@@ -36,30 +36,13 @@ import {
 import type { ExpressionNode } from '../../types/core';
 import { parseBareURLPath, isNakedURLStart } from './utility-commands';
 import type { SlotMap } from '../command-slots';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * Keywords that structure a `go` command. Matched value-first (via
  * `resolveKeyword` for multilingual input) and emitted as `string` nodes.
  */
-const GO_KEYWORDS = new Set([
-  'to',
-  'the',
-  'url',
-  'of',
-  'in',
-  'new',
-  'window',
-  'top',
-  'middle',
-  'bottom',
-  'left',
-  'center',
-  'right',
-  'smoothly',
-  'instantly',
-  'back',
-  'forward',
-]);
+const GO_POSITIONS = new Set(['top', 'middle', 'bottom', 'left', 'center', 'right', 'nearest']);
 
 function stringNode(value: string, tok: Pick<Token, 'start' | 'end' | 'line' | 'column'>): ASTNode {
   return {
@@ -79,81 +62,116 @@ function stringNode(value: string, tok: Pick<Token, 'start' | 'end' | 'line' | '
  * @param identifierNode - The `go` identifier node
  * @returns CommandNode representing the go command
  */
+/**
+ * A `go` destination is a PRIMARY — a selector, a URL, an identifier, a
+ * string — never a folded expression: `#el + 50` is a target and an offset,
+ * `myUrl in new window` a target and a window clause.
+ */
+function goTarget(ctx: ParserContext): ASTNode | undefined {
+  if (ctx.isAtEnd()) return undefined;
+  const before = ctx.current;
+  const node = ctx.parsePrimary();
+  return ctx.current === before ? undefined : node;
+}
+
 export function parseGoCommand(
   ctx: ParserContext,
   identifierNode: IdentifierNode
 ): CommandNode | null {
   const args: ASTNode[] = [];
-
+  const modifiers: SlotMap<'go'> = {};
   while (!isCommandBoundary(ctx, ['when', 'where', 'catch', 'finally'])) {
     const tok = ctx.peek();
-    const canonical = ctx.resolveKeyword(tok.value).toLowerCase();
-
-    // 1. Structural go keyword → flat string arg.
-    if (GO_KEYWORDS.has(canonical)) {
+    const word = ctx.resolveKeyword(tok.value).toLowerCase();
+    if (word === 'to' || word === 'the') {
       ctx.advance();
-      args.push(stringNode(canonical, tok));
       continue;
     }
-
-    // 2. Naked URL (/path or scheme://…) → one reassembled string literal.
-    //
-    // The same routine `fetch` uses. `go` used to pass its own GO_URL_STOP set
-    // (`in`, `then`, `and`, …), but every word in it is whitespace-separated in
-    // the grammar, so adjacency subsumes the whole set: in `go to /x in new
-    // window`, `x` ends at 8 and `in` starts at 9, so the URL stops on its own.
-    if (isNakedURLStart(ctx)) {
-      const url = parseBareURLPath(ctx);
-      if (url) {
-        args.push(url);
+    if ((word === 'back' || word === 'forward') && args.length === 0 && !modifiers.url) {
+      ctx.advance();
+      modifiers[word] = stringNode(word, tok) as ExpressionNode;
+      continue;
+    }
+    if (word === 'url') {
+      ctx.advance();
+      const url = isNakedURLStart(ctx) ? parseBareURLPath(ctx) : goTarget(ctx);
+      if (url) modifiers.url = url as ExpressionNode;
+      continue;
+    }
+    if (word === 'in') {
+      // `in new window`
+      ctx.advance();
+      const first = ctx.peek();
+      const parts: string[] = [];
+      while (!ctx.isAtEnd() && ['new', 'window'].includes(ctx.peek().value.toLowerCase())) {
+        parts.push(ctx.advance().value.toLowerCase());
+      }
+      modifiers.in = stringNode(parts.join(' ') || first.value, first) as ExpressionNode;
+      continue;
+    }
+    if (GO_POSITIONS.has(word) && !modifiers.position) {
+      ctx.advance();
+      modifiers.position = stringNode(word, tok) as ExpressionNode;
+      continue;
+    }
+    if (word === 'of') {
+      ctx.advance();
+      if (ctx.resolveKeyword(ctx.peek().value).toLowerCase() === 'the') ctx.advance();
+      const target = goTarget(ctx);
+      if (target) modifiers.of = target as ExpressionNode;
+      continue;
+    }
+    if (word === 'smoothly' || word === 'instantly') {
+      ctx.advance();
+      modifiers.behavior = stringNode(
+        word === 'smoothly' ? 'smooth' : 'instant',
+        tok
+      ) as ExpressionNode;
+      continue;
+    }
+    if (tok.value === '+' || tok.value === '-' || tok.kind === 'number') {
+      let sign = 1;
+      if (tok.value === '+' || tok.value === '-') {
+        ctx.advance();
+        if (tok.value === '-') sign = -1;
+      }
+      const numTok = ctx.peek();
+      if (numTok.kind !== 'number') break;
+      ctx.advance();
+      let end = numTok.end;
+      const next = ctx.peek();
+      if (!ctx.isAtEnd() && next.value === 'px' && next.start === numTok.end)
+        end = ctx.advance().end;
+      modifiers.by = toLegacyExpression({
+        type: 'literal',
+        value: sign * Number(numTok.value),
+        raw: numTok.value,
+        start: tok.start,
+        end,
+        line: tok.line,
+        column: tok.column,
+      });
+      continue;
+    }
+    if (args.length === 0 && !modifiers.of && !modifiers.url) {
+      if (isNakedURLStart(ctx)) {
+        const url = parseBareURLPath(ctx);
+        if (url) {
+          args.push(url);
+          continue;
+        }
+      }
+      const target = goTarget(ctx);
+      if (target) {
+        args.push(target);
         continue;
       }
-      // Pathological lone `/`: consume it so the loop makes progress.
-      ctx.advance();
-      args.push(stringNode(tok.value, tok));
-      continue;
     }
-
-    // 3. Scroll offset sign (`+ 50`, `- 50px`) → keep the sign as a string.
-    if (tok.value === '+' || tok.value === '-') {
-      ctx.advance();
-      args.push(stringNode(tok.value, tok));
-      continue;
-    }
-
-    // 4. Number, merging an immediately-adjacent `px` unit into "50px".
-    if (tok.kind === 'number') {
-      ctx.advance();
-      const next = ctx.peek();
-      if (!ctx.isAtEnd() && next.value === 'px' && next.start === tok.end) {
-        const px = ctx.advance();
-        args.push(stringNode(`${tok.value}px`, { ...tok, end: px.end }));
-      } else {
-        args.push({
-          type: 'literal',
-          value: Number(tok.value),
-          raw: tok.value,
-          start: tok.start,
-          end: tok.end,
-          line: tok.line,
-          column: tok.column,
-        } as ASTNode);
-      }
-      continue;
-    }
-
-    // 5. Anything else — quoted string, template literal, variable, selector,
-    //    me/it, parenthesized expression — is a single primary atom.
-    const before = ctx.current;
-    args.push(ctx.parsePrimary());
-    if (ctx.current === before) {
-      // parsePrimary didn't consume (e.g. an error token) — stop rather than spin.
-      break;
-    }
+    break;
   }
-
   return CommandNodeBuilder.fromIdentifier<'go'>(identifierNode)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -166,29 +184,12 @@ export function parseGoCommand(
  * `nearest` is hyperfixi's own (documented in `reference/index.ts` and accepted
  * by ScrollCommand.parsePosition); upstream has no such position word.
  */
-const SCROLL_KEYWORDS = new Set([
-  'to',
-  'the',
-  'of',
-  'in',
-  'top',
-  'middle',
-  'bottom',
-  'left',
-  'center',
-  'right',
-  'nearest',
-  'px',
-  'smoothly',
-  'instantly',
-]);
 
 /**
  * Structural keywords in the scrollBy form,
  * `scroll [<target>] [up|down|left|right] by <n> [px] [smoothly|instantly]`
  * — upstream's non-`to` branch. `up`/`down`/`by` are meaningful only here.
  */
-const SCROLL_BY_KEYWORDS = new Set([...SCROLL_KEYWORDS, 'up', 'down', 'by']);
 
 /**
  * Words that end the lookahead for a `by` — the DEFAULT_BOUNDARY_KEYWORDS the
@@ -258,77 +259,141 @@ export function parseScrollCommand(
   identifierNode: IdentifierNode
 ): CommandNode | null {
   if (ctx.isAtEnd()) return null;
-
   if (ctx.resolveKeyword(ctx.peek().value).toLowerCase() === 'to') {
-    return collectScrollArgs(ctx, identifierNode, SCROLL_KEYWORDS);
+    return parseScrollTo(ctx, identifierNode);
   }
   if (hasScrollByAhead(ctx)) {
-    return collectScrollArgs(ctx, identifierNode, SCROLL_BY_KEYWORDS);
+    return parseScrollBy(ctx, identifierNode);
   }
   return null;
 }
 
-function collectScrollArgs(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode,
-  keywords: ReadonlySet<string>
-): CommandNode {
-  const args: ASTNode[] = [];
+const SCROLL_POSITIONS = new Set(['top', 'middle', 'bottom', 'left', 'center', 'right', 'nearest']);
+const SCROLL_DIRECTIONS = new Set(['up', 'down', 'left', 'right']);
+const SCROLL_STOP = ['of', 'smoothly', 'instantly', 'by', 'up', 'down', 'left', 'right'];
 
+/** Consume a trailing `smoothly` / `instantly`, as the `behavior` slot. */
+function takeScrollBehavior(ctx: ParserContext, modifiers: SlotMap<'scroll'>): boolean {
+  const tok = ctx.peek();
+  const word = ctx.resolveKeyword(tok.value).toLowerCase();
+  if (word !== 'smoothly' && word !== 'instantly') return false;
+  ctx.advance();
+  modifiers.behavior = stringNode(
+    word === 'smoothly' ? 'smooth' : 'instant',
+    tok
+  ) as ExpressionNode;
+  return true;
+}
+
+/**
+ * `scroll to [the] [<position>] [of] <target> [smoothly|instantly]`
+ *
+ * Every word is a slot (Arc 3 step 3): `position` (the logical position
+ * word), `of` (the target it introduces), `behavior`; the target is the one
+ * positional argument when it is not introduced by `of` — a whole
+ * expression, so `last <.message/> in #chat` stays one positional `in`
+ * expression as upstream reads it. Nothing is pushed as a string for the
+ * command to match by value.
+ */
+function parseScrollTo(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  const args: ASTNode[] = [];
+  const modifiers: SlotMap<'scroll'> = {};
+  ctx.advance(); // `to`
   while (!isCommandBoundary(ctx, ['when', 'where', 'catch', 'finally'])) {
     const tok = ctx.peek();
-    const canonical = ctx.resolveKeyword(tok.value).toLowerCase();
-
-    // 1. Structural scroll keyword → flat string arg. String, not identifier:
-    //    an unbound identifier evaluates to `undefined` at runtime, and the
-    //    runtime matches these by their own text.
-    if (keywords.has(canonical)) {
+    const word = ctx.resolveKeyword(tok.value).toLowerCase();
+    if (word === 'the') {
       ctx.advance();
-      args.push(stringNode(canonical, tok));
       continue;
     }
-
-    // 2. Offset sign (`scroll to me + 50 px`) → keep the sign as a string.
-    if (tok.value === '+' || tok.value === '-') {
+    if (SCROLL_POSITIONS.has(word) && !modifiers.position) {
       ctx.advance();
-      args.push(stringNode(tok.value, tok));
+      modifiers.position = stringNode(word, tok) as ExpressionNode;
       continue;
     }
-
-    // 3. Number, merging an immediately-adjacent `px` unit into "50px" — the
-    //    same rule `go`'s scroll forms use.
-    if (tok.kind === 'number') {
+    if (word === 'of') {
       ctx.advance();
-      const next = ctx.peek();
-      if (!ctx.isAtEnd() && next.value === 'px' && next.start === tok.end) {
-        const px = ctx.advance();
-        args.push(stringNode(`${tok.value}px`, { ...tok, end: px.end }));
-      } else {
-        args.push({
+      const target = parseOneArgument(ctx, SCROLL_STOP);
+      if (target) modifiers.of = target as ExpressionNode;
+      continue;
+    }
+    if (takeScrollBehavior(ctx, modifiers)) continue;
+    if (args.length === 0 && !modifiers.of) {
+      const target = parseOneArgument(ctx, SCROLL_STOP);
+      if (target) {
+        args.push(target);
+        continue;
+      }
+    }
+    break;
+  }
+  return CommandNodeBuilder.fromIdentifier<'scroll'>(identifierNode)
+    .withArgs(...args)
+    .withModifiers(modifiers)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
+ * `scroll [<target>] [up|down|left|right] by [+|-]<n>[px] [smoothly|instantly]`
+ * — `direction`, `by` (a signed literal; `px` is consumed) and `behavior`
+ * are slots, the target the one positional argument.
+ */
+function parseScrollBy(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  const args: ASTNode[] = [];
+  const modifiers: SlotMap<'scroll'> = {};
+  while (!isCommandBoundary(ctx, ['when', 'where', 'catch', 'finally'])) {
+    const tok = ctx.peek();
+    const word = ctx.resolveKeyword(tok.value).toLowerCase();
+    if (SCROLL_DIRECTIONS.has(word)) {
+      ctx.advance();
+      modifiers.direction = stringNode(word, tok) as ExpressionNode;
+      continue;
+    }
+    if (word === 'by') {
+      ctx.advance();
+      let sign = 1;
+      const signTok = ctx.peek();
+      if (signTok.value === '+' || signTok.value === '-') {
+        ctx.advance();
+        if (signTok.value === '-') sign = -1;
+      }
+      const numTok = ctx.peek();
+      if (numTok.kind === 'number') {
+        ctx.advance();
+        const next = ctx.peek();
+        let end = numTok.end;
+        if (!ctx.isAtEnd() && next.value === 'px' && next.start === numTok.end) {
+          end = ctx.advance().end;
+        }
+        modifiers.by = toLegacyExpression({
           type: 'literal',
-          value: Number(tok.value),
-          raw: tok.value,
-          start: tok.start,
-          end: tok.end,
-          line: tok.line,
-          column: tok.column,
-        } as ASTNode);
+          value: sign * Number(numTok.value),
+          raw: numTok.value,
+          start: numTok.start,
+          end,
+          line: numTok.line,
+          column: numTok.column,
+        });
+      } else {
+        const offset = parseOneArgument(ctx, SCROLL_STOP);
+        if (offset) modifiers.by = offset as ExpressionNode;
       }
       continue;
     }
-
-    // 4. The target (or container): selector, query reference, `me`/`it`,
-    //    positional expression, variable, parenthesized expression.
-    const before = ctx.current;
-    args.push(ctx.parsePrimary());
-    if (ctx.current === before) {
-      // parsePrimary didn't consume — stop rather than spin.
-      break;
+    if (takeScrollBehavior(ctx, modifiers)) continue;
+    if (args.length === 0) {
+      const target = parseOneArgument(ctx, SCROLL_STOP);
+      if (target) {
+        args.push(target);
+        continue;
+      }
     }
+    break;
   }
-
   return CommandNodeBuilder.fromIdentifier<'scroll'>(identifierNode)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }

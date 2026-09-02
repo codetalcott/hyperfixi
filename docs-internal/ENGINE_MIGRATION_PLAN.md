@@ -1052,7 +1052,11 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    (`parseToggleCommand` in `command-parsers/dom-commands.ts`) emits the node;
    `CommandNode` becomes `CommandNode<K extends CommandName>` with a per-K
    `args` type, and `command-node-builder.ts` builds it.
-3. **Migration order = the `parseInput` size table above**, largest first:
+3. **Migration order = the `parseInput` size table above**, largest first: ✅
+   **CLOSED 2026-09-03** — every command whose syntax lived in `args` (marker
+   words) or in evaluated values (`go`, `scroll`) is on slots; what `args`
+   still carries is positional by construction (see the `go` History entry).
+   The per-command record follows.
    **`toggle` STARTED 2026-09-02 — PR A of two.** The parser now emits the
    destination as a slot: `toggle .active on #panel` is `args: [.active]`,
    `modifiers.on: #panel` (`from`, the HyperFixi spelling, shares the slot).
@@ -1439,6 +1443,57 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    whose syntax hides in VALUES the census cannot see: `go` (`to`, `the`,
    `url`, `back`, `of`, `in new window` scanned after evaluation) and
    `scroll` (`top`/`bottom`/`smoothly`) — their own PR.
+
+   **`scroll` (2026-09-03) — the census-blind case.** Its parser pushed
+   every keyword as a STRING node and the command matched the evaluated
+   values — `args.includes('smoothly')`, `args.find(a => a === 'up' || …)`,
+   a 14-word skip list to find the target — so the census read `12 lines ·
+   S 0` for a command whose whole syntax lived in `execute`. `parseScrollTo`
+   / `parseScrollBy` now emit `position`, `of`, `behavior`
+   (`'smooth'`|`'instant'`), `direction` and a signed `by` (the `px` unit
+   consumed), the target the one positional argument; `ScrollCommandInput`
+   is `{ target, position?, behavior?, direction?, offset? }`, resolved in
+   `parseInput`, consumed by `execute` (the file shrank 254 → 195 lines).
+   `in` is deliberately NOT a slot: `scroll to last <.message/> in #chat`
+   is one positional `in` expression, as upstream reads it — the old
+   collector split it into `[to, last…, in, #chat]`, and upstream `scroll`
+   has no container clause. The meter, honestly: **scroll 12 → 44 lines ·
+   S 0 → 1 · V 1 → 4** — the row GROWS because ~80 lines of execute-side
+   value scanning became a `parseInput` the meter counts; that is the
+   migration doing what it is for, and the baseline was regenerated with
+   that reason. Four AST-equivalence rows moved. AOT's `ScrollCodegen`
+   reads the `behavior` slot beside the semantic path's `smooth` flag.
+   `go` is next, same shape: `back` (a flag), `url`, `in` (`new window`),
+   `position`, `of`, `behavior`, `by`, with the bare URL or element the
+   positional argument — which is also what the hybrid bundle's `go`
+   template and `goSchema`'s `args: ['destination']` already emit.
+
+   **`go` (2026-09-03), same shape, one more lesson.** `parseGoCommand`
+   emits `back`/`forward` (flags), `url`, `in` (`'new window'`),
+   `position`, `of`, `behavior` and a signed `by`; the bare URL or element
+   is the one positional argument. `GoCommandInput` is a three-way union
+   (history | url | scroll) built in `parseInput`; `execute` consumes it and
+   the nine value-scans (`args.findIndex(arg => arg === 'url')`,
+   `args.includes('new') && args.includes('window')`, the skip-list target
+   search) are gone. The lesson: a destination is parsed as a PRIMARY,
+   never an expression — the first draft used `parseExpression` and `#el +
+   50` folded into a binary plus (the offset vanished), `myUrl in new
+   window` into a positional `in` expression (the window clause vanished);
+   `go`'s grammar has no expression operands, so `parsePrimary` is the
+   honest reader, with a progress check. Two consumers outside the command:
+   the interchange's hand-written `go` role mapper (`from-core.ts`) learned
+   the slot shape beside the flat one it keeps accepting from the hybrid
+   bundle's template and `buildAST` (both still emit `[url, '/page']` —
+   Arc 5's boundary), and AOT `GoCodegen` reads `back` and `url`. Two
+   documented forms added (`in new window`, `smoothly`), which is what makes
+   the AST corpus and the slot-table gate see them; `by` and `forward` are
+   banked phantoms with reasons. **Census: go 14 → 40 lines · S 0 → 1 · V 1
+   → 6**, the same honest growth as `scroll`. Five AST-equivalence rows
+   (three moved, two added). With `go` and `scroll` done, no command's
+   syntax lives in evaluated values any more; what `args` still carries is
+   positional by construction (measure/transition's property word, install's
+   name + params, js's code + params, pick's array, the block bodies) — the
+   typed-`args` step's material, and the end of step 3.
 
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,

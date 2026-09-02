@@ -191,7 +191,8 @@ class RemoveCodegen implements CommandCodegen {
     if (args.length === 0) {
       // The target is the `from` slot (Arc 3 step 3); `node.target` is the
       // semantic path's spelling of the same thing.
-      const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
+      const targetSlot =
+        node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
       const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
       return {
         code: `${target}.remove()`,
@@ -809,7 +810,10 @@ class ScrollCodegen implements CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
     const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
-    const behavior = (node.modifiers as { smooth?: boolean })?.smooth ? "'smooth'" : "'auto'";
+    const mods = node.modifiers as { smooth?: boolean; behavior?: { value?: unknown } } | undefined;
+    // `smooth` is the semantic path's flag; `behavior` is the core parser's slot (Arc 3 step 3).
+    const smooth = mods?.smooth || mods?.behavior?.value === 'smooth';
+    const behavior = smooth ? "'smooth'" : "'auto'";
 
     return {
       code: `${target}.scrollIntoView({ behavior: ${behavior} })`,
@@ -1050,8 +1054,15 @@ class GoCodegen implements CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
     const roles = node.roles;
+    // The core parser's slots (Arc 3 step 3): `back` is a flag, `url` the
+    // destination; the semantic path names a destination role or a
+    // positional argument.
+    const mods = node.modifiers as Record<string, ASTNode> | undefined;
+    if (mods?.back) {
+      return { code: 'history.back()', async: false, sideEffects: true };
+    }
 
-    const target = roles?.destination ?? args[0];
+    const target = mods?.url ?? roles?.destination ?? args[0];
     if (!target) return null;
 
     // go back / go forward

@@ -8,6 +8,41 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GoCommand } from '../go';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
+import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { parse } from '../../../parser/parser';
+import { assertNodeOfKind } from '../../../ast/guards';
+
+/** Evaluate the nodes the real parser emits: literals, selectors (querySelector), and context words. */
+function realishEvaluator(context: ExecutionContext): ExpressionEvaluator {
+  return {
+    evaluate: async (node: ASTNode) => {
+      const n = node as unknown as { type?: string; value?: unknown; name?: string };
+      if (n.type === 'selector') return document.querySelector(String(n.value)) ?? String(n.value);
+      if (n.type === 'identifier') {
+        if (n.name === 'me') return context.me;
+        if (n.name === 'it') return context.it;
+        if (n.name === 'you') return context.you;
+        return n.name;
+      }
+      return n.value;
+    },
+  } as unknown as ExpressionEvaluator;
+}
+
+/** The real parse of `src`, through parseInput. */
+async function parseGo(src: string, context: ExecutionContext & TypedExecutionContext) {
+  const node = assertNodeOfKind(parse(src).node, 'command');
+  return new GoCommand().parseInput(
+    { args: node.args as unknown as ASTNode[], modifiers: (node.modifiers ?? {}) as never },
+    realishEvaluator(context),
+    context
+  );
+}
+
+/** Parse, then execute. */
+async function run(src: string, context: ExecutionContext & TypedExecutionContext) {
+  return new GoCommand().execute(await parseGo(src, context), context);
+}
 
 // ========== Test Utilities ==========
 
@@ -70,65 +105,36 @@ describe('GoCommand', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator(['back']);
 
-      const input = await command.parseInput(
-        { args: [{ type: 'keyword', value: 'back' }], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await parseGo('go back', context);
 
-      expect(input.args).toEqual(['back']);
+      expect(input).toEqual({ kind: 'back' });
     });
 
     it('should parse URL navigation', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['to', 'url', 'https://example.com']);
-
-      const input = await command.parseInput(
-        {
-          args: [
-            { type: 'keyword', value: 'to' },
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: 'https://example.com' },
-          ],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.args).toContain('url');
-      expect(input.args).toContain('https://example.com');
+      const input = await parseGo('go to url "https://example.com"', context);
+      expect(input).toEqual({ kind: 'url', url: 'https://example.com', newWindow: false });
     });
 
     it('should parse element scrolling', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['to', 'top', 'of', '#header']);
-
-      const input = await command.parseInput(
-        {
-          args: [
-            { type: 'keyword', value: 'to' },
-            { type: 'keyword', value: 'top' },
-            { type: 'keyword', value: 'of' },
-            { type: 'string', value: '#header' },
-          ],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.args).toContain('top');
-      expect(input.args).toContain('#header');
+      const header = document.createElement('div');
+      header.id = 'header';
+      document.body.appendChild(header);
+      const input = await parseGo('go to top of #header', context);
+      expect(input).toMatchObject({
+        kind: 'scroll',
+        target: header,
+        position: { vertical: 'top', horizontal: 'nearest' },
+        offset: 0,
+        behavior: 'smooth',
+      });
+      header.remove();
     });
 
-    it('should return empty args if none provided', async () => {
+    it('should reject a bare `go` (no destination)', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator([]);
-
-      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
-
-      expect(input.args).toEqual([]);
+      await expect(parseGo('go', context)).rejects.toThrow('Go command requires arguments');
     });
   });
 
@@ -138,8 +144,7 @@ describe('GoCommand', () => {
       const backSpy = vi.fn();
       global.window.history.back = backSpy;
 
-      const input = { args: ['back'] };
-      const output = await command.execute(input, context);
+      const output = await run('go back', context);
 
       expect(backSpy).toHaveBeenCalled();
       expect(output.type).toBe('back');
@@ -148,11 +153,7 @@ describe('GoCommand', () => {
 
     it('should throw if no arguments provided', async () => {
       const context = createMockContext();
-      const input = { args: [] };
-
-      await expect(command.execute(input, context)).rejects.toThrow(
-        'Go command requires arguments'
-      );
+      await expect(run('go ', context)).rejects.toThrow('Go command requires arguments');
     });
   });
 
@@ -162,8 +163,7 @@ describe('GoCommand', () => {
       const assignSpy = vi.fn();
       global.window.location = { assign: assignSpy } as any;
 
-      const input = { args: ['to', 'url', 'https://example.com'] };
-      const output = await command.execute(input, context);
+      const output = await run('go to url https://example.com', context);
 
       expect(assignSpy).toHaveBeenCalledWith('https://example.com');
       expect(output.type).toBe('url');
@@ -174,8 +174,7 @@ describe('GoCommand', () => {
       const context = createMockContext();
       const originalHash = global.window.location.hash;
 
-      const input = { args: ['to', 'url', '#section'] };
-      await command.execute(input, context);
+      await run('go to url #section', context);
 
       // Cleanup
       global.window.location.hash = originalHash;
@@ -183,9 +182,7 @@ describe('GoCommand', () => {
 
     it('should throw on invalid URL', async () => {
       const context = createMockContext();
-      const input = { args: ['to', 'url', 'not a valid url!!!'] };
-
-      await expect(command.execute(input, context)).rejects.toThrow('Invalid URL');
+      await expect(run('go to url "not a valid url!!!"', context)).rejects.toThrow('Invalid URL');
     });
 
     it('should accept relative URLs', async () => {
@@ -193,8 +190,7 @@ describe('GoCommand', () => {
       const assignSpy = vi.fn();
       global.window.location = { assign: assignSpy } as any;
 
-      const input = { args: ['to', 'url', '/page'] };
-      const output = await command.execute(input, context);
+      const output = await run('go to url /page', context);
 
       expect(assignSpy).toHaveBeenCalledWith('/page');
       expect(output.result).toBe('/page');
@@ -208,8 +204,7 @@ describe('GoCommand', () => {
         const assignSpy = vi.fn();
         global.window.location = { assign: assignSpy } as any;
 
-        const input = { args: ['to', '/users/42'] };
-        const output = await command.execute(input, context);
+        const output = await run('go to /users/42', context);
 
         expect(assignSpy).toHaveBeenCalledWith('/users/42');
         expect(output.type).toBe('url');
@@ -221,8 +216,7 @@ describe('GoCommand', () => {
         const assignSpy = vi.fn();
         global.window.location = { assign: assignSpy } as any;
 
-        const input = { args: ['to', 'https://example.com/x'] };
-        const output = await command.execute(input, context);
+        const output = await run('go to https://example.com/x', context);
 
         expect(assignSpy).toHaveBeenCalledWith('https://example.com/x');
         expect(output.type).toBe('url');
@@ -233,8 +227,7 @@ describe('GoCommand', () => {
         const assignSpy = vi.fn();
         global.window.location = { assign: assignSpy } as any;
 
-        const input = { args: ['to', 'mailto:x@example.com'] };
-        const output = await command.execute(input, context);
+        const output = await run('go to mailto:x@example.com', context);
 
         expect(assignSpy).toHaveBeenCalledWith('mailto:x@example.com');
         expect(output.type).toBe('url');
@@ -245,8 +238,7 @@ describe('GoCommand', () => {
         const openSpy = vi.fn(() => ({ focus: vi.fn() }));
         global.window.open = openSpy as any;
 
-        const input = { args: ['to', '/dashboard', 'in', 'new', 'window'] };
-        const output = await command.execute(input, context);
+        const output = await run('go to /dashboard in new window', context);
 
         expect(openSpy).toHaveBeenCalledWith('/dashboard', '_blank');
         expect(output.type).toBe('url');
@@ -260,8 +252,7 @@ describe('GoCommand', () => {
         const scrollSpy = vi.fn();
         element.scrollIntoView = scrollSpy;
 
-        const input = { args: ['to', '#section'] };
-        const output = await command.execute(input, context);
+        const output = await run('go to #section', context);
 
         expect(output.type).toBe('scroll');
         expect(scrollSpy).toHaveBeenCalled();
@@ -281,8 +272,7 @@ describe('GoCommand', () => {
       const scrollSpy = vi.fn();
       element.scrollIntoView = scrollSpy;
 
-      const input = { args: ['to', '#test-element'] };
-      const output = await command.execute(input, context);
+      const output = await run('go to #test-element', context);
 
       expect(scrollSpy).toHaveBeenCalled();
       expect(output.type).toBe('scroll');
@@ -297,8 +287,7 @@ describe('GoCommand', () => {
       const scrollSpy = vi.fn();
       document.body.scrollIntoView = scrollSpy;
 
-      const input = { args: ['to', 'top'] };
-      const output = await command.execute(input, context);
+      const output = await run('go to top', context);
 
       expect(output.type).toBe('scroll');
     });
@@ -310,8 +299,7 @@ describe('GoCommand', () => {
       const scrollSpy = vi.fn();
       element.scrollIntoView = scrollSpy;
 
-      const input = { args: ['to', 'me'] };
-      const output = await command.execute(input, context);
+      const output = await run('go to me', context);
 
       expect(scrollSpy).toHaveBeenCalled();
       expect(output.result).toBe(element);
@@ -326,11 +314,7 @@ describe('GoCommand', () => {
       global.window.history.back = backSpy;
 
       // Parse
-      const input = await command.parseInput(
-        { args: [{ type: 'keyword', value: 'back' }], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await parseGo('go back', context);
 
       // Execute
       const output = await command.execute(input, context);
@@ -341,23 +325,11 @@ describe('GoCommand', () => {
 
     it('should parse and execute URL navigation end-to-end', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['to', 'url', '/path']);
       const assignSpy = vi.fn();
       global.window.location = { assign: assignSpy } as any;
 
       // Parse
-      const input = await command.parseInput(
-        {
-          args: [
-            { type: 'keyword', value: 'to' },
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/path' },
-          ],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
+      const input = await parseGo('go to url /path', context);
 
       // Execute
       const output = await command.execute(input, context);

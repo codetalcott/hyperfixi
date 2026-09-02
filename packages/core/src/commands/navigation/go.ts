@@ -27,9 +27,20 @@ import type { CommandRaw } from '../../parser/command-slots';
 /**
  * Typed input for GoCommand
  */
-export interface GoCommandInput {
-  args: unknown[];
-}
+/**
+ * What the parser's slots resolve to (Arc 3 step 3).
+ */
+export type GoCommandInput =
+  | { kind: 'back' }
+  | { kind: 'forward' }
+  | { kind: 'url'; url: string; newWindow: boolean }
+  | {
+      kind: 'scroll';
+      target: HTMLElement;
+      position: { vertical: string; horizontal: string };
+      offset: number;
+      behavior: ScrollBehavior;
+    };
 
 /**
  * Output from go command
@@ -51,7 +62,13 @@ export class GoCommand implements DecoratedCommand {
     description:
       'Navigation functionality including URL navigation, element scrolling, and browser history',
     syntax: ['go back', 'go to url <url> [in new window]', 'go to [position] [of] <element>'],
-    examples: ['go back', 'go to url "https://example.com"', 'go to top of #header'],
+    examples: [
+      'go back',
+      'go to url "https://example.com"',
+      'go to url "https://example.com" in new window',
+      'go to top of #header',
+      'go to bottom of #footer smoothly',
+    ],
     sideEffects: ['navigation', 'scrolling'],
     category: 'navigation',
     compatibility: 'standard',
@@ -68,134 +85,88 @@ export class GoCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<GoCommandInput> {
-    if (!raw.args || raw.args.length === 0) {
-      return { args: [] };
+    const m = raw.modifiers;
+    if (m.back) return { kind: 'back' };
+    if (m.forward) return { kind: 'forward' };
+    const newWindow = m.in !== undefined;
+    if (m.url !== undefined) {
+      const url = String(await evaluator.evaluate(m.url, context));
+      if (!this.isValidUrl(url)) throw new Error(`Invalid URL: "${url}"`);
+      return { kind: 'url', url, newWindow };
     }
-    const args = await Promise.all(
-      raw.args.map((arg: ASTNode) => evaluator.evaluate(arg, context))
-    );
-    return { args };
+    const targetNode = m.of ?? raw.args[0];
+    if (!targetNode && !m.position) throw new Error('Go command requires arguments');
+    const targetValue = targetNode ? await evaluator.evaluate(targetNode, context) : 'body';
+    if (typeof targetValue === 'string' && this.isBareUrl(targetValue) && !m.of && !m.position) {
+      return { kind: 'url', url: targetValue, newWindow };
+    }
+    const target = this.resolveScrollTarget(targetValue, context);
+    if (!target) throw new Error(`Target element not found: ${String(targetValue)}`);
+    const word = m.position ? String(await evaluator.evaluate(m.position, context)) : undefined;
+    const position = { vertical: 'top', horizontal: 'nearest' };
+    if (word === 'top' || word === 'middle' || word === 'bottom') position.vertical = word;
+    else if (word === 'left' || word === 'center' || word === 'right') {
+      position.horizontal = word;
+      position.vertical = 'nearest';
+    }
+    const behaviorWord = m.behavior ? await evaluator.evaluate(m.behavior, context) : undefined;
+    const behavior: ScrollBehavior =
+      behaviorWord === 'instant' ? ('instant' as ScrollBehavior) : 'smooth';
+    let offset = 0;
+    if (m.by !== undefined) {
+      const n = Number(String(await evaluator.evaluate(m.by, context)).replace(/px$/, ''));
+      if (!Number.isNaN(n)) offset = n;
+    }
+    return { kind: 'scroll', target, position, offset, behavior };
   }
 
-  async execute(input: GoCommandInput, context: TypedExecutionContext): Promise<GoCommandOutput> {
-    const { args } = input;
-
-    if (args.length === 0) {
-      throw new Error('Go command requires arguments');
+  async execute(input: GoCommandInput, _context: TypedExecutionContext): Promise<GoCommandOutput> {
+    if (input.kind === 'back' || input.kind === 'forward') {
+      await this.goHistory(input.kind);
+      return { result: input.kind, type: 'back' };
     }
-
-    // Handle "go back"
-    if (typeof args[0] === 'string' && args[0].toLowerCase() === 'back') {
-      await this.goBack();
-      return { result: 'back', type: 'back' };
+    if (input.kind === 'url') {
+      this.navigate(input.url, input.newWindow);
+      return { result: input.url, type: 'url' };
     }
-
-    // Handle legacy `go to url <url>` syntax
-    if (this.isUrlNavigation(args)) {
-      const url = await this.navigateToUrl(args, context);
-      return { result: url, type: 'url' };
+    const { target, position, offset, behavior } = input;
+    if (typeof window !== 'undefined') {
+      const block = this.mapVerticalPosition(position.vertical);
+      const inline = this.mapHorizontalPosition(position.horizontal);
+      target.scrollIntoView?.({ behavior, block, inline });
+      if (offset !== 0) {
+        const { x, y } = this.calculateScrollPosition(target, position, offset);
+        window.scrollTo?.({ left: x, top: y, behavior });
+      }
     }
-
-    // Upstream _hyperscript 0.9.90: `go to <bare-url>` without the `url`
-    // keyword. Accepts paths starting with `/` or values with a URL scheme
-    // (http://, https://, mailto:, tel:, etc.). Leaves CSS selectors
-    // (`#id`, `.class`, bare identifiers) to the scroll branch below.
-    const bareUrl = this.findBareUrl(args);
-    if (bareUrl !== null) {
-      const url = await this.navigateToBareUrl(bareUrl, args);
-      return { result: url, type: 'url' };
-    }
-
-    // Handle element scrolling (also the deprecated `go to top of X` form —
-    // upstream prefers `scroll to top of X` as of 0.9.90, but both work).
-    const element = await this.scrollToElement(args, context);
-    return { result: element, type: 'scroll' };
+    return { result: target, type: 'scroll' };
   }
 
-  private isUrlNavigation(args: unknown[]): boolean {
-    return args.findIndex(arg => arg === 'url') !== -1;
-  }
-
-  /**
-   * Bare URL detection for `go to <url>` without the legacy `url` keyword.
-   * Matches absolute paths (`/foo`, `/`) and values with a URL scheme
-   * (`https://`, `mailto:`, `tel:`, `ftp:`, etc.). Does NOT match CSS
-   * selectors (`#id`, `.class`) — those remain scroll targets.
-   */
   private isBareUrl(s: string): boolean {
     if (s.startsWith('/')) return true;
     return /^[a-z][a-z0-9+.-]*:/i.test(s);
   }
 
-  /**
-   * Scan args for a bare URL, skipping the common `to` / `the` prefix
-   * keywords that the parser may include. Returns the first URL found; if
-   * the first non-keyword arg isn't a URL, returns null (it's a scroll
-   * target, not a URL).
-   */
-  private findBareUrl(args: unknown[]): string | null {
-    for (const a of args) {
-      if (a === 'to' || a === 'the') continue;
-      if (typeof a === 'string' && this.isBareUrl(a)) return a;
-      return null;
-    }
-    return null;
-  }
-
-  private async navigateToBareUrl(url: string, args: unknown[]): Promise<string> {
-    const inNewWindow = args.includes('new') && args.includes('window');
-
-    if (inNewWindow) {
+  private navigate(url: string, newWindow: boolean): void {
+    if (newWindow) {
       if (typeof window !== 'undefined' && window.open) {
-        const newWindow = window.open(url, '_blank');
-        if (newWindow?.focus) newWindow.focus();
+        const opened = window.open(url, '_blank');
+        if (opened?.focus) opened.focus();
       }
     } else if (url.startsWith('#')) {
       if (typeof window !== 'undefined') window.location.hash = url;
     } else if (typeof window !== 'undefined') {
       window.location.assign?.(url) ?? (window.location.href = url);
     }
-
-    return url;
   }
 
-  private async goBack(): Promise<void> {
+  private async goHistory(direction: 'back' | 'forward'): Promise<void> {
     if (typeof window !== 'undefined' && window.history) {
-      window.history.back();
+      if (direction === 'back') window.history.back();
+      else window.history.forward();
     } else {
       throw new Error('Browser history API not available');
     }
-  }
-
-  private async navigateToUrl(args: unknown[], context: ExecutionContext): Promise<string> {
-    const urlIndex = args.findIndex(arg => arg === 'url');
-    const url = args[urlIndex + 1];
-
-    if (!url) {
-      throw new Error('URL is required after "url" keyword');
-    }
-
-    const resolvedUrl = typeof url === 'string' ? url : String(url);
-    const inNewWindow = args.includes('new') && args.includes('window');
-
-    if (!this.isValidUrl(resolvedUrl)) {
-      throw new Error(`Invalid URL: "${resolvedUrl}"`);
-    }
-
-    if (inNewWindow) {
-      if (typeof window !== 'undefined' && window.open) {
-        const newWindow = window.open(resolvedUrl, '_blank');
-        if (newWindow?.focus) newWindow.focus();
-      }
-    } else if (resolvedUrl.startsWith('#')) {
-      if (typeof window !== 'undefined') window.location.hash = resolvedUrl;
-    } else {
-      if (typeof window !== 'undefined') {
-        window.location.assign?.(resolvedUrl) ?? (window.location.href = resolvedUrl);
-      }
-    }
-
-    return resolvedUrl;
   }
 
   private isValidUrl(url: string): boolean {
@@ -206,34 +177,6 @@ export class GoCommand implements DecoratedCommand {
     } catch {
       return false;
     }
-  }
-
-  private async scrollToElement(args: unknown[], context: ExecutionContext): Promise<HTMLElement> {
-    const position = this.parseScrollPosition(args);
-    const target = this.parseScrollTarget(args);
-    const offset = this.parseScrollOffset(args);
-    const smooth = !args.includes('instantly');
-
-    const element = this.resolveScrollTarget(target, context);
-    if (!element) {
-      throw new Error(`Target element not found: ${target}`);
-    }
-
-    if (typeof window !== 'undefined') {
-      const behavior = smooth ? 'smooth' : 'instant';
-      const block = this.mapVerticalPosition(position.vertical);
-      const inline = this.mapHorizontalPosition(position.horizontal);
-
-      if (offset !== 0) {
-        element.scrollIntoView?.({ behavior: behavior as ScrollBehavior, block, inline });
-        const { x, y } = this.calculateScrollPosition(element, position, offset);
-        window.scrollTo?.({ left: x, top: y, behavior: behavior as ScrollBehavior });
-      } else {
-        element.scrollIntoView?.({ behavior: behavior as ScrollBehavior, block, inline });
-      }
-    }
-
-    return element;
   }
 
   private mapVerticalPosition(pos: string): ScrollLogicalPosition {
@@ -254,116 +197,6 @@ export class GoCommand implements DecoratedCommand {
       nearest: 'nearest',
     };
     return map[pos] || 'nearest';
-  }
-
-  private parseScrollPosition(args: unknown[]): { vertical: string; horizontal: string } {
-    const position = { vertical: 'top', horizontal: 'nearest' };
-    const vKeys = ['top', 'middle', 'bottom'];
-    const hKeys = ['left', 'center', 'right'];
-    let hasV = false,
-      hasH = false;
-
-    for (const arg of args) {
-      if (typeof arg === 'string') {
-        if (vKeys.includes(arg)) {
-          position.vertical = arg;
-          hasV = true;
-        } else if (hKeys.includes(arg)) {
-          position.horizontal = arg;
-          hasH = true;
-        }
-      }
-    }
-    if (hasH && !hasV) position.vertical = 'nearest';
-    return position;
-  }
-
-  private parseScrollTarget(args: unknown[]): string | HTMLElement {
-    const ofIndex = args.findIndex(arg => arg === 'of');
-    if (ofIndex !== -1 && ofIndex + 1 < args.length) {
-      let target = args[ofIndex + 1];
-      if (target === 'the' && ofIndex + 2 < args.length) target = args[ofIndex + 2];
-      return target as string | HTMLElement;
-    }
-
-    for (const arg of args) {
-      if (isDOMNode(arg)) return arg as HTMLElement;
-    }
-
-    const skip = [
-      'top',
-      'middle',
-      'bottom',
-      'left',
-      'center',
-      'right',
-      'of',
-      'the',
-      'to',
-      'smoothly',
-      'instantly',
-    ];
-    for (const arg of args) {
-      if (
-        typeof arg === 'string' &&
-        !skip.includes(arg) &&
-        (arg.startsWith('#') ||
-          arg.startsWith('.') ||
-          arg.includes('[') ||
-          /^[a-zA-Z][a-zA-Z0-9-]*$/.test(arg))
-      ) {
-        return arg;
-      }
-    }
-    return 'body';
-  }
-
-  private parseScrollOffset(args: unknown[]): number {
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      if (typeof arg === 'string') {
-        const match = arg.match(/^([+-]?\d+)(px)?$/);
-        if (match) return parseInt(match[1], 10);
-      }
-      if ((arg === '+' || arg === '-') && i + 1 < args.length) {
-        const next = args[i + 1];
-        const num = typeof next === 'number' ? next : parseInt(String(next).replace('px', ''), 10);
-        if (!isNaN(num)) return arg === '-' ? -num : num;
-      }
-    }
-    return 0;
-  }
-
-  private resolveScrollTarget(target: unknown, context: ExecutionContext): HTMLElement | null {
-    if (typeof target === 'object' && target && (target as any).nodeType)
-      return target as HTMLElement;
-
-    const str = typeof target === 'string' ? target : String(target);
-
-    if (str === 'body' && typeof document !== 'undefined') return document.body;
-    if (str === 'html' && typeof document !== 'undefined') return document.documentElement;
-
-    if (str === 'me' && isHTMLElement(context.me)) return context.me as HTMLElement;
-    if (str === 'it' && isHTMLElement(context.it)) return context.it as HTMLElement;
-    if (str === 'you' && isHTMLElement(context.you)) return context.you as HTMLElement;
-
-    const variable = getVariableValue(str, context);
-    if (isHTMLElement(variable)) return variable as HTMLElement;
-
-    if (typeof document !== 'undefined') {
-      try {
-        const el = document.querySelector(str);
-        if (el) return el as HTMLElement;
-      } catch {
-        try {
-          const els = document.getElementsByTagName(str);
-          if (els.length > 0) return els[0] as HTMLElement;
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    return null;
   }
 
   private calculateScrollPosition(
@@ -407,6 +240,38 @@ export class GoCommand implements DecoratedCommand {
     }
 
     return { x: Math.max(0, x), y: Math.max(0, y) };
+  }
+
+  private resolveScrollTarget(target: unknown, context: ExecutionContext): HTMLElement | null {
+    if (typeof target === 'object' && target && (target as any).nodeType)
+      return target as HTMLElement;
+
+    const str = typeof target === 'string' ? target : String(target);
+
+    if (str === 'body' && typeof document !== 'undefined') return document.body;
+    if (str === 'html' && typeof document !== 'undefined') return document.documentElement;
+
+    if (str === 'me' && isHTMLElement(context.me)) return context.me as HTMLElement;
+    if (str === 'it' && isHTMLElement(context.it)) return context.it as HTMLElement;
+    if (str === 'you' && isHTMLElement(context.you)) return context.you as HTMLElement;
+
+    const variable = getVariableValue(str, context);
+    if (isHTMLElement(variable)) return variable as HTMLElement;
+
+    if (typeof document !== 'undefined') {
+      try {
+        const el = document.querySelector(str);
+        if (el) return el as HTMLElement;
+      } catch {
+        try {
+          const els = document.getElementsByTagName(str);
+          if (els.length > 0) return els[0] as HTMLElement;
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    return null;
   }
 }
 

@@ -528,7 +528,9 @@ function inferRoles(
     //
     // Three producer shapes reach here (core `string` nodes convert to
     // interchange `literal`, so the traditional and buildAST shapes coincide):
-    //  1. traditional parser: flat args, keywords + naked URLs as literals —
+    //  0. traditional parser (Arc 3 step 3): slots `back`/`forward`/`url`/`of`,
+    //     the bare URL or element the one positional argument
+    //  1. the old flat args (hybrid template / buildAST): keywords + naked URLs as literals —
     //     [lit to, lit url, lit '/page'] / [lit to, lit '/about'] / [lit back]
     //  2. semantic compileSync: args:[], modifiers.on = destination,
     //     modifiers.method = literal 'url'
@@ -556,7 +558,20 @@ function inferRoles(
       let method: InterchangeNode | undefined;
 
       const onMod = asNode(modifiers?.on);
-      if (args.length === 0 && onMod) {
+      const slotUrl = asNode(modifiers?.url);
+      const slotOf = asNode(modifiers?.of);
+      const slotHistory = kw(asNode(modifiers?.back)) ?? kw(asNode(modifiers?.forward));
+      if (slotHistory === 'back' || slotHistory === 'forward') {
+        // Shape 0 — the core parser's slots (Arc 3 step 3): `back`/`forward`
+        // are flags, `url` and `of` carry the destination, the bare URL or
+        // element is the one positional argument.
+        destination = { type: 'identifier', value: slotHistory, name: slotHistory };
+      } else if (slotUrl) {
+        destination = slotUrl;
+        method = { type: 'literal', value: 'url' };
+      } else if (slotOf) {
+        destination = slotOf;
+      } else if (args.length === 0 && onMod) {
         // Shape 2 — semantic modifiers path.
         destination = onMod;
         if (kw(asNode(modifiers?.method)) === 'url') {

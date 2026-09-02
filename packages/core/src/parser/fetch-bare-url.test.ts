@@ -257,9 +257,11 @@ describe('naked URL termination (adjacency)', () => {
     // at 16, so the URL stops on its own.
     const result = parse('go to /api/put/1 in new window');
     expect(result.success).toBe(true);
-    const values = (assertNodeOfKind(result.node, 'command').args ?? []).map(
-      (a: unknown) => (a as { value?: unknown }).value
-    );
-    expect(values).toEqual(['to', '/api/put/1', 'in', 'new', 'window']);
+    const node = assertNodeOfKind(result.node, 'command');
+    // The URL is the one positional argument; `in new window` is the `in` slot (Arc 3 step 3).
+    expect((node.args ?? []).map((a: unknown) => (a as { value?: unknown }).value)).toEqual([
+      '/api/put/1',
+    ]);
+    expect((node.modifiers?.in as { value?: unknown } | undefined)?.value).toBe('new window');
   });
 });
