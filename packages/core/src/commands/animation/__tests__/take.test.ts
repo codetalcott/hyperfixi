@@ -77,9 +77,7 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: 'class' } as any,
-          ],
+          args: [{ type: 'literal', value: 'class' } as any],
           modifiers: { from: { type: 'literal', value: '#source' } as any },
         },
         evaluator,
@@ -97,11 +95,12 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: '@data-value' } as any,
-          ],
+          args: [{ type: 'literal', value: '@data-value' } as any],
           // `from` and the `and put it on` target are slots (Arc 3 step 3).
-          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
+          modifiers: {
+            from: { type: 'literal', value: '#source' } as any,
+            for: { type: 'literal', value: '#target' } as any,
+          },
         },
         evaluator,
         context
@@ -118,10 +117,11 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: '.active' } as any,
-          ],
-          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
+          args: [{ type: 'literal', value: '.active' } as any],
+          modifiers: {
+            from: { type: 'literal', value: '#source' } as any,
+            for: { type: 'literal', value: '#target' } as any,
+          },
         },
         evaluator,
         context
@@ -174,10 +174,11 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'selector', value: '.active', selectorType: 'class' } as any,
-          ],
-          modifiers: { from: { type: 'literal', value: '.tab' } as any, for: { type: 'literal', value: '#panel' } as any },
+          args: [{ type: 'selector', value: '.active', selectorType: 'class' } as any],
+          modifiers: {
+            from: { type: 'literal', value: '.tab' } as any,
+            for: { type: 'literal', value: '#panel' } as any,
+          },
         },
         evaluator,
         context
@@ -550,11 +551,12 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: 'class' } as any,
-          ],
+          args: [{ type: 'literal', value: 'class' } as any],
           // `from` and the `and put it on` target are slots (Arc 3 step 3).
-          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
+          modifiers: {
+            from: { type: 'literal', value: '#source' } as any,
+            for: { type: 'literal', value: '#target' } as any,
+          },
         },
         evaluator,
         context
@@ -584,11 +586,12 @@ describe('TakeCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: '@data-id' } as any,
-          ],
+          args: [{ type: 'literal', value: '@data-id' } as any],
           // `from` and the `and put it on` target are slots (Arc 3 step 3).
-          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
+          modifiers: {
+            from: { type: 'literal', value: '#source' } as any,
+            for: { type: 'literal', value: '#target' } as any,
+          },
         },
         evaluator,
         context

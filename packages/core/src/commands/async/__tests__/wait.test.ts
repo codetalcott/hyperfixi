@@ -11,6 +11,24 @@ import type { ExecutionContext, TypedExecutionContext } from '../../../types/cor
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 
+/** The node `parseWaitCommand` emits for `wait for <event>`: one spec per alternative. */
+const eventSpec = (name: unknown) =>
+  ({
+    type: 'arrayLiteral',
+    elements: [
+      {
+        type: 'objectLiteral',
+        properties: [
+          { key: { type: 'identifier', name: 'name' }, value: { type: 'literal', value: name } },
+          {
+            key: { type: 'identifier', name: 'args' },
+            value: { type: 'arrayLiteral', elements: [] },
+          },
+        ],
+      },
+    ],
+  }) as unknown as ASTNode;
+
 // ========== Test Utilities ==========
 
 /** Test context with guaranteed non-null me */
@@ -202,8 +220,8 @@ describe('WaitCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'click' } },
+          args: [eventSpec('click')],
+          modifiers: {},
         },
         evaluator,
         context
@@ -220,8 +238,8 @@ describe('WaitCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'load' } },
+          args: [eventSpec('load')],
+          modifiers: {},
         },
         evaluator,
         context
@@ -237,8 +255,8 @@ describe('WaitCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'custom:event' } },
+          args: [eventSpec('custom:event')],
+          modifiers: {},
         },
         evaluator,
         context
@@ -255,8 +273,8 @@ describe('WaitCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [{ type: 'literal', value: 'placeholder' }],
-            modifiers: { for: { type: 'expression', value: 123 } },
+            args: [eventSpec(123)],
+            modifiers: {},
           },
           evaluator,
           context
@@ -485,8 +503,8 @@ describe('WaitCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'click' } },
+          args: [eventSpec('click')],
+          modifiers: {},
         },
         evaluator,
         context

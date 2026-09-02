@@ -99,7 +99,6 @@ export class TakeCommand implements DecoratedCommand {
       ? await evaluator.evaluate(raw.modifiers.from, context)
       : undefined;
     let target: unknown;
-    if (!target && raw.modifiers?.on) target = await evaluator.evaluate(raw.modifiers.on, context);
     if (!target && raw.modifiers?.for)
       target = await evaluator.evaluate(raw.modifiers.for, context);
 

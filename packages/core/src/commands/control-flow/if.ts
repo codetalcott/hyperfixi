@@ -132,9 +132,6 @@ export class ConditionalCommand implements DecoratedCommand {
       if (raw.args.length >= 2 && raw.args[1]) {
         thenCommands = raw.args[1];
         elseCommands = raw.args.length >= 3 ? raw.args[2] : undefined;
-      } else if (raw.modifiers?.then) {
-        thenCommands = raw.modifiers.then;
-        elseCommands = raw.modifiers.else;
       }
 
       if (!thenCommands) {

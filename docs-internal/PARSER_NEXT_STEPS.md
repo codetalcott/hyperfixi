@@ -212,6 +212,29 @@ defect each:
   the `<selector/>` query-literal form, which suggests one shared cause rather
   than two.
 
+### Two `wait`/`pick` forms whose only implementation was a hand-built node (2026-09-03)
+
+Found by Arc 3 step 2's slot-key parity gate and the fixture conversion that
+followed it (`ENGINE_MIGRATION_PLAN.md`, History 2026-09-03). Both PARSE, so
+no documented-examples gate sees them; both run wrong.
+
+- **`pick from <expr>`** — a documented example (`pick from colors`). The parser
+  has no `from` form for `pick` (upstream has none either: first/last/random/
+  items/match), so the generic fallback parses it positionally as `[from,
+  colors]` and the command evaluates `from` as a VARIABLE. The
+  `modifiers.from` branch that would have handled it was reachable only from
+  hand-built nodes and is deleted. Options: drop the example (it is not an
+  upstream form), or give `pick` a `from`-only variant (random single) with a
+  parser slot. Gate: `slot-key-parity.test.ts` will demand the emitter.
+- **`wait <time> or for <event>`, `wait <time> or <time>`** — the time-first
+  race. The parser reads `wait 2s or for click` as ONE argument, a binary
+  `or` expression, so `parseTimeWait` gets a boolean. The race the parser does
+  support is event-first (`wait for click or 1s` → an alternative list).
+  Three tests once described the time-first form against hand-built
+  `modifiers.or` nodes; they are a KNOWN GAP pin now
+  (`wait-new-features.test.ts`). Upstream `wait` has no time-first race, so
+  this is a HyperFixi extension to decide on, not a parity fix.
+
 ### Why the gated entries need no doc to survive
 
 - **`and`** — the two `KNOWN GAP` tests assert the *current, wrong* shape. Anyone
