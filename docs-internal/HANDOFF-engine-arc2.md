@@ -145,9 +145,25 @@ being redundant — at which point removing them is real, and the compile errors
 that appear are the actual burn-down list. Doing it in the plan's order would
 book the credit before doing the work.
 
-The same question is open for `commands/` (235) and `compatibility/` (161) and
-should be asked before either is scheduled: **which `ASTNode` does this cluster
-import, and is the field it casts DECLARED?**
+The same question was then asked of the other two clusters. **`compatibility/`
+is the `ast-utils` case**: it types its nodes from `parser/hybrid/ast-types.ts`,
+whose signature is `[key: string]: any` (line 9), so its AST casts are redundant
+there too — and Arc 5 may retire that tree, which is a second reason not to
+schedule it.
+
+**`commands/` (235) is genuinely open**, and the obvious guess about it is
+wrong. It imports `base-types`/`types/core` — the `unknown` side — so the plan's
+model was that its `(arg as Record<string, unknown>).name === 'x'` idiom is
+load-bearing. Measured: it is not, at least not for the comparison.
+`arg.name === 'toggle'` compiles with no cast at all, because the `unknown`
+index signature permits property ACCESS and `===` accepts `unknown` on either
+side. What `unknown` actually blocks is using the result — arithmetic, a nested
+property, passing it somewhere typed.
+
+So the split inside `commands/` has to be measured per site rather than assumed
+from the cluster, and the earlier characterization of it (~19% of the hatch
+total, mixed AST and `context: any`/DOM expandos) is the right starting point.
+Do not schedule it on the strength of the idiom alone.
 
 ## Traps
 
