@@ -24,7 +24,9 @@
  */
 
 import { isOk } from '../../types/result';
-import type { ExecutionResult, ExecutionSignal } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+import { bodyOps } from '../helpers/body-ops';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
@@ -39,10 +41,10 @@ import {
 import type { CommandRaw } from '../../ast/command-slots';
 
 export interface StartViewTransitionInput {
-  /** Optional CSS view-transition-name. */
+  /** Optional `using <type>` — mapped to the View Transitions API `types` */
   transitionName?: string;
-  /** AST nodes representing the commands inside the transition body. */
-  body: ASTNode[];
+  /** The compiled body commands — closures handed in by the runtime (Arc 4b) */
+  body: Op[];
 }
 
 export interface StartViewTransitionOutput {
@@ -80,7 +82,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
   ): Promise<StartViewTransitionInput> {
     // Body is in args (the parser packs the command list there). Transition
     // name is in modifiers.transitionName (a literal node from parseStartCommand).
-    const body = raw.args ?? [];
+    const body = bodyOps(raw, 0);
     let transitionName: string | undefined;
     if (raw.modifiers?.transitionName) {
       const value = await evaluator.evaluate(raw.modifiers.transitionName, context);
@@ -93,9 +95,6 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     input: StartViewTransitionInput,
     context: TypedExecutionContext
   ): Promise<StartViewTransitionOutput | ExecutionSignal> {
-    const runtimeExecute = context.locals.get('_runtimeExecute') as
-      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<ExecutionResult<unknown>>) | undefined;
-
     let commandsExecuted = 0;
     // A signal from the body ends it and passes through to the boundary that
     // owns it, once the transition has run.
@@ -103,22 +102,10 @@ export class StartViewTransitionCommand implements DecoratedCommand {
 
     const runBody = async () => {
       for (const cmd of input.body) {
-        if (runtimeExecute) {
-          const result = await runtimeExecute(cmd, context);
-          if (!isOk(result)) {
-            signal = result.error;
-            break;
-          }
-        } else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function') {
-          // Re-read and re-narrow: the condition's typeof does not flow to a
-          // fresh property access, and `unknown` narrowed by typeof is callable
-          // without any cast. `.call(cmd, …)` keeps the original receiver.
-          const execute = (cmd as { execute?: unknown }).execute;
-          if (typeof execute === 'function') await execute.call(cmd, context);
-        } else if (typeof cmd === 'function') {
-          // `typeof` narrows to `ASTNode & Function` — Function alone has no
-          // call signature TS will invoke, so state the one we mean.
-          await (cmd as (c: typeof context) => unknown)(context);
+        const result = await cmd(context);
+        if (!isOk(result)) {
+          signal = result.error;
+          break;
         }
         commandsExecuted++;
       }

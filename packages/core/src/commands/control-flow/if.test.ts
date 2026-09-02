@@ -16,22 +16,59 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import { ok, err, isSignal } from '../../types/result';
 import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+
+/**
+ * Test stand-in for the runtime's compile step (Arc 4b). The runtime compiles
+ * a command's bodies to closures and hands them in as `raw.bodies`; these
+ * tests hand-build inputs, so they build the closures themselves. A body runs
+ * its hand-built commands through `context.locals._testExecute` when a test
+ * installed one (the old observation channel, now test-local), else calls a
+ * function or an `{ execute }` object directly.
+ */
+function testBody(commands: readonly unknown[] = []): Op {
+  return async ctx => {
+    const run = (ctx.locals as Map<string, unknown>).get('_testExecute') as
+      ((cmd: unknown, ctx: unknown) => unknown) | undefined;
+    let last: unknown;
+    for (const cmd of commands) {
+      let r: unknown;
+      if (typeof cmd === 'function') r = await (cmd as (c: unknown) => unknown)(ctx);
+      else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function')
+        r = await (cmd as { execute: (c: unknown) => unknown }).execute(ctx);
+      else if (run) r = await run(cmd, ctx);
+      else throw new Error('testBody: not an executable command');
+      if (isSignal(r)) return err(r);
+      last = r;
+    }
+    return ok(last);
+  };
+}
+/** One body per command — what the runtime hands `tell`/`start view transition`. */
+function testOps(commands: readonly unknown[]): Op[] {
+  return commands.map(c => testBody([c]));
+}
+/** What the runtime does for a raw input: compile every block/command argument. */
+function rawWithBodies<T extends { args: readonly unknown[] }>(
+  raw: T
+): T & { bodies: (Op | undefined)[] } {
+  const bodies = raw.args.map(a => {
+    const t = (a as { type?: string } | null)?.type;
+    if (t === 'block')
+      return testBody(((a as { commands?: unknown[] }).commands ?? []) as unknown[]);
+    // A `command` node — or, in these hand-built fixtures, an `{ execute }`
+    // object standing in for one.
+    if (t === 'command' || typeof (a as { execute?: unknown } | null)?.execute === 'function')
+      return testBody([a]);
+    return undefined;
+  });
+  return { ...raw, bodies };
+}
 
 /** Narrow a command's completion to its output — a signal here is a test failure. */
 function outputOf<T>(completion: T | ExecutionSignal): T {
   if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
   return completion;
-}
-
-/**
- * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
- * mocks return plain values or a signal object; this adapts them to the contract.
- */
-function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
-  return async (cmd: unknown, ctx: unknown) => {
-    const r = await fn(cmd as never, ctx as never);
-    return isSignal(r) ? err(r) : ok(r);
-  };
 }
 
 // =============================================================================
@@ -42,7 +79,7 @@ function createMockContext(): TypedExecutionContext {
   return {
     me: null,
     you: null,
-    locals: new Map([['_runtimeExecute', asRuntimeExecute(vi.fn(async () => 'executed'))]]),
+    locals: new Map([['_testExecute', vi.fn(async () => 'executed')]]),
     globals: new Map(),
     result: undefined,
     halted: false,
@@ -56,11 +93,13 @@ function createMockEvaluator(returnValue: any = true): ExpressionEvaluator {
   } as unknown as ExpressionEvaluator;
 }
 
-function createMockBlock(commands: any[] = []): ExpressionNode {
-  return {
-    type: 'block',
-    commands,
-  } as unknown as ExpressionNode;
+function createMockBlock(commands: any[] = []): Op {
+  return testBody(commands);
+}
+
+/** A parser-shaped block node, for parseInput tests (the runtime compiles it to an Op). */
+function mockBlockNode(commands: any[] = []): ExpressionNode {
+  return { type: 'block', commands } as unknown as ExpressionNode;
 }
 
 // =============================================================================
@@ -88,10 +127,10 @@ describe('ConditionalCommand', () => {
       const context = createMockContext();
 
       const conditionNode = { type: 'boolean', value: true } as ASTNode;
-      const thenBlock = createMockBlock([{ type: 'command' }]);
+      const thenBlock = mockBlockNode([{ type: 'command' }]);
 
       const input = await command.parseInput(
-        { args: [conditionNode, thenBlock], modifiers: {}, commandName: 'if' },
+        rawWithBodies({ args: [conditionNode, thenBlock], modifiers: {}, commandName: 'if' }),
         evaluator,
         context
       );
@@ -106,11 +145,15 @@ describe('ConditionalCommand', () => {
       const context = createMockContext();
 
       const conditionNode = { type: 'boolean', value: false } as ASTNode;
-      const thenBlock = createMockBlock([{ type: 'command', name: 'then-cmd' }]);
-      const elseBlock = createMockBlock([{ type: 'command', name: 'else-cmd' }]);
+      const thenBlock = mockBlockNode([{ type: 'command', name: 'then-cmd' }]);
+      const elseBlock = mockBlockNode([{ type: 'command', name: 'else-cmd' }]);
 
       const input = await command.parseInput(
-        { args: [conditionNode, thenBlock, elseBlock], modifiers: {}, commandName: 'if' },
+        rawWithBodies({
+          args: [conditionNode, thenBlock, elseBlock],
+          modifiers: {},
+          commandName: 'if',
+        }),
         evaluator,
         context
       );
@@ -125,7 +168,11 @@ describe('ConditionalCommand', () => {
       const context = createMockContext();
 
       await expect(
-        command.parseInput({ args: [], modifiers: {}, commandName: 'if' }, evaluator, context)
+        command.parseInput(
+          rawWithBodies({ args: [], modifiers: {}, commandName: 'if' }),
+          evaluator,
+          context
+        )
       ).rejects.toThrow('if command requires a condition');
     });
 
@@ -137,7 +184,7 @@ describe('ConditionalCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [conditionNode], modifiers: {}, commandName: 'if' },
+          rawWithBodies({ args: [conditionNode], modifiers: {}, commandName: 'if' }),
           evaluator,
           context
         )
@@ -154,7 +201,7 @@ describe('ConditionalCommand', () => {
       const commandNode = { type: 'command', name: 'show' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' },
+        rawWithBodies({ args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' }),
         evaluator,
         context
       );
@@ -164,7 +211,7 @@ describe('ConditionalCommand', () => {
       // args[1] verbatim — the parser wraps every unless body in one block
       // node there, same as if. The old slice(1) array shape is what made
       // unless bodies silently unexecutable (see unless.test.ts end-to-end).
-      expect(input.thenCommands).toBe(commandNode);
+      expect(input.thenCommands).toBeTypeOf('function');
     });
 
     it('should throw error if unless has no commands', async () => {
@@ -175,7 +222,7 @@ describe('ConditionalCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [conditionNode], modifiers: {}, commandName: 'unless' },
+          rawWithBodies({ args: [conditionNode], modifiers: {}, commandName: 'unless' }),
           evaluator,
           context
         )
@@ -187,7 +234,7 @@ describe('ConditionalCommand', () => {
     it('should execute then branch when condition is true', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'then-result');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
+      context.locals.set('_testExecute', mockExecute);
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -206,7 +253,7 @@ describe('ConditionalCommand', () => {
     it('should execute else branch when condition is false', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'else-result');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
+      context.locals.set('_testExecute', mockExecute);
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -279,7 +326,7 @@ describe('ConditionalCommand', () => {
     it('should execute commands when condition is false (inverted logic)', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'result');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
+      context.locals.set('_testExecute', mockExecute);
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -297,7 +344,7 @@ describe('ConditionalCommand', () => {
     it('should NOT execute commands when condition is true', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn();
-      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
+      context.locals.set('_testExecute', mockExecute);
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -320,7 +367,10 @@ describe('ConditionalCommand', () => {
       // on the command output.
       const context = createMockContext();
       const expectedResult = 'unless-result';
-      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
+      context.locals.set(
+        '_testExecute',
+        vi.fn(async () => expectedResult)
+      );
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -375,7 +425,7 @@ describe('ConditionalCommand', () => {
       const input: ConditionalCommandInput = {
         mode: 'if',
         condition: true,
-        thenCommands: [cmd1, cmd2],
+        thenCommands: createMockBlock([cmd1, cmd2]),
       };
 
       const output = outputOf(await command.execute(input, context));
@@ -390,7 +440,10 @@ describe('ConditionalCommand', () => {
     it('should return result from then branch', async () => {
       const context = createMockContext();
       const expectedResult = { value: 42 };
-      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
+      context.locals.set(
+        '_testExecute',
+        vi.fn(async () => expectedResult)
+      );
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -405,7 +458,10 @@ describe('ConditionalCommand', () => {
     it('should return result from else branch', async () => {
       const context = createMockContext();
       const expectedResult = { value: 99 };
-      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
+      context.locals.set(
+        '_testExecute',
+        vi.fn(async () => expectedResult)
+      );
 
       const input: ConditionalCommandInput = {
         mode: 'if',

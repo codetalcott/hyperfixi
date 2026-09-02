@@ -6,8 +6,9 @@
  */
 
 import type { TypedExecutionContext } from '../../types/core';
-import { isSignal } from '../../types/result';
+import { isOk } from '../../types/result';
 import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
 
 /**
  * Loop configuration - defines how the loop behaves
@@ -102,10 +103,9 @@ export interface LoopResult {
  */
 export async function executeLoop(
   config: LoopConfig,
-  commands: unknown,
   context: TypedExecutionContext,
   iterCtx: LoopIterationContext,
-  executeCommands: (cmds: unknown, ctx: TypedExecutionContext) => Promise<unknown>
+  body: Op
 ): Promise<LoopResult> {
   const maxIterations = config.maxIterations ?? 10000;
   let iterations = 0;
@@ -141,13 +141,14 @@ export async function executeLoop(
       // The LOOP boundary (Arc 4a): the body returns a signal instead of
       // throwing one. `break`/`continue` are consumed here; halt/exit/return
       // end the loop and pass through to the boundary that owns them.
-      const outcome = await executeCommands(commands, context);
-      if (isSignal(outcome)) {
-        if (outcome.type === 'break') {
+      const outcome = await body(context);
+      if (!isOk(outcome)) {
+        const signal = outcome.error;
+        if (signal.type === 'break') {
           interrupted = true;
           break;
         }
-        if (outcome.type === 'continue') {
+        if (signal.type === 'continue') {
           iterations++;
           iterCtx.index = iterations;
           // For event loops, yield to allow events to fire
@@ -156,9 +157,9 @@ export async function executeLoop(
           }
           continue;
         }
-        return { iterations, lastResult, interrupted, signal: outcome };
+        return { iterations, lastResult, interrupted, signal };
       }
-      lastResult = outcome;
+      lastResult = outcome.value;
 
       iterations++;
       iterCtx.index = iterations;

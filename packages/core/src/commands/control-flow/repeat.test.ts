@@ -18,22 +18,59 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import { ok, err, isSignal } from '../../types/result';
 import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+
+/**
+ * Test stand-in for the runtime's compile step (Arc 4b). The runtime compiles
+ * a command's bodies to closures and hands them in as `raw.bodies`; these
+ * tests hand-build inputs, so they build the closures themselves. A body runs
+ * its hand-built commands through `context.locals._testExecute` when a test
+ * installed one (the old observation channel, now test-local), else calls a
+ * function or an `{ execute }` object directly.
+ */
+function testBody(commands: readonly unknown[] = []): Op {
+  return async ctx => {
+    const run = (ctx.locals as Map<string, unknown>).get('_testExecute') as
+      ((cmd: unknown, ctx: unknown) => unknown) | undefined;
+    let last: unknown;
+    for (const cmd of commands) {
+      let r: unknown;
+      if (typeof cmd === 'function') r = await (cmd as (c: unknown) => unknown)(ctx);
+      else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function')
+        r = await (cmd as { execute: (c: unknown) => unknown }).execute(ctx);
+      else if (run) r = await run(cmd, ctx);
+      else throw new Error('testBody: not an executable command');
+      if (isSignal(r)) return err(r);
+      last = r;
+    }
+    return ok(last);
+  };
+}
+/** One body per command — what the runtime hands `tell`/`start view transition`. */
+function testOps(commands: readonly unknown[]): Op[] {
+  return commands.map(c => testBody([c]));
+}
+/** What the runtime does for a raw input: compile every block/command argument. */
+function rawWithBodies<T extends { args: readonly unknown[] }>(
+  raw: T
+): T & { bodies: (Op | undefined)[] } {
+  const bodies = raw.args.map(a => {
+    const t = (a as { type?: string } | null)?.type;
+    if (t === 'block')
+      return testBody(((a as { commands?: unknown[] }).commands ?? []) as unknown[]);
+    // A `command` node — or, in these hand-built fixtures, an `{ execute }`
+    // object standing in for one.
+    if (t === 'command' || typeof (a as { execute?: unknown } | null)?.execute === 'function')
+      return testBody([a]);
+    return undefined;
+  });
+  return { ...raw, bodies };
+}
 
 /** Narrow a command's completion to its output — a signal here is a test failure. */
 function outputOf<T>(completion: T | ExecutionSignal): T {
   if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
   return completion;
-}
-
-/**
- * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
- * mocks return plain values or a signal object; this adapts them to the contract.
- */
-function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
-  return async (cmd: unknown, ctx: unknown) => {
-    const r = await fn(cmd as never, ctx as never);
-    return isSignal(r) ? err(r) : ok(r);
-  };
 }
 
 // =============================================================================
@@ -44,7 +81,7 @@ function createMockContext(): TypedExecutionContext {
   return {
     me: null,
     you: null,
-    locals: new Map([['_runtimeExecute', asRuntimeExecute(vi.fn(async () => 'executed'))]]),
+    locals: new Map([['_testExecute', vi.fn(async () => 'executed')]]),
     globals: new Map(),
     result: undefined,
     halted: false,
@@ -63,11 +100,13 @@ function createMockEvaluator(returnValue: any = []): ExpressionEvaluator {
   } as unknown as ExpressionEvaluator;
 }
 
-function createMockBlock(commands: any[] = []): ASTNode {
-  return {
-    type: 'block',
-    commands,
-  } as ASTNode;
+function createMockBlock(commands: any[] = []): Op {
+  return testBody(commands);
+}
+
+/** A parser-shaped block node, for parseInput tests (the runtime compiles it to an Op). */
+function mockBlockNode(commands: any[] = []): ASTNode {
+  return { type: 'block', commands } as unknown as ASTNode;
 }
 
 // =============================================================================
@@ -97,17 +136,17 @@ describe('RepeatCommand', () => {
       const forNode = { type: 'identifier', name: 'for' } as ASTNode;
       const varNode = { type: 'identifier', name: 'item', value: 'item' } as ASTNode;
       const collectionNode = { type: 'array', value: [1, 2, 3] } as ASTNode;
-      const block = createMockBlock();
+      const block = mockBlockNode();
 
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [block],
           modifiers: {
             loopType: forNode as never,
             for: varNode as never,
             in: collectionNode as never,
           },
-        },
+        }),
         evaluator,
         context
       );
@@ -136,7 +175,7 @@ describe('RepeatCommand', () => {
       const indexNode = { type: 'expression', name: 'i' } as ExpressionNode;
 
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [],
           modifiers: {
             loopType: forNode as never,
@@ -144,7 +183,7 @@ describe('RepeatCommand', () => {
             in: collectionNode as never,
             index: indexNode as never,
           },
-        },
+        }),
         indexEvaluator,
         context
       );
@@ -161,7 +200,7 @@ describe('RepeatCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [], modifiers: { loopType: forNode as never } },
+          rawWithBodies({ args: [], modifiers: { loopType: forNode as never } }),
           evaluator,
           context
         )
@@ -176,10 +215,13 @@ describe('RepeatCommand', () => {
 
       const timesNode = { type: 'identifier', name: 'times' } as ASTNode;
       const countNode = { type: 'number', value: 5 } as ASTNode;
-      const block = createMockBlock();
+      const block = mockBlockNode();
 
       const input = await command.parseInput(
-        { args: [block], modifiers: { loopType: timesNode as never, times: countNode as never } },
+        rawWithBodies({
+          args: [block],
+          modifiers: { loopType: timesNode as never, times: countNode as never },
+        }),
         evaluator,
         context
       );
@@ -201,7 +243,10 @@ describe('RepeatCommand', () => {
       const countNode = { type: 'number', value: '10' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [], modifiers: { loopType: timesNode as never, times: countNode as never } },
+        rawWithBodies({
+          args: [],
+          modifiers: { loopType: timesNode as never, times: countNode as never },
+        }),
         evaluator,
         context
       );
@@ -218,7 +263,10 @@ describe('RepeatCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [], modifiers: { loopType: timesNode as never, times: countNode as never } },
+          rawWithBodies({
+            args: [],
+            modifiers: { loopType: timesNode as never, times: countNode as never },
+          }),
           evaluator,
           context
         )
@@ -235,7 +283,10 @@ describe('RepeatCommand', () => {
       const conditionNode = { type: 'boolean', value: true } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [], modifiers: { loopType: whileNode as never, while: conditionNode as never } },
+        rawWithBodies({
+          args: [],
+          modifiers: { loopType: whileNode as never, while: conditionNode as never },
+        }),
         evaluator,
         context
       );
@@ -252,7 +303,7 @@ describe('RepeatCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [], modifiers: { loopType: whileNode as never } },
+          rawWithBodies({ args: [], modifiers: { loopType: whileNode as never } }),
           evaluator,
           context
         )
@@ -269,7 +320,10 @@ describe('RepeatCommand', () => {
       const conditionNode = { type: 'boolean', value: false } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [], modifiers: { loopType: untilNode as never, until: conditionNode as never } },
+        rawWithBodies({
+          args: [],
+          modifiers: { loopType: untilNode as never, until: conditionNode as never },
+        }),
         evaluator,
         context
       );
@@ -286,7 +340,7 @@ describe('RepeatCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [], modifiers: { loopType: untilNode as never } },
+          rawWithBodies({ args: [], modifiers: { loopType: untilNode as never } }),
           evaluator,
           context
         )
@@ -302,7 +356,7 @@ describe('RepeatCommand', () => {
       const foreverNode = { type: 'identifier', name: 'forever' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [], modifiers: { loopType: foreverNode as never } },
+        rawWithBodies({ args: [], modifiers: { loopType: foreverNode as never } }),
         evaluator,
         context
       );
@@ -318,13 +372,12 @@ describe('RepeatCommand', () => {
       const executedItems: string[] = [];
 
       context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(
-          vi.fn(async (cmd: any, ctx: any) => {
-            executedItems.push(ctx.locals.get('item'));
-            return 'ok';
-          })
-        )
+        '_testExecute',
+
+        vi.fn(async (cmd: any, ctx: any) => {
+          executedItems.push(ctx.locals.get('item'));
+          return 'ok';
+        })
       );
 
       const input: RepeatCommandInput = {
@@ -348,13 +401,12 @@ describe('RepeatCommand', () => {
       const executedIndexes: number[] = [];
 
       context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(
-          vi.fn(async (cmd: any, ctx: any) => {
-            executedIndexes.push(ctx.locals.get('i'));
-            return 'ok';
-          })
-        )
+        '_testExecute',
+
+        vi.fn(async (cmd: any, ctx: any) => {
+          executedIndexes.push(ctx.locals.get('i'));
+          return 'ok';
+        })
       );
 
       const input: RepeatCommandInput = {
@@ -377,13 +429,12 @@ describe('RepeatCommand', () => {
       let executionCount = 0;
 
       context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(
-          vi.fn(async () => {
-            executionCount++;
-            return 'ok';
-          })
-        )
+        '_testExecute',
+
+        vi.fn(async () => {
+          executionCount++;
+          return 'ok';
+        })
       );
 
       const input: RepeatCommandInput = {
@@ -404,13 +455,12 @@ describe('RepeatCommand', () => {
       const indexes: number[] = [];
 
       context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(
-          vi.fn(async (cmd: any, ctx: any) => {
-            indexes.push(ctx.locals.get('i'));
-            return 'ok';
-          })
-        )
+        '_testExecute',
+
+        vi.fn(async (cmd: any, ctx: any) => {
+          indexes.push(ctx.locals.get('i'));
+          return 'ok';
+        })
       );
 
       const input: RepeatCommandInput = {
@@ -428,7 +478,7 @@ describe('RepeatCommand', () => {
     it('should handle zero iterations', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
+      context.locals.set('_testExecute', executeSpy);
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -449,13 +499,12 @@ describe('RepeatCommand', () => {
       let counter = 0;
 
       context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(
-          vi.fn(async () => {
-            counter++;
-            return 'ok';
-          })
-        )
+        '_testExecute',
+
+        vi.fn(async () => {
+          counter++;
+          return 'ok';
+        })
       );
 
       // Mock condition that becomes false after 3 iterations
@@ -477,7 +526,10 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const expectedResult = 'final-result';
 
-      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
+      context.locals.set(
+        '_testExecute',
+        vi.fn(async () => expectedResult)
+      );
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -502,28 +554,13 @@ describe('RepeatCommand', () => {
 
       await expect(command.execute(input, context)).rejects.toThrow('Unknown repeat type');
     });
-
-    it('should handle missing _runtimeExecute function', async () => {
-      const context = createMockContext();
-      context.locals.delete('_runtimeExecute');
-
-      const input: RepeatCommandInput = {
-        type: 'times',
-        count: 1,
-        commands: createMockBlock([{ type: 'command' }]),
-      };
-
-      await expect(command.execute(input, context)).rejects.toThrow(
-        'Runtime execute function not available'
-      );
-    });
   });
 
   describe('Edge Cases', () => {
     it('should handle empty collection in for-in loop', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
+      context.locals.set('_testExecute', executeSpy);
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -541,7 +578,7 @@ describe('RepeatCommand', () => {
     it('should handle single-item collection', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn(async () => 'ok');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
+      context.locals.set('_testExecute', executeSpy);
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -559,7 +596,7 @@ describe('RepeatCommand', () => {
     it('should handle negative count gracefully', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
+      context.locals.set('_testExecute', executeSpy);
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -580,9 +617,8 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
+      context.locals.set('_testExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
       );
 
       const input: RepeatCommandInput = {
@@ -606,9 +642,8 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
+      context.locals.set('_testExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
       );
 
       const input: RepeatCommandInput = {
@@ -630,9 +665,8 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
+      context.locals.set('_testExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
       );
 
       const input: RepeatCommandInput = {
@@ -656,13 +690,10 @@ describe('RepeatCommand', () => {
       // to be 0 only when shouldContinue returns false from the start.
       const context = createMockContext();
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set(
-        '_runtimeExecute',
-        asRuntimeExecute(async (cmd: any) => {
-          if (cmd.fromElse) return elseSpy();
-          return { type: 'break' };
-        })
-      );
+      context.locals.set('_testExecute', async (cmd: any) => {
+        if (cmd.fromElse) return elseSpy();
+        return { type: 'break' };
+      });
 
       const input: RepeatCommandInput = {
         type: 'forever',
@@ -681,7 +712,7 @@ describe('RepeatCommand', () => {
     it('should be a no-op when elseCommands is undefined and 0 iterations', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
+      context.locals.set('_testExecute', executeSpy);
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -705,7 +736,7 @@ describe('RepeatCommand', () => {
       // when condition is true). Bottom-tested forces iteration 0 to run.
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
+      context.locals.set('_testExecute', bodySpy);
 
       const input: RepeatCommandInput = {
         type: 'until',
@@ -723,7 +754,7 @@ describe('RepeatCommand', () => {
     it('should NOT run body when bottomTested=false (top-tested) and until is true', async () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
+      context.locals.set('_testExecute', bodySpy);
 
       const input: RepeatCommandInput = {
         type: 'until',
@@ -745,7 +776,7 @@ describe('RepeatCommand', () => {
       // forces iteration 0 to run, then stops because condition is false.
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
+      context.locals.set('_testExecute', bodySpy);
 
       const input: RepeatCommandInput = {
         type: 'while',
@@ -763,7 +794,7 @@ describe('RepeatCommand', () => {
     it('should be top-tested by default when bottomTested is undefined', async () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
+      context.locals.set('_testExecute', bodySpy);
 
       const input: RepeatCommandInput = {
         type: 'while',

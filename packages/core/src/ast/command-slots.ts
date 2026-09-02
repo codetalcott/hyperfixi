@@ -25,6 +25,7 @@
  */
 
 import type { ASTNode, ExpressionNode } from '../types/core';
+import type { BodyOps } from '../types/program';
 
 /** Keys the parser can attach to ANY command. */
 export const GENERIC_SLOT_KEYS = ['when', 'where', 'debounce', 'throttle'] as const;
@@ -228,4 +229,6 @@ export interface CommandRaw<K extends SlottedCommandName> {
   args: ArgsOf<K>;
   modifiers: Partial<Record<SlotKey<K>, ExpressionNode>>;
   commandName?: string;
+  /** Precompiled `block`/`command` arguments, parallel to `args` (Arc 4b). */
+  bodies?: BodyOps;
 }

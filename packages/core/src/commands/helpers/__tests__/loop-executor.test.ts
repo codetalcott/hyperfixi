@@ -17,6 +17,16 @@ import {
   type LoopIterationContext,
 } from '../loop-executor';
 import type { TypedExecutionContext } from '../../../types/core';
+import { ok, err, isSignal } from '../../../types/result';
+import type { Op } from '../../../types/program';
+
+/** Adapt a test's `(commands, ctx) => value | signal` mock to the loop body Op the executor runs. */
+function asBody(fn: (commands: never, ctx: never) => unknown, commands: unknown): Op {
+  return async ctx => {
+    const r = await fn(commands as never, ctx as never);
+    return isSignal(r) ? err(r) : ok(r);
+  };
+}
 
 // ========== Test Utilities ==========
 
@@ -66,7 +76,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.iterations).toBe(3);
         expect(executeCommands).toHaveBeenCalledTimes(3);
@@ -81,7 +91,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.lastResult).toBe('last-value');
       });
@@ -93,7 +103,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(iterCtx.index).toBe(3);
       });
@@ -106,7 +116,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.iterations).toBe(5);
       });
@@ -122,7 +132,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         // Should hit safety limit
         expect(result.iterations).toBe(10000);
@@ -139,7 +149,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(beforeIteration).toHaveBeenCalledTimes(3);
       });
@@ -153,7 +163,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(beforeIteration).toHaveBeenCalledWith(iterCtx, context);
       });
@@ -174,7 +184,7 @@ describe('Loop Executor Helper', () => {
         });
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(callOrder).toEqual(['before', 'exec', 'before', 'exec']);
       });
@@ -192,7 +202,7 @@ describe('Loop Executor Helper', () => {
           indexVariable: 'i',
         };
 
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         // Last iteration sets index to 2 (0-indexed)
         expect(context.locals.get('i')).toBe(2);
@@ -205,7 +215,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(context.locals.size).toBe(0);
       });
@@ -227,7 +237,7 @@ describe('Loop Executor Helper', () => {
           indexVariable: 'i',
         };
 
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(indices).toEqual([0, 1, 2]);
       });
@@ -246,7 +256,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.iterations).toBe(1);
         expect(result.interrupted).toBe(true);
@@ -263,7 +273,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.interrupted).toBe(true);
       });
@@ -284,7 +294,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(executeCommands).toHaveBeenCalledTimes(3);
       });
@@ -298,7 +308,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(result.iterations).toBe(2);
       });
@@ -312,7 +322,7 @@ describe('Loop Executor Helper', () => {
         };
 
         const iterCtx: LoopIterationContext = { index: 0 };
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(iterCtx.index).toBe(3);
       });
@@ -343,7 +353,7 @@ describe('Loop Executor Helper', () => {
           target.dispatchEvent(new Event('click'));
         }, 10);
 
-        const result = await executeLoop(config, null, context, iterCtx, executeCommands);
+        const result = await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         // Loop should have stopped when event fired
         expect(iterCtx.eventFired).toBe(true);
@@ -372,7 +382,7 @@ describe('Loop Executor Helper', () => {
           },
         };
 
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(addEventListenerSpy).toHaveBeenCalled();
         expect(removeEventListenerSpy).toHaveBeenCalled();
@@ -397,7 +407,7 @@ describe('Loop Executor Helper', () => {
           },
         };
 
-        await executeLoop(config, null, context, iterCtx, executeCommands);
+        await executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         expect(removeEventListenerSpy).not.toHaveBeenCalled();
       });
@@ -416,7 +426,7 @@ describe('Loop Executor Helper', () => {
           shouldContinue: ctx => !ctx.eventFired,
         };
 
-        const promise = executeLoop(config, null, context, iterCtx, executeCommands);
+        const promise = executeLoop(config, context, iterCtx, asBody(executeCommands, null));
 
         // Advance timers to allow yielding
         await vi.runAllTimersAsync();
@@ -443,7 +453,7 @@ describe('Loop Executor Helper', () => {
           shouldContinue: ctx => !ctx.eventFired,
         };
 
-        const promise = executeLoop(config, null, context, iterCtx, executeCommands);
+        const promise = executeLoop(config, context, iterCtx, asBody(executeCommands, null));
         await vi.runAllTimersAsync();
 
         await promise;
@@ -464,9 +474,9 @@ describe('Loop Executor Helper', () => {
 
         const iterCtx: LoopIterationContext = { index: 0 };
 
-        await expect(executeLoop(config, null, context, iterCtx, executeCommands)).rejects.toThrow(
-          'Custom error'
-        );
+        await expect(
+          executeLoop(config, context, iterCtx, asBody(executeCommands, null))
+        ).rejects.toThrow('Custom error');
       });
 
       it('should rethrow errors that are not Error instances', async () => {
@@ -479,9 +489,9 @@ describe('Loop Executor Helper', () => {
 
         const iterCtx: LoopIterationContext = { index: 0 };
 
-        await expect(executeLoop(config, null, context, iterCtx, executeCommands)).rejects.toBe(
-          'string error'
-        );
+        await expect(
+          executeLoop(config, context, iterCtx, asBody(executeCommands, null))
+        ).rejects.toBe('string error');
       });
     });
   });

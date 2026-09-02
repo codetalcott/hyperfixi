@@ -20,15 +20,18 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { CommandRaw } from '../../ast/command-slots';
-import { isOk, isSignal } from '../../types/result';
+import { isOk } from '../../types/result';
 import type { ExecutionResult, ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+import { bodyOps } from '../helpers/body-ops';
 
 /**
  * Typed input for TellCommand
  */
 export interface TellCommandInput {
   target: HTMLElement | HTMLElement[] | string;
-  commands: any[];
+  /** The compiled told commands — closures handed in by the runtime (Arc 4b) */
+  commands: Op[];
 }
 
 /**
@@ -73,7 +76,7 @@ export class TellCommand implements DecoratedCommand {
     }
 
     const target = await evaluator.evaluate(raw.args[0], context);
-    const commands = raw.args.slice(1);
+    const commands = bodyOps(raw, 1);
 
     return { target, commands };
   }
@@ -90,7 +93,6 @@ export class TellCommand implements DecoratedCommand {
     }
 
     // Get runtime execute function for AST command nodes (same pattern as RepeatCommand)
-    const runtimeExecute = context.locals.get('_runtimeExecute') as RuntimeExecute | undefined;
 
     const commandResults: any[] = [];
 
@@ -112,9 +114,9 @@ export class TellCommand implements DecoratedCommand {
       };
 
       for (const cmd of commands) {
-        let result: unknown;
+        let outcome: ExecutionResult<unknown>;
         try {
-          result = await this.executeCommand(cmd, tellContext, runtimeExecute);
+          outcome = await cmd(tellContext);
         } catch (error) {
           throw new Error(
             `Command execution failed in tell block: ${
@@ -124,7 +126,8 @@ export class TellCommand implements DecoratedCommand {
         }
         // A signal (halt/exit/break/continue/return) is not a failure: `tell`
         // passes it through to the boundary that owns it.
-        if (isSignal(result)) return result;
+        if (!isOk(outcome)) return outcome.error;
+        const result = outcome.value;
         commandResults.push(result);
         Object.assign(tellContext, { it: result });
       }
@@ -136,34 +139,7 @@ export class TellCommand implements DecoratedCommand {
       executionCount: targetElements.length * commands.length,
     };
   }
-
-  private async executeCommand(
-    cmd: any,
-    context: TypedExecutionContext,
-    runtimeExecute?: RuntimeExecute
-  ): Promise<unknown> {
-    // Handle AST command nodes using runtime execute (same pattern as RepeatCommand)
-    if (cmd && typeof cmd === 'object' && cmd.type === 'command' && runtimeExecute) {
-      const result = await runtimeExecute(cmd, context);
-      return isOk(result) ? result.value : result.error;
-    }
-
-    if (typeof cmd === 'function') {
-      return await cmd(context);
-    }
-
-    if (cmd && typeof cmd === 'object' && typeof cmd.execute === 'function') {
-      return await cmd.execute(context);
-    }
-
-    throw new Error('Invalid command: must be a function or object with execute method');
-  }
 }
-
-type RuntimeExecute = (
-  cmd: unknown,
-  ctx: TypedExecutionContext
-) => Promise<ExecutionResult<unknown>>;
 
 export const createTellCommand = createFactory(TellCommand);
 export default TellCommand;
