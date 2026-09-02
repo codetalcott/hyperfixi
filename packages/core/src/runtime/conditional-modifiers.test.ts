@@ -24,7 +24,8 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
-import type { CommandNode, ExecutionContext } from '../types/core';
+import type { ExecutionContext } from '../types/core';
+import type { CommandNode } from '../ast/nodes';
 
 // ========== Test Utilities ==========
 

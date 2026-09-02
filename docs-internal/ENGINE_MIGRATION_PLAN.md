@@ -788,6 +788,55 @@ progress meter.
    parser's `ast-types.ts` is left alone here — it is a separate producer and
    Arc 5 decides its fate — but the `case 'event'`/`case 'sequence'` adapter in
    `runtime-base.ts` is typed as a converter from `HybridNode` to `Stmt`.
+
+   > **Executed 2026-09-01 as PR 5, and most of the sentence above was wrong.**
+   > Measured first, then done:
+   >
+   > - ~~`types/base-types.ASTNode` → `Node`, re-exported with `@deprecated`~~ —
+   >   falsified twice. The union is `SyntaxNode` (a test pins that `Node` is not
+   >   used; it is a DOM global), and every member EXTENDS `base-types.ASTNode`
+   >   for its `[key: string]: unknown` index signature — aliasing `ASTNode` to
+   >   the union would delete that signature, which is step 6 and goes last on
+   >   purpose. `ASTNode` is untouched; it is also public from the package root.
+   > - "zero non-test importers: `ContextReferenceNode`, `TypedASTNode`" — it was
+   >   **seven**, once imports were attributed by resolved module path instead
+   >   of by name (`ast/nodes.ts` reuses the same names, so a name grep counts the
+   >   union's importers as base-types'): `Binary`/`Unary`/`Member`/
+   >   `PropertyAccess`/`ContextReference`/`LiteralNode` and `TypedASTNode`.
+   >   Deleted; zero compile errors.
+   > - The other four — `CommandNode`, `EventHandlerNode`, `BehaviorNode`,
+   >   `DefNode` — were NOT stale: they were the live parser output, and MORE
+   >   complete than the union. `parser.ts` builds `errorSymbol`, `errorHandler`,
+   >   `finallyHandler`, `attributeName`, `watchTarget`, `customEventSource` and
+   >   `args` at 7–11 sites each, `runtime-base.ts` destructures every one, and
+   >   `ast/nodes.ts` declared none of them. The conformance gate never fired
+   >   because the engine corpus holds one `catch` and nothing else that emits
+   >   them. Also `event`/`target` were declared `unknown`; measured `string` on
+   >   both parse paths. The union absorbed all of it, `EXTRA_SOURCES` in the
+   >   conformance test now feeds those constructs (mutation-verified: dropping
+   >   a field is red with them and GREEN without them), and the four were
+   >   deleted from base-types with every consumer repointed — parser.ts,
+   >   runtime-base.ts, four parser front-ends, eight test files, and the dead
+   >   re-exports in `types/core` and `types/index` (the latter had exported
+   >   base-types' three-field `CommandNode` under the same bare name as the
+   >   frozen public one — two shapes, one name, path-dependent).
+   > - Layering: `types` is layer 0 and `ast` layer 1, so base-types cannot alias
+   >   TO the union. Consumers repoint; the originals go.
+   > - `parser/parser-types.ts`'s fifteen node interfaces are the third duplicate
+   >   description, and they stay for now. Probed: aliasing them to the union
+   >   costs 16 errors, all `ast-helpers.ts` factory params; retyping the
+   >   factories cascades to 24; and narrowing `parseExpression`'s family to
+   >   `Expr` RAISES it to 43 — because those functions legitimately return
+   >   commands and handlers in some branches (`CommandNode → Expr` at two
+   >   sites, `EventHandlerNode → Expr` at one). Their wide `ASTNode` return type
+   >   is honest; making it `Expr` is a front-end redesign (Arc 3), not a
+   >   types-only collapse. Instead `ast/legacy.ts` gained the reverse crossings
+   >   (`fromLegacyCommands`, `fromLegacyExpression`, `fromHybridStatements`),
+   >   three more `as unknown as` in the one file licensed to hold them.
+   > - The `case 'event'`/`'sequence'` hybrid adapter IS typed as the plan said
+   >   (`HybridEventNode` → `EventHandlerNode` via `fromHybridStatements`), and the
+   >   rest of the dispatch narrows to union members; `executeObjectLiteral` takes
+   >   `ObjectLiteralNode` and its two key casts went. `runtime/` −6, `ast/` +3.
 5. ~~**Commands stop casting.** `ast/guards.ts` (`isIdentifier`, `isSelector`,
    `isLiteral`, …) replaces `(arg as Record<string, unknown>).name === 'x'`
    one file at a time, ratcheted. This is mechanical and boring and it is where

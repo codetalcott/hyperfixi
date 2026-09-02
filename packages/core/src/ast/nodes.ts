@@ -7,7 +7,10 @@
  * the parser: `parser/parser-types.ts` (15 kinds), 21 local
  * `type X = ASTNode & {…}` aliases in `parser/runtime.ts` (deleted by step 3,
  * which pointed each evaluator helper at its union member instead), and a
- * stale per-kind set in `types/base-types.ts`. This file is the single description,
+ * stale per-kind set in `types/base-types.ts` (its eleven per-kind interfaces
+ * deleted by step 4: seven had no importer at all, the live four now resolve
+ * here; `parser/parser-types.ts`' fifteen remain, for the measured reason in
+ * `ENGINE_MIGRATION_PLAN.md` step 4). This file is the single description,
  * and every member below was checked against what the parser ACTUALLY emits
  * (a field census over the whole engine corpus, plus source inspection for the
  * kinds the corpus does not reach) rather than copied from any of the three.
@@ -343,6 +346,13 @@ export interface CommandNode extends BaseNode {
   readonly implicitTarget?: Expr;
   readonly originalCommand?: string;
   readonly semanticRoles?: Record<string, Expr>;
+  /**
+   * Set by `createPartialCommandNode` when a command parser returns null
+   * mid-typing (`toggle` with no arguments yet); the LSP reads it to offer
+   * argument completions. Never in a completed parse, so the corpus cannot see
+   * it — declared from the emitter, not the census.
+   */
+  readonly partial?: boolean;
 }
 
 export interface BlockNode extends BaseNode {
@@ -353,15 +363,46 @@ export interface BlockNode extends BaseNode {
 /**
  * `events` (31 of 32) carries every name of an `on a or b` handler; `event` is
  * the primary. `condition` is the `[filter]` form, `target` the `from` clause.
+ *
+ * ## Corrected and completed by Arc 2 step 4 (2026-09-01)
+ *
+ * `event` and `target` were declared `unknown`. Measured over the corpus AND
+ * the constructs the corpus lacks (`catch`/`finally`, `of @attr`, `in <sel>`,
+ * `from <sel>`, `or`-joined names), on both parse paths: `event` is ALWAYS a
+ * string, `target` always a string when present. `unknown` was looser than
+ * reality, and the runtime's `{}`-after-truthiness errors were the symptom.
+ *
+ * Seven fields were MISSING. `parser.ts` builds them at 7–11 sites each and
+ * `runtime-base.ts` destructures every one — `types/base-types.ts` declared
+ * them and this file did not. The conformance test never fired because the
+ * engine corpus holds one `catch` and none of the others; it now feeds those
+ * constructs explicitly (`EXTRA_SOURCES` in `union-conformance.test.ts`).
+ *
+ * `selector` is declared because the runtime destructures it, but NO parser
+ * path emits it (the `from` clause lands in `target`). Kept typed rather than
+ * deleted so the runtime read stays a compile-checked read of an absent field
+ * — deleting the read is a behaviour decision, not a typing one.
  */
 export interface EventHandlerNode extends BaseNode {
   readonly type: 'eventHandler';
-  readonly event: unknown;
+  readonly event: string;
   readonly commands: Stmt[];
   readonly events?: string[];
   readonly condition?: Expr;
-  readonly target?: unknown;
-  readonly selector?: unknown;
+  readonly target?: string;
+  readonly selector?: string;
+  /** `on click(button, clientX)` — event properties destructured into locals. */
+  readonly args?: string[];
+  /** `on mutation of @attr`. */
+  readonly attributeName?: string;
+  /** `on change in <selector>` — a selector node the runtime observes. */
+  readonly watchTarget?: Expr;
+  /** `on <name>` where `<name>` is a registered custom event source. */
+  readonly customEventSource?: string;
+  /** `catch <symbol>` — shared with {@link DefNode}, as upstream shares `parseErrorAndFinally`. */
+  readonly errorSymbol?: string;
+  readonly errorHandler?: Stmt[];
+  readonly finallyHandler?: Stmt[];
   readonly modifiers?: {
     readonly once?: boolean;
     readonly prevent?: boolean;
@@ -379,11 +420,15 @@ export interface BehaviorNode extends BaseNode {
   readonly initBlock?: Stmt;
 }
 
+/** `def name(params) … [catch e …] [finally …] end`. The catch/finally trio mirrors {@link EventHandlerNode}. */
 export interface DefNode extends BaseNode {
   readonly type: 'def';
   readonly name: string;
   readonly params: string[];
   readonly body: Stmt[];
+  readonly errorSymbol?: string;
+  readonly errorHandler?: Stmt[];
+  readonly finallyHandler?: Stmt[];
 }
 
 export interface InitBlockNode extends BaseNode {

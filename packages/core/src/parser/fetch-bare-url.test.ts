@@ -19,7 +19,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import type { CommandNode, EventHandlerNode } from '../types/base-types';
+import type { CommandNode, EventHandlerNode } from '../ast/nodes';
 
 const fetchCommand = (src: string): CommandNode => {
   const result = parse(src);

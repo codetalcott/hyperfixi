@@ -76,6 +76,30 @@ function declaredFields(): Map<string, Set<string>> {
 // What the parser emits
 // ---------------------------------------------------------------------------
 
+/**
+ * Constructs the engine corpus does NOT exercise, added by Arc 2 step 4.
+ *
+ * The corpus holds one `catch` and no `finally`, `of @attr`, `in <sel>`,
+ * `from <sel>` or `on a or b`. So this file passed for a union that lacked
+ * `errorSymbol`, `errorHandler`, `finallyHandler`, `attributeName`,
+ * `watchTarget` and `args` — seven fields `parser.ts` builds and
+ * `runtime-base.ts` destructures. "Every field the parser emits is declared"
+ * is only as strong as the sources it sees; these are the ones that were
+ * missing.
+ */
+const EXTRA_SOURCES: readonly string[] = [
+  'on click log 1 catch e log e end',
+  'on click log 1 finally log 2 end',
+  'on click log 1 catch e log e finally log 2 end',
+  'def f(a) return a catch e log e finally log 1 end',
+  'on mutation of @data-x log 1',
+  'on change from #inp log 1',
+  'on input in #form log 1',
+  'on click or keyup log 1',
+  'on click(button, clientX) log button',
+  'behavior Foo(a) on click log a end end',
+];
+
 /** Every (kind, field) pair the traditional parse of the corpus produces. */
 function emittedFields(): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
@@ -94,7 +118,7 @@ function emittedFields(): Map<string, Set<string>> {
     }
     for (const child of Object.values(node)) scan(child);
   };
-  for (const source of corpusSources()) {
+  for (const source of [...corpusSources(), ...EXTRA_SOURCES]) {
     const result = hyperscript.compileSync(source, { traditional: true } as never) as {
       ok: boolean;
       ast?: unknown;
@@ -170,5 +194,55 @@ describe('ast/nodes.ts conforms to the parser', () => {
 
     // `selector` carries the query-reference pair.
     expect(declared.get('selector')).toContain('fromQuery');
+  });
+
+  it('the handler fields step 4 added are really emitted, with the runtime types the union now claims', () => {
+    // `event`/`target` were `unknown` in the union; measured string on both
+    // parse paths. `errorSymbol` etc. were absent. Pin the emission AND the
+    // runtime type, so neither can quietly drift back.
+    const typesSeen = new Map<string, Set<string>>();
+    const note = (field: string, value: unknown): void => {
+      const kind = Array.isArray(value)
+        ? 'array'
+        : value !== null && typeof value === 'object'
+          ? `node:${(value as { type?: unknown }).type}`
+          : typeof value;
+      (typesSeen.get(field) ?? typesSeen.set(field, new Set()).get(field)!).add(kind);
+    };
+    const scan = (value: unknown): void => {
+      if (!value || typeof value !== 'object') return;
+      if (Array.isArray(value)) return value.forEach(scan);
+      const node = value as Record<string, unknown>;
+      if (node['type'] === 'eventHandler' || node['type'] === 'def') {
+        for (const f of [
+          'event',
+          'target',
+          'errorSymbol',
+          'errorHandler',
+          'finallyHandler',
+          'attributeName',
+          'watchTarget',
+          'args',
+        ]) {
+          if (f in node) note(f, node[f]);
+        }
+      }
+      for (const child of Object.values(node)) scan(child);
+    };
+    for (const source of [...corpusSources(), ...EXTRA_SOURCES]) {
+      const result = hyperscript.compileSync(source, { traditional: true } as never) as {
+        ok: boolean;
+        ast?: unknown;
+      };
+      if (result.ok) scan(result.ast);
+    }
+    expect([...typesSeen.get('event')!]).toEqual(['string']);
+    expect([...typesSeen.get('target')!]).toEqual(['string']);
+    expect([...typesSeen.get('errorSymbol')!]).toEqual(['string']);
+    expect([...typesSeen.get('attributeName')!]).toEqual(['string']);
+    expect([...typesSeen.get('errorHandler')!]).toEqual(['array']);
+    expect([...typesSeen.get('finallyHandler')!]).toEqual(['array']);
+    expect([...typesSeen.get('args')!]).toEqual(['array']);
+    expect([...typesSeen.get('watchTarget')!]).toEqual(['node:selector']);
   });
 });

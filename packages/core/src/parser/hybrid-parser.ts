@@ -29,7 +29,8 @@
  */
 
 import type { ParserInterface } from './parser-interface';
-import type { ASTNode, CommandNode } from '../types/base-types';
+import type { ASTNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 // Import modular parser components (tree-shakeable)
 import { HybridParser } from './hybrid/parser-core';

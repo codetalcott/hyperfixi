@@ -29,7 +29,7 @@ import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
 import { createContext, getSharedGlobals } from '../core/context';
 import type { ExecutionContext } from '../types/core';
-import type { DefNode } from '../types/base-types';
+import type { DefNode } from '../ast/nodes';
 
 describe('def execution', () => {
   let runtime: Runtime;
