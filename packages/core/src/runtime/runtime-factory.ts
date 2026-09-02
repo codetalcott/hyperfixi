@@ -67,12 +67,6 @@ export interface TreeShakeableRuntimeOptions {
    * @default true
    */
   enableErrorReporting?: boolean;
-
-  /**
-   * Enable Result-based execution pattern.
-   * @default true
-   */
-  enableResultPattern?: boolean;
 }
 
 /**
@@ -223,7 +217,6 @@ export function createTreeShakeableRuntime(
     enableAsyncCommands: options.enableAsyncCommands ?? true,
     commandTimeout: options.commandTimeout ?? 10000,
     enableErrorReporting: options.enableErrorReporting ?? true,
-    enableResultPattern: options.enableResultPattern ?? true,
   });
 }
 
@@ -283,7 +276,6 @@ export function createRuntime(options: RuntimeOptions): LokaScriptRuntime {
     enableAsyncCommands: options.enableAsyncCommands ?? true,
     commandTimeout: options.commandTimeout ?? 10000,
     enableErrorReporting: options.enableErrorReporting ?? true,
-    enableResultPattern: true,
   };
 
   const runtime = new RuntimeBase(runtimeOptions);
