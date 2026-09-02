@@ -1490,7 +1490,15 @@ go to url "https://example.com"
 ```
 
 ```hyperscript
+go to url "https://example.com" in new window
+```
+
+```hyperscript
 go to top of #header
+```
+
+```hyperscript
+go to bottom of #footer smoothly
 ```
 
 **Side Effects:** navigation, scrolling

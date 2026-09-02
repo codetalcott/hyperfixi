@@ -259,7 +259,13 @@
     "go": {
       "description": "Navigation functionality including URL navigation, element scrolling, and browser history",
       "syntax": ["go back", "go to url <url> [in new window]", "go to [position] [of] <element>"],
-      "examples": ["go back", "go to url \"https://example.com\"", "go to top of #header"],
+      "examples": [
+        "go back",
+        "go to url \"https://example.com\"",
+        "go to url \"https://example.com\" in new window",
+        "go to top of #header",
+        "go to bottom of #footer smoothly"
+      ],
       "sideEffects": ["navigation", "scrolling"],
       "category": "navigation",
       "compatibility": "standard"

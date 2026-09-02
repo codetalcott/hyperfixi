@@ -1054,8 +1054,15 @@ class GoCodegen implements CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
     const roles = node.roles;
+    // The core parser's slots (Arc 3 step 3): `back` is a flag, `url` the
+    // destination; the semantic path names a destination role or a
+    // positional argument.
+    const mods = node.modifiers as Record<string, ASTNode> | undefined;
+    if (mods?.back) {
+      return { code: 'history.back()', async: false, sideEffects: true };
+    }
 
-    const target = roles?.destination ?? args[0];
+    const target = mods?.url ?? roles?.destination ?? args[0];
     if (!target) return null;
 
     // go back / go forward

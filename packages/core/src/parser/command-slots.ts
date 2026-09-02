@@ -54,7 +54,7 @@ export const COMMAND_SLOTS = {
   fetch: ['as', 'body', 'doNotThrow', 'with'],
   focus: [],
   get: [],
-  go: [],
+  go: ['back', 'behavior', 'by', 'forward', 'in', 'of', 'position', 'url'],
   halt: ['the'],
   hide: ['with'],
   if: [],

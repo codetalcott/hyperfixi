@@ -49,6 +49,10 @@ const KNOWN_PHANTOMS: Record<string, Record<string, string>> = {
     to: 'same',
     with: 'same',
   },
+  go: {
+    by: 'emitted for the `go to <position> of <el> + <n>` offset form; no documented example',
+    forward: 'emitted for `go forward`, which the AOT codegen also compiles; not a documented form',
+  },
   copy: {
     to: 'the grammar marker `to clipboard`; the destination is always the clipboard, so nothing reads it',
   },
