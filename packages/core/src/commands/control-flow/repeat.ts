@@ -35,8 +35,10 @@ import {
   createForeverLoopConfig,
 } from '../helpers/loop-executor';
 import type { CommandRaw } from '../../ast/command-slots';
-import { isOk } from '../../types/result';
-import type { ExecutionResult, ExecutionSignal } from '../../types/result';
+import { isOk, ok } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+import { bodyOp } from '../helpers/body-ops';
 
 /** Typed input for RepeatCommand */
 export interface RepeatCommandInput {
@@ -46,9 +48,10 @@ export interface RepeatCommandInput {
   condition?: unknown;
   count?: number;
   indexVariable?: string;
-  commands?: unknown;
+  /** The compiled loop body — a closure handed in by the runtime (Arc 4b) */
+  commands?: Op;
   /** Else branch — executed when the loop completes with zero iterations */
-  elseCommands?: unknown;
+  elseCommands?: Op;
   /**
    * Bottom-tested flag. True for `repeat <body> until/while <expr> end`,
    * where the body runs unconditionally before the first condition check
@@ -133,22 +136,22 @@ export class RepeatCommand implements DecoratedCommand {
     // Extract commands block(s). The body is always the first 'block' arg
     // scanning right-to-left. If a second block immediately precedes it (also
     // scanning right-to-left), that's the body and the later one is the else.
-    let commands: unknown = undefined;
-    let elseCommands: unknown = undefined;
+    let commands: Op | undefined = undefined;
+    let elseCommands: Op | undefined = undefined;
     {
-      const blocks: unknown[] = [];
+      const blocks: number[] = [];
       for (let i = raw.args.length - 1; i >= 0; i--) {
         const arg = raw.args[i] as unknown as { type?: string; commands?: unknown };
         if (arg?.type === 'block' && arg.commands) {
-          blocks.unshift(arg);
+          blocks.unshift(i);
           if (blocks.length === 2) break;
         }
       }
       if (blocks.length === 2) {
-        commands = blocks[0];
-        elseCommands = blocks[1];
+        commands = bodyOp(raw, blocks[0]);
+        elseCommands = bodyOp(raw, blocks[1]);
       } else if (blocks.length === 1) {
-        commands = blocks[0];
+        commands = bodyOp(raw, blocks[0]);
       }
     }
 
@@ -292,10 +295,9 @@ export class RepeatCommand implements DecoratedCommand {
     // Execute loop using unified executor
     const result = await executeLoop(
       config,
-      commands,
       context,
       iterCtx,
-      this.executeCommands.bind(this)
+      commands ?? (async () => ok(undefined))
     );
     // halt/exit/return from the body pass through to the boundary that owns them.
     if (result.signal) return result.signal;
@@ -303,7 +305,9 @@ export class RepeatCommand implements DecoratedCommand {
     // Run else branch if loop completed naturally with zero iterations.
     // Mirrors upstream _hyperscript controlflow.js:125 (didIterate flag).
     if (result.iterations === 0 && !result.interrupted && elseCommands) {
-      const elseResult = await this.executeCommands(elseCommands, context);
+      const elseOutcome = await elseCommands(context);
+      if (!isOk(elseOutcome)) return elseOutcome.error;
+      const elseResult = elseOutcome.value;
       Object.assign(context, { it: elseResult });
       return {
         type,
@@ -323,52 +327,6 @@ export class RepeatCommand implements DecoratedCommand {
       lastResult: result.lastResult,
       interrupted: result.interrupted,
     };
-  }
-
-  /** Execute commands block or array */
-  private async executeCommands(
-    commands: unknown,
-    context: TypedExecutionContext
-  ): Promise<unknown> {
-    // Handle block nodes from parser
-    if (
-      commands &&
-      typeof commands === 'object' &&
-      (commands as { type?: string }).type === 'block'
-    ) {
-      const block = commands as { commands?: unknown[] };
-      const runtimeExecute = context.locals.get('_runtimeExecute') as
-        | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<ExecutionResult<unknown>>)
-        | undefined;
-      if (!runtimeExecute) throw new Error('Runtime execute function not available');
-      let lastResult: unknown;
-      if (block.commands) {
-        for (const cmd of block.commands) {
-          const result = await runtimeExecute(cmd, context);
-          // The signal goes back to the loop executor, which consumes
-          // break/continue and passes the rest through.
-          if (!isOk(result)) return result.error;
-          lastResult = result.value;
-        }
-      }
-      return lastResult;
-    }
-
-    // Handle array of commands
-    if (Array.isArray(commands)) {
-      let lastResult: unknown;
-      for (const cmd of commands) {
-        if (typeof cmd === 'function') lastResult = await cmd(context);
-        else if (cmd && typeof (cmd as { execute?: Function }).execute === 'function') {
-          lastResult = await (cmd as { execute: Function }).execute(context);
-        } else lastResult = cmd;
-      }
-      return lastResult;
-    }
-
-    // Single command or function
-    if (typeof commands === 'function') return await commands(context);
-    return commands;
   }
 }
 

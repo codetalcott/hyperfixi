@@ -75,6 +75,11 @@ is scope creep by the plan's own text.
 
 ## Decisions to put to the owner before the first PR
 
+> **All five DECIDED 2026-09-04, each as recommended** (keep `ExecutionResult`;
+> statements only; delete the three API-only body shapes; `async` to 6b; bench
+> guard local). Steps 1 and 2 shipped together on those decisions the same day;
+> the list stays as the record of what was asked and why.
+
 1. **Op protocol: keep `ExecutionResult`** (recommended) or introduce the
    target's `{ kind: 'normal', … }`. The Result form has every reader; the
    `kind` form has none. Recommendation: keep, and strike target item 4's
@@ -103,9 +108,9 @@ is scope creep by the plan's own text.
 
 | step | does                                                                                                                                                                                                                                                  | gate it leaves                                                                          | size |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---- |
-| 0    | Commit the hot-path numbers as a baseline with a tolerance; a `bench:check` that fails outside it (decision 5 says where it runs).                                                                                                                     | the regression guard exists                                                             | S    |
-| 1    | `Op`/`Program` types; `compile()` for the statement tree; `adapter.compile(node)` with the per-execution default; `execute()` becomes `compile(node, this)(ctx)`. No command changes.                                                                | matrix unchanged (35); AST-equivalence untouched; output-contract untouched; bench in tolerance | M    |
-| 2    | Block bodies as Ops for the four commands; delete `_runtimeExecute`, the three API-only body shapes, `LoopResult.signal`; the five suites move to real parses.                                                                                        | matrix unchanged; parse-input census shrinks (the body-shape branches leave `parseInput`) | M–L  |
+| 0 ✅  | Commit the hot-path numbers as a baseline with a tolerance; a `bench:check` that fails outside it (decision 5 says where it runs).                                                                                                                     | the regression guard exists                                                             | S    |
+| 1 ✅  | `Op`/`Program` types; `compile()` for the statement tree; `adapter.compile(node)` with the per-execution default; `execute()` becomes `compile(node, this)(ctx)`. No command changes.                                                                | matrix unchanged (35); AST-equivalence untouched; output-contract untouched; bench in tolerance | M    |
+| 2 ✅  | Block bodies as Ops for the four commands; delete `_runtimeExecute`, the three API-only body shapes, `LoopResult.signal`; the five suites move to real parses.                                                                                        | matrix unchanged; parse-input census shrinks (the body-shape branches leave `parseInput`) | M–L  |
 | 3    | Handlers, `def`, behavior init compile their bodies once at registration; `runCommands` becomes `body(ctx)`. **Add the observer row to the matrix first** — #1085 found those loops by reading, not by a test.                                       | matrix +1 row (observer), otherwise unchanged                                           | M    |
 | 4    | `ASTCache` → Program cache: the value gains `program`, the four-part key stays, and an eviction test is added (the current suite never crosses 500).                                                                                                  | `ast-cache.test.ts` exercises eviction                                                  | S    |
 | 5    | OPTIONAL tail, per command, only where a measurement shows a win: a real `compile` that binds slot evaluators once instead of running `parseInput`. The plan's rule applies — no measured win, no PR. Claim 6 predicts none.                          | bench per command                                                                       | —    |

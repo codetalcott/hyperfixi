@@ -1827,6 +1827,36 @@ NOT collapse under 4b (its 29 disagreements are the initial-value family,
 which 4c's `Scope` owns); and the `ContextBridge` copy is 4c's deletion, not
 4b's — all three corrected in the brief.
 
+**Steps 1 and 2 DONE 2026-09-04 (one PR), on the brief's five decisions —
+all taken as recommended:** (1) the Op protocol is `ExecutionResult`, no
+`{ kind: 'normal' }` object; (2) statements only, expressions stay on
+`evaluateAST`; (3) the three API-only body shapes are deleted; (4) `async` is
+listed for 6b; (5) the bench guard stays local. Mechanically: `types/program.ts`
+declares `Op = (ctx) => Promise<ExecutionResult>`, `Program` and `BodyOps`;
+`RuntimeBase.compile(node)` binds a node to an `Op` ONCE, memoised in a
+`WeakMap` on the node object — so the API's cached ASTs yield cached closures
+and a handler body compiles on its first event — and `executeNode` is now
+`prepareContext` + `compile(node)(ctx)`. A `command` node compiles its
+`block`/`command` arguments and hands them to the adapter as `raw.bodies`,
+parallel to `args`; `if`/`unless`, `repeat`, `tell` and `start view transition`
+read them through `commands/helpers/body-ops.ts` and run closures. The
+`_runtimeExecute` channel, the four commands' body-shape branches (functions,
+`{ execute }` objects, echoed values, the AST re-entry), `repeat`'s
+`executeCommands`, `tell`'s `executeCommand` and the loop executor's
+`executeCommands` callback are gone; `executeLoop` takes the body `Op`. One
+behaviour the matrix caught on the way: the compiled `block` consumed `halt`
+as `executeBlock` did, but `if`/`repeat` bodies never went through
+`executeBlock` — only an `initBlock` consumes it now. Matrix 35 cells, none
+moved. Type-escapes 880 → 870. Bench within tolerance (execute-only −2 %,
+noise). The six hand-built suites keep their fixtures with a test-local
+stand-in for the compile step (`testBody`/`rawWithBodies`), which is honest
+about what it is — the runtime's own path is pinned by the matrix and the
+core suite, not by those mocks. Still owed by 4b: step 3 (handlers, `def`,
+behavior init compile their bodies at registration — the memo already binds
+them on first run, so this is a deletion of `runCommands`'s per-command loop,
+not a speed-up), step 4 (`ASTCache` → Program cache; eviction test), and the
+optional per-command `compile` tail (claim 6 predicts nothing lands).
+
 **4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
 flow is `Completion` now); `enhanceContext`'s `Proxy` is deleted after step 1
@@ -1951,6 +1981,11 @@ i18n's own `.d.ts`), and — if Arc 1 moved them — the `registry/multilingual`
 subpath. Each has a ghost test from 6a proving no internal consumer; the PR is
 the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
 3.0.0 format. Land as the first PRs of the 4.0 cycle, not the last.
+
+- **`async` (the command)** — listed 2026-09-04 by the Arc 4b brief's decision 4:
+  it runs a body of functions or `{ execute }` objects that no parser
+  produces (no parser entry; its `executeCommand` throws on an AST node), so
+  from parsed hyperscript it is unreachable. Exported, so it waits here.
 
 ## Non-goals
 

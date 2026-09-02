@@ -25,6 +25,54 @@ import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 import { ok, err, isSignal } from '../../../types/result';
 import type { ExecutionSignal } from '../../../types/result';
+import type { Op } from '../../../types/program';
+
+/**
+ * Test stand-in for the runtime's compile step (Arc 4b). The runtime compiles
+ * a command's bodies to closures and hands them in as `raw.bodies`; these
+ * tests hand-build inputs, so they build the closures themselves. A body runs
+ * its hand-built commands through `context.locals._testExecute` when a test
+ * installed one (the old observation channel, now test-local), else calls a
+ * function or an `{ execute }` object directly.
+ */
+function testBody(commands: readonly unknown[] = []): Op {
+  return async ctx => {
+    const run = (ctx.locals as Map<string, unknown>).get('_testExecute') as
+      ((cmd: unknown, ctx: unknown) => unknown) | undefined;
+    let last: unknown;
+    for (const cmd of commands) {
+      let r: unknown;
+      if (typeof cmd === 'function') r = await (cmd as (c: unknown) => unknown)(ctx);
+      else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function')
+        r = await (cmd as { execute: (c: unknown) => unknown }).execute(ctx);
+      else if (run) r = await run(cmd, ctx);
+      else throw new Error('testBody: not an executable command');
+      if (isSignal(r)) return err(r);
+      last = r;
+    }
+    return ok(last);
+  };
+}
+/** One body per command — what the runtime hands `tell`/`start view transition`. */
+function testOps(commands: readonly unknown[]): Op[] {
+  return commands.map(c => testBody([c]));
+}
+/** What the runtime does for a raw input: compile every block/command argument. */
+function rawWithBodies<T extends { args: readonly unknown[] }>(
+  raw: T
+): T & { bodies: (Op | undefined)[] } {
+  const bodies = raw.args.map(a => {
+    const t = (a as { type?: string } | null)?.type;
+    if (t === 'block')
+      return testBody(((a as { commands?: unknown[] }).commands ?? []) as unknown[]);
+    // A `command` node — or, in these hand-built fixtures, an `{ execute }`
+    // object standing in for one.
+    if (t === 'command' || typeof (a as { execute?: unknown } | null)?.execute === 'function')
+      return testBody([a]);
+    return undefined;
+  });
+  return { ...raw, bodies };
+}
 
 /** Narrow a command's completion to its output — a signal here is a test failure. */
 function outputOf<T>(completion: T | ExecutionSignal): T {
@@ -115,7 +163,7 @@ describe('UnlessCommand', () => {
       const commandNode = { type: 'command', name: 'log' } as unknown as ASTNode;
 
       const input = await command.parseInput(
-        { args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' },
+        rawWithBodies({ args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' }),
         evaluator,
         context
       );
@@ -131,7 +179,7 @@ describe('UnlessCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [conditionNode], modifiers: {}, commandName: 'unless' },
+          rawWithBodies({ args: [conditionNode], modifiers: {}, commandName: 'unless' }),
           evaluator,
           context
         )
@@ -154,12 +202,12 @@ describe('UnlessCommand', () => {
       } as unknown as ASTNode;
 
       const input = await command.parseInput(
-        { args: [conditionNode, block], modifiers: {}, commandName: 'unless' },
+        rawWithBodies({ args: [conditionNode, block], modifiers: {}, commandName: 'unless' }),
         evaluator,
         context
       );
 
-      expect(input.thenCommands).toBe(block);
+      expect(input.thenCommands).toBeTypeOf('function');
     });
 
     it('should ignore a stray else block — unless has no else', async () => {
@@ -174,12 +222,16 @@ describe('UnlessCommand', () => {
       const elseBlock = { type: 'block', commands: [] } as unknown as ASTNode;
 
       const input = await command.parseInput(
-        { args: [conditionNode, thenBlock, elseBlock], modifiers: {}, commandName: 'unless' },
+        rawWithBodies({
+          args: [conditionNode, thenBlock, elseBlock],
+          modifiers: {},
+          commandName: 'unless',
+        }),
         evaluator,
         context
       );
 
-      expect(input.thenCommands).toBe(thenBlock);
+      expect(input.thenCommands).toBeTypeOf('function');
       expect(input.elseCommands).toBeUndefined();
     });
 
@@ -191,7 +243,7 @@ describe('UnlessCommand', () => {
       const commandNode = { type: 'command', name: 'log' } as unknown as ASTNode;
 
       const input = await command.parseInput(
-        { args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' },
+        rawWithBodies({ args: [conditionNode, commandNode], modifiers: {}, commandName: 'unless' }),
         evaluator,
         context
       );
@@ -212,7 +264,7 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: false,
-            thenCommands: [mockCmd as unknown as ASTNode],
+            thenCommands: testBody([mockCmd]),
           },
           context
         )
@@ -231,7 +283,7 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: true,
-            thenCommands: [mockCmd as unknown as ASTNode],
+            thenCommands: testBody([mockCmd]),
           },
           context
         )
@@ -253,7 +305,7 @@ describe('UnlessCommand', () => {
             {
               mode: 'unless',
               condition: falsyValue,
-              thenCommands: [mockCmd as unknown as ASTNode],
+              thenCommands: testBody([mockCmd]),
             },
             context
           )
@@ -276,7 +328,7 @@ describe('UnlessCommand', () => {
             {
               mode: 'unless',
               condition: truthyValue,
-              thenCommands: [mockCmd as unknown as ASTNode],
+              thenCommands: testBody([mockCmd]),
             },
             context
           )
@@ -301,7 +353,7 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: false,
-            thenCommands: [mockCmd1 as unknown as ASTNode, mockCmd2 as unknown as ASTNode],
+            thenCommands: testBody([mockCmd1, mockCmd2]),
           },
           context
         )
@@ -324,7 +376,7 @@ describe('UnlessCommand', () => {
         {
           mode: 'unless',
           condition: false,
-          thenCommands: [mockCmd as unknown as ASTNode],
+          thenCommands: testBody([mockCmd]),
         },
         context
       );
@@ -342,7 +394,7 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: false,
-            thenCommands: [mockCmd as unknown as ASTNode],
+            thenCommands: testBody([mockCmd]),
           },
           context
         )
@@ -357,7 +409,7 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: true,
-            thenCommands: [mockCmd as unknown as ASTNode],
+            thenCommands: testBody([mockCmd]),
           },
           context
         )
@@ -380,8 +432,8 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: true,
-            thenCommands: [mockCmd as unknown as ASTNode],
-            elseCommands: [{ type: 'command', name: 'elseCmd' } as unknown as ASTNode],
+            thenCommands: testBody([mockCmd]),
+            elseCommands: testBody([{ type: 'command', name: 'elseCmd' }]),
           },
           context
         )
@@ -402,8 +454,8 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: true,
-            thenCommands: [thenCmd as unknown as ASTNode],
-            elseCommands: [elseCmd as unknown as ASTNode],
+            thenCommands: testBody([thenCmd]),
+            elseCommands: testBody([elseCmd]),
           },
           context
         )
@@ -419,8 +471,8 @@ describe('UnlessCommand', () => {
           {
             mode: 'unless',
             condition: false,
-            thenCommands: [thenCmd as unknown as ASTNode],
-            elseCommands: [elseCmd as unknown as ASTNode],
+            thenCommands: testBody([thenCmd]),
+            elseCommands: testBody([elseCmd]),
           },
           context
         )
@@ -444,11 +496,11 @@ describe('UnlessCommand', () => {
 
       // Parse
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [conditionNode, mockCmd as unknown as ASTNode],
           modifiers: {},
           commandName: 'unless',
-        },
+        }),
         evaluator,
         context
       );
@@ -478,11 +530,11 @@ describe('UnlessCommand', () => {
 
       // Parse
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [conditionNode, mockCmd as unknown as ASTNode],
           modifiers: {},
           commandName: 'unless',
-        },
+        }),
         evaluator,
         context
       );

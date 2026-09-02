@@ -19,6 +19,7 @@ import { evaluateAST } from '../parser/runtime';
 import type { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
 import { COMMANDS } from '../parser/parser-constants';
+import type { BodyOps } from '../types/program';
 
 /**
  * Adapter that wraps the canonical `evaluateAST` in the `ExpressionEvaluator`
@@ -84,6 +85,8 @@ export interface CommandRawInput {
   args: ASTNode[];
   modifiers: Record<string, unknown>;
   commandName?: string;
+  /** Precompiled `block`/`command` arguments, parallel to `args` (Arc 4b). */
+  bodies?: BodyOps;
 }
 
 /**
@@ -359,6 +362,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
               modifiers: mods || {},
               // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
               commandName: rawInput.commandName as string | undefined,
+              bodies: rawInput.bodies as BodyOps | undefined,
             },
             canonicalEvaluator,
             context

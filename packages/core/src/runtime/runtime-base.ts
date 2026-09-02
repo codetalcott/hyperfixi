@@ -44,6 +44,12 @@ import type { ExpressionRegistry } from '../core/expression-registry';
  * `catch` block can decline it: upstream routes real errors to `catch`, and a
  * stray `break` is not one the author wrote a `catch` for.
  */
+/** A command argument that is itself executable: a branch/loop body or a told command. */
+function isBodyNode(arg: unknown): arg is AnyNode {
+  const t = (arg as { type?: unknown } | null)?.type;
+  return t === 'block' || t === 'command';
+}
+
 export class StrayControlFlowError extends Error {
   constructor(readonly signal: ExecutionSignal) {
     super(`'${signal.type}' used outside of a loop`);
@@ -60,6 +66,7 @@ import {
   RegistryIntegration,
   type RegistryIntegrationOptions,
 } from '../registry/runtime-integration';
+import type { Op, BodyOps } from '../types/program';
 
 /**
  * Pattern from expression evaluator where a space-separated "word token" is
@@ -440,7 +447,7 @@ export class RuntimeBase {
    * evaluator use: `hyperscript.eval('return x + 1')`); a `halt`/`exit`
    * ends the program. `break`/`continue` have no loop to reach and stay
    * errors. Structural callers inside the runtime — the statement loops,
-   * `_runtimeExecute` for `if`/`repeat`/`tell` bodies, the handler's command
+   * the compiled bodies of `if`/`repeat`/`tell`, the handler's command
    * loop — call `executeNode` instead, so a signal keeps travelling to the
    * boundary that consumes it.
    */
@@ -462,118 +469,160 @@ export class RuntimeBase {
     node: AnyNode,
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
-    const nodeName = (node as { name?: string })?.name || '';
-    debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
+    this.prepareContext(context);
+    return this.compile(node)(context);
+  }
 
-    // Thread the bundle's ExpressionRegistry through context. Commands receive
-    // this context and forward it to evaluator.evaluate(), which dispatches
-    // named-expression lookups via context.registry. Without this, parseInput()
-    // calls that evaluate AST nodes (e.g. tell's target, send's target) fail
-    // with "Expression X not in ExecutionContext.registry".
-    //
-    // Mutate in place rather than spread into a new object — `locals`/`globals`
-    // are already populated via the caller's reference (see the `.set()` calls
-    // below), so command writes to `context.result` / `context.it` need to
-    // propagate to the caller too. Cloning here would silently swallow those
-    // writes at the outer boundary while letting them flow within the runtime.
+  /**
+   * Every context that runs a node carries the registry and the behavior API.
+   *
+   * Thread the bundle's ExpressionRegistry through context. Commands receive
+   * this context and forward it to evaluator.evaluate(), which dispatches
+   * named-expression lookups via context.registry. Mutate in place rather than
+   * spread into a new object — `locals`/`globals` are already populated via
+   * the caller's reference, so command writes to `context.result` / `context.it`
+   * need to propagate to the caller too.
+   */
+  private prepareContext(context: ExecutionContext): void {
     if (!context.registry) {
       context.registry = this.expressionRegistry;
     }
-
-    // Inject behavior API
     if (!context.locals.has('_behaviors')) {
       context.locals.set('_behaviors', this.behaviorAPI);
     }
+  }
 
-    // Inject self-reference for recursive execution (needed by control flow commands)
-    if (!context.locals.has('_runtimeExecute')) {
-      context.locals.set('_runtimeExecute', (n: ASTNode, ctx?: ExecutionContext) =>
-        this.executeNode(n, ctx || context)
-      );
-    }
+  // ---------------------------------------------------------------------------
+  // Compile (Arc 4b)
+  // ---------------------------------------------------------------------------
 
-    try {
-      // Resilient parsing: skip error-diagnosed nodes
-      if (this.hasErrorDiagnostics(node)) {
-        const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
-        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
-        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
+  private readonly ops = new WeakMap<object, Op>();
+
+  /**
+   * Bind a node to a closure ONCE. Memoised on the node object, so the API's
+   * cached ASTs yield cached closures and a handler body compiles on its
+   * first event, never again. Statement kinds compile structurally — a
+   * command's `block`/`command` arguments are compiled and handed to it as
+   * `bodies` — and everything else is a closure over {@link dispatch}, the
+   * per-execution path the uncompiled kinds still take.
+   */
+  compile(node: AnyNode): Op {
+    const cached = this.ops.get(node);
+    if (cached) return cached;
+    const op = this.compileNode(node);
+    this.ops.set(node, op);
+    return op;
+  }
+
+  private compileNode(node: AnyNode): Op {
+    // Resilient parsing: an error-diagnosed node runs as a warning.
+    if (this.hasErrorDiagnostics(node)) {
+      const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
+      const message = diag?.message || 'Skipped error node';
+      return async () => {
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${message}`);
+        this.runtimeWarnings.push(message);
         return ok(undefined);
+      };
+    }
+    switch (node.type) {
+      case 'command': {
+        // The signal, if any, travels as a Result to the boundary that
+        // consumes it — the loop, the function, the handler, or the program.
+        const command = node as CommandNode;
+        const bodies: BodyOps = (command.args ?? []).map(arg =>
+          isBodyNode(arg) ? this.compile(arg) : undefined
+        );
+        const hasBodies = bodies.some(Boolean);
+        return context =>
+          this.processCommandWithResult(command, context, hasBodies ? bodies : undefined);
+      }
+      case 'initBlock':
+      case 'block': {
+        const block = node as BlockNode | InitBlockNode;
+        const ops = (Array.isArray(block.commands) ? block.commands : []).map(c => this.compile(c));
+        // An `init` block consumes `halt` (as `executeBlock` always did for
+        // it). A command body — an `if` branch, a loop body — is a plain
+        // block and passes EVERY signal to the command that owns it; those
+        // bodies never went through `executeBlock`, and the control-flow
+        // matrix's "inside if"/"inside repeat" columns pin that.
+        const consumesHalt = node.type === 'initBlock';
+        return async context => {
+          for (const op of ops) {
+            const result = await op(context);
+            if (isOk(result)) continue;
+            if (consumesHalt && result.error.type === 'halt') break;
+            return result;
+          }
+          return ok(undefined);
+        };
+      }
+      case 'sequence':
+      case 'CommandSequence': {
+        // Two producers reach this arm: the full parser's `CommandSequence`
+        // and the hybrid parser's `sequence`. Both carry `commands`.
+        const seqNode = node as CommandSequenceNode | HybridSequenceNode;
+        return context => this.executeCommandSequenceWithResult(seqNode.commands || [], context);
+      }
+      case 'Program': {
+        return context => this.executeProgram(node as ProgramNode, context);
+      }
+      default:
+        return context => this.dispatch(node, context);
+    }
+  }
+
+  /** The per-execution path for the kinds `compile` does not bind structurally. */
+  private async dispatch(
+    node: AnyNode,
+    context: ExecutionContext
+  ): Promise<ExecutionResult<unknown>> {
+    debug.runtime(`RUNTIME BASE: dispatch node type: '${node.type}'`);
+    switch (node.type) {
+      case 'eventHandler': {
+        return ok(await this.executeEventHandler(node as EventHandlerNode, context));
       }
 
-      switch (node.type) {
-        case 'command': {
-          // The signal, if any, travels as a Result to the boundary that
-          // consumes it — the loop, the function, the handler, or the program.
-          return await this.processCommandWithResult(node as CommandNode, context);
-        }
-
-        case 'eventHandler': {
-          return ok(await this.executeEventHandler(node as EventHandlerNode, context));
-        }
-
-        case 'event': {
-          // The hybrid parser's `event` node (a separate producer — Arc 5 owns
-          // it) is adapted into a union `EventHandlerNode` before execution.
-          // Typed as that converter (Arc 2 step 4): `body` crosses through
-          // `fromHybridStatements`, the one sanctioned crossing for it.
-          //
-          // `filter` is a hybrid AST node, not a string. It was always handed
-          // to `target` under a string cast, and the runtime's target
-          // resolution then falls through to `queryElements(target)`. That is
-          // pre-existing behaviour a types-only step must not change, so the
-          // cast stays — visibly, on one line, with this note.
-          const hybrid = node as HybridEventNode;
-          const adaptedNode: EventHandlerNode = {
-            type: 'eventHandler',
-            event: hybrid.event,
-            events: [hybrid.event],
-            commands: fromHybridStatements(hybrid.body || []),
-            target: hybrid.filter as string | undefined,
-            modifiers: hybrid.modifiers || {},
-          };
-          return ok(await this.executeEventHandler(adaptedNode, context));
-        }
-
-        case 'behavior': {
-          return ok(await this.executeBehaviorDefinition(node as BehaviorNode, context));
-        }
-
-        case 'def': {
-          return ok(this.installFunction(node as DefNode, context));
-        }
-
-        case 'Program': {
-          return await this.executeProgram(node as ProgramNode, context);
-        }
-
-        case 'initBlock':
-        case 'block': {
-          return await this.executeBlock(node as BlockNode | InitBlockNode, context);
-        }
-
-        case 'sequence':
-        case 'CommandSequence': {
-          // Two producers reach this arm: the full parser's `CommandSequence`
-          // and the hybrid parser's `sequence`. Both carry `commands`.
-          const seqNode = node as CommandSequenceNode | HybridSequenceNode;
-          return await this.executeCommandSequenceWithResult(seqNode.commands || [], context);
-        }
-        case 'objectLiteral': {
-          return ok(await this.executeObjectLiteral(node as ObjectLiteralNode, context));
-        }
-
-        case 'templateLiteral':
-        case 'memberExpression':
-        default: {
-          return await this.evaluateExpressionWithResult(node, context);
-        }
+      case 'event': {
+        // The hybrid parser's `event` node (a separate producer — Arc 5 owns
+        // it) is adapted into a union `EventHandlerNode` before execution.
+        // Typed as that converter (Arc 2 step 4): `body` crosses through
+        // `fromHybridStatements`, the one sanctioned crossing for it.
+        //
+        // `filter` is a hybrid AST node, not a string. It was always handed
+        // to `target` under a string cast, and the runtime's target
+        // resolution then falls through to `queryElements(target)`. That is
+        // pre-existing behaviour a types-only step must not change, so the
+        // cast stays — visibly, on one line, with this note.
+        const hybrid = node as HybridEventNode;
+        const adaptedNode: EventHandlerNode = {
+          type: 'eventHandler',
+          event: hybrid.event,
+          events: [hybrid.event],
+          commands: fromHybridStatements(hybrid.body || []),
+          target: hybrid.filter as string | undefined,
+          modifiers: hybrid.modifiers || {},
+        };
+        return ok(await this.executeEventHandler(adaptedNode, context));
       }
-    } catch (error) {
-      if (this.options.enableErrorReporting) {
-        // Optional: Add hook for error reporting service
+
+      case 'behavior': {
+        return ok(await this.executeBehaviorDefinition(node as BehaviorNode, context));
       }
-      throw error;
+
+      case 'def': {
+        return ok(this.installFunction(node as DefNode, context));
+      }
+
+      case 'objectLiteral': {
+        return ok(await this.executeObjectLiteral(node as ObjectLiteralNode, context));
+      }
+
+      case 'templateLiteral':
+      case 'memberExpression':
+      default: {
+        return await this.evaluateExpressionWithResult(node, context);
+      }
     }
   }
 
@@ -596,7 +645,8 @@ export class RuntimeBase {
    */
   protected async processCommandWithResult(
     node: CommandNode,
-    context: ExecutionContext
+    context: ExecutionContext,
+    bodies?: BodyOps
   ): Promise<ExecutionResult<unknown>> {
     const { name, args, modifiers } = node;
     const commandName = name.toLowerCase();
@@ -622,6 +672,7 @@ export class RuntimeBase {
       const result = await adapter.execute(context, {
         args: args || [],
         modifiers: modifiers || {},
+        bodies,
         // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
         commandName,
         runtime: this,
@@ -660,7 +711,7 @@ export class RuntimeBase {
 
       // For commands, use Result-based execution
       if (command.type === 'command') {
-        const result = await this.processCommandWithResult(command as CommandNode, context);
+        const result = await this.compile(command)(context);
 
         if (!isOk(result)) {
           // Handle control flow signals
@@ -923,17 +974,8 @@ export class RuntimeBase {
   protected async executeBlock(
     node: BlockNode | InitBlockNode,
     context: ExecutionContext
-  ): Promise<ExecutionResult<void>> {
-    if (!node.commands || !Array.isArray(node.commands)) return ok(undefined);
-    for (const command of node.commands) {
-      const result = await this.executeNode(command, context);
-      if (isOk(result)) continue;
-      // A block consumes `halt` (as it always has); every other signal
-      // travels on to the boundary that owns it.
-      if (result.error.type === 'halt') break;
-      return result;
-    }
-    return ok(undefined);
+  ): Promise<ExecutionResult<unknown>> {
+    return this.compile(node)(context);
   }
 
   protected async executeObjectLiteral(
