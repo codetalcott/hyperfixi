@@ -139,8 +139,9 @@ export class InstallCommand {
 
     // Second arg (if present) is parameters object
     let parameters: Record<string, unknown> | undefined;
-    if (raw.args.length >= 2) {
-      const params = await evaluator.evaluate(raw.args[1], context);
+    const paramsNode = raw.args[1];
+    if (paramsNode) {
+      const params = await evaluator.evaluate(paramsNode, context);
       if (params && typeof params === 'object' && !Array.isArray(params)) {
         parameters = params as Record<string, unknown>;
 

@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ScrollCommand } from '../scroll-to';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
+import type { CommandRaw } from '../../../ast/command-slots';
 import { parse } from '../../../parser/parser';
 import { assertNodeOfKind } from '../../../ast/guards';
 
@@ -76,7 +77,10 @@ describe('ScrollCommand', () => {
       document.body.appendChild(chat);
       const node = assertNodeOfKind(parse('scroll to bottom of #chat smoothly').node, 'command');
       const input = await command.parseInput(
-        { args: node.args as unknown as ASTNode[], modifiers: node.modifiers as never },
+        {
+          args: node.args as unknown as CommandRaw<'scroll'>['args'],
+          modifiers: node.modifiers as never,
+        },
         createMockEvaluator(['#chat', 'bottom', 'smooth']),
         context
       );
@@ -209,7 +213,10 @@ describe('ScrollCommand', () => {
       const missing = assertNodeOfKind(parse('scroll to #does-not-exist').node, 'command');
       await expect(
         command.parseInput(
-          { args: missing.args as unknown as ASTNode[], modifiers: missing.modifiers as never },
+          {
+            args: missing.args as unknown as CommandRaw<'scroll'>['args'],
+            modifiers: missing.modifiers as never,
+          },
           createMockEvaluator(['#does-not-exist']),
           context
         )

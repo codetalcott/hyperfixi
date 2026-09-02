@@ -11,6 +11,7 @@ import { HaltCommand } from '../halt';
 import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import type { CommandRaw } from '../../../ast/command-slots';
 
 // ========== Test Utilities ==========
 
@@ -144,7 +145,7 @@ describe('HaltCommand', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      const args = [{ value: 'someValue' }] as unknown as ASTNode[];
+      const args = [{ value: 'someValue' }] as unknown as CommandRaw<'halt'>['args'];
 
       const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
 
@@ -156,7 +157,7 @@ describe('HaltCommand', () => {
       const evaluator = createMockEvaluator();
 
       // Single identifier that is not "the event" pair
-      const args = [{ type: 'identifier', name: 'myVar' }] as unknown as ASTNode[];
+      const args = [{ type: 'identifier', name: 'myVar' }] as unknown as CommandRaw<'halt'>['args'];
 
       const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
 

@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WaitCommand } from '../wait';
 import type { ExecutionContext, ExpressionNode, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
+import type { CommandRaw } from '../../../ast/command-slots';
 import { parse } from '../../../parser/parser';
 import { assertNodeOfKind } from '../../../ast/guards';
 
@@ -25,11 +26,11 @@ const text = (n: ASTNode): unknown =>
  * argument for `from`); the hand-built `for`/`or`/`from` slots they used to
  * be written with never existed on any real path.
  */
-function realInput(src: string): { args: ASTNode[]; modifiers: Record<string, ExpressionNode> } {
+function realInput(src: string): CommandRaw<'wait'> {
   const node = assertNodeOfKind(parse(src).node, 'command');
   return {
-    args: node.args as unknown as ASTNode[],
-    modifiers: (node.modifiers ?? {}) as unknown as Record<string, ExpressionNode>,
+    args: node.args as unknown as CommandRaw<'wait'>['args'],
+    modifiers: (node.modifiers ?? {}) as CommandRaw<'wait'>['modifiers'],
   };
 }
 

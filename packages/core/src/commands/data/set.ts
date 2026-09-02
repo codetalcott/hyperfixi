@@ -389,8 +389,9 @@ export class SetCommand implements DecoratedCommand {
     if (raw.modifiers.to) {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
-    if (raw.args.length >= 2) {
-      return evaluator.evaluate(raw.args[1], context);
+    const second = raw.args[1];
+    if (second) {
+      return evaluator.evaluate(second, context);
     }
 
     throw new Error('set command requires a value (use "to" keyword)');

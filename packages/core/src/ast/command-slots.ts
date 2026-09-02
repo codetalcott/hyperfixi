@@ -119,7 +119,7 @@ export type SlottedCommandName = keyof typeof COMMAND_SLOTS;
 export const COMMAND_ARITY = {
   add: [1, 2],
   append: [1, 1],
-  async: [0, 1],
+  async: [0, null],
   beep: [0, null],
   blur: [0, 1],
   break: [0, 0],
@@ -146,7 +146,7 @@ export const COMMAND_ARITY = {
   log: [0, null],
   make: [0, 1],
   measure: [0, 2],
-  morph: [1, 1],
+  morph: [1, 3],
   open: [0, 1],
   pick: [1, null],
   prepend: [1, 1],
@@ -167,7 +167,9 @@ export const COMMAND_ARITY = {
   settle: [0, 1],
   show: [0, 1],
   start: [1, null],
-  swap: [1, 1],
+  // 3: the front-end flat shape `[method?, target, content]` from buildAST and
+  // the hybrid bundle's template — Arc 5's boundary.
+  swap: [1, 3],
   take: [1, 1],
   tell: [2, null],
   throw: [0, 1],
@@ -186,12 +188,44 @@ export type SlotKey<K extends SlottedCommandName> =
 /** The `modifiers` a parser builds for command `K` — keyed by its row. */
 export type SlotMap<K extends SlottedCommandName> = Partial<Record<SlotKey<K>, ExpressionNode>>;
 
+// ---------------------------------------------------------------------------
+// Positional arity as a TYPE: the tuple shapes `COMMAND_ARITY` declares.
+// ---------------------------------------------------------------------------
+
+type Repeat<T, N extends number, R extends T[] = []> = R['length'] extends N
+  ? R
+  : Repeat<T, N, [...R, T]>;
+
+/** Every tuple length from `Min` to `Max` inclusive, as a union. */
+type TupleRange<
+  T,
+  Min extends number,
+  Max extends number,
+  R extends T[] = Repeat<T, Min>,
+> = R['length'] extends Max ? R : R | TupleRange<T, Min, Max, [...R, T]>;
+
+/**
+ * The positional arguments command `K` can carry: every tuple length up to
+ * its `COMMAND_ARITY` row's max, or a plain array for a variadic tail. The
+ * lower bound is deliberately 0 — a command's "requires an argument" guard
+ * is real code for a hand-built or foreign node — so what the type forbids
+ * is exactly a read of `raw.args[i]` at or beyond the row's max. A union of
+ * commands widens to the array.
+ */
+export type ArgsOf<K extends SlottedCommandName> = [K] extends [
+  (typeof COMMAND_ARITY)[K] extends readonly [number, number] ? K : never,
+]
+  ? (typeof COMMAND_ARITY)[K] extends readonly [number, infer Max extends number]
+    ? TupleRange<ASTNode, 0, Max>
+    : ASTNode[]
+  : ASTNode[];
+
 /**
  * What a command's `parseInput` receives. `modifiers` is keyed by the
  * command's declared slots: a read of any other key does not compile.
  */
 export interface CommandRaw<K extends SlottedCommandName> {
-  args: ASTNode[];
+  args: ArgsOf<K>;
   modifiers: Partial<Record<SlotKey<K>, ExpressionNode>>;
   commandName?: string;
 }

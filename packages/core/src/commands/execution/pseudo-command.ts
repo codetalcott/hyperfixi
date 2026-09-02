@@ -166,7 +166,7 @@ export class PseudoCommand {
     }
 
     // First arg is method name
-    const methodName = String(await evaluator.evaluate(raw.args[0], context));
+    const methodName = String(await evaluator.evaluate(raw.args[0] as ASTNode, context));
 
     // Second arg is method arguments (array)
     const methodArgs = Array.isArray(raw.args[1])
@@ -188,7 +188,7 @@ export class PseudoCommand {
     }
 
     // If no preposition modifier, use third arg
-    if (!targetExpression && raw.args.length >= 3) {
+    if (!targetExpression && raw.args[2]) {
       targetExpression = await evaluator.evaluate(raw.args[2], context);
     }
 

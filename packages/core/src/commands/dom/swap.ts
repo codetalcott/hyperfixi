@@ -165,8 +165,8 @@ export class SwapCommand implements DecoratedCommand {
       // and the content.
       const lead = literalText(args[0])?.toLowerCase();
       if (args.length >= 3 && lead && STRATEGY_KEYWORDS[lead]) strategy = STRATEGY_KEYWORDS[lead];
-      targetNode = args[args.length - 2];
-      contentNode = args[args.length - 1];
+      targetNode = args[args.length - 2] as ASTNode | undefined;
+      contentNode = args[args.length - 1] as ASTNode | undefined;
     }
 
     // Variable swap (upstream _hyperscript setters.js:210): `swap a with b`

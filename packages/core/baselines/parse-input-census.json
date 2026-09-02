@@ -3,9 +3,9 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2096,
+    "lines": 2102,
     "branches": 331,
-    "syntaxSites": 75,
+    "syntaxSites": 73,
     "valueSites": 190
   },
   "commands": {
@@ -32,9 +32,9 @@
     },
     "settle": {
       "file": "src/commands/animation/settle.ts",
-      "lines": 33,
+      "lines": 34,
       "branches": 5,
-      "syntaxSites": 1,
+      "syntaxSites": 0,
       "valueSites": 4
     },
     "start": {
@@ -74,7 +74,7 @@
     },
     "install": {
       "file": "src/commands/behaviors/install.ts",
-      "lines": 56,
+      "lines": 57,
       "branches": 7,
       "syntaxSites": 3,
       "valueSites": 5
@@ -88,9 +88,9 @@
     },
     "halt": {
       "file": "src/commands/control-flow/halt.ts",
-      "lines": 19,
+      "lines": 20,
       "branches": 2,
-      "syntaxSites": 1,
+      "syntaxSites": 0,
       "valueSites": 2
     },
     "if": {
@@ -123,9 +123,9 @@
     },
     "throw": {
       "file": "src/commands/control-flow/throw.ts",
-      "lines": 12,
+      "lines": 13,
       "branches": 1,
-      "syntaxSites": 1,
+      "syntaxSites": 0,
       "valueSites": 1
     },
     "clear": {
@@ -165,7 +165,7 @@
     },
     "add": {
       "file": "src/commands/dom/add.ts",
-      "lines": 52,
+      "lines": 53,
       "branches": 7,
       "syntaxSites": 2,
       "valueSites": 5
@@ -209,7 +209,7 @@
       "file": "src/commands/dom/put.ts",
       "lines": 132,
       "branches": 31,
-      "syntaxSites": 3,
+      "syntaxSites": 4,
       "valueSites": 7
     },
     "remove": {
@@ -293,7 +293,7 @@
       "file": "src/commands/execution/pseudo-command.ts",
       "lines": 103,
       "branches": 16,
-      "syntaxSites": 6,
+      "syntaxSites": 7,
       "valueSites": 10
     },
     "go": {
@@ -340,9 +340,9 @@
     },
     "copy": {
       "file": "src/commands/utility/copy.ts",
-      "lines": 15,
+      "lines": 16,
       "branches": 1,
-      "syntaxSites": 1,
+      "syntaxSites": 0,
       "valueSites": 1
     },
     "log": {

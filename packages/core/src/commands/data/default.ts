@@ -169,7 +169,7 @@ export class DefaultCommand implements DecoratedCommand {
     // Evaluated tail: shapes the ladder does not name. A selector or expression
     // whose VALUE is the element to fill (`default #out to "x"`) — here
     // evaluation is correct, because the element is the target, not its name.
-    const evaluated = await evaluator.evaluate(raw.args[0], context);
+    const evaluated = await evaluator.evaluate(raw.args[0] as ASTNode, context);
     if (isHTMLElement(evaluated)) {
       return { type: 'element', element: evaluated as HTMLElement, value };
     }
@@ -203,8 +203,9 @@ export class DefaultCommand implements DecoratedCommand {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
 
-    if (raw.args.length >= 2) {
-      return evaluator.evaluate(raw.args[1], context);
+    const second = raw.args[1];
+    if (second) {
+      return evaluator.evaluate(second, context);
     }
 
     throw new Error('default command requires a value (use "to <value>")');

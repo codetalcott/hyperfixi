@@ -76,8 +76,9 @@ export class HaltCommand implements DecoratedCommand {
     // (`haltSchema` skips the article and binds `event`), which evaluates to
     // the current event below; no path delivers the article as an argument.
     if (raw.modifiers.the) return { target: context.event };
-    if (raw.args && raw.args.length > 0) {
-      const target = await evaluator.evaluate(raw.args[0], context);
+    const [first] = raw.args;
+    if (first) {
+      const target = await evaluator.evaluate(first, context);
       return { target };
     }
 

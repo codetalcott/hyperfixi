@@ -69,11 +69,12 @@ export class CopyCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<CopyCommandInput> {
-    if (raw.args.length < 1) {
+    const [first] = raw.args;
+    if (!first) {
       throw new Error('copy command requires a source (text or element)');
     }
 
-    const source = await evaluator.evaluate(raw.args[0], context);
+    const source = await evaluator.evaluate(first, context);
     // `format` is part of the input contract; no parser emits a `format`
     // slot (Arc 3 step 2's parity gate), so it is always text here.
     return { source, format: 'text' };

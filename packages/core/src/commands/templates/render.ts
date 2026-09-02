@@ -112,7 +112,7 @@ export class RenderCommand {
     }
 
     // First arg is template
-    const template = await evaluator.evaluate(raw.args[0], context);
+    const template = await evaluator.evaluate(raw.args[0] as ASTNode, context);
 
     // `with <variables>` is the `with` slot — the declared grammar's marker
     // (Arc 3 step 4); the positional `[template, with, vars]` shape no parser
