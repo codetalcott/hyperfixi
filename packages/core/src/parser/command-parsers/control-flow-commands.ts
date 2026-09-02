@@ -17,6 +17,7 @@ import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { isIdentifierLike, isEvent, isComment } from '../token-predicates';
 import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Parse halt command
@@ -69,7 +70,7 @@ export function parseHaltCommand(
   }
 
   // Use CommandNodeBuilder for consistent node construction
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'halt'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();
@@ -294,7 +295,7 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   if (elseCommands !== null) {
     args.push(createBlock(elseCommands, { ...pos, end: pos.end || 0 }));
   }
-  const builder = CommandNodeBuilder.from(commandToken)
+  const builder = CommandNodeBuilder.from<'repeat'>(commandToken)
     .withArgs(...args)
     .withModifiers(modifiers);
   if (bottomTested) {
@@ -779,7 +780,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     }
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'if' | 'unless'>(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();

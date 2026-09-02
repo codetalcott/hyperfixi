@@ -16,6 +16,7 @@ import type { Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import type { CommandGrammar } from '../command-grammar';
 import { isCommandBoundary, isKeyword } from '../helpers/parsing-helpers';
+import type { SlotKey, SlotMap, SlottedCommandName } from '../command-slots';
 
 /**
  * Is the parser at the end of this command's arguments?
@@ -49,7 +50,7 @@ export function parseDeclaredCommand(
   grammar: CommandGrammar
 ): ASTNode {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<SlottedCommandName> = {};
 
   if (grammar.positional !== 'none') {
     const continuation = grammar.continuation ?? [];
@@ -103,7 +104,8 @@ export function parseDeclaredCommand(
         column: first.column,
       } as ASTNode;
     }
-    if (value) modifiers[key] = value as ExpressionNode;
+    // The grammar row's markers are pinned ⊆ COMMAND_SLOTS by command-slots.test.ts.
+    if (value) modifiers[key as SlotKey<SlottedCommandName>] = value as ExpressionNode;
   }
 
   const builder = CommandNodeBuilder.from(commandToken)

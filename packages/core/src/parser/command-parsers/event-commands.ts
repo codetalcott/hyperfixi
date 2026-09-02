@@ -18,6 +18,7 @@ import {
   parseOneArgument,
 } from '../helpers/parsing-helpers';
 import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Parse trigger/send command
@@ -144,7 +145,7 @@ export function parseTriggerCommand(
   // there deliberately: parsePrimary interprets `on` as an event-handler
   // start, and an expression parse would swallow the target marker.
   const finalArgs: ASTNode[] = [...allArgs];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'trigger' | 'send'> = {};
   while (!isCommandBoundary(ctx)) {
     if (ctx.check(KEYWORDS.ON) || ctx.check(KEYWORDS.TO)) {
       ctx.advance();
@@ -188,7 +189,9 @@ export function parseTriggerCommand(
     }
   }
   // Use CommandNodeBuilder for consistent node construction
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
+  const builder = CommandNodeBuilder.fromIdentifier<'trigger' | 'send'>(identifierNode).withArgs(
+    ...finalArgs
+  );
   if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
   return builder.endingAt(ctx.getPosition()).build();
 }
