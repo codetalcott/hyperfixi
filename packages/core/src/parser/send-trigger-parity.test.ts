@@ -23,11 +23,12 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
 import type { CommandNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 const cmd = (src: string): CommandNode => {
   const result = parse(src);
   expect(result.success).toBe(true);
-  return result.node as CommandNode;
+  return assertNodeOfKind(result.node, 'command');
 };
 
 /** Shape of the args, comparable across the two spellings. */

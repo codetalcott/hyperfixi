@@ -19,6 +19,7 @@ import { tokenize } from './tokenizer';
 import type { Token } from '../types/core';
 import { parse } from './parser';
 import type { CommandNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 const values = (src: string): string[] => tokenize(src).map((t: Token) => t.value);
 const kinds = (src: string): string[] => tokenize(src).map((t: Token) => `${t.value}:${t.kind}`);
@@ -47,7 +48,7 @@ describe('single-quoted strings beginning with `s`', () => {
   it('parses to the intended command rather than a mangled one', () => {
     const result = parse("put 'saved' into #status");
     expect(result.success).toBe(true);
-    const node = result.node as CommandNode;
+    const node = assertNodeOfKind(result.node, 'command');
     expect(node.name).toBe('put');
     expect((node.args?.[0] as { value?: unknown }).value).toBe('saved');
   });
@@ -71,6 +72,6 @@ describe('possessive still works when adjacent', () => {
   it('parses a possessive property access', () => {
     const result = parse("put me's innerHTML into #out");
     expect(result.success).toBe(true);
-    expect((result.node as CommandNode).name).toBe('put');
+    expect(assertNodeOfKind(result.node, 'command').name).toBe('put');
   });
 });

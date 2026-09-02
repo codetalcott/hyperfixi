@@ -80,7 +80,13 @@ import type {
   PossessiveExpressionNode,
 } from './parser-types';
 import * as astHelpers from './helpers/ast-helpers';
-import { fromLegacyCommands, fromLegacyExpression } from '../ast/legacy';
+import {
+  fromLegacyCommands,
+  fromLegacyExpression,
+  toLegacyNode,
+  toLegacyNodes,
+  type AnyNode,
+} from '../ast/legacy';
 import * as parsingHelpers from './helpers/parsing-helpers';
 
 // Extracted per-category command parsers.
@@ -313,7 +319,7 @@ export class Parser {
 
       // Check if this is a behavior definition (may have multiple)
       if (this.check('behavior')) {
-        const behaviors: ASTNode[] = [];
+        const behaviors: AnyNode[] = [];
 
         while (this.check('behavior')) {
           this.advance(); // consume 'behavior' keyword
@@ -329,7 +335,10 @@ export class Parser {
         if (this.error) {
           return {
             success: false,
-            node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
+            node:
+              behaviors.length === 1
+                ? toLegacyNode(behaviors[0])
+                : this.createProgramNode(behaviors),
             tokens: this.tokens,
             error: this.error,
             warnings: this.warnings,
@@ -339,7 +348,8 @@ export class Parser {
         // Return single behavior directly, or program node for multiple
         return {
           success: true,
-          node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
+          node:
+            behaviors.length === 1 ? toLegacyNode(behaviors[0]) : this.createProgramNode(behaviors),
           tokens: this.tokens,
           warnings: this.warnings,
         };
@@ -357,7 +367,7 @@ export class Parser {
         this.checkComment() ||
         topPluginFeature !== null
       ) {
-        const statements: ASTNode[] = [];
+        const statements: AnyNode[] = [];
 
         // Parse all top-level features (init blocks, event handlers, function defs,
         // plugin features), skipping comments.
@@ -466,7 +476,7 @@ export class Parser {
             debug.parse(
               '✅ PARSER: Found event handlers after command sequence, parsing as program'
             );
-            const statements: ASTNode[] = [commandSequence];
+            const statements: AnyNode[] = [commandSequence];
             debug.parse(
               `✅ PARSER: Starting with ${statements.length} statement(s) from command sequence`
             );
@@ -481,9 +491,7 @@ export class Parser {
               const eventHandler = this.parseEventHandler();
               debug.parse(
                 `✅ PARSER: parseEventHandler returned:`,
-                eventHandler
-                  ? `type=${eventHandler.type}, event=${(eventHandler as Record<string, unknown>).event}`
-                  : 'null'
+                eventHandler ? `type=${eventHandler.type}, event=${eventHandler.event}` : 'null'
               );
               if (eventHandler) {
                 statements.push(eventHandler);
@@ -1709,7 +1717,9 @@ export class Parser {
 
       // Handle special hyperscript constructs
       if (token.value === 'on') {
-        return this.parseEventHandler();
+        // `parsePrimary` is declared `ASTNode` honestly (probe E): some of its
+        // branches really do return a handler or a command, not an expression.
+        return toLegacyNode(this.parseEventHandler());
       }
 
       if (token.value === 'if') {
@@ -4324,8 +4334,8 @@ export class Parser {
    * Create a Program node that contains multiple top-level statements
    * (e.g., commands followed by event handlers)
    */
-  private createProgramNode(statements: ASTNode[]): ASTNode {
-    return astHelpers.createProgramNode(statements);
+  private createProgramNode(statements: readonly AnyNode[]): ASTNode {
+    return astHelpers.createProgramNode(toLegacyNodes(statements));
   }
 
   // Token manipulation methods

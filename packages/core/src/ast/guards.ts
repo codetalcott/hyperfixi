@@ -57,6 +57,31 @@ export function isNodeOfKind<K extends SyntaxKind>(
   return isNode(value) && value.type === kind;
 }
 
+/**
+ * Narrow to one kind, or throw.
+ *
+ * The crossing test code needs: `parse()` returns `ParseResult.node` as the
+ * legacy wide `ASTNode`, and a test that wants to read a union member's fields
+ * used to write `result.node as BehaviorNode` — an assertion that says nothing
+ * and checks nothing. Since Arc 2 step 6 the two types no longer overlap, so
+ * that cast does not even compile; this replaces it with the check the test
+ * meant, and returns the narrowed node.
+ *
+ * The thrown message names both kinds, so a parser change that alters what a
+ * source produces reports the actual kind instead of failing later on an
+ * undefined field read.
+ */
+export function assertNodeOfKind<K extends SyntaxKind>(
+  value: unknown,
+  kind: K
+): Extract<SyntaxNode, { type: K }> {
+  if (!isNodeOfKind(value, kind)) {
+    const actual = isNode(value) ? value.type : typeof value;
+    throw new Error(`Expected an AST node of kind '${kind}', got '${actual}'`);
+  }
+  return value;
+}
+
 export function isIdentifierNode(value: unknown): value is IdentifierNode {
   return isNodeOfKind(value, 'identifier');
 }

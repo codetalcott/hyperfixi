@@ -8,6 +8,7 @@
  */
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
+import type { PropertyOfExpressionNode, PropertyAccessNode } from '../../ast/nodes';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from './element-resolution';
@@ -21,17 +22,16 @@ export interface PropertyTarget {
   property: string;
 }
 
-export interface PropertyOfExpressionNode {
-  type: 'propertyOfExpression';
-  property: { type: 'identifier'; name: string };
-  target: ASTNode;
-}
-
-export interface PropertyAccessNode {
-  type: 'propertyAccess';
-  object: ASTNode;
-  property: string;
-}
+/*
+ * These two kinds are described by the union (`ast/nodes.ts`). This module used
+ * to declare its own narrower copies — `property` as a bare
+ * `{ type: 'identifier'; name: string }` and as a bare `string` — which is what
+ * the resolvers below ASSUME but is NOT what the guards verify (Arc 2 step 5
+ * kept the guards' runtime checks verbatim rather than strengthening them, so
+ * that no node changed route). Re-exported under the same names, so the
+ * `commands/helpers` surface is unchanged.
+ */
+export type { PropertyOfExpressionNode, PropertyAccessNode };
 
 // Pattern for "the X of Y" strings
 const PATTERN = /^the\s+(.+?)\s+of\s+(.+)$/i;
@@ -66,11 +66,11 @@ const BOOL_PROPS = new Set([
 
 // The two guards moved to `ast/guards.ts` (Arc 2 step 5) — a node guard
 // belongs with the union, and every caller here imports from THIS path, so it
-// is re-exported. The local interfaces above stay: they are the RESOLVERS'
-// contract (`property` must carry `name` / be a string), which is narrower
-// than what the guards verify — the guards' runtime checks moved verbatim, and
-// strengthening them to the resolver contract would change which nodes route
-// here.
+// is re-exported. Step 6 then deleted the local interfaces that stood beside
+// them: they described the RESOLVERS' assumption (`property` carries `name` /
+// is a string) as if it were the node's shape, and it is not — the guards
+// verify less, deliberately. The assumption now lives where it belongs, as a
+// structural read inside each resolver.
 import {
   isPropertyOfExpressionNode as isPropertyOfExpressionNodeGuard,
   isPropertyAccessNode as isPropertyAccessNodeGuard,
@@ -90,7 +90,11 @@ export async function resolvePropertyTargetFromNode(
   evaluator: ExpressionEvaluator,
   context: ExecutionContext
 ): Promise<PropertyTarget | null> {
-  const property = node.property?.name;
+  // Structural read: the union's `property` is an `Expr`, and only some of its
+  // members carry `name`. The guard verified `property` is an object, nothing
+  // more — narrowing here to `identifier` would reject nodes this has always
+  // resolved.
+  const property = (node.property as { name?: string } | undefined)?.name;
   if (!property) return null;
 
   let element = await evaluator.evaluate(node.target, context);
@@ -157,12 +161,12 @@ export async function resolveAnyPropertyTarget(
 ): Promise<PropertyTarget | null> {
   // Core parser: "the X of Y"
   if (isPropertyOfExpressionNode(node)) {
-    return resolvePropertyTargetFromNode(node as PropertyOfExpressionNode, evaluator, context);
+    return resolvePropertyTargetFromNode(node, evaluator, context);
   }
 
   // Semantic parser: "#element's X"
   if (isPropertyAccessNode(node)) {
-    return resolvePropertyTargetFromAccessNode(node as PropertyAccessNode, evaluator, context);
+    return resolvePropertyTargetFromAccessNode(node, evaluator, context);
   }
 
   // Possessive/member expression: "#element's @disabled", "#element's *opacity"

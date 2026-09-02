@@ -31,16 +31,33 @@
  * was never written. A required position would force a fabricated one. The
  * fields stay optional on {@link BaseNode}; see #1043.
  *
- * ## Why members still `extend ASTNode`
+ * ## Members no longer extend `ASTNode` (Arc 2 step 6)
  *
- * `ASTNode` carries `[key: string]: unknown`, which defeats exhaustiveness.
- * Removing it is Arc 2 step 6 and it goes LAST on purpose: the compile errors
- * that appear when it goes are the burn-down list. Until then, extending it
- * keeps this file assignable everywhere the old types were, so adopting the
- * union is a per-file change rather than a big-bang one.
+ * Until step 6, {@link BaseNode} extended `types/base-types.ASTNode` so that a
+ * union member stayed assignable everywhere the old wide type was, and
+ * adopting the union could be a per-file change. The cost was that `ASTNode`
+ * carries `[key: string]: unknown`, and an inherited index signature makes
+ * every member permit every field: `node.definitelyNotAField` type-checks, a
+ * misspelled read returns `unknown` instead of erroring, and the exhaustive
+ * switches of step 3 are the only thing in the file that a typo could not slip
+ * past. That is the opposite of what a single description of the AST is for.
+ *
+ * So the inheritance is gone and {@link BaseNode} declares what it needs
+ * itself — `type`, the four optional position fields, and the `raw` /
+ * `diagnostics` that `ASTNode` used to supply. `ASTNode` KEEPS its index
+ * signature: it is exported from `index.ts`, downstream packages type against
+ * it, and it is still what the front end's honestly-wide return types say (see
+ * `ast/legacy.ts`). What changed is that the two are now separate types, so
+ * every crossing between them is a place the code has to say so.
+ *
+ * The crossings live in `ast/legacy.ts` — {@link AnyNode} for the wide
+ * evaluator/executor entries that legitimately take either, and the
+ * `toLegacy*` / `fromLegacy*` helpers for the rest. `git grep AnyNode` plus
+ * `git grep fromLegacy` is 4.0's deletion list, once the public types are
+ * redefined to the union.
  */
 
-import type { ASTNode } from '../types/base-types';
+import type { ParseDiagnostic } from '../types/base-types';
 
 // ===========================================================================
 // Base
@@ -50,12 +67,14 @@ import type { ASTNode } from '../types/base-types';
  * What every node has. `type` is narrowed by each member below into the
  * discriminant the unions switch on.
  */
-export interface BaseNode extends ASTNode {
+export interface BaseNode {
   readonly type: string;
   readonly start?: number;
   readonly end?: number;
   readonly line?: number;
   readonly column?: number;
+  readonly raw?: string;
+  readonly diagnostics?: readonly ParseDiagnostic[];
 }
 
 // ===========================================================================
