@@ -1410,6 +1410,36 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    With both sides typed, the slot layer of step 2 is closed; `args` and
    `CommandNode<K>` remain.
 
+   **Step 3 tail: `process` and `halt` (2026-09-03).** The arity census
+   (every command's documented examples parsed, `args` kinds per position)
+   named the commands still carrying SYNTAX positionally. Two were marker
+   words: `process partials in <content>` parsed as `[partials, in,
+   content]` with the command re-finding both by name, and `halt the event`
+   as `[the, event]`. `process` now emits `args: [content]` — the shape
+   `processSchema`'s descriptor always produced — and its `parseInput`
+   reads `args[0]`; the `using view transition` word-scan went too (the tail
+   has been the `viewTransition` slot on both paths since #1064). `halt`'s
+   `the [event]` is the `the` slot, a literal `'event'`; `haltSchema`'s
+   descriptor moved with it (`ast: { args: [], modifiers: { the: 'patient'
+   } }`, mapper-parity fixture regenerated, a `contract` exemption in the
+   shape-consistency gate because `the` is the article the schema SKIPS, not
+   a patient marker), so both paths emit one shape and core's role inferrer
+   reads it in reverse. The argument-side article read — `firstArg.name
+   === 'the' || firstArg.value === 'the'`, kept for the retired i18n
+   transformer's literal — is deleted with its test. **Census: process 81 →
+   44 lines · 13 → 5 branches · S 2 → 1; halt 29 → 19 · S 3 → 1 · V 1 → 2
+   (the slot read is counted as a value site — the meter trades a syntax
+   site for one, which is the migration's whole point); totals 2,038 lines ·
+   305 branches · 73 syntax sites.** Six AST-equivalence rows moved (three
+   each), reviewed; type-escapes 891 → 890. Still positional and NOT marker
+   words — left for the typed-`args` step, not this one: `measure <el>
+   <property>` and `transition <el> <property>` (the property word is a
+   genuine operand the command disambiguates from a target), `install`'s
+   name + params, `js`'s code + params, `pick`'s array. And two commands
+   whose syntax hides in VALUES the census cannot see: `go` (`to`, `the`,
+   `url`, `back`, `of`, `in new window` scanned after evaluation) and
+   `scroll` (`top`/`bottom`/`smoothly`) — their own PR.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

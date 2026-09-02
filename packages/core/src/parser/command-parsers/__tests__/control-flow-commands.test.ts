@@ -191,9 +191,8 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result).not.toBeNull();
       expect(result!.name).toBe('halt');
-      expect(result!.args).toHaveLength(2);
-      expect((result!.args[0] as any).name).toBe('the');
-      expect((result!.args[1] as any).name).toBe('event');
+      expect(result!.args).toHaveLength(0);
+      expect(result!.modifiers?.the).toMatchObject({ type: 'literal', value: 'event' });
     });
 
     it('should parse halt the (without event keyword following)', () => {
@@ -205,9 +204,9 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result).not.toBeNull();
       expect(result!.name).toBe('halt');
-      // Only 'the' should be in args since 'something' !== 'event'
-      expect(result!.args).toHaveLength(1);
-      expect((result!.args[0] as any).name).toBe('the');
+      // `the` alone still names the event; `something` is left for the caller.
+      expect(result!.args).toHaveLength(0);
+      expect(result!.modifiers?.the).toMatchObject({ type: 'literal', value: 'event' });
     });
   });
 

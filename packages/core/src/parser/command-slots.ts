@@ -55,7 +55,7 @@ export const COMMAND_SLOTS = {
   focus: [],
   get: [],
   go: [],
-  halt: [],
+  halt: ['the'],
   hide: ['with'],
   if: [],
   increment: ['by'],

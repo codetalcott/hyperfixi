@@ -41,39 +41,26 @@ export function parseHaltCommand(
 ): CommandNode | null {
   // Parse "halt" or "halt the event"
   // We need to keep "the" and "event" as separate tokens for the command adapter
-  const args: ASTNode[] = [];
-
-  // Check if next tokens are "the event"
+  // `halt the event`: the `the` slot names what is halted (the current
+  // event). It used to arrive as two identifier words in `args` for the
+  // command to recognise by name (Arc 3 step 3).
+  const builder = CommandNodeBuilder.fromIdentifier<'halt'>(identifierNode);
   if (ctx.check(KEYWORDS.THE)) {
     const theToken = ctx.advance();
-    args.push({
-      type: 'identifier',
-      name: KEYWORDS.THE,
-      start: theToken.start,
-      end: theToken.end,
-      line: theToken.line,
-      column: theToken.column,
-    } as IdentifierNode);
-
-    // Check if followed by "event"
-    if (ctx.check(KEYWORDS.EVENT)) {
-      const eventToken = ctx.advance();
-      args.push({
-        type: 'identifier',
-        name: KEYWORDS.EVENT,
-        start: eventToken.start,
-        end: eventToken.end,
-        line: eventToken.line,
-        column: eventToken.column,
-      } as IdentifierNode);
-    }
+    const last = ctx.check(KEYWORDS.EVENT) ? ctx.advance() : theToken;
+    builder.withModifier(
+      'the',
+      toLegacyExpression({
+        type: 'literal',
+        value: 'event',
+        start: theToken.start,
+        end: last.end,
+        line: theToken.line,
+        column: theToken.column,
+      })
+    );
   }
-
-  // Use CommandNodeBuilder for consistent node construction
-  return CommandNodeBuilder.fromIdentifier<'halt'>(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+  return builder.endingAt(ctx.getPosition()).build();
 }
 
 /**
