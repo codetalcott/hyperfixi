@@ -1,5 +1,13 @@
 # Arc 2 brief — one typed AST
 
+> **STATUS: Arc 2 closed 2026-09-02** (#1052 · #1053 · #1054 · #1055). This file
+> stays as the arc's measured record — the seven scored claims, the ratchet's
+> blind spot, and the per-cluster question that reordered the work. Every
+> correction made while executing is struck through in place below; the
+> completion entry, the deliberate non-goals with their probe numbers, and the
+> three behavioural defects the arc filed rather than fixed are at the end of
+> [ENGINE_MIGRATION_PLAN.md](./ENGINE_MIGRATION_PLAN.md)'s History.
+
 > Written 2026-09-01 on `10485310`, opening Arc 2 of
 > [ENGINE_MIGRATION_PLAN.md](./ENGINE_MIGRATION_PLAN.md). The plan asks every
 > arc to start with a brief that **re-measures the plan's own claims on the

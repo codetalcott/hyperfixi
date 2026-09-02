@@ -1467,3 +1467,49 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   **live shipped bug** (`on click log 1 and 2` fails in the default config),
   filed in `PARSER_NEXT_STEPS.md` and now step 6's motivating case. Detail is
   on the step itself.
+
+- **2026-09-02** — **Arc 2 is COMPLETE.** Steps 3, 4, 5 and 6 landed as #1052,
+  #1053, #1054 and #1055; the union is the single description of the core
+  parser's AST, both evaluator switches are exhaustive, and no member inherits
+  an index signature. `tsc` is clean without it, which is the finish line the
+  arc named for itself.
+
+  The escape ratchet went **1088 → 927** over the four PRs, and the honest
+  accounting of that number is the arc's most useful output: 155 of the 161 came
+  from `ast-utils` alone, and **only because step 4 flipped its `[key: string]:
+  any` to `unknown` FIRST**. Stripping the same casts without that flip
+  typechecks clean, keeps all 348 tests green, and moves the meter 157 → 81
+  while changing nothing — the arc's brief measured that and reordered the work
+  around it. Step 6, conversely, moved the meter **not at all** (927 → 927)
+  while doing the single largest type-safety change in the arc. The ratchet
+  counts hatch spellings; it cannot see an `any` arriving through an index
+  signature, and it cannot see one leaving. Read it as a floor, never as a
+  score.
+
+  Four of the arc's seven plan claims were false on measurement, and the plan
+  now carries each correction struck through in place: `parser-types.ts` covers
+  15 kinds not 20, positions are NOT always set (24 of 857 traditional, 58 of
+  949 semantic — and 20 of those are correct, a value materialized from a schema
+  default has no source text to point at), `ast-utils` was the 5th `any` cluster
+  not the 2nd, and `commands` holds 19% of the hatches rather than "most" — its
+  AST-shaped portion was ~13 sites of 235, which re-scoped step 5 to a fraction
+  of its planned size. The pattern across all four: the plan's model of WHERE
+  the difficulty lived was stale, and re-measuring before costing is what caught
+  it every time.
+
+  What the arc deliberately did NOT do, each with its numbers recorded so nobody
+  re-runs the probe: delete the index signature from `types/base-types.ASTNode`
+  itself (probe F, 435 errors, a 4.0 item — it touches the frozen public type
+  and `commands/`); collapse `parser/parser-types.ts` (16 → 24 → **43** errors
+  as the retype widens, because the front end's `ASTNode` return types are
+  HONEST — `parseExpression` really does return commands and handlers in some
+  branches, which is Arc 3's redesign, not a types edit); and retype
+  `ast-utils`' public `ASTUtilNode`, which must stay duck-typed because its
+  modules discriminate on kinds no core parser emits.
+
+  Three behavioural defects surfaced by the arc are filed rather than fixed,
+  because a types-only arc cannot contain them: the seven incomplete-position
+  producers, `ast-utils`' generator having no `block` arm (a real `if`'s
+  branches render as `''`, pinned as a KNOWN GAP), and `set *<css-prop> …`
+  breaking 4 of 5 shapes against upstream 0.9.93, 3 of them silently. All in
+  `PARSER_NEXT_STEPS.md`.
