@@ -433,11 +433,10 @@ describe('Hyperscript AST Parser', () => {
       expectAST('toggle *display on #target', {
         type: 'command',
         name: 'toggle',
-        args: [
-          { type: 'selector', value: '*display' },
-          { type: 'identifier', name: 'on' },
-          { type: 'selector', value: '#target' },
-        ],
+        // The destination is a slot since Arc 3 step 3 — `on`/`from` open
+        // `modifiers.on`; the marker word no longer sits in `args`.
+        args: [{ type: 'selector', value: '*display' }],
+        modifiers: { on: { type: 'selector', value: '#target' } },
       });
     });
   });
@@ -573,11 +572,8 @@ describe('Hyperscript AST Parser', () => {
       expectAST('toggle .active from me', {
         type: 'command',
         name: 'toggle',
-        args: [
-          { type: 'selector', value: '.active' },
-          { type: 'identifier', name: 'from' },
-          { type: 'identifier', name: 'me' },
-        ],
+        args: [{ type: 'selector', value: '.active' }],
+        modifiers: { on: { type: 'identifier', name: 'me' } },
       });
     });
 

@@ -199,18 +199,17 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
       }
     }
 
-    // Accept 'from' or 'on' for target specification
-    const preposition = consumeOneOfKeywordsToArgs(ctx, [KEYWORDS.FROM, KEYWORDS.ON], args);
-    if (preposition) {
+    // `on <target>` / `from <target>` is the destination SLOT, not two more
+    // arguments — see the note on the standard form below.
+    const modifiers: Record<string, ExpressionNode> = {};
+    if (consumeOptionalKeyword(ctx, KEYWORDS.FROM) || consumeOptionalKeyword(ctx, KEYWORDS.ON)) {
       const targetArg = parseOneArgument(ctx);
-      if (targetArg) {
-        args.push(targetArg);
-      }
+      if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
     }
 
     return CommandNodeBuilder.fromIdentifier(identifierNode)
       .withArgs(...args)
-      .withModifiers(parseTemporalTail(ctx))
+      .withModifiers({ ...modifiers, ...parseTemporalTail(ctx) })
       .endingAt(ctx.getPosition())
       .build();
   }
@@ -224,14 +223,21 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     args.push(classArg);
   }
 
-  // Accept either 'from' or 'on' keyword for target specification
-  const preposition = consumeOneOfKeywordsToArgs(ctx, [KEYWORDS.FROM, KEYWORDS.ON], args);
-  if (preposition) {
-    // Parse target
+  // `on <target>` / `from <target>` — the destination. Emitted as
+  // `modifiers.on`, NOT pushed into `args` as `[on, <target>]` (Arc 3 step 3,
+  // toggle's first PR). The parser has just consumed the keyword; encoding it
+  // as an argument for ToggleCommand to rediscover by name was the
+  // `marker-in-args` family the convergence detour left open, and the
+  // interchange's role inference tries modifier markers first, so the
+  // destination role survives unchanged. `from` (the HyperFixi spelling) and
+  // `on` (upstream's) mean the same thing here and share the slot.
+  // ToggleCommand.parseInput already read `modifiers.on` as its fallback
+  // destination (`fallbackModifierKey: 'on'`), which is how the semantic path
+  // always reached it.
+  const modifiers: Record<string, ExpressionNode> = {};
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM) || consumeOptionalKeyword(ctx, KEYWORDS.ON)) {
     const targetArg = parseOneArgument(ctx);
-    if (targetArg) {
-      args.push(targetArg);
-    }
+    if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
   }
 
   // Optional bare `modal` modifier for dialogs: `toggle #dialog modal`.
@@ -244,7 +250,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
-    .withModifiers(parseTemporalTail(ctx))
+    .withModifiers({ ...modifiers, ...parseTemporalTail(ctx) })
     .endingAt(ctx.getPosition())
     .build();
 }

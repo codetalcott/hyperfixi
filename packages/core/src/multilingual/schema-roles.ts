@@ -63,6 +63,25 @@ export const schemaRoleInferrer: RoleInferrer = (name, args, modifiers, target) 
     INTERCHANGE_ADAPTER
   );
 
+  // The schema's own `ast` descriptor — the declarative shape `buildAST`
+  // emits, e.g. toggle's `{ modifiers: { on: 'destination' } }` — is also the
+  // reverse map: a core node carrying `modifiers.on` IS that role, whether or
+  // not the role declares an English `markerOverride` (toggle's destination
+  // does not; its `on` comes from the profile, which `inferRolesFromSchema`
+  // never consults). Before Arc 3 step 3 the traditional parser left the
+  // marker in `args` and the positional pass bound the value after it; now
+  // the parser emits the slot, and this is what reads it.
+  const declared = (schema as { ast?: { modifiers?: Readonly<Record<string, string>> } }).ast
+    ?.modifiers;
+  if (declared && modifiers) {
+    for (const [key, role] of Object.entries(declared)) {
+      const value = modifiers[key];
+      const isNode = !!value && typeof value === 'object' && 'type' in value;
+      if (isNode && inferred[role as keyof typeof inferred] === undefined) {
+        inferred[role as keyof typeof inferred] = value as InterchangeNode;
+      }
+    }
+  }
   return Object.keys(inferred).length > 0
     ? (inferred as Readonly<Record<string, InterchangeNode>>)
     : null;
