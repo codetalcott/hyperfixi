@@ -260,17 +260,16 @@ describe('Toggle between - tokenizer + parser regression', () => {
     // `parse` returns the command node directly for a single statement.
     const cmd = result.node?.body?.[0] ?? result.node;
     expect(cmd?.name).toBe('toggle');
-    // Flat shape the toggle command's parseInput expects for the pair:
-    // [between, classA, and, classB] — and the destination as a slot
-    // (`modifiers.on`), since Arc 3 step 3.
-    const args = (cmd?.args ?? []) as Array<Record<string, unknown>>;
-    expect(args[0]?.name).toBe('between');
-    expect(args[1]?.value).toBe('.on');
-    expect(args[2]?.name).toBe('and');
-    expect(args[3]?.value).toBe('.off');
-    expect(args).toHaveLength(4);
-    const modifiers = (cmd as { modifiers?: Record<string, { value?: unknown }> } | undefined)
-      ?.modifiers;
+    // Both syntactic decisions are slots since Arc 3 step 3: the pair is
+    // `modifiers.between` (an arrayLiteral of the two), the destination
+    // `modifiers.on`; `args` is empty.
+    expect(cmd?.args).toEqual([]);
+    const modifiers = (
+      cmd as
+        | { modifiers?: Record<string, { value?: unknown; elements?: Array<{ value?: unknown }> }> }
+        | undefined
+    )?.modifiers;
+    expect(modifiers?.between?.elements?.map(e => e.value)).toEqual(['.on', '.off']);
     expect(modifiers?.on?.value).toBe('#target');
   });
 });

@@ -356,13 +356,17 @@ describe('ToggleCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'between' } as any,
-            { type: 'literal', value: '.classA' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'literal', value: '.classB' } as any,
-          ],
-          modifiers: {},
+          // The pair is the `between` SLOT the parser emits (Arc 3 step 3).
+          args: [],
+          modifiers: {
+            between: {
+              type: 'arrayLiteral',
+              elements: [
+                { type: 'literal', value: '.classA' },
+                { type: 'literal', value: '.classB' },
+              ],
+            } as any,
+          },
         },
         evaluator,
         context
@@ -381,13 +385,17 @@ describe('ToggleCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'between' } as any,
-            { type: 'literal', value: '.foo' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'literal', value: '.bar' } as any,
-          ],
-          modifiers: {},
+          // The pair is the `between` SLOT the parser emits (Arc 3 step 3).
+          args: [],
+          modifiers: {
+            between: {
+              type: 'arrayLiteral',
+              elements: [
+                { type: 'literal', value: '.foo' },
+                { type: 'literal', value: '.bar' },
+              ],
+            } as any,
+          },
         },
         evaluator,
         context
@@ -744,13 +752,17 @@ describe('ToggleCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'between' } as any,
-            { type: 'literal', value: '.foo' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'literal', value: '.bar' } as any,
-          ],
-          modifiers: {},
+          // The pair is the `between` SLOT the parser emits (Arc 3 step 3).
+          args: [],
+          modifiers: {
+            between: {
+              type: 'arrayLiteral',
+              elements: [
+                { type: 'literal', value: '.foo' },
+                { type: 'literal', value: '.bar' },
+              ],
+            } as any,
+          },
         },
         evaluator,
         context
