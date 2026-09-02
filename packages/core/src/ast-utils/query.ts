@@ -7,15 +7,33 @@
 
 import { findNodes } from './visitor.js';
 import type { ASTNode, QueryMatch } from './types.js';
+import { isASTNode } from './duck.js';
 
 // ============================================================================
 // Query Types
 // ============================================================================
 
+/** What `parseAttributeValue` can produce from the text between `[name=` and `]`. */
+type AttributeValue = string | number | boolean | null | undefined;
+
 interface AttributeSelector {
   name: string;
   operator: '=' | '!=' | '^=' | '$=' | '*=' | '|=' | '~=' | 'exists';
-  value: any;
+  value: AttributeValue;
+}
+
+/**
+ * The traversal state the matchers consult. Everything but `getParent` is
+ * optional because `hasDescendant` matches against a bare `{ getParent }` and
+ * the matchers already branch on which methods are present — this type just
+ * writes that down instead of passing `any`.
+ */
+interface QueryContext {
+  getParent(): ASTNode | null;
+  getPath?(): string[];
+  getAncestors?(): ASTNode[];
+  getSiblingIndex?(): number;
+  getSiblings?(): ASTNode[];
 }
 
 interface PseudoSelector {
@@ -74,7 +92,7 @@ export function queryAll(ast: ASTNode | null, selector: string): QueryMatch[] {
       siblings: ASTNode[]
     ) {
       // Create a context-like object with ancestor access
-      const queryContext = {
+      const queryContext: QueryContext = {
         getParent: () => parent,
         getPath: () => path,
         getAncestors: () => [...ancestorStack],
@@ -106,17 +124,16 @@ export function queryAll(ast: ASTNode | null, selector: string): QueryMatch[] {
         }
 
         if (Array.isArray(value)) {
-          const childNodes = value.filter(
-            (v: any) => v && typeof v === 'object' && typeof v.type === 'string'
-          ) as ASTNode[];
-          for (let i = 0; i < value.length; i++) {
-            const item = value[i];
-            if (item && typeof item === 'object' && typeof item.type === 'string') {
+          const items: unknown[] = value;
+          const childNodes = items.filter(isASTNode);
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (isASTNode(item)) {
               traverse(item, [...path, `${key}/${i}`], node, i, childNodes);
             }
           }
-        } else if (value && typeof value === 'object' && typeof (value as any).type === 'string') {
-          traverse(value as ASTNode, [...path, key], node, 0, [value as ASTNode]);
+        } else if (isASTNode(value)) {
+          traverse(value, [...path, key], node, 0, [value]);
         }
       }
 
@@ -168,7 +185,7 @@ function parseSingleSelector(selector: string): ParsedSelector {
     const [, left, combinator, right] = combinatorMatch;
     if (combinator && left && right) {
       result.combinator = {
-        type: (combinator.trim() || ' ') as any,
+        type: (combinator.trim() || ' ') as '>' | '+' | '~' | ' ',
         right: parseSingleSelector(right),
       };
       selector = left.trim();
@@ -213,7 +230,7 @@ function parseSingleSelector(selector: string): ParsedSelector {
     if (name) {
       result.attributes.push({
         name: name.trim(),
-        operator: (operator || 'exists') as any,
+        operator: (operator || 'exists') as AttributeSelector['operator'],
         value: value !== undefined ? parseAttributeValue(value.trim()) : null,
       });
     }
@@ -222,7 +239,7 @@ function parseSingleSelector(selector: string): ParsedSelector {
   return result;
 }
 
-function parseAttributeValue(value: string): any {
+function parseAttributeValue(value: string): AttributeValue {
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
@@ -247,7 +264,7 @@ function parseAttributeValue(value: string): any {
 // Selector Matching
 // ============================================================================
 
-function matchesSelector(node: ASTNode, selector: ParsedSelector, context: any): boolean {
+function matchesSelector(node: ASTNode, selector: ParsedSelector, context: QueryContext): boolean {
   if (selector.combinator) {
     const rightmost = getRightmostSelector(selector);
 
@@ -268,7 +285,11 @@ function getRightmostSelector(selector: ParsedSelector): ParsedSelector {
   return selector;
 }
 
-function checkCombinatorChain(node: ASTNode, selector: ParsedSelector, context: any): boolean {
+function checkCombinatorChain(
+  node: ASTNode,
+  selector: ParsedSelector,
+  context: QueryContext
+): boolean {
   if (!selector.combinator) {
     return true;
   }
@@ -300,7 +321,11 @@ function checkCombinatorChain(node: ASTNode, selector: ParsedSelector, context: 
   return checkCombinatorRelationship(node, combinatorType, leftSelector, context);
 }
 
-function matchesSimpleSelector(node: ASTNode, selector: ParsedSelector, context?: any): boolean {
+function matchesSimpleSelector(
+  node: ASTNode,
+  selector: ParsedSelector,
+  context?: QueryContext
+): boolean {
   if (selector.type && node.type !== selector.type) {
     return false;
   }
@@ -327,7 +352,7 @@ function matchesSimpleSelector(node: ASTNode, selector: ParsedSelector, context?
 }
 
 function matchesAttribute(node: ASTNode, attr: AttributeSelector): boolean {
-  const value = (node as any)[attr.name];
+  const value = node[attr.name];
 
   switch (attr.operator) {
     case 'exists':
@@ -344,7 +369,8 @@ function matchesAttribute(node: ASTNode, attr: AttributeSelector): boolean {
       return typeof value === 'string' && value.includes(String(attr.value));
     case '|=':
       return (
-        typeof value === 'string' && (value === attr.value || value.startsWith(attr.value + '-'))
+        typeof value === 'string' &&
+        (value === attr.value || value.startsWith(String(attr.value) + '-'))
       );
     case '~=':
       return typeof value === 'string' && value.split(/\s+/).includes(String(attr.value));
@@ -353,7 +379,7 @@ function matchesAttribute(node: ASTNode, attr: AttributeSelector): boolean {
   }
 }
 
-function matchesPseudo(node: ASTNode, pseudo: PseudoSelector, context: any): boolean {
+function matchesPseudo(node: ASTNode, pseudo: PseudoSelector, context: QueryContext): boolean {
   switch (pseudo.name) {
     case 'first-child':
       return isFirstChild(node, context);
@@ -387,7 +413,7 @@ function checkCombinatorRelationship(
   node: ASTNode,
   combinatorType: string,
   leftSelector: ParsedSelector,
-  context: any,
+  context: QueryContext,
   intermediateSelector?: ParsedSelector
 ): boolean {
   switch (combinatorType) {
@@ -423,7 +449,7 @@ function checkCombinatorRelationship(
 
 function hasAncestorMatchingWithFurtherAncestor(
   node: ASTNode,
-  context: any,
+  context: QueryContext,
   intermediateSelector: ParsedSelector,
   leftSelector: ParsedSelector
 ): boolean {
@@ -449,7 +475,7 @@ function hasAncestorMatchingWithFurtherAncestor(
 // Helper Functions
 // ============================================================================
 
-function isFirstChild(node: ASTNode, context: any): boolean {
+function isFirstChild(node: ASTNode, context: QueryContext): boolean {
   if (context.getSiblingIndex) {
     return context.getSiblingIndex() === 0;
   }
@@ -465,7 +491,7 @@ function isFirstChild(node: ASTNode, context: any): boolean {
   return false;
 }
 
-function isLastChild(node: ASTNode, context: any): boolean {
+function isLastChild(node: ASTNode, context: QueryContext): boolean {
   if (context.getSiblingIndex && context.getSiblings) {
     const siblings = context.getSiblings();
     return context.getSiblingIndex() === siblings.length - 1;
@@ -504,7 +530,11 @@ function containsText(node: ASTNode, text: string): boolean {
   return nodeStr.includes(searchText);
 }
 
-function hasAncestorMatching(node: ASTNode, context: any, selector: ParsedSelector): boolean {
+function hasAncestorMatching(
+  node: ASTNode,
+  context: QueryContext,
+  selector: ParsedSelector
+): boolean {
   if (context.getAncestors) {
     const ancestors = context.getAncestors();
     for (const ancestor of ancestors) {
@@ -521,7 +551,7 @@ function hasAncestorMatching(node: ASTNode, context: any, selector: ParsedSelect
 
 function hasPreviousSiblingMatching(
   node: ASTNode,
-  context: any,
+  context: QueryContext,
   selector: ParsedSelector
 ): boolean {
   if (!context.getSiblings || !context.getSiblingIndex) {
@@ -538,7 +568,7 @@ function hasPreviousSiblingMatching(
 
 function hasAnyPreviousSiblingMatching(
   node: ASTNode,
-  context: any,
+  context: QueryContext,
   selector: ParsedSelector
 ): boolean {
   if (!context.getSiblings || !context.getSiblingIndex) {
@@ -558,15 +588,15 @@ function hasAnyPreviousSiblingMatching(
 function extractCaptures(
   node: ASTNode,
   selector: ParsedSelector,
-  context?: any
-): Record<string, any> {
-  const captures: Record<string, any> = {};
+  context?: QueryContext
+): Record<string, unknown> {
+  const captures: Record<string, unknown> = {};
 
   const rightmost = getRightmostSelector(selector);
   for (const attr of rightmost.attributes) {
     if (attr.operator === '=' || attr.operator === 'exists') {
       const key = rightmost.type ? `${rightmost.type}[${attr.name}]` : `[${attr.name}]`;
-      captures[key] = (node as any)[attr.name];
+      captures[key] = node[attr.name];
     }
   }
 
@@ -581,7 +611,7 @@ function extractCaptures(
 function extractCapturesFromCombinatorChain(
   selector: ParsedSelector,
   ancestors: ASTNode[],
-  captures: Record<string, any>
+  captures: Record<string, unknown>
 ): void {
   if (!selector.combinator) return;
 
@@ -597,7 +627,7 @@ function extractCapturesFromCombinatorChain(
       for (const attr of leftSelector.attributes) {
         if (attr.operator === '=' || attr.operator === 'exists') {
           const key = leftSelector.type ? `${leftSelector.type}[${attr.name}]` : `[${attr.name}]`;
-          captures[key] = (ancestor as any)[attr.name];
+          captures[key] = ancestor[attr.name];
         }
       }
       break;

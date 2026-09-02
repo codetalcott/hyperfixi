@@ -9,6 +9,15 @@
 /**
  * Minimal AST node interface.
  * Works with core parser nodes, semantic nodes, and any object with `type`.
+ *
+ * The index signature is `unknown`, not `any` — changed by Arc 2 step 4
+ * (`docs-internal/ENGINE_MIGRATION_PLAN.md`). Under `any`, every field read in
+ * this package was untyped whether or not it was cast, so the casts were
+ * decoration and the type-escape ratchet could be satisfied without doing any
+ * work (#1048). Under `unknown`, a read has to be checked before use; `duck.ts`
+ * is where the checks live. The interface stays duck-typed on purpose — it is
+ * published as `ASTUtilNode`, and the modules here read shapes the core
+ * parser's union does not describe (see `duck.ts` for the measurement).
  */
 export interface ASTNode {
   type: string;
@@ -16,7 +25,7 @@ export interface ASTNode {
   end?: number;
   line?: number;
   column?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ============================================================================
@@ -29,14 +38,14 @@ export interface VisitorContext {
   replace(node: ASTNode | ASTNode[] | null): void;
   getPath(): (string | number)[];
   getParent(): ASTNode | null;
-  getScope(): Map<string, any>;
-  setScope(key: string, value: any): void;
+  getScope(): Map<string, unknown>;
+  setScope(key: string, value: unknown): void;
 }
 
 export interface VisitorHandlers {
   enter?(node: ASTNode, context: VisitorContext): void;
   exit?(node: ASTNode, context: VisitorContext): void;
-  [nodeType: string]: ((node: any, context: VisitorContext) => void) | undefined;
+  [nodeType: string]: ((node: ASTNode, context: VisitorContext) => void) | undefined;
 }
 
 // ============================================================================
@@ -46,7 +55,7 @@ export interface VisitorHandlers {
 export interface QueryMatch {
   node: ASTNode;
   path: (string | number)[];
-  matches: Record<string, any>;
+  matches: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -90,7 +99,7 @@ export interface PatternMatch {
   type?: string;
   pattern: string;
   node: ASTNode;
-  bindings: Record<string, any>;
+  bindings: Record<string, unknown>;
   confidence: number;
   suggestion?: string;
 }

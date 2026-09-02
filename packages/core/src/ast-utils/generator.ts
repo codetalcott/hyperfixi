@@ -9,6 +9,27 @@ import type { ASTNode, GeneratorOptions, GeneratorResult } from './types.js';
 
 export type { GeneratorOptions, GeneratorResult };
 
+/**
+ * What the generator actually accepts: any object, `type` or not.
+ *
+ * Deliberately WIDER than {@link ASTNode}. The old code's only gate was
+ * `typeof node !== 'object'`, so an object with no `type` reached
+ * `generateFallback` and rendered its `value`/`name` — and
+ * `generator.test.ts` pins that ("should handle node without type"). A guard
+ * that demanded a string `type` here was the one behaviour change the Arc 2
+ * step 4 retype introduced, and that test caught it.
+ */
+type Nodeish = { readonly [key: string]: unknown };
+
+function isObject(value: unknown): value is Nodeish {
+  return value !== null && typeof value === 'object';
+}
+
+/** `value` as an array of whatever it holds, or `[]` — the `x || []` of the old code. */
+function listOf(value: unknown): unknown[] {
+  return Array.isArray(value) ? (value as unknown[]) : [];
+}
+
 export function generate(ast: ASTNode, options: GeneratorOptions = {}): string {
   const opts: GeneratorOptions = {
     minify: false,
@@ -37,11 +58,18 @@ export function generateWithMetadata(
   return { code, nodeCount };
 }
 
-function generateNode(node: ASTNode, opts: GeneratorOptions): string {
-  if (!node || typeof node !== 'object') return '';
+/**
+ * Takes `unknown` on purpose. Every caller below hands it a field read off a
+ * node (`node.condition`, `node.then`, an `args` element), and the old code's
+ * first line already rejected anything that was not an object — so the wide
+ * parameter is the honest one, and {@link isObject} is that same check with a
+ * type attached.
+ */
+function generateNode(node: unknown, opts: GeneratorOptions): string {
+  if (!isObject(node)) return '';
 
-  if (opts.preserveRaw && (node as any).raw && typeof (node as any).raw === 'string') {
-    return (node as any).raw;
+  if (opts.preserveRaw && typeof node.raw === 'string' && node.raw) {
+    return node.raw;
   }
 
   switch (node.type) {
@@ -50,7 +78,7 @@ function generateNode(node: ASTNode, opts: GeneratorOptions): string {
     case 'eventHandler':
       return generateEventHandler(node, opts);
     case 'command':
-      return generateCommand(node, opts);
+      return emitCommand(node, opts);
     case 'conditional':
       return generateConditional(node, opts);
     case 'behavior':
@@ -83,33 +111,31 @@ function generateNode(node: ASTNode, opts: GeneratorOptions): string {
   }
 }
 
-function generateProgram(node: ASTNode, opts: GeneratorOptions): string {
-  const features = (node as any).features || [];
+function generateProgram(node: Nodeish, opts: GeneratorOptions): string {
+  const features = listOf(node.features);
   const separator = opts.minify ? ' ' : '\n\n';
   return features
-    .map((f: ASTNode) => generateNode(f, opts))
+    .map(f => generateNode(f, opts))
     .filter(Boolean)
     .join(separator);
 }
 
-function generateEventHandler(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
+function generateEventHandler(node: Nodeish, opts: GeneratorOptions): string {
   const parts: string[] = ['on'];
-  if (data.events && data.events.length > 1) {
-    parts.push(data.events.join(' or '));
+  const events = node.events;
+  if (Array.isArray(events) && events.length > 1) {
+    parts.push(events.join(' or '));
   } else {
-    parts.push(data.event || 'click');
+    parts.push(String(node.event || 'click'));
   }
-  if (data.selector && data.selector !== 'me') parts.push('from', data.selector);
-  if (data.condition) parts.push(`[${generateNode(data.condition, opts)}]`);
+  if (node.selector && node.selector !== 'me') parts.push('from', String(node.selector));
+  if (node.condition) parts.push(`[${generateNode(node.condition, opts)}]`);
 
-  const commands = data.commands || [];
+  const commands = listOf(node.commands);
   if (commands.length > 0) {
     const cmdSeparator = opts.minify ? ' then ' : '\n' + indent(opts);
     const commandsStr = commands
-      .map((cmd: ASTNode) =>
-        generateNode(cmd, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 })
-      )
+      .map(cmd => generateNode(cmd, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 }))
       .join(cmdSeparator);
     if (opts.minify) {
       parts.push(commandsStr);
@@ -120,20 +146,16 @@ function generateEventHandler(node: ASTNode, opts: GeneratorOptions): string {
   return parts.join(' ');
 }
 
-function generateBehavior(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
+function generateBehavior(node: Nodeish, opts: GeneratorOptions): string {
   const parts: string[] = ['behavior'];
-  const params = data.parameters || [];
-  parts.push(
-    params.length > 0 ? `${data.name || 'unnamed'}(${params.join(', ')})` : data.name || 'unnamed'
-  );
+  const params = listOf(node.parameters);
+  const name = String(node.name || 'unnamed');
+  parts.push(params.length > 0 ? `${name}(${params.join(', ')})` : name);
 
-  const body = data.body || data.eventHandlers || [];
+  const body = listOf(node.body || node.eventHandlers);
   if (body.length > 0) {
     const bodyStr = body
-      .map((item: ASTNode) =>
-        generateNode(item, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 })
-      )
+      .map(item => generateNode(item, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 }))
       .join(opts.minify ? ' ' : '\n' + indent(opts));
     if (opts.minify) {
       parts.push(bodyStr, 'end');
@@ -146,16 +168,14 @@ function generateBehavior(node: ASTNode, opts: GeneratorOptions): string {
   return parts.join(' ');
 }
 
-function generateFunction(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
+function generateFunction(node: Nodeish, opts: GeneratorOptions): string {
   const parts: string[] = ['def'];
-  const params = data.parameters || data.params || [];
-  parts.push(
-    params.length > 0 ? `${data.name || 'unnamed'}(${params.join(', ')})` : data.name || 'unnamed'
-  );
+  const params = listOf(node.parameters || node.params);
+  const name = String(node.name || 'unnamed');
+  parts.push(params.length > 0 ? `${name}(${params.join(', ')})` : name);
 
-  if (data.body) {
-    const bodyStr = generateNode(data.body, {
+  if (node.body) {
+    const bodyStr = generateNode(node.body, {
       ...opts,
       _indentLevel: (opts._indentLevel || 0) + 1,
     });
@@ -170,49 +190,52 @@ function generateFunction(node: ASTNode, opts: GeneratorOptions): string {
   return parts.join(' ');
 }
 
+/** Public entry keeps the {@link ASTNode} signature; the switch above calls the wide form. */
 export function generateCommand(node: ASTNode, opts: GeneratorOptions = {}): string {
-  const data = node as any;
-  const parts: string[] = [data.name || 'unknown'];
-  const args = data.args || [];
-  for (const arg of args) parts.push(generateNode(arg, opts));
-  if (data.modifiers) {
-    for (const [key, value] of Object.entries(data.modifiers)) {
-      if (value) parts.push(key, generateNode(value as ASTNode, opts));
+  return emitCommand(node, opts);
+}
+
+function emitCommand(node: Nodeish, opts: GeneratorOptions): string {
+  const name = String(node.name || 'unknown');
+  const parts: string[] = [name];
+  for (const arg of listOf(node.args)) parts.push(generateNode(arg, opts));
+  const modifiers = node.modifiers;
+  if (isObject(modifiers)) {
+    for (const [key, value] of Object.entries(modifiers)) {
+      if (value) parts.push(key, generateNode(value, opts));
     }
   }
-  if (data.target) {
-    parts.push(getTargetPreposition(data.name), generateNode(data.target, opts));
+  if (node.target) {
+    parts.push(getTargetPreposition(name), generateNode(node.target, opts));
   }
-  if (data.implicitTarget) parts.push(generateNode(data.implicitTarget, opts));
+  if (node.implicitTarget) parts.push(generateNode(node.implicitTarget, opts));
   return parts.join(' ');
 }
 
-function generateConditional(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
+function generateConditional(node: Nodeish, opts: GeneratorOptions): string {
   const parts: string[] = ['if'];
-  if (data.condition) parts.push(generateNode(data.condition, opts));
+  if (node.condition) parts.push(generateNode(node.condition, opts));
   parts.push('then');
-  if (data.then) parts.push(generateNode(data.then, opts));
-  if (data.else) parts.push('else', generateNode(data.else, opts));
+  if (node.then) parts.push(generateNode(node.then, opts));
+  if (node.else) parts.push('else', generateNode(node.else, opts));
   parts.push('end');
   return parts.join(' ');
 }
 
-function generateReturnStatement(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  return data.argument ? `return ${generateNode(data.argument, opts)}` : 'return';
+function generateReturnStatement(node: Nodeish, opts: GeneratorOptions): string {
+  return node.argument ? `return ${generateNode(node.argument, opts)}` : 'return';
 }
 
 export function generateExpression(node: ASTNode, opts: GeneratorOptions = {}): string {
   return generateNode(node, opts);
 }
 
-function generateSelector(node: ASTNode): string {
-  return (node as any).value || '';
+function generateSelector(node: Nodeish): string {
+  return String(node.value || '');
 }
 
-function generateLiteral(node: ASTNode): string {
-  const value = (node as any).value;
+function generateLiteral(node: Nodeish): string {
+  const value = node.value;
   if (typeof value === 'string') return `'${escapeString(value)}'`;
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (value === null) return 'null';
@@ -220,53 +243,46 @@ function generateLiteral(node: ASTNode): string {
   return String(value);
 }
 
-function generateIdentifier(node: ASTNode): string {
-  return (node as any).name || '';
+function generateIdentifier(node: Nodeish): string {
+  return String(node.name || '');
 }
 
-function generateBinaryExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  return `${generateNode(data.left, opts)} ${data.operator || '+'} ${generateNode(data.right, opts)}`;
+function generateBinaryExpression(node: Nodeish, opts: GeneratorOptions): string {
+  return `${generateNode(node.left, opts)} ${node.operator || '+'} ${generateNode(node.right, opts)}`;
 }
 
-function generateLogicalExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  return `${generateNode(data.left, opts)} ${data.operator || 'and'} ${generateNode(data.right, opts)}`;
+function generateLogicalExpression(node: Nodeish, opts: GeneratorOptions): string {
+  return `${generateNode(node.left, opts)} ${node.operator || 'and'} ${generateNode(node.right, opts)}`;
 }
 
-function generateUnaryExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  const argument = generateNode(data.argument, opts);
-  const operator = data.operator || 'not';
-  return data.prefix !== false ? `${operator} ${argument}` : `${argument} ${operator}`;
+function generateUnaryExpression(node: Nodeish, opts: GeneratorOptions): string {
+  const argument = generateNode(node.argument, opts);
+  const operator = node.operator || 'not';
+  return node.prefix !== false ? `${operator} ${argument}` : `${argument} ${operator}`;
 }
 
-function generateMemberExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  const object = data.object ? generateNode(data.object, opts) : '';
-  const property = data.property ? generateNode(data.property, opts) : '';
-  if (data.computed) return `${object}[${property}]`;
+function generateMemberExpression(node: Nodeish, opts: GeneratorOptions): string {
+  const object = node.object ? generateNode(node.object, opts) : '';
+  const property = node.property ? generateNode(node.property, opts) : '';
+  if (node.computed) return `${object}[${property}]`;
   return object ? `${object}.${property}` : property;
 }
 
-function generatePossessiveExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  return `${generateNode(data.object, opts)}'s ${generateNode(data.property, opts)}`;
+function generatePossessiveExpression(node: Nodeish, opts: GeneratorOptions): string {
+  return `${generateNode(node.object, opts)}'s ${generateNode(node.property, opts)}`;
 }
 
-function generateCallExpression(node: ASTNode, opts: GeneratorOptions): string {
-  const data = node as any;
-  const callee = data.callee ? generateNode(data.callee, opts) : 'call';
-  const args = (data.arguments || data.args || [])
-    .map((arg: ASTNode) => generateNode(arg, opts))
+function generateCallExpression(node: Nodeish, opts: GeneratorOptions): string {
+  const callee = node.callee ? generateNode(node.callee, opts) : 'call';
+  const args = listOf(node.arguments || node.args)
+    .map(arg => generateNode(arg, opts))
     .join(', ');
   return `${callee}(${args})`;
 }
 
-function generateFallback(node: ASTNode): string {
-  const data = node as any;
-  if (data.value !== undefined) return String(data.value);
-  if (data.name) return data.name;
+function generateFallback(node: Nodeish): string {
+  if (node.value !== undefined) return String(node.value);
+  if (node.name) return String(node.name);
   return '';
 }
 
@@ -299,16 +315,21 @@ function getTargetPreposition(commandName: string): string {
   }
 }
 
-function countNodes(node: ASTNode, callback: () => void): void {
-  if (!node || typeof node !== 'object') return;
+/**
+ * The ROOT is counted whether or not it has a `type`; CHILDREN are counted only
+ * when they carry a truthy one. Asymmetric, and preserved exactly — it is what
+ * the untyped version did.
+ */
+function countNodes(node: unknown, callback: () => void): void {
+  if (!isObject(node)) return;
   callback();
   for (const value of Object.values(node)) {
     if (Array.isArray(value)) {
-      for (const item of value) {
-        if (item && typeof item === 'object' && item.type) countNodes(item, callback);
+      for (const item of value as unknown[]) {
+        if (isObject(item) && item.type) countNodes(item, callback);
       }
-    } else if (value && typeof value === 'object' && (value as any).type) {
-      countNodes(value as ASTNode, callback);
+    } else if (isObject(value) && value.type) {
+      countNodes(value, callback);
     }
   }
 }
