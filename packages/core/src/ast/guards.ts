@@ -7,18 +7,11 @@
  *
  * ## Deliberately small
  *
- * The generic {@link isNodeOfKind} plus four thin kind guards. Guards are added
- * as consumers adopt them, not in advance — a guard nothing calls is the same
+ * The generic {@link isNodeOfKind}, thin kind guards, and the two property
+ * guards moved here from `commands/helpers/property-target.ts` (which
+ * re-exports them, so its callers did not churn). Guards are added as consumers
+ * adopt them, not in advance — a guard nothing calls is the same
  * dead-scaffolding shape Arc 6a has been deleting.
- *
- * `commands/helpers/property-target.ts`'s `isPropertyOfExpressionNode` /
- * `isPropertyAccessNode` were the obvious first move and are deliberately NOT
- * here yet. They narrow to that file's OWN local node interfaces — a fourth
- * definition set, narrower than this union (`property` typed
- * `{type:'identifier'; name}` and `string` respectively, where the parser emits
- * a general expression and both spellings). Moving them means reconciling
- * those, which is adoption work (Arc 2 step 5), not union work. This arc's
- * step 2 stays purely additive.
  *
  * ## Naming
  *
@@ -37,6 +30,8 @@ import type {
   LiteralNode,
   SelectorNode,
   CommandNode,
+  PropertyOfExpressionNode,
+  PropertyAccessNode,
 } from './nodes';
 
 /** Anything shaped like an AST node: an object carrying a string `type`. */
@@ -76,4 +71,38 @@ export function isSelectorNode(value: unknown): value is SelectorNode {
 
 export function isCommandNode(value: unknown): value is CommandNode {
   return isNodeOfKind(value, 'command');
+}
+
+/**
+ * `the X of Y` (core parser).
+ *
+ * More than the discriminant on purpose: consumers dereference `property`, so
+ * the guard verifies it is a node. The check is EXACTLY what
+ * `property-target.ts` shipped — its resolvers additionally assume the property
+ * is an identifier carrying `name`, and strengthening the guard to verify that
+ * would change which nodes route to them, which a types arc must not do.
+ */
+export function isPropertyOfExpressionNode(value: unknown): value is PropertyOfExpressionNode {
+  if (!isNodeOfKind(value, 'propertyOfExpression')) return false;
+  const property: unknown = (value as { property?: unknown }).property;
+  return typeof property === 'object' && property !== null;
+}
+
+/**
+ * `#element's X` (semantic parser) or `obj.prop` (expression parser).
+ *
+ * Accepts BOTH `property` spellings on purpose: the semantic parser emitted a
+ * bare string and the expression parser a `{ name }` node, and a guard that
+ * took only one silently rejected half the real inputs. Preserved verbatim
+ * from `property-target.ts`, where that tolerance was established.
+ */
+export function isPropertyAccessNode(value: unknown): value is PropertyAccessNode {
+  if (!isNodeOfKind(value, 'propertyAccess')) return false;
+  const property: unknown = (value as { property?: unknown }).property;
+  if (typeof property === 'string') return true;
+  return (
+    typeof property === 'object' &&
+    property !== null &&
+    typeof (property as { name?: unknown }).name === 'string'
+  );
 }

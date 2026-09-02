@@ -762,10 +762,20 @@ progress meter.
    parser's `ast-types.ts` is left alone here — it is a separate producer and
    Arc 5 decides its fate — but the `case 'event'`/`case 'sequence'` adapter in
    `runtime-base.ts` is typed as a converter from `HybridNode` to `Stmt`.
-5. **Commands stop casting.** `ast/guards.ts` (`isIdentifier`, `isSelector`,
+5. ~~**Commands stop casting.** `ast/guards.ts` (`isIdentifier`, `isSelector`,
    `isLiteral`, …) replaces `(arg as Record<string, unknown>).name === 'x'`
    one file at a time, ratcheted. This is mechanical and boring and it is where
-   most of the 1,152 hatches live.
+   most of the 1,152 hatches live.~~ **Re-scoped by the owner 2026-09-01, and
+   then executed the same day.** Measured first: the AST-shaped portion of
+   `commands/` was ~13 sites of 235 — the rest is ExecutionContext / DOM /
+   network typing that no node union touches, a different track outside this
+   arc. The 13 landed as guard adoptions (`isIdentifierNode`, `isLiteralNode`,
+   `isNodeOfKind`, and the existing `isDOMNode` for the one genuinely
+   load-bearing cast) plus the `property-target.ts` guard move — its two
+   predicates now live in `ast/guards.ts` with their runtime checks verbatim,
+   because strengthening them to the resolvers' narrower contract would change
+   which nodes route where. The step as originally written — a cluster-wide
+   burn-down — is DROPPED; its premise did not survive measurement.
 6. **Remove the index signature.** `[key: string]: unknown` comes off `Node`
    last. The compile errors that appear are the burn-down list; the arc is done
    when `tsc` is clean without it.

@@ -90,7 +90,7 @@ export class PutCommand implements DecoratedCommand {
   ): Promise<PutCommandInput> {
     if (!raw.args?.length) throw new Error('put requires arguments');
 
-    const nodeType = (n: ASTNode): string => (n as any)?.type || 'unknown';
+    const nodeType = (n: ASTNode): string => n?.type || 'unknown';
     const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'];
 
     let prepIdx = -1,
@@ -98,7 +98,7 @@ export class PutCommand implements DecoratedCommand {
     for (let i = 0; i < raw.args.length; i++) {
       const arg = raw.args[i];
       const t = nodeType(arg);
-      const v = (t === 'literal' ? (arg as any).value : (arg as any).name) as string;
+      const v = (t === 'literal' ? arg.value : arg.name) as string;
       if ((t === 'literal' || t === 'identifier') && validPreps.includes(v)) {
         prepIdx = i;
         prepKw = v;
