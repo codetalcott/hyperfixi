@@ -15,7 +15,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import type { EventHandlerNode, BehaviorNode, CommandNode } from '../types/base-types';
+import type { EventHandlerNode, BehaviorNode, CommandNode } from '../ast/nodes';
 
 const handler = (src: string): EventHandlerNode => {
   const result = parse(src);

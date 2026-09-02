@@ -4,13 +4,24 @@
  * Designed for tree-shaking: strict dependency injection pattern.
  */
 
+import type { ASTNode, ExecutionContext } from '../types/base-types';
 import type {
-  ASTNode,
-  ExecutionContext,
+  Expr,
   CommandNode,
   EventHandlerNode,
   DefNode,
-} from '../types/base-types';
+  BehaviorNode,
+  ProgramNode,
+  BlockNode,
+  InitBlockNode,
+  CommandSequenceNode,
+  ObjectLiteralNode,
+} from '../ast/nodes';
+import type {
+  EventNode as HybridEventNode,
+  SequenceNode as HybridSequenceNode,
+} from '../parser/hybrid/ast-types';
+import { fromHybridStatements } from '../ast/legacy';
 
 import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../types/result';
 
@@ -526,30 +537,30 @@ export class RuntimeBase {
         }
 
         case 'event': {
-          // Handle EventNode from hybrid parser (different structure from EventHandlerNode)
-          // EventNode has: event, filter, modifiers, body
-          // EventHandlerNode expects: event, events, commands, target, args, selector
+          // The hybrid parser's `event` node (a separate producer — Arc 5 owns
+          // it) is adapted into a union `EventHandlerNode` before execution.
+          // Typed as that converter (Arc 2 step 4): `body` crosses through
+          // `fromHybridStatements`, the one sanctioned crossing for it.
+          //
+          // `filter` is a hybrid AST node, not a string. It was always handed
+          // to `target` under a string cast, and the runtime's target
+          // resolution then falls through to `queryElements(target)`. That is
+          // pre-existing behaviour a types-only step must not change, so the
+          // cast stays — visibly, on one line, with this note.
+          const hybrid = node as HybridEventNode;
           const adaptedNode: EventHandlerNode = {
             type: 'eventHandler',
-            event: node.event as string,
-            events: [node.event as string],
-            commands: (node.body as ASTNode[]) || [],
-            target: node.filter as string | undefined,
-            modifiers: (node.modifiers as Record<string, unknown>) || {},
+            event: hybrid.event,
+            events: [hybrid.event],
+            commands: fromHybridStatements(hybrid.body || []),
+            target: hybrid.filter as string | undefined,
+            modifiers: hybrid.modifiers || {},
           };
           return await this.executeEventHandler(adaptedNode, context);
         }
 
         case 'behavior': {
-          return await this.executeBehaviorDefinition(
-            node as ASTNode & {
-              name: string;
-              parameters?: string[];
-              eventHandlers?: EventHandlerNode[];
-              initBlock?: ASTNode;
-            },
-            context
-          );
+          return await this.executeBehaviorDefinition(node as BehaviorNode, context);
         }
 
         case 'def': {
@@ -557,19 +568,21 @@ export class RuntimeBase {
         }
 
         case 'Program': {
-          return await this.executeProgram(node as ASTNode & { features?: ASTNode[] }, context);
+          return await this.executeProgram(node as ProgramNode, context);
         }
 
         case 'initBlock':
         case 'block': {
-          return await this.executeBlock(node as ASTNode & { commands?: ASTNode[] }, context);
+          return await this.executeBlock(node as BlockNode | InitBlockNode, context);
         }
 
         case 'sequence':
         case 'CommandSequence': {
           // Use Result-based execution when enabled
           if (this.options.enableResultPattern) {
-            const seqNode = node as unknown as { commands: ASTNode[] };
+            // Two producers reach this arm: the full parser's `CommandSequence`
+            // and the hybrid parser's `sequence`. Both carry `commands`.
+            const seqNode = node as CommandSequenceNode | HybridSequenceNode;
             const result = await this.executeCommandSequenceWithResult(
               seqNode.commands || [],
               context
@@ -580,16 +593,13 @@ export class RuntimeBase {
             return result.value;
           }
           return await this.executeCommandSequence(
-            node as unknown as { commands: ASTNode[] },
+            node as CommandSequenceNode | HybridSequenceNode,
             context
           );
         }
 
         case 'objectLiteral': {
-          return await this.executeObjectLiteral(
-            node as unknown as { properties: Array<{ key: ASTNode; value: ASTNode }> },
-            context
-          );
+          return await this.executeObjectLiteral(node as ObjectLiteralNode, context);
         }
 
         case 'templateLiteral':
@@ -853,10 +863,13 @@ export class RuntimeBase {
     if (isImplicitCommand(value)) {
       // Execute command and wrap in Result
       if (this.options.enableResultPattern) {
+        // The runtime is a second PRODUCER of command nodes here (the implicit
+        // `add .class` pattern). `isBlocking: false` is what its absence meant.
         const commandNode: CommandNode = {
           type: 'command',
           name: value.command,
           args: [{ type: 'literal', value: value.selector }],
+          isBlocking: false,
         };
         return this.processCommandWithResult(commandNode, context);
       } else {
@@ -894,12 +907,13 @@ export class RuntimeBase {
 
     // Heuristic: Implicit commands usually treat the selector as a Literal arg
     // unless specific commands override this behavior.
-    const args: ASTNode[] = [{ type: 'literal', value: selector }];
+    const args: Expr[] = [{ type: 'literal', value: selector }];
 
     const commandNode: CommandNode = {
       type: 'command',
       name: commandName,
       args: args,
+      isBlocking: false,
     };
 
     return this.processCommand(commandNode, context);
@@ -935,9 +949,9 @@ export class RuntimeBase {
   protected installFunction(node: DefNode, context: ExecutionContext): void {
     const runtime = this;
     const params = node.params ?? [];
-    const body = (node.body ?? []) as ASTNode[];
-    const errorHandler = node.errorHandler as ASTNode[] | undefined;
-    const finallyHandler = node.finallyHandler as ASTNode[] | undefined;
+    const body = node.body ?? [];
+    const errorHandler = node.errorHandler;
+    const finallyHandler = node.finallyHandler;
     const errorSymbol = node.errorSymbol;
 
     const fn = async (...args: unknown[]): Promise<unknown> => {
@@ -1101,7 +1115,7 @@ export class RuntimeBase {
   }
 
   protected async executeObjectLiteral(
-    node: { properties: Array<{ key: ASTNode; value: ASTNode }> },
+    node: ObjectLiteralNode,
     context: ExecutionContext
   ): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {};
@@ -1111,9 +1125,9 @@ export class RuntimeBase {
       let key: string;
       // Key evaluation logic
       if (property.key.type === 'identifier') {
-        key = (property.key as unknown as { name: string }).name;
+        key = property.key.name;
       } else if (property.key.type === 'literal') {
-        key = String((property.key as unknown as { value: unknown }).value);
+        key = String(property.key.value);
       } else {
         const evalKey = await this.execute(property.key, context);
         key = String(evalKey);

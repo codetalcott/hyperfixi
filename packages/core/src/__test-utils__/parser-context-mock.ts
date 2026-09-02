@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { ParserContext, IdentifierNode, Position } from '../parser/parser-types';
-import type { Token, CommandNode } from '../types/core';
+import type { Token } from '../types/core';
+import type { CommandNode } from '../ast/nodes';
 
 /**
  * Creates a comprehensive mock ParserContext for testing parser functions.

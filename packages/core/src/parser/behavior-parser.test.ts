@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import type { BehaviorNode, EventHandlerNode } from '../types/base-types';
+import type { BehaviorNode, EventHandlerNode } from '../ast/nodes';
 
 describe('Behavior Parser', () => {
   describe('basic behavior parsing', () => {

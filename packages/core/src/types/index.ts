@@ -90,14 +90,12 @@ export {
 // ============================================================================
 
 // Export additional base types not already exported from unified-types
-export type {
-  ExpressionNode,
-  CommandNode,
-  EvaluationResult,
-  EventHandlerNode,
-  BehaviorNode,
-  DefNode,
-} from './base-types';
+export type { ExpressionNode, EvaluationResult } from './base-types';
+// The per-kind node re-exports (`CommandNode`, `EventHandlerNode`,
+// `BehaviorNode`, `DefNode`) left with Arc 2 step 4 — measured: no non-test
+// file imported any of them from here, and the `CommandNode` this exported was
+// base-types' three-field duck, a DIFFERENT shape from the `CommandNode` that
+// `types/core` and the package root export. `ast/nodes.ts` is the source now.
 
 // ============================================================================
 // Convenience Type Aliases

@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { tokenize } from './tokenizer';
 import type { Token } from '../types/core';
 import { parse } from './parser';
-import type { CommandNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 const values = (src: string): string[] => tokenize(src).map((t: Token) => t.value);
 const kinds = (src: string): string[] => tokenize(src).map((t: Token) => `${t.value}:${t.kind}`);

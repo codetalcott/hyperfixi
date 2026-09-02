@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import type { CommandNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 const cmd = (src: string): CommandNode => {
   const result = parse(src);

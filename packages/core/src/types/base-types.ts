@@ -531,63 +531,18 @@ export interface BaseCommand {
 // ============================================================================
 // AST Integration Types
 // ============================================================================
-
-// ASTNode is already defined above - this was a duplicate
-
-/**
- * Binary expression AST node
- */
-export interface BinaryExpressionNode extends ASTNode {
-  readonly type: 'binaryExpression';
-  readonly operator: string;
-  readonly left: ASTNode;
-  readonly right: ASTNode;
-}
-
-/**
- * Unary expression AST node
- */
-export interface UnaryExpressionNode extends ASTNode {
-  readonly type: 'unaryExpression';
-  readonly operator: string;
-  readonly operand: ASTNode;
-}
-
-/**
- * Property access AST node
- */
-export interface PropertyAccessNode extends ASTNode {
-  readonly type: 'propertyAccess';
-  readonly object: ASTNode;
-  readonly property: string;
-}
-
-/**
- * Member expression AST node
- */
-export interface MemberExpressionNode extends ASTNode {
-  readonly type: 'memberExpression';
-  readonly expression: ASTNode;
-  readonly member: string;
-}
-
-/**
- * Context reference AST node
- */
-export interface ContextReferenceNode extends ASTNode {
-  readonly type: 'contextReference';
-  readonly contextType: 'me' | 'you' | 'it' | 'target' | 'event';
-}
-
-/**
- * Command AST node
- */
-export interface CommandNode extends ASTNode {
-  readonly type: 'command';
-  readonly name: string;
-  readonly args?: ASTNode[];
-  readonly source?: string;
-}
+//
+// The per-kind node interfaces that used to live here were deleted by Arc 2
+// step 4 (2026-09-01). `ast/nodes.ts` is the single description of what the
+// parser emits; every consumer resolves `CommandNode`, `EventHandlerNode`,
+// `BehaviorNode` and `DefNode` from there. Seven of the eleven had no importer
+// at all (`MemberExpressionNode` described a `{expression, member}` shape
+// nothing ever produced); the other four were live and MORE complete than the
+// union — the catch/finally, `of @attr` and `in <sel>` fields were declared
+// here and nowhere else — so the union absorbed them first. `ASTNode` and
+// `ExpressionNode` stay: `ASTNode` carries the index signature the union
+// members extend (step 6 decides its fate), `ExpressionNode` is the frozen
+// public type `ast/legacy.ts` crosses into.
 
 /**
  * Expression AST node
@@ -597,100 +552,6 @@ export interface ExpressionNode extends ASTNode {
   readonly value?: unknown;
   readonly operator?: string;
   readonly operands?: ExpressionNode[];
-}
-
-/**
- * Literal AST node
- */
-export interface LiteralNode extends ASTNode {
-  readonly type: 'literal';
-  readonly value: string | number | boolean;
-}
-
-/**
- * Event handler AST node
- */
-export interface EventHandlerNode extends ASTNode {
-  readonly type: 'eventHandler';
-  readonly event: string; // Primary event name (for backward compatibility)
-  readonly events?: string[]; // All event names when using "on event1 or event2" syntax
-  readonly target?: string;
-  readonly selector?: string; // CSS selector for event delegation ("from" keyword)
-  readonly condition?: ASTNode; // Optional event condition ("[condition]" syntax)
-  readonly attributeName?: string; // Attribute name for mutation events ("of @attribute" syntax)
-  readonly watchTarget?: ASTNode; // Target element to watch for changes ("in <target>" syntax)
-  readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
-  readonly commands: ASTNode[];
-  readonly customEventSource?: string; // Name of registered custom event source (e.g., 'request', 'websocket')
-  /**
-   * Error symbol name bound in the catch block (`on click … catch e … end`).
-   * Same shape as {@link DefNode} — upstream _hyperscript shares one
-   * `parseErrorAndFinally` between its `on` and `def` features.
-   */
-  readonly errorSymbol?: string;
-  /** Error handler commands (catch block) */
-  readonly errorHandler?: ASTNode[];
-  /** Finally handler commands — run after the body whether or not it threw */
-  readonly finallyHandler?: ASTNode[];
-  readonly modifiers?: {
-    // Event modifiers for controlling event behavior
-    once?: boolean; // Fire event handler only once (.once)
-    prevent?: boolean; // Call preventDefault() on the event (.prevent)
-    stop?: boolean; // Call stopPropagation() on the event (.stop)
-    debounce?: number; // Debounce delay in milliseconds (.debounce(N))
-    throttle?: number; // Throttle delay in milliseconds (.throttle(N))
-  };
-}
-
-/**
- * Behavior definition AST node
- * Represents a reusable behavior that can be installed on elements
- */
-export interface BehaviorNode extends ASTNode {
-  readonly type: 'behavior';
-  readonly name: string;
-  readonly parameters: string[];
-  readonly eventHandlers: EventHandlerNode[];
-  readonly initBlock?: ASTNode;
-  readonly namespace?: string;
-}
-
-/**
- * Function definition AST node (def feature)
- * Represents a user-defined function in hyperscript
- *
- * Syntax:
- *   def <name>(<params>)
- *     <commands>
- *   [catch <errorSymbol>
- *     <commands>]
- *   [finally
- *     <commands>]
- *   end
- */
-export interface DefNode extends ASTNode {
-  readonly type: 'def';
-  /** Function name (can be namespaced, e.g., "utils.calculate") */
-  readonly name: string;
-  /** Parameter names */
-  readonly params: string[];
-  /** Function body commands */
-  readonly body: CommandNode[];
-  /** Error symbol name for catch block (if present) */
-  readonly errorSymbol?: string;
-  /** Error handler commands (catch block) */
-  readonly errorHandler?: CommandNode[];
-  /** Finally handler commands */
-  readonly finallyHandler?: CommandNode[];
-}
-
-/**
- * Enhanced AST node with type information
- */
-export interface TypedASTNode extends ASTNode {
-  readonly evaluationType: EvaluationType;
-  readonly validationResult: ValidationResult;
-  readonly metadata?: Record<string, unknown>;
 }
 
 // ============================================================================

@@ -13,10 +13,8 @@ import type {
   ExpressionNode,
   ParseResult as CoreParseResult,
   ParseWarning,
-  EventHandlerNode,
-  BehaviorNode,
-  DefNode,
 } from '../types/core';
+import type { EventHandlerNode, BehaviorNode, DefNode, InitBlockNode } from '../ast/nodes';
 import type {
   ParseError as LocalParseError,
   KeywordResolver,
@@ -82,6 +80,7 @@ import type {
   PossessiveExpressionNode,
 } from './parser-types';
 import * as astHelpers from './helpers/ast-helpers';
+import { fromLegacyCommands, fromLegacyExpression } from '../ast/legacy';
 import * as parsingHelpers from './helpers/parsing-helpers';
 
 // Extracted per-category command parsers.
@@ -2310,10 +2309,10 @@ export class Parser {
       type: 'def' as const,
       name: funcName,
       params,
-      body: bodyCommands,
+      body: fromLegacyCommands(bodyCommands),
       ...(errorSymbol !== undefined && { errorSymbol }),
-      ...(errorHandler !== undefined && { errorHandler }),
-      ...(finallyHandler !== undefined && { finallyHandler }),
+      ...(errorHandler !== undefined && { errorHandler: fromLegacyCommands(errorHandler) }),
+      ...(finallyHandler !== undefined && { finallyHandler: fromLegacyCommands(finallyHandler) }),
       start: pos.start,
       end: this.getPosition().end,
       line: pos.line,
@@ -3020,19 +3019,19 @@ export class Parser {
       type: 'eventHandler',
       event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
       events: eventNames, // Store all event names for runtime
-      commands,
+      commands: fromLegacyCommands(commands),
       ...(errorSymbol !== undefined && { errorSymbol }),
-      ...(errorHandler !== undefined && { errorHandler }),
-      ...(finallyHandler !== undefined && { finallyHandler }),
+      ...(errorHandler !== undefined && { errorHandler: fromLegacyCommands(errorHandler) }),
+      ...(finallyHandler !== undefined && { finallyHandler: fromLegacyCommands(finallyHandler) }),
       // Event-argument destructure names (`on click(button)`). Emit as `args` —
       // the `EventHandlerNode.args` field the runtime binds from (and the field the
       // behavior-handler parser already uses). Previously emitted as the untyped,
       // unread `params`, so top-level `on event(args)` never bound the names.
       ...(eventParams.length > 0 && { args: eventParams }),
-      ...(condition && { condition }), // Add condition if present
+      ...(condition && { condition: fromLegacyExpression(condition) }), // Add condition if present
       ...(target && { target }), // Add target if present
       ...(attributeName && { attributeName }), // Add attributeName if present
-      ...(watchTarget && { watchTarget }), // Add watchTarget if present
+      ...(watchTarget && { watchTarget: fromLegacyExpression(watchTarget) }), // Add watchTarget if present
       ...(customEventSource && { customEventSource }), // Add custom event source if detected
       ...(Object.keys(modifiers).length > 0 && { modifiers }), // Add modifiers if present
       start: pos.start,
@@ -3092,7 +3091,7 @@ export class Parser {
 
     // Parse behavior body: event handlers and optional init block
     const eventHandlers: EventHandlerNode[] = [];
-    let initBlock: ASTNode | undefined;
+    let initBlock: InitBlockNode | undefined;
 
     // Parse body until we hit 'end'
     while (!this.isAtEnd() && !this.check('end')) {
@@ -3185,10 +3184,14 @@ export class Parser {
         const handlerNode: EventHandlerNode = {
           type: 'eventHandler',
           event: eventName,
-          commands: handlerCommands,
+          commands: fromLegacyCommands(handlerCommands),
           ...(handlerErrorSymbol !== undefined && { errorSymbol: handlerErrorSymbol }),
-          ...(handlerErrorHandler !== undefined && { errorHandler: handlerErrorHandler }),
-          ...(handlerFinallyHandler !== undefined && { finallyHandler: handlerFinallyHandler }),
+          ...(handlerErrorHandler !== undefined && {
+            errorHandler: fromLegacyCommands(handlerErrorHandler),
+          }),
+          ...(handlerFinallyHandler !== undefined && {
+            finallyHandler: fromLegacyCommands(handlerFinallyHandler),
+          }),
           ...(eventSource !== undefined && { target: eventSource }), // Add the captured target from 'from' clause
           ...(eventArgs.length > 0 && { args: eventArgs }), // Add captured event parameters
           start: handlerPos.start,
@@ -3204,7 +3207,7 @@ export class Parser {
 
         initBlock = {
           type: 'initBlock',
-          commands: initCommands,
+          commands: fromLegacyCommands(initCommands),
           start: pos.start,
           end: this.getPosition().end,
           line: pos.line,
