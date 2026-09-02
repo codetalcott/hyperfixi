@@ -109,11 +109,8 @@ describe('Hyperscript Runtime', () => {
       const setCommandAST = {
         type: 'command',
         name: 'set',
-        args: [
-          { type: 'identifier', name: 'myVar' },
-          { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'test value' },
-        ],
+        args: [{ type: 'identifier', name: 'myVar' }],
+        modifiers: { to: { type: 'literal', value: 'test value' } },
       };
 
       await runtime.execute(setCommandAST, context);
@@ -126,11 +123,8 @@ describe('Hyperscript Runtime', () => {
       const setCommandAST = {
         type: 'command',
         name: 'set',
-        args: [
-          { type: 'identifier', name: 'result' },
-          { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'completed' },
-        ],
+        args: [{ type: 'identifier', name: 'result' }],
+        modifiers: { to: { type: 'literal', value: 'completed' } },
       };
 
       await runtime.execute(setCommandAST, context);
@@ -739,11 +733,8 @@ describe('RuntimeBase Method Coverage', () => {
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'myVar' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 42 },
-            ],
+            args: [{ type: 'identifier', name: 'myVar' }],
+            modifiers: { to: { type: 'literal', value: 42 } },
           },
         ],
       };
@@ -927,20 +918,14 @@ describe('RuntimeBase Method Coverage', () => {
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 10 },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 10 } },
           },
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'y' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 20 },
-            ],
+            args: [{ type: 'identifier', name: 'y' }],
+            modifiers: { to: { type: 'literal', value: 20 } },
           },
         ],
       };
@@ -958,21 +943,15 @@ describe('RuntimeBase Method Coverage', () => {
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 'before' },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 'before' } },
           },
           { type: 'command', name: 'halt', args: [] },
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 'after' },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 'after' } },
           },
         ],
       };

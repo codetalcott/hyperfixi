@@ -302,7 +302,7 @@ describe('Parser Integration Tests', () => {
         name: 'lives',
         scope: 'element',
       });
-      expect(args[2]).toMatchObject({
+      expect((node as { modifiers?: Record<string, any> }).modifiers?.to).toMatchObject({
         type: 'binaryExpression',
         operator: '-',
       });
@@ -337,7 +337,7 @@ describe('Parser Integration Tests', () => {
       expect(node.name).toBe('set');
       const args = getArgs(node);
       // args: [target, 'to', value]
-      const valueExpr = args[2];
+      const valueExpr = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       expect(valueExpr.type).toBe('propertyOfExpression');
       expect(valueExpr.property.name).toBe('values');
     });
@@ -347,7 +347,7 @@ describe('Parser Integration Tests', () => {
       expect(node.type).toBe('command');
       expect(node.name).toBe('set');
       const args = getArgs(node);
-      const valueExpr = args[2];
+      const valueExpr = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       expect(valueExpr.type).toBe('propertyOfExpression');
       expect(valueExpr.property.name).toBe('values');
     });
@@ -356,7 +356,7 @@ describe('Parser Integration Tests', () => {
       const node = parseOk('set :data to values of #my-form');
       expect(node.type).toBe('command');
       const args = getArgs(node);
-      const valueExpr = args[2];
+      const valueExpr = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       expect(valueExpr.type).toBe('propertyOfExpression');
       expect(valueExpr.property.name).toBe('values');
     });
@@ -640,7 +640,7 @@ describe('Parser Integration Tests', () => {
       const node = parseOk('set :x to 5 + 3');
       const args = getArgs(node);
       // Value (after 'to') should be a binary expression
-      const value = args[2]; // [target, 'to', value]
+      const value = (node as { modifiers?: Record<string, any> }).modifiers?.to; // the value is the `to` slot (Arc 3 step 3)
       expect(value).toMatchObject({
         type: 'binaryExpression',
         operator: '+',
@@ -650,7 +650,7 @@ describe('Parser Integration Tests', () => {
     it('should parse parenthesized expression in set value', () => {
       const node = parseOk('set :total to (:price + :tax)');
       const args = getArgs(node);
-      const value = args[2];
+      const value = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       expect(value).toMatchObject({
         type: 'binaryExpression',
         operator: '+',
@@ -671,7 +671,7 @@ describe('Parser Integration Tests', () => {
     it('should parse member access in expressions', () => {
       const node = parseOk('set :len to items.length');
       const args = getArgs(node);
-      const value = args[2];
+      const value = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       expect(value).toMatchObject({
         type: 'memberExpression',
         object: { type: 'identifier', name: 'items' },
@@ -682,7 +682,7 @@ describe('Parser Integration Tests', () => {
     it('should parse as conversion in expression', () => {
       const node = parseOk('set :num to val as Int');
       const args = getArgs(node);
-      const value = args[2];
+      const value = (node as { modifiers?: Record<string, any> }).modifiers?.to;
       // The Pratt parser emits `asExpression` (not `binaryExpression`) for
       // type conversions; runtime evaluators dispatch on `case 'asExpression'`.
       // See commit bb89811e for the rationale (smaller blast radius than
@@ -737,7 +737,9 @@ describe('Parser Integration Tests', () => {
       expect(node.name).toBe('set');
       const args = getArgs(node);
       // [target, 'to', value]
-      expect(args).toHaveLength(3);
+      // The value is the `to` slot (Arc 3 step 3).
+      expect(args).toHaveLength(1);
+      expect((node as { modifiers?: Record<string, unknown> }).modifiers?.to).toBeDefined();
     });
 
     it('should route halt command to parseHaltCommand', () => {
@@ -837,8 +839,8 @@ describe('Parser Integration Tests', () => {
       expect(node.name).toBe('set');
       const args = getArgs(node);
       // set count to (count + 5)
-      expect(args).toHaveLength(3);
-      const binaryExpr = args[2]; // the value expression
+      expect(args).toHaveLength(1);
+      const binaryExpr = (node as { modifiers?: Record<string, any> }).modifiers?.to; // the value expression
       expect(binaryExpr).toMatchObject({
         type: 'binaryExpression',
         operator: '+',

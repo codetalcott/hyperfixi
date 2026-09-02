@@ -296,12 +296,15 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
   } else if (fallbackTokens.length > 0) {
     finalArgs.push(...fallbackTokens);
   }
-  finalArgs.push(ctx.createIdentifier(KEYWORDS.TO));
-  if (value) {
-    finalArgs.push(value);
-  }
-
+  // The value is the `to` SLOT (Arc 3 step 3): `set x to 1` is
+  // `args: [x]`, `modifiers.to: 1` — the shape the semantic path always
+  // produced and the one SetCommand.parseInput already read first. The parser
+  // had just consumed `to` and was pushing it back into args as an identifier
+  // for the command to find again by scanning.
   const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
+  if (value) {
+    builder.withModifier('to', value as ExpressionNode);
+  }
   if (scopeTarget) {
     // SetCommand reads its element scope from modifiers.on (not args) —
     // the same shape the semantic parser's setMapper emits.
@@ -422,17 +425,20 @@ export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken:
   // which return strings) instead of concatenating them.
   (binaryExpr as { coerceNumeric?: boolean }).coerceNumeric = true;
 
-  // Create the 'to' keyword identifier
-  const toIdentifier = createIdentifier(KEYWORDS.TO, pos);
-
-  // Build args for set command: [target, 'to', binaryExpression]
-  const args: ASTNode[] = [targetWithScope, toIdentifier, binaryExpr];
-
-  // Return a `set` command node instead of increment/decrement
-  return CommandNodeBuilder.from(commandToken)
-    .withName('set')
-    .withArgs(...args)
-    .withOriginalCommand(commandName)
-    .endingAt({ end: ctx.previous().end })
-    .build();
+  // Return a `set` command node instead of increment/decrement — in the
+  // slot shape `set` itself now emits (Arc 3 step 3): the target positional,
+  // the synthesized `target ± amount` as `modifiers.to`. Until now this was
+  // the one in-repo producer of the flat `[target, to, value]` shape, and
+  // SetCommand.parseInput's scan for a `to` identifier was covering for it.
+  return (
+    CommandNodeBuilder.from(commandToken)
+      .withName('set')
+      .withArgs(targetWithScope)
+      // `createBinaryExpression` returns the legacy-typed node; ExpressionNode is
+      // its subtype, so this is an ordinary downcast, not a hatch.
+      .withModifier('to', binaryExpr as ASTNode as ExpressionNode)
+      .withOriginalCommand(commandName)
+      .endingAt({ end: ctx.previous().end })
+      .build()
+  );
 }
