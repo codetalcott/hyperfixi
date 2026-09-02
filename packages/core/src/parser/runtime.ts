@@ -36,6 +36,34 @@ import {
   evaluateJoinedBy,
 } from '../expressions/collection/index';
 import { parse } from './parser';
+import type {
+  Expr,
+  ArrayLiteralNode,
+  AsExpressionNode,
+  AttributeAccessNode,
+  BetweenExpressionNode,
+  BinaryExpressionNode,
+  BlockLiteralNode,
+  CallExpressionNode,
+  CollectionExpressionNode,
+  ConditionalExpressionNode,
+  ContextReferenceNode,
+  EventHandlerNode,
+  IdentifierNode,
+  LiteralNode,
+  MemberExpressionNode,
+  ObjectLiteralNode,
+  PossessiveExpressionNode,
+  PropertyAccessNode,
+  PropertyOfExpressionNode,
+  SelectorNode,
+  StringNode,
+  StringPostfixNode,
+  TemplateLiteralNode,
+  TypeCheckExpressionNode,
+  UnaryExpressionNode,
+} from '../ast/nodes';
+import { isIdentifierNode } from '../ast/guards';
 
 /**
  * Look up a named expression on the runtime context's registry. Throws a clear,
@@ -57,82 +85,6 @@ function getExpr(context: ExecutionContext, name: string): ExpressionImplementat
   return impl;
 }
 
-// ============================================================================
-// Node shapes — minimal per-helper interfaces over ASTNode.
-// Each shape lists only the fields that helper reads. These narrow the
-// `(node: any)` parameters and catch typos at the call site without
-// committing to a full discriminated-union of every parser output.
-// ============================================================================
-
-type LiteralNode = ASTNode & { value: unknown };
-type IdentifierNode = ASTNode & { name: string };
-type BinaryNode = ASTNode & {
-  operator: string;
-  left: ASTNode;
-  right: ASTNode;
-  ignoringCase?: boolean;
-};
-type AsNode = ASTNode & { expression: ASTNode; targetType: unknown };
-type BetweenNode = ASTNode & {
-  value: ASTNode;
-  min: ASTNode;
-  max: ASTNode;
-  ignoringCase?: boolean;
-  negated?: boolean;
-};
-type TypeCheckNode = ASTNode & {
-  value: ASTNode;
-  typeName: string;
-  nullOk?: boolean;
-  negated?: boolean;
-};
-type ArrayLiteralNode = ASTNode & { elements: ASTNode[] };
-type ObjectLiteralNode = ASTNode & {
-  properties: Array<{ key: ASTNode & { valueType?: string }; value: ASTNode }>;
-};
-type AttributeAccessNode = ASTNode & { attributeName: string };
-type PropertyAccessNode = ASTNode & { object: ASTNode; property: string };
-type PropertyOfNode = ASTNode & { property: ASTNode; target: ASTNode };
-type TemplateLiteralNode = ASTNode & { value: string };
-type CollectionNode = ASTNode & {
-  operator: string;
-  collection: ASTNode;
-  right: ASTNode;
-  order?: 'asc' | 'desc';
-};
-type UnaryNode = ASTNode & { operator: string; operand?: ASTNode; argument?: ASTNode };
-type MemberNode = ASTNode & {
-  object: ASTNode;
-  property: ASTNode & { name?: string };
-  computed?: boolean;
-};
-type CallNode = ASTNode & {
-  callee: ASTNode & { type: string; name?: string; object?: ASTNode };
-  arguments: ASTNode[];
-  isConstructor?: boolean;
-};
-type SelectorNode = ASTNode & { value: unknown; fromQuery?: boolean };
-type ContextRefNode = ASTNode & {
-  contextType:
-    | 'me'
-    | 'my'
-    | 'myself'
-    | 'I'
-    | 'you'
-    | 'your'
-    | 'yourself'
-    | 'it'
-    | 'its'
-    | 'target'
-    | 'event'
-    | 'body'
-    | 'document'
-    | 'window';
-};
-type PossessiveNode = ASTNode & { object: ASTNode; property: { name: string } };
-type EventHandlerNode = ASTNode & { event?: unknown; selector?: unknown; commands: ASTNode[] };
-type ConditionalNode = ASTNode & { test: ASTNode; consequent: ASTNode; alternate?: ASTNode };
-
 /**
  * Unwrap a `{ success, value, errors }` TypedResult returned by the
  * arithmetic registry. Non-TypedResult values pass through unchanged. Callers
@@ -149,8 +101,211 @@ function unwrapTypedResult(result: any): any {
 }
 
 /**
+ * The kinds {@link evaluateKnown} dispatches: every {@link Expr} member EXCEPT
+ * the three below, plus the one statement kind the evaluator handles.
+ *
+ * `eventHandler` is a statement, not an `Expr`, and it is here because the
+ * evaluator genuinely evaluates it (`evaluateEventHandler` installs the
+ * listener and returns). The other eight statement kinds are EXECUTED by
+ * `runtime-base.ts` and never evaluated — see the routing table below.
+ *
+ * The three excluded `Expr` kinds are not oversights. Each is consumed
+ * structurally by its one reader and never reaches an evaluator:
+ *
+ *   - `cssProperty`   — built by `semantic-integration.createPropertyNode` for
+ *                       a `set` destination, read by
+ *                       `commands/helpers/selector-type-detection.ts`, which
+ *                       destructures it. (Measured 2026-09-01: that reader
+ *                       cannot match the shape the emitter builds. A behaviour
+ *                       bug, filed in `PARSER_NEXT_STEPS.md`; a types-only arc
+ *                       must not fix it here.)
+ *   - `functionCall`  — built by `command-parsers/event-commands.ts` for a
+ *                       `send`/`trigger` event name, destructured by
+ *                       `commands/events/trigger.ts` (`.name` / `.args`). Its
+ *                       sibling arms in that function evaluate; this one does
+ *                       not.
+ *   - `expression`    — the generic wrapper, read structurally by
+ *                       `commands/async/fetch.ts` and `semantic-integration.ts`.
+ *
+ * Excluding them is what keeps `evaluateKnown`'s `never` default honest: listed,
+ * the switch would need three arms nothing can reach. If one ever DOES arrive at
+ * {@link evaluateAST}, it falls through to the plugin registry and then to the
+ * same `Unknown AST node type` throw it gets today — this typing changes no
+ * behaviour.
+ */
+type EvaluableNode =
+  | Exclude<Expr, { type: 'cssProperty' } | { type: 'functionCall' } | { type: 'expression' }>
+  | EventHandlerNode;
+
+/**
+ * The runtime mirror of {@link EvaluableNode}, and the reason it cannot drift.
+ *
+ * `satisfies` proves every string here is a real kind (no ghosts); the
+ * `MissingEvaluableKind` line below proves every kind is listed (none missing).
+ * One direction alone is not enough — a plain `readonly EvaluableNode['type'][]`
+ * annotation accepts a SHORT array happily, and a short array here would route
+ * a real parser kind to the plugin registry by accident.
+ */
+const EVALUABLE_KINDS = [
+  'literal',
+  'string',
+  'identifier',
+  'selector',
+  'attributeAccess',
+  'binaryExpression',
+  'unaryExpression',
+  'callExpression',
+  'memberExpression',
+  'possessiveExpression',
+  'propertyOfExpression',
+  'arrayLiteral',
+  'objectLiteral',
+  'templateLiteral',
+  'asExpression',
+  'betweenExpression',
+  'typeCheckExpression',
+  'collectionExpression',
+  'conditionalExpression',
+  'stringPostfix',
+  'blockLiteral',
+  'propertyAccess',
+  'contextReference',
+  'eventHandler',
+] as const satisfies readonly EvaluableNode['type'][];
+
+/** `never` iff the array above lists every {@link EvaluableNode} kind. */
+type MissingEvaluableKind = Exclude<EvaluableNode['type'], (typeof EVALUABLE_KINDS)[number]>;
+const _evaluableKindsAreComplete: MissingEvaluableKind extends never
+  ? true
+  : ['EVALUABLE_KINDS is missing these kinds', MissingEvaluableKind] = true;
+void _evaluableKindsAreComplete;
+
+const EVALUABLE_KIND_SET: ReadonlySet<string> = new Set<string>(EVALUABLE_KINDS);
+
+/**
+ * Evaluate a node of a kind the core parser emits.
+ *
+ * Exhaustive over {@link EvaluableNode}: the `default` arm assigns to `never`,
+ * so adding a member to `Expr` without adding an arm here is a compile error.
+ * That gate is the whole point of the split — {@link evaluateAST} keeps the
+ * wide parameter and the plugin registry, so neither can weaken it.
+ *
+ * ## Where the other 11 union kinds go
+ *
+ * `evaluateAST`'s arms cover 24 of the union's 35 kinds (measured 2026-09-01).
+ * The 11 that never arrive here:
+ *
+ * | kind | handled by |
+ * | --- | --- |
+ * | `command`, `block`, `CommandSequence`, `Program` | `runtime-base.ts` EXECUTES them — statements, not values |
+ * | `behavior`, `def`, `initBlock` | `runtime-base.ts` installs them at registration time |
+ * | `error` | the interchange converter's unconvertible-node marker; never executed |
+ * | `cssProperty`, `functionCall`, `expression` | structural readers — see {@link EvaluableNode} |
+ */
+async function evaluateKnown(node: EvaluableNode, context: ExecutionContext): Promise<any> {
+  switch (node.type) {
+    case 'literal':
+      return evaluateLiteral(node);
+
+    case 'identifier':
+      return evaluateIdentifier(node, context);
+
+    case 'binaryExpression':
+      return evaluateBinaryExpression(node, context);
+
+    case 'asExpression':
+      return evaluateAsExpressionNode(node, context);
+
+    case 'betweenExpression':
+      return evaluateBetweenExpression(node, context);
+
+    case 'typeCheckExpression':
+      return evaluateTypeCheckExpression(node, context);
+
+    case 'collectionExpression':
+      return evaluateCollectionExpression(node, context);
+
+    case 'unaryExpression':
+      return evaluateUnaryExpression(node, context);
+
+    case 'memberExpression':
+      return evaluateMemberExpression(node, context);
+
+    // LEGACY: flat property paths (string `property`, possibly dotted). No
+    // parser emits these any more — Thread B item 5 converged the semantic
+    // builder on the core parser's nested `memberExpression`. MEASURED
+    // 2026-09-01: zero in-repo non-test producers remain (grep + kind
+    // classifier); the arm now serves only EXTERNAL hand-built ASTs
+    // (buildAST is public API). Delete with the next minor version bump.
+    case 'propertyAccess':
+      return evaluatePropertyAccess(node, context);
+
+    case 'callExpression':
+      return evaluateCallExpression(node, context);
+
+    case 'selector':
+      return evaluateSelector(node, context);
+
+    // LEGACY: dedicated context-reference nodes (`me`/`you`/`it`/`target`/
+    // `event`). No parser emits these any more — Thread B item 5 converged
+    // every reference on the core parser's `identifier` spelling (handled
+    // above). MEASURED 2026-09-01: zero in-repo non-test producers remain;
+    // the arm now serves only EXTERNAL hand-built ASTs (buildAST is public
+    // API). Delete with the next minor version bump.
+    case 'contextReference':
+      return evaluateContextReference(node, context);
+
+    case 'possessiveExpression':
+      return evaluatePossessiveExpression(node, context);
+
+    case 'eventHandler':
+      return evaluateEventHandler(node, context);
+
+    case 'conditionalExpression':
+      return evaluateConditionalExpression(node, context);
+
+    // Raw string AST node (loop variables, event names, command args parsed
+    // as bare strings — e.g. transition's "*background-color" property arg).
+    case 'string':
+      return node.value;
+
+    // Composite expression nodes produced by the canonical parser.
+    case 'arrayLiteral':
+      return evaluateArrayLiteralNode(node, context);
+    case 'objectLiteral':
+      return evaluateObjectLiteralNode(node, context);
+    case 'attributeAccess':
+      return evaluateAttributeAccessNode(node, context);
+    case 'propertyOfExpression':
+      return evaluatePropertyOfExpressionNode(node, context);
+    case 'templateLiteral':
+      return evaluateTemplateLiteralNode(node, context);
+    case 'stringPostfix':
+      return evaluateStringPostfixNode(node, context);
+    case 'blockLiteral':
+      return makeBlockLiteralClosure(node, context);
+
+    default: {
+      const unreachable: never = node;
+      throw new Error(
+        `Unhandled evaluable AST node type: ${String((unreachable as { type?: unknown }).type)}`
+      );
+    }
+  }
+}
+
+/**
  * Evaluate any AST node. Inlines fast paths for the two most common shapes
- * (literal, identifier) before falling through to a per-type switch.
+ * (literal, identifier) before dispatching to {@link evaluateKnown}.
+ *
+ * The parameter stays WIDE on purpose. Callers hand this nodes from the
+ * interchange converter, from `buildAST` (public API) and from plugins, none of
+ * which the union describes; narrowing here would push a cast to every one of
+ * those call sites and prove nothing. The exhaustiveness gate lives one level
+ * down, where the input really is a union member — which is also why
+ * `PluginNode` is a registry payload type and NOT a union member: a
+ * `type: string` member widens every narrow in that switch and makes its
+ * `never` default impossible (compiler-probed, #1051).
  */
 export async function evaluateAST(node: ASTNode, context: ExecutionContext): Promise<any> {
   if (!node) {
@@ -171,101 +326,18 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     return evaluateIdentifier(node as IdentifierNode, context);
   }
 
-  // Fall through to switch for complex node types. Each case casts to the
-  // helper's input shape — `node.type` already narrows what's there, but TS
-  // lacks a discriminated union over the full ASTNode set.
-  const n = node as any;
-  switch (node.type) {
-    case 'literal':
-      return evaluateLiteral(n);
-
-    case 'identifier':
-      return evaluateIdentifier(n, context);
-
-    case 'binaryExpression':
-      return evaluateBinaryExpression(n, context);
-
-    case 'asExpression':
-      return evaluateAsExpressionNode(n, context);
-
-    case 'betweenExpression':
-      return evaluateBetweenExpression(n, context);
-
-    case 'typeCheckExpression':
-      return evaluateTypeCheckExpression(n, context);
-
-    case 'collectionExpression':
-      return evaluateCollectionExpression(n, context);
-
-    case 'unaryExpression':
-      return evaluateUnaryExpression(n, context);
-
-    case 'memberExpression':
-      return evaluateMemberExpression(n, context);
-
-    // LEGACY: flat property paths (string `property`, possibly dotted). No
-    // parser emits these any more — Thread B item 5 converged the semantic
-    // builder on the core parser's nested `memberExpression`. MEASURED
-    // 2026-09-01: zero in-repo non-test producers remain (grep + kind
-    // classifier); the arm now serves only EXTERNAL hand-built ASTs
-    // (buildAST is public API). Delete with the next minor version bump.
-    case 'propertyAccess':
-      return evaluatePropertyAccess(n, context);
-
-    case 'callExpression':
-      return evaluateCallExpression(n, context);
-
-    case 'selector':
-      return evaluateSelector(n, context);
-
-    // LEGACY: dedicated context-reference nodes (`me`/`you`/`it`/`target`/
-    // `event`). No parser emits these any more — Thread B item 5 converged
-    // every reference on the core parser's `identifier` spelling (handled
-    // above). MEASURED 2026-09-01: zero in-repo non-test producers remain;
-    // the arm now serves only EXTERNAL hand-built ASTs (buildAST is public
-    // API). Delete with the next minor version bump.
-    case 'contextReference':
-      return evaluateContextReference(n as ContextRefNode, context);
-
-    case 'possessiveExpression':
-      return evaluatePossessiveExpression(n, context);
-
-    case 'eventHandler':
-      return evaluateEventHandler(n, context);
-
-    case 'conditionalExpression':
-      return evaluateConditionalExpression(n, context);
-
-    // Raw string AST node (loop variables, event names, command args parsed
-    // as bare strings — e.g. transition's "*background-color" property arg).
-    case 'string':
-      return n.value;
-
-    // Composite expression nodes produced by the canonical parser.
-    case 'arrayLiteral':
-      return evaluateArrayLiteralNode(n, context);
-    case 'objectLiteral':
-      return evaluateObjectLiteralNode(n, context);
-    case 'attributeAccess':
-      return evaluateAttributeAccessNode(n, context);
-    case 'propertyOfExpression':
-      return evaluatePropertyOfExpressionNode(n, context);
-    case 'templateLiteral':
-      return evaluateTemplateLiteralNode(n, context);
-    case 'stringPostfix':
-      return evaluateStringPostfixNode(n, context);
-    case 'blockLiteral':
-      return makeBlockLiteralClosure(n, context);
-
-    default: {
-      // Allow plugins to register evaluators for custom AST node types.
-      const pluginEvaluator = getRegisteredNodeEvaluator((node as any).type);
-      if (pluginEvaluator) {
-        return pluginEvaluator(node, context);
-      }
-      throw new Error(`Unknown AST node type: ${(node as any).type}`);
-    }
+  if (EVALUABLE_KIND_SET.has(node.type)) {
+    return evaluateKnown(node as EvaluableNode, context);
   }
+
+  // Allow plugins to register evaluators for custom AST node types. Checked
+  // AFTER the core kinds, exactly as the old `default` arm did, so a plugin
+  // cannot shadow a kind the parser emits.
+  const pluginEvaluator = getRegisteredNodeEvaluator(node.type);
+  if (pluginEvaluator) {
+    return pluginEvaluator(node, context);
+  }
+  throw new Error(`Unknown AST node type: ${node.type}`);
 }
 
 /**
@@ -323,6 +395,35 @@ export class NotSyncEvaluable extends Error {
 }
 
 /**
+ * The pure-expression subset {@link evaluateKnownSync} can prove synchronous.
+ *
+ * Derived FROM the kind array rather than the other way round, which is the
+ * opposite of {@link EvaluableNode} above and deliberate. That one is "every
+ * `Expr` except three", so the exclusions are the thing worth naming and a
+ * separate completeness check earns its keep. This one is an opt-in subset with
+ * no principle behind its membership beyond "provably needs no `await`", so the
+ * array IS the definition: deriving the type from it makes a missing entry
+ * impossible by construction, and `satisfies` still rejects a ghost kind.
+ */
+const SYNC_EVALUABLE_KINDS = [
+  'literal',
+  'string',
+  'selector',
+  'identifier',
+  'contextReference',
+  'arrayLiteral',
+  'objectLiteral',
+  'asExpression',
+  'stringPostfix',
+  'blockLiteral',
+  'memberExpression',
+] as const satisfies readonly Expr['type'][];
+
+type SyncEvaluableNode = Extract<Expr, { type: (typeof SYNC_EVALUABLE_KINDS)[number] }>;
+
+const SYNC_EVALUABLE_KIND_SET: ReadonlySet<string> = new Set<string>(SYNC_EVALUABLE_KINDS);
+
+/**
  * Synchronous fast-path for the *pure-expression* subset, used only by the
  * upstream-parity harness so `_hyperscript("expr")` can return a value (not a
  * Promise) — matching upstream's synchronous `_hyperscript()`. Production keeps
@@ -330,38 +431,57 @@ export class NotSyncEvaluable extends Error {
  * synchronous throws `NotSyncEvaluable` so the caller falls back to async.
  *
  * Currently covers bare selector references (`.c1`, `#id`, `<.c1/>`), which is
- * what the classRef/queryRef parity tests need. Reuses the same selector
- * resolution semantics as `evaluateSelector` (sans the async registry).
+ * what the classRef/queryRef parity tests need.
+ *
+ * Split into an outer router and {@link evaluateKnownSync} for the same reason
+ * {@link evaluateAST} is: the parameter must stay wide (callers pass arbitrary
+ * `ASTNode`s, and the function recurses on children), but the switch must be
+ * exhaustive. The router is also where a null/undefined node becomes
+ * `NotSyncEvaluable('unknown')`, preserving the old `switch (n?.type)`.
  */
 export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext): unknown {
-  const n = node as any;
-  switch (n?.type) {
+  const kind: unknown = node?.type;
+  if (typeof kind === 'string' && SYNC_EVALUABLE_KIND_SET.has(kind)) {
+    return evaluateKnownSync(node as SyncEvaluableNode, context);
+  }
+  throw new NotSyncEvaluable(typeof kind === 'string' ? kind : 'unknown');
+}
+
+/**
+ * Exhaustive over {@link SyncEvaluableNode}. Adding a kind to
+ * {@link SYNC_EVALUABLE_KINDS} without an arm here is a compile error, and an
+ * arm for a kind that is not in the array is one too (the label is not
+ * comparable to the narrowed type) — so the array and the switch cannot drift
+ * apart in either direction.
+ */
+function evaluateKnownSync(node: SyncEvaluableNode, context: ExecutionContext): unknown {
+  switch (node.type) {
     case 'literal':
     case 'string':
-      return n.value;
+      return node.value;
     case 'selector':
-      return evaluateSelectorSync(n, context);
+      return evaluateSelectorSync(node, context);
     case 'identifier':
-      return resolveIdentifierSync(n.name, context, (n as { scope?: string }).scope);
+      return resolveIdentifierSync(node.name, context, node.scope);
     case 'contextReference':
-      return resolveContextReferenceSync(n.contextType, context);
+      return resolveContextReferenceSync(node.contextType, context);
     case 'arrayLiteral':
-      return (n.elements as ASTNode[]).map(el => evaluateExpressionSync(el, context));
+      return node.elements.map(el => evaluateExpressionSync(el, context));
     case 'objectLiteral':
-      return evaluateObjectLiteralSync(n, context);
+      return evaluateObjectLiteralSync(node, context);
     case 'asExpression': {
-      const value = evaluateExpressionSync(n.expression, context);
-      return convertValue(value, normalizeAsTargetType(n.targetType), context);
+      const value = evaluateExpressionSync(node.expression, context);
+      return convertValue(value, normalizeAsTargetType(node.targetType), context);
     }
     case 'stringPostfix':
-      return `${evaluateExpressionSync(n.expression, context)}${n.unit}`;
+      return `${evaluateExpressionSync(node.expression, context)}${node.unit}`;
     case 'blockLiteral':
-      return makeBlockLiteralClosure(n, context);
+      return makeBlockLiteralClosure(node, context);
     case 'memberExpression': {
       // Plain property reads only. DOM/collection targets defer to the async
       // path, which has styleRef/classref special-casing this naive read would
       // get wrong.
-      const obj = evaluateExpressionSync(n.object, context);
+      const obj = evaluateExpressionSync(node.object, context);
       if (obj == null) return undefined;
       if (
         obj instanceof Element ||
@@ -370,16 +490,22 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
       ) {
         throw new NotSyncEvaluable('memberExpression');
       }
-      const prop = n.computed
-        ? String(evaluateExpressionSync(n.property, context))
-        : (n.property?.name as string);
+      // `property` is an `Expr`, so `name` is only present on some members.
+      // Read it structurally rather than narrowing to `identifier`: the old
+      // code accepted a `name` on ANY property node, and a types-only change
+      // must not shrink that.
+      const prop = node.computed
+        ? String(evaluateExpressionSync(node.property, context))
+        : ((node.property as { name?: string }).name as string);
       const value = (obj as Record<string, unknown>)[prop];
       return typeof value === 'function'
         ? (value as (...a: unknown[]) => unknown).bind(obj)
         : value;
     }
-    default:
-      throw new NotSyncEvaluable(n?.type ?? 'unknown');
+    default: {
+      const unreachable: never = node;
+      throw new NotSyncEvaluable(String((unreachable as { type?: unknown }).type ?? 'unknown'));
+    }
   }
 }
 
@@ -430,7 +556,10 @@ function resolveContextReferenceSync(contextType: string, context: ExecutionCont
 }
 
 /** Sync object-literal evaluation mirroring `evaluateObjectLiteralNode`. */
-function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record<string, unknown> {
+function evaluateObjectLiteralSync(
+  node: ObjectLiteralNode,
+  context: ExecutionContext
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const property of node.properties) {
     const keyNode = property.key;
@@ -438,7 +567,10 @@ function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record
     if (keyNode.type === 'identifier') {
       key = keyNode.name;
     } else if (keyNode.type === 'literal' && keyNode.valueType === 'string') {
-      key = keyNode.value;
+      // `LiteralNode.value` is `unknown`; the `valueType` guard says it is a
+      // string here. `String()` is a no-op on one, and object keys are
+      // stringified on assignment anyway, so this cannot change behaviour.
+      key = String(keyNode.value);
     } else {
       key = String(evaluateExpressionSync(keyNode, context));
     }
@@ -661,7 +793,10 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
  * pattern `first/last .X in <root>`, short-circuit `and`/`or`, and delegates
  * the remaining operators to the logical/arithmetic registries.
  */
-async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionContext): Promise<any> {
+async function evaluateBinaryExpression(
+  node: BinaryExpressionNode,
+  context: ExecutionContext
+): Promise<any> {
   const operator = node.operator;
   const rightNode = node.right as any;
   const leftNode = node.left as any;
@@ -1087,7 +1222,10 @@ function normalizeAsTargetType(target: unknown): string {
  * Evaluate the `asExpression` AST node (`{ expression, targetType }`) emitted
  * by the Pratt parser.
  */
-async function evaluateAsExpressionNode(node: AsNode, context: ExecutionContext): Promise<unknown> {
+async function evaluateAsExpressionNode(
+  node: AsExpressionNode,
+  context: ExecutionContext
+): Promise<unknown> {
   const value = await evaluateAST(node.expression, context);
   const typeName = normalizeAsTargetType(node.targetType);
   return getExpr(context, 'as').evaluate(context, value, typeName);
@@ -1097,7 +1235,7 @@ async function evaluateAsExpressionNode(node: AsNode, context: ExecutionContext)
  * Evaluates `X is between A and B` / `X is not between A and B` ternary comparisons.
  */
 async function evaluateBetweenExpression(
-  node: BetweenNode,
+  node: BetweenExpressionNode,
   context: ExecutionContext
 ): Promise<boolean> {
   const value = await evaluateAST(node.value, context);
@@ -1119,7 +1257,7 @@ async function evaluateBetweenExpression(
  * named global constructor (`globalThis[typeName]`).
  */
 async function evaluateTypeCheckExpression(
-  node: TypeCheckNode,
+  node: TypeCheckExpressionNode,
   context: ExecutionContext
 ): Promise<boolean> {
   const value = await evaluateAST(node.value, context);
@@ -1236,7 +1374,7 @@ async function evaluateAttributeAccessNode(
  * expression.
  */
 async function evaluatePropertyOfExpressionNode(
-  node: PropertyOfNode,
+  node: PropertyOfExpressionNode,
   context: ExecutionContext
 ): Promise<unknown> {
   const propertyNode = node.property as any;
@@ -1372,7 +1510,7 @@ async function replaceAsync(
  * execution don't see each other's `it` values.
  */
 async function evaluateCollectionExpression(
-  node: CollectionNode,
+  node: CollectionExpressionNode,
   context: ExecutionContext
 ): Promise<any> {
   const collection = await evaluateAST(node.collection, context);
@@ -1427,7 +1565,10 @@ async function evaluateCollectionExpression(
  * produced as `unaryExpression` nodes by PARSER_COMPARISON_FRAGMENT
  * ([pratt-parser.ts:715-770]).
  */
-async function evaluateUnaryExpression(node: UnaryNode, context: ExecutionContext): Promise<any> {
+async function evaluateUnaryExpression(
+  node: UnaryExpressionNode,
+  context: ExecutionContext
+): Promise<any> {
   const operandNode = node.operand ?? node.argument;
   if (!operandNode) {
     throw new Error(`Unary expression has no operand (operator: ${node.operator})`);
@@ -1482,7 +1623,10 @@ async function evaluateUnaryExpression(node: UnaryNode, context: ExecutionContex
  * null so no extra check is needed today. The flag preserves intent if `.` is
  * ever tightened to throw on null.
  */
-async function evaluateMemberExpression(node: MemberNode, context: ExecutionContext): Promise<any> {
+async function evaluateMemberExpression(
+  node: MemberExpressionNode,
+  context: ExecutionContext
+): Promise<any> {
   const object = await evaluateAST(node.object, context);
 
   if (node.computed) {
@@ -1613,7 +1757,10 @@ function unwrapElement(value: unknown): Element | undefined {
   return undefined;
 }
 
-async function evaluateCallExpression(node: CallNode, context: ExecutionContext): Promise<any> {
+async function evaluateCallExpression(
+  node: CallExpressionNode,
+  context: ExecutionContext
+): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
 
   // `new Foo(args)` — parser marks constructor invocations with
@@ -1749,7 +1896,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
  * target and then `me`.
  */
 async function evaluateContextReference(
-  node: ContextRefNode,
+  node: ContextReferenceNode,
   context: ExecutionContext
 ): Promise<any> {
   switch (node.contextType) {
@@ -1947,7 +2094,7 @@ function interpolateQueryRefTemplateSync(
  * Evaluate possessive expressions (`element's property`).
  */
 async function evaluatePossessiveExpression(
-  node: PossessiveNode,
+  node: PossessiveExpressionNode,
   context: ExecutionContext
 ): Promise<any> {
   const object = await evaluateAST(node.object, context);
@@ -1989,7 +2136,7 @@ async function evaluateEventHandler(
  * Evaluates conditional expressions (if-then-else)
  */
 async function evaluateConditionalExpression(
-  node: ConditionalNode,
+  node: ConditionalExpressionNode,
   context: ExecutionContext
 ): Promise<any> {
   const test = await evaluateAST(node.test, context);

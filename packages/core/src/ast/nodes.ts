@@ -5,8 +5,9 @@
  * `docs-internal/HANDOFF-engine-arc2.md`. Until now the emitted node shapes
  * were described in **three** places that disagreed with each other and with
  * the parser: `parser/parser-types.ts` (15 kinds), 21 local
- * `type X = ASTNode & {…}` aliases in `parser/runtime.ts`, and a stale
- * per-kind set in `types/base-types.ts`. This file is the single description,
+ * `type X = ASTNode & {…}` aliases in `parser/runtime.ts` (deleted by step 3,
+ * which pointed each evaluator helper at its union member instead), and a
+ * stale per-kind set in `types/base-types.ts`. This file is the single description,
  * and every member below was checked against what the parser ACTUALLY emits
  * (a field census over the whole engine corpus, plus source inspection for the
  * kinds the corpus does not reach) rather than copied from any of the three.
@@ -417,10 +418,23 @@ export interface ErrorNode extends BaseNode {
 
 /**
  * A kind contributed at runtime through the node-evaluator registry
- * (`getRegisteredNodeEvaluator`). The registry stays — this member is what
- * lets the evaluator switch be exhaustive over everything the PARSER emits
- * while still admitting registered kinds, instead of the switch's `default`
- * arm silently absorbing a typo'd core kind too.
+ * (`getRegisteredNodeEvaluator`). The registry stays, and this describes what
+ * it holds.
+ *
+ * ## NOT a member of {@link Expr}, {@link Stmt} or {@link SyntaxNode}
+ *
+ * It was designed as one, and that design cannot compile — probed 2026-09-01
+ * (#1051) and confirmed when step 3 shipped. `type: string` is not a literal,
+ * so a `PluginNode` member widens every narrow in a switch over the union
+ * (`n.type === 'literal'` yields `LiteralNode | PluginNode`) and makes the
+ * `never` default impossible — destroying the exhaustiveness it was meant to
+ * enable.
+ *
+ * What replaced it: `parser/runtime.ts` splits the evaluator in two. The inner
+ * `evaluateKnown` takes a real union member and holds the exhaustive switch;
+ * the outer `evaluateAST` keeps a wide parameter and consults this registry
+ * AFTER the core kinds, so a plugin still cannot shadow a kind the parser
+ * emits. `parser/__tests__/evaluator-routing.test.ts` pins both halves.
  */
 export interface PluginNode extends BaseNode {
   readonly type: string;
