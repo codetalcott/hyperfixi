@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2038,
-    "branches": 305,
-    "syntaxSites": 73,
-    "valueSites": 182
+    "lines": 2070,
+    "branches": 316,
+    "syntaxSites": 74,
+    "valueSites": 185
   },
   "commands": {
     "async": {
@@ -312,10 +312,10 @@
     },
     "scroll": {
       "file": "src/commands/navigation/scroll-to.ts",
-      "lines": 12,
-      "branches": 1,
-      "syntaxSites": 0,
-      "valueSites": 1
+      "lines": 44,
+      "branches": 12,
+      "syntaxSites": 1,
+      "valueSites": 4
     },
     "render": {
       "file": "src/commands/templates/render.ts",

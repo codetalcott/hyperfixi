@@ -73,60 +73,49 @@ const BOTH_PATHS: Array<[string, boolean]> = [
   ['traditional', true],
 ];
 
-/** Structural words must arrive as `string` nodes — see the docblock. */
-function stringArgs(node: CommandNode): string[] {
-  return (node.args ?? []).filter(a => a.type === 'string').map(a => String(a.value));
+/** The slots the parser emits (Arc 3 step 3); a word's text is its literal value. */
+function slots(node: CommandNode): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(
+    (node as { modifiers?: Record<string, unknown> }).modifiers ?? {}
+  )) {
+    const n = v as { type?: string; value?: unknown };
+    out[k] = n.type === 'string' || n.type === 'literal' ? n.value : n.type;
+  }
+  return out;
 }
 
 describe('scroll — parse', () => {
   describe.each(BOTH_PATHS)('%s path', (_label, traditional) => {
-    it('keeps the trailing adverb, as a string the runtime can match', () => {
-      expect(stringArgs(commandOf('scroll to me instantly', traditional))).toEqual([
-        'to',
-        'instantly',
-      ]);
-      expect(stringArgs(commandOf('scroll to me smoothly', traditional))).toEqual([
-        'to',
-        'smoothly',
-      ]);
+    it('carries the adverb as the `behavior` slot', () => {
+      expect(slots(commandOf('scroll to me instantly', traditional)).behavior).toBe('instant');
+      expect(slots(commandOf('scroll to me smoothly', traditional)).behavior).toBe('smooth');
     });
 
-    it('keeps the position word flat instead of folding it into a binary `of`', () => {
+    it('carries the position word as the `position` slot and the target under `of`', () => {
       const node = commandOf('scroll to the top of #chat smoothly', traditional);
-      expect(stringArgs(node)).toEqual(['to', 'the', 'top', 'of', 'smoothly']);
-      // The target survives as its own argument — the fold is what lost it.
-      expect((node.args ?? []).some(a => a.type === 'selector' && a.value === '#chat')).toBe(true);
+      expect(slots(node)).toEqual({ position: 'top', of: 'selector', behavior: 'smooth' });
+      expect(node.args ?? []).toHaveLength(0);
     });
 
-    it('keeps a positional target expression whole', () => {
+    it('keeps a positional target expression whole (`in` is the positional operator, not a slot)', () => {
       const node = commandOf('scroll to last <.message/> in #chat', traditional);
-      // Until Arc 1 step 6 the default path ADOPTED this source from the
-      // semantic front-end, which models `in` as part of the target expression
-      // (`binaryExpression 'in'`), and this test recorded that as a convergence
-      // difference. The in-loop path is gone; both paths are now the core
-      // parser, and the shape is upstream's: `last <.message/>` is one
-      // expression and `in #chat` is scroll's container clause — exactly how
-      // `_parseScrollModifiers` reads it (target via `unaryExpression`, then
-      // `matchToken("in")`).
-      expect(stringArgs(node)).toEqual(['to', 'in']);
-      expect(node.args?.length).toBe(4);
+      expect(node.args?.length).toBe(1);
+      expect(slots(node)).toEqual({});
+      expect(JSON.stringify(node.args?.[0])).toContain('#chat');
     });
 
-    it('parses the `scroll <dir> by <n>` branch flat, like the `to` branch', () => {
-      // Structural words as `string` nodes the runtime matches by text — the
-      // generic path used to emit `identifier`s here, which evaluate to
-      // `undefined` (and the form had no runtime at all).
+    it('parses the `scroll <dir> by <n>` branch into `direction` and a signed `by`', () => {
       const node = commandOf('scroll down by 100 px', traditional);
       expect(node.name).toBe('scroll');
-      expect(stringArgs(node)).toEqual(['down', 'by', 'px']);
-      expect((node.args ?? []).some(a => a.type === 'literal' && a.value === 100)).toBe(true);
+      expect(slots(node)).toEqual({ direction: 'down', by: 100 });
     });
 
     it('parses the target-first `scroll <target> <dir> by <n>` form', () => {
       const node = commandOf('scroll #panel right by 50', traditional);
       expect(node.name).toBe('scroll');
-      expect(stringArgs(node)).toEqual(['right', 'by']);
-      expect((node.args ?? []).some(a => a.type === 'selector' && a.value === '#panel')).toBe(true);
+      expect(slots(node)).toEqual({ direction: 'right', by: 50 });
+      expect(node.args?.[0]).toMatchObject({ type: 'selector', value: '#panel' });
     });
   });
 });

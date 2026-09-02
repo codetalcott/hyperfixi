@@ -1440,6 +1440,30 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    `url`, `back`, `of`, `in new window` scanned after evaluation) and
    `scroll` (`top`/`bottom`/`smoothly`) — their own PR.
 
+   **`scroll` (2026-09-03) — the census-blind case.** Its parser pushed
+   every keyword as a STRING node and the command matched the evaluated
+   values — `args.includes('smoothly')`, `args.find(a => a === 'up' || …)`,
+   a 14-word skip list to find the target — so the census read `12 lines ·
+   S 0` for a command whose whole syntax lived in `execute`. `parseScrollTo`
+   / `parseScrollBy` now emit `position`, `of`, `behavior`
+   (`'smooth'`|`'instant'`), `direction` and a signed `by` (the `px` unit
+   consumed), the target the one positional argument; `ScrollCommandInput`
+   is `{ target, position?, behavior?, direction?, offset? }`, resolved in
+   `parseInput`, consumed by `execute` (the file shrank 254 → 195 lines).
+   `in` is deliberately NOT a slot: `scroll to last <.message/> in #chat`
+   is one positional `in` expression, as upstream reads it — the old
+   collector split it into `[to, last…, in, #chat]`, and upstream `scroll`
+   has no container clause. The meter, honestly: **scroll 12 → 44 lines ·
+   S 0 → 1 · V 1 → 4** — the row GROWS because ~80 lines of execute-side
+   value scanning became a `parseInput` the meter counts; that is the
+   migration doing what it is for, and the baseline was regenerated with
+   that reason. Four AST-equivalence rows moved. AOT's `ScrollCodegen`
+   reads the `behavior` slot beside the semantic path's `smooth` flag.
+   `go` is next, same shape: `back` (a flag), `url`, `in` (`new window`),
+   `position`, `of`, `behavior`, `by`, with the bare URL or element the
+   positional argument — which is also what the hybrid bundle's `go`
+   template and `goSchema`'s `args: ['destination']` already emit.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

@@ -89,7 +89,7 @@ export const COMMAND_SLOTS = {
   replace: ['title'],
   reset: [],
   return: [],
-  scroll: [],
+  scroll: ['behavior', 'by', 'direction', 'of', 'position'],
   select: [],
   send: ['detail', 'on', 'to', 'with'],
   set: ['on', 'to'],
