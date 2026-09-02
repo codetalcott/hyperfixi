@@ -48,7 +48,7 @@ describe('SwapCommand variable-swap variant', () => {
   describe('parseInput detection', () => {
     it('detects variable-swap when args are [ident, with, ident]', async () => {
       const input = await cmd.parseInput(
-        { args: [ident('x'), ident('with'), ident('y')], modifiers: {} },
+        { args: [ident('x')], modifiers: { with: ident('y') } },
         evaluator(),
         ctx()
       );
@@ -60,7 +60,7 @@ describe('SwapCommand variable-swap variant', () => {
     it('does NOT detect variable-swap when first operand is a known strategy', async () => {
       // `innerHTML` is a recognized strategy keyword → falls through to DOM swap.
       const input = await cmd.parseInput(
-        { args: [ident('innerHTML'), ident('with'), ident('y')], modifiers: {} },
+        { args: [ident('innerHTML')], modifiers: { with: ident('y') } },
         evaluator(),
         ctx()
       );
@@ -70,7 +70,7 @@ describe('SwapCommand variable-swap variant', () => {
     it('does NOT detect variable-swap when an operand is a reserved context var', async () => {
       // `me`/`you`/`it`/etc. are reserved — falls through to DOM-swap.
       const input = await cmd.parseInput(
-        { args: [ident('me'), ident('with'), ident('x')], modifiers: {} },
+        { args: [ident('me')], modifiers: { with: ident('x') } },
         evaluator(),
         ctx({ x: 5 })
       );

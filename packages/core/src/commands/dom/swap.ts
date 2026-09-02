@@ -29,6 +29,7 @@ import {
 } from '../../lib/swap-executor';
 import type { MorphOptions } from '../../lib/morph-adapter';
 import { isHTMLElement } from '../../utils/element-check';
+import { isNodeOfKind } from '../../ast/guards';
 import {
   commandMeta,
   command,
@@ -70,6 +71,14 @@ export interface SwapCommandInput {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/** The text of a literal/string/identifier node, for a word carried as a slot. */
+function literalText(node: unknown): string | undefined {
+  if (isNodeOfKind(node, 'literal') && typeof node.value === 'string') return node.value;
+  if (isNodeOfKind(node, 'string')) return node.value;
+  if (isNodeOfKind(node, 'identifier')) return node.name;
+  return undefined;
+}
 
 async function resolveTargets(
   selector: string | null,
@@ -129,178 +138,66 @@ export class SwapCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SwapCommandInput> {
-    const args = raw.args;
-
-    if (!args || args.length === 0) {
+    const args = raw.args ?? [];
+    const modifiers = raw.modifiers ?? {};
+    if (args.length === 0) {
       throw new Error('[HyperFixi] swap: command requires arguments');
     }
 
-    const getNodeKeyword = (node: unknown): string | null => {
-      if (!node || typeof node !== 'object') return null;
-      const nodeObj = node as Record<string, unknown>;
-      const nodeType = nodeObj.type as string;
+    // The parser carries every syntactic decision as a slot (Arc 3 step 3):
+    // `modifiers.strategy` (the strategy word), `modifiers.with` (the content),
+    // `modifiers.viewTransition` (the tail), and the target as the one
+    // positional argument. The semantic front-end's shape — positional
+    // `[method, destination, patient]` — is read by the fallback below, as it
+    // always was; only the traditional path changed spelling.
+    const strategyWord = literalText(modifiers.strategy)?.toLowerCase();
+    let strategy: SwapStrategy = (strategyWord && STRATEGY_KEYWORDS[strategyWord]) || 'morph';
+    const useViewTransition = modifiers.viewTransition !== undefined;
 
-      if (nodeType === 'literal' && typeof nodeObj.value === 'string') {
-        return (nodeObj.value as string).toLowerCase();
-      }
-      if (nodeType === 'identifier' && typeof nodeObj.name === 'string') {
-        return (nodeObj.name as string).toLowerCase();
-      }
-      return null;
-    };
-
-    const argKeywords: (string | null)[] = args.map(getNodeKeyword);
-
-    const withIndex = argKeywords.findIndex(k => k === 'with');
-    const ofIndex = argKeywords.findIndex(k => k === 'of');
-    const deleteIndex = argKeywords.findIndex(k => k === 'delete');
-    const usingIndex = argKeywords.findIndex(k => k === 'using');
-
-    // ------------------------------------------------------------------
-    // Variable swap disambiguation (upstream _hyperscript setters.js:210)
-    //
-    // `swap a with b` exchanges two local variable values when:
-    //   - args is exactly [identifier, 'with', identifier]
-    //   - no strategy/keyword tokens are present (`of`, `delete`, `using`,
-    //     `into`, `over`, no STRATEGY_KEYWORDS first)
-    //   - neither operand is a selector or attribute reference
-    //   - both operand names are not 'me'/'you'/'it'/'result' (those are
-    //     read-only context references — falling back to DOM swap)
-    //
-    // When unmatched, fall through to the existing DOM-swap handler below.
-    // ------------------------------------------------------------------
-    if (
-      args.length === 3 &&
-      withIndex === 1 &&
-      ofIndex === -1 &&
-      deleteIndex === -1 &&
-      usingIndex === -1
-    ) {
-      const left = args[0] as Record<string, unknown>;
-      const right = args[2] as Record<string, unknown>;
-      const leftIsIdent = left?.type === 'identifier' && typeof left.name === 'string';
-      const rightIsIdent = right?.type === 'identifier' && typeof right.name === 'string';
-      const RESERVED = new Set(['me', 'you', 'it', 'result', 'window', 'document']);
-      if (
-        leftIsIdent &&
-        rightIsIdent &&
-        !RESERVED.has((left.name as string).toLowerCase()) &&
-        !RESERVED.has((right.name as string).toLowerCase()) &&
-        !STRATEGY_KEYWORDS[(left.name as string).toLowerCase()]
-      ) {
-        return {
-          variant: 'variable',
-          leftName: left.name as string,
-          rightName: right.name as string,
-        };
-      }
-    }
-
-    // The semantic path binds the tail to swapSchema's `manner` role and emits
-    // it as `modifiers.viewTransition` — presence is the whole request (the
-    // role's captured value is just the literal word `transition`). The
-    // traditional parser leaves the three keywords in the arg list instead,
-    // which the scan below reads. MorphCommand reads both the same way, off
-    // morphSchema's own `manner` role.
-    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
-    if (usingIndex !== -1) {
-      const afterUsing = argKeywords.slice(usingIndex + 1);
-      if (afterUsing.includes('view') && afterUsing.includes('transition')) {
-        useViewTransition = true;
-      }
-    }
-
-    let strategy: SwapStrategy = 'morph';
-    let targetNode: ASTNode | null = null;
-    let contentNode: ASTNode | null = null;
-
-    if (deleteIndex !== -1) {
-      strategy = 'delete';
-      targetNode = args[deleteIndex + 1];
-      contentNode = null;
-    } else if (ofIndex !== -1 && withIndex !== -1) {
-      const potentialStrategy = argKeywords[0];
-      if (potentialStrategy && STRATEGY_KEYWORDS[potentialStrategy]) {
-        strategy = STRATEGY_KEYWORDS[potentialStrategy];
-      }
-      targetNode = args[ofIndex + 1];
-      contentNode = args[withIndex + 1];
-    } else if (withIndex !== -1) {
-      const beforeWithKeywords = argKeywords.slice(0, withIndex);
-      const intoIdx = beforeWithKeywords.findIndex(k => k === 'into');
-      const overIdx = beforeWithKeywords.findIndex(k => k === 'over');
-
-      if (intoIdx !== -1) {
-        strategy = 'innerHTML';
-        targetNode = args[intoIdx + 1];
-      } else if (overIdx !== -1) {
-        strategy = 'outerHTML';
-        targetNode = args[overIdx + 1];
-      } else {
-        const firstKeyword = argKeywords[0];
-        if (firstKeyword && STRATEGY_KEYWORDS[firstKeyword]) {
-          strategy = STRATEGY_KEYWORDS[firstKeyword];
-          targetNode = args[1] || args[withIndex - 1];
-        } else {
-          targetNode = args[withIndex - 1];
-        }
-      }
-      contentNode = args[withIndex + 1];
+    let targetNode: ASTNode | undefined;
+    let contentNode: ASTNode | undefined;
+    if (modifiers.with !== undefined || args.length === 1) {
+      targetNode = args[0];
+      contentNode = modifiers.with as ASTNode | undefined;
     } else {
-      if (args.length >= 2) {
-        const firstKeyword = argKeywords[0];
-        if (firstKeyword && STRATEGY_KEYWORDS[firstKeyword]) {
-          strategy = STRATEGY_KEYWORDS[firstKeyword];
-        }
-        targetNode = args[args.length - 2];
-        contentNode = args[args.length - 1];
-      } else {
-        throw new Error(
-          '[HyperFixi] swap: could not parse arguments. Expected "swap <target> with <content>"'
-        );
-      }
+      // Front-end shape: an optional leading method literal, then the target
+      // and the content.
+      const lead = literalText(args[0])?.toLowerCase();
+      if (args.length >= 3 && lead && STRATEGY_KEYWORDS[lead]) strategy = STRATEGY_KEYWORDS[lead];
+      targetNode = args[args.length - 2];
+      contentNode = args[args.length - 1];
     }
 
-    let targetArg: unknown = null;
-    let contentArg: unknown = null;
-
-    if (targetNode) {
-      const nodeType = (targetNode as Record<string, unknown>).type;
-      const nodeValue = (targetNode as Record<string, unknown>).value;
-
-      if (nodeType === 'selector' && typeof nodeValue === 'string') {
-        targetArg = nodeValue;
-      } else if (
-        nodeType === 'binaryExpression' &&
-        (targetNode as Record<string, unknown>).operator === 'of'
+    // Variable swap (upstream _hyperscript setters.js:210): `swap a with b`
+    // exchanges two local variable values when both operands are plain
+    // identifiers, neither is a read-only context reference, and no strategy
+    // was given. Otherwise it is a DOM swap.
+    if (strategy === 'morph' && !strategyWord && isNodeOfKind(targetNode, 'identifier')) {
+      const RESERVED = new Set(['me', 'you', 'it', 'result', 'window', 'document']);
+      const leftName = targetNode.name;
+      const rightName = isNodeOfKind(contentNode, 'identifier') ? contentNode.name : undefined;
+      if (
+        rightName !== undefined &&
+        !RESERVED.has(leftName.toLowerCase()) &&
+        !RESERVED.has(rightName.toLowerCase()) &&
+        !STRATEGY_KEYWORDS[leftName.toLowerCase()]
       ) {
-        const left = (targetNode as Record<string, unknown>).left as Record<string, unknown>;
-        const right = (targetNode as Record<string, unknown>).right as Record<string, unknown>;
-
-        if (left && left.type === 'identifier' && typeof left.name === 'string') {
-          const strategyName = left.name.toLowerCase();
-          if (STRATEGY_KEYWORDS[strategyName]) {
-            strategy = STRATEGY_KEYWORDS[strategyName];
-          }
-        }
-
-        if (right && right.type === 'selector' && typeof right.value === 'string') {
-          targetArg = right.value;
-        } else if (right) {
-          targetArg = await evaluator.evaluate(right as ASTNode, context);
-        }
-      } else {
-        targetArg = await evaluator.evaluate(targetNode, context);
+        return { variant: 'variable', leftName, rightName };
       }
     }
-    if (contentNode) {
-      contentArg = await evaluator.evaluate(contentNode, context);
+
+    if (!targetNode || (!contentNode && strategy !== 'delete')) {
+      throw new Error(
+        '[HyperFixi] swap: could not parse arguments. Expected "swap <target> with <content>"'
+      );
     }
 
-    let targetSelector: string | null = null;
-    if (typeof targetArg === 'string') {
-      targetSelector = targetArg;
-    } else if (isHTMLElement(targetArg)) {
+    const targetArg: unknown = isNodeOfKind(targetNode, 'selector')
+      ? targetNode.value
+      : await evaluator.evaluate(targetNode, context);
+    const contentArg: unknown = contentNode ? await evaluator.evaluate(contentNode, context) : null;
+
+    if (isHTMLElement(targetArg)) {
       return {
         targets: [targetArg as HTMLElement],
         content: extractContent(contentArg),
@@ -309,13 +206,10 @@ export class SwapCommand implements DecoratedCommand {
         useViewTransition,
       };
     }
-
-    const targets = await resolveTargets(targetSelector, context);
-    const content = extractContent(contentArg);
-
+    const targets = await resolveTargets(typeof targetArg === 'string' ? targetArg : null, context);
     return {
       targets,
-      content,
+      content: extractContent(contentArg),
       strategy,
       morphOptions: { preserveChanges: true },
       useViewTransition,
@@ -397,86 +291,40 @@ export class MorphCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SwapCommandInput> {
-    const args = raw.args;
-
-    if (!args || args.length === 0) {
+    const args = raw.args ?? [];
+    const modifiers = raw.modifiers ?? {};
+    if (args.length === 0 && modifiers.with === undefined) {
       throw new Error('[HyperFixi] morph: command requires arguments');
     }
 
-    // Extract keywords from raw AST nodes (before evaluation)
-    // This is more robust than evaluating and checking strings
-    const getNodeKeyword = (arg: ASTNode): string | null => {
-      const nodeObj = arg as Record<string, unknown>;
-      const nodeType = nodeObj.type;
-      if (nodeType === 'identifier' && typeof nodeObj.name === 'string') {
-        return (nodeObj.name as string).toLowerCase();
-      }
-      return null;
-    };
+    // Slots from the parser (Arc 3 step 3): `modifiers.strategy` is `over`
+    // for the outer form, `modifiers.with` the content, `modifiers.viewTransition`
+    // the tail, and the target is the one positional argument. The front-end
+    // emits `args: [source]` with the target under `modifiers.on`; both are
+    // read here.
+    const strategy: SwapStrategy =
+      literalText(modifiers.strategy)?.toLowerCase() === 'over' ? 'morphOuter' : 'morph';
+    const useViewTransition = modifiers.viewTransition !== undefined;
 
-    const argKeywords: (string | null)[] = args.map(getNodeKeyword);
-    const withIndex = argKeywords.findIndex(k => k === 'with');
-    const overIndex = argKeywords.findIndex(k => k === 'over');
-    const usingIndex = argKeywords.findIndex(k => k === 'using');
-
-    // Check for 'using view transition' modifier. Two arrival shapes, same as
-    // SwapCommand: the semantic path binds the tail to morphSchema's `manner`
-    // role and emits `modifiers.viewTransition` (presence is the whole
-    // request); the traditional parser — which owns English, morph being on
-    // SKIP_SEMANTIC_COMMANDS — leaves the three keywords in the arg list for
-    // the scan below.
-    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
-    if (usingIndex !== -1) {
-      const afterUsing = argKeywords.slice(usingIndex + 1);
-      if (afterUsing.includes('view') && afterUsing.includes('transition')) {
-        useViewTransition = true;
-      }
-    }
-
-    let strategy: SwapStrategy = 'morph';
-    let targetNode: ASTNode | null = null;
-    let contentNode: ASTNode | null = null;
-
-    if (overIndex !== -1 && overIndex < (withIndex === -1 ? Infinity : withIndex)) {
-      // morph over <target> with <content>
-      strategy = 'morphOuter';
-      targetNode = args[overIndex + 1];
-      if (withIndex !== -1) {
-        contentNode = args[withIndex + 1];
-      }
-    } else if (withIndex !== -1) {
-      // morph <target> with <content>
-      targetNode = args[withIndex - 1];
-      contentNode = args[withIndex + 1];
-    } else if (args.length >= 2) {
-      // Fallback: morph <target> <content>
-      targetNode = args[0];
-      contentNode = args[1];
-    }
-
-    if (!targetNode) {
+    const targetNode: ASTNode | undefined =
+      modifiers.on !== undefined ? (modifiers.on as ASTNode) : args[0];
+    const contentNode: ASTNode | undefined =
+      modifiers.with !== undefined
+        ? (modifiers.with as ASTNode)
+        : modifiers.on !== undefined
+          ? args[0]
+          : args[1];
+    if (!targetNode || !contentNode) {
       throw new Error('[HyperFixi] morph: could not determine target');
     }
 
-    // Evaluate target
-    let targetArg: unknown = null;
-    const targetNodeObj = targetNode as Record<string, unknown>;
-    if (targetNodeObj.type === 'selector' && typeof targetNodeObj.value === 'string') {
-      targetArg = targetNodeObj.value;
-    } else {
-      targetArg = await evaluator.evaluate(targetNode, context);
-    }
-
-    // Evaluate content
-    let contentArg: unknown = null;
-    if (contentNode) {
-      contentArg = await evaluator.evaluate(contentNode, context);
-    }
-
+    const targetArg: unknown = isNodeOfKind(targetNode, 'selector')
+      ? targetNode.value
+      : await evaluator.evaluate(targetNode, context);
+    const contentArg: unknown = contentNode ? await evaluator.evaluate(contentNode, context) : null;
     if (!targetArg) {
       throw new Error('[HyperFixi] morph: could not determine target');
     }
-
     let targets: HTMLElement[];
     if (typeof targetArg === 'string') {
       targets = await resolveTargets(targetArg, context);
@@ -485,7 +333,6 @@ export class MorphCommand implements DecoratedCommand {
     } else {
       throw new Error('[HyperFixi] morph: target must be a selector or element');
     }
-
     return {
       targets,
       content: extractContent(contentArg),

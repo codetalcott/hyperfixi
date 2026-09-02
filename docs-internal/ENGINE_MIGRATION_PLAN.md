@@ -1080,6 +1080,28 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    which a positional slot IS. Pinned end to end in `toggle-slots.test.ts`
    (real parser, real evaluator, DOM effect), not by fixtures: the mock-fed
    `unless` bug is why.
+
+   **`swap` + `morph` + the shared `using view transition` tail (same day).**
+   `parseSwapCommand` emits the target positionally and everything syntactic
+   as slots — `modifiers.strategy` (the strategy word; the parser now
+   recognises every key of `lib/swap-executor.ts`'s `STRATEGY_KEYWORDS`, not
+   its own seven-word subset), `modifiers.with` (the content), and
+   `modifiers.viewTransition` (the tail, which `swap`, `morph` and `process
+   partials` share — `parseViewTransitionTail` replaces the helper that pushed
+   `using`, `view`, `transition` into `args` as three identifiers for each
+   command to scan for). `swap innerHTML of #t with it`, `swap over #m with
+   c`, `swap delete #n`, `swap #t with it` and the variable form `swap a with
+   b` all land in one shape. `SwapCommand.parseInput` lost its keyword scan
+   (`findIndex` over `with`/`of`/`delete`/`using`/`into`/`over`) and the
+   `binaryExpression 'of'` branch no producer emits any more; `MorphCommand`
+   likewise. The front-end's positional shape (`[method, destination,
+   patient]`, and morph's `args: [source]` + `modifiers.on`) is still read by
+   a fallback, as it always was — only the traditional path changed spelling.
+   **Census rows: swap 198 → 83 lines / 10 → 2 syntax sites, morph 103 → 56 /
+   5 → 4, process 82 → 81.** Type-escapes 918 → 906. Seven corpus rows moved,
+   reviewed; two `KNOWN_UNFIXED` marker bindings in `marker-roles.test.ts`
+   (`swap.method="over"`, `morph.patient="over"`) cleared, because there is no
+   bare `over` in `args` for the positional pass to bind any more.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

@@ -113,7 +113,7 @@ describe('SwapCommand', () => {
       const contentNode = { type: 'identifier', name: 'it' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -155,7 +155,10 @@ describe('SwapCommand', () => {
       const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [intoNode, targetNode, withNode, contentNode], modifiers: {} },
+        {
+          args: [targetNode],
+          modifiers: { strategy: intoNode as never, with: contentNode as never },
+        },
         evaluator,
         context
       );
@@ -174,7 +177,10 @@ describe('SwapCommand', () => {
       const contentNode = { type: 'string', value: '<div>New</div>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [overNode, targetNode, withNode, contentNode], modifiers: {} },
+        {
+          args: [targetNode],
+          modifiers: { strategy: overNode as never, with: contentNode as never },
+        },
         evaluator,
         context
       );
@@ -190,7 +196,7 @@ describe('SwapCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [deleteNode, targetNode], modifiers: {} },
+        { args: [targetNode], modifiers: { strategy: deleteNode as never } },
         evaluator,
         context
       );
@@ -213,7 +219,10 @@ describe('SwapCommand', () => {
         const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
 
         const input = await command.parseInput(
-          { args: [strategyNode, ofNode, targetNode, withNode, contentNode], modifiers: {} },
+          {
+            args: [targetNode],
+            modifiers: { strategy: strategyNode as never, with: contentNode as never },
+          },
           evaluator,
           context
         );
@@ -237,8 +246,8 @@ describe('SwapCommand', () => {
 
       const input = await command.parseInput(
         {
-          args: [targetNode, withNode, contentNode, usingNode, viewNode, transitionNode],
-          modifiers: {},
+          args: [targetNode],
+          modifiers: { with: contentNode as never, viewTransition: transitionNode as never },
         },
         evaluator,
         context
@@ -257,7 +266,7 @@ describe('SwapCommand', () => {
       const usingNode = { type: 'identifier', name: 'using' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode, usingNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -281,7 +290,7 @@ describe('SwapCommand', () => {
       const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluatorWithElement,
         context
       );
@@ -300,7 +309,7 @@ describe('SwapCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [targetNode, withNode, contentNode], modifiers: {} },
+          { args: [targetNode], modifiers: { with: contentNode as never } },
           evaluator,
           context
         )
@@ -308,30 +317,9 @@ describe('SwapCommand', () => {
     });
   });
 
-  describe('Parsing - Binary Expression (strategy of target)', () => {
-    it('should parse binary expression with "of" operator', async () => {
-      const evaluator = createMockEvaluator();
-      const context = createMockContext([createMockElement('target')]);
-
-      const targetNode = {
-        type: 'binaryExpression',
-        operator: 'of',
-        left: { type: 'identifier', name: 'innerHTML' },
-        right: { type: 'selector', value: '#target' },
-      } as ASTNode;
-      const withNode = { type: 'identifier', name: 'with' } as ASTNode;
-      const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
-
-      const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
-        evaluator,
-        context
-      );
-
-      expect(input.strategy).toBe('innerHTML');
-      expect(input.targets).toHaveLength(1);
-    });
-  });
+  // The `innerHTML of #target` binaryExpression shape is gone: the parser
+  // consumes `of` and carries the strategy as `modifiers.strategy` (Arc 3
+  // step 3), so no producer emits it and the branch that read it is deleted.
 
   describe('Execution', () => {
     it('should execute swap with morph strategy', async () => {
@@ -432,7 +420,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'identifier', name: 'it' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -474,7 +462,10 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'string', value: '<div>New</div>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [overNode, targetNode, withNode, contentNode], modifiers: {} },
+        {
+          args: [targetNode],
+          modifiers: { strategy: overNode as never, with: contentNode as never },
+        },
         evaluator,
         context
       );
@@ -492,7 +483,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'string', value: '<div>New</div>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -515,8 +506,8 @@ describe('MorphCommand', () => {
 
       const input = await command.parseInput(
         {
-          args: [targetNode, withNode, contentNode, usingNode, viewNode, transitionNode],
-          modifiers: {},
+          args: [targetNode],
+          modifiers: { with: contentNode as never, viewTransition: transitionNode as never },
         },
         evaluator,
         context
@@ -536,7 +527,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -558,7 +549,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'string', value: '<p>Content</p>' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluatorWithElement,
         context
       );
@@ -580,7 +571,7 @@ describe('MorphCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [targetNode, withNode, contentNode], modifiers: {} },
+          { args: [targetNode], modifiers: { with: contentNode as never } },
           evaluatorWithNumber,
           context
         )
@@ -681,7 +672,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'null', value: null } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -698,7 +689,7 @@ describe('MorphCommand', () => {
       const contentNode = { type: 'string', value: '' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );

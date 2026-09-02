@@ -316,31 +316,14 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
 }
 
 /**
- * Consume the optional `using view transition` tail shared by `swap` and
- * `process`.
- *
- * Both commands declare the tail in their own `commandMeta` syntax and both
- * runtimes already read it — `SwapCommand.parseInput` and
- * `ProcessPartialsCommand.parseInput` each scan the flat args for
- * `using` … `view` … `transition` — but neither parser consumed it. Since
- * `transition` is a COMMAND token, the unconsumed tail was re-parsed as a
- * fresh `transition` command and both forms died with
- * `Transition command requires a CSS property`. An unconsumed tail is never
- * inert: this is the same defect class as `toggle … for 2s` (#846) and
- * `take … for me` (#859).
- *
- * Flat identifier args, not modifiers, because that is the shape both
- * runtimes already read (and the shape the existing process unit fixtures
- * are written in).
- *
- * @param ctx - Parser context providing access to parser state and methods
- * @param args - Argument array to append the three tail keywords to
- * @returns True if a tail was present and consumed
+ * `using view transition` — the tail `swap`, `morph` and `process partials`
+ * share. Emitted as `modifiers.viewTransition` (Arc 3 step 3): the slot the
+ * semantic path has always produced from its `manner` role, and the one every
+ * command's `parseInput` reads. It used to push the three words into `args`
+ * as identifiers for each command to scan for by name.
  */
-function consumeViewTransitionTail(ctx: ParserContext, args: ASTNode[]): boolean {
-  if (!ctx.check('using')) {
-    return false;
-  }
+function parseViewTransitionTail(ctx: ParserContext): Record<string, ExpressionNode> {
+  if (!ctx.check('using')) return {};
   ctx.advance(); // consume 'using'
   if (!ctx.match('view')) {
     throw new Error("expected 'view transition' after 'using'");
@@ -348,10 +331,7 @@ function consumeViewTransitionTail(ctx: ParserContext, args: ASTNode[]): boolean
   if (!ctx.match('transition')) {
     throw new Error("expected 'transition' after 'using view'");
   }
-  args.push(ctx.createIdentifier('using'));
-  args.push(ctx.createIdentifier('view'));
-  args.push(ctx.createIdentifier('transition'));
-  return true;
+  return { viewTransition: literalModifier('transition') };
 }
 
 /**
@@ -403,12 +383,11 @@ export function parseProcessCommand(ctx: ParserContext, identifierNode: Identifi
     }
   }
 
-  consumeViewTransitionTail(ctx, args);
+  const modifiers = parseViewTransitionTail(ctx);
+  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...args);
+  if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+  return builder.endingAt(ctx.getPosition()).build();
 }
 
 /**
@@ -556,14 +535,23 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
 /**
  * Swap strategy keywords that indicate a specific swap strategy
  */
+// Every strategy word SwapCommand knows (`lib/swap-executor.ts`'s
+// STRATEGY_KEYWORDS), lower-cased: the parser recognises the same set the
+// command resolves, so a strategy the command accepts never parses as a target.
 const SWAP_STRATEGY_KEYWORDS = [
-  'innerhtml',
-  'outerhtml',
-  'into',
-  'over',
+  'afterbegin',
+  'afterend',
+  'beforebegin',
+  'beforeend',
   'delete',
+  'innerhtml',
+  'innermorph',
+  'into',
   'morph',
-  'morphouter',
+  'none',
+  'outerhtml',
+  'outermorph',
+  'over',
 ];
 
 /**
@@ -581,66 +569,43 @@ const SWAP_STRATEGY_KEYWORDS = [
  * @returns CommandNode representing the swap command
  */
 export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
+  // Every syntactic decision is a slot (Arc 3 step 3): the strategy word is
+  // `modifiers.strategy`, the content after `with` is `modifiers.with`, the
+  // `using view transition` tail is `modifiers.viewTransition`, and the one
+  // positional argument is the target. `swap innerHTML of #t with it`,
+  // `swap over #m with c`, `swap delete #n`, `swap #t with it` and the
+  // variable form `swap a with b` all land in that one shape; SwapCommand and
+  // MorphCommand no longer scan `args` for keyword identifiers.
   const args: ASTNode[] = [];
-
-  // Check for strategy keyword first (innerHTML, outerHTML, into, over, delete)
-  let strategyKeyword: string | null = null;
+  const modifiers: Record<string, ExpressionNode> = {};
 
   if (!ctx.isAtEnd()) {
     const current = ctx.peek();
-    if (current && current.value) {
-      const lowerValue = current.value.toLowerCase();
-      if (SWAP_STRATEGY_KEYWORDS.includes(lowerValue)) {
-        strategyKeyword = lowerValue;
-        ctx.advance(); // consume the strategy keyword
-        args.push(ctx.createIdentifier(strategyKeyword));
-      }
+    const lowerValue = current?.value?.toLowerCase();
+    if (lowerValue && SWAP_STRATEGY_KEYWORDS.includes(lowerValue)) {
+      ctx.advance(); // consume the strategy keyword
+      modifiers['strategy'] = literalModifier(lowerValue);
     }
   }
 
-  // Handle 'delete' strategy (no content needed)
-  if (strategyKeyword === 'delete') {
-    // Parse target: swap delete #target
-    const targetExpr = ctx.parseExpression();
-    if (targetExpr) {
-      args.push(targetExpr);
-    }
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(ctx.getPosition())
-      .build();
+  // `delete <target>` takes no content.
+  const isDelete = (modifiers['strategy'] as { value?: unknown } | undefined)?.value === 'delete';
+
+  // `of` is optional after a strategy word: `swap innerHTML of #target` and
+  // `swap innerHTML #target` are the same thing.
+  consumeOptionalKeyword(ctx, KEYWORDS.OF);
+
+  const targetExpr = isDelete ? ctx.parseExpression() : parseOneArgument(ctx, [KEYWORDS.WITH]);
+  if (targetExpr) args.push(targetExpr);
+
+  if (!isDelete && consumeOptionalKeyword(ctx, KEYWORDS.WITH)) {
+    const contentExpr = parseOneArgument(ctx, ['using']);
+    if (contentExpr) modifiers['with'] = contentExpr as ExpressionNode;
   }
-
-  // Check for 'of' keyword after strategy (e.g., "innerHTML of #target")
-  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.OF)) {
-    ctx.advance(); // consume 'of'
-    args.push(ctx.createIdentifier('of'));
-  }
-
-  // Parse target expression
-  const targetExpr = ctx.parseExpression();
-  if (targetExpr) {
-    args.push(targetExpr);
-  }
-
-  // Check for 'with' keyword - use KEYWORDS.WITH constant
-  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.WITH)) {
-    ctx.advance(); // consume 'with'
-    args.push(ctx.createIdentifier('with'));
-
-    // Parse content expression
-    const contentExpr = ctx.parseExpression();
-    if (contentExpr) {
-      args.push(contentExpr);
-    }
-  }
-
-  // Optional `using view transition` — declared by SwapCommand's own
-  // commandMeta and already read by its runtime, but never consumed here.
-  consumeViewTransitionTail(ctx, args);
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
+    .withModifiers({ ...modifiers, ...parseViewTransitionTail(ctx) })
     .endingAt(ctx.getPosition())
     .build();
 }

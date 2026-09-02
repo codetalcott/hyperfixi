@@ -215,17 +215,18 @@ describe('the second dispatch entry point', () => {
 describe('the `using view transition` tail reaches the runtime', () => {
   // Both commands declare the tail in their own commandMeta and both runtimes
   // already read it off the flat args — only the parsers never consumed it.
-  const TAIL = ['using', 'view', 'transition'];
 
   it.each([
     ['process', 'process partials in it using view transition'],
     ['swap', 'swap #target with it using view transition'],
-  ])('%s keeps all three tail keywords in its args', (_name, src) => {
+  ])('%s carries the tail as `modifiers.viewTransition`', (_name, src) => {
+    // Since Arc 3 step 3 the parser emits the tail as the slot the semantic
+    // path always produced, instead of three identifiers in `args` for each
+    // command to scan for by name.
     for (const [, opts] of BOTH_PATHS) {
       const result = hyperscript.compileSync(src, opts as never);
-      const node = topLevel(result)[0] as { args?: Array<{ name?: string; value?: unknown }> };
-      const names = (node.args ?? []).map(a => String(a?.name ?? a?.value).toLowerCase());
-      expect(names.slice(-3), `${src}: args were [${names.join(', ')}]`).toEqual(TAIL);
+      const node = topLevel(result)[0] as { modifiers?: Record<string, unknown> };
+      expect(node.modifiers?.viewTransition, src).toBeDefined();
     }
   });
 });
