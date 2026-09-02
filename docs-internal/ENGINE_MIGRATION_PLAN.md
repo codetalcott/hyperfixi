@@ -1761,6 +1761,32 @@ that pinned `execute()` rejecting on `halt` now pin it resolving. What
 step 3 still owes: `signalToError` (the seam between Results and the
 thrown form the loops still speak), `toSignal`, `asControlFlowError` —
 each falls when the loops and `executeBlock` read Results directly.
+**Step 3, last slice, DONE 2026-09-04 — Arc 4a's step 2 and step 3 are
+CLOSED:** the loops read Results. `executeNode`, `executeProgram` and
+`executeBlock` return `ExecutionResult`; the handler loop, the two observer
+loops, the statement loops, `installFunction`'s `run` and the public
+`execute()` boundary each consume the signals they own and hand the rest
+up; `_runtimeExecute` gives the four body-running commands (`if`, `repeat`,
+`tell`, `start view transition`) a Result and they return a signal as their
+completion (`repeat`'s loop executor consumes `break`/`continue` and
+carries the rest out in `LoopResult.signal`). Deleted: `signalToError`,
+`toSignal`, `isControlFlowError`, `asControlFlowError`, the
+`ControlFlowError` type, `tell`'s and `repeat`'s control-flow catches, the
+loop executor's `message.includes('BREAK')` catch, `command-adapter`'s
+logging gate. The only thrown form left is `StrayControlFlowError` — a
+`break`/`continue` reaching a function, handler or program boundary, which
+is an authoring error and is thrown as one (the handler's `catch` declines
+it by class, as it declined the flagged error before). Matrix: 35 cells,
+none moved; the twelve stray cells re-pinned from `BREAK_EXECUTION` to
+`'break' used outside of a loop`. Found on the way (#1085's amendment): the
+`on mutation`/`when … changes` observer loops ran each body command
+through the PUBLIC `execute()`, so under the step-2 boundary a `halt` there
+resolved and the body ran on — the matrix has no observer row, so add one
+before touching those loops again. Hand-built test mocks of
+`_runtimeExecute` (5 files, 30 sites) returned bare values and were adapted
+to the contract with an explicit helper rather than loosened in the
+command. Type-escapes 884 → 880. Arc 4b's `compile` seam replaces the
+`_runtimeExecute` channel itself.
 ~~**Decision needed before the second half (owner):**~~ **Decided:** the matrix pins today's
 semantics at the `def` boundary — `halt`/`exit` inside a called `def` stop
 the CALLING handler too (`a f`, never `c`), and `return` outside a `def` is
