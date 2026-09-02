@@ -86,6 +86,10 @@ describe('Event Command Parsers', () => {
         column: 0,
       })),
 
+      // The target slot is read through parseOneArgument → parseExpression;
+      // one token per expression is all these streams need.
+      parseExpression: vi.fn(() => ctx.parsePrimary()),
+
       parsePrimary: vi.fn(() => {
         if (position >= tokens.length) {
           return {
@@ -167,18 +171,14 @@ describe('Event Command Parsers', () => {
         expect(result).toBeTruthy();
         expect(result?.type).toBe('command');
         expect(result?.name).toBe('trigger');
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
 
         // Should have: event (string), 'on' keyword, target (selector)
         expect(result?.args[0]).toMatchObject({
           type: 'string',
           value: 'click',
         });
-        expect(result?.args[1]).toMatchObject({
-          type: 'identifier',
-          name: 'on',
-        });
-        expect(result?.args[2]).toMatchObject({
+        expect(result?.modifiers?.on).toMatchObject({
           type: 'selector',
           value: '#button',
         });
@@ -196,18 +196,14 @@ describe('Event Command Parsers', () => {
         expect(result).toBeTruthy();
         expect(result?.type).toBe('command');
         expect(result?.name).toBe('send');
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
 
         // Should have: event (string), 'to' keyword, target (selector)
         expect(result?.args[0]).toMatchObject({
           type: 'string',
           value: 'customEvent',
         });
-        expect(result?.args[1]).toMatchObject({
-          type: 'identifier',
-          name: 'to',
-        });
-        expect(result?.args[2]).toMatchObject({
+        expect(result?.modifiers?.on).toMatchObject({
           type: 'selector',
           value: '#target',
         });
@@ -237,7 +233,7 @@ describe('Event Command Parsers', () => {
 
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
 
-        expect(result?.args[2]).toMatchObject({
+        expect(result?.modifiers?.on).toMatchObject({
           type: 'selector',
           value: '<button/>',
         });
@@ -456,7 +452,7 @@ describe('Event Command Parsers', () => {
     });
 
     describe('Keyword detection', () => {
-      it('should find "on" keyword in argument list', () => {
+      it('should put the "on" target in the on slot, never in args', () => {
         const tokens = createTokenStream(
           ['click', 'on', '#button'],
           ['identifier', 'keyword', 'selector']
@@ -464,15 +460,11 @@ describe('Event Command Parsers', () => {
         const ctx = createParserContextForEventCommand(tokens);
 
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
-
-        // Should have restructured around 'on'
-        expect(result?.args[1]).toMatchObject({
-          type: 'identifier',
-          name: 'on',
-        });
+        expect(result?.args).toHaveLength(1);
+        expect(result?.modifiers?.on).toMatchObject({ type: 'selector', value: '#button' });
       });
 
-      it('should find "to" keyword in argument list', () => {
+      it('should put the "to" target in the SAME on slot (one key for both spellings)', () => {
         const tokens = createTokenStream(
           ['event', 'to', '.target'],
           ['identifier', 'keyword', 'selector']
@@ -480,12 +472,9 @@ describe('Event Command Parsers', () => {
         const ctx = createParserContextForEventCommand(tokens);
 
         const result = parseTriggerCommand(ctx, createIdentifierNode('send'));
-
-        // Should have restructured around 'to'
-        expect(result?.args[1]).toMatchObject({
-          type: 'identifier',
-          name: 'to',
-        });
+        expect(result?.args).toHaveLength(1);
+        expect(result?.modifiers?.to).toBeUndefined();
+        expect(result?.modifiers?.on).toMatchObject({ type: 'selector', value: '.target' });
       });
 
       it('should handle missing keyword gracefully', () => {
@@ -500,8 +489,8 @@ describe('Event Command Parsers', () => {
       });
     });
 
-    describe('Argument restructuring', () => {
-      it('should restructure arguments around "on" keyword', () => {
+    describe('Target slot', () => {
+      it('should read `on <target>` as the on slot', () => {
         const tokens = createTokenStream(
           ['myEvent', 'on', '#target'],
           ['identifier', 'keyword', 'selector']
@@ -511,13 +500,12 @@ describe('Event Command Parsers', () => {
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
 
         // Order: event, 'on', target
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
         expect((result?.args[0] as any).value).toBe('myEvent');
-        expect((result?.args[1] as any).name).toBe('on');
-        expect((result?.args[2] as any).value).toBe('#target');
+        expect((result?.modifiers?.on as any).value).toBe('#target');
       });
 
-      it('should restructure arguments around "to" keyword', () => {
+      it('should read `to <target>` as the on slot', () => {
         const tokens = createTokenStream(
           ['event', 'to', '.element'],
           ['identifier', 'keyword', 'selector']
@@ -527,10 +515,9 @@ describe('Event Command Parsers', () => {
         const result = parseTriggerCommand(ctx, createIdentifierNode('send'));
 
         // Order: event, 'to', target
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
         expect((result?.args[0] as any).value).toBe('event');
-        expect((result?.args[1] as any).name).toBe('to');
-        expect((result?.args[2] as any).value).toBe('.element');
+        expect((result?.modifiers?.on as any).value).toBe('.element');
       });
 
       it('should preserve argument order after keyword', () => {
@@ -543,8 +530,8 @@ describe('Event Command Parsers', () => {
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
 
         // Should preserve all args after 'on'
-        expect(result?.args.length).toBeGreaterThanOrEqual(3);
-        expect((result?.args[2] as any).value).toBe('#button');
+        expect((result?.modifiers?.on as any).value).toBe('#button');
+        expect(result?.args.length).toBeGreaterThanOrEqual(1);
       });
     });
 
@@ -556,8 +543,8 @@ describe('Event Command Parsers', () => {
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
 
         expect(result).toBeTruthy();
-        // May have only event and 'on', no target
-        expect(result?.args.length).toBeGreaterThanOrEqual(2);
+        expect(result?.args).toHaveLength(1);
+        expect(result?.modifiers?.on).toBeUndefined();
       });
 
       it('should handle multiple arguments before keyword', () => {
@@ -618,7 +605,7 @@ describe('Event Command Parsers', () => {
         expect(sendResult?.name).toBe('send');
       });
 
-      it('should have restructured arguments array', () => {
+      it('should leave only the event name in args', () => {
         const tokens = createTokenStream(
           ['myEvent', 'on', '.target'],
           ['identifier', 'keyword', 'selector']
@@ -628,7 +615,7 @@ describe('Event Command Parsers', () => {
         const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
 
         expect(result?.args).toBeInstanceOf(Array);
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
       });
     });
 
@@ -856,13 +843,11 @@ describe('Event Command Parsers', () => {
           name: 'trigger',
         });
 
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
         expect((result?.args[0] as any).type).toBe('string');
         expect((result?.args[0] as any).value).toBe('customEvent');
-        expect((result?.args[1] as any).type).toBe('identifier');
-        expect((result?.args[1] as any).name).toBe('on');
-        expect((result?.args[2] as any).type).toBe('selector');
-        expect((result?.args[2] as any).value).toBe('<form/>');
+        expect((result?.modifiers?.on as any).type).toBe('selector');
+        expect((result?.modifiers?.on as any).value).toBe('<form/>');
       });
 
       it('should parse complete send command end-to-end', () => {
@@ -879,13 +864,11 @@ describe('Event Command Parsers', () => {
           name: 'send',
         });
 
-        expect(result?.args).toHaveLength(3);
+        expect(result?.args).toHaveLength(1);
         expect((result?.args[0] as any).type).toBe('string');
         expect((result?.args[0] as any).value).toBe('notify');
-        expect((result?.args[1] as any).type).toBe('identifier');
-        expect((result?.args[1] as any).name).toBe('to');
-        expect((result?.args[2] as any).type).toBe('selector');
-        expect((result?.args[2] as any).value).toBe('#notification');
+        expect((result?.modifiers?.on as any).type).toBe('selector');
+        expect((result?.modifiers?.on as any).value).toBe('#notification');
       });
     });
   });

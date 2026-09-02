@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2191,
-    "branches": 337,
-    "syntaxSites": 94,
-    "valueSites": 206
+    "lines": 2135,
+    "branches": 323,
+    "syntaxSites": 76,
+    "valueSites": 202
   },
   "commands": {
     "async": {
@@ -46,10 +46,10 @@
     },
     "take": {
       "file": "src/commands/animation/take.ts",
-      "lines": 71,
-      "branches": 13,
-      "syntaxSites": 11,
-      "valueSites": 12
+      "lines": 40,
+      "branches": 5,
+      "syntaxSites": 1,
+      "valueSites": 9
     },
     "transition": {
       "file": "src/commands/animation/transition.ts",
@@ -263,10 +263,10 @@
     },
     "trigger": {
       "file": "src/commands/events/trigger.ts",
-      "lines": 63,
-      "branches": 11,
-      "syntaxSites": 4,
-      "valueSites": 3
+      "lines": 47,
+      "branches": 8,
+      "syntaxSites": 1,
+      "valueSites": 4
     },
     "blur": {
       "file": "src/commands/execution/blur.ts",
@@ -319,10 +319,10 @@
     },
     "render": {
       "file": "src/commands/templates/render.ts",
-      "lines": 38,
-      "branches": 6,
-      "syntaxSites": 6,
-      "valueSites": 6
+      "lines": 29,
+      "branches": 3,
+      "syntaxSites": 1,
+      "valueSites": 4
     },
     "beep": {
       "file": "src/commands/utility/beep.ts",

@@ -38,6 +38,15 @@ const shape = (c: CommandNode): Array<{ type?: string; value?: unknown }> =>
     return { type: n.type, value: n.value ?? n.name };
   });
 
+/** Shape of the slots, comparable across the two spellings. */
+const slots = (c: CommandNode): Record<string, { type?: string; value?: unknown }> =>
+  Object.fromEntries(
+    Object.entries(c.modifiers ?? {}).map(([k, v]) => {
+      const n = v as { type?: string; value?: unknown; name?: unknown };
+      return [k, { type: n.type, value: n.value ?? n.name }];
+    })
+  );
+
 describe('send / trigger parity', () => {
   it.each([
     'EVENT(id: 1) to #modal',
@@ -54,6 +63,7 @@ describe('send / trigger parity', () => {
     expect(asSend.name).toBe('send');
     expect(asTrigger.name).toBe('trigger');
     expect(shape(asSend)).toEqual(shape(asTrigger));
+    expect(slots(asSend)).toEqual(slots(asTrigger));
     expect(parse(`send ${tail.replace('EVENT', 'showProduct')}`).errors ?? []).toEqual([]);
   });
 
@@ -64,14 +74,12 @@ describe('send / trigger parity', () => {
     expect(first.name).toBe('showProduct');
   });
 
-  it('still routes the to-target', () => {
+  it('routes the to-target to the on slot, and the marker word reaches nowhere', () => {
     // The MULTI_WORD_PATTERNS entry existed to capture `to <target>`;
-    // parseTriggerCommand already does it, as a positional arg.
-    expect(shape(cmd('send showProduct(id: 1) to #modal'))).toEqual([
-      { type: 'functionCall', value: 'showProduct' },
-      { type: 'identifier', value: 'to' },
-      { type: 'selector', value: '#modal' },
-    ]);
+    // parseTriggerCommand does it, as the `on` slot (Arc 3 step 3).
+    const c = cmd('send showProduct(id: 1) to #modal');
+    expect(shape(c)).toEqual([{ type: 'functionCall', value: 'showProduct' }]);
+    expect(slots(c)).toEqual({ on: { type: 'selector', value: '#modal' } });
   });
 });
 

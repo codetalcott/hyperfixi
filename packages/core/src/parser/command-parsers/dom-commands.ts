@@ -291,12 +291,12 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
   }
 
   // Optional `from <source>` — flat args, same shape as remove
-  if (ctx.check(KEYWORDS.FROM)) {
-    consumeKeywordToArgs(ctx, KEYWORDS.FROM, args);
+  // `from <source>` is the source SLOT (Arc 3 step 3) — the spelling
+  // TakeCommand.parseInput already read on the semantic path — not a `from`
+  // identifier pushed into args for the command to check by name.
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
     const sourceArg = parseOneArgument(ctx, [KEYWORDS.FOR]);
-    if (sourceArg) {
-      args.push(sourceArg);
-    }
+    if (sourceArg) modifiers['from'] = sourceArg as ExpressionNode;
   }
 
   // Optional `for <recipient>` — must be consumed here or the next parse

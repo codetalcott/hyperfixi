@@ -113,19 +113,10 @@ export class RenderCommand {
     // First arg is template
     const template = await evaluator.evaluate(raw.args[0], context);
 
-    // Optional: "with <variables>" (args[1] = 'with', args[2] = variables)
+    // `with <variables>` is the `with` slot — the declared grammar's marker
+    // (Arc 3 step 4); the positional `[template, with, vars]` shape no parser
+    // produces any more.
     let variables: Record<string, unknown> | undefined;
-
-    if (raw.args.length >= 3) {
-      const withKeyword = await evaluator.evaluate(raw.args[1], context);
-      if (withKeyword === 'with') {
-        const vars = await evaluator.evaluate(raw.args[2], context);
-        if (vars && typeof vars === 'object') {
-          variables = vars as Record<string, unknown>;
-        }
-      }
-    }
-
     // Check "with" modifier
     if (!variables && raw.modifiers?.with) {
       const vars = await evaluator.evaluate(raw.modifiers.with, context);
