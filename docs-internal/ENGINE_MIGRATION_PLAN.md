@@ -1781,8 +1781,18 @@ Runs in parallel with Arc 3.
 2. **Move docs to generated JSON** beside `commands.json`, produced by the same
    generator with the same `--check` gate. The runtime objects keep `name`,
    `evaluate`, `precedence`, `operators`.
+   ✅ **The three stragglers' `documentation` blocks deleted 2026-09-03**
+   (144 lines, `logical/index.ts` 1,042 → 892; zero runtime readers, and the
+   reference docs are generated). `inputSchema` and `metadata` stay — the
+   former has its one runtime reader, the latter is the registry's.
 3. **`trackEvaluation` becomes opt-in**: a devtools wrapper installed by
    `DebugController`, not a `Date.now()` pair on every comparison.
+   **Half done 2026-09-03:** the 24 timing sites in `logical/index.ts` are
+   now uniformly guarded — 21 already spent `Date.now()` only when the
+   context carries `evaluationHistory` (a test/devtools context), and the
+   last three (`is`, `and`, `matches`) paid it on every evaluation; they
+   guard the same way. The wrapper-in-`DebugController` shape is the
+   remaining half, and it can wait for Arc 7 step 4's table entries.
 4. **Operators as table entries with `compile`.** `evaluateBinaryExpression`
    switches on the operator string and then calls `getExpr('equals')` — the
    registry is indirection over a switch that already knows the answer. Fold
