@@ -202,26 +202,26 @@ describe('Parser Integration Tests', () => {
       expect(node.type).toBe('command');
       expect(node.name).toBe('repeat');
       const args = getArgs(node);
-      // args[0] should now be 'until' (loopType promoted from forever)
-      expect((args[0] as { name?: string }).name).toBe('until');
-      // bottomTested should be set as a modifier
+      // the loop type is promoted from `forever` to `until` — carried as the `loopType` slot
       const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect((modifiers?.loopType as { value?: string } | undefined)?.value).toBe('until');
+      // bottomTested should be set as a modifier
       expect(modifiers?.bottomTested).toBeDefined();
     });
 
     it('should parse bottom-tested repeat with while', () => {
       const node = parseOk('repeat forever add .ping while count < 10 end');
       const args = getArgs(node);
-      expect((args[0] as { name?: string }).name).toBe('while');
       const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect((modifiers?.loopType as { value?: string } | undefined)?.value).toBe('while');
       expect(modifiers?.bottomTested).toBeDefined();
     });
 
     it('should NOT mark top-tested while as bottomTested', () => {
       const node = parseOk('repeat while count < 10 add .ping end');
       const args = getArgs(node);
-      expect((args[0] as { name?: string }).name).toBe('while');
       const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect((modifiers?.loopType as { value?: string } | undefined)?.value).toBe('while');
       expect(modifiers?.bottomTested).toBeUndefined();
     });
 
