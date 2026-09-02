@@ -1222,6 +1222,26 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    `cmd.target` only and is unchanged (widening what it prerenders is a
    behaviour change, not this PR's). `vite-plugin/src/compiler.ts` compiles
    its own node shape (`cmd.target`) and is untouched.
+   **Same PR, the last two marker-word commands: `push`/`replace`.** Both
+   were `COMPOUND_COMMANDS` members with no case in `parseCompoundCommand`,
+   so they fell to `parseRegularCommand` — the second generic loop — and
+   `commands/helpers/url-argument-parser.ts` re-derived `push url <u> with
+   title <t>` from the words it found in `args` (a `KEYWORDS` list of
+   `url`/`with`/`title`, three `findIndex` scans). `parsePushCommand` now
+   emits `args: [url]` (naked `/path` or any expression; the `url` word is
+   consumed) and `modifiers.title`; the helper reads the slot. Every
+   `COMPOUND_COMMANDS` member has a case now — `parseCompoundCommand`'s
+   `default` is unreachable from that switch, which is the precondition for
+   retiring the set. The census could not see this one either way: the scan
+   lived in a helper (uncounted), and the slot read stays there too — the
+   `push` row is 13 lines / 0 sites before and after. `@lokascript/semantic`
+   has no title role for these, so the slot is core-only. The AOT
+   `PushUrlCodegen`/`ReplaceUrlCodegen` read `roles?.destination ?? args[0]`:
+   for a traditional parse `args[0]` used to be the identifier `url`, so they
+   compiled `history.pushState({}, '', url)` — a variable reference — and now
+   get the URL with no change of their own. Four more AST-equivalence rows
+   moved (the four documented `push`/`replace` forms); type-escapes 893 → 891
+   (the helper's two `as unknown as Record` reads went with the scan).
 
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
