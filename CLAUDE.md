@@ -913,15 +913,18 @@ registerCustomKeywords('my-lang', {
 Quick reference — full detail in [packages/core/docs/API.md](packages/core/docs/API.md).
 
 ```javascript
-// Which parser handled a compile, and with what confidence:
-hyperfixi.compile('toggle .active').metadata;
-// { parserUsed: 'semantic', semanticConfidence: 0.98, semanticLanguage: 'en', warnings: [] }
+// Which parser produced a compile's AST (English is ALWAYS the core parser;
+// 'semantic' means the multilingual front-end built it, non-English only):
+hyperfixi.compileSync('toggle .active').meta; // { parser: 'traditional', language: 'en', timeMs }
+(await hyperfixi.compile('alternar .active', { language: 'es' })).meta;
+// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs }
 
 // Debug logging (persists via localStorage, works in production builds):
 hyperfixi.debugControl.enable(); // or: localStorage.setItem('hyperfixi:debug', '*') + reload
 // Log prefixes: ATTR:/SCRIPT:/SCAN: (attribute-processor) · PARSE: · CMD: · EXPR:
 
-// Per-parse decisions and running stats:
+// Front-end consultations (one per NON-English compile — the per-command
+// in-loop attempt on English was deleted by Arc 1 step 6) and running stats:
 window.addEventListener('hyperfixi:semantic-parse', e => console.log(e.detail));
 hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanticFallbacks, averageConfidence }
 ```

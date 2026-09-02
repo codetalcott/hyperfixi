@@ -100,20 +100,16 @@ describe('scroll — parse', () => {
 
     it('keeps a positional target expression whole', () => {
       const node = commandOf('scroll to last <.message/> in #chat', traditional);
-      if (traditional) {
-        // `last <.message/>` is one expression and `in #chat` is scroll's
-        // container clause — exactly how upstream's `_parseScrollModifiers`
-        // reads it (target via `unaryExpression`, then `matchToken("in")`).
-        expect(stringArgs(node)).toEqual(['to', 'in']);
-        expect(node.args?.length).toBe(4);
-      } else {
-        // The semantic parser ADOPTS this source and models `in` as part of
-        // the target expression instead. Both resolve to the same element (the
-        // execution row below runs on this path), so it is a convergence
-        // difference, not a defect — recorded here rather than asserted away.
-        expect(node.args?.[0]?.type).toBe('binaryExpression');
-        expect(node.args?.[0]?.operator).toBe('in');
-      }
+      // Until Arc 1 step 6 the default path ADOPTED this source from the
+      // semantic front-end, which models `in` as part of the target expression
+      // (`binaryExpression 'in'`), and this test recorded that as a convergence
+      // difference. The in-loop path is gone; both paths are now the core
+      // parser, and the shape is upstream's: `last <.message/>` is one
+      // expression and `in #chat` is scroll's container clause — exactly how
+      // `_parseScrollModifiers` reads it (target via `unaryExpression`, then
+      // `matchToken("in")`).
+      expect(stringArgs(node)).toEqual(['to', 'in']);
+      expect(node.args?.length).toBe(4);
     });
 
     it('parses the `scroll <dir> by <n>` branch flat, like the `to` branch', () => {

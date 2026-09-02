@@ -1052,8 +1052,8 @@ describe('RuntimeBase Method Coverage', () => {
     it('`get` is visible to the NEXT command (defect fixed 2026-08-30)', async () => {
       // This pinned a KNOWN DEFECT: `get 42 then put it into #probe` yielded ''
       // while inserting any command between them yielded '42'. The semantic
-      // adoption coverage gate fixed it — `get` is not on the
-      // skipSemanticParsing list, so the `get` head of a then-chain was
+      // adoption coverage gate fixed it — `get` was not on the
+      // skipSemanticParsing list (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone), so the `get` head of a then-chain was
       // adopted from a SEMANTIC prefix-parse while the rest of the chain
       // parsed traditionally, and the result slot did not survive that seam.
       // Under the gate a then-chain parses as `compound`, which the adapter's
