@@ -514,6 +514,24 @@ export class RuntimeBase {
     return op;
   }
 
+  /**
+   * A body — a handler's, a `def`'s, a `catch`/`finally` block's — compiled
+   * ONCE as a plain sequence: every statement in order, the first signal
+   * returned to the boundary that owns it, nothing consumed here.
+   */
+  protected compileSequence(nodes: readonly AnyNode[]): Op {
+    const ops = nodes.map(n => this.compile(n));
+    return async context => {
+      let last: unknown;
+      for (const op of ops) {
+        const result = await op(context);
+        if (!isOk(result)) return result;
+        last = result.value;
+      }
+      return ok(last);
+    };
+  }
+
   private compileNode(node: AnyNode): Op {
     // Resilient parsing: an error-diagnosed node runs as a warning.
     if (this.hasErrorDiagnostics(node)) {
@@ -843,6 +861,10 @@ export class RuntimeBase {
     const errorHandler = node.errorHandler;
     const finallyHandler = node.finallyHandler;
     const errorSymbol = node.errorSymbol;
+    // The FUNCTION's bodies compile once, at installation (Arc 4b step 3).
+    const bodyOp = this.compileSequence(body);
+    const errorOp = errorHandler ? this.compileSequence(errorHandler) : undefined;
+    const finallyOp = finallyHandler ? this.compileSequence(finallyHandler) : undefined;
 
     const fn = async (...args: unknown[]): Promise<unknown> => {
       // Fresh locals per call, seeded from the declaring scope. Globals stay by
@@ -859,8 +881,8 @@ export class RuntimeBase {
       // call returns undefined; halt's event side effect already happened),
       // `return` hands its value to the caller, and the caller continues —
       // upstream's rule. `break`/`continue` have no loop here and stay errors.
-      const run = async (commands: readonly AnyNode[]): Promise<unknown> => {
-        const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
+      const run = async (op: Op): Promise<unknown> => {
+        const result = await op(fnContext);
         if (!isOk(result)) {
           const signal = result.error;
           if (signal.type === 'break' || signal.type === 'continue') {
@@ -871,19 +893,19 @@ export class RuntimeBase {
         return result.value;
       };
 
-      if (!errorHandler && !finallyHandler) {
-        return await run(body);
+      if (!errorOp && !finallyOp) {
+        return await run(bodyOp);
       }
 
       try {
-        return await run(body);
+        return await run(bodyOp);
       } catch (e) {
-        if (!errorHandler || e instanceof StrayControlFlowError) throw e;
+        if (!errorOp || e instanceof StrayControlFlowError) throw e;
         if (errorSymbol) fnContext.locals.set(errorSymbol, e);
-        return await run(errorHandler);
+        return await run(errorOp);
       } finally {
-        if (finallyHandler) {
-          await run(finallyHandler);
+        if (finallyOp) {
+          await run(finallyOp);
         }
       }
     };
@@ -1500,6 +1522,15 @@ export class RuntimeBase {
     },
     condition?: AnyNode
   ): (domEvent: Event) => Promise<void> {
+    // The handler's bodies compile ONCE, here at registration (Arc 4b step 3);
+    // the listener below runs the closures on every event.
+    const bodyOp = runtime.compileSequence(commands);
+    const errorOp = errorBlocks?.errorHandler
+      ? runtime.compileSequence(errorBlocks.errorHandler)
+      : undefined;
+    const finallyOp = errorBlocks?.finallyHandler
+      ? runtime.compileSequence(errorBlocks.finallyHandler)
+      : undefined;
     return async (domEvent: Event) => {
       // Recursion Guard (uses WeakMap instead of expando property on Event)
       const currentDepth = eventRecursionDepth.get(domEvent) ?? 0;
@@ -1594,34 +1625,33 @@ export class RuntimeBase {
       // The HANDLER boundary (Arc 4a): `halt`/`exit` end the handler,
       // `return` ends it and its value lands in `it`/`result`. A stray
       // `break`/`continue` is thrown as the error it is.
-      const runCommands = async (toRun: readonly AnyNode[]): Promise<void> => {
-        for (const command of toRun) {
-          let outcome: ExecutionResult<unknown>;
-          try {
-            outcome = await runtime.executeNode(command, eventContext);
-          } catch (e) {
-            runtime.logError(`COMMAND FAILED:`, e);
-            throw e;
-          }
-          if (isOk(outcome)) continue;
-          const signal = outcome.error;
-          if (signal.type === 'return' && signal.returnValue !== undefined) {
-            Object.assign(eventContext, { it: signal.returnValue, result: signal.returnValue });
-          }
-          if (signal.type === 'break' || signal.type === 'continue') {
-            throw new StrayControlFlowError(signal);
-          }
-          break;
+      // The HANDLER's bodies were compiled once at registration (Arc 4b
+      // step 3); each event runs the closures. halt/exit end the handler,
+      // return ends it with its value in it/result, a stray break/continue
+      // is thrown as the error it is.
+      runtime.prepareContext(eventContext);
+      const runBody = async (op: Op): Promise<void> => {
+        let outcome: ExecutionResult<unknown>;
+        try {
+          outcome = await op(eventContext);
+        } catch (e) {
+          runtime.logError(`COMMAND FAILED:`, e);
+          throw e;
+        }
+        if (isOk(outcome)) return;
+        const signal = outcome.error;
+        if (signal.type === 'return' && signal.returnValue !== undefined) {
+          Object.assign(eventContext, { it: signal.returnValue, result: signal.returnValue });
+        }
+        if (signal.type === 'break' || signal.type === 'continue') {
+          throw new StrayControlFlowError(signal);
         }
       };
 
-      const errorHandler = errorBlocks?.errorHandler;
-      const finallyHandler = errorBlocks?.finallyHandler;
-
       // No `catch`/`finally` on this handler — behave exactly as before, including
       // letting the error escape to the page after the COMMAND FAILED log.
-      if (!errorHandler && !finallyHandler) {
-        await runCommands(commands);
+      if (!errorOp && !finallyOp) {
+        await runBody(bodyOp);
         return;
       }
 
@@ -1629,18 +1659,18 @@ export class RuntimeBase {
       // the error is bound as a local under the author's symbol, a handled error
       // does NOT propagate, and `finally` runs on both paths).
       try {
-        await runCommands(commands);
+        await runBody(bodyOp);
       } catch (e) {
         // A stray break/continue is not an error the author wrote a `catch`
         // for and is not routed to it; `finally` alone never swallows.
-        if (!errorHandler || e instanceof StrayControlFlowError) throw e;
+        if (!errorOp || e instanceof StrayControlFlowError) throw e;
         if (errorBlocks?.errorSymbol) {
           eventContext.locals.set(errorBlocks.errorSymbol, e);
         }
-        await runCommands(errorHandler);
+        await runBody(errorOp);
       } finally {
-        if (finallyHandler) {
-          await runCommands(finallyHandler);
+        if (finallyOp) {
+          await runBody(finallyOp);
         }
       }
     };

@@ -1857,6 +1857,23 @@ them on first run, so this is a deletion of `runCommands`'s per-command loop,
 not a speed-up), step 4 (`ASTCache` → Program cache; eviction test), and the
 optional per-command `compile` tail (claim 6 predicts nothing lands).
 
+**Steps 3 and 4 DONE 2026-09-04 — Arc 4b's numbered steps are CLOSED; only
+the optional per-command tail remains.** Step 3: a handler's three bodies
+(`on … catch … finally`) compile once in `createEventHandler`, at
+registration, and a `def`'s three in `installFunction`, at installation, via
+`compileSequence` (a plain sequence Op: first signal returned, nothing
+consumed); the per-command `runCommands` loop is gone and each event runs
+one closure. Step 4 was FALSIFIED by the design and is recorded as such: an
+`Op` closes over the runtime that compiled it, so a program cannot live in
+the module-global `ASTCache` (many runtimes, one cache) — the Program cache
+is the runtime's own memo, and the AST cache's job is to return the SAME
+node object for the same source, which is what makes the memo hit.
+`compile-memo.test.ts` pins both halves (same node → same Op; distinct
+node → distinct Op; the cached AST's Op is stable across compiles; two
+runtimes never share an Op), and `ast-cache.test.ts` finally crosses the
+500-entry boundary (LRU: a touched entry survives the overflow, its
+neighbour is evicted). Matrix 35 cells, none moved.
+
 **4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
 flow is `Completion` now); `enhanceContext`'s `Proxy` is deleted after step 1
