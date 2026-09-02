@@ -1,0 +1,370 @@
+{
+  "$comment": "Arc 3 step 1 census of every parseInput body (docs-internal/ENGINE_MIGRATION_PLAN.md). Per command: line count, branch count, syntax-discrimination sites (positional args[i] reads + keyword-name compares) and value-evaluation sites (evaluator calls + raw.modifiers reads). Shrink-only: parse-input-census.test.ts fails on any increase. Regenerate with `npx tsx scripts/generate-parse-input-census.ts --update` in the SAME PR that lowers a number.",
+  "generated": "2026-09-02",
+  "totals": {
+    "bodies": 51,
+    "lines": 2434,
+    "branches": 361,
+    "syntaxSites": 128,
+    "valueSites": 215
+  },
+  "commands": {
+    "async": {
+      "file": "src/commands/advanced/async.ts",
+      "lines": 17,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 0
+    },
+    "js": {
+      "file": "src/commands/advanced/js.ts",
+      "lines": 42,
+      "branches": 6,
+      "syntaxSites": 4,
+      "valueSites": 0
+    },
+    "measure": {
+      "file": "src/commands/animation/measure.ts",
+      "lines": 51,
+      "branches": 14,
+      "syntaxSites": 6,
+      "valueSites": 7
+    },
+    "settle": {
+      "file": "src/commands/animation/settle.ts",
+      "lines": 33,
+      "branches": 5,
+      "syntaxSites": 1,
+      "valueSites": 4
+    },
+    "start": {
+      "file": "src/commands/animation/start-view-transition.ts",
+      "lines": 16,
+      "branches": 4,
+      "syntaxSites": 0,
+      "valueSites": 3
+    },
+    "take": {
+      "file": "src/commands/animation/take.ts",
+      "lines": 71,
+      "branches": 13,
+      "syntaxSites": 11,
+      "valueSites": 12
+    },
+    "transition": {
+      "file": "src/commands/animation/transition.ts",
+      "lines": 74,
+      "branches": 14,
+      "syntaxSites": 3,
+      "valueSites": 14
+    },
+    "fetch": {
+      "file": "src/commands/async/fetch.ts",
+      "lines": 19,
+      "branches": 1,
+      "syntaxSites": 1,
+      "valueSites": 3
+    },
+    "wait": {
+      "file": "src/commands/async/wait.ts",
+      "lines": 19,
+      "branches": 4,
+      "syntaxSites": 3,
+      "valueSites": 4
+    },
+    "install": {
+      "file": "src/commands/behaviors/install.ts",
+      "lines": 56,
+      "branches": 7,
+      "syntaxSites": 3,
+      "valueSites": 5
+    },
+    "ContentInsertionCommand": {
+      "file": "src/commands/content/insertion-base.ts",
+      "lines": 35,
+      "branches": 6,
+      "syntaxSites": 1,
+      "valueSites": 3
+    },
+    "halt": {
+      "file": "src/commands/control-flow/halt.ts",
+      "lines": 29,
+      "branches": 2,
+      "syntaxSites": 3,
+      "valueSites": 1
+    },
+    "if": {
+      "file": "src/commands/control-flow/if.ts",
+      "lines": 53,
+      "branches": 8,
+      "syntaxSites": 7,
+      "valueSites": 4
+    },
+    "repeat": {
+      "file": "src/commands/control-flow/repeat.ts",
+      "lines": 126,
+      "branches": 30,
+      "syntaxSites": 17,
+      "valueSites": 19
+    },
+    "return": {
+      "file": "src/commands/control-flow/return.ts",
+      "lines": 12,
+      "branches": 1,
+      "syntaxSites": 1,
+      "valueSites": 1
+    },
+    "ControlFlowSignalBase": {
+      "file": "src/commands/control-flow/signal-base.ts",
+      "lines": 8,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 0
+    },
+    "throw": {
+      "file": "src/commands/control-flow/throw.ts",
+      "lines": 12,
+      "branches": 1,
+      "syntaxSites": 1,
+      "valueSites": 1
+    },
+    "clear": {
+      "file": "src/commands/data/clear.ts",
+      "lines": 39,
+      "branches": 2,
+      "syntaxSites": 0,
+      "valueSites": 3
+    },
+    "default": {
+      "file": "src/commands/data/default.ts",
+      "lines": 53,
+      "branches": 7,
+      "syntaxSites": 2,
+      "valueSites": 1
+    },
+    "get": {
+      "file": "src/commands/data/get.ts",
+      "lines": 23,
+      "branches": 3,
+      "syntaxSites": 1,
+      "valueSites": 1
+    },
+    "increment": {
+      "file": "src/commands/data/increment.ts",
+      "lines": 11,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 0
+    },
+    "set": {
+      "file": "src/commands/data/set.ts",
+      "lines": 122,
+      "branches": 20,
+      "syntaxSites": 1,
+      "valueSites": 5
+    },
+    "add": {
+      "file": "src/commands/dom/add.ts",
+      "lines": 67,
+      "branches": 7,
+      "syntaxSites": 2,
+      "valueSites": 5
+    },
+    "close": {
+      "file": "src/commands/dom/close.ts",
+      "lines": 17,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "empty": {
+      "file": "src/commands/dom/empty.ts",
+      "lines": 16,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "make": {
+      "file": "src/commands/dom/make.ts",
+      "lines": 34,
+      "branches": 7,
+      "syntaxSites": 2,
+      "valueSites": 6
+    },
+    "open": {
+      "file": "src/commands/dom/open.ts",
+      "lines": 30,
+      "branches": 4,
+      "syntaxSites": 0,
+      "valueSites": 3
+    },
+    "process": {
+      "file": "src/commands/dom/process-partials.ts",
+      "lines": 81,
+      "branches": 13,
+      "syntaxSites": 2,
+      "valueSites": 2
+    },
+    "put": {
+      "file": "src/commands/dom/put.ts",
+      "lines": 152,
+      "branches": 34,
+      "syntaxSites": 9,
+      "valueSites": 7
+    },
+    "remove": {
+      "file": "src/commands/dom/remove.ts",
+      "lines": 63,
+      "branches": 7,
+      "syntaxSites": 1,
+      "valueSites": 3
+    },
+    "reset": {
+      "file": "src/commands/dom/reset.ts",
+      "lines": 16,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "select": {
+      "file": "src/commands/dom/select.ts",
+      "lines": 16,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "swap": {
+      "file": "src/commands/dom/swap.ts",
+      "lines": 198,
+      "branches": 27,
+      "syntaxSites": 10,
+      "valueSites": 4
+    },
+    "morph": {
+      "file": "src/commands/dom/swap.ts",
+      "lines": 103,
+      "branches": 15,
+      "syntaxSites": 5,
+      "valueSites": 3
+    },
+    "toggle": {
+      "file": "src/commands/dom/toggle.ts",
+      "lines": 243,
+      "branches": 30,
+      "syntaxSites": 8,
+      "valueSites": 24
+    },
+    "VisibilityCommandBase": {
+      "file": "src/commands/dom/visibility-base.ts",
+      "lines": 19,
+      "branches": 3,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "trigger": {
+      "file": "src/commands/events/trigger.ts",
+      "lines": 63,
+      "branches": 11,
+      "syntaxSites": 4,
+      "valueSites": 3
+    },
+    "blur": {
+      "file": "src/commands/execution/blur.ts",
+      "lines": 16,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "call": {
+      "file": "src/commands/execution/call.ts",
+      "lines": 11,
+      "branches": 1,
+      "syntaxSites": 1,
+      "valueSites": 0
+    },
+    "focus": {
+      "file": "src/commands/execution/focus.ts",
+      "lines": 16,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 2
+    },
+    "pseudo-command": {
+      "file": "src/commands/execution/pseudo-command.ts",
+      "lines": 103,
+      "branches": 16,
+      "syntaxSites": 6,
+      "valueSites": 10
+    },
+    "go": {
+      "file": "src/commands/navigation/go.ts",
+      "lines": 14,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 1
+    },
+    "push": {
+      "file": "src/commands/navigation/push-url.ts",
+      "lines": 13,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 0
+    },
+    "scroll": {
+      "file": "src/commands/navigation/scroll-to.ts",
+      "lines": 12,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 1
+    },
+    "render": {
+      "file": "src/commands/templates/render.ts",
+      "lines": 38,
+      "branches": 6,
+      "syntaxSites": 6,
+      "valueSites": 6
+    },
+    "beep": {
+      "file": "src/commands/utility/beep.ts",
+      "lines": 10,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 1
+    },
+    "breakpoint": {
+      "file": "src/commands/utility/breakpoint.ts",
+      "lines": 8,
+      "branches": 0,
+      "syntaxSites": 0,
+      "valueSites": 0
+    },
+    "copy": {
+      "file": "src/commands/utility/copy.ts",
+      "lines": 20,
+      "branches": 3,
+      "syntaxSites": 1,
+      "valueSites": 4
+    },
+    "log": {
+      "file": "src/commands/utility/log.ts",
+      "lines": 14,
+      "branches": 1,
+      "syntaxSites": 0,
+      "valueSites": 1
+    },
+    "pick": {
+      "file": "src/commands/utility/pick.ts",
+      "lines": 105,
+      "branches": 21,
+      "syntaxSites": 4,
+      "valueSites": 25
+    },
+    "tell": {
+      "file": "src/commands/utility/tell.ts",
+      "lines": 15,
+      "branches": 1,
+      "syntaxSites": 1,
+      "valueSites": 1
+    }
+  }
+}
