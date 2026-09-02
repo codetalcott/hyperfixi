@@ -1832,6 +1832,15 @@ explicit stop**:
 
 Gates: bundle-size ceilings; the Playwright bundle-compatibility matrix;
 `generate:bundles:check` until it retires.
+**Spike inputs, measured 2026-09-03 (not started):** the hybrid parser is
+1,055 lines (`parser/hybrid/parser-core.ts`) plus 1,467 of parser
+templates; the full parser is 4,643 lines and its command parsers 4,348 —
+so "fragments" means those 4,348 lines minus the statement grammar, against
+a ceiling of `MAX_HYBRID=24000` gz (ci.yml) and today's snapshot
+(`scripts/bundle-snapshots/baseline.json`): lite 2,000 gz, lite-plus 2,692,
+hybrid-complete 11,376 (44,090 raw). The spike is a build experiment — one
+tsup entry that imports the command parsers and a minimal statement loop,
+gz-measured — and it is Arc 5's first and possibly only step.
 
 ### Arc 6b — Delete exported dead code (small, needs 4.0)
 
