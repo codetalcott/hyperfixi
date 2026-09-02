@@ -38,7 +38,6 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { NodeWriterFn } from '../../parser/extensions';
-import { isIdentifierNode } from '../../ast/guards';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -384,16 +383,11 @@ export class SetCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
+    // The value is the `to` slot (Arc 3 step 3) — what both parsers emit. A
+    // bare two-argument node built directly still reads `args[1]`.
     if (raw.modifiers.to) {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
-
-    const toIndex = raw.args.findIndex(arg => isIdentifierNode(arg) && arg.name === 'to');
-
-    if (toIndex >= 0 && raw.args.length > toIndex + 1) {
-      return evaluator.evaluate(raw.args[toIndex + 1], context);
-    }
-
     if (raw.args.length >= 2) {
       return evaluator.evaluate(raw.args[1], context);
     }

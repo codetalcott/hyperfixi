@@ -115,13 +115,12 @@ describe('Variable Command Parsers', () => {
 
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // args[0] = target
       expect(result.args[0]).toBe(targetNode);
       // args[1] = 'to' identifier
-      expect((result.args[1] as any).name).toBe('to');
       // args[2] = value
-      expect(result.args[2]).toBe(valueNode);
+      expect(result.modifiers?.to).toBe(valueNode);
     });
 
     it('should parse set with local scope (:var)', () => {
@@ -193,16 +192,15 @@ describe('Variable Command Parsers', () => {
 
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // Target should be an element-scoped identifier (`:myVar`)
       const target = result.args[0] as any;
       expect(target.type).toBe('identifier');
       expect(target.name).toBe('myVar');
       expect(target.scope).toBe('element');
       // 'to' keyword
-      expect((result.args[1] as any).name).toBe('to');
       // value
-      expect(result.args[2]).toBe(valueNode);
+      expect(result.modifiers?.to).toBe(valueNode);
     });
 
     it('should parse set with global scope (::var)', () => {
@@ -271,16 +269,15 @@ describe('Variable Command Parsers', () => {
 
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // Target should be a global-scoped identifier
       const target = result.args[0] as any;
       expect(target.type).toBe('identifier');
       expect(target.name).toBe('globalVar');
       expect(target.scope).toBe('global');
       // 'to' keyword
-      expect((result.args[1] as any).name).toBe('to');
       // value
-      expect(result.args[2]).toBe(valueNode);
+      expect(result.modifiers?.to).toBe(valueNode);
     });
 
     it('should parse set with scope modifier (global keyword)', () => {
@@ -349,16 +346,15 @@ describe('Variable Command Parsers', () => {
 
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // Target should have global scope from the 'global' keyword
       const target = result.args[0] as any;
       expect(target.type).toBe('identifier');
       expect(target.name).toBe('counter');
       expect(target.scope).toBe('global');
       // 'to' keyword
-      expect((result.args[1] as any).name).toBe('to');
       // value
-      expect(result.args[2]).toBe(valueNode);
+      expect(result.modifiers?.to).toBe(valueNode);
     });
 
     it('should throw if "to" keyword is missing', () => {
@@ -503,10 +499,9 @@ describe('Variable Command Parsers', () => {
 
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       expect(result.args[0]).toBe(targetNode);
-      expect((result.args[1] as any).name).toBe('to');
-      expect(result.args[2]).toBe(valueNode);
+      expect(result.modifiers?.to).toBe(valueNode);
     });
   });
 
@@ -566,13 +561,12 @@ describe('Variable Command Parsers', () => {
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
       expect((result as any).originalCommand).toBe('increment');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // args[0] = target
       expect(result.args[0]).toBe(targetNode);
       // args[1] = 'to' identifier
-      expect((result.args[1] as any).name).toBe('to');
       // args[2] = binary expression: target + 1
-      const binaryExpr = result.args[2] as any;
+      const binaryExpr = result.modifiers?.to as any as any;
       expect(binaryExpr.type).toBe('binaryExpression');
       expect(binaryExpr.operator).toBe('+');
       expect(binaryExpr.left).toBe(targetNode);
@@ -637,13 +631,12 @@ describe('Variable Command Parsers', () => {
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
       expect((result as any).originalCommand).toBe('decrement');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // args[0] = target
       expect(result.args[0]).toBe(targetNode);
       // args[1] = 'to' identifier
-      expect((result.args[1] as any).name).toBe('to');
       // args[2] = binary expression: target - 1
-      const binaryExpr = result.args[2] as any;
+      const binaryExpr = result.modifiers?.to as any as any;
       expect(binaryExpr.type).toBe('binaryExpression');
       expect(binaryExpr.operator).toBe('-');
       expect(binaryExpr.left).toBe(targetNode);
@@ -724,13 +717,12 @@ describe('Variable Command Parsers', () => {
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
       expect((result as any).originalCommand).toBe('increment');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // args[0] = target
       expect(result.args[0]).toBe(targetNode);
       // args[1] = 'to' identifier
-      expect((result.args[1] as any).name).toBe('to');
       // args[2] = binary expression: target + 5
-      const binaryExpr = result.args[2] as any;
+      const binaryExpr = result.modifiers?.to as any as any;
       expect(binaryExpr.type).toBe('binaryExpression');
       expect(binaryExpr.operator).toBe('+');
       expect(binaryExpr.left).toBe(targetNode);
@@ -793,16 +785,15 @@ describe('Variable Command Parsers', () => {
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
       expect((result as any).originalCommand).toBe('increment');
-      expect(result.args).toHaveLength(3);
+      expect(result.args).toHaveLength(1);
       // Target should have global scope applied
       const target = result.args[0] as any;
       expect(target.type).toBe('identifier');
       expect(target.name).toBe('counter');
       expect(target.scope).toBe('global');
       // 'to' identifier
-      expect((result.args[1] as any).name).toBe('to');
       // Binary expression: target + 1
-      const binaryExpr = result.args[2] as any;
+      const binaryExpr = result.modifiers?.to as any as any;
       expect(binaryExpr.type).toBe('binaryExpression');
       expect(binaryExpr.operator).toBe('+');
     });

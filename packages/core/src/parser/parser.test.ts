@@ -1130,17 +1130,15 @@ describe('Hyperscript AST Parser', () => {
       expect(command!.type).toBe('command');
       expect(command!.name).toBe('set'); // Transformed from 'increment'
       expect((command as { originalCommand?: unknown }).originalCommand).toBe('increment'); // Original preserved
-      // args structure: [target, 'to', binaryExpression]
+      // increment desugars to `set`: args [target], the synthesized value in the `to` slot
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'counter',
         scope: 'element',
       });
-      expect(((command as { args?: unknown }).args as unknown[])[1]).toMatchObject({
-        type: 'identifier',
-        name: 'to',
-      });
-      expect(((command as { args?: unknown }).args as unknown[])[2]).toMatchObject({
+      expect(
+        ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to
+      ).toMatchObject({
         type: 'binaryExpression',
         operator: '+',
       });
@@ -1161,7 +1159,7 @@ describe('Hyperscript AST Parser', () => {
         scope: 'element',
       });
       // Binary expression contains target and amount
-      const binaryExpr = ((command as { args?: unknown }).args as unknown[])[2];
+      const binaryExpr = ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to;
       expect((binaryExpr as { type?: string }).type).toBe('binaryExpression');
       expect((binaryExpr as { operator?: string }).operator).toBe('+');
       // The right side of the expression is :amount
@@ -1177,17 +1175,15 @@ describe('Hyperscript AST Parser', () => {
       expect(result.success).toBe(true);
       const command = result.node;
 
-      // args structure: [target, 'to', value]
+      // args: [target]; the value is the `to` slot (Arc 3 step 3)
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'name',
         scope: 'element',
       });
-      expect(((command as { args?: unknown }).args as unknown[])[1]).toMatchObject({
-        type: 'identifier',
-        name: 'to',
-      });
-      expect(((command as { args?: unknown }).args as unknown[])[2]).toMatchObject({
+      expect(
+        ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to
+      ).toMatchObject({
         type: 'literal',
         value: 'hello',
       });
@@ -1283,17 +1279,15 @@ describe('Hyperscript AST Parser', () => {
       expect(command!.type).toBe('command');
       expect(command!.name).toBe('set'); // Transformed from 'increment'
       expect((command as { originalCommand?: unknown }).originalCommand).toBe('increment'); // Original preserved
-      // args structure: [target, 'to', binaryExpression]
+      // increment desugars to `set`: args [target], the synthesized value in the `to` slot
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'total',
         scope: 'global',
       });
-      expect(((command as { args?: unknown }).args as unknown[])[1]).toMatchObject({
-        type: 'identifier',
-        name: 'to',
-      });
-      expect(((command as { args?: unknown }).args as unknown[])[2]).toMatchObject({
+      expect(
+        ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to
+      ).toMatchObject({
         type: 'binaryExpression',
         operator: '+',
       });
@@ -1314,7 +1308,7 @@ describe('Hyperscript AST Parser', () => {
         scope: 'global',
       });
       // Binary expression contains target and amount
-      const binaryExpr = ((command as { args?: unknown }).args as unknown[])[2];
+      const binaryExpr = ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to;
       expect((binaryExpr as { type?: string }).type).toBe('binaryExpression');
       expect((binaryExpr as { operator?: string }).operator).toBe('+');
       // The right side of the expression is ::amount
@@ -1390,7 +1384,7 @@ describe('Hyperscript AST Parser', () => {
         scope: 'global',
       });
       // Binary expression contains target and amount
-      const binaryExpr = ((command as { args?: unknown }).args as unknown[])[2];
+      const binaryExpr = ((command as { modifiers?: Record<string, unknown> }).modifiers ?? {}).to;
       expect((binaryExpr as { type?: string }).type).toBe('binaryExpression');
       expect((binaryExpr as { operator?: string }).operator).toBe('+');
       // Amount should be local

@@ -1134,6 +1134,22 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    the first draft's slot-reading helper was written inline and took the
    branch count UP (30 → 32) while the syntax count fell — the ratchet caught
    it, and the helper is a module-level function now.
+
+   **`set` (2026-09-03).** The value is the `to` slot: `set x to 1` is
+   `args: [x]`, `modifiers.to: 1` — what the semantic path always produced
+   and what `SetCommand.parseInput` read first; the parser had consumed `to`
+   and was pushing it back as an identifier for the command to scan for.
+   The scan is gone. What the scan had been covering for: `increment`/
+   `decrement` desugar to a `set` node in the parser, and that desugar was the
+   one in-repo producer of the flat `[target, to, value]` shape — it emits the
+   slot now too, so `increment :count` and `set :count to :count + 1` are the
+   same node. **Census row: 122 lines, syntax sites 1** — the row's numbers
+   did not move, because the census counts positional `args[i]` reads and the
+   one that remains is the bare two-argument fallback's `args[1]`; the `to`
+   scan it removed was a `findIndex`, which the census never counted. The
+   step is real; the meter is blind to this one, and says so here. Nine corpus rows moved (every
+   `set` and `increment` example), reviewed; seven hand-built runtime nodes,
+   the parser expectations and the parser-unit pins reshaped.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the
