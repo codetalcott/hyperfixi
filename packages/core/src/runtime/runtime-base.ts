@@ -970,7 +970,10 @@ export class RuntimeBase {
         // executeCommandSequenceWithResult already turns the `return` signal
         // into ok(returnValue), so this is the whole of return handling.
         const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
-        if (!isOk(result)) throw asControlFlowError(result.error);
+        // `result.error` is a SIGNAL object, not an Error: `asControlFlowError`
+        // returned null for it, so `halt` inside a function threw `null` and
+        // rejected the caller (the control-flow matrix's "rejected:null" row).
+        if (!isOk(result)) throw signalToError(result.error);
         return result.value;
       };
 
