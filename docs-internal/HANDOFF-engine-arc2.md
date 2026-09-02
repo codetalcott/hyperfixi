@@ -110,6 +110,45 @@ Two structural facts that shape it:
    hybrid/bundle producer tree, which Arc 5 may retire outright; typing it now
    risks being work the plan has already flagged as conditional.
 
+## The ratchet has a blind spot, and it changes the order of the work
+
+Measured 2026-09-01, after #1047 took `pratt-parser.ts` from 46 escape hatches
+to 0 without needing the union at all. The obvious next question was whether the
+other clusters are the same, and the answer is **no — for the opposite reason**.
+
+The two `ASTNode` declarations differ in one character that decides everything:
+
+| declaration | an UNDECLARED field resolves to |
+| ----------- | ------------------------------- |
+| `types/base-types.ts:316` — `[key: string]: unknown` | `unknown` |
+| `ast-utils/types.ts:19` — `[key: string]: any` | **`any`** |
+
+So in `parser/`, deleting `(left as any).start` recovers a real type: `start` is
+DECLARED on the interface, and the expression becomes `number | undefined`. That
+is why #1047 is progress.
+
+In `ast-utils/`, deleting `(node as any).commands` recovers **nothing** —
+`node.commands` is `any` either way, because the index signature already says so.
+A mechanical strip of that pattern across the six modules typechecks clean, keeps
+all 348 tests green, and drops the ratchet **157 → 81**. It would be pure
+meter-movement.
+
+**That is a blind spot in the arc's own progress meter.** `check-type-escapes`
+counts the four hatch spellings; it cannot see an `any` arriving through an index
+signature instead, so a directory can be "burned down" by half while its type
+safety is unchanged.
+
+Consequence for the plan's order: in `ast-utils/`, the index signature is not the
+LAST step (as Arc 2 step 6 has it for `base-types`) but the FIRST. Replace
+`ast-utils/types.ts`'s `[key: string]: any` with the union, and the casts stop
+being redundant — at which point removing them is real, and the compile errors
+that appear are the actual burn-down list. Doing it in the plan's order would
+book the credit before doing the work.
+
+The same question is open for `commands/` (235) and `compatibility/` (161) and
+should be asked before either is scheduled: **which `ASTNode` does this cluster
+import, and is the field it casts DECLARED?**
+
 ## Traps
 
 - **The AST-equivalence corpus is the gate and it must NOT move.** Arc 2 is
