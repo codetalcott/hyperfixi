@@ -28,17 +28,10 @@ import { Runtime, type RuntimeOptions } from '../runtime/runtime';
 import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
 import type { RuntimeHooks } from '../types/hooks';
-import type { SemanticAnalyzerInterface } from '../parser/types';
-import { createSemanticAdapter } from '../parser/semantic-integration';
+import { DEFAULT_CONFIDENCE_THRESHOLD } from '../parser/semantic-integration';
+import { emitSemanticParseEvent, updateDebugStats, isDebugEnabled } from '../utils/debug-events';
 import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
 import { VERSION } from '../version';
-import {
-  parseSemantic,
-  isLanguageRegistered,
-  getRegisteredLanguages,
-  buildAST,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-} from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
 import {
   process as processDOMElements,
@@ -82,7 +75,9 @@ class ASTCache {
   private makeKey(code: string, options?: NewCompileOptions): string {
     const lang = options?.language || DEFAULT_LANGUAGE;
     const trad = options?.traditional ? '1' : '0';
-    return `${lang}\0${trad}\0${code}`;
+    // `config.semantic` is part of the key: a non-English program compiled with
+    // the front-end on and then off must not be served the front-end's AST.
+    return `${lang}\0${trad}\0${config.semantic ? 1 : 0}\0${code}`;
   }
 
   get(code: string, options?: NewCompileOptions): CompileResult | undefined {
@@ -149,9 +144,6 @@ declare global {
     };
   }
 }
-
-// Singleton semantic analyzer instance (lazy-initialized)
-let semanticAnalyzerInstance: SemanticAnalyzerInterface | null = null;
 
 // Singleton bridge instance for direct AST path (lazy-initialized)
 let bridgeInstance: import('../multilingual/bridge').SemanticGrammarBridge | null = null;
@@ -252,43 +244,10 @@ async function getOrCreateBridge(): Promise<
 > {
   if (!bridgeInstance) {
     const { SemanticGrammarBridge } = await import('../multilingual/bridge');
-    bridgeInstance = new SemanticGrammarBridge();
+    bridgeInstance = new SemanticGrammarBridge({ confidenceThreshold: config.confidenceThreshold });
     await bridgeInstance.initialize();
   }
   return bridgeInstance;
-}
-
-/**
- * Get or create the singleton semantic analyzer instance.
- * Lazy initialization to avoid overhead if not used.
- */
-function getSemanticAnalyzer(): SemanticAnalyzerInterface {
-  if (!semanticAnalyzerInstance) {
-    semanticAnalyzerInstance = createSemanticAdapter({
-      parse: parseSemantic,
-      isRegistered: isLanguageRegistered,
-      registered: getRegisteredLanguages,
-      buildAST,
-    }) as unknown as SemanticAnalyzerInterface;
-  }
-  return semanticAnalyzerInstance;
-}
-
-/**
- * Default parser options based on global config.
- * Returns semantic analyzer only if config.semantic is true.
- */
-function getDefaultParserOptions() {
-  if (!config.semantic) {
-    // Traditional parsing only - no semantic analyzer
-    return {};
-  }
-
-  return {
-    semanticAnalyzer: getSemanticAnalyzer(),
-    language: config.language,
-    semanticConfidenceThreshold: config.confidenceThreshold,
-  };
 }
 
 // ============================================================================
@@ -856,11 +815,10 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
   const lang = options?.language || DEFAULT_LANGUAGE;
 
   try {
-    const disableSemantic = options?.traditional ?? false;
-    const parserOptions = disableSemantic ? {} : getDefaultParserOptions();
-    const usesSemanticParser = !disableSemantic;
-
-    const parseResult = parseToResult(code, parserOptions);
+    // English is parsed by the core parser alone (Arc 1 step 6). `traditional`
+    // is a no-op here; `compileAsync` honours it by skipping the front-end for
+    // a non-English program.
+    const parseResult = parseToResult(code, {});
     const timeMs = performance.now() - startTime;
 
     if (parseResult.success && parseResult.node) {
@@ -874,7 +832,7 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
         ast: parseResult.node,
         ...(recovered.length > 0 ? { errors: recovered.map(toCompileError) } : {}),
         meta: {
-          parser: usesSemanticParser ? 'semantic' : 'traditional',
+          parser: 'traditional',
           language: lang,
           timeMs,
         },
@@ -886,7 +844,7 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
         ok: false,
         errors: parseResult.error ? [toCompileError(parseResult.error)] : [],
         meta: {
-          parser: usesSemanticParser ? 'semantic' : 'traditional',
+          parser: 'traditional',
           language: lang,
           timeMs,
         },
@@ -949,8 +907,12 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
   const lang = options?.language || DEFAULT_LANGUAGE;
 
-  // For English or when traditional parsing is requested, use sync path (includes cache)
-  if (lang === DEFAULT_LANGUAGE || options?.traditional) {
+  // English, `traditional`, and `config.semantic === false` all mean "core
+  // parser only" — the front-end is not consulted, so a non-English program
+  // under `semantic: false` fails to parse exactly as it would with no semantic
+  // bundle loaded. Before Arc 1 step 6 the flag also governed an in-loop
+  // attempt on every English command; that path is gone.
+  if (lang === DEFAULT_LANGUAGE || options?.traditional || !config.semantic) {
     return compileSync(code, options);
   }
 
@@ -966,6 +928,27 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
   try {
     const bridge = await getOrCreateBridge();
     const astResult = await bridge.parseToASTWithDetails(code, lang);
+
+    if (isDebugEnabled()) {
+      // The `hyperfixi:semantic-parse` event and `semanticDebug.getStats()`
+      // used to be fed by the per-command in-loop attempt; since Arc 1 step 6
+      // the front-end is consulted exactly here, once per program.
+      const command = (astResult.ast as { name?: unknown } | null)?.name;
+      const detail = {
+        input: code.substring(0, 100),
+        language: lang,
+        confidence: astResult.confidence,
+        threshold: config.confidenceThreshold,
+        semanticSuccess: astResult.usedDirectPath,
+        fallbackTriggered: !astResult.usedDirectPath && astResult.fallbackText !== null,
+        ...(typeof command === 'string' ? { command } : {}),
+        ...(astResult.warnings?.length ? { errors: astResult.warnings } : {}),
+        timestamp: Date.now(),
+        duration: performance.now() - startTime,
+      };
+      emitSemanticParseEvent(detail);
+      updateDebugStats(detail);
+    }
 
     if (astResult.usedDirectPath && astResult.ast) {
       const timeMs = performance.now() - startTime;

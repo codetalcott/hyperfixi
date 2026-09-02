@@ -1,8 +1,8 @@
 /**
  * `using view transition` survives the SEMANTIC path into both runtimes.
  *
- * English never had this problem: `process` is on the traditional parser's
- * `skipSemanticParsing` list and `swap` on the semantic adapter's skip list, so
+ * English never had this problem: `process` was on the traditional parser's
+ * `skipSemanticParsing` list and `swap` on the semantic adapter's skip list (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone), so
  * the tail arrives as three flat identifier args there. Every OTHER language
  * reaches the runtime through semantic parse → buildAST, and until
  * `swapSchema`/`processSchema` grew a `manner` role that path dropped the tail

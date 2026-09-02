@@ -32,8 +32,8 @@
  *    even once the parser produced it.
  * 3. On the auto path the semantic match consumed the content at full
  *    confidence and left the tail behind — `processSchema` is patient-only and
- *    models no tail role — so `process` joins take/toggle/add on
- *    parseCommandCore's skipSemanticParsing list.
+ *    models no tail role — so `process` joined take/toggle/add on
+ *    parseCommandCore's skipSemanticParsing list (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone).
  *
  * These go through the real parser and the real runtime on BOTH paths
  * deliberately: the existing unit suite hand-builds AST args, so it cannot see

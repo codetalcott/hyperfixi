@@ -531,13 +531,56 @@ and the parser loop that assumes it.
      them in `PARSER_NEXT_STEPS.md`, fix them, then delete;
    - **differs where semantic is worse** → those rows are already the reason
      the skip list exists; they become test cases for the deletion PR.
-6. **Delete `trySemanticParse` / `skipToCommandBoundary` /
-   `skipSemanticParsing` from `parseCommandCore`.** Fallback for a non-en
-   program is whole-program: the front-end tries `parseToAST`; if it fails, it
-   renders to English and the core parser parses the English. That is what
-   `compileAsync` already does (`fallbackText`); this step makes it the ONLY
-   path. The `SemanticAnalyzer` interface and `semantic-integration.ts` shrink
-   to the adapter the front-end registers.
+6. ~~**Delete `trySemanticParse` / `skipToCommandBoundary` /
+   `skipSemanticParsing` from `parseCommandCore`.**~~ ✅ **DONE 2026-09-02.**
+   Fallback for a non-en program is whole-program: the front-end tries
+   `parseToAST`; if it fails, it renders to English and the core parser parses
+   the English. That is what `compileAsync` already did (`fallbackText`); it is
+   now the ONLY path, and English never reaches the front-end at all. ~~The
+   `SemanticAnalyzer` interface and `semantic-integration.ts` shrink to the
+   adapter the front-end registers.~~ **Measured smaller than that:** nothing
+   in the repo consumed `createSemanticAdapter`'s product except the deleted
+   in-loop adapter — the plan's "kept anyway because the multilingual bundles
+   call it" was false (they never did; they use `@lokascript/semantic` directly
+   and the bridge). So `SemanticAnalyzer`, `createSemanticAdapter`,
+   `SemanticIntegrationAdapter` (650 lines), `ParserOptions.semanticAnalyzer` /
+   `language` / `semanticConfidenceThreshold`, and `types.ts`'s mirror
+   `SemanticAnalyzerInterface` are all gone; `semantic-integration.ts` is the
+   one number the engine still owns, `DEFAULT_CONFIDENCE_THRESHOLD`, which the
+   API now passes to the bridge (`config.confidenceThreshold` had been reaching
+   the in-loop path only). Step 2's registration seam is a `parseToAST`-shaped
+   front-end, not an analyzer, and will be written fresh.
+
+   What else moved, all measured: `config.semantic` now gates `compileAsync`
+   (it had governed only the in-loop attempt); the AST cache key includes it
+   (a non-English program compiled with the front-end on and then off was
+   served the front-end's AST — found by the new gate); `meta.parser` on an
+   English compile is `'traditional'`, always — `'semantic'` now means "the
+   front-end PRODUCED this AST", as the plan said it would; the
+   `hyperfixi:semantic-parse` event and `semanticDebug` stats are fed from the
+   whole-program path, once per non-English compile; `eval-hyperscript.ts`
+   routes a non-English script through the API instead of building its own
+   analyzer (its `static-value` row is gone: **boundary 7 → 5**);
+   `tools/triage-parse-paths.ts` compares the core parser against the bridge's
+   direct path with `lang: 'en'`, because comparing `compileSync` against itself
+   would have made every row `same` — and on THAT comparison the corpus reads
+   `same` 0 · `differ` 202 (86 metadata-only) · `trad-only` 15 · `sem-only` 14
+   · `both-fail` 5, `marker-in-args` 51, not the detour's 140 · 77 · 19 / 13:
+   the direct path never had the in-loop adapter's coverage gate or span
+   rebasing, so it is a wider gap, and it is the one a multilingual-bundle
+   user's English actually crosses. Type-escapes **927 → 922**. Bundles (gz,
+   local macOS): `hyperfixi.js` 346,391 → 344,563, `-hx-v4.js` 358,319 →
+   356,194, `-multilingual.js` 98,374 → 95,968; `dist/index.mjs` −22 KB.
+
+   Five test files (77 cases) whose whole subject was the deleted path —
+   `semantic-integration`, `-delegation`, `toggle-skip-semantic`,
+   `semantic-resync-and`, `semantic-adoption-coverage`, `semantic-span` — are
+   replaced by `whole-program-fallback.test.ts` (11 cases): the default path
+   and `{ traditional: true }` produce byte-identical ASTs over the WHOLE engine
+   corpus, `meta.parser`, the `config.semantic` / `traditional` gates, the debug
+   stats, and the absolute shapes the retired files pinned. One pre-existing
+   test (`scroll-parse`) had recorded the in-loop path's `in`-as-binary shape
+   as a convergence difference; it now asserts upstream's shape on both paths.
 
 **The owner decided on 2026-08-30: CONVERGE the two paths first** (step 5's
 third option). Steps 2, 3 and 6 stay blocked behind that work, which has its own
@@ -649,7 +692,7 @@ step 4 changed its default behaviour** — an external caller passing one argume
 now gets roles for `set` and `go` only. The signature stays source-compatible, so
 this breaks silently rather than loudly; it is the one part of step 4 that
 reaches outside this repo. Every in-repo consumer was updated in the same change.
-Also: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
+Also: ~~`createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it)~~ **deleted by step 6 — measured: no bundle ever called it**; `config.semantic` (public, kept — now gates `compileAsync`); `compile().meta.parser`
 values (`'semantic' | 'traditional' | 'lse'`, kept — step 6 makes `'semantic'`
 mean "the front-end produced the AST" rather than "the analyzer was consulted").
 
