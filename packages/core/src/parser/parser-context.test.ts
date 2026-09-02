@@ -68,7 +68,6 @@ describe('ParserContext', () => {
 
       // Utility Functions (3 methods)
       expect(typeof context.isCommand).toBe('function');
-      expect(typeof context.isCompoundCommand).toBe('function');
       expect(typeof context.isKeyword).toBe('function');
     });
   });
@@ -203,18 +202,6 @@ describe('ParserContext', () => {
       const result = context.isCommand('set');
       expect(typeof result).toBe('boolean');
       expect(result).toBe(true); // 'set' is a command
-    });
-
-    it('should check if token is a compound command', () => {
-      // Test with known compound command structure (method should return boolean)
-      const result1 = context.isCompoundCommand('if');
-      const result2 = context.isCompoundCommand('repeat');
-
-      expect(typeof result1).toBe('boolean');
-      expect(typeof result2).toBe('boolean');
-
-      // At least one should be a compound command
-      // (implementation details may vary, just verify method works)
     });
 
     it.skip('should check if token is a keyword', () => {

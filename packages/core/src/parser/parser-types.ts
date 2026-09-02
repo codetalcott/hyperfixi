@@ -352,9 +352,6 @@ export interface ParserUtilities {
   /** Check if identifier is a command */
   isCommand(name: string): boolean;
 
-  /** Check if command is a compound command */
-  isCompoundCommand(name: string): boolean;
-
   /** Check if identifier is a keyword */
   isKeyword(name: string): boolean;
 

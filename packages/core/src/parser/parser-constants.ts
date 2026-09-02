@@ -134,47 +134,6 @@ export const COMMANDS = new Set<string>([
 ]);
 
 /**
- * Compound commands that require special parsing logic
- * These commands have complex argument patterns and prepositions
- */
-export const COMPOUND_COMMANDS = new Set([
-  'put',
-  'trigger',
-  'send', // send <event> to <target> (alias for trigger)
-  'remove',
-  'take',
-  'toggle',
-  'set',
-  'show',
-  'hide',
-  'add',
-  'halt',
-  'measure',
-  'js',
-  // go [to] <url> [in new window] / go back / (deprecated) go to url <u>,
-  // go to <pos> of <el> — keyword-driven; the generic arg loop drops the
-  // trailing URL and folds scroll forms into binary expressions.
-  'go',
-  // scroll to [the] [top|middle|bottom] [of] <target> [in <container>]
-  // [smoothly|instantly] — keyword-driven. The generic arg loop folded
-  // `bottom of #chat` into a binary `of` (the runtime then threw) and dropped
-  // the trailing adverb, which INVERTED `instantly`.
-  'scroll',
-  'tell', // tell <target> <command> [<command> ...]
-  // pick: 5 variants from upstream _hyperscript (first/last/random/range/match)
-  // — keyword-driven, can't be parsed by the generic identifier-plus-args path.
-  'pick',
-  // start view transition [using <type>] <body> end (upstream animations.js)
-  'start',
-  // htmx-like commands with complex argument patterns
-  'swap', // swap [strategy] of <target> with <content> [using view transition]
-  'morph', // morph [over] <target> with <content>
-  'push', // push url <url> [with title <title>]
-  'replace', // replace url <url> [with title <title>]
-  'process', // process partials in <content> [using view transition]
-]);
-
-/**
  * Control flow commands that use block structures
  */
 export const CONTROL_FLOW_COMMANDS = new Set(['if', 'unless', 'repeat', 'wait', 'for', 'while']);
@@ -288,10 +247,6 @@ export const HYPERSCRIPT_KEYWORDS = new Set([
 export const CommandClassification = {
   isCommand(name: string): boolean {
     return COMMANDS.has(name.toLowerCase());
-  },
-
-  isCompoundCommand(name: string): boolean {
-    return COMPOUND_COMMANDS.has(name.toLowerCase());
   },
 
   isControlFlowCommand(name: string): boolean {

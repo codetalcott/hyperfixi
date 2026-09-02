@@ -50,67 +50,87 @@ import { toLegacyExpression } from '../../ast/legacy';
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the command, or result of parseRegularCommand for unknown commands
  */
+type DedicatedCommandParser = (
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+) => CommandNode | null;
+
+/**
+ * The commands with a hand-written parser, keyed by name — ONE table.
+ *
+ * This used to be two things that had to agree by hand: a `COMPOUND_COMMANDS`
+ * set in `parser-constants.ts` (membership routed a command here) and a
+ * `switch` in this function (which parser it got). A member with no case fell
+ * through to `parseRegularCommand`'s generic loop — `take`, `process`,
+ * `show`/`hide`, `push`/`replace` were all found in that state, each by a
+ * behaviour bug. The set is retired (Arc 3 step 5); a command is dedicated
+ * iff it has a row here, and a row is the parser it gets.
+ */
+export const COMPOUND_COMMAND_PARSERS: ReadonlyMap<string, DedicatedCommandParser> = new Map<
+  string,
+  DedicatedCommandParser
+>([
+  ['put', domCommands.parsePutCommand],
+  ['trigger', eventCommands.parseTriggerCommand],
+  ['send', eventCommands.parseTriggerCommand],
+  ['remove', domCommands.parseRemoveCommand],
+  ['take', domCommands.parseTakeCommand],
+  ['toggle', domCommands.parseToggleCommand],
+  ['set', variableCommands.parseSetCommand],
+  // `add` reaches parseCommandCore's own keyword branch first; the row keeps
+  // the manifest's `multiword` mirror and the coverage probe honest.
+  ['add', (ctx, id) => domCommands.parseAddCommand(ctx, identifierToToken(id))],
+  ['halt', controlFlowCommands.parseHaltCommand],
+  ['measure', animationCommands.parseMeasureCommand],
+  ['js', parseJsCommand],
+  ['go', navigationCommands.parseGoCommand],
+  ['push', navigationCommands.parsePushCommand],
+  ['replace', navigationCommands.parsePushCommand],
+  // Falls back for the `scroll <dir> by <n>` branch, which has no runtime
+  // here and keeps the generic path.
+  [
+    'scroll',
+    (ctx, id) => navigationCommands.parseScrollCommand(ctx, id) ?? parseRegularCommand(ctx, id),
+  ],
+  ['tell', parseTellCommand],
+  ['pick', parsePickCommand],
+  ['start', animationCommands.parseStartCommand],
+  ['swap', domCommands.parseSwapCommand],
+  ['morph', domCommands.parseSwapCommand],
+  ['show', domCommands.parseShowHideCommand],
+  ['hide', domCommands.parseShowHideCommand],
+  // Falls back for non-`partials` input so the runtime keeps reporting its
+  // own keyword error rather than a parse error.
+  [
+    'process',
+    (ctx, id) => domCommands.parseProcessCommand(ctx, id) ?? parseRegularCommand(ctx, id),
+  ],
+]);
+
+/** The names in the table — what `COMPOUND_COMMANDS` used to list by hand. */
+export const COMPOUND_COMMAND_NAMES: ReadonlySet<string> = new Set(COMPOUND_COMMAND_PARSERS.keys());
+
+function identifierToToken(node: IdentifierNode): Token {
+  return {
+    kind: 'identifier',
+    value: node.name,
+    start: node.start ?? 0,
+    end: node.end ?? 0,
+    line: node.line ?? 0,
+    column: node.column ?? 0,
+  };
+}
+
+/**
+ * Parse a command that has a dedicated parser (see {@link COMPOUND_COMMAND_PARSERS}).
+ * Returns null for a name with no row; callers check membership first.
+ */
 export function parseCompoundCommand(
   ctx: ParserContext,
   identifierNode: IdentifierNode
 ): CommandNode | null {
-  const commandName = identifierNode.name.toLowerCase();
-
-  switch (commandName) {
-    case 'put':
-      return domCommands.parsePutCommand(ctx, identifierNode);
-    case 'trigger':
-    case 'send':
-      return eventCommands.parseTriggerCommand(ctx, identifierNode);
-    case 'remove':
-      return domCommands.parseRemoveCommand(ctx, identifierNode);
-    case 'take':
-      return domCommands.parseTakeCommand(ctx, identifierNode);
-    case 'toggle':
-      return domCommands.parseToggleCommand(ctx, identifierNode);
-    case 'set':
-      return variableCommands.parseSetCommand(ctx, identifierNode);
-    case 'halt':
-      return controlFlowCommands.parseHaltCommand(ctx, identifierNode);
-    case 'measure':
-      return animationCommands.parseMeasureCommand(ctx, identifierNode);
-    case 'js':
-      return parseJsCommand(ctx, identifierNode);
-    case 'go':
-      return navigationCommands.parseGoCommand(ctx, identifierNode);
-    case 'push':
-    case 'replace':
-      return navigationCommands.parsePushCommand(ctx, identifierNode);
-    case 'scroll':
-      // Falls back for the `scroll <dir> by <n>` branch, which has no runtime
-      // here and keeps the generic path.
-      return (
-        navigationCommands.parseScrollCommand(ctx, identifierNode) ??
-        parseRegularCommand(ctx, identifierNode)
-      );
-    case 'tell':
-      return parseTellCommand(ctx, identifierNode);
-    case 'pick':
-      return parsePickCommand(ctx, identifierNode);
-    case 'start':
-      return animationCommands.parseStartCommand(ctx, identifierNode);
-    case 'swap':
-    case 'morph':
-      return domCommands.parseSwapCommand(ctx, identifierNode);
-    case 'show':
-    case 'hide':
-      return domCommands.parseShowHideCommand(ctx, identifierNode);
-    case 'process':
-      // Falls back for non-`partials` input so the runtime keeps reporting its
-      // own keyword error rather than a parse error.
-      return (
-        domCommands.parseProcessCommand(ctx, identifierNode) ??
-        parseRegularCommand(ctx, identifierNode)
-      );
-    default:
-      // Fallback to regular parsing
-      return parseRegularCommand(ctx, identifierNode);
-  }
+  const parse = COMPOUND_COMMAND_PARSERS.get(identifierNode.name.toLowerCase());
+  return parse ? parse(ctx, identifierNode) : null;
 }
 
 /**
@@ -150,7 +170,7 @@ export function parseRegularCommand(ctx: ParserContext, identifierNode: Identifi
       // matched nothing here and the loop broke on its first argument.
       // `hide <button/>` and `show <button/>` therefore parsed to a command
       // with NO ARGS at all, silently dropping the target; `clear <textarea/>`
-      // was fine because `clear` is not a COMPOUND_COMMANDS member and takes
+      // was fine because `clear` has no dedicated-parser row and takes
       // `parseCommandCore`'s loop, which calls `parseExpression()` outright.
       //
       // The trailing `ctx.match('<')` below is a consuming call sitting in a

@@ -80,7 +80,7 @@ export interface CommandGrammar {
 
 /**
  * Commands parsed by a DEDICATED parser — a keyword branch in
- * `parseCommandCore`, or membership in `COMPOUND_COMMANDS`. They have no row
+ * `parseCommandCore`, or a row in `COMPOUND_COMMAND_PARSERS`. They have no row
  * here, and `command-routes.test.ts` asserts that this set and the grammar's
  * keys partition `COMMAND_NAMES` exactly: every command has one route, and
  * no command has two. Adding a command means choosing.
@@ -104,9 +104,9 @@ export const DEDICATED_PARSER_COMMANDS: ReadonlySet<string> = new Set<string>([
   'add',
   'increment',
   'decrement',
-  // COMPOUND_COMMANDS → parseCompoundCommand (every member has a case since
-  // push/replace got parsePushCommand in Arc 3 step 5; the default,
-  // parseRegularCommand, is unreachable from here)
+  // COMPOUND_COMMAND_PARSERS rows → parseCompoundCommand (the set that used
+  // to route these by membership was retired in Arc 3 step 5: a command is
+  // dedicated iff it has a row, and the row is its parser)
   'put',
   'trigger',
   'send',
