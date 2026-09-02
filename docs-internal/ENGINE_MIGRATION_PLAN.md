@@ -1739,7 +1739,29 @@ the five tests that pinned message-only detection; the signal commands'
 `asControlFlowError`) went too. Left for the second half: `signalToError`
 at the `execute()` boundary and `toSignal`/`asControlFlowError`
 themselves, which fall when the callers read completions.
-**Decision needed before the second half (owner):** the matrix pins today's
+**Step 2, second half, DONE 2026-09-03 — the decision was made the same
+day (upstream's rule, measured on 0.9.93 in jsdom) and the boundaries are
+written down once:** a signal travels up until the nearest boundary that
+CONSUMES it. Loop: `break`/`continue`. Function (`installFunction`):
+`halt`/`exit`/`return` — the call yields `undefined` or the value, the
+caller continues. Handler (`createEventHandler`'s loop): `halt`/`exit`/
+`return` end the handler, the value dropped. Program (the public
+`execute()` — the API's eval, observer bodies, behavior init): `return`
+hands its value to the caller (the embedded-evaluator use #235 was for),
+`halt`/`exit` end the program and RESOLVE. Everything else passes through;
+`break`/`continue` reaching a function, handler or program stay errors.
+Mechanically: `execute()` split into the boundary wrapper and
+`executeNode` (the dispatcher, which structural callers — the statement
+loops, `_runtimeExecute`, the handler loop — use), the command arm no
+longer turns `return` into a value, and `executeProgram` consumes a
+`return` like the boundary does. The matrix moved EXACTLY the eight target
+cells: the six `return` rows outside `def` (marks stop at the return) and
+the two `halt`/`exit` rows inside `def` (gain `c`); two API-level tests
+that pinned `execute()` rejecting on `halt` now pin it resolving. What
+step 3 still owes: `signalToError` (the seam between Results and the
+thrown form the loops still speak), `toSignal`, `asControlFlowError` —
+each falls when the loops and `executeBlock` read Results directly.
+~~**Decision needed before the second half (owner):**~~ **Decided:** the matrix pins today's
 semantics at the `def` boundary — `halt`/`exit` inside a called `def` stop
 the CALLING handler too (`a f`, never `c`), and `return` outside a `def` is
 a no-op — while upstream ends only the function for `exit`/`return` and

@@ -443,7 +443,34 @@ export class RuntimeBase {
   /**
    * Main Entry Point: Execute an AST node
    */
+  /**
+   * The PROGRAM boundary (Arc 4a): the entry every outside caller uses — the
+   * API's eval/execute, handler and observer bodies, behavior init. A
+   * `return` that reaches it hands its value to the caller (the embedded-
+   * evaluator use: `hyperscript.eval('return x + 1')`); a `halt`/`exit`
+   * ends the program. `break`/`continue` have no loop to reach and stay
+   * errors. Structural callers inside the runtime — the statement loops,
+   * `_runtimeExecute` for `if`/`repeat`/`tell` bodies, the handler's command
+   * loop — call `executeNode` instead, so a signal keeps travelling to the
+   * boundary that consumes it.
+   */
   async execute(node: AnyNode, context: ExecutionContext): Promise<unknown> {
+    try {
+      return await this.executeNode(node, context);
+    } catch (e) {
+      const cfe = asControlFlowError(e);
+      if (cfe?.isReturn) {
+        const rv = cfe.returnValue;
+        if (rv !== undefined) Object.assign(context, { it: rv, result: rv });
+        return rv;
+      }
+      if (cfe?.isHalt || cfe?.isExit) return undefined;
+      throw e;
+    }
+  }
+
+  /** The recursive dispatcher. Signals leave it as control-flow errors. */
+  protected async executeNode(node: AnyNode, context: ExecutionContext): Promise<unknown> {
     const nodeName = (node as { name?: string })?.name || '';
     debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
 
@@ -470,7 +497,7 @@ export class RuntimeBase {
     // Inject self-reference for recursive execution (needed by control flow commands)
     if (!context.locals.has('_runtimeExecute')) {
       context.locals.set('_runtimeExecute', (n: ASTNode, ctx?: ExecutionContext) =>
-        this.execute(n, ctx || context)
+        this.executeNode(n, ctx || context)
       );
     }
 
@@ -492,16 +519,12 @@ export class RuntimeBase {
           // sequence executor does, rather than leaking the raw
           // RETURN_EXECUTION signal to the caller.
           const result = await this.processCommandWithResult(node as CommandNode, context);
-          if (!isOk(result)) {
-            if (result.error.type === 'return') {
-              const rv = (result.error as { returnValue?: unknown }).returnValue;
-              if (rv !== undefined) {
-                Object.assign(context, { it: rv, result: rv });
-              }
-              return rv;
-            }
-            throw signalToError(result.error);
-          }
+          // Every signal, `return` included, leaves the dispatcher as a
+          // control-flow error and is consumed by the nearest boundary —
+          // the loop, the function, the handler, or the program entry. (A
+          // `return` used to become a VALUE here, which is why a handler
+          // kept running after it: the handler's loop never saw a signal.)
+          if (!isOk(result)) throw signalToError(result.error);
           return result.value;
         }
 
@@ -842,14 +865,17 @@ export class RuntimeBase {
         if (name) fnContext.locals.set(name, args[i]);
       });
 
+      // The FUNCTION boundary (Arc 4a): `halt`/`exit` end the function (the
+      // call returns undefined; halt's event side effect already happened),
+      // `return` hands its value to the caller, and the caller continues —
+      // upstream's rule. `break`/`continue` have no loop here and stay errors.
       const run = async (commands: readonly AnyNode[]): Promise<unknown> => {
-        // executeCommandSequenceWithResult already turns the `return` signal
-        // into ok(returnValue), so this is the whole of return handling.
         const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
-        // `result.error` is a SIGNAL object, not an Error: `asControlFlowError`
-        // returned null for it, so `halt` inside a function threw `null` and
-        // rejected the caller (the control-flow matrix's "rejected:null" row).
-        if (!isOk(result)) throw signalToError(result.error);
+        if (!isOk(result)) {
+          const signal = result.error;
+          if (signal.type === 'break' || signal.type === 'continue') throw signalToError(signal);
+          return signal.type === 'return' ? signal.returnValue : undefined;
+        }
         return result.value;
       };
 
@@ -903,13 +929,13 @@ export class RuntimeBase {
     // callable before init runs, exactly as a handler has to be registered
     // before init can send to it.
     for (const def of defs) {
-      this.execute(def, context);
+      this.executeNode(def, context);
     }
 
     // Phase 1: Register all event handlers first
     for (const handler of eventHandlers) {
       try {
-        await this.execute(handler, context);
+        await this.executeNode(handler, context);
       } catch (error) {
         if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
           break;
@@ -921,9 +947,13 @@ export class RuntimeBase {
     // Phase 2: Execute init blocks (now handlers are registered)
     for (const init of initBlocks) {
       try {
-        lastResult = await this.execute(init, context);
+        lastResult = await this.executeNode(init, context);
       } catch (error) {
         if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
+          break;
+        }
+        if (isControlFlowError(error) && error.isReturn) {
+          lastResult = error.returnValue;
           break;
         }
         throw error;
@@ -933,9 +963,13 @@ export class RuntimeBase {
     // Execute the remaining non-event-handler statements.
     for (const statement of otherStatements) {
       try {
-        lastResult = await this.execute(statement, context);
+        lastResult = await this.executeNode(statement, context);
       } catch (error) {
         if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
+          break;
+        }
+        if (isControlFlowError(error) && error.isReturn) {
+          lastResult = error.returnValue;
           break;
         }
         throw error;
@@ -953,7 +987,7 @@ export class RuntimeBase {
 
     for (const command of node.commands) {
       try {
-        await this.execute(command, context);
+        await this.executeNode(command, context);
       } catch (error) {
         if (isControlFlowError(error) && error.isHalt) break;
         throw error;
@@ -1577,7 +1611,7 @@ export class RuntimeBase {
       const runCommands = async (toRun: readonly AnyNode[]): Promise<void> => {
         for (const command of toRun) {
           try {
-            await runtime.execute(command, eventContext);
+            await runtime.executeNode(command, eventContext);
           } catch (e) {
             if (isControlFlowError(e)) {
               if (e.isHalt || e.isExit) break;
@@ -1661,7 +1695,8 @@ export class RuntimeBase {
             // Execute all commands
             for (const command of commands) {
               try {
-                await this.execute(command, mutationContext);
+                // Structural loop: the dispatcher, so a signal reaches the catch below.
+                await this.executeNode(command, mutationContext);
               } catch (error) {
                 if (isControlFlowError(error)) {
                   if (error.isHalt || error.isExit || error.isReturn) break;
@@ -1751,7 +1786,8 @@ export class RuntimeBase {
             // Execute all commands
             for (const command of commands) {
               try {
-                await this.execute(command, changeContext);
+                // Structural loop: the dispatcher, so a signal reaches the catch below.
+                await this.executeNode(command, changeContext);
               } catch (error) {
                 if (isControlFlowError(error)) {
                   if (error.isHalt || error.isExit || error.isReturn) break;
