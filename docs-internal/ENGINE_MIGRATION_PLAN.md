@@ -1270,6 +1270,32 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    `continuation` words in the grammar rows, which are the old
    `continuationKeywords` by another name — each behind a caller count.
 
+   **Step 5, third deletion: `parseRegularCommand` (2026-09-03).** The last
+   copy of the generic argument loop had three callers, not the two the
+   previous entry counted: the `scroll` and `process` fallbacks in the
+   dedicated-parser table, and `pick`'s "legacy fallback" for `pick from
+   <expr>` / `pick a, b, c`. All three now call `parseDeclaredCommand` with a
+   local `GENERIC_FALLBACK_GRAMMAR` — `positional: 'primary'`, no markers —
+   which is what the loop collected. Measured before/after on the nine
+   shapes the three callers can see: seven identical; the two `pick` legacy
+   forms IMPROVED, because the old loop stopped at the first argument (`pick
+   a, b, c` was `[a]`, `pick from [1, 2]` was `[from]` — the array literal
+   dropped) and the declared parser continues across commas and takes a
+   primary of any kind. A first draft used the plugin row instead
+   (`positional: 'expression'`) and the dump caught it: `scroll #panel
+   smoothly` lost its adverb, because an expression parse stops after
+   `#panel` and `smoothly` is not a continuation word. The `primary` row is
+   the loop's behaviour; the `expression` row is not. One documented example
+   left the parse-gap allowlist because of the `pick` change — `pick "red",
+   "green", "blue"`, which now parses as three arguments. Its allowlist
+   reason survives here: upstream rejects it, none of `pick`'s five forms is
+   a bare list, and the runtime still reports it — it is a docs defect that
+   now fails at the right layer. Two AST-equivalence rows moved (that example
+   and its `pick` sibling), reviewed; type-escapes unchanged at 891. Step 5's
+   deletion list is now closed except for the parts that were never
+   leftovers: `fallbackModifierKey` (the slot read) and the plugin row's
+   `continuation` words (designed for plugin commands).
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
@@ -1355,8 +1381,13 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    commands" but as a TABLE: `COMPOUND_COMMAND_PARSERS` in
    `utility-commands.ts`, one row per dedicated parser; a command is dedicated
    iff it has a row. The expression-path copy of the generic loop
-   (`createCommandFromIdentifier`) went with it. `parseRegularCommand` remains
-   for two fallbacks (`scroll <dir> by <n>`, non-`partials` `process`).
+   (`createCommandFromIdentifier`) went with it. ~~`parseRegularCommand` remains
+   for two fallbacks (`scroll <dir> by <n>`, non-`partials` `process`).~~
+   `parseRegularCommand` deleted 2026-09-03 (three fallback callers, not two —
+   `pick`'s legacy forms were the third); the fallback is the declared parser
+   with a primary-collecting row. `continuationKeywords` survives only as the
+   plugin row's `continuation` words — designed behaviour for commands the
+   manifest does not know, not a leftover.
 
 Gates: the classification audit (ratchet to 0); `command-output-contract`
 (both paths — until Arc 4 deletes one); `compound-command-coverage`;

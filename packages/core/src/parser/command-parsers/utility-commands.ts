@@ -22,6 +22,8 @@ import * as domCommands from './dom-commands';
 import * as variableCommands from './variable-commands';
 import * as navigationCommands from './navigation-commands';
 import { toLegacyExpression } from '../../ast/legacy';
+import { parseDeclaredCommand } from './declared-commands';
+import type { CommandGrammar } from '../command-grammar';
 
 /**
  * Parse compound command
@@ -48,7 +50,7 @@ import { toLegacyExpression } from '../../ast/legacy';
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The command identifier node
- * @returns CommandNode representing the command, or result of parseRegularCommand for unknown commands
+ * @returns CommandNode representing the command, or null for a name with no row commands
  */
 type DedicatedCommandParser = (
   ctx: ParserContext,
@@ -61,7 +63,7 @@ type DedicatedCommandParser = (
  * This used to be two things that had to agree by hand: a `COMPOUND_COMMANDS`
  * set in `parser-constants.ts` (membership routed a command here) and a
  * `switch` in this function (which parser it got). A member with no case fell
- * through to `parseRegularCommand`'s generic loop — `take`, `process`,
+ * through to a second generic argument loop — `take`, `process`,
  * `show`/`hide`, `push`/`replace` were all found in that state, each by a
  * behaviour bug. The set is retired (Arc 3 step 5); a command is dedicated
  * iff it has a row here, and a row is the parser it gets.
@@ -90,7 +92,7 @@ export const COMPOUND_COMMAND_PARSERS: ReadonlyMap<string, DedicatedCommandParse
   // here and keeps the generic path.
   [
     'scroll',
-    (ctx, id) => navigationCommands.parseScrollCommand(ctx, id) ?? parseRegularCommand(ctx, id),
+    (ctx, id) => navigationCommands.parseScrollCommand(ctx, id) ?? parseGenericFallback(ctx, id),
   ],
   ['tell', parseTellCommand],
   ['pick', parsePickCommand],
@@ -103,7 +105,7 @@ export const COMPOUND_COMMAND_PARSERS: ReadonlyMap<string, DedicatedCommandParse
   // own keyword error rather than a parse error.
   [
     'process',
-    (ctx, id) => domCommands.parseProcessCommand(ctx, id) ?? parseRegularCommand(ctx, id),
+    (ctx, id) => domCommands.parseProcessCommand(ctx, id) ?? parseGenericFallback(ctx, id),
   ],
 ]);
 
@@ -134,65 +136,29 @@ export function parseCompoundCommand(
 }
 
 /**
- * Parse regular command
- *
- * Generic command parser that collects space-separated arguments until
- * a command boundary is reached. This is used for commands that don't
- * have special parsing requirements.
- *
- * Arguments are collected until one of these boundaries:
- * - 'then', 'and', 'else', 'end' keywords
- * - Another command token
- * - End of input
- *
- * Examples:
- *   - log "message" value
- *   - call myFunction(arg1, arg2)
- *   - send customEvent to <button/>
- *
- * @param ctx - Parser context providing access to parser state and methods
- * @param identifierNode - The command identifier node
- * @returns CommandNode representing the command
+ * The row a dedicated parser hands malformed or lenient input to: every
+ * primary up to the boundary, no marker slots — exactly what the deleted
+ * `parseRegularCommand` loop collected (`primary`, not `expression`, so a
+ * trailing adverb like `scroll #panel smoothly` keeps its `smoothly`).
  */
-export function parseRegularCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
-  const args: ASTNode[] = [];
+const GENERIC_FALLBACK_GRAMMAR: CommandGrammar = {
+  positional: 'primary',
+  markers: [],
+  syntax: '<command> [<primary> …]',
+};
 
-  // Parse command arguments (space-separated, not comma-separated)
-  while (!isCommandBoundary(ctx, ['catch', 'finally'])) {
-    // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
-    // checkIdentifierLike() covers: IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT
-    // checkSelector() covers: CSS_SELECTOR, ID_SELECTOR, CLASS_SELECTOR
-    // checkLiteral() covers: STRING, NUMBER, BOOLEAN, TEMPLATE_LITERAL
-    if (
-      ctx.checkIdentifierLike() ||
-      // `checkAnySelector`, not `checkSelector`: the latter covers only BASIC
-      // selectors (`#id`, `.class`, css), so a QUERY REFERENCE — `<button/>` —
-      // matched nothing here and the loop broke on its first argument.
-      // `hide <button/>` and `show <button/>` therefore parsed to a command
-      // with NO ARGS at all, silently dropping the target; `clear <textarea/>`
-      // was fine because `clear` has no dedicated-parser row and takes
-      // `parseCommandCore`'s loop, which calls `parseExpression()` outright.
-      //
-      // The trailing `ctx.match('<')` below is a consuming call sitting in a
-      // chain of non-consuming checks — it never fired for this input (the
-      // tokenizer emits the query reference as ONE token, not a bare `<`), and
-      // it is left alone here rather than widened, since removing it is a
-      // separate question from fixing the drop.
-      ctx.checkAnySelector() ||
-      ctx.checkLiteral() ||
-      ctx.checkTimeExpression() ||
-      ctx.match('<')
-    ) {
-      args.push(ctx.parsePrimary());
-    } else {
-      break;
-    }
-  }
-
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+/**
+ * Parse with {@link GENERIC_FALLBACK_GRAMMAR}. This is what
+ * `parseRegularCommand` — the second copy of the generic argument loop — used
+ * to be; Arc 3 step 5 deleted the copy so there is one generic parser.
+ */
+function parseGenericFallback(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  return parseDeclaredCommand(
+    ctx,
+    identifierToToken(identifierNode),
+    identifierNode.name.toLowerCase(),
+    GENERIC_FALLBACK_GRAMMAR
+  ) as CommandNode;
 }
 
 /**
@@ -931,6 +897,5 @@ export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierN
   }
 
   // --- Legacy fallback: `pick from <expr>` or `pick a, b, c` ---
-  // Reuse the regular parser for backward compatibility.
-  return parseRegularCommand(ctx, identifierNode);
+  return parseGenericFallback(ctx, identifierNode);
 }

@@ -143,7 +143,7 @@
     "pick items 1 to 3 of items": "ok:60575af8bca5",
     "pick match of \"[0-9]+\" from text": "ok:16aacda75aa1",
     "pick from colors": "ok:d3a16b678122",
-    "pick \"red\", \"green\", \"blue\"": "ok:aa328aabd0be",
+    "pick \"red\", \"green\", \"blue\"": "ok:9be64f3acca6",
     "prepend \"Hello\"": "ok:34af3a59ebf3",
     "prepend \"World\" to greeting": "ok:3a65a8cb4b6b",
     "prepend item to myArray": "ok:512858fce9cb",
