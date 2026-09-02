@@ -1857,7 +1857,24 @@ them on first run, so this is a deletion of `runCommands`'s per-command loop,
 not a speed-up), step 4 (`ASTCache` → Program cache; eviction test), and the
 optional per-command `compile` tail (claim 6 predicts nothing lands).
 
-**4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
+**Steps 3 and 4 DONE 2026-09-04 — Arc 4b's numbered steps are CLOSED; only
+the optional per-command tail remains.** Step 3: a handler's three bodies
+(`on … catch … finally`) compile once in `createEventHandler`, at
+registration, and a `def`'s three in `installFunction`, at installation, via
+`compileSequence` (a plain sequence Op: first signal returned, nothing
+consumed); the per-command `runCommands` loop is gone and each event runs
+one closure. Step 4 was FALSIFIED by the design and is recorded as such: an
+`Op` closes over the runtime that compiled it, so a program cannot live in
+the module-global `ASTCache` (many runtimes, one cache) — the Program cache
+is the runtime's own memo, and the AST cache's job is to return the SAME
+node object for the same source, which is what makes the memo hit.
+`compile-memo.test.ts` pins both halves (same node → same Op; distinct
+node → distinct Op; the cached AST's Op is stable across compiles; two
+runtimes never share an Op), and `ast-cache.test.ts` finally crosses the
+500-entry boundary (LRU: a touched entry survives the overflow, its
+neighbour is evicted). Matrix 35 cells, none moved.
+
+**4c — `Scope`.** _Opened 2026-09-04 by [HANDOFF-engine-arc4c.md](./HANDOFF-engine-arc4c.md) — nine claims re-measured (four hold, two false, three incomplete); read it before the first 4c PR._ Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
 flow is `Completion` now); `enhanceContext`'s `Proxy` is deleted after step 1
 measures that no production caller registers a context provider (2026-08-30:
@@ -1870,9 +1887,12 @@ through `HyperfixiPluginContext.runtime`, which they already receive. Gate: a
 ratchet (this is the arc that removes `expressions → parser/extensions` and
 `commands → parser/extensions`).
 
-Blast radius: `ExecutionContext` is exported and used downstream as a type
-(reactivity, realtime, components). Keep it as an alias of `Scope` for one
-release. `createContext`/`createChildContext`/`ensureContext` keep their
+Blast radius: ~~`ExecutionContext` is exported and used downstream as a type
+(reactivity, realtime, components).~~ Measured 2026-09-04 (the 4c brief):
+reactivity, realtime, intercept and components each declare their OWN
+structural `ExecutionContext`, deliberately, and only two test files import
+core's — a rename never reaches them, a SHAPE change does. Keep it as an alias
+of `Scope` for one release anyway: it is on core's public surface. `createContext`/`createChildContext`/`ensureContext` keep their
 names. `HyperfixiPluginContext` gains `runtime.globals` hooks; nothing is
 removed from it.
 
