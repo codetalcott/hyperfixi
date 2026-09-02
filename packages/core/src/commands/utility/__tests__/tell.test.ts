@@ -11,6 +11,25 @@ import { TellCommand } from '../tell';
 import type { TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { ok, err, isSignal } from '../../../types/result';
+import type { ExecutionSignal } from '../../../types/result';
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
+
+/**
+ * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
+ * mocks return plain values or a signal object; this adapts them to the contract.
+ */
+function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
+  return async (cmd: unknown, ctx: unknown) => {
+    const r = await fn(cmd as never, ctx as never);
+    return isSignal(r) ? err(r) : ok(r);
+  };
+}
 
 // Mock element resolution helper
 vi.mock('../../helpers/element-resolution', () => ({
@@ -193,7 +212,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdObj] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: [cmdObj] }, context)
+      );
 
       expect(executeSpy).toHaveBeenCalledTimes(1);
       expect(result.commandResults).toContain('executed');
@@ -205,7 +226,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: [cmdFn] }, context)
+      );
 
       expect(result.targetElements).toContain(targetEl);
       expect(result.commandResults).toEqual(['result-value']);
@@ -282,12 +305,14 @@ describe('TellCommand', () => {
       const runtimeExecute = vi.fn(async (_cmd: unknown, _ctx: unknown) => 'runtime-result');
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_runtimeExecute', asRuntimeExecute(runtimeExecute));
       const context = createMockContext({ locals });
 
       const astCmd = { type: 'command', name: 'hide' };
 
-      const result = await command.execute({ target: targetEl, commands: [astCmd] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: [astCmd] }, context)
+      );
 
       expect(runtimeExecute).toHaveBeenCalledTimes(1);
       // First arg is the AST node
@@ -305,7 +330,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: [cmdFn] }, context)
+      );
 
       expect(cmdFn).toHaveBeenCalledTimes(1);
       expect(result.commandResults).toEqual(['called-on-DIV']);
@@ -337,7 +364,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: [el1, el2, el3], commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: [el1, el2, el3], commands: [cmdFn] }, context)
+      );
 
       expect(cmdFn).toHaveBeenCalledTimes(3);
       expect(capturedMeValues).toEqual([el1, el2, el3]);
@@ -354,9 +383,8 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute(
-        { target: [el1, el2], commands: [cmdFn1, cmdFn2, cmdFn3] },
-        context
+      const result = outputOf(
+        await command.execute({ target: [el1, el2], commands: [cmdFn1, cmdFn2, cmdFn3] }, context)
       );
 
       // 2 targets * 3 commands = 6
@@ -425,7 +453,7 @@ describe('TellCommand', () => {
       const runtimeExecute = vi.fn(async () => 'added');
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_runtimeExecute', asRuntimeExecute(runtimeExecute));
       const context = createMockContext({ locals });
 
       // 1. parseInput
@@ -442,7 +470,7 @@ describe('TellCommand', () => {
       expect(input.commands).toHaveLength(1);
 
       // 2. execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       expect(runtimeExecute).toHaveBeenCalledTimes(1);
       expect(result.targetElements).toContain(targetEl);
@@ -465,7 +493,7 @@ describe('TellCommand', () => {
       });
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_runtimeExecute', asRuntimeExecute(runtimeExecute));
       const context = createMockContext({ locals });
 
       // 1. parseInput
@@ -481,7 +509,7 @@ describe('TellCommand', () => {
       expect(input.commands).toHaveLength(2);
 
       // 2. execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       // 2 targets * 2 commands = 4 executions
       expect(runtimeExecute).toHaveBeenCalledTimes(4);

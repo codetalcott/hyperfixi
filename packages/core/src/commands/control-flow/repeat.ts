@@ -35,7 +35,8 @@ import {
   createForeverLoopConfig,
 } from '../helpers/loop-executor';
 import type { CommandRaw } from '../../ast/command-slots';
-import { asControlFlowError } from '../../types/result';
+import { isOk } from '../../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../../types/result';
 
 /** Typed input for RepeatCommand */
 export interface RepeatCommandInput {
@@ -226,7 +227,7 @@ export class RepeatCommand implements DecoratedCommand {
   async execute(
     input: RepeatCommandInput,
     context: TypedExecutionContext
-  ): Promise<RepeatCommandOutput> {
+  ): Promise<RepeatCommandOutput | ExecutionSignal> {
     const {
       type,
       variable,
@@ -289,53 +290,39 @@ export class RepeatCommand implements DecoratedCommand {
     }
 
     // Execute loop using unified executor
-    try {
-      const result = await executeLoop(
-        config,
-        commands,
-        context,
-        iterCtx,
-        this.executeCommands.bind(this)
-      );
+    const result = await executeLoop(
+      config,
+      commands,
+      context,
+      iterCtx,
+      this.executeCommands.bind(this)
+    );
+    // halt/exit/return from the body pass through to the boundary that owns them.
+    if (result.signal) return result.signal;
 
-      // Run else branch if loop completed naturally with zero iterations.
-      // Mirrors upstream _hyperscript controlflow.js:125 (didIterate flag).
-      if (result.iterations === 0 && !result.interrupted && elseCommands) {
-        const elseResult = await this.executeCommands(elseCommands, context);
-        Object.assign(context, { it: elseResult });
-        return {
-          type,
-          iterations: 0,
-          completed: true,
-          lastResult: elseResult,
-        };
-      }
-
-      // Update context.it to last result
-      Object.assign(context, { it: result.lastResult });
-
+    // Run else branch if loop completed naturally with zero iterations.
+    // Mirrors upstream _hyperscript controlflow.js:125 (didIterate flag).
+    if (result.iterations === 0 && !result.interrupted && elseCommands) {
+      const elseResult = await this.executeCommands(elseCommands, context);
+      Object.assign(context, { it: elseResult });
       return {
         type,
-        iterations: result.iterations,
-        completed: !result.interrupted,
-        lastResult: result.lastResult,
-        interrupted: result.interrupted,
+        iterations: 0,
+        completed: true,
+        lastResult: elseResult,
       };
-    } catch (error) {
-      // Handle top-level control flow errors
-      // A break/continue that escaped the body arrives as a flagged
-      // control-flow error (signalToError); read the flag, not the message.
-      const cfe = asControlFlowError(error);
-      if (cfe?.isBreak || cfe?.isContinue) {
-        return {
-          type,
-          iterations: 0,
-          completed: true,
-          interrupted: cfe.isBreak === true,
-        };
-      }
-      throw error;
     }
+
+    // Update context.it to last result
+    Object.assign(context, { it: result.lastResult });
+
+    return {
+      type,
+      iterations: result.iterations,
+      completed: !result.interrupted,
+      lastResult: result.lastResult,
+      interrupted: result.interrupted,
+    };
   }
 
   /** Execute commands block or array */
@@ -351,12 +338,17 @@ export class RepeatCommand implements DecoratedCommand {
     ) {
       const block = commands as { commands?: unknown[] };
       const runtimeExecute = context.locals.get('_runtimeExecute') as
-        ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
+        | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<ExecutionResult<unknown>>)
+        | undefined;
       if (!runtimeExecute) throw new Error('Runtime execute function not available');
       let lastResult: unknown;
       if (block.commands) {
         for (const cmd of block.commands) {
-          lastResult = await runtimeExecute(cmd, context);
+          const result = await runtimeExecute(cmd, context);
+          // The signal goes back to the loop executor, which consumes
+          // break/continue and passes the rest through.
+          if (!isOk(result)) return result.error;
+          lastResult = result.value;
         }
       }
       return lastResult;

@@ -14,6 +14,25 @@ import { ConditionalCommand, createConditionalCommand, type ConditionalCommandIn
 import type { TypedExecutionContext } from '../../types/core';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
+import { ok, err, isSignal } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
+
+/**
+ * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
+ * mocks return plain values or a signal object; this adapts them to the contract.
+ */
+function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
+  return async (cmd: unknown, ctx: unknown) => {
+    const r = await fn(cmd as never, ctx as never);
+    return isSignal(r) ? err(r) : ok(r);
+  };
+}
 
 // =============================================================================
 // Test Helpers
@@ -23,7 +42,7 @@ function createMockContext(): TypedExecutionContext {
   return {
     me: null,
     you: null,
-    locals: new Map([['_runtimeExecute', vi.fn(async () => 'executed')]]),
+    locals: new Map([['_runtimeExecute', asRuntimeExecute(vi.fn(async () => 'executed'))]]),
     globals: new Map(),
     result: undefined,
     halted: false,
@@ -168,7 +187,7 @@ describe('ConditionalCommand', () => {
     it('should execute then branch when condition is true', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'then-result');
-      context.locals.set('_runtimeExecute', mockExecute);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -176,7 +195,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.mode).toBe('if');
       expect(output.conditionResult).toBe(true);
@@ -187,7 +206,7 @@ describe('ConditionalCommand', () => {
     it('should execute else branch when condition is false', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'else-result');
-      context.locals.set('_runtimeExecute', mockExecute);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -196,7 +215,7 @@ describe('ConditionalCommand', () => {
         elseCommands: createMockBlock([{ type: 'command', name: 'else' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.mode).toBe('if');
       expect(output.conditionResult).toBe(false);
@@ -213,7 +232,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.conditionResult).toBe(false);
       expect(output.executedBranch).toBe('none');
@@ -231,7 +250,7 @@ describe('ConditionalCommand', () => {
           thenCommands: createMockBlock(),
         };
 
-        const output = await command.execute(input, context);
+        const output = outputOf(await command.execute(input, context));
         expect(output.conditionResult).toBe(true);
         expect(output.executedBranch).toBe('then');
       }
@@ -249,7 +268,7 @@ describe('ConditionalCommand', () => {
           thenCommands: createMockBlock(),
         };
 
-        const output = await command.execute(input, context);
+        const output = outputOf(await command.execute(input, context));
         expect(output.conditionResult).toBe(false);
         expect(output.executedBranch).toBe('none');
       }
@@ -260,7 +279,7 @@ describe('ConditionalCommand', () => {
     it('should execute commands when condition is false (inverted logic)', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn(async () => 'result');
-      context.locals.set('_runtimeExecute', mockExecute);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -268,7 +287,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.conditionResult).toBe(false);
       expect(output.executedBranch).toBe('then');
@@ -278,7 +297,7 @@ describe('ConditionalCommand', () => {
     it('should NOT execute commands when condition is true', async () => {
       const context = createMockContext();
       const mockExecute = vi.fn();
-      context.locals.set('_runtimeExecute', mockExecute);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(mockExecute));
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -286,7 +305,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.conditionResult).toBe(true);
       expect(output.executedBranch).toBe('none');
@@ -301,10 +320,7 @@ describe('ConditionalCommand', () => {
       // on the command output.
       const context = createMockContext();
       const expectedResult = 'unless-result';
-      context.locals.set(
-        '_runtimeExecute',
-        vi.fn(async () => expectedResult)
-      );
+      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
 
       const input: ConditionalCommandInput = {
         mode: 'unless',
@@ -312,7 +328,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.result).toBe(expectedResult);
       expect(context.it).toBeUndefined();
@@ -329,7 +345,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
       expect(output.executedBranch).toBe('then');
     });
 
@@ -345,7 +361,7 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock(),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
       expect(output.conditionResult).toBe(true);
       expect(output.executedBranch).toBe('then');
     });
@@ -362,7 +378,7 @@ describe('ConditionalCommand', () => {
         thenCommands: [cmd1, cmd2],
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.executedBranch).toBe('then');
       expect(cmd1.execute).toHaveBeenCalled();
@@ -374,10 +390,7 @@ describe('ConditionalCommand', () => {
     it('should return result from then branch', async () => {
       const context = createMockContext();
       const expectedResult = { value: 42 };
-      context.locals.set(
-        '_runtimeExecute',
-        vi.fn(async () => expectedResult)
-      );
+      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -385,17 +398,14 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
       expect(output.result).toBe(expectedResult);
     });
 
     it('should return result from else branch', async () => {
       const context = createMockContext();
       const expectedResult = { value: 99 };
-      context.locals.set(
-        '_runtimeExecute',
-        vi.fn(async () => expectedResult)
-      );
+      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
 
       const input: ConditionalCommandInput = {
         mode: 'if',
@@ -404,7 +414,7 @@ describe('ConditionalCommand', () => {
         elseCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
       expect(output.result).toBe(expectedResult);
     });
   });

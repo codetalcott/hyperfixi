@@ -16,6 +16,25 @@ import { RepeatCommand, createRepeatCommand, type RepeatCommandInput } from './r
 import type { TypedExecutionContext } from '../../types/core';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
+import { ok, err, isSignal } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
+
+/**
+ * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
+ * mocks return plain values or a signal object; this adapts them to the contract.
+ */
+function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
+  return async (cmd: unknown, ctx: unknown) => {
+    const r = await fn(cmd as never, ctx as never);
+    return isSignal(r) ? err(r) : ok(r);
+  };
+}
 
 // =============================================================================
 // Test Helpers
@@ -25,7 +44,7 @@ function createMockContext(): TypedExecutionContext {
   return {
     me: null,
     you: null,
-    locals: new Map([['_runtimeExecute', vi.fn(async () => 'executed')]]),
+    locals: new Map([['_runtimeExecute', asRuntimeExecute(vi.fn(async () => 'executed'))]]),
     globals: new Map(),
     result: undefined,
     halted: false,
@@ -300,10 +319,12 @@ describe('RepeatCommand', () => {
 
       context.locals.set(
         '_runtimeExecute',
-        vi.fn(async (cmd: any, ctx: any) => {
-          executedItems.push(ctx.locals.get('item'));
-          return 'ok';
-        })
+        asRuntimeExecute(
+          vi.fn(async (cmd: any, ctx: any) => {
+            executedItems.push(ctx.locals.get('item'));
+            return 'ok';
+          })
+        )
       );
 
       const input: RepeatCommandInput = {
@@ -313,7 +334,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.type).toBe('for');
       expect(output.iterations).toBe(3);
@@ -328,10 +349,12 @@ describe('RepeatCommand', () => {
 
       context.locals.set(
         '_runtimeExecute',
-        vi.fn(async (cmd: any, ctx: any) => {
-          executedIndexes.push(ctx.locals.get('i'));
-          return 'ok';
-        })
+        asRuntimeExecute(
+          vi.fn(async (cmd: any, ctx: any) => {
+            executedIndexes.push(ctx.locals.get('i'));
+            return 'ok';
+          })
+        )
       );
 
       const input: RepeatCommandInput = {
@@ -355,10 +378,12 @@ describe('RepeatCommand', () => {
 
       context.locals.set(
         '_runtimeExecute',
-        vi.fn(async () => {
-          executionCount++;
-          return 'ok';
-        })
+        asRuntimeExecute(
+          vi.fn(async () => {
+            executionCount++;
+            return 'ok';
+          })
+        )
       );
 
       const input: RepeatCommandInput = {
@@ -367,7 +392,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(5);
       expect(executionCount).toBe(5);
@@ -380,10 +405,12 @@ describe('RepeatCommand', () => {
 
       context.locals.set(
         '_runtimeExecute',
-        vi.fn(async (cmd: any, ctx: any) => {
-          indexes.push(ctx.locals.get('i'));
-          return 'ok';
-        })
+        asRuntimeExecute(
+          vi.fn(async (cmd: any, ctx: any) => {
+            indexes.push(ctx.locals.get('i'));
+            return 'ok';
+          })
+        )
       );
 
       const input: RepeatCommandInput = {
@@ -401,7 +428,7 @@ describe('RepeatCommand', () => {
     it('should handle zero iterations', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', executeSpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -409,7 +436,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(0);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -423,10 +450,12 @@ describe('RepeatCommand', () => {
 
       context.locals.set(
         '_runtimeExecute',
-        vi.fn(async () => {
-          counter++;
-          return 'ok';
-        })
+        asRuntimeExecute(
+          vi.fn(async () => {
+            counter++;
+            return 'ok';
+          })
+        )
       );
 
       // Mock condition that becomes false after 3 iterations
@@ -448,10 +477,7 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const expectedResult = 'final-result';
 
-      context.locals.set(
-        '_runtimeExecute',
-        vi.fn(async () => expectedResult)
-      );
+      context.locals.set('_runtimeExecute', asRuntimeExecute(vi.fn(async () => expectedResult)));
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -497,7 +523,7 @@ describe('RepeatCommand', () => {
     it('should handle empty collection in for-in loop', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', executeSpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -506,7 +532,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(0);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -515,7 +541,7 @@ describe('RepeatCommand', () => {
     it('should handle single-item collection', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn(async () => 'ok');
-      context.locals.set('_runtimeExecute', executeSpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -524,7 +550,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(1);
       expect(executeSpy).toHaveBeenCalledTimes(1);
@@ -533,7 +559,7 @@ describe('RepeatCommand', () => {
     it('should handle negative count gracefully', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', executeSpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
 
       const input: RepeatCommandInput = {
         type: 'times',
@@ -541,7 +567,7 @@ describe('RepeatCommand', () => {
         commands: createMockBlock([{ type: 'command' }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       // Negative count should result in 0 iterations
       expect(output.iterations).toBe(0);
@@ -554,8 +580,9 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set('_runtimeExecute', async (cmd: any) =>
-        cmd.fromElse ? elseSpy() : bodySpy()
+      context.locals.set(
+        '_runtimeExecute',
+        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
       );
 
       const input: RepeatCommandInput = {
@@ -566,7 +593,7 @@ describe('RepeatCommand', () => {
         elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(0);
       expect(output.completed).toBe(true);
@@ -579,8 +606,9 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set('_runtimeExecute', async (cmd: any) =>
-        cmd.fromElse ? elseSpy() : bodySpy()
+      context.locals.set(
+        '_runtimeExecute',
+        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
       );
 
       const input: RepeatCommandInput = {
@@ -591,7 +619,7 @@ describe('RepeatCommand', () => {
         elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(2);
       expect(bodySpy).toHaveBeenCalledTimes(2);
@@ -602,8 +630,9 @@ describe('RepeatCommand', () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body');
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set('_runtimeExecute', async (cmd: any) =>
-        cmd.fromElse ? elseSpy() : bodySpy()
+      context.locals.set(
+        '_runtimeExecute',
+        asRuntimeExecute(async (cmd: any) => (cmd.fromElse ? elseSpy() : bodySpy()))
       );
 
       const input: RepeatCommandInput = {
@@ -613,7 +642,7 @@ describe('RepeatCommand', () => {
         elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(0);
       expect(bodySpy).not.toHaveBeenCalled();
@@ -627,10 +656,13 @@ describe('RepeatCommand', () => {
       // to be 0 only when shouldContinue returns false from the start.
       const context = createMockContext();
       const elseSpy = vi.fn(async () => 'else-ran');
-      context.locals.set('_runtimeExecute', async (cmd: any) => {
-        if (cmd.fromElse) return elseSpy();
-        throw new Error('BREAK from body');
-      });
+      context.locals.set(
+        '_runtimeExecute',
+        asRuntimeExecute(async (cmd: any) => {
+          if (cmd.fromElse) return elseSpy();
+          return { type: 'break' };
+        })
+      );
 
       const input: RepeatCommandInput = {
         type: 'forever',
@@ -638,7 +670,7 @@ describe('RepeatCommand', () => {
         elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       // Loop was interrupted via BREAK — the executor flag prevents the
       // else branch from running even when iterations is 0.
@@ -649,7 +681,7 @@ describe('RepeatCommand', () => {
     it('should be a no-op when elseCommands is undefined and 0 iterations', async () => {
       const context = createMockContext();
       const executeSpy = vi.fn();
-      context.locals.set('_runtimeExecute', executeSpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(executeSpy));
 
       const input: RepeatCommandInput = {
         type: 'for',
@@ -659,7 +691,7 @@ describe('RepeatCommand', () => {
         // no elseCommands
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(output.iterations).toBe(0);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -673,7 +705,7 @@ describe('RepeatCommand', () => {
       // when condition is true). Bottom-tested forces iteration 0 to run.
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', bodySpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
 
       const input: RepeatCommandInput = {
         type: 'until',
@@ -682,7 +714,7 @@ describe('RepeatCommand', () => {
         bottomTested: true,
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(bodySpy).toHaveBeenCalledTimes(1);
       expect(output.iterations).toBe(1);
@@ -691,7 +723,7 @@ describe('RepeatCommand', () => {
     it('should NOT run body when bottomTested=false (top-tested) and until is true', async () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', bodySpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
 
       const input: RepeatCommandInput = {
         type: 'until',
@@ -700,7 +732,7 @@ describe('RepeatCommand', () => {
         // bottomTested is undefined / false
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       // Top-tested: until=true means stop immediately, so 0 iterations
       expect(bodySpy).not.toHaveBeenCalled();
@@ -713,7 +745,7 @@ describe('RepeatCommand', () => {
       // forces iteration 0 to run, then stops because condition is false.
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', bodySpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
 
       const input: RepeatCommandInput = {
         type: 'while',
@@ -722,7 +754,7 @@ describe('RepeatCommand', () => {
         bottomTested: true,
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       expect(bodySpy).toHaveBeenCalledTimes(1);
       expect(output.iterations).toBe(1);
@@ -731,7 +763,7 @@ describe('RepeatCommand', () => {
     it('should be top-tested by default when bottomTested is undefined', async () => {
       const context = createMockContext();
       const bodySpy = vi.fn(async () => 'body-ran');
-      context.locals.set('_runtimeExecute', bodySpy);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(bodySpy));
 
       const input: RepeatCommandInput = {
         type: 'while',
@@ -740,7 +772,7 @@ describe('RepeatCommand', () => {
         // bottomTested NOT set
       };
 
-      const output = await command.execute(input, context);
+      const output = outputOf(await command.execute(input, context));
 
       // while false from the start → 0 iterations
       expect(bodySpy).not.toHaveBeenCalled();

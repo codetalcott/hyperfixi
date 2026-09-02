@@ -234,10 +234,10 @@ describe('Loop Executor Helper', () => {
     });
 
     describe('break handling', () => {
-      it('should stop loop when BREAK error is thrown', async () => {
+      it('should stop the loop when the body returns a break signal', async () => {
         executeCommands
           .mockResolvedValueOnce('iter1')
-          .mockRejectedValueOnce(new Error('BREAK'))
+          .mockResolvedValueOnce({ type: 'break' })
           .mockResolvedValueOnce('iter3');
 
         const config: LoopConfig = {
@@ -254,7 +254,7 @@ describe('Loop Executor Helper', () => {
       });
 
       it('should set interrupted flag on break', async () => {
-        executeCommands.mockRejectedValue(new Error('BREAK'));
+        executeCommands.mockResolvedValue({ type: 'break' });
 
         const config: LoopConfig = {
           type: 'forever',
@@ -270,12 +270,12 @@ describe('Loop Executor Helper', () => {
     });
 
     describe('continue handling', () => {
-      it('should skip to next iteration when CONTINUE error is thrown', async () => {
+      it('should skip to the next iteration when the body returns a continue signal', async () => {
         const results: string[] = [];
 
         executeCommands
           .mockResolvedValueOnce('iter1')
-          .mockRejectedValueOnce(new Error('CONTINUE'))
+          .mockResolvedValueOnce({ type: 'continue' })
           .mockResolvedValueOnce('iter3');
 
         const config: LoopConfig = {
@@ -290,7 +290,7 @@ describe('Loop Executor Helper', () => {
       });
 
       it('should increment iteration counter on continue', async () => {
-        executeCommands.mockRejectedValueOnce(new Error('CONTINUE')).mockResolvedValueOnce('done');
+        executeCommands.mockResolvedValueOnce({ type: 'continue' }).mockResolvedValueOnce('done');
 
         const config: LoopConfig = {
           type: 'times',
@@ -304,7 +304,7 @@ describe('Loop Executor Helper', () => {
       });
 
       it('should update iterCtx.index on continue', async () => {
-        executeCommands.mockRejectedValueOnce(new Error('CONTINUE')).mockResolvedValue('done');
+        executeCommands.mockResolvedValueOnce({ type: 'continue' }).mockResolvedValue('done');
 
         const config: LoopConfig = {
           type: 'times',
@@ -430,7 +430,7 @@ describe('Loop Executor Helper', () => {
       it('should yield on continue for event loops', async () => {
         vi.useFakeTimers();
 
-        executeCommands.mockRejectedValueOnce(new Error('CONTINUE')).mockResolvedValueOnce('done');
+        executeCommands.mockResolvedValueOnce({ type: 'continue' }).mockResolvedValueOnce('done');
 
         const iterCtx: LoopIterationContext = {
           index: 0,

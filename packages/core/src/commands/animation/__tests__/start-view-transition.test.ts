@@ -14,6 +14,25 @@ import * as viewTransitionsLib from '../../../lib/view-transitions';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode, ExpressionNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { ok, err, isSignal } from '../../../types/result';
+import type { ExecutionSignal } from '../../../types/result';
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
+
+/**
+ * The runtime's `_runtimeExecute` returns a Result (Arc 4a step 3). Hand-built
+ * mocks return plain values or a signal object; this adapts them to the contract.
+ */
+function asRuntimeExecute(fn: (cmd: never, ctx: never) => unknown) {
+  return async (cmd: unknown, ctx: unknown) => {
+    const r = await fn(cmd as never, ctx as never);
+    return isSignal(r) ? err(r) : ok(r);
+  };
+}
 
 // ---------- helpers ----------
 
@@ -101,9 +120,11 @@ describe('StartViewTransitionCommand', () => {
         ran++;
       };
 
-      const output = await command.execute(
-        { transitionName: undefined, body: [bodyCmd as unknown as ASTNode] },
-        ctx()
+      const output = outputOf(
+        await command.execute(
+          { transitionName: undefined, body: [bodyCmd as unknown as ASTNode] },
+          ctx()
+        )
       );
 
       expect(output.usedViewTransition).toBe(false);
@@ -124,12 +145,14 @@ describe('StartViewTransitionCommand', () => {
         ran++;
       };
 
-      const output = await command.execute(
-        {
-          transitionName: 'fade',
-          body: [bodyCmd as unknown as ASTNode, bodyCmd as unknown as ASTNode],
-        },
-        ctx()
+      const output = outputOf(
+        await command.execute(
+          {
+            transitionName: 'fade',
+            body: [bodyCmd as unknown as ASTNode, bodyCmd as unknown as ASTNode],
+          },
+          ctx()
+        )
       );
 
       expect(output.usedViewTransition).toBe(true);
@@ -148,7 +171,7 @@ describe('StartViewTransitionCommand', () => {
       });
 
       const context = ctx();
-      context.locals.set('_runtimeExecute', runtimeExecute);
+      context.locals.set('_runtimeExecute', asRuntimeExecute(runtimeExecute));
 
       const astCmd1 = { type: 'command', name: 'add' };
       const astCmd2 = { type: 'command', name: 'remove' };

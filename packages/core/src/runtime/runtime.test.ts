@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
 import type { ExecutionContext } from '../types/core';
-import { isControlFlowError } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
 import { HookRegistry } from '../types/hooks';
 
@@ -333,50 +332,6 @@ describe('Hyperscript Runtime', () => {
 // ============================================================================
 
 describe('Runtime Audit Fixes', () => {
-  describe('isControlFlowError()', () => {
-    it('should detect halt signals', () => {
-      const error = new Error('HALT_EXECUTION') as any;
-      error.isHalt = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect exit signals', () => {
-      const error = new Error('EXIT_COMMAND') as any;
-      error.isExit = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect break signals', () => {
-      const error = new Error('break') as any;
-      error.isBreak = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect continue signals', () => {
-      const error = new Error('continue') as any;
-      error.isContinue = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect return signals', () => {
-      const error = new Error('return') as any;
-      error.isReturn = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should return false for normal errors', () => {
-      expect(isControlFlowError(new Error('Something went wrong'))).toBe(false);
-      expect(isControlFlowError(new TypeError('type error'))).toBe(false);
-    });
-
-    it('should return false for non-Error values', () => {
-      expect(isControlFlowError('string')).toBe(false);
-      expect(isControlFlowError(42)).toBe(false);
-      expect(isControlFlowError(null)).toBe(false);
-      expect(isControlFlowError(undefined)).toBe(false);
-    });
-  });
-
   describe('queryElements() with invalid CSS selectors', () => {
     let runtime: Runtime;
     let context: ExecutionContext;
@@ -820,65 +775,6 @@ describe('RuntimeBase Method Coverage', () => {
       };
 
       await expect(runtime.execute(installNode, context)).resolves.not.toThrow();
-    });
-  });
-
-  describe('toSignal() conversion', () => {
-    let runtime: Runtime;
-
-    beforeEach(() => {
-      runtime = new Runtime();
-    });
-
-    // Access protected method via any
-    const callToSignal = (rt: Runtime, error: unknown) => (rt as any).toSignal(error);
-
-    it('should convert isHalt error to halt signal', () => {
-      const error = new Error('halt') as any;
-      error.isHalt = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'halt' });
-    });
-
-    it('should convert isExit error to exit signal with returnValue', () => {
-      const error = new Error('exit') as any;
-      error.isExit = true;
-      error.returnValue = 'result';
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'exit', returnValue: 'result' });
-    });
-
-    it('should convert isBreak error to break signal', () => {
-      const error = new Error('break') as any;
-      error.isBreak = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'break' });
-    });
-
-    it('should convert isContinue error to continue signal', () => {
-      const error = new Error('continue') as any;
-      error.isContinue = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'continue' });
-    });
-
-    it('should convert isReturn error to return signal with value', () => {
-      const error = new Error('return') as any;
-      error.isReturn = true;
-      error.returnValue = 42;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'return', returnValue: 42 });
-    });
-
-    it('should return null for normal errors', () => {
-      const signal = callToSignal(runtime, new Error('something went wrong'));
-      expect(signal).toBeNull();
-    });
-
-    it('should return null for non-Error values', () => {
-      expect(callToSignal(runtime, 'string')).toBeNull();
-      expect(callToSignal(runtime, 42)).toBeNull();
-      expect(callToSignal(runtime, null)).toBeNull();
     });
   });
 

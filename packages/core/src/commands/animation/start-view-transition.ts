@@ -23,6 +23,8 @@
  * resolves with no captured snapshot.
  */
 
+import { isOk } from '../../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../../types/result';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
@@ -90,16 +92,23 @@ export class StartViewTransitionCommand implements DecoratedCommand {
   async execute(
     input: StartViewTransitionInput,
     context: TypedExecutionContext
-  ): Promise<StartViewTransitionOutput> {
+  ): Promise<StartViewTransitionOutput | ExecutionSignal> {
     const runtimeExecute = context.locals.get('_runtimeExecute') as
-      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
+      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<ExecutionResult<unknown>>) | undefined;
 
     let commandsExecuted = 0;
+    // A signal from the body ends it and passes through to the boundary that
+    // owns it, once the transition has run.
+    let signal: ExecutionSignal | undefined;
 
     const runBody = async () => {
       for (const cmd of input.body) {
         if (runtimeExecute) {
-          await runtimeExecute(cmd, context);
+          const result = await runtimeExecute(cmd, context);
+          if (!isOk(result)) {
+            signal = result.error;
+            break;
+          }
         } else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function') {
           // Re-read and re-narrow: the condition's typeof does not flow to a
           // fresh property access, and `unknown` narrowed by typeof is callable
@@ -118,7 +127,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     if (!isViewTransitionsSupported()) {
       // Fallback: run body directly. No animation, but commands still execute.
       await runBody();
-      return { usedViewTransition: false, commandsExecuted };
+      return signal ?? { usedViewTransition: false, commandsExecuted };
     }
 
     // Forward the parsed `transitionName` (upstream `start view transition
@@ -129,7 +138,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     // `view-transition-name`).
     const options = input.transitionName ? { transitionName: input.transitionName } : undefined;
     await withViewTransition(runBody, options);
-    return { usedViewTransition: true, commandsExecuted };
+    return signal ?? { usedViewTransition: true, commandsExecuted };
   }
 }
 

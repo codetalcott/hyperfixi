@@ -20,7 +20,8 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { CommandRaw } from '../../ast/command-slots';
-import { asControlFlowError } from '../../types/result';
+import { isOk, isSignal } from '../../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../../types/result';
 
 /**
  * Typed input for TellCommand
@@ -80,7 +81,7 @@ export class TellCommand implements DecoratedCommand {
   async execute(
     input: TellCommandInput,
     context: TypedExecutionContext
-  ): Promise<TellCommandOutput> {
+  ): Promise<TellCommandOutput | ExecutionSignal> {
     const { target, commands } = input;
     const targetElements = resolveElements(target, context);
 
@@ -89,8 +90,7 @@ export class TellCommand implements DecoratedCommand {
     }
 
     // Get runtime execute function for AST command nodes (same pattern as RepeatCommand)
-    const runtimeExecute = context.locals.get('_runtimeExecute') as
-      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
+    const runtimeExecute = context.locals.get('_runtimeExecute') as RuntimeExecute | undefined;
 
     const commandResults: any[] = [];
 
@@ -112,22 +112,21 @@ export class TellCommand implements DecoratedCommand {
       };
 
       for (const cmd of commands) {
+        let result: unknown;
         try {
-          const result = await this.executeCommand(cmd, tellContext, runtimeExecute);
-          commandResults.push(result);
-          Object.assign(tellContext, { it: result });
+          result = await this.executeCommand(cmd, tellContext, runtimeExecute);
         } catch (error) {
-          // A control-flow signal (halt/exit/break/continue/return) is not a
-          // failure: pass it through so the enclosing block sees it — the
-          // control-flow matrix's "inside tell" column read "rejected:
-          // Command execution failed in tell block: HALT_EXECUTION" before.
-          if (asControlFlowError(error)) throw error;
           throw new Error(
             `Command execution failed in tell block: ${
               error instanceof Error ? error.message : 'Unknown error'
             }`
           );
         }
+        // A signal (halt/exit/break/continue/return) is not a failure: `tell`
+        // passes it through to the boundary that owns it.
+        if (isSignal(result)) return result;
+        commandResults.push(result);
+        Object.assign(tellContext, { it: result });
       }
     }
 
@@ -141,11 +140,12 @@ export class TellCommand implements DecoratedCommand {
   private async executeCommand(
     cmd: any,
     context: TypedExecutionContext,
-    runtimeExecute?: (cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>
-  ): Promise<any> {
+    runtimeExecute?: RuntimeExecute
+  ): Promise<unknown> {
     // Handle AST command nodes using runtime execute (same pattern as RepeatCommand)
     if (cmd && typeof cmd === 'object' && cmd.type === 'command' && runtimeExecute) {
-      return await runtimeExecute(cmd, context);
+      const result = await runtimeExecute(cmd, context);
+      return isOk(result) ? result.value : result.error;
     }
 
     if (typeof cmd === 'function') {
@@ -159,6 +159,11 @@ export class TellCommand implements DecoratedCommand {
     throw new Error('Invalid command: must be a function or object with execute method');
   }
 }
+
+type RuntimeExecute = (
+  cmd: unknown,
+  ctx: TypedExecutionContext
+) => Promise<ExecutionResult<unknown>>;
 
 export const createTellCommand = createFactory(TellCommand);
 export default TellCommand;

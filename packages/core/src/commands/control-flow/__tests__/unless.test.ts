@@ -23,6 +23,14 @@ import { UnlessCommand } from '../unless';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { ok, err, isSignal } from '../../../types/result';
+import type { ExecutionSignal } from '../../../types/result';
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
 
 // ========== Test Utilities ==========
 
@@ -199,13 +207,15 @@ describe('UnlessCommand', () => {
       const context = createMockContext();
       const mockCmd = createMockCommand('executed');
 
-      const result = await command.execute(
-        {
-          mode: 'unless',
-          condition: false,
-          thenCommands: [mockCmd as unknown as ASTNode],
-        },
-        context
+      const result = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: false,
+            thenCommands: [mockCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(result.executedBranch).toBe('then');
@@ -216,13 +226,15 @@ describe('UnlessCommand', () => {
       const context = createMockContext();
       const mockCmd = createMockCommand('should-not-run');
 
-      const result = await command.execute(
-        {
-          mode: 'unless',
-          condition: true,
-          thenCommands: [mockCmd as unknown as ASTNode],
-        },
-        context
+      const result = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: true,
+            thenCommands: [mockCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(result.executedBranch).toBe('none');
@@ -236,13 +248,15 @@ describe('UnlessCommand', () => {
         const context = createMockContext();
         const mockCmd = createMockCommand(`ran-for-${falsyValue}`);
 
-        const result = await command.execute(
-          {
-            mode: 'unless',
-            condition: falsyValue,
-            thenCommands: [mockCmd as unknown as ASTNode],
-          },
-          context
+        const result = outputOf(
+          await command.execute(
+            {
+              mode: 'unless',
+              condition: falsyValue,
+              thenCommands: [mockCmd as unknown as ASTNode],
+            },
+            context
+          )
         );
 
         expect(result.executedBranch).toBe('then');
@@ -257,13 +271,15 @@ describe('UnlessCommand', () => {
         const context = createMockContext();
         const mockCmd = createMockCommand('should-not-run');
 
-        const result = await command.execute(
-          {
-            mode: 'unless',
-            condition: truthyValue,
-            thenCommands: [mockCmd as unknown as ASTNode],
-          },
-          context
+        const result = outputOf(
+          await command.execute(
+            {
+              mode: 'unless',
+              condition: truthyValue,
+              thenCommands: [mockCmd as unknown as ASTNode],
+            },
+            context
+          )
         );
 
         expect(result.executedBranch).toBe('none');
@@ -280,13 +296,15 @@ describe('UnlessCommand', () => {
       const mockCmd1 = createMockCommand('result1');
       const mockCmd2 = createMockCommand('result2');
 
-      const result = await command.execute(
-        {
-          mode: 'unless',
-          condition: false,
-          thenCommands: [mockCmd1 as unknown as ASTNode, mockCmd2 as unknown as ASTNode],
-        },
-        context
+      const result = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: false,
+            thenCommands: [mockCmd1 as unknown as ASTNode, mockCmd2 as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(mockCmd1.execute).toHaveBeenCalledWith(context);
@@ -319,26 +337,30 @@ describe('UnlessCommand', () => {
       const mockCmd = createMockCommand('ok');
 
       // When condition is falsy: executedBranch = 'then'
-      const resultExecuted = await command.execute(
-        {
-          mode: 'unless',
-          condition: false,
-          thenCommands: [mockCmd as unknown as ASTNode],
-        },
-        context
+      const resultExecuted = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: false,
+            thenCommands: [mockCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(resultExecuted.mode).toBe('unless');
       expect(resultExecuted.executedBranch).toBe('then');
 
       // When condition is truthy: executedBranch = 'none'
-      const resultSkipped = await command.execute(
-        {
-          mode: 'unless',
-          condition: true,
-          thenCommands: [mockCmd as unknown as ASTNode],
-        },
-        context
+      const resultSkipped = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: true,
+            thenCommands: [mockCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(resultSkipped.mode).toBe('unless');
@@ -353,14 +375,16 @@ describe('UnlessCommand', () => {
       const context = createMockContext();
       const mockCmd = createMockCommand('should-not-run');
 
-      const result = await command.execute(
-        {
-          mode: 'unless',
-          condition: true,
-          thenCommands: [mockCmd as unknown as ASTNode],
-          elseCommands: [{ type: 'command', name: 'elseCmd' } as unknown as ASTNode],
-        },
-        context
+      const result = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: true,
+            thenCommands: [mockCmd as unknown as ASTNode],
+            elseCommands: [{ type: 'command', name: 'elseCmd' } as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(result.executedBranch).toBe('none');
@@ -373,14 +397,16 @@ describe('UnlessCommand', () => {
       const elseCmd = createMockCommand('else-result');
 
       // Condition truthy: unless skips, but should NOT fall through to else
-      const resultTruthy = await command.execute(
-        {
-          mode: 'unless',
-          condition: true,
-          thenCommands: [thenCmd as unknown as ASTNode],
-          elseCommands: [elseCmd as unknown as ASTNode],
-        },
-        context
+      const resultTruthy = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: true,
+            thenCommands: [thenCmd as unknown as ASTNode],
+            elseCommands: [elseCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(resultTruthy.executedBranch).toBe('none');
@@ -388,14 +414,16 @@ describe('UnlessCommand', () => {
       expect(elseCmd.execute).not.toHaveBeenCalled();
 
       // Condition falsy: unless executes thenCommands, still no else
-      const resultFalsy = await command.execute(
-        {
-          mode: 'unless',
-          condition: false,
-          thenCommands: [thenCmd as unknown as ASTNode],
-          elseCommands: [elseCmd as unknown as ASTNode],
-        },
-        context
+      const resultFalsy = outputOf(
+        await command.execute(
+          {
+            mode: 'unless',
+            condition: false,
+            thenCommands: [thenCmd as unknown as ASTNode],
+            elseCommands: [elseCmd as unknown as ASTNode],
+          },
+          context
+        )
       );
 
       expect(resultFalsy.executedBranch).toBe('then');
@@ -429,7 +457,7 @@ describe('UnlessCommand', () => {
       expect(input.condition).toBe(false);
 
       // Execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       expect(result.mode).toBe('unless');
       expect(result.executedBranch).toBe('then');
@@ -463,7 +491,7 @@ describe('UnlessCommand', () => {
       expect(input.condition).toBe(true);
 
       // Execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       expect(result.mode).toBe('unless');
       expect(result.executedBranch).toBe('none');
