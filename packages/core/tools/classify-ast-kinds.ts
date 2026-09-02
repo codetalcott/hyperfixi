@@ -118,9 +118,18 @@ function scan(): Map<string, Sites> {
   // Scoping to the known kind universe below is what makes the loose pattern
   // safe: `=== 'literal'` in some unrelated string check would be noise
   // otherwise.
+  //
+  // `!==` counts as a read too, and leaving it out was a real defect: measured
+  // 2026-09-01 (Arc 2 step 3), `cssProperty` reported DEAD while
+  // `selector-type-detection.ts` reads it — in a NEGATED chain
+  // (`nodeType !== 'selector' && nodeType !== 'cssProperty'`), which is the
+  // ordinary way to write an early-return guard. A kind whose only reader
+  // rejects rather than accepts is still a kind something reads, and calling it
+  // dead invites deleting a live emitter. `cssProperty` is the only kind in the
+  // universe this changed; the pattern is `[!=]==` so both spellings count.
   const EMIT = /\btype:\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
   const READ_CASE = /\bcase\s+['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
-  const READ_CMP = /===\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
+  const READ_CMP = /[!=]==\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
 
   for (const file of sourceFiles(SRC)) {
     const text = stripComments(readFileSync(file, 'utf8'));

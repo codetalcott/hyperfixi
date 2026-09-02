@@ -755,8 +755,19 @@ progress meter.
    > `PluginNode` stays a TYPE for registry payloads, not a union member.
    > Also: there are TWO switches to make exhaustive, not one —
    > `evaluateExpressionSync` (`runtime.ts:338`) is the second — and the
-   > current 24 cases cover only 19 of the 30 full-parser kinds; the
+   > ~~current 24 cases cover only 19 of the 30 full-parser kinds~~; the
    > missing-kind list is this step's interesting output.
+   >
+   > **Count corrected, measured 2026-09-01 when step 3 executed.** The union
+   > has **35** members, not 30 (26 `Expr` + 9 `Stmt`; cross-checked two ways —
+   > discriminant count in `nodes.ts`, and membership of the two unions, with
+   > `PluginNode` correctly outside both). `evaluateAST`'s 24 arms therefore
+   > cover **24 of 35**, not 19 of 30: 23 of the 26 `Expr` kinds plus
+   > `eventHandler`, which is a `Stmt` the evaluator really does evaluate. The
+   > 11 that never arrive are the 8 remaining statement kinds (executed by
+   > `runtime-base.ts`, not evaluated) plus 3 `Expr` kinds consumed
+   > structurally — `cssProperty`, `functionCall`, `expression`. The routing is
+   > pinned in a table on `evaluateKnown` in `runtime.ts`.
    > **Order correction, measured 2026-09-01 (#1047 follow-up).** For
    > `ast-utils/` this step must come FIRST, not last. Its own `ASTNode`
    > (`ast-utils/types.ts:19`) uses `[key: string]: any`, not `unknown`, so
