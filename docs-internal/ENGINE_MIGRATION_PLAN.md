@@ -740,6 +740,20 @@ progress meter.
    (`parser/runtime.ts:63-135`) is deleted; each `evaluate*` helper takes its
    union member. Plugin-registered kinds are a declared `PluginNode` member
    whose payload is `unknown` — the registry stays, typed.
+   > **Order correction, measured 2026-09-01 (#1047 follow-up).** For
+   > `ast-utils/` this step must come FIRST, not last. Its own `ASTNode`
+   > (`ast-utils/types.ts:19`) uses `[key: string]: any`, not `unknown`, so
+   > every `(node as any).foo` there is redundant with the index signature:
+   > stripping the pattern across all six modules typechecks clean, keeps 348
+   > tests green, and moves the ratchet 157 → 81 while changing NOTHING about
+   > type safety. `check-type-escapes` counts hatch spellings and cannot see an
+   > `any` arriving through an index signature, so the burn-down would book
+   > credit for work not done. Replace that `any` with the union first; the
+   > compile errors that appear are the real list. `parser/` is the opposite
+   > case — `base-types`' signature is `unknown` and `start` is declared, so
+   > removing those casts recovers `number | undefined`, which is why #1047 is
+   > genuine. Ask per cluster: which `ASTNode`, and is the field declared?
+
 4. **Collapse the definitions.** `types/base-types.ASTNode` → `Node`
    (re-exported under the old name for one release with `@deprecated`);
    `types/core`, `types/unified-types`, `types/index` re-export; `ast-utils/types.ts`'s

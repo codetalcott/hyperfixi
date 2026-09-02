@@ -110,6 +110,78 @@ Two structural facts that shape it:
    hybrid/bundle producer tree, which Arc 5 may retire outright; typing it now
    risks being work the plan has already flagged as conditional.
 
+## The ratchet has a blind spot, and it changes the order of the work
+
+Measured 2026-09-01, after #1047 took `pratt-parser.ts` from 46 escape hatches
+to 0 without needing the union at all. The obvious next question was whether the
+other clusters are the same, and the answer is **no — for the opposite reason**.
+
+The two `ASTNode` declarations differ in one character that decides everything:
+
+| declaration | an UNDECLARED field resolves to |
+| ----------- | ------------------------------- |
+| `types/base-types.ts:316` — `[key: string]: unknown` | `unknown` |
+| `ast-utils/types.ts:19` — `[key: string]: any` | **`any`** |
+
+So in `parser/`, deleting `(left as any).start` recovers a real type: `start` is
+DECLARED on the interface, and the expression becomes `number | undefined`. That
+is why #1047 is progress.
+
+In `ast-utils/`, deleting `(node as any).commands` recovers **nothing** —
+`node.commands` is `any` either way, because the index signature already says so.
+A mechanical strip of that pattern across the six modules typechecks clean, keeps
+all 348 tests green, and drops the ratchet **157 → 81**. It would be pure
+meter-movement.
+
+**That is a blind spot in the arc's own progress meter.** `check-type-escapes`
+counts the four hatch spellings; it cannot see an `any` arriving through an index
+signature instead, so a directory can be "burned down" by half while its type
+safety is unchanged.
+
+Consequence for the plan's order: in `ast-utils/`, the index signature is not the
+LAST step (as Arc 2 step 6 has it for `base-types`) but the FIRST. Replace
+`ast-utils/types.ts`'s `[key: string]: any` with the union, and the casts stop
+being redundant — at which point removing them is real, and the compile errors
+that appear are the actual burn-down list. Doing it in the plan's order would
+book the credit before doing the work.
+
+The same question was then asked of the other two clusters. **`compatibility/`
+is the `ast-utils` case**: it types its nodes from `parser/hybrid/ast-types.ts`,
+whose signature is `[key: string]: any` (line 9), so its AST casts are redundant
+there too — and Arc 5 may retire that tree, which is a second reason not to
+schedule it.
+
+**`commands/` (235) is genuinely open**, and the obvious guess about it is
+wrong. It imports `base-types`/`types/core` — the `unknown` side — so the plan's
+model was that its `(arg as Record<string, unknown>).name === 'x'` idiom is
+load-bearing. Measured: it is not, at least not for the comparison.
+`arg.name === 'toggle'` compiles with no cast at all, because the `unknown`
+index signature permits property ACCESS and `===` accepts `unknown` on either
+side. What `unknown` actually blocks is using the result — arithmetic, a nested
+property, passing it somewhere typed.
+
+So the split inside `commands/` has to be measured per site rather than assumed
+from the cluster. A first bounded pass: stripping the cast from property access
+on the six commonest AST-node variable names (`arg`, `node`, `cmd`, `expr`,
+`argNode`, `valueNode`) matches **13 sites in the whole 235-hatch cluster** — 12
+of which typecheck clean when removed, and exactly one of which is load-bearing
+(`navigation/go.ts:288`, where the value is `object` and the code wants
+`nodeType`).
+
+That is the strongest form of claim 7's falsification. Arc 2 step 5 says
+`commands/` is "where most of the hatches live" and that guards are what retire
+them. Not only is it not most (235 of 1,231 = 19%) — **the AST-shaped portion of
+it is around a dozen sites.** The rest is `context: any`, `Promise<any>`, DOM
+expandos and network payloads, none of which a node union touches. Step 5 should
+be re-scoped or dropped before it is scheduled.
+
+(Method note: the first attempt at this measurement used a regex that also
+matched inside `Array.from(target as any)`, silently producing
+`Array.fromtarget` and two phantom errors. Requiring the `(` not to follow an
+identifier character fixed it. A mechanical strip needs its own sanity check —
+the same anchored-edit trap that has bitten structural edits in this repo
+before.)
+
 ## Traps
 
 - **The AST-equivalence corpus is the gate and it must NOT move.** Arc 2 is
