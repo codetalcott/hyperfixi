@@ -24,8 +24,8 @@
  *    lookup → undefined ≠ 'from'), so the traditional flat-args shape always
  *    threw; the semantic modifiers shape (`modifiers.from`) wasn't read at all.
  * 3. On the auto path the semantic match consumed `take .active` and left
- *    `for me` unconsumed (`take` is now on parseCommandCore's
- *    skipSemanticParsing list with its siblings toggle/add/remove).
+ *    `for me` unconsumed (`take` was put on parseCommandCore's
+ *    skipSemanticParsing list with its siblings toggle/add/remove (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone)).
  *
  * Execution semantics follow upstream's TakeCommand for the class-reference
  * variant: remove the class from EVERY source element (or every current

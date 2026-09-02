@@ -26,7 +26,7 @@
  * `@lokascript/semantic` through `dist`, so this file only reddens against a
  * fresh build (`npm run check:fresh`).
  *
- * Narrow by construction: `put` and `set` are on `skipSemanticParsing`, so only
+ * Narrow by construction (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone): `put` and `set` were on `skipSemanticParsing`, so only
  * commands that reach the semantic path could show it — which is why `put` and
  * `set` rows below were correct before and after, and are here to pin that the
  * fix did not have to reach them.
@@ -71,7 +71,7 @@ describe('template literal parity', () => {
       expect(arg?.value).toBe('t ${1}');
     });
 
-    it('was already right for the skipSemanticParsing commands', async () => {
+    it('was already right for the commands the (deleted) in-loop path skipped', async () => {
       await hyperscript.eval('put `x ${1}` into #out', host(), { traditional } as never);
       expect(document.getElementById('out')?.textContent).toBe('x 1');
     });

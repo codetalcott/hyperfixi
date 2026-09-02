@@ -2,9 +2,9 @@
 /**
  * `open <dialog> as non-modal` reaches `OpenCommand.parseDialogMode`.
  *
- * `open` is absent from BOTH skip lists (`parser.ts`'s `skipSemanticParsing`
- * and the adapter's `SKIP_SEMANTIC_COMMANDS`), so plain English `open` runs the
- * semantic path — schema → pattern → `buildAST` → the command. Two defects met
+ * `open` was absent from BOTH skip lists (`parser.ts`'s `skipSemanticParsing`
+ * and the adapter's `SKIP_SEMANTIC_COMMANDS`), so plain English `open` ran the
+ * semantic path (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone) — schema → pattern → `buildAST` → the command. Two defects met
  * there, and neither was visible without the other:
  *
  * 1. `openSchema` gave `style` svoPosition 1, so the generated en pattern was

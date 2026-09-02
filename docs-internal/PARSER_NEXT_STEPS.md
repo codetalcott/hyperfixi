@@ -17,6 +17,14 @@
 
 ## Read this before triaging anything below
 
+> **The in-loop semantic path is GONE (Arc 1 step 6, 2026-09-02).** Every entry
+> below that explains a defect through `parseCommandCore`'s `skipSemanticParsing`
+> list, `trySemanticParse`, the resync, or "semantic-first" is describing a
+> mechanism that no longer exists: English is parsed by the core parser alone,
+> and a non-English program falls back whole-program via `compileAsync`'s
+> `fallbackText`. Those entries are kept as the record of how each defect was
+> found; a NEW parse defect cannot be in that class.
+
 **Which entries are load-bearing.** Two of these are protected by a gate that
 fails loudly on its own; the rest can be lost entirely. Know which you are
 looking at before deciding what to work on — and do **not** "tidy up" the gated

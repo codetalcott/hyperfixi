@@ -1,5 +1,7 @@
 # Handoff — parse-path convergence, next session
 
+> **2026-09-02 — the comparison this handoff is about changed shape.** Arc 1 step 6 deleted the in-loop semantic path, so "semantic-first English" no longer exists; `tools/triage-parse-paths.ts` now compares the core parser against the bridge's WHOLE-PROGRAM direct path (`parseToASTWithDetails(src, 'en')`), the route the multilingual bundles take. On that comparison: `same` 0 · `differ` 202 (86 metadata-only) · `trad-only` 15 · `sem-only` 14 · `both-fail` 5, `marker-in-args` 51 — much wider than the detour's closing 140 · 77 · 19 / 13, because the direct path never went through the coverage gate or the span rebasing that the in-loop adapter added. The detour's numbers below are history. Item 1's owner question is unchanged; the Arc 3 brief (`HANDOFF-engine-arc3.md`) holds the plan for `marker-in-args`.
+
 > Rewritten 2026-09-01 (second pass), after the semantic-span arc. The previous
 > version — written after #1038–#1041 — is in git history; its item 1 is now
 > done, and its stated ORACLE for that item was wrong. See "What the

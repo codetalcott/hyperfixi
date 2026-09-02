@@ -1,5 +1,7 @@
 # Handoff — engine migration, Arc 1 (the engine / front-end boundary)
 
+> **2026-09-02: step 6 is DONE** — the in-loop semantic attempt is deleted and English is parsed by the core parser alone; the plan's step 6 entry carries the numbers. Steps 2 and 3 remain. The "decision this arc now hangs on" below was answered (converge first, #1038–#1042) and then executed. `tools/triage-parse-paths.ts` now compares the core parser against the bridge's whole-program direct path with `lang: 'en'`, because the in-loop side of the old comparison no longer exists — and on that comparison the numbers are NOT the convergence detour's: `same` 0 · `differ` 202 (86 metadata-only) · `trad-only` 15 · `sem-only` 14 · `both-fail` 5, `marker-in-args` 51. That is what a multilingual-bundle user's English actually gets, and it is the honest starting point for whatever convergence work Arc 3 does.
+
 Paste the block below the `---` into a fresh session. Everything above it is
 orientation for a human.
 

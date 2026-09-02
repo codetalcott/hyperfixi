@@ -21,10 +21,7 @@ import type {
   ParserOptions,
   ParserRegistryIntegration,
 } from './types';
-import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
-// Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
-import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
 import { getRegisteredFeature } from './extensions';
 
 import {
@@ -220,7 +217,6 @@ export class Parser {
   private errors: LocalParseError[] = [];
   private warnings: ParseWarning[] = [];
   private keywordResolver?: KeywordResolver;
-  private semanticAdapter?: SemanticIntegrationAdapter;
   private originalInput?: string;
   private registryIntegration?: ParserRegistryIntegration;
 
@@ -246,17 +242,7 @@ export class Parser {
     this.keywordResolver = options?.keywords;
     this.registryIntegration = options?.registryIntegration;
 
-    // Initialize semantic integration if analyzer provided
-    if (options?.semanticAnalyzer && options?.language) {
-      this.semanticAdapter = new SemanticIntegrationAdapter({
-        analyzer: options.semanticAnalyzer as SemanticAnalyzer,
-        language: options.language,
-        confidenceThreshold: options.semanticConfidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD,
-      });
-    }
-
     // Store original input for commands that need raw code (js...end, etc.)
-    // Also used for semantic analysis if adapter is present
     // Fallback to reconstructing from tokens if not provided
     this.originalInput = originalInput || tokens.map(t => t.value).join(' ');
   }
@@ -3433,110 +3419,6 @@ export class Parser {
   }
 
   /**
-   * Try semantic-first parsing for the current command.
-   *
-   * This method attempts to parse using the semantic analyzer when available.
-   * If successful with sufficient confidence, returns the parsed command node.
-   * Otherwise returns null to indicate fallback to traditional parsing.
-   *
-   * @param remainingInput The remaining input string from current position
-   * @returns Parsed CommandNode if successful, null otherwise
-   */
-  private trySemanticParse(remainingInput: string): CommandNode | null {
-    if (!this.semanticAdapter || !this.semanticAdapter.isAvailable()) {
-      return null;
-    }
-
-    try {
-      const result = this.semanticAdapter.trySemanticParse(remainingInput);
-
-      if (result.success && result.node) {
-        debug.parse(
-          `[Semantic] Successfully parsed with confidence ${result.confidence}:`,
-          result.node.name
-        );
-
-        // Update position tracking based on tokens consumed
-        // For now, semantic parsing handles full command - traditional parser continues from here
-        return result.node;
-      }
-
-      debug.parse(
-        `[Semantic] Low confidence (${result.confidence}), falling back to traditional parser`
-      );
-      return null;
-    } catch (error) {
-      debug.parse('[Semantic] Error during semantic parse:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Rebase a semantically-built node's spans onto the whole source.
-   *
-   * `@lokascript/semantic` parses the slice `getRemainingInput()` hands it, so
-   * the spans it records on nested argument nodes count from that slice's
-   * start, and it emits no `line`/`column` at all — it never sees the document
-   * those would index into. Both are recoverable here and nowhere else:
-   * `offset` is the slice's origin, and `this.originalInput` is the document.
-   *
-   * Only nodes that already carry a numeric `start` are touched, so a value the
-   * semantic parser could not place (a materialized schema default, a value
-   * built from synthesized text) stays span-free rather than being given a
-   * fabricated one. The command node's own span is stamped by the caller.
-   *
-   * The walk rebuilds plain objects and arrays and returns anything else by
-   * reference. Nothing else appears today — measured over the whole engine
-   * corpus on this path, 0 non-plain objects — but `buildAST` is public API and
-   * the walk is generic, and copying a `Map` field by `Object.entries` would
-   * silently replace it with `{}`.
-   */
-  private rebaseSemanticSpans(node: unknown, offset: number): unknown {
-    const source = this.originalInput;
-    const rebase = (input: unknown): unknown => {
-      if (Array.isArray(input)) return input.map(rebase);
-      if (!input || typeof input !== 'object') return input;
-      const proto = Object.getPrototypeOf(input) as unknown;
-      if (proto !== Object.prototype && proto !== null) return input;
-      const out: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(input)) {
-        out[key] =
-          (key === 'start' || key === 'end') && typeof value === 'number'
-            ? value + offset
-            : rebase(value);
-      }
-      if (typeof out['start'] === 'number' && source) {
-        const { line, column } = lineColumnAt(source, out['start']);
-        out['line'] = line;
-        out['column'] = column;
-      }
-      return out;
-    };
-    return rebase(node);
-  }
-
-  /**
-   * Get remaining input from current token position for semantic analysis.
-   */
-  private getRemainingInput(): string {
-    if (!this.originalInput) {
-      // Reconstruct from tokens if not stored
-      return this.tokens
-        .slice(this.current > 0 ? this.current - 1 : 0)
-        .map(t => t.value)
-        .join(' ');
-    }
-
-    // Get position from current token
-    const currentToken = this.current > 0 ? this.tokens[this.current - 1] : this.tokens[0];
-    if (currentToken && currentToken.start !== undefined) {
-      return this.originalInput.slice(currentToken.start);
-    }
-
-    return this.originalInput;
-  }
-
-  /**
    * Parse a command, then attach any trailing `when`/`where` conditional guard.
    *
    * Traditional command parsers (parseAddCommand, the generic argument loop,
@@ -3579,148 +3461,14 @@ export class Parser {
   }
 
   private parseCommandCore(): CommandNode {
-    // Try semantic-first parsing if available
-    // Semantic parsing uses modifiers format ({args: [patient], modifiers: {into: dest}})
-    // Command handlers now accept both formats via fallback logic
-
-    // Commands that intentionally use traditional parsing. Each entry has
-    // upstream-`_hyperscript` syntax the semantic schemas do not model:
-    //   - install: `install Behavior(param: value)` named-param block
-    //   - wait: multiline `or` continuation + `from` clauses
-    //   - repeat / for: nested command bodies and `until event X from Y`
-    //   - set / put: complex target syntax (possessive, CSS properties,
-    //     `at start/end of`, `before`, `after`, `into`)
-    //   - increment / decrement: `by N` quantity (no semantic role marker)
-    //   - add: CSS object-literal syntax
-    //   - toggle: `.class` / `@attr` / `*property` argument references —
-    //     semantic parsing drops the prefix, so `toggle @disabled` loses the
-    //     attribute reference (sibling of add / remove, which are also here)
-    //   - take: same family as toggle/add/remove. It also carries a
-    //     `for <recipient>` tail: the semantic match used to leave `for me`
-    //     unconsumed, the old resync scan stopped at `for` (a command
-    //     token), and the next round parsed it as a for LOOP. takeSchema now
-    //     models `recipient`, but only as a REFERENCE (`for me`) — upstream's
-    //     element-expression recipients still need this path
-    //   - if / unless: condition role + multi-branch bodies
-    //   - make / measure / trigger / halt / remove / exit / return / closest:
-    //     each carries hyperscript-specific shape that semantic doesn't capture
-    //   - js: raw-body command (semantic loses the body)
-    //   - tell: command block with body
-    //   - fetch: `with { ... }` request options (where hx-headers / hx-vals live),
-    //     naked named args, and `do not throw`. This path reaches modifiers via
-    //     SemanticIntegrationAdapter.parseExpressionString(), which understands
-    //     identifiers, property access and calls — but not object literals — so
-    //     `with { ... }` would arrive as a bogus identifier node even though the
-    //     semantic schema now models the options role (it does, for the buildAST
-    //     multilingual path: fetchSchema's `style`). Before this entry existed the
-    //     URL matched at confidence 1.0 and the old resync scan ate the rest,
-    //     dropping method/body/headers off the wire in silence.
-    //   - process: `processSchema` is patient-only — it models
-    //     `partials in <content>` and has no role for the
-    //     `using view transition` tail, so the semantic match consumed the
-    //     content at full confidence and left the tail to be re-parsed as a
-    //     fresh `transition` command (`Transition command requires a CSS
-    //     property`). Same shape as take's entry above; the multilingual half
-    //     is filed in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
-    // `call` and `get` previously lived on this list; they're now handled by
-    // SemanticIntegrationAdapter.parseExpressionString() (method calls etc.).
-    // Migrating any of the remaining commands is a multi-PR initiative
-    // touching both `packages/semantic/` schemas and the dispatch here.
+    // Traditional parsing only. Until Arc 1 step 6 (2026-09-02) this method
+    // first offered every command not on a 27-entry skip list to the semantic
+    // front-end and adopted its parse when confident; a non-English program
+    // now falls back WHOLE-PROGRAM instead — the front-end renders to English
+    // and this parser parses the English (`compileAsync`'s `fallbackText`),
+    // which is the only place the two ever meet. See ENGINE_MIGRATION_PLAN.md.
     const commandToken = this.previous();
     let commandName = commandToken.value;
-    const skipSemanticParsing: string[] = [
-      'install',
-      'wait',
-      'repeat',
-      'for',
-      'set',
-      'put',
-      'increment',
-      'decrement',
-      'add',
-      'append',
-      'prepend',
-      'toggle',
-      'take',
-      'if',
-      'unless',
-      'make',
-      'measure',
-      'trigger',
-      'halt',
-      'remove',
-      'exit',
-      'return',
-      'closest',
-      'js',
-      'tell',
-      'fetch',
-      'process',
-    ];
-
-    if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {
-      const remainingInput = this.getRemainingInput();
-      const semanticResult = this.trySemanticParse(remainingInput);
-      if (semanticResult) {
-        // Adopted — consume the rest of the token stream. This is exact, not a
-        // heuristic: the adapter's coverage gate rejects any parse that left
-        // input unconsumed (`unconsumed-input` diagnostic), and a remainder
-        // holding more than one command parses as kind 'compound', which the
-        // gate also rejects. So an adoption here means the analyzer consumed
-        // remainingInput in FULL — which runs to the end of the source
-        // (`getRemainingInput` slices to the end) — and the resync is simply
-        // "the rest".
-        //
-        // This replaces skipToCommandBoundary(), a keyword scan that stopped at
-        // then/else/end and at any command word. Its command-word stop split
-        // spans the analyzer had fully consumed — `call element.focus()`
-        // stopped at `focus` (a command name inside a member expression) and
-        // re-parsed `focus()` as a phantom second command. Its keyword stops
-        // are dead under the coverage gate: a remainder with a trailing
-        // `end`/`then` tail is never adopted in the first place (the tail is
-        // unconsumed input). Same class as the `and` boundary bug (#1013);
-        // deleting the scan closes the class instead of tuning its word list.
-        while (!this.isAtEnd()) {
-          this.advance();
-        }
-
-        // Stamp the real span. The command node's `[0, 0]` is
-        // `normalizeBuiltNode`'s placeholder, so every semantically-adopted
-        // command used to report `start 0, end 0, line 1` regardless of where it
-        // actually sat. LSP hover and diagnostic ranges read these.
-        //
-        // The span is exact rather than estimated, and only because of the
-        // coverage gate above: an adoption means the analyzer consumed
-        // `remainingInput` IN FULL, and `getRemainingInput()` slices from this
-        // command's token to the end of the source. So the command runs from
-        // `commandToken.start` to the end of the input, and the token carries
-        // the line/column the traditional parser would have reported.
-        //
-        // Nested ARGUMENT spans arrive too, and they are why `rebaseSemanticSpans`
-        // exists. `@lokascript/semantic` records the span of the token run each
-        // role was captured from, but relative to the string IT was handed —
-        // which is `remainingInput`, a slice starting at `commandToken.start`.
-        // So every nested offset is short by exactly that, and the package
-        // deliberately emits no line/column at all (it never sees the whole
-        // document). Rebasing both is the caller's job, and this is the caller.
-        if (typeof commandToken.start !== 'number') return semanticResult;
-        // End at the last CONSUMED TOKEN, not at the raw input length: the
-        // source may carry trailing whitespace, and `log "x"   ` would
-        // otherwise report an end of 10 where the traditional parser reports 7.
-        const lastToken = this.previous();
-        return {
-          ...(this.rebaseSemanticSpans(semanticResult, commandToken.start) as CommandNode),
-          start: commandToken.start,
-          end: lastToken?.end ?? commandToken.end ?? commandToken.start,
-          line: commandToken.line ?? semanticResult.line,
-          column: commandToken.column ?? semanticResult.column,
-        };
-      }
-      // Fall through to traditional parsing
-    }
-
-    // Note: commandToken already defined above from this.previous()
-    // Re-read the command name (may have been modified above)
 
     // Handle special case for beep! command - check if beep is followed by !
     if (commandName === 'beep' && this.check('!')) {
