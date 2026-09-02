@@ -40,15 +40,47 @@ command layer; it is spread across `features` (238), `commands` (235),
 
 ## The real shape of step 2
 
-The union has to cover the **46 live kinds** the classifier reports (46 live ·
+~~The union has to cover the **46 live kinds** the classifier reports (46 live ·
 2 dead-but-annotated · 3 orphan-read · 3 phantom, over a 54-kind universe).
 `parser-types.ts` defines **15** of them, so **31 kind interfaces do not exist
 yet**. That is the actual size of step 2, and it is larger than "start from
-`parser-types.ts`" implies.
+`parser-types.ts`" implies.~~
+
+**Corrected while building it.** Two errors in the paragraph above, both from
+trusting the classifier's hand-maintained `KIND_UNIVERSE`:
+
+- **The universe was missing five kinds.** `typeCheckExpression`,
+  `collectionExpression`, `conditionalExpression`, `stringPostfix` and
+  `blockLiteral` are each emitted by `pratt-parser.ts` or `parser.ts` and read
+  by `evaluateAST`'s switch — live all along, and simply outside the scan. The
+  set was seeded from `ast-vocabulary.test.ts` plus the plan's hypotheses and
+  neither source listed them. Added; the tool now reports **51 live**, and it
+  grew a `--live` flag because it could previously report everything except the
+  positive list its readers actually needed.
+- **46 (now 51) was never the union's size.** Sixteen of those kinds are the
+  HYBRID parser's vocabulary, which has its own typing in
+  `parser/hybrid/ast-types.ts` and whose fate is Arc 5's. The union covers the
+  **full-parser vocabulary: 30 kinds**.
+
+`parser-types.ts` defines 15 of the 30 — but one of the 15 was **wrong**, which
+is the finding that justifies the whole step. It declared
+`UnaryExpressionNode.argument` as the operand field. Every reachable emitter
+writes `operand`; the shape it described (`argument`, no `operand`) is produced
+only by `ast-helpers.createUnaryExpression`, whose sole caller
+`Parser.createUnaryExpression` **is never called**. A type describing a shape
+nothing reachable emits, sitting unchallenged in the file the plan names as the
+starting point.
+
+That is why `ast/nodes.ts` ships with `union-conformance.test.ts`: it parses the
+whole corpus and asserts every emitted kind is a member and every emitted FIELD
+is declared. A fourth prose description of the AST would rot exactly like the
+three it replaces. Mutation-verified, including against the historical
+`argument`-not-`operand` shape.
 
 Two structural facts that shape it:
 
-- **`evaluateAST`'s switch covers 24 cases**, not 46. Making it exhaustive
+- **`evaluateAST`'s switch covers 24 cases**, and 19 of them are full-parser
+  kinds. Making it exhaustive
   (step 3) therefore surfaces ~22 kinds that reach the evaluator by some other
   route or not at all. Expect that list to be the interesting output of step 3,
   not a formality.
@@ -66,9 +98,14 @@ Two structural facts that shape it:
    smuggle it in.
 2. **Take `parser` (163) before `commands` (235).** It is smaller, it is where
    the union is produced, and claim 7 means the commands work is not the
-   majority it was planned as. `features` (238) is the largest single cluster
+   majority it was planned as. ~~`features` (238) is the largest single cluster
    and the plan does not mention it at all — scope it explicitly before
-   committing to an arc size.
+   committing to an arc size.~~ **Scoped, and it is not Arc 2's.** `features` is
+   mostly declared-dead code: `init.ts` and `predefined-behaviors/` were
+   unexported AND unimported and were deleted outright (Arc 6a class), taking
+   the cluster 238 → 180 with no typing at all; the six remaining families are
+   the deprecated exports waiting on 4.0 (Arc 6b). Typing them would have been
+   work on code slated for deletion.
 3. **Leave `compatibility` (161) alone until Arc 5 is decided.** It is the
    hybrid/bundle producer tree, which Arc 5 may retire outright; typing it now
    risks being work the plan has already flagged as conditional.
