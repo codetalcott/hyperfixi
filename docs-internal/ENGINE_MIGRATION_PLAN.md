@@ -1816,6 +1816,17 @@ a REGRESSION guard here — closures must not make execution slower — and take
 the arc's justification from what it DELETES: the `ContextBridge` per-command
 copy, the `_runtimeExecute` channel, and the dual execution paths.
 
+**Step 0 DONE 2026-09-04** (brief: `HANDOFF-engine-arc4b.md`): the hot-path
+numbers are a committed baseline, `packages/core/scripts/bench-snapshots/hot-path-baseline.json`
+(4 rows, hz), checked by `npm run bench:check --prefix packages/core`
+(`scripts/bench-baseline.mjs`, one-sided, −15 % fails, `--update` regenerates).
+It is a LOCAL gate like `snapshot:bundle-size`; whether it runs on PRs in CI is
+the brief's decision 5 and is not wired. ~~The `ASTCache`'s key is `lang\0trad\0code`~~
+(four parts — the `semantic` flag is the third); the output-contract gate does
+NOT collapse under 4b (its 29 disagreements are the initial-value family,
+which 4c's `Scope` owns); and the `ContextBridge` copy is 4c's deletion, not
+4b's — all three corrected in the brief.
+
 **4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
 flow is `Completion` now); `enhanceContext`'s `Proxy` is deleted after step 1
