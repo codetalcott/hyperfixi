@@ -163,12 +163,22 @@ Item 5 is what the plan missed.
    Making it `as const` (or deriving a union from the manifest) is a one-line
    change with a ripple through every `string`-typed consumer of it. Do it as
    its own small PR before step 2, so the per-K `args` type has a `K`.
-4. **`unless` never executes its body** (`COMMAND_ARCHITECTURE_NEXT_STEPS.md`
+   **Done 2026-09-02 — and the ripple was zero:** both consumers (`metadata.ts`
+   reads `.length`, `parser-constants.ts` spreads it into a `Set<string>`)
+   accept a `readonly` tuple unchanged. `CommandName =
+   (typeof COMMAND_NAMES)[number]` is exported from the manifest.
+4. ~~**`unless` never executes its body** (`COMMAND_ARCHITECTURE_NEXT_STEPS.md`
    :1075 — `if.ts` hands `unless` an array where `if` gets the block node; the
    test passes on mocks). Arc 3's `if`/`unless` migration is where this gets
    fixed, and the migration's typed node makes the bug unrepresentable. Decide
    whether it waits for its turn in the size order (16th) or jumps the queue
-   as a live bug.
+   as a live bug.~~ **Withdrawn 2026-09-02 — already FIXED in #805.** The
+   entry's status sits five lines below the text quoted here, and this brief
+   repeated the filing's head without reading it (the trap
+   `feedback_read_a_filings_status_before_costing_it` names). `if.ts` takes
+   the parser's block node for both modes today, and `unless.test.ts` carries
+   an end-to-end describe precisely because the mock-only version is how the
+   bug survived. No decision to make.
 
 ## Recommended order
 
