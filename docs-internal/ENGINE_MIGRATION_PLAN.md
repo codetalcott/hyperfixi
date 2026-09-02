@@ -1716,6 +1716,26 @@ any).flag = true` casts went with the throws). Second half: the callers —
 `executeProgram`/`executeBlock`'s halt loops, `installFunction`, `tell`,
 `repeat`'s message-string catch, `evaluateASTWithResult` — read
 completions instead of catching; then step 3 deletes the conversions.
+**Step 3, first slice, DONE 2026-09-03:** `enableResultPattern` and the
+exception-speaking twins it guarded — `processCommand`,
+`executeCommandFromPattern`, `executeCommandSequence`, and the four
+`if (this.options.enableResultPattern)` branches in `execute()` — deleted;
+no caller ever set it `false` and one test only mentioned it, so the
+Result path was the only path. The implicit `add .class` pattern in
+`evaluateExpression` moved onto `processCommandWithResult`. Matrix
+unchanged. What step 3 still owes: `signalToError` at the `execute()`
+boundary (the callers still catch), `toSignal`'s and
+`isControlFlowError`'s message-string branches, `asControlFlowError`, and
+`repeat`'s `error.message.includes('BREAK')` catch — each falls when its
+caller reads completions (step 2's second half).
+**Decision needed before the second half (owner):** the matrix pins today's
+semantics at the `def` boundary — `halt`/`exit` inside a called `def` stop
+the CALLING handler too (`a f`, never `c`), and `return` outside a `def` is
+a no-op — while upstream ends only the function for `exit`/`return` and
+ends the handler for `return` at top level. The second half is where
+those boundaries get their `Completion` handling written down once, so
+the choice (keep today's rows, or move to upstream's) must precede it;
+either way the matrix cells move visibly and the PR states which.
 `throw` becomes the only exception and the `catch`/`finally` paths in
 `installFunction` and `executeEventHandler` are re-derived against the matrix.
 

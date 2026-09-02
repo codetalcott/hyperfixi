@@ -127,14 +127,6 @@ export interface RuntimeBaseOptions {
   enableErrorReporting?: boolean;
 
   /**
-   * Enable Result-based execution pattern (napi-rs inspired).
-   * When enabled, uses Result<T, ExecutionSignal> instead of exceptions
-   * for control flow, providing ~12-18% performance improvement.
-   * Default: true
-   */
-  enableResultPattern?: boolean;
-
-  /**
    * Bundle-supplied expression registry threaded through to
    * `parser/runtime.ts:evaluateAST` via `context.registry`. Build with
    * `createExpressionRegistry()` from the category objects the bundle includes
@@ -229,7 +221,6 @@ export class RuntimeBase {
     this.options = {
       commandTimeout: 10000,
       enableErrorReporting: true,
-      enableResultPattern: true, // Default on for ~12-18% performance improvement
       enableAutoCleanup: true, // Default on to prevent memory leaks
       ...options,
     };
@@ -503,34 +494,18 @@ export class RuntimeBase {
           // multi-command case). Surface the returned value the same way the
           // sequence executor does, rather than leaking the raw
           // RETURN_EXECUTION signal to the caller.
-          // Use Result-based execution when enabled (~12-18% faster)
-          if (this.options.enableResultPattern) {
-            const result = await this.processCommandWithResult(node as CommandNode, context);
-            if (!isOk(result)) {
-              if (result.error.type === 'return') {
-                const rv = (result.error as { returnValue?: unknown }).returnValue;
-                if (rv !== undefined) {
-                  Object.assign(context, { it: rv, result: rv });
-                }
-                return rv;
-              }
-              throw signalToError(result.error);
-            }
-            return result.value;
-          }
-          try {
-            return await this.processCommand(node as CommandNode, context);
-          } catch (e) {
-            const cfe = asControlFlowError(e);
-            if (cfe?.isReturn) {
-              const rv = cfe.returnValue;
+          const result = await this.processCommandWithResult(node as CommandNode, context);
+          if (!isOk(result)) {
+            if (result.error.type === 'return') {
+              const rv = (result.error as { returnValue?: unknown }).returnValue;
               if (rv !== undefined) {
                 Object.assign(context, { it: rv, result: rv });
               }
               return rv;
             }
-            throw e;
+            throw signalToError(result.error);
           }
+          return result.value;
         }
 
         case 'eventHandler': {
@@ -579,26 +554,18 @@ export class RuntimeBase {
 
         case 'sequence':
         case 'CommandSequence': {
-          // Use Result-based execution when enabled
-          if (this.options.enableResultPattern) {
-            // Two producers reach this arm: the full parser's `CommandSequence`
-            // and the hybrid parser's `sequence`. Both carry `commands`.
-            const seqNode = node as CommandSequenceNode | HybridSequenceNode;
-            const result = await this.executeCommandSequenceWithResult(
-              seqNode.commands || [],
-              context
-            );
-            if (!isOk(result)) {
-              throw signalToError(result.error);
-            }
-            return result.value;
-          }
-          return await this.executeCommandSequence(
-            node as CommandSequenceNode | HybridSequenceNode,
+          // Two producers reach this arm: the full parser's `CommandSequence`
+          // and the hybrid parser's `sequence`. Both carry `commands`.
+          const seqNode = node as CommandSequenceNode | HybridSequenceNode;
+          const result = await this.executeCommandSequenceWithResult(
+            seqNode.commands || [],
             context
           );
+          if (!isOk(result)) {
+            throw signalToError(result.error);
+          }
+          return result.value;
         }
-
         case 'objectLiteral': {
           return await this.executeObjectLiteral(node as ObjectLiteralNode, context);
         }
@@ -606,16 +573,11 @@ export class RuntimeBase {
         case 'templateLiteral':
         case 'memberExpression':
         default: {
-          // For expressions, use Result-based evaluation when enabled
-          if (this.options.enableResultPattern) {
-            const result = await this.evaluateExpressionWithResult(node, context);
-            if (!isOk(result)) {
-              throw signalToError(result.error);
-            }
-            return result.value;
+          const result = await this.evaluateExpressionWithResult(node, context);
+          if (!isOk(result)) {
+            throw signalToError(result.error);
           }
-          // For expressions, delegate to evaluator
-          return await this.evaluateExpression(node, context);
+          return result.value;
         }
       }
     } catch (error) {
@@ -624,54 +586,6 @@ export class RuntimeBase {
       }
       throw error;
     }
-  }
-
-  /**
-   * Generic Command Processor
-   * Unlike the legacy Runtime, this does NOT contain specific logic for 'put', 'set', etc.
-   * It delegates strictly to the Registry.
-   */
-  protected async processCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
-    const { name, args, modifiers } = node;
-    const commandName = name.toLowerCase();
-
-    debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
-
-    // 1. check registry
-    if (this.registry.has(commandName)) {
-      const adapter = await this.registry.getAdapter(commandName);
-
-      if (!adapter) {
-        throw new Error(`Command '${commandName}' is registered but failed to load adapter.`);
-      }
-
-      // 2. Delegate entirely to Adapter
-      // We pass the raw AST nodes (args/modifiers) and the Context.
-      // The Adapter (or the Command Implementation inside it) determines
-      // if it needs to evaluate arguments or treat them as raw AST.
-      try {
-        const result = await adapter.execute(context, {
-          args: args || [],
-          modifiers: modifiers || {},
-          commandName,
-          runtime: this,
-        });
-        // A signal command RETURNS its signal (Arc 4a); this path still
-        // speaks exceptions, so convert at the boundary (deleted by step 3).
-        if (isSignal(result)) throw signalToError(result);
-        return result;
-      } catch (e) {
-        if (!isControlFlowError(e)) {
-          this.logError(`Error executing command '${commandName}':`, e);
-        }
-        throw e;
-      }
-    }
-
-    // 3. Fallback / Error
-    const errorMsg = `Unknown command: ${name}. Ensure it is registered in the Runtime options.`;
-    this.logWarn(errorMsg);
-    throw new Error(errorMsg);
   }
 
   // --------------------------------------------------------------------------
@@ -839,7 +753,16 @@ export class RuntimeBase {
     // Check for "Implicit Command Pattern" (e.g. "add .class") — happens when
     // the parser sees "word token" but interprets as property access.
     if (isImplicitCommand(result)) {
-      return await this.executeCommandFromPattern(result.command, result.selector, context);
+      // The implicit `add .class` pattern, on the Result path (the only path).
+      const commandNode: CommandNode = {
+        type: 'command',
+        name: result.command,
+        args: [{ type: 'literal', value: result.selector }],
+        isBlocking: false,
+      };
+      const executed = await this.processCommandWithResult(commandNode, context);
+      if (!isOk(executed)) throw signalToError(executed.error);
+      return executed.value;
     }
 
     return result;
@@ -866,62 +789,18 @@ export class RuntimeBase {
 
     // Check for "Implicit Command Pattern" (e.g. "add .class")
     if (isImplicitCommand(value)) {
-      // Execute command and wrap in Result
-      if (this.options.enableResultPattern) {
-        // The runtime is a second PRODUCER of command nodes here (the implicit
-        // `add .class` pattern). `isBlocking: false` is what its absence meant.
-        const commandNode: CommandNode = {
-          type: 'command',
-          name: value.command,
-          args: [{ type: 'literal', value: value.selector }],
-          isBlocking: false,
-        };
-        return this.processCommandWithResult(commandNode, context);
-      } else {
-        try {
-          const cmdResult = await this.executeCommandFromPattern(
-            value.command,
-            value.selector,
-            context
-          );
-          return ok(cmdResult);
-        } catch (e) {
-          const signal = this.toSignal(e);
-          if (signal) {
-            return err(signal);
-          }
-          throw e;
-        }
-      }
+      // The runtime is a second PRODUCER of command nodes here (the implicit
+      // `add .class` pattern). `isBlocking: false` is what its absence meant.
+      const commandNode: CommandNode = {
+        type: 'command',
+        name: value.command,
+        args: [{ type: 'literal', value: value.selector }],
+        isBlocking: false,
+      };
+      return this.processCommandWithResult(commandNode, context);
     }
 
     return ok(value);
-  }
-
-  /**
-   * Handles the "Implicit Command Pattern"
-   * e.g., "add .active" where parser returned { command: 'add', selector: '.active' }
-   */
-  protected async executeCommandFromPattern(
-    commandName: string,
-    selector: string,
-    context: ExecutionContext
-  ): Promise<unknown> {
-    // Convert the pattern back into a standard Command structure and execute
-    // This ensures it goes through the standard Registry lookup
-
-    // Heuristic: Implicit commands usually treat the selector as a Literal arg
-    // unless specific commands override this behavior.
-    const args: Expr[] = [{ type: 'literal', value: selector }];
-
-    const commandNode: CommandNode = {
-      type: 'command',
-      name: commandName,
-      args: args,
-      isBlocking: false,
-    };
-
-    return this.processCommand(commandNode, context);
   }
 
   // --------------------------------------------------------------------------
@@ -1087,36 +966,6 @@ export class RuntimeBase {
         throw error;
       }
     }
-  }
-
-  protected async executeCommandSequence(
-    node: CommandSequenceNode | HybridSequenceNode,
-    context: ExecutionContext
-  ): Promise<unknown> {
-    if (!node.commands || !Array.isArray(node.commands)) return;
-
-    let lastResult: unknown = undefined;
-
-    for (const command of node.commands) {
-      try {
-        lastResult = await this.execute(command, context);
-      } catch (error) {
-        // Handle Flow Control Signals
-        if (isControlFlowError(error)) {
-          if (error.isHalt || error.isExit) break;
-          if (error.isReturn) {
-            if (error.returnValue !== undefined) {
-              Object.assign(context, { it: error.returnValue, result: error.returnValue });
-              return error.returnValue;
-            }
-            break;
-          }
-          if (error.isBreak) throw error; // Caught by loop
-        }
-        throw error;
-      }
-    }
-    return lastResult;
   }
 
   protected async executeObjectLiteral(
