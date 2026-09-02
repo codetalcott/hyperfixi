@@ -227,6 +227,8 @@
     "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'",
     "verify:reference": "tsx scripts/verify-reference-data.ts",
     "baseline:ast-equivalence": "tsx scripts/generate-ast-equivalence-baseline.ts",
+    "census:parse-input": "tsx scripts/generate-parse-input-census.ts",
+    "census:parse-input:update": "tsx scripts/generate-parse-input-census.ts --update",
     "docs:commands": "tsx scripts/generate-command-docs.ts && tsx scripts/generate-command-docs.ts --format json",
     "docs:commands:check": "tsx scripts/generate-command-docs.ts --check && tsx scripts/generate-command-docs.ts --format json --check",
     "generate:bundles": "tsx scripts/generate-bundles.ts",
