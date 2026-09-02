@@ -163,6 +163,19 @@ being redundant — at which point removing them is real, and the compile errors
 that appear are the actual burn-down list. Doing it in the plan's order would
 book the credit before doing the work.
 
+> **Executed 2026-09-01 — with one correction.** The signature was replaced with
+> `unknown`, NOT the union: `ast-utils` is a public duck-typed contract
+> (`ASTUtilNode`, `./ast-utils` subpath, three dynamic importers) and its modules
+> read a fictional AST the union cannot describe — see the step 4 note in
+> `ENGINE_MIGRATION_PLAN.md`. And the "compile errors that appear are the list"
+> prediction was itself off: flipping the signature produced **five** errors, all
+> in one test file, none in the six modules — because every production read
+> already went through a `(node as any).foo` cast, so the casts were doing all
+> the work and the `any` signature none. Under `unknown` those casts became
+> load-bearing, and THEN removing each one surfaced its real narrowing question.
+> Result: 157 → 2, each drop backed by a `typeof`/`isASTNode` check rather than
+> by a redundant cast disappearing.
+
 The same question was then asked of the other two clusters. **`compatibility/`
 is the `ast-utils` case**: it types its nodes from `parser/hybrid/ast-types.ts`,
 whose signature is `[key: string]: any` (line 9), so its AST casts are redundant
