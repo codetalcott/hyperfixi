@@ -2267,3 +2267,15 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   branches render as `''`, pinned as a KNOWN GAP), and `set *<css-prop> …`
   breaking 4 of 5 shapes against upstream 0.9.93, 3 of them silently. All in
   `PARSER_NEXT_STEPS.md`.
+
+- **2026-09-04** — **Arc 4a is COMPLETE** (#1079–#1086): the control-flow
+  matrix (step 1), `Completion` returned by the five signal commands (step 2,
+  first half), the boundaries decided on upstream's rule and written down once
+  (step 2, second half — `execute()` is a boundary wrapper over the
+  `executeNode` dispatcher), and every conversion between Results and the
+  thrown form deleted (step 3, three slices — the loops read Results; the
+  only thrown form left is `StrayControlFlowError` for a `break`/`continue`
+  with no loop). Found on the way: two observer loops called the PUBLIC
+  boundary per command and would have run on past `halt`; the matrix has no
+  observer row. Next: Arc 4b, opened by
+  [HANDOFF-engine-arc4b.md](./HANDOFF-engine-arc4b.md).
