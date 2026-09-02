@@ -20,6 +20,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { CommandRaw } from '../../ast/command-slots';
+import { asControlFlowError } from '../../types/result';
 
 /**
  * Typed input for TellCommand
@@ -116,6 +117,11 @@ export class TellCommand implements DecoratedCommand {
           commandResults.push(result);
           Object.assign(tellContext, { it: result });
         } catch (error) {
+          // A control-flow signal (halt/exit/break/continue/return) is not a
+          // failure: pass it through so the enclosing block sees it — the
+          // control-flow matrix's "inside tell" column read "rejected:
+          // Command execution failed in tell block: HALT_EXECUTION" before.
+          if (asControlFlowError(error)) throw error;
           throw new Error(
             `Command execution failed in tell block: ${
               error instanceof Error ? error.message : 'Unknown error'

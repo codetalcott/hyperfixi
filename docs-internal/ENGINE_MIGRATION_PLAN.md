@@ -1689,10 +1689,11 @@ recorder global; each cell is the mark sequence plus `rejected:<message>`)
 and pinned. What the matrix says about today, filed here for step 2's
 `Completion` to decide on, not fixed: (1) **`return` outside a `def` is a
 no-op** — `on click … return "v" then …` keeps running (`a b`), in every
-context but `def`; upstream ends the handler. (2) **Every signal inside
-`tell` escapes as a rejection** wrapped in "Command execution failed in
-tell block: HALT_EXECUTION" — `tell` does not pass control flow through,
-so `halt` inside `tell` fails the handler. (3) ~~**Every signal inside a
+context but `def`; upstream ends the handler. (2) ~~**Every signal inside
+`tell` escapes as a rejection**~~ wrapped in "Command execution failed in
+tell block: HALT_EXECUTION" — `tell`'s per-command catch re-wrapped every
+error, control flow included; **fixed the same day** (a control-flow error
+passes through), and the `tell` column now matches top-level. (3) ~~**Every signal inside a
 called `def` rejects the handler with `null`**~~ — `installFunction` threw
 `asControlFlowError(result.error)` on a signal OBJECT, which is `null` for
 anything that is not an `Error`; **fixed the same day** (`signalToError`),

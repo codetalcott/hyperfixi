@@ -140,8 +140,9 @@ describe('control-flow matrix (Arc 4a step 1)', () => {
  *
  * What the matrix says about today, filed in the plan (Arc 4a) — not fixed here:
  *  - `return` outside a `def` is a NO-OP: the handler keeps running (`a b`).
- *  - every signal inside `tell` escapes as a rejection wrapped in
- *    "Command execution failed in tell block" — `tell` does not pass control flow.
+ *  - a signal inside `tell` used to escape as a rejection wrapped in
+ *    "Command execution failed in tell block" — fixed on this branch: `tell`
+ *    passes control-flow errors through, so the column matches top-level.
  *  - a signal inside a called `def` used to reject the handler with `null`
  *    (`installFunction` threw `asControlFlowError(signal)`, which is null for a
  *    signal object) — fixed on this branch; the `def` column now matches top-level.
@@ -153,7 +154,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'top-level': 'a',
     'inside if': 'a',
     'inside repeat': 'a i',
-    'inside tell': 'a t rejected:Command execution failed in tell block: HALT_EXECUTION',
+    'inside tell': 'a t',
     'inside def': 'a f',
     'with catch': 'a',
     'with finally': 'a fin',
@@ -162,7 +163,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'top-level': 'a',
     'inside if': 'a',
     'inside repeat': 'a i',
-    'inside tell': 'a t rejected:Command execution failed in tell block: EXIT_EXECUTION',
+    'inside tell': 'a t',
     'inside def': 'a f',
     'with catch': 'a',
     'with finally': 'a fin',
@@ -171,7 +172,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'top-level': 'a rejected:BREAK_EXECUTION',
     'inside if': 'a rejected:BREAK_EXECUTION',
     'inside repeat': 'a i c',
-    'inside tell': 'a t rejected:Command execution failed in tell block: BREAK_EXECUTION',
+    'inside tell': 'a t rejected:BREAK_EXECUTION',
     'inside def': 'a f rejected:BREAK_EXECUTION',
     'with catch': 'a rejected:BREAK_EXECUTION',
     'with finally': 'a fin rejected:BREAK_EXECUTION',
@@ -180,7 +181,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'top-level': 'a rejected:CONTINUE_EXECUTION',
     'inside if': 'a rejected:CONTINUE_EXECUTION',
     'inside repeat': 'a i i c',
-    'inside tell': 'a t rejected:Command execution failed in tell block: CONTINUE_EXECUTION',
+    'inside tell': 'a t rejected:CONTINUE_EXECUTION',
     'inside def': 'a f rejected:CONTINUE_EXECUTION',
     'with catch': 'a rejected:CONTINUE_EXECUTION',
     'with finally': 'a fin rejected:CONTINUE_EXECUTION',
