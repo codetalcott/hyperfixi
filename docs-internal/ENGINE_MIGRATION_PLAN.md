@@ -1678,7 +1678,22 @@ path are deleted (no test sets it `false`; one references it). Step 1 is the
 `{top-level, inside if, inside repeat, inside tell, inside def, inside a
 handler with catch, with finally}` — 35 rows pinning today's observable
 behaviour (which is the spec; upstream parity where they disagree is a
-separate decision, filed not fixed). Step 2 migrates; step 3 deletes.
+separate decision, filed not fixed). ✅ **Step 1 DONE 2026-09-03** —
+`runtime/__tests__/control-flow-matrix.test.ts`, recorded once (a `mark()`
+recorder global; each cell is the mark sequence plus `rejected:<message>`)
+and pinned. What the matrix says about today, filed here for step 2's
+`Completion` to decide on, not fixed: (1) **`return` outside a `def` is a
+no-op** — `on click … return "v" then …` keeps running (`a b`), in every
+context but `def`; upstream ends the handler. (2) **Every signal inside
+`tell` escapes as a rejection** wrapped in "Command execution failed in
+tell block: HALT_EXECUTION" — `tell` does not pass control flow through,
+so `halt` inside `tell` fails the handler. (3) **Every signal inside a
+called `def` rejects the handler with `null`** — `installFunction`'s
+conversion loses the signal entirely. (4) `catch` never sees a signal and
+`finally` always runs (right); `break`/`continue` outside a loop reject the
+handler with their bare message. (1)–(3) are the strongest argument for
+`Completion`: three call boundaries, three different ways of losing a
+signal that was never an exception. Step 2 migrates; step 3 deletes.
 `throw` becomes the only exception and the `catch`/`finally` paths in
 `installFunction` and `executeEventHandler` are re-derived against the matrix.
 
