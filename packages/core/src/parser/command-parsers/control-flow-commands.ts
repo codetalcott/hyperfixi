@@ -266,49 +266,37 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   }
 
   // Build args array based on loop type
-  args.push({
-    type: 'identifier',
-    name: loopType,
-    start: commandToken.start,
-    end: commandToken.end,
-    line: commandToken.line,
-    column: commandToken.column,
-  } as IdentifierNode);
-
+  // Every operand is a SLOT keyed by the word that introduced it (Arc 3 step
+  // 3): `modifiers.loopType` names the form, `for` the loop variable, `in` the
+  // collection, `times` the count, `while`/`until` the condition, `event` the
+  // event name, `from` its target, `index` the index variable. Only the body
+  // block (and an `else` block) stay positional. RepeatCommand.parseInput
+  // used to re-derive all of this from `args[0].name` and the positions after
+  // it; now it reads the slots.
   const pos = {
     start: commandToken.start,
     end: commandToken.end,
     line: commandToken.line,
     column: commandToken.column,
   };
-
-  if (variable) {
-    args.push(createStringLiteral(variable, pos));
-  }
-
-  if (collection) args.push(collection);
-  if (condition) args.push(condition);
-  if (times) args.push(times);
-
-  if (eventName) {
-    args.push(createStringLiteral(eventName, pos));
-  }
-
-  if (eventTarget) args.push(eventTarget);
-
-  if (indexVariable) {
-    args.push(createStringLiteral(indexVariable, pos));
-  }
-
-  // Add commands as a block
+  const modifiers: Record<string, ExpressionNode> = {
+    loopType: toLegacyExpression(createStringLiteral(loopType, pos)),
+  };
+  if (variable) modifiers['for'] = toLegacyExpression(createStringLiteral(variable, pos));
+  if (collection) modifiers['in'] = collection as ExpressionNode;
+  if (times) modifiers['times'] = times as ExpressionNode;
+  if (condition) modifiers[loopType === 'while' ? 'while' : 'until'] = condition as ExpressionNode;
+  if (eventName) modifiers['event'] = toLegacyExpression(createStringLiteral(eventName, pos));
+  if (eventTarget) modifiers['from'] = eventTarget as ExpressionNode;
+  if (indexVariable)
+    modifiers['index'] = toLegacyExpression(createStringLiteral(indexVariable, pos));
   args.push(createBlock(commands, { ...pos, end: pos.end || 0 }));
-
-  // Optional else branch (executed when loop completes with 0 iterations)
   if (elseCommands !== null) {
     args.push(createBlock(elseCommands, { ...pos, end: pos.end || 0 }));
   }
-
-  const builder = CommandNodeBuilder.from(commandToken).withArgs(...args);
+  const builder = CommandNodeBuilder.from(commandToken)
+    .withArgs(...args)
+    .withModifiers(modifiers);
   if (bottomTested) {
     builder.withModifier(
       'bottomTested',

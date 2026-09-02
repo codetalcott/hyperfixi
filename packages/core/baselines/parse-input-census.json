@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2211,
+    "lines": 2191,
     "branches": 337,
-    "syntaxSites": 108,
-    "valueSites": 215
+    "syntaxSites": 94,
+    "valueSites": 206
   },
   "commands": {
     "async": {
@@ -102,10 +102,10 @@
     },
     "repeat": {
       "file": "src/commands/control-flow/repeat.ts",
-      "lines": 126,
+      "lines": 106,
       "branches": 30,
-      "syntaxSites": 17,
-      "valueSites": 19
+      "syntaxSites": 3,
+      "valueSites": 10
     },
     "return": {
       "file": "src/commands/control-flow/return.ts",

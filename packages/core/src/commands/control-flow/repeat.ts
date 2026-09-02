@@ -17,6 +17,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import { evaluateCondition } from '../helpers/condition-helpers';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isNodeOfKind } from '../../ast/guards';
 import {
   commandMeta,
   command,
@@ -62,6 +63,28 @@ export interface RepeatCommandOutput {
   completed: boolean;
   lastResult?: unknown;
   interrupted?: boolean;
+}
+
+/**
+ * The text a slot carries: a string/literal/identifier node's own text, or the
+ * evaluated value when it is one. The parser emits the loop form, variable,
+ * event and index names as string literals (Arc 3 step 3); a hand-built node
+ * may carry an identifier or an expression instead.
+ */
+async function slotText(
+  node: ExpressionNode | undefined,
+  evaluator: ExpressionEvaluator,
+  context: ExecutionContext
+): Promise<string | undefined> {
+  if (!node) return undefined;
+  // Read as `unknown`: the legacy `ExpressionNode` type does not overlap the
+  // union members, so a guard on it would narrow to `never`.
+  const n: unknown = node;
+  if (isNodeOfKind(n, 'string')) return n.value;
+  if (isNodeOfKind(n, 'literal') && typeof n.value === 'string') return n.value;
+  if (isNodeOfKind(n, 'identifier')) return n.name;
+  const v = await evaluator.evaluate(node, context);
+  return typeof v === 'string' ? v : undefined;
 }
 
 @command({ name: 'repeat' })
@@ -123,21 +146,17 @@ export class RepeatCommand implements DecoratedCommand {
     }
 
     // Detect loop type from args[0]
-    const firstArg = raw.args[0] as { type?: string; name?: string };
-    const loopType = firstArg?.type === 'identifier' ? firstArg.name : null;
-
-    // Bottom-tested flag from parser (set when `repeat <body> until/while
-    // <expr> end` is used). Encoded as a modifier literal so it survives
-    // the args/modifier split without polluting the loop-type discriminant.
-    const bottomTested = raw.modifiers?.bottomTested
-      ? ((await evaluator.evaluate(raw.modifiers.bottomTested, context)) as boolean)
+    // The parser carries the form and every operand as slots (Arc 3 step 3);
+    // only the body block(s) are positional, found above.
+    const m = raw.modifiers ?? {};
+    const text = (node: ExpressionNode | undefined) => slotText(node, evaluator, context);
+    const loopType = (await text(m.loopType)) ?? null;
+    const bottomTested = m.bottomTested
+      ? ((await evaluator.evaluate(m.bottomTested, context)) as boolean)
       : false;
-
-    // Parse based on loop type
-    if (loopType === 'for' || raw.modifiers?.for) {
-      const varArg = raw.args[1] as { value?: string; name?: string };
-      const variable = varArg?.value || varArg?.name;
-      const collection = raw.args[2] ? await evaluator.evaluate(raw.args[2], context) : undefined;
+    if (loopType === 'for' || m.for) {
+      const variable = await text(m.for);
+      const collection = m.in && (await evaluator.evaluate(m.in, context));
       if (!variable || collection === undefined)
         throw new Error('for loops require variable and collection');
       return {
@@ -149,43 +168,30 @@ export class RepeatCommand implements DecoratedCommand {
         elseCommands,
       };
     }
-
-    if (loopType === 'times' || raw.modifiers?.times) {
-      const countArg = raw.args[1];
-      const countValue = countArg ? await evaluator.evaluate(countArg, context) : undefined;
+    if (loopType === 'times' || m.times) {
+      const countValue = m.times && (await evaluator.evaluate(m.times, context));
       const count = typeof countValue === 'number' ? countValue : parseInt(String(countValue), 10);
       if (isNaN(count)) throw new Error('times loops require a count number');
       return { type: 'times', count, indexVariable, commands, elseCommands };
     }
-
-    if (loopType === 'while' || raw.modifiers?.while) {
-      const condition = raw.args[1] || raw.modifiers?.while;
+    if (loopType === 'while' || m.while) {
+      const condition = m.while;
       if (!condition) throw new Error('while loops require a condition');
       return { type: 'while', condition, indexVariable, commands, elseCommands, bottomTested };
     }
-
-    if ((loopType === 'until' && raw.modifiers?.from) || loopType === 'until-event') {
-      const eventArg = raw.args[1] as { value?: string; name?: string };
-      const eventName = eventArg?.value || eventArg?.name;
+    if (loopType === 'until-event' || m.event) {
+      const eventName = await text(m.event);
       if (!eventName) throw new Error('until-event loops require an event name');
       let eventTarget: EventTarget = context.me as EventTarget;
-      if (raw.args[2]) {
-        const targetArg = raw.args[2] as { type?: string; name?: string };
-        // `document` / `window` often arrive as bare identifiers the expression
-        // evaluator doesn't resolve to the global EventTarget in this context
-        // (which silently left the listener on `me` — so `repeat until event
-        // pointerup from document` never terminated). Resolve them by name first,
-        // then fall back to evaluating arbitrary target expressions.
-        if (targetArg?.type === 'identifier' && targetArg.name === 'document') {
+      if (m.from) {
+        const from: unknown = m.from;
+        const targetName = isNodeOfKind(from, 'identifier') ? from.name : undefined;
+        if (targetName === 'document') {
           eventTarget = document;
-        } else if (
-          targetArg?.type === 'identifier' &&
-          targetArg.name === 'window' &&
-          typeof window !== 'undefined'
-        ) {
+        } else if (targetName === 'window' && typeof window !== 'undefined') {
           eventTarget = window;
         } else {
-          const target = await evaluator.evaluate(raw.args[2], context);
+          const target = await evaluator.evaluate(m.from, context);
           if (target instanceof EventTarget) eventTarget = target;
           else if (target === 'document') eventTarget = document;
           else if (typeof window !== 'undefined' && target === window) eventTarget = window;
@@ -200,17 +206,14 @@ export class RepeatCommand implements DecoratedCommand {
         elseCommands,
       };
     }
-
-    if (loopType === 'until' || raw.modifiers?.until) {
-      const condition = raw.args[1] || raw.modifiers?.until;
+    if (loopType === 'until' || m.until) {
+      const condition = m.until;
       if (!condition) throw new Error('until loops require a condition');
       return { type: 'until', condition, indexVariable, commands, elseCommands, bottomTested };
     }
-
-    if (loopType === 'forever' || raw.modifiers?.forever) {
+    if (loopType === 'forever' || m.forever) {
       return { type: 'forever', indexVariable, commands, elseCommands };
     }
-
     throw new Error('repeat command requires a loop type (for/times/while/until/forever)');
   }
 

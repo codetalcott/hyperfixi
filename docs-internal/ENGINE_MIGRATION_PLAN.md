@@ -1114,6 +1114,26 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    two-argument node built directly still defaults to `into`. **Census row:
    152 → 132 lines, 9 → 3 syntax sites.** Type-escapes 906 → 902. Four corpus
    rows moved, reviewed; 18 fixtures and 4 parser pins reshaped.
+
+   **`repeat` (2026-09-03) — the first block-shaped command.** The parser had
+   already resolved the loop form and every operand (`for x in y`, `N times`,
+   `while`/`until <cond>`, `until event <name> [from <target>]`, `forever`,
+   `index <var>`, and the bottom-tested `repeat … until/while … end` form)
+   and was flattening them into `args` in a fixed order behind an identifier
+   named after the form, for `RepeatCommand.parseInput` to re-derive from
+   `args[0].name` and the positions after it. Every operand is now a slot
+   keyed by the word that introduced it — `modifiers.loopType`, `for`, `in`,
+   `times`, `while`, `until`, `event`, `from`, `index` (`bottomTested` already
+   was) — and only the body block and an `else` block stay positional.
+   `parseInput` reads the slots; its `raw.modifiers?.for/times/...` reads had
+   only ever been reachable from hand-built nodes, because
+   `@lokascript/semantic`'s `buildAST` never builds a loop node (a filed gap).
+   **Census row: 126 → 106 lines, 17 → 3 syntax sites** — the three left are
+   the `args[i].type === 'block'` reads that find the body. Two corpus rows
+   moved; 11 fixtures and 7 parser pins reshaped. One trap worth the note:
+   the first draft's slot-reading helper was written inline and took the
+   branch count UP (30 → 32) while the syntax count fell — the ratchet caught
+   it, and the helper is a module-level function now.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

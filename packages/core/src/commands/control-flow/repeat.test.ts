@@ -81,7 +81,14 @@ describe('RepeatCommand', () => {
       const block = createMockBlock();
 
       const input = await command.parseInput(
-        { args: [forNode, varNode, collectionNode, block], modifiers: {} },
+        {
+          args: [block],
+          modifiers: {
+            loopType: forNode as never,
+            for: varNode as never,
+            in: collectionNode as never,
+          },
+        },
         evaluator,
         context
       );
@@ -110,7 +117,15 @@ describe('RepeatCommand', () => {
       const indexNode = { type: 'expression', name: 'i' } as ExpressionNode;
 
       const input = await command.parseInput(
-        { args: [forNode, varNode, collectionNode], modifiers: { index: indexNode } },
+        {
+          args: [],
+          modifiers: {
+            loopType: forNode as never,
+            for: varNode as never,
+            in: collectionNode as never,
+            index: indexNode as never,
+          },
+        },
         indexEvaluator,
         context
       );
@@ -126,7 +141,11 @@ describe('RepeatCommand', () => {
       const forNode = { type: 'identifier', name: 'for' } as ASTNode;
 
       await expect(
-        command.parseInput({ args: [forNode], modifiers: {} }, evaluator, context)
+        command.parseInput(
+          { args: [], modifiers: { loopType: forNode as never } },
+          evaluator,
+          context
+        )
       ).rejects.toThrow('for loops require variable and collection');
     });
   });
@@ -141,7 +160,7 @@ describe('RepeatCommand', () => {
       const block = createMockBlock();
 
       const input = await command.parseInput(
-        { args: [timesNode, countNode, block], modifiers: {} },
+        { args: [block], modifiers: { loopType: timesNode as never, times: countNode as never } },
         evaluator,
         context
       );
@@ -163,7 +182,7 @@ describe('RepeatCommand', () => {
       const countNode = { type: 'number', value: '10' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [timesNode, countNode], modifiers: {} },
+        { args: [], modifiers: { loopType: timesNode as never, times: countNode as never } },
         evaluator,
         context
       );
@@ -179,7 +198,11 @@ describe('RepeatCommand', () => {
       const countNode = { type: 'string', value: 'invalid' } as ASTNode;
 
       await expect(
-        command.parseInput({ args: [timesNode, countNode], modifiers: {} }, evaluator, context)
+        command.parseInput(
+          { args: [], modifiers: { loopType: timesNode as never, times: countNode as never } },
+          evaluator,
+          context
+        )
       ).rejects.toThrow('times loops require a count number');
     });
   });
@@ -193,7 +216,7 @@ describe('RepeatCommand', () => {
       const conditionNode = { type: 'boolean', value: true } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [whileNode, conditionNode], modifiers: {} },
+        { args: [], modifiers: { loopType: whileNode as never, while: conditionNode as never } },
         evaluator,
         context
       );
@@ -209,7 +232,11 @@ describe('RepeatCommand', () => {
       const whileNode = { type: 'identifier', name: 'while' } as ASTNode;
 
       await expect(
-        command.parseInput({ args: [whileNode], modifiers: {} }, evaluator, context)
+        command.parseInput(
+          { args: [], modifiers: { loopType: whileNode as never } },
+          evaluator,
+          context
+        )
       ).rejects.toThrow('while loops require a condition');
     });
   });
@@ -223,7 +250,7 @@ describe('RepeatCommand', () => {
       const conditionNode = { type: 'boolean', value: false } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [untilNode, conditionNode], modifiers: {} },
+        { args: [], modifiers: { loopType: untilNode as never, until: conditionNode as never } },
         evaluator,
         context
       );
@@ -239,7 +266,11 @@ describe('RepeatCommand', () => {
       const untilNode = { type: 'identifier', name: 'until' } as ASTNode;
 
       await expect(
-        command.parseInput({ args: [untilNode], modifiers: {} }, evaluator, context)
+        command.parseInput(
+          { args: [], modifiers: { loopType: untilNode as never } },
+          evaluator,
+          context
+        )
       ).rejects.toThrow('until loops require a condition');
     });
   });
@@ -252,7 +283,7 @@ describe('RepeatCommand', () => {
       const foreverNode = { type: 'identifier', name: 'forever' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [foreverNode], modifiers: {} },
+        { args: [], modifiers: { loopType: foreverNode as never } },
         evaluator,
         context
       );
