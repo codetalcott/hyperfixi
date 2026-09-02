@@ -14,6 +14,7 @@ import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
 import { parseHyphenatedName } from '../helpers/parsing-helpers';
 import { isIdentifierLike } from '../token-predicates';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * Parse measure command
@@ -90,14 +91,14 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
     if (ctx.match('set')) {
       if (ctx.checkIdentifierLike()) {
         const variableName = ctx.advance();
-        modifiers['set'] = {
+        modifiers['set'] = toLegacyExpression({
           type: 'identifier',
           name: variableName.value,
           start: variableName.start,
           end: variableName.end,
           line: variableName.line,
           column: variableName.column,
-        } as unknown as ExpressionNode;
+        });
       }
     }
   }

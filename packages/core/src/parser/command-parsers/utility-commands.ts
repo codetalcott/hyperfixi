@@ -21,6 +21,7 @@ import * as animationCommands from './animation-commands';
 import * as domCommands from './dom-commands';
 import * as variableCommands from './variable-commands';
 import * as navigationCommands from './navigation-commands';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * Parse compound command
@@ -501,14 +502,14 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
         const doToken = ctx.advance(); // consume 'do'
         ctx.advance(); // consume 'not'
         const throwToken = ctx.advance(); // consume 'throw'
-        modifiers['doNotThrow'] = {
+        modifiers['doNotThrow'] = toLegacyExpression({
           type: 'literal',
           value: true,
           start: doToken.start,
           end: throwToken.end,
           line: doToken.line,
           column: doToken.column,
-        } as unknown as ExpressionNode;
+        });
         continue;
       }
     }
@@ -910,12 +911,12 @@ export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierN
 
   // Helper: build a literal-value modifier node (variant tags).
   const makeStringLiteral = (value: string): ExpressionNode =>
-    ({
+    toLegacyExpression({
       type: 'literal',
       value,
       start: identifierNode.start,
       end: identifierNode.end,
-    }) as unknown as ExpressionNode;
+    });
 
   // Helper: consume `of` or `from` and parse the source expression.
   const consumeSource = (): ASTNode => {

@@ -8,6 +8,9 @@
  */
 
 import type { CommandNode, ExpressionNode } from '../types/core';
+import type { Expr } from '../ast/nodes';
+import { isNodeOfKind } from '../ast/guards';
+import { toLegacyExpression, toLegacyExpressions, toLegacyExpressionMap } from '../ast/legacy';
 import {
   emitSemanticParseEvent,
   updateDebugStats,
@@ -430,8 +433,11 @@ export class SemanticIntegrationAdapter {
     readonly name: string;
     readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   }): CommandNode {
-    const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
+    // Constructed as the UNION and crossed to the legacy public type once, at
+    // the return — see `ast/legacy.ts`. The per-site casts this replaces
+    // silenced everything, including an undeclared kind (`cssProperty`).
+    const args: Expr[] = [];
+    const modifiers: Record<string, Expr> = {};
 
     // 1. loopType as first arg (identifier) - this is the loop variant discriminator
     const loopType = command.roles.get('loopType' as SemanticRole);
@@ -443,7 +449,7 @@ export class SemanticIntegrationAdapter {
         end: 0,
         line: 1,
         column: 0,
-      } as unknown as ExpressionNode);
+      });
     }
 
     // 2. For 'for' loops: patient is the loop variable name
@@ -461,7 +467,7 @@ export class SemanticIntegrationAdapter {
         end: 0,
         line: 1,
         column: 0,
-      } as unknown as ExpressionNode);
+      });
     }
 
     // 3. event name as string (for until-event loops)
@@ -474,7 +480,7 @@ export class SemanticIntegrationAdapter {
         end: 0,
         line: 1,
         column: 0,
-      } as unknown as ExpressionNode);
+      });
     }
 
     // 4. source as expression (for 'from document' etc. or collection in 'for' loops)
@@ -498,8 +504,8 @@ export class SemanticIntegrationAdapter {
     return {
       type: 'command',
       name: 'repeat',
-      args,
-      modifiers: Object.keys(modifiers).length > 0 ? modifiers : undefined,
+      args: toLegacyExpressions(args),
+      modifiers: Object.keys(modifiers).length > 0 ? toLegacyExpressionMap(modifiers) : undefined,
       isBlocking: false,
       start: 0,
       end: 0,
@@ -519,7 +525,7 @@ export class SemanticIntegrationAdapter {
     readonly name: string;
     readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   }): CommandNode {
-    const args: ExpressionNode[] = [];
+    const args: Expr[] = [];
 
     // 1. Destination (target) - could be identifier, possessiveExpression, or memberExpression
     const destination = command.roles.get('destination' as SemanticRole);
@@ -540,7 +546,7 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode);
+        });
       } else {
         args.push(this.semanticValueToExpression(destination));
       }
@@ -554,7 +560,7 @@ export class SemanticIntegrationAdapter {
       end: 0,
       line: 1,
       column: 0,
-    } as unknown as ExpressionNode);
+    });
 
     // 3. Patient (value)
     const patient = command.roles.get('patient' as SemanticRole);
@@ -565,7 +571,7 @@ export class SemanticIntegrationAdapter {
     return {
       type: 'command',
       name: 'set',
-      args,
+      args: toLegacyExpressions(args),
       isBlocking: false,
       start: 0,
       end: 0,
@@ -578,7 +584,7 @@ export class SemanticIntegrationAdapter {
    * Create a property node for set command targets.
    * Handles CSS property syntax (*property) vs regular identifiers.
    */
-  private createPropertyNode(property: string): ExpressionNode {
+  private createPropertyNode(property: string): Expr {
     if (property.startsWith('*')) {
       // CSS property: *opacity → { type: 'cssProperty', name: 'opacity' }
       return {
@@ -588,7 +594,7 @@ export class SemanticIntegrationAdapter {
         end: 0,
         line: 1,
         column: 0,
-      } as unknown as ExpressionNode;
+      };
     }
     // Regular property: innerHTML → { type: 'identifier', name: 'innerHTML' }
     return {
@@ -598,7 +604,7 @@ export class SemanticIntegrationAdapter {
       end: 0,
       line: 1,
       column: 0,
-    } as unknown as ExpressionNode;
+    };
   }
 
   /**
@@ -610,7 +616,7 @@ export class SemanticIntegrationAdapter {
     readonly name: string;
     readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   }): CommandNode {
-    const args: ExpressionNode[] = [];
+    const args: Expr[] = [];
 
     // 1. Condition as first arg
     const condition = command.roles.get('condition' as SemanticRole);
@@ -621,7 +627,7 @@ export class SemanticIntegrationAdapter {
     return {
       type: 'command',
       name: command.name, // 'if' or 'unless'
-      args,
+      args: toLegacyExpressions(args),
       isBlocking: false,
       start: 0,
       end: 0,
@@ -633,7 +639,7 @@ export class SemanticIntegrationAdapter {
   /**
    * Convert a semantic value to an expression node.
    */
-  private semanticValueToExpression(value: SemanticValue): ExpressionNode {
+  private semanticValueToExpression(value: SemanticValue): Expr {
     switch (value.type) {
       case 'selector':
         return {
@@ -643,7 +649,7 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode;
+        };
 
       case 'reference':
         return {
@@ -653,7 +659,7 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode;
+        };
 
       case 'literal':
         // Check if this is a template literal with ${...} interpolation syntax
@@ -670,7 +676,7 @@ export class SemanticIntegrationAdapter {
             end: 0,
             line: 1,
             column: 0,
-          } as unknown as ExpressionNode;
+          };
         }
         return {
           type: 'literal',
@@ -680,7 +686,7 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode;
+        };
 
       case 'property-path': {
         // Property paths become memberExpression nodes
@@ -708,7 +714,7 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode;
+        };
       }
 
       case 'expression':
@@ -732,7 +738,7 @@ export class SemanticIntegrationAdapter {
    * - Method calls: foo(), x.y(), x.y(a, b)
    * - Nested calls: x.y(a.b, c)
    */
-  private parseExpressionString(input: string): ExpressionNode {
+  private parseExpressionString(input: string): Expr {
     let pos = 0;
 
     const skipWhitespace = () => {
@@ -746,8 +752,8 @@ export class SemanticIntegrationAdapter {
       return input.slice(start, pos);
     };
 
-    const parseArguments = (): ExpressionNode[] => {
-      const args: ExpressionNode[] = [];
+    const parseArguments = (): Expr[] => {
+      const args: Expr[] = [];
       pos++; // skip '('
       skipWhitespace();
 
@@ -769,7 +775,7 @@ export class SemanticIntegrationAdapter {
       return args;
     };
 
-    const parseExpression = (): ExpressionNode => {
+    const parseExpression = (): Expr => {
       skipWhitespace();
 
       // Start with identifier
@@ -783,17 +789,17 @@ export class SemanticIntegrationAdapter {
           end: 0,
           line: 1,
           column: 0,
-        } as unknown as ExpressionNode;
+        };
       }
 
-      let result: ExpressionNode = {
+      let result: Expr = {
         type: 'identifier',
         name,
         start: 0,
         end: 0,
         line: 1,
         column: 0,
-      } as unknown as ExpressionNode;
+      };
 
       // Handle postfix operations (property access and function calls)
       while (pos < input.length) {
@@ -821,7 +827,7 @@ export class SemanticIntegrationAdapter {
               end: 0,
               line: 1,
               column: 0,
-            } as unknown as ExpressionNode;
+            };
           }
         } else if (char === '(') {
           // Function call
@@ -834,7 +840,7 @@ export class SemanticIntegrationAdapter {
             end: 0,
             line: 1,
             column: 0,
-          } as unknown as ExpressionNode;
+          };
         } else {
           break;
         }
@@ -920,17 +926,20 @@ type BuildASTFn = (node: never) => { ast: unknown; warnings?: string[] };
  * `CommandNode` requires `isBlocking`, and its error messages read the span.
  */
 function normalizeBuiltNode(ast: unknown): CommandNode | undefined {
-  if (!ast || typeof ast !== 'object') return undefined;
-  const node = ast as Record<string, unknown>;
-  if (node['type'] !== 'command' || typeof node['name'] !== 'string') return undefined;
+  // `isNodeOfKind` narrows to the union's CommandNode, but the input is a
+  // hand-buildable public-API payload (`buildAST`), so the runtime checks the
+  // narrowing does NOT perform — a string `name`, a real `args` array — stay
+  // explicit rather than being assumed from the type.
+  if (!isNodeOfKind(ast, 'command')) return undefined;
+  if (typeof ast.name !== 'string') return undefined;
   return {
     start: 0,
     end: 0,
     line: 1,
     column: 0,
-    ...node,
-    isBlocking: node['isBlocking'] === true,
-    args: Array.isArray(node['args']) ? (node['args'] as ExpressionNode[]) : [],
+    ...ast,
+    isBlocking: ast.isBlocking === true,
+    args: Array.isArray(ast.args) ? toLegacyExpressions(ast.args) : [],
   } as CommandNode;
 }
 

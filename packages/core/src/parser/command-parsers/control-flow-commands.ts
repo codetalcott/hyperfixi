@@ -16,6 +16,7 @@ import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { isIdentifierLike, isEvent, isComment } from '../token-predicates';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * Parse halt command
@@ -309,11 +310,14 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
 
   const builder = CommandNodeBuilder.from(commandToken).withArgs(...args);
   if (bottomTested) {
-    builder.withModifier('bottomTested', {
-      type: 'literal',
-      value: true,
-      ...pos,
-    } as unknown as ExpressionNode);
+    builder.withModifier(
+      'bottomTested',
+      toLegacyExpression({
+        type: 'literal',
+        value: true,
+        ...pos,
+      })
+    );
   }
   return builder.endingAt(ctx.getPosition()).build();
 }

@@ -20,6 +20,7 @@ import {
   consumeOneOfKeywordsToArgs,
   consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * A `literal` node in the slot `withModifiers` types as `ExpressionNode`.
@@ -35,7 +36,7 @@ import {
  * an identifier node would be looked up as a variable and come back undefined.
  */
 function literalModifier(value: string): ExpressionNode {
-  return { type: 'literal', value, raw: value } as unknown as ExpressionNode;
+  return toLegacyExpression({ type: 'literal', value, raw: value });
 }
 
 /**
@@ -238,7 +239,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
   // form is handled in ToggleCommand.parseInput via the asExpression target.)
   if (ctx.check('modal')) {
     ctx.advance();
-    args.push({ type: 'literal', value: 'modal', raw: 'modal' } as unknown as ASTNode);
+    args.push(toLegacyExpression({ type: 'literal', value: 'modal', raw: 'modal' }));
   }
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)

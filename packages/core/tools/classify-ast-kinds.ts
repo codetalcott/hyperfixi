@@ -157,6 +157,10 @@ function classify(s: Sites): Klass {
  * an unscoped scan classified `WHITESPACE`, `SELECT` and `top` as AST kinds.
  */
 const KIND_UNIVERSE = new Set([
+  // The sixth missed kind, found when semantic-integration's constructions
+  // were typed against the union (its only emitter had cast the undeclared
+  // kind into silence): read by isCSSPropertySelectorNode.
+  'cssProperty',
   // Five kinds this set MISSED until 2026-09-01, found while sizing Arc 2
   // step 2's union: each is emitted by `pratt-parser.ts` or `parser.ts` and
   // read by `evaluateAST`'s switch, so they were live all along and simply
