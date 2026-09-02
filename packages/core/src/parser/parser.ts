@@ -1383,10 +1383,6 @@ export class Parser {
   /**
    * Parse regular command
    */
-  private parseRegularCommand(identifierNode: IdentifierNode): CommandNode | null {
-    return utilityCommands.parseRegularCommand(this.getContext(), identifierNode);
-  }
-
   private parseCall(): ASTNode {
     let expr = this.parsePrimary();
 

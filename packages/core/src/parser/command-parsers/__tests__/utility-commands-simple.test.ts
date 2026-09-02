@@ -1,17 +1,13 @@
 /**
  * Test Suite for Utility Command Parsers (Non-Dispatch Functions)
  *
- * Tests parseRegularCommand, parseJsCommand, and parseTellCommand.
+ * Tests parseJsCommand and parseTellCommand (parseRegularCommand was
+ * deleted in Arc 3 step 5 — the declared parser is the one generic parser).
  * Skips parseCompoundCommand to avoid circular dependency issues.
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  parseRegularCommand,
-  parseFetchCommand,
-  parseJsCommand,
-  parseTellCommand,
-} from '../utility-commands';
+import { parseFetchCommand, parseJsCommand, parseTellCommand } from '../utility-commands';
 import {
   createMockParserContext,
   createTokenStream,
@@ -30,77 +26,6 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
       column: 0,
     };
   }
-
-  describe('parseRegularCommand', () => {
-    it('should parse command with multiple arguments', () => {
-      const tokens = createTokenStream(['arg1', 'arg2', 'then']);
-      const ctx = createMockParserContext(tokens, {
-        checkIdentifierLike: vi
-          .fn()
-          .mockReturnValueOnce(true)
-          .mockReturnValueOnce(true)
-          .mockReturnValue(false),
-        parsePrimary: vi
-          .fn()
-          .mockReturnValueOnce({ type: 'identifier', name: 'arg1' })
-          .mockReturnValueOnce({ type: 'identifier', name: 'arg2' }),
-        getPosition: vi.fn(() => ({ start: 0, end: 10, line: 1, column: 0 })),
-      });
-
-      const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
-
-      expect(result.args).toHaveLength(2);
-      expect(result.name).toBe('myCommand');
-    });
-
-    it('should parse command with selector arguments', () => {
-      const tokens = createTokenStream(['.class', '#id']);
-      const ctx = createMockParserContext(tokens, {
-        checkIdentifierLike: vi.fn(() => false),
-        // `parseRegularCommand` calls checkAnySelector (query references like
-        // `<button/>` are selectors too, and gating on checkSelector silently
-        // dropped them). Both are stubbed: overriding only the one the code no
-        // longer calls left the mock's DEFAULT checkAnySelector answering, and
-        // since this mock's parsePrimary does NOT advance the token position,
-        // the arg loop never terminated — the worker OOMed rather than failing.
-        checkSelector: vi
-          .fn()
-          .mockReturnValueOnce(true)
-          .mockReturnValueOnce(true)
-          .mockReturnValue(false),
-        checkAnySelector: vi
-          .fn()
-          .mockReturnValueOnce(true)
-          .mockReturnValueOnce(true)
-          .mockReturnValue(false),
-        parsePrimary: vi
-          .fn()
-          .mockReturnValueOnce({ type: 'selector', value: '.class' })
-          .mockReturnValueOnce({ type: 'selector', value: '#id' }),
-        getPosition: vi.fn(() => ({ start: 0, end: 10, line: 1, column: 0 })),
-      });
-
-      const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
-
-      expect(result.args).toHaveLength(2);
-    });
-
-    it('should stop at command boundaries', () => {
-      const tokens = createTokenStream(['arg', 'then']);
-      const ctx = createMockParserContext(tokens, {
-        checkIdentifierLike: vi
-          .fn(() => true)
-          .mockReturnValueOnce(true)
-          .mockReturnValue(false),
-        parsePrimary: vi.fn(() => ({ type: 'identifier', name: 'arg' })),
-        getPosition: vi.fn(() => ({ start: 0, end: 10, line: 1, column: 0 })),
-      });
-
-      const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
-
-      expect(result.args).toHaveLength(1);
-    });
-  });
 
   // `parseMultiWordCommand` was replaced by `parseDeclaredCommand` (Arc 3
   // step 4), whose behaviour is pinned end-to-end in

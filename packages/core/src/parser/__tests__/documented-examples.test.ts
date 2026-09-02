@@ -274,12 +274,6 @@ const ALLOWED: readonly Allowed[] = [
     status: 'lossy',
     reason: 'docs defect: upstream rejects; needs a comma, `result` is discarded',
   },
-  {
-    command: 'pick',
-    source: 'pick "red", "green", "blue"',
-    status: 'lossy',
-    reason: "docs defect: upstream rejects; none of pick's five forms is a bare list",
-  },
 ] as const;
 
 // ===========================================================================
