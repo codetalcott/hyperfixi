@@ -78,6 +78,9 @@ export function parseCompoundCommand(
       return parseJsCommand(ctx, identifierNode);
     case 'go':
       return navigationCommands.parseGoCommand(ctx, identifierNode);
+    case 'push':
+    case 'replace':
+      return navigationCommands.parsePushCommand(ctx, identifierNode);
     case 'scroll':
       // Falls back for the `scroll <dir> by <n>` branch, which has no runtime
       // here and keeps the generic path.

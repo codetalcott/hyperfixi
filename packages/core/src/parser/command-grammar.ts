@@ -104,8 +104,9 @@ export const DEDICATED_PARSER_COMMANDS: ReadonlySet<string> = new Set<string>([
   'add',
   'increment',
   'decrement',
-  // COMPOUND_COMMANDS → parseCompoundCommand (push/replace reach its default,
-  // parseRegularCommand — a dedicated route by membership, if not by case)
+  // COMPOUND_COMMANDS → parseCompoundCommand (every member has a case since
+  // push/replace got parsePushCommand in Arc 3 step 5; the default,
+  // parseRegularCommand, is unreachable from here)
   'put',
   'trigger',
   'send',

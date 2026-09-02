@@ -60,7 +60,7 @@ export class ResetCommand implements DecoratedCommand {
       evaluator,
       context,
       'reset',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

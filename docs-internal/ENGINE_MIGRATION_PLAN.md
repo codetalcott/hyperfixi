@@ -1187,6 +1187,62 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    arc, restated: a per-command PR is TWO edits, parser and command, and
    the command's own suite cannot tell whether the parser's arrived.
 
+   **Step 5, first deletion: `KEYWORD_PREPOSITIONS` and `filterPrepositions`
+   (2026-09-02) — and the two commands the filter was still load-bearing
+   for.** The plan listed the filter as a mechanism to delete "when its caller
+   count reaches zero"; the count was twelve (`filterPrepositions: true` at
+   twelve `resolveTargetsFromArgs` sites) and, measured by dumping each
+   caller's documented form, the filter was DEAD for ten of them — `focus`,
+   `blur`, `select`, `empty`, `close`, `open`, `reset`, `clear` are `ONE_EXPR`
+   grammar rows with no marker word to filter, and `toggle` had been on slots
+   since the first step-3 PR — and live for two: `add .a to #x` was parsing as
+   `[.a, #x]` (the parser consumed `to` and pushed nothing) and `remove .a
+   from #x` as `[.a, from, #x]`, which only the filter turned into a target.
+   So step 5's first deletion is also step 3's next migration: `add`'s target
+   is `modifiers.to` and `remove`'s `modifiers.from` — the keys
+   `@lokascript/semantic`'s `addSchema`/`removeSchema` `ast` descriptors
+   already emit — and `DOMModificationBase.resolveTargets` reads the
+   preposition slot directly, no `args` in its signature. `default` lost its
+   flat `[target, 'to', value]` fallback the same way (the parser has emitted
+   `modifiers.to` since the `set` PR; the fallback's own test pinned the
+   flat shape and is now the slot test). `fallbackModifierKey` STAYS: with
+   the filter gone it is the slot read, not a fallback.
+   **Census: add 67 → 52 lines, remove 63 → 53; totals 2,110 lines · 323
+   branches · 76 syntax sites.** The syntax-site counts did not move for any
+   of the three — the filter lived in a helper the census does not walk, and
+   `default`'s `=== 'to'` compare was a `String(...).toLowerCase()` form the
+   census's keyword-compare pattern never matched. Thirteen AST-equivalence
+   rows moved (every `add`/`remove` example with a target, plus the four
+   handler/block rows that contain one), reviewed; type-escapes 896 → 893.
+   Two consumers outside core: the AOT compiler's `AddCodegen`/`RemoveCodegen`
+   resolved the target from `node.target` (the semantic path's field) or
+   `_ctx.me` — it had never read the traditional parse's target at all, so a
+   traditionally parsed `add .x to #y` compiled to add on `me`; both now read
+   `node.target ?? modifiers.to/from`. Its `init-prerender` classifier reads
+   `cmd.target` only and is unchanged (widening what it prerenders is a
+   behaviour change, not this PR's). `vite-plugin/src/compiler.ts` compiles
+   its own node shape (`cmd.target`) and is untouched.
+   **Same PR, the last two marker-word commands: `push`/`replace`.** Both
+   were `COMPOUND_COMMANDS` members with no case in `parseCompoundCommand`,
+   so they fell to `parseRegularCommand` — the second generic loop — and
+   `commands/helpers/url-argument-parser.ts` re-derived `push url <u> with
+   title <t>` from the words it found in `args` (a `KEYWORDS` list of
+   `url`/`with`/`title`, three `findIndex` scans). `parsePushCommand` now
+   emits `args: [url]` (naked `/path` or any expression; the `url` word is
+   consumed) and `modifiers.title`; the helper reads the slot. Every
+   `COMPOUND_COMMANDS` member has a case now — `parseCompoundCommand`'s
+   `default` is unreachable from that switch, which is the precondition for
+   retiring the set. The census could not see this one either way: the scan
+   lived in a helper (uncounted), and the slot read stays there too — the
+   `push` row is 13 lines / 0 sites before and after. `@lokascript/semantic`
+   has no title role for these, so the slot is core-only. The AOT
+   `PushUrlCodegen`/`ReplaceUrlCodegen` read `roles?.destination ?? args[0]`:
+   for a traditional parse `args[0]` used to be the identifier `url`, so they
+   compiled `history.pushState({}, '', url)` — a variable reference — and now
+   get the URL with no change of their own. Four more AST-equivalence rows
+   moved (the four documented `push`/`replace` forms); type-escapes 893 → 891
+   (the helper's two `as unknown as Record` reads went with the scan).
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
@@ -1260,10 +1316,15 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    `check:mapper-parity` already pins the mappers. Two sources with a gate
    beat one source across a boundary the plan is trying to draw.
 5. **Delete the mechanism.** `continuationKeywords`, the generic argument
-   loop, `KEYWORD_PREPOSITIONS`, `filterPrepositions`, `fallbackModifierKey`,
-   `resolveTargetsFromArgs`'s AST-walking half — each when its caller count
-   reaches zero (a test per list, ratcheted). `COMPOUND_COMMANDS` becomes "all
-   commands" and is deleted with `isCompoundCommand`.
+   loop, ~~`KEYWORD_PREPOSITIONS`, `filterPrepositions`~~ (✅ deleted
+   2026-09-02 — see the step-5 History entry; the deletion needed one more
+   step-3 migration first, `add`/`remove`), `fallbackModifierKey` (**stays**:
+   it IS the slot read — `resolveTargetsFromArgs(target ? [target] : [])`
+   after the filter went is the same function minus the filter, and the key
+   names which slot a command's target lives under), `resolveTargetsFromArgs`'s
+   AST-walking half — each when its caller count reaches zero (a test per
+   list, ratcheted). `COMPOUND_COMMANDS` becomes "all commands" and is deleted
+   with `isCompoundCommand`.
 
 Gates: the classification audit (ratchet to 0); `command-output-contract`
 (both paths — until Arc 4 deletes one); `compound-command-coverage`;

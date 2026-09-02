@@ -88,7 +88,7 @@ export class HistoryCommand implements DecoratedCommand {
     const mode: HistoryMode = raw.commandName?.toLowerCase().includes('replace')
       ? 'replace'
       : 'push';
-    const baseInput = await parseUrlArguments(raw.args, evaluator, context, `${mode} url`);
+    const baseInput = await parseUrlArguments(raw, evaluator, context, `${mode} url`);
     return { ...baseInput, mode };
   }
 

@@ -57,7 +57,7 @@ export class EmptyCommand implements DecoratedCommand {
       evaluator,
       context,
       'empty',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

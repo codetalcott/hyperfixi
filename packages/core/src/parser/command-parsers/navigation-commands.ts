@@ -28,7 +28,12 @@
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, CommandNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
-import { isCommandBoundary } from '../helpers/parsing-helpers';
+import {
+  isCommandBoundary,
+  consumeOptionalKeyword,
+  parseOneArgument,
+} from '../helpers/parsing-helpers';
+import type { ExpressionNode } from '../../types/core';
 import { parseBareURLPath, isNakedURLStart } from './utility-commands';
 
 /**
@@ -323,6 +328,40 @@ function collectScrollArgs(
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
+ * `push url <url> [with title <title>]` / `replace url <url> [with title <title>]`.
+ *
+ * The URL is the one positional argument (a naked `/path` or any expression;
+ * the leading `url` word is consumed, not emitted); `with title <title>` is
+ * the `title` slot. Marker words never reach `args` (Arc 3 step 3). Both
+ * spellings were COMPOUND_COMMANDS members with no case in
+ * `parseCompoundCommand`, so they fell to `parseRegularCommand` and the
+ * command re-derived the syntax from the words it found in `args` — the last
+ * two commands in the repo doing so.
+ */
+export function parsePushCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  const args: ASTNode[] = [];
+  const modifiers: Record<string, ExpressionNode> = {};
+  consumeOptionalKeyword(ctx, 'url');
+  if (!ctx.isAtEnd() && isNakedURLStart(ctx)) {
+    const url = parseBareURLPath(ctx);
+    if (url) args.push(url);
+  } else {
+    const url = parseOneArgument(ctx, ['with']);
+    if (url) args.push(url);
+  }
+  if (consumeOptionalKeyword(ctx, 'with')) {
+    consumeOptionalKeyword(ctx, 'title');
+    const title = parseOneArgument(ctx);
+    if (title) modifiers['title'] = title as ExpressionNode;
+  }
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }

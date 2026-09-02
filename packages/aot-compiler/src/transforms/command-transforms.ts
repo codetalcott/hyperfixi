@@ -119,7 +119,10 @@ class AddCodegen implements CommandCodegen {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    // The target is the `to` slot (Arc 3 step 3); `node.target` is the
+    // semantic path's spelling of the same thing.
+    const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.to;
+    const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
 
@@ -186,7 +189,10 @@ class RemoveCodegen implements CommandCodegen {
 
     // No args = remove the element itself
     if (args.length === 0) {
-      const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+      // The target is the `from` slot (Arc 3 step 3); `node.target` is the
+      // semantic path's spelling of the same thing.
+      const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
+      const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
       return {
         code: `${target}.remove()`,
         async: false,
@@ -194,7 +200,10 @@ class RemoveCodegen implements CommandCodegen {
       };
     }
 
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    // The target is the `from` slot (Arc 3 step 3); `node.target` is the
+    // semantic path's spelling of the same thing.
+    const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
+    const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
 
