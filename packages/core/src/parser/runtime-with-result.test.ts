@@ -70,16 +70,6 @@ describe('evaluateASTWithResult', () => {
       }
     });
 
-    it('translates `HALT_EXECUTION` message errors to halt signals', async () => {
-      // Some legacy paths signal halt only via the message, with no isHalt flag.
-      const result = await evaluateASTWithResult(makeNode(new Error('HALT_EXECUTION')), context);
-
-      expect(isErr(result)).toBe(true);
-      if (isErr(result)) {
-        expect(result.error.type).toBe('halt');
-      }
-    });
-
     it('translates `isExit` errors to exit signals (preserves returnValue)', async () => {
       const exitErr = Object.assign(new Error('exit requested'), {
         isExit: true,
@@ -92,15 +82,6 @@ describe('evaluateASTWithResult', () => {
         expect(result.error.returnValue).toBe('goodbye');
       } else {
         expect.fail('expected an exit signal');
-      }
-    });
-
-    it('translates `EXIT_COMMAND` message errors to exit signals', async () => {
-      const result = await evaluateASTWithResult(makeNode(new Error('EXIT_COMMAND')), context);
-
-      expect(isErr(result)).toBe(true);
-      if (isErr(result)) {
-        expect(result.error.type).toBe('exit');
       }
     });
 

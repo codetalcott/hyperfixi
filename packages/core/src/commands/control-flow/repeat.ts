@@ -35,6 +35,7 @@ import {
   createForeverLoopConfig,
 } from '../helpers/loop-executor';
 import type { CommandRaw } from '../../ast/command-slots';
+import { asControlFlowError } from '../../types/result';
 
 /** Typed input for RepeatCommand */
 export interface RepeatCommandInput {
@@ -322,15 +323,16 @@ export class RepeatCommand implements DecoratedCommand {
       };
     } catch (error) {
       // Handle top-level control flow errors
-      if (error instanceof Error) {
-        if (error.message.includes('BREAK') || error.message.includes('CONTINUE')) {
-          return {
-            type,
-            iterations: 0,
-            completed: true,
-            interrupted: error.message.includes('BREAK'),
-          };
-        }
+      // A break/continue that escaped the body arrives as a flagged
+      // control-flow error (signalToError); read the flag, not the message.
+      const cfe = asControlFlowError(error);
+      if (cfe?.isBreak || cfe?.isContinue) {
+        return {
+          type,
+          iterations: 0,
+          completed: true,
+          interrupted: cfe.isBreak === true,
+        };
       }
       throw error;
     }

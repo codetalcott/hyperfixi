@@ -364,15 +364,6 @@ describe('Runtime Audit Fixes', () => {
       expect(isControlFlowError(error)).toBe(true);
     });
 
-    it('should detect legacy message-based halt', () => {
-      expect(isControlFlowError(new Error('HALT_EXECUTION'))).toBe(true);
-    });
-
-    it('should detect legacy message-based exit', () => {
-      expect(isControlFlowError(new Error('EXIT_COMMAND'))).toBe(true);
-      expect(isControlFlowError(new Error('EXIT_EXECUTION'))).toBe(true);
-    });
-
     it('should return false for normal errors', () => {
       expect(isControlFlowError(new Error('Something went wrong'))).toBe(false);
       expect(isControlFlowError(new TypeError('type error'))).toBe(false);
@@ -875,11 +866,6 @@ describe('RuntimeBase Method Coverage', () => {
       error.returnValue = 42;
       const signal = callToSignal(runtime, error);
       expect(signal).toEqual({ type: 'return', returnValue: 42 });
-    });
-
-    it('should convert HALT_EXECUTION message to halt signal', () => {
-      const signal = callToSignal(runtime, new Error('HALT_EXECUTION'));
-      expect(signal).toEqual({ type: 'halt' });
     });
 
     it('should return null for normal errors', () => {

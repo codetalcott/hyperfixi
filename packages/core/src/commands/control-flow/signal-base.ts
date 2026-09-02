@@ -45,10 +45,8 @@ export abstract class ControlFlowSignalBase implements DecoratedCommand {
   protected abstract readonly signalType: SignalType;
 
   /** Signal error message */
-  protected abstract readonly errorMessage: string;
 
   /** Signal error flag name (isBreak, isContinue, isExit) */
-  protected abstract readonly errorFlag: string;
 
   async parseInput(
     _raw: CommandRaw<'break' | 'continue' | 'exit'>,
