@@ -233,7 +233,8 @@
       "examples": [
         "fetch \"/api/data\"",
         "fetch \"/api/users\" as json",
-        "fetch \"/api/save\" with { method:\"POST\" }"
+        "fetch \"/api/save\" with { method:\"POST\" }",
+        "fetch \"/api/optional\" as json do not throw"
       ],
       "sideEffects": ["network", "event-dispatching"],
       "category": "async",
@@ -547,7 +548,11 @@
         "repeat until <condition> { <commands> }",
         "repeat forever { <commands> }"
       ],
-      "examples": ["repeat for item in items { log item }", "repeat 5 times { log \"hello\" }"],
+      "examples": [
+        "repeat for item in items { log item }",
+        "repeat 5 times { log \"hello\" }",
+        "repeat for item in items index i log i end"
+      ],
       "sideEffects": ["iteration", "conditional-execution"],
       "category": "control-flow",
       "compatibility": "standard"
@@ -625,7 +630,8 @@
         "trigger click on #button",
         "trigger customEvent on me",
         "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
+        "send myEvent(count: 42) to me",
+        "send saved to #form with bubbles cancelable"
       ],
       "sideEffects": ["event-dispatch"],
       "aliases": ["send"],
@@ -671,6 +677,7 @@
       "syntax": ["start view transition [using <type>] <body> end"],
       "examples": [
         "start view transition add .highlight to me end",
+        "start view transition using \"slide\" add .active to #panel end",
         "start view transition using \"slide\" then put result into #panel end"
       ],
       "sideEffects": ["animation", "dom-mutation"],
@@ -745,7 +752,8 @@
         "toggle .active on me",
         "toggle @disabled",
         "toggle #myDialog as modal",
-        "toggle .loading for 2s"
+        "toggle .loading for 2s",
+        "toggle between .expanded and .collapsed"
       ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
@@ -777,7 +785,8 @@
         "trigger click on #button",
         "trigger customEvent on me",
         "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
+        "send myEvent(count: 42) to me",
+        "send saved to #form with bubbles cancelable"
       ],
       "sideEffects": ["event-dispatch"],
       "aliases": ["send"],

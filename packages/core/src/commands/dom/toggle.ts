@@ -170,6 +170,7 @@ export class ToggleCommand implements DecoratedCommand {
       'toggle @disabled',
       'toggle #myDialog as modal',
       'toggle .loading for 2s',
+      'toggle between .expanded and .collapsed',
     ],
     sideEffects: ['dom-mutation'],
     category: 'dom',

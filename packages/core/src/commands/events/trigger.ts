@@ -70,6 +70,7 @@ export class EventDispatchCommand implements DecoratedCommand {
       'trigger customEvent on me',
       'send dataEvent to #target',
       'send myEvent(count: 42) to me',
+      'send saved to #form with bubbles cancelable',
     ],
     sideEffects: ['event-dispatch'],
     aliases: ['send'],

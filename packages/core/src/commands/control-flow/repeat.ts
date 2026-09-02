@@ -99,7 +99,11 @@ export class RepeatCommand implements DecoratedCommand {
       'repeat until <condition> { <commands> }',
       'repeat forever { <commands> }',
     ],
-    examples: ['repeat for item in items { log item }', 'repeat 5 times { log "hello" }'],
+    examples: [
+      'repeat for item in items { log item }',
+      'repeat 5 times { log "hello" }',
+      'repeat for item in items index i log i end',
+    ],
     sideEffects: ['iteration', 'conditional-execution'],
     category: 'control-flow',
     compatibility: 'standard',
