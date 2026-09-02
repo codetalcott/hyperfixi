@@ -1393,6 +1393,23 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    typed `args` (per-command positional shapes) and the node itself
    (`CommandNode<K>`), which this table makes a mechanical extension.
 
+   **The emit side (2026-09-03).** `CommandNodeBuilder<K>`: `withModifier`
+   takes `SlotKey<K>` and `withModifiers` a `SlotMap<K>`, and each of the 26
+   dedicated parser functions names its command on the builder
+   (`CommandNodeBuilder.fromIdentifier<'toggle'>(id)`) and on its local
+   modifier map — a slot key a PARSER writes outside the row is a compile
+   error, the twin of the read side. The default `K` is every command's
+   keys, so a builder that names none is checked against the union and
+   nothing outside the dedicated parsers changed. The one dynamic write, the
+   declared parser's `modifiers[marker]`, is a cast pinned by a new static
+   test: every grammar row's `markers` ⊆ its slot row. `tsc` found two
+   things: the builder's `build()` handing a narrowed map to the wide public
+   `CommandNode.modifiers` (a cast at the one boundary, the node's shape is
+   unchanged), and `put` writing its operation word from an untyped keyword
+   list. Zero AST-equivalence rows moved; type-escapes unchanged at 891.
+   With both sides typed, the slot layer of step 2 is closed; `args` and
+   `CommandNode<K>` remain.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

@@ -19,6 +19,7 @@ import {
   createPropertyOfExpression,
 } from '../helpers/ast-helpers';
 import { parseOneArgument } from '../helpers/parsing-helpers';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Parse set command
@@ -301,7 +302,7 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
   // produced and the one SetCommand.parseInput already read first. The parser
   // had just consumed `to` and was pushing it back into args as an identifier
   // for the command to find again by scanning.
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
+  const builder = CommandNodeBuilder.fromIdentifier<'set'>(identifierNode).withArgs(...finalArgs);
   if (value) {
     builder.withModifier('to', value as ExpressionNode);
   }
@@ -431,7 +432,7 @@ export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken:
   // the one in-repo producer of the flat `[target, to, value]` shape, and
   // SetCommand.parseInput's scan for a `to` identifier was covering for it.
   return (
-    CommandNodeBuilder.from(commandToken)
+    CommandNodeBuilder.from<'set'>(commandToken)
       .withName('set')
       .withArgs(targetWithScope)
       // `createBinaryExpression` returns the legacy-typed node; ExpressionNode is

@@ -24,6 +24,7 @@ import {
   createLiteral,
 } from '../helpers/ast-helpers';
 import { isIdentifierLike } from '../token-predicates';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Parse wait command
@@ -69,7 +70,7 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
     const timeExpr = ctx.parseExpression();
     args.push(timeExpr);
 
-    return CommandNodeBuilder.from(commandToken)
+    return CommandNodeBuilder.from<'wait'>(commandToken)
       .withArgs(...args)
       .blocking()
       .endingAt(ctx.getPosition())
@@ -209,7 +210,7 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'wait'>(commandToken)
     .withArgs(...args)
     .blocking() // wait is a blocking command
     .endingAt(ctx.getPosition())
@@ -299,7 +300,7 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'install'>(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();

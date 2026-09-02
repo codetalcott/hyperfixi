@@ -21,6 +21,7 @@ import {
   consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
 import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotKey, SlotMap } from '../command-slots';
 
 /**
  * A `literal` node in the slot `withModifiers` types as `ExpressionNode`.
@@ -129,13 +130,13 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
   }
 
   // `from <target>` is the `from` slot — the key the semantic path emits.
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'remove'> = {};
   if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
     const targetArg = parseOneArgument(ctx);
     if (targetArg) modifiers['from'] = targetArg as ExpressionNode;
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'remove'>(identifierNode)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
@@ -176,7 +177,7 @@ function dialogModeOf(targetType: unknown): string | undefined {
 
 export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'toggle'> = {};
 
   // Every SYNTACTIC decision toggle has is made here and carried as a slot
   // (Arc 3 step 3, toggle PR B): the `between A and B` pair is
@@ -246,7 +247,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'toggle'>(identifierNode)
     .withArgs(...args)
     .withModifiers({ ...modifiers, ...parseTemporalTail(ctx) })
     .endingAt(ctx.getPosition())
@@ -281,7 +282,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
  */
 export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'take'> = {};
 
   // First argument: what to take (stops at 'from'/'for' boundaries)
   const whatArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.FOR]);
@@ -307,7 +308,7 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
     }
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'take'>(identifierNode)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
@@ -321,7 +322,9 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
  * command's `parseInput` reads. It used to push the three words into `args`
  * as identifiers for each command to scan for by name.
  */
-function parseViewTransitionTail(ctx: ParserContext): Record<string, ExpressionNode> {
+function parseViewTransitionTail(
+  ctx: ParserContext
+): SlotMap<'swap' | 'morph' | 'process' | 'put'> {
   if (!ctx.check('using')) return {};
   ctx.advance(); // consume 'using'
   if (!ctx.match('view')) {
@@ -383,7 +386,7 @@ export function parseProcessCommand(ctx: ParserContext, identifierNode: Identifi
   }
 
   const modifiers = parseViewTransitionTail(ctx);
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...args);
+  const builder = CommandNodeBuilder.fromIdentifier<'process'>(identifierNode).withArgs(...args);
   if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
 
   return builder.endingAt(ctx.getPosition()).build();
@@ -425,13 +428,13 @@ export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
   }
 
   // `to <target>` is the `to` slot — the key the semantic path emits.
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'add'> = {};
   if (consumeOptionalKeyword(ctx, KEYWORDS.TO)) {
     const targetArg = parseOneArgument(ctx);
     if (targetArg) modifiers['to'] = targetArg as ExpressionNode;
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'add'>(commandToken)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
@@ -529,9 +532,9 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
   // their spelling as the key (`'at start of'`, `'at end of'`), which is what
   // the command's position map is keyed on. Until now the parser pushed the
   // operation word into `args` as an identifier for the command to find again.
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'put'>(identifierNode)
     .withArgs(contentExpr)
-    .withModifier(operation, targetExpr as ExpressionNode)
+    .withModifier(operation as SlotKey<'put'>, targetExpr as ExpressionNode)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -581,7 +584,7 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
   // variable form `swap a with b` all land in that one shape; SwapCommand and
   // MorphCommand no longer scan `args` for keyword identifiers.
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'swap' | 'morph'> = {};
 
   if (!ctx.isAtEnd()) {
     const current = ctx.peek();
@@ -607,7 +610,7 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
     if (contentExpr) modifiers['with'] = contentExpr as ExpressionNode;
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'swap' | 'morph'>(identifierNode)
     .withArgs(...args)
     .withModifiers({ ...modifiers, ...parseViewTransitionTail(ctx) })
     .endingAt(ctx.getPosition())
@@ -656,7 +659,7 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
  */
 export function parseShowHideCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'show' | 'hide'> = {};
 
   // A bare `show` / `show when <cond>` / `show with <strategy>` has no target;
   // the runtime defaults to `me`. No implicit node is forged here — a runtime
@@ -679,7 +682,7 @@ export function parseShowHideCommand(ctx: ParserContext, identifierNode: Identif
     }
   }
 
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
+  const builder = CommandNodeBuilder.fromIdentifier<'show' | 'hide'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition());
   if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);

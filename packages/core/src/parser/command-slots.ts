@@ -113,6 +113,9 @@ export type SlottedCommandName = keyof typeof COMMAND_SLOTS;
 export type SlotKey<K extends SlottedCommandName> =
   (typeof COMMAND_SLOTS)[K][number] | GenericSlotKey;
 
+/** The `modifiers` a parser builds for command `K` — keyed by its row. */
+export type SlotMap<K extends SlottedCommandName> = Partial<Record<SlotKey<K>, ExpressionNode>>;
+
 /**
  * What a command's `parseInput` receives. `modifiers` is keyed by the
  * command's declared slots: a read of any other key does not compile.

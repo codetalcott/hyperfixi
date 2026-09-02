@@ -9,6 +9,7 @@ import { commandSchemas } from '@lokascript/semantic';
 import { parse } from '../parser';
 import { commandExamples } from './engine-corpus';
 import { COMMAND_SLOTS, GENERIC_SLOT_KEYS } from '../command-slots';
+import { COMMAND_GRAMMAR } from '../command-grammar';
 import { parseInputModifierReads } from '../../commands/__tests__/parse-input-census';
 import { COMMAND_NAMES } from '../../commands/manifest';
 
@@ -91,6 +92,17 @@ describe('COMMAND_SLOTS is the measured truth', () => {
       reads.set(name, set);
     }
   }
+
+  it("every declared grammar row's markers are in the command's slot row (the declared parser writes them by name)", () => {
+    const outside: string[] = [];
+    for (const [name, grammar] of Object.entries(COMMAND_GRAMMAR)) {
+      const row = new Set<string>(
+        COMMAND_SLOTS[(name === 'beep!' ? 'beep' : name) as keyof typeof COMMAND_SLOTS] ?? []
+      );
+      for (const m of grammar.markers) if (!row.has(m)) outside.push(`${name}.${m}`);
+    }
+    expect(outside).toEqual([]);
+  });
 
   it('has a row for every manifest command, and no row for a name the manifest lacks', () => {
     const rows = new Set(Object.keys(COMMAND_SLOTS));

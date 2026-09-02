@@ -24,6 +24,7 @@ import * as navigationCommands from './navigation-commands';
 import { toLegacyExpression } from '../../ast/legacy';
 import { parseDeclaredCommand } from './declared-commands';
 import type { CommandGrammar } from '../command-grammar';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Parse compound command
@@ -302,7 +303,7 @@ export function parseBareURLPath(ctx: ParserContext): ASTNode | null {
  * @returns CommandNode representing the fetch command
  */
 export function parseFetchCommand(ctx: ParserContext, commandToken: Token): CommandNode {
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'fetch'> = {};
 
   // Step 1: Parse URL — reassemble a naked URL (`/api/data`, `https://host/path`)
   // into one string literal first, then fall back to parsePrimary for quoted
@@ -316,7 +317,7 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
   }
   if (!url) {
     ctx.addError('fetch requires a URL');
-    return CommandNodeBuilder.from(commandToken).endingAt(ctx.getPosition()).build();
+    return CommandNodeBuilder.from<'fetch'>(commandToken).endingAt(ctx.getPosition()).build();
   }
 
   // Step 2: Check for object literal directly after URL (no 'with' keyword)
@@ -371,7 +372,9 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
     break; // Not a fetch modifier — stop
   }
 
-  const builder = CommandNodeBuilder.from(commandToken).withArgs(url).endingAt(ctx.getPosition());
+  const builder = CommandNodeBuilder.from<'fetch'>(commandToken)
+    .withArgs(url)
+    .endingAt(ctx.getPosition());
 
   if (Object.keys(modifiers).length > 0) {
     builder.withModifiers(modifiers);
@@ -611,7 +614,7 @@ export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNod
     end: ctx.getPosition().end,
   };
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'js'>(identifierNode)
     .withArgs(codeNode, paramsNode)
     .endingAt(ctx.getPosition())
     .build();
@@ -729,7 +732,7 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
     throw new Error('tell command requires at least one command after the target');
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'tell'>(identifierNode)
     .withArgs(target, ...commands)
     .endingAt(ctx.getPosition())
     .build();
@@ -755,7 +758,7 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
  * modifiers.rangeEnd / modifiers.rangeMode / modifiers.regex / modifiers.flags.
  */
 export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode);
+  const builder = CommandNodeBuilder.fromIdentifier<'pick'>(identifierNode);
 
   // Optional "the": `pick the first 3 of arr`
   consumeOptionalKeyword(ctx, KEYWORDS.THE);

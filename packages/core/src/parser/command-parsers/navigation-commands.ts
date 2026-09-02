@@ -35,6 +35,7 @@ import {
 } from '../helpers/parsing-helpers';
 import type { ExpressionNode } from '../../types/core';
 import { parseBareURLPath, isNakedURLStart } from './utility-commands';
+import type { SlotMap } from '../command-slots';
 
 /**
  * Keywords that structure a `go` command. Matched value-first (via
@@ -151,7 +152,7 @@ export function parseGoCommand(
     }
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'go'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();
@@ -326,7 +327,7 @@ function collectScrollArgs(
     }
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'scroll'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();
@@ -345,7 +346,7 @@ function collectScrollArgs(
  */
 export function parsePushCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'push' | 'replace'> = {};
   consumeOptionalKeyword(ctx, 'url');
   if (!ctx.isAtEnd() && isNakedURLStart(ctx)) {
     const url = parseBareURLPath(ctx);
@@ -359,7 +360,7 @@ export function parsePushCommand(ctx: ParserContext, identifierNode: IdentifierN
     const title = parseOneArgument(ctx);
     if (title) modifiers['title'] = title as ExpressionNode;
   }
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'push' | 'replace'>(identifierNode)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
