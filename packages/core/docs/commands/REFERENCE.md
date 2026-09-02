@@ -170,6 +170,10 @@ start view transition add .highlight to me end
 ```
 
 ```hyperscript
+start view transition using "slide" add .active to #panel end
+```
+
+```hyperscript
 start view transition using "slide" then put result into #panel end
 ```
 
@@ -281,6 +285,10 @@ fetch "/api/users" as json
 
 ```hyperscript
 fetch "/api/save" with { method:"POST" }
+```
+
+```hyperscript
+fetch "/api/optional" as json do not throw
 ```
 
 **Side Effects:** network, event-dispatching
@@ -519,6 +527,10 @@ repeat for item in items { log item }
 
 ```hyperscript
 repeat 5 times { log "hello" }
+```
+
+```hyperscript
+repeat for item in items index i log i end
 ```
 
 **Side Effects:** iteration, conditional-execution
@@ -1357,6 +1369,10 @@ toggle #myDialog as modal
 toggle .loading for 2s
 ```
 
+```hyperscript
+toggle between .expanded and .collapsed
+```
+
 **Side Effects:** dom-mutation
 
 ---
@@ -1935,6 +1951,10 @@ send dataEvent to #target
 send myEvent(count: 42) to me
 ```
 
+```hyperscript
+send saved to #form with bubbles cancelable
+```
+
 **Side Effects:** event-dispatch
 
 ---
@@ -1977,6 +1997,10 @@ send dataEvent to #target
 
 ```hyperscript
 send myEvent(count: 42) to me
+```
+
+```hyperscript
+send saved to #form with bubbles cancelable
 ```
 
 **Side Effects:** event-dispatch

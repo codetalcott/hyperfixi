@@ -1296,6 +1296,36 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    leftovers: `fallbackModifierKey` (the slot read) and the plugin row's
    `continuation` words (designed for plugin commands).
 
+   **Step 2 opener: the slot-key parity gate (2026-09-03).** Before any typed
+   node, the cheapest static form of the check a typed node would give:
+   `commands/__tests__/slot-key-parity.test.ts` asserts that every
+   `modifiers.<key>` a command's `parseInput` READS is a key some parser
+   EMITS for that command — the core parser measured by parsing the
+   command's own `metadata.examples` and collecting the keys on every
+   command node, plus `@lokascript/semantic`'s schema `ast.modifiers`
+   descriptor, plus the parser's generic `when`/`where`/`debounce`/`throttle`.
+   This is the gate #1068 lacked: `trigger` read `modifiers.on` while its
+   parser still pushed `on` into `args`, and no fixture could see it because
+   every fixture is hand-built; a read with no emitter is static. First run,
+   21 keys across 11 commands, in three classes. (1) Two the gate itself
+   mis-keyed: the `ContentInsertionCommand` base body serves `append`/
+   `prepend`, and `trigger`'s body serves `send` — a `SERVES` map. (2) Five
+   real emitted forms no documented example reached — `fetch … do not
+   throw`, `toggle between … and …`, `repeat … index i`, `start view
+   transition using …` (its only `using` example is an allowlisted parse
+   gap: it puts `then` inside the block), `send … with bubbles` — each now
+   has an example, which is also what makes the AST-equivalence corpus and
+   the documented-examples gate see the form. (3) **Eleven reads that only a
+   hand-built node can satisfy** — `copy.format`, `if.then/else`,
+   `pick.from/flags`, `repeat.block/commands`, `take.on`,
+   `wait.for/from/or` — banked in `KNOWN_UNEMITTED` with reasons, shrink-only.
+   Each is the missing-half shape at rest: a `parseInput` branch no real
+   parse reaches, kept alive by the fixtures that exercise it (`wait` has
+   five, `take` and `pick` four each). They are deletions with fixture
+   reshapes, one PR, after this lands. `pick.flags` is the odd one: the
+   parser DOES emit it, for a `| <flags>` regex form the syntax list never
+   documented — a docs decision, not a dead read.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

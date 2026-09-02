@@ -159,6 +159,7 @@ export class FetchCommand implements DecoratedCommand {
       'fetch "/api/data"',
       'fetch "/api/users" as json',
       'fetch "/api/save" with { method:"POST" }',
+      'fetch "/api/optional" as json do not throw',
     ],
     sideEffects: ['network', 'event-dispatching'],
     category: 'async',

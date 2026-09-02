@@ -57,7 +57,7 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 /** The text of every `parseInput(` method body in a file, brace-matched. */
-function parseInputBodies(source: string): string[] {
+export function parseInputBodies(source: string): string[] {
   const bodies: string[] = [];
   const re = /\n\s*(?:async\s+)?parseInput\s*\(/g;
   let m: RegExpExecArray | null;
@@ -77,6 +77,36 @@ function parseInputBodies(source: string): string[] {
 
 function count(re: RegExp, text: string): number {
   return (text.match(re) ?? []).length;
+}
+
+/**
+ * Every `modifiers.<key>` a command's `parseInput` reads, keyed by command —
+ * the read side of `slot-key-parity.test.ts`. Same walk and same name
+ * detection as the census.
+ */
+export function parseInputModifierReads(): Record<string, { file: string; keys: string[] }> {
+  const out: Record<string, { file: string; keys: string[] }> = {};
+  for (const file of walk(COMMANDS_DIR).sort()) {
+    const source = readFileSync(file, 'utf8');
+    const bodies = parseInputBodies(source);
+    if (bodies.length === 0) continue;
+    const names = [
+      ...source.matchAll(
+        /@command\(\{\s*name:\s*'([^']+)'|readonly name = '([^']+)'|abstract class (\w+)/g
+      ),
+    ].map(x => x[1] ?? x[2] ?? x[3]);
+    bodies.forEach((body, index) => {
+      const name = names[index] ?? `${relative(COMMANDS_DIR, file)}#${index}`;
+      const keys = new Set<string>();
+      for (const m of body.matchAll(
+        /\bmodifiers\??\.([A-Za-z_]+)|\bmodifiers\??\.?\[['"]([A-Za-z_]+)['"]\]/g
+      )) {
+        keys.add(m[1] ?? m[2]);
+      }
+      out[name] = { file: relative(ROOT, file), keys: [...keys].sort() };
+    });
+  }
+  return out;
 }
 
 export function census(): Census {

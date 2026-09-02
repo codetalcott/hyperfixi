@@ -56,6 +56,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     syntax: ['start view transition [using <type>] <body> end'],
     examples: [
       'start view transition add .highlight to me end',
+      'start view transition using "slide" add .active to #panel end',
       'start view transition using "slide" then put result into #panel end',
     ],
     sideEffects: ['animation', 'dom-mutation'],
