@@ -24,41 +24,31 @@ import type {
 } from '../parser/hybrid/ast-types';
 import { fromHybridStatements, toLegacyNode, type AnyNode } from '../ast/legacy';
 
-import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../types/result';
 
 import type { RuntimeHooks } from '../types/hooks';
 import { HookRegistry } from '../types/hooks';
 
-import { ok, err, isOk, isSignal, asControlFlowError } from '../types/result';
+import { ok, err, isOk, isSignal } from '../types/result';
 
 import { evaluateAST, evaluateASTWithResult } from '../parser/runtime';
 import type { ExpressionRegistry } from '../core/expression-registry';
 
 /**
- * Convert an ExecutionSignal to a legacy Error for backward compatibility.
- * Used when Result-based execution returns a signal that must be re-thrown
- * as an exception for callers expecting exception-based control flow.
+ * The only thrown form left (Arc 4a step 3, last slice). Every signal travels
+ * as a `Result` from the command that produced it to the boundary that
+ * consumes it — the loop for `break`/`continue`, the function, the handler
+ * or the program for `halt`/`exit`/`return`. A `break`/`continue` that
+ * reaches a boundary with no loop around it is not control flow any more; it
+ * is an authoring error, and it is thrown as one. Named so that a handler's
+ * `catch` block can decline it: upstream routes real errors to `catch`, and a
+ * stray `break` is not one the author wrote a `catch` for.
  */
-function signalToError(signal: ExecutionSignal): Error {
-  const error = new Error(signal.type.toUpperCase() + '_EXECUTION') as Error & {
-    [key: string]: unknown;
-  };
-  error['is' + signal.type.charAt(0).toUpperCase() + signal.type.slice(1)] = true;
-  if ('returnValue' in signal) {
-    error.returnValue = signal.returnValue;
+export class StrayControlFlowError extends Error {
+  constructor(readonly signal: ExecutionSignal) {
+    super(`'${signal.type}' used outside of a loop`);
+    this.name = 'StrayControlFlowError';
   }
-  return error;
-}
-
-/**
- * Check if an error is a control-flow signal (halt, exit, break, continue, return).
- * These are expected signals used for flow control, not actual errors.
- */
-export function isControlFlowError(e: unknown): e is ControlFlowError {
-  if (!(e instanceof Error)) return false;
-  // Every producer sets the flag (signalToError, the hybrid executor); the
-  // message-string branches were dead by construction (Arc 4a step 3).
-  return asControlFlowError(e) !== null;
 }
 // NOTE: ExpressionEvaluator import removed for tree-shaking.
 // Use ConfigurableExpressionEvaluator or ExpressionEvaluator explicitly in your bundle.
@@ -455,22 +445,23 @@ export class RuntimeBase {
    * boundary that consumes it.
    */
   async execute(node: AnyNode, context: ExecutionContext): Promise<unknown> {
-    try {
-      return await this.executeNode(node, context);
-    } catch (e) {
-      const cfe = asControlFlowError(e);
-      if (cfe?.isReturn) {
-        const rv = cfe.returnValue;
-        if (rv !== undefined) Object.assign(context, { it: rv, result: rv });
-        return rv;
-      }
-      if (cfe?.isHalt || cfe?.isExit) return undefined;
-      throw e;
+    const result = await this.executeNode(node, context);
+    if (isOk(result)) return result.value;
+    const signal = result.error;
+    if (signal.type === 'return') {
+      const rv = signal.returnValue;
+      if (rv !== undefined) Object.assign(context, { it: rv, result: rv });
+      return rv;
     }
+    if (signal.type === 'halt' || signal.type === 'exit') return undefined;
+    throw new StrayControlFlowError(signal);
   }
 
   /** The recursive dispatcher. Signals leave it as control-flow errors. */
-  protected async executeNode(node: AnyNode, context: ExecutionContext): Promise<unknown> {
+  protected async executeNode(
+    node: AnyNode,
+    context: ExecutionContext
+  ): Promise<ExecutionResult<unknown>> {
     const nodeName = (node as { name?: string })?.name || '';
     debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
 
@@ -507,29 +498,18 @@ export class RuntimeBase {
         const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
         debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
         this.runtimeWarnings.push(diag?.message || 'Skipped error node');
-        return undefined;
+        return ok(undefined);
       }
 
       switch (node.type) {
         case 'command': {
-          // A standalone `return <expr>` reaches here as a single-command
-          // program — there is no `then`-joined sequence around it to catch the
-          // control-flow signal (executeCommandSequenceWithResult handles the
-          // multi-command case). Surface the returned value the same way the
-          // sequence executor does, rather than leaking the raw
-          // RETURN_EXECUTION signal to the caller.
-          const result = await this.processCommandWithResult(node as CommandNode, context);
-          // Every signal, `return` included, leaves the dispatcher as a
-          // control-flow error and is consumed by the nearest boundary —
-          // the loop, the function, the handler, or the program entry. (A
-          // `return` used to become a VALUE here, which is why a handler
-          // kept running after it: the handler's loop never saw a signal.)
-          if (!isOk(result)) throw signalToError(result.error);
-          return result.value;
+          // The signal, if any, travels as a Result to the boundary that
+          // consumes it — the loop, the function, the handler, or the program.
+          return await this.processCommandWithResult(node as CommandNode, context);
         }
 
         case 'eventHandler': {
-          return await this.executeEventHandler(node as EventHandlerNode, context);
+          return ok(await this.executeEventHandler(node as EventHandlerNode, context));
         }
 
         case 'event': {
@@ -552,15 +532,15 @@ export class RuntimeBase {
             target: hybrid.filter as string | undefined,
             modifiers: hybrid.modifiers || {},
           };
-          return await this.executeEventHandler(adaptedNode, context);
+          return ok(await this.executeEventHandler(adaptedNode, context));
         }
 
         case 'behavior': {
-          return await this.executeBehaviorDefinition(node as BehaviorNode, context);
+          return ok(await this.executeBehaviorDefinition(node as BehaviorNode, context));
         }
 
         case 'def': {
-          return this.installFunction(node as DefNode, context);
+          return ok(this.installFunction(node as DefNode, context));
         }
 
         case 'Program': {
@@ -577,27 +557,16 @@ export class RuntimeBase {
           // Two producers reach this arm: the full parser's `CommandSequence`
           // and the hybrid parser's `sequence`. Both carry `commands`.
           const seqNode = node as CommandSequenceNode | HybridSequenceNode;
-          const result = await this.executeCommandSequenceWithResult(
-            seqNode.commands || [],
-            context
-          );
-          if (!isOk(result)) {
-            throw signalToError(result.error);
-          }
-          return result.value;
+          return await this.executeCommandSequenceWithResult(seqNode.commands || [], context);
         }
         case 'objectLiteral': {
-          return await this.executeObjectLiteral(node as ObjectLiteralNode, context);
+          return ok(await this.executeObjectLiteral(node as ObjectLiteralNode, context));
         }
 
         case 'templateLiteral':
         case 'memberExpression':
         default: {
-          const result = await this.evaluateExpressionWithResult(node, context);
-          if (!isOk(result)) {
-            throw signalToError(result.error);
-          }
-          return result.value;
+          return await this.evaluateExpressionWithResult(node, context);
         }
       }
     } catch (error) {
@@ -613,33 +582,6 @@ export class RuntimeBase {
   // --------------------------------------------------------------------------
   // These methods use the Result<T, E> pattern instead of exceptions for
   // control flow, providing ~18% performance improvement on hot paths.
-
-  /**
-   * Convert exception-based control flow error to ExecutionSignal.
-   * Used for bridging legacy exception-throwing code with Result pattern.
-   */
-  protected toSignal(error: unknown): ExecutionSignal | null {
-    const cfe = asControlFlowError(error);
-    if (cfe) {
-      if (cfe.isHalt) {
-        return { type: 'halt' };
-      }
-      if (cfe.isExit) {
-        return { type: 'exit', returnValue: cfe.returnValue };
-      }
-      if (cfe.isBreak) {
-        return { type: 'break' };
-      }
-      if (cfe.isContinue) {
-        return { type: 'continue' };
-      }
-      if (cfe.isReturn) {
-        return { type: 'return', returnValue: cfe.returnValue };
-      }
-    }
-    // Legacy message-based signals (no signal properties set)
-    return null;
-  }
 
   /**
    * Result-based command processor (internal).
@@ -688,12 +630,8 @@ export class RuntimeBase {
       if (isSignal(result)) return err(result);
       return ok(result);
     } catch (e) {
-      // Check if this is a control flow signal
-      const signal = this.toSignal(e);
-      if (signal) {
-        return err(signal);
-      }
-      // Real error - log and re-throw
+      // Signals never throw (a signal command RETURNS its signal); anything
+      // caught here is a real error.
       this.logError(`Error executing command '${commandName}':`, e);
       throw e;
     }
@@ -777,7 +715,8 @@ export class RuntimeBase {
         isBlocking: false,
       };
       const executed = await this.processCommandWithResult(commandNode, context);
-      if (!isOk(executed)) throw signalToError(executed.error);
+      // `add`/`remove`/`toggle` never signal; a signal here is a stray.
+      if (!isOk(executed)) throw new StrayControlFlowError(executed.error);
       return executed.value;
     }
 
@@ -873,7 +812,9 @@ export class RuntimeBase {
         const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
         if (!isOk(result)) {
           const signal = result.error;
-          if (signal.type === 'break' || signal.type === 'continue') throw signalToError(signal);
+          if (signal.type === 'break' || signal.type === 'continue') {
+            throw new StrayControlFlowError(signal);
+          }
           return signal.type === 'return' ? signal.returnValue : undefined;
         }
         return result.value;
@@ -886,7 +827,7 @@ export class RuntimeBase {
       try {
         return await run(body);
       } catch (e) {
-        if (!errorHandler || isControlFlowError(e)) throw e;
+        if (!errorHandler || e instanceof StrayControlFlowError) throw e;
         if (errorSymbol) fnContext.locals.set(errorSymbol, e);
         return await run(errorHandler);
       } finally {
@@ -899,8 +840,11 @@ export class RuntimeBase {
     context.globals.set(node.name, fn);
   }
 
-  protected async executeProgram(node: ProgramNode, context: ExecutionContext): Promise<unknown> {
-    if (!node.statements || !Array.isArray(node.statements)) return;
+  protected async executeProgram(
+    node: ProgramNode,
+    context: ExecutionContext
+  ): Promise<ExecutionResult<unknown>> {
+    if (!node.statements || !Array.isArray(node.statements)) return ok(undefined);
 
     let lastResult: unknown = undefined;
 
@@ -929,70 +873,67 @@ export class RuntimeBase {
     // callable before init runs, exactly as a handler has to be registered
     // before init can send to it.
     for (const def of defs) {
-      this.executeNode(def, context);
+      void this.executeNode(def, context);
     }
 
+    // The statement loops read Results (Arc 4a step 3): `halt`/`exit` end
+    // the program, `return` ends it with a value, and a stray
+    // `break`/`continue` propagates to the program boundary, which throws it.
     // Phase 1: Register all event handlers first
     for (const handler of eventHandlers) {
-      try {
-        await this.executeNode(handler, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        throw error;
-      }
+      const result = await this.executeNode(handler, context);
+      if (isOk(result)) continue;
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      return result;
     }
 
     // Phase 2: Execute init blocks (now handlers are registered)
     for (const init of initBlocks) {
-      try {
-        lastResult = await this.executeNode(init, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        if (isControlFlowError(error) && error.isReturn) {
-          lastResult = error.returnValue;
-          break;
-        }
-        throw error;
+      const result = await this.executeNode(init, context);
+      if (isOk(result)) {
+        lastResult = result.value;
+        continue;
       }
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      if (result.error.type === 'return') {
+        lastResult = result.error.returnValue;
+        break;
+      }
+      return result;
     }
 
     // Execute the remaining non-event-handler statements.
     for (const statement of otherStatements) {
-      try {
-        lastResult = await this.executeNode(statement, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        if (isControlFlowError(error) && error.isReturn) {
-          lastResult = error.returnValue;
-          break;
-        }
-        throw error;
+      const result = await this.executeNode(statement, context);
+      if (isOk(result)) {
+        lastResult = result.value;
+        continue;
       }
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      if (result.error.type === 'return') {
+        lastResult = result.error.returnValue;
+        break;
+      }
+      return result;
     }
 
-    return lastResult;
+    return ok(lastResult);
   }
 
   protected async executeBlock(
     node: BlockNode | InitBlockNode,
     context: ExecutionContext
-  ): Promise<void> {
-    if (!node.commands || !Array.isArray(node.commands)) return;
-
+  ): Promise<ExecutionResult<void>> {
+    if (!node.commands || !Array.isArray(node.commands)) return ok(undefined);
     for (const command of node.commands) {
-      try {
-        await this.executeNode(command, context);
-      } catch (error) {
-        if (isControlFlowError(error) && error.isHalt) break;
-        throw error;
-      }
+      const result = await this.executeNode(command, context);
+      if (isOk(result)) continue;
+      // A block consumes `halt` (as it always has); every other signal
+      // travels on to the boundary that owns it.
+      if (result.error.type === 'halt') break;
+      return result;
     }
+    return ok(undefined);
   }
 
   protected async executeObjectLiteral(
@@ -1170,7 +1111,7 @@ export class RuntimeBase {
         debug.runtime(`BEHAVIOR: Init block completed for ${behaviorName}`);
       } catch (e) {
         debug.runtime(`BEHAVIOR: Init block error for ${behaviorName}:`, e);
-        if (!(e instanceof Error && isControlFlowError(e))) throw e;
+        throw e;
       }
     }
 
@@ -1608,23 +1549,27 @@ export class RuntimeBase {
       // wrapper objects leaking into `it` plus an array collapse that took the
       // first element of `toggle`/`put`'s element list. See
       // docs-internal/HANDOFF-command-arch-output-contract.md.
+      // The HANDLER boundary (Arc 4a): `halt`/`exit` end the handler,
+      // `return` ends it and its value lands in `it`/`result`. A stray
+      // `break`/`continue` is thrown as the error it is.
       const runCommands = async (toRun: readonly AnyNode[]): Promise<void> => {
         for (const command of toRun) {
+          let outcome: ExecutionResult<unknown>;
           try {
-            await runtime.executeNode(command, eventContext);
+            outcome = await runtime.executeNode(command, eventContext);
           } catch (e) {
-            if (isControlFlowError(e)) {
-              if (e.isHalt || e.isExit) break;
-              if (e.isReturn) {
-                if (e.returnValue !== undefined) {
-                  Object.assign(eventContext, { it: e.returnValue, result: e.returnValue });
-                }
-                break;
-              }
-            }
             runtime.logError(`COMMAND FAILED:`, e);
             throw e;
           }
+          if (isOk(outcome)) continue;
+          const signal = outcome.error;
+          if (signal.type === 'return' && signal.returnValue !== undefined) {
+            Object.assign(eventContext, { it: signal.returnValue, result: signal.returnValue });
+          }
+          if (signal.type === 'break' || signal.type === 'continue') {
+            throw new StrayControlFlowError(signal);
+          }
+          break;
         }
       };
 
@@ -1644,9 +1589,9 @@ export class RuntimeBase {
       try {
         await runCommands(commands);
       } catch (e) {
-        // Control-flow signals (a stray break/continue) are not author-visible
-        // errors and must not be routed to `catch`; `finally` alone never swallows.
-        if (!errorHandler || isControlFlowError(e)) throw e;
+        // A stray break/continue is not an error the author wrote a `catch`
+        // for and is not routed to it; `finally` alone never swallows.
+        if (!errorHandler || e instanceof StrayControlFlowError) throw e;
         if (errorBlocks?.errorSymbol) {
           eventContext.locals.set(errorBlocks.errorSymbol, e);
         }
@@ -1694,15 +1639,17 @@ export class RuntimeBase {
 
             // Execute all commands
             for (const command of commands) {
+              let outcome: ExecutionResult<unknown> | undefined;
               try {
-                // Structural loop: the dispatcher, so a signal reaches the catch below.
-                await this.executeNode(command, mutationContext);
+                outcome = await this.executeNode(command, mutationContext);
               } catch (error) {
-                if (isControlFlowError(error)) {
-                  if (error.isHalt || error.isExit || error.isReturn) break;
-                } else {
-                  this.logError(`Error executing mutation handler command:`, error);
-                }
+                this.logError(`Error executing mutation handler command:`, error);
+              }
+              // halt/exit/return end the mutation body; a stray break/continue is
+              // ignored here, as it always was.
+              if (outcome && !isOk(outcome)) {
+                const t = outcome.error.type;
+                if (t === 'halt' || t === 'exit' || t === 'return') break;
               }
             }
           }
@@ -1785,15 +1732,17 @@ export class RuntimeBase {
 
             // Execute all commands
             for (const command of commands) {
+              let outcome: ExecutionResult<unknown> | undefined;
               try {
-                // Structural loop: the dispatcher, so a signal reaches the catch below.
-                await this.executeNode(command, changeContext);
+                outcome = await this.executeNode(command, changeContext);
               } catch (error) {
-                if (isControlFlowError(error)) {
-                  if (error.isHalt || error.isExit || error.isReturn) break;
-                } else {
-                  this.logError(`Error executing change handler command:`, error);
-                }
+                this.logError(`Error executing change handler command:`, error);
+              }
+              // halt/exit/return end the change body; a stray break/continue is
+              // ignored here, as it always was.
+              if (outcome && !isOk(outcome)) {
+                const t = outcome.error.type;
+                if (t === 'halt' || t === 'exit' || t === 'return') break;
               }
             }
           }

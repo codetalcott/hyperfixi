@@ -18,7 +18,6 @@ import { HookRegistry } from '../types/hooks';
 import { evaluateAST } from '../parser/runtime';
 import type { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
-import { isControlFlowError } from './runtime-base';
 import { COMMANDS } from '../parser/parser-constants';
 
 /**
@@ -406,9 +405,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       return result;
     } catch (error) {
-      if (!isControlFlowError(error)) {
-        debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
-      }
+      debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
 
       // HOOK: onError - allow hooks to transform the error
       if (this.hookRegistry && error instanceof Error) {

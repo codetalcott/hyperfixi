@@ -6,6 +6,8 @@
  */
 
 import type { TypedExecutionContext } from '../../types/core';
+import { isSignal } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
 
 /**
  * Loop configuration - defines how the loop behaves
@@ -83,6 +85,9 @@ export interface LoopResult {
 
   /** Whether loop was interrupted by break */
   interrupted: boolean;
+
+  /** A halt/exit/return from the body, ending the loop; passed through by `repeat` */
+  signal?: ExecutionSignal;
 }
 
 /**
@@ -133,26 +138,27 @@ export async function executeLoop(
       }
 
       // Execute commands with break/continue handling
-      try {
-        lastResult = await executeCommands(commands, context);
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.message.includes('BREAK')) {
-            interrupted = true;
-            break;
-          }
-          if (error.message.includes('CONTINUE')) {
-            iterations++;
-            iterCtx.index = iterations;
-            // For event loops, yield to allow events to fire
-            if (config.type === 'until-event') {
-              await new Promise(resolve => setTimeout(resolve, 0));
-            }
-            continue;
-          }
+      // The LOOP boundary (Arc 4a): the body returns a signal instead of
+      // throwing one. `break`/`continue` are consumed here; halt/exit/return
+      // end the loop and pass through to the boundary that owns them.
+      const outcome = await executeCommands(commands, context);
+      if (isSignal(outcome)) {
+        if (outcome.type === 'break') {
+          interrupted = true;
+          break;
         }
-        throw error;
+        if (outcome.type === 'continue') {
+          iterations++;
+          iterCtx.index = iterations;
+          // For event loops, yield to allow events to fire
+          if (config.type === 'until-event') {
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+          continue;
+        }
+        return { iterations, lastResult, interrupted, signal: outcome };
       }
+      lastResult = outcome;
 
       iterations++;
       iterCtx.index = iterations;

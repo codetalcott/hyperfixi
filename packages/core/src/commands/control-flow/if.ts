@@ -10,6 +10,8 @@
  *   unless <condition> <commands>
  */
 
+import { isOk, isSignal } from '../../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../../types/result';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
@@ -147,7 +149,7 @@ export class ConditionalCommand implements DecoratedCommand {
   async execute(
     input: ConditionalCommandInput,
     context: TypedExecutionContext
-  ): Promise<ConditionalCommandOutput> {
+  ): Promise<ConditionalCommandOutput | ExecutionSignal> {
     const { mode, condition, thenCommands, elseCommands } = input;
     const rawConditionResult = evaluateCondition(condition, context);
 
@@ -173,6 +175,8 @@ export class ConditionalCommand implements DecoratedCommand {
       executedBranch = 'none';
     }
 
+    // A signal from the branch passes through to the boundary that owns it.
+    if (isSignal(result)) return result;
     return { mode, conditionResult: rawConditionResult, executedBranch, result };
   }
 
@@ -195,13 +199,16 @@ export class ConditionalCommand implements DecoratedCommand {
   }
 
   private async executeBlock(block: any, context: TypedExecutionContext): Promise<any> {
-    const runtimeExecute = context.locals.get('_runtimeExecute') as any;
+    const runtimeExecute = context.locals.get('_runtimeExecute') as RuntimeExecute | undefined;
     if (!runtimeExecute) throw new Error('Runtime execute function not available');
 
-    let lastResult: any;
+    let lastResult: unknown;
     if (block.commands?.length) {
       for (const cmd of block.commands) {
-        lastResult = await runtimeExecute(cmd, context);
+        const result = await runtimeExecute(cmd, context);
+        // `if` passes every signal through to the boundary that owns it.
+        if (!isOk(result)) return result.error;
+        lastResult = result.value;
       }
     }
     return lastResult;
@@ -218,14 +225,21 @@ export class ConditionalCommand implements DecoratedCommand {
         // verbatim (the old fallthrough) is how `unless` bodies silently never
         // executed — keep this branch so an array-of-nodes input from a direct
         // API caller executes instead of reproducing that bug.
-        const runtimeExecute = context.locals.get('_runtimeExecute') as any;
+        const runtimeExecute = context.locals.get('_runtimeExecute') as RuntimeExecute | undefined;
         if (!runtimeExecute) throw new Error('Runtime execute function not available');
-        lastResult = await runtimeExecute(cmd, context);
+        const result = await runtimeExecute(cmd, context);
+        if (!isOk(result)) return result.error;
+        lastResult = result.value;
       } else lastResult = cmd;
     }
     return lastResult;
   }
 }
+
+type RuntimeExecute = (
+  cmd: unknown,
+  ctx: TypedExecutionContext
+) => Promise<ExecutionResult<unknown>>;
 
 // Primary exports
 export const createConditionalCommand = createFactory(ConditionalCommand);
