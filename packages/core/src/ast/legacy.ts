@@ -1,5 +1,10 @@
 /**
- * The one crossing between the union and the legacy public types
+ * Every crossing between the union and the legacy wide types
+ *
+ * (It held ONE when step 4 wrote it. Step 6 separated `ast/nodes.ts`'s members
+ * from `types/base-types.ASTNode` entirely, so the crossings the index
+ * signature used to make implicit had to be named — they are named here, and
+ * `git grep` over this module's exports is 4.0's deletion list.)
  *
  * `types/base-types.ts` declares `ExpressionNode` as the SINGLE kind
  * `type: 'expression'`, and `types/core.CommandNode.args` is typed with it —
@@ -26,12 +31,55 @@
  *
  * When 4.0 redefines the public types, `git grep toLegacyExpression` is the
  * complete list of crossings to delete — plus `fromLegacyCommands` below, the
- * same lie read in the other direction.
+ * same lie read in the other direction, and the step 6 additions
+ * ({@link AnyNode}, {@link toLegacyNode}, {@link toLegacyNodes}).
  */
 
 import type { ASTNode, ExpressionNode } from '../types/base-types';
 import type { CommandNode as LegacyCommandNode } from '../types/core';
-import type { Expr, Stmt } from './nodes';
+import type { Expr, Stmt, SyntaxNode } from './nodes';
+
+/**
+ * The parameter type of a WIDE entry point — one that legitimately takes
+ * either a union member or a legacy `ASTNode`.
+ *
+ * Arc 2 step 6 removed the index signature from {@link SyntaxNode}'s base, so
+ * a union member is no longer assignable to `ASTNode`; the two are separate
+ * types and every crossing has to say so. Most crossings are the `toLegacy*` /
+ * `fromLegacy*` helpers below — a value converted once, at a boundary. These
+ * are the other shape: `evaluateAST`, `evaluateExpressionSync` and the
+ * runtime's `execute`/`run` are dispatchers that route on `node.type` at
+ * RUNTIME, and their callers are split between the two worlds (the union
+ * inside the evaluator, `ASTNode` from the front end and from plugins). A
+ * union parameter is the honest signature for them; casting 34 call sites to
+ * `ASTNode` would be a lie repeated 34 times.
+ *
+ * It is deliberately NOT a supertype anyone builds against: nothing returns
+ * `AnyNode`, and a dispatcher narrows it by discriminant before use.
+ */
+export type AnyNode = SyntaxNode | ASTNode;
+
+/**
+ * Cross an {@link AnyNode} into a position typed as the legacy wide `ASTNode`.
+ *
+ * One caller, deliberately: `evaluateAST`'s plugin-evaluator arm. A registered
+ * `NodeEvaluatorFn` is declared `(node: ASTNode) => …` and is written by
+ * consumers outside this repo, so widening its parameter to `AnyNode` would
+ * break every existing implementation (a `(node: ASTNode) => …` is not
+ * assignable to a `(node: AnyNode) => …` under `strictFunctionTypes`). The
+ * plugin contract stays as published and the crossing is named here instead.
+ *
+ * Reference cast, no copy: the values are the same objects either way — the
+ * index signature only ever governed what a READ was allowed to say.
+ */
+export function toLegacyNode(node: AnyNode): ASTNode {
+  return node as ASTNode;
+}
+
+/** The array form of {@link toLegacyNode}. Same reference — no copy. */
+export function toLegacyNodes(nodes: readonly AnyNode[]): ASTNode[] {
+  return nodes as ASTNode[];
+}
 
 /** Cross ONE typed expression into a legacy `ExpressionNode` position. */
 export function toLegacyExpression(node: Expr): ExpressionNode {

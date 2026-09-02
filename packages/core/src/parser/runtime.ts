@@ -64,6 +64,7 @@ import type {
   UnaryExpressionNode,
 } from '../ast/nodes';
 import { isIdentifierNode } from '../ast/guards';
+import { toLegacyNode, type AnyNode } from '../ast/legacy';
 
 /**
  * Look up a named expression on the runtime context's registry. Throws a clear,
@@ -307,7 +308,7 @@ async function evaluateKnown(node: EvaluableNode, context: ExecutionContext): Pr
  * `type: string` member widens every narrow in that switch and makes its
  * `never` default impossible (compiler-probed, #1051).
  */
-export async function evaluateAST(node: ASTNode, context: ExecutionContext): Promise<any> {
+export async function evaluateAST(node: AnyNode, context: ExecutionContext): Promise<any> {
   if (!node) {
     throw new Error('Cannot evaluate null or undefined AST node');
   }
@@ -335,7 +336,7 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
   // cannot shadow a kind the parser emits.
   const pluginEvaluator = getRegisteredNodeEvaluator(node.type);
   if (pluginEvaluator) {
-    return pluginEvaluator(node, context);
+    return pluginEvaluator(toLegacyNode(node), context);
   }
   throw new Error(`Unknown AST node type: ${node.type}`);
 }
@@ -348,7 +349,7 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
  * blocks rather than logged as errors. Re-throws any non-signal error.
  */
 export async function evaluateASTWithResult(
-  node: ASTNode,
+  node: AnyNode,
   context: ExecutionContext
 ): Promise<ExecutionResult<unknown>> {
   try {
@@ -439,7 +440,7 @@ const SYNC_EVALUABLE_KIND_SET: ReadonlySet<string> = new Set<string>(SYNC_EVALUA
  * exhaustive. The router is also where a null/undefined node becomes
  * `NotSyncEvaluable('unknown')`, preserving the old `switch (n?.type)`.
  */
-export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext): unknown {
+export function evaluateExpressionSync(node: AnyNode, context: ExecutionContext): unknown {
   const kind: unknown = node?.type;
   if (typeof kind === 'string' && SYNC_EVALUABLE_KIND_SET.has(kind)) {
     return evaluateKnownSync(node as SyncEvaluableNode, context);
@@ -1326,7 +1327,7 @@ async function evaluateObjectLiteralNode(
  * falling back to async evaluation for bodies the sync path can't handle.
  */
 function makeBlockLiteralClosure(
-  node: { parameters: string[]; body: ASTNode },
+  node: BlockLiteralNode,
   context: ExecutionContext
 ): (...args: unknown[]) => unknown {
   const params = node.parameters ?? [];
@@ -1350,7 +1351,7 @@ function makeBlockLiteralClosure(
  * Mirrors upstream `_hyperscript`: `"" + value + unit`.
  */
 async function evaluateStringPostfixNode(
-  node: { expression: ASTNode; unit: string },
+  node: StringPostfixNode,
   context: ExecutionContext
 ): Promise<string> {
   const value = await evaluateAST(node.expression, context);
@@ -1524,7 +1525,7 @@ async function evaluateCollectionExpression(
   }
 
   // Helper: evaluate the RHS AST with `it` bound to the given element.
-  const evalWithIt = async (astNode: ASTNode, it: unknown): Promise<unknown> => {
+  const evalWithIt = async (astNode: AnyNode, it: unknown): Promise<unknown> => {
     const elementContext = { ...context, it } as ExecutionContext;
     return evaluateAST(astNode, elementContext);
   };
@@ -1639,8 +1640,12 @@ async function evaluateMemberExpression(
     }
     return object?.[property];
   } else {
-    // Non-computed access: object.property
-    return resolveNamedProperty(object, node.property.name as string, context);
+    // Non-computed access: object.property. `property` is an `Expr`, so `name`
+    // is only present on some members — read it structurally, exactly as the
+    // sync twin above does, because the old code accepted a `name` on ANY
+    // property node and a types-only change must not shrink that.
+    const name = (node.property as { name?: string }).name as string;
+    return resolveNamedProperty(object, name, context);
   }
 }
 
@@ -1719,7 +1724,7 @@ async function evaluatePropertyAccess(
 const RAW_ARG_BUILTINS = new Set(['closest', 'previous', 'next']);
 
 async function resolveCallArgs(
-  argNodes: ASTNode[],
+  argNodes: Expr[],
   funcName: string,
   context: ExecutionContext
 ): Promise<unknown[]> {
@@ -2098,7 +2103,9 @@ async function evaluatePossessiveExpression(
   context: ExecutionContext
 ): Promise<any> {
   const object = await evaluateAST(node.object, context);
-  const propertyName = node.property.name;
+  // Structural read for the same reason as `evaluateMemberExpression`: the
+  // union's `property` is an `Expr` and only some members carry `name`.
+  const propertyName = (node.property as { name?: string }).name;
 
   return getExpr(context, 'possessive').evaluate(context, object, propertyName);
 }

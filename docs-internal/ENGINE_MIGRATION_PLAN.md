@@ -851,9 +851,85 @@ progress meter.
    because strengthening them to the resolvers' narrower contract would change
    which nodes route where. The step as originally written — a cluster-wide
    burn-down — is DROPPED; its premise did not survive measurement.
-6. **Remove the index signature.** `[key: string]: unknown` comes off `Node`
+6. ~~**Remove the index signature.** `[key: string]: unknown` comes off `Node`
    last. The compile errors that appear are the burn-down list; the arc is done
-   when `tsc` is clean without it.
+   when `tsc` is clean without it.~~ **DONE 2026-09-02, in the narrower of the
+   two shapes the sentence conflates.** There are two of them, and the plan did
+   not distinguish them:
+
+   - **Probe F — delete the signature from `types/base-types.ASTNode` itself.**
+     435 errors in 51 files (production 78 in 18; tests 357 in 33, overwhelmingly
+     `TS2353 'value' does not exist` — 216 fixtures hand-building
+     `{ type: 'literal', value }` typed as `ASTNode`). It touches the FROZEN
+     public `ASTNode` and lands squarely in `commands/`, whose typing the owner
+     scoped out of this arc. **That is a 4.0 item, not a step** — it belongs
+     with the `ExpressionNode` redefinition that `ast/legacy.ts` already lists
+     (`git grep toLegacyExpression`, `fromLegacy*`, `AnyNode`).
+   - **Probe G — union members stop inheriting it; `ASTNode` keeps it for
+     legacy and public consumers.** This is what shipped. `BaseNode` declares
+     `type`, the four optional positions, `raw?` and `diagnostics?` itself.
+
+   **Probe G's cost was measured TWICE and the two numbers differ by 54,**
+   which is the useful part: on the step-5 branch (before step 3 landed) it was
+   63 errors in 11 files, production 33 in 5; on the merged tree it is **117 in
+   12 files, production 87 in 6**. Step 3's exhaustive evaluators are the whole
+   delta — `parser/runtime.ts` went from 0 to 54 — because typed switch arms are
+   exactly what turns "a union member flows into an `ASTNode` parameter" from
+   invisible into a compile error. A probe run on a branch that lacks its
+   sibling's merged work under-reports.
+
+   What the errors actually were, and what each says:
+
+   | shape | n | fix |
+   | ----- | - | --- |
+   | a union member passed to an `ASTNode` parameter (TS2345) | 67 | retype the parameter |
+   | an `ASTNode` cast to a union member at a dispatch (TS2352) | 45 | widen the dispatcher's parameter to `AnyNode`; the discriminant then narrows |
+   | `node.property.name` on an `Expr` (TS2339) | 4 | structural read — the guards verify less than the resolvers assume, deliberately |
+
+   The parameter retypes are the content. `evaluateAST`, `evaluateExpressionSync`,
+   `RuntimeBase.execute` and the observer/handler helpers are dispatchers whose
+   callers are split between the two worlds, so they take
+   `AnyNode = SyntaxNode | ASTNode` (`ast/legacy.ts`) — casting 34 call sites to
+   `ASTNode` would have been the same lie repeated 34 times. Everything else got
+   its real union member: `executeProgram(ProgramNode)`,
+   `executeBlock(BlockNode | InitBlockNode)`,
+   `executeCommandSequence(CommandSequenceNode | HybridSequenceNode)`,
+   `executeBehaviorDefinition(BehaviorNode & …)`,
+   `makeBlockLiteralClosure(BlockLiteralNode)`, `resolveCallArgs(Expr[])`.
+
+   Three findings the errors surfaced that no gate had:
+
+   - **`expressions/collection/index.ts` declared its OWN
+     `CollectionExpressionNode`** — a fifth prose description of a kind,
+     exported and imported by nobody (`parser/runtime.ts` takes the union
+     member and the four evaluator functions, never the interface). Deleted.
+   - **`commands/helpers/property-target.ts` declared its own
+     `PropertyOfExpressionNode` / `PropertyAccessNode`**, narrower than the
+     union AND narrower than what the guards beside them verify — step 5 kept
+     the guards' runtime checks verbatim so no node changed route, which left
+     the resolvers' ASSUMPTION written down as if it were the node's SHAPE.
+     Deleted; the assumption is now a structural read inside each resolver,
+     where it is visibly an assumption.
+   - **`imperativeInstaller` has no emitter anywhere in the repo** — read only
+     by `executeBehaviorDefinition`, written by nothing, and `parser.ts:3230`
+     (the one `type: 'behavior'` producer) does not emit it. It is NOT promoted
+     into `BehaviorNode`, because the union describes what the parser builds.
+     But `execute` is public and the method is `protected` on a published
+     class, so the branch is reachable from outside and deleting it would be a
+     behaviour change this arc cannot make. It stays as an intersection at that
+     one site, with the reasoning on it.
+
+   The 30 test errors were all one shape — `result.node as BehaviorNode`, a
+   cast that asserted nothing — and became `assertNodeOfKind(result.node,
+   'behavior')`, which checks the kind it was assuming and names the actual one
+   when it is wrong. One of them (`behavior.initBlock?.commands`) was a real
+   unchecked read that the cast had been hiding.
+
+   Ratchet: **927 → 927.** Step 6 adds no hatches and removes none — the one
+   `as Record<string, unknown>` it deleted lives inside a `debug.parse` template
+   literal, which the counter strips. That is the honest number: this step buys
+   type safety the ratchet cannot see, which is the same blind spot the arc's
+   brief documented in the other direction for `ast-utils`.
 
 Gates: `tsc` (the exhaustive switch and the removed index signature ARE the
 gate); the AST-equivalence corpus; the vocabulary snapshot; the escape ratchet
@@ -861,7 +937,18 @@ gate); the AST-equivalence corpus; the vocabulary snapshot; the escape ratchet
 
 Blast radius: `ASTNode` is exported from `index.ts` and used downstream as a
 type (vite-plugin, developer-tools). Keep the alias for a release. The hybrid
-`ast-types` subpath export is unchanged.
+`ast-types` subpath export is unchanged. **As executed, `ASTNode` is untouched**
+— step 6 separated the union from it rather than changing it, so downstream
+types compile exactly as before. What DID move is a handful of internal
+signatures on `RuntimeBase` (`execute`, and the `protected` `executeProgram` /
+`executeBlock` / `executeCommandSequence` / `executeBehaviorDefinition` /
+`setupMutationObserver` / `setupChangeObserver`): a downstream subclass
+overriding one of those with the old `ASTNode`-shaped parameter now sees a
+narrower or wider type. In-repo overrides all typecheck; call it out in the
+release notes. `ExpressionEvaluator.evaluate` widened the same way, and is safe
+by construction: it is declared as a METHOD, and method parameters are checked
+bivariantly, so a command or test that implements it as
+`evaluate(node: ASTNode, …)` stays assignable.
 
 ### Arc 3 — Grammar into the parser (large; one PR per command)
 

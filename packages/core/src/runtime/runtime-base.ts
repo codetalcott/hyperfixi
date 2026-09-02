@@ -16,12 +16,13 @@ import type {
   InitBlockNode,
   CommandSequenceNode,
   ObjectLiteralNode,
+  Stmt,
 } from '../ast/nodes';
 import type {
   EventNode as HybridEventNode,
   SequenceNode as HybridSequenceNode,
 } from '../parser/hybrid/ast-types';
-import { fromHybridStatements } from '../ast/legacy';
+import { fromHybridStatements, toLegacyNode, type AnyNode } from '../ast/legacy';
 
 import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../types/result';
 
@@ -439,7 +440,7 @@ export class RuntimeBase {
   /**
    * Check if an AST node has error-severity diagnostics (resilient parsing).
    */
-  private hasErrorDiagnostics(node: ASTNode): boolean {
+  private hasErrorDiagnostics(node: AnyNode): boolean {
     const diagnostics = node.diagnostics as Array<{ severity: string }> | undefined;
     return !!diagnostics?.some(d => d.severity === 'error');
   }
@@ -454,7 +455,7 @@ export class RuntimeBase {
   /**
    * Main Entry Point: Execute an AST node
    */
-  async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
+  async execute(node: AnyNode, context: ExecutionContext): Promise<unknown> {
     const nodeName = (node as { name?: string })?.name || '';
     debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
 
@@ -771,7 +772,7 @@ export class RuntimeBase {
    * exception-based control flow.
    */
   protected async executeCommandSequenceWithResult(
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
     let lastResult: unknown = undefined;
@@ -824,7 +825,7 @@ export class RuntimeBase {
    * Evaluate Expression (Delegator)
    * Handles standard expressions + the "implicit command pattern" (space operator)
    */
-  protected async evaluateExpression(node: ASTNode, context: ExecutionContext): Promise<unknown> {
+  protected async evaluateExpression(node: AnyNode, context: ExecutionContext): Promise<unknown> {
     // Canonical AST evaluation. The bundle's ExpressionRegistry is threaded
     // through `context.registry` so named-expression operators (`ends with`,
     // `is in`, `as`, etc.) resolve via the registry instead of static imports.
@@ -847,7 +848,7 @@ export class RuntimeBase {
    * Provides performance improvement by eliminating try-catch overhead.
    */
   protected async evaluateExpressionWithResult(
-    node: ASTNode,
+    node: AnyNode,
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
     const ctx = context.registry ? context : { ...context, registry: this.expressionRegistry };
@@ -965,7 +966,7 @@ export class RuntimeBase {
         if (name) fnContext.locals.set(name, args[i]);
       });
 
-      const run = async (commands: ASTNode[]): Promise<unknown> => {
+      const run = async (commands: readonly AnyNode[]): Promise<unknown> => {
         // executeCommandSequenceWithResult already turns the `return` signal
         // into ok(returnValue), so this is the whole of return handling.
         const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
@@ -993,10 +994,7 @@ export class RuntimeBase {
     context.globals.set(node.name, fn);
   }
 
-  protected async executeProgram(
-    node: ASTNode & { statements?: ASTNode[] },
-    context: ExecutionContext
-  ): Promise<unknown> {
+  protected async executeProgram(node: ProgramNode, context: ExecutionContext): Promise<unknown> {
     if (!node.statements || !Array.isArray(node.statements)) return;
 
     let lastResult: unknown = undefined;
@@ -1004,10 +1002,10 @@ export class RuntimeBase {
     // Separate statements into categories for proper execution order
     // Event handlers MUST be registered before init blocks run
     // This ensures that events sent during init are properly received
-    const eventHandlers: ASTNode[] = [];
-    const defs: ASTNode[] = [];
-    const initBlocks: ASTNode[] = [];
-    const otherStatements: ASTNode[] = [];
+    const eventHandlers: Stmt[] = [];
+    const defs: Stmt[] = [];
+    const initBlocks: Stmt[] = [];
+    const otherStatements: Stmt[] = [];
 
     for (const statement of node.statements) {
       if (statement.type === 'eventHandler') {
@@ -1069,7 +1067,7 @@ export class RuntimeBase {
   }
 
   protected async executeBlock(
-    node: { commands?: ASTNode[] },
+    node: BlockNode | InitBlockNode,
     context: ExecutionContext
   ): Promise<void> {
     if (!node.commands || !Array.isArray(node.commands)) return;
@@ -1085,7 +1083,7 @@ export class RuntimeBase {
   }
 
   protected async executeCommandSequence(
-    node: { commands: ASTNode[] },
+    node: CommandSequenceNode | HybridSequenceNode,
     context: ExecutionContext
   ): Promise<unknown> {
     if (!node.commands || !Array.isArray(node.commands)) return;
@@ -1159,12 +1157,19 @@ export class RuntimeBase {
   // --------------------------------------------------------------------------
 
   protected async executeBehaviorDefinition(
-    node: ASTNode & {
-      name: string;
-      parameters?: string[];
-      eventHandlers?: EventHandlerNode[];
-      initBlock?: ASTNode;
-      imperativeInstaller?: (element: HTMLElement, parameters: Record<string, any>) => void;
+    // `imperativeInstaller` is NOT a union field, on purpose. Nothing in this
+    // repo emits it — `parser.ts:3230` is the only `type: 'behavior'` producer
+    // and it writes name/parameters/eventHandlers/initBlock — so promoting it
+    // into `BehaviorNode` would put a shape the parser never builds into the
+    // file that describes what the parser builds. But `execute` is public and
+    // this method is `protected` on a published class, so the branch below is
+    // reachable from outside and deleting it would be a behaviour change a
+    // types-only arc cannot make. It stays as an intersection at this one site.
+    node: BehaviorNode & {
+      readonly imperativeInstaller?: (
+        element: HTMLElement,
+        parameters: Record<string, any>
+      ) => void;
     },
     _context: ExecutionContext
   ): Promise<void> {
@@ -1182,7 +1187,14 @@ export class RuntimeBase {
       debug.runtime(`RUNTIME BASE: Registered imperative behavior '${name}'`);
     } else {
       // Hyperscript behavior: store AST for event-handler-based installation
-      this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
+      // `BehaviorEntry.initBlock` is the frozen public `ASTNode`; the union's
+      // is a `Stmt`. Same node, crossed once (see `ast/legacy.ts`).
+      this.behaviorRegistry.set(name, {
+        name,
+        parameters,
+        eventHandlers,
+        initBlock: initBlock && toLegacyNode(initBlock),
+      });
       debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
     }
   }
@@ -1611,16 +1623,16 @@ export class RuntimeBase {
    */
   private static createEventHandler(
     runtime: RuntimeBase,
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext,
     selector: string | undefined,
     args: string[] | undefined,
     errorBlocks?: {
       errorSymbol?: string;
-      errorHandler?: ASTNode[];
-      finallyHandler?: ASTNode[];
+      errorHandler?: readonly AnyNode[];
+      finallyHandler?: readonly AnyNode[];
     },
-    condition?: ASTNode
+    condition?: AnyNode
   ): (domEvent: Event) => Promise<void> {
     return async (domEvent: Event) => {
       // Recursion Guard (uses WeakMap instead of expando property on Event)
@@ -1713,7 +1725,7 @@ export class RuntimeBase {
       // wrapper objects leaking into `it` plus an array collapse that took the
       // first element of `toggle`/`put`'s element list. See
       // docs-internal/HANDOFF-command-arch-output-contract.md.
-      const runCommands = async (toRun: ASTNode[]): Promise<void> => {
+      const runCommands = async (toRun: readonly AnyNode[]): Promise<void> => {
         for (const command of toRun) {
           try {
             await runtime.execute(command, eventContext);
@@ -1767,7 +1779,7 @@ export class RuntimeBase {
   protected setupMutationObserver(
     targets: HTMLElement[],
     attr: string,
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): void {
     debug.runtime(
@@ -1832,8 +1844,8 @@ export class RuntimeBase {
   }
 
   protected async setupChangeObserver(
-    watchTarget: ASTNode,
-    commands: ASTNode[],
+    watchTarget: AnyNode,
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): Promise<void> {
     debug.runtime(`RUNTIME BASE: Setting up MutationObserver for content changes on watch target`);

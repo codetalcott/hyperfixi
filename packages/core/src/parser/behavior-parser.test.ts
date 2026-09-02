@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
 import type { BehaviorNode, EventHandlerNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 describe('Behavior Parser', () => {
   describe('basic behavior parsing', () => {
@@ -28,7 +29,7 @@ describe('Behavior Parser', () => {
       expect(result.success).toBe(true);
       expect(result.node!.type).toBe('behavior');
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Removable');
       expect(behavior.parameters).toEqual([]);
       expect(behavior.eventHandlers).toHaveLength(1);
@@ -51,7 +52,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Draggable');
       expect(behavior.eventHandlers).toHaveLength(2);
       expect(behavior.eventHandlers[0].event).toBe('mousedown');
@@ -68,7 +69,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('EmptyBehavior');
       expect(behavior.eventHandlers).toEqual([]);
     });
@@ -88,7 +89,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Tooltip');
       expect(behavior.parameters).toEqual(['text']);
     });
@@ -106,7 +107,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Modal');
       expect(behavior.parameters).toEqual(['title', 'content', 'closeable']);
     });
@@ -124,7 +125,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('MyBehavior');
       expect(behavior.parameters).toEqual([]);
     });
@@ -147,7 +148,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Counter');
       expect(behavior.initBlock).toBeDefined();
       expect(behavior.initBlock?.type).toBe('initBlock');
@@ -168,9 +169,9 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.initBlock).toBeDefined();
-      expect(behavior.initBlock?.commands).toBeDefined();
+      expect(assertNodeOfKind(behavior.initBlock, 'initBlock').commands).toBeDefined();
     });
 
     it('should parse behavior with both init and event handlers', () => {
@@ -189,7 +190,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.initBlock).toBeDefined();
       expect(behavior.eventHandlers).toHaveLength(1);
     });
@@ -216,7 +217,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('AdvancedTooltip');
       expect(behavior.parameters).toEqual(['text', 'position', 'delay']);
       expect(behavior.initBlock).toBeDefined();
@@ -238,7 +239,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       const handler = behavior.eventHandlers[0];
       expect(handler.commands).toHaveLength(3);
     });
@@ -333,7 +334,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Removable');
       expect(behavior.eventHandlers).toHaveLength(1);
       expect(behavior.eventHandlers[0].event).toBe('click');
@@ -359,7 +360,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Draggable');
       expect(behavior.eventHandlers).toHaveLength(3);
     });
@@ -380,7 +381,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Sortable');
       expect(behavior.parameters).toEqual(['axis', 'handle']);
       expect(behavior.initBlock).toBeDefined();
@@ -402,7 +403,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.start).toBeDefined();
       expect(behavior.end).toBeDefined();
       expect(behavior.line).toBeDefined();
@@ -420,7 +421,7 @@ describe('Behavior Parser', () => {
 
       const result = parse(input);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.type).toBe('behavior');
       expect(behavior.eventHandlers[0].type).toBe('eventHandler');
     });
@@ -454,7 +455,7 @@ describe('Behavior Parser', () => {
 
       expect(result.success).toBe(true);
 
-      const behavior = result.node as BehaviorNode;
+      const behavior = assertNodeOfKind(result.node, 'behavior');
       expect(behavior.name).toBe('Draggable');
       expect(behavior.parameters).toEqual(['dragHandle']);
       expect(behavior.eventHandlers).toHaveLength(1);
@@ -487,7 +488,7 @@ describe('parameter as from target', () => {
     expect(result.success).toBe(true);
     expect(result.node!.type).toBe('behavior');
 
-    const behavior = result.node as BehaviorNode;
+    const behavior = assertNodeOfKind(result.node, 'behavior');
     expect(behavior.name).toBe('Test');
     expect(behavior.parameters).toEqual(['trigger']);
     expect(behavior.eventHandlers).toHaveLength(1);

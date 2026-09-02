@@ -86,8 +86,18 @@ Two structural facts that shape it:
   not a formality.
 - **All four `ASTNode` definitions carry `[key: string]: unknown`** —
   `types/base-types.ts`, `ast-utils/types.ts`, `types/unified-types.ts`, and
-  `parser/hybrid/ast-types.ts`. Step 6 removes it "last"; note that removing it
-  from any ONE of them does nothing while the others are still assignable.
+  `parser/hybrid/ast-types.ts`. Step 6 removes it "last"; ~~note that removing
+  it from any ONE of them does nothing while the others are still
+  assignable.~~ **Half right, measured 2026-09-02 when step 6 executed.** The
+  four are independent, so removing one changes nothing about the other three —
+  that part holds. But the sentence reads as "therefore removing one buys
+  nothing", and that is false: what mattered was not which `ASTNode` kept the
+  signature, it was whether `ast/nodes.ts`'s members still INHERITED one. Cut
+  that inheritance and 117 errors appear (`ast-utils`' signature went `any` →
+  `unknown` in step 4 by the same logic, for the same reason). Step 6 shipped
+  exactly that and left `types/base-types.ASTNode`'s own signature in place for
+  the legacy and published consumers — see the step 6 entry in the plan for the
+  numbers and for why deleting it there is a 4.0 item.
 
 ## Recommended order, given the above
 

@@ -16,11 +16,12 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
 import type { EventHandlerNode, BehaviorNode, CommandNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 const handler = (src: string): EventHandlerNode => {
   const result = parse(src);
   expect(result.success).toBe(true);
-  const node = result.node as EventHandlerNode;
+  const node = assertNodeOfKind(result.node, 'eventHandler');
   expect(node.type).toBe('eventHandler');
   return node;
 };
@@ -109,7 +110,7 @@ describe('event handler catch/finally — parsing', () => {
     end`);
 
     expect(result.success).toBe(true);
-    const behavior = result.node as BehaviorNode;
+    const behavior = assertNodeOfKind(result.node, 'behavior');
     expect(behavior.type).toBe('behavior');
     expect(behavior.eventHandlers).toHaveLength(2);
   });
@@ -126,7 +127,7 @@ describe('event handler catch/finally — parsing', () => {
     end`);
 
     expect(result.success).toBe(true);
-    const behavior = result.node as BehaviorNode;
+    const behavior = assertNodeOfKind(result.node, 'behavior');
     expect(behavior.eventHandlers).toHaveLength(1);
     const [first] = behavior.eventHandlers;
     expect(names(first.commands)).toEqual(['throw']);

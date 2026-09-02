@@ -30,6 +30,7 @@ import { parse } from '../parser/parser';
 import { createContext, getSharedGlobals } from '../core/context';
 import type { ExecutionContext } from '../types/core';
 import type { DefNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 describe('def execution', () => {
   let runtime: Runtime;
@@ -66,7 +67,7 @@ describe('def execution', () => {
     end`);
 
     expect(result.success).toBe(true);
-    const def = result.node as DefNode;
+    const def = assertNodeOfKind(result.node, 'def');
     expect(def.type).toBe('def');
     expect(def.errorSymbol).toBe('e');
     expect(def.errorHandler?.length).toBeGreaterThan(0);

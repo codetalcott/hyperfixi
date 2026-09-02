@@ -96,8 +96,13 @@ function isModalAsExpression(arg: ASTNode | undefined): boolean {
   // targetType is dual-shape: an identifier node { name } or a bare string —
   // typed as exactly that on the union's AsExpressionNode.
   const targetType = arg.targetType;
+  // The node arm is an `Expr`, so `name` lives on only some members — read it
+  // structurally rather than narrowing to `identifier`, which would reject the
+  // other kinds this has always accepted.
   const name =
-    typeof targetType === 'string' ? targetType : (targetType?.name as string | undefined);
+    typeof targetType === 'string'
+      ? targetType
+      : (targetType as { name?: string } | undefined)?.name;
   return typeof name === 'string' && name.toLowerCase() === 'modal';
 }
 
