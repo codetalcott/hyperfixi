@@ -26,7 +26,7 @@ import {
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for RemoveCommand

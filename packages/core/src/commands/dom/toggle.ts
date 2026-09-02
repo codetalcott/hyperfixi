@@ -52,7 +52,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import { isNodeOfKind } from '../../ast/guards';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for ToggleCommand */
 export type ToggleCommandInput =

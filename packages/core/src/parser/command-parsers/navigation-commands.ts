@@ -35,7 +35,7 @@ import {
 } from '../helpers/parsing-helpers';
 import type { ExpressionNode } from '../../types/core';
 import { parseBareURLPath, isNakedURLStart } from './utility-commands';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 import { toLegacyExpression } from '../../ast/legacy';
 
 /**

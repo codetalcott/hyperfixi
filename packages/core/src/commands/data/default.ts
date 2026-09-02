@@ -30,7 +30,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for DefaultCommand (discriminated union).

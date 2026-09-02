@@ -21,7 +21,7 @@ import {
   consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
 import { toLegacyExpression } from '../../ast/legacy';
-import type { SlotKey, SlotMap } from '../command-slots';
+import type { SlotKey, SlotMap } from '../../ast/command-slots';
 
 /**
  * A `literal` node in the slot `withModifiers` types as `ExpressionNode`.

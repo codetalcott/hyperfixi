@@ -34,7 +34,7 @@ import {
   createUntilEventLoopConfig,
   createForeverLoopConfig,
 } from '../helpers/loop-executor';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for RepeatCommand */
 export interface RepeatCommandInput {

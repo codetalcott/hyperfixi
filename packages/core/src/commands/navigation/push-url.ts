@@ -23,7 +23,7 @@ import {
 } from '../decorators';
 import { parseUrlArguments, type UrlCommandInput } from '../helpers/url-argument-parser';
 import { dispatchLokaScriptEvent } from '../helpers/event-helpers';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * History operation mode

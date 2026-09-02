@@ -18,7 +18,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * A command queued for async execution. The runtime accepts three shapes:

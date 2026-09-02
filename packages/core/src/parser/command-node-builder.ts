@@ -4,7 +4,7 @@
  */
 
 import type { Token, CommandNode, ExpressionNode, ASTNode, StatementNode } from '../types/core';
-import type { SlotKey, SlotMap, SlottedCommandName } from './command-slots';
+import type { SlotKey, SlotMap, SlottedCommandName } from '../ast/command-slots';
 
 /**
  * Position information for AST nodes

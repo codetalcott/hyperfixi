@@ -19,7 +19,7 @@ import {
   createPropertyOfExpression,
 } from '../helpers/ast-helpers';
 import { parseOneArgument } from '../helpers/parsing-helpers';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse set command

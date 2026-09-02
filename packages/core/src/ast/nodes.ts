@@ -58,6 +58,7 @@
  */
 
 import type { ParseDiagnostic } from '../types/base-types';
+import type { SlotKey, SlottedCommandName } from './command-slots';
 
 // ===========================================================================
 // Base
@@ -355,13 +356,20 @@ export interface GenericExpressionNode extends BaseNode {
  * `semanticRoles` is the SEMANTICS surface — where a materialized schema
  * default lives, held back from `args`, which is the SYNTAX surface.
  */
-export interface CommandNode extends BaseNode {
+/**
+ * `K` is the command whose `COMMAND_SLOTS` row keys `modifiers` (Arc 3 step
+ * 2). The default is every command's keys, so a `CommandNode` that names no
+ * `K` reads as it always did; a parser or command that names one gets its
+ * row checked. `args` stays `Expr[]` — the positional arity is declared in
+ * `COMMAND_ARITY` and pinned by test, not yet by type.
+ */
+export interface CommandNode<K extends SlottedCommandName = SlottedCommandName> extends BaseNode {
   readonly type: 'command';
   readonly name: string;
   readonly args: Expr[];
   readonly isBlocking: boolean;
   readonly body?: Stmt[];
-  readonly modifiers?: Record<string, Expr>;
+  readonly modifiers?: Partial<Record<SlotKey<K>, Expr>>;
   readonly implicitTarget?: Expr;
   readonly originalCommand?: string;
   readonly semanticRoles?: Record<string, Expr>;

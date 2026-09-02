@@ -24,7 +24,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * The CSS property name a node NAMES, for a node the evaluator resolves to

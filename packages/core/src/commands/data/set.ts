@@ -38,7 +38,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { NodeWriterFn } from '../../parser/extensions';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =

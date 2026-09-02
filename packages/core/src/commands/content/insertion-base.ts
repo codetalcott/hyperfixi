@@ -48,7 +48,7 @@ import {
 import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import { queryTargetElements, toElementListStrict } from '../helpers/target-elements';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Where content lands, and how scalar values combine. */
 export type InsertionPosition = Extract<SemanticPosition, 'append' | 'prepend'>;

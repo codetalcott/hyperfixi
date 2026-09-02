@@ -16,7 +16,7 @@ import type { Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import type { CommandGrammar } from '../command-grammar';
 import { isCommandBoundary, isKeyword } from '../helpers/parsing-helpers';
-import type { SlotKey, SlotMap, SlottedCommandName } from '../command-slots';
+import type { SlotKey, SlotMap, SlottedCommandName } from '../../ast/command-slots';
 
 /**
  * Is the parser at the end of this command's arguments?

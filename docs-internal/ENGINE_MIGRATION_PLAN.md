@@ -1495,6 +1495,27 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    name + params, js's code + params, pick's array, the block bodies) — the
    typed-`args` step's material, and the end of step 3.
 
+   **`CommandNode<K>` and the arity table (2026-09-03).** `ast/nodes.ts`'s
+   `CommandNode` is generic over its command's slot row —
+   `CommandNode<K extends SlottedCommandName = SlottedCommandName>` with
+   `modifiers?: Partial<Record<SlotKey<K>, Expr>>` — the node-side third of
+   the typed-slot story (read side `CommandRaw<K>`, emit side
+   `CommandNodeBuilder<K>`, now the node). The default `K` is every
+   command's keys, so the 42 files that name `CommandNode` compile
+   unchanged; the seven keys read outside `commands/` (`when`, `where`,
+   `debounce`, `throttle`, `on`, `to`, `from`) are all in the union. The
+   layering ratchet earned its keep: `ast` (layer 1) importing the table
+   from `parser` (layer 2) was an upward edge, so `command-slots.ts` moved
+   to `ast/` and its 61 importers were repointed by computed relative path
+   — the tables were always node-level facts, not parser ones. `args` is
+   still `Expr[]`: the positional arity is a declared table instead,
+   `COMMAND_ARITY` (`[min, max | null]` per command), pinned by
+   `command-arity.test.ts` to what the parser emits over the documented
+   examples and to the highest `raw.args[i]` each `parseInput` reads —
+   which found `toggle` reading `args[1]` for the semantic path's split
+   `*display` form (declared `[0, 2]` with the reason). A tuple type per
+   command is the remaining step-2 item, and the table is its input.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

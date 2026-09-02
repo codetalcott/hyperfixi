@@ -30,7 +30,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { debug } from '../../utils/debug';
 import { commandMeta } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for RenderCommand

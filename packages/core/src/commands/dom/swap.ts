@@ -37,7 +37,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 // Re-export types from swap-executor for consumers
 export type { SwapStrategy } from '../../lib/swap-executor';

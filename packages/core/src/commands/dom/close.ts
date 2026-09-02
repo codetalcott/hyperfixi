@@ -35,7 +35,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface CloseCommandInput {
   targets: HTMLElement[];
