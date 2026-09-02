@@ -1051,6 +1051,22 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    `CommandNode` becomes `CommandNode<K extends CommandName>` with a per-K
    `args` type, and `command-node-builder.ts` builds it.
 3. **Migration order = the `parseInput` size table above**, largest first:
+   **`toggle` STARTED 2026-09-02 — PR A of two.** The parser now emits the
+   destination as a slot: `toggle .active on #panel` is `args: [.active]`,
+   `modifiers.on: #panel` (`from`, the HyperFixi spelling, shares the slot).
+   ToggleCommand's `parseInput` already read `modifiers.on` as its fallback
+   destination — the shape the semantic path always produced — so the runtime
+   is untouched, and toggle's rows leave the `marker-in-args` family. Two
+   AST-equivalence rows moved, reviewed. What it found: the interchange's
+   `inferRolesFromSchema` derives a role's English markers from
+   `markerOverride`/`markerVariants` only, and toggle's destination has
+   neither (its `on` is the profile's), so the old binding had worked by the
+   positional pass skipping the literal `on` in `args` — with the value in a
+   slot, `destination` came back undefined and `marker-roles.test.ts` caught
+   it. Core's inferrer now also applies the schema's own `ast.modifiers`
+   descriptor as the reverse map (`modifiers.on` IS `destination`, by the
+   schema's own declaration) before returning. PR B is the typed node and the
+   `parseInput` shrink; the census row ratchets down there.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

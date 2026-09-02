@@ -248,7 +248,10 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // The destination is a SLOT (Arc 3 step 3): one positional argument, the
+      // target under `modifiers.on` — for `from` and `on` alike.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.on).toBeDefined();
     });
 
     it('should parse toggle with "on" keyword (hyperscript compatibility)', () => {
@@ -261,7 +264,10 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // The destination is a SLOT (Arc 3 step 3): one positional argument, the
+      // target under `modifiers.on` — for `from` and `on` alike.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.on).toBeDefined();
     });
 
     it('should parse toggle between syntax', () => {
