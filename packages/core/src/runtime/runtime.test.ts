@@ -743,7 +743,7 @@ describe('RuntimeBase Method Coverage', () => {
       await expect(runtime.execute(programNode, context)).resolves.not.toThrow();
     });
 
-    it('should handle halt signal in command sequence', async () => {
+    it('ends the program on halt (program boundary) and resolves', async () => {
       const seqNode = {
         type: 'sequence',
         commands: [
@@ -753,7 +753,9 @@ describe('RuntimeBase Method Coverage', () => {
       };
 
       // Halt signals propagate as exceptions from top-level execute()
-      await expect(runtime.execute(seqNode, context)).rejects.toThrow('HALT_EXECUTION');
+      // The public execute() is the PROGRAM boundary (Arc 4a): a halt ends the
+      // program and resolves; the commands after it never run.
+      await expect(runtime.execute(seqNode, context)).resolves.toBeUndefined();
     });
   });
 
@@ -922,7 +924,7 @@ describe('RuntimeBase Method Coverage', () => {
       expect(context.locals?.get('y')).toBe(20);
     });
 
-    it('should propagate halt signal through Result pattern', async () => {
+    it('stops the sequence at halt and resolves (program boundary)', async () => {
       const seqNode = {
         type: 'sequence',
         commands: [
@@ -943,7 +945,9 @@ describe('RuntimeBase Method Coverage', () => {
       };
 
       // Halt propagates as exception from top-level execute; 'x' is set before halt fires
-      await expect(runtime.execute(seqNode, context)).rejects.toThrow('HALT_EXECUTION');
+      // The public execute() is the PROGRAM boundary (Arc 4a): a halt ends the
+      // program and resolves; the commands after it never run.
+      await expect(runtime.execute(seqNode, context)).resolves.toBeUndefined();
       expect(context.locals?.get('x')).toBe('before');
     });
 

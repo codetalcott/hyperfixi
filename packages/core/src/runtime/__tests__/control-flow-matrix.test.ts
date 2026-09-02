@@ -139,13 +139,15 @@ describe('control-flow matrix (Arc 4a step 1)', () => {
  * Filled from the first recorded run (2026-09-03); every cell is a pin.
  *
  * What the matrix says about today, filed in the plan (Arc 4a) — not fixed here:
- *  - `return` outside a `def` is a NO-OP: the handler keeps running (`a b`).
+ *  - `return` ends the enclosing handler or function (upstream); at handler level
+ *    its value is dropped, at program level (`hyperscript.eval`) it is the result.
  *  - a signal inside `tell` used to escape as a rejection wrapped in
  *    "Command execution failed in tell block" — fixed on this branch: `tell`
  *    passes control-flow errors through, so the column matches top-level.
  *  - a signal inside a called `def` used to reject the handler with `null`
  *    (`installFunction` threw `asControlFlowError(signal)`, which is null for a
- *    signal object) — fixed on this branch; the `def` column now matches top-level.
+ *    signal object); now the FUNCTION boundary consumes halt/exit/return and the
+ *    caller continues (`a f c`), upstream's rule.
  *  - `catch` never sees a signal (right); `finally` always runs (right);
  *    `break`/`continue` outside a loop reject the handler.
  */
@@ -155,7 +157,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'inside if': 'a',
     'inside repeat': 'a i',
     'inside tell': 'a t',
-    'inside def': 'a f',
+    'inside def': 'a f c',
     'with catch': 'a',
     'with finally': 'a fin',
   },
@@ -164,7 +166,7 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'inside if': 'a',
     'inside repeat': 'a i',
     'inside tell': 'a t',
-    'inside def': 'a f',
+    'inside def': 'a f c',
     'with catch': 'a',
     'with finally': 'a fin',
   },
@@ -187,12 +189,12 @@ const EXPECTED: Record<string, Record<string, string>> = {
     'with finally': 'a fin rejected:CONTINUE_EXECUTION',
   },
   return: {
-    'top-level': 'a b',
-    'inside if': 'a b c',
-    'inside repeat': 'a i b i b c',
-    'inside tell': 'a t b c',
+    'top-level': 'a',
+    'inside if': 'a',
+    'inside repeat': 'a i',
+    'inside tell': 'a t',
     'inside def': 'a f c',
-    'with catch': 'a b',
-    'with finally': 'a b fin',
+    'with catch': 'a',
+    'with finally': 'a fin',
   },
 };
