@@ -20,6 +20,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { CommandRaw } from '../../ast/command-slots';
+import type { HaltSignal } from '../../types/result';
 
 /**
  * Typed input for HaltCommand
@@ -31,11 +32,14 @@ export interface HaltCommandInput {
 /**
  * Output from Halt command execution
  */
-export interface HaltCommandOutput {
+export interface HaltEventOutput {
   halted: true;
   timestamp: number;
   eventHalted?: boolean;
 }
+
+/** Halting an event reports it; halting execution RETURNS the signal (Arc 4a). */
+export type HaltCommandOutput = HaltEventOutput | HaltSignal;
 
 /**
  * HaltCommand - Stops execution or prevents event defaults
@@ -117,9 +121,9 @@ export class HaltCommand implements DecoratedCommand {
       (context as any).halted = true;
     }
 
-    const haltError = new Error('HALT_EXECUTION');
-    (haltError as any).isHalt = true;
-    throw haltError;
+    // A signal is RETURNED, not thrown (Arc 4a): the runtime's dispatch
+    // recognises it and stops the enclosing block.
+    return { type: 'halt' };
   }
 
   private isEvent(value: unknown): value is Event {

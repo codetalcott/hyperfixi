@@ -136,48 +136,32 @@ describe('ReturnCommand', () => {
   });
 
   describe('execute', () => {
-    it('should throw error with isReturn flag', async () => {
+    it('should return a signal with isReturn flag', async () => {
       const context = createMockContext();
       const input = { value: 42 };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.isReturn).toBe(true);
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('return');
     });
 
-    it('should throw error with RETURN_VALUE message', async () => {
+    it('should return a signal with RETURN_VALUE message', async () => {
       const context = createMockContext();
       const input = { value: 42 };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.message).toBe('RETURN_VALUE');
+      expect(signal.type).toBe('return');
     });
 
     it('should attach returnValue to error', async () => {
       const context = createMockContext();
       const input = { value: 'test value' };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.returnValue).toBe('test value');
+      expect(signal.returnValue).toBe('test value');
     });
 
     it('should set context.it to return value', async () => {
@@ -210,14 +194,9 @@ describe('ReturnCommand', () => {
       const context = createMockContext();
       const input = { value: undefined };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.returnValue).toBeUndefined();
+      expect(signal.returnValue).toBeUndefined();
       expect(context.it).toBeUndefined();
     });
 
@@ -226,14 +205,9 @@ describe('ReturnCommand', () => {
       const obj = { data: 'test', count: 5 };
       const input = { value: obj };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.returnValue).toBe(obj);
+      expect(signal.returnValue).toBe(obj);
       expect(context.it).toBe(obj);
     });
   });
@@ -251,16 +225,11 @@ describe('ReturnCommand', () => {
       );
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isReturn).toBe(true);
-      expect(thrownError.returnValue).toBe(42);
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('return');
+      expect(signal.returnValue).toBe(42);
       expect(context.it).toBe(42);
     });
 
@@ -272,16 +241,11 @@ describe('ReturnCommand', () => {
       const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isReturn).toBe(true);
-      expect(thrownError.returnValue).toBeUndefined();
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('return');
+      expect(signal.returnValue).toBeUndefined();
       expect(context.it).toBeUndefined();
     });
   });

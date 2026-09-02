@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { HaltCommand } from '../halt';
+import { HaltCommand, type HaltEventOutput } from '../halt';
 import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
@@ -166,32 +166,21 @@ describe('HaltCommand', () => {
   });
 
   describe('execute - Regular Halt', () => {
-    it('should throw Error with message HALT_EXECUTION', async () => {
+    it('should return a signal with HALT_EXECUTION', async () => {
       const context = createMockContext();
 
-      let thrownError: any;
-      try {
-        await command.execute({}, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute({}, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.message).toBe('HALT_EXECUTION');
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('halt');
     });
 
-    it('should throw error with isHalt flag set to true', async () => {
+    it('should return a signal with ', async () => {
       const context = createMockContext();
 
-      let thrownError: any;
-      try {
-        await command.execute({}, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute({}, context);
 
-      expect(thrownError.isHalt).toBe(true);
+      expect(signal.type).toBe('halt');
     });
 
     it('should set context.halted to true if property exists', async () => {
@@ -207,18 +196,9 @@ describe('HaltCommand', () => {
       expect((context as any).halted).toBe(true);
     });
 
-    it('should always throw and never return a value', async () => {
+    it('returns the halt signal instead of throwing (Arc 4a)', async () => {
       const context = createMockContext();
-
-      let didReturn = false;
-      try {
-        await command.execute({}, context);
-        didReturn = true;
-      } catch {
-        // Expected to throw
-      }
-
-      expect(didReturn).toBe(false);
+      await expect(command.execute({}, context)).resolves.toEqual({ type: 'halt' });
     });
   });
 
@@ -245,7 +225,7 @@ describe('HaltCommand', () => {
       const mockEvent = createMockEvent();
       const context = createMockContext();
 
-      const result = await command.execute({ target: mockEvent }, context);
+      const result = (await command.execute({ target: mockEvent }, context)) as HaltEventOutput;
 
       expect(result.halted).toBe(true);
       expect(result.eventHalted).toBe(true);
@@ -255,7 +235,7 @@ describe('HaltCommand', () => {
       const mockEvent = createMockEvent();
       const context = createMockContext();
 
-      const result = await command.execute({ target: mockEvent }, context);
+      const result = (await command.execute({ target: mockEvent }, context)) as HaltEventOutput;
 
       expect(typeof result.timestamp).toBe('number');
       expect(result.timestamp).toBeGreaterThan(0);
@@ -267,7 +247,7 @@ describe('HaltCommand', () => {
       const mockEvent = createMockEvent();
       const context = createMockContext({ event: mockEvent as any });
 
-      const result = await command.execute({ target: 'the' }, context);
+      const result = (await command.execute({ target: 'the' }, context)) as HaltEventOutput;
 
       expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
       expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
@@ -279,7 +259,10 @@ describe('HaltCommand', () => {
       const mockEvent = createMockEvent();
       const context = createMockContext({ event: mockEvent as any });
 
-      const result = await command.execute({ target: { target: 'the' } }, context);
+      const result = (await command.execute(
+        { target: { target: 'the' } },
+        context
+      )) as HaltEventOutput;
 
       expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
       expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
@@ -291,16 +274,11 @@ describe('HaltCommand', () => {
       const context = createMockContext();
       const plainObject = { foo: 'bar' };
 
-      let thrownError: any;
-      try {
-        await command.execute({ target: plainObject }, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute({ target: plainObject }, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isHalt).toBe(true);
-      expect(thrownError.message).toBe('HALT_EXECUTION');
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('halt');
+      expect(signal.type).toBe('halt');
     });
   });
 
@@ -313,17 +291,11 @@ describe('HaltCommand', () => {
       const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.isHalt).toBe(true);
-      expect(thrownError.message).toBe('HALT_EXECUTION');
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('halt');
+      expect(signal.type).toBe('halt');
     });
 
     it('should parse and execute event halt end-to-end', async () => {
@@ -344,7 +316,7 @@ describe('HaltCommand', () => {
       );
 
       // Execute
-      const result = await command.execute(input, context);
+      const result = (await command.execute(input, context)) as HaltEventOutput;
 
       expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
       expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();

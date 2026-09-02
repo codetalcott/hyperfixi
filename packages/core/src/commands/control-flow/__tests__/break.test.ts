@@ -86,34 +86,23 @@ describe('BreakCommand', () => {
   });
 
   describe('execute', () => {
-    it('should throw an error with isBreak flag', async () => {
+    it('should return a signal with isBreak flag', async () => {
       const context = createMockContext();
       const input = { signalType: 'break' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.isBreak).toBe(true);
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('break');
     });
 
-    it('should throw error with BREAK_LOOP message', async () => {
+    it('should return a signal with BREAK_LOOP message', async () => {
       const context = createMockContext();
       const input = { signalType: 'break' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.message).toBe('BREAK_LOOP');
+      expect(signal.type).toBe('break');
     });
 
     it('should not modify execution context before throwing', async () => {
@@ -142,16 +131,11 @@ describe('BreakCommand', () => {
       const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isBreak).toBe(true);
-      expect(thrownError.message).toBe('BREAK_LOOP');
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('break');
+      expect(signal.type).toBe('break');
     });
   });
 });

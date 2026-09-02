@@ -1703,6 +1703,19 @@ is the matrix doing its job. (4) `catch` never sees a signal and
 handler with their bare message. (1)–(3) are the strongest argument for
 `Completion`: three call boundaries, three different ways of losing a
 signal that was never an exception. Step 2 migrates; step 3 deletes.
+**Step 2, first half, DONE 2026-09-03:** `Completion<T> = T |
+ExecutionSignal` in `types/result.ts`; the five signal commands RETURN
+their signal (`{ type: 'halt' }` …) instead of throwing, their output
+types are the signal types, and the runtime's two dispatch paths route a
+returned signal — `processCommandWithResult` as `err(signal)`,
+`processCommand` (the non-Result path) by converting at the boundary with
+`signalToError`, so every caller that still speaks exceptions sees what it
+saw before. The matrix did not move (35 cells, same pins); the five command
+suites assert the returned signal; type-escapes 890 → 884 (the `(error as
+any).flag = true` casts went with the throws). Second half: the callers —
+`executeProgram`/`executeBlock`'s halt loops, `installFunction`, `tell`,
+`repeat`'s message-string catch, `evaluateASTWithResult` — read
+completions instead of catching; then step 3 deletes the conversions.
 `throw` becomes the only exception and the `catch`/`finally` paths in
 `installFunction` and `executeEventHandler` are re-derived against the matrix.
 

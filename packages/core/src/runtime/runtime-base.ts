@@ -29,7 +29,7 @@ import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../type
 import type { RuntimeHooks } from '../types/hooks';
 import { HookRegistry } from '../types/hooks';
 
-import { ok, err, isOk, asControlFlowError } from '../types/result';
+import { ok, err, isOk, isSignal, asControlFlowError } from '../types/result';
 
 import { evaluateAST, evaluateASTWithResult } from '../parser/runtime';
 import type { ExpressionRegistry } from '../core/expression-registry';
@@ -650,14 +650,16 @@ export class RuntimeBase {
       // The Adapter (or the Command Implementation inside it) determines
       // if it needs to evaluate arguments or treat them as raw AST.
       try {
-        return await adapter.execute(context, {
+        const result = await adapter.execute(context, {
           args: args || [],
           modifiers: modifiers || {},
-          // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
           commandName,
-          // Pass runtime reference just in case command needs to re-enter runtime
           runtime: this,
         });
+        // A signal command RETURNS its signal (Arc 4a); this path still
+        // speaks exceptions, so convert at the boundary (deleted by step 3).
+        if (isSignal(result)) throw signalToError(result);
+        return result;
       } catch (e) {
         if (!isControlFlowError(e)) {
           this.logError(`Error executing command '${commandName}':`, e);
@@ -752,6 +754,8 @@ export class RuntimeBase {
         commandName,
         runtime: this,
       });
+      // A signal command RETURNS its signal (Arc 4a); route it as control flow.
+      if (isSignal(result)) return err(result);
       return ok(result);
     } catch (e) {
       // Check if this is a control flow signal
