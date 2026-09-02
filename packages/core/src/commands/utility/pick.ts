@@ -27,6 +27,8 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
+import { evaluateSlot } from '../helpers/slots';
 
 /**
  * Pick command input. The optional `variant` selects between the upstream
@@ -91,7 +93,7 @@ export class PickCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'pick'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PickCommandInput> {
@@ -101,7 +103,7 @@ export class PickCommand implements DecoratedCommand {
     // ---------- New variant-tagged forms (from parsePickCommand) ----------
     if (variant === 'first' || variant === 'last') {
       const array = await evaluator.evaluate(raw.args[0], context);
-      const count = await evaluator.evaluate(raw.modifiers.count, context);
+      const count = await evaluateSlot(evaluator, context, raw.modifiers.count, 'pick: count');
       if (!Array.isArray(array)) {
         throw new Error(`pick ${variant}: source must be an array, got ${typeof array}`);
       }
@@ -136,7 +138,7 @@ export class PickCommand implements DecoratedCommand {
       const rangeStartRaw =
         rangeStartNode?.value === 'start'
           ? 'start'
-          : await evaluator.evaluate(raw.modifiers.rangeStart, context);
+          : await evaluateSlot(evaluator, context, raw.modifiers.rangeStart, 'pick: start');
       const rangeStart = rangeStartRaw === 'start' ? ('start' as const) : Number(rangeStartRaw);
 
       let rangeEnd: number | 'end' | undefined;
@@ -167,7 +169,7 @@ export class PickCommand implements DecoratedCommand {
       if (typeof source !== 'string') {
         throw new Error(`pick ${variant}: source must be a string, got ${typeof source}`);
       }
-      const regexRaw = await evaluator.evaluate(raw.modifiers.regex, context);
+      const regexRaw = await evaluateSlot(evaluator, context, raw.modifiers.regex, 'pick: regex');
       const regex = typeof regexRaw === 'string' ? regexRaw : String(regexRaw);
       const flagsNode = raw.modifiers.flags as { value?: string } | undefined;
       const flags = flagsNode?.value;

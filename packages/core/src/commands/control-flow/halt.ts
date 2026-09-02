@@ -19,6 +19,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for HaltCommand
@@ -65,7 +66,7 @@ export class HaltCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'halt'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HaltCommandInput> {

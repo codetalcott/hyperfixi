@@ -22,6 +22,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export interface WaitTimeInput {
   type: 'time';
@@ -74,7 +75,7 @@ export class WaitCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'wait'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<WaitCommandInput> {

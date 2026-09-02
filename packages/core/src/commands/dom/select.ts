@@ -27,6 +27,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export interface SelectCommandInput {
   targets: HTMLElement[];
@@ -55,7 +56,7 @@ export class SelectCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'select'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SelectCommandInput> {

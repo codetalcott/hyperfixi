@@ -36,6 +36,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * @deprecated Use `ContentInsertPosition` from `commands/helpers/dom-mutation`,
@@ -84,14 +85,14 @@ export class PutCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'put'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PutCommandInput> {
     if (!raw.args?.length) throw new Error('put requires arguments');
 
     const nodeType = (n: ASTNode): string => n?.type || 'unknown';
-    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'];
+    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'] as const;
     // The parser carries the operation as the slot the target lives under
     // (`{ args: [content], modifiers: { into: target } }`, Arc 3 step 3) —
     // the shape the semantic path always produced. Any operation can arrive

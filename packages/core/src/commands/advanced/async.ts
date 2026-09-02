@@ -18,6 +18,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * A command queued for async execution. The runtime accepts three shapes:
@@ -69,7 +70,7 @@ export class AsyncCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'async'>,
     _evaluator: ExpressionEvaluator,
     _context: ExecutionContext
   ): Promise<AsyncCommandInput> {

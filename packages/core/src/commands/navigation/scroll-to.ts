@@ -24,6 +24,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export interface ScrollCommandInput {
   args: unknown[];
@@ -66,7 +67,7 @@ export class ScrollCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'scroll'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ScrollCommandInput> {

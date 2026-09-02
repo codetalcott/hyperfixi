@@ -1038,7 +1038,9 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    The A class needed no column — Arc 1 step 6 landed first (#1058), so there
    are no semantic-shape branches left to classify. **Baseline: 51 bodies ·
    2,434 lines · 361 branches · 128 syntax sites · 215 value sites.**
-2. **Per-command typed nodes.** `ToggleNode` is `ToggleCommandInput` with
+2. **Per-command typed nodes.** ✅ **Slots typed 2026-09-03** (`CommandRaw<K>`
+   over `COMMAND_SLOTS`, see History); `args` and the node itself remain.
+   `ToggleNode` is `ToggleCommandInput` with
    `HTMLElement[]` replaced by `Expr` slots and `duration: number` by `Expr`.
    ~~The existing input unions (46 files already have one) are the shapes —
    this step is moving them one layer up.~~ **Measured 2026-09-02: 77
@@ -1352,6 +1354,44 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    a docs defect for `PARSER_NEXT_STEPS.md`, not a parser fix. A trap for the
    record: the first conversion script matched `or:` inside `for:` and every
    `for` fixture grew a phantom `or <event>` — word-bound the keys.
+
+   **Typed slots (2026-09-03) — the static half of step 2, before any typed
+   node.** `parser/command-slots.ts` is ONE declared table, `COMMAND_SLOTS`:
+   the slot keys each of the 59 commands can carry, and the type behind
+   every `parseInput`'s `raw`: `CommandRaw<K>` types `modifiers` as
+   `Partial<Record<SlotKey<K>, ExpressionNode>>`, where `SlotKey<K>` is the
+   row plus the four generic keys the parser attaches anywhere (`when`,
+   `where`, `debounce`, `throttle`). All 48 inline `raw: { args; modifiers:
+   Record<string, …> }` signatures now read `raw: CommandRaw<'toggle'>` (a
+   base-class body takes the union it serves: `'append' | 'prepend'`,
+   `'show' | 'hide'`, `'break' | 'continue' | 'exit'`; `swap` serves
+   `'swap' | 'morph'`). A read of a key outside the row is a COMPILE error —
+   the check the parity gate does at test time, moved to `tsc`. The table is
+   declared, not derived (it is a type), and not trusted:
+   `command-slots.test.ts` pins every row in both directions to the union of
+   what the core parser emits over the command's documented examples, what
+   the semantic descriptor emits, and what the command reads; phantom keys
+   (declared, nothing emits or reads) are banked with reasons, shrink-only —
+   today `put`'s four operation keys and `repeat`'s five loop keys that no
+   documented example reaches, `pseudo-command`'s six prepositions (it is
+   constructed, never parsed), and `copy`'s `to clipboard` marker that
+   nothing reads. The first `tsc` run produced eleven errors, and each was
+   the intended kind: `repeat` read `m.forever` (never emitted — the form
+   arrives as `loopType: 'forever'`; deleted), a `toggle` fixture and the
+   temporal helper used `until`/`from` that the read census had missed
+   because the helper takes `raw.modifiers` whole (rows extended, and
+   `toggle .loading until click from #done` is now a documented example),
+   `swap` read `morph`'s `on`, `put` indexed by an untyped string, and three
+   `pick` reads (`count`, `regex`, `rangeStart`) that the type correctly
+   calls optional — now `evaluateSlot(...)`, which throws naming the slot
+   instead of evaluating `undefined`. Two meter notes: the read census only
+   sees `modifiers.<key>` spelled out, so a helper that takes `raw.modifiers`
+   whole hides its reads (the table test covers that gap from the emitter
+   side); and `pick`'s value-site count fell 22 → 19 only because three
+   `evaluator.evaluate(` calls moved inside `evaluateSlot` — the meter
+   counts the spelling, not the evaluation. What step 2 still owes: the
+   typed `args` (per-command positional shapes) and the node itself
+   (`CommandNode<K>`), which this table makes a mechanical extension.
 
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,

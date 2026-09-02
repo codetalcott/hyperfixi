@@ -11,6 +11,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /** Signal type for control flow */
 export type SignalType = 'break' | 'continue' | 'exit';
@@ -51,7 +52,7 @@ export abstract class ControlFlowSignalBase implements DecoratedCommand {
   protected abstract readonly errorFlag: string;
 
   async parseInput(
-    _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    _raw: CommandRaw<'break' | 'continue' | 'exit'>,
     _evaluator: ExpressionEvaluator,
     _context: ExecutionContext
   ): Promise<SignalCommandInput> {

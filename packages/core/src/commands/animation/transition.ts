@@ -24,6 +24,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * The CSS property name a node NAMES, for a node the evaluator resolves to
@@ -79,7 +80,7 @@ function namedPropertyOf(node: unknown): { property: string; objectNode?: unknow
       typeof prop === 'string'
         ? prop
         : typeof (prop as { name?: unknown })?.name === 'string'
-          ? ((prop as { name: string }).name)
+          ? (prop as { name: string }).name
           : undefined;
     if (name) return { property: name, objectNode: n.object };
   }
@@ -140,7 +141,7 @@ export class TransitionCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'transition'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<TransitionCommandInput> {

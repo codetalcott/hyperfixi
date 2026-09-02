@@ -34,6 +34,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export interface StartViewTransitionInput {
   /** Optional CSS view-transition-name. */
@@ -71,7 +72,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'start'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<StartViewTransitionInput> {

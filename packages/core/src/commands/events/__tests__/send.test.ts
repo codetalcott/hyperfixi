@@ -66,9 +66,7 @@ describe('SendCommand (send syntax)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'dataEvent' } as any,
-          ],
+          args: [{ type: 'identifier', name: 'dataEvent' } as any],
           modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
@@ -177,9 +175,7 @@ describe('SendCommand (send syntax)', () => {
       // Parse with send commandName
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'message' } as any,
-          ],
+          args: [{ type: 'identifier', name: 'message' } as any],
           modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },

@@ -176,9 +176,7 @@ describe('WaitCommand - Race Conditions', () => {
         command.parseInput(
           {
             args: [],
-            modifiers: {
-              or: { type: 'expression', value: '1s' },
-            },
+            modifiers: {},
           },
           evaluator,
           context

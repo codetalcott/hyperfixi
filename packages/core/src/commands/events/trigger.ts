@@ -25,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export type { EventOptions } from '../helpers/event-helpers';
 
@@ -85,7 +86,7 @@ export class EventDispatchCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
+    raw: CommandRaw<'trigger'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<EventDispatchInput> {

@@ -32,6 +32,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { commandMeta } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for InstallCommand
@@ -109,7 +110,7 @@ export class InstallCommand {
    * @returns Typed input object for execute()
    */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'install'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<InstallCommandInput> {

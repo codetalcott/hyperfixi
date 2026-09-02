@@ -28,6 +28,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { commandMeta } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for PseudoCommand
@@ -100,7 +101,7 @@ export class PseudoCommand {
    * @returns Typed input object for execute()
    */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'pseudo-command'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PseudoCommandInput> {

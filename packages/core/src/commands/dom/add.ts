@@ -24,6 +24,7 @@ import {
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for AddCommand
@@ -74,7 +75,7 @@ export class AddCommand extends DOMModificationBase {
   protected readonly preposition = 'to';
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'add'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<AddCommandInput> {
