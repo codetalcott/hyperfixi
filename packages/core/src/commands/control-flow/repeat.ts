@@ -130,9 +130,9 @@ export class RepeatCommand implements DecoratedCommand {
     // Extract commands block(s). The body is always the first 'block' arg
     // scanning right-to-left. If a second block immediately precedes it (also
     // scanning right-to-left), that's the body and the later one is the else.
-    let commands: unknown = raw.modifiers?.block || raw.modifiers?.commands;
+    let commands: unknown = undefined;
     let elseCommands: unknown = undefined;
-    if (!commands) {
+    {
       const blocks: unknown[] = [];
       for (let i = raw.args.length - 1; i >= 0; i--) {
         const arg = raw.args[i] as unknown as { type?: string; commands?: unknown };

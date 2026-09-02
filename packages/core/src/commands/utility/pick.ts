@@ -174,18 +174,6 @@ export class PickCommand implements DecoratedCommand {
       return { variant, source, regex, flags };
     }
 
-    // ---------- Legacy fallback: `pick from <expr>` (random single) ----------
-    if (raw.modifiers?.from) {
-      const array = await evaluator.evaluate(raw.modifiers.from, context);
-      if (!Array.isArray(array)) {
-        throw new Error('pick from requires an array');
-      }
-      if (array.length === 0) {
-        throw new Error('Cannot pick from empty array');
-      }
-      return { variant: 'random', array };
-    }
-
     // ---------- Legacy fallback: `pick a, b, c` (random from inline items) ----------
     if (raw.args.length === 0) {
       throw new Error('pick command requires items to choose from');

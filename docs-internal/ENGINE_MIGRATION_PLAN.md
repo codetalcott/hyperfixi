@@ -1326,6 +1326,33 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    parser DOES emit it, for a `| <flags>` regex form the syntax list never
    documented — a docs decision, not a dead read.
 
+   **The bank emptied (2026-09-03).** The eleven hand-built-only reads are
+   deleted: `copy.format`, `if.then/else`, `pick.from`, `repeat.block/
+   commands`, `take.on`, `wait.for/from/or` — `wait` loses `parseEventWait`
+   and `parseRaceCondition` whole, since only the deleted branches called
+   them, and its two guards (event name must be a string; a `from` target
+   must be an EventTarget) move onto the real path, `parseEventArrayWait`,
+   where the second is a small behaviour change: a non-EventTarget `from`
+   now throws instead of silently falling back to `me`. **Census 2,110 →
+   2,085 lines · 323 → 313 branches · 202 → 184 value sites** (wait 105 →
+   93, pick 53 → 50, and repeat/take/copy/if). What the fixtures had been
+   hiding: `wait-new-features.test.ts` — 40 tests for the race, destructuring
+   and `from` forms — was written ENTIRELY against the hand-built
+   `for`/`or`/`from` slots, so its 22 parseInput cases had never once
+   exercised the shape the parser emits. Rewritten to parse each test's own
+   source string (`realInput('wait for click or 1s')`), which found two more
+   things: three tests described a time-first race, `wait 2s or for click`
+   and `wait 500ms or 1s`, that NO parser has ever produced — the parser
+   reads it as a binary `or` expression — now pinned as a KNOWN GAP instead
+   of green fiction; and the per-test evaluator mocks were keyed on the old
+   hand-built `value`s and blind to identifier nodes (`from window`, `from
+   customElement`). The `pick from <expr>` documented example is in the same
+   family: it parses positionally (`[from, colors]`), evaluates `from` as a
+   variable, and its runtime branch was the deleted `modifiers.from` read —
+   a docs defect for `PARSER_NEXT_STEPS.md`, not a parser fix. A trap for the
+   record: the first conversion script matched `or:` inside `for:` and every
+   `for` fixture grew a phantom `or <event>` — word-bound the keys.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,

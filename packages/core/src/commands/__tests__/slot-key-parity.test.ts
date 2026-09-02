@@ -40,30 +40,13 @@ const SERVES: Record<string, readonly string[]> = {
 };
 
 /**
- * Keys read today with no measured emitter. Shrink-only. Every entry is a read
- * that only a HAND-BUILT node can satisfy — neither parser produces the key —
- * which is the shape the missing-half bug wears; each is a deletion (with its
- * fixtures reshaped) waiting on its own PR.
+ * Keys read today with no measured emitter. Shrink-only. The eleven reads
+ * that only a hand-built node could satisfy were deleted with their fixtures
+ * (Arc 3 step 2); what remains is emitted syntax the docs do not list.
  */
 const KNOWN_UNEMITTED: Record<string, Record<string, string>> = {
-  copy: { format: 'no parser emits `format`; one hand-built fixture' },
-  if: {
-    then: 'the parser puts branches in `args` as blocks; hand-built fallback only',
-    else: 'same fallback as `then`',
-  },
   pick: {
-    from: 'the legacy `pick from <expr>` form parses positionally; hand-built fixtures only',
     flags: 'emitted by the `| <flags>` regex form, which the syntax list does not document',
-  },
-  repeat: {
-    block: 'the parser puts the body in `args` as a block; hand-built fallback only',
-    commands: 'same fallback as `block`',
-  },
-  take: { on: 'semantic emits `for`, the core parser `from`/`for`; four hand-built fixtures' },
-  wait: {
-    for: 'the parser emits one arrayLiteral of event specs in `args`; five hand-built fixtures',
-    from: 'same — the event spec carries its source',
-    or: 'same — the race form is the same arrayLiteral',
   },
 };
 

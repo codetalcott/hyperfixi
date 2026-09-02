@@ -73,14 +73,9 @@ export class CopyCommand implements DecoratedCommand {
     }
 
     const source = await evaluator.evaluate(raw.args[0], context);
-    let format: 'text' | 'html' = 'text';
-
-    if (raw.modifiers?.format) {
-      const formatValue = await evaluator.evaluate(raw.modifiers.format, context);
-      if (formatValue === 'html' || formatValue === 'text') format = formatValue;
-    }
-
-    return { source, format };
+    // `format` is part of the input contract; no parser emits a `format`
+    // slot (Arc 3 step 2's parity gate), so it is always text here.
+    return { source, format: 'text' };
   }
 
   async execute(

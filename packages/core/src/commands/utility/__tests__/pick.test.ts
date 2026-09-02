@@ -94,56 +94,6 @@ describe('PickCommand', () => {
       expect(input.array).toBeUndefined();
     });
 
-    it('should parse from array modifier', async () => {
-      const context = createMockContext();
-      const colors = ['red', 'green', 'blue'];
-      const evaluator = createMockEvaluator([colors]);
-
-      const input = await command.parseInput(
-        {
-          args: [],
-          modifiers: { from: { type: 'expression', name: 'colors' } as ExpressionNode },
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.array).toEqual(colors);
-      expect(input.items).toBeUndefined();
-    });
-
-    it('should throw if from modifier is not an array', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator(['not-an-array']);
-
-      await expect(
-        command.parseInput(
-          {
-            args: [],
-            modifiers: { from: { type: 'expression', name: 'notArray' } as ExpressionNode },
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow('pick from requires an array');
-    });
-
-    it('should throw if from array is empty', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator([[]]);
-
-      await expect(
-        command.parseInput(
-          {
-            args: [],
-            modifiers: { from: { type: 'expression', name: 'emptyArray' } as ExpressionNode },
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow('Cannot pick from empty array');
-    });
-
     it('should throw if no items provided', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
@@ -325,31 +275,6 @@ describe('PickCommand', () => {
       expect(context.it).toBe(output.selectedItem);
       expect(output.sourceType).toBe('items');
       expect(output.sourceLength).toBe(3);
-    });
-
-    it('should parse and execute end-to-end with from modifier', async () => {
-      const context = createMockContext();
-      const numbers = [1, 2, 3, 4, 5];
-      const evaluator = createMockEvaluator([numbers]);
-
-      // Parse
-      const input = await command.parseInput(
-        {
-          args: [],
-          modifiers: { from: { type: 'expression', name: 'numbers' } as ExpressionNode },
-        },
-        evaluator,
-        context
-      );
-
-      // Execute
-      const output = await command.execute(input, context);
-
-      expect(output.selectedItem).toBeDefined();
-      expect(numbers).toContain(output.selectedItem);
-      expect(context.it).toBe(output.selectedItem);
-      expect(output.sourceType).toBe('array');
-      expect(output.sourceLength).toBe(5);
     });
   });
 });

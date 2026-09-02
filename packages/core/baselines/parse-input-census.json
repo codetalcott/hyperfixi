@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2110,
-    "branches": 323,
+    "lines": 2085,
+    "branches": 313,
     "syntaxSites": 76,
-    "valueSites": 202
+    "valueSites": 184
   },
   "commands": {
     "async": {
@@ -46,10 +46,10 @@
     },
     "take": {
       "file": "src/commands/animation/take.ts",
-      "lines": 40,
-      "branches": 5,
+      "lines": 39,
+      "branches": 4,
       "syntaxSites": 1,
-      "valueSites": 9
+      "valueSites": 6
     },
     "transition": {
       "file": "src/commands/animation/transition.ts",
@@ -67,10 +67,10 @@
     },
     "wait": {
       "file": "src/commands/async/wait.ts",
-      "lines": 19,
-      "branches": 4,
+      "lines": 15,
+      "branches": 2,
       "syntaxSites": 3,
-      "valueSites": 4
+      "valueSites": 0
     },
     "install": {
       "file": "src/commands/behaviors/install.ts",
@@ -95,17 +95,17 @@
     },
     "if": {
       "file": "src/commands/control-flow/if.ts",
-      "lines": 53,
-      "branches": 8,
+      "lines": 50,
+      "branches": 7,
       "syntaxSites": 7,
-      "valueSites": 4
+      "valueSites": 1
     },
     "repeat": {
       "file": "src/commands/control-flow/repeat.ts",
       "lines": 106,
-      "branches": 30,
+      "branches": 29,
       "syntaxSites": 3,
-      "valueSites": 10
+      "valueSites": 8
     },
     "return": {
       "file": "src/commands/control-flow/return.ts",
@@ -340,10 +340,10 @@
     },
     "copy": {
       "file": "src/commands/utility/copy.ts",
-      "lines": 20,
-      "branches": 3,
+      "lines": 15,
+      "branches": 1,
       "syntaxSites": 1,
-      "valueSites": 4
+      "valueSites": 1
     },
     "log": {
       "file": "src/commands/utility/log.ts",
@@ -354,10 +354,10 @@
     },
     "pick": {
       "file": "src/commands/utility/pick.ts",
-      "lines": 105,
-      "branches": 21,
+      "lines": 93,
+      "branches": 18,
       "syntaxSites": 4,
-      "valueSites": 25
+      "valueSites": 22
     },
     "tell": {
       "file": "src/commands/utility/tell.ts",

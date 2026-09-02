@@ -101,29 +101,6 @@ describe('ConditionalCommand', () => {
       expect(input.elseCommands).toBeDefined();
     });
 
-    it('should parse if with modifier syntax (then/else modifiers)', async () => {
-      const evaluator = createMockEvaluator(true);
-      const context = createMockContext();
-
-      const conditionNode = { type: 'boolean', value: true } as ASTNode;
-      const thenBlock = createMockBlock();
-      const elseBlock = createMockBlock();
-
-      const input = await command.parseInput(
-        {
-          args: [conditionNode],
-          modifiers: { then: thenBlock, else: elseBlock },
-          commandName: 'if',
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.mode).toBe('if');
-      expect(input.thenCommands).toBe(thenBlock);
-      expect(input.elseCommands).toBe(elseBlock);
-    });
-
     it('should throw error if no condition provided', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext();
