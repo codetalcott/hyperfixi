@@ -214,7 +214,7 @@
     "if not valid then throw \"Validation failed\"": "ok:444012789fea",
     "toggle .active on me": "ok:88a91be36692",
     "toggle @disabled": "ok:65c402d7e97b",
-    "toggle #myDialog as modal": "ok:049aaeefe530",
+    "toggle #myDialog as modal": "ok:b54bf980c30f",
     "toggle .loading for 2s": "ok:103ba7a99b6c",
     "transition opacity to 0.5": "ok:18bacb39efc6",
     "transition my *opacity to 0 over 200ms": "ok:6d7c370620d9",

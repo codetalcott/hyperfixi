@@ -1065,8 +1065,21 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    slot, `destination` came back undefined and `marker-roles.test.ts` caught
    it. Core's inferrer now also applies the schema's own `ast.modifiers`
    descriptor as the reverse map (`modifiers.on` IS `destination`, by the
-   schema's own declaration) before returning. PR B is the typed node and the
-   `parseInput` shrink; the census row ratchets down there.
+   schema's own declaration) before returning. **PR B (same day):** the two
+   other syntactic decisions became slots — `between A and B` is
+   `modifiers.between` (an arrayLiteral of the pair, `args` empty) and the
+   dialog mode of `as modal` / bare `modal` is `modifiers.as` (the parser
+   unwraps the `asExpression` the expression parser builds for `#dlg as
+   modal`, once). `parseInput` lost the `firstArgName === 'between'` branch,
+   the `on`/`from` name-skipping, the `asExpression` unwrap and the
+   evaluate-`args[1]`-and-compare-to-`'modal'` mode detection. **Census row:
+   243 → 202 lines, 30 → 25 branches, 8 → 3 syntax sites.** What stays is
+   value work — element-vs-class from the evaluated first value, the
+   dialog/details/select dispatch by element type, `*prop` from a selector
+   token's value — and the remaining three syntax sites are `args[0]` reads,
+   which a positional slot IS. Pinned end to end in `toggle-slots.test.ts`
+   (real parser, real evaluator, DOM effect), not by fixtures: the mock-fed
+   `unless` bug is why.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

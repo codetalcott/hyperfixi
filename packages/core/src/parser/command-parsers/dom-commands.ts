@@ -166,86 +166,85 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
  * @param identifierNode - The 'toggle' identifier node
  * @returns CommandNode representing the toggle command
  */
+/** `modal` / `non-modal` from an asExpression's target type (a node or a bare string). */
+function dialogModeOf(targetType: unknown): string | undefined {
+  const name =
+    typeof targetType === 'string'
+      ? targetType
+      : (targetType as { name?: unknown } | undefined)?.name;
+  return name === 'modal' || name === 'non-modal' ? name : undefined;
+}
+
 export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
+  const modifiers: Record<string, ExpressionNode> = {};
 
-  // Check for "toggle between" syntax
+  // Every SYNTACTIC decision toggle has is made here and carried as a slot
+  // (Arc 3 step 3, toggle PR B): the `between A and B` pair is
+  // `modifiers.between` (an arrayLiteral of the two), the dialog mode of
+  // `as modal` / bare `modal` is `modifiers.as`, and the destination is
+  // `modifiers.on` (PR A). ToggleCommand.parseInput no longer rediscovers any
+  // of them by evaluating an argument and string-comparing the result. What it
+  // still decides — element vs class from the evaluated first value, the
+  // dialog/details/select dispatch by element type — is VALUE work, and stays.
+
   if (ctx.check(KEYWORDS.BETWEEN)) {
     ctx.advance(); // consume 'between'
-    args.push(ctx.createIdentifier('between'));
-
-    // Parse first class/attribute. `parseOneArgument` uses the full expression
-    // parser, which treats `and` as a logical operator — so `.on and .off`
-    // comes back as a single binary `and` expression. Split it back into the
-    // flat `classA, and, classB` shape the toggle command's parseInput expects.
+    // `parseOneArgument` uses the full expression parser, which treats `and`
+    // as a logical operator — so `.on and .off` comes back as one binary
+    // `and` expression. Split it into the pair; otherwise parse the pair
+    // around the keyword.
+    const pair: ASTNode[] = [];
     const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]) as
       (ASTNode & { type?: string; operator?: string; left?: ASTNode; right?: ASTNode }) | undefined;
     if (firstArg && firstArg.type === 'binaryExpression' && firstArg.operator === 'and') {
-      if (firstArg.left) args.push(firstArg.left);
-      args.push(ctx.createIdentifier('and'));
-      if (firstArg.right) args.push(firstArg.right);
+      if (firstArg.left) pair.push(firstArg.left);
+      if (firstArg.right) pair.push(firstArg.right);
     } else {
-      if (firstArg) {
-        args.push(firstArg);
-      }
-
-      // Consume 'and' keyword
-      consumeKeywordToArgs(ctx, KEYWORDS.AND, args);
-
-      // Parse second class/attribute (stops at 'on'/'from'/'for')
+      if (firstArg) pair.push(firstArg);
+      consumeOptionalKeyword(ctx, KEYWORDS.AND);
       const secondArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON, KEYWORDS.FOR]);
-      if (secondArg) {
-        args.push(secondArg);
-      }
+      if (secondArg) pair.push(secondArg);
     }
-
-    // `on <target>` / `from <target>` is the destination SLOT, not two more
-    // arguments — see the note on the standard form below.
-    const modifiers: Record<string, ExpressionNode> = {};
-    if (consumeOptionalKeyword(ctx, KEYWORDS.FROM) || consumeOptionalKeyword(ctx, KEYWORDS.ON)) {
-      const targetArg = parseOneArgument(ctx);
-      if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
+    const first = pair[0];
+    const last = pair[pair.length - 1];
+    modifiers['between'] = toLegacyExpression({
+      type: 'arrayLiteral',
+      elements: pair as never,
+      ...(first?.start !== undefined ? { start: first.start } : {}),
+      ...(last?.end !== undefined ? { end: last.end } : {}),
+      ...(first?.line !== undefined ? { line: first.line } : {}),
+      ...(first?.column !== undefined ? { column: first.column } : {}),
+    });
+  } else {
+    // Standard syntax: toggle <class|attr|element> [as modal|non-modal] [on|from <target>].
+    // The argument stops before `as` so that `as modal` is read as the mode
+    // slot rather than folded into an `asExpression` the command would have
+    // to unwrap.
+    // `as` is an expression operator, so `#dlg as modal` comes back from the
+    // expression parser as ONE asExpression; unwrap it here, once, into the
+    // target plus the mode slot. (Stopping the argument before `as` would not
+    // help — `parseOneArgument` only refuses to START at a boundary.)
+    const classArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON]) as
+      (ASTNode & { expression?: ASTNode; targetType?: unknown }) | undefined;
+    const mode = classArg?.type === 'asExpression' ? dialogModeOf(classArg.targetType) : undefined;
+    if (classArg && mode !== undefined && classArg.expression) {
+      args.push(classArg.expression);
+      modifiers['as'] = literalModifier(mode);
+    } else if (classArg) {
+      args.push(classArg);
     }
-
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .withModifiers({ ...modifiers, ...parseTemporalTail(ctx) })
-      .endingAt(ctx.getPosition())
-      .build();
+    if (mode === undefined && ctx.check('modal')) {
+      ctx.advance();
+      modifiers['as'] = literalModifier('modal');
+    }
   }
 
-  // Standard toggle syntax: toggle <class> from <target> OR toggle <class> on <target>
-  // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
-
-  // Parse first argument (class) until 'from' or 'on'
-  const classArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON]);
-  if (classArg) {
-    args.push(classArg);
-  }
-
-  // `on <target>` / `from <target>` — the destination. Emitted as
-  // `modifiers.on`, NOT pushed into `args` as `[on, <target>]` (Arc 3 step 3,
-  // toggle's first PR). The parser has just consumed the keyword; encoding it
-  // as an argument for ToggleCommand to rediscover by name was the
-  // `marker-in-args` family the convergence detour left open, and the
-  // interchange's role inference tries modifier markers first, so the
-  // destination role survives unchanged. `from` (the HyperFixi spelling) and
-  // `on` (upstream's) mean the same thing here and share the slot.
-  // ToggleCommand.parseInput already read `modifiers.on` as its fallback
-  // destination (`fallbackModifierKey: 'on'`), which is how the semantic path
-  // always reached it.
-  const modifiers: Record<string, ExpressionNode> = {};
+  // `on <target>` / `from <target>` — the destination slot (PR A). `from` is
+  // the HyperFixi spelling, `on` upstream's; they mean the same thing here.
   if (consumeOptionalKeyword(ctx, KEYWORDS.FROM) || consumeOptionalKeyword(ctx, KEYWORDS.ON)) {
     const targetArg = parseOneArgument(ctx);
     if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
-  }
-
-  // Optional bare `modal` modifier for dialogs: `toggle #dialog modal`.
-  // ToggleCommand.parseModalMode reads args[1] === 'modal'. (The `as modal`
-  // form is handled in ToggleCommand.parseInput via the asExpression target.)
-  if (ctx.check('modal')) {
-    ctx.advance();
-    args.push(toLegacyExpression({ type: 'literal', value: 'modal', raw: 'modal' }));
   }
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)

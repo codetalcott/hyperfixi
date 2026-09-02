@@ -280,8 +280,11 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      // Should have: 'between' keyword, classA, 'and' keyword, classB, 'on' keyword, target
-      expect(result.args.length).toBeGreaterThanOrEqual(4);
+      // The pair and the destination are slots (Arc 3 step 3): nothing
+      // positional, `modifiers.between` holds the two, `modifiers.on` the target.
+      expect(result.args).toEqual([]);
+      expect(result.modifiers?.between).toBeDefined();
+      expect(result.modifiers?.on).toBeDefined();
     });
   });
 

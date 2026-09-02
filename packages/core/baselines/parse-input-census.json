@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2434,
-    "branches": 361,
-    "syntaxSites": 128,
-    "valueSites": 215
+    "lines": 2393,
+    "branches": 356,
+    "syntaxSites": 123,
+    "valueSites": 216
   },
   "commands": {
     "async": {
@@ -249,10 +249,10 @@
     },
     "toggle": {
       "file": "src/commands/dom/toggle.ts",
-      "lines": 243,
-      "branches": 30,
-      "syntaxSites": 8,
-      "valueSites": 24
+      "lines": 202,
+      "branches": 25,
+      "syntaxSites": 3,
+      "valueSites": 25
     },
     "VisibilityCommandBase": {
       "file": "src/commands/dom/visibility-base.ts",
