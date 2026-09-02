@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HaltCommand } from '../halt';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 
@@ -103,12 +103,16 @@ describe('HaltCommand', () => {
       const context = createMockContext({ event: mockEvent as any });
       const evaluator = createMockEvaluator();
 
-      const args = [
-        { type: 'identifier', name: 'the' },
-        { type: 'identifier', name: 'event' },
-      ] as unknown as ASTNode[];
+      const input = await command.parseInput(
+        {
+          args: [],
+          modifiers: { the: { type: 'literal', value: 'event' } as unknown as ExpressionNode },
+        },
 
-      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
+        evaluator,
+
+        context
+      );
 
       expect(input.target).toBe(mockEvent);
     });
@@ -124,19 +128,14 @@ describe('HaltCommand', () => {
       const context = createMockContext({ event: mockEvent as any });
       const evaluator = createMockEvaluator();
 
-      const args = [{ type: 'identifier', name: 'the' }] as unknown as ASTNode[];
-      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
-
-      expect(input.target).toBe(mockEvent);
-    });
-
-    it('should recognize a leading "the" literal as halt-the-event (en form)', async () => {
-      const mockEvent = createMockEvent();
-      const context = createMockContext({ event: mockEvent as any });
-      const evaluator = createMockEvaluator();
-
-      const args = [{ type: 'literal', value: 'the' }] as unknown as ASTNode[];
-      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
+      const input = await command.parseInput(
+        {
+          args: [],
+          modifiers: { the: { type: 'literal', value: 'event' } as unknown as ExpressionNode },
+        },
+        evaluator,
+        context
+      );
 
       expect(input.target).toBe(mockEvent);
     });
@@ -332,12 +331,16 @@ describe('HaltCommand', () => {
       const evaluator = createMockEvaluator();
 
       // Parse "halt the event"
-      const args = [
-        { type: 'identifier', name: 'the' },
-        { type: 'identifier', name: 'event' },
-      ] as unknown as ASTNode[];
+      const input = await command.parseInput(
+        {
+          args: [],
+          modifiers: { the: { type: 'literal', value: 'event' } as unknown as ExpressionNode },
+        },
 
-      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
+        evaluator,
+
+        context
+      );
 
       // Execute
       const result = await command.execute(input, context);

@@ -373,18 +373,17 @@ export function parseProcessCommand(ctx: ParserContext, identifierNode: Identifi
     return null;
   }
 
+  // `process partials in <content>`: both words are consumed; the content is
+  // the one positional argument — the shape the semantic path always emitted
+  // (`ast: { args: ['patient'] }`). Marker words never reach `args`.
   const args: ASTNode[] = [];
-  consumeKeywordToArgs(ctx, 'partials', args);
-
-  // `in <content>` — the keyword must be consumed here; the generic loop
-  // treats it as a boundary and silently dropped everything after it.
-  if (consumeKeywordToArgs(ctx, KEYWORDS.IN, args)) {
+  ctx.advance(); // consume 'partials'
+  if (consumeOptionalKeyword(ctx, KEYWORDS.IN)) {
     const contentArg = parseOneArgument(ctx, ['using']);
     if (contentArg) {
       args.push(contentArg);
     }
   }
-
   const modifiers = parseViewTransitionTail(ctx);
   const builder = CommandNodeBuilder.fromIdentifier<'process'>(identifierNode).withArgs(...args);
   if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);

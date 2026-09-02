@@ -577,8 +577,10 @@ describe('Halt Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('halt');
-    expect(result.args).toHaveLength(1);
-    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'the' });
+    // The patient rides the `the` slot (Arc 3 step 3) — the shape the core
+    // parser emits and HaltCommand reads; a bare halt has no slot.
+    expect(result.args).toHaveLength(0);
+    expect(result.modifiers?.the).toMatchObject({ type: 'literal', value: 'the' });
   });
 });
 
@@ -603,14 +605,52 @@ describe('Throw Command Mapper', () => {
 
 describe('Command Mapper Registry', () => {
   const allCommands: ActionType[] = [
-    'toggle', 'add', 'remove', 'set', 'show', 'hide',
-    'increment', 'decrement', 'wait', 'log', 'put',
-    'fetch', 'append', 'prepend', 'trigger', 'send',
-    'go', 'transition', 'focus', 'blur', 'get', 'take',
-    'call', 'return', 'halt', 'throw', 'settle', 'swap',
-    'morph', 'clone', 'make', 'measure', 'tell', 'js',
-    'async', 'if', 'unless', 'repeat', 'for', 'while',
-    'continue', 'default', 'init', 'behavior', 'install', 'on',
+    'toggle',
+    'add',
+    'remove',
+    'set',
+    'show',
+    'hide',
+    'increment',
+    'decrement',
+    'wait',
+    'log',
+    'put',
+    'fetch',
+    'append',
+    'prepend',
+    'trigger',
+    'send',
+    'go',
+    'transition',
+    'focus',
+    'blur',
+    'get',
+    'take',
+    'call',
+    'return',
+    'halt',
+    'throw',
+    'settle',
+    'swap',
+    'morph',
+    'clone',
+    'make',
+    'measure',
+    'tell',
+    'js',
+    'async',
+    'if',
+    'unless',
+    'repeat',
+    'for',
+    'while',
+    'continue',
+    'default',
+    'init',
+    'behavior',
+    'install',
+    'on',
   ];
 
   it('should have mappers for all commands', () => {

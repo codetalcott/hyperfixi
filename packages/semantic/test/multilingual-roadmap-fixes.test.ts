@@ -16,7 +16,6 @@
 import { describe, it, expect } from 'vitest';
 import { parse, canParse, getTokenizer, fillSchemaDefaults, render } from '../src';
 
-
 /**
  * The COMMANDS of a handler body, looking through the `compound` wrapper.
  *
@@ -7343,7 +7342,8 @@ describe('hi halt-propagation — leaked `the` before a fronted patient (R2 batc
   it('[hi] halt keeps its patient (the event) so the handler continues', () => {
     const ast = buildAST(parse(corpus, 'hi'));
     const halt = findAstCommand(ast.ast, 'halt');
-    expect((halt!.args as unknown[]).length).toBeGreaterThan(0); // NOT a bare halt
+    // NOT a bare halt: `the event` is the `the` slot (Arc 3 step 3)
+    expect((halt!.modifiers as Record<string, unknown> | undefined)?.the).toBeDefined();
     expect(astActions(ast.ast)).toEqual(expect.arrayContaining(['halt', 'toggle']));
   });
 
@@ -7360,7 +7360,8 @@ describe('hi halt-propagation — leaked `the` before a fronted patient (R2 batc
     // en is excluded from the skip — `halt the event` still parses (the en
     // reference must stay byte-identical).
     const halt = findAstCommand(buildAST(parse('halt the event', 'en')).ast, 'halt');
-    expect((halt!.args as unknown[]).length).toBeGreaterThan(0);
+    // `the event` is the `the` slot (Arc 3 step 3), not an argument.
+    expect((halt!.modifiers as Record<string, unknown> | undefined)?.the).toBeDefined();
   });
 });
 

@@ -10,6 +10,7 @@
  * - End-to-end integration scenarios
  */
 
+import type { ExpressionNode } from '../../../types/core';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ProcessPartialsCommand, extractPartials, processPartials } from '../process-partials';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
@@ -154,40 +155,6 @@ describe('ProcessPartialsCommand (Decorated)', () => {
       ).rejects.toThrow(/requires.*content.*argument/i);
     });
 
-    it('should throw without "partials" keyword', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      // args: ['in', '<div>hello</div>']  — missing 'partials'
-      await expect(
-        command.parseInput(
-          {
-            args: [kwArg('in'), litArg('<div>hello</div>')],
-            modifiers: {},
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow(/partials/i);
-    });
-
-    it('should throw without "in" keyword', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      // args: ['partials', '<div>hello</div>']  — missing 'in'
-      await expect(
-        command.parseInput(
-          {
-            args: [kwArg('partials'), litArg('<div>hello</div>')],
-            modifiers: {},
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow(/in/i);
-    });
-
     it('should parse HTML string content after "in"', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
@@ -195,7 +162,7 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       const input = await command.parseInput(
         {
-          args: [kwArg('partials'), kwArg('in'), litArg(htmlContent)],
+          args: [litArg(htmlContent)],
           modifiers: {},
         },
         evaluator,
@@ -214,15 +181,9 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            kwArg('partials'),
-            kwArg('in'),
-            litArg(htmlContent),
-            kwArg('using'),
-            kwArg('view'),
-            kwArg('transition'),
-          ],
-          modifiers: {},
+          args: [litArg(htmlContent)],
+          // The tail is the `viewTransition` slot (what parseViewTransitionTail emits).
+          modifiers: { viewTransition: litArg('transition') as ExpressionNode },
         },
         evaluator,
         context
@@ -249,7 +210,7 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       const input = await command.parseInput(
         {
-          args: [kwArg('partials'), kwArg('in'), litArg(htmlContent)],
+          args: [litArg(htmlContent)],
           modifiers: {},
         },
         blindEvaluator,
@@ -264,15 +225,9 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            kwArg('partials'),
-            kwArg('in'),
-            litArg('<hx-partial target="#t">x</hx-partial>'),
-            kwArg('using'),
-            kwArg('view'),
-            kwArg('transition'),
-          ],
-          modifiers: {},
+          args: [litArg('<hx-partial target="#t">x</hx-partial>')],
+          // The tail is the `viewTransition` slot (what parseViewTransitionTail emits).
+          modifiers: { viewTransition: litArg('transition') as ExpressionNode },
         },
         blindEvaluator,
         context
@@ -529,7 +484,7 @@ describe('ProcessPartialsCommand (Decorated)', () => {
       // parseInput
       const input = await command.parseInput(
         {
-          args: [kwArg('partials'), kwArg('in'), litArg(htmlContent)],
+          args: [litArg(htmlContent)],
           modifiers: {},
         },
         evaluator,
@@ -559,7 +514,7 @@ describe('ProcessPartialsCommand (Decorated)', () => {
       // parseInput
       const input = await command.parseInput(
         {
-          args: [kwArg('partials'), kwArg('in'), litArg(htmlContent)],
+          args: [litArg(htmlContent)],
           modifiers: {},
         },
         evaluator,

@@ -42,6 +42,11 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
   // roles, but both keys still equal their role's en marker exactly
   // (patient → 'to', scope → 'on', both via markerOverride). Two exemptions
   // were written here on the assumption they diverged; the gate rejected both.
+  'halt.the': {
+    kind: 'contract',
+    reason:
+      '`the` is the article haltSchema SKIPS (argSkipTokens), not a patient marker; it is the slot the core parser emits for `halt the event` (Arc 3 step 3), so the descriptor names it to keep both paths on one shape',
+  },
   'show.with': {
     kind: 'undeclared',
     reason: '`duration` is not declared on showSchema; the parser relabels into it',

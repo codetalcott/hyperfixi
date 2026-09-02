@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2085,
-    "branches": 313,
-    "syntaxSites": 76,
-    "valueSites": 181
+    "lines": 2038,
+    "branches": 305,
+    "syntaxSites": 73,
+    "valueSites": 182
   },
   "commands": {
     "async": {
@@ -88,10 +88,10 @@
     },
     "halt": {
       "file": "src/commands/control-flow/halt.ts",
-      "lines": 29,
+      "lines": 19,
       "branches": 2,
-      "syntaxSites": 3,
-      "valueSites": 1
+      "syntaxSites": 1,
+      "valueSites": 2
     },
     "if": {
       "file": "src/commands/control-flow/if.ts",
@@ -200,9 +200,9 @@
     },
     "process": {
       "file": "src/commands/dom/process-partials.ts",
-      "lines": 81,
-      "branches": 13,
-      "syntaxSites": 2,
+      "lines": 44,
+      "branches": 5,
+      "syntaxSites": 1,
       "valueSites": 2
     },
     "put": {

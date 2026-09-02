@@ -3246,14 +3246,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
@@ -3268,14 +3269,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
@@ -3341,14 +3343,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         }
       ]
