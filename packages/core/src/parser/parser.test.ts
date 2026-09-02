@@ -560,11 +560,9 @@ describe('Hyperscript AST Parser', () => {
       expectAST('put "hello" into #output', {
         type: 'command',
         name: 'put',
-        args: [
-          { type: 'literal', value: 'hello' },
-          { type: 'identifier', name: 'into' },
-          { type: 'selector', value: '#output' },
-        ],
+        // The operation is the slot the target lives under (Arc 3 step 3).
+        args: [{ type: 'literal', value: 'hello' }],
+        modifiers: { into: { type: 'selector', value: '#output' } },
       });
     });
 

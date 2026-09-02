@@ -1102,6 +1102,18 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    reviewed; two `KNOWN_UNFIXED` marker bindings in `marker-roles.test.ts`
    (`swap.method="over"`, `morph.patient="over"`) cleared, because there is no
    bare `over` in `args` for the positional pass to bind any more.
+
+   **`put` (same day).** The operation is the slot the target lives under:
+   `put X into Y` is `args: [X]`, `modifiers.into: Y`, and the multi-word
+   operations keep their spelling as the key (`'at start of'`, `'at end of'`)
+   — the shape `putSchema`'s `ast` descriptor has always produced on the
+   semantic path and `PutCommand.parseInput` already read. The parser had
+   just resolved the operation (including `at the start of` → `at start of`)
+   and was pushing it back into `args` as an identifier for the command to
+   find again by scanning for one of six words. That scan is gone; a bare
+   two-argument node built directly still defaults to `into`. **Census row:
+   152 → 132 lines, 9 → 3 syntax sites.** Type-escapes 906 → 902. Four corpus
+   rows moved, reviewed; 18 fixtures and 4 parser pins reshaped.
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

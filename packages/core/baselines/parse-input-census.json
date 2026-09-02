@@ -3,9 +3,9 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2231,
-    "branches": 340,
-    "syntaxSites": 114,
+    "lines": 2211,
+    "branches": 337,
+    "syntaxSites": 108,
     "valueSites": 215
   },
   "commands": {
@@ -207,9 +207,9 @@
     },
     "put": {
       "file": "src/commands/dom/put.ts",
-      "lines": 152,
-      "branches": 34,
-      "syntaxSites": 9,
+      "lines": 132,
+      "branches": 31,
+      "syntaxSites": 3,
       "valueSites": 7
     },
     "remove": {

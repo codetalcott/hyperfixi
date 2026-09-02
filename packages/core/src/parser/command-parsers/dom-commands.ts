@@ -526,8 +526,16 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
   }
 
   // Create command node using builder pattern
+  // The operation is the SLOT the target lives under (Arc 3 step 3):
+  // `put X into Y` is `args: [X]`, `modifiers.into: Y` — the shape the
+  // semantic path always produced from putSchema's `ast` descriptor, and the
+  // one PutCommand.parseInput already read. The multi-word operations keep
+  // their spelling as the key (`'at start of'`, `'at end of'`), which is what
+  // the command's position map is keyed on. Until now the parser pushed the
+  // operation word into `args` as an identifier for the command to find again.
   return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(contentExpr, ctx.createIdentifier(operation), targetExpr)
+    .withArgs(contentExpr)
+    .withModifier(operation, targetExpr as ExpressionNode)
     .endingAt(ctx.getPosition())
     .build();
 }
