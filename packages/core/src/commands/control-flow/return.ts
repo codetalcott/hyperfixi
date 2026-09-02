@@ -20,6 +20,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { CommandRaw } from '../../ast/command-slots';
+import type { ReturnSignal } from '../../types/result';
 
 /**
  * Typed input for ReturnCommand
@@ -31,10 +32,8 @@ export interface ReturnCommandInput {
 /**
  * Output from Return command execution
  */
-export interface ReturnCommandOutput {
-  returnValue: unknown;
-  timestamp: number;
-}
+/** `return` completes with its signal (Arc 4a); the value rides on it. */
+export type ReturnCommandOutput = ReturnSignal;
 
 /**
  * ReturnCommand - Returns a value
@@ -82,10 +81,8 @@ export class ReturnCommand implements DecoratedCommand {
     }
     Object.assign(context, { it: value });
 
-    const returnError = new Error('RETURN_VALUE');
-    (returnError as any).isReturn = true;
-    (returnError as any).returnValue = value;
-    throw returnError;
+    // A signal is RETURNED, not thrown (Arc 4a).
+    return { type: 'return', returnValue: value };
   }
 }
 

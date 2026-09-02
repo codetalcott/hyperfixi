@@ -87,64 +87,32 @@ describe('ExitCommand', () => {
   });
 
   describe('execute', () => {
-    it('should throw an error with isExit flag', async () => {
+    it('should return a signal with isExit flag', async () => {
       const context = createMockContext();
       const input = { signalType: 'exit' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.isExit).toBe(true);
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('exit');
     });
 
-    it('should throw error with EXIT_COMMAND message', async () => {
+    it('should return a signal with EXIT_COMMAND message', async () => {
       const context = createMockContext();
       const input = { signalType: 'exit' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.message).toBe('EXIT_COMMAND');
+      expect(signal.type).toBe('exit');
     });
 
     it('should include returnValue as undefined', async () => {
       const context = createMockContext();
       const input = { signalType: 'exit' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.returnValue).toBeUndefined();
-    });
-
-    it('should include timestamp', async () => {
-      const context = createMockContext();
-      const input = { signalType: 'exit' as const };
-
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
-
-      expect(thrownError.timestamp).toBeDefined();
-      expect(typeof thrownError.timestamp).toBe('number');
-      expect(thrownError.timestamp).toBeGreaterThan(0);
+      expect(signal.returnValue).toBeUndefined();
     });
 
     it('should not modify execution context before throwing', async () => {
@@ -173,18 +141,10 @@ describe('ExitCommand', () => {
       const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isExit).toBe(true);
-      expect(thrownError.message).toBe('EXIT_COMMAND');
-      expect(thrownError.returnValue).toBeUndefined();
-      expect(thrownError.timestamp).toBeDefined();
+      expect(signal).toBeDefined();
+      expect(signal).toEqual({ type: 'exit', returnValue: undefined });
     });
   });
 });

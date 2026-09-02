@@ -81,6 +81,16 @@ export interface ReturnSignal {
 export type ExecutionResult<T> = Result<T, ExecutionSignal>;
 
 /**
+ * What a command's `execute` completes with (Arc 4a): a value, or a
+ * control-flow signal RETURNED rather than thrown. `halt`, `exit`, `break`,
+ * `continue` and `return` return the signal; the runtime's dispatch
+ * (`processCommandWithResult` / `processCommand`) recognises it with
+ * {@link isSignal} and routes it as control flow. Every other command's
+ * return is a plain value.
+ */
+export type Completion<T = unknown> = T | ExecutionSignal;
+
+/**
  * Error subtype carrying control-flow signal properties.
  * Used to bridge exception-based control flow (legacy) with typed signal handling.
  * Commands like halt, exit, break, continue, return throw these.
