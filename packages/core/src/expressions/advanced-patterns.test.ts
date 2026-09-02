@@ -47,11 +47,6 @@ describe('Advanced Pattern Coverage', () => {
       ]),
       globals: new Map([['window', { location: { href: 'http://localhost:3000' } }]]),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
   });
 

@@ -67,11 +67,6 @@ function convertContext(
     result: hyperScriptContext?.result,
     locals: new Map(),
     globals: initialGlobals,
-    halted: false,
-    returned: false,
-    broke: false,
-    continued: false,
-    async: false,
   };
 
   if (!hyperScriptContext) {

@@ -32,7 +32,6 @@ describe.skip('Simple Integration Test', () => {
     };
 
     const typedContext = ContextBridge.toTyped(context) as any;
-    expect(typedContext.validationMode).toBe('strict');
     expect(Array.isArray(typedContext.errors)).toBe(true);
   });
 

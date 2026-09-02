@@ -95,7 +95,6 @@ function createMockContext(
     globals: new Map(),
     target: meElement,
     detail: undefined,
-    halted: false,
     ...overrides,
   } as unknown as ExecutionContext & TypedExecutionContext;
 }

@@ -1887,6 +1887,20 @@ through `HyperfixiPluginContext.runtime`, which they already receive. Gate: a
 ratchet (this is the arc that removes `expressions → parser/extensions` and
 `commands → parser/extensions`).
 
+**Step 1 DONE 2026-09-04** (the brief's step 0 measurements folded in): the
+three write-only bridge fields (`expressionStack`, `evaluationDepth`,
+`validationMode`), the dead `meta` and `events`, and the never-read
+control-flow flags (`halted`/`returned`/`broke`/`continued`/`async` and the
+`flags` object — dead since Arc 4a made every signal a Result) are gone from
+`ExecutionContext`/`TypedExecutionContext`, `ContextBridge`, the context
+factories (`createContext`/`createChildContext`/`snapshot`/`restore`/`clone`;
+`ensureContext` no longer keys "already valid" on `flags`), the two
+compatibility adapters, the test helpers and 26 test files that carried the
+literals. `TypedExecutionContext` now adds ONE field, `evaluationHistory`,
+which step 2 moves onto the runtime — and then the bridge has nothing left
+to add. Core 7975, matrix unmoved, output-contract unmoved, bench within
+tolerance.
+
 Blast radius: ~~`ExecutionContext` is exported and used downstream as a type
 (reactivity, realtime, components).~~ Measured 2026-09-04 (the 4c brief):
 reactivity, realtime, intercept and components each declare their OWN

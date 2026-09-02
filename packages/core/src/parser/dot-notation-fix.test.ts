@@ -20,11 +20,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map([['obj', { prop: 'value' }]]),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       const result = await evaluateExpressionFromSource('obj.prop', context);
@@ -46,11 +41,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       const result = await evaluateExpressionFromSource(
@@ -69,11 +59,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map([['obj', { nested: { prop: 'deep-value' } }]]),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       const result = await evaluateExpressionFromSource('obj.nested.prop', context);
@@ -93,11 +78,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       // Test dot notation
@@ -126,11 +106,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       // Test string length property
@@ -147,11 +122,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map([['nullObj', null]]),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       // Canonical (per design-doc Q2): silent-null member access returns
@@ -172,11 +142,6 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
 
       // Fixed: dot notation now works correctly

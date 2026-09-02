@@ -201,25 +201,11 @@ export interface ExecutionContext extends CoreExecutionContext {
    */
   registry?: ExpressionRegistry;
 
-  // Control flow flags
-  readonly halted?: boolean;
-  readonly returned?: boolean;
-  readonly broke?: boolean;
-  readonly continued?: boolean;
-  readonly async?: boolean;
-
-  // Legacy compatibility properties
+  // Legacy compatibility properties. (The control-flow flags, `events` and
+  // `meta` that used to sit here had no reader — Arc 4c step 1 deleted them;
+  // a signal is a Result since Arc 4a.)
   readonly variables?: Map<string, unknown>;
-  readonly events?: Map<string, { target: HTMLElement; event: string; handler: Function }>;
   readonly parent?: ExecutionContext;
-  readonly meta?: Record<string, unknown>;
-  readonly flags?: {
-    halted: boolean;
-    breaking: boolean;
-    continuing: boolean;
-    returning: boolean;
-    async: boolean;
-  };
 
   /**
    * Optional convenience for plugin commands to register per-element
@@ -242,13 +228,12 @@ export interface ExecutionContext extends CoreExecutionContext {
  * - Gradual adoption (add tracking as needed)
  */
 export interface TypedExecutionContext extends ExecutionContext {
-  /** Stack of expression names for debugging nested evaluations */
-  readonly expressionStack?: string[];
-  /** Current nesting depth of expression evaluation */
-  readonly evaluationDepth?: number;
-  /** Validation strictness mode */
-  readonly validationMode?: 'strict' | 'permissive';
-  /** History of expression evaluations for debugging/performance */
+  /**
+   * History of expression evaluations for debugging/performance. The only
+   * field this interface still adds (Arc 4c step 1 deleted `expressionStack`,
+   * `evaluationDepth` and `validationMode`, which nothing read); step 2 moves
+   * this one onto the runtime as an opt-in tracker and the interface folds.
+   */
   readonly evaluationHistory?: Array<{
     expressionName: string;
     category: string;
@@ -568,9 +553,6 @@ export class TypeSystemBridge {
   static toEnhanced(context: ExecutionContext): TypedExecutionContext {
     return {
       ...context,
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'permissive',
       evaluationHistory: [],
     };
   }
@@ -682,9 +664,6 @@ export function createTypedExecutionContext(
   const executionContext = createExecutionContext(base?.me, base);
   return {
     ...executionContext,
-    expressionStack: [],
-    evaluationDepth: 0,
-    validationMode: 'strict',
     evaluationHistory: [],
     ...overrides,
   };
@@ -696,7 +675,7 @@ export function createTypedExecutionContext(
 export function isTypedExecutionContext(
   context: ExecutionContext | TypedExecutionContext
 ): context is TypedExecutionContext {
-  return 'expressionStack' in context && 'evaluationDepth' in context;
+  return 'evaluationHistory' in context;
 }
 
 /**

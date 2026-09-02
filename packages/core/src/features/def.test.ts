@@ -21,14 +21,6 @@ describe('Def Feature', () => {
     // Ensure required context properties exist
     if (!context.locals) (context as any).locals = new Map();
     if (!context.globals) (context as any).globals = new Map();
-    if (!context.flags)
-      (context as any).flags = {
-        halted: false,
-        breaking: false,
-        continuing: false,
-        returning: false,
-        async: false,
-      };
   });
 
   afterEach(() => {

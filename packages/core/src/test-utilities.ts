@@ -210,9 +210,6 @@ export interface TestContextOptions {
   variables?: Map<string, unknown>;
   result?: unknown;
   // Optional enhanced properties
-  expressionStack?: string[];
-  evaluationDepth?: number;
-  validationMode?: 'strict' | 'permissive';
   evaluationHistory?: Array<{
     expressionName: string;
     category: string;
@@ -222,8 +219,6 @@ export interface TestContextOptions {
     duration: number;
     success: boolean;
   }>;
-  // Legacy/meta properties
-  meta?: Record<string, unknown>;
 }
 
 /**
@@ -259,7 +254,6 @@ export function createTestContext(options: TestContextOptions = {}): ExecutionCo
     // ExecutionContext additions
     result: options.result ?? null,
     variables: options.variables,
-    meta: options.meta,
   };
 }
 
@@ -281,11 +275,7 @@ export function createTypedExecutionContext(
     // ExecutionContext additions
     result: options.result ?? null,
     variables: options.variables,
-    meta: options.meta,
     // TypedExecutionContext optional properties
-    expressionStack: options.expressionStack,
-    evaluationDepth: options.evaluationDepth,
-    validationMode: options.validationMode,
     evaluationHistory: options.evaluationHistory,
   };
 }
@@ -298,7 +288,7 @@ export function createTypedExpressionContext(
   data: Record<string, unknown> = {}
 ): TestExpressionContext {
   // Extract known properties
-  const { me, you, it, event, locals, globals, variables, result, meta, ...rest } = data;
+  const { me, you, it, event, locals, globals, variables, result, ...rest } = data;
 
   const context: TestExpressionContext = {
     // Core properties
@@ -311,7 +301,6 @@ export function createTypedExpressionContext(
     // ExecutionContext additions
     result: result ?? null,
     variables: variables instanceof Map ? variables : new Map(Object.entries(variables || {})),
-    meta: meta instanceof Map ? Object.fromEntries(meta) : (meta as Record<string, unknown>) || {},
     // Performance tracking (test-specific)
     performanceMetrics: {
       totalEvaluations: 0,

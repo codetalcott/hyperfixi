@@ -302,7 +302,6 @@ export function createRuntime(options: RuntimeOptions): LokaScriptRuntime {
         variables: new Map(),
         locals: new Map(),
         globals: new Map(),
-        meta: {},
       };
 
       return runtime.execute(ast, context);
