@@ -56,12 +56,9 @@ function signalToError(signal: ExecutionSignal): Error {
  */
 export function isControlFlowError(e: unknown): e is ControlFlowError {
   if (!(e instanceof Error)) return false;
-  return (
-    asControlFlowError(e) !== null ||
-    e.message === 'HALT_EXECUTION' ||
-    e.message === 'EXIT_COMMAND' ||
-    e.message === 'EXIT_EXECUTION'
-  );
+  // Every producer sets the flag (signalToError, the hybrid executor); the
+  // message-string branches were dead by construction (Arc 4a step 3).
+  return asControlFlowError(e) !== null;
 }
 // NOTE: ExpressionEvaluator import removed for tree-shaking.
 // Use ConfigurableExpressionEvaluator or ExpressionEvaluator explicitly in your bundle.
@@ -601,10 +598,10 @@ export class RuntimeBase {
   protected toSignal(error: unknown): ExecutionSignal | null {
     const cfe = asControlFlowError(error);
     if (cfe) {
-      if (cfe.isHalt || cfe.message === 'HALT_EXECUTION') {
+      if (cfe.isHalt) {
         return { type: 'halt' };
       }
-      if (cfe.isExit || cfe.message === 'EXIT_COMMAND') {
+      if (cfe.isExit) {
         return { type: 'exit', returnValue: cfe.returnValue };
       }
       if (cfe.isBreak) {
@@ -618,10 +615,6 @@ export class RuntimeBase {
       }
     }
     // Legacy message-based signals (no signal properties set)
-    if (error instanceof Error) {
-      if (error.message === 'HALT_EXECUTION') return { type: 'halt' };
-      if (error.message === 'EXIT_COMMAND') return { type: 'exit' };
-    }
     return null;
   }
 

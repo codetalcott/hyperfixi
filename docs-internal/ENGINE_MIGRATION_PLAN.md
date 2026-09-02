@@ -1728,6 +1728,17 @@ boundary (the callers still catch), `toSignal`'s and
 `isControlFlowError`'s message-string branches, `asControlFlowError`, and
 `repeat`'s `error.message.includes('BREAK')` catch — each falls when its
 caller reads completions (step 2's second half).
+**Step 3, second slice, DONE 2026-09-03:** every remaining producer of a
+control-flow error sets its flag (`signalToError`; the hybrid executor's
+`halt`/`exit`), so `isControlFlowError`'s and `toSignal`'s
+`message === 'HALT_EXECUTION'` / `'EXIT_COMMAND'` branches and
+`evaluateASTWithResult`'s twins were dead by construction — deleted, with
+the five tests that pinned message-only detection; the signal commands'
+`errorMessage`/`errorFlag` fields (dead since they return signals) and
+`repeat`'s `error.message.includes('BREAK')` catch (now the flags via
+`asControlFlowError`) went too. Left for the second half: `signalToError`
+at the `execute()` boundary and `toSignal`/`asControlFlowError`
+themselves, which fall when the callers read completions.
 **Decision needed before the second half (owner):** the matrix pins today's
 semantics at the `def` boundary — `halt`/`exit` inside a called `def` stop
 the CALLING handler too (`a f`, never `c`), and `return` outside a `def` is

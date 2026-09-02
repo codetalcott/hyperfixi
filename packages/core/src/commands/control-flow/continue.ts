@@ -40,8 +40,6 @@ export class ContinueCommand extends ControlFlowSignalBase {
   }
 
   protected readonly signalType = 'continue' as const;
-  protected readonly errorMessage = 'CONTINUE_LOOP';
-  protected readonly errorFlag = 'isContinue';
 }
 
 export const createContinueCommand = createFactory(ContinueCommand);

@@ -358,10 +358,10 @@ export async function evaluateASTWithResult(
   } catch (e) {
     if (e instanceof Error) {
       const error = e as any;
-      if (error.isHalt || error.message === 'HALT_EXECUTION') {
+      if (error.isHalt) {
         return err({ type: 'halt' } as ExecutionSignal);
       }
-      if (error.isExit || error.message === 'EXIT_COMMAND') {
+      if (error.isExit) {
         return err({ type: 'exit', returnValue: error.returnValue } as ExecutionSignal);
       }
       if (error.isBreak) {
