@@ -952,6 +952,17 @@ bivariantly, so a command or test that implements it as
 
 ### Arc 3 — Grammar into the parser (large; one PR per command)
 
+> **Brief: [HANDOFF-engine-arc3.md](./HANDOFF-engine-arc3.md)** (2026-09-02).
+> Re-measures this section's claims on `2b1a6f22` and scores **fourteen: eight
+> hold, three false, three incomplete**. The false ones are the counts — "46
+> input unions" (77 `*Input` types, **7** unions), "28 generic-loop commands"
+> (**25**, through **two** loops), and a blast radius that omits `aot-compiler`
+> (52 `.args` reads) and `vite-plugin` (12). The finding that changes the
+> order: the dedicated parsers push marker words INTO `args`, which IS the open
+> `marker-in-args` convergence family (13) — step 2 closes it by construction.
+> Four owner decisions are listed there; the first (land Arc 1 step 6 before
+> the first command) is the one to answer before starting.
+
 The core of the migration. Each command's `parseInput` is split: syntax
 decisions move into that command's parser; value work stays as expression
 slots the runtime evaluates. At the end of the arc `parseInput` receives a
@@ -974,8 +985,13 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    it to zero.
 2. **Per-command typed nodes.** `ToggleNode` is `ToggleCommandInput` with
    `HTMLElement[]` replaced by `Expr` slots and `duration: number` by `Expr`.
-   The existing input unions (46 files already have one) are the shapes —
-   this step is moving them one layer up. The dedicated parser
+   ~~The existing input unions (46 files already have one) are the shapes —
+   this step is moving them one layer up.~~ **Measured 2026-09-02: 77
+   exported `*Input` types, of which 7 are discriminated unions** (`Insertion`,
+   `Remove`, `Add`, `Toggle`, `Set`, `Default`, `Clear`); the rest are flat
+   interfaces. The shapes exist and do move up a layer; "46" and "union" were
+   both wrong. Also: **no `CommandName` type exists** — `COMMAND_NAMES` is
+   `readonly string[]`, so the `K` below needs a manifest change first. The dedicated parser
    (`parseToggleCommand` in `command-parsers/dom-commands.ts`) emits the node;
    `CommandNode` becomes `CommandNode<K extends CommandName>` with a per-K
    `args` type, and `command-node-builder.ts` builds it.
@@ -991,7 +1007,10 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    red gate — (d) update semantic's `buildAST` mapper for the command and
    regenerate `check:mapper-parity`'s fixture in the same PR (cross-package,
    same PR: a split lands one half green and the other broken).
-4. **The 28 generic-loop commands** get a declared grammar instead of the
+4. ~~**The 28 generic-loop commands**~~ **The 25 generic-loop commands
+   (measured 2026-09-02) — 23 through `parseCommandCore`'s own tail loop and
+   2 (`push`, `replace`) through `parseRegularCommand`, because there are
+   TWO generic loops, not one** — get a declared grammar instead of the
    loop. **Decision to record in the brief:** (a) a core-local arg spec per
    command module (`args: [{ slot: 'value', kind: 'expr' }, { marker: 'to',
    slot: 'target' }]`) consumed by ONE generic parser, or (b) reuse
@@ -1019,7 +1038,15 @@ Blast radius: semantic's mappers (cross-package PR pairs, ~50 of them);
 OLD shape until Arc 5 — the `runtime-base.ts` adapter converts; the
 `ast-utils` visitor/query/transformer see per-command `args` (they already
 duck-type `args`, so they keep working — add a test that they do); LSP
-completions and `reference/index.ts` are metadata, untouched.
+completions and `reference/index.ts` are metadata, untouched. **Two consumers
+this list missed (measured 2026-09-02): `aot-compiler` reads `.args` 52
+times — `transforms/command-transforms.ts` alone 34, switching on 21
+preposition/unit literals — and `vite-plugin/src/compiler.ts` 12 times. Both
+break on a per-command `args` shape and belong in each command's PR.** And the
+mapper half is smaller than "~50 pairs" implies: Arc F already moved 43 of 47
+mappers to schema `ast` descriptors, so a command's cross-package change is a
+descriptor line plus a fixture regen; 15 manifest commands have no mapper at
+all, and `pseudo-command`/`start` have no schema.
 
 ### Arc 4 — Compile to closures · one control-flow protocol · typed Scope (large)
 

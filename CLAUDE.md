@@ -232,7 +232,7 @@ npm run typecheck:scripts --prefix packages/core
    Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
    `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
    needs `--no-verify`.
-4. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
+3. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
    committed baseline and fail on any increase: `check-type-escapes`
    (`any` / `as any` / `as Record<string, unknown>` / `as unknown as`, per
    directory), `check-layering` (upward imports), and `check-semantic-boundary`.
@@ -242,7 +242,7 @@ npm run typecheck:scripts --prefix packages/core
    for `:update` only when the hatch is genuinely required, and say why in the
    PR. Note these run BEFORE `npm ci` in the job, which is why they are cheap
    enough to run on every change.
-5. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+4. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
@@ -526,7 +526,7 @@ yields a 0 delta):
     skips a failed parse _before_ scoring, removing it from numerator and
     denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
     **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
-    that did parse. R2 covers 47 curated ids; R4's denominator excludes ~14% of
+    that did parse. R2 covers 41 curated ids (measured 2026-09-02; this said 47); R4's denominator excludes ~14% of
     the corpus and is full-mode only. This is not hypothetical — #763's
     `markerOverride.he` change stopped `לך את back` parsing and the gate would
     have gone green; two vitest cases caught it instead. The other tolerances are
