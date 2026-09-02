@@ -108,6 +108,22 @@ export interface AttributeAccessNode extends BaseNode {
   readonly attributeName: string;
 }
 
+/**
+ * A CSS property reference (`*opacity` → name `opacity`).
+ *
+ * One emitter (`semantic-integration.ts`'s set-destination builder), one
+ * reader (`selector-type-detection.ts`'s `isCSSPropertySelectorNode`) — and
+ * until 2026-09-01 the kind existed in NO type and NOT in the classifier's
+ * universe. It was found the moment that emitter's construction was typed
+ * against this union: the `as unknown as` it used to carry had silenced the
+ * undeclared kind for as long as it existed. The sixth kind the hand-kept
+ * universe missed.
+ */
+export interface CssPropertyNode extends BaseNode {
+  readonly type: 'cssProperty';
+  readonly name: string;
+}
+
 // ===========================================================================
 // Composite expressions
 // ===========================================================================
@@ -421,6 +437,7 @@ export type Expr =
   | IdentifierNode
   | SelectorNode
   | AttributeAccessNode
+  | CssPropertyNode
   | BinaryExpressionNode
   | UnaryExpressionNode
   | CallExpressionNode

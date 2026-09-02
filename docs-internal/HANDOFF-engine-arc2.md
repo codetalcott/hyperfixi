@@ -110,6 +110,24 @@ Two structural facts that shape it:
    hybrid/bundle producer tree, which Arc 5 may retire outright; typing it now
    risks being work the plan has already flagged as conditional.
 
+## Decisions taken 2026-09-01 (owner delegated both)
+
+- **`ExpressionNode` keeps its public shape until 4.0; the USAGES move to
+  `Expr`.** Redefining the exported type to the union breaks downstream
+  compiles twice over — reads like `.operands` degrade to `unknown`, and
+  narrowing on `type === 'expression'` loses its premise. Instead, every
+  internal construction is typed against the union and crosses to the legacy
+  type through `ast/legacy.ts`, which holds the only three casts and documents
+  why; `git grep toLegacyExpression` is 4.0's complete deletion list. Executing
+  this found the SEVENTH kind the universe missed: `type: 'cssProperty'`, live
+  (one emitter, one reader) and declared in no type — the per-site cast had
+  silenced it for as long as it existed.
+- **Step 5 is re-scoped, not dropped.** Its real content is the ~13 AST-shaped
+  cast sites in `commands/` plus reconciling `property-target.ts`'s fourth node
+  type set with the union. The other ~222 hatches there are
+  ExecutionContext/DOM/network typing — a different track, explicitly out of
+  this arc.
+
 ## The ratchet has a blind spot, and it changes the order of the work
 
 Measured 2026-09-01, after #1047 took `pratt-parser.ts` from 46 escape hatches
