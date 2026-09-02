@@ -68,10 +68,8 @@ describe('SendCommand (send syntax)', () => {
         {
           args: [
             { type: 'identifier', name: 'dataEvent' } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,
@@ -115,10 +113,8 @@ describe('SendCommand (send syntax)', () => {
               name: 'notification',
               args: [{ type: 'string', value: 'Hello' }],
             } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,
@@ -183,10 +179,8 @@ describe('SendCommand (send syntax)', () => {
         {
           args: [
             { type: 'identifier', name: 'message' } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,

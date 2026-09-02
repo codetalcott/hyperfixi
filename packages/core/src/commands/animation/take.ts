@@ -90,46 +90,15 @@ export class TakeCommand implements DecoratedCommand {
     // The `from` keyword is detected on the RAW node — evaluating an
     // identifier resolves it as a variable lookup, which comes back
     // undefined and made the traditional flat-args path unreachable.
-    const isFromKeyword = (node: ASTNode | undefined): boolean => {
-      const n = node as { type?: string; name?: string; value?: unknown } | undefined;
-      if (!n) return false;
-      return (n.type === 'identifier' && n.name === 'from') || n.value === 'from';
-    };
-
-    let source: unknown;
-    if (raw.args.length >= 2) {
-      if (!isFromKeyword(raw.args[1])) {
-        throw new Error('take syntax: take <property> from <source>');
-      }
-      if (raw.args[2]) {
-        source = await evaluator.evaluate(raw.args[2], context);
-      }
-    } else if (raw.modifiers?.from) {
-      // Semantic-path shape: `take .active from .tab` → args [.active],
-      // modifiers { from: .tab }
-      source = await evaluator.evaluate(raw.modifiers.from, context);
-    }
-
-    // Recipient: the `and put it on <target>` tail (raw keyword check),
-    // a bare fourth arg, or the on/for modifiers (`for` is upstream's
-    // recipient clause, carried by the parser as a modifier).
+    // The source is the `from` slot (Arc 3 step 3). The parser used to push
+    // `from` into args as an identifier and this checked for it by name — and
+    // scanned eight positions for an `and put it on <target>` tail no parser
+    // has ever produced (that documented form is a recorded parse gap).
+    // No `from` slot is valid: `take .active` takes from every current holder.
+    const source = raw.modifiers?.from
+      ? await evaluator.evaluate(raw.modifiers.from, context)
+      : undefined;
     let target: unknown;
-    if (raw.args.length >= 8) {
-      const names = [3, 4, 5, 6].map(i => raw.args[i] as { name?: string; value?: unknown });
-      const word = (n: { name?: string; value?: unknown }) => n?.name ?? n?.value;
-      if (
-        word(names[0]) === 'and' &&
-        word(names[1]) === 'put' &&
-        word(names[2]) === 'it' &&
-        word(names[3]) === 'on' &&
-        raw.args[7]
-      ) {
-        target = await evaluator.evaluate(raw.args[7], context);
-      }
-    } else if (raw.args.length > 3) {
-      target = await evaluator.evaluate(raw.args[3], context);
-    }
-
     if (!target && raw.modifiers?.on) target = await evaluator.evaluate(raw.modifiers.on, context);
     if (!target && raw.modifiers?.for)
       target = await evaluator.evaluate(raw.modifiers.for, context);

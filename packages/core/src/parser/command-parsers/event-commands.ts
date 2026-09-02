@@ -9,10 +9,15 @@
  */
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
-import type { ASTNode, CommandNode } from '../../types/core';
+import type { ASTNode, CommandNode, ExpressionNode } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { isCommandBoundary, parseMaybeNamedArgument } from '../helpers/parsing-helpers';
+import {
+  isCommandBoundary,
+  parseMaybeNamedArgument,
+  parseOneArgument,
+} from '../helpers/parsing-helpers';
+import { toLegacyExpression } from '../../ast/legacy';
 
 /**
  * Parse trigger/send command
@@ -128,25 +133,49 @@ export function parseTriggerCommand(
     }
   }
 
-  // Parse remaining tokens up to a command boundary, treating 'on'/'to' as
-  // structural identifiers rather than expression operands. Must check 'on'/'to'
-  // explicitly rather than delegating to parsePrimary(), because parsePrimary()
-  // interprets 'on' as event handler start. Without this loop, malformed inputs
-  // (e.g. `trigger arg1 arg2`) would leave trailing tokens for the parent
-  // parser to choke on; the doc-comment contract above promises we collect them.
+  // The tail is two slots. `on`/`to <target>` is the target slot (`on`, the
+  // key the semantic path already emits for both spellings); `with <words>` is
+  // the option-word list (`bubbles`, `nocancelable`, …), an arrayLiteral so a
+  // single slot can carry several. Marker words never reach `args` — the
+  // command reads slots, not positions (Arc 3 step 3). Anything else before
+  // the boundary is malformed trailing input; it is still collected into
+  // `args`, because the doc-comment contract above promises the parent parser
+  // never sees it, and `parsePrimary()` — not `parseExpression()` — is used
+  // there deliberately: parsePrimary interprets `on` as an event-handler
+  // start, and an expression parse would swallow the target marker.
   const finalArgs: ASTNode[] = [...allArgs];
-
+  const modifiers: Record<string, ExpressionNode> = {};
   while (!isCommandBoundary(ctx)) {
-    if (ctx.check('on') || ctx.check('to')) {
-      const keyword = ctx.advance().value;
-      finalArgs.push(ctx.createIdentifier(keyword));
+    if (ctx.check(KEYWORDS.ON) || ctx.check(KEYWORDS.TO)) {
+      ctx.advance();
+      const target = parseOneArgument(ctx, [KEYWORDS.WITH]);
+      if (target) modifiers['on'] = target as ExpressionNode;
       continue;
     }
-
+    if (ctx.check(KEYWORDS.WITH)) {
+      ctx.advance();
+      const words: ASTNode[] = [];
+      while (!isCommandBoundary(ctx, [KEYWORDS.ON, KEYWORDS.TO])) {
+        const before = ctx.savePosition();
+        const word = ctx.parsePrimary();
+        if (word) words.push(word);
+        if (ctx.savePosition() === before) ctx.advance();
+      }
+      const first = words[0];
+      const last = words[words.length - 1];
+      modifiers['with'] = toLegacyExpression({
+        type: 'arrayLiteral',
+        elements: words as never,
+        ...(first?.start !== undefined ? { start: first.start } : {}),
+        ...(last?.end !== undefined ? { end: last.end } : {}),
+        ...(first?.line !== undefined ? { line: first.line } : {}),
+        ...(first?.column !== undefined ? { column: first.column } : {}),
+      });
+      continue;
+    }
     const before = ctx.savePosition();
     const expr = ctx.parsePrimary();
     if (expr) finalArgs.push(expr);
-
     // parsePrimary() can return WITHOUT consuming a token when it cannot start
     // an expression there — e.g. the `&` in an HTML-escaped `&lt;form /&gt;`,
     // which is what a `<form/>` selector becomes when a doc example is copied
@@ -158,10 +187,8 @@ export function parseTriggerCommand(
       ctx.advance();
     }
   }
-
   // Use CommandNodeBuilder for consistent node construction
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...finalArgs)
-    .endingAt(ctx.getPosition())
-    .build();
+  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
+  if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
+  return builder.endingAt(ctx.getPosition()).build();
 }

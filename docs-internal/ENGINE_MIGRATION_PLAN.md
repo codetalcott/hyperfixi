@@ -1147,9 +1147,47 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    did not move, because the census counts positional `args[i]` reads and the
    one that remains is the bare two-argument fallback's `args[1]`; the `to`
    scan it removed was a `findIndex`, which the census never counted. The
-   step is real; the meter is blind to this one, and says so here. Nine corpus rows moved (every
-   `set` and `increment` example), reviewed; seven hand-built runtime nodes,
-   the parser expectations and the parser-unit pins reshaped.
+   step is real; the meter is blind to this one, and says so here.
+   Nine corpus rows moved (every `set` and `increment` example), reviewed;
+   seven hand-built runtime nodes, the parser expectations and the
+   parser-unit pins reshaped.
+
+   **`take`, `trigger`/`send`, `render` (2026-09-03) — the last three commands
+   still receiving marker words in `args`.** Measured from the census's own
+   syntax-site lines: every other command's remaining `args[i]` reads are
+   genuinely positional (a block, a params array, a property). `take`'s
+   `from <source>` is `modifiers.from` (its `parseInput` already read that
+   on the semantic path); the eight-position scan for an `and put it on
+   <target>` tail went with it — no parser has ever produced that shape, the
+   documented form is a recorded parse gap — and the end-to-end
+   `take-from-for` suite caught the first draft requiring the slot: bare
+   `take .active` is valid and takes from every current holder. `trigger`'s
+   `on`/`to <target>` is `modifiers.on` and the option words after `with`
+   are one `modifiers.with` list, which `parseEventOptions` reads instead of
+   scanning `args`. `render`'s `with` had been a slot since step 4's
+   declared grammar; its `args[1] === 'with'` branch was dead code and is
+   gone. **Census rows: take 71 → 40 lines / 11 → 1 syntax sites, trigger
+   63 → 47 / 4 → 1, render 38 → 29 / 6 → 1.** Six corpus rows moved (two `take`, two `trigger`, two `send`), reviewed.
+   Sixteen fixtures across four suites reshaped; two dead-shape cases
+   (`take X to Y`, `render … [with, vars]` positional) deleted with the
+   reason on them.
+   **The first draft of this PR shipped half of `trigger`.** The command
+   read slots only, but the parser edit that produced them had never
+   reached the tree — `send hello to X` still parsed as `[hello, to, X]`,
+   the target fell through to `context.me`, and core's 7,974 tests stayed
+   green: every `trigger`/`send` fixture is hand-built, and the
+   send/trigger parity test pinned the FLAT shape as the expected one. The
+   one gate that saw it was `packages/realtime`'s end-to-end
+   `send hello to ChatSocket` — the only test in the repo that parses a
+   `send … to` and executes what came out. Two consequences landed with the
+   fix: the parity test now compares the slots too (not just `args`), and
+   the parser-unit mock context grew a `parseExpression`, because the slot
+   is read through `parseOneArgument`, which a `parsePrimary`-only mock
+   silently returns nothing from. The lesson is the one at the head of the
+   arc, restated: a per-command PR is TWO edits, parser and command, and
+   the command's own suite cannot tell whether the parser's arrived.
+
+
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the

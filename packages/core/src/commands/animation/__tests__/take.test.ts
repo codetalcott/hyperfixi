@@ -79,10 +79,8 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'literal', value: 'class' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '#source' } as any,
           ],
-          modifiers: {},
+          modifiers: { from: { type: 'literal', value: '#source' } as any },
         },
         evaluator,
         context
@@ -101,15 +99,9 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'literal', value: '@data-value' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '#source' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'identifier', name: 'put' } as any,
-            { type: 'identifier', name: 'it' } as any,
-            { type: 'identifier', name: 'on' } as any,
-            { type: 'literal', value: '#target' } as any,
           ],
-          modifiers: {},
+          // `from` and the `and put it on` target are slots (Arc 3 step 3).
+          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
         },
         evaluator,
         context
@@ -128,10 +120,8 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'literal', value: '.active' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '#source' } as any,
           ],
-          modifiers: { on: { type: 'literal', value: '#target' } as any },
+          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
         },
         evaluator,
         context
@@ -141,25 +131,9 @@ describe('TakeCommand (Standalone V2)', () => {
       expect(input.target).toBe('#target');
     });
 
-    it('should throw error when missing from keyword', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      await expect(
-        command.parseInput(
-          {
-            args: [
-              { type: 'literal', value: 'class' } as any,
-              { type: 'identifier', name: 'to' } as any,
-              { type: 'literal', value: '#source' } as any,
-            ],
-            modifiers: {},
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow('take syntax: take <property> from <source>');
-    });
+    // The `take X to Y` wrong-keyword case is gone with the marker-in-args
+    // shape: the parser never emitted `to` for take, and a source now arrives
+    // only as the `from` slot (Arc 3 step 3).
 
     it('should throw error when too few arguments', async () => {
       const context = createMockContext();
@@ -202,10 +176,8 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'selector', value: '.active', selectorType: 'class' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '.tab' } as any,
           ],
-          modifiers: { for: { type: 'literal', value: '#panel' } as any },
+          modifiers: { from: { type: 'literal', value: '.tab' } as any, for: { type: 'literal', value: '#panel' } as any },
         },
         evaluator,
         context
@@ -580,15 +552,9 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'literal', value: 'class' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '#source' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'identifier', name: 'put' } as any,
-            { type: 'identifier', name: 'it' } as any,
-            { type: 'identifier', name: 'on' } as any,
-            { type: 'literal', value: '#target' } as any,
           ],
-          modifiers: {},
+          // `from` and the `and put it on` target are slots (Arc 3 step 3).
+          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
         },
         evaluator,
         context
@@ -620,15 +586,9 @@ describe('TakeCommand (Standalone V2)', () => {
         {
           args: [
             { type: 'literal', value: '@data-id' } as any,
-            { type: 'identifier', name: 'from' } as any,
-            { type: 'literal', value: '#source' } as any,
-            { type: 'identifier', name: 'and' } as any,
-            { type: 'identifier', name: 'put' } as any,
-            { type: 'identifier', name: 'it' } as any,
-            { type: 'identifier', name: 'on' } as any,
-            { type: 'literal', value: '#target' } as any,
           ],
-          modifiers: {},
+          // `from` and the `and put it on` target are slots (Arc 3 step 3).
+          modifiers: { from: { type: 'literal', value: '#source' } as any, on: { type: 'literal', value: '#target' } as any },
         },
         evaluator,
         context
