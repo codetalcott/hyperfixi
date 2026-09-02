@@ -738,8 +738,25 @@ progress meter.
 3. **`evaluateAST` becomes exhaustive.** `switch (node.type)` over `Expr` with
    a `never` default; the local `type X = ASTNode & {…}` block
    (`parser/runtime.ts:63-135`) is deleted; each `evaluate*` helper takes its
-   union member. Plugin-registered kinds are a declared `PluginNode` member
-   whose payload is `unknown` — the registry stays, typed.
+   union member. ~~Plugin-registered kinds are a declared `PluginNode` member
+   whose payload is `unknown` — the registry stays, typed.~~
+
+   > **Design correction, compiler-probed 2026-09-01.** A `PluginNode` member
+   > with `type: string` cannot live in the union: it pollutes every narrow
+   > (`n.type === 'literal'` yields `LiteralNode | PluginNode` — TS2322 proof)
+   > and makes the `never` default impossible, so the design as written cannot
+   > produce the very gate this step is supposed to leave behind. Working
+   > design instead: TWO layers. `evaluateKnown(node: Expr)` holds the
+   > exhaustive switch with the real `never` default; the outer `evaluateAST`
+   > keeps an honest wide parameter, consults the plugin registry, and routes
+   > known kinds through a runtime kind-set guard — `const EXPR_KINDS = […] as
+   > const satisfies readonly Expr['type'][]` plus the reverse completeness
+   > check, so the array can neither list a ghost kind nor miss a real one.
+   > `PluginNode` stays a TYPE for registry payloads, not a union member.
+   > Also: there are TWO switches to make exhaustive, not one —
+   > `evaluateExpressionSync` (`runtime.ts:338`) is the second — and the
+   > current 24 cases cover only 19 of the 30 full-parser kinds; the
+   > missing-kind list is this step's interesting output.
    > **Order correction, measured 2026-09-01 (#1047 follow-up).** For
    > `ast-utils/` this step must come FIRST, not last. Its own `ASTNode`
    > (`ast-utils/types.ts:19`) uses `[key: string]: any`, not `unknown`, so
