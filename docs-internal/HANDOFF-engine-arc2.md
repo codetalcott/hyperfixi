@@ -161,9 +161,26 @@ side. What `unknown` actually blocks is using the result — arithmetic, a neste
 property, passing it somewhere typed.
 
 So the split inside `commands/` has to be measured per site rather than assumed
-from the cluster, and the earlier characterization of it (~19% of the hatch
-total, mixed AST and `context: any`/DOM expandos) is the right starting point.
-Do not schedule it on the strength of the idiom alone.
+from the cluster. A first bounded pass: stripping the cast from property access
+on the six commonest AST-node variable names (`arg`, `node`, `cmd`, `expr`,
+`argNode`, `valueNode`) matches **13 sites in the whole 235-hatch cluster** — 12
+of which typecheck clean when removed, and exactly one of which is load-bearing
+(`navigation/go.ts:288`, where the value is `object` and the code wants
+`nodeType`).
+
+That is the strongest form of claim 7's falsification. Arc 2 step 5 says
+`commands/` is "where most of the hatches live" and that guards are what retire
+them. Not only is it not most (235 of 1,231 = 19%) — **the AST-shaped portion of
+it is around a dozen sites.** The rest is `context: any`, `Promise<any>`, DOM
+expandos and network payloads, none of which a node union touches. Step 5 should
+be re-scoped or dropped before it is scheduled.
+
+(Method note: the first attempt at this measurement used a regex that also
+matched inside `Array.from(target as any)`, silently producing
+`Array.fromtarget` and two phantom errors. Requiring the `(` not to follow an
+identifier character fixed it. A mechanical strip needs its own sanity check —
+the same anchored-edit trap that has bitten structural edits in this repo
+before.)
 
 ## Traps
 
