@@ -28,7 +28,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for SettleCommand
@@ -79,8 +79,9 @@ export class SettleCommand implements DecoratedCommand {
     let target: string | HTMLElement | undefined;
     let timeout: number | string | undefined;
 
-    if (raw.args && raw.args.length > 0) {
-      const firstArg = await evaluator.evaluate(raw.args[0], context);
+    const [first] = raw.args;
+    if (first) {
+      const firstArg = await evaluator.evaluate(first, context);
       if (
         isHTMLElement(firstArg) ||
         (typeof firstArg === 'string' &&

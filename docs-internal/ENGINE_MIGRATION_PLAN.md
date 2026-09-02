@@ -1038,8 +1038,9 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    The A class needed no column — Arc 1 step 6 landed first (#1058), so there
    are no semantic-shape branches left to classify. **Baseline: 51 bodies ·
    2,434 lines · 361 branches · 128 syntax sites · 215 value sites.**
-2. **Per-command typed nodes.** ✅ **Slots typed 2026-09-03** (`CommandRaw<K>`
-   over `COMMAND_SLOTS`, see History); `args` and the node itself remain.
+2. **Per-command typed nodes.** ✅ **DONE 2026-09-03** — `CommandRaw<K>` (read),
+   `CommandNodeBuilder<K>` (emit), `CommandNode<K>` (node) over `COMMAND_SLOTS`,
+   and `ArgsOf<K>` over `COMMAND_ARITY`; see History.
    `ToggleNode` is `ToggleCommandInput` with
    `HTMLElement[]` replaced by `Expr` slots and `duration: number` by `Expr`.
    ~~The existing input unions (46 files already have one) are the shapes —
@@ -1494,6 +1495,57 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    positional by construction (measure/transition's property word, install's
    name + params, js's code + params, pick's array, the block bodies) — the
    typed-`args` step's material, and the end of step 3.
+
+   **`CommandNode<K>` and the arity table (2026-09-03).** `ast/nodes.ts`'s
+   `CommandNode` is generic over its command's slot row —
+   `CommandNode<K extends SlottedCommandName = SlottedCommandName>` with
+   `modifiers?: Partial<Record<SlotKey<K>, Expr>>` — the node-side third of
+   the typed-slot story (read side `CommandRaw<K>`, emit side
+   `CommandNodeBuilder<K>`, now the node). The default `K` is every
+   command's keys, so the 42 files that name `CommandNode` compile
+   unchanged; the seven keys read outside `commands/` (`when`, `where`,
+   `debounce`, `throttle`, `on`, `to`, `from`) are all in the union. The
+   layering ratchet earned its keep: `ast` (layer 1) importing the table
+   from `parser` (layer 2) was an upward edge, so `command-slots.ts` moved
+   to `ast/` and its 61 importers were repointed by computed relative path
+   — the tables were always node-level facts, not parser ones. `args` is
+   still `Expr[]`: the positional arity is a declared table instead,
+   `COMMAND_ARITY` (`[min, max | null]` per command), pinned by
+   `command-arity.test.ts` to what the parser emits over the documented
+   examples and to the highest `raw.args[i]` each `parseInput` reads —
+   which found `toggle` reading `args[1]` for the semantic path's split
+   `*display` form (declared `[0, 2]` with the reason). A tuple type per
+   command is the remaining step-2 item, and the table is its input.
+
+   **`ArgsOf<K>` (2026-09-03) — the tuple type, and step 2 is closed.**
+   `CommandRaw<K>['args']` is now the union of tuple lengths its
+   `COMMAND_ARITY` row allows (`TupleRange<ASTNode, 0, Max>`, a plain array
+   for a variadic row), derived at the type level from the same table the
+   arity test pins. The lower bound is 0 on purpose: a command's "requires
+   an argument" guard is real code for a hand-built or foreign node, so what
+   the type forbids is exactly a read at or beyond the row's max. What the
+   first `tsc` run said (94 errors, 53 with the zero floor): nineteen
+   `evaluate(raw.args[0])` sites read a possibly-absent element behind a
+   `.length` guard the type cannot see across a tuple union — each now
+   reads through a guarded local (`const [first] = raw.args; if (!first)
+   throw …`); `swap`'s front-end flat-shape branch typed `never` under a
+   `[1, 1]` row, which is the type saying the branch is unreachable from
+   the core parser — true, and it stays because `buildAST` and the hybrid
+   template still emit `[method?, target, content]` until Arc 5, so
+   `swap`/`morph` are `[1, 3]` with that reason; `async` is variadic; and a
+   dozen fixtures were shapes the parser cannot produce — the last flat
+   `toggle` forms, `swap-variable`'s five-word list, `return`'s "only the
+   first of many" — reshaped or deleted. The meter: `put` 3 → 4 and
+   `pseudo-command` 6 → 7 syntax sites because an `args.length >= N`
+   compare (uncounted) became an `args[N]` read (counted); four rows +1
+   line for a guard; `settle`/`halt`/`copy`/`throw` lose their `args[0]`
+   read to a local. With slots typed on three sides and `args` typed by
+   arity, step 2's typed node is done in substance; what remains of the
+   original wording — `ToggleNode` as `ToggleCommandInput` with `Expr`
+   slots — would be a rename of what `CommandRaw<'toggle'>` already is.
+   Step 4 and step 1 landed earlier; step 5 is closed; step 3 is closed.
+   **Arc 3 is complete** except the semantic front-end's own emission of
+   these shapes, which is Arc 5's boundary work.
 
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,

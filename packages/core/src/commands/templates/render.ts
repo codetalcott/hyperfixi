@@ -30,7 +30,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { debug } from '../../utils/debug';
 import { commandMeta } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for RenderCommand
@@ -112,7 +112,7 @@ export class RenderCommand {
     }
 
     // First arg is template
-    const template = await evaluator.evaluate(raw.args[0], context);
+    const template = await evaluator.evaluate(raw.args[0] as ASTNode, context);
 
     // `with <variables>` is the `with` slot — the declared grammar's marker
     // (Arc 3 step 4); the positional `[template, with, vars]` shape no parser

@@ -22,7 +22,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface BreakpointCommandInput {
   // No arguments — present for shape parity with other commands.

@@ -230,12 +230,8 @@ describe('ToggleCommand (Standalone V2)', () => {
       try {
         const input = await command.parseInput(
           {
-            args: [
-              { type: 'attributeAccess', attributeName: 'required' } as any,
-              { type: 'identifier', name: 'on' } as any,
-              { type: 'selector', value: '#target-btn' } as any,
-            ],
-            modifiers: {},
+            args: [{ type: 'attributeAccess', attributeName: 'required' } as any],
+            modifiers: { on: { type: 'selector', value: '#target-btn' } as any },
           },
           evaluator,
           context

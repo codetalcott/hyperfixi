@@ -38,7 +38,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { NodeWriterFn } from '../../parser/extensions';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -389,8 +389,9 @@ export class SetCommand implements DecoratedCommand {
     if (raw.modifiers.to) {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
-    if (raw.args.length >= 2) {
-      return evaluator.evaluate(raw.args[1], context);
+    const second = raw.args[1];
+    if (second) {
+      return evaluator.evaluate(second, context);
     }
 
     throw new Error('set command requires a value (use "to" keyword)');

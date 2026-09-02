@@ -24,7 +24,7 @@ import * as navigationCommands from './navigation-commands';
 import { toLegacyExpression } from '../../ast/legacy';
 import { parseDeclaredCommand } from './declared-commands';
 import type { CommandGrammar } from '../command-grammar';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse compound command

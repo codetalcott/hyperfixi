@@ -22,7 +22,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import { isDOMNode } from '../../types/type-guards';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for GoCommand

@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { commandSchemas } from '@lokascript/semantic';
 import { parse } from '../parser';
 import { commandExamples } from './engine-corpus';
-import { COMMAND_SLOTS, GENERIC_SLOT_KEYS } from '../command-slots';
+import { COMMAND_SLOTS, GENERIC_SLOT_KEYS } from '../../ast/command-slots';
 import { COMMAND_GRAMMAR } from '../command-grammar';
 import { parseInputModifierReads } from '../../commands/__tests__/parse-input-census';
 import { COMMAND_NAMES } from '../../commands/manifest';

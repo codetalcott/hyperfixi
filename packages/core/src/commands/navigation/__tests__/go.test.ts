@@ -9,6 +9,7 @@ import { GoCommand } from '../go';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import type { CommandRaw } from '../../../ast/command-slots';
 import { parse } from '../../../parser/parser';
 import { assertNodeOfKind } from '../../../ast/guards';
 
@@ -33,7 +34,10 @@ function realishEvaluator(context: ExecutionContext): ExpressionEvaluator {
 async function parseGo(src: string, context: ExecutionContext & TypedExecutionContext) {
   const node = assertNodeOfKind(parse(src).node, 'command');
   return new GoCommand().parseInput(
-    { args: node.args as unknown as ASTNode[], modifiers: (node.modifiers ?? {}) as never },
+    {
+      args: node.args as unknown as CommandRaw<'go'>['args'],
+      modifiers: (node.modifiers ?? {}) as never,
+    },
     realishEvaluator(context),
     context
   );

@@ -24,7 +24,7 @@ import {
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for AddCommand
@@ -106,10 +106,11 @@ export class AddCommand extends DOMModificationBase {
       // CSS property shorthand: *property
       if (this.isCSSProperty(trimmed)) {
         const property = trimmed.substring(1).trim();
-        if (raw.args.length < 2) {
+        const valueNode = raw.args[1];
+        if (!valueNode) {
           throw new Error('add *property requires a value argument');
         }
-        const valueArg = await evaluator.evaluate(raw.args[1], context);
+        const valueArg = await evaluator.evaluate(valueNode, context);
         const styles = { [property]: String(valueArg) };
         const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'styles', styles, targets };

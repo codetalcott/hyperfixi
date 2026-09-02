@@ -52,7 +52,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import { isNodeOfKind } from '../../ast/guards';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for ToggleCommand */
 export type ToggleCommandInput =
@@ -238,7 +238,7 @@ export class ToggleCommand implements DecoratedCommand {
       let expression = (firstArg as any).value as string;
       let argsConsumed = 1;
       // Semantic parser may split '*display' — check if next arg has the property name
-      if (expression === '*' && raw.args.length > 1 && raw.args[1].type === 'identifier') {
+      if (expression === '*' && raw.args[1]?.type === 'identifier') {
         expression = '*' + ((raw.args[1] as any).name as string);
         argsConsumed = 2;
       }

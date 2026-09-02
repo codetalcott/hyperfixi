@@ -28,7 +28,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { commandMeta } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for PseudoCommand
@@ -166,7 +166,7 @@ export class PseudoCommand {
     }
 
     // First arg is method name
-    const methodName = String(await evaluator.evaluate(raw.args[0], context));
+    const methodName = String(await evaluator.evaluate(raw.args[0] as ASTNode, context));
 
     // Second arg is method arguments (array)
     const methodArgs = Array.isArray(raw.args[1])
@@ -188,7 +188,7 @@ export class PseudoCommand {
     }
 
     // If no preposition modifier, use third arg
-    if (!targetExpression && raw.args.length >= 3) {
+    if (!targetExpression && raw.args[2]) {
       targetExpression = await evaluator.evaluate(raw.args[2], context);
     }
 

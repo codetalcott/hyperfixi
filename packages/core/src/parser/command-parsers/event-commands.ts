@@ -18,7 +18,7 @@ import {
   parseOneArgument,
 } from '../helpers/parsing-helpers';
 import { toLegacyExpression } from '../../ast/legacy';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse trigger/send command

@@ -36,7 +36,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * @deprecated Use `ContentInsertPosition` from `commands/helpers/dom-mutation`,
@@ -105,7 +105,7 @@ export class PutCommand implements DecoratedCommand {
     if (prepKey) {
       prepKw = prepKey;
       targetArg = raw.modifiers[prepKey] as ASTNode;
-    } else if (raw.args.length >= 2) {
+    } else if (raw.args[1]) {
       prepKw = 'into';
       targetArg = raw.args[1];
     } else {

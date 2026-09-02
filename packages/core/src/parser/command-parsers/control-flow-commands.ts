@@ -17,7 +17,7 @@ import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { isIdentifierLike, isEvent, isComment } from '../token-predicates';
 import { toLegacyExpression } from '../../ast/legacy';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse halt command

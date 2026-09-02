@@ -24,7 +24,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * The CSS property name a node NAMES, for a node the evaluator resolves to
@@ -164,7 +164,7 @@ export class TransitionCommand implements DecoratedCommand {
       (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))
     ) {
       target = firstAsElement as string | HTMLElement;
-      property = String(await evaluator.evaluate(raw.args[1], context));
+      property = String(await evaluator.evaluate(raw.args[1] as ASTNode, context));
     } else if (raw.args.length >= 2) {
       // The parser emits `[target, property]` (parseTransitionCommand), so a
       // two-arg call whose target did not resolve is a missing element — NOT a

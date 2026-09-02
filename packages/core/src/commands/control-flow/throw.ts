@@ -18,7 +18,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for ThrowCommand
@@ -62,10 +62,11 @@ export class ThrowCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ThrowCommandInput> {
-    if (raw.args.length < 1) {
+    const [first] = raw.args;
+    if (!first) {
       throw new Error('throw command requires a message or error object');
     }
-    const message = await evaluator.evaluate(raw.args[0], context);
+    const message = await evaluator.evaluate(first, context);
     return { message };
   }
 

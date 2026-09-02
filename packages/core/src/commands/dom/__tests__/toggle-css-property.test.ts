@@ -12,6 +12,7 @@ import { JSDOM } from 'jsdom';
 import { ToggleCommand } from '../toggle';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import type { CommandRaw } from '../../../ast/command-slots';
 
 describe('ToggleCommand - CSS Property Syntax', () => {
   let dom: JSDOM;
@@ -71,11 +72,9 @@ describe('ToggleCommand - CSS Property Syntax', () => {
       const context = createMockContext(testElement);
       const raw = {
         args: [
-          { type: 'selector', value: '*display' },
-          { type: 'identifier', name: 'on' },
-          { type: 'selector', value: '#test-element' },
-        ],
-        modifiers: {},
+          { type: 'selector', value: '*display' } as any,
+        ] as unknown as CommandRaw<'toggle'>['args'],
+        modifiers: { on: { type: 'selector', value: '#test-element' } as any },
       };
 
       const input = await command.parseInput(raw, mockEvaluator, context);
@@ -90,11 +89,9 @@ describe('ToggleCommand - CSS Property Syntax', () => {
       const context = createMockContext(testElement);
       const raw = {
         args: [
-          { type: 'selector', value: '*visibility' },
-          { type: 'identifier', name: 'on' },
-          { type: 'selector', value: '#test-element' },
-        ],
-        modifiers: {},
+          { type: 'selector', value: '*visibility' } as any,
+        ] as unknown as CommandRaw<'toggle'>['args'],
+        modifiers: { on: { type: 'selector', value: '#test-element' } as any },
       };
 
       const input = await command.parseInput(raw, mockEvaluator, context);
@@ -109,11 +106,9 @@ describe('ToggleCommand - CSS Property Syntax', () => {
       const context = createMockContext(testElement);
       const raw = {
         args: [
-          { type: 'selector', value: '*opacity' },
-          { type: 'identifier', name: 'on' },
-          { type: 'selector', value: '#test-element' },
-        ],
-        modifiers: {},
+          { type: 'selector', value: '*opacity' } as any,
+        ] as unknown as CommandRaw<'toggle'>['args'],
+        modifiers: { on: { type: 'selector', value: '#test-element' } as any },
       };
 
       const input = await command.parseInput(raw, mockEvaluator, context);

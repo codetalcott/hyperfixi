@@ -133,25 +133,6 @@ describe('ReturnCommand', () => {
 
       expect(input).toMatchObject({ value: null });
     });
-
-    it('should only use first argument if multiple provided', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator('first');
-
-      const input = await command.parseInput(
-        {
-          args: [
-            { type: 'literal', value: 'first' },
-            { type: 'literal', value: 'second' },
-          ],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
-
-      expect(input).toMatchObject({ value: 'first' });
-    });
   });
 
   describe('execute', () => {

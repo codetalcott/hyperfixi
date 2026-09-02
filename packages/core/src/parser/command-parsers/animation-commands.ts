@@ -15,7 +15,7 @@ import { KEYWORDS } from '../parser-constants';
 import { parseHyphenatedName } from '../helpers/parsing-helpers';
 import { isIdentifierLike } from '../token-predicates';
 import { toLegacyExpression } from '../../ast/legacy';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse measure command

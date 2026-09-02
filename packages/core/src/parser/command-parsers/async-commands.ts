@@ -24,7 +24,7 @@ import {
   createLiteral,
 } from '../helpers/ast-helpers';
 import { isIdentifierLike } from '../token-predicates';
-import type { SlotMap } from '../command-slots';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse wait command

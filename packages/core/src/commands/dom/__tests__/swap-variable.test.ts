@@ -87,14 +87,13 @@ describe('SwapCommand variable-swap variant', () => {
       try {
         const input = await cmd.parseInput(
           {
-            args: [
-              ident('innerHTML'),
-              ident('of'),
-              { type: 'selector', value: '#target' } as unknown as ExpressionNode,
-              ident('with'),
-              { type: 'literal', value: 'new' } as unknown as ExpressionNode,
-            ],
-            modifiers: {},
+            // The shape parseSwapCommand emits for `swap innerHTML of #target with "new"`
+            // (Arc 3 step 3): the strategy and content are slots, the target positional.
+            args: [{ type: 'selector', value: '#target' } as unknown as ExpressionNode],
+            modifiers: {
+              strategy: { type: 'literal', value: 'innerHTML' } as unknown as ExpressionNode,
+              with: { type: 'literal', value: 'new' } as unknown as ExpressionNode,
+            },
           },
           evaluator(),
           ctx()

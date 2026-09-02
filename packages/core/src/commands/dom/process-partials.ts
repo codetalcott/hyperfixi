@@ -34,7 +34,7 @@ import {
 } from '../../validation/partial-warning-formatter';
 import type { PartialValidationResult } from '../../validation/partial-validation-types';
 import { dispatchLokaScriptEvent } from '../helpers/event-helpers';
-import type { CommandRaw } from '../../parser/command-slots';
+import type { CommandRaw } from '../../ast/command-slots';
 
 // ============================================================================
 // Types
