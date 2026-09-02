@@ -230,7 +230,7 @@ export interface CommandManifestEntry {
  * `commands/index.ts`: an explicit list, gated at tolerance 0, because
  * generating it would pin what must stay shakeable.
  */
-export const COMMAND_NAMES: readonly string[] = [
+export const COMMAND_NAMES = [
   'add',
   'append',
   'async',
@@ -290,7 +290,18 @@ export const COMMAND_NAMES: readonly string[] = [
   'trigger',
   'unless',
   'wait',
-];
+] as const;
+
+/**
+ * The command names as a type — `'add' | 'append' | … | 'wait'`.
+ *
+ * Derived from {@link COMMAND_NAMES} rather than written twice, so it can no
+ * more drift from the manifest than the array can. Arc 3 step 2 keys the
+ * per-command typed node on it (`CommandNode<K extends CommandName>`); until
+ * this existed the array was a widened `readonly string[]` and there was
+ * nothing to key on.
+ */
+export type CommandName = (typeof COMMAND_NAMES)[number];
 
 /**
  * All 59 registered commands, in registry (sorted) order.

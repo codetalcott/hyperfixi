@@ -961,7 +961,10 @@ bivariantly, so a command or test that implements it as
 > order: the dedicated parsers push marker words INTO `args`, which IS the open
 > `marker-in-args` convergence family (13) — step 2 closes it by construction.
 > Four owner decisions are listed there; the first (land Arc 1 step 6 before
-> the first command) is the one to answer before starting.
+> the first command) is the one to answer before starting. **2026-09-02:**
+> decided and done — step 6 landed first (#1058), the `CommandName` type
+> exists, and decision 4 was withdrawn (`unless` was fixed in #805; the brief
+> had quoted the filing's head without its status).
 
 The core of the migration. Each command's `parseInput` is split: syntax
 decisions move into that command's parser; value work stays as expression
