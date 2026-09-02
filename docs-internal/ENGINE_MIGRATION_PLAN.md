@@ -755,8 +755,19 @@ progress meter.
    > `PluginNode` stays a TYPE for registry payloads, not a union member.
    > Also: there are TWO switches to make exhaustive, not one —
    > `evaluateExpressionSync` (`runtime.ts:338`) is the second — and the
-   > current 24 cases cover only 19 of the 30 full-parser kinds; the
+   > ~~current 24 cases cover only 19 of the 30 full-parser kinds~~; the
    > missing-kind list is this step's interesting output.
+   >
+   > **Count corrected, measured 2026-09-01 when step 3 executed.** The union
+   > has **35** members, not 30 (26 `Expr` + 9 `Stmt`; cross-checked two ways —
+   > discriminant count in `nodes.ts`, and membership of the two unions, with
+   > `PluginNode` correctly outside both). `evaluateAST`'s 24 arms therefore
+   > cover **24 of 35**, not 19 of 30: 23 of the 26 `Expr` kinds plus
+   > `eventHandler`, which is a `Stmt` the evaluator really does evaluate. The
+   > 11 that never arrive are the 8 remaining statement kinds (executed by
+   > `runtime-base.ts`, not evaluated) plus 3 `Expr` kinds consumed
+   > structurally — `cssProperty`, `functionCall`, `expression`. The routing is
+   > pinned in a table on `evaluateKnown` in `runtime.ts`.
    > **Order correction, measured 2026-09-01 (#1047 follow-up).** For
    > `ast-utils/` this step must come FIRST, not last. Its own `ASTNode`
    > (`ast-utils/types.ts:19`) uses `[key: string]: any`, not `unknown`, so
@@ -773,9 +784,7 @@ progress meter.
 
 4. **Collapse the definitions.** `types/base-types.ASTNode` → `Node`
    (re-exported under the old name for one release with `@deprecated`);
-   `types/core`, `types/unified-types`, `types/index` re-export; `ast-utils/types.ts`'s
-   duck-typed `ASTNode` becomes `Node` (the visitor/query/transformer modules
-   are the second-largest `any` cluster and go on the ratchet); the hybrid
+   `types/core`, `types/unified-types`, `types/index` re-export; ~~`ast-utils/types.ts`'s duck-typed `ASTNode` becomes `Node` (the visitor/query/transformer modules are the second-largest `any` cluster and go on the ratchet)~~ — **falsified when step 4 executed (2026-09-01):** `ast-utils`' `ASTNode` must STAY duck-typed. Measured: it is published as `ASTUtilNode` via the `./ast-utils` subpath and `await import`ed by three packages, and its modules discriminate on kinds no core parser emits (`conditional`, `logicalExpression`, `returnStatement`, `program`, `function` — phantoms in the classifier) and read fields no union member declares (`variable`, `features`, `then`, `else`). Its 348 tests hand-build those shapes and never parse real code. What DID change: the index signature went `any` → `unknown`, one `duck.ts` helper carries the package's single remaining hatch, and every field read now narrows before use — `ast-utils` 157 → **2** counted escapes, honestly this time, because each removed cast was load-bearing under `unknown`. `real-ast.test.ts` now anchors the modules to a real parse — and on its first run found that **the generator renders a block command's branches as empty**. First filed as "never reads `body`" — wrong, and the probe that checked it is why this note is accurate: the real `if` node's keys are `type`, `name`, `args`, `isBlocking` and position; there is no `body`. The condition and the two branches all sit in `args`, the branches as `block` nodes, and `generator.ts` has no `block` arm, so each falls to `generateFallback` and renders as `''` (the two trailing spaces in `on click \nif I match .open  ` are the two empty blocks). Pre-existing, behavioural, pinned as a KNOWN GAP test rather than fixed; the fix is a `case 'block'` rendering `commands`, and the pin flips when it lands; the hybrid
    parser's `ast-types.ts` is left alone here — it is a separate producer and
    Arc 5 decides its fate — but the `case 'event'`/`case 'sequence'` adapter in
    `runtime-base.ts` is typed as a converter from `HybridNode` to `Stmt`.

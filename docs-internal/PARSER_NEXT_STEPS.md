@@ -45,6 +45,7 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**Composite expressions span only their LAST token**~~ | **FIXED 2026-09-01** — `memberExpression` / `callExpression` / `possessiveExpression` all took `getPosition()` (the token consumed last), so `call myFunction()` spanned `)` and `get me.parentElement` spanned `parentElement`. Two synthesized CHILDREN had it in mirror image (`first .item`'s callee took `.item`'s span; `copy my textContent`'s `me` took the property's), and `clear :count` moved `start` back over the sigil without moving `column`. All six are read by LSP hover and diagnostic ranges. Found by the parse-path triage once `@lokascript/semantic` began reporting spans — the two paths disagreed and TRADITIONAL was the wrong one, contradicting the handoff that named it the oracle. | ✅ `composite-expression-spans.test.ts` (asserts against the SOURCE TEXT, not against the other path; mutation-verified — each of the four fixes reddens a different row count) + the regenerated `ast-equivalence` baseline | `HANDOFF-convergence-next.md`, "What the measurement falsified" |
 | **`pick`'s `variant` modifier is given the command's own span** | low — `pick first 3 of items` gives `modifiers.variant` the span `[0, 4)`, which is `pick`, not `first`. Same class as the composite-span defects fixed above, in a hand-built modifier the fix did not reach. | ⚠️ NONE — the semantic path emits no span there at all, so it reads as `field-only-trad` in the triage rather than as a disagreement | found 2026-09-01 while measuring the span residual; `HANDOFF-convergence-next.md`, "The residual, precisely" group 3 |
 | **Seven producers emit an INCOMPLETE position** | low-medium — 24 of 857 typed nodes in a traditional parse of the engine corpus lack a full `{start,end,line,column}`, so LSP range and diagnostic consumers get nothing for them. Producers: `js … end` bodies (9 sites — body literal + params arrayLiteral), `pick`'s `variant`/`rangeMode` (7), `propertyOfExpression` (`asExpression` inherits its `undefined`s, so fixing one fixes both), `betweenExpression`, a `when`-modifier `unaryExpression`, an object-literal `properties[].key`, and `set`'s sigil-variable destination — which sets `start`/`end` but omits `line`/`column`, so the same `:count` surface is positioned two different ways inside one parse of `on click set :count to 1 then increment :count`. **Not the same as a materialized default**, which is correctly span-free (`focus`'s implicit `me`) and must stay that way. | ⚠️ NONE — no gate asserts position completeness on either path | measured 2026-09-01 after #1042; blocks nothing, but it is why `ENGINE_MIGRATION_PLAN.md` Arc 2 step 2 can NOT make positions required (that entry carries the full measurement) |
+| **`set *<css-prop> of <target>` silently no-ops** | **medium-high — upstream ACCEPTS all five shapes and we break four**, three of them SILENTLY. Only the possessive `set my *opacity to 0.5` works. Same class as `show … in … when …` above: real, with an oracle, and silent. | ⚠️ NONE — no gate covers `*`-property `set` destinations on either path | measured 2026-09-01 while listing the kinds that never reach the evaluators (Arc 2 step 3); section below |
 
 ### ~~`and` in a semantically-parsed command's arguments~~ — FIXED (2026-08-30)
 
@@ -1957,6 +1958,55 @@ no shipped page uses `scroll`.
 The top-line triage is unchanged (`same` 139 · `differ` 77): both parse paths
 were broken identically and are fixed together, which is precisely the class a
 convergence triage cannot see.
+
+
+### `set *<css-property>` — four of five shapes broken (2026-09-01)
+
+Found while answering Arc 2 step 3's question "which union kinds never reach the
+evaluators, and where is each actually handled?". `cssProperty` is one of the
+three `Expr` kinds that never arrives; chasing its one reader turned up a live
+parity bug next door.
+
+Measured against the vendored engine (`_hyperscript-0.9.93.min.js`, loaded into
+jsdom) on the same element, same context:
+
+| source | upstream 0.9.93 | hyperfixi |
+| ------ | --------------- | --------- |
+| `set *opacity of me to 0.5` | `opacity: 0.5` | **silent no-op** |
+| `set *opacity to 0.5` | `opacity: 0.5` | **silent no-op** |
+| `set *background-color of me to "red"` | `background-color: red` | **silent no-op** |
+| `set the *opacity of me to 0.5` | `opacity: 0.5` | **throws** `Property name must be an identifier in "the X of Y" pattern` |
+| `set my *opacity to 0.5` | `opacity: 0.5` | `opacity: 0.5` ✅ |
+
+So the possessive spelling is the only one that works, and the three silent rows
+are the dangerous ones — a shipped page using them looks fine and does nothing.
+
+**Do not assume the `cssProperty` node is involved.** It is not: for every row
+above, BOTH the traditional and the default (semantic-first) path parse `*opacity`
+into a `selector` or `identifier`, never into `cssProperty`. Verified by walking
+the compiled AST for each source. The kind has exactly one emitter
+(`semantic-integration.ts`'s `createPropertyNode`, for a `set` destination) and
+these English surfaces do not reach it.
+
+**Second, separate defect in the same area.** `cssProperty`'s only reader cannot
+match the shape its only emitter builds:
+
+- emitter writes `{ type: 'cssProperty', name: 'opacity' }` — the `*` **stripped**,
+  and no `value` field;
+- `isCSSPropertySelectorNode` (`commands/helpers/selector-type-detection.ts`)
+  accepts a node only when `extractSelectorValue(node)` **starts with `*`**;
+  that helper falls through to `name`, so it returns `'opacity'` and the guard
+  returns `false`.
+
+Confirmed directly: `isCSSPropertySelectorNode({type:'cssProperty',name:'opacity'})`
+→ `false`; the same call with `{value:'*opacity'}` → `true`. Whether the fix is to
+stop stripping the `*`, or to have the reader accept `cssProperty` on its
+discriminant alone, is a behaviour decision — which is why this is filed rather
+than fixed inside a types-only arc.
+
+Both are behaviour changes and neither belongs in Arc 2. Start from the table
+above (it is the oracle), and note the `the X of Y` row throws from
+`property-target.ts`, a different code path than the three silent rows.
 
 ## Notes
 
