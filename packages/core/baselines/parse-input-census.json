@@ -3,10 +3,10 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2393,
-    "branches": 356,
-    "syntaxSites": 123,
-    "valueSites": 216
+    "lines": 2231,
+    "branches": 340,
+    "syntaxSites": 114,
+    "valueSites": 215
   },
   "commands": {
     "async": {
@@ -235,16 +235,16 @@
     },
     "swap": {
       "file": "src/commands/dom/swap.ts",
-      "lines": 198,
-      "branches": 27,
-      "syntaxSites": 10,
-      "valueSites": 4
+      "lines": 83,
+      "branches": 13,
+      "syntaxSites": 2,
+      "valueSites": 3
     },
     "morph": {
       "file": "src/commands/dom/swap.ts",
-      "lines": 103,
-      "branches": 15,
-      "syntaxSites": 5,
+      "lines": 56,
+      "branches": 13,
+      "syntaxSites": 4,
       "valueSites": 3
     },
     "toggle": {

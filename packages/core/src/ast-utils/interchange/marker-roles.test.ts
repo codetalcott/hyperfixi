@@ -71,8 +71,9 @@ const MARKER_WORDS = new Set([
  *   Fixing them means teaching a parser, not annotating a schema.
  */
 const KNOWN_UNFIXED: ReadonlyArray<`${string}.${string}="${string}"`> = [
-  'swap.method="over"',
-  'morph.patient="over"',
+  // `swap.method="over"` and `morph.patient="over"` left this list with Arc 3
+  // step 3's swap PR: the strategy word is `modifiers.strategy` now, so there
+  // is no bare `over` in `args` for the positional pass to bind as a value.
   'pick.patient="from"',
 ];
 

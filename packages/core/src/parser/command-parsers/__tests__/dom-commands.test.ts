@@ -522,7 +522,9 @@ describe('DOM Command Parsers', () => {
       const result = parseSwapCommand(ctx, createIdentifierNode('swap'));
 
       expect(result.name).toBe('swap');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // Slots (Arc 3 step 3): the target is positional, the content is `modifiers.with`.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.with).toBeDefined();
     });
 
     it('should parse swap with innerHTML strategy', () => {
@@ -564,7 +566,10 @@ describe('DOM Command Parsers', () => {
 
       expect(result.name).toBe('swap');
       // Should include strategy keyword in arguments
-      expect(result.args.length).toBeGreaterThanOrEqual(1);
+      // The strategy word is `modifiers.strategy`; `of` is consumed, not kept.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.strategy).toBeDefined();
+      expect(result.modifiers?.with).toBeDefined();
     });
 
     it('should parse swap delete syntax', () => {
