@@ -59,7 +59,9 @@ export const equalsExpression: EnhancedExpressionImplementation = {
   operators: ['is', '==', 'equals'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const startTime = Date.now();
+    // Timing is only spent when the context collects it (a devtools/test context).
+    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const startTime = tracking ? Date.now() : 0;
     try {
       // Hyperscript uses loose equality for 'is' and strict equality for other operators
       const result = left == right;
@@ -108,53 +110,6 @@ export const equalsExpression: EnhancedExpressionImplementation = {
       averageTime: 0.001,
       complexity: 'O(1)',
     },
-  },
-
-  documentation: {
-    summary: 'Compares two values for loose equality, allowing type coercion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'unknown',
-        description: 'Left operand for comparison',
-        optional: false,
-        examples: ['5', '"hello"', 'true', 'null'],
-      },
-      {
-        name: 'right',
-        type: 'unknown',
-        description: 'Right operand for comparison',
-        optional: false,
-        examples: ['5', '"hello"', 'true', 'null'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if values are loosely equal, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Basic equality check',
-        code: 'if my.value is 10',
-        explanation: 'Check if element value equals 10',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Type coercion',
-        code: 'if "5" == 5',
-        explanation: 'String "5" equals number 5 with automatic type conversion',
-        output: 'true',
-      },
-      {
-        title: 'Null checks',
-        code: 'if value is null',
-        explanation: 'Check if value is null or undefined',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['strictEquals', 'notEquals', 'matches'],
-    tags: ['comparison', 'equality', 'logic', 'type-coercion'],
   },
 };
 
@@ -318,7 +273,9 @@ export const andExpression: EnhancedExpressionImplementation = {
   operators: ['and', '&&'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<unknown> {
-    const startTime = Date.now();
+    // Timing is only spent when the context collects it (a devtools/test context).
+    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const startTime = tracking ? Date.now() : 0;
     try {
       // Return the first falsy value, or the last value if all are truthy
       // This matches JavaScript && behavior: returns actual values, not booleans
@@ -373,53 +330,6 @@ export const andExpression: EnhancedExpressionImplementation = {
       averageTime: 0.001,
       complexity: 'O(1)',
     },
-  },
-
-  documentation: {
-    summary: 'Logical AND operation that returns true only if both operands are truthy',
-    parameters: [
-      {
-        name: 'left',
-        type: 'unknown',
-        description: 'Left operand (evaluated for truthiness)',
-        optional: false,
-        examples: ['true', 'name', '5', '"hello"'],
-      },
-      {
-        name: 'right',
-        type: 'unknown',
-        description: 'Right operand (evaluated for truthiness)',
-        optional: false,
-        examples: ['false', 'age', '0', '""'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if both operands are truthy, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Form validation',
-        code: 'if name and email',
-        explanation: 'Check if both name and email have values',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Multiple conditions',
-        code: 'if age > 18 and hasLicense',
-        explanation: 'Combine multiple conditions',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Short-circuit evaluation',
-        code: 'if element and element.value',
-        explanation: 'Check element exists before accessing properties',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['or', 'not', 'exists'],
-    tags: ['logic', 'boolean', 'conditions', 'validation'],
   },
 };
 
@@ -802,7 +712,9 @@ export const matchesExpression: EnhancedExpressionImplementation = {
   operators: ['matches'],
 
   async evaluate(context: ExecutionContext, element: unknown, selector: unknown): Promise<boolean> {
-    const startTime = Date.now();
+    // Timing is only spent when the context collects it (a devtools/test context).
+    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const startTime = tracking ? Date.now() : 0;
     try {
       let result: boolean;
 
@@ -890,59 +802,6 @@ export const matchesExpression: EnhancedExpressionImplementation = {
       averageTime: 0.5,
       complexity: 'O(n)',
     },
-  },
-
-  documentation: {
-    summary: 'Tests if element matches CSS selector or string matches regex pattern',
-    parameters: [
-      {
-        name: 'element',
-        type: 'Element | string',
-        description: 'DOM element or string to test',
-        optional: false,
-        examples: ['<div>', '"hello world"', 'me', 'target'],
-      },
-      {
-        name: 'selector',
-        type: 'string',
-        description: 'CSS selector or regex pattern to match against',
-        optional: false,
-        examples: ['".active"', '"#navbar"', '"/^hello/"', '"\\\\d+"'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if element matches selector/pattern',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'CSS class matching',
-        code: 'if me matches ".active"',
-        explanation: 'Check if current element has "active" class',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Attribute matching',
-        code: 'if target matches "[data-role=\\"button\\"]"',
-        explanation: 'Check if element has specific data attribute',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Regex pattern matching',
-        code: 'if email matches "/^[^@]+@[^@]+\\\\.[^@]+$/"',
-        explanation: 'Validate email format with regex',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Complex CSS selector',
-        code: 'if element matches ".card:hover .button"',
-        explanation: 'Match complex CSS selector with pseudo-classes',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['contains', 'startsWith', 'endsWith', 'querySelector'],
-    tags: ['pattern', 'css', 'regex', 'validation', 'dom'],
   },
 };
 

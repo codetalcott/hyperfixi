@@ -328,7 +328,9 @@ describe('Enhanced Logical Expressions', () => {
     });
 
     it('should have new enhanced properties', () => {
-      const enhancedProps = ['metadata', 'documentation', 'inputSchema'];
+      // `documentation` had zero runtime readers and is gone (Arc 7); the
+      // reference docs are generated, not carried on the runtime object.
+      const enhancedProps = ['metadata', 'inputSchema'];
 
       for (const prop of enhancedProps) {
         expect(equalsExpression).toHaveProperty(prop);
