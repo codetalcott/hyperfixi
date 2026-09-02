@@ -1243,6 +1243,33 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    moved (the four documented `push`/`replace` forms); type-escapes 893 → 891
    (the helper's two `as unknown as Record` reads went with the scan).
 
+   **Step 5, second deletion: `COMPOUND_COMMANDS` retired (2026-09-03).** The
+   set in `parser-constants.ts` routed a command to `parseCompoundCommand` by
+   membership; the `switch` inside chose the parser; the two had to agree by
+   hand and five times did not — `take`, `process`, `show`/`hide`,
+   `push`/`replace` were each found as a member with no case, falling through
+   to `parseRegularCommand`, each by a behaviour bug. Now there is ONE table,
+   `COMPOUND_COMMAND_PARSERS` (name → parser); `isCompoundCommand` is
+   `has()`, `parseCompoundCommand` is `get()`, and the `switch` and its
+   `default` are gone. `CommandClassification.isCompoundCommand` and the
+   `ParserContext.isCompoundCommand` method (no consumer outside the parser
+   itself) went with the set; the manifest's `multiword` flag now mirrors the
+   table's keys (its audit test and the coverage/routes tests import
+   `COMPOUND_COMMAND_NAMES`, derived from the table). Same PR: the
+   expression-path copy of the generic argument loop —
+   `createCommandFromIdentifier`, reached from expression statements and
+   conditional branches — is deleted; that path routes exactly as
+   `parseCommandCore` does (dedicated row, else `parseDeclaredCommand` with
+   the declared grammar). Zero AST-equivalence rows moved: no corpus source
+   reaches a command through that path with arguments the two loops read
+   differently, which is the measurement that says the copy was a copy.
+   One row is new: `add` — it reaches `parseCommandCore`'s own keyword branch
+   first, but on the expression path it used to fall to the generic loop
+   (no `to` handling); it now gets `parseAddCommand` there too. What remains
+   of step 5: `parseRegularCommand` (two fallback callers), and the
+   `continuation` words in the grammar rows, which are the old
+   `continuationKeywords` by another name — each behind a caller count.
+
 
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
@@ -1323,8 +1350,13 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    after the filter went is the same function minus the filter, and the key
    names which slot a command's target lives under), `resolveTargetsFromArgs`'s
    AST-walking half — each when its caller count reaches zero (a test per
-   list, ratcheted). `COMPOUND_COMMANDS` becomes "all commands" and is deleted
-   with `isCompoundCommand`.
+   list, ratcheted). ~~`COMPOUND_COMMANDS` becomes "all commands" and is deleted
+   with `isCompoundCommand`.~~ ✅ **Retired 2026-09-03** — not as "all
+   commands" but as a TABLE: `COMPOUND_COMMAND_PARSERS` in
+   `utility-commands.ts`, one row per dedicated parser; a command is dedicated
+   iff it has a row. The expression-path copy of the generic loop
+   (`createCommandFromIdentifier`) went with it. `parseRegularCommand` remains
+   for two fallbacks (`scroll <dir> by <n>`, non-`partials` `process`).
 
 Gates: the classification audit (ratchet to 0); `command-output-contract`
 (both paths — until Arc 4 deletes one); `compound-command-coverage`;

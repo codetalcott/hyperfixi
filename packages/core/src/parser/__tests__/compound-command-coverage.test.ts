@@ -1,7 +1,7 @@
 /**
- * Every COMPOUND_COMMANDS member parses its own documented syntax.
+ * Every COMPOUND_COMMAND_NAMES member parses its own documented syntax.
  *
- * Membership in `COMPOUND_COMMANDS` routes a command to
+ * Membership in `COMPOUND_COMMAND_NAMES` routes a command to
  * `parseCompoundCommand` — but that function is a switch whose `default:`
  * silently falls back to `parseRegularCommand`, and NOTHING guarded the
  * correspondence between the set and the switch. A member with no case gets
@@ -24,13 +24,13 @@
  * tail its own commandMeta declares.
  *
  * Probes come from each command's documented syntax/examples. Adding a member
- * to COMPOUND_COMMANDS without adding a probe fails the ratchet below, and so
+ * to COMPOUND_COMMAND_NAMES without adding a probe fails the ratchet below, and so
  * does removing one.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { hyperscript } from '../../api/hyperscript-api';
-import { COMPOUND_COMMANDS } from '../parser-constants';
+import { COMPOUND_COMMAND_NAMES } from '../command-parsers/utility-commands';
 
 /** command name → sources that must each parse to exactly that one command. */
 const PROBES: Record<string, string[]> = {
@@ -110,9 +110,9 @@ function topLevel(result: unknown): Array<{ type?: string; name?: string }> {
   return (Array.isArray(ast.body) ? ast.body : [ast]) as Array<{ type?: string; name?: string }>;
 }
 
-describe('COMPOUND_COMMANDS ↔ parseCompoundCommand coverage', () => {
+describe('COMPOUND_COMMAND_NAMES ↔ parseCompoundCommand coverage', () => {
   it('has a probe for every member, and no probe for a non-member', () => {
-    expect(Object.keys(PROBES).sort()).toEqual([...COMPOUND_COMMANDS].sort());
+    expect(Object.keys(PROBES).sort()).toEqual([...COMPOUND_COMMAND_NAMES].sort());
   });
 
   describe.each(BOTH_PATHS)('%s path', (_label, opts) => {

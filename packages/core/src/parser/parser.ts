@@ -26,7 +26,6 @@ import { getRegisteredFeature } from './extensions';
 
 import {
   COMMANDS,
-  COMPOUND_COMMANDS,
   HYPERSCRIPT_KEYWORDS,
   CommandClassification,
   PUT_OPERATIONS,
@@ -992,59 +991,37 @@ export class Parser {
     return CommandClassification.isKeyword(name);
   }
 
+  /**
+   * A command met where an expression was expected (an expression statement,
+   * a conditional branch). Same routing as `parseCommandCore`: a dedicated
+   * parser if the command has one, else its declared grammar row. This used
+   * to carry its own copy of the generic argument loop (Arc 3 step 5 deleted
+   * it — one generic parser, `parseDeclaredCommand`, not two).
+   */
   private createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode | null {
-    const args: ASTNode[] = [];
     // Resolve to English canonical form for AST normalization
     const commandName = this.resolveKeyword(identifierNode.name.toLowerCase());
-
     if (this.isCompoundCommand(commandName)) {
       return this.parseCompoundCommand(identifierNode);
     }
-
-    // Parse command arguments (space-separated, not comma-separated)
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.checkIsCommand()
-    ) {
-      // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
-      if (
-        this.checkContextVar() ||
-        this.checkIdentifier() ||
-        this.checkKeyword() || // Add KEYWORD support for words like "into"
-        this.checkEvent() ||
-        this.checkCssSelector() ||
-        this.checkIdSelector() ||
-        this.checkClassSelector() ||
-        this.checkString() ||
-        this.checkNumber() ||
-        this.checkTimeExpression() ||
-        this.match('<')
-      ) {
-        args.push(this.parsePrimary());
-      } else {
-        // Stop parsing if we encounter an unrecognized token
-        break;
-      }
-    }
-
-    return {
-      type: 'command',
-      name: identifierNode.name,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
-      end: this.getPosition().end,
-      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
+    const commandToken: Token = {
+      kind: 'identifier',
+      value: identifierNode.name,
+      start: identifierNode.start ?? 0,
+      end: identifierNode.end ?? 0,
+      line: identifierNode.line ?? 0,
+      column: identifierNode.column ?? 0,
     };
+    return parseDeclaredCommand(
+      this.getContext(),
+      commandToken,
+      commandName,
+      grammarOf(commandName) ?? PLUGIN_COMMAND_GRAMMAR
+    ) as CommandNode;
   }
 
   private isCompoundCommand(commandName: string): boolean {
-    // Use centralized command list
-    return CommandClassification.isCompoundCommand(commandName);
+    return utilityCommands.COMPOUND_COMMAND_NAMES.has(commandName.toLowerCase());
   }
 
   private parseCompoundCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -4624,9 +4601,8 @@ export class Parser {
       addError: this.addError.bind(this),
       addWarning: this.addWarning.bind(this),
 
-      // Utility Functions (5 methods)
+      // Utility Functions (4 methods)
       isCommand: this.isCommand.bind(this),
-      isCompoundCommand: this.isCompoundCommand.bind(this),
       isKeyword: this.isKeyword.bind(this),
       resolveKeyword: this.resolveKeyword.bind(this),
 

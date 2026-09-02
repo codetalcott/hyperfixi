@@ -68,7 +68,7 @@
  * | `tier` | `reference/index.ts`'s `availability` | exact, all 59 |
  * | `upstreamOrExtension` | the LSP tier lists (`language-server/src/command-tiers.ts`) | per-command equality, all 59; plus `unknown` set === the audit's `TIER_UNCLASSIFIED` (both empty since step 4.1) |
  * | `consolidationAliasOf` | `metadata.aliases`, resolved by shared implementation identity | exact, the 4 pairs |
- * | `multiword` | `parser-constants.COMPOUND_COMMANDS` | set equality |
+ * | `multiword` | `utility-commands.COMPOUND_COMMAND_NAMES` (the dedicated-parser table) | set equality |
  *
  * Every field is a **checked mirror** of a source that already exists, not a
  * fresh hand-maintained copy — which is the whole point: a manifest that could
@@ -197,7 +197,7 @@ export interface CommandManifestEntry {
    * (`runtime/command-adapter.ts`). Absent for the other 55.
    */
   readonly consolidationAliasOf?: string;
-  /** Has multi-word forms — mirrors `parser-constants.COMPOUND_COMMANDS`. */
+  /** Has multi-word forms — mirrors `utility-commands.COMPOUND_COMMAND_NAMES` (the dedicated-parser table). */
   readonly multiword: boolean;
 }
 

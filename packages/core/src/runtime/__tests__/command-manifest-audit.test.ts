@@ -61,7 +61,8 @@ import { readFileSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { COMMANDS, COMPOUND_COMMANDS } from '../../parser/parser-constants';
+import { COMMANDS } from '../../parser/parser-constants';
+import { COMPOUND_COMMAND_NAMES } from '../../parser/command-parsers/utility-commands';
 import { COMMAND_MANIFEST, COMMAND_NAMES, toRegisteredName } from '../../commands/manifest';
 import {
   AVAILABLE_COMMANDS,
@@ -926,11 +927,11 @@ describe('the command manifest', () => {
     }
   });
 
-  it('multiword mirrors COMPOUND_COMMANDS', () => {
+  it('multiword mirrors COMPOUND_COMMAND_NAMES', () => {
     const manifestMultiword = COMMAND_MANIFEST.filter(e => e.multiword)
       .map(e => e.name)
       .sort();
-    expect(manifestMultiword).toEqual([...COMPOUND_COMMANDS].sort());
+    expect(manifestMultiword).toEqual([...COMPOUND_COMMAND_NAMES].sort());
     expect(manifestMultiword.length).toBe(23);
   });
 
