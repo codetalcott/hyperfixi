@@ -363,12 +363,9 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args).toHaveLength(3);
+      // The operation is the slot the target lives under (Arc 3 step 3).
+      expect(result?.args).toHaveLength(1);
       // Args: content, operation keyword, target
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'into',
-      });
     });
 
     it('should parse put before', () => {
@@ -381,10 +378,6 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'before',
-      });
     });
 
     it('should parse put after', () => {
@@ -397,10 +390,6 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'after',
-      });
     });
 
     it('should parse put at start of', () => {
@@ -443,7 +432,9 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1].name).toBe('at start of');
+      // The multi-word operation keeps its spelling as the slot key (Arc 3 step 3).
+      expect(result?.args).toHaveLength(1);
+      expect(result?.modifiers?.['at start of']).toBeDefined();
     });
 
     it('should return null if content expression is missing', () => {

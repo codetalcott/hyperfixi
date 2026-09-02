@@ -106,7 +106,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -148,7 +148,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -165,7 +165,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, beforeNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { before: targetNode as never } },
         evaluator,
         context
       );
@@ -182,7 +182,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, afterNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { after: targetNode as never } },
         evaluator,
         context
       );
@@ -199,7 +199,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, atStartNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { 'at start of': targetNode as never } },
         evaluator,
         context
       );
@@ -216,7 +216,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, atEndNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { 'at end of': targetNode as never } },
         evaluator,
         context
       );
@@ -288,7 +288,7 @@ describe('PutCommand', () => {
       const meNode = { type: 'identifier', name: 'me' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, meNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: meNode as never } },
         evaluator,
         context
       );
@@ -306,7 +306,7 @@ describe('PutCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [contentNode, intoNode, targetNode], modifiers: {} },
+          { args: [contentNode], modifiers: { into: targetNode as never } },
           evaluator,
           context
         )
@@ -330,7 +330,7 @@ describe('PutCommand', () => {
       const intoNode = { type: 'literal', value: 'into' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -354,7 +354,7 @@ describe('PutCommand', () => {
       const intoNode = { type: 'literal', value: 'into' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -374,7 +374,7 @@ describe('PutCommand', () => {
       const varNode = { type: 'identifier', name: 'myVar' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -392,7 +392,7 @@ describe('PutCommand', () => {
       const varNode = { type: 'literal', value: 'count' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -905,7 +905,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
@@ -929,7 +929,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
@@ -953,7 +953,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -975,7 +975,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -997,7 +997,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -1019,7 +1019,7 @@ describe('PutCommand', () => {
       const context = createMockContext(meElement);
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
