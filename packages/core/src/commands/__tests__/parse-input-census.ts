@@ -57,9 +57,61 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 /** The text of every `parseInput(` method body in a file, brace-matched. */
+/**
+ * Drop `//` and block comments, keeping string and template contents intact
+ * (the census matches string contents — `=== 'to'` is a keyword compare).
+ * Without this the census counted a comment's `args[0]` as a syntax site: on
+ * 2026-09-03, 6 of the 70 "syntax sites" were prose. Same lesson as the
+ * type-escape ratchet's stripper — a count that reads comments can be moved
+ * by editing a comment.
+ */
+export function stripComments(text: string): string {
+  let out = '';
+  let i = 0;
+  const n = text.length;
+  while (i < n) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (c === '/' && next === '/') {
+      while (i < n && text[i] !== '\n') i++;
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < n && !(text[i] === '*' && text[i + 1] === '/')) i++;
+      i += 2;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < n) {
+        if (text[i] === '\\') {
+          out += text[i] + (text[i + 1] ?? '');
+          i += 2;
+          continue;
+        }
+        out += text[i];
+        if (text[i] === quote) {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 export function parseInputBodies(source: string): string[] {
   const bodies: string[] = [];
-  const re = /\n\s*(?:async\s+)?parseInput\s*\(/g;
+  // Same-line whitespace only: `\s*` would back up over the blank lines a
+  // stripped docblock leaves and count them as body.
+  const re = /\n[ \t]*(?:async\s+)?parseInput\s*\(/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(source))) {
     const close = source.indexOf(')', m.index + m[0].length);
@@ -112,7 +164,7 @@ export function parseInputModifierReads(): Record<string, { file: string; keys: 
 export function census(): Census {
   const commands: Record<string, CensusRow> = {};
   for (const file of walk(COMMANDS_DIR).sort()) {
-    const source = readFileSync(file, 'utf8');
+    const source = stripComments(readFileSync(file, 'utf8'));
     const bodies = parseInputBodies(source);
     if (bodies.length === 0) continue;
     // One row per body; a file with two classes (swap.ts holds swap and
