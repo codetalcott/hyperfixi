@@ -1,24 +1,20 @@
 {
-  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND \u2014 static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
-  "generated": "2026-09-02",
+  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
+  "generated": "2026-09-03",
   "totals": {
     "static-value": 5,
-    "dynamic": 3,
+    "dynamic": 1,
     "static-type": 2,
     "typeof-import": 2
   },
   "files": {
-    "api/hyperscript-api.ts": {
-      "dynamic": 2,
-      "reason": "Two DYNAMIC imports only (compileMultilingual, fromLSECode), both deferred. The static-value import \u2014 `getSemanticAnalyzer()` building an analyzer for every compile(), so that every English compile() ran the front-end first for the 32 commands not on parseCommandCore's skip list \u2014 was deleted by Arc 1 step 6 (2026-09-02) with the in-loop path itself; the API now reaches the front-end only through `multilingual/bridge.ts`, whole-program, for a non-English compile. Arc 1 step 2 (`hyperscript.use(frontEnd)`) takes these two with it."
-    },
     "compatibility/browser-bundle-classic-i18n.ts": {
       "static-value": 1,
       "reason": "LEGITIMATE and terminal. This IS the classic-i18n bundle; importing @lokascript/i18n/browser is its entire reason to exist. Target-state row."
     },
     "compatibility/browser-bundle-multilingual.ts": {
       "typeof-import": 1,
-      "reason": "LEGITIMATE. A `typeof import(...)` type query only \u2014 the module itself is loaded lazily by getSemanticModule(). Target-state row."
+      "reason": "LEGITIMATE. A `typeof import(...)` type query only — the module itself is loaded lazily by getSemanticModule(). Target-state row."
     },
     "compatibility/browser-bundle-semantic-complete.ts": {
       "static-value": 1,
@@ -32,7 +28,7 @@
       "static-type": 1,
       "typeof-import": 1,
       "dynamic": 1,
-      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 \u2014 the engine now owns that policy."
+      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 — the engine now owns that policy."
     },
     "multilingual/index.ts": {
       "static-type": 1,
@@ -40,7 +36,7 @@
     },
     "multilingual/schema-roles.ts": {
       "static-value": 2,
-      "reason": "LEGITIMATE and target-state. The schema-driven role inferrer `fromCoreAST` takes by injection (Arc 1 step 4). These two imports are the SAME two that ast-utils/interchange/from-core.ts used to hold \u2014 the step moved them from a file that must not import the front-end onto the front-end side of the line, so the static-value TOTAL is unchanged at 7. Both `multilingual/` rows are target-state under the ratchet's endpoint (compatibility/browser-bundle*.ts + multilingual/ only)."
+      "reason": "LEGITIMATE and target-state. The schema-driven role inferrer `fromCoreAST` takes by injection (Arc 1 step 4). These two imports are the SAME two that ast-utils/interchange/from-core.ts used to hold — the step moved them from a file that must not import the front-end onto the front-end side of the line, so the static-value TOTAL is unchanged at 7. Both `multilingual/` rows are target-state under the ratchet's endpoint (compatibility/browser-bundle*.ts + multilingual/ only)."
     }
   }
 }
