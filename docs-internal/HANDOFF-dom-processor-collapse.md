@@ -1,5 +1,7 @@
 # Handoff — collapse the three DOM processors onto the Program cache
 
+> **LANDED 2026-09-03 (#1122 parity gate, #1123 shared processor, #1124 deletion) — this brief is a record now.** Two of its claims were wrong on measurement and are corrected in the commits: the element lifecycle and `data-hyperscript-powered` lived only in the API processor (the bundle path never had them), and the `detectLanguage` twin was in `browser-bundle-multilingual.ts`, not the attribute processor. Three processors → two; the `dom -> api` edge is gone; 57 parity rows on three paths.
+>
 > **Written 2026-09-03 from measurement, not started.** This is the plan's
 > risk 6 ("two of the three DOM processors will move"), filed as After-the-plan
 > item 2 and worked as far as its first slice: `hyperscript.process()` no
