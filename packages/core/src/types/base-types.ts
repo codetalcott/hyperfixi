@@ -184,7 +184,7 @@ export type ExpressionCategory =
  *        ↓
  *   TypedExecutionContext - Type registry + validation cache
  */
-export interface ExecutionContext extends CoreExecutionContext {
+export interface Scope extends CoreExecutionContext {
   /** Result of last operation — mutable for runtime context updates */
   result: unknown;
 
@@ -217,6 +217,14 @@ export interface ExecutionContext extends CoreExecutionContext {
    */
   readonly registerCleanup?: (element: Element, cleanup: () => void, description?: string) => void;
 }
+
+/**
+ * The public name of {@link Scope}. Kept as an alias (Arc 4c step 5): the
+ * target design calls the runtime's context a `Scope`, and `ExecutionContext`
+ * is what every importer — inside and outside this package — has always
+ * written. The two are one type.
+ */
+export type ExecutionContext = Scope;
 
 /**
  * Alias kept for the 141 files that import it. It used to add evaluation

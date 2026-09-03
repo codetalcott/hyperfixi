@@ -24,6 +24,7 @@ export { hyperscript } from './api/hyperscript-api';
 export type {
   ASTNode,
   ExecutionContext,
+  Scope,
   ParseResult,
   ParseError,
   Token,

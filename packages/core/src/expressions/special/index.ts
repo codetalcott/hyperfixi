@@ -19,7 +19,7 @@ import type { ExpressionCategory } from '../../types/expression-types';
 import { isString, isNumber, isBoolean } from '../type-helpers';
 import { toNumber } from '../shared';
 import { BaseExpressionImpl } from '../base-expression';
-import { notifyLocalRead } from '../../parser/extensions';
+import { notifyLocalRead } from '../../core/scope-hooks';
 
 // ============================================================================
 // Input Schemas

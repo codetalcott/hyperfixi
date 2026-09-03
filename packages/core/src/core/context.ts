@@ -4,7 +4,7 @@
  */
 
 import type { ExecutionContext } from '../types/core';
-import { setGlobal, notifyLocalRead, notifyLocalWrite } from '../parser/extensions';
+import { setGlobal, notifyLocalRead, notifyLocalWrite } from './scope-hooks';
 
 /**
  * Shared global variables Map across all execution contexts

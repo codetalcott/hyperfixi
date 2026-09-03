@@ -79,6 +79,12 @@ export class RegistryIntegration {
     if (!this.options.enableContextProviders) {
       return baseContext;
     }
+    // Arc 4c step 3: with no provider registered — every production caller,
+    // measured — there is nothing to resolve, so no Proxy. The five contexts
+    // the runtime builds per event/mutation/change/behavior stay plain objects.
+    if (this.contextRegistry.getProviderNames().length === 0) {
+      return baseContext;
+    }
 
     // Check cache first
     const cached = this.contextCache.get(baseContext);

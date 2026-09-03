@@ -1,20 +1,14 @@
 {
   "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself — known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
-  "generated": "2026-08-30",
-  "totalUpwardImports": 38,
-  "totalValueImports": 22,
+  "generated": "2026-09-03",
+  "totalUpwardImports": 37,
+  "totalValueImports": 21,
   "upwardEdges": {
     "commands -> validation": {
       "count": 3,
       "valueImports": 2,
       "typeOnlyImports": 1,
       "reason": "process-partials.ts calls the partial-template validator, formatter and its types. Arc 3: when the command gets a compile(), the validator arrives by injection instead of by import."
-    },
-    "core -> parser": {
-      "count": 1,
-      "valueImports": 1,
-      "typeOnlyImports": 0,
-      "reason": "core/context.ts imports setGlobal / notifyLocalRead / notifyLocalWrite from parser/extensions — the PROCESS-GLOBAL registry that also carries the reactivity plugin's dependency hooks. Arc 4c moves those hooks onto Runtime, which is what removes this."
     },
     "dom -> api": {
       "count": 2,

@@ -13,6 +13,7 @@
 // Re-export core types from unified base-types system
 export type {
   ExecutionContext,
+  Scope,
   TypedExecutionContext,
   EvaluationType,
   HyperScriptValueType,
