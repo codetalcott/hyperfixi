@@ -1901,6 +1901,24 @@ which step 2 moves onto the runtime — and then the bridge has nothing left
 to add. Core 7975, matrix unmoved, output-contract unmoved, bench within
 tolerance.
 
+**Step 2 DONE 2026-09-04 (decision 2 taken as recommended):** evaluation
+tracking is an opt-in sink — `expressions/shared/tracking.ts`
+(`setEvaluationTracker`/`getEvaluationTracker`/`isTrackingEvaluations`/
+`collectEvaluations`) — and the 24 comparison sites, `trackEvaluation` and
+`BaseExpressionImpl.trackPerformance`/`trackSimple` record into it, skipping
+the `Date.now()` pair when nothing listens. `evaluationHistory` is gone from
+the context, so `TypedExecutionContext` had nothing left to add and is now an
+alias of `ExecutionContext` (141 importers untouched); `TypedExpressionContext`
+likewise. Deleted: `ContextBridge` and the per-command `toTyped`/`fromTyped`
+copy in the adapter (the one default it supplied, `variables ??= new Map()`,
+stays as one line), `TypeSystemBridge`, `createTypedExecutionContext`,
+`isTypedExecutionContext`, `context-bridge.test.ts`. The three suites that
+asserted tracking through the context now install a tracker. **Measured on
+the bench guard: execute-only +8 %, `toggle` +11 %** — the first 4c change
+above noise, and the per-command cost the plan promised for 4b, credited
+here. Core suite green, matrix and output-contract unmoved, type-escapes
+870 → 869.
+
 Blast radius: ~~`ExecutionContext` is exported and used downstream as a type
 (reactivity, realtime, components).~~ Measured 2026-09-04 (the 4c brief):
 reactivity, realtime, intercept and components each declare their OWN

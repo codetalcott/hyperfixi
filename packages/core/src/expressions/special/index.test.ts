@@ -14,6 +14,7 @@ import {
   MultiplicationExpression,
   specialExpressions,
 } from './index';
+import { collectEvaluations, setEvaluationTracker } from '../shared/tracking';
 
 describe('Enhanced Special Expressions', () => {
   let context: TypedExpressionContext;
@@ -249,15 +250,21 @@ describe('Enhanced Special Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory!.length;
+        const records = collectEvaluations();
+        setEvaluationTracker(records);
+        const initialHistoryLength = 0;
 
-        await expression.evaluate(context, {
-          value: 'test',
-        });
+        try {
+          await expression.evaluate(context, {
+            value: 'test',
+          });
+        } finally {
+          setEvaluationTracker(null);
+        }
 
-        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
+        expect(records.records.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
+        const evaluation = records.records[records.records.length - 1];
         expect(evaluation.expressionName).toBe('stringLiteral');
         expect(evaluation.category).toBe('Special');
         expect(evaluation.success).toBe(true);
@@ -876,15 +883,20 @@ describe('Enhanced Special Expressions', () => {
 
     it('should track performance history correctly', async () => {
       const addExpr = new AdditionExpression();
-      const initialHistoryLength = context.evaluationHistory!.length;
+      const records = collectEvaluations();
+      setEvaluationTracker(records);
 
-      await addExpr.evaluate(context, { left: 1, right: 2 });
-      await addExpr.evaluate(context, { left: 3, right: 4 });
-      await addExpr.evaluate(context, { left: 5, right: 6 });
+      try {
+        await addExpr.evaluate(context, { left: 1, right: 2 });
+        await addExpr.evaluate(context, { left: 3, right: 4 });
+        await addExpr.evaluate(context, { left: 5, right: 6 });
+      } finally {
+        setEvaluationTracker(null);
+      }
 
-      expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 3);
+      expect(records.records.length).toBe(3);
 
-      const recentEvaluations = context.evaluationHistory!.slice(-3);
+      const recentEvaluations = records.records.slice(-3);
       recentEvaluations.forEach(evaluation => {
         expect(evaluation.expressionName).toBe('addition');
         expect(evaluation.category).toBe('Special');

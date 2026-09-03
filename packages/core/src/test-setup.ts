@@ -142,5 +142,4 @@ export const createTypedExecutionContext = (element?: HTMLElement) => ({
   locals: new Map<string, any>(),
   globals: new Map<string, any>(),
   // Enhanced features for expression evaluation
-  evaluationHistory: [] as any[],
 });
