@@ -32,7 +32,9 @@ export default withAsciiOnly(
         inlineDynamicImports: true,
       },
       {
-        file: `dist/${module}.js`,
+        // `.cjs`, not `.js`: core's package.json says `"type": "module"`, so a
+        // `.js` file is ESM to Node and a CJS-syntax one exports nothing.
+        file: `dist/${module}.cjs`,
         format: 'cjs',
         sourcemap: true,
         inlineDynamicImports: true,

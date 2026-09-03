@@ -70,7 +70,7 @@ async function sourcemapSources(relPath) {
   return { file, sources: map.sources };
 }
 
-for (const entry of ['dist/index.mjs', 'dist/index.js', 'dist/multilingual/index.mjs']) {
+for (const entry of ['dist/index.mjs', 'dist/index.cjs', 'dist/multilingual/index.mjs']) {
   await check(`@hyperfixi/core — ${entry} inlines no front-end package`, async () => {
     const { sources } = await sourcemapSources(entry);
     // Workspace paths look like `../../semantic/dist/index.js`; a consumer's
@@ -94,6 +94,39 @@ await check(
     return `${hits.length} deferred import(s)`;
   }
 );
+// ---------------------------------------------------------------------------
+// The CJS surface. Every `exports.*.require` and `main` pointed at a `.js`
+// file built as CommonJS — but core's package.json says `"type": "module"`,
+// so Node read those files as ESM and `require('@hyperfixi/core')` returned
+// `{}` (the subpaths threw), on the published 3.0.0 too. Nothing above could
+// see it: this script only ever `import()`ed. The CJS outputs are `.cjs` now;
+// these checks `require()` them and assert the same named entry points.
+// ---------------------------------------------------------------------------
+
+const { createRequire } = await import('node:module');
+const requireCjs = createRequire(import.meta.url);
+
+await check('@hyperfixi/core — bare-Node require() (CJS main)', async () => {
+  const m = requireCjs('@hyperfixi/core');
+  for (const name of ['hyperscript', 'parse', 'Runtime', 'createContext', 'getElementScopeMap']) {
+    assert(name in m, `${name} missing from require()`);
+  }
+  const exportCount = Object.keys(m).length;
+  assert(exportCount > 20, `only ${exportCount} exports from require() (expected > 20)`);
+  return `${exportCount} exports`;
+});
+
+await check('@hyperfixi/core/commands — bare-Node require()', async () => {
+  const m = requireCjs('@hyperfixi/core/commands');
+  assert(typeof m.swap === 'function', 'swap factory missing from require()');
+  return 'swap factory';
+});
+
+await check('@hyperfixi/core/multilingual — bare-Node require()', async () => {
+  const m = requireCjs('@hyperfixi/core/multilingual');
+  assert(typeof m.schemaRoleInferrer === 'function', 'schemaRoleInferrer missing from require()');
+  return 'schemaRoleInferrer';
+});
 
 await check('@hyperfixi/core/commands — bare-Node import', async () => {
   const m = await import('@hyperfixi/core/commands');

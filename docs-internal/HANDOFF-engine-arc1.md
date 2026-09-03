@@ -124,9 +124,9 @@ Landed as written, with decisions 1 (UMD kept, self-contained) and 2
 load; gate mutation-verified (three FAILs against `external: []`). **It also
 found that every CJS entry point is empty** — `"type": "module"` makes
 Node load the CJS-syntax `dist/*.js` as ESM; the same file as `.cjs` yields
-all 27 keys; the published 3.0.0 has the same defect. That is queued in the
-plan's After-the-plan list ahead of step B (same two files). Original step
-text follows for the record.
+all 27 keys; the published 3.0.0 has the same defect. **Fixed 2026-09-03** —
+`.cjs` outputs, `require()` checks in the same gate, freshness guards widened.
+Original step text follows for the record.
 
 1. In `rollup.config.mjs`, give the main entry's `.mjs` and `.js` outputs
    `external: ['@lokascript/semantic', '@lokascript/intent', '@lokascript/i18n',

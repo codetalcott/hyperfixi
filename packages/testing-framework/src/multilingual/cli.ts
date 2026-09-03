@@ -54,9 +54,13 @@ function findStaleDists(): string[] {
   for (const name of DIST_GUARD_PACKAGES) {
     const pkg = path.join(packagesRoot, name);
     const srcDir = path.join(pkg, 'src');
-    const marker = path.join(pkg, 'dist', 'index.js');
+    // Whichever entry the build emits: `.js` for most packages, `.mjs` for core
+    // (its CJS twin is `.cjs` — see scripts/ensure-fresh.sh).
+    const marker = ['index.js', 'index.mjs', 'index.cjs']
+      .map(f => path.join(pkg, 'dist', f))
+      .find(f => fs.existsSync(f));
     if (!fs.existsSync(srcDir)) continue;
-    if (!fs.existsSync(marker) || hasNewerTs(srcDir, fs.statSync(marker).mtimeMs)) {
+    if (!marker || hasNewerTs(srcDir, fs.statSync(marker).mtimeMs)) {
       stale.push(name);
     }
   }
