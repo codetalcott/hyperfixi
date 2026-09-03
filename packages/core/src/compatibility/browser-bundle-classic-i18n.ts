@@ -178,6 +178,13 @@ import {
   qu as quDictionary,
   sw as swDictionary,
 } from '@lokascript/i18n/browser';
+// NOTE: this entry is excluded from `tsconfig.build.json` (core's declaration
+// build) the way `browser-bundle.ts` and `hybrid-hx-v4` are: `@lokascript/i18n`
+// depends on core, not the reverse, so CI's build job compiles core BEFORE
+// i18n's `browser.d.ts` exists. The bundles job (rollup + tsconfig.json) and
+// the typecheck job both run after every dist is built, so the import resolves
+// to i18n's real types there — which is what the deleted `types.d.ts` shim
+// used to fake with `any`.
 
 // ============================================================================
 // i18n Setup - Register all locale providers
@@ -365,6 +372,31 @@ const attributeProcessor = createMinimalAttributeProcessor(runtimeAdapter);
  * `hyperfixi.translate(code, from, to)` there is the same renderer, correctly
  * sized for the job. See docs/BROWSER_BUNDLES.md.
  */
+/**
+ * The dictionary objects' declared type (`Dictionary`) lives in a private
+ * chunk of `@lokascript/i18n`'s emitted `browser.d.ts`, so a type inferred
+ * from them is not portable (TS2742), and naming it from the package's main
+ * entry would add a front-end type import the semantic-boundary ratchet
+ * refuses. `object` is what a script-tag consumer of `hyperfixi.i18n.dictionaries`
+ * can rely on; it was `any` while `types.d.ts` shimmed this module. `en` is
+ * `{}`: English is the canonical vocabulary and has no dictionary.
+ */
+const dictionaries: Record<string, object> = {
+  en: {}, // English is canonical, no dictionary needed
+  es: esDictionary,
+  ja: jaDictionary,
+  fr: frDictionary,
+  de: deDictionary,
+  ar: arDictionary,
+  ko: koDictionary,
+  zh: zhDictionary,
+  tr: trDictionary,
+  id: idDictionary,
+  pt: ptDictionary,
+  qu: quDictionary,
+  sw: swDictionary,
+};
+
 const i18nApi = {
   /**
    * Get current locale
@@ -456,21 +488,7 @@ const i18nApi = {
   /**
    * Dictionaries for creating custom providers
    */
-  dictionaries: {
-    en: {}, // English is canonical, no dictionary needed
-    es: esDictionary,
-    ja: jaDictionary,
-    fr: frDictionary,
-    de: deDictionary,
-    ar: arDictionary,
-    ko: koDictionary,
-    zh: zhDictionary,
-    tr: trDictionary,
-    id: idDictionary,
-    pt: ptDictionary,
-    qu: quDictionary,
-    sw: swDictionary,
-  },
+  dictionaries,
 
   /**
    * Create a keyword provider from a dictionary

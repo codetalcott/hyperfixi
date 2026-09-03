@@ -41,6 +41,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _Migration:_ `import { tokenize } from '@hyperfixi/core'` and walk the
   returned `Token[]`; there is no drop-in `Tokens` cursor class.
 
+- **Three never-reachable exports deleted** (Arc 6b): the `unified-types`
+  `Validator` class (a static `validateInput`/`createValidationError` pair
+  wrapped around `lightweight-validators` — exported from `types/index.ts`,
+  which `@hyperfixi/core` neither re-exports nor lists as a subpath, so no
+  consumer could import it); `src/types.d.ts` (an `any`-typed
+  `declare module '@lokascript/i18n/browser'` shim plus a
+  `Hyperscript.Commands` global namespace nothing read — the classic-i18n
+  bundle now typechecks against `@lokascript/i18n`'s own `browser.d.ts`);
+  and `src/registry/multilingual/` (`createMultilingualServerPlugin` and its
+  examples — documented as importable from
+  `@hyperfixi/core/registry/multilingual`, but never in `exports` and never
+  built into `dist/`, so the documented import never resolved). None had an
+  importer outside its own tests. Listed here rather than silently removed
+  because each carried an exported name in source.
+
+  _Migration:_ none possible or needed — no published entry point reached
+  any of the three.
+
 ## [3.0.0] - 2026-08-30
 
 Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).

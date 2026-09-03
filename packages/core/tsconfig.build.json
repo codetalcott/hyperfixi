@@ -21,6 +21,7 @@
     "src/test-helpers/**/*",
     "vitest.config.ts",
     "src/compatibility/browser-bundle-hybrid-hx-v4.ts",
-    "src/compatibility/browser-bundle.ts"
+    "src/compatibility/browser-bundle.ts",
+    "src/compatibility/browser-bundle-classic-i18n.ts"
   ]
 }
