@@ -396,6 +396,39 @@ describe('LSP Integration', () => {
       }
     });
 
+    // `fromCoreAST` names roles for `set`/`go` only unless server.ts injects the
+    // schema-driven inferrer, and the framework re-infers the simple cases
+    // itself when rendering LSE — so only a case it cannot re-infer proves the
+    // injection is wired: without it `add .x to me` renders `[add patient:.x]`
+    // (2026-09-03, 4 of 28 corpus feature sources differ). Strict on purpose:
+    // the keyword test above tolerates a null result; this one does not.
+    it('hover LSE carries the schema-inferred destination role', async () => {
+      const rolesUri = 'file:///test/hover-roles.hs';
+      client.sendNotification('textDocument/didOpen', {
+        textDocument: {
+          uri: rolesUri,
+          languageId: 'hyperscript',
+          version: 1,
+          text: 'on click add .x to me',
+        },
+      });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const response = await client.sendRequest('textDocument/hover', {
+        textDocument: { uri: rolesUri },
+        position: { line: 0, character: 9 }, // "add"
+      });
+
+      expect(response.error).toBeUndefined();
+      const hover = response.result as {
+        contents: { kind: string; value: string } | string;
+      } | null;
+      expect(hover).not.toBeNull();
+      const value = typeof hover!.contents === 'string' ? hover!.contents : hover!.contents.value;
+      expect(value).toContain('**LSE:**');
+      expect(value).toContain('destination:me');
+    });
+
     it('returns null for non-keyword positions', async () => {
       const response = await client.sendRequest('textDocument/hover', {
         textDocument: { uri: testUri },
