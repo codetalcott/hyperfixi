@@ -2131,6 +2131,20 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   class, `enhance()`, the four default providers and the unified registry's
   `context` slot are exported via `@hyperfixi/core/registry`, so the deletion
   waits here.
+- **The bundle lineup collapses to two names** — DECIDED 2026-09-04, after
+  Arc 5's spike (keep the hybrid parser, delete the CHOICE): the hybrid parser
+  is the engine under the Vite plugin, and what confuses prospective users is
+  the nine-row bundle table, not the parser. Three steps: (1) measure what a
+  small bundle does on a construct it cannot parse and make it fail LOUDLY,
+  naming the full bundle — the one step that changes no exported name and
+  can be done any time; (2) the Vite plugin becomes the default story (it
+  already picks lite vs hybrid with zero options); (3) the prebuilt lineup
+  for script-tag users shrinks to `hyperfixi.js` and one small prebuilt
+  (`hybrid-hx` is the candidate), retiring `lite`, `lite-plus`,
+  `hybrid-complete`, `minimal` and `standard` as public `exports` names. Each
+  retired name is a `⚠ BREAKING` entry; the size snapshot baseline, the CI
+  ceilings, `metadata.ts` and `verify:reference` follow. Brief and recipe:
+  `~/.claude/plans/hyperfixi-arc6b-and-bundle-lineup-handoff.md`.
 
 ## Non-goals
 
