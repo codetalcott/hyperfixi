@@ -639,7 +639,6 @@ describe('Command Mapper Registry', () => {
     'measure',
     'tell',
     'js',
-    'async',
     'if',
     'unless',
     'repeat',
