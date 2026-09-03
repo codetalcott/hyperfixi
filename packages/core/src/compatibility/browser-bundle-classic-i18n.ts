@@ -36,6 +36,7 @@ import { createExpressionRegistry } from '../core/expression-registry';
 import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { specialExpressions } from '../expressions/special/index';
+import { mathematicalExpressions } from '../expressions/mathematical/index';
 import { propertiesExpressions } from '../expressions/properties/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
@@ -220,6 +221,7 @@ const expressionRegistry = createExpressionRegistry(
   referencesExpressions,
   logicalExpressions,
   specialExpressions,
+  mathematicalExpressions,
   propertiesExpressions,
   conversionExpressions,
   positionalExpressions
