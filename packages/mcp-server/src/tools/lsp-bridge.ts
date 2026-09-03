@@ -900,7 +900,11 @@ async function getHoverInfo(
   // Try AST-based hover first (interchange format with optional LSE bracket notation)
   if (astToolkit && parseFunction && astToolkit.fromCoreAST && astToolkit.interchangeToLSPHover) {
     try {
-      const ast = parseFunction(code);
+      // `parse()` returns a ParseResult; the AST is its `.node`. Passing the
+      // result object itself converted to an `error` interchange node, so
+      // every AST-path hover rendered as `[get patient:]` and the role-path
+      // tests in lsp-bridge.test.ts could not see the schema-inferred roles.
+      const ast = parseFunction(code)?.node ?? null;
       if (ast) {
         const interchange = astToolkit.fromCoreAST(
           ast,

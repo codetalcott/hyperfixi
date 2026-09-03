@@ -239,6 +239,40 @@ describe('get_hover_info', () => {
     // Should not throw, may have contents or not
     expect(parsed).toBeDefined();
   });
+
+  // The interchange hover renders the node at the cursor as LSE. `fromCoreAST`
+  // names roles for `set` and `go` only unless the schema-driven inferrer is
+  // injected (lsp-bridge.ts binds `schemaRoleInferrer`) — but the framework's
+  // `fromInterchangeNode` re-infers the SIMPLE cases itself when rendering, so
+  // a `toggle .active` hover shows `patient:.active` even with the injection
+  // deleted. Only a case the framework cannot re-infer proves the wiring:
+  // without the inferrer `add .x to me` renders `[add patient:.x]` (the
+  // destination is dropped) and `halt the event` renders bare `[halt]`.
+  // Measured over the engine corpus's feature sources, 2026-09-03: 4 of 28
+  // render differently. Mutation: drop `inferRoles` in lsp-bridge.ts.
+  it('hover LSE carries the schema-inferred destination role on add', async () => {
+    const result = await handleLspBridgeTool('get_hover_info', {
+      code: 'on click add .x to me',
+      line: 0,
+      character: 9, // "add"
+    });
+
+    const parsed = JSON.parse(getTextContent(result));
+    expect(parsed.contents).toContain('**LSE:**');
+    expect(parsed.contents).toContain('destination:me');
+    expect(parsed.contents).toContain('patient:.x');
+  });
+
+  it('hover LSE carries the schema-inferred patient role on halt the event', async () => {
+    const result = await handleLspBridgeTool('get_hover_info', {
+      code: 'on mouseenter halt the event',
+      line: 0,
+      character: 14, // "halt"
+    });
+
+    const parsed = JSON.parse(getTextContent(result));
+    expect(parsed.contents).toContain('patient:event');
+  });
 });
 
 describe('get_document_symbols', () => {
