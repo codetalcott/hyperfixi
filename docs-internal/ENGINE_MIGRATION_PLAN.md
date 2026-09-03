@@ -2261,7 +2261,12 @@ worked. None needs an arc; the first has a brief.
    prove the wiring. Writing it found the MCP hover passing the whole
    ParseResult to `fromCoreAST` (every AST hover rendered `[get patient:]`);
    fixed in the same PR.
-6. **The MCP LSP bridge guards three AST paths on names core never exported.**
+6. ~~**The MCP LSP bridge guards three AST paths on names core never exported.**~~
+   ✅ **DONE 2026-09-03** — all four AST paths go through one
+   `parseToInterchange` (parser errors surfaced as diagnostics; converter
+   `error` nodes and the `__ERROR__` sentinel dropped; a `Program` converted
+   statement by statement, since `fromCoreAST(Program)` keeps only the first).
+   Five strict tests. Original text follows.
    `lsp-bridge.ts` checks `astToolkit.astToLSPDiagnostics` / `astToLSPCompletions`
    / `astToLSPSymbols` before using them; none exists, so `get_diagnostics`,
    `get_completions` and `get_document_symbols` silently take the token-based

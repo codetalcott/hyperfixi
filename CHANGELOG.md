@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **MCP `get_diagnostics`, `get_completions` and `get_document_symbols` read
+  the AST.** The bridge guarded those paths on helper names core never
+  exported, so all three had only ever taken their token-based fallback.
+  They now read the interchange: the core parser's own errors become
+  diagnostics, completions inside a command offer that command's argument
+  shapes, symbols carry their commands as children, and a document with
+  several `end`-terminated handlers keeps all of them.
+
 - **`hyperscript.process()` honours the event grammar.** The API-side DOM
   processor carried its own listener installer for `on …` attributes and
   silently dropped what the runtime's installer handles: `on
