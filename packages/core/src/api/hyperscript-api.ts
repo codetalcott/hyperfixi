@@ -34,7 +34,10 @@ import { emitSemanticParseEvent, updateDebugStats, isDebugEnabled } from '../uti
 import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
 import { VERSION } from '../version';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
+import {
+  defaultAttributeProcessor,
+  initializeAttributeProcessor,
+} from '../dom/attribute-processor';
 import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
@@ -392,8 +395,16 @@ export interface HyperscriptAPI {
   // ─────────────────────────────────────────────────────────────
 
   /**
-   * Process element and descendants for hyperscript attributes.
-   * Automatically detects language from element/document.
+   * Process an element and its descendants: `<script type="text/hyperscript">`
+   * tags first (with or without `for=`), then every `_=` attribute, each
+   * compiled in the language detected from the element (`data-lang`, closest
+   * `lang`, the document's). Runs on the same processor every browser bundle
+   * uses, so an element is initialized once however many times it is passed
+   * here or scanned; `cleanup()` makes it processable again. Each element
+   * gets `hyperscript:before:init` (cancelable) / `hyperscript:after:init`,
+   * the `data-hyperscript-powered` marker, and a non-bubbling `load` once its
+   * program has run. Returns void: the listeners of `on …` handlers are
+   * installed before it returns, and the rest completes asynchronously.
    */
   process(element: Element): void;
 
@@ -783,12 +794,13 @@ function getVersion(): string {
 }
 
 // ============================================================================
-// DOM Processing (Delegated to dom-processor.ts)
+// DOM Processing (delegated to dom/attribute-processor.ts)
 // ============================================================================
 
-// DOM processing functions are now in dom-processor.ts to maintain separation
-// between the API layer and DOM-specific code. The functions are imported at
-// the top of this file and re-exported through the hyperscript API object.
+// `process()` and `cleanup()` run on the SAME processor instance every browser
+// bundle uses (`defaultAttributeProcessor`), which this module hands its
+// compiler and runtime at load time (`initializeAttributeProcessor` below).
+// One processor, one AST cache, one set of processed elements.
 
 // ============================================================================
 // New API Implementation (v2)
@@ -1019,8 +1031,9 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
   }
 }
 
-// Initialize DOM processor with compile functions and runtime
-initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
+// Hand the attribute processor its compiler and runtime. The processor sits
+// under this module in the layering, so it cannot import these.
+initializeAttributeProcessor({ compileSync, compile: compileAsync, execute, config });
 
 /**
  * Compiles and executes hyperscript code in a single call.
@@ -1203,8 +1216,12 @@ export const hyperscript: HyperscriptAPI = {
   // Validate syntax
   validate,
 
-  // Process DOM elements
-  process: processDOMElements,
+  // Process an element and its descendants. Returns void by contract; the
+  // listeners of `on …` attributes are installed before this returns (the
+  // processor starts every element synchronously), the rest completes async.
+  process: (element: Element) => {
+    void defaultAttributeProcessor.processTree(element);
+  },
 
   // Clean up resources for an element and its descendants (upstream 0.9.90).
   // Dispatches `hyperscript:before:cleanup` / `hyperscript:after:cleanup`
@@ -1214,10 +1231,11 @@ export const hyperscript: HyperscriptAPI = {
       new CustomEvent('hyperscript:before:cleanup', { bubbles: true, cancelable: false })
     );
     const count = getDefaultRuntime().cleanupTree(element);
-    // Remove the powered marker once the listeners are gone.
-    if (element.hasAttribute?.('data-hyperscript-powered')) {
-      element.removeAttribute('data-hyperscript-powered');
-    }
+    // Un-mark the tree — processed state and `data-hyperscript-powered`
+    // markers alike, root and descendants — so process() can initialize it
+    // again. (This used to strip the ROOT's marker only, so a container
+    // cleanup left every processed descendant still claiming to be powered.)
+    defaultAttributeProcessor.forget(element);
     element.dispatchEvent(
       new CustomEvent('hyperscript:after:cleanup', {
         bubbles: true,

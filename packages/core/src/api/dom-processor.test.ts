@@ -26,7 +26,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hyperscript } from './hyperscript-api';
+import { hyperscript, config } from './hyperscript-api';
 import { AttributeProcessor, defaultAttributeProcessor } from '../dom/attribute-processor';
 
 type Install = (el: HTMLElement) => Promise<void>;
@@ -68,6 +68,7 @@ afterEach(() => {
   document.body.innerHTML = '';
   delete (window as Window & { __seen?: unknown }).__seen;
   delete (window as Window & { __fired?: unknown }).__fired;
+  config.onCompileError = null;
 });
 
 describe('every processor honours the event grammar the runtime installs', () => {
@@ -200,6 +201,151 @@ describe('config.logAll logs a line per handler fired, on every path', () => {
         hyperscript.config.logAll = false;
         logSpy.mockRestore();
       }
+    });
+  }
+});
+
+describe('the load event and compile-error reporting are the same on every path', () => {
+  for (const [label, install] of PATHS) {
+    it(`${label}: dispatches a non-bubbling load event on the element once it is processed`, async () => {
+      const onElement = vi.fn();
+      const onBody = vi.fn();
+      const el = await run('on click add .c', install, click, el => {
+        el.addEventListener('load', onElement);
+        document.body.addEventListener('load', onBody);
+      });
+      expect(el.classList.contains('c')).toBe(true);
+      expect(onElement).toHaveBeenCalledOnce();
+      expect(onBody).not.toHaveBeenCalled();
+    });
+
+    it(`${label}: an unparseable attribute is reported three ways and installs nothing`, async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const hook = vi.fn();
+      const event = vi.fn();
+      config.onCompileError = hook;
+      try {
+        const el = await run('on click klaatu barada nikto (((', install, click, el => {
+          el.addEventListener('hyperfixi:compile-error', event);
+        });
+        expect(errorSpy).toHaveBeenCalledWith(
+          '[LokaScript] Compilation failed for _= attribute:',
+          expect.arrayContaining([expect.objectContaining({ message: expect.any(String) })]),
+          el
+        );
+        expect(hook).toHaveBeenCalledOnce();
+        expect(hook.mock.calls[0][0]).toMatchObject({ source: 'attribute', element: el });
+        expect(event).toHaveBeenCalledOnce();
+        expect((event.mock.calls[0][0] as CustomEvent).detail).toMatchObject({
+          source: 'attribute',
+          code: 'on click klaatu barada nikto (((',
+        });
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Tree-level: `hyperscript.process(container)` against the bundle's scan.
+// ---------------------------------------------------------------------------
+
+type InstallTree = (container: HTMLElement) => Promise<void>;
+// One lazy processor for the whole tree table, as the bundle has one: the
+// "twice" and cleanup rows are about a processor's memory of an element.
+const lazyTreeProcessor = new AttributeProcessor({ autoScan: false, lazyParsing: true });
+const TREE_PATHS: Array<[string, InstallTree]> = [
+  ['hyperscript.process', async c => void hyperscript.process(c)],
+  ['attribute processor', async () => defaultAttributeProcessor.scanAndProcessAll()],
+  ['attribute processor (lazy)', async () => lazyTreeProcessor.scanAndProcessAll()],
+];
+
+const tick = () => new Promise(r => setTimeout(r, 10));
+
+function tree(html: string): HTMLElement {
+  document.body.innerHTML = '';
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  document.body.appendChild(container);
+  return container;
+}
+
+describe('a tree is processed the same way by hyperscript.process() and the bundle scan', () => {
+  for (const [label, install] of TREE_PATHS) {
+    it(`${label}: a global <script type="text/hyperscript"> defines a behavior an element below installs`, async () => {
+      const c = tree(`
+        <script type="text/hyperscript">
+          behavior Parity()
+            on click
+              add .installed to me
+            end
+          end
+        </script>
+        <button _="install Parity">b</button>`);
+      await install(c);
+      await tick();
+      const b = c.querySelector('button')!;
+      b.click();
+      await tick();
+      expect(b.classList.contains('installed')).toBe(true);
+    });
+
+    it(`${label}: <script for="#id"> binds its handler to the target with me = the target`, async () => {
+      const c = tree(`
+        <script type="text/hyperscript" for="#tgt">on click add .s to me</script>
+        <button id="tgt">t</button>`);
+      await install(c);
+      await tick();
+      const b = c.querySelector('#tgt') as HTMLElement;
+      b.click();
+      await tick();
+      expect(b.classList.contains('s')).toBe(true);
+    });
+
+    it(`${label}: processing the same tree twice installs each handler once`, async () => {
+      const c = tree(`<button _="on click toggle .t">b</button>`);
+      await install(c);
+      await install(c);
+      await tick();
+      const b = c.querySelector('button')!;
+      b.click();
+      await tick();
+      // A doubled install would toggle twice and leave the class absent.
+      expect(b.classList.contains('t')).toBe(true);
+    });
+
+    it(`${label}: after hyperscript.cleanup() the tree is inert, and process() re-initializes it once`, async () => {
+      const c = tree(`<button _="on click toggle .t">b</button>`);
+      await install(c);
+      await tick();
+      const b = c.querySelector('button')!;
+
+      hyperscript.cleanup(c);
+      b.click();
+      await tick();
+      expect(b.classList.contains('t')).toBe(false);
+      expect(b.hasAttribute('data-hyperscript-powered')).toBe(false);
+
+      await install(c);
+      await tick();
+      b.click();
+      await tick();
+      expect(b.classList.contains('t')).toBe(true);
+    });
+
+    it(`${label}: two handler attributes are installed before the call returns`, async () => {
+      const c = tree(
+        `<button _="on click add .one">1</button><button _="on click add .two">2</button>`
+      );
+      const started = install(c); // deliberately NOT awaited before the clicks
+      const [b1, b2] = Array.from(c.querySelectorAll('button'));
+      b1.click();
+      b2.click();
+      await started;
+      await tick();
+      expect(b1.classList.contains('one')).toBe(true);
+      expect(b2.classList.contains('two')).toBe(true);
     });
   }
 });

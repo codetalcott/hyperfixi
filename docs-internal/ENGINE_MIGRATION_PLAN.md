@@ -2232,7 +2232,11 @@ worked. None needs an arc; the first has a brief.
    of 3) landed 2026-09-03** — see the History entry: the attribute processor
    gained the lifecycle, the `powered` marker and language detection it never
    had, the lazy stub lost the header shapes it ran wrong, and the gate runs
-   36 rows on three paths. The collapse proper still stands. `api/dom-processor.ts`
+   36 rows on three paths. **Third slice (the move, PR 2 of 3) landed
+   2026-09-03** — `process()`/`cleanup()` run on the attribute processor, the
+   API injects the compiler, the `dom -> api` edge is gone; 57 rows. What
+   remains is deleting `api/dom-processor.ts` and the `detectLanguage` twin
+   (PR 3). `api/dom-processor.ts`
    (444 lines), `dom/attribute-processor.ts` (664) and
    `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
    runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
@@ -2811,3 +2815,24 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   script tags, cleanup-then-reprocess) land WITH the move that makes
   `process()` call the attribute processor, since a row red on one path cannot
   land first.
+
+- **2026-09-03** — **DOM-processor collapse, PR 2 of 3: the move.**
+  `hyperscript.process()` calls the attribute processor's new `processTree()`
+  and `cleanup()` its `forget()`; the processor takes `compileSync` /
+  `compile` / `execute` / `config` by injection (`initializeAttributeProcessor`,
+  a structural `ProcessorHost` contract) instead of importing the API, and
+  the `dom -> api` row is gone from `layering.json` (37 → 35 upward imports).
+  Every bundle and the API now share one processor, one AST cache, one
+  processed set. The parity table grew to 57 rows: `load`, compile-error
+  reporting, and a tree-level table (global script tag → `install`, `for=`
+  script tag, processed-once, cleanup-then-reprocess, listeners installed
+  before the call returns) on the same three paths. Three defects found by
+  those rows, all fixed: `cleanup(container)` stripped the ROOT's
+  `data-hyperscript-powered` only; the lazy path never checked the processed
+  set, so a second scan registered a second stub; and "processed" was
+  per-instance state, so `cleanup()` could not forget what a non-default
+  instance had stubbed — it is module-level now. `process()`'s three
+  behaviour changes (once-only, script tags, `load` + error reporting) are
+  upstream parity and are in the CHANGELOG. `api/dom-processor.ts` is
+  unimported; PR 3 deletes it and measures `detectLanguage`'s remaining twin
+  in `browser-bundle-multilingual.ts`.
