@@ -12,8 +12,9 @@
 > single-layer structure; this one holds the **cross-layer** structure that the
 > six command arcs, deliberately, did not touch.
 >
-> **Status (2026-09-03): every arc has closed except Arc 1, whose steps 2 and
-> 3 are OPEN** — the post-plan queue is [After the plan](#after-the-plan).
+> **Status (2026-09-03, evening): every arc has closed — Arc 1's last two steps
+> landed the same day the review found them open.** What remains is the
+> post-plan queue in [After the plan](#after-the-plan).
 > Every claim in
 > [Verified state](#verified-state-measured-2026-08-30-on-e3b3e34a) was measured
 > on the tree named above, not inherited from an earlier doc. Line refs will
@@ -429,8 +430,10 @@ step 2 deletes; each deletion is its own PR. Tag the tree
 ### Arc 1 — Engine / front-end boundary (medium)
 
 > **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (rewritten
-> 2026-09-03). **Steps 1, 4, 5 and 6 are done; steps 2 and 3 are OPEN** — the
-> only open steps in the plan. The 2026-09-03 re-measurement moved the debt: at
+> 2026-09-03). ~~**Steps 1, 4, 5 and 6 are done; steps 2 and 3 are OPEN** — the
+> only open steps in the plan.~~ **ALL SIX STEPS DONE 2026-09-03** — step 2's
+> build half #1113, its API half (`hyperscript.use(frontEnd)`) and step 3 (the
+> ratchet became an assertion) in one PR the same evening. The 2026-09-03 re-measurement moved the debt: at
 > the SOURCE level the boundary is already at the ratchet's endpoint (the five
 > `static-value` rows are the four bundle entries plus
 > `multilingual/schema-roles.ts`, all target-state), but at the BUILD level it
@@ -2195,8 +2198,9 @@ exports (53 → 29); it names five entry points now.
 What the 2026-09-03 post-release review left open, in the order it should be
 worked. None needs an arc; the first has a brief.
 
-1. **Arc 1 steps 2 and 3** — the one target-design point (6) the plan did not
-   reach. Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). ~~Build
+1. ~~**Arc 1 steps 2 and 3** — the one target-design point (6) the plan did not
+   reach.~~ ✅ **DONE 2026-09-03** (#1113 build half; `use()` + ratchet flip in the
+   PR after #1115). Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). ~~Build
    half first (externalize the front-end in `rollup.config.mjs`; 3.33 MB →
    1.04 MB measured; no API change)~~ ✅ **build half DONE 2026-09-03**, then
    `hyperscript.use(frontEnd)` with the library entry keeping a default
@@ -2720,3 +2724,35 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   4-of-28 cases the framework cannot re-infer; the MCP hover was passing a
   ParseResult to `fromCoreAST` and rendering an `error` node for every AST
   hover — fixed. The three dead `astToLSP*` guards it sits beside are item 6.
+
+- **2026-09-03** — **Arc 1 is COMPLETE: steps 2 (API half) and 3 landed, and
+  with them every arc of the plan.** `parser/semantic-integration.ts` — the
+  29-line seam step 6 left — now declares the `FrontEnd` contract
+  (`parseToAST`, optional `parse`/`render`) and `hyperscript.use(frontEnd)`
+  registers one; `compile()` consults it once per non-English program, and
+  `toLSE`/`fromLSE` go through the same registration instead of importing
+  `@lokascript/semantic` directly. `multilingual/bridge.ts` wraps the bridge
+  as `createBridgeFrontEnd`; the full browser bundle registers it at boot;
+  the library entry builds the same bridge lazily when nothing is registered
+  (the 3.x default — its removal is the 4.0 entry). Ten strict tests pin the
+  contract with a stub whose AST the source text cannot produce, plus the real
+  bridge through `use()`. Multilingual gate local: 3744/3744, no regression.
+  Core 7,560 passed.
+
+  **The boundary ratchet reached its endpoint and became the rule (step 3).**
+  With the API's two dynamic rows gone, every row in `semantic-boundary.json`
+  is on the front-end side — the four bundle entries and `multilingual/` — so
+  `check-semantic-boundary.cjs` now fails ANY front-end import outside
+  `compatibility/browser-bundle*.ts` and `multilingual/`, in any kind,
+  allowlisted or not, and `--update` refuses to write such a row (25
+  self-tests; the old `api/hyperscript-api.ts: dynamic 2` row is the negative
+  case). The per-kind ratchet still applies on the front-end side. The plan's
+  "gate that becomes a type error" preference was not taken here, by
+  reasoning rather than by trial: a `tsconfig` `paths` block maps specifiers
+  for the whole program and cannot forbid one per directory, and the script
+  already runs before `npm ci` in `lint-typecheck`, so it is the cheaper gate.
+
+  Target-design point 6 is now true at every level the plan can measure:
+  source (ratchet, hard), artifact (#1113's sourcemap gate), and API
+  (`use()`). `@lokascript/semantic` and `/intent` remain `dependencies` for
+  the 3.x default; that is the last 4.0 item this arc leaves.

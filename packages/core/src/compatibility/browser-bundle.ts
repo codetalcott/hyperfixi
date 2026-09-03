@@ -56,6 +56,7 @@ import { getDefaultRegistry } from '../registry';
 import type { LokaScriptRegistry, LokaScriptPlugin } from '../registry';
 import { registerFetchResponseType } from '../commands/async/fetch';
 import { installPlugin } from '../runtime/plugin';
+import { SemanticGrammarBridge, createBridgeFrontEnd } from '../multilingual/bridge';
 import { getParserExtensionRegistry } from '../parser/extensions';
 
 // Bundled plugins — the full bundle ships with reactivity (live/when/bind/$var)
@@ -328,6 +329,17 @@ function installBundledPlugins(): void {
   const runtime = hyperscript.getDefaultRuntime();
   installPlugin(runtime as never, reactivityPlugin as never);
   installPlugin(runtime as never, realtimePlugin as never);
+
+  // This bundle SHIPS the multilingual front-end, so it registers it (Arc 1
+  // step 2): non-English `compile()` goes through `hyperscript.use(...)`'s
+  // front-end. The library entry builds the same bridge lazily when nothing is
+  // registered, so this changes no behaviour — it makes the bundle say what
+  // it is, and it is the registration the 4.0 default-removal leaves standing.
+  hyperscript.use(
+    createBridgeFrontEnd(
+      new SemanticGrammarBridge({ confidenceThreshold: hyperscript.config.confidenceThreshold })
+    )
+  );
 }
 installBundledPlugins();
 

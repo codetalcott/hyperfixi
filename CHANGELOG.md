@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`hyperscript.use(frontEnd)`** — register the multilingual front-end
+  `compile()` consults for a non-English program (and `toLSE`/`fromLSE` for
+  a semantic node and a renderer). The contract is `FrontEnd` in
+  `@hyperfixi/core` (`parseToAST`, optional `parse`/`render`);
+  `@lokascript/semantic` satisfies it through
+  `createBridgeFrontEnd(new SemanticGrammarBridge())` from
+  `@hyperfixi/core/multilingual`. The full browser bundle registers it at
+  boot. The library entry registers nothing and, through 3.x, builds the same
+  bridge lazily on the first non-English compile — so nothing changes for a
+  consumer with `@lokascript/semantic` installed. **4.0 will remove that
+  default:** a non-English `compile()` with no front-end registered will
+  return the same result the core-parser-only path returns today, and
+  `@lokascript/semantic` becomes an optional peer. Engine-migration plan
+  Arc 1, steps 2 and 3.
+
 ### Fixed
 
 - **`require('@hyperfixi/core')` returned `{}`, and the subpath `require`s

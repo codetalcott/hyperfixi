@@ -19,6 +19,7 @@ import type { SemanticNode, ASTNode } from '@lokascript/semantic';
 // the front-end made the value a thing the front-end could change under us, and
 // cost a static-value import across a line Arc 1 exists to erase.
 import { DEFAULT_CONFIDENCE_THRESHOLD } from '../parser/semantic-integration';
+import type { FrontEnd, FrontEndParseResult } from '../parser/semantic-integration';
 import { debug } from '../utils/debug';
 
 // =============================================================================
@@ -300,6 +301,22 @@ export class SemanticGrammarBridge {
 // =============================================================================
 
 let _defaultBridge: SemanticGrammarBridge | null = null;
+
+/**
+ * The `@lokascript/semantic` front-end, in the shape the engine registers
+ * (`hyperscript.use(createBridgeFrontEnd(new SemanticGrammarBridge()))`).
+ * The full browser bundle registers it at boot; the library entry builds the
+ * same thing lazily when nothing is registered (3.x default).
+ */
+export function createBridgeFrontEnd(bridge: SemanticGrammarBridge): FrontEnd {
+  return {
+    name: 'semantic-bridge',
+    parseToAST: (code, lang) =>
+      bridge.parseToASTWithDetails(code, lang) as Promise<FrontEndParseResult>,
+    parse: (code, lang) => bridge.parse(code, lang),
+    render: (node, lang) => bridge.render(node as SemanticNode, lang),
+  };
+}
 
 export async function getDefaultBridge(): Promise<SemanticGrammarBridge> {
   if (!_defaultBridge) {
