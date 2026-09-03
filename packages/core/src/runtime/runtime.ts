@@ -247,6 +247,9 @@ export interface RuntimeOptions {
    */
   enableAsyncCommands?: boolean;
 
+  /** Log every event handler that fires (`config.logAll`); read at fire time. */
+  logAll?: () => boolean;
+
   /**
    * Command timeout in milliseconds
    */
@@ -341,6 +344,9 @@ export class Runtime extends RuntimeBase {
     }
     if (options.enableErrorReporting !== undefined) {
       baseOptions.enableErrorReporting = options.enableErrorReporting;
+    }
+    if (options.logAll !== undefined) {
+      baseOptions.logAll = options.logAll;
     }
 
     super(baseOptions);

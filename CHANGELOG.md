@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`hyperscript.process()` honours the event grammar.** The API-side DOM
+  processor carried its own listener installer for `on …` attributes and
+  silently dropped what the runtime's installer handles: `on
+click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
+  fired on mouseenter, `on click from document` never fired. Every browser
+  bundle already went through the runtime; `process()` now does too, and
+  `config.logAll` moved into the runtime so both paths log. Pinned by
+  `api/dom-processor.test.ts`, which runs each case on both paths.
+
 - **`set *<css-property>` writes inline style in every spelling upstream
   accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
   `set *background-color of me to "red"` were silent no-ops and
