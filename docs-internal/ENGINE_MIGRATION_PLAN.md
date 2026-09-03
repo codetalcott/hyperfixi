@@ -2232,12 +2232,21 @@ worked. None needs an arc; the first has a brief.
    (444 lines), `dom/attribute-processor.ts` (664) and
    `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
    runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
-3. **Arc 3's honest endpoint is `syntaxSites: 0`, not "`parseInput` deleted".**
-   The census (`baselines/parse-input-census.json`) still holds 50 bodies /
-   2,085 lines, and 30 of them still discriminate syntax at runtime (70
-   `syntaxSites`). Ratchet that column to zero, largest-first
-   (`pseudo-command` 7, `measure` 6, `put` 4, `pick` 4, `morph` 4); lines fall
-   as a side effect. Do not chase the line count.
+3. ~~**Arc 3's honest endpoint is `syntaxSites: 0`, not "`parseInput` deleted".**~~
+   **Measured 2026-09-03, and the column is not a design signal.** Of the 70
+   counted sites, **6 were comments** — the census read prose (fixed: it strips
+   comments now, and its body-start regex no longer backs up over a stripped
+   docblock's blank lines; 70 → 64, lines 2,085 → 2,039); **56** are positional
+   `args[N]` reads, most of a DECLARED second slot (`js`/`install` params,
+   `add`'s value, `if`'s branches); **4** are pronoun checks (`name === 'me'`);
+   **3** are marker-word compares. The runtime syntax decisions that actually
+   remain are about six, by name: toggle's `raw.args[1]?.type === 'identifier'`
+   star split, put's target-by-position (`raw.args[1]`), pseudo-command's
+   third-slot presence check, repeat's `loopType === 'for' | 'until'` re-checks
+   of a modifier the parser already set, and swap/morph's `=== 'over'` strategy
+   literal. Work those six by name; do not ratchet the column — it counts
+   spellings, and a ratchet satisfied by renaming is the trap
+   `feedback_the_ratchet_is_a_floor_not_a_score` records.
 4. ~~**`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
    four of five shapes broken, three silently, upstream is the oracle.
    `PARSER_NEXT_STEPS.md`.~~ ✅ **FIXED 2026-09-03** — parse-time re-typing of
@@ -2765,3 +2774,11 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   source (ratchet, hard), artifact (#1113's sourcemap gate), and API
   (`use()`). `@lokascript/semantic` and `/intent` remain `dependencies` for
   the 3.x default; that is the last 4.0 item this arc leaves.
+
+- **2026-09-03** — **The parseInput census stripped of comments, and After-the-plan
+  item 3 rewritten from the measurement.** The census counted a comment's
+  `args[0]` as a syntax site (6 of 70) and its body-start regex, once comments
+  were stripped, backed up over the docblock's blank lines (`\s*` spans
+  newlines — anchored to `[ \t]*`). Baseline regenerated: 50 bodies, 2,039
+  lines, 329 branches, 64 syntax sites, 190 value sites. The decomposition of
+  the 64 is on the item; the honest remainder is six named sites, not a number.
