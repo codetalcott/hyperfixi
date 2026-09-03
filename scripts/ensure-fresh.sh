@@ -26,9 +26,15 @@ for pkg in "$@"; do
   # build emits: `.js` for most, `.mjs` for core (whose `.js` CJS twin became
   # `.cjs` when `"type": "module"` made Node read it as ESM — an empty
   # `require()` surface, shipped through 3.0.0).
+  # The NEWEST candidate wins: a tree that built before the `.cjs` rename keeps a
+  # stale `index.js` beside a fresh `index.mjs`, and taking the first match made
+  # that leftover the marker — every run then saw "src newer than dist".
   dist_marker=""
   for candidate in "$pkg/dist/index.js" "$pkg/dist/index.mjs" "$pkg/dist/index.cjs"; do
-    [[ -f "$candidate" ]] && { dist_marker="$candidate"; break; }
+    [[ -f "$candidate" ]] || continue
+    if [[ -z "$dist_marker" || "$candidate" -nt "$dist_marker" ]]; then
+      dist_marker="$candidate"
+    fi
   done
   [[ -n "$dist_marker" ]] || dist_marker="$pkg/dist/index.js"
 
