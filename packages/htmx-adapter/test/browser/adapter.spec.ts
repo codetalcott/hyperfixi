@@ -19,6 +19,35 @@ async function routeGreeting(page: Page): Promise<void> {
   );
 }
 
+/**
+ * htmx catches the SyntaxError from JS-evaling a hyperscript body and routes
+ * it to `htmx:error` + console.error — never an uncaught exception, and
+ * never a DOM change. So the only way to SEE htmx binding a claimed node
+ * is to collect console errors and `htmx:error` events, installed BEFORE
+ * navigation. (Deleting the before:on:init hook used to leave the suite
+ * green; with this collector it goes red.)
+ */
+async function collectHtmxErrors(page: Page): Promise<{ console: string[]; warnings: string[]; htmx: () => Promise<string[]> }> {
+  const consoleErrors: string[] = [];
+  const warnings: string[] = [];
+  page.on('console', msg => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+    if (msg.type() === 'warning') warnings.push(msg.text());
+  });
+  await page.addInitScript(() => {
+    const w = window as unknown as { __htmxErrors: string[] };
+    w.__htmxErrors = [];
+    document.addEventListener('htmx:error', e => {
+      w.__htmxErrors.push(String((e as CustomEvent).detail?.error ?? e.type));
+    });
+  });
+  return {
+    console: consoleErrors,
+    warnings,
+    htmx: () => page.evaluate(() => (window as unknown as { __htmxErrors: string[] }).__htmxErrors),
+  };
+}
+
 test.describe('htmx v4 (4.0.0)', () => {
   test('localized button drives a real GET + swap @smoke', async ({ page }) => {
     await routeGreeting(page);
@@ -72,6 +101,7 @@ test.describe('htmx v4 (4.0.0)', () => {
   test('executor mode: hx-on bodies run through real _hyperscript with me bound', async ({
     page,
   }) => {
+    const errors = await collectHtmxErrors(page);
     await page.goto(`${FIXTURES}/v4-hx-on.html`);
 
     // Canonical-named claim on v4: the authored attribute is PRESERVED —
@@ -100,11 +130,58 @@ test.describe('htmx v4 (4.0.0)', () => {
     );
     expect(translations).toEqual([{ body: 'alternar .activo', lang: 'es' }]);
 
-    // No JS-eval errors from htmx trying to run hyperscript bodies.
-    const errors: string[] = [];
-    page.on('pageerror', err => errors.push(String(err)));
+    // htmx never bound the claimed node: no htmx:error, no console error.
+    expect(await errors.htmx()).toEqual([]);
+    expect(errors.console).toEqual([]);
+  });
+
+  test('executor mode: _hyperscript loaded AFTER htmx — attr still preserved on v4', async ({
+    page,
+  }) => {
+    const errors = await collectHtmxErrors(page);
+    await page.goto(`${FIXTURES}/v4-hx-on-late-hyperscript.html`);
+    const canonical = page.locator('#canonical');
+    await expect(canonical).toHaveAttribute('hx-on:click', 'toggle .marcado on me');
     await canonical.click();
-    expect(errors).toEqual([]);
+    await expect(canonical).toHaveClass(/marcado/);
+    await canonical.click();
+    await expect(canonical).not.toHaveClass(/marcado/);
+    expect(await errors.htmx()).toEqual([]);
+    expect(errors.console).toEqual([]);
+  });
+
+  test('executor mode: everything loaded with defer — sweep waits for DOMContentLoaded', async ({
+    page,
+  }) => {
+    const errors = await collectHtmxErrors(page);
+    await page.goto(`${FIXTURES}/v4-hx-on-defer.html`);
+    const canonical = page.locator('#canonical');
+    await expect(canonical).toHaveAttribute('hx-on:click', 'toggle .marcado on me');
+    await canonical.click();
+    await expect(canonical).toHaveClass(/marcado/);
+    const localized = page.locator('#localizado');
+    await expect(localized).not.toHaveAttribute('hx-on:click', /./);
+    await localized.click();
+    await expect(localized).toHaveClass(/activo/);
+    expect(await errors.htmx()).toEqual([]);
+    expect(errors.console).toEqual([]);
+  });
+
+  test('executor mode: extension allowlist rejects the adapter — removal guard, warning, no JS eval', async ({
+    page,
+  }) => {
+    const errors = await collectHtmxErrors(page);
+    await page.goto(`${FIXTURES}/v4-hx-on-allowlist.html`);
+    const canonical = page.locator('#canonical');
+    // Not registered → the hook cannot run → the claim removed the attr.
+    await expect(canonical).not.toHaveAttribute('hx-on:click', /./);
+    await canonical.click();
+    await expect(canonical).toHaveClass(/marcado/);
+    await canonical.click();
+    await expect(canonical).not.toHaveClass(/marcado/);
+    expect(errors.warnings.some(w => w.includes('htmx.config.extensions'))).toBe(true);
+    expect(await errors.htmx()).toEqual([]);
+    expect(errors.console).toEqual([]);
   });
 
   test('executor mode: mixed node — composite hx-on stays with htmx, colon form with the executor', async ({

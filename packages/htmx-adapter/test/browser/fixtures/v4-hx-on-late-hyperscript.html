@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + _hyperscript loaded LAST — executor detected only at DOMContentLoaded</title>
+    <!-- Adapter → vocab → htmx → _hyperscript. The executor is absent when
+         the adapter runs and is auto-detected at DOMContentLoaded, AFTER
+         the extension-registration retry. The first sweep must therefore
+         run with claim-time removal already off: the authored hx-on:*
+         attribute has to survive on v4. -->
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/_hyperscript-0.9.93.min.js"></script>
+  </head>
+  <body>
+    <div data-hyperfixi-lang="en">
+      <button id="canonical" hx-on:click="toggle .marcado on me">canonical</button>
+    </div>
+  </body>
+</html>

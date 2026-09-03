@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 — adapter, vocab and htmx all loaded with defer</title>
+    <!-- Every script is deferred: the adapter executes at readyState
+         'interactive' (before DOMContentLoaded) with no htmx on window.
+         The sweep must wait for DOMContentLoaded to have FIRED — where
+         the registration retry runs first — instead of sweeping at once
+         in the default remove mode. -->
+    <script src="/packages/htmx-adapter/test/browser/vendor/_hyperscript-0.9.93.min.js"></script>
+    <script defer src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script defer src="/packages/core/vocab/htmx/es.js"></script>
+    <script defer src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <div data-hyperfixi-lang="en">
+      <button id="canonical" hx-on:click="toggle .marcado on me">canonical</button>
+    </div>
+    <button id="localizado" hx-en:clic="toggle .activo on me">localizado</button>
+  </body>
+</html>
