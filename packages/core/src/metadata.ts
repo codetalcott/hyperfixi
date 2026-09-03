@@ -133,7 +133,7 @@ export const bundleInfo: BundleInfo[] = [
     id: 'lite-plus',
     name: 'Lite Plus',
     filename: 'hyperfixi-lite-plus.js',
-    gzipSize: '2.6 KB',
+    gzipSize: '2.7 KB',
     rawSize: '8 KB',
     commandCount: 19,
     parser: 'regex',
@@ -155,8 +155,8 @@ export const bundleInfo: BundleInfo[] = [
     // generated from `bundle-generator/templates.ts`, so the count is the full
     // advertised list. +2967 B gz, of which 2057 is `morphlex` (the `morph`
     // case's dependency).
-    gzipSize: '11.1 KB',
-    rawSize: '43 KB',
+    gzipSize: '11.4 KB',
+    rawSize: '44 KB',
     commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
@@ -174,8 +174,8 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-hx.js',
     // Inherits hybrid-complete's runtime wholesale, so it inherits the Arc E
     // step 4 command set and its size move too (+2972 B gz).
-    gzipSize: '21.5 KB',
-    rawSize: '81 KB',
+    gzipSize: '21.8 KB',
+    rawSize: '82 KB',
     commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,

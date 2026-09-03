@@ -159,6 +159,9 @@ const BUNDLES = {
   },
 };
 
+/** The bundles that hand-pick their commands and cannot fall back to the full parser. */
+const SMALL_BUNDLES = new Set(['lite', 'lite-plus', 'hybrid-complete', 'hybrid-hx']);
+
 // Gallery examples with functional tests
 const GALLERY_EXAMPLES = [
   {
@@ -515,6 +518,47 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
           .evaluate(el => (el as HTMLElement).style.opacity);
         // Initial 0 + 0.2 = 0.2
         expect(opacity).toBe('0.2');
+      });
+    }
+
+    // A construct this bundle cannot run must fail LOUDLY and name the remedy.
+    // The bundle lineup collapses to two names in the 4.0 cycle
+    // (ENGINE_MIGRATION_PLAN Arc 6b); the escape hatch from the small bundle to
+    // the full one is only discoverable if the failure says which bundle has the
+    // missing command, at the moment it is missing. `make` is a full-runtime-only
+    // command (FULL_RUNTIME_ONLY_COMMANDS), so every small bundle lacks it.
+    if (SMALL_BUNDLES.has(bundleKey)) {
+      test(`unknown command fails loudly and names hyperfixi.js @comprehensive`, async ({
+        page,
+      }) => {
+        const consoleErrors: string[] = [];
+        page.on('console', msg => {
+          if (msg.type() === 'error') consoleErrors.push(msg.text());
+        });
+        await page.goto(
+          `${BASE_URL}/examples/toggle-and-state/toggle-class.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
+
+        // The `_` attribute path, not `api.execute()`: that is where a script-tag
+        // user meets the failure, and where every bundle's error boundary logs.
+        await page.evaluate(() => {
+          const el = document.createElement('button');
+          el.id = 'probe-unknown';
+          el.setAttribute('_', 'on click make a <div/>');
+          document.body.appendChild(el);
+          (window as unknown as { hyperfixi: { process(root: Element): void } }).hyperfixi.process(
+            document.body
+          );
+        });
+        await page.click('#probe-unknown');
+        await page.waitForTimeout(200);
+
+        // Lite bundles reach the executor's `default:`; hybrid bundles reject at
+        // parse time. Either way: one console.error, naming the word AND the
+        // bundle that has it.
+        const loud = consoleErrors.filter(e => e.includes('make') && e.includes('hyperfixi.js'));
+        expect(loud, `console.error lines: ${JSON.stringify(consoleErrors)}`).toHaveLength(1);
       });
     }
   });

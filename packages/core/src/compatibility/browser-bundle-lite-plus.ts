@@ -637,7 +637,11 @@ async function executeCommand(
     }
 
     default:
-      console.warn(`Unknown command: ${cmd.name}`);
+      // Loud, and it names the remedy: a script-tag user who hits a command this
+      // bundle does not ship must learn WHICH bundle does at the moment it fails.
+      console.error(
+        `[hyperfixi] Unknown command "${cmd.name}" — not in this bundle. Use hyperfixi.js (full bundle).`
+      );
       return null;
   }
 }
