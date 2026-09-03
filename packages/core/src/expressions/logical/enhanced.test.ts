@@ -3,11 +3,12 @@
  * Tests for the enhanced logical expressions to verify both enhanced features and backward compatibility
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { equalsExpression, andExpression, matchesExpression } from './index';
 import type { ExecutionContext } from '../../types/core';
 import type { TypedExpressionContext } from '../../types/base-types';
+import { collectEvaluations, setEvaluationTracker } from '../shared/tracking';
 
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
@@ -16,7 +17,9 @@ global.window = dom.window as unknown as Window & typeof globalThis;
 global.Element = dom.window.Element;
 
 describe('Enhanced Logical Expressions', () => {
-  let mockContext: ExecutionContext & { evaluationHistory?: any[] };
+  let mockContext: ExecutionContext;
+  // Tracking is an opt-in sink since Arc 4c step 2 (see shared/tracking.ts).
+  let records: ReturnType<typeof collectEvaluations>;
   let mockElement: HTMLElement;
 
   beforeEach(() => {
@@ -35,12 +38,17 @@ describe('Enhanced Logical Expressions', () => {
       locals: new Map(),
       globals: new Map(),
       event: null,
-      evaluationHistory: [], // Enhanced tracking
     };
+    records = collectEvaluations();
+    setEvaluationTracker(records);
 
     // Clear DOM
     document.body.innerHTML = '';
     document.body.appendChild(mockElement);
+  });
+
+  afterEach(() => {
+    setEvaluationTracker(null);
   });
 
   describe('Enhanced Equals Expression', () => {
@@ -71,8 +79,8 @@ describe('Enhanced Logical Expressions', () => {
     it.skip('should track evaluation history', async () => {
       await equalsExpression.evaluate(mockContext, 10, 10);
 
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory![0];
+      expect(records.records).toHaveLength(1);
+      const evaluation = records.records[0];
       expect(evaluation.expressionName).toBe('equals');
       expect(evaluation.category).toBe('Comparison');
       expect(evaluation.success).toBe(true);
@@ -143,8 +151,8 @@ describe('Enhanced Logical Expressions', () => {
     it.skip('should track evaluation history', async () => {
       await andExpression.evaluate(mockContext, 'name', 'email');
 
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory![0];
+      expect(records.records).toHaveLength(1);
+      const evaluation = records.records[0];
       expect(evaluation.expressionName).toBe('and');
       expect(evaluation.category).toBe('Logical');
       expect(evaluation.success).toBe(true);
@@ -177,16 +185,15 @@ describe('Enhanced Logical Expressions', () => {
       // since mocking the function breaks the test
 
       // Instead, let's test with a context that might cause issues
-      const errorContext = {
-        ...mockContext,
-        evaluationHistory: [], // Fresh history for this test
-      };
+      const errorContext = { ...mockContext };
+      records = collectEvaluations(); // Fresh history for this test
+      setEvaluationTracker(records);
 
       // Test normal operation first
       await andExpression.evaluate(errorContext, true, false);
-      expect(errorContext.evaluationHistory).toHaveLength(1);
-      expect((errorContext.evaluationHistory as any)[0].success).toBe(true);
-      expect((errorContext.evaluationHistory as any)[0].output).toBe(false);
+      expect(records.records).toHaveLength(1);
+      expect(records.records[0].success).toBe(true);
+      expect(records.records[0].output).toBe(false);
     });
   });
 
@@ -236,8 +243,8 @@ describe('Enhanced Logical Expressions', () => {
     it.skip('should track evaluation history for DOM queries', async () => {
       await matchesExpression.evaluate(mockContext, mockElement, '.active');
 
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory![0];
+      expect(records.records).toHaveLength(1);
+      const evaluation = records.records[0];
       expect(evaluation.expressionName).toBe('matches');
       expect(evaluation.category).toBe('Logical');
       expect(evaluation.success).toBe(true);
@@ -350,7 +357,7 @@ describe('Enhanced Logical Expressions', () => {
         event: null,
       };
 
-      // Should not throw errors even without evaluationHistory
+      // Should not throw errors with a tracker installed or not
       const result1 = await equalsExpression.evaluate(basicContext, 5, 5);
       expect(result1).toBe(true);
 

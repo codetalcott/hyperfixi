@@ -147,68 +147,6 @@ export interface CommandWithParseInput {
 }
 
 /**
- * Context bridge between ExecutionContext and TypedExecutionContext
- * (Copied from V1 - this part is generic and works well)
- */
-export class ContextBridge {
-  /**
-   * Convert ExecutionContext to TypedExecutionContext
-   */
-  static toTyped(context: ExecutionContext): TypedExecutionContext {
-    return {
-      // Core context elements
-      me: context.me,
-      // Owner of `:name` element scope. Must be propagated (not derived from
-      // `me`) so element-scoped vars stay with the handler's element even when
-      // `me` is retargeted — e.g. inside a `tell` block, where `me` becomes the
-      // told element but `:name` must remain bound to the owner.
-      ...(context.owner !== undefined && { owner: context.owner }),
-      it: context.it,
-      you: context.you,
-      result: context.result,
-      ...(context.event !== undefined && { event: context.event }),
-
-      // Variable storage
-      variables: context.variables || new Map(),
-      locals: context.locals || new Map(),
-      globals: context.globals || new Map(),
-
-      // Runtime state
-
-      // Bundle-supplied ExpressionRegistry. Commands like `call` invoke
-      // `evaluateAST(node, context)` directly inside their `execute()`, which
-      // requires `context.registry` for named-expression dispatch
-      // (elementWithSelector, addition, etc.). Propagate it through so the
-      // typed context isn't a registry-less downgrade of the original.
-      ...(context.registry !== undefined && { registry: context.registry }),
-
-      // Enhanced features for typed commands
-      evaluationHistory: [],
-    };
-  }
-
-  /**
-   * Update ExecutionContext from TypedExecutionContext
-   */
-  static fromTyped(
-    typedContext: TypedExecutionContext,
-    originalContext: ExecutionContext
-  ): ExecutionContext {
-    return {
-      ...originalContext,
-      me: typedContext.me,
-      it: typedContext.it,
-      you: typedContext.you,
-      result: typedContext.result,
-      ...(typedContext.event !== undefined && { event: typedContext.event }),
-      ...(typedContext.variables !== undefined && { variables: typedContext.variables }),
-      locals: typedContext.locals,
-      globals: typedContext.globals,
-    };
-  }
-}
-
-/**
  * Command Adapter V2 - Generic adapter with parseInput() support
  *
  * This adapter is much simpler than V1 because it delegates argument parsing
@@ -313,8 +251,12 @@ export class CommandAdapterV2 implements RuntimeCommand {
         return undefined;
       }
 
-      // Convert to typed context
-      const typedContext = ContextBridge.toTyped(context);
+      // No bridge copy any more (Arc 4c step 2): the command sees the caller's
+      // context object. The one default the copy used to supply stays.
+      if (!context.variables) {
+        (context as { variables?: Map<string, unknown> }).variables = new Map();
+      }
+      const typedContext = context;
 
       // Parse input arguments. The shape is command-specific; the adapter
       // treats it opaquely and the command's own execute() narrows it.
@@ -391,9 +333,6 @@ export class CommandAdapterV2 implements RuntimeCommand {
       }
 
       debug.command(`CommandAdapterV2: Command result:`, result);
-
-      // Update original context with changes from typed context
-      Object.assign(context, ContextBridge.fromTyped(typedContext, context));
 
       // HOOK: afterExecute
       if (this.hookRegistry) {

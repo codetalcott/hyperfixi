@@ -219,35 +219,12 @@ export interface ExecutionContext extends CoreExecutionContext {
 }
 
 /**
- * Enhanced execution context for typed expressions and features.
- * Extends ExecutionContext with additional type safety and tracking.
- *
- * All enhanced properties are optional to support:
- * - Tree-shakeable minimal bundles (don't need tracking)
- * - Test code (can provide only what's needed)
- * - Gradual adoption (add tracking as needed)
+ * Alias kept for the 141 files that import it. It used to add evaluation
+ * tracking fields (`evaluationHistory` and three others) that the command
+ * adapter allocated on every execution; Arc 4c step 2 moved tracking onto
+ * an opt-in sink (`expressions/shared/tracking.ts`) and the split folded.
  */
-export interface TypedExecutionContext extends ExecutionContext {
-  /**
-   * History of expression evaluations for debugging/performance. The only
-   * field this interface still adds (Arc 4c step 1 deleted `expressionStack`,
-   * `evaluationDepth` and `validationMode`, which nothing read); step 2 moves
-   * this one onto the runtime as an opt-in tracker and the interface folds.
-   */
-  readonly evaluationHistory?: Array<{
-    expressionName: string;
-    category: string;
-    input: unknown;
-    output: unknown;
-    timestamp: number;
-    duration: number;
-    success: boolean;
-  }>;
-  /** Type registry for runtime type checking (optional for tree-shaking) */
-  readonly typeRegistry?: Map<string, unknown>;
-  /** Validation cache for performance (optional for tree-shaking) */
-  readonly validationCache?: Map<string, unknown>;
-}
+export type TypedExecutionContext = ExecutionContext;
 
 // NOTE: TypedExpressionImplementation is intentionally NOT defined here to avoid conflicts
 // Files should import it directly from enhanced-expressions.ts or enhanced-core.ts
@@ -422,10 +399,7 @@ export interface ExpressionEvaluationOptions {
 /**
  * Enhanced expression context with additional evaluation state
  */
-export interface TypedExpressionContext extends TypedExecutionContext {
-  // Inherits all properties from TypedExecutionContext
-  // This ensures compatibility while maintaining the enhanced typing
-}
+export type TypedExpressionContext = ExecutionContext;
 
 // ============================================================================
 // Feature System Types
@@ -543,94 +517,6 @@ export interface ExpressionNode extends ASTNode {
 // Bridge Utilities
 // ============================================================================
 
-/**
- * Type system bridge for converting between legacy and enhanced systems
- */
-export class TypeSystemBridge {
-  /**
-   * Convert ExecutionContext to TypedExecutionContext
-   */
-  static toEnhanced(context: ExecutionContext): TypedExecutionContext {
-    return {
-      ...context,
-      evaluationHistory: [],
-    };
-  }
-
-  /**
-   * Extract core ExecutionContext from TypedExecutionContext
-   */
-  static toLegacy(context: TypedExecutionContext): ExecutionContext {
-    return {
-      me: context.me,
-      you: context.you,
-      it: context.it,
-      result: context.result,
-      locals: context.locals,
-      globals: context.globals,
-      event: context.event,
-    };
-  }
-
-  /**
-   * Normalize ValidationResult from any source
-   */
-  static normalizeValidationResult(result: unknown): ValidationResult {
-    const res = result as any; // Type assertion for property access
-    return {
-      isValid: Boolean(res?.isValid),
-      errors: Array.isArray(res?.errors) ? res.errors : [],
-      suggestions: Array.isArray(res?.suggestions) ? res.suggestions : [],
-      warnings: Array.isArray(res?.warnings) ? res.warnings : undefined,
-      performance: res?.performance,
-    };
-  }
-
-  /**
-   * Convert EvaluationType to HyperScriptValueType
-   */
-  static toHyperScriptType(evaluationType: EvaluationType): HyperScriptValueType {
-    return evaluationToHyperScriptType[evaluationType];
-  }
-
-  /**
-   * Create a TypedResult from legacy result data
-   */
-  static createTypedResult<T>(
-    success: boolean,
-    value?: T,
-    error?: string | EnhancedError,
-    type?: HyperScriptValueType
-  ): TypedResult<T> {
-    if (success && value !== undefined) {
-      return {
-        success: true,
-        value,
-        type: type || 'object',
-      };
-    } else {
-      const errorObj =
-        typeof error === 'string'
-          ? {
-              name: 'GenericError',
-              message: error,
-              code: 'UNKNOWN_ERROR',
-              suggestions: [],
-            }
-          : error || {
-              name: 'UnknownError',
-              message: 'An unknown error occurred',
-              code: 'UNKNOWN_ERROR',
-              suggestions: [],
-            };
-      return {
-        success: false,
-        error: errorObj,
-      };
-    }
-  }
-}
-
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -652,30 +538,6 @@ export function createExecutionContext(
     event: null,
     ...overrides,
   };
-}
-
-/**
- * Create a new TypedExecutionContext with default values
- */
-export function createTypedExecutionContext(
-  base?: Partial<ExecutionContext>,
-  overrides: Partial<TypedExecutionContext> = {}
-): TypedExecutionContext {
-  const executionContext = createExecutionContext(base?.me, base);
-  return {
-    ...executionContext,
-    evaluationHistory: [],
-    ...overrides,
-  };
-}
-
-/**
- * Type guard to check if a context is typed
- */
-export function isTypedExecutionContext(
-  context: ExecutionContext | TypedExecutionContext
-): context is TypedExecutionContext {
-  return 'evaluationHistory' in context;
 }
 
 /**

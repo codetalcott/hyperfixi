@@ -210,15 +210,6 @@ export interface TestContextOptions {
   variables?: Map<string, unknown>;
   result?: unknown;
   // Optional enhanced properties
-  evaluationHistory?: Array<{
-    expressionName: string;
-    category: string;
-    input: unknown;
-    output: unknown;
-    timestamp: number;
-    duration: number;
-    success: boolean;
-  }>;
 }
 
 /**
@@ -275,8 +266,6 @@ export function createTypedExecutionContext(
     // ExecutionContext additions
     result: options.result ?? null,
     variables: options.variables,
-    // TypedExecutionContext optional properties
-    evaluationHistory: options.evaluationHistory,
   };
 }
 
@@ -308,15 +297,6 @@ export function createTypedExpressionContext(
       lastEvaluationTime: 0,
     },
     // Evaluation history for tracking (test-specific)
-    evaluationHistory: [] as Array<{
-      expressionName: string;
-      category: string;
-      input: unknown;
-      output: unknown;
-      timestamp: number;
-      duration: number;
-      success: boolean;
-    }>,
     // Spread remaining properties for flexible test data
     ...rest,
   };
