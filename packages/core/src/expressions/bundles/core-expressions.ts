@@ -31,6 +31,7 @@ import type { ExpressionRegistry } from '../../core/expression-registry';
 import { referencesExpressions } from '../references/index';
 import { logicalExpressions } from '../logical/index';
 import { specialExpressions } from '../special/index';
+import { mathematicalExpressions } from '../mathematical/index';
 
 /**
  * Build an ExpressionRegistry with the core expression categories
@@ -38,8 +39,13 @@ import { specialExpressions } from '../special/index';
  * categories' modules in the dist.
  */
 export function createCoreRegistry(): ExpressionRegistry {
-  return createExpressionRegistry(referencesExpressions, logicalExpressions, specialExpressions);
+  return createExpressionRegistry(
+    referencesExpressions,
+    logicalExpressions,
+    specialExpressions,
+    mathematicalExpressions
+  );
 }
 
 // Export individual categories for custom bundles
-export { referencesExpressions, logicalExpressions, specialExpressions };
+export { referencesExpressions, logicalExpressions, specialExpressions, mathematicalExpressions };

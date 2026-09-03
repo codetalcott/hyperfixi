@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { ParserContext, IdentifierNode, Position } from '../parser/parser-types';
-import type { Token, CommandNode } from '../types/core';
+import type { Token } from '../types/core';
+import type { CommandNode } from '../ast/nodes';
 
 /**
  * Creates a comprehensive mock ParserContext for testing parser functions.
@@ -57,6 +58,13 @@ export function createMockParserContext(
       return token;
     }),
     isAtEnd: vi.fn(() => currentPosition >= tokens.length),
+
+    // Identity for English input — the real one maps a localized keyword back
+    // to its canonical English spelling. Parsers that branch on a canonical
+    // keyword (`parseGoCommand`, `parseScrollCommand`,
+    // `parseMultiWordCommand`'s comma-list opt-in) call it, and its absence
+    // here is a TypeError rather than a wrong answer.
+    resolveKeyword: vi.fn((value: string) => value),
 
     // Predicate checks
     checkIdentifierLike: vi.fn(() => {

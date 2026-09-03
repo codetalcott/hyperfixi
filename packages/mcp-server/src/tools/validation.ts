@@ -1113,14 +1113,15 @@ function getBundleConfig(
 ): { content: Array<{ type: string; text: string }> } {
   const needsMultilingual = languages.length > 1 || languages.some(l => l !== 'en');
 
-  // ---- LokaScript bundle recommendation ----
-  let bundle = 'hyperfixi-lite.js'; // 1.9 KB
-  let bundleSize = '1.9 KB';
-
-  if (blocks.length > 0 || positional) {
-    bundle = 'hyperfixi-hybrid-complete.js'; // 6.7 KB
-    bundleSize = '6.7 KB';
-  }
+  // ---- Bundle recommendation ----
+  // Two prebuilt names for script-tag users since the 4.0 lineup collapse:
+  // hyperfixi-hx.js (the small one: hybrid parser + blocks + positional +
+  // htmx v1/v2 attributes) and hyperfixi.js (everything). A Vite project
+  // should not pick at all — the plugin does — which the generated config
+  // below is for. `blocks` / `positional` no longer change the answer: the
+  // small prebuilt carries both.
+  let bundle = 'hyperfixi-hx.js'; // 21.5 KB
+  let bundleSize = '21.5 KB';
 
   if (needsMultilingual) {
     bundle = 'hyperfixi-multilingual.js'; // 250 KB

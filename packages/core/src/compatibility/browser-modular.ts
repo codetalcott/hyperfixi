@@ -1,22 +1,15 @@
 /**
  * HyperFixi Modular Browser Bundle (ES Module)
  *
- * This is the optimized entry point for modern browsers using ES modules.
- * It provides automatic on-demand loading of optional features.
+ * The ES-module entry point for modern browsers.
  *
  * Usage:
  *   <script type="module" src="hyperfixi.mjs"></script>
  *
- * Benefits over IIFE bundle:
- * - ~40KB gzipped initial load (vs ~80KB full bundle)
- * - WebSocket, SSE, and Worker features load only when used
- * - Native browser code splitting
- * - Better caching (features cached separately)
- *
- * Features loaded on demand:
- * - sockets: WebSocket connections (~5KB)
- * - eventsource: Server-Sent Events (~5KB)
- * - workers: Web Worker support (~5KB)
+ * The on-demand feature loader this bundle used to carry (`features.*`,
+ * `loadRequiredFeatures`, `preloadFeatures`, …) was deleted with the six
+ * `features/` families in the 4.0 cycle: the modules it imported registered
+ * nothing on load, so every call was a no-op with a misleading name.
  *
  * For simple script tag usage, use hyperfixi.js (IIFE bundle) instead.
  */
@@ -29,14 +22,6 @@ import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
 import { debug } from '../utils/debug';
 import { styleBatcher, ObjectPool } from '../utils/performance';
-import {
-  preloadDocumentFeatures,
-  loadRequiredFeatures,
-  detectFeatures,
-  isFeatureLoaded,
-  getLoadedFeatures,
-  preloadFeatures,
-} from './feature-loader';
 
 // Note: Window.hyperfixi type is declared in browser-bundle.ts with full interface.
 // This modular bundle exports a subset of that interface.
@@ -77,27 +62,8 @@ const hyperfixi = {
   Runtime,
   tokenize,
 
-  // DOM processing with automatic feature loading
+  // DOM processing
   processNode: async (element: Element | Document): Promise<void> => {
-    // Collect hyperscript from element/document
-    const code: string[] = [];
-    if (element === document) {
-      document.querySelectorAll('[_]').forEach(el => {
-        const attr = el.getAttribute('_');
-        if (attr) code.push(attr);
-      });
-      document.querySelectorAll('script[type="text/hyperscript"]').forEach(script => {
-        if (script.textContent) code.push(script.textContent);
-      });
-    } else if (element instanceof HTMLElement) {
-      const attr = element.getAttribute('_');
-      if (attr) code.push(attr);
-    }
-
-    // Load any required features before processing
-    await loadRequiredFeatures(code);
-
-    // Now process normally
     if (element === document) {
       defaultAttributeProcessor.scanAndProcessAll();
     } else if (element instanceof HTMLElement) {
@@ -116,16 +82,6 @@ const hyperfixi = {
   // Debug utilities
   debug,
 
-  // Feature loading API (modular-specific)
-  features: {
-    preloadDocument: preloadDocumentFeatures,
-    loadRequired: loadRequiredFeatures,
-    detect: detectFeatures,
-    isLoaded: isFeatureLoaded,
-    getLoaded: getLoadedFeatures,
-    preload: preloadFeatures,
-  },
-
   // Version info
   version: '1.0.0-modular',
 };
@@ -140,18 +96,15 @@ if (typeof window !== 'undefined') {
   (window as any).evalHyperScriptAsync = evalHyperScriptAsync;
   (window as any).evalHyperScriptSmart = evalHyperScriptSmart;
 
-  // Auto-initialize: preload features then init processor
-  // init() sets up MutationObserver for dynamic elements and dispatches hyperscript:ready
+  // Auto-initialize: init() sets up the MutationObserver for dynamic elements
+  // and dispatches hyperscript:ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', async () => {
-      await preloadDocumentFeatures();
-      await defaultAttributeProcessor.init();
+    document.addEventListener('DOMContentLoaded', () => {
+      defaultAttributeProcessor.init();
     });
   } else {
     // DOM already loaded
-    preloadDocumentFeatures().then(() => {
-      defaultAttributeProcessor.init();
-    });
+    defaultAttributeProcessor.init();
   }
 }
 
@@ -168,13 +121,6 @@ export {
   debug,
   styleBatcher,
   ObjectPool,
-  // Feature loading
-  preloadDocumentFeatures,
-  loadRequiredFeatures,
-  detectFeatures,
-  isFeatureLoaded,
-  getLoadedFeatures,
-  preloadFeatures,
 };
 
 // Default export

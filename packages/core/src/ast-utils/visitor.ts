@@ -6,6 +6,9 @@
  */
 
 import type { ASTNode, VisitorHandlers, VisitorContext } from './types.js';
+import { isASTNode } from './duck.js';
+
+export { isASTNode };
 
 class VisitorContextImpl implements VisitorContext {
   private _skipped = false;
@@ -14,7 +17,7 @@ class VisitorContextImpl implements VisitorContext {
   private _hasReplacement = false;
   private _path: (string | number)[] = [];
   private _parent: ASTNode | null = null;
-  private _scope = new Map<string, any>();
+  private _scope = new Map<string, unknown>();
 
   constructor(path: (string | number)[] = [], parent: ASTNode | null = null) {
     this._path = [...path];
@@ -42,11 +45,11 @@ class VisitorContextImpl implements VisitorContext {
     return this._parent;
   }
 
-  getScope(): Map<string, any> {
+  getScope(): Map<string, unknown> {
     return new Map(this._scope);
   }
 
-  setScope(key: string, value: any): void {
+  setScope(key: string, value: unknown): void {
     this._scope.set(key, value);
   }
 
@@ -112,7 +115,9 @@ export class ASTVisitor {
   }
 
   private visitChildren(node: ASTNode, context: VisitorContextImpl): ASTNode {
-    const result = { ...node };
+    // `ASTNode`'s index signature is `unknown`, so the copy accepts the
+    // rewritten children below without a cast.
+    const result: ASTNode = { ...node };
     let modified = false;
 
     for (const [key, value] of Object.entries(node)) {
@@ -127,10 +132,11 @@ export class ASTVisitor {
       }
 
       if (Array.isArray(value)) {
-        const newArray: any[] = [];
-        for (let i = 0; i < value.length; i++) {
-          const item = value[i];
-          if (this.isASTNode(item)) {
+        const items: unknown[] = value;
+        const newArray: unknown[] = [];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (isASTNode(item)) {
             const childContext = context.createChild(`${key}/${i}`, node);
             const visitedChild = this.visit(item, childContext);
             if (visitedChild === null) {
@@ -151,15 +157,15 @@ export class ASTVisitor {
             newArray.push(item);
           }
         }
-        if (modified || newArray.length !== value.length) {
-          (result as any)[key] = newArray;
+        if (modified || newArray.length !== items.length) {
+          result[key] = newArray;
           modified = true;
         }
-      } else if (this.isASTNode(value)) {
+      } else if (isASTNode(value)) {
         const childContext = context.createChild(key, node);
         const visitedChild = this.visit(value, childContext);
         if (visitedChild !== value) {
-          (result as any)[key] = visitedChild;
+          result[key] = visitedChild;
           modified = true;
         }
         if (childContext.stopped) {
@@ -169,10 +175,6 @@ export class ASTVisitor {
     }
 
     return modified ? result : node;
-  }
-
-  private isASTNode(value: any): value is ASTNode {
-    return value && typeof value === 'object' && typeof value.type === 'string';
   }
 }
 
@@ -246,13 +248,14 @@ export function getAncestors(ast: ASTNode | null, targetNode: ASTNode): ASTNode[
       }
 
       if (Array.isArray(value)) {
-        for (const item of value) {
-          if (item && typeof item === 'object' && typeof item.type === 'string') {
+        const items: unknown[] = value;
+        for (const item of items) {
+          if (isASTNode(item)) {
             if (findPath(item, [...path, node])) return true;
           }
         }
-      } else if (value && typeof value === 'object' && typeof (value as any).type === 'string') {
-        if (findPath(value as any, [...path, node])) return true;
+      } else if (isASTNode(value)) {
+        if (findPath(value, [...path, node])) return true;
       }
     }
 

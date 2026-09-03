@@ -1,20 +1,14 @@
 {
   "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself — known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
-  "generated": "2026-08-30",
-  "totalUpwardImports": 38,
-  "totalValueImports": 22,
+  "generated": "2026-09-03",
+  "totalUpwardImports": 37,
+  "totalValueImports": 23,
   "upwardEdges": {
     "commands -> validation": {
       "count": 3,
       "valueImports": 2,
       "typeOnlyImports": 1,
       "reason": "process-partials.ts calls the partial-template validator, formatter and its types. Arc 3: when the command gets a compile(), the validator arrives by injection instead of by import."
-    },
-    "core -> parser": {
-      "count": 1,
-      "valueImports": 1,
-      "typeOnlyImports": 0,
-      "reason": "core/context.ts imports setGlobal / notifyLocalRead / notifyLocalWrite from parser/extensions — the PROCESS-GLOBAL registry that also carries the reactivity plugin's dependency hooks. Arc 4c moves those hooks onto Runtime, which is what removes this."
     },
     "dom -> api": {
       "count": 2,
@@ -47,10 +41,10 @@
       "reason": "parser/regex-parser.ts imports the lite BUNDLE it is meant to be a component of, inverting the whole stack in one line. Arc 5 (parser tiers) is where this is repaired; until then it is the single most backwards edge in the graph."
     },
     "parser -> expressions": {
-      "count": 5,
-      "valueImports": 5,
+      "count": 7,
+      "valueImports": 7,
       "typeOnlyImports": 0,
-      "reason": "All five are parser/runtime.ts, which is not a parser: it is the 1,967-line canonical EVALUATOR, filed under parser/ for historical reasons. Relocating that one file to the runtime layer removes these five AND two of the three `parser -> commands` imports — 7 of the 22 value edges in this file. Arc 2 types it; Arc 4 moves it."
+      "reason": "All five are parser/runtime.ts, which is not a parser: it is the 1,967-line canonical EVALUATOR, filed under parser/ for historical reasons. Relocating that one file to the runtime layer removes these five AND two of the three `parser -> commands` imports — 7 of the 22 value edges in this file. Arc 2 types it; Arc 4 moves it. Arc 7 step 3 (2026-09-04) added two: parser/runtime.ts references `referencesExpressions` and `logicalExpressions` statically instead of looking 23 core-set names up on the context's registry — the direction step 4 wants (semantics beside the evaluator), on an edge that leaves when this file moves to runtime/."
     },
     "root:metadata -> commands": {
       "count": 1,
@@ -83,9 +77,9 @@
       "reason": "base-types.ts imports the ExpressionRegistry TYPE for ExecutionContext.registry. Type-only, and it disappears in Arc 7 when the registry becomes Pratt-table entries."
     },
     "types -> validation": {
-      "count": 10,
+      "count": 8,
       "valueImports": 4,
-      "typeOnlyImports": 6,
+      "typeOnlyImports": 4,
       "reason": "The zod clone. Ten imports across seven type modules, four of them VALUE imports of `v`/`z` for schemas that types/context-types.ts already documents as any-typed and unused. Arc 6a deletes the schemas; the clone itself has no other consumer once features/ and context/ go."
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/monorepo",
-  "version": "2.11.1",
+  "version": "3.0.0",
   "description": "LokaScript monorepo - multilingual hyperscript engine with 24-language support",
   "private": true,
   "type": "module",
@@ -107,7 +107,7 @@
     "follow-redirects": "^1.16.0",
     "axios": "^1.16.0",
     "tmp": "^0.2.7",
-    "qs": "^6.15.2",
+    "qs": "^6.16.0",
     "yaml": "^2.9.0",
     "brace-expansion": "^5.0.9",
     "js-yaml": "^4.3.1",

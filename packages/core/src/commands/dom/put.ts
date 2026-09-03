@@ -36,6 +36,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * @deprecated Use `ContentInsertPosition` from `commands/helpers/dom-mutation`,
@@ -84,52 +85,32 @@ export class PutCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'put'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PutCommandInput> {
     if (!raw.args?.length) throw new Error('put requires arguments');
 
-    const nodeType = (n: ASTNode): string => (n as any)?.type || 'unknown';
-    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'];
-
-    let prepIdx = -1,
-      prepKw: string | null = null;
-    for (let i = 0; i < raw.args.length; i++) {
-      const arg = raw.args[i];
-      const t = nodeType(arg);
-      const v = (t === 'literal' ? (arg as any).value : (arg as any).name) as string;
-      if ((t === 'literal' || t === 'identifier') && validPreps.includes(v)) {
-        prepIdx = i;
-        prepKw = v;
-        break;
-      }
-    }
-
-    let contentArg: ASTNode | null = null,
-      targetArg: ASTNode | null = null;
-    if (prepIdx === -1) {
-      // Check modifiers for semantic parsing format (e.g., { args: [content], modifiers: { into: target } })
-      // Any valid preposition can arrive as a modifier key, including the
-      // multi-word positional forms ('at start of' / 'at end of').
-      const prepKey = validPreps.find(p => raw.modifiers[p]);
-      if (prepKey) {
-        contentArg = raw.args[0];
-        prepKw = prepKey;
-        targetArg = raw.modifiers[prepKey] as ASTNode;
-      } else if (raw.args.length >= 3) {
-        contentArg = raw.args[0];
-        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || null;
-        targetArg = raw.args[2];
-      } else if (raw.args.length >= 2) {
-        contentArg = raw.args[0];
-        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || 'into';
-      } else throw new Error('put requires content and position');
+    const nodeType = (n: ASTNode): string => n?.type || 'unknown';
+    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'] as const;
+    // The parser carries the operation as the slot the target lives under
+    // (`{ args: [content], modifiers: { into: target } }`, Arc 3 step 3) —
+    // the shape the semantic path always produced. Any operation can arrive
+    // as the key, including the multi-word ones. A bare two-argument node
+    // (`put X Y`, built directly) still defaults to `into`.
+    const prepKey = validPreps.find(p => raw.modifiers?.[p]);
+    let contentArg: ASTNode | null = raw.args[0] ?? null;
+    let prepKw: string | null = null;
+    let targetArg: ASTNode | null = null;
+    if (prepKey) {
+      prepKw = prepKey;
+      targetArg = raw.modifiers[prepKey] as ASTNode;
+    } else if (raw.args[1]) {
+      prepKw = 'into';
+      targetArg = raw.args[1];
     } else {
-      contentArg = raw.args.slice(0, prepIdx)[0] || null;
-      targetArg = raw.args.slice(prepIdx + 1)[0] || null;
+      throw new Error('put requires content and position');
     }
-
     if (!contentArg) throw new Error('put requires content');
     if (!prepKw) throw new Error('put requires position keyword');
 

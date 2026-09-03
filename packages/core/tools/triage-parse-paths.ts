@@ -20,6 +20,7 @@
 
 import { corpusSources, canonicalize } from '../src/parser/__tests__/engine-corpus';
 import { hyperscript } from '../src/api/hyperscript-api';
+import { SemanticGrammarBridge } from '../src/multilingual/bridge';
 
 // ---------------------------------------------------------------------------
 // Parsing
@@ -27,13 +28,36 @@ import { hyperscript } from '../src/api/hyperscript-api';
 
 type Parse = { ok: true; ast: unknown } | { ok: false };
 
-function parseWith(source: string, traditional: boolean): Parse {
+/**
+ * The two English parse paths, as they exist after Arc 1 step 6.
+ *
+ * `traditional` is the core parser (`compileSync`). `semantic` is the
+ * front-end's WHOLE-PROGRAM direct path — `SemanticGrammarBridge.parseToASTWithDetails`
+ * with `lang: 'en'`, the route `hyperscript.compile(code, { language })` and the
+ * multilingual bundles take. Until step 6 the semantic side here was
+ * `compileSync` with the in-loop adapter, which adopted the front-end's parse
+ * per command; that path no longer exists, and comparing `compileSync` against
+ * itself would have made every row `same`. A fallback (`usedDirectPath: false`)
+ * is reported as a semantic parse failure — the fallback IS the traditional
+ * parse, so there is nothing to compare.
+ */
+function parseTraditional(source: string): Parse {
   try {
-    const r = hyperscript.compileSync(source, { traditional } as never) as {
-      ok: boolean;
-      ast?: unknown;
-    };
+    const r = hyperscript.compileSync(source) as { ok: boolean; ast?: unknown };
     return r.ok && r.ast ? { ok: true, ast: canonicalize(r.ast) } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+let bridge: SemanticGrammarBridge | null = null;
+async function parseSemantic(source: string): Promise<Parse> {
+  try {
+    if (!bridge) {
+      bridge = new SemanticGrammarBridge();
+      await bridge.initialize();
+    }
+    const r = await bridge.parseToASTWithDetails(source, 'en');
+    return r.usedDirectPath && r.ast ? { ok: true, ast: canonicalize(r.ast) } : { ok: false };
   } catch {
     return { ok: false };
   }
@@ -84,10 +108,23 @@ function nodeType(v: unknown): string | undefined {
     : undefined;
 }
 
+/**
+ * The word a node carries, if it is the kind of node a marker can arrive as.
+ *
+ * `string` is here as well as `identifier` because the flat-token-list parsers
+ * (`parseGoCommand`, `parseScrollCommand`) deliberately emit their structural
+ * keywords as `string` nodes — an unbound identifier does not evaluate to its
+ * own text, and those runtimes match these words BY text. Reading only
+ * `identifier` therefore under-counted `marker-in-args` and spilled the same
+ * differences into `arity`: `go to url "…"` had been misfiled that way since
+ * `parseGoCommand` was written, and `scroll to #top` joined it the moment
+ * `scroll` got the same treatment. Both are markers the semantic path lifts
+ * into a role, which is exactly what this family is for.
+ */
 function identName(v: unknown): string | undefined {
   if (!v || typeof v !== 'object') return undefined;
   const n = v as { type?: string; name?: unknown; value?: unknown };
-  if (n.type !== 'identifier') return undefined;
+  if (n.type !== 'identifier' && n.type !== 'string') return undefined;
   if (typeof n.name === 'string' && n.name !== '') return n.name;
   return typeof n.value === 'string' ? n.value : undefined;
 }
@@ -230,25 +267,36 @@ interface Row {
   sites: DiffSite[];
 }
 
-function analyse(): Row[] {
-  return corpusSources().map((source, index) => {
-    const t = parseWith(source, true);
-    const s = parseWith(source, false);
-    if (!t.ok && !s.ok) return { index, source, status: 'both-fail' as const, sites: [] };
-    if (!s.ok) return { index, source, status: 'trad-only' as const, sites: [] };
-    if (!t.ok) return { index, source, status: 'sem-only' as const, sites: [] };
+async function analyse(): Promise<Row[]> {
+  const rows: Row[] = [];
+  for (const [index, source] of corpusSources().entries()) {
+    const t = parseTraditional(source);
+    const s = await parseSemantic(source);
+    if (!t.ok && !s.ok) {
+      rows.push({ index, source, status: 'both-fail', sites: [] });
+      continue;
+    }
+    if (!s.ok) {
+      rows.push({ index, source, status: 'trad-only', sites: [] });
+      continue;
+    }
+    if (!t.ok) {
+      rows.push({ index, source, status: 'sem-only', sites: [] });
+      continue;
+    }
     const sites: DiffSite[] = [];
     diff(t.ast, s.ast, '', sites);
-    return {
+    rows.push({
       index,
       source,
-      status: sites.length === 0 ? ('same' as const) : ('differ' as const),
+      status: sites.length === 0 ? 'same' : 'differ',
       sites,
-    };
-  });
+    });
+  }
+  return rows;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const arg = (name: string): string | undefined =>
     argv
@@ -257,7 +305,7 @@ function main(): void {
       .slice(1)
       .join('=');
 
-  const rows = analyse();
+  const rows = await analyse();
 
   if (argv.includes('--json')) {
     process.stdout.write(JSON.stringify(rows, null, 2) + '\n');
@@ -406,4 +454,4 @@ function main(): void {
   L('');
 }
 
-main();
+void main();

@@ -13,7 +13,7 @@ import type { ExpressionMetadata, LLMDocumentation } from '../../types/expressio
 import { matchesWithCache } from '../../performance/integration';
 import { validateArgCount, validateTwoArgs } from '../validation-helpers';
 import { isString, isObject } from '../type-helpers';
-import { trackEvaluation } from '../shared';
+import { trackEvaluation, isTrackingEvaluations } from '../shared';
 import { compareValues } from '../shared/comparison-utils';
 
 /** Duck-typed DOM element check for cross-realm compatibility (JSDOM/happy-dom). */
@@ -59,7 +59,9 @@ export const equalsExpression: EnhancedExpressionImplementation = {
   operators: ['is', '==', 'equals'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const startTime = Date.now();
+    // Timing is only spent when a devtools tracker is installed.
+    const tracking = isTrackingEvaluations();
+    const startTime = tracking ? Date.now() : 0;
     try {
       // Hyperscript uses loose equality for 'is' and strict equality for other operators
       const result = left == right;
@@ -109,53 +111,6 @@ export const equalsExpression: EnhancedExpressionImplementation = {
       complexity: 'O(1)',
     },
   },
-
-  documentation: {
-    summary: 'Compares two values for loose equality, allowing type coercion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'unknown',
-        description: 'Left operand for comparison',
-        optional: false,
-        examples: ['5', '"hello"', 'true', 'null'],
-      },
-      {
-        name: 'right',
-        type: 'unknown',
-        description: 'Right operand for comparison',
-        optional: false,
-        examples: ['5', '"hello"', 'true', 'null'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if values are loosely equal, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Basic equality check',
-        code: 'if my.value is 10',
-        explanation: 'Check if element value equals 10',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Type coercion',
-        code: 'if "5" == 5',
-        explanation: 'String "5" equals number 5 with automatic type conversion',
-        output: 'true',
-      },
-      {
-        title: 'Null checks',
-        code: 'if value is null',
-        explanation: 'Check if value is null or undefined',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['strictEquals', 'notEquals', 'matches'],
-    tags: ['comparison', 'equality', 'logic', 'type-coercion'],
-  },
 };
 
 export const strictEqualsExpression: ExpressionImplementation = {
@@ -167,7 +122,7 @@ export const strictEqualsExpression: ExpressionImplementation = {
   operators: ['==='],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = left === right;
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -188,7 +143,7 @@ export const notEqualsExpression: ExpressionImplementation = {
   operators: ['!=', 'is not', 'does not equal'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = left != right;
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -209,7 +164,7 @@ export const strictNotEqualsExpression: ExpressionImplementation = {
   operators: ['!=='],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = left !== right;
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -230,7 +185,7 @@ export const lessThanExpression: ExpressionImplementation = {
   operators: ['<', 'is less than'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = compareValues(left, right, '<');
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -251,7 +206,7 @@ export const lessThanOrEqualExpression: ExpressionImplementation = {
   operators: ['<=', 'is less than or equal to'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = compareValues(left, right, '<=');
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -272,7 +227,7 @@ export const greaterThanExpression: ExpressionImplementation = {
   operators: ['>', 'is greater than'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = compareValues(left, right, '>');
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -293,7 +248,7 @@ export const greaterThanOrEqualExpression: ExpressionImplementation = {
   operators: ['>=', 'is greater than or equal to'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = compareValues(left, right, '>=');
     if (tracking) trackEvaluation(this, context, [left, right], result, startTime);
@@ -318,7 +273,9 @@ export const andExpression: EnhancedExpressionImplementation = {
   operators: ['and', '&&'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<unknown> {
-    const startTime = Date.now();
+    // Timing is only spent when a devtools tracker is installed.
+    const tracking = isTrackingEvaluations();
+    const startTime = tracking ? Date.now() : 0;
     try {
       // Return the first falsy value, or the last value if all are truthy
       // This matches JavaScript && behavior: returns actual values, not booleans
@@ -374,53 +331,6 @@ export const andExpression: EnhancedExpressionImplementation = {
       complexity: 'O(1)',
     },
   },
-
-  documentation: {
-    summary: 'Logical AND operation that returns true only if both operands are truthy',
-    parameters: [
-      {
-        name: 'left',
-        type: 'unknown',
-        description: 'Left operand (evaluated for truthiness)',
-        optional: false,
-        examples: ['true', 'name', '5', '"hello"'],
-      },
-      {
-        name: 'right',
-        type: 'unknown',
-        description: 'Right operand (evaluated for truthiness)',
-        optional: false,
-        examples: ['false', 'age', '0', '""'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if both operands are truthy, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Form validation',
-        code: 'if name and email',
-        explanation: 'Check if both name and email have values',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Multiple conditions',
-        code: 'if age > 18 and hasLicense',
-        explanation: 'Combine multiple conditions',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Short-circuit evaluation',
-        code: 'if element and element.value',
-        explanation: 'Check element exists before accessing properties',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['or', 'not', 'exists'],
-    tags: ['logic', 'boolean', 'conditions', 'validation'],
-  },
 };
 
 export const orExpression: ExpressionImplementation = {
@@ -432,7 +342,7 @@ export const orExpression: ExpressionImplementation = {
   operators: ['or', '||'],
 
   async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<unknown> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     // Return the first truthy value, or the last value if all are falsy
     // This matches JavaScript || behavior: returns actual values, not booleans
@@ -455,7 +365,7 @@ export const notExpression: ExpressionImplementation = {
   operators: ['not', '!'],
 
   async evaluate(context: ExecutionContext, operand: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     // Convert to boolean using truthy/falsy rules
     const result = !operand;
@@ -479,7 +389,7 @@ export const isEmptyExpression: ExpressionImplementation = {
   operators: ['is empty', 'isEmpty'],
 
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     let result: boolean;
     if (value == null) result = true;
@@ -507,7 +417,7 @@ export const noExpression: ExpressionImplementation = {
   operators: ['no'],
 
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     // The 'no' operator returns true for "absence of value":
     // - null/undefined: true (no value)
@@ -541,7 +451,7 @@ export const isNotEmptyExpression: ExpressionImplementation = {
   operators: ['is not empty', 'isNotEmpty'],
 
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = !(await isEmptyExpression.evaluate(context, value));
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
@@ -560,7 +470,7 @@ export const existsExpression: ExpressionImplementation = {
   operators: ['exists'],
 
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = valueExists(value);
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
@@ -593,7 +503,7 @@ export const doesNotExistExpression: ExpressionImplementation = {
   operators: ['does not exist', 'doesNotExist'],
 
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = !valueExists(value);
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
@@ -616,7 +526,7 @@ export const containsExpression: ExpressionImplementation = {
   operators: ['contains', 'includes', 'include'],
 
   async evaluate(context: ExecutionContext, container: unknown, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     let result: boolean;
 
@@ -695,7 +605,7 @@ export const doesNotContainExpression: ExpressionImplementation = {
   operators: ['does not contain', 'doesNotContain', 'does not include', 'doesNotInclude'],
 
   async evaluate(context: ExecutionContext, container: unknown, value: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = !(await containsExpression.evaluate(context, container, value));
     if (tracking) trackEvaluation(this, context, [container, value], result, startTime);
@@ -714,7 +624,7 @@ export const startsWithExpression: ExpressionImplementation = {
   operators: ['starts with', 'startsWith'],
 
   async evaluate(context: ExecutionContext, str: unknown, prefix: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     // Upstream coerces non-string operands to strings (`123 starts with '12'`),
     // but null/undefined never match.
@@ -735,7 +645,7 @@ export const endsWithExpression: ExpressionImplementation = {
   operators: ['ends with', 'endsWith'],
 
   async evaluate(context: ExecutionContext, str: unknown, suffix: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     // Upstream coerces non-string operands to strings (`123 ends with '23'`),
     // but null/undefined never match.
@@ -769,7 +679,7 @@ export const betweenExpression: ExpressionImplementation = {
     min: unknown,
     max?: unknown
   ): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
 
     // Auto-order the bounds so callers don't have to worry about min/max
@@ -802,7 +712,9 @@ export const matchesExpression: EnhancedExpressionImplementation = {
   operators: ['matches'],
 
   async evaluate(context: ExecutionContext, element: unknown, selector: unknown): Promise<boolean> {
-    const startTime = Date.now();
+    // Timing is only spent when a devtools tracker is installed.
+    const tracking = isTrackingEvaluations();
+    const startTime = tracking ? Date.now() : 0;
     try {
       let result: boolean;
 
@@ -891,59 +803,6 @@ export const matchesExpression: EnhancedExpressionImplementation = {
       complexity: 'O(n)',
     },
   },
-
-  documentation: {
-    summary: 'Tests if element matches CSS selector or string matches regex pattern',
-    parameters: [
-      {
-        name: 'element',
-        type: 'Element | string',
-        description: 'DOM element or string to test',
-        optional: false,
-        examples: ['<div>', '"hello world"', 'me', 'target'],
-      },
-      {
-        name: 'selector',
-        type: 'string',
-        description: 'CSS selector or regex pattern to match against',
-        optional: false,
-        examples: ['".active"', '"#navbar"', '"/^hello/"', '"\\\\d+"'],
-      },
-    ],
-    returns: {
-      type: 'Boolean',
-      description: 'True if element matches selector/pattern',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'CSS class matching',
-        code: 'if me matches ".active"',
-        explanation: 'Check if current element has "active" class',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Attribute matching',
-        code: 'if target matches "[data-role=\\"button\\"]"',
-        explanation: 'Check if element has specific data attribute',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Regex pattern matching',
-        code: 'if email matches "/^[^@]+@[^@]+\\\\.[^@]+$/"',
-        explanation: 'Validate email format with regex',
-        output: 'Boolean result',
-      },
-      {
-        title: 'Complex CSS selector',
-        code: 'if element matches ".card:hover .button"',
-        explanation: 'Match complex CSS selector with pseudo-classes',
-        output: 'Boolean result',
-      },
-    ],
-    seeAlso: ['contains', 'startsWith', 'endsWith', 'querySelector'],
-    tags: ['pattern', 'css', 'regex', 'validation', 'dom'],
-  },
 };
 
 // ============================================================================
@@ -957,7 +816,7 @@ export const hasExpression: ExpressionImplementation = {
   operators: ['has', 'have'],
 
   async evaluate(context: ExecutionContext, element: unknown, selector: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     let result = false;
     // Check class presence: "me has .active"
@@ -987,7 +846,7 @@ export const doesNotHaveExpression: ExpressionImplementation = {
   operators: ['does not have'],
 
   async evaluate(context: ExecutionContext, element: unknown, selector: unknown): Promise<boolean> {
-    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const tracking = isTrackingEvaluations();
     const startTime = tracking ? Date.now() : 0;
     const result = !(await hasExpression.evaluate(context, element, selector));
     if (tracking) trackEvaluation(this, context, [element, selector], result, startTime);

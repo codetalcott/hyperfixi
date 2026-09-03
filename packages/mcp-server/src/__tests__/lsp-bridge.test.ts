@@ -67,7 +67,9 @@ describe('get_diagnostics', () => {
 
     const parsed = JSON.parse(getTextContent(result));
     expect(parsed.diagnostics.length).toBeGreaterThan(0);
-    expect(parsed.diagnostics.some((d: any) => d.message.includes('quote'))).toBe(true);
+    // The core parser's own error ("Unclosed string literal") now comes
+    // first; the token-based "Unmatched single quote" is the fallback.
+    expect(parsed.diagnostics.some((d: any) => /quote|string literal/i.test(d.message))).toBe(true);
   });
 
   it('detects unmatched double quote', async () => {
@@ -85,7 +87,8 @@ describe('get_diagnostics', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.diagnostics.some((d: any) => d.message.includes('parenthes'))).toBe(true);
+    // Parser first ("Expected ')' after arguments"); token check is the fallback.
+    expect(parsed.diagnostics.some((d: any) => /parenthes|\)/.test(d.message))).toBe(true);
   });
 
   it('warns about deprecated setTimeout', async () => {
@@ -239,6 +242,110 @@ describe('get_hover_info', () => {
     // Should not throw, may have contents or not
     expect(parsed).toBeDefined();
   });
+
+  // The interchange hover renders the node at the cursor as LSE. `fromCoreAST`
+  // names roles for `set` and `go` only unless the schema-driven inferrer is
+  // injected (lsp-bridge.ts binds `schemaRoleInferrer`) — but the framework's
+  // `fromInterchangeNode` re-infers the SIMPLE cases itself when rendering, so
+  // a `toggle .active` hover shows `patient:.active` even with the injection
+  // deleted. Only a case the framework cannot re-infer proves the wiring:
+  // without the inferrer `add .x to me` renders `[add patient:.x]` (the
+  // destination is dropped) and `halt the event` renders bare `[halt]`.
+  // Measured over the engine corpus's feature sources, 2026-09-03: 4 of 28
+  // render differently. Mutation: drop `inferRoles` in lsp-bridge.ts.
+  it('hover LSE carries the schema-inferred destination role on add', async () => {
+    const result = await handleLspBridgeTool('get_hover_info', {
+      code: 'on click add .x to me',
+      line: 0,
+      character: 9, // "add"
+    });
+
+    const parsed = JSON.parse(getTextContent(result));
+    expect(parsed.contents).toContain('**LSE:**');
+    expect(parsed.contents).toContain('destination:me');
+    expect(parsed.contents).toContain('patient:.x');
+  });
+
+  it('hover LSE carries the schema-inferred patient role on halt the event', async () => {
+    const result = await handleLspBridgeTool('get_hover_info', {
+      code: 'on mouseenter halt the event',
+      line: 0,
+      character: 14, // "halt"
+    });
+
+    const parsed = JSON.parse(getTextContent(result));
+    expect(parsed.contents).toContain('patient:event');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The three AST paths that were never reached. `lsp-bridge.ts` guarded its
+// diagnostics, completions and symbols AST paths on `astToolkit.astToLSP*`,
+// names core has never exported, so all three silently took their token-based
+// fallback (After-the-plan item 6). They read the interchange now; each row
+// below asserts something the token path cannot produce, so reverting the
+// guards to the dead names reddens every one.
+// ---------------------------------------------------------------------------
+
+describe('AST paths: symbols, completions, diagnostics read the interchange', () => {
+  it('symbols: an event handler carries its commands as children', async () => {
+    const result = await handleLspBridgeTool('get_document_symbols', {
+      code: 'on click toggle .active then add .x',
+    });
+    const { symbols } = JSON.parse(getTextContent(result));
+    const handler = symbols.find((s: { name: string }) => s.name === 'on click');
+    expect(handler).toBeDefined();
+    expect((handler.children ?? []).map((c: { name: string }) => c.name)).toEqual([
+      'toggle',
+      'add',
+    ]);
+  });
+
+  it('completions: inside a command, its argument shapes are offered', async () => {
+    const result = await handleLspBridgeTool('get_completions', {
+      code: 'on click toggle .active',
+      line: 0,
+      character: 15, // inside "toggle"
+    });
+    const labels = JSON.parse(getTextContent(result)).completions.map(
+      (c: { label: string }) => c.label
+    );
+    expect(labels).toEqual(expect.arrayContaining(['.', '@', 'me']));
+    expect(labels).not.toContain('init'); // the token path's generic list
+  });
+
+  it('completions: after `set … to`, the variable sigils are offered', async () => {
+    const result = await handleLspBridgeTool('get_completions', {
+      code: 'set x to',
+      line: 0,
+      character: 8,
+    });
+    const labels = JSON.parse(getTextContent(result)).completions.map(
+      (c: { label: string }) => c.label
+    );
+    expect(labels).toEqual(expect.arrayContaining([':', '$', 'the']));
+  });
+
+  it("diagnostics: the core parser's own error is reported, not a typo guess", async () => {
+    const result = await handleLspBridgeTool('get_diagnostics', {
+      code: 'behavior Foo on click add .x end',
+    });
+    const { diagnostics } = JSON.parse(getTextContent(result));
+    const parseErrors = diagnostics.filter((d: { code: string }) => d.code === 'parse-error');
+    expect(parseErrors.map((d: { message: string }) => d.message)).toContain(
+      "Expected 'end' to close behavior definition"
+    );
+  });
+
+  it('a statement kind the converter cannot represent is not a parse error', async () => {
+    // `fromCoreAST` throws "Unknown core AST node type: def"; that is a
+    // converter limit and must not surface as a diagnostic.
+    const result = await handleLspBridgeTool('get_diagnostics', {
+      code: 'def greet(name) log name end',
+    });
+    const { diagnostics } = JSON.parse(getTextContent(result));
+    expect(diagnostics.filter((d: { code: string }) => d.code === 'parse-error')).toEqual([]);
+  });
 });
 
 describe('get_document_symbols', () => {
@@ -282,11 +389,14 @@ describe('get_document_symbols', () => {
 
   it('extracts multiple symbols', async () => {
     const result = await handleLspBridgeTool('get_document_symbols', {
-      code: 'on click toggle .active\non mouseenter add .hover',
+      // `end`-terminated: without it, `toggle .active on mouseenter` reads
+      // `on` as toggle's destination marker (upstream does too), and the
+      // token-based extractor only ever counted two by regex.
+      code: 'on click toggle .active end\non mouseenter add .hover end',
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.symbols.length).toBeGreaterThanOrEqual(2);
+    expect(parsed.symbols.map((s: any) => s.name)).toEqual(['on click', 'on mouseenter']);
   });
 
   it('returns valid LSP symbol format', async () => {

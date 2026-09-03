@@ -25,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for BeepCommand
@@ -66,7 +67,7 @@ export class BeepCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'beep'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<BeepCommandInput> {

@@ -106,20 +106,8 @@ describe('RenderCommand (Standalone V2)', () => {
       expect(input.variables).toBeUndefined();
     });
 
-    it('should parse variables via "with" keyword in args', async () => {
-      const vars = { name: 'Alice', age: 30 };
-      const input = await command.parseInput(
-        {
-          args: [astValue('<p>${name}</p>'), astValue('with'), astValue(vars)],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.template).toBe('<p>${name}</p>');
-      expect(input.variables).toEqual({ name: 'Alice', age: 30 });
-    });
+    // The positional `[template, with, vars]` shape is gone: `with` is the
+    // declared grammar's marker and arrives as `modifiers.with` (Arc 3 step 4).
 
     it('should parse variables from "with" modifier', async () => {
       const vars = { greeting: 'Hello' };

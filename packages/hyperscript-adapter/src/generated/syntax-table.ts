@@ -6,7 +6,6 @@
 export const SYNTAX: Record<string, readonly [string, string][]> = {
   add: [['patient', ''], ['destination', 'to']],
   append: [['patient', ''], ['destination', 'to']],
-  async: [],
   beep: [['patient', '']],
   behavior: [['patient', '']],
   bind: [['destination', ''], ['source', 'to']],

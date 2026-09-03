@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **21.5 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~310 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **21.5 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -185,13 +185,14 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
-#### Three gates `test:check` does NOT cover
+#### ~~Three~~ FOUR classes of gate `test:check` does NOT cover
 
 These are required CI checks that no `test:check` invocation reaches, so a green
-local run can still fail CI. Each cost a full CI round-trip during Arc F
-follow-ups round 2. Run all three whenever a change touches
-`packages/semantic/src/generators/command-schemas.ts`, a language profile, or
-R2's curated execution subset:
+local run can still fail CI. The first three cost a full CI round-trip during Arc
+F follow-ups round 2; the fourth cost one on #1034. Run 1–3 whenever a change
+touches `packages/semantic/src/generators/command-schemas.ts`, a language
+profile, or R2's curated execution subset — and run 4 whenever you touch
+**anything**, because it is a dozen cheap scripts that guard the whole repo:
 
 ```bash
 # 1. Vocab consistency (V1–V4 cross-surface check)
@@ -202,6 +203,22 @@ npm run test:check --prefix packages/hyperscript-adapter
 
 # 3. The R2 curated-subset lock (part of the testing-framework suite)
 npm run test:check --prefix packages/testing-framework
+
+# 4. Everything the `lint-typecheck` JOB runs that no test suite does.
+#    Nine guard scripts + their three self-tests, then oxlint, then the 32
+#    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
+#    the FIRST failure hides the rest.
+for s in check-ci-build-order check-bundle-shards check-test-check-list \
+         check-ci-test-list check-ci-job-lists validate-versions \
+         check-type-escapes check-layering check-semantic-boundary; do
+  node scripts/$s.cjs || echo "FAILED: $s"
+done
+for t in check-type-escapes check-layering check-semantic-boundary; do
+  node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
+done
+npm run lint
+npm run typecheck:scripts --prefix packages/core
+# …plus `npm run typecheck --prefix packages/<each>` for the 32 the job lists.
 ```
 
 1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
@@ -215,7 +232,17 @@ npm run test:check --prefix packages/testing-framework
    Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
    `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
    needs `--no-verify`.
-3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+3. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
+   committed baseline and fail on any increase: `check-type-escapes`
+   (`any` / `as any` / `as Record<string, unknown>` / `as unknown as`, per
+   directory), `check-layering` (upward imports), and `check-semantic-boundary`.
+   #1034 added exactly **two** `as unknown as` in `packages/core/src/parser`
+   while every test suite stayed green — both were avoidable, and the right
+   answer was to type the values, not to run `check:type-escapes:update`. Reach
+   for `:update` only when the hatch is genuinely required, and say why in the
+   PR. Note these run BEFORE `npm ci` in the job, which is why they are cheap
+   enough to run on every change.
+4. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
@@ -499,7 +526,7 @@ yields a 0 delta):
     skips a failed parse _before_ scoring, removing it from numerator and
     denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
     **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
-    that did parse. R2 covers 47 curated ids; R4's denominator excludes ~14% of
+    that did parse. R2 covers 41 curated ids (measured 2026-09-02; this said 47); R4's denominator excludes ~14% of
     the corpus and is full-mode only. This is not hypothetical — #763's
     `markerOverride.he` change stopped `לך את back` parsing and the gate would
     have gone green; two vitest cases caught it instead. The other tolerances are
@@ -663,7 +690,7 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 ### Command Pattern
 
-All 59 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
+All 58 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
 `@command` class decorator with a type-visible `commandMeta` static:
 
 ```typescript
@@ -763,11 +790,11 @@ cd packages/core && npx playwright test src/compatibility/browser-tests/bundle-c
 
 **Bundle Test Matrix:**
 
-The bundle compatibility test suite automatically tests all 7 bundles against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
+The bundle compatibility test suite automatically tests every built bundle against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (11.1 KB), hybrid-hx (21.5 KB), hybrid-hx-v4 (~321 KB), minimal (71.5 KB), standard (78 KB), browser (~309 KB)
+- Bundles: hybrid-complete (11.1 KB, plugin-internal), hybrid-hx (21.5 KB), hybrid-hx-v4 (~342 KB), browser (~310 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -886,15 +913,18 @@ registerCustomKeywords('my-lang', {
 Quick reference — full detail in [packages/core/docs/API.md](packages/core/docs/API.md).
 
 ```javascript
-// Which parser handled a compile, and with what confidence:
-hyperfixi.compile('toggle .active').metadata;
-// { parserUsed: 'semantic', semanticConfidence: 0.98, semanticLanguage: 'en', warnings: [] }
+// Which parser produced a compile's AST (English is ALWAYS the core parser;
+// 'semantic' means the multilingual front-end built it, non-English only):
+hyperfixi.compileSync('toggle .active').meta; // { parser: 'traditional', language: 'en', timeMs }
+(await hyperfixi.compile('alternar .active', { language: 'es' })).meta;
+// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs }
 
 // Debug logging (persists via localStorage, works in production builds):
 hyperfixi.debugControl.enable(); // or: localStorage.setItem('hyperfixi:debug', '*') + reload
 // Log prefixes: ATTR:/SCRIPT:/SCAN: (attribute-processor) · PARSE: · CMD: · EXPR:
 
-// Per-parse decisions and running stats:
+// Front-end consultations (one per NON-English compile — the per-command
+// in-loop attempt on English was deleted by Arc 1 step 6) and running stats:
 window.addEventListener('hyperfixi:semantic-parse', e => console.log(e.detail));
 hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanticFallbacks, averageConfidence }
 ```
@@ -984,19 +1014,23 @@ generator, and semantic regional bundles — lives in
 
 Quick selection (sizes gzipped):
 
-| Bundle                         | Size      | Use case                                                                                   |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------ |
-| via `@hyperfixi/vite-plugin`   | minimal   | **Default for Vite projects** — scans usage, emits the right bundle                        |
-| `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
-| `hyperfixi-hybrid-complete.js` | 11.1 KB   | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
-| `hyperfixi-hx.js`              | 21.5 KB   | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
-| `hyperfixi-hx-v4.js`           | ~321 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | ~309 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
-| `hyperfixi-multilingual.js`    | 93 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
-| semantic bundles               | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
+| Bundle                       | Size      | Use case                                                                                                |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| via `@hyperfixi/vite-plugin` | minimal   | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
+| `hyperfixi-hx.js`            | ~21.5 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
+| `hyperfixi.js`               | ~310 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
+| `hyperfixi-hx-v4.js`         | ~342 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
+| `hyperfixi-multilingual.js`  | ~91 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
+| semantic bundles             | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
 
-Rule of thumb: start as small as you can; upgrade when you hit a missing feature.
-The vite plugin removes this decision entirely.
+Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
+with `hyperfixi-hx.js` and moves to `hyperfixi.js` the first time the console
+says a command needs it (a small bundle fails loudly and names the full one —
+pinned by the bundle-compatibility matrix). `lite`, `lite-plus`, `minimal` and
+`standard` were retired as public names in the 4.0 cycle;
+`hyperfixi-hybrid-complete.js` is still built because the plugin's generated
+fallback imports it (`@hyperfixi/core/browser/hybrid-complete`), and is
+plugin-internal.
 
 Multilingual usage (execute/translate in any of 24 languages):
 

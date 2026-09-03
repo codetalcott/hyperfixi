@@ -210,6 +210,21 @@ export class HybridParser {
       throw new Error(`'${this.peek().value}' needs the full parser (use hyperfixi.js)`);
     }
 
+    // A WORD at command position that no rule claims is a command this bundle
+    // does not ship. Reject it the same way, naming the remedy: the skip
+    // fallback below used to drop it one token at a time, so `make a <div/>`
+    // in a hybrid bundle ran as NOTHING and logged nothing — measured 2026-09-04
+    // by the bundle-compatibility row that now pins this. Stray non-word
+    // tokens (a bare `@`) still skip.
+    const stray = this.peek();
+    if (
+      !this.isAtEnd() &&
+      (stray.type === 'identifier' || stray.type === 'keyword') &&
+      !this.match('then', 'and', 'end', 'else')
+    ) {
+      throw new Error(`'${stray.value}' needs the full parser (use hyperfixi.js)`);
+    }
+
     if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
       this.advance();
     }
@@ -269,9 +284,30 @@ export class HybridParser {
     return { type: 'while', condition, body };
   }
 
+  /**
+   * A naked URL — `fetch /api/data …`, `fetch https://x/y …` — the way upstream
+   * reads one: everything up to the next whitespace, verbatim. The tokenizer
+   * splits `/api/data` into `/`, `api`, `/`, `data`, and `parseExpression` used
+   * to return the first `/` as the URL; the skip fallback then dropped the rest
+   * silently, so every unquoted `fetch /path` in a hybrid bundle fetched `/`.
+   * Measured 2026-09-04 when the fallback stopped being silent.
+   */
+  private parseNakedUrl(): ASTNode | null {
+    const tok = this.peek();
+    const isSlash = tok.type === 'operator' && tok.value === '/';
+    const isScheme =
+      (tok.value === 'http' || tok.value === 'https') &&
+      this.source.slice(tok.pos + tok.value.length, tok.pos + tok.value.length + 3) === '://';
+    if (!isSlash && !isScheme) return null;
+    let end = tok.pos;
+    while (end < this.source.length && !/\s/.test(this.source[end])) end++;
+    while (!this.isAtEnd() && this.peek().pos < end) this.advance();
+    return { type: 'literal', value: this.source.slice(tok.pos, end) };
+  }
+
   private parseFetchBlock(): BlockNode {
     this.expect('fetch');
-    const url = this.parseExpression();
+    const url = this.parseNakedUrl() ?? this.parseExpression();
     let responseType: ASTNode = { type: 'literal', value: 'text' };
     let options: ASTNode | undefined;
     let method: ASTNode | undefined;
@@ -436,7 +472,18 @@ export class HybridParser {
    */
   private parseSend(marker: 'to' | 'on'): CommandNode {
     this.advance();
-    const event = this.advance().value;
+    const first = this.advance();
+    let event = first.value;
+    // A colon-qualified name — `send custom:event to #t` — tokenizes as
+    // `custom` + localVar `:event`. Rejoin the adjacent pieces; the old code
+    // took `custom` and the skip fallback swallowed `:event to #t`, so the
+    // event went out under the wrong name and to `me`. Measured 2026-09-04.
+    let end = first.pos + first.value.length;
+    while (!this.isAtEnd() && this.peek().type === 'localVar' && this.peek().pos === end) {
+      const piece = this.advance();
+      event += piece.value;
+      end = piece.pos + piece.value.length;
+    }
     let target: ASTNode | undefined;
     if (this.match(marker)) {
       this.advance();

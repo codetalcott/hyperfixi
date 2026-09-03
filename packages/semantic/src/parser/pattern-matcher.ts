@@ -21,6 +21,7 @@ import {
   createReference,
   createPropertyPath,
   isValidReference,
+  withPosition,
 } from '../types';
 import { stripOptionalDiacritics } from '@lokascript/framework';
 import { isTypeCompatible } from './utils/type-validation';
@@ -569,10 +570,55 @@ export class PatternMatcher {
     nextPatternToken?: PatternToken
   ): boolean {
     const startIdx = tokens.position();
+    const before = captured.get(patternToken.role);
     if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
     this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
     this.absorbTrailingConditionOperand(tokens, patternToken, captured, nextPatternToken, startIdx);
+    this.stampCaptureSpan(tokens, patternToken.role, captured, startIdx, before);
     return true;
+  }
+
+  /**
+   * Give a freshly captured role the span of the token run it was built from.
+   *
+   * This is the ONLY place a role gets a span, deliberately. `matchRoleTokenCore`
+   * captures through some twenty branches — a plain single token, but also a
+   * dozen folds that assemble one value from a RUN (`myFunction()`,
+   * `#dialog.showModal()`, `my value`, `first .item`, `"Hello, " + my value`,
+   * `{ left: …px }`), each returning a synthesized value with nowhere to hang a
+   * token's position. Stamping the run once, here, covers all of them, cannot
+   * be forgotten by a branch added later, and includes whatever
+   * `absorbTrailingConversion` / `absorbTrailingConditionOperand` went on to
+   * swallow — `attrs.data as JSON` is one value, so it is one span.
+   *
+   * A stamp inside `tokenToSemanticValue` (in this class and in
+   * `semantic-parser.ts`) was written first and then MEASURED dead: with both
+   * removed, the parse-path triage, the core span tests and all 9,806 semantic
+   * tests were byte-identical, and the ja/ko/tr verb-final paths still reported
+   * correct spans. Two stamps for one fact is one too many.
+   *
+   * Three guards keep it honest. A value that already carries a position keeps
+   * it. A slot that captured nothing new — a skipped optional, a marker-only
+   * match — leaves the previously captured value alone. And a run of zero
+   * tokens yields no span at all, rather than an empty one at the slot's start.
+   */
+  private stampCaptureSpan(
+    tokens: TokenStream,
+    role: SemanticRole,
+    captured: Map<SemanticRole, SemanticValue>,
+    startIdx: number,
+    before: SemanticValue | undefined
+  ): void {
+    const value = captured.get(role);
+    if (!value || value === before || value.position) return;
+    if (tokens.position() <= startIdx) return;
+    const first = tokens.tokens[startIdx];
+    const last = tokens.tokens[tokens.position() - 1];
+    if (!first || !last) return;
+    captured.set(
+      role,
+      withPosition(value, { start: first.position.start, end: last.position.end })
+    );
   }
 
   /**

@@ -12,8 +12,8 @@
  *
  * The defect was invisible to `tools/triage-parse-paths.ts`, which measures
  * where the two parse paths DIFFER — here they agreed, both wrongly, because
- * every affected command is on `parseCommandCore`'s `skipSemanticParsing` list
- * and only one parser ever runs. A per-case test would have pinned the one
+ * every affected command was on `parseCommandCore`'s `skipSemanticParsing` list
+ * and only one parser ever ran (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone). A per-case test would have pinned the one
  * example someone happened to look at; sweeping every documented command
  * example is what found that NINE commands were affected, not the one the
  * filing named.
@@ -71,8 +71,9 @@ const MARKER_WORDS = new Set([
  *   Fixing them means teaching a parser, not annotating a schema.
  */
 const KNOWN_UNFIXED: ReadonlyArray<`${string}.${string}="${string}"`> = [
-  'swap.method="over"',
-  'morph.patient="over"',
+  // `swap.method="over"` and `morph.patient="over"` left this list with Arc 3
+  // step 3's swap PR: the strategy word is `modifiers.strategy` now, so there
+  // is no bare `over` in `args` for the positional pass to bind as a value.
   'pick.patient="from"',
 ];
 

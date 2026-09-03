@@ -41,6 +41,7 @@ import { createExpressionRegistry } from '../core/expression-registry';
 import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { specialExpressions } from '../expressions/special/index';
+import { mathematicalExpressions } from '../expressions/mathematical/index';
 import { propertiesExpressions } from '../expressions/properties/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
@@ -121,7 +122,6 @@ import { createBreakpointCommand } from '../commands/utility/breakpoint';
 // Advanced Commands (2)
 // ============================================================================
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // ============================================================================
 // Navigation Commands (1)
@@ -141,12 +141,13 @@ import { createPseudoCommand } from '../commands/execution/pseudo-command';
 // Runtime Setup
 // ============================================================================
 
-// Build an ExpressionRegistry with the 6 categories the classic bundle ships.
+// Build an ExpressionRegistry with the 7 categories the classic bundle ships.
 // Tree-shaking: only these categories' modules land in the dist.
 const expressionRegistry = createExpressionRegistry(
   referencesExpressions,
   logicalExpressions,
   specialExpressions,
+  mathematicalExpressions,
   propertiesExpressions,
   conversionExpressions,
   positionalExpressions
@@ -217,7 +218,6 @@ const runtime = createTreeShakeableRuntime(
 
     // Advanced (2)
     createJsCommand(),
-    createAsyncCommand(),
 
     // Navigation (1)
     createGoCommand(),
@@ -314,9 +314,8 @@ const api = {
     // Execution (2)
     'focus',
     'blur',
-    // Advanced (2)
+    // Advanced (1)
     'js',
-    'async',
     // Navigation (1)
     'go',
     // Special (4)

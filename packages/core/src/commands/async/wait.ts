@@ -22,6 +22,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface WaitTimeInput {
   type: 'time';
@@ -74,15 +75,11 @@ export class WaitCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'wait'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<WaitCommandInput> {
     if (!raw.args?.length) throw new Error('wait command requires an argument');
-
-    if (raw.modifiers.or) return this.parseRaceCondition(raw, evaluator, context);
-    if (raw.modifiers.for)
-      return this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context);
 
     const firstArg = raw.args[0] as any;
     if (firstArg.type === 'arrayLiteral' && firstArg.elements) {
@@ -144,31 +141,6 @@ export class WaitCommand implements DecoratedCommand {
     return { type: 'time', milliseconds: parseDurationStrict(value) };
   }
 
-  private async parseEventWait(
-    arg: ASTNode,
-    fromMod: ASTNode | undefined,
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<WaitEventInput> {
-    const value = await evaluator.evaluate(arg, context);
-    if (typeof value !== 'string') throw new Error('wait for: event name must be a string');
-
-    const match = value.match(/^(\w+)\(([^)]+)\)$/);
-    const eventName = match ? match[1] : value;
-    const destructure = match ? match[2].split(',').map(s => s.trim()) : undefined;
-
-    let target: EventTarget | undefined;
-    if (fromMod) {
-      const t = await evaluator.evaluate(fromMod, context);
-      if (t && typeof t === 'object' && 'addEventListener' in t) target = t as EventTarget;
-      else throw new Error('wait for from: target must be an EventTarget');
-    } else {
-      target = context.me ?? undefined;
-    }
-
-    return { type: 'event', eventName, target, destructure };
-  }
-
   /**
    * The `wait for …` alternative list.
    *
@@ -188,6 +160,7 @@ export class WaitCommand implements DecoratedCommand {
     if (targetArg) {
       const t = await evaluator.evaluate(targetArg, context);
       if (t && typeof t === 'object' && 'addEventListener' in t) target = t as EventTarget;
+      else throw new Error('wait for from: target must be an EventTarget');
     }
     if (!target) target = context.me ?? undefined;
 
@@ -201,8 +174,12 @@ export class WaitCommand implements DecoratedCommand {
       let durationNode: ASTNode | undefined;
       for (const p of obj.properties) {
         const k = p.key?.name || p.key?.value;
-        if (k === 'name' && p.value) name = p.value.value || '';
-        else if (k === 'args' && p.value?.elements)
+        if (k === 'name' && p.value) {
+          if (typeof p.value.value !== 'string') {
+            throw new Error('wait for: event name must be a string');
+          }
+          name = p.value.value;
+        } else if (k === 'args' && p.value?.elements)
           params = p.value.elements.map((e: any) => e.value || e.name || '');
         else if (k === 'duration' && p.value) durationNode = p.value as ASTNode;
       }
@@ -224,48 +201,6 @@ export class WaitCommand implements DecoratedCommand {
     // and `wait for 1s` (which upstream also accepts) becomes a plain timeout.
     if (conditions.length === 1) return conditions[0];
 
-    return { type: 'race', conditions };
-  }
-
-  private async parseRaceCondition(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<WaitRaceInput> {
-    const conditions: (WaitTimeInput | WaitEventInput)[] = [];
-
-    if (raw.modifiers.for) {
-      conditions.push(
-        await this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context)
-      );
-    } else if (raw.args[0]) {
-      conditions.push(await this.parseTimeWait(raw.args[0], evaluator, context));
-    }
-
-    const orValue = await evaluator.evaluate(raw.modifiers.or, context);
-    const orValues = Array.isArray(orValue) ? orValue : [orValue];
-
-    for (const v of orValues) {
-      try {
-        conditions.push({ type: 'time', milliseconds: parseDurationStrict(v) });
-      } catch {
-        if (typeof v === 'string') {
-          const match = v.match(/^(\w+)\(([^)]+)\)$/);
-          conditions.push(
-            match
-              ? {
-                  type: 'event',
-                  eventName: match[1],
-                  target: context.me ?? undefined,
-                  destructure: match[2].split(',').map(s => s.trim()),
-                }
-              : { type: 'event', eventName: v, target: context.me ?? undefined }
-          );
-        }
-      }
-    }
-
-    if (conditions.length < 2) throw new Error('wait: race requires at least 2 conditions');
     return { type: 'race', conditions };
   }
 

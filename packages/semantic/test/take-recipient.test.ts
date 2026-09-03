@@ -126,9 +126,9 @@ describe('the English reference no longer drops `for me`', () => {
     const node = parse('take .active from .tab-button for me', 'en') as CommandSemanticNode;
     const ast = buildAST(node).ast as unknown as Record<string, any>;
     expect(ast.modifiers?.from).toMatchObject({ value: '.tab-button' });
-    // A reference lands as the contextReference node the evaluator resolves —
+    // A reference lands as the identifier node the evaluator resolves —
     // `evaluator.evaluate(raw.modifiers.for)` is what TakeCommand calls.
-    expect(ast.modifiers?.for).toMatchObject({ type: 'contextReference', contextType: 'me' });
+    expect(ast.modifiers?.for).toMatchObject({ type: 'identifier', name: 'me' });
   });
 });
 

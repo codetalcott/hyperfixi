@@ -11,12 +11,18 @@
  * any shape with the same `evaluate` method.
  */
 
-import type { ASTNode } from '../types/base-types';
+import type { AnyNode } from '../ast/legacy';
 import type { ExecutionContext } from '../types/core';
 
 export interface ExpressionEvaluator {
   // Loose return type matches the deleted class's behavior; many call sites
   // assign directly to typed slots without explicit narrowing.
+  //
+  // The parameter is {@link AnyNode} (Arc 2 step 6): callers hand it both
+  // legacy `ASTNode`s from the front end and union members from the typed AST.
+  // Declared as a METHOD on purpose — method parameters are checked
+  // bivariantly, so every existing implementer written as
+  // `evaluate(node: ASTNode, …)` stays assignable.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  evaluate(node: ASTNode, context: ExecutionContext): Promise<any>;
+  evaluate(node: AnyNode, context: ExecutionContext): Promise<any>;
 }

@@ -26,11 +26,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
       locals: new Map(),
       globals: new Map(),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     it('should parse my.textContent (dot syntax)', async () => {
@@ -95,11 +90,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
       locals: new Map(),
       globals: new Map(),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     it('should parse its.value (dot syntax)', async () => {
@@ -140,11 +130,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
       locals: new Map(),
       globals: new Map(),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     it('should parse your.value (dot syntax)', async () => {
@@ -186,11 +171,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
       const result = await evaluateExpressionFromSource(
         'my?.value',
@@ -208,11 +188,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
       };
       const result = await evaluateExpressionFromSource(
         'my?.value',
@@ -236,11 +211,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
       locals: new Map(),
       globals: new Map(),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     it('should support method calls: my.getAttribute("data-value")', async () => {
@@ -266,11 +236,6 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
         locals: new Map(),
         globals: new Map(),
         parent: undefined,
-        halted: false,
-        returned: false,
-        broke: false,
-        continued: false,
-        async: false,
         ...overrides,
       }) as unknown as ExecutionContext;
 

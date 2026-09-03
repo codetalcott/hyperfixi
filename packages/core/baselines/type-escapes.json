@@ -1,31 +1,39 @@
 {
   "$comment": "Shrink-only ratchet for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Counts comment- and string-stripped occurrences of `: any`, `as any`, `as Record<string, unknown>` and `as unknown as` in packages/core/src non-test source, per top-level directory. Regenerate with `npm run check:type-escapes:update` in the SAME PR that lowers a count; a rise fails scripts/check-type-escapes.cjs.",
-  "generated": "2026-08-30",
-  "total": 1231,
+  "generated": "2026-09-03",
+  "total": 640,
   "directories": {
     ".": {
-      "total": 35,
-      "colonAny": 33,
+      "total": 2,
+      "colonAny": 2,
       "asAny": 0,
       "asRecordUnknown": 0,
       "asUnknownAs": 0,
-      "genericAny": 2
+      "genericAny": 0
     },
     "api": {
-      "total": 1,
+      "total": 0,
       "colonAny": 0,
       "asAny": 0,
       "asRecordUnknown": 0,
-      "asUnknownAs": 1,
+      "asUnknownAs": 0,
+      "genericAny": 0
+    },
+    "ast": {
+      "total": 6,
+      "colonAny": 0,
+      "asAny": 0,
+      "asRecordUnknown": 0,
+      "asUnknownAs": 6,
       "genericAny": 0
     },
     "ast-utils": {
-      "total": 157,
-      "colonAny": 44,
-      "asAny": 103,
-      "asRecordUnknown": 1,
+      "total": 2,
+      "colonAny": 0,
+      "asAny": 0,
+      "asRecordUnknown": 2,
       "asUnknownAs": 0,
-      "genericAny": 9
+      "genericAny": 0
     },
     "behaviors": {
       "total": 0,
@@ -44,20 +52,20 @@
       "genericAny": 4
     },
     "commands": {
-      "total": 235,
-      "colonAny": 31,
-      "asAny": 117,
-      "asRecordUnknown": 63,
-      "asUnknownAs": 17,
-      "genericAny": 7
+      "total": 165,
+      "colonAny": 23,
+      "asAny": 87,
+      "asRecordUnknown": 36,
+      "asUnknownAs": 16,
+      "genericAny": 3
     },
     "compatibility": {
-      "total": 161,
-      "colonAny": 61,
-      "asAny": 51,
+      "total": 144,
+      "colonAny": 54,
+      "asAny": 46,
       "asRecordUnknown": 0,
-      "asUnknownAs": 7,
-      "genericAny": 42
+      "asUnknownAs": 6,
+      "genericAny": 38
     },
     "core": {
       "total": 40,
@@ -90,14 +98,6 @@
       "asRecordUnknown": 18,
       "asUnknownAs": 8,
       "genericAny": 0
-    },
-    "features": {
-      "total": 238,
-      "colonAny": 170,
-      "asAny": 42,
-      "asRecordUnknown": 0,
-      "asUnknownAs": 1,
-      "genericAny": 25
     },
     "htmx": {
       "total": 7,
@@ -140,12 +140,12 @@
       "genericAny": 0
     },
     "parser": {
-      "total": 163,
-      "colonAny": 10,
-      "asAny": 86,
-      "asRecordUnknown": 12,
-      "asUnknownAs": 41,
-      "genericAny": 14
+      "total": 87,
+      "colonAny": 9,
+      "asAny": 36,
+      "asRecordUnknown": 11,
+      "asUnknownAs": 16,
+      "genericAny": 15
     },
     "performance": {
       "total": 18,
@@ -172,17 +172,17 @@
       "genericAny": 0
     },
     "runtime": {
-      "total": 29,
+      "total": 23,
       "colonAny": 11,
       "asAny": 2,
-      "asRecordUnknown": 7,
-      "asUnknownAs": 6,
+      "asRecordUnknown": 6,
+      "asUnknownAs": 1,
       "genericAny": 3
     },
     "types": {
-      "total": 26,
+      "total": 25,
       "colonAny": 9,
-      "asAny": 7,
+      "asAny": 6,
       "asRecordUnknown": 2,
       "asUnknownAs": 0,
       "genericAny": 8

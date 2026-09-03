@@ -389,10 +389,16 @@ export const commands: Record<string, CommandRef> = {
     name: 'scroll',
     description:
       'Scroll an element into view (upstream _hyperscript 0.9.90 replacement for `go to top of`)',
-    syntax: 'scroll to [top|bottom|middle|center|nearest] [of] target [smoothly|instantly]',
+    syntax:
+      'scroll to [top|middle|bottom|nearest] [left|center|right] [of] target [smoothly|instantly] | scroll [target] [up|down|left|right] by n [px]',
     category: 'navigation',
     availability: 'full',
-    examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
+    examples: [
+      'scroll to #top',
+      'scroll to bottom of #chat',
+      'scroll to me smoothly',
+      'scroll down by 200',
+    ],
   },
 
   // Control Flow Commands
@@ -563,14 +569,6 @@ export const commands: Record<string, CommandRef> = {
     availability: 'full',
     examples: ['js(console.log("hi"))', 'js(return Date.now())'],
   },
-  async: {
-    name: 'async',
-    description: 'Execute commands asynchronously',
-    syntax: 'async do ... end',
-    category: 'advanced',
-    availability: 'hybrid',
-    examples: ['async do fetch /api/data then put result into #output end'],
-  },
 
   // Behavior Commands
   install: {
@@ -654,28 +652,6 @@ export interface BundleRef {
  */
 export const bundles: BundleRef[] = [
   {
-    name: 'lite',
-    file: 'lokascript-lite.js',
-    size: '2.0 KB',
-    commandCount: 8,
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    useCase: 'Minimal interactivity (toggle, show/hide)',
-    importPath: '@hyperfixi/core/browser/lite',
-  },
-  {
-    name: 'lite-plus',
-    file: 'lokascript-lite-plus.js',
-    size: '2.6 KB',
-    commandCount: 14,
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    useCase: 'Basic interactivity with wait, log, increment',
-    importPath: '@hyperfixi/core/browser/lite-plus',
-  },
-  {
     name: 'hybrid-complete',
     file: 'lokascript-hybrid-complete.js',
     size: '7.3 KB',
@@ -696,28 +672,6 @@ export const bundles: BundleRef[] = [
     hasPositional: true,
     useCase: 'htmx/fixi compatibility with hx-* attributes',
     importPath: '@hyperfixi/core/browser/hybrid-hx',
-  },
-  {
-    name: 'minimal',
-    file: 'lokascript-browser-minimal.js',
-    size: '58 KB',
-    commandCount: 30,
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    useCase: 'Full parser, reduced commands',
-    importPath: '@hyperfixi/core/browser/minimal',
-  },
-  {
-    name: 'standard',
-    file: 'lokascript-browser-standard.js',
-    size: '63 KB',
-    commandCount: 35,
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    useCase: 'Full parser, common commands',
-    importPath: '@hyperfixi/core/browser/standard',
   },
   {
     name: 'browser',

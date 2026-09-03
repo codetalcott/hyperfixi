@@ -32,6 +32,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { commandMeta } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for InstallCommand
@@ -109,7 +110,7 @@ export class InstallCommand {
    * @returns Typed input object for execute()
    */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'install'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<InstallCommandInput> {
@@ -138,8 +139,9 @@ export class InstallCommand {
 
     // Second arg (if present) is parameters object
     let parameters: Record<string, unknown> | undefined;
-    if (raw.args.length >= 2) {
-      const params = await evaluator.evaluate(raw.args[1], context);
+    const paramsNode = raw.args[1];
+    if (paramsNode) {
+      const params = await evaluator.evaluate(paramsNode, context);
       if (params && typeof params === 'object' && !Array.isArray(params)) {
         parameters = params as Record<string, unknown>;
 

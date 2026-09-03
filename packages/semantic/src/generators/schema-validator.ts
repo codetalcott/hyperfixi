@@ -70,7 +70,6 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'else',
   'halt',
   'continue',
-  'async',
   'init',
   'settle',
   'focus',

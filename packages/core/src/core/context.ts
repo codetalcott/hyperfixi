@@ -4,7 +4,7 @@
  */
 
 import type { ExecutionContext } from '../types/core';
-import { setGlobal, notifyLocalRead, notifyLocalWrite } from '../parser/extensions';
+import { setGlobal, notifyLocalRead, notifyLocalWrite } from './scope-hooks';
 
 /**
  * Shared global variables Map across all execution contexts
@@ -87,13 +87,6 @@ export function createContext(
     result: null,
     locals: new Map<string, any>(),
     globals: globals || sharedGlobals, // Use shared globals by default
-    flags: {
-      halted: false,
-      breaking: false,
-      continuing: false,
-      returning: false,
-      async: false,
-    },
   };
 }
 
@@ -121,13 +114,6 @@ export function createChildContext(
     locals: new Map<string, any>(),
     globals: parent.globals, // Shared global scope
     parent,
-    flags: {
-      halted: false,
-      breaking: false,
-      continuing: false,
-      returning: false,
-      async: false,
-    },
   };
 }
 
@@ -147,13 +133,8 @@ export function ensureContext(userContext?: Partial<ExecutionContext> | any): Ex
     return createContext();
   }
 
-  // If already has locals/globals Maps AND flags, use it directly (already valid)
-  // Must check flags to ensure context is truly complete
-  if (
-    userContext.locals instanceof Map &&
-    userContext.globals instanceof Map &&
-    userContext.flags
-  ) {
+  // If already has locals/globals Maps, use it directly (already valid).
+  if (userContext.locals instanceof Map && userContext.globals instanceof Map) {
     return userContext as ExecutionContext;
   }
 
@@ -321,7 +302,6 @@ export function snapshotContext(context: ExecutionContext): Record<string, any> 
     result: context.result,
     locals: Object.fromEntries(context.locals),
     globals: Object.fromEntries(context.globals),
-    flags: { ...context.flags },
   };
 
   return snapshot;
@@ -354,10 +334,6 @@ export function restoreContext(context: ExecutionContext, snapshot: Record<strin
       setGlobal(context, key, value);
     });
   }
-
-  if (snapshot.flags && context.flags) {
-    Object.assign(context.flags, snapshot.flags);
-  }
 }
 
 /**
@@ -377,11 +353,6 @@ export function cloneContext(context: ExecutionContext): ExecutionContext {
 
   // Share globals reference (globals should be shared)
   Object.assign(cloned, { globals: context.globals, parent: context.parent });
-
-  // Copy flags if both exist
-  if (cloned.flags && context.flags) {
-    Object.assign(cloned.flags, context.flags);
-  }
 
   return cloned;
 }

@@ -766,39 +766,6 @@ describe('Element Resolution Helpers', () => {
       });
     });
 
-    describe('options.filterPrepositions', () => {
-      it('should filter out keyword prepositions when enabled', async () => {
-        const context = createMockContext();
-        const evaluator = createMockEvaluator('#target1');
-
-        const args = [
-          { type: 'identifier', name: 'on' },
-          { type: 'identifier', name: 'from' },
-          { value: '#target1' },
-        ];
-
-        const result = await resolveTargetsFromArgs(args, evaluator, context, 'test', {
-          filterPrepositions: true,
-        });
-
-        expect(evaluator.evaluate).toHaveBeenCalledTimes(1); // Only non-preposition arg
-        expect(result).toHaveLength(1);
-      });
-
-      it('should not filter when filterPrepositions is false', async () => {
-        const context = createMockContext();
-        const evaluator = createMockEvaluator('#target1');
-
-        const args = [{ type: 'identifier', name: 'on' }, { value: '#target1' }];
-
-        await resolveTargetsFromArgs(args, evaluator, context, 'test', {
-          filterPrepositions: false,
-        });
-
-        expect(evaluator.evaluate).toHaveBeenCalledTimes(2); // Both args evaluated
-      });
-    });
-
     describe('options.fallbackModifierKey', () => {
       it('should use fallback modifier when args are empty', async () => {
         const context = createMockContext();

@@ -29,15 +29,20 @@
  * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` → `lossy`.
  *
  * The allowlist did NOT collapse when the gate was strengthened, as this
- * docblock once predicted — it GREW, from 19 rows to 30, and is now at 29.
+ * docblock once predicted — it GREW, from 19 rows to 30, and is now at 27.
  * That is what strengthening a gate blind to an entire band does first: eleven
  * examples that had read as fine for years were losing content in silence.
  * Eight are docs defects (upstream rejects them too) and three were parser gaps
  * (upstream accepts); every entry records which, with the verdict measured on
- * the real hyperscript.org engine rather than guessed. The first of the three
- * to be fixed — `transition left to 100px over 500ms`, which was animating to a
- * UNITLESS length — dropped straight off the list, which is the ratchet doing
- * what it is for.
+ * the real hyperscript.org engine rather than guessed. **All three of the
+ * parser gaps have since dropped off the list** — `transition left to 100px
+ * over 500ms`, which was animating to a UNITLESS length; `scroll to me
+ * smoothly`, whose dropped adverb turned out to be the MILD half of a defect
+ * that also killed every `scroll to <pos> of <target>` form outright; and
+ * `make a URL from "/path/", "…"`, which was dropping constructor arguments in
+ * the parser AND unable to use a resolved constructor in the runtime. What
+ * remains on the list is docs defects and legal-only-inside-a-feature rows.
+ * That is the ratchet doing what it is for.
  *
  * ## The allowlist ratchets both ways
  *
@@ -165,12 +170,6 @@ const ALLOWED: readonly Allowed[] = [
     reason: 'paren named-args unimplemented; tail silently dropped',
   },
   {
-    command: 'settle',
-    source: 'settle for 3000',
-    status: 'lossy',
-    reason: '`settle [for <timeout>]` is declared in syntax but unimplemented; tail dropped',
-  },
-  {
     command: 'take',
     source: 'take @data-value from <.source/> and put it on <#target/>',
     status: 'no-parse',
@@ -229,38 +228,23 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'blur',
     source: 'blur on <input/>',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+    status: 'no-parse',
+    reason:
+      'docs defect: upstream rejects it too (\"Expected event name\"). Since Arc 3 step 4 the declared grammar stops a command\'s arguments at `on`, so this fails to parse instead of swallowing `<input/>` (and, at the end of a handler body, the NEXT handler) as an argument',
   },
   {
     command: 'focus',
     source: 'focus on <input/>',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+    status: 'no-parse',
+    reason:
+      'docs defect: upstream rejects it too (\"Expected event name\"). Since Arc 3 step 4 the declared grammar stops a command\'s arguments at `on`, so this fails to parse instead of swallowing `<input/>` (and, at the end of a handler body, the NEXT handler) as an argument',
   },
 
-  // Space-separated argument lists. Upstream rejects all five ("Unexpected
-  // Token : <second arg>") — its `log` wants commas and its `async` takes one
-  // command — so these are docs defects, and the parser quietly keeping only
-  // the first argument is how they read as fine for years.
-  {
-    command: 'async',
-    source: 'async command1 command2',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
-  {
-    command: 'async',
-    source: 'async fetchData processData',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
-  {
-    command: 'async',
-    source: 'async animateIn showContent',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
+  // Space-separated argument lists. Upstream rejects them ("Unexpected
+  // Token : <second arg>") — its `log` wants commas — so these are docs
+  // defects, and the parser quietly keeping only the first argument is how
+  // they read as fine for years. (The three `async` rows that sat here left
+  // with the command in Arc 6b.)
   {
     command: 'log',
     source: 'log x y z',
@@ -272,28 +256,6 @@ const ALLOWED: readonly Allowed[] = [
     source: 'log "Result:" result',
     status: 'lossy',
     reason: 'docs defect: upstream rejects; needs a comma, `result` is discarded',
-  },
-  {
-    command: 'pick',
-    source: 'pick "red", "green", "blue"',
-    status: 'lossy',
-    reason: "docs defect: upstream rejects; none of pick's five forms is a bare list",
-  },
-
-  // Upstream ACCEPTS these three — hyperfixi parser gaps, and the two `over`
-  // /adverb tails are content loss on syntax the commands themselves document.
-  {
-    command: 'scroll',
-    source: 'scroll to me smoothly',
-    status: 'lossy',
-    reason: 'PARSER GAP: upstream accepts; wrapped, `smoothly` is discarded',
-  },
-  {
-    command: 'make',
-    source: 'make a URL from "/path/", "https://origin.example.com"',
-    status: 'lossy',
-    reason:
-      'PARSER GAP: upstream accepts both shapes; wrapped in a handler this does not parse at all',
   },
 ] as const;
 

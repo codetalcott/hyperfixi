@@ -126,7 +126,6 @@ export { createStartViewTransitionCommand as start } from './animation/start-vie
 
 // Advanced Commands (factories)
 export { createJsCommand as js } from './advanced/js';
-export { createAsyncCommand as async_ } from './advanced/async';
 
 // Behavior Commands (factories)
 export { createInstallCommand as install } from './behaviors/install';
@@ -238,7 +237,6 @@ export { TakeCommand, createTakeCommand } from './animation/take';
 
 // Advanced Commands
 export { JsCommand, createJsCommand } from './advanced/js';
-export { AsyncCommand, createAsyncCommand } from './advanced/async';
 
 // Control Flow
 export { UnlessCommand, createUnlessCommand } from './control-flow/unless';
@@ -318,7 +316,6 @@ export type { TransitionCommandInput } from './animation/transition';
 export type { MeasureCommandInput } from './animation/measure';
 export type { SettleCommandInput } from './animation/settle';
 export type { JsCommandInput } from './advanced/js';
-export type { AsyncCommandInput } from './advanced/async';
 export type { UnlessCommandInput } from './control-flow/unless';
 export type { DefaultCommandInput } from './data/default';
 export type { PseudoCommandInput } from './execution/pseudo-command';

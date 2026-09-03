@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RemoveCommand } from '../remove';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types.ts';
 
 // ========== Test Utilities ==========
@@ -224,11 +224,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: 'active' },
-            { type: 'literal', value: targetElement },
-          ],
-          modifiers: {},
+          args: [{ type: 'literal', value: 'active' }],
+          modifiers: {
+            from: { type: 'literal', value: targetElement } as ASTNode as ExpressionNode,
+          },
         },
         evaluator,
         context
@@ -257,11 +256,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: 'active' },
-            { type: 'literal', value: '#test-target' },
-          ],
-          modifiers: {},
+          args: [{ type: 'literal', value: 'active' }],
+          modifiers: {
+            from: { type: 'literal', value: '#test-target' } as ASTNode as ExpressionNode,
+          },
         },
         evaluator,
         context
@@ -296,11 +294,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: 'active' },
-            { type: 'literal', value: '.test-class' },
-          ],
-          modifiers: {},
+          args: [{ type: 'literal', value: 'active' }],
+          modifiers: {
+            from: { type: 'literal', value: '.test-class' } as ASTNode as ExpressionNode,
+          },
         },
         evaluator,
         context
@@ -331,11 +328,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [
-              { type: 'literal', value: 'active' },
-              { type: 'literal', value: ':::invalid:::' },
-            ],
-            modifiers: {},
+            args: [{ type: 'literal', value: 'active' }],
+            modifiers: {
+              from: { type: 'literal', value: ':::invalid:::' } as ASTNode as ExpressionNode,
+            },
           },
           evaluator,
           context
@@ -359,11 +355,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [
-              { type: 'literal', value: 'active' },
-              { type: 'literal', value: '.nonexistent-element' },
-            ],
-            modifiers: {},
+            args: [{ type: 'literal', value: 'active' }],
+            modifiers: {
+              from: { type: 'literal', value: '.nonexistent-element' } as ASTNode as ExpressionNode,
+            },
           },
           evaluator,
           context
@@ -637,11 +632,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'literal', value: '.active' },
-            { type: 'literal', value: '#test-button' },
-          ],
-          modifiers: {},
+          args: [{ type: 'literal', value: '.active' }],
+          modifiers: {
+            from: { type: 'literal', value: '#test-button' } as ASTNode as ExpressionNode,
+          },
         },
         evaluator,
         context

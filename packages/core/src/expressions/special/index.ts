@@ -19,7 +19,7 @@ import type { ExpressionCategory } from '../../types/expression-types';
 import { isString, isNumber, isBoolean } from '../type-helpers';
 import { toNumber } from '../shared';
 import { BaseExpressionImpl } from '../base-expression';
-import { notifyLocalRead } from '../../parser/extensions';
+import { notifyLocalRead } from '../../core/scope-hooks';
 
 // ============================================================================
 // Input Schemas
@@ -349,79 +349,6 @@ export class BooleanLiteralExpression extends BaseExpressionImpl<BooleanLiteralI
 }
 
 // ============================================================================
-// Addition Expression
-// ============================================================================
-
-export class AdditionExpression extends BaseExpressionImpl<BinaryOperationInput, number> {
-  public readonly name = 'addition';
-  public readonly category: ExpressionCategory = 'Special';
-  public readonly syntax = 'left + right';
-  public readonly description = 'Addition of two numeric values';
-  public readonly inputSchema = BinaryOperationInputSchema;
-  public readonly outputType: EvaluationType = 'Number';
-
-  public readonly metadata: ExpressionMetadata = {
-    category: 'Special',
-    complexity: 'simple',
-  };
-
-  async evaluate(
-    context: TypedExpressionContext,
-    input: BinaryOperationInput
-  ): Promise<EvaluationResult<number>> {
-    const startTime = Date.now();
-
-    try {
-      const validation = this.validate(input);
-      if (!validation.isValid) {
-        this.trackSimple(context, startTime, false);
-        return this.failure<number>(
-          'ValidationError',
-          'validation-error',
-          validation.errors.map(e => e.message).join(', '),
-          'VALIDATION_FAILED',
-          validation.suggestions
-        );
-      }
-
-      // Use shared toNumber primitive for consistent number conversion
-      const leftNum = toNumber(input.left, 'left operand');
-      const rightNum = toNumber(input.right, 'right operand');
-      const result = leftNum + rightNum;
-
-      this.trackSimple(context, startTime, true, result);
-      return this.success(result, 'number');
-    } catch (error) {
-      this.trackSimple(context, startTime, false);
-      return this.failure<number>(
-        'AdditionError',
-        'runtime-error',
-        `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
-        'ADDITION_FAILED'
-      );
-    }
-  }
-
-  validate(input: unknown): ValidationResult {
-    try {
-      const parsed = this.inputSchema.safeParse(input);
-      if (!parsed.success) {
-        return this.validationFailure(
-          'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid addition input',
-          ['Provide left and right operands']
-        );
-      }
-      return this.validationSuccess();
-    } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', [
-        'Check input structure and types',
-      ]);
-    }
-  }
-}
-
-// ============================================================================
 // Enhanced String Concatenation Expression
 // ============================================================================
 
@@ -509,79 +436,6 @@ export class StringConcatenationExpression extends BaseExpressionImpl<
 }
 
 // ============================================================================
-// Multiplication Expression
-// ============================================================================
-
-export class MultiplicationExpression extends BaseExpressionImpl<BinaryOperationInput, number> {
-  public readonly name = 'multiplication';
-  public readonly category: ExpressionCategory = 'Special';
-  public readonly syntax = 'left * right';
-  public readonly description = 'Multiplication of two numeric values';
-  public readonly inputSchema = BinaryOperationInputSchema;
-  public readonly outputType: EvaluationType = 'Number';
-
-  public readonly metadata: ExpressionMetadata = {
-    category: 'Special',
-    complexity: 'simple',
-  };
-
-  async evaluate(
-    context: TypedExpressionContext,
-    input: BinaryOperationInput
-  ): Promise<EvaluationResult<number>> {
-    const startTime = Date.now();
-
-    try {
-      const validation = this.validate(input);
-      if (!validation.isValid) {
-        this.trackSimple(context, startTime, false);
-        return this.failure<number>(
-          'ValidationError',
-          'validation-error',
-          validation.errors.map(e => e.message).join(', '),
-          'VALIDATION_FAILED',
-          validation.suggestions
-        );
-      }
-
-      // Use shared toNumber primitive for consistent number conversion
-      const leftNum = toNumber(input.left, 'left operand');
-      const rightNum = toNumber(input.right, 'right operand');
-      const result = leftNum * rightNum;
-
-      this.trackSimple(context, startTime, true, result);
-      return this.success(result, 'number');
-    } catch (error) {
-      this.trackSimple(context, startTime, false);
-      return this.failure<number>(
-        'MultiplicationError',
-        'runtime-error',
-        `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
-        'MULTIPLICATION_FAILED'
-      );
-    }
-  }
-
-  validate(input: unknown): ValidationResult {
-    try {
-      const parsed = this.inputSchema.safeParse(input);
-      if (!parsed.success) {
-        return this.validationFailure(
-          'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid multiplication input',
-          ['Provide left and right operands']
-        );
-      }
-      return this.validationSuccess();
-    } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', [
-        'Check input structure and types',
-      ]);
-    }
-  }
-}
-
-// ============================================================================
 // Factory Functions
 // ============================================================================
 
@@ -597,16 +451,8 @@ export function createBooleanLiteralExpression(): BooleanLiteralExpression {
   return new BooleanLiteralExpression();
 }
 
-export function createAdditionExpression(): AdditionExpression {
-  return new AdditionExpression();
-}
-
 export function createStringConcatenationExpression(): StringConcatenationExpression {
   return new StringConcatenationExpression();
-}
-
-export function createMultiplicationExpression(): MultiplicationExpression {
-  return new MultiplicationExpression();
 }
 
 // ============================================================================
@@ -617,9 +463,7 @@ export const specialExpressions = {
   stringLiteral: createStringLiteralExpression(),
   numberLiteral: createNumberLiteralExpression(),
   booleanLiteral: createBooleanLiteralExpression(),
-  addition: createAdditionExpression(),
   stringConcatenation: createStringConcatenationExpression(),
-  multiplication: createMultiplicationExpression(),
 } as const;
 
 export type SpecialExpressionName = keyof typeof specialExpressions;

@@ -125,7 +125,7 @@ describe('Bundle Generator Validation', () => {
     });
 
     it('should list full runtime only commands', () => {
-      expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('async');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('make');
       expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('swap');
       expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('tell');
       expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('install');
@@ -151,7 +151,7 @@ describe('Bundle Generator Validation', () => {
 
     it('isAvailableCommand should return false for invalid commands', () => {
       expect(isAvailableCommand('unknown')).toBe(false);
-      expect(isAvailableCommand('async')).toBe(false);
+      expect(isAvailableCommand('make')).toBe(false);
     });
 
     it('isAvailableBlock should return true for valid blocks', () => {
@@ -164,7 +164,7 @@ describe('Bundle Generator Validation', () => {
     });
 
     it('requiresFullRuntime should identify full runtime commands', () => {
-      expect(requiresFullRuntime('async')).toBe(true);
+      expect(requiresFullRuntime('make')).toBe(true);
       expect(requiresFullRuntime('swap')).toBe(true);
       expect(requiresFullRuntime('toggle')).toBe(false);
     });

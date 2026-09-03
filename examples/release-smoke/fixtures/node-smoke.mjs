@@ -66,11 +66,23 @@ await check('@lokascript/semantic — parser surface', async () => {
   return 'KNOWN_PROFILES + parseSemantic';
 });
 
-await check('@lokascript/i18n — grammar surface', async () => {
+await check('@lokascript/i18n — vocabulary surface', async () => {
+  // 3.0.0 deleted the grammar transformer (#1001); what i18n ships is
+  // per-language vocabulary and grammar PROFILES. Translation lives in
+  // @lokascript/semantic — asserted in the next check, so a release that
+  // dropped it would still fail here.
   const m = await import('@lokascript/i18n');
-  assert(typeof m.GrammarTransformer === 'function', 'GrammarTransformer missing');
+  assert(typeof m.getProfile === 'function', 'getProfile missing');
+  assert(typeof m.getSupportedLocales === 'function', 'getSupportedLocales missing');
+  assert(m.LocaleManager && typeof m.LocaleManager.register === 'function', 'LocaleManager missing');
+  assert(m.GrammarTransformer === undefined, 'GrammarTransformer came back — it was deleted in 3.0.0');
+  return 'getProfile + getSupportedLocales + LocaleManager';
+});
+
+await check('@lokascript/semantic — translate surface', async () => {
+  const m = await import('@lokascript/semantic');
   assert(typeof m.translate === 'function', 'translate missing');
-  return 'GrammarTransformer + translate';
+  return 'translate';
 });
 
 process.exit(failed ? 1 : 0);

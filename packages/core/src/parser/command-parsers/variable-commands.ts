@@ -19,6 +19,7 @@ import {
   createPropertyOfExpression,
 } from '../helpers/ast-helpers';
 import { parseOneArgument } from '../helpers/parsing-helpers';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse set command
@@ -266,6 +267,10 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
     fallbackTokens = fallback.tokens;
   }
 
+  if (targetExpression) {
+    targetExpression = retypeStylePropertyTarget(targetExpression);
+  }
+
   // Expect 'to' keyword
   if (!ctx.check(KEYWORDS.TO)) {
     const found = ctx.isAtEnd() ? 'end of input' : ctx.peek().value;
@@ -296,18 +301,84 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
   } else if (fallbackTokens.length > 0) {
     finalArgs.push(...fallbackTokens);
   }
-  finalArgs.push(ctx.createIdentifier(KEYWORDS.TO));
+  // The value is the `to` SLOT (Arc 3 step 3): `set x to 1` is
+  // `args: [x]`, `modifiers.to: 1` — the shape the semantic path always
+  // produced and the one SetCommand.parseInput already read first. The parser
+  // had just consumed `to` and was pushing it back into args as an identifier
+  // for the command to find again by scanning.
+  const builder = CommandNodeBuilder.fromIdentifier<'set'>(identifierNode).withArgs(...finalArgs);
   if (value) {
-    finalArgs.push(value);
+    builder.withModifier('to', value as ExpressionNode);
   }
-
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
   if (scopeTarget) {
     // SetCommand reads its element scope from modifiers.on (not args) —
     // the same shape the semantic parser's setMapper emits.
     builder.withModifier('on', scopeTarget as ExpressionNode);
   }
   return builder.endingAt(ctx.getPosition()).build();
+}
+
+/**
+ * `*<css-property>` as a set destination is a PROPERTY NAME, not a CSS
+ * selector — but the tokenizer classifies `*opacity` as a selector token (for
+ * `measure`'s sake), so the expression parser hands set a `selector` node
+ * wherever the star lands. Upstream accepts every spelling and writes inline
+ * style; measured on 0.9.93 (2026-09-03):
+ *
+ *   set *opacity to 0.5              → me.style.opacity
+ *   set *opacity of me to 0.5        → me
+ *   set the *opacity of me to 0.5    → me
+ *   set *opacity of #target to 0.5   → #target   (also `the … of`, `#target's`)
+ *   set my *opacity to 0.5           → me
+ *
+ * Only the last worked here: `my *opacity` is a memberExpression whose
+ * property is an IDENTIFIER named `*opacity`, and every runtime rung that
+ * writes a property already splits a leading `*` into a style write
+ * (`helpers/write-target.ts`, `helpers/property-target.ts`). The other four
+ * carried the star as a `selector` node: the bare one was evaluated as a CSS
+ * query and silently no-op'd, `*x of T` was an `of` binaryExpression that
+ * evaluated to nothing, and `the *x of T` threw from the evaluator because a
+ * propertyOfExpression's property "must be an identifier". This re-types the
+ * star selector into that identifier, in the three positions it can occupy,
+ * and folds the bare `of` form into the same propertyOfExpression the `the`
+ * form already builds — so one runtime path serves all five spellings.
+ */
+function retypeStylePropertyTarget(target: ASTNode): ASTNode {
+  const asStyleIdentifier = (node: ASTNode | undefined): ASTNode | null => {
+    if (!node || node.type !== 'selector') return null;
+    const value = (node as { value?: unknown }).value;
+    if (typeof value !== 'string' || !value.startsWith('*')) return null;
+    return createIdentifier(value, {
+      start: node.start ?? 0,
+      end: node.end ?? 0,
+      line: node.line ?? 1,
+      column: node.column ?? 1,
+    });
+  };
+  const pos = {
+    start: target.start ?? 0,
+    end: target.end ?? 0,
+    line: target.line ?? 1,
+    column: target.column ?? 1,
+  };
+
+  // `set *opacity to …` — the star alone; the style write lands on `me`.
+  const bare = asStyleIdentifier(target);
+  if (bare) return bare;
+
+  // `set *opacity of <target> to …` — parsed as an `of` binaryExpression.
+  if (target.type === 'binaryExpression' && target.operator === KEYWORDS.OF) {
+    const property = asStyleIdentifier(target.left as ASTNode | undefined);
+    if (property) return createPropertyOfExpression(property, target.right as ASTNode, pos);
+  }
+
+  // `set the *opacity of <target> to …` — already a propertyOfExpression.
+  if (target.type === 'propertyOfExpression') {
+    const property = asStyleIdentifier(target.property as ASTNode | undefined);
+    if (property) return createPropertyOfExpression(property, target.target as ASTNode, pos);
+  }
+
+  return target;
 }
 
 /**
@@ -422,17 +493,20 @@ export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken:
   // which return strings) instead of concatenating them.
   (binaryExpr as { coerceNumeric?: boolean }).coerceNumeric = true;
 
-  // Create the 'to' keyword identifier
-  const toIdentifier = createIdentifier(KEYWORDS.TO, pos);
-
-  // Build args for set command: [target, 'to', binaryExpression]
-  const args: ASTNode[] = [targetWithScope, toIdentifier, binaryExpr];
-
-  // Return a `set` command node instead of increment/decrement
-  return CommandNodeBuilder.from(commandToken)
-    .withName('set')
-    .withArgs(...args)
-    .withOriginalCommand(commandName)
-    .endingAt({ end: ctx.previous().end })
-    .build();
+  // Return a `set` command node instead of increment/decrement — in the
+  // slot shape `set` itself now emits (Arc 3 step 3): the target positional,
+  // the synthesized `target ± amount` as `modifiers.to`. Until now this was
+  // the one in-repo producer of the flat `[target, to, value]` shape, and
+  // SetCommand.parseInput's scan for a `to` identifier was covering for it.
+  return (
+    CommandNodeBuilder.from<'set'>(commandToken)
+      .withName('set')
+      .withArgs(targetWithScope)
+      // `createBinaryExpression` returns the legacy-typed node; ExpressionNode is
+      // its subtype, so this is an ordinary downcast, not a hatch.
+      .withModifier('to', binaryExpr as ASTNode as ExpressionNode)
+      .withOriginalCommand(commandName)
+      .endingAt({ end: ctx.previous().end })
+      .build()
+  );
 }

@@ -1,18 +1,13 @@
 {
   "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
-  "generated": "2026-08-30",
+  "generated": "2026-09-03",
   "totals": {
-    "static-value": 7,
-    "dynamic": 3,
+    "static-value": 5,
+    "dynamic": 1,
     "static-type": 2,
     "typeof-import": 2
   },
   "files": {
-    "api/hyperscript-api.ts": {
-      "static-value": 1,
-      "dynamic": 2,
-      "reason": "THE one that matters. `getSemanticAnalyzer()` builds the analyzer for every compile(), and `config.semantic` defaults true — so every English compile() runs the front-end first for the 32 commands not on parseCommandCore's skip list. Arc 1 step 2 replaces this with `hyperscript.use(frontEnd)`; the two dynamic imports (compileMultilingual, fromLSECode) are already deferred and go with it."
-    },
     "compatibility/browser-bundle-classic-i18n.ts": {
       "static-value": 1,
       "reason": "LEGITIMATE and terminal. This IS the classic-i18n bundle; importing @lokascript/i18n/browser is its entire reason to exist. Target-state row."
@@ -28,10 +23,6 @@
     "compatibility/browser-bundle.ts": {
       "static-value": 1,
       "reason": "LEGITIMATE. The full browser bundle ships the multilingual API on purpose (hyperfixi.semantic.*). Target-state row."
-    },
-    "compatibility/eval-hyperscript.ts": {
-      "static-value": 1,
-      "reason": "The one compatibility row that is NOT target-state: evalHyperScript duplicates the API's semantic wiring rather than going through it. Falls out of Arc 1 step 2 — once the API takes a registered front-end, this should ask the API rather than build its own analyzer."
     },
     "multilingual/bridge.ts": {
       "static-type": 1,

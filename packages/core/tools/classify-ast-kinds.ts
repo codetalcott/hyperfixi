@@ -118,9 +118,18 @@ function scan(): Map<string, Sites> {
   // Scoping to the known kind universe below is what makes the loose pattern
   // safe: `=== 'literal'` in some unrelated string check would be noise
   // otherwise.
+  //
+  // `!==` counts as a read too, and leaving it out was a real defect: measured
+  // 2026-09-01 (Arc 2 step 3), `cssProperty` reported DEAD while
+  // `selector-type-detection.ts` reads it — in a NEGATED chain
+  // (`nodeType !== 'selector' && nodeType !== 'cssProperty'`), which is the
+  // ordinary way to write an early-return guard. A kind whose only reader
+  // rejects rather than accepts is still a kind something reads, and calling it
+  // dead invites deleting a live emitter. `cssProperty` is the only kind in the
+  // universe this changed; the pattern is `[!=]==` so both spellings count.
   const EMIT = /\btype:\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
   const READ_CASE = /\bcase\s+['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
-  const READ_CMP = /===\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
+  const READ_CMP = /[!=]==\s*['"]([A-Za-z][A-Za-z0-9_]*)['"]/g;
 
   for (const file of sourceFiles(SRC)) {
     const text = stripComments(readFileSync(file, 'utf8'));
@@ -157,6 +166,22 @@ function classify(s: Sites): Klass {
  * an unscoped scan classified `WHITESPACE`, `SELECT` and `top` as AST kinds.
  */
 const KIND_UNIVERSE = new Set([
+  // The sixth missed kind, found when semantic-integration's constructions
+  // were typed against the union (its only emitter had cast the undeclared
+  // kind into silence): read by isCSSPropertySelectorNode.
+  'cssProperty',
+  // Five kinds this set MISSED until 2026-09-01, found while sizing Arc 2
+  // step 2's union: each is emitted by `pratt-parser.ts` or `parser.ts` and
+  // read by `evaluateAST`'s switch, so they were live all along and simply
+  // outside the scan. The universe was seeded from `ast-vocabulary.test.ts`
+  // plus the plan's hypotheses, and neither source listed them — which is why
+  // a hand-maintained universe needs its own cross-check (`ast/nodes.ts`'s
+  // conformance test now provides one).
+  'blockLiteral',
+  'collectionExpression',
+  'conditionalExpression',
+  'stringPostfix',
+  'typeCheckExpression',
   // full parser (ast-vocabulary.test.ts)
   'CommandSequence',
   'Program',
@@ -264,6 +289,22 @@ function main(): void {
     if (!kinds.has(k)) kinds.set(k, { emit: new Set(), read: new Set() });
   }
   const rows = [...kinds.entries()].map(([k, s]) => ({ k, s, c: classify(s) }));
+
+  // `--live` lists the kinds that are emitted AND read. It is off by default
+  // because the report exists to surface PROBLEMS, but sizing any work over the
+  // vocabulary (Arc 2's union, for one) needs the positive list, and having to
+  // re-derive it with a shell loop over `--kind=` is how a tool ends up
+  // reimplemented by its readers.
+  if (process.argv.includes('--live')) {
+    const live = rows.filter(r => r.c === 'live').sort((a, b) => a.k.localeCompare(b.k));
+    out('');
+    out(`=== LIVE (${live.length}) ===`);
+    for (const { k, s } of live) {
+      out(
+        `  ${k.padEnd(24)} emit ${String(s.emit.size).padStart(2)}  read ${String(s.read.size).padStart(3)}  ${[...s.emit].sort()[0] ?? ''}`
+      );
+    }
+  }
 
   for (const klass of ['dead', 'phantom', 'orphan-read'] as const) {
     const group = rows.filter(r => r.c === klass).sort((a, b) => a.k.localeCompare(b.k));

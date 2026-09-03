@@ -12,7 +12,10 @@
 > single-layer structure; this one holds the **cross-layer** structure that the
 > six command arcs, deliberately, did not touch.
 >
-> **Status: PLANNED — no arc has started.** Every claim in
+> **Status (2026-09-03, evening): every arc has closed — Arc 1's last two steps
+> landed the same day the review found them open.** What remains is the
+> post-plan queue in [After the plan](#after-the-plan).
+> Every claim in
 > [Verified state](#verified-state-measured-2026-08-30-on-e3b3e34a) was measured
 > on the tree named above, not inherited from an earlier doc. Line refs will
 > drift — re-verify by symbol (`grep -n`), not by number.
@@ -32,21 +35,21 @@
 
 ## Why this plan exists
 
-A whole-engine review (2026-08-30) found the code well *governed* — the
+A whole-engine review (2026-08-30) found the code well _governed_ — the
 manifest audit, output-contract test, ratchets, `--check`'d generators and the
 docs-internal queues are the reason 115 k lines are still navigable — but the
-*design* underneath fighting itself in five places. Each is measured below; the
+_design_ underneath fighting itself in five places. Each is measured below; the
 one-line versions:
 
-| #   | Finding                                                                                                                                                                          | Where it is felt                                                                                                                                                                                                         |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **The AST is untyped**, five times over: every `ASTNode` is `{ type: string; [key: string]: unknown }`; three producers emit three vocabularies into it                          | 1,152 type escape hatches in non-test source; `evaluateAST` re-declares node shapes locally and dispatches on `node as any`; commands read `(arg as Record<string, unknown>).name`                                        |
-| 2   | **The grammar is parsed twice** — once by the parser's generic argument loop, again by each command's `parseInput`, on **every execution**                                       | prepositions travel through `args` as identifier nodes and are filtered back out at runtime; 30 commands index `raw.args[N]`; `put.ts`'s `parseInput` has 33 branches; nothing caches `parseInput`                       |
-| 3   | **Two front-ends feed one runtime and the commands absorb the difference.** The core parser tries the semantic parser FIRST for 32 of 59 commands, then re-syncs tokens by heuristic | `toggle.ts`, `property-target.ts`, `numeric-target-parser.ts` each special-case "semantic parser vs traditional"; the engine package statically imports `@lokascript/semantic`, so "engine tests" are never engine-only |
-| 4   | **Two control-flow protocols**, bridged in both directions                                                                                                                       | `enableResultPattern` gates duplicate paths; commands still `throw`; `toSignal`/`signalToError` convert each way; 49 sites match message strings or `isHalt`-style flags                                                 |
-| 5   | **The execution context is a mutable bag with hidden channels and per-command copying**                                                                                          | commands re-enter the runtime via `locals.get('_runtimeExecute')`; `ContextBridge` copies the context per command and `Object.assign`s it back; a `Proxy` wraps handler contexts (registry providers, default ON)      |
-| 6   | **~17 k lines (15 %) are dead scaffolding exported as public API**                                                                                                              | `features/` (10.6 k) has zero production callers by its own docblock; `context/` (2.5 k) is excluded from `tsconfig`; a second root `tokenizer.ts`; an 833-line zod clone                                                 |
-| 7   | **Layering is circular**                                                                                                                                                         | `parser/runtime.ts` → `commands/helpers`; `parser-constants` → `commands/manifest`; `commands` → `parser/runtime`; `expressions` → `parser/extensions`, which is a process-global registry carrying the reactivity hooks |
+| #   | Finding                                                                                                                                                                               | Where it is felt                                                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **The AST is untyped**, five times over: every `ASTNode` is `{ type: string; [key: string]: unknown }`; three producers emit three vocabularies into it                               | 1,152 type escape hatches in non-test source; `evaluateAST` re-declares node shapes locally and dispatches on `node as any`; commands read `(arg as Record<string, unknown>).name`                                       |
+| 2   | **The grammar is parsed twice** — once by the parser's generic argument loop, again by each command's `parseInput`, on **every execution**                                            | prepositions travel through `args` as identifier nodes and are filtered back out at runtime; 30 commands index `raw.args[N]`; `put.ts`'s `parseInput` has 33 branches; nothing caches `parseInput`                       |
+| 3   | **Two front-ends feed one runtime and the commands absorb the difference.** The core parser tries the semantic parser FIRST for 32 of 59 commands, then re-syncs tokens by heuristic  | `toggle.ts`, `property-target.ts`, `numeric-target-parser.ts` each special-case "semantic parser vs traditional"; the engine package statically imports `@lokascript/semantic`, so "engine tests" are never engine-only  |
+| 4   | **Two control-flow protocols**, bridged in both directions                                                                                                                            | `enableResultPattern` gates duplicate paths; commands still `throw`; `toSignal`/`signalToError` convert each way; 49 sites match message strings or `isHalt`-style flags                                                 |
+| 5   | **The execution context is a mutable bag with hidden channels and per-command copying**                                                                                               | commands re-enter the runtime via `locals.get('_runtimeExecute')`; `ContextBridge` copies the context per command and `Object.assign`s it back; a `Proxy` wraps handler contexts (registry providers, default ON)        |
+| 6   | **~17 k lines (15 %) are dead scaffolding exported as public API**                                                                                                                    | `features/` (10.6 k) has zero production callers by its own docblock; `context/` (2.5 k) is excluded from `tsconfig`; a second root `tokenizer.ts`; an 833-line zod clone                                                |
+| 7   | **Layering is circular**                                                                                                                                                              | `parser/runtime.ts` → `commands/helpers`; `parser-constants` → `commands/manifest`; `commands` → `parser/runtime`; `expressions` → `parser/extensions`, which is a process-global registry carrying the reactivity hooks |
 | 8   | **Four parser implementations, 17 bundle entries, 23 rollup configs** — the consequence of #2: a command that is not a composable grammar + op unit has to be re-implemented per tier | Arc E gated the drift; this plan removes the cause                                                                                                                                                                       |
 
 The pattern the command arcs established — audit first, gate with the audit,
@@ -102,13 +105,13 @@ this plan needs:
 > read as current. Where a number now lives in a committed baseline, that
 > baseline is authoritative and is named:
 >
-> | Fact | Live source |
-> | ---- | ----------- |
-> | type-escape counts | `packages/core/baselines/type-escapes.json` |
-> | import-direction debt | `packages/core/baselines/layering.json` |
-> | front-end coupling | `packages/core/baselines/semantic-boundary.json` |
-> | per-source parse shapes | `packages/core/baselines/ast-equivalence.json` |
-> | node-kind vocabularies | `packages/core/src/parser/__tests__/ast-vocabulary.test.ts` |
+> | Fact                    | Live source                                                 |
+> | ----------------------- | ----------------------------------------------------------- |
+> | type-escape counts      | `packages/core/baselines/type-escapes.json`                 |
+> | import-direction debt   | `packages/core/baselines/layering.json`                     |
+> | front-end coupling      | `packages/core/baselines/semantic-boundary.json`            |
+> | per-source parse shapes | `packages/core/baselines/ast-equivalence.json`              |
+> | node-kind vocabularies  | `packages/core/src/parser/__tests__/ast-vocabulary.test.ts` |
 
 Baseline: **7,972 passing, 106 skipped, 312 files** (`npm run test:check
 --prefix packages/core`). Non-test core source: **114,763 lines**; the test
@@ -118,7 +121,7 @@ lines for comparison.
 ### The AST
 
 - **Five `ASTNode` definitions**, all structurally `{ type: string; …;
-  [key: string]: unknown }`: `types/base-types.ts:308` (61 importing files),
+[key: string]: unknown }`: `types/base-types.ts:308` (61 importing files),
   `types/core.ts` (re-exports it; 17 importing files), `types/unified-types.ts:199`
   (0), `ast-utils/types.ts:13` (0 external), `parser/hybrid/ast-types.ts:7`
   (the hybrid producer's own). A sixth in `parser/types.ts:154` declares
@@ -146,12 +149,12 @@ lines for comparison.
 
 - 59 manifest commands. **31 have a dedicated parser** (`COMPOUND_COMMANDS` +
   the explicit `parse*Command` branches in `parseCommandCore`): `add decrement
-  fetch go halt hide if increment install js measure morph pick process push put
-  remove repeat replace send set show start swap take tell toggle transition
-  trigger unless wait`. **28 go through the generic argument loop**: `append
-  async beep blur break breakpoint call clear close continue copy default empty
-  exit focus get log make open prepend pseudo-command render reset return scroll
-  select settle throw`.
+fetch go halt hide if increment install js measure morph pick process push put
+remove repeat replace send set show start swap take tell toggle transition
+trigger unless wait`. **28 go through the generic argument loop**: `append
+async beep blur break breakpoint call clear close continue copy default empty
+exit focus get log make open prepend pseudo-command render reset return scroll
+select settle throw`.
 - The generic loop stops on a hand list (`continuationKeywords`, nine words);
   its stop set is `STOP_TOKENS` (Pratt) plus `then/and/else/end`. Prepositions
   reach the runtime as identifier nodes and are removed again by
@@ -161,19 +164,19 @@ lines for comparison.
   it; 30 index `raw.args[N]`. `CommandAdapterV2.execute` calls it on every
   execution and nothing caches the result. Largest, by lines of `parseInput`:
 
-  | lines | command             | lines | command       |
-  | ----: | ------------------- | ----: | ------------- |
-  |   242 | `dom/toggle`        |    62 | `dom/remove`  |
-  |   197 | `dom/swap`          |    56 | `install`     |
-  |   151 | `dom/put`           |    56 | `transition`  |
-  |   125 | `control-flow/repeat` |  52 | `data/default`|
-  |   121 | `data/set`          |    52 | `if`          |
-  |   104 | `utility/pick`      |    50 | `measure`     |
-  |   103 | `pseudo-command`    |    42 | `data/clear`  |
-  |    80 | `process-partials`  |    41 | `advanced/js` |
-  |    70 | `animation/take`    |    38 | `render`      |
-  |    66 | `dom/add`           |       |               |
-  |    62 | `events/trigger`    |       |               |
+  | lines | command               | lines | command        |
+  | ----: | --------------------- | ----: | -------------- |
+  |   242 | `dom/toggle`          |    62 | `dom/remove`   |
+  |   197 | `dom/swap`            |    56 | `install`      |
+  |   151 | `dom/put`             |    56 | `transition`   |
+  |   125 | `control-flow/repeat` |    52 | `data/default` |
+  |   121 | `data/set`            |    52 | `if`           |
+  |   104 | `utility/pick`        |    50 | `measure`      |
+  |   103 | `pseudo-command`      |    42 | `data/clear`   |
+  |    80 | `process-partials`    |    41 | `advanced/js`  |
+  |    70 | `animation/take`      |    38 | `render`       |
+  |    66 | `dom/add`             |       |                |
+  |    62 | `events/trigger`      |       |                |
 
 - Commands that special-case the semantic front-end's shapes by name: 6 files
   (`toggle.ts:286-330` alone handles three shapes of `*display`).
@@ -188,13 +191,13 @@ nine files, not five. This hand-read table was comment-blind in both directions.
 each file by import KIND — the distinction that matters, and one this table does
 not make. Kept for the shape it describes:
 
-| File                                        | Imports                                                                                    | Nature                                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `api/hyperscript-api.ts:35-41`              | `parseSemantic, isLanguageRegistered, getRegisteredLanguages, buildAST, DEFAULT_CONFIDENCE_THRESHOLD` (+2 lazy) | **the one that matters** — builds the analyzer for every `compile()`      |
-| `ast-utils/interchange/from-core.ts:21-22`  | `getSchema` (semantic), `inferRolesFromSchema` (intent)                                    | schema-driven role inference for the AOT/LSP interchange                   |
-| `multilingual/bridge.ts:14-15`, `index.ts:13` | `SemanticNode, ASTNode` (types), `DEFAULT_CONFIDENCE_THRESHOLD`; the module itself is `await import`ed | already lazy; the constant is a duplicate of `parser/semantic-integration.ts:146` |
-| `compatibility/eval-hyperscript.ts:26`      | same five as the API                                                                       | bundle-facing                                                              |
-| `compatibility/browser-bundle.ts`, `-semantic-complete.ts`, `-multilingual.ts` | the semantic API                                                        | these ARE the multilingual bundles — legitimate                            |
+| File                                                                           | Imports                                                                                                         | Nature                                                                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `api/hyperscript-api.ts:35-41`                                                 | `parseSemantic, isLanguageRegistered, getRegisteredLanguages, buildAST, DEFAULT_CONFIDENCE_THRESHOLD` (+2 lazy) | **the one that matters** — builds the analyzer for every `compile()`              |
+| `ast-utils/interchange/from-core.ts:21-22`                                     | `getSchema` (semantic), `inferRolesFromSchema` (intent)                                                         | schema-driven role inference for the AOT/LSP interchange                          |
+| `multilingual/bridge.ts:14-15`, `index.ts:13`                                  | `SemanticNode, ASTNode` (types), `DEFAULT_CONFIDENCE_THRESHOLD`; the module itself is `await import`ed          | already lazy; the constant is a duplicate of `parser/semantic-integration.ts:146` |
+| `compatibility/eval-hyperscript.ts:26`                                         | same five as the API                                                                                            | bundle-facing                                                                     |
+| `compatibility/browser-bundle.ts`, `-semantic-complete.ts`, `-multilingual.ts` | the semantic API                                                                                                | these ARE the multilingual bundles — legitimate                                   |
 
 The parser layer is **already decoupled by interface**:
 `parser/semantic-integration.ts` defines `SemanticAnalyzer` and
@@ -216,7 +219,7 @@ on `skipSemanticParsing` (`parser.ts:3481`).
 - `enhanceContext` (the `Proxy`) is called from **7** sites in `runtime-base.ts`;
   no package outside `src/registry/` registers a context provider.
 - `RuntimeBase` has **zero** downstream importers. `Parser` (17 files, all in i18n), `installPlugin` (14), `createRuntime` (15), `hybridParser` (5), `getParserExtensionRegistry` (6) are the internals downstream actually reaches for; core's `createSemanticAdapter` has none (aot-compiler exports its own function of that name). The plugin contract is `HyperfixiPlugin.install({ commandRegistry,
-  parserExtensions, runtime })`.
+parserExtensions, runtime })`.
 
 ### Downstream consumers of `@hyperfixi/core`
 
@@ -230,17 +233,17 @@ engine, so it is a regression detector for every arc here.
 
 ### Dead and scaffolding code
 
-| Tree                                  | Lines  | Status                                                                                                                                                       |
-| ------------------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/features/`                       | 10,572 | zero production callers; imported only by `index.ts`, which re-exports six `Typed*FeatureImplementation` families as public API, already `@deprecated` |
-| ~~`src/context/`~~ **DELETED (Arc 6a)**  |  2,543 | was excluded from ALL THREE tsconfigs (`.json`, `.build.json`, `.scripts.json`), so it had not compiled in any configuration; imported by nothing                                                                           |
-| `src/registry/examples/`, `registry/multilingual/` | ~1,800 | no non-test downstream importer of either (the only hits are `dist/` artifacts) — ghost-test before deleting                                                                  |
-| ~~`src/experimental/`~~ **DELETED (Arc 6a)** |  2,696 | imported by nothing (the 2,217 here counted only `.ts`; the tree was 2,696)                                                                                                                                          |
-| `src/tokenizer.ts` (root)             |    —   | a second tokenizer, "compatible with `_hyperscript` tokenizer API", exported as `Lexer, Tokens`; the parser uses `parser/tokenizer.ts`                       |
-| `validation/lightweight-validators.ts`|    833 | a zod clone; consumed by `features/`, `context/`, the `types/*` files, and three expression modules' `inputSchema` fields                                     |
-| ~~`types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation`~~ **DELETED (Arc 6a)** | 144 | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files). Arc 6a deleted these plus four more in the same dead chain — `LegacyValidationResult`, `FeatureImplementation`, and the `types/core.ts` `Runtime`/`HyperscriptConfig` (each of which had a LIVE namesake elsewhere) |
-| `src/types.d.ts`                      |    —   | `any`-typed module declarations for `@lokascript/i18n/browser`                                                                                               |
-| `api/dom-processor.ts` + `dom/attribute-processor.ts` + `dom/minimal-attribute-processor.ts` | — | three DOM processors; the first two both wire `compileSync`/runtime |
+| Tree                                                                                                                                           |  Lines | Status                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | -----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/features/`                                                                                                                                | 10,572 | zero production callers; imported only by `index.ts`, which re-exports six `Typed*FeatureImplementation` families as public API, already `@deprecated`                                                                                                                                                                |
+| ~~`src/context/`~~ **DELETED (Arc 6a)**                                                                                                        |  2,543 | was excluded from ALL THREE tsconfigs (`.json`, `.build.json`, `.scripts.json`), so it had not compiled in any configuration; imported by nothing                                                                                                                                                                     |
+| `src/registry/examples/`, `registry/multilingual/`                                                                                             | ~1,800 | no non-test downstream importer of either (the only hits are `dist/` artifacts) — ghost-test before deleting                                                                                                                                                                                                          |
+| ~~`src/experimental/`~~ **DELETED (Arc 6a)**                                                                                                   |  2,696 | imported by nothing (the 2,217 here counted only `.ts`; the tree was 2,696)                                                                                                                                                                                                                                           |
+| `src/tokenizer.ts` (root)                                                                                                                      |      — | a second tokenizer, "compatible with `_hyperscript` tokenizer API", exported as `Lexer, Tokens`; the parser uses `parser/tokenizer.ts`                                                                                                                                                                                |
+| `validation/lightweight-validators.ts`                                                                                                         |    833 | a zod clone; consumed by `features/`, `context/`, the `types/*` files, and three expression modules' `inputSchema` fields                                                                                                                                                                                             |
+| ~~`types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation`~~ **DELETED (Arc 6a)** |    144 | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files). Arc 6a deleted these plus four more in the same dead chain — `LegacyValidationResult`, `FeatureImplementation`, and the `types/core.ts` `Runtime`/`HyperscriptConfig` (each of which had a LIVE namesake elsewhere) |
+| `src/types.d.ts`                                                                                                                               |      — | `any`-typed module declarations for `@lokascript/i18n/browser`                                                                                                                                                                                                                                                        |
+| `api/dom-processor.ts` + `dom/attribute-processor.ts` + `dom/minimal-attribute-processor.ts`                                                   |      — | three DOM processors; the first two both wire `compileSync`/runtime                                                                                                                                                                                                                                                   |
 
 ### Gates that already exist and that every arc must keep green
 
@@ -310,7 +313,10 @@ implementation would choose; the arcs approach it from the current tree.
    `def` see only it.
 
 5. **A small typed `Scope`, not a bag.** `{ me, you, it, event, owner, locals,
-   globals }` plus `elementVars(owner)`, with an explicit `child()`. Runtime
+globals }` ~~plus `elementVars(owner)`, with an explicit `child()`~~ (struck
+   2026-09-04, Arc 4c step 5: contexts are spread objects in four places, so the
+   free functions `createChildContext` and `getElementVar`/`setElementVar` are
+   the shape, not methods). Runtime
    services (`execute`, behaviors, cleanup, the expression table) live on the
    `Runtime` passed to every `Op`. One flag set. No `Proxy`. Context providers,
    if kept, are compile-time expression resolvers.
@@ -335,17 +341,17 @@ implementation would choose; the arcs approach it from the current tree.
 
 ## Read this before starting anything below
 
-| Arc | Scope                                                              | Size | Gate it leaves behind                                                                       | Needs a major? |
-| --- | ------------------------------------------------------------------ | ---- | ------------------------------------------------------------------------------------------- | -------------- |
-| 0   | Baselines and ratchets                                             | S    | escape-hatch ratchet, layering ratchet, AST-vocabulary snapshot, hot-path benchmark         | no             |
-| 6a  | Delete UNEXPORTED dead code                                        | S    | ghost-import tests per deleted tree                                                          | no             |
-| 1   | Engine / front-end boundary — semantic out of the engine           | M    | `no-static-semantic-import` test; en-parse equivalence corpus (semantic-first on vs off)    | no (option kept) |
-| 2   | One typed AST                                                      | M–L  | exhaustive `switch` (tsc); `[key: string]: unknown` gone; AST-equivalence corpus byte-identical | no          |
-| 3   | Grammar into the parser — `parseInput` → parse-time               | L    | per-command classification audit ratcheting `parseInput` line count to 0; snapshot regen per command | no    |
-| 4   | Compile to closures · one control-flow protocol · typed Scope      | L    | control-flow matrix test; Program-cache benchmark; `Scope` shape test                       | no             |
-| 7   | Expressions: table entries, docs out of the hot path               | S–M  | expression-table parity vs the switch; bundle-size gate                                     | no             |
-| 5   | One parser, tiers as fragment subsets                              | XL, **conditional** | bundle-size ceilings; Playwright matrix; parser-template-drift retires                  | no             |
-| 6b  | Delete EXPORTED dead code                                          | S    | CHANGELOG BREAKING entry; ghost tests from 6a                                                | **yes (4.0)**  |
+| Arc | Scope                                                         | Size                | Gate it leaves behind                                                                                | Needs a major?   |
+| --- | ------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
+| 0   | Baselines and ratchets                                        | S                   | escape-hatch ratchet, layering ratchet, AST-vocabulary snapshot, hot-path benchmark                  | no               |
+| 6a  | Delete UNEXPORTED dead code                                   | S                   | ghost-import tests per deleted tree                                                                  | no               |
+| 1   | Engine / front-end boundary — semantic out of the engine      | M                   | `no-static-semantic-import` test; en-parse equivalence corpus (semantic-first on vs off)             | no (option kept) |
+| 2   | One typed AST                                                 | M–L                 | exhaustive `switch` (tsc); `[key: string]: unknown` gone; AST-equivalence corpus byte-identical      | no               |
+| 3   | Grammar into the parser — `parseInput` → parse-time           | L                   | per-command classification audit ratcheting `parseInput` line count to 0; snapshot regen per command | no               |
+| 4   | Compile to closures · one control-flow protocol · typed Scope | L                   | control-flow matrix test; Program-cache benchmark; `Scope` shape test                                | no               |
+| 7   | Expressions: table entries, docs out of the hot path          | S–M                 | expression-table parity vs the switch; bundle-size gate                                              | no               |
+| 5   | One parser, tiers as fragment subsets                         | XL, **conditional** | bundle-size ceilings; Playwright matrix; parser-template-drift retires                               | no               |
+| 6b  | Delete EXPORTED dead code                                     | S                   | CHANGELOG BREAKING entry; ghost tests from 6a                                                        | **yes (4.0)**    |
 
 **Order: 0 → 6a → 1 → 2 → 3 → 4 → 7 → 5 → 6b.** Dependencies: 2 needs 1
 (otherwise the union has to type the semantic front-end's shapes too); 3 needs
@@ -379,7 +385,7 @@ and failing on increase:
    `api/`, `compatibility/`. Today's violations are recorded as an allowlist
    with a reason each; a new edge fails; removing an edge requires removing its
    allowlist row. Target matrix (end of Arc 4): `ast ← parser ← commands ←
-   runtime ← api ← compatibility`, expressions beside commands, nothing pointing
+runtime ← api ← compatibility`, expressions beside commands, nothing pointing
    left-to-right.
 3. **AST-vocabulary snapshot** — a test that parses a corpus (the gallery, the
    shipped sources, the en column of the pattern corpus, and every
@@ -388,7 +394,7 @@ and failing on increase:
    command under review. A stray kind appearing is a failure.
 4. **Hot-path benchmark** — `bench:ci` already exists and uploads nightly; add
    a row that compiles once and executes `toggle .active on #x then put 'a'
-   into #y` N times through `hyperscript.execute`, so Arc 4b's "bind once"
+into #y` N times through `hyperscript.execute`, so Arc 4b's "bind once"
    claim is a number, not an adjective. Record today's figure in the arc brief.
 
 Also in this arc: **an AST-equivalence corpus** (`parse(x)` deep-equal before
@@ -423,10 +429,23 @@ step 2 deletes; each deletion is its own PR. Tag the tree
 
 ### Arc 1 — Engine / front-end boundary (medium)
 
-> **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (2026-08-30).
-> Steps 1 and 5 are done; it carries the measured state, the open decision step
-> 5 surfaced, and the recommended order for the rest. Read it before starting
-> step 2, 3, 4 or 6.
+> **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (rewritten
+> 2026-09-03). ~~**Steps 1, 4, 5 and 6 are done; steps 2 and 3 are OPEN** — the
+> only open steps in the plan.~~ **ALL SIX STEPS DONE 2026-09-03** — step 2's
+> build half #1113, its API half (`hyperscript.use(frontEnd)`) and step 3 (the
+> ratchet became an assertion) in one PR the same evening. The 2026-09-03 re-measurement moved the debt: at
+> the SOURCE level the boundary is already at the ratchet's endpoint (the five
+> `static-value` rows are the four bundle entries plus
+> `multilingual/schema-roles.ts`, all target-state), but at the BUILD level it
+> is not — `rollup.config.mjs` gives the main entry `external: []` with
+> `inlineDynamicImports: true`, so `dist/index.mjs` inlines the prebuilt
+> `semantic`, `framework` and `intent` dist files whole: 3.33 MB, against
+> 1.04 MB with them external (measured). Step 2's "the library entry stops
+> pulling semantic into every Node consumer" is therefore a build change first
+> and an API change second. **The build half landed 2026-09-03** (step A of
+> the brief: `rollup.config.mjs` externalizes the four packages, 3,331,225 →
+> 1,037,542 bytes, gated on the sourcemap by `scripts/check-node-import.mjs`).
+> Read the brief before starting the API half.
 
 The semantic package becomes a front-end the engine does not know about.
 The seam is already there; the arc is about the one call site that ignores it
@@ -442,8 +461,8 @@ and the parser loop that assumes it.
    the survivor; the bridge imports it from there).
 2. **`hyperscript-api.ts` stops importing semantic.** `getSemanticAnalyzer()`
    reads an analyzer that a front-end registered: `hyperscript.use({ name,
-   analyzer: createSemanticAdapter({ parse, isRegistered, registered, buildAST
-   }) })`. `config.semantic` keeps its meaning (use a registered front-end if
+analyzer: createSemanticAdapter({ parse, isRegistered, registered, buildAST
+}) })`. `config.semantic` keeps its meaning (use a registered front-end if
    one exists). `compileAsync`'s non-en branch delegates to the registered
    front-end's `parseToAST` (today `SemanticGrammarBridge.parseToASTWithDetails`);
    with no front-end registered it returns the same "no analyzer" result the
@@ -485,21 +504,22 @@ and the parser loop that assumes it.
    Equivalence was proven rather than assumed: `main`'s converter vs the
    injected one over both parse paths of every corpus source — **430
    comparisons, 0 diffs**.
+
 5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
    the three anticipated outcomes was the answer.** Measured over the 233-source corpus, **and then RE-measured after the `and`
    fix below landed, which moved it**:
 
-   | | same | differ | trad-only | sem-only | both-fail |
-   | - | - | - | - | - | - |
-   | before the `and` fix | 107 | 105 | **2** | 2 | 17 |
-   | after (current `main`) | 107 | **107** | **0** | 2 | 17 |
+   |                        | same | differ  | trad-only | sem-only | both-fail |
+   | ---------------------- | ---- | ------- | --------- | -------- | --------- |
+   | before the `and` fix   | 107  | 105     | **2**     | 2        | 17        |
+   | after (current `main`) | 107  | **107** | **0**     | 2        | 17        |
 
    The two traditional-only rows WERE the `and` cases; fixing that moved them
    into `differ`. So **semantic-first is now a strict superset in
    parseability** — it parses everything traditional does, plus the two
    `render … with (…)` forms — while still producing a different AST for
    **107 of the 216** sources both paths parse. Re-run this before costing
-   step 6; it has already moved once. Semantic-first produces a *materially different* English AST
+   step 6; it has already moved once. Semantic-first produces a _materially different_ English AST
    for **105 of the 214** sources both paths parse — different node kinds
    (`contextReference` vs `identifier`), an added `semanticRoles` field, zeroed
    positions, an injected implicit `me` target, and prepositions kept out of
@@ -531,13 +551,57 @@ and the parser loop that assumes it.
      them in `PARSER_NEXT_STEPS.md`, fix them, then delete;
    - **differs where semantic is worse** → those rows are already the reason
      the skip list exists; they become test cases for the deletion PR.
-6. **Delete `trySemanticParse` / `skipToCommandBoundary` /
-   `skipSemanticParsing` from `parseCommandCore`.** Fallback for a non-en
-   program is whole-program: the front-end tries `parseToAST`; if it fails, it
-   renders to English and the core parser parses the English. That is what
-   `compileAsync` already does (`fallbackText`); this step makes it the ONLY
-   path. The `SemanticAnalyzer` interface and `semantic-integration.ts` shrink
-   to the adapter the front-end registers.
+
+6. ~~**Delete `trySemanticParse` / `skipToCommandBoundary` /
+   `skipSemanticParsing` from `parseCommandCore`.**~~ ✅ **DONE 2026-09-02.**
+   Fallback for a non-en program is whole-program: the front-end tries
+   `parseToAST`; if it fails, it renders to English and the core parser parses
+   the English. That is what `compileAsync` already did (`fallbackText`); it is
+   now the ONLY path, and English never reaches the front-end at all. ~~The
+   `SemanticAnalyzer` interface and `semantic-integration.ts` shrink to the
+   adapter the front-end registers.~~ **Measured smaller than that:** nothing
+   in the repo consumed `createSemanticAdapter`'s product except the deleted
+   in-loop adapter — the plan's "kept anyway because the multilingual bundles
+   call it" was false (they never did; they use `@lokascript/semantic` directly
+   and the bridge). So `SemanticAnalyzer`, `createSemanticAdapter`,
+   `SemanticIntegrationAdapter` (650 lines), `ParserOptions.semanticAnalyzer` /
+   `language` / `semanticConfidenceThreshold`, and `types.ts`'s mirror
+   `SemanticAnalyzerInterface` are all gone; `semantic-integration.ts` is the
+   one number the engine still owns, `DEFAULT_CONFIDENCE_THRESHOLD`, which the
+   API now passes to the bridge (`config.confidenceThreshold` had been reaching
+   the in-loop path only). Step 2's registration seam is a `parseToAST`-shaped
+   front-end, not an analyzer, and will be written fresh.
+
+   What else moved, all measured: `config.semantic` now gates `compileAsync`
+   (it had governed only the in-loop attempt); the AST cache key includes it
+   (a non-English program compiled with the front-end on and then off was
+   served the front-end's AST — found by the new gate); `meta.parser` on an
+   English compile is `'traditional'`, always — `'semantic'` now means "the
+   front-end PRODUCED this AST", as the plan said it would; the
+   `hyperfixi:semantic-parse` event and `semanticDebug` stats are fed from the
+   whole-program path, once per non-English compile; `eval-hyperscript.ts`
+   routes a non-English script through the API instead of building its own
+   analyzer (its `static-value` row is gone: **boundary 7 → 5**);
+   `tools/triage-parse-paths.ts` compares the core parser against the bridge's
+   direct path with `lang: 'en'`, because comparing `compileSync` against itself
+   would have made every row `same` — and on THAT comparison the corpus reads
+   `same` 0 · `differ` 202 (86 metadata-only) · `trad-only` 15 · `sem-only` 14
+   · `both-fail` 5, `marker-in-args` 51, not the detour's 140 · 77 · 19 / 13:
+   the direct path never had the in-loop adapter's coverage gate or span
+   rebasing, so it is a wider gap, and it is the one a multilingual-bundle
+   user's English actually crosses. Type-escapes **927 → 922**. Bundles (gz,
+   local macOS): `hyperfixi.js` 346,391 → 344,563, `-hx-v4.js` 358,319 →
+   356,194, `-multilingual.js` 98,374 → 95,968; `dist/index.mjs` −22 KB.
+
+   Five test files (77 cases) whose whole subject was the deleted path —
+   `semantic-integration`, `-delegation`, `toggle-skip-semantic`,
+   `semantic-resync-and`, `semantic-adoption-coverage`, `semantic-span` — are
+   replaced by `whole-program-fallback.test.ts` (11 cases): the default path
+   and `{ traditional: true }` produce byte-identical ASTs over the WHOLE engine
+   corpus, `meta.parser`, the `config.semantic` / `traditional` gates, the debug
+   stats, and the absolute shapes the retired files pinned. One pre-existing
+   test (`scroll-parse`) had recorded the in-loop path's `in`-as-binary shape
+   as a convergence difference; it now asserts upstream's shape on both paths.
 
 **The owner decided on 2026-08-30: CONVERGE the two paths first** (step 5's
 third option). Steps 2, 3 and 6 stay blocked behind that work, which has its own
@@ -581,9 +645,8 @@ parts that change THIS plan:
 
 - **Two of the arc's queue items are done.** `hide <button/>` (a live throw on a
   documented example in the DEFAULT config) is fixed in `packages/semantic`'s
-  `convertSelector`, which also closed the query-literal half of the arc's item
-  3. And **`implicit-me` was DECIDED by the owner**: an injected schema default
-  is *relocated, not duplicated* — held back from `args`/`modifiers` and kept on
+  `convertSelector`, which also closed the query-literal half of the arc's item 3. And **`implicit-me` was DECIDED by the owner**: an injected schema default
+  is _relocated, not duplicated_ — held back from `args`/`modifiers` and kept on
   `semanticRoles`, with the runtime remaining the single executable home of
   every default. That decision generalises beyond the 7 triaged rows to all 22
   defaulted schema roles, and it is the precedent for any future "does the
@@ -609,6 +672,34 @@ parts that change THIS plan:
   failed on it. Both now derive from git. Any new corpus-walking gate should do
   the same — the lesson is already recorded at #862 and was not applied.
 
+**2026-09-01 — the convergence detour is CLOSED by owner decision (#1038–#1042).**
+Steps 2, 3 and 6 are unblocked. Final triage: `same` 140 · `differ` 77 ·
+trad-only 0 · sem-only 0 · both-fail 19 (the gated `metadata.examples`).
+Families: `semanticRoles-added` 77, `field-only-sem` 78, `field-only-trad` 68,
+`marker-in-args` 13, `node-type` 2, `value` 2, **`position` 0**. What is left is
+deliberate enrichment plus a named residual; the owner judged that a defensible
+endpoint rather than a stopping point mid-way. The parts that change THIS plan:
+
+- **The `node-type` alias work landed and is not Arc 2's to redo** (#1040). The
+  ordering correction recorded above — "Arc 2 is sequenced after Arc 1 and that
+  ordering is now known to be wrong" — was resolved by moving Arc 2 **step 1**
+  ahead; it is done, and its own hypothesis table is in Arc 2 below. The four
+  `node-type` transitions the convergence brief listed are gone: semantic's
+  emitters converged on core's spellings, pinned by
+  `node-type-alias-parity.test.ts`.
+- **Every convergence pass found a live defect, including the last one.** The
+  span pass (#1042) set out to fix the SEMANTIC path and fixed the TRADITIONAL
+  one in six places: `memberExpression` / `callExpression` /
+  `possessiveExpression` all took their span from the token consumed LAST, so
+  `call myFunction()` spanned `)` and `get me.parentElement` spanned
+  `parentElement`; two synthesized children took a sibling's span; and
+  `clear :count` reported a column that indexed different text than its own
+  offset. All are read by LSP hover and diagnostic ranges. **The convergence
+  brief had named the traditional parse the oracle for spans. It was not.**
+- **`marker-in-args` (13) is the only family still explicitly blocked**, on Arc 2
+  — semantic is internally inconsistent about markers, and the family is not
+  executable until the union exists.
+
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
 snapshot (`hyperfixi.js`, `-multilingual.js`, `-semantic-complete.js`
@@ -621,11 +712,19 @@ step 4 changed its default behaviour** — an external caller passing one argume
 now gets roles for `set` and `go` only. The signature stays source-compatible, so
 this breaks silently rather than loudly; it is the one part of step 4 that
 reaches outside this repo. Every in-repo consumer was updated in the same change.
-Also: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
+Also: ~~`createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it)~~ **deleted by step 6 — measured: no bundle ever called it**; `config.semantic` (public, kept — now gates `compileAsync`); `compile().meta.parser`
 values (`'semantic' | 'traditional' | 'lse'`, kept — step 6 makes `'semantic'`
 mean "the front-end produced the AST" rather than "the analyzer was consulted").
 
 ### Arc 2 — One typed AST (medium-large)
+
+> **Brief: [HANDOFF-engine-arc2.md](./HANDOFF-engine-arc2.md)** (2026-09-01). It
+> re-measures this section's claims on the current tree and scores **four of
+> seven false**: `parser-types.ts` covers 15 kinds not 20 (and two are
+> PascalCase), positions are not always set (see step 2 below), `ast-utils` is
+> the 5th `any` cluster not the 2nd, and `commands` holds 19% of the hatches
+> rather than "most". The union has to cover **46 live kinds**, of which 15
+> exist — that is the real size of step 2. Read it before starting.
 
 A types-only arc. Runtime behaviour is byte-identical; the AST-equivalence
 corpus is the gate and it must not move. The escape-hatch ratchet is the
@@ -638,16 +737,16 @@ progress meter.
    **46 live · 2 dead (both false positives, annotated) · 3 orphan-read ·
    3 phantom**.
 
-   | hypothesis | measured |
-   | ---------- | -------- |
-   | `dollarExpression` dead | ✅ **correct** — emitted by `parser.ts`, read NOWHERE in the monorepo. **Fixed**: it now returns the `expression` it was wrapping. |
-   | `contextVariable` dead | phantom — already gone; nothing to delete |
-   | `idSelector` dead | **live** — emitted via a *ternary* (`variable-commands.ts:214`) and read as a token type |
-   | `expression` dead | **live** — 3 emitters, 3 readers |
-   | `functionCall` = alias-of `callExpression` | **not an alias** — command-local, read by `trigger.ts`, exactly as `ast-vocabulary.test.ts` already documented |
-   | `Command` = alias-of `command` | live (2 emit / 1 read) |
-   | `CommandSequence` = alias-of `sequence` | live — the one alias claim that holds |
-   | `object`/`keyword` producer-local | `object` live (10/71); **`keyword` has no emitter at all** |
+   | hypothesis                                 | measured                                                                                                                           |
+   | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+   | `dollarExpression` dead                    | ✅ **correct** — emitted by `parser.ts`, read NOWHERE in the monorepo. **Fixed**: it now returns the `expression` it was wrapping. |
+   | `contextVariable` dead                     | phantom — already gone; nothing to delete                                                                                          |
+   | `idSelector` dead                          | **live** — emitted via a _ternary_ (`variable-commands.ts:214`) and read as a token type                                           |
+   | `expression` dead                          | **live** — 3 emitters, 3 readers                                                                                                   |
+   | `functionCall` = alias-of `callExpression` | **not an alias** — command-local, read by `trigger.ts`, exactly as `ast-vocabulary.test.ts` already documented                     |
+   | `Command` = alias-of `command`             | live (2 emit / 1 read)                                                                                                             |
+   | `CommandSequence` = alias-of `sequence`    | live — the one alias claim that holds                                                                                              |
+   | `object`/`keyword` producer-local          | `object` live (10/71); **`keyword` has no emitter at all**                                                                         |
 
    So the arc's premise list was mostly stale, and the real remaining alias work
    is the seven `RENAME_PAIRS` Arc 0 already pinned — not the names above.
@@ -666,33 +765,237 @@ progress meter.
    `dollarExpression` still reported it emitted, because the comment explaining
    the deletion quotes `type: '…'` — the same reason
    `check-semantic-boundary.cjs` carries its own stripper.
+
 2. **`ast/nodes.ts`.** The union. Start from `parser/parser-types.ts` (already
    camelCase, already matches the emitted names, already per-kind interfaces
    for 20 kinds) and the interchange union's structure. Keep the emitted
    camelCase names — 61 files import by them and renaming buys nothing.
    Expression and statement unions are separate; `Node = Expr | Stmt`.
-   Positions are a required `{ start, end, line, column }` (the parser always
-   sets them; the type just stops saying it might not).
+   ~~Positions are a required `{ start, end, line, column }` (the parser always
+   sets them; the type just stops saying it might not).~~ **Measured false,
+   2026-09-01, on both paths** — over the engine corpus, the TRADITIONAL parser
+   leaves **24 of 857** typed nodes without a complete position and
+   semantic-first leaves **58 of 949**. A required position would be a lie the
+   type tells, and making it true is not a types change.
+
+   Two distinct causes, and only one of them is a defect:
+
+   - **20 of the semantic 58 are correct.** A value the parser materialized
+     from a schema `default` was never written down, so it has no source text
+     to point at — a bare `focus`'s implicit `me` is asserted span-free in
+     `semantic-span.test.ts`, and a required position would force a fabricated
+     one. Whatever the union says, it has to admit these.
+   - **The traditional 24 are a defect**, from SEVEN producers, none of them
+     the semantic path: `js … end` bodies (9 sites — body literal and params
+     arrayLiteral), `pick`'s `variant`/`rangeMode` modifiers (7),
+     `propertyOfExpression` (which `asExpression` then inherits from, so 2
+     sites collapse to 1), `betweenExpression`, a `when`-modifier
+     `unaryExpression`, an object-literal `properties[].key`, and `set`'s
+     sigil-variable destination — which sets `start`/`end` and omits
+     `line`/`column`, so the same `:count` surface is positioned two different
+     ways inside one parse of
+     `on click set :count to 1 then increment :count`.
+
+   So: keep the position OPTIONAL on `Node` and say why (the materialized case
+   is real), and fix the seven producers separately — a behaviour change, which
+   this types-only arc cannot contain. Filed in `PARSER_NEXT_STEPS.md`.
+
 3. **`evaluateAST` becomes exhaustive.** `switch (node.type)` over `Expr` with
    a `never` default; the local `type X = ASTNode & {…}` block
    (`parser/runtime.ts:63-135`) is deleted; each `evaluate*` helper takes its
-   union member. Plugin-registered kinds are a declared `PluginNode` member
-   whose payload is `unknown` — the registry stays, typed.
+   union member. ~~Plugin-registered kinds are a declared `PluginNode` member
+   whose payload is `unknown` — the registry stays, typed.~~
+
+   > **Design correction, compiler-probed 2026-09-01.** A `PluginNode` member
+   > with `type: string` cannot live in the union: it pollutes every narrow
+   > (`n.type === 'literal'` yields `LiteralNode | PluginNode` — TS2322 proof)
+   > and makes the `never` default impossible, so the design as written cannot
+   > produce the very gate this step is supposed to leave behind. Working
+   > design instead: TWO layers. `evaluateKnown(node: Expr)` holds the
+   > exhaustive switch with the real `never` default; the outer `evaluateAST`
+   > keeps an honest wide parameter, consults the plugin registry, and routes
+   > known kinds through a runtime kind-set guard — `const EXPR_KINDS = […] as
+const satisfies readonly Expr['type'][]` plus the reverse completeness
+   > check, so the array can neither list a ghost kind nor miss a real one.
+   > `PluginNode` stays a TYPE for registry payloads, not a union member.
+   > Also: there are TWO switches to make exhaustive, not one —
+   > `evaluateExpressionSync` (`runtime.ts:338`) is the second — and the
+   > ~~current 24 cases cover only 19 of the 30 full-parser kinds~~; the
+   > missing-kind list is this step's interesting output.
+   >
+   > **Count corrected, measured 2026-09-01 when step 3 executed.** The union
+   > has **35** members, not 30 (26 `Expr` + 9 `Stmt`; cross-checked two ways —
+   > discriminant count in `nodes.ts`, and membership of the two unions, with
+   > `PluginNode` correctly outside both). `evaluateAST`'s 24 arms therefore
+   > cover **24 of 35**, not 19 of 30: 23 of the 26 `Expr` kinds plus
+   > `eventHandler`, which is a `Stmt` the evaluator really does evaluate. The
+   > 11 that never arrive are the 8 remaining statement kinds (executed by
+   > `runtime-base.ts`, not evaluated) plus 3 `Expr` kinds consumed
+   > structurally — `cssProperty`, `functionCall`, `expression`. The routing is
+   > pinned in a table on `evaluateKnown` in `runtime.ts`.
+   > **Order correction, measured 2026-09-01 (#1047 follow-up).** For
+   > `ast-utils/` this step must come FIRST, not last. Its own `ASTNode`
+   > (`ast-utils/types.ts:19`) uses `[key: string]: any`, not `unknown`, so
+   > every `(node as any).foo` there is redundant with the index signature:
+   > stripping the pattern across all six modules typechecks clean, keeps 348
+   > tests green, and moves the ratchet 157 → 81 while changing NOTHING about
+   > type safety. `check-type-escapes` counts hatch spellings and cannot see an
+   > `any` arriving through an index signature, so the burn-down would book
+   > credit for work not done. Replace that `any` with the union first; the
+   > compile errors that appear are the real list. `parser/` is the opposite
+   > case — `base-types`' signature is `unknown` and `start` is declared, so
+   > removing those casts recovers `number | undefined`, which is why #1047 is
+   > genuine. Ask per cluster: which `ASTNode`, and is the field declared?
+
 4. **Collapse the definitions.** `types/base-types.ASTNode` → `Node`
    (re-exported under the old name for one release with `@deprecated`);
-   `types/core`, `types/unified-types`, `types/index` re-export; `ast-utils/types.ts`'s
-   duck-typed `ASTNode` becomes `Node` (the visitor/query/transformer modules
-   are the second-largest `any` cluster and go on the ratchet); the hybrid
+   `types/core`, `types/unified-types`, `types/index` re-export; ~~`ast-utils/types.ts`'s duck-typed `ASTNode` becomes `Node` (the visitor/query/transformer modules are the second-largest `any` cluster and go on the ratchet)~~ — **falsified when step 4 executed (2026-09-01):** `ast-utils`' `ASTNode` must STAY duck-typed. Measured: it is published as `ASTUtilNode` via the `./ast-utils` subpath and `await import`ed by three packages, and its modules discriminate on kinds no core parser emits (`conditional`, `logicalExpression`, `returnStatement`, `program`, `function` — phantoms in the classifier) and read fields no union member declares (`variable`, `features`, `then`, `else`). Its 348 tests hand-build those shapes and never parse real code. What DID change: the index signature went `any` → `unknown`, one `duck.ts` helper carries the package's single remaining hatch, and every field read now narrows before use — `ast-utils` 157 → **2** counted escapes, honestly this time, because each removed cast was load-bearing under `unknown`. `real-ast.test.ts` now anchors the modules to a real parse — and on its first run found that **the generator renders a block command's branches as empty**. First filed as "never reads `body`" — wrong, and the probe that checked it is why this note is accurate: the real `if` node's keys are `type`, `name`, `args`, `isBlocking` and position; there is no `body`. The condition and the two branches all sit in `args`, the branches as `block` nodes, and `generator.ts` has no `block` arm, so each falls to `generateFallback` and renders as `''` (the two trailing spaces in `on click \nif I match .open  ` are the two empty blocks). Pre-existing, behavioural, pinned as a KNOWN GAP test rather than fixed; the fix is a `case 'block'` rendering `commands`, and the pin flips when it lands; the hybrid
    parser's `ast-types.ts` is left alone here — it is a separate producer and
    Arc 5 decides its fate — but the `case 'event'`/`case 'sequence'` adapter in
    `runtime-base.ts` is typed as a converter from `HybridNode` to `Stmt`.
-5. **Commands stop casting.** `ast/guards.ts` (`isIdentifier`, `isSelector`,
+
+   > **Executed 2026-09-01 as PR 5, and most of the sentence above was wrong.**
+   > Measured first, then done:
+   >
+   > - ~~`types/base-types.ASTNode` → `Node`, re-exported with `@deprecated`~~ —
+   >   falsified twice. The union is `SyntaxNode` (a test pins that `Node` is not
+   >   used; it is a DOM global), and every member EXTENDS `base-types.ASTNode`
+   >   for its `[key: string]: unknown` index signature — aliasing `ASTNode` to
+   >   the union would delete that signature, which is step 6 and goes last on
+   >   purpose. `ASTNode` is untouched; it is also public from the package root.
+   > - "zero non-test importers: `ContextReferenceNode`, `TypedASTNode`" — it was
+   >   **seven**, once imports were attributed by resolved module path instead
+   >   of by name (`ast/nodes.ts` reuses the same names, so a name grep counts the
+   >   union's importers as base-types'): `Binary`/`Unary`/`Member`/
+   >   `PropertyAccess`/`ContextReference`/`LiteralNode` and `TypedASTNode`.
+   >   Deleted; zero compile errors.
+   > - The other four — `CommandNode`, `EventHandlerNode`, `BehaviorNode`,
+   >   `DefNode` — were NOT stale: they were the live parser output, and MORE
+   >   complete than the union. `parser.ts` builds `errorSymbol`, `errorHandler`,
+   >   `finallyHandler`, `attributeName`, `watchTarget`, `customEventSource` and
+   >   `args` at 7–11 sites each, `runtime-base.ts` destructures every one, and
+   >   `ast/nodes.ts` declared none of them. The conformance gate never fired
+   >   because the engine corpus holds one `catch` and nothing else that emits
+   >   them. Also `event`/`target` were declared `unknown`; measured `string` on
+   >   both parse paths. The union absorbed all of it, `EXTRA_SOURCES` in the
+   >   conformance test now feeds those constructs (mutation-verified: dropping
+   >   a field is red with them and GREEN without them), and the four were
+   >   deleted from base-types with every consumer repointed — parser.ts,
+   >   runtime-base.ts, four parser front-ends, eight test files, and the dead
+   >   re-exports in `types/core` and `types/index` (the latter had exported
+   >   base-types' three-field `CommandNode` under the same bare name as the
+   >   frozen public one — two shapes, one name, path-dependent).
+   > - Layering: `types` is layer 0 and `ast` layer 1, so base-types cannot alias
+   >   TO the union. Consumers repoint; the originals go.
+   > - `parser/parser-types.ts`'s fifteen node interfaces are the third duplicate
+   >   description, and they stay for now. Probed: aliasing them to the union
+   >   costs 16 errors, all `ast-helpers.ts` factory params; retyping the
+   >   factories cascades to 24; and narrowing `parseExpression`'s family to
+   >   `Expr` RAISES it to 43 — because those functions legitimately return
+   >   commands and handlers in some branches (`CommandNode → Expr` at two
+   >   sites, `EventHandlerNode → Expr` at one). Their wide `ASTNode` return type
+   >   is honest; making it `Expr` is a front-end redesign (Arc 3), not a
+   >   types-only collapse. Instead `ast/legacy.ts` gained the reverse crossings
+   >   (`fromLegacyCommands`, `fromLegacyExpression`, `fromHybridStatements`),
+   >   three more `as unknown as` in the one file licensed to hold them.
+   > - The `case 'event'`/`'sequence'` hybrid adapter IS typed as the plan said
+   >   (`HybridEventNode` → `EventHandlerNode` via `fromHybridStatements`), and the
+   >   rest of the dispatch narrows to union members; `executeObjectLiteral` takes
+   >   `ObjectLiteralNode` and its two key casts went. `runtime/` −6, `ast/` +3.
+
+5. ~~**Commands stop casting.** `ast/guards.ts` (`isIdentifier`, `isSelector`,
    `isLiteral`, …) replaces `(arg as Record<string, unknown>).name === 'x'`
    one file at a time, ratcheted. This is mechanical and boring and it is where
-   most of the 1,152 hatches live.
-6. **Remove the index signature.** `[key: string]: unknown` comes off `Node`
+   most of the 1,152 hatches live.~~ **Re-scoped by the owner 2026-09-01, and
+   then executed the same day.** Measured first: the AST-shaped portion of
+   `commands/` was ~13 sites of 235 — the rest is ExecutionContext / DOM /
+   network typing that no node union touches, a different track outside this
+   arc. The 13 landed as guard adoptions (`isIdentifierNode`, `isLiteralNode`,
+   `isNodeOfKind`, and the existing `isDOMNode` for the one genuinely
+   load-bearing cast) plus the `property-target.ts` guard move — its two
+   predicates now live in `ast/guards.ts` with their runtime checks verbatim,
+   because strengthening them to the resolvers' narrower contract would change
+   which nodes route where. The step as originally written — a cluster-wide
+   burn-down — is DROPPED; its premise did not survive measurement.
+6. ~~**Remove the index signature.** `[key: string]: unknown` comes off `Node`
    last. The compile errors that appear are the burn-down list; the arc is done
-   when `tsc` is clean without it.
+   when `tsc` is clean without it.~~ **DONE 2026-09-02, in the narrower of the
+   two shapes the sentence conflates.** There are two of them, and the plan did
+   not distinguish them:
+
+   - **Probe F — delete the signature from `types/base-types.ASTNode` itself.**
+     435 errors in 51 files (production 78 in 18; tests 357 in 33, overwhelmingly
+     `TS2353 'value' does not exist` — 216 fixtures hand-building
+     `{ type: 'literal', value }` typed as `ASTNode`). It touches the FROZEN
+     public `ASTNode` and lands squarely in `commands/`, whose typing the owner
+     scoped out of this arc. **That is a 4.0 item, not a step** — it belongs
+     with the `ExpressionNode` redefinition that `ast/legacy.ts` already lists
+     (`git grep toLegacyExpression`, `fromLegacy*`, `AnyNode`).
+   - **Probe G — union members stop inheriting it; `ASTNode` keeps it for
+     legacy and public consumers.** This is what shipped. `BaseNode` declares
+     `type`, the four optional positions, `raw?` and `diagnostics?` itself.
+
+   **Probe G's cost was measured TWICE and the two numbers differ by 54,**
+   which is the useful part: on the step-5 branch (before step 3 landed) it was
+   63 errors in 11 files, production 33 in 5; on the merged tree it is **117 in
+   12 files, production 87 in 6**. Step 3's exhaustive evaluators are the whole
+   delta — `parser/runtime.ts` went from 0 to 54 — because typed switch arms are
+   exactly what turns "a union member flows into an `ASTNode` parameter" from
+   invisible into a compile error. A probe run on a branch that lacks its
+   sibling's merged work under-reports.
+
+   What the errors actually were, and what each says:
+
+   | shape                                                      | n   | fix                                                                              |
+   | ---------------------------------------------------------- | --- | -------------------------------------------------------------------------------- |
+   | a union member passed to an `ASTNode` parameter (TS2345)   | 67  | retype the parameter                                                             |
+   | an `ASTNode` cast to a union member at a dispatch (TS2352) | 45  | widen the dispatcher's parameter to `AnyNode`; the discriminant then narrows     |
+   | `node.property.name` on an `Expr` (TS2339)                 | 4   | structural read — the guards verify less than the resolvers assume, deliberately |
+
+   The parameter retypes are the content. `evaluateAST`, `evaluateExpressionSync`,
+   `RuntimeBase.execute` and the observer/handler helpers are dispatchers whose
+   callers are split between the two worlds, so they take
+   `AnyNode = SyntaxNode | ASTNode` (`ast/legacy.ts`) — casting 34 call sites to
+   `ASTNode` would have been the same lie repeated 34 times. Everything else got
+   its real union member: `executeProgram(ProgramNode)`,
+   `executeBlock(BlockNode | InitBlockNode)`,
+   `executeCommandSequence(CommandSequenceNode | HybridSequenceNode)`,
+   `executeBehaviorDefinition(BehaviorNode & …)`,
+   `makeBlockLiteralClosure(BlockLiteralNode)`, `resolveCallArgs(Expr[])`.
+
+   Three findings the errors surfaced that no gate had:
+
+   - **`expressions/collection/index.ts` declared its OWN
+     `CollectionExpressionNode`** — a fifth prose description of a kind,
+     exported and imported by nobody (`parser/runtime.ts` takes the union
+     member and the four evaluator functions, never the interface). Deleted.
+   - **`commands/helpers/property-target.ts` declared its own
+     `PropertyOfExpressionNode` / `PropertyAccessNode`**, narrower than the
+     union AND narrower than what the guards beside them verify — step 5 kept
+     the guards' runtime checks verbatim so no node changed route, which left
+     the resolvers' ASSUMPTION written down as if it were the node's SHAPE.
+     Deleted; the assumption is now a structural read inside each resolver,
+     where it is visibly an assumption.
+   - **`imperativeInstaller` has no emitter anywhere in the repo** — read only
+     by `executeBehaviorDefinition`, written by nothing, and `parser.ts:3230`
+     (the one `type: 'behavior'` producer) does not emit it. It is NOT promoted
+     into `BehaviorNode`, because the union describes what the parser builds.
+     But `execute` is public and the method is `protected` on a published
+     class, so the branch is reachable from outside and deleting it would be a
+     behaviour change this arc cannot make. It stays as an intersection at that
+     one site, with the reasoning on it.
+
+   The 30 test errors were all one shape — `result.node as BehaviorNode`, a
+   cast that asserted nothing — and became `assertNodeOfKind(result.node,
+'behavior')`, which checks the kind it was assuming and names the actual one
+   when it is wrong. One of them (`behavior.initBlock?.commands`) was a real
+   unchecked read that the cast had been hiding.
+
+   Ratchet: **927 → 927.** Step 6 adds no hatches and removes none — the one
+   `as Record<string, unknown>` it deleted lives inside a `debug.parse` template
+   literal, which the counter strips. That is the honest number: this step buys
+   type safety the ratchet cannot see, which is the same blind spot the arc's
+   brief documented in the other direction for `ast-utils`.
 
 Gates: `tsc` (the exhaustive switch and the removed index signature ARE the
 gate); the AST-equivalence corpus; the vocabulary snapshot; the escape ratchet
@@ -700,9 +1003,34 @@ gate); the AST-equivalence corpus; the vocabulary snapshot; the escape ratchet
 
 Blast radius: `ASTNode` is exported from `index.ts` and used downstream as a
 type (vite-plugin, developer-tools). Keep the alias for a release. The hybrid
-`ast-types` subpath export is unchanged.
+`ast-types` subpath export is unchanged. **As executed, `ASTNode` is untouched**
+— step 6 separated the union from it rather than changing it, so downstream
+types compile exactly as before. What DID move is a handful of internal
+signatures on `RuntimeBase` (`execute`, and the `protected` `executeProgram` /
+`executeBlock` / `executeCommandSequence` / `executeBehaviorDefinition` /
+`setupMutationObserver` / `setupChangeObserver`): a downstream subclass
+overriding one of those with the old `ASTNode`-shaped parameter now sees a
+narrower or wider type. In-repo overrides all typecheck; call it out in the
+release notes. `ExpressionEvaluator.evaluate` widened the same way, and is safe
+by construction: it is declared as a METHOD, and method parameters are checked
+bivariantly, so a command or test that implements it as
+`evaluate(node: ASTNode, …)` stays assignable.
 
 ### Arc 3 — Grammar into the parser (large; one PR per command)
+
+> **Brief: [HANDOFF-engine-arc3.md](./HANDOFF-engine-arc3.md)** (2026-09-02).
+> Re-measures this section's claims on `2b1a6f22` and scores **fourteen: eight
+> hold, three false, three incomplete**. The false ones are the counts — "46
+> input unions" (77 `*Input` types, **7** unions), "28 generic-loop commands"
+> (**25**, through **two** loops), and a blast radius that omits `aot-compiler`
+> (52 `.args` reads) and `vite-plugin` (12). The finding that changes the
+> order: the dedicated parsers push marker words INTO `args`, which IS the open
+> `marker-in-args` convergence family (13) — step 2 closes it by construction.
+> Four owner decisions are listed there; the first (land Arc 1 step 6 before
+> the first command) is the one to answer before starting. **2026-09-02:**
+> decided and done — step 6 landed first (#1058), the `CommandName` type
+> exists, and decision 4 was withdrawn (`unless` was fixed in #805; the brief
+> had quoted the filing's head without its status).
 
 The core of the migration. Each command's `parseInput` is split: syntax
 decisions move into that command's parser; value work stays as expression
@@ -723,15 +1051,525 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    evaluation — targets, durations, URLs), or **A** (absorbing the semantic
    front-end's shapes — dies with Arc 1 step 6). The test pins the
    `parseInput` line count per command and fails on increase; the arc ratchets
-   it to zero.
-2. **Per-command typed nodes.** `ToggleNode` is `ToggleCommandInput` with
+   it to zero. ✅ **DONE 2026-09-02** — `baselines/parse-input-census.json`,
+   regenerated by `npm run census:parse-input:update`, gated by
+   `commands/__tests__/parse-input-census.test.ts` (shrink-only on four
+   metrics per body, plus unknown/stale-row checks and a totals-consistency
+   check; mutation-verified — one added `if` in `log` reddens it). The
+   measurement is a regex census rather than a hand-classified table, and
+   that is deliberate: it is reproducible and it is what the arc can ratchet.
+   The A class needed no column — Arc 1 step 6 landed first (#1058), so there
+   are no semantic-shape branches left to classify. **Baseline: 51 bodies ·
+   2,434 lines · 361 branches · 128 syntax sites · 215 value sites.**
+2. **Per-command typed nodes.** ✅ **DONE 2026-09-03** — `CommandRaw<K>` (read),
+   `CommandNodeBuilder<K>` (emit), `CommandNode<K>` (node) over `COMMAND_SLOTS`,
+   and `ArgsOf<K>` over `COMMAND_ARITY`; see History.
+   `ToggleNode` is `ToggleCommandInput` with
    `HTMLElement[]` replaced by `Expr` slots and `duration: number` by `Expr`.
-   The existing input unions (46 files already have one) are the shapes —
-   this step is moving them one layer up. The dedicated parser
+   ~~The existing input unions (46 files already have one) are the shapes —
+   this step is moving them one layer up.~~ **Measured 2026-09-02: 77
+   exported `*Input` types, of which 7 are discriminated unions** (`Insertion`,
+   `Remove`, `Add`, `Toggle`, `Set`, `Default`, `Clear`); the rest are flat
+   interfaces. The shapes exist and do move up a layer; "46" and "union" were
+   both wrong. Also: **no `CommandName` type exists** — `COMMAND_NAMES` is
+   `readonly string[]`, so the `K` below needs a manifest change first. The dedicated parser
    (`parseToggleCommand` in `command-parsers/dom-commands.ts`) emits the node;
    `CommandNode` becomes `CommandNode<K extends CommandName>` with a per-K
    `args` type, and `command-node-builder.ts` builds it.
-3. **Migration order = the `parseInput` size table above**, largest first:
+3. **Migration order = the `parseInput` size table above**, largest first: ✅
+   **CLOSED 2026-09-03** — every command whose syntax lived in `args` (marker
+   words) or in evaluated values (`go`, `scroll`) is on slots; what `args`
+   still carries is positional by construction (see the `go` History entry).
+   The per-command record follows.
+   **`toggle` STARTED 2026-09-02 — PR A of two.** The parser now emits the
+   destination as a slot: `toggle .active on #panel` is `args: [.active]`,
+   `modifiers.on: #panel` (`from`, the HyperFixi spelling, shares the slot).
+   ToggleCommand's `parseInput` already read `modifiers.on` as its fallback
+   destination — the shape the semantic path always produced — so the runtime
+   is untouched, and toggle's rows leave the `marker-in-args` family. Two
+   AST-equivalence rows moved, reviewed. What it found: the interchange's
+   `inferRolesFromSchema` derives a role's English markers from
+   `markerOverride`/`markerVariants` only, and toggle's destination has
+   neither (its `on` is the profile's), so the old binding had worked by the
+   positional pass skipping the literal `on` in `args` — with the value in a
+   slot, `destination` came back undefined and `marker-roles.test.ts` caught
+   it. Core's inferrer now also applies the schema's own `ast.modifiers`
+   descriptor as the reverse map (`modifiers.on` IS `destination`, by the
+   schema's own declaration) before returning. **PR B (same day):** the two
+   other syntactic decisions became slots — `between A and B` is
+   `modifiers.between` (an arrayLiteral of the pair, `args` empty) and the
+   dialog mode of `as modal` / bare `modal` is `modifiers.as` (the parser
+   unwraps the `asExpression` the expression parser builds for `#dlg as
+modal`, once). `parseInput` lost the `firstArgName === 'between'` branch,
+   the `on`/`from` name-skipping, the `asExpression` unwrap and the
+   evaluate-`args[1]`-and-compare-to-`'modal'` mode detection. **Census row:
+   243 → 202 lines, 30 → 25 branches, 8 → 3 syntax sites.** What stays is
+   value work — element-vs-class from the evaluated first value, the
+   dialog/details/select dispatch by element type, `*prop` from a selector
+   token's value — and the remaining three syntax sites are `args[0]` reads,
+   which a positional slot IS. Pinned end to end in `toggle-slots.test.ts`
+   (real parser, real evaluator, DOM effect), not by fixtures: the mock-fed
+   `unless` bug is why.
+
+   **`swap` + `morph` + the shared `using view transition` tail (same day).**
+   `parseSwapCommand` emits the target positionally and everything syntactic
+   as slots — `modifiers.strategy` (the strategy word; the parser now
+   recognises every key of `lib/swap-executor.ts`'s `STRATEGY_KEYWORDS`, not
+   its own seven-word subset), `modifiers.with` (the content), and
+   `modifiers.viewTransition` (the tail, which `swap`, `morph` and `process
+partials` share — `parseViewTransitionTail` replaces the helper that pushed
+   `using`, `view`, `transition` into `args` as three identifiers for each
+   command to scan for). `swap innerHTML of #t with it`, `swap over #m with
+c`, `swap delete #n`, `swap #t with it` and the variable form `swap a with
+b` all land in one shape. `SwapCommand.parseInput` lost its keyword scan
+   (`findIndex` over `with`/`of`/`delete`/`using`/`into`/`over`) and the
+   `binaryExpression 'of'` branch no producer emits any more; `MorphCommand`
+   likewise. The front-end's positional shape (`[method, destination,
+patient]`, and morph's `args: [source]` + `modifiers.on`) is still read by
+   a fallback, as it always was — only the traditional path changed spelling.
+   **Census rows: swap 198 → 83 lines / 10 → 2 syntax sites, morph 103 → 56 /
+   5 → 4, process 82 → 81.** Type-escapes 918 → 906. Seven corpus rows moved,
+   reviewed; two `KNOWN_UNFIXED` marker bindings in `marker-roles.test.ts`
+   (`swap.method="over"`, `morph.patient="over"`) cleared, because there is no
+   bare `over` in `args` for the positional pass to bind any more.
+
+   **`put` (same day).** The operation is the slot the target lives under:
+   `put X into Y` is `args: [X]`, `modifiers.into: Y`, and the multi-word
+   operations keep their spelling as the key (`'at start of'`, `'at end of'`)
+   — the shape `putSchema`'s `ast` descriptor has always produced on the
+   semantic path and `PutCommand.parseInput` already read. The parser had
+   just resolved the operation (including `at the start of` → `at start of`)
+   and was pushing it back into `args` as an identifier for the command to
+   find again by scanning for one of six words. That scan is gone; a bare
+   two-argument node built directly still defaults to `into`. **Census row:
+   152 → 132 lines, 9 → 3 syntax sites.** Type-escapes 906 → 902. Four corpus
+   rows moved, reviewed; 18 fixtures and 4 parser pins reshaped.
+
+   **`repeat` (2026-09-03) — the first block-shaped command.** The parser had
+   already resolved the loop form and every operand (`for x in y`, `N times`,
+   `while`/`until <cond>`, `until event <name> [from <target>]`, `forever`,
+   `index <var>`, and the bottom-tested `repeat … until/while … end` form)
+   and was flattening them into `args` in a fixed order behind an identifier
+   named after the form, for `RepeatCommand.parseInput` to re-derive from
+   `args[0].name` and the positions after it. Every operand is now a slot
+   keyed by the word that introduced it — `modifiers.loopType`, `for`, `in`,
+   `times`, `while`, `until`, `event`, `from`, `index` (`bottomTested` already
+   was) — and only the body block and an `else` block stay positional.
+   `parseInput` reads the slots; its `raw.modifiers?.for/times/...` reads had
+   only ever been reachable from hand-built nodes, because
+   `@lokascript/semantic`'s `buildAST` never builds a loop node (a filed gap).
+   **Census row: 126 → 106 lines, 17 → 3 syntax sites** — the three left are
+   the `args[i].type === 'block'` reads that find the body. Two corpus rows
+   moved; 11 fixtures and 7 parser pins reshaped. One trap worth the note:
+   the first draft's slot-reading helper was written inline and took the
+   branch count UP (30 → 32) while the syntax count fell — the ratchet caught
+   it, and the helper is a module-level function now.
+
+   **`set` (2026-09-03).** The value is the `to` slot: `set x to 1` is
+   `args: [x]`, `modifiers.to: 1` — what the semantic path always produced
+   and what `SetCommand.parseInput` read first; the parser had consumed `to`
+   and was pushing it back as an identifier for the command to scan for.
+   The scan is gone. What the scan had been covering for: `increment`/
+   `decrement` desugar to a `set` node in the parser, and that desugar was the
+   one in-repo producer of the flat `[target, to, value]` shape — it emits the
+   slot now too, so `increment :count` and `set :count to :count + 1` are the
+   same node. **Census row: 122 lines, syntax sites 1** — the row's numbers
+   did not move, because the census counts positional `args[i]` reads and the
+   one that remains is the bare two-argument fallback's `args[1]`; the `to`
+   scan it removed was a `findIndex`, which the census never counted. The
+   step is real; the meter is blind to this one, and says so here.
+   Nine corpus rows moved (every `set` and `increment` example), reviewed;
+   seven hand-built runtime nodes, the parser expectations and the
+   parser-unit pins reshaped.
+
+   **`take`, `trigger`/`send`, `render` (2026-09-03) — the last three commands
+   still receiving marker words in `args`.** Measured from the census's own
+   syntax-site lines: every other command's remaining `args[i]` reads are
+   genuinely positional (a block, a params array, a property). `take`'s
+   `from <source>` is `modifiers.from` (its `parseInput` already read that
+   on the semantic path); the eight-position scan for an `and put it on
+<target>` tail went with it — no parser has ever produced that shape, the
+   documented form is a recorded parse gap — and the end-to-end
+   `take-from-for` suite caught the first draft requiring the slot: bare
+   `take .active` is valid and takes from every current holder. `trigger`'s
+   `on`/`to <target>` is `modifiers.on` and the option words after `with`
+   are one `modifiers.with` list, which `parseEventOptions` reads instead of
+   scanning `args`. `render`'s `with` had been a slot since step 4's
+   declared grammar; its `args[1] === 'with'` branch was dead code and is
+   gone. **Census rows: take 71 → 40 lines / 11 → 1 syntax sites, trigger
+   63 → 47 / 4 → 1, render 38 → 29 / 6 → 1.** Six corpus rows moved (two `take`, two `trigger`, two `send`), reviewed.
+   Sixteen fixtures across four suites reshaped; two dead-shape cases
+   (`take X to Y`, `render … [with, vars]` positional) deleted with the
+   reason on them.
+   **The first draft of this PR shipped half of `trigger`.** The command
+   read slots only, but the parser edit that produced them had never
+   reached the tree — `send hello to X` still parsed as `[hello, to, X]`,
+   the target fell through to `context.me`, and core's 7,974 tests stayed
+   green: every `trigger`/`send` fixture is hand-built, and the
+   send/trigger parity test pinned the FLAT shape as the expected one. The
+   one gate that saw it was `packages/realtime`'s end-to-end
+   `send hello to ChatSocket` — the only test in the repo that parses a
+   `send … to` and executes what came out. Two consequences landed with the
+   fix: the parity test now compares the slots too (not just `args`), and
+   the parser-unit mock context grew a `parseExpression`, because the slot
+   is read through `parseOneArgument`, which a `parsePrimary`-only mock
+   silently returns nothing from. The lesson is the one at the head of the
+   arc, restated: a per-command PR is TWO edits, parser and command, and
+   the command's own suite cannot tell whether the parser's arrived.
+
+   **Step 5, first deletion: `KEYWORD_PREPOSITIONS` and `filterPrepositions`
+   (2026-09-02) — and the two commands the filter was still load-bearing
+   for.** The plan listed the filter as a mechanism to delete "when its caller
+   count reaches zero"; the count was twelve (`filterPrepositions: true` at
+   twelve `resolveTargetsFromArgs` sites) and, measured by dumping each
+   caller's documented form, the filter was DEAD for ten of them — `focus`,
+   `blur`, `select`, `empty`, `close`, `open`, `reset`, `clear` are `ONE_EXPR`
+   grammar rows with no marker word to filter, and `toggle` had been on slots
+   since the first step-3 PR — and live for two: `add .a to #x` was parsing as
+   `[.a, #x]` (the parser consumed `to` and pushed nothing) and `remove .a
+from #x` as `[.a, from, #x]`, which only the filter turned into a target.
+   So step 5's first deletion is also step 3's next migration: `add`'s target
+   is `modifiers.to` and `remove`'s `modifiers.from` — the keys
+   `@lokascript/semantic`'s `addSchema`/`removeSchema` `ast` descriptors
+   already emit — and `DOMModificationBase.resolveTargets` reads the
+   preposition slot directly, no `args` in its signature. `default` lost its
+   flat `[target, 'to', value]` fallback the same way (the parser has emitted
+   `modifiers.to` since the `set` PR; the fallback's own test pinned the
+   flat shape and is now the slot test). `fallbackModifierKey` STAYS: with
+   the filter gone it is the slot read, not a fallback.
+   **Census: add 67 → 52 lines, remove 63 → 53; totals 2,110 lines · 323
+   branches · 76 syntax sites.** The syntax-site counts did not move for any
+   of the three — the filter lived in a helper the census does not walk, and
+   `default`'s `=== 'to'` compare was a `String(...).toLowerCase()` form the
+   census's keyword-compare pattern never matched. Thirteen AST-equivalence
+   rows moved (every `add`/`remove` example with a target, plus the four
+   handler/block rows that contain one), reviewed; type-escapes 896 → 893.
+   Two consumers outside core: the AOT compiler's `AddCodegen`/`RemoveCodegen`
+   resolved the target from `node.target` (the semantic path's field) or
+   `_ctx.me` — it had never read the traditional parse's target at all, so a
+   traditionally parsed `add .x to #y` compiled to add on `me`; both now read
+   `node.target ?? modifiers.to/from`. Its `init-prerender` classifier reads
+   `cmd.target` only and is unchanged (widening what it prerenders is a
+   behaviour change, not this PR's). `vite-plugin/src/compiler.ts` compiles
+   its own node shape (`cmd.target`) and is untouched.
+   **Same PR, the last two marker-word commands: `push`/`replace`.** Both
+   were `COMPOUND_COMMANDS` members with no case in `parseCompoundCommand`,
+   so they fell to `parseRegularCommand` — the second generic loop — and
+   `commands/helpers/url-argument-parser.ts` re-derived `push url <u> with
+title <t>` from the words it found in `args` (a `KEYWORDS` list of
+   `url`/`with`/`title`, three `findIndex` scans). `parsePushCommand` now
+   emits `args: [url]` (naked `/path` or any expression; the `url` word is
+   consumed) and `modifiers.title`; the helper reads the slot. Every
+   `COMPOUND_COMMANDS` member has a case now — `parseCompoundCommand`'s
+   `default` is unreachable from that switch, which is the precondition for
+   retiring the set. The census could not see this one either way: the scan
+   lived in a helper (uncounted), and the slot read stays there too — the
+   `push` row is 13 lines / 0 sites before and after. `@lokascript/semantic`
+   has no title role for these, so the slot is core-only. The AOT
+   `PushUrlCodegen`/`ReplaceUrlCodegen` read `roles?.destination ?? args[0]`:
+   for a traditional parse `args[0]` used to be the identifier `url`, so they
+   compiled `history.pushState({}, '', url)` — a variable reference — and now
+   get the URL with no change of their own. Four more AST-equivalence rows
+   moved (the four documented `push`/`replace` forms); type-escapes 893 → 891
+   (the helper's two `as unknown as Record` reads went with the scan).
+
+   **Step 5, second deletion: `COMPOUND_COMMANDS` retired (2026-09-03).** The
+   set in `parser-constants.ts` routed a command to `parseCompoundCommand` by
+   membership; the `switch` inside chose the parser; the two had to agree by
+   hand and five times did not — `take`, `process`, `show`/`hide`,
+   `push`/`replace` were each found as a member with no case, falling through
+   to `parseRegularCommand`, each by a behaviour bug. Now there is ONE table,
+   `COMPOUND_COMMAND_PARSERS` (name → parser); `isCompoundCommand` is
+   `has()`, `parseCompoundCommand` is `get()`, and the `switch` and its
+   `default` are gone. `CommandClassification.isCompoundCommand` and the
+   `ParserContext.isCompoundCommand` method (no consumer outside the parser
+   itself) went with the set; the manifest's `multiword` flag now mirrors the
+   table's keys (its audit test and the coverage/routes tests import
+   `COMPOUND_COMMAND_NAMES`, derived from the table). Same PR: the
+   expression-path copy of the generic argument loop —
+   `createCommandFromIdentifier`, reached from expression statements and
+   conditional branches — is deleted; that path routes exactly as
+   `parseCommandCore` does (dedicated row, else `parseDeclaredCommand` with
+   the declared grammar). Zero AST-equivalence rows moved: no corpus source
+   reaches a command through that path with arguments the two loops read
+   differently, which is the measurement that says the copy was a copy.
+   One row is new: `add` — it reaches `parseCommandCore`'s own keyword branch
+   first, but on the expression path it used to fall to the generic loop
+   (no `to` handling); it now gets `parseAddCommand` there too. What remains
+   of step 5: `parseRegularCommand` (two fallback callers), and the
+   `continuation` words in the grammar rows, which are the old
+   `continuationKeywords` by another name — each behind a caller count.
+
+   **Step 5, third deletion: `parseRegularCommand` (2026-09-03).** The last
+   copy of the generic argument loop had three callers, not the two the
+   previous entry counted: the `scroll` and `process` fallbacks in the
+   dedicated-parser table, and `pick`'s "legacy fallback" for `pick from
+<expr>` / `pick a, b, c`. All three now call `parseDeclaredCommand` with a
+   local `GENERIC_FALLBACK_GRAMMAR` — `positional: 'primary'`, no markers —
+   which is what the loop collected. Measured before/after on the nine
+   shapes the three callers can see: seven identical; the two `pick` legacy
+   forms IMPROVED, because the old loop stopped at the first argument (`pick
+a, b, c` was `[a]`, `pick from [1, 2]` was `[from]` — the array literal
+   dropped) and the declared parser continues across commas and takes a
+   primary of any kind. A first draft used the plugin row instead
+   (`positional: 'expression'`) and the dump caught it: `scroll #panel
+smoothly` lost its adverb, because an expression parse stops after
+   `#panel` and `smoothly` is not a continuation word. The `primary` row is
+   the loop's behaviour; the `expression` row is not. One documented example
+   left the parse-gap allowlist because of the `pick` change — `pick "red",
+"green", "blue"`, which now parses as three arguments. Its allowlist
+   reason survives here: upstream rejects it, none of `pick`'s five forms is
+   a bare list, and the runtime still reports it — it is a docs defect that
+   now fails at the right layer. Two AST-equivalence rows moved (that example
+   and its `pick` sibling), reviewed; type-escapes unchanged at 891. Step 5's
+   deletion list is now closed except for the parts that were never
+   leftovers: `fallbackModifierKey` (the slot read) and the plugin row's
+   `continuation` words (designed for plugin commands).
+
+   **Step 2 opener: the slot-key parity gate (2026-09-03).** Before any typed
+   node, the cheapest static form of the check a typed node would give:
+   `commands/__tests__/slot-key-parity.test.ts` asserts that every
+   `modifiers.<key>` a command's `parseInput` READS is a key some parser
+   EMITS for that command — the core parser measured by parsing the
+   command's own `metadata.examples` and collecting the keys on every
+   command node, plus `@lokascript/semantic`'s schema `ast.modifiers`
+   descriptor, plus the parser's generic `when`/`where`/`debounce`/`throttle`.
+   This is the gate #1068 lacked: `trigger` read `modifiers.on` while its
+   parser still pushed `on` into `args`, and no fixture could see it because
+   every fixture is hand-built; a read with no emitter is static. First run,
+   21 keys across 11 commands, in three classes. (1) Two the gate itself
+   mis-keyed: the `ContentInsertionCommand` base body serves `append`/
+   `prepend`, and `trigger`'s body serves `send` — a `SERVES` map. (2) Five
+   real emitted forms no documented example reached — `fetch … do not
+throw`, `toggle between … and …`, `repeat … index i`, `start view
+transition using …` (its only `using` example is an allowlisted parse
+   gap: it puts `then` inside the block), `send … with bubbles` — each now
+   has an example, which is also what makes the AST-equivalence corpus and
+   the documented-examples gate see the form. (3) **Eleven reads that only a
+   hand-built node can satisfy** — `copy.format`, `if.then/else`,
+   `pick.from/flags`, `repeat.block/commands`, `take.on`,
+   `wait.for/from/or` — banked in `KNOWN_UNEMITTED` with reasons, shrink-only.
+   Each is the missing-half shape at rest: a `parseInput` branch no real
+   parse reaches, kept alive by the fixtures that exercise it (`wait` has
+   five, `take` and `pick` four each). They are deletions with fixture
+   reshapes, one PR, after this lands. `pick.flags` is the odd one: the
+   parser DOES emit it, for a `| <flags>` regex form the syntax list never
+   documented — a docs decision, not a dead read.
+
+   **The bank emptied (2026-09-03).** The eleven hand-built-only reads are
+   deleted: `copy.format`, `if.then/else`, `pick.from`, `repeat.block/
+commands`, `take.on`, `wait.for/from/or` — `wait` loses `parseEventWait`
+   and `parseRaceCondition` whole, since only the deleted branches called
+   them, and its two guards (event name must be a string; a `from` target
+   must be an EventTarget) move onto the real path, `parseEventArrayWait`,
+   where the second is a small behaviour change: a non-EventTarget `from`
+   now throws instead of silently falling back to `me`. **Census 2,110 →
+   2,085 lines · 323 → 313 branches · 202 → 184 value sites** (wait 105 →
+   93, pick 53 → 50, and repeat/take/copy/if). What the fixtures had been
+   hiding: `wait-new-features.test.ts` — 40 tests for the race, destructuring
+   and `from` forms — was written ENTIRELY against the hand-built
+   `for`/`or`/`from` slots, so its 22 parseInput cases had never once
+   exercised the shape the parser emits. Rewritten to parse each test's own
+   source string (`realInput('wait for click or 1s')`), which found two more
+   things: three tests described a time-first race, `wait 2s or for click`
+   and `wait 500ms or 1s`, that NO parser has ever produced — the parser
+   reads it as a binary `or` expression — now pinned as a KNOWN GAP instead
+   of green fiction; and the per-test evaluator mocks were keyed on the old
+   hand-built `value`s and blind to identifier nodes (`from window`, `from
+customElement`). The `pick from <expr>` documented example is in the same
+   family: it parses positionally (`[from, colors]`), evaluates `from` as a
+   variable, and its runtime branch was the deleted `modifiers.from` read —
+   a docs defect for `PARSER_NEXT_STEPS.md`, not a parser fix. A trap for the
+   record: the first conversion script matched `or:` inside `for:` and every
+   `for` fixture grew a phantom `or <event>` — word-bound the keys.
+
+   **Typed slots (2026-09-03) — the static half of step 2, before any typed
+   node.** `parser/command-slots.ts` is ONE declared table, `COMMAND_SLOTS`:
+   the slot keys each of the 59 commands can carry, and the type behind
+   every `parseInput`'s `raw`: `CommandRaw<K>` types `modifiers` as
+   `Partial<Record<SlotKey<K>, ExpressionNode>>`, where `SlotKey<K>` is the
+   row plus the four generic keys the parser attaches anywhere (`when`,
+   `where`, `debounce`, `throttle`). All 48 inline `raw: { args; modifiers:
+Record<string, …> }` signatures now read `raw: CommandRaw<'toggle'>` (a
+   base-class body takes the union it serves: `'append' | 'prepend'`,
+   `'show' | 'hide'`, `'break' | 'continue' | 'exit'`; `swap` serves
+   `'swap' | 'morph'`). A read of a key outside the row is a COMPILE error —
+   the check the parity gate does at test time, moved to `tsc`. The table is
+   declared, not derived (it is a type), and not trusted:
+   `command-slots.test.ts` pins every row in both directions to the union of
+   what the core parser emits over the command's documented examples, what
+   the semantic descriptor emits, and what the command reads; phantom keys
+   (declared, nothing emits or reads) are banked with reasons, shrink-only —
+   today `put`'s four operation keys and `repeat`'s five loop keys that no
+   documented example reaches, `pseudo-command`'s six prepositions (it is
+   constructed, never parsed), and `copy`'s `to clipboard` marker that
+   nothing reads. The first `tsc` run produced eleven errors, and each was
+   the intended kind: `repeat` read `m.forever` (never emitted — the form
+   arrives as `loopType: 'forever'`; deleted), a `toggle` fixture and the
+   temporal helper used `until`/`from` that the read census had missed
+   because the helper takes `raw.modifiers` whole (rows extended, and
+   `toggle .loading until click from #done` is now a documented example),
+   `swap` read `morph`'s `on`, `put` indexed by an untyped string, and three
+   `pick` reads (`count`, `regex`, `rangeStart`) that the type correctly
+   calls optional — now `evaluateSlot(...)`, which throws naming the slot
+   instead of evaluating `undefined`. Two meter notes: the read census only
+   sees `modifiers.<key>` spelled out, so a helper that takes `raw.modifiers`
+   whole hides its reads (the table test covers that gap from the emitter
+   side); and `pick`'s value-site count fell 22 → 19 only because three
+   `evaluator.evaluate(` calls moved inside `evaluateSlot` — the meter
+   counts the spelling, not the evaluation. What step 2 still owes: the
+   typed `args` (per-command positional shapes) and the node itself
+   (`CommandNode<K>`), which this table makes a mechanical extension.
+
+   **The emit side (2026-09-03).** `CommandNodeBuilder<K>`: `withModifier`
+   takes `SlotKey<K>` and `withModifiers` a `SlotMap<K>`, and each of the 26
+   dedicated parser functions names its command on the builder
+   (`CommandNodeBuilder.fromIdentifier<'toggle'>(id)`) and on its local
+   modifier map — a slot key a PARSER writes outside the row is a compile
+   error, the twin of the read side. The default `K` is every command's
+   keys, so a builder that names none is checked against the union and
+   nothing outside the dedicated parsers changed. The one dynamic write, the
+   declared parser's `modifiers[marker]`, is a cast pinned by a new static
+   test: every grammar row's `markers` ⊆ its slot row. `tsc` found two
+   things: the builder's `build()` handing a narrowed map to the wide public
+   `CommandNode.modifiers` (a cast at the one boundary, the node's shape is
+   unchanged), and `put` writing its operation word from an untyped keyword
+   list. Zero AST-equivalence rows moved; type-escapes unchanged at 891.
+   With both sides typed, the slot layer of step 2 is closed; `args` and
+   `CommandNode<K>` remain.
+
+   **Step 3 tail: `process` and `halt` (2026-09-03).** The arity census
+   (every command's documented examples parsed, `args` kinds per position)
+   named the commands still carrying SYNTAX positionally. Two were marker
+   words: `process partials in <content>` parsed as `[partials, in,
+content]` with the command re-finding both by name, and `halt the event`
+   as `[the, event]`. `process` now emits `args: [content]` — the shape
+   `processSchema`'s descriptor always produced — and its `parseInput`
+   reads `args[0]`; the `using view transition` word-scan went too (the tail
+   has been the `viewTransition` slot on both paths since #1064). `halt`'s
+   `the [event]` is the `the` slot, a literal `'event'`; `haltSchema`'s
+   descriptor moved with it (`ast: { args: [], modifiers: { the: 'patient'
+} }`, mapper-parity fixture regenerated, a `contract` exemption in the
+   shape-consistency gate because `the` is the article the schema SKIPS, not
+   a patient marker), so both paths emit one shape and core's role inferrer
+   reads it in reverse. The argument-side article read — `firstArg.name
+=== 'the' || firstArg.value === 'the'`, kept for the retired i18n
+   transformer's literal — is deleted with its test. **Census: process 81 →
+   44 lines · 13 → 5 branches · S 2 → 1; halt 29 → 19 · S 3 → 1 · V 1 → 2
+   (the slot read is counted as a value site — the meter trades a syntax
+   site for one, which is the migration's whole point); totals 2,038 lines ·
+   305 branches · 73 syntax sites.** Six AST-equivalence rows moved (three
+   each), reviewed; type-escapes 891 → 890. Still positional and NOT marker
+   words — left for the typed-`args` step, not this one: `measure <el>
+<property>` and `transition <el> <property>` (the property word is a
+   genuine operand the command disambiguates from a target), `install`'s
+   name + params, `js`'s code + params, `pick`'s array. And two commands
+   whose syntax hides in VALUES the census cannot see: `go` (`to`, `the`,
+   `url`, `back`, `of`, `in new window` scanned after evaluation) and
+   `scroll` (`top`/`bottom`/`smoothly`) — their own PR.
+
+   **`scroll` (2026-09-03) — the census-blind case.** Its parser pushed
+   every keyword as a STRING node and the command matched the evaluated
+   values — `args.includes('smoothly')`, `args.find(a => a === 'up' || …)`,
+   a 14-word skip list to find the target — so the census read `12 lines ·
+S 0` for a command whose whole syntax lived in `execute`. `parseScrollTo`
+   / `parseScrollBy` now emit `position`, `of`, `behavior`
+   (`'smooth'`|`'instant'`), `direction` and a signed `by` (the `px` unit
+   consumed), the target the one positional argument; `ScrollCommandInput`
+   is `{ target, position?, behavior?, direction?, offset? }`, resolved in
+   `parseInput`, consumed by `execute` (the file shrank 254 → 195 lines).
+   `in` is deliberately NOT a slot: `scroll to last <.message/> in #chat`
+   is one positional `in` expression, as upstream reads it — the old
+   collector split it into `[to, last…, in, #chat]`, and upstream `scroll`
+   has no container clause. The meter, honestly: **scroll 12 → 44 lines ·
+   S 0 → 1 · V 1 → 4** — the row GROWS because ~80 lines of execute-side
+   value scanning became a `parseInput` the meter counts; that is the
+   migration doing what it is for, and the baseline was regenerated with
+   that reason. Four AST-equivalence rows moved. AOT's `ScrollCodegen`
+   reads the `behavior` slot beside the semantic path's `smooth` flag.
+   `go` is next, same shape: `back` (a flag), `url`, `in` (`new window`),
+   `position`, `of`, `behavior`, `by`, with the bare URL or element the
+   positional argument — which is also what the hybrid bundle's `go`
+   template and `goSchema`'s `args: ['destination']` already emit.
+
+   **`go` (2026-09-03), same shape, one more lesson.** `parseGoCommand`
+   emits `back`/`forward` (flags), `url`, `in` (`'new window'`),
+   `position`, `of`, `behavior` and a signed `by`; the bare URL or element
+   is the one positional argument. `GoCommandInput` is a three-way union
+   (history | url | scroll) built in `parseInput`; `execute` consumes it and
+   the nine value-scans (`args.findIndex(arg => arg === 'url')`,
+   `args.includes('new') && args.includes('window')`, the skip-list target
+   search) are gone. The lesson: a destination is parsed as a PRIMARY,
+   never an expression — the first draft used `parseExpression` and `#el +
+50` folded into a binary plus (the offset vanished), `myUrl in new
+window` into a positional `in` expression (the window clause vanished);
+   `go`'s grammar has no expression operands, so `parsePrimary` is the
+   honest reader, with a progress check. Two consumers outside the command:
+   the interchange's hand-written `go` role mapper (`from-core.ts`) learned
+   the slot shape beside the flat one it keeps accepting from the hybrid
+   bundle's template and `buildAST` (both still emit `[url, '/page']` —
+   Arc 5's boundary), and AOT `GoCodegen` reads `back` and `url`. Two
+   documented forms added (`in new window`, `smoothly`), which is what makes
+   the AST corpus and the slot-table gate see them; `by` and `forward` are
+   banked phantoms with reasons. **Census: go 14 → 40 lines · S 0 → 1 · V 1
+   → 6**, the same honest growth as `scroll`. Five AST-equivalence rows
+   (three moved, two added). With `go` and `scroll` done, no command's
+   syntax lives in evaluated values any more; what `args` still carries is
+   positional by construction (measure/transition's property word, install's
+   name + params, js's code + params, pick's array, the block bodies) — the
+   typed-`args` step's material, and the end of step 3.
+
+   **`CommandNode<K>` and the arity table (2026-09-03).** `ast/nodes.ts`'s
+   `CommandNode` is generic over its command's slot row —
+   `CommandNode<K extends SlottedCommandName = SlottedCommandName>` with
+   `modifiers?: Partial<Record<SlotKey<K>, Expr>>` — the node-side third of
+   the typed-slot story (read side `CommandRaw<K>`, emit side
+   `CommandNodeBuilder<K>`, now the node). The default `K` is every
+   command's keys, so the 42 files that name `CommandNode` compile
+   unchanged; the seven keys read outside `commands/` (`when`, `where`,
+   `debounce`, `throttle`, `on`, `to`, `from`) are all in the union. The
+   layering ratchet earned its keep: `ast` (layer 1) importing the table
+   from `parser` (layer 2) was an upward edge, so `command-slots.ts` moved
+   to `ast/` and its 61 importers were repointed by computed relative path
+   — the tables were always node-level facts, not parser ones. `args` is
+   still `Expr[]`: the positional arity is a declared table instead,
+   `COMMAND_ARITY` (`[min, max | null]` per command), pinned by
+   `command-arity.test.ts` to what the parser emits over the documented
+   examples and to the highest `raw.args[i]` each `parseInput` reads —
+   which found `toggle` reading `args[1]` for the semantic path's split
+   `*display` form (declared `[0, 2]` with the reason). A tuple type per
+   command is the remaining step-2 item, and the table is its input.
+
+   **`ArgsOf<K>` (2026-09-03) — the tuple type, and step 2 is closed.**
+   `CommandRaw<K>['args']` is now the union of tuple lengths its
+   `COMMAND_ARITY` row allows (`TupleRange<ASTNode, 0, Max>`, a plain array
+   for a variadic row), derived at the type level from the same table the
+   arity test pins. The lower bound is 0 on purpose: a command's "requires
+   an argument" guard is real code for a hand-built or foreign node, so what
+   the type forbids is exactly a read at or beyond the row's max. What the
+   first `tsc` run said (94 errors, 53 with the zero floor): nineteen
+   `evaluate(raw.args[0])` sites read a possibly-absent element behind a
+   `.length` guard the type cannot see across a tuple union — each now
+   reads through a guarded local (`const [first] = raw.args; if (!first)
+throw …`); `swap`'s front-end flat-shape branch typed `never` under a
+   `[1, 1]` row, which is the type saying the branch is unreachable from
+   the core parser — true, and it stays because `buildAST` and the hybrid
+   template still emit `[method?, target, content]` until Arc 5, so
+   `swap`/`morph` are `[1, 3]` with that reason; `async` is variadic; and a
+   dozen fixtures were shapes the parser cannot produce — the last flat
+   `toggle` forms, `swap-variable`'s five-word list, `return`'s "only the
+   first of many" — reshaped or deleted. The meter: `put` 3 → 4 and
+   `pseudo-command` 6 → 7 syntax sites because an `args.length >= N`
+   compare (uncounted) became an `args[N]` read (counted); four rows +1
+   line for a guard; `settle`/`halt`/`copy`/`throw` lose their `args[0]`
+   read to a local. With slots typed on three sides and `args` typed by
+   arity, step 2's typed node is done in substance; what remains of the
+   original wording — `ToggleNode` as `ToggleCommandInput` with `Expr`
+   slots — would be a rename of what `CommandRaw<'toggle'>` already is.
+   Step 4 and step 1 landed earlier; step 5 is closed; step 3 is closed.
+   **Arc 3 is complete** except the semantic front-end's own emission of
+   these shapes, which is Arc 5's boundary work.
+
    toggle, swap, put, repeat, set, pick, pseudo-command, process, take, add,
    trigger, remove, install, transition, default, if, measure, clear, js,
    render, then the tail. Largest-first because the big ones are where the
@@ -743,21 +1581,88 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    red gate — (d) update semantic's `buildAST` mapper for the command and
    regenerate `check:mapper-parity`'s fixture in the same PR (cross-package,
    same PR: a split lands one half green and the other broken).
-4. **The 28 generic-loop commands** get a declared grammar instead of the
-   loop. **Decision to record in the brief:** (a) a core-local arg spec per
+
+4. ~~**The 28 generic-loop commands**~~ **The 25 generic-loop commands
+   (measured 2026-09-02) — 23 through `parseCommandCore`'s own tail loop and
+   2 (`push`, `replace`) through `parseRegularCommand`, because there are
+   TWO generic loops, not one** — get a declared grammar instead of the
+   loop. ✅ **DONE 2026-09-02 for the 23 (+ the 4 multi-word commands), option
+   (a).** `parser/command-grammar.ts` is the table — one row per command:
+   a positional rule (`expression` for the 23, `primary` for the four that were
+   `MULTI_WORD_PATTERNS`, `none` for the argument-less five), the marker words
+   that open a slot, and the syntax string — and
+   `command-parsers/declared-commands.ts` is the ONE parser that reads it.
+   The tail loop, its `continuationKeywords` array, `parseMultiWordCommand`,
+   `MULTI_WORD_PATTERNS`, `getMultiWordPattern` and the `MultiWordPattern`
+   type are deleted. `command-routes.test.ts` pins that the dedicated set and
+   the grammar's keys partition `COMMAND_NAMES` exactly (tolerance 0): every
+   command has one route and no command has two. `push`/`replace` stay on
+   `parseRegularCommand` via the compound switch's `default` — their
+   `with title <expr>` is a two-word marker the row shape does not have yet.
+
+   **Why (a), measured.** The schemas describe the same commands from the
+   other side (`svoPosition` 108 sites, `markerOverride` 47, `argSkipTokens`
+   8), in a role vocabulary the engine has no reason to know, across the
+   boundary Arc 1 draws. The parity the plan asked for in exchange is
+   `grammar-schema-parity.test.ts`: for every generic command, the grammar's
+   marker words are compared with the English markers the schema would bind,
+   and the **five** asymmetries are pinned by name with their reasons
+   (`copy`'s inert `to`, `get`'s unread schema `on`, `make`'s constructor
+   words, `open`'s `as` parsed inside the expression, and `settle`'s `for` —
+   which the front-end's schema cannot express at all: a front-end gap, filed
+   in `MULTILINGUAL_NEXT_STEPS.md`).
+
+   **Two defects the tail loop had, fixed by the shared boundary rule.** It
+   did not stop at `on`, and `parsePrimary` on `on` returns an event handler,
+   so a zero-argument command at the end of a handler body swallowed the NEXT
+   HANDLER as its argument — `on click focus\non keyup log 1` compiled to one
+   handler. And it stopped at every command word, so `call fetch("/x")` split
+   into an empty `call` and a `fetch` COMMAND that then ran; a command word
+   followed by `(` is now a call expression. `settle for 3000` — declared in
+   the command's own syntax, filed as a parser gap — parses. The
+   AST-equivalence baseline moved on exactly **7 rows**, each reviewed: the
+   three `default … to …` examples (`to` is now a `modifiers` slot, which
+   DefaultCommand already read on the semantic path), `call fetch(...)`,
+   `settle for 3000` (fail → ok), and `blur`/`focus on <input/>` (ok →
+   fail, matching upstream's rejection; the documented-examples gate rows are
+   re-statused `no-parse`). `CommandSequence` left the corpus vocabulary pin:
+   its only producer was the `call fetch` split.
+
+   **Deliberately NOT changed:** leftover tokens that are neither a boundary
+   nor a marker are left for the statement loop exactly as before, so
+   `log x y z` still parses `log x` and drops the rest in silence. Upstream
+   rejects the source; making it an error is filed in `PARSER_NEXT_STEPS.md`
+   as the follow-up, because it flips silent drops into errors across an
+   unmeasured set of pages. **Decision to record in the brief:** (a) a core-local arg spec per
    command module (`args: [{ slot: 'value', kind: 'expr' }, { marker: 'to',
-   slot: 'target' }]`) consumed by ONE generic parser, or (b) reuse
+slot: 'target' }]`) consumed by ONE generic parser, or (b) reuse
    `@lokascript/semantic`'s per-command schemas via `@lokascript/intent`.
    **Recommendation: (a)** — the schema is the front-end's description of the
    command and the engine must not import it (Arc 1), but a parity test
    asserts (a) and (b) produce the same typed node on the en corpus, the way
    `check:mapper-parity` already pins the mappers. Two sources with a gate
    beat one source across a boundary the plan is trying to draw.
+
 5. **Delete the mechanism.** `continuationKeywords`, the generic argument
-   loop, `KEYWORD_PREPOSITIONS`, `filterPrepositions`, `fallbackModifierKey`,
-   `resolveTargetsFromArgs`'s AST-walking half — each when its caller count
-   reaches zero (a test per list, ratcheted). `COMPOUND_COMMANDS` becomes "all
-   commands" and is deleted with `isCompoundCommand`.
+   loop, ~~`KEYWORD_PREPOSITIONS`, `filterPrepositions`~~ (✅ deleted
+   2026-09-02 — see the step-5 History entry; the deletion needed one more
+   step-3 migration first, `add`/`remove`), `fallbackModifierKey` (**stays**:
+   it IS the slot read — `resolveTargetsFromArgs(target ? [target] : [])`
+   after the filter went is the same function minus the filter, and the key
+   names which slot a command's target lives under), `resolveTargetsFromArgs`'s
+   AST-walking half — each when its caller count reaches zero (a test per
+   list, ratcheted). ~~`COMPOUND_COMMANDS` becomes "all commands" and is deleted
+   with `isCompoundCommand`.~~ ✅ **Retired 2026-09-03** — not as "all
+   commands" but as a TABLE: `COMPOUND_COMMAND_PARSERS` in
+   `utility-commands.ts`, one row per dedicated parser; a command is dedicated
+   iff it has a row. The expression-path copy of the generic loop
+   (`createCommandFromIdentifier`) went with it. ~~`parseRegularCommand` remains
+   for two fallbacks (`scroll <dir> by <n>`, non-`partials` `process`).~~
+   `parseRegularCommand` deleted 2026-09-03 (three fallback callers, not two —
+   `pick`'s legacy forms were the third); the fallback is the declared parser
+   with a primary-collecting row. `continuationKeywords` survives only as the
+   plugin row's `continuation` words — designed behaviour for commands the
+   manifest does not know, not a leftover.
 
 Gates: the classification audit (ratchet to 0); `command-output-contract`
 (both paths — until Arc 4 deletes one); `compound-command-coverage`;
@@ -771,7 +1676,15 @@ Blast radius: semantic's mappers (cross-package PR pairs, ~50 of them);
 OLD shape until Arc 5 — the `runtime-base.ts` adapter converts; the
 `ast-utils` visitor/query/transformer see per-command `args` (they already
 duck-type `args`, so they keep working — add a test that they do); LSP
-completions and `reference/index.ts` are metadata, untouched.
+completions and `reference/index.ts` are metadata, untouched. **Two consumers
+this list missed (measured 2026-09-02): `aot-compiler` reads `.args` 52
+times — `transforms/command-transforms.ts` alone 34, switching on 21
+preposition/unit literals — and `vite-plugin/src/compiler.ts` 12 times. Both
+break on a per-command `args` shape and belong in each command's PR.** And the
+mapper half is smaller than "~50 pairs" implies: Arc F already moved 43 of 47
+mappers to schema `ast` descriptors, so a command's cross-package change is a
+descriptor line plus a fixture regen; 15 manifest commands have no mapper at
+all, and `pseudo-command`/`start` have no schema.
 
 ### Arc 4 — Compile to closures · one control-flow protocol · typed Scope (large)
 
@@ -789,7 +1702,118 @@ path are deleted (no test sets it `false`; one references it). Step 1 is the
 `{top-level, inside if, inside repeat, inside tell, inside def, inside a
 handler with catch, with finally}` — 35 rows pinning today's observable
 behaviour (which is the spec; upstream parity where they disagree is a
-separate decision, filed not fixed). Step 2 migrates; step 3 deletes.
+separate decision, filed not fixed). ✅ **Step 1 DONE 2026-09-03** —
+`runtime/__tests__/control-flow-matrix.test.ts`, recorded once (a `mark()`
+recorder global; each cell is the mark sequence plus `rejected:<message>`)
+and pinned. What the matrix says about today, filed here for step 2's
+`Completion` to decide on, not fixed: (1) **`return` outside a `def` is a
+no-op** — `on click … return "v" then …` keeps running (`a b`), in every
+context but `def`; upstream ends the handler. (2) ~~**Every signal inside
+`tell` escapes as a rejection**~~ wrapped in "Command execution failed in
+tell block: HALT_EXECUTION" — `tell`'s per-command catch re-wrapped every
+error, control flow included; **fixed the same day** (a control-flow error
+passes through), and the `tell` column now matches top-level. (3) ~~**Every signal inside a
+called `def` rejects the handler with `null`**~~ — `installFunction` threw
+`asControlFlowError(result.error)` on a signal OBJECT, which is `null` for
+anything that is not an `Error`; **fixed the same day** (`signalToError`),
+and the matrix's `def` column now matches top-level — the pin moved, which
+is the matrix doing its job. (4) `catch` never sees a signal and
+`finally` always runs (right); `break`/`continue` outside a loop reject the
+handler with their bare message. (1)–(3) are the strongest argument for
+`Completion`: three call boundaries, three different ways of losing a
+signal that was never an exception. Step 2 migrates; step 3 deletes.
+**Step 2, first half, DONE 2026-09-03:** `Completion<T> = T |
+ExecutionSignal` in `types/result.ts`; the five signal commands RETURN
+their signal (`{ type: 'halt' }` …) instead of throwing, their output
+types are the signal types, and the runtime's two dispatch paths route a
+returned signal — `processCommandWithResult` as `err(signal)`,
+`processCommand` (the non-Result path) by converting at the boundary with
+`signalToError`, so every caller that still speaks exceptions sees what it
+saw before. The matrix did not move (35 cells, same pins); the five command
+suites assert the returned signal; type-escapes 890 → 884 (the `(error as
+any).flag = true` casts went with the throws). Second half: the callers —
+`executeProgram`/`executeBlock`'s halt loops, `installFunction`, `tell`,
+`repeat`'s message-string catch, `evaluateASTWithResult` — read
+completions instead of catching; then step 3 deletes the conversions.
+**Step 3, first slice, DONE 2026-09-03:** `enableResultPattern` and the
+exception-speaking twins it guarded — `processCommand`,
+`executeCommandFromPattern`, `executeCommandSequence`, and the four
+`if (this.options.enableResultPattern)` branches in `execute()` — deleted;
+no caller ever set it `false` and one test only mentioned it, so the
+Result path was the only path. The implicit `add .class` pattern in
+`evaluateExpression` moved onto `processCommandWithResult`. Matrix
+unchanged. What step 3 still owes: `signalToError` at the `execute()`
+boundary (the callers still catch), `toSignal`'s and
+`isControlFlowError`'s message-string branches, `asControlFlowError`, and
+`repeat`'s `error.message.includes('BREAK')` catch — each falls when its
+caller reads completions (step 2's second half).
+**Step 3, second slice, DONE 2026-09-03:** every remaining producer of a
+control-flow error sets its flag (`signalToError`; the hybrid executor's
+`halt`/`exit`), so `isControlFlowError`'s and `toSignal`'s
+`message === 'HALT_EXECUTION'` / `'EXIT_COMMAND'` branches and
+`evaluateASTWithResult`'s twins were dead by construction — deleted, with
+the five tests that pinned message-only detection; the signal commands'
+`errorMessage`/`errorFlag` fields (dead since they return signals) and
+`repeat`'s `error.message.includes('BREAK')` catch (now the flags via
+`asControlFlowError`) went too. Left for the second half: `signalToError`
+at the `execute()` boundary and `toSignal`/`asControlFlowError`
+themselves, which fall when the callers read completions.
+**Step 2, second half, DONE 2026-09-03 — the decision was made the same
+day (upstream's rule, measured on 0.9.93 in jsdom) and the boundaries are
+written down once:** a signal travels up until the nearest boundary that
+CONSUMES it. Loop: `break`/`continue`. Function (`installFunction`):
+`halt`/`exit`/`return` — the call yields `undefined` or the value, the
+caller continues. Handler (`createEventHandler`'s loop): `halt`/`exit`/
+`return` end the handler, the value dropped. Program (the public
+`execute()` — the API's eval, observer bodies, behavior init): `return`
+hands its value to the caller (the embedded-evaluator use #235 was for),
+`halt`/`exit` end the program and RESOLVE. Everything else passes through;
+`break`/`continue` reaching a function, handler or program stay errors.
+Mechanically: `execute()` split into the boundary wrapper and
+`executeNode` (the dispatcher, which structural callers — the statement
+loops, `_runtimeExecute`, the handler loop — use), the command arm no
+longer turns `return` into a value, and `executeProgram` consumes a
+`return` like the boundary does. The matrix moved EXACTLY the eight target
+cells: the six `return` rows outside `def` (marks stop at the return) and
+the two `halt`/`exit` rows inside `def` (gain `c`); two API-level tests
+that pinned `execute()` rejecting on `halt` now pin it resolving. What
+step 3 still owes: `signalToError` (the seam between Results and the
+thrown form the loops still speak), `toSignal`, `asControlFlowError` —
+each falls when the loops and `executeBlock` read Results directly.
+**Step 3, last slice, DONE 2026-09-04 — Arc 4a's step 2 and step 3 are
+CLOSED:** the loops read Results. `executeNode`, `executeProgram` and
+`executeBlock` return `ExecutionResult`; the handler loop, the two observer
+loops, the statement loops, `installFunction`'s `run` and the public
+`execute()` boundary each consume the signals they own and hand the rest
+up; `_runtimeExecute` gives the four body-running commands (`if`, `repeat`,
+`tell`, `start view transition`) a Result and they return a signal as their
+completion (`repeat`'s loop executor consumes `break`/`continue` and
+carries the rest out in `LoopResult.signal`). Deleted: `signalToError`,
+`toSignal`, `isControlFlowError`, `asControlFlowError`, the
+`ControlFlowError` type, `tell`'s and `repeat`'s control-flow catches, the
+loop executor's `message.includes('BREAK')` catch, `command-adapter`'s
+logging gate. The only thrown form left is `StrayControlFlowError` — a
+`break`/`continue` reaching a function, handler or program boundary, which
+is an authoring error and is thrown as one (the handler's `catch` declines
+it by class, as it declined the flagged error before). Matrix: 35 cells,
+none moved; the twelve stray cells re-pinned from `BREAK_EXECUTION` to
+`'break' used outside of a loop`. Found on the way (#1085's amendment): the
+`on mutation`/`when … changes` observer loops ran each body command
+through the PUBLIC `execute()`, so under the step-2 boundary a `halt` there
+resolved and the body ran on — the matrix has no observer row, so add one
+before touching those loops again. Hand-built test mocks of
+`_runtimeExecute` (5 files, 30 sites) returned bare values and were adapted
+to the contract with an explicit helper rather than loosened in the
+command. Type-escapes 884 → 880. Arc 4b's `compile` seam replaces the
+`_runtimeExecute` channel itself.
+~~**Decision needed before the second half (owner):**~~ **Decided:** the matrix pins today's
+semantics at the `def` boundary — `halt`/`exit` inside a called `def` stop
+the CALLING handler too (`a f`, never `c`), and `return` outside a `def` is
+a no-op — while upstream ends only the function for `exit`/`return` and
+ends the handler for `return` at top level. The second half is where
+those boundaries get their `Completion` handling written down once, so
+the choice (keep today's rows, or move to upstream's) must precede it;
+either way the matrix cells move visibly and the PR states which.
 `throw` becomes the only exception and the `catch`/`finally` paths in
 `installFunction` and `executeEventHandler` are re-derived against the matrix.
 
@@ -811,7 +1835,65 @@ a REGRESSION guard here — closures must not make execution slower — and take
 the arc's justification from what it DELETES: the `ContextBridge` per-command
 copy, the `_runtimeExecute` channel, and the dual execution paths.
 
-**4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
+**Step 0 DONE 2026-09-04** (brief: `HANDOFF-engine-arc4b.md`): the hot-path
+numbers are a committed baseline, `packages/core/scripts/bench-snapshots/hot-path-baseline.json`
+(4 rows, hz), checked by `npm run bench:check --prefix packages/core`
+(`scripts/bench-baseline.mjs`, one-sided, −15 % fails, `--update` regenerates).
+It is a LOCAL gate like `snapshot:bundle-size`; whether it runs on PRs in CI is
+the brief's decision 5 and is not wired. ~~The `ASTCache`'s key is `lang\0trad\0code`~~
+(four parts — the `semantic` flag is the third); the output-contract gate does
+NOT collapse under 4b (its 29 disagreements are the initial-value family,
+which 4c's `Scope` owns); and the `ContextBridge` copy is 4c's deletion, not
+4b's — all three corrected in the brief.
+
+**Steps 1 and 2 DONE 2026-09-04 (one PR), on the brief's five decisions —
+all taken as recommended:** (1) the Op protocol is `ExecutionResult`, no
+`{ kind: 'normal' }` object; (2) statements only, expressions stay on
+`evaluateAST`; (3) the three API-only body shapes are deleted; (4) `async` is
+listed for 6b; (5) the bench guard stays local. Mechanically: `types/program.ts`
+declares `Op = (ctx) => Promise<ExecutionResult>`, `Program` and `BodyOps`;
+`RuntimeBase.compile(node)` binds a node to an `Op` ONCE, memoised in a
+`WeakMap` on the node object — so the API's cached ASTs yield cached closures
+and a handler body compiles on its first event — and `executeNode` is now
+`prepareContext` + `compile(node)(ctx)`. A `command` node compiles its
+`block`/`command` arguments and hands them to the adapter as `raw.bodies`,
+parallel to `args`; `if`/`unless`, `repeat`, `tell` and `start view transition`
+read them through `commands/helpers/body-ops.ts` and run closures. The
+`_runtimeExecute` channel, the four commands' body-shape branches (functions,
+`{ execute }` objects, echoed values, the AST re-entry), `repeat`'s
+`executeCommands`, `tell`'s `executeCommand` and the loop executor's
+`executeCommands` callback are gone; `executeLoop` takes the body `Op`. One
+behaviour the matrix caught on the way: the compiled `block` consumed `halt`
+as `executeBlock` did, but `if`/`repeat` bodies never went through
+`executeBlock` — only an `initBlock` consumes it now. Matrix 35 cells, none
+moved. Type-escapes 880 → 870. Bench within tolerance (execute-only −2 %,
+noise). The six hand-built suites keep their fixtures with a test-local
+stand-in for the compile step (`testBody`/`rawWithBodies`), which is honest
+about what it is — the runtime's own path is pinned by the matrix and the
+core suite, not by those mocks. Still owed by 4b: step 3 (handlers, `def`,
+behavior init compile their bodies at registration — the memo already binds
+them on first run, so this is a deletion of `runCommands`'s per-command loop,
+not a speed-up), step 4 (`ASTCache` → Program cache; eviction test), and the
+optional per-command `compile` tail (claim 6 predicts nothing lands).
+
+**Steps 3 and 4 DONE 2026-09-04 — Arc 4b's numbered steps are CLOSED; only
+the optional per-command tail remains.** Step 3: a handler's three bodies
+(`on … catch … finally`) compile once in `createEventHandler`, at
+registration, and a `def`'s three in `installFunction`, at installation, via
+`compileSequence` (a plain sequence Op: first signal returned, nothing
+consumed); the per-command `runCommands` loop is gone and each event runs
+one closure. Step 4 was FALSIFIED by the design and is recorded as such: an
+`Op` closes over the runtime that compiled it, so a program cannot live in
+the module-global `ASTCache` (many runtimes, one cache) — the Program cache
+is the runtime's own memo, and the AST cache's job is to return the SAME
+node object for the same source, which is what makes the memo hit.
+`compile-memo.test.ts` pins both halves (same node → same Op; distinct
+node → distinct Op; the cached AST's Op is stable across compiles; two
+runtimes never share an Op), and `ast-cache.test.ts` finally crosses the
+500-entry boundary (LRU: a touched entry survives the overflow, its
+neighbour is evicted). Matrix 35 cells, none moved.
+
+**4c — `Scope`.** _Opened 2026-09-04 by [HANDOFF-engine-arc4c.md](./HANDOFF-engine-arc4c.md) — nine claims re-measured (four hold, two false, three incomplete); read it before the first 4c PR._ Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
 flow is `Completion` now); `enhanceContext`'s `Proxy` is deleted after step 1
 measures that no production caller registers a context provider (2026-08-30:
@@ -824,9 +1906,68 @@ through `HyperfixiPluginContext.runtime`, which they already receive. Gate: a
 ratchet (this is the arc that removes `expressions → parser/extensions` and
 `commands → parser/extensions`).
 
-Blast radius: `ExecutionContext` is exported and used downstream as a type
-(reactivity, realtime, components). Keep it as an alias of `Scope` for one
-release. `createContext`/`createChildContext`/`ensureContext` keep their
+**Step 1 DONE 2026-09-04** (the brief's step 0 measurements folded in): the
+three write-only bridge fields (`expressionStack`, `evaluationDepth`,
+`validationMode`), the dead `meta` and `events`, and the never-read
+control-flow flags (`halted`/`returned`/`broke`/`continued`/`async` and the
+`flags` object — dead since Arc 4a made every signal a Result) are gone from
+`ExecutionContext`/`TypedExecutionContext`, `ContextBridge`, the context
+factories (`createContext`/`createChildContext`/`snapshot`/`restore`/`clone`;
+`ensureContext` no longer keys "already valid" on `flags`), the two
+compatibility adapters, the test helpers and 26 test files that carried the
+literals. `TypedExecutionContext` now adds ONE field, `evaluationHistory`,
+which step 2 moves onto the runtime — and then the bridge has nothing left
+to add. Core 7975, matrix unmoved, output-contract unmoved, bench within
+tolerance.
+
+**Step 2 DONE 2026-09-04 (decision 2 taken as recommended):** evaluation
+tracking is an opt-in sink — `expressions/shared/tracking.ts`
+(`setEvaluationTracker`/`getEvaluationTracker`/`isTrackingEvaluations`/
+`collectEvaluations`) — and the 24 comparison sites, `trackEvaluation` and
+`BaseExpressionImpl.trackPerformance`/`trackSimple` record into it, skipping
+the `Date.now()` pair when nothing listens. `evaluationHistory` is gone from
+the context, so `TypedExecutionContext` had nothing left to add and is now an
+alias of `ExecutionContext` (141 importers untouched); `TypedExpressionContext`
+likewise. Deleted: `ContextBridge` and the per-command `toTyped`/`fromTyped`
+copy in the adapter (the one default it supplied, `variables ??= new Map()`,
+stays as one line), `TypeSystemBridge`, `createTypedExecutionContext`,
+`isTypedExecutionContext`, `context-bridge.test.ts`. The three suites that
+asserted tracking through the context now install a tracker. **Measured on
+the bench guard: execute-only +8 %, `toggle` +11 %** — the first 4c change
+above noise, and the per-command cost the plan promised for 4b, credited
+here. Core suite green, matrix and output-contract unmoved, type-escapes
+870 → 869.
+
+**Steps 3, 4 and 5 DONE 2026-09-04 (one PR; decisions 3 and 4 as
+recommended) — Arc 4c's numbered steps are CLOSED.** Step 3: with zero
+providers registered — every production caller — `enhanceContext` returns
+the context; the `Proxy` exists only once a provider is registered
+(`runtime-integration-proxy.test.ts` pins both), so the five per-context
+allocations are gone. The `ContextProviderRegistry` API stays callable and is
+listed under Arc 6b (it is exported via `@hyperfixi/core/registry`; deleting
+it is a 4.0 surface change). Step 4: the scope read/write hooks and
+`setGlobal` moved to `core/scope-hooks.ts`; `parser/extensions.ts` re-exports
+them and its `register*Hook`/`snapshot`/`restore` delegate, so reactivity's
+wiring is untouched; `expressions/special` and `commands/helpers/variable-access`
+import from `core/` — the layering allowlist ratcheted 14 → 13 upward edges
+(the `core → parser` row is gone). The three node-writer edges into
+`parser/extensions` are a different registry and are FILED, not moved (Arc 7
+or 6b). Step 5: the interface is `Scope`, `ExecutionContext` is its alias on
+the public surface (`Scope` exported too), and `types/__tests__/scope-shape.test.ts`
+pins the twelve keys at the type level and the seven `createContext` builds.
+Target item 5's `child()`/`elementVars()` METHODS are struck: contexts are
+spread in four places, so the free functions (`createChildContext`,
+`getElementVar`/`setElementVar`) are the shape. Bench: execute-only +3 %,
+compile+execute +14 %, `toggle` +11 % vs the step 0 baseline. Core 7973.
+Left in Arc 4c: nothing numbered; the `variables` migration onto `locals`
+(decision 1 kept it) is a behaviour arc if ever wanted.
+
+Blast radius: ~~`ExecutionContext` is exported and used downstream as a type
+(reactivity, realtime, components).~~ Measured 2026-09-04 (the 4c brief):
+reactivity, realtime, intercept and components each declare their OWN
+structural `ExecutionContext`, deliberately, and only two test files import
+core's — a rename never reaches them, a SHAPE change does. Keep it as an alias
+of `Scope` for one release anyway: it is on core's public surface. `createContext`/`createChildContext`/`ensureContext` keep their
 names. `HyperfixiPluginContext` gains `runtime.globals` hooks; nothing is
 removed from it.
 
@@ -838,14 +1979,14 @@ Runs in parallel with Arc 3.
    was that the seven category modules are mostly per-expression `metadata` /
    `documentation` prose. They are not:
 
-   | Measured | |
-   | -------- | - |
-   | `expressions/` non-test lines | 7,385 |
-   | `metadata` + `documentation` prose in all of it | **224 (3.0%)** |
-   | …of which, in `logical/index.ts` | **224 — all of it** |
-   | expressions in `logical/index.ts` carrying those blocks | **3 of 25** |
-   | `trackEvaluation` call sites, whole tree | **31 — all in `logical/index.ts`** |
-   | `matchesWithCache` call sites | **2** |
+   | Measured                                                |                                    |
+   | ------------------------------------------------------- | ---------------------------------- |
+   | `expressions/` non-test lines                           | 7,385                              |
+   | `metadata` + `documentation` prose in all of it         | **224 (3.0%)**                     |
+   | …of which, in `logical/index.ts`                        | **224 — all of it**                |
+   | expressions in `logical/index.ts` carrying those blocks | **3 of 25**                        |
+   | `trackEvaluation` call sites, whole tree                | **31 — all in `logical/index.ts`** |
+   | `matchesWithCache` call sites                           | **2**                              |
 
    So **Arc 7's entire surface is one file.** The prose is 21.7% of
    `logical/index.ts`, not "the rest" of it — that file is ~810 lines of real
@@ -864,12 +2005,59 @@ Runs in parallel with Arc 3.
    at runtime in exactly one place (`expressions/special/index.ts`, two
    `safeParse` calls) — the other readers are in `features/`, which Arc 6b
    deletes.
+
 2. **Move docs to generated JSON** beside `commands.json`, produced by the same
    generator with the same `--check` gate. The runtime objects keep `name`,
    `evaluate`, `precedence`, `operators`.
+   ✅ **The three stragglers' `documentation` blocks deleted 2026-09-03**
+   (144 lines, `logical/index.ts` 1,042 → 892; zero runtime readers, and the
+   reference docs are generated). `inputSchema` and `metadata` stay — the
+   former has its one runtime reader, the latter is the registry's.
 3. **`trackEvaluation` becomes opt-in**: a devtools wrapper installed by
    `DebugController`, not a `Date.now()` pair on every comparison.
-4. **Operators as table entries with `compile`.** `evaluateBinaryExpression`
+   **Half done 2026-09-03:** the 24 timing sites in `logical/index.ts` are
+   now uniformly guarded — 21 already spent `Date.now()` only when the
+   context carries `evaluationHistory` (a test/devtools context), and the
+   last three (`is`, `and`, `matches`) paid it on every evaluation; they
+   guard the same way. ~~The wrapper-in-`DebugController` shape is the
+   remaining half, and it can wait for Arc 7 step 4's table entries.~~
+   ✅ **DONE 2026-09-04 by Arc 4c step 2:** tracking is an opt-in sink
+   (`expressions/shared/tracking.ts` — `setEvaluationTracker`,
+   `collectEvaluations`); the 24 sites guard on `isTrackingEvaluations()` and
+   the context carries nothing. A `DebugController` convenience that installs
+   `collectEvaluations()` is a one-liner for whoever wants it; the hot path is
+   done.
+4. **Operators as table entries with `compile`.** **Brief steps 1 and 2 DONE
+   2026-09-04 (decisions 2 and 3 as recommended):** `special`'s `addition`
+   and `multiplication` — the raw-result pair — are deleted; every registry
+   (`createCoreRegistry`, `createCommonRegistry`, `createFullRegistry`, the
+   full kitchen-sink one, and the two `classic` bundles) now takes
+   `mathematical`, so `+`/`*` mean one thing everywhere and a non-finite
+   result is a failure in every bundle. `bundles/arithmetic-parity.test.ts`
+   pins the six arithmetic names to `mathematical`'s implementations in each
+   registry. `collection`'s never-registered registry shape (five
+   `ExpressionImplementation` objects whose `evaluate` threw "dispatched via
+   the AST node") is deleted; the direct-import path in `parser/runtime.ts`
+   is the documented one. Bundle-size gate: minimal −3.2 % gz, standard
+   −3.0 %, classic −2.1 %, full +1.1 % — all within ±5 % (the two deleted
+   classes outweighed the six they replaced). **Step 3 DONE 2026-09-04:**
+   the 23 core-set lookups outside the binary switch — `me`/`you`/`it`/
+   `result`/`window`/`document`/`elementWithSelector`/`closest`/`styleRef`
+   from `references`, `not`/`no`/`exists`/`doesNotExist`/`isEmpty`/
+   `isNotEmpty`/`between` from `logical` — are static references to the
+   category objects, which every registry-using bundle already ships (bundle
+   sizes unmoved). `getExpr` keeps 38: the binary switch's 28 (Arc 5's), the
+   names a small bundle may legitimately omit (`as`, `first`, `last`,
+   `possessive`) and the three dynamic lookups (`funcName` ×2,
+   `node.contextType`) — the registry is still, honestly, a function
+   namespace there. The `parser -> expressions` allowlist row grew 5 → 7 with
+   the reason recorded: this file is the evaluator filed under `parser/`, and
+   the edge leaves with it. The switch fold is Arc 5's.
+   _Re-measured 2026-09-04 by
+   [HANDOFF-engine-arc7.md](./HANDOFF-engine-arc7.md): the "fragments already
+   shake" premise is false (three fragments, always merged; the registry is
+   what shakes), so this step splits — the cheap half stays in Arc 7, the
+   binary-switch fold moves under Arc 5. Read the brief before starting._ `evaluateBinaryExpression`
    switches on the operator string and then calls `getExpr('equals')` — the
    registry is indirection over a switch that already knows the answer. Fold
    the switch INTO the Pratt entries (`{ token, bp, compile }`) so grammar and
@@ -905,8 +2093,40 @@ explicit stop**:
 
 Gates: bundle-size ceilings; the Playwright bundle-compatibility matrix;
 `generate:bundles:check` until it retires.
+**Spike inputs, measured 2026-09-03 (not started):** the hybrid parser is
+1,055 lines (`parser/hybrid/parser-core.ts`) plus 1,467 of parser
+templates; the full parser is 4,643 lines and its command parsers 4,348 —
+so "fragments" means those 4,348 lines minus the statement grammar, against
+a ceiling of `MAX_HYBRID=24000` gz (ci.yml) and today's snapshot
+(`scripts/bundle-snapshots/baseline.json`): lite 2,000 gz, lite-plus 2,692,
+hybrid-complete 11,376 (44,090 raw). The spike is a build experiment — one
+tsup entry that imports the command parsers and a minimal statement loop,
+gz-measured — and it is Arc 5's first and possibly only step.
 
-### Arc 6b — Delete exported dead code (small, needs 4.0)
+**Spike DONE 2026-09-04 — and it was the only step. Arc 5 CLOSES as
+"measured, not worth it."** Three esbuild builds (`--bundle --minify`,
+gzip −9), each a one-line entry under `compatibility/`, not committed:
+
+| entry                                                | raw      | gz         |
+| ---------------------------------------------------- | -------- | ---------- |
+| the full parser alone (`export { parse }`)           | 118.0 KB | **29,236** |
+| the nine command-parser files alone (the fragments)  | 39.1 KB  | **10,965** |
+| the Pratt table alone                                | 6.7 KB   | 1,812      |
+
+Against `MAX_HYBRID=24000` and today's hybrid-complete at 11,376 gz (parser
+AND executor AND runtime): the fragments by themselves — no statement loop,
+no tokenizer, no expressions, no executor — already weigh what the whole
+hybrid bundle weighs, and the full parser alone is over the ceiling by a
+fifth. No fragment selection can get under a bundle that is smaller than
+its own inputs. So, exactly as step 1 says: the hybrid parser stays as a
+second producer of the typed AST (Arc 2 types it, Arc E's generator keeps it
+in sync), the regex lite family stays hand-written, and this arc is a
+record. Consequence for Arc 7 step 4: the binary switch's registry lookups
+were to fold into table entries once "tiers are fragment subsets"; with no
+such tiers, the switch and `context.registry` STAY as the small bundles'
+shaking mechanism — filed as measured, not deferred.
+
+### ~~Arc 6b — Delete exported dead code (small, needs 4.0)~~ — DONE 2026-09-04/05 (#1099–#1104), lineup #1103 + #1105
 
 The `@deprecated` exports: the six `features/` families from `index.ts`,
 `Lexer`/`Tokens` and root `tokenizer.ts`, the `unified-types` `Validator`
@@ -915,6 +2135,145 @@ i18n's own `.d.ts`), and — if Arc 1 moved them — the `registry/multilingual`
 subpath. Each has a ghost test from 6a proving no internal consumer; the PR is
 the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
 3.0.0 format. Land as the first PRs of the 4.0 cycle, not the last.
+
+✅ **Landed 2026-09-04/05, one family per PR:** features/ (#1099 — with
+`feature-loader.ts` and `./browser/modular`'s no-op `features` namespace;
+type-escapes 869 → 689), `Lexer`/`Tokens` (#1100), the three never-reachable
+names (#1101 — `Validator` was exported only from `types/index.ts`, which no
+entry point re-exports; `registry/multilingual` was never in `exports` or
+`dist/`), `async` (#1102 — manifest 59 → 58, seven gates moved with their
+numbers), `ContextProviderRegistry` + the Proxy (#1104). Two of the plan's
+claims were false and cost a CI round-trip each, as the rule predicts:
+"replaced by real types from i18n's own `.d.ts`" — the `build` job compiles
+core BEFORE i18n (i18n depends on core, not the reverse), which is what the
+`any` shim was for; the classic-i18n bundle entry is now excluded from
+`tsconfig.build.json` like `browser-bundle.ts` already was. And the bare-Node
+import check's `> 40` export-count heuristic tripped on a deletion of dead
+exports (53 → 29); it names five entry points now.
+
+- **`async` (the command)** — listed 2026-09-04 by the Arc 4b brief's decision 4:
+  it runs a body of functions or `{ execute }` objects that no parser
+  produces (no parser entry; its `executeCommand` throws on an AST node), so
+  from parsed hyperscript it is unreachable. Exported, so it waits here.
+- **`ContextProviderRegistry` and the context-provider `Proxy`** — listed
+  2026-09-04 by the Arc 4c brief's decision 4: no production caller has ever
+  registered a provider, the only named consumer (server-integration) is not
+  under `packages/` any more, and step 3 took the Proxy off the hot path. The
+  class, `enhance()`, the four default providers and the unified registry's
+  `context` slot are exported via `@hyperfixi/core/registry`, so the deletion
+  waits here.
+- ✅ **The bundle lineup collapses to two names** — DONE 2026-09-05 (#1103 +
+  #1105). Step 1 measured the feared failure
+  and found it real: the hybrid bundles ran `on click make a <div/> then
+  toggle .x` as just the toggle, silently — the parser's fallback dropped an
+  unclaimed word a token at a time, and the same fallback hid `fetch
+  /api/data` fetching `/`, `send custom:event` sending `custom` to `me`, and
+  `repeat forever` running zero iterations. All loud or fixed now, pinned by
+  a `@comprehensive` matrix row (the compatibility spec was untagged — CI had
+  never run it). Steps 2+3 in one PR: public names are `hyperfixi-hx.js` and
+  `hyperfixi.js`; `hx-v4` and `multilingual` stay as separate products;
+  `lite`/`lite-plus`/`minimal`/`standard` are retired (not built, no
+  `exports`, no docs row). Measured and KEPT: `hyperfixi-hybrid-complete.js`
+  and its export (the vite plugin's generated fallback imports it — it is
+  plugin-internal, not a name to reach for) and the `browser-bundle-lite.ts`
+  MODULE (`@hyperfixi/core/parser/regex` is built on it). Original decision
+  text follows.
+  DECIDED 2026-09-04, after
+  Arc 5's spike (keep the hybrid parser, delete the CHOICE): the hybrid parser
+  is the engine under the Vite plugin, and what confuses prospective users is
+  the nine-row bundle table, not the parser. Three steps: (1) measure what a
+  small bundle does on a construct it cannot parse and make it fail LOUDLY,
+  naming the full bundle — the one step that changes no exported name and
+  can be done any time; (2) the Vite plugin becomes the default story (it
+  already picks lite vs hybrid with zero options); (3) the prebuilt lineup
+  for script-tag users shrinks to `hyperfixi.js` and one small prebuilt
+  (`hybrid-hx` is the candidate), retiring `lite`, `lite-plus`,
+  `hybrid-complete`, `minimal` and `standard` as public `exports` names. Each
+  retired name is a `⚠ BREAKING` entry; the size snapshot baseline, the CI
+  ceilings, `metadata.ts` and `verify:reference` follow. Brief and recipe:
+  `~/.claude/plans/hyperfixi-arc6b-and-bundle-lineup-handoff.md`.
+
+## After the plan
+
+What the 2026-09-03 post-release review left open, in the order it should be
+worked. None needs an arc; the first has a brief.
+
+1. ~~**Arc 1 steps 2 and 3** — the one target-design point (6) the plan did not
+   reach.~~ ✅ **DONE 2026-09-03** (#1113 build half; `use()` + ratchet flip in the
+   PR after #1115). Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). ~~Build
+   half first (externalize the front-end in `rollup.config.mjs`; 3.33 MB →
+   1.04 MB measured; no API change)~~ ✅ **build half DONE 2026-09-03**, then
+   `hyperscript.use(frontEnd)` with the library entry keeping a default
+   registration through 3.x so no Node consumer changes; moving
+   `@lokascript/semantic` from `dependencies` to an optional peer is a 4.0
+   entry.
+1. ~~**The CJS entry points are empty — every one, since `"type": "module"`.**~~
+   ✅ **FIXED 2026-09-03** — the CJS outputs are `.cjs`; `main` and all 22
+   `require` conditions point at them; the bare-Node check `require()`s three
+   entries; the three freshness guards accept `index.{js,mjs,cjs}`. Record:
+   Found by step A's bare-Node probe: `require('@hyperfixi/core')` returns
+   `{}` (27 exports expected) and `require('@hyperfixi/core/commands')` (and
+   `/expressions`, `/registry`, `/multilingual`) throws — on the published
+   3.0.0 tarball too, so it predates this cycle. Cause: core's `package.json`
+   says `"type": "module"`, so Node loads the CJS-syntax `dist/*.js` as ESM;
+   the identical file renamed `.cjs` yields all 27 keys. Fix is mechanical —
+   emit `.cjs`, point `main` and every `exports.*.require` at it, and give
+   `scripts/check-node-import.mjs` a `require()` check per entry (it only
+   ever `import()`ed, which is why this was invisible). Do it before step B.
+2. **Collapse the three DOM processors onto the Program cache** — risk 6
+   below, named as a 4b follow-up and never filed. **First slice landed
+   2026-09-03:** measuring the two live processors side by side found
+   `hyperscript.process()` installing `on …` handlers through its own
+   `addEventListener` and dropping filters, `or` lists and `from` (the bundle
+   path was right); the private installer is deleted, both paths hand the AST
+   to the runtime, `config.logAll` lives in the runtime, and
+   `api/dom-processor.test.ts` pins the two paths against each other.
+   `api/dom-processor.ts` 444 → 285 lines. The collapse proper still stands. `api/dom-processor.ts`
+   (444 lines), `dom/attribute-processor.ts` (664) and
+   `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
+   runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
+3. ~~**Arc 3's honest endpoint is `syntaxSites: 0`, not "`parseInput` deleted".**~~
+   **Measured 2026-09-03, and the column is not a design signal.** Of the 70
+   counted sites, **6 were comments** — the census read prose (fixed: it strips
+   comments now, and its body-start regex no longer backs up over a stripped
+   docblock's blank lines; 70 → 64, lines 2,085 → 2,039); **56** are positional
+   `args[N]` reads, most of a DECLARED second slot (`js`/`install` params,
+   `add`'s value, `if`'s branches); **4** are pronoun checks (`name === 'me'`);
+   **3** are marker-word compares. The runtime syntax decisions that actually
+   remain are about six, by name: toggle's `raw.args[1]?.type === 'identifier'`
+   star split, put's target-by-position (`raw.args[1]`), pseudo-command's
+   third-slot presence check, repeat's `loopType === 'for' | 'until'` re-checks
+   of a modifier the parser already set, and swap/morph's `=== 'over'` strategy
+   literal. Work those six by name; do not ratchet the column — it counts
+   spellings, and a ratchet satisfied by renaming is the trap
+   `feedback_the_ratchet_is_a_floor_not_a_score` records.
+4. ~~**`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
+   four of five shapes broken, three silently, upstream is the oracle.
+   `PARSER_NEXT_STEPS.md`.~~ ✅ **FIXED 2026-09-03** — parse-time re-typing of
+   the star selector in `parseSetCommand`; ten oracle rows, mutation reddens
+   eight. Record in `PARSER_NEXT_STEPS.md`.
+5. ~~**The two LSP consumers of `fromCoreAST` have no role-path test** (Arc 1
+   step 4's finding; their hover tests assert `toBeDefined()` only). Two tests.~~
+   ✅ **DONE 2026-09-03 (#1114)** — and the obvious test was vacuous: the
+   framework's `fromInterchangeNode` re-infers simple roles itself, so only the
+   4 of 28 corpus feature sources that render differently without the inferrer
+   (`add .x to me` → `destination:me`, `halt the event` → `patient:event`)
+   prove the wiring. Writing it found the MCP hover passing the whole
+   ParseResult to `fromCoreAST` (every AST hover rendered `[get patient:]`);
+   fixed in the same PR.
+6. ~~**The MCP LSP bridge guards three AST paths on names core never exported.**~~
+   ✅ **DONE 2026-09-03** — all four AST paths go through one
+   `parseToInterchange` (parser errors surfaced as diagnostics; converter
+   `error` nodes and the `__ERROR__` sentinel dropped; a `Program` converted
+   statement by statement, since `fromCoreAST(Program)` keeps only the first).
+   Five strict tests. Original text follows.
+   `lsp-bridge.ts` checks `astToolkit.astToLSPDiagnostics` / `astToLSPCompletions`
+   / `astToLSPSymbols` before using them; none exists, so `get_diagnostics`,
+   `get_completions` and `get_document_symbols` silently take the token-based
+   fallback. Core exports `interchangeToLSPDiagnostics` / `Completions` /
+   `Symbols` (the language server uses the first). Wire them through
+   `fromCoreAST(parse(code).node, { inferRoles })` — the hover path is the
+   template — with a strict test per tool.
 
 ## Non-goals
 
@@ -935,7 +2294,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
 ## Risks and measured unknowns
 
 1. **Arc 1 step 5 may find semantic-first is load-bearing for English.** The
-   skip list records where semantic is *worse*; the inverse — en syntax the
+   skip list records where semantic is _worse_; the inverse — en syntax the
    core parser rejects and semantic rescues — has never been measured. The
    step is written as a measurement with three outcomes for this reason.
 2. **Arc 3 is ~50 cross-package PR pairs.** Each command's typed node changes
@@ -997,6 +2356,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   - **`parser/regex-parser.ts` imports the lite BUNDLE it is a component of**
     (`compatibility/browser-bundle-lite`), inverting the whole stack in one
     line. The single most backwards edge in the graph; Arc 5 repairs it.
+
 - **2026-08-30** — **Arc 0 step 4** (hot-path benchmark) landed, and it
   **falsified the performance framing of two later arcs**.
   `bench/hot-path.bench.ts` is the first benchmark here that compiles OUTSIDE
@@ -1019,6 +2379,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   contrast row was originally `log`, which writes to stdout, and the I/O
   dominated so completely that the "cheap" command benchmarked **9.6x slower**
   than the expensive one.
+
 - **2026-08-30** — **Arc 6a** (delete unexported dead code) landed.
   **5,801 lines gone**, every deletion measured rather than assumed:
   `src/context/` (2,543 — excluded from all THREE tsconfigs, so it had not
@@ -1033,7 +2394,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
 
   **Two documentation claims that were already false** went with them: both
   CLAUDE.md files said "all commands use `CommandImplementation<TInput, TOutput,
-  TypedExecutionContext>`". They never did — they implement `DecoratedCommand` —
+TypedExecutionContext>`". They never did — they implement `DecoratedCommand` —
   and the named interface had zero implementers. The core one also still
   documented the `@meta` decorator that Arc B deleted in #827.
 
@@ -1046,6 +2407,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   Ratchets regenerated: type escapes **1,285 → 1,231**, layering conforming
   imports 893 → 873, all 14 upward edges and their reasons intact. Suite
   7,972 → **7,915** passing (the 57 were the deleted trees' own tests).
+
 - **2026-08-30** — **Arc 0 steps 3 and 5** (AST-vocabulary snapshot +
   equivalence corpus) landed together, because both read one corpus and
   splitting them would have duplicated it.
@@ -1090,6 +2452,7 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   Also fixed in passing: `__tests__` helper files were emitting `.d.ts` into the
   published `dist/` (`add-standalone-helpers.d.ts` had been shipping). Excluded
   from `tsconfig.build.json`.
+
 - **2026-08-30** — **Arc 1 step 1** (the boundary audit-as-gate) landed.
   `scripts/check-semantic-boundary.cjs` records every `packages/core/src` file
   importing `@lokascript/semantic`, `/intent` or `/i18n`, **per file and per
@@ -1211,11 +2574,216 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
     now covered; those two are wired identically but unguarded.
 
     **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
-  the 233-source corpus, semantic-first vs traditional for English:
-  **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail
-  17.** None of step 5's three anticipated outcomes was the answer — the two
-  paths produce materially different English ASTs for **half the corpus**, so
-  step 6 is a reviewed behavioural change, not a deletion. It also surfaced a
-  **live shipped bug** (`on click log 1 and 2` fails in the default config),
-  filed in `PARSER_NEXT_STEPS.md` and now step 6's motivating case. Detail is
-  on the step itself.
+    the 233-source corpus, semantic-first vs traditional for English:
+    **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail 17.** None of step 5's three anticipated outcomes was the answer — the two
+    paths produce materially different English ASTs for **half the corpus**, so
+    step 6 is a reviewed behavioural change, not a deletion. It also surfaced a
+    **live shipped bug** (`on click log 1 and 2` fails in the default config),
+    filed in `PARSER_NEXT_STEPS.md` and now step 6's motivating case. Detail is
+    on the step itself.
+
+- **2026-09-02** — **Arc 2 is COMPLETE.** Steps 3, 4, 5 and 6 landed as #1052,
+  #1053, #1054 and #1055; the union is the single description of the core
+  parser's AST, both evaluator switches are exhaustive, and no member inherits
+  an index signature. `tsc` is clean without it, which is the finish line the
+  arc named for itself.
+
+  The escape ratchet went **1088 → 927** over the four PRs, and the honest
+  accounting of that number is the arc's most useful output: 155 of the 161 came
+  from `ast-utils` alone, and **only because step 4 flipped its `[key: string]:
+any` to `unknown` FIRST**. Stripping the same casts without that flip
+  typechecks clean, keeps all 348 tests green, and moves the meter 157 → 81
+  while changing nothing — the arc's brief measured that and reordered the work
+  around it. Step 6, conversely, moved the meter **not at all** (927 → 927)
+  while doing the single largest type-safety change in the arc. The ratchet
+  counts hatch spellings; it cannot see an `any` arriving through an index
+  signature, and it cannot see one leaving. Read it as a floor, never as a
+  score.
+
+  Four of the arc's seven plan claims were false on measurement, and the plan
+  now carries each correction struck through in place: `parser-types.ts` covers
+  15 kinds not 20, positions are NOT always set (24 of 857 traditional, 58 of
+  949 semantic — and 20 of those are correct, a value materialized from a schema
+  default has no source text to point at), `ast-utils` was the 5th `any` cluster
+  not the 2nd, and `commands` holds 19% of the hatches rather than "most" — its
+  AST-shaped portion was ~13 sites of 235, which re-scoped step 5 to a fraction
+  of its planned size. The pattern across all four: the plan's model of WHERE
+  the difficulty lived was stale, and re-measuring before costing is what caught
+  it every time.
+
+  What the arc deliberately did NOT do, each with its numbers recorded so nobody
+  re-runs the probe: delete the index signature from `types/base-types.ASTNode`
+  itself (probe F, 435 errors, a 4.0 item — it touches the frozen public type
+  and `commands/`); collapse `parser/parser-types.ts` (16 → 24 → **43** errors
+  as the retype widens, because the front end's `ASTNode` return types are
+  HONEST — `parseExpression` really does return commands and handlers in some
+  branches, which is Arc 3's redesign, not a types edit); and retype
+  `ast-utils`' public `ASTUtilNode`, which must stay duck-typed because its
+  modules discriminate on kinds no core parser emits.
+
+  Three behavioural defects surfaced by the arc are filed rather than fixed,
+  because a types-only arc cannot contain them: the seven incomplete-position
+  producers, `ast-utils`' generator having no `block` arm (a real `if`'s
+  branches render as `''`, pinned as a KNOWN GAP), and `set *<css-prop> …`
+  breaking 4 of 5 shapes against upstream 0.9.93, 3 of them silently. All in
+  `PARSER_NEXT_STEPS.md`.
+
+- **2026-09-04** — **Arc 4a is COMPLETE** (#1079–#1086): the control-flow
+  matrix (step 1), `Completion` returned by the five signal commands (step 2,
+  first half), the boundaries decided on upstream's rule and written down once
+  (step 2, second half — `execute()` is a boundary wrapper over the
+  `executeNode` dispatcher), and every conversion between Results and the
+  thrown form deleted (step 3, three slices — the loops read Results; the
+  only thrown form left is `StrayControlFlowError` for a `break`/`continue`
+  with no loop). Found on the way: two observer loops called the PUBLIC
+  boundary per command and would have run on past `halt`; the matrix has no
+  observer row. Next: Arc 4b, opened by
+  [HANDOFF-engine-arc4b.md](./HANDOFF-engine-arc4b.md).
+
+- **2026-09-04** — **Arcs 4b, 4c and 7 closed; Arc 5 measured and closed.**
+  4b (#1088, #1091, #1092): compile to closures, bodies as Ops, the
+  `_runtimeExecute` channel gone; 4c (#1093, #1094, #1095): dead context
+  fields, opt-in evaluation tracking, `ContextBridge` and the provider Proxy
+  off the hot path, scope hooks in `core/`, `Scope` named; 7 (#1096 +
+  step 3): one arithmetic in every registry, `collection`'s dead shape gone,
+  core-set expressions referenced statically. Arc 5's spike measured the
+  fragments at the size of the whole hybrid bundle and the full parser over
+  the ceiling — closed as not worth it, and with it Arc 7 step 4's fold.
+  What remains of the plan is Arc 6b, which waits for the 4.0 cycle by
+  design. Bench vs the step 0 baseline: execute-only +3 %, compile+execute
+  +14 %, `toggle` +11 %. Type-escapes 884 → 869; layering allowlist 14 → 13
+  edges.
+
+- **2026-09-05** — **Arc 6b is COMPLETE** ~~, and with it the plan~~ (#1099–#1104
+  for the five exported-dead-code families; #1103 + #1105 for the bundle
+  lineup). ~~Every arc of the plan is now closed.~~ (Corrected 2026-09-03: Arc 1's steps
+  2 and 3 never landed — see the entry below.) Type-escapes 869 →
+  656 over the six deletions; the command manifest is 58; the prebuilt
+  lineup is two public names plus two separate products, and a small bundle
+  that meets a command it lacks says so and names `hyperfixi.js`. Three
+  hybrid-parser mis-parses that the silent fallback had hidden (naked URLs,
+  colon event names, `repeat forever`) were found by making it loud and fixed
+  in the same PR. What the 4.0 cycle still owes is a release: `CHANGELOG.md`
+  carries a `[3.0.0]` heading but no `v3.0.0` tag or npm publish exists
+  (npm is at 2.11.1), so the `[Unreleased]` block holds both the 3.0.0 and
+  the 4.0.0 breaking entries — whether they ship as one major or two is the
+  owner's call. Filed, not done: `@lokascript/semantic`'s `asyncSchema` now
+  describes a command core does not register (a semantic-package change).
+
+- **2026-09-03** — **The close-out was overstated, and the record is corrected.**
+  A post-release review found Arc 1 open: steps 2 (`hyperscript.use(frontEnd)`)
+  and 3 (the multilingual module as the only importer) never landed, the plan
+  never marked the arc either way, and the 3.0.0 changelog called the plan
+  complete. Re-measured on `79052242`:
+  - **Source level: the boundary ratchet's stated endpoint is reached.** Its
+    five `static-value` rows are all target-state (four bundle entries plus
+    `multilingual/schema-roles.ts`); `api/hyperscript-api.ts` reaches the
+    front-end only through two dynamic imports and the lazily-imported bridge.
+  - **Build level: it is not.** `rollup.config.mjs` gives the main entry
+    `external: []` with `inlineDynamicImports: true`, so `dist/index.mjs`
+    (3,331,225 bytes) inlines `semantic/dist/index.js`,
+    `framework/dist/index.js` and `intent/dist/index.js` whole (the sourcemap's
+    `sources` names them), and every `await import('@lokascript/semantic')` is
+    flattened away. Rebuilt with the three front-end packages and
+    `@lokascript/framework` external: **1,036,964 bytes**, with three
+    `import('@lokascript/semantic')` and one `import('@lokascript/framework')`
+    surviving as real deferred loads. `package.json` still lists semantic and
+    intent under `dependencies`, and framework — already an optional peer — is
+    inlined regardless, which makes `lse/index.ts`'s "install it as a peer"
+    check vacuous. The subpath entries are clean (`commands`, `expressions`,
+    `parser/full`, `registry`, `behaviors`, `bundle-generator` inline no
+    workspace package); `multilingual/index.mjs` externalizes semantic but
+    inlines `intent/dist`.
+  - **Consumers.** Every package that depends on `@hyperfixi/core` and compiles
+    non-English through the library entry (aot-compiler, i18n, language-server,
+    mcp-server, playground, testing-framework) already depends on
+    `@lokascript/semantic` itself; none of the ten that do not appears among
+    the library entry's `compile`/`compileAsync` callers. So a default
+    registration kept through 3.x changes nobody's behaviour.
+  - The History dates 2026-09-04/05 above are session-clock drift — git dates
+    every commit from #1088 to #1111 on 2026-09-03.
+
+  The brief is rewritten (`HANDOFF-engine-arc1.md`) and the post-plan queue is
+  [After the plan](#after-the-plan).
+
+- **2026-09-03** — **Arc 1 step 2, build half (step A of the brief), landed.**
+  `rollup.config.mjs` gives the main ESM/CJS entry and the `multilingual` and
+  `lse` subpaths `external: ['@lokascript/semantic', '@lokascript/intent',
+  '@lokascript/i18n', '@lokascript/framework']`; the UMD `index.min.js` is
+  split into its own config block and stays the one self-contained output
+  (decision 1: kept; decision 2: framework external — it was already an
+  optional peer). `dist/index.mjs` **3,331,225 → 1,037,542 bytes**, with three
+  `import('@lokascript/semantic')` and one `import('@lokascript/framework')`
+  surviving as deferred loads; `dist/multilingual/index.mjs` stops inlining
+  `intent/dist`. Proven end-to-end, not by size: a bare-Node ESM import of the
+  built entry compiles `.active を 切り替え` (`language: 'ja'`) through the
+  deferred front-end in 42 ms, `parser: 'semantic'`, confidence 0.82. Gate:
+  `scripts/check-node-import.mjs` (CI `export-validation`) reads the
+  sourcemap's `sources` and fails on any `/semantic/`, `/intent/`, `/i18n/`
+  or `/framework/` path, and requires at least one real
+  `import('@lokascript/semantic')` in the entry — mutation-verified by
+  rebuilding with the old `external: []` (three FAILs). Also deleted:
+  `packages/core/test-includes-simple.cjs`, the UMD's only in-repo consumer,
+  which required the `Lexer` Arc 6b removed.
+
+  **What the probe found that the size could not:** the CJS surface is empty
+  and has been since `"type": "module"` — see After the plan, item 2. It is
+  not caused by this change (the published 3.0.0 `dist/index.js` requires to
+  `{}` too) and is not fixed by it; it is queued ahead of step B because the
+  fix and the gate live in the same two files.
+
+- **2026-09-03** — **The CJS surface is fixed, and After-the-plan item 5 closed
+  by finding a bug.** The `.cjs` rename: main entry, the 21 `createSubpathEntry`
+  outputs and the parser modules emit `.cjs`; `main` and all 22 `require`
+  conditions follow; `scripts/check-node-import.mjs` `require()`s the main
+  entry, `/commands` and `/multilingual` (this is the check that would have
+  caught it — the script only ever `import()`ed); and the three freshness
+  guards (`ensure-fresh.sh`, the multilingual CLI, the vocab CLI) take the
+  first of `dist/index.{js,mjs,cjs}` as the marker instead of the literal
+  `index.js` that no longer exists for core. Known limit, left: a TypeScript
+  CJS consumer under `node16` resolution still sees ESM-flavoured `.d.ts`
+  (there is no `.d.cts`) — pre-existing, and the JS was empty before.
+  Item 5 (#1114): the two LSP role-path tests exist, are strict, and pin the
+  4-of-28 cases the framework cannot re-infer; the MCP hover was passing a
+  ParseResult to `fromCoreAST` and rendering an `error` node for every AST
+  hover — fixed. The three dead `astToLSP*` guards it sits beside are item 6.
+
+- **2026-09-03** — **Arc 1 is COMPLETE: steps 2 (API half) and 3 landed, and
+  with them every arc of the plan.** `parser/semantic-integration.ts` — the
+  29-line seam step 6 left — now declares the `FrontEnd` contract
+  (`parseToAST`, optional `parse`/`render`) and `hyperscript.use(frontEnd)`
+  registers one; `compile()` consults it once per non-English program, and
+  `toLSE`/`fromLSE` go through the same registration instead of importing
+  `@lokascript/semantic` directly. `multilingual/bridge.ts` wraps the bridge
+  as `createBridgeFrontEnd`; the full browser bundle registers it at boot;
+  the library entry builds the same bridge lazily when nothing is registered
+  (the 3.x default — its removal is the 4.0 entry). Ten strict tests pin the
+  contract with a stub whose AST the source text cannot produce, plus the real
+  bridge through `use()`. Multilingual gate local: 3744/3744, no regression.
+  Core 7,560 passed.
+
+  **The boundary ratchet reached its endpoint and became the rule (step 3).**
+  With the API's two dynamic rows gone, every row in `semantic-boundary.json`
+  is on the front-end side — the four bundle entries and `multilingual/` — so
+  `check-semantic-boundary.cjs` now fails ANY front-end import outside
+  `compatibility/browser-bundle*.ts` and `multilingual/`, in any kind,
+  allowlisted or not, and `--update` refuses to write such a row (25
+  self-tests; the old `api/hyperscript-api.ts: dynamic 2` row is the negative
+  case). The per-kind ratchet still applies on the front-end side. The plan's
+  "gate that becomes a type error" preference was not taken here, by
+  reasoning rather than by trial: a `tsconfig` `paths` block maps specifiers
+  for the whole program and cannot forbid one per directory, and the script
+  already runs before `npm ci` in `lint-typecheck`, so it is the cheaper gate.
+
+  Target-design point 6 is now true at every level the plan can measure:
+  source (ratchet, hard), artifact (#1113's sourcemap gate), and API
+  (`use()`). `@lokascript/semantic` and `/intent` remain `dependencies` for
+  the 3.x default; that is the last 4.0 item this arc leaves.
+
+- **2026-09-03** — **The parseInput census stripped of comments, and After-the-plan
+  item 3 rewritten from the measurement.** The census counted a comment's
+  `args[0]` as a syntax site (6 of 70) and its body-start regex, once comments
+  were stripped, backed up over the docblock's blank lines (`\s*` spans
+  newlines — anchored to `[ \t]*`). Baseline regenerated: 50 bodies, 2,039
+  lines, 329 branches, 64 syntax sites, 190 value sites. The decomposition of
+  the 64 is on the item; the honest remainder is six named sites, not a number.

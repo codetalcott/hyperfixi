@@ -5581,3 +5581,14 @@ the `sync-translations` ledger join, the shared text-hash util, the agent sweep/
 harness, changeset fan-out across the five vocab surfaces, and the per-language status
 ladder. The badge work is the natural next arc: it is what turns "unverified" on the
 site into a claim, and it needs a real inflow of reviewer sign-offs first.
+
+## `settle for <timeout>` has no duration role in the schema (2026-09-02)
+
+Found by `packages/core/src/parser/__tests__/grammar-schema-parity.test.ts`
+(Arc 3 step 4): the engine's declared grammar opens a `for` slot on `settle`
+— `settle for 3000` is in the command's own `metadata.syntax` and now parses —
+but `settleSchema` carries only `patient`, so no language can express the
+timeout and `translate('settle for 3000', 'en', L)` drops it. Adding a
+`duration` role with `for` as its English marker is a schema change plus the
+usual profile sweep (`toggle … for <duration>` already has the role to copy
+from); the parity test's `settle` row is the pin to delete when it lands.

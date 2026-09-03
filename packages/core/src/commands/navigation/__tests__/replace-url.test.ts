@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ReplaceUrlCommand } from '../replace-url';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 
@@ -99,14 +99,11 @@ describe('ReplaceUrlCommand (replace-url)', () => {
   describe('parseInput', () => {
     it('should detect replace mode when commandName contains "replace"', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/replaced']);
+      const evaluator = createMockEvaluator(['/replaced']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'url' } as unknown as ASTNode,
-            { type: 'string', value: '/replaced' } as unknown as ASTNode,
-          ],
+          args: [{ type: 'string', value: '/replaced' } as unknown as ASTNode],
           modifiers: {},
           commandName: 'replace',
         },
@@ -119,14 +116,11 @@ describe('ReplaceUrlCommand (replace-url)', () => {
 
     it('should detect replace mode from "replace-url" commandName', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/page']);
+      const evaluator = createMockEvaluator(['/page']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' } as unknown as ASTNode,
-            { type: 'string', value: '/page' } as unknown as ASTNode,
-          ],
+          args: [{ type: 'string', value: '/page' } as unknown as ASTNode],
           modifiers: {},
           commandName: 'replace-url',
         },
@@ -140,18 +134,12 @@ describe('ReplaceUrlCommand (replace-url)', () => {
 
     it('should parse URL and title from args', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/dashboard', 'with', 'title', 'Dashboard']);
+      const evaluator = createMockEvaluator(['/dashboard', 'Dashboard']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' } as unknown as ASTNode,
-            { type: 'string', value: '/dashboard' } as unknown as ASTNode,
-            { type: 'keyword', value: 'with' } as unknown as ASTNode,
-            { type: 'keyword', value: 'title' } as unknown as ASTNode,
-            { type: 'string', value: 'Dashboard' } as unknown as ASTNode,
-          ],
-          modifiers: {},
+          args: [{ type: 'string', value: '/dashboard' } as unknown as ASTNode],
+          modifiers: { title: { type: 'string', value: 'Dashboard' } as ASTNode as ExpressionNode },
           commandName: 'replace',
         },
         evaluator,
@@ -265,14 +253,11 @@ describe('ReplaceUrlCommand (replace-url)', () => {
   describe('integration', () => {
     it('should parse and execute replace with URL only end-to-end', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/current']);
+      const evaluator = createMockEvaluator(['/current']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' } as unknown as ASTNode,
-            { type: 'string', value: '/current' } as unknown as ASTNode,
-          ],
+          args: [{ type: 'string', value: '/current' } as unknown as ASTNode],
           modifiers: {},
           commandName: 'replace',
         },
@@ -290,19 +275,15 @@ describe('ReplaceUrlCommand (replace-url)', () => {
 
     it('should parse and execute replace with URL and title end-to-end', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/settings', 'with', 'title', 'Settings Page']);
+      const evaluator = createMockEvaluator(['/settings', 'Settings Page']);
       const originalTitle = document.title;
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' } as unknown as ASTNode,
-            { type: 'string', value: '/settings' } as unknown as ASTNode,
-            { type: 'keyword', value: 'with' } as unknown as ASTNode,
-            { type: 'keyword', value: 'title' } as unknown as ASTNode,
-            { type: 'string', value: 'Settings Page' } as unknown as ASTNode,
-          ],
-          modifiers: {},
+          args: [{ type: 'string', value: '/settings' } as unknown as ASTNode],
+          modifiers: {
+            title: { type: 'string', value: 'Settings Page' } as ASTNode as ExpressionNode,
+          },
           commandName: 'replace-url',
         },
         evaluator,

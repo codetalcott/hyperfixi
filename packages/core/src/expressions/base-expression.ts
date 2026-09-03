@@ -21,6 +21,7 @@ import type {
   ExpressionCategory,
 } from '../types/base-types';
 import { isString, isNumber, isBoolean, isObject, isFunction } from './type-helpers';
+import { getEvaluationTracker } from './shared/tracking';
 
 /**
  * Abstract base class for typed expression implementations.
@@ -52,7 +53,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    * Track expression evaluation in context history
    * Previously duplicated ~15 lines across 80+ expression classes
    *
-   * @param context - The expression context with evaluationHistory
+   * @param context - The expression context (unused since tracking moved to the runtime sink)
    * @param input - The input that was evaluated
    * @param result - The evaluation result
    * @param startTime - The timestamp when evaluation started (from Date.now())
@@ -63,8 +64,9 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
     result: EvaluationResult<TOutput>,
     startTime: number
   ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
+    const sink = getEvaluationTracker();
+    if (sink) {
+      sink.record({
         expressionName: this.name,
         category: this.category,
         input,
@@ -80,7 +82,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    * Simplified tracking for success/failure without full result object
    * Used when you only have a boolean success flag
    *
-   * @param context - The expression context with evaluationHistory
+   * @param context - The expression context (unused since tracking moved to the runtime sink)
    * @param startTime - The timestamp when evaluation started
    * @param success - Whether the operation succeeded
    * @param output - Optional output value or error description
@@ -91,8 +93,9 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
     success: boolean,
     output: unknown = success ? 'success' : 'error'
   ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
+    const sink = getEvaluationTracker();
+    if (sink) {
+      sink.record({
         expressionName: this.name,
         category: this.category,
         input: 'operation',

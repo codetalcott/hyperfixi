@@ -12,7 +12,7 @@
 > files — and two moved the AST-equivalence baseline. Worth a human read before
 > building on them.
 >
-> ### Landed 2026-08-31 — do not redo (#1023–#1026)
+> ### Landed 2026-08-31 — do not redo (#1023–#1026, then #1028–#1031)
 >
 > 1. ~~`hide <button/>` THROWS on the default path~~ — **#1023**, in
 >    `packages/semantic`'s `convertSelector`. The filing's recommended fix site
@@ -40,11 +40,53 @@
 >    functions now record it. Same commit fixed the shipped-sources gate to walk
 >    `git ls-files` rather than the working tree.
 >
+> 5. **Thread A items 1 and 2 both closed, plus two follow-ons they turned up**
+>    — **#1028** (`show`/`hide` keep their `in <scope>` and `when`), **#1029**
+>    (`if <cond> then <cmd>` needs `end` only when input follows, and the
+>    documented-examples gate now reads `errors`), **#1030** (`transition … to
+>    <value>` keeps its CSS unit), **#1031** (the `install X on <target>` queue
+>    item, corrected — it is a docs defect, not a parser bug). Detail on each is
+>    in the numbered queue below and in `PARSER_NEXT_STEPS.md`.
+>
+> 6. **Thread A item 2b — all three gaps CLOSED.** `scroll` got a dedicated
+>    parser, `make`'s `from` got its comma list (plus the runtime fix that made
+>    the example actually run), and the spaced time unit got a postfix. The
+>    `documented-examples` allowlist is at **27** and holds NO parser gaps any
+>    more — only docs defects and legal-only-inside-a-feature rows. Every one of
+>    the three filings was wrong about something, and each correction is struck
+>    through in place in `PARSER_NEXT_STEPS.md`:
+>
+>    - **`scroll to me smoothly`** named the MILD half. The dropped adverb
+>      changed nothing observable on `smoothly` (the runtime already defaulted
+>      to smooth) — while the same drop INVERTED `instantly`, and every
+>      `scroll to <pos> of <target>` form threw `target element not found`
+>      outright. Only executing it against 0.9.93 ranked it. The cheap fix
+>      (COMPOUND_COMMANDS membership with no dispatch case) is measured WRONG:
+>      `parseRegularCommand` consumes those words as `identifier` nodes, an
+>      unbound identifier does not evaluate to its own text, and the runtime
+>      matches them BY text — so the parse looks complete and is still broken.
+>    - **`make a URL from "/a", "/b"`** blamed the body loop. Measured: `log
+>      "a", "b"` and `call foo("a","b")` compile fine in a body; it is `make`.
+>      And "does not parse inside a handler" was the symptom — bare it reported
+>      `ok: true` while dropping everything after the first comma. Fixing the
+>      parse was still not enough: `createClassInstance` could not use a
+>      constructor `parseInput` had already resolved, so the example threw at
+>      every arity, and `make.test.ts`'s MOCK evaluator (returning the STRING
+>      `'URL'`) is why nothing saw it.
+>    - **`over 500 ms`** was RIGHT — the one filing this session that held up.
+>
+>    A fourth thing moved that nobody was aiming at: the triage tool's own
+>    `marker-in-args` family recognised markers only on `identifier` nodes, so
+>    `go to url "…"` had been misfiled under `arity` since `parseGoCommand` was
+>    written. `identName` now reads `string` nodes too — `marker-in-args` 12 →
+>    **13** and **`arity` is EMPTY**.
+>
 > ### What is left, in the order I would take it
 >
-> **Two threads now.** Items 1–2 are the parser-correctness thread that came out
-> of opening `both-fail`; items 3–5 are the original convergence thread. The
-> first thread is live user-visible defects and is worth more per hour.
+> **Thread A (items 1, 2, 2b) is CLOSED.** What remains is items 3–5, the
+> original convergence thread. Thread A was live user-visible defects and was
+> worth more per hour; it is done, and its filings' corrections are recorded in
+> `PARSER_NEXT_STEPS.md` rather than only here.
 >
 > 1. ~~**`examples/behaviors/recipes.html` — upstream ACCEPTS, we drop.**~~ —
 >    **DONE.** `show`/`hide` were the THIRD `COMPOUND_COMMANDS` member with no
@@ -113,30 +155,67 @@
 >    entry. **Third filing this arc whose recommendation aged worse than its
 >    observation** — after the `hide <button/>` fix site and this item's own
 >    19→27/8-additions estimate.
-> 2b. **NEW, from #1029's strengthened gate — two parser gaps remain of the
->    three it found.** `transition left to 100px` was the third and is FIXED
->    (#1030). Still open, both upstream-VALID with a repro in
->    `PARSER_NEXT_STEPS.md`:
->    - `scroll to me smoothly` drops `smoothly`.
->    - `make a URL from "/path/", "…"` parses BARE and does not parse inside a
->      handler at all — a comma-separated argument list that survives at top
->      level and dies in a body points at the body loop, not at `make`.
->    - adjacent, found by #1030: `over 500 ms` (with a space) drops the `ms`.
->      The tokenizer joins `500ms` into one TIME token, but there is no time
->      POSTFIX expression to match upstream's `TimeExpression`.
-> 3. **Residual item-5 rows** — the template-literal backticks
->    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
->    `settle` `isBlocking` rows marked INERT below.
+> 2b. ~~**NEW, from #1029's strengthened gate — two parser gaps remain of the
+>    three it found.**~~ — **ALL THREE DONE**, plus the `over 500 ms` follow-on.
+>    See item 6 of the landed list above; the corrected diagnoses are struck
+>    through in place in `PARSER_NEXT_STEPS.md`. The `documented-examples`
+>    allowlist now holds **no parser gaps at all**.
+>
+>    Three runtime divergences from upstream were FILED rather than silently
+>    changed, all on `scroll` and all pinned by `scroll-to.test.ts`: the
+>    `behavior: 'smooth'` default (upstream leaves it unset), `inline` never
+>    being set (upstream maps `left`/`center`/`right` to it, not to `block`),
+>    and `in <container>` / `scroll <dir> by <n>` having no runtime. Upstream's
+>    own container branch produced NO observable call in jsdom, so there is no
+>    oracle for it — which is why the parser consumes the clause and the runtime
+>    does not implement it. A fourth, unrelated: `parseTimeToMs` resolves
+>    `debounced at 2minutes` to 2000 ms, not 120000 (it tests `s` before
+>    `minutes`).
+> 3. ~~**Residual item-5 rows** — the template-literal backticks
+>    (`log \`t ${1}\``).~~ — **DONE.** Not a shape nicety: the delimiters were
+>    being PRINTED (`log \`t ${1}\`` logged `` `t 1` `` on the default path).
+>    The producer is `packages/semantic`'s expression parser, found only after
+>    two plausible fix sites were measured DEAD — and a `src` edit there proves
+>    nothing until the package is rebuilt, because core's tests resolve
+>    `@lokascript/semantic` through `dist`. The `value` family is now the two
+>    INERT `settle` rows only.
 > 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
 >    `packages/semantic` tracking spans; filed, not faked.
-> 5. **Arc 2 step 2+** — the seven `RENAME_PAIRS` Arc 0 pinned
->    (`binaryExpression`/`binary`, `eventHandler`/`event`, …). Step 1 is done
->    (#1018); this is the actual alias-normalisation work, and it is what 12 of
->    the 14 remaining `node-type` differences are.
+> 5. **Arc 2 step 2+** — **THREE live defects were found inside this "alias"
+>    family and are FIXED** (2026-09-01): `transition <bare-property>` was a
+>    silent no-op on the default path, a sigil-scoped variable read `undefined`
+>    in the LAST command of any handler (hitting `log` and breaking `default`
+>    outright), and `clear :count` was a no-op on the TRADITIONAL path. Detail
+>    in `PARSER_NEXT_STEPS.md`. `node-type` is **14 → 12**; the four remaining
+>    `identifier -> contextReference` sites are `me` on
+>    `empty`/`hide`/`select`/`show` and ARE genuine aliases.
+>
+>    **The lesson to carry into the rest of item 5:** a family named after a
+>    SHAPE says nothing about whether the shapes behave the same. Execute each
+>    row before calling it a rename. (`open #popup as non-modal` was checked the
+>    same way and IS fine — `OpenCommand` reads both shapes explicitly.)
+>
+>    **And this item's stated payoff is MEASURED FALSE.**
+>    `RENAME_PAIRS` is the full parser vs the **HYBRID** parser; the triage's
+>    `node-type` family is traditional vs **semantic**, and the hybrid parser
+>    takes no part in it. Renaming all seven pairs closes **ZERO** of the 14
+>    sites. Measured over the corpus: the only divergent kinds are
+>    `contextReference` + `propertyAccess` (semantic-only) and `functionCall`
+>    (traditional-only), and NO `RENAME_PAIRS` name appears among them.
+>
+>    The real step is **three names, not seven pairs**: normalise
+>    `identifier`/`contextReference` (6 sites) and
+>    `memberExpression`+`possessiveExpression`/`propertyAccess` (5), which is 11
+>    of the 12 alias sites; `parser/runtime.ts` already carries the parallel arms
+>    and its own comments name the work. Two of the 14 (`asExpression→selector`,
+>    `string→identifier`) are real disagreements, not aliases. Full measurement
+>    in `PARSER_NEXT_STEPS.md`.
 >
 > ### Do not re-derive these
 >
-> - **`settle`'s `isBlocking` disagreement is INERT.** Real (semantic is right;
+> - **`settle`'s `isBlocking` disagreement is INERT** — and since Thread B item
+>   3 landed, it is the ENTIRE `value` family (2 sites, both `settle`).
+>   Real (semantic is right;
 >   the traditional generic path hardcodes `false`), but nothing in the
 >   monorepo branches on that field. Scored and deliberately left.
 > - **`swap`'s `method="over"` is NOT a defect** — it is swapSchema's
@@ -208,18 +287,20 @@
 > `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
 > "START HERE" block first and do not re-derive what it marks as settled.
 >
-> **#1023–#1026 are landed; start at the top of "What is left".** That is the
-> `recipes.html` parser gap — upstream accepts a surface we silently truncate.
-> The old items 1, 2 and the query-literal half of 3 are done; do not redo them.
+> **#1023–#1026 and #1028–#1031 are landed, and Thread A is now CLOSED**
+> (items 1, 2 and 2b). Do not redo the `recipes.html` gap, the
+> `if`-without-`end` false positive, the `transition` unit drop, the
+> `install X on <target>` triage, or any of item 2b's three gaps. **Start at
+> Thread B — items 3, 4 and 5.**
 >
 > **Re-run the measurement before costing anything** —
-> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. As of 2026-08-31
-> after all four PRs: same **137** · differ **77** · trad-only 0 · sem-only 0 ·
-> both-fail 19, with families `semanticRoles-added` 77, `field-only-trad`
-> 194/43, `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12,
-> `position` 36/10, `value` 3, `arity` 1. `implicit-me` is gone from the table.
-> These numbers move with every fix; the tool is the authority, not this
-> paragraph.
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After Thread A
+> item 2b: same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail
+> 19, with families `semanticRoles-added` 77, `field-only-trad` 194/43,
+> `field-only-sem` 76/48, `node-type` **12**, `marker-in-args` **13**,
+> `position` 36/10, `value` **2**, `arity` **0**. `implicit-me` is gone from the
+> table, and `arity` joined it — its one member was a marker the tool could not
+> see. The tool is the authority, not this paragraph.
 >
 > **`both-fail 19` is now understood and is NOT parser gaps** — all 19 are the
 > repo's own `metadata.examples`, triaged in `PARSER_NEXT_STEPS.md` and gated by
@@ -230,9 +311,18 @@
 > allowlists carry measured upstream verdicts. Both derive their corpus from
 > `git ls-files` — keep it that way.
 >
-> Note the top-line `differ` did NOT move, and that is expected: the fix removed
-> difference SITES from sources that still differ in metadata. Read the family
-> table, not the headline — the headline was misleading in step 5 too.
+> Note the top-line `differ` has not moved through eight PRs, and that is
+> expected: those fixes removed difference SITES from sources that still differ
+> in metadata, and Thread A's fixes are defects both paths SHARED, which the
+> triage cannot see at all. Read the family table, not the headline — the
+> headline was misleading in step 5 too.
+>
+> **Three allowlists now carry measured upstream verdicts, and their current
+> sizes are part of the state**: `documented-examples.test.ts` **27**,
+> `shipped-sources-validity.json` **4**, `shipped-examples-execution.json`
+> **33**. Two of the three ratchet DOWN only; the documented-examples list grew
+> to 30 when #1029 taught it to read `errors`, and Thread A item 2b walked it
+> 30 → 29 → 28 → 27, at which point it holds no parser gaps at all.
 >
 > A parser change needs the multilingual gate run LOCALLY before pushing
 > (~10 min): `npm run test:multilingual:build-deps` → `npm run populate --prefix

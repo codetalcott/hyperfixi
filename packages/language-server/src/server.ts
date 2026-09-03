@@ -360,11 +360,6 @@ const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; 
       description: 'Closes a block (event handler, behavior, if, repeat).',
       example: 'on click\\n  toggle .active\\nend',
     },
-    async: {
-      title: 'async',
-      description: 'Runs a command asynchronously without blocking.',
-      example: 'async fetch /api/data',
-    },
     tell: {
       title: 'tell',
       description: 'Sets the default target for subsequent commands.',

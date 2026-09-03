@@ -104,7 +104,17 @@ jobs:
             NEW="$CURRENT"
           else
             cd packages/core
-            npm version "$VERSION_TYPE" --no-git-tag-version > /dev/null 2>&1
+            # --no-workspaces-update: npm's `workspaces-update` config (default
+            # true) makes `npm version` inside a workspace REIFY the tree after
+            # the bump. On npm 11.19 (the runner since 2026-09) that reify saw
+            # core@3.0.0 against every other package's ^2.11.1 range, rewrote
+            # package-lock.json (+498 lines) and DELETED the
+            # node_modules/@lokascript/framework link — so core's own build then
+            # failed with TS2307 on `@lokascript/framework`, and the
+            # `git checkout` below restored only the manifest. Reproduced and
+            # fixed locally against npm@11.19.0 on the v3.0.0 dry run; npm 11.12
+            # (the 2.11.1 runner) did not reify here.
+            npm version "$VERSION_TYPE" --no-git-tag-version --no-workspaces-update > /dev/null 2>&1
             NEW=$(node -p "require('./package.json').version")
             cd ../..
             git checkout packages/core/package.json

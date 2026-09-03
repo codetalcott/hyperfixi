@@ -3,6 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { fromSemanticAST } from '../src/interchange/from-semantic';
+import { parseExpression } from '../src/ast-builder/expression-parser';
 
 // Helper: create a minimal semantic AST node
 function semNode(
@@ -700,6 +701,27 @@ describe('fromSemanticAST', () => {
         type: 'literal',
         value: 'val=${x}',
       });
+    });
+
+    // The row above pins the MECHANISM with a synthetic node that sets `raw` —
+    // but the expression parser NEVER sets `raw`; its node carries the content
+    // in `value`. Reading `raw` alone turned every real template literal into
+    // an EMPTY literal, invisible to the synthetic row.
+    it('converts a parser-shaped templateLiteral (value, no raw) without emptying it', () => {
+      expect(fromSemanticAST(semNode('templateLiteral', { value: 'val=${x}' }))).toMatchObject({
+        type: 'literal',
+        value: 'val=${x}',
+      });
+    });
+
+    it('carries a REAL parsed template literal through the interchange (end-to-end)', () => {
+      const result = parseExpression('`t ${1}`');
+      expect(result.success).toBe(true);
+      expect(result.node?.type).toBe('templateLiteral');
+      const converted = fromSemanticAST(
+        result.node as unknown as Parameters<typeof fromSemanticAST>[0]
+      );
+      expect(converted).toMatchObject({ type: 'literal', value: 't ${1}' });
     });
 
     it('CommandSequence with 1 command unwraps', () => {

@@ -25,7 +25,6 @@
 | ---------------- | ------------ | -------------------------------------------------------------------------------------------- |
 | `add`            | dom          | Add CSS classes, attributes, or styles to elements.                                          |
 | `append`         | content      | Add content to the end of a string, array, Set, or HTML element.                             |
-| `async`          | advanced     | Execute commands asynchronously without blocking.                                            |
 | `beep`           | utility      | Debug output for expressions with type information.                                          |
 | `blur`           | execution    | Remove focus from an element (calls HTMLElement.                                             |
 | `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                      |
@@ -170,6 +169,10 @@ start view transition add .highlight to me end
 ```
 
 ```hyperscript
+start view transition using "slide" add .active to #panel end
+```
+
+```hyperscript
 start view transition using "slide" then put result into #panel end
 ```
 
@@ -281,6 +284,10 @@ fetch "/api/users" as json
 
 ```hyperscript
 fetch "/api/save" with { method:"POST" }
+```
+
+```hyperscript
+fetch "/api/optional" as json do not throw
 ```
 
 **Side Effects:** network, event-dispatching
@@ -519,6 +526,10 @@ repeat for item in items { log item }
 
 ```hyperscript
 repeat 5 times { log "hello" }
+```
+
+```hyperscript
+repeat for item in items index i log i end
 ```
 
 **Side Effects:** iteration, conditional-execution
@@ -1357,6 +1368,14 @@ toggle #myDialog as modal
 toggle .loading for 2s
 ```
 
+```hyperscript
+toggle between .expanded and .collapsed
+```
+
+```hyperscript
+toggle .loading until click from #done
+```
+
 **Side Effects:** dom-mutation
 
 ---
@@ -1470,7 +1489,15 @@ go to url "https://example.com"
 ```
 
 ```hyperscript
+go to url "https://example.com" in new window
+```
+
+```hyperscript
 go to top of #header
+```
+
+```hyperscript
+go to bottom of #footer smoothly
 ```
 
 **Side Effects:** navigation, scrolling
@@ -1583,6 +1610,10 @@ scroll to top of <target>
 scroll to <target> smoothly
 ```
 
+```hyperscript
+scroll [<target>] [up|down|left|right] by <n> [px]
+```
+
 **Examples:**
 
 ```hyperscript
@@ -1595,6 +1626,10 @@ scroll to bottom of #chat
 
 ```hyperscript
 scroll to me smoothly
+```
+
+```hyperscript
+scroll down by 200
 ```
 
 **Side Effects:** scrolling
@@ -1825,34 +1860,6 @@ tell closest <form/> submit
 
 ## Advanced Commands
 
-### async
-
-Execute commands asynchronously without blocking
-
-**Syntax:**
-
-```hyperscript
-async <command> [<command> ...]
-```
-
-**Examples:**
-
-```hyperscript
-async command1 command2
-```
-
-```hyperscript
-async fetchData processData
-```
-
-```hyperscript
-async animateIn showContent
-```
-
-**Side Effects:** async-execution
-
----
-
 ### js
 
 Execute inline JavaScript code with access to hyperscript context
@@ -1927,6 +1934,10 @@ send dataEvent to #target
 send myEvent(count: 42) to me
 ```
 
+```hyperscript
+send saved to #form with bubbles cancelable
+```
+
 **Side Effects:** event-dispatch
 
 ---
@@ -1969,6 +1980,10 @@ send dataEvent to #target
 
 ```hyperscript
 send myEvent(count: 42) to me
+```
+
+```hyperscript
+send saved to #form with bubbles cancelable
 ```
 
 **Side Effects:** event-dispatch

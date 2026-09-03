@@ -11,6 +11,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
+import type { ExitSignal, BreakSignal, ContinueSignal } from '../../types/result';
 
 /** Signal type for control flow */
 export type SignalType = 'break' | 'continue' | 'exit';
@@ -21,10 +23,8 @@ export interface SignalCommandInput {
 }
 
 /** Base output */
-export interface SignalCommandOutput {
-  signalType: SignalType;
-  timestamp: number;
-}
+/** The signal the command completes with (Arc 4a). */
+export type SignalCommandOutput = ExitSignal | BreakSignal | ContinueSignal;
 
 /**
  * Abstract base class for control flow signals
@@ -45,13 +45,11 @@ export abstract class ControlFlowSignalBase implements DecoratedCommand {
   protected abstract readonly signalType: SignalType;
 
   /** Signal error message */
-  protected abstract readonly errorMessage: string;
 
   /** Signal error flag name (isBreak, isContinue, isExit) */
-  protected abstract readonly errorFlag: string;
 
   async parseInput(
-    _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    _raw: CommandRaw<'break' | 'continue' | 'exit'>,
     _evaluator: ExpressionEvaluator,
     _context: ExecutionContext
   ): Promise<SignalCommandInput> {
@@ -62,12 +60,10 @@ export abstract class ControlFlowSignalBase implements DecoratedCommand {
     _input: SignalCommandInput,
     _context: TypedExecutionContext
   ): Promise<SignalCommandOutput> {
-    const error = new Error(this.errorMessage);
-    (error as any)[this.errorFlag] = true;
-    if (this.signalType === 'exit') {
-      (error as any).returnValue = undefined;
-      (error as any).timestamp = Date.now();
-    }
-    throw error;
+    // A signal is RETURNED, not thrown (Arc 4a): the runtime's dispatch
+    // recognises it and routes it as control flow.
+    return this.signalType === 'exit'
+      ? { type: 'exit', returnValue: undefined }
+      : { type: this.signalType };
   }
 }

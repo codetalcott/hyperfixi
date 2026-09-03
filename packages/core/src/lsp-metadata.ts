@@ -117,7 +117,6 @@ export const COMMAND_KEYWORDS = [
   'beep',
   'breakpoint',
   'js',
-  'async',
 
   // Animation Commands
   'transition',
@@ -411,8 +410,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   scroll: {
     title: 'scroll',
-    description: 'Scrolls an element into view.',
-    example: 'scroll to #section\nscroll to the top of me',
+    description: 'Scrolls an element into view, or by an offset.',
+    example: 'scroll to #section\nscroll to the top of me\nscroll down by 200',
     category: 'command',
   },
   process: {
@@ -622,12 +621,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'js',
     description: 'Executes inline JavaScript.',
     example: 'js(event) return event.clientX end',
-    category: 'command',
-  },
-  async: {
-    title: 'async',
-    description: 'Runs commands asynchronously (non-blocking).',
-    example: 'async do fetch /api/data end',
     category: 'command',
   },
 

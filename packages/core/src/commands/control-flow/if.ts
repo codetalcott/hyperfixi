@@ -10,6 +10,10 @@
  *   unless <condition> <commands>
  */
 
+import { isOk } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+import { bodyOp } from '../helpers/body-ops';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
@@ -21,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Conditional mode type */
 export type ConditionalMode = 'if' | 'unless';
@@ -33,10 +38,10 @@ export interface ConditionalCommandInput {
   mode: ConditionalMode;
   /** The evaluated condition value (will be coerced to boolean) */
   condition: unknown;
-  /** AST node(s) for the then branch commands (or 'unless' commands) */
-  thenCommands: ASTNode | ASTNode[];
-  /** AST node(s) for the else branch commands (optional, only for 'if' mode) */
-  elseCommands?: ASTNode | ASTNode[];
+  /** The compiled then branch (or the `unless` body) — a closure handed in by the runtime (Arc 4b) */
+  thenCommands: Op;
+  /** The compiled else branch, `if` only */
+  elseCommands?: Op;
 }
 
 // Backwards compatibility type aliases
@@ -94,7 +99,7 @@ export class ConditionalCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
+    raw: CommandRaw<'if'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ConditionalCommandInput> {
@@ -105,8 +110,8 @@ export class ConditionalCommand implements DecoratedCommand {
       throw new Error(`${mode} command requires a condition to evaluate`);
     }
 
-    let thenCommands: ASTNode | ASTNode[] | undefined;
-    let elseCommands: ASTNode | ASTNode[] | undefined;
+    let thenCommands: Op | undefined;
+    let elseCommands: Op | undefined;
 
     if (mode === 'unless') {
       // unless <condition> <commands> — simpler syntax, no else branch.
@@ -126,15 +131,12 @@ export class ConditionalCommand implements DecoratedCommand {
       if (raw.args.length < 2) {
         throw new Error('unless command requires a condition and at least one command');
       }
-      thenCommands = raw.args[1];
+      thenCommands = bodyOp(raw, 1);
     } else {
       // if <condition> then <commands> [else <commands>]
       if (raw.args.length >= 2 && raw.args[1]) {
-        thenCommands = raw.args[1];
-        elseCommands = raw.args.length >= 3 ? raw.args[2] : undefined;
-      } else if (raw.modifiers?.then) {
-        thenCommands = raw.modifiers.then;
-        elseCommands = raw.modifiers.else;
+        thenCommands = bodyOp(raw, 1);
+        elseCommands = raw.args.length >= 3 ? bodyOp(raw, 2) : undefined;
       }
 
       if (!thenCommands) {
@@ -149,7 +151,7 @@ export class ConditionalCommand implements DecoratedCommand {
   async execute(
     input: ConditionalCommandInput,
     context: TypedExecutionContext
-  ): Promise<ConditionalCommandOutput> {
+  ): Promise<ConditionalCommandOutput | ExecutionSignal> {
     const { mode, condition, thenCommands, elseCommands } = input;
     const rawConditionResult = evaluateCondition(condition, context);
 
@@ -159,73 +161,30 @@ export class ConditionalCommand implements DecoratedCommand {
     const shouldExecuteThen = mode === 'unless' ? !rawConditionResult : rawConditionResult;
 
     let executedBranch: 'then' | 'else' | 'none';
-    let result: any;
+    let result: unknown;
+    let branch: Op | undefined;
 
     if (shouldExecuteThen) {
       executedBranch = 'then';
-      result = await this.executeCommandsOrBlock(thenCommands, context);
+      branch = thenCommands;
       // No `it` assignment: parity with `if`, which leaves `it` to the body's
       // own commands. The removed unless-only self-assign existed only to
       // propagate the body's last result — and in practice propagated the
       // unexecuted AST node (see parseInput's unless comment).
     } else if (elseCommands && mode === 'if') {
       executedBranch = 'else';
-      result = await this.executeCommandsOrBlock(elseCommands, context);
+      branch = elseCommands;
     } else {
       executedBranch = 'none';
     }
+    if (branch) {
+      const outcome = await branch(context);
+      // A signal from the branch passes through to the boundary that owns it.
+      if (!isOk(outcome)) return outcome.error;
+      result = outcome.value;
+    }
 
     return { mode, conditionResult: rawConditionResult, executedBranch, result };
-  }
-
-  private async executeCommandsOrBlock(
-    commandsOrBlock: any,
-    context: TypedExecutionContext
-  ): Promise<any> {
-    if (commandsOrBlock?.type === 'block') {
-      return this.executeBlock(commandsOrBlock, context);
-    }
-    if (Array.isArray(commandsOrBlock)) {
-      return this.executeCommands(commandsOrBlock, context);
-    }
-    // A single body value (an executable, or one AST command node) executes
-    // through the same path as a one-element array. The old `return
-    // commandsOrBlock` fallthrough handed the body back UNEXECUTED — the same
-    // silent no-op class as the unless args.slice(1) bug; executeCommands
-    // still passes plain values through untouched.
-    return this.executeCommands([commandsOrBlock], context);
-  }
-
-  private async executeBlock(block: any, context: TypedExecutionContext): Promise<any> {
-    const runtimeExecute = context.locals.get('_runtimeExecute') as any;
-    if (!runtimeExecute) throw new Error('Runtime execute function not available');
-
-    let lastResult: any;
-    if (block.commands?.length) {
-      for (const cmd of block.commands) {
-        lastResult = await runtimeExecute(cmd, context);
-      }
-    }
-    return lastResult;
-  }
-
-  private async executeCommands(commands: any[], context: TypedExecutionContext): Promise<any> {
-    let lastResult: any;
-    for (const cmd of commands) {
-      if (cmd?.execute) lastResult = await cmd.execute(context);
-      else if (typeof cmd === 'function') lastResult = await cmd();
-      else if (cmd && typeof cmd === 'object' && typeof cmd.type === 'string') {
-        // A parsed AST node has neither an execute method nor callability; it
-        // must go through the runtime, same as executeBlock. Returning it
-        // verbatim (the old fallthrough) is how `unless` bodies silently never
-        // executed — keep this branch so an array-of-nodes input from a direct
-        // API caller executes instead of reproducing that bug.
-        const runtimeExecute = context.locals.get('_runtimeExecute') as any;
-        if (!runtimeExecute) throw new Error('Runtime execute function not available');
-        lastResult = await runtimeExecute(cmd, context);
-      } else lastResult = cmd;
-    }
-    return lastResult;
   }
 }
 

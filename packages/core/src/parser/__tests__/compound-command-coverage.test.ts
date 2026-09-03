@@ -1,7 +1,7 @@
 /**
- * Every COMPOUND_COMMANDS member parses its own documented syntax.
+ * Every COMPOUND_COMMAND_NAMES member parses its own documented syntax.
  *
- * Membership in `COMPOUND_COMMANDS` routes a command to
+ * Membership in `COMPOUND_COMMAND_NAMES` routes a command to
  * `parseCompoundCommand` — but that function is a switch whose `default:`
  * silently falls back to `parseRegularCommand`, and NOTHING guarded the
  * correspondence between the set and the switch. A member with no case gets
@@ -24,13 +24,13 @@
  * tail its own commandMeta declares.
  *
  * Probes come from each command's documented syntax/examples. Adding a member
- * to COMPOUND_COMMANDS without adding a probe fails the ratchet below, and so
+ * to COMPOUND_COMMAND_NAMES without adding a probe fails the ratchet below, and so
  * does removing one.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { hyperscript } from '../../api/hyperscript-api';
-import { COMPOUND_COMMANDS } from '../parser-constants';
+import { COMPOUND_COMMAND_NAMES } from '../command-parsers/utility-commands';
 
 /** command name → sources that must each parse to exactly that one command. */
 const PROBES: Record<string, string[]> = {
@@ -60,6 +60,19 @@ const PROBES: Record<string, string[]> = {
   put: ['put "Hello" into #probe'],
   remove: ['remove .active from #probe'],
   replace: ['replace url "/search?q=test"', 'replace url "/page" with title "Updated Page"'],
+  scroll: [
+    'scroll to #probe',
+    // The trailing adverb, dropped for as long as `scroll` had no case here.
+    // `instantly` is the one that mattered: ScrollCommand's default is
+    // `smooth = !args.includes('instantly')`, so dropping it INVERTED the
+    // request rather than merely losing a hint.
+    'scroll to me instantly',
+    // The positional form. `bottom of #probe` folded into a binary `of`, and
+    // the runtime then threw `scroll: target element not found` — every one of
+    // `top of` / `the bottom of` / `middle of` / `right of` was dead.
+    'scroll to bottom of #probe',
+    'scroll to the top of #probe smoothly',
+  ],
   send: ['send dataEvent to #probe'],
   set: ['set myVar to "value"'],
   show: [
@@ -97,9 +110,9 @@ function topLevel(result: unknown): Array<{ type?: string; name?: string }> {
   return (Array.isArray(ast.body) ? ast.body : [ast]) as Array<{ type?: string; name?: string }>;
 }
 
-describe('COMPOUND_COMMANDS ↔ parseCompoundCommand coverage', () => {
+describe('COMPOUND_COMMAND_NAMES ↔ parseCompoundCommand coverage', () => {
   it('has a probe for every member, and no probe for a non-member', () => {
-    expect(Object.keys(PROBES).sort()).toEqual([...COMPOUND_COMMANDS].sort());
+    expect(Object.keys(PROBES).sort()).toEqual([...COMPOUND_COMMAND_NAMES].sort());
   });
 
   describe.each(BOTH_PATHS)('%s path', (_label, opts) => {
@@ -202,17 +215,18 @@ describe('the second dispatch entry point', () => {
 describe('the `using view transition` tail reaches the runtime', () => {
   // Both commands declare the tail in their own commandMeta and both runtimes
   // already read it off the flat args — only the parsers never consumed it.
-  const TAIL = ['using', 'view', 'transition'];
 
   it.each([
     ['process', 'process partials in it using view transition'],
     ['swap', 'swap #target with it using view transition'],
-  ])('%s keeps all three tail keywords in its args', (_name, src) => {
+  ])('%s carries the tail as `modifiers.viewTransition`', (_name, src) => {
+    // Since Arc 3 step 3 the parser emits the tail as the slot the semantic
+    // path always produced, instead of three identifiers in `args` for each
+    // command to scan for by name.
     for (const [, opts] of BOTH_PATHS) {
       const result = hyperscript.compileSync(src, opts as never);
-      const node = topLevel(result)[0] as { args?: Array<{ name?: string; value?: unknown }> };
-      const names = (node.args ?? []).map(a => String(a?.name ?? a?.value).toLowerCase());
-      expect(names.slice(-3), `${src}: args were [${names.join(', ')}]`).toEqual(TAIL);
+      const node = topLevel(result)[0] as { modifiers?: Record<string, unknown> };
+      expect(node.modifiers?.viewTransition, src).toBeDefined();
     }
   });
 });

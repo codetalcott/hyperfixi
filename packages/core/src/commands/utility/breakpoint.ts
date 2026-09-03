@@ -22,6 +22,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface BreakpointCommandInput {
   // No arguments — present for shape parity with other commands.
@@ -46,7 +47,7 @@ export class BreakpointCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    _raw: CommandRaw<'breakpoint'>,
     _evaluator: ExpressionEvaluator,
     _context: ExecutionContext
   ): Promise<BreakpointCommandInput> {

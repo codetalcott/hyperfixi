@@ -92,7 +92,6 @@ import { createTakeCommand } from '../commands/animation/take';
 
 // Advanced Commands
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // Data Commands
 import { createDefaultCommand } from '../commands/data/default';
@@ -201,7 +200,6 @@ const COMMAND_FACTORIES: Readonly<Record<string, () => CommandWithParseInput>> =
 
   // Advanced
   js: createJsCommand,
-  async: createAsyncCommand,
 
   // Utility
   log: createLogCommand,
@@ -248,6 +246,9 @@ export interface RuntimeOptions {
    * Enable async command execution
    */
   enableAsyncCommands?: boolean;
+
+  /** Log every event handler that fires (`config.logAll`); read at fire time. */
+  logAll?: () => boolean;
 
   /**
    * Command timeout in milliseconds
@@ -343,6 +344,9 @@ export class Runtime extends RuntimeBase {
     }
     if (options.enableErrorReporting !== undefined) {
       baseOptions.enableErrorReporting = options.enableErrorReporting;
+    }
+    if (options.logAll !== undefined) {
+      baseOptions.logAll = options.logAll;
     }
 
     super(baseOptions);

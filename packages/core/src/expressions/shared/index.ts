@@ -22,6 +22,15 @@ export {
   safeDivide,
   safeModulo,
 } from './number-utils';
+import { getEvaluationTracker } from './tracking';
+export {
+  setEvaluationTracker,
+  getEvaluationTracker,
+  isTrackingEvaluations,
+  collectEvaluations,
+  type EvaluationRecord,
+  type EvaluationTracker,
+} from './tracking';
 
 // Comparison utilities
 export {
@@ -83,34 +92,16 @@ export {
  */
 export function trackEvaluation<T>(
   expression: { name: string; category: string },
-  context: unknown,
+  _context: unknown,
   args: unknown[],
   result: T,
   startTime: number,
   success: boolean = true,
   error?: Error
 ): T {
-  // Add evaluation tracking if context supports it
-  if (
-    context &&
-    typeof context === 'object' &&
-    'evaluationHistory' in context &&
-    Array.isArray((context as { evaluationHistory?: unknown[] }).evaluationHistory)
-  ) {
-    (
-      context as {
-        evaluationHistory: Array<{
-          expressionName: string;
-          category: string;
-          input: unknown;
-          output: unknown;
-          timestamp: number;
-          duration: number;
-          success: boolean;
-          error?: Error;
-        }>;
-      }
-    ).evaluationHistory.push({
+  const sink = getEvaluationTracker();
+  if (sink) {
+    sink.record({
       expressionName: expression.name,
       category: expression.category,
       input: args,

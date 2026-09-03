@@ -139,8 +139,6 @@ const NOT_EXERCISED: Record<string, string> = {
   breakpoint: 'invokes the debugger, which halts the test run',
   install: 'requires a registered behavior; covered by the behaviors suite',
   // --- no runnable single-command snippet found (see step-1 note in the brief).
-  async:
-    'no single-command snippet parses: `async do … end` fails with "Async command execution failed"',
   default:
     '`default @data-theme to "light"` throws "Invalid target type: object" — suspected parse defect, needs triage',
   'pseudo-command': 'no top-level form parses: `getAttribute("id") the #probe` fails to compile',
@@ -295,7 +293,7 @@ describe('audit coverage — derived from the registry, not from this file', () 
     // 14 → 12: `take` and `process` were both skipped for a PARSE failure, and
     // both parse now (#859 and the COMPOUND_COMMANDS dispatch fix). The budget
     // only ever ratchets down.
-    expect(Object.keys(NOT_EXERCISED)).toHaveLength(12);
+    expect(Object.keys(NOT_EXERCISED)).toHaveLength(11);
     expect(Object.keys(AUDIT).length).toBeGreaterThanOrEqual(47);
   });
 });

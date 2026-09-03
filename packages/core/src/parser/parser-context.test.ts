@@ -66,11 +66,9 @@ describe('ParserContext', () => {
       expect(typeof context.addError).toBe('function');
       expect(typeof context.addWarning).toBe('function');
 
-      // Utility Functions (4 methods)
+      // Utility Functions (3 methods)
       expect(typeof context.isCommand).toBe('function');
-      expect(typeof context.isCompoundCommand).toBe('function');
       expect(typeof context.isKeyword).toBe('function');
-      expect(typeof context.getMultiWordPattern).toBe('function');
     });
   });
 
@@ -206,31 +204,10 @@ describe('ParserContext', () => {
       expect(result).toBe(true); // 'set' is a command
     });
 
-    it('should check if token is a compound command', () => {
-      // Test with known compound command structure (method should return boolean)
-      const result1 = context.isCompoundCommand('if');
-      const result2 = context.isCompoundCommand('repeat');
-
-      expect(typeof result1).toBe('boolean');
-      expect(typeof result2).toBe('boolean');
-
-      // At least one should be a compound command
-      // (implementation details may vary, just verify method works)
-    });
-
     it.skip('should check if token is a keyword', () => {
       const token = tokens.find(t => t.value === 'to');
       const result = context.isKeyword(token?.value ?? '');
       expect(typeof result).toBe('boolean');
-    });
-
-    it('should get multi-word pattern for command', () => {
-      const pattern = context.getMultiWordPattern('fetch');
-      expect(pattern).toBeDefined();
-      if (pattern) {
-        expect(pattern.command).toBe('fetch');
-        expect(Array.isArray(pattern.keywords)).toBe(true);
-      }
     });
   });
 

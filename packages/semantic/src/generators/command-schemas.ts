@@ -1902,14 +1902,14 @@ export const haltSchema: CommandSchema = {
   // The patient distinguishes `halt the event` (preventDefault, handler
   // CONTINUES) from bare `halt` (stops the handler). Dropping it collapsed
   // both to the bare form. HaltCommand resolves a 'the' target to context.event.
-  ast: { args: ['patient'] },
-  // Role markers the traditional parser leaves in `args` as bare identifiers.
-  // Skipped when schema-driven inference scans args for role VALUES, so the
-  // marker cannot be bound as one (interchange `roles` only — the runtime
-  // reads `raw.args` and is unaffected).
-  // `halt the event` → args [the, event]. HaltCommand reads the bare
-  // 'the' from raw.args as a context.event sentinel (that stays); the ROLE
-  // must name what is halted. Semantic binds patient='event'.
+  // `halt the event` is the `the` slot on both paths (Arc 3 step 3): the
+  // core parser emits `modifiers.the`, and this descriptor makes the
+  // semantic path emit the patient there too — HaltCommand resolves the slot
+  // to context.event, and core's role inferrer reads this map in reverse.
+  ast: { args: [], modifiers: { the: 'patient' } },
+  // Role markers the traditional parser used to leave in `args` as bare
+  // identifiers; skipped when schema-driven inference scans args for role
+  // VALUES. Semantic binds patient='event'.
   argSkipTokens: ['the'],
   roles: [
     {
@@ -2859,20 +2859,6 @@ export const jsSchema: CommandSchema = {
 };
 
 /**
- * Async command: runs commands asynchronously.
- */
-export const asyncSchema: CommandSchema = {
-  action: 'async',
-  description: 'Execute commands asynchronously',
-  category: 'async',
-  primaryRole: 'patient',
-  // Roleless keyword: emits a bare command node.
-  ast: {},
-  hasBody: true,
-  roles: [],
-};
-
-/**
  * Tell command: sends commands to another element.
  */
 export const tellSchema: CommandSchema = {
@@ -3786,7 +3772,6 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   call: callSchema,
   return: returnSchema,
   js: jsSchema,
-  async: asyncSchema,
   tell: tellSchema,
   default: defaultSchema,
   init: initSchema,

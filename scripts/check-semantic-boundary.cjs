@@ -37,10 +37,17 @@
  * which is where six commands' worth of "semantic parser vs traditional"
  * special-casing in `commands/` comes from.
  *
- * The seam already exists — `parser/semantic-integration.ts` defines the
- * `SemanticAnalyzer` interface and `createSemanticAdapter({ parse, … })` is the
- * injection shape the API already uses. Arc 1 is about making the one caller
- * that ignores it stop ignoring it.
+ * ## The endpoint, and the rule it became (Arc 1 steps 2–3, 2026-09-03)
+ *
+ * The seam is `parser/semantic-integration.ts`'s `FrontEnd` contract and
+ * `hyperscript.use(frontEnd)`. Once the API reached the front-end only through
+ * that registration, every remaining row was on the FRONT-END SIDE of the
+ * line — the bundles that exist to ship it, and `multilingual/`, the module
+ * that IS it. So the allowlist stopped being the rule and became the record:
+ * a front-end import anywhere else in `packages/core/src` now fails outright,
+ * in any kind, allowlisted or not, and `--update` refuses to write such a row.
+ * The per-kind ratchet still applies to the front-end-side rows (a `dynamic`
+ * import hardening into `static-value` there still fails).
  *
  * Zero runtime deps — node built-ins only.
  */
@@ -56,6 +63,27 @@ const BASELINE = path.join(REPO_ROOT, 'packages', 'core', 'baselines', 'semantic
 
 /** The front-end packages core must eventually not depend on. */
 const FRONT_END_PACKAGES = ['@lokascript/semantic', '@lokascript/intent', '@lokascript/i18n'];
+
+/**
+ * The front-end SIDE of the boundary: the only places in packages/core/src that
+ * may import a front-end package, in any kind. Everything else is the engine.
+ */
+const FRONT_END_SIDE = [/^compatibility\/browser-bundle[^/]*\.ts$/, /^multilingual\//];
+
+function isFrontEndSide(file) {
+  return FRONT_END_SIDE.some(re => re.test(file));
+}
+
+function engineSideFailure(file, counts) {
+  return (
+    `packages/core/src/${file} imports the front-end from the ENGINE side of the ` +
+    `boundary (${describe(counts)}). Since Arc 1 steps 2–3 (docs-internal/ENGINE_MIGRATION_PLAN.md) ` +
+    `only compatibility/browser-bundle*.ts and multilingual/ may import @lokascript/semantic, ` +
+    `/intent or /i18n — in ANY kind, allowlisted or not. The engine reaches a front-end ` +
+    `through \`hyperscript.use(frontEnd)\` (parser/semantic-integration.ts's FrontEnd contract); ` +
+    `put the code on the front-end side, or take the front-end by injection.`
+  );
+}
 
 /** Import kinds, cheapest last — used for the "hardening" check. */
 const KINDS = ['static-value', 'dynamic', 'static-type', 'typeof-import'];
@@ -126,7 +154,10 @@ function frontEndImports(code, packages = FRONT_END_PACKAGES) {
     const suffix = String.raw`[^'"]*`;
 
     for (const m of code.matchAll(
-      new RegExp(String.raw`\b(?:import|export)\s+(type\s+)?[^'";]*?from\s*['"](` + p + suffix + `)['"]`, 'g')
+      new RegExp(
+        String.raw`\b(?:import|export)\s+(type\s+)?[^'";]*?from\s*['"](` + p + suffix + `)['"]`,
+        'g'
+      )
     )) {
       found.push({ spec: m[2], kind: m[1] ? 'static-type' : 'static-value' });
     }
@@ -163,7 +194,10 @@ function collectFiles(dir = SRC_DIR, prefix = '') {
 /**
  * Measure the tree. Returns `{ files: { rel: { kind: count } }, totals }`.
  */
-function analyze(files = collectFiles(), readFile = rel => fs.readFileSync(path.join(SRC_DIR, rel), 'utf8')) {
+function analyze(
+  files = collectFiles(),
+  readFile = rel => fs.readFileSync(path.join(SRC_DIR, rel), 'utf8')
+) {
   const byFile = {};
   const totals = Object.fromEntries(KINDS.map(k => [k, 0]));
 
@@ -191,15 +225,19 @@ function check(analysis, baseline) {
   const allowed = baseline.files || {};
 
   for (const [file, counts] of Object.entries(analysis.files)) {
+    // The hard rule first: an engine-side file fails whether or not a row
+    // exists for it. A row is a record of a front-end-side file, never a
+    // licence for an engine-side one.
+    if (!isFrontEndSide(file)) {
+      failures.push(engineSideFailure(file, counts));
+      continue;
+    }
     const row = allowed[file];
     if (!row) {
       failures.push(
         `NEW front-end import in packages/core/src/${file} ` +
-          `(${describe(counts)}). The engine must not depend on ` +
-          `@lokascript/semantic, /intent or /i18n — that dependency is what Arc 1 of ` +
-          `docs-internal/ENGINE_MIGRATION_PLAN.md exists to remove. Inject the ` +
-          `front-end instead (see createSemanticAdapter in parser/semantic-integration.ts), ` +
-          `or put the code on the front-end side of the boundary.`
+          `(${describe(counts)}). The file is on the front-end side, so this may be right — ` +
+          `run \`npm run check:semantic-boundary:update\` and give the row a real reason.`
       );
       continue;
     }
@@ -254,11 +292,21 @@ function loadBaseline() {
 }
 
 function writeBaseline(analysis, previous = {}) {
+  // `--update` cannot launder an engine-side import into the allowlist.
+  const engineSide = Object.keys(analysis.files).filter(f => !isFrontEndSide(f));
+  if (engineSide.length) {
+    throw new Error(
+      `check-semantic-boundary: refusing to write a baseline with engine-side rows:\n` +
+        engineSide.map(f => `  • ${engineSideFailure(f, analysis.files[f])}`).join('\n')
+    );
+  }
   const files = {};
   for (const file of Object.keys(analysis.files).sort()) {
     files[file] = {
       ...analysis.files[file],
-      reason: previous[file]?.reason || 'TODO: why this file needs the front-end, and which arc removes it',
+      reason:
+        previous[file]?.reason ||
+        'TODO: why this file needs the front-end, and which arc removes it',
     };
   }
 
@@ -268,7 +316,9 @@ function writeBaseline(analysis, previous = {}) {
       'Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, ' +
       'counted per import KIND — static-value is the real debt, static-type and typeof-import ' +
       'erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen ' +
-      'count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.',
+      'count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs. ' +
+      'Since Arc 1 steps 2-3 every row is on the FRONT-END SIDE (compatibility/browser-bundle*.ts ' +
+      'and multilingual/); a front-end import anywhere else fails outright and cannot be added here.',
     generated: new Date().toISOString().slice(0, 10),
     totals: analysis.totals,
     files,
@@ -290,7 +340,13 @@ function main() {
     } catch {
       /* first run */
     }
-    const payload = writeBaseline(analysis, previous);
+    let payload;
+    try {
+      payload = writeBaseline(analysis, previous);
+    } catch (err) {
+      process.stderr.write(`${err.message}\n`);
+      process.exit(1);
+    }
     process.stdout.write(
       `check-semantic-boundary: baseline written — ${Object.keys(payload.files).length} files ` +
         `(${describe(payload.totals)})\n`
@@ -324,6 +380,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  FRONT_END_SIDE,
+  isFrontEndSide,
+  writeBaseline,
   stripComments,
   frontEndImports,
   collectFiles,

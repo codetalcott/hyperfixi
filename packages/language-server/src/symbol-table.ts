@@ -347,7 +347,6 @@ export function buildSymbolTable(
       'def',
       'install',
       'init',
-      'async',
       ...behaviorKws,
       ...defKws,
       ...setKws,

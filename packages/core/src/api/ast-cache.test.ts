@@ -172,15 +172,34 @@ describe('AST Compilation Cache', () => {
 
   describe('LRU eviction', () => {
     it('should grow cache correctly up to capacity', () => {
-      // We can't easily test the internal maxSize=500 without compiling 500+ unique strings,
-      // but we can verify the cache grows and stats work correctly
       const uniqueStrings = 20;
       for (let i = 0; i < uniqueStrings; i++) {
-        hyperscript.compileSync(`add .class-${i}`);
+        hyperscript.compileSync(`on click add .class${i}`);
       }
-
       expect(hyperscript.getCacheStats().size).toBe(uniqueStrings);
-      expect(hyperscript.getCacheStats().misses).toBe(uniqueStrings);
+    });
+
+    it('caps at 500 entries and evicts the least recently used', () => {
+      // Arc 4b step 4: the previous test never crossed the boundary, so the
+      // eviction branch had no gate. 500 distinct sources fill the cache;
+      // the 501st evicts exactly one; which one is the LRU rule — a `get`
+      // moves its entry to the back, so touching #0 right before the overflow
+      // keeps it and evicts #1 instead.
+      for (let i = 0; i < 500; i++) hyperscript.compileSync(`on click add .c${i}`);
+      expect(hyperscript.getCacheStats().size).toBe(500);
+
+      hyperscript.compileSync('on click add .c0'); // hit — #0 is now most recent
+      const before = hyperscript.getCacheStats();
+      hyperscript.compileSync('on click add .c500'); // overflow: evicts #1
+      const after = hyperscript.getCacheStats();
+      expect(after.size).toBe(500);
+      expect(after.misses).toBe(before.misses + 1);
+
+      hyperscript.compileSync('on click add .c0'); // still cached
+      expect(hyperscript.getCacheStats().misses).toBe(after.misses);
+      hyperscript.compileSync('on click add .c1'); // evicted — recompiles
+      expect(hyperscript.getCacheStats().misses).toBe(after.misses + 1);
+      expect(hyperscript.getCacheStats().size).toBe(500);
     });
   });
 });

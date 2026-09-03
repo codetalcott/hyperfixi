@@ -59,6 +59,12 @@ export interface SelectorNode extends ExpressionNode {
 export type ContextType =
   'me' | 'you' | 'it' | 'its' | 'my' | 'your' | 'result' | 'event' | 'target' | 'body' | 'detail';
 
+/**
+ * LEGACY SPELLING — no parser in this package emits `contextReference` any
+ * more (Thread B item 5 converged every reference on the traditional
+ * parser's `identifier{name}`). Kept in the union because hand-built ASTs
+ * and the interchange still accept it; new code should emit `identifier`.
+ */
 export interface ContextReferenceNode extends ExpressionNode {
   readonly type: 'contextReference' | 'symbol';
   readonly contextType?: ContextType;
@@ -75,6 +81,13 @@ export interface IdentifierNode extends ExpressionNode {
 // Property Access Nodes
 // =============================================================================
 
+/**
+ * LEGACY SPELLING — no parser in this package emits `propertyAccess` any
+ * more (Thread B item 5 converged property paths on the traditional parser's
+ * nested `memberExpression`, and possessive surfaces on
+ * `possessiveExpression`). Kept in the union because hand-built ASTs and the
+ * interchange still accept it; new code should emit `memberExpression`.
+ */
 export interface PropertyAccessNode extends ExpressionNode {
   readonly type: 'propertyAccess';
   readonly object: ExpressionNode;

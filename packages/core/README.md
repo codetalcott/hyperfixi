@@ -78,15 +78,19 @@ Debug settings persist across page reloads via localStorage. Logs include:
 Every compilation returns metadata about parser usage and warnings:
 
 ```javascript
-const result = lokascript.compile('toggle .active');
-console.log(result.metadata);
-// {
-//   parserUsed: 'semantic',
-//   semanticConfidence: 0.98,
-//   semanticLanguage: 'en',
-//   warnings: []
-// }
+const result = hyperscript.compileSync('toggle .active');
+console.log(result.meta);
+// { parser: 'traditional', language: 'en', timeMs: 0.4 }
+
+const es = await hyperscript.compile('alternar .active', { language: 'es' });
+console.log(es.meta);
+// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs: 1.2 }
 ```
+
+`meta.parser` is `'semantic'` only when the multilingual front-end PRODUCED the
+AST (a non-English program on the direct path). English is always parsed by the
+core parser; `'traditional'` is what an English compile — or a non-English one
+that fell back to its English rendering — reports.
 
 ## Runtime Hooks
 

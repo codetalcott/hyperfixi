@@ -11,6 +11,62 @@ import { TellCommand } from '../tell';
 import type { TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { ok, err, isSignal } from '../../../types/result';
+import type { ExecutionSignal } from '../../../types/result';
+import type { Op } from '../../../types/program';
+
+/**
+ * Test stand-in for the runtime's compile step (Arc 4b). The runtime compiles
+ * a command's bodies to closures and hands them in as `raw.bodies`; these
+ * tests hand-build inputs, so they build the closures themselves. A body runs
+ * its hand-built commands through `context.locals._testExecute` when a test
+ * installed one (the old observation channel, now test-local), else calls a
+ * function or an `{ execute }` object directly.
+ */
+function testBody(commands: readonly unknown[] = []): Op {
+  return async ctx => {
+    const run = (ctx.locals as Map<string, unknown>).get('_testExecute') as
+      ((cmd: unknown, ctx: unknown) => unknown) | undefined;
+    let last: unknown;
+    for (const cmd of commands) {
+      let r: unknown;
+      if (typeof cmd === 'function') r = await (cmd as (c: unknown) => unknown)(ctx);
+      else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function')
+        r = await (cmd as { execute: (c: unknown) => unknown }).execute(ctx);
+      else if (run) r = await run(cmd, ctx);
+      else throw new Error('testBody: not an executable command');
+      if (isSignal(r)) return err(r);
+      last = r;
+    }
+    return ok(last);
+  };
+}
+/** One body per command — what the runtime hands `tell`/`start view transition`. */
+function testOps(commands: readonly unknown[]): Op[] {
+  return commands.map(c => testBody([c]));
+}
+/** What the runtime does for a raw input: compile every block/command argument. */
+function rawWithBodies<T extends { args: readonly unknown[] }>(
+  raw: T
+): T & { bodies: (Op | undefined)[] } {
+  const bodies = raw.args.map(a => {
+    const t = (a as { type?: string } | null)?.type;
+    if (t === 'block')
+      return testBody(((a as { commands?: unknown[] }).commands ?? []) as unknown[]);
+    // A `command` node — or, in these hand-built fixtures, an `{ execute }`
+    // object standing in for one.
+    if (t === 'command' || typeof (a as { execute?: unknown } | null)?.execute === 'function')
+      return testBody([a]);
+    return undefined;
+  });
+  return { ...raw, bodies };
+}
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
 
 // Mock element resolution helper
 vi.mock('../../helpers/element-resolution', () => ({
@@ -96,12 +152,12 @@ describe('TellCommand', () => {
       const evaluator = createMockEvaluator();
 
       await expect(
-        command.parseInput({ args: [], modifiers: {} }, evaluator, context)
+        command.parseInput(rawWithBodies({ args: [], modifiers: {} }), evaluator, context)
       ).rejects.toThrow(/target.*command|at least/i);
 
       await expect(
         command.parseInput(
-          { args: [{ type: 'identifier', value: '#sidebar' }], modifiers: {} },
+          rawWithBodies({ args: [{ type: 'identifier', value: '#sidebar' }], modifiers: {} }),
           evaluator,
           context
         )
@@ -114,13 +170,13 @@ describe('TellCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [
             { type: 'identifier', value: '#sidebar' },
             { type: 'command', name: 'hide' },
           ],
           modifiers: {},
-        },
+        }),
         evaluator,
         context
       );
@@ -137,14 +193,17 @@ describe('TellCommand', () => {
       const cmdNode2 = { type: 'command', name: 'add' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [{ type: 'identifier', value: '#sidebar' }, cmdNode1, cmdNode2], modifiers: {} },
+        rawWithBodies({
+          args: [{ type: 'identifier', value: '#sidebar' }, cmdNode1, cmdNode2],
+          modifiers: {},
+        }),
         evaluator,
         context
       );
 
       expect(input.commands).toHaveLength(2);
-      expect(input.commands[0]).toBe(cmdNode1);
-      expect(input.commands[1]).toBe(cmdNode2);
+      expect(input.commands[0]).toBeTypeOf('function');
+      expect(input.commands[1]).toBeTypeOf('function');
     });
   });
 
@@ -163,7 +222,7 @@ describe('TellCommand', () => {
 
       const context = createMockContext({ me: originalMe });
 
-      await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      await command.execute({ target: targetEl, commands: testOps([cmdFn]) }, context);
 
       expect(capturedMe).toBe(targetEl);
       // Original context unchanged
@@ -181,7 +240,7 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      await command.execute({ target: targetEl, commands: testOps([cmdFn]) }, context);
 
       expect(capturedYou).toBe(targetEl);
     });
@@ -193,7 +252,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdObj] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: testOps([cmdObj]) }, context)
+      );
 
       expect(executeSpy).toHaveBeenCalledTimes(1);
       expect(result.commandResults).toContain('executed');
@@ -205,7 +266,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: testOps([cmdFn]) }, context)
+      );
 
       expect(result.targetElements).toContain(targetEl);
       expect(result.commandResults).toEqual(['result-value']);
@@ -232,7 +295,7 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      await command.execute({ target: [el1, el2, el3], commands: [cmdFn] }, context);
+      await command.execute({ target: [el1, el2, el3], commands: testOps([cmdFn]) }, context);
 
       expect(seenMe).toEqual(['el1', 'el2', 'el3']);
       expect(seenYou).toEqual(['el1', 'el2', 'el3']);
@@ -247,7 +310,7 @@ describe('TellCommand', () => {
       const originalMe = context.me;
       const originalYou = context.you;
 
-      await command.execute({ target: [el1, el2], commands: [cmdFn] }, context);
+      await command.execute({ target: [el1, el2], commands: testOps([cmdFn]) }, context);
 
       expect(context.me).toBe(originalMe);
       expect(context.you).toBe(originalYou);
@@ -267,7 +330,7 @@ describe('TellCommand', () => {
       });
 
       const context = createMockContext();
-      await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      await command.execute({ target: targetEl, commands: testOps([cmdFn]) }, context);
 
       expect(captured.me).toBe(targetEl);
       expect(captured.you).toBe(targetEl);
@@ -277,17 +340,19 @@ describe('TellCommand', () => {
   // ---------- 4. execute - command types ----------
 
   describe('execute - command types', () => {
-    it('should execute AST command nodes via _runtimeExecute', async () => {
+    it('should execute AST command nodes via _testExecute', async () => {
       const targetEl = document.createElement('div');
       const runtimeExecute = vi.fn(async (_cmd: unknown, _ctx: unknown) => 'runtime-result');
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_testExecute', runtimeExecute);
       const context = createMockContext({ locals });
 
       const astCmd = { type: 'command', name: 'hide' };
 
-      const result = await command.execute({ target: targetEl, commands: [astCmd] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: testOps([astCmd]) }, context)
+      );
 
       expect(runtimeExecute).toHaveBeenCalledTimes(1);
       // First arg is the AST node
@@ -305,7 +370,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: targetEl, commands: testOps([cmdFn]) }, context)
+      );
 
       expect(cmdFn).toHaveBeenCalledTimes(1);
       expect(result.commandResults).toEqual(['called-on-DIV']);
@@ -316,7 +383,7 @@ describe('TellCommand', () => {
       const context = createMockContext();
 
       await expect(
-        command.execute({ target: targetEl, commands: [42 as unknown] }, context)
+        command.execute({ target: targetEl, commands: testOps([42 as unknown]) }, context)
       ).rejects.toThrow(/command execution failed|invalid command/i);
     });
   });
@@ -337,7 +404,9 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute({ target: [el1, el2, el3], commands: [cmdFn] }, context);
+      const result = outputOf(
+        await command.execute({ target: [el1, el2, el3], commands: testOps([cmdFn]) }, context)
+      );
 
       expect(cmdFn).toHaveBeenCalledTimes(3);
       expect(capturedMeValues).toEqual([el1, el2, el3]);
@@ -354,9 +423,11 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      const result = await command.execute(
-        { target: [el1, el2], commands: [cmdFn1, cmdFn2, cmdFn3] },
-        context
+      const result = outputOf(
+        await command.execute(
+          { target: [el1, el2], commands: testOps([cmdFn1, cmdFn2, cmdFn3]) },
+          context
+        )
       );
 
       // 2 targets * 3 commands = 6
@@ -374,7 +445,7 @@ describe('TellCommand', () => {
 
       // Pass a string that resolveElements mock returns [] for
       await expect(
-        command.execute({ target: 'nonexistent-selector', commands: [cmdFn] }, context)
+        command.execute({ target: 'nonexistent-selector', commands: testOps([cmdFn]) }, context)
       ).rejects.toThrow(/no target elements/i);
     });
 
@@ -387,7 +458,7 @@ describe('TellCommand', () => {
       const context = createMockContext();
 
       await expect(
-        command.execute({ target: targetEl, commands: [failingCmd] }, context)
+        command.execute({ target: targetEl, commands: testOps([failingCmd]) }, context)
       ).rejects.toThrow(/command execution failed.*inner command broke/i);
     });
   });
@@ -407,7 +478,7 @@ describe('TellCommand', () => {
 
       const context = createMockContext();
 
-      await command.execute({ target: targetEl, commands: [cmd1, cmd2] }, context);
+      await command.execute({ target: targetEl, commands: testOps([cmd1, cmd2]) }, context);
 
       // cmd2 should see the result of cmd1 as 'it'
       expect(capturedIt).toBe('first-result');
@@ -425,15 +496,15 @@ describe('TellCommand', () => {
       const runtimeExecute = vi.fn(async () => 'added');
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_testExecute', runtimeExecute);
       const context = createMockContext({ locals });
 
       // 1. parseInput
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [{ type: 'identifier', value: '#btn' }, cmdNode],
           modifiers: {},
-        },
+        }),
         evaluator,
         context
       );
@@ -442,7 +513,7 @@ describe('TellCommand', () => {
       expect(input.commands).toHaveLength(1);
 
       // 2. execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       expect(runtimeExecute).toHaveBeenCalledTimes(1);
       expect(result.targetElements).toContain(targetEl);
@@ -465,15 +536,15 @@ describe('TellCommand', () => {
       });
 
       const locals = new Map<string, unknown>();
-      locals.set('_runtimeExecute', runtimeExecute);
+      locals.set('_testExecute', runtimeExecute);
       const context = createMockContext({ locals });
 
       // 1. parseInput
       const input = await command.parseInput(
-        {
+        rawWithBodies({
           args: [{ type: 'identifier', value: '.items' }, cmdA, cmdB],
           modifiers: {},
-        },
+        }),
         evaluator,
         context
       );
@@ -481,7 +552,7 @@ describe('TellCommand', () => {
       expect(input.commands).toHaveLength(2);
 
       // 2. execute
-      const result = await command.execute(input, context);
+      const result = outputOf(await command.execute(input, context));
 
       // 2 targets * 2 commands = 4 executions
       expect(runtimeExecute).toHaveBeenCalledTimes(4);

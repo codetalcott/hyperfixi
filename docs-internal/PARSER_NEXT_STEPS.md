@@ -17,6 +17,14 @@
 
 ## Read this before triaging anything below
 
+> **The in-loop semantic path is GONE (Arc 1 step 6, 2026-09-02).** Every entry
+> below that explains a defect through `parseCommandCore`'s `skipSemanticParsing`
+> list, `trySemanticParse`, the resync, or "semantic-first" is describing a
+> mechanism that no longer exists: English is parsed by the core parser alone,
+> and a non-English program falls back whole-program via `compileAsync`'s
+> `fallbackText`. Those entries are kept as the record of how each defect was
+> found; a NEW parse defect cannot be in that class.
+
 **Which entries are load-bearing.** Two of these are protected by a gate that
 fails loudly on its own; the rest can be lost entirely. Know which you are
 looking at before deciding what to work on — and do **not** "tidy up" the gated
@@ -42,6 +50,10 @@ ones, because the gate *is* the tracking mechanism.
 | **`recovered` false-positives on single-line `if`** | medium — blocks using `recovered` as a gate signal. `if x > 5 then add .active` parses CORRECTLY and still reports `Expected 'end' after if block`; 11 corpus sources are in this state, and it predates the diagnostics work. Measured: strengthening `documented-examples.test.ts` to reject `recovered` takes it from 19 to 27 failures, **all 8 additions being this false positive**. | ⚠️ NONE — it is noise IN a signal, so no gate can see it | found 2026-08-31 while measuring whether the new gate could be strengthened |
 | ~~**A dropped handler body is silently discarded**~~ | **REPORTED 2026-08-31** — `on click qqqq` compiled to `ok: true` with an EMPTY handler and zero diagnostics; a typo gave you a handler that silently does nothing. Five sites across TWO functions now record it via `recovered`. | ✅ `then-as-separator.test.ts` pins one diagnostic; `shipped-sources-validity.json` carries the four shipped sources it exposed | section below |
 | ~~**Semantic-first parsing breaks `and` in a command's arguments inside a handler**~~ | **FIXED 2026-08-30** — one word. `and` was in `skipToCommandBoundary()`'s boundary list and is not a command separator anywhere in this engine. The analyzer had already reported `tokensConsumed: 4` at confidence 1 for `log 1 and 2`; the resync stopped at the `and` anyway. | ✅ `packages/core/src/parser/__tests__/semantic-resync-and.test.ts` (14 assertions, mutation-verified: restoring the word reddens 8) | section below |
+| ~~**Composite expressions span only their LAST token**~~ | **FIXED 2026-09-01** — `memberExpression` / `callExpression` / `possessiveExpression` all took `getPosition()` (the token consumed last), so `call myFunction()` spanned `)` and `get me.parentElement` spanned `parentElement`. Two synthesized CHILDREN had it in mirror image (`first .item`'s callee took `.item`'s span; `copy my textContent`'s `me` took the property's), and `clear :count` moved `start` back over the sigil without moving `column`. All six are read by LSP hover and diagnostic ranges. Found by the parse-path triage once `@lokascript/semantic` began reporting spans — the two paths disagreed and TRADITIONAL was the wrong one, contradicting the handoff that named it the oracle. | ✅ `composite-expression-spans.test.ts` (asserts against the SOURCE TEXT, not against the other path; mutation-verified — each of the four fixes reddens a different row count) + the regenerated `ast-equivalence` baseline | `HANDOFF-convergence-next.md`, "What the measurement falsified" |
+| **`pick`'s `variant` modifier is given the command's own span** | low — `pick first 3 of items` gives `modifiers.variant` the span `[0, 4)`, which is `pick`, not `first`. Same class as the composite-span defects fixed above, in a hand-built modifier the fix did not reach. | ⚠️ NONE — the semantic path emits no span there at all, so it reads as `field-only-trad` in the triage rather than as a disagreement | found 2026-09-01 while measuring the span residual; `HANDOFF-convergence-next.md`, "The residual, precisely" group 3 |
+| **Seven producers emit an INCOMPLETE position** | low-medium — 24 of 857 typed nodes in a traditional parse of the engine corpus lack a full `{start,end,line,column}`, so LSP range and diagnostic consumers get nothing for them. Producers: `js … end` bodies (9 sites — body literal + params arrayLiteral), `pick`'s `variant`/`rangeMode` (7), `propertyOfExpression` (`asExpression` inherits its `undefined`s, so fixing one fixes both), `betweenExpression`, a `when`-modifier `unaryExpression`, an object-literal `properties[].key`, and `set`'s sigil-variable destination — which sets `start`/`end` but omits `line`/`column`, so the same `:count` surface is positioned two different ways inside one parse of `on click set :count to 1 then increment :count`. **Not the same as a materialized default**, which is correctly span-free (`focus`'s implicit `me`) and must stay that way. | ⚠️ NONE — no gate asserts position completeness on either path | measured 2026-09-01 after #1042; blocks nothing, but it is why `ENGINE_MIGRATION_PLAN.md` Arc 2 step 2 can NOT make positions required (that entry carries the full measurement) |
+| ~~**`set *<css-prop> of <target>` silently no-ops**~~ | **FIXED 2026-09-03** — the tokenizer classes `*opacity` as a selector (for `measure`), and set's parser now re-types that selector into the identifier property the runtime's style rungs already split on, folding `*x of T` into the `the *x of T` propertyOfExpression. All five filed shapes plus `of #target`, `the … of #target`, `#target's` and `of the first <div/>` write inline style; oracle re-run on 0.9.93 the same day. | ✅ `set-css-property.test.ts` (10 rows, strict — the target rows also assert `me` was NOT written; mutation: reverting the parser change reddens 8) | section below |
 
 ### ~~`and` in a semantically-parsed command's arguments~~ — FIXED (2026-08-30)
 
@@ -199,6 +211,29 @@ defect each:
   `take … from <.source/>`, `tell closest <form/> submit`) — the last two use
   the `<selector/>` query-literal form, which suggests one shared cause rather
   than two.
+
+### Two `wait`/`pick` forms whose only implementation was a hand-built node (2026-09-03)
+
+Found by Arc 3 step 2's slot-key parity gate and the fixture conversion that
+followed it (`ENGINE_MIGRATION_PLAN.md`, History 2026-09-03). Both PARSE, so
+no documented-examples gate sees them; both run wrong.
+
+- **`pick from <expr>`** — a documented example (`pick from colors`). The parser
+  has no `from` form for `pick` (upstream has none either: first/last/random/
+  items/match), so the generic fallback parses it positionally as `[from,
+  colors]` and the command evaluates `from` as a VARIABLE. The
+  `modifiers.from` branch that would have handled it was reachable only from
+  hand-built nodes and is deleted. Options: drop the example (it is not an
+  upstream form), or give `pick` a `from`-only variant (random single) with a
+  parser slot. Gate: `slot-key-parity.test.ts` will demand the emitter.
+- **`wait <time> or for <event>`, `wait <time> or <time>`** — the time-first
+  race. The parser reads `wait 2s or for click` as ONE argument, a binary
+  `or` expression, so `parseTimeWait` gets a boolean. The race the parser does
+  support is event-first (`wait for click or 1s` → an alternative list).
+  Three tests once described the time-first form against hand-built
+  `modifiers.or` nodes; they are a KNOWN GAP pin now
+  (`wait-new-features.test.ts`). Upstream `wait` has no time-first race, so
+  this is a HyperFixi extension to decide on, not a parity fix.
 
 ### Why the gated entries need no doc to survive
 
@@ -1376,7 +1411,7 @@ examples had been losing content in silence. Each carries the real
 | n | class | rows |
 | - | ----- | ---- |
 | 8 | **docs defect** — upstream rejects it too | `blur on <input/>`, `focus on <input/>`, `async <a> <b>` ×3, `log x y z`, `log "Result:" result`, `pick "red", "green", "blue"` |
-| 3 | **parser gap** — upstream ACCEPTS | `scroll to me smoothly` (drops `smoothly`), `transition left to 100px over 500ms` (drops `px over 500ms` — the DURATION is lost), `make a URL from "/path/", "…"` (does not parse at all inside a handler) |
+| 3 | **parser gap** — upstream ACCEPTS | ~~`scroll to me smoothly`~~, ~~`transition left to 100px over 500ms`~~, ~~`make a URL from "/path/", "…"`~~ — **all three FIXED** |
 
 Two of those are worth acting on next:
 
@@ -1384,10 +1419,17 @@ Two of those are worth acting on next:
   the same day**; see the entry below. The guess that "a plain
   `transition left to 100px` is likely affected too" was right, and it was the
   bigger half: the VALUE was losing its unit, not just the tail.
-- **`make a URL from "/path/", "https://…"` does not parse inside a handler at
-  all**, while it parses bare and upstream accepts both. A comma-separated
-  argument list that survives at top level and dies in a body points at the body
-  loop, not at `make`.
+- ~~**`scroll to me smoothly` drops `smoothly`**~~ — **FIXED**; see the entry
+  below. Same shape as the `transition` row in the way that matters: the
+  documented example named the MILD half. The dropped adverb changed nothing
+  observable on `smoothly` (the runtime already defaulted to smooth), while
+  `instantly` was INVERTED and every `scroll to <pos> of <target>` form threw.
+- ~~**`make a URL from "/path/", "https://…"` does not parse inside a handler at
+  all**~~ — **FIXED**; see the entry below. **Its stated diagnosis was wrong.**
+  "A comma-separated argument list that survives at top level and dies in a body
+  points at the body loop, not at `make`" — measured: `log "a", "b"` and
+  `call foo("a", "b")` both compile fine inside a handler. The body loop is
+  innocent; it IS `make`.
 
 **And it corrects a claim in the convergence brief.** That brief lists rows
 45/82 (`blur on <input/>`) as "a third defect belonging to neither path's
@@ -1430,10 +1472,607 @@ because `500ms` and `1s` arrive as ONE token. `over 2 * delay` is what proves it
 — which is exactly the "a mutation must redden the behavioural row" discipline
 catching an unproven change in its author's own diff.
 
-Still open, and adjacent: **`over 500 ms` (with a space) drops the `ms`.** The
-tokenizer joins `500ms` into one TIME token, but there is no time POSTFIX
-expression to match upstream's `TimeExpression`, which accepts the spaced form.
-Same shape as the string-postfix gap, one layer over.
+~~Still open, and adjacent: **`over 500 ms` (with a space) drops the `ms`.**~~ —
+**FIXED**, see the time-postfix entry below. The diagnosis in this paragraph was
+right: it is the same shape as the string-postfix gap, one layer over.
+
+### ~~`make a URL from "/a", "/b"` dies inside a handler~~ — FIXED, and the filing blamed the wrong thing (2026-09-01)
+
+The filing said: *"A comma-separated argument list that survives at top level
+and dies in a body points at the body loop, not at `make`."* **Measured, that is
+backwards.** `log "a", "b"` and `call foo("a", "b")` both compile clean inside a
+handler; `make a Set from "a", "b"` fails there exactly like the URL row. The
+body loop is innocent. It is `make`.
+
+**And "does not parse inside a handler" was the symptom, not the defect.** Bare,
+the source reported `ok: true` — while silently discarding everything after the
+first comma. `make` is parsed by `parseMultiWordCommand`, whose modifier loop
+reads one `parseExpression()` per keyword, and the comma is not an operator. So
+`from` took `"/path/"` and left `, "https://…"`; bare that is invisible (the
+parser reports discarded input only from inside a handler body, #1026), and
+inside a handler the remainder is re-read as a statement and the whole handler
+fails to compile. Same source, two very different-looking symptoms, one cause.
+
+Upstream spells the list explicitly —
+`do { args.push(requireElement("expression")) } while (parser.matchOpToken(","))`
+— so the fix is a `commaListKeywords` opt-in on the pattern, **not** a generic
+comma rule: `append "x" to #a, #b` is rejected by the canonical engine too
+(`Unexpected Token : ,`), and collecting commas for every multi-word modifier
+would have made hyperfixi accept syntax upstream refuses. Only `make`'s `from`
+has the opt-in; a test pins that `append`'s comma stays rejected.
+
+**Fixing the parse was not enough — the example still did nothing.** `make a URL
+from …` then threw `Constructor 'class URL { … }' not found or is not a
+function`, at every arity. `parseInput` EVALUATES the type expression and the
+real evaluator resolves a global like `URL` or `Date` to the class object, while
+`createClassInstance` did `String(className)` and looked that up by name — so
+the "name" was the class's entire source text. `make.test.ts` could not see it:
+its rows pass a MOCK evaluator returning the STRING `'URL'`, which is the one
+input shape the name lookup handles. *A unit test can pin the mechanism while
+the real path bypasses it* — again.
+
+Both halves are mutation-tested in
+`src/commands/dom/__tests__/make-constructor-args.test.ts`, and the two-argument
+form now yields `pathname` and `origin` byte-identical to the 0.9.93 engine in
+jsdom. Allowlist 28 → **27**; the AST-equivalence baseline moved on that one
+corpus source, `ok:` → `ok:`.
+
+**One incidental find, filed not fixed:** `MultiWordPattern` is declared TWICE
+(`helpers/parsing-helpers.ts` and `parser-types.ts`), the two have always
+differed (`syntax` vs `minArgs`/`maxArgs`, none of them read), and the values
+flow between them structurally — so a field added to one is silently invisible
+on the other side of `getMultiWordPattern`. That is how `commaListKeywords`
+first failed to typecheck. Part of the known duplicate-type divergence.
+
+### ~~`over 500 ms` (spaced) drops the unit~~ — FIXED (2026-09-01)
+
+The tokenizer joins `500ms` into one TIME token, so the unspaced form always
+worked; the spaced form had nothing to match upstream's `TimeExpression` (a
+POSTFIX over `s` / `seconds` / `ms` / `milliseconds`) and the unit was simply
+discarded. **`wait 2 s` therefore waited two MILLISECONDS** — a 1000× error on
+syntax `hyperscript.org` accepts, and the reason this is not cosmetic.
+
+The filing's diagnosis held: same shape as the string-postfix gap one layer
+over, and the mechanism already existed (`tryParseStringPostfix`, mirroring
+upstream's `StringPostfixExpression`). Only the unit set was missing.
+
+Three decisions, each measured rather than assumed:
+
+- **The node is a `stringPostfix`, evaluating to the string `"500ms"`** —
+  upstream's TimeExpression evaluates to a NUMBER of ms. Matching hyperfixi's own
+  JOINED token matters more: its literal carries `"500ms"` and every duration
+  consumer here already parses that string (`_parseDurationComponents` accepts
+  all four spellings). The tests pin the two spellings to the same VALUE.
+- **The postfix requires a numeric root**, which upstream does not do. Upstream
+  matches `s`/`ms` after any expression, so `log a s` is the string `"as"`
+  there. `s` and `ms` are ordinary variable names and hyperfixi's generic
+  command-argument loops parse expressions in sequence far more often than
+  upstream's hand-written command parsers do, so the unrestricted form would
+  silently fuse two arguments. Pinned, and mutation-tested by removing the guard.
+- **`minutes`/`hours`/`days` stay unspaced-only.** Upstream rejects `wait 2
+  minutes` AND `wait 2minutes`; hyperfixi accepts the joined form as an
+  extension. Widening the spaced set would invent syntax rather than close a gap.
+
+**Still open, found while measuring this:** `parseTimeToMs` (parser-internal,
+used only by `debounced at` / `throttled at`) tests suffixes in the order
+`ms, seconds, s, minutes, hours, days` — and `"2minutes"` ends with `s`, so
+`debounced at 2minutes` resolves to **2000 ms, not 120000**. Reachable (`minutes`
+is in the tokenizer's TIME_UNITS) and wrong by 60×. Not fixed here: it is a
+different surface from the expression postfix and wants its own behavioural row.
+
+### ~~A template literal's `value` carried its BACKTICKS on the semantic path~~ — FIXED (2026-09-01)
+
+Thread B item 3. The convergence triage's `value` family was three sites and
+this was the only one not marked inert; it read like an AST-shape nicety
+(`"t ${1}"` vs `` "`t ${1}`" ``). It was not. The delimiters were being
+**printed**: `log \`t ${1}\`` logged `` `t 1` `` on the default path and `t 1`
+on the traditional one, because the evaluator interpolates the value it is given
+and emits whatever comes out.
+
+Narrow by construction — `put` and `set` are on `skipSemanticParsing`, so only
+commands that reach the semantic path could show it, and both were measured
+correct before and after.
+
+**The producer took three attempts to find, and the first two were plausible.**
+Recording them because the pattern generalises:
+
+1. **core's `semanticValueToExpression`** (`semantic-integration.ts`) builds a
+   `templateLiteral` for any literal containing `${…}`. Patching it changed
+   NOTHING — that branch never fires for this source. *Drop each piece of the
+   fix and re-measure*, again.
+2. **`packages/semantic`'s top-level `parse`** returns `null` for both
+   `log \`t ${1}\`` and its handler-wrapped form, so `buildAST` was not the
+   route either.
+3. The live producer is **the semantic package's expression parser**
+   (`ast-builder/expression-parser/parser.ts`), reached from core through the
+   built `dist`. Tagging its SOURCE proved nothing until the package was
+   rebuilt — core's vitest config aliases only `@`/`@test`, so
+   `@lokascript/semantic` resolves through the workspace symlink to `dist`.
+   **A probe that edits a sibling package's `src` and runs core's tests measures
+   the OLD build.**
+
+Fixed at the producer rather than at the consumer, because
+`interchange/from-semantic.ts` reads `raw` and nothing else in that package
+reads `value`. The `value` family is now the two INERT `settle` rows only.
+
+**Found while checking that, filed not fixed:** the same node never SETS `raw`,
+and `from-semantic.ts` does `node.raw ?? ''` — so the interchange turns every
+template literal into an EMPTY literal. Separate defect, separate blast radius
+(interchange output has its own gates).
+
+### Three live defects were hiding inside the `node-type` family (2026-09-01)
+
+Thread B item 5 is "alias normalisation", and the 14 `node-type` sites read as
+spellings needing a rename. Executing each one found **three** live defects on
+the DEFAULT parse path, in three different commands. The lesson generalises past
+this arc: *a difference family named after a SHAPE tells you nothing about
+whether the shapes behave the same.*
+
+#### 1. `transition <property>` was a silent no-op for a bare CSS property
+
+Filed as `string -> identifier` on `transition opacity to 0.5`. The traditional
+parser emits `string{value:'opacity'}`, which evaluates to its own text; the
+semantic parser emits `identifier{name:'opacity'}`, which evaluates to
+**undefined**. `parseInput` did `String(firstArg)`, so the property became the
+literal string `"undefined"` — truthy, so the existing guard passed it — and the
+command animated a CSS property that cannot exist. No error, no effect.
+
+| source | traditional | semantic (DEFAULT) |
+| ------ | ----------- | ------------------ |
+| `transition opacity to 0.5` | `0.5` | **no-op** |
+| `transition color to red` | `red` | **no-op** |
+| `transition my opacity to 0.5` | `0.5` | **no-op** |
+| `transition *opacity to 0.5` | `0.5` | `0.5` |
+| `transition left to 100px` | `100px` | `100px` |
+
+The three that worked are the tell: `*opacity` is a SELECTOR token because of
+the sigil and `left` is a KEYWORD token, so both reach the runtime as strings
+either way. Only a bare, non-keyword CSS property — the idiomatic form, and the
+command's own documented syntax — was broken.
+
+Fixed at the CONSUMER, deliberately: `transition` is the only command that needs
+a property NAME out of an expression slot, transitionSchema admits `expression`
+there on purpose (a literal-only patient dropped the unquoted form in every
+language — see its role comment), and every runtime consumer goes through
+`parseInput`. The `!property` guard now also rejects `'undefined'`/`'null'`,
+which is the whole `String(<nothing>)` class this file had already been bitten
+by once for the TARGET slot.
+
+**jsdom cannot oracle this against upstream.** Run on the real 0.9.93 engine,
+*every* row above is a no-op, `*opacity` included: upstream's transition
+completes through `transitionend`, which jsdom never fires. That is exactly why
+`shipped-examples-execution` disqualifies `transition` outright. The oracle here
+is hyperfixi's own traditional path.
+
+#### 2. A sigil-scoped variable read as `undefined` in the LAST command of a handler
+
+Filed as `identifier -> contextReference`, six sites. `packages/semantic`'s
+`convertReference` turned EVERY reference into a `contextReference`, sigil and
+all: `:count` became
+`{ type: 'contextReference', contextType: ':count', name: ':count' }`. But
+`ContextType` is a closed union of `me`/`it`/`you`/`event`/… that never
+contained a sigil form — so the cast was a lie — and core's
+`evaluateContextReference` has no case for it and returns `undefined`.
+
+**Core parses a command sequence traditionally and hands only the final
+remainder to the semantic analyzer**, so it is the LAST command of a handler
+that gets the semantic node. That is what made it both easy to miss and easy to
+misattribute:
+
+```
+set :v to 5 then log :v then log :v   →  ["5", "5", undefined]
+set $v to 5 then log $v then log $v   →  ["5", "5", undefined]
+set  v to 5 then log  v then log  v   →  ["5", "5", "5"]      (unscoped: fine)
+```
+
+So `on click increment :count then log :count` produced `undefined` while every
+earlier command in the same handler was fine. `default` was hit harder — it was
+neither preserving an existing value nor applying its default:
+
+```
+default :x to 0 then log :x                   before: undefined  after: 0
+set :x to 7 then default :x to 0 then log :x  before: undefined  after: 7
+```
+
+Fixed at the producer, which is also where it was WRONG rather than merely
+different: `convertReference` now emits the scoped identifier the traditional
+parser emits (`:name` strips the sigil and tags `scope: 'element'`; `$name`
+keeps its sigil and carries no scope — those are two different conventions and
+both are the traditional parser's, matched exactly). A real context reference is
+still a context reference, which is why **only 2 of the 6 sites closed**: the
+other four are `me` on `empty`/`hide`/`select`/`show`, genuine aliases and the
+actual item-5 work.
+
+`node-type` **14 → 12**.
+
+#### 3. `clear :count` was a no-op on the TRADITIONAL path
+
+Found in the same measurement, on the opposite path, and fixed alongside because
+the two together are what make the paths agree. `clear` wrote
+`context.locals.set(name, null)` directly, ignoring the `scope` its node
+carries — so an element-scoped `:count` was never cleared (`log :count` still
+read 5). `clear $g` and `clear x` worked, which is why it survived: only the
+element scope is a genuinely separate store. It now writes through
+`setVariableValue`, the helper `set` already uses.
+
+`clear` is a hyperfixi EXTENSION — upstream has no `clear` keyword at all and
+parses `clear :count` as something else — so "upstream ACCEPTs it" is not an
+oracle here. Internal consistency with `set`/`get` is.
+
+#### And one that is NOT a defect, checked rather than assumed
+
+`open #popup as non-modal` (`asExpression -> selector`) looked like content
+loss: the semantic path drops the `asExpression` and the traditional path keeps
+it. It does not — the semantic path lifts `as non-modal` into `modifiers.as`,
+and `OpenCommand` already reads BOTH shapes explicitly. Working as designed, at
+the cost of a runtime that carries three fallback branches because the two paths
+disagree. That is the real price of item 5, and it is paid in the commands, not
+in the parser.
+
+### The 10 remaining `node-type` rows executed — ALL benign, the family is fully dispositioned (2026-09-01, second pass)
+
+Step 1 of the convergence brief (`HANDOFF-convergence-next.md`): execute the 10
+`node-type` sites the first pass left unchecked, because that exact step found
+three live defects in the other 4. This time it found **zero** — all 10 behave
+IDENTICALLY on both parse paths, observable by observable, in jsdom:
+
+| row | observable, same on both paths |
+| --- | ------------------------------ |
+| `call element.focus()` | activeElement becomes the target |
+| `copy my textContent` | clipboard receives the text |
+| `get me.parentElement` | resolves the parent (BODY) |
+| `log me.value` | logs the input's value |
+| `empty me` / `hide me` / `show me` | innerHTML `''` / display `none` / restored |
+| `select me` | input contents selected `[0,2]` |
+| `log #target's innerHTML` | logs through the possessive |
+| `go back` | `history.back()` called once |
+
+With #1036's three fixes and the two checked-benign rows (`open … as
+non-modal`, `transition opacity to 0.5`), **all 14 original sites are now
+dispositioned**: 3 live defects (fixed), 11 benign. Thread B item 5 is
+therefore PURE spelling normalisation — there is no behavioural repair hiding
+anywhere in the family — and needs only the owner decision on which spelling
+wins per family before any code.
+
+Pinned by `src/parser/__tests__/node-type-alias-parity.test.ts` (20 rows, both
+paths, observables not parse shapes), so the rename work cannot silently
+change behaviour while it moves node types. Mutation-measured: nulling the
+`propertyAccess` dispatch arm in `parser/runtime.ts` reddens 4 auto-path rows,
+nulling `contextReference` reddens 3. The `empty/hide/show/select me` rows
+survive the second mutation — those commands fall back to implicit `me` when
+an evaluated target is `undefined`, so their behaviour CANNOT break through
+that arm; the rows still pin the end-to-end surface the fallback serves.
+
+### Thread B item 5 EXECUTED — the vocabulary converged on the core spellings, and the convergence found a live `body` defect (2026-09-01, third pass)
+
+The owner delegated the spelling decision ("think about the naming issue,
+then proceed with your recommended approach"). **Decision: converge the
+semantic emitters on the traditional/core vocabulary**, not the other way:
+
+- The engine-migration direction makes core the canonical engine; the
+  semantic front-end is an adapter INTO core's AST, and adapters speak the
+  host's vocabulary.
+- Blast radius: semantic's emission sites are few (value-converters, the
+  expression parser, one mapper); core's vocabulary is baked into the
+  parser, evaluators, hybrid bundles, the pinned vocabulary and the
+  AST-equivalence baseline — renaming core's emissions would move every
+  fingerprint.
+- On `contextReference` being "arguably better": nothing in core USES the
+  extra information — `evaluateContextReference` resolves through the same
+  machinery as identifier-`me`, and the info is recoverable from the name.
+  If the typed-AST arc later wants a richer node, it renames ONE converged
+  vocabulary instead of two.
+
+**What changed** (all emitter-side, in `packages/semantic`):
+
+- `convertReference` → `identifier{name}` always (possessive surfaces
+  normalise to their base word; the sigil branches from #1036 unchanged).
+- `convertPropertyPath` → the traditional parser's NESTED
+  `memberExpression` chain (one link per dotted-path segment, `property` an
+  identifier node, `computed: false`) — measured byte-identical to trad for
+  `me.value`, `my @data-count`, `event.detail.message`. A possessive
+  surface (`value.access === 'possessive'`) emits `possessiveExpression` —
+  EXCEPT a pronoun-base object (`me`/`it`/`you`), which can only be the
+  space form `my`/`its`/`your` + property and folds to memberExpression
+  exactly as trad does (`copy my textContent`, measured; `event's detail` /
+  `bob's name` keep possessiveExpression on both paths, also measured).
+- The expression parser: CONTEXT_VAR → `identifier`; dot access → nested
+  memberExpression; `[index]` → computed memberExpression (trad-exact; the
+  old flat form stringified an identifier index, silently reading `a[i]` as
+  `a.i`); the possessive space-form fold re-gated by identifier NAME and
+  emitting the base word.
+- The `go` mapper's structural keywords `back`/`url` → `string` nodes (the
+  spelling parseGoCommand emits; string nodes evaluate to their own text).
+
+`ContextReferenceNode` / `PropertyAccessNode` stay in the type union marked
+LEGACY, and core's dispatch arms for them stay until measured dead — they
+serve hand-built ASTs (buildAST is public API). Fixture regenerated
+(`mapper-parity.json`: exactly 2 literal→string + 1
+contextReference→identifier). The AST-equivalence gate pins the TRADITIONAL
+parse only (`parse(source, {})`), so it correctly did not move.
+
+**Result:** `node-type` **12 → 2** — only the two checked-benign real
+disagreements remain (`asExpression→selector` on `open … as non-modal`,
+`string→identifier` on `transition opacity to 0.5`, both dispositioned in
+#1036). The memberExpression→possessiveExpression residual this change
+briefly created on `copy my textContent` was closed by the pronoun-base
+rule above rather than documented — the "equal difference under a new name"
+trap, caught by re-running the triage.
+
+**And the convergence found a live defect, as every pass of this arc has:**
+converging `body` on `identifier` exposed that the TRADITIONAL path had
+never resolved bare `body` — only the semantic path's contextReference arm
+did — so `add .modal-open to body` classed the BUTTON (implicit-me
+fallback) on the traditional path, and started doing so on BOTH paths after
+convergence. The **agent-bench phrasing ratchet** is what caught it
+(`correct → warned-wrong` on the `<body/>` phrasing, whose effect stopped
+matching the reference's). Upstream RESERVES `body` and resolves it from
+its Context to `document.body`. Fixed in `evaluateIdentifier` (async + sync
+mirrors), placed AFTER the locals/globals lookups so a user binding named
+`body` still shadows — hyperfixi stays lenient where upstream reserves the
+word. Pinned in `node-type-alias-parity.test.ts` (both paths + the shadow
+row), mutation-measured.
+
+### `detail` and `sender` were unresolved — the `body` defect had SIBLINGS (2026-09-01, fourth pass)
+
+Auditing upstream's reserved-word list (`meta, it, result, locals, event,
+target, detail, sender, body`) after the `body` fix found two more words of
+the same class. Upstream's Context derives `detail = event?.detail ?? null`
+and `sender = event?.detail?.sender ?? null`; hyperfixi resolved NEITHER:
+
+| source (in an `on custom` handler, CustomEvent detail `{sender, num: 5}`) | before | after |
+| --- | --- | --- |
+| `log detail` | **undefined** | the detail object |
+| `log detail.num` | **undefined** | `5` |
+| `log sender` | **undefined** | the sender element |
+| `log event.detail` | worked | unchanged |
+
+Fixed where `body` was fixed — `evaluateIdentifier` + its sync mirror —
+derived at READ time from `context.event` rather than stamped into the
+per-event context: there are two context-hydration sites today (DOM
+listener, custom-event path) and a stamped field would silently miss any
+third. After locals/globals, so a user binding still shadows. Pinned in
+`reserved-context-words.test.ts` (shadow row + no-event nulls both paths),
+mutation-measured. `target`/`event` already resolved (measured);
+`meta`/`locals` are upstream-internal surfaces with no documented usage —
+left unresolved deliberately.
+
+**Legacy-arm liveness, measured the same day:** zero in-repo non-test
+producers of `contextReference` or `propertyAccess` nodes remain (grep over
+every package + the kind classifier; the remaining hits are type
+declarations and consumer-side interfaces). Core's dispatch arms and the
+two LEGACY types now serve only EXTERNAL hand-built ASTs (`buildAST` is
+public API) — recorded in the arm comments; delete with the next minor
+version bump.
+
+### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
+
+The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
+(`binaryExpression`/`binary`, `eventHandler`/`event`, …) … and it is what 12 of
+the 14 remaining `node-type` differences are."* **The two halves of that
+sentence are about different axes**, and only the second is true.
+
+- `RENAME_PAIRS` (in `ast-vocabulary.test.ts`) is the **full parser vs the
+  HYBRID parser** — the slim-bundle producer. `binaryExpression`/`binary`,
+  `memberExpression`/`member`, and so on.
+- The triage's `node-type` family is **traditional vs semantic**, and the
+  hybrid parser takes no part in it at all: the tool calls
+  `hyperscript.compileSync(src, { traditional })` both times.
+
+Measured over the whole corpus, collecting every node kind each path emits:
+
+```
+semantic-only kinds : contextReference, propertyAccess
+traditional-only    : functionCall
+RENAME_PAIRS names among those divergent kinds : (NONE)
+RENAME_PAIRS hybrid names emitted by EITHER path: (NONE)
+```
+
+So renaming all seven pairs moves **zero** of the 14 sites. `memberExpression`
+does appear in a transition — but as `memberExpression → propertyAccess`, and
+its RENAME_PAIRS partner is `member`; renaming it would leave
+`member → propertyAccess`, an equal difference under a new name.
+
+**The real convergence vocabulary gap is THREE names, not seven pairs**, and the
+12 alias sites are exactly two families:
+
+| transition | sites | what it is |
+| ---------- | ----- | ---------- |
+| `identifier → contextReference` | 6 | semantic emits a dedicated node for `me`/`it`/`you` |
+| `memberExpression → propertyAccess` | 4 | one meaning, two spellings |
+| `possessiveExpression → propertyAccess` | 1 | two traditional spellings collapsing to one |
+| `string → literal` | 1 | one meaning, two spellings |
+| `asExpression → selector` | 1 | **not an alias** — a real disagreement |
+| `string → identifier` | 1 | **not an alias** — a real disagreement |
+
+`parser/runtime.ts` already carries the parallel arms, and its own comments name
+the work: *"The core parser uses `memberExpression`, so this only arrives from
+`@lokascript/semantic`"* and *"The traditional parser emits these as `identifier`
+nodes … but the semantic→AST builder emits dedicated `contextReference` nodes."*
+Pick one spelling per family and those duplicate arms collapse. That is the
+actual step, and it is smaller and better-defined than the brief's version —
+but it changes AST shapes across `packages/semantic`, 9 consumer files, and the
+AST-equivalence baseline, so it wants its own PR.
+
+### The triage tool's `marker-in-args` family was under-counting
+
+Not a parser defect — a MEASUREMENT one, found because the `scroll` fix tripped
+it. `identName()` recognised a marker only on an `identifier` node, but the
+flat-token-list parsers deliberately emit their structural keywords as `string`
+nodes (an unbound identifier does not evaluate to its own text, and those
+runtimes match by text). So `go to url "…"` had been misfiled under `arity`
+since `parseGoCommand` was written, reporting a bare count instead of the
+markers `["to","url"]`, and `scroll to #top` joined it the moment `scroll` got
+the same treatment.
+
+With `identName` widened, `marker-in-args` reads **13** (12 before this session,
++1 for the corrected `scroll` row) and **`arity` is now EMPTY** — no source in
+the corpus has an unexplained arity difference. Same lesson as the gates: *a
+family that inspects one node type is blind to a parser that emits another.*
+
+### ~~`scroll to me smoothly` drops `smoothly`~~ — FIXED, and the filing named the mild half (2026-09-01)
+
+`scroll` was not a `COMPOUND_COMMANDS` member, so it fell to
+`parseCommandCore`'s generic argument loop, which continues only across a fixed
+set of continuation keywords (`into from to with by at before after over`).
+`scroll` now has a dedicated parser (`parseScrollCommand`) mirroring upstream's
+`_parseScrollModifiers`, emitting the flat token list `parseGoCommand` already
+builds and `commands/navigation/scroll-to.ts` already consumes.
+
+**Executing it against the real 0.9.93 engine — rather than reading the parse —
+is what showed the filing understated the defect.** Both engines were run in
+jsdom with `scrollIntoView` stubbed, on `scroll`'s own documented examples:
+
+| source | upstream | hyperfixi BEFORE | after |
+| ------ | -------- | ---------------- | ----- |
+| `scroll to me smoothly` | `behavior:'smooth'` | `behavior:'smooth'` | unchanged |
+| `scroll to me instantly` | `behavior:'instant'` | **`behavior:'smooth'`** | `'instant'` |
+| `scroll to bottom of #chat` | `block:'end'` on `#chat` | **THREW** `target element not found` | `block:'end'` |
+| `scroll to middle of #chat` | `block:'center'` | **THREW** | `block:'center'` |
+| `scroll to the right of #chat` | `#chat`, `inline:'end'` | **THREW** | `#chat` (inline still unmapped) |
+
+So the row the gate found — `smoothly` — was the one shape whose dropped token
+changed NOTHING observable, because ScrollCommand's default is
+`smooth = !args.includes('instantly')`. The same drop on `instantly` inverted
+the request, and the sibling positional forms were dead outright. **A
+parse-level filing describes a parse-level symptom; only execution ranks it.**
+
+**The obvious cheaper fix is measured wrong.** Adding `scroll` to
+`COMPOUND_COMMANDS` with NO dispatch case routes it to `parseRegularCommand`,
+whose `checkIdentifierLike()` loop *does* consume `instantly` and `bottom`/`of`
+as arguments — the parse looks complete and reports no discarded input. It is
+still broken: `parseRegularCommand` emits them as `identifier` nodes, an unbound
+identifier does not evaluate to its own text, and ScrollCommand matches these
+words by text. Mutation-measured with the case deleted: `instantly` scrolls
+smoothly, `bottom of` scrolls to `start`, `the right of` throws. **The dedicated
+parser's `string` nodes are the entire difference**, and that difference is
+invisible to every parse-shape assertion.
+
+That is also why `compound-command-coverage.test.ts` was not enough here, and
+why `src/commands/navigation/__tests__/scroll-parse.test.ts` exists: deleting the
+dispatch case leaves the coverage gate GREEN (mutation-measured) and reddens 5
+execution rows in the new file. The parse rows there are worth keeping too —
+11 of 15 rows fail against the pre-change parser — but the behavioural five are
+the ones that carry the claim.
+
+**One early probe result was wrong, and the page was why.** The first sweep
+reported `scroll to last <.message/> in #chat` (a multilingual corpus row) as
+throwing on both sides. It resolves fine on both paths; it threw only because
+the scratch page had no `.message` elements. A defect measured on a page that
+cannot exhibit it is not a measurement.
+
+**Deliberately NOT changed — three runtime divergences from upstream, filed:**
+
+1. **`behavior` default.** hyperfixi always sets `behavior:'smooth'` when no
+   adverb is given; upstream leaves it unset (browser default `auto`), so
+   `scroll to #top` force-animates here and does not upstream. Pinned by
+   `scroll-to.test.ts`, so it is a decision, not a slip — same handling #1028
+   gave `show`'s `data-original-display` restore.
+2. **`inline` is never set**, and the HORIZONTAL position word is mapped to
+   `block`. Upstream always sets `inline` (default `nearest`) and maps
+   `left`/`center`/`right` to it — so `scroll to center of #chat` means
+   `inline:'center'` upstream and `block:'center'` here.
+3. **`in <container>` and `scroll <dir> by <n> [px]` have no runtime.** The
+   parser now consumes both (the container clause so it cannot corrupt the
+   target; the by-form is declined outright and keeps the generic path), but
+   ScrollCommand models neither `scrollTo`-relative-to-a-container nor
+   `scrollBy`. Note upstream's own container branch produced no observable call
+   in jsdom, so **there is no oracle for it** — which is why it was consumed
+   rather than implemented.
+
+Gates moved: `documented-examples` allowlist 29 → **28** (second row to ratchet
+DOWN); AST-equivalence baseline moved on exactly the 3 scroll corpus sources,
+all `ok:` → `ok:` (structure, not validity); manifest `multiword` count 22 → 23.
+`shipped-sources-validity` (4) and `shipped-examples-execution` (33) unmoved —
+no shipped page uses `scroll`.
+
+The top-line triage is unchanged (`same` 139 · `differ` 77): both parse paths
+were broken identically and are fixed together, which is precisely the class a
+convergence triage cannot see.
+
+
+### ~~`set *<css-property>` — four of five shapes broken~~ — FIXED (2026-09-03)
+
+**Resolution.** Parse-time, in `parseSetCommand`: a `*prop` star lands as a
+`selector` node (the tokenizer's classification, kept for `measure`), and
+`retypeStylePropertyTarget` turns it into the `identifier` the runtime's
+`write-target`/`property-target` rungs already split on — bare, as the left
+of an `of` binaryExpression (folded into a propertyOfExpression), or as a
+propertyOfExpression's property. One runtime path serves every spelling; no
+`parseInput` scan was added. The second defect filed below (`cssProperty`'s
+reader vs its emitter) is MOOT for these surfaces and its emitter is gone
+with Arc 1 step 6; the kind is now unemitted in core. Original filing follows.
+
+Found while answering Arc 2 step 3's question "which union kinds never reach the
+evaluators, and where is each actually handled?". `cssProperty` is one of the
+three `Expr` kinds that never arrives; chasing its one reader turned up a live
+parity bug next door.
+
+Measured against the vendored engine (`_hyperscript-0.9.93.min.js`, loaded into
+jsdom) on the same element, same context:
+
+| source | upstream 0.9.93 | hyperfixi |
+| ------ | --------------- | --------- |
+| `set *opacity of me to 0.5` | `opacity: 0.5` | **silent no-op** |
+| `set *opacity to 0.5` | `opacity: 0.5` | **silent no-op** |
+| `set *background-color of me to "red"` | `background-color: red` | **silent no-op** |
+| `set the *opacity of me to 0.5` | `opacity: 0.5` | **throws** `Property name must be an identifier in "the X of Y" pattern` |
+| `set my *opacity to 0.5` | `opacity: 0.5` | `opacity: 0.5` ✅ |
+
+So the possessive spelling is the only one that works, and the three silent rows
+are the dangerous ones — a shipped page using them looks fine and does nothing.
+
+**Do not assume the `cssProperty` node is involved.** It is not: for every row
+above, BOTH the traditional and the default (semantic-first) path parse `*opacity`
+into a `selector` or `identifier`, never into `cssProperty`. Verified by walking
+the compiled AST for each source. The kind has exactly one emitter
+(`semantic-integration.ts`'s `createPropertyNode`, for a `set` destination) and
+these English surfaces do not reach it.
+
+**Second, separate defect in the same area.** `cssProperty`'s only reader cannot
+match the shape its only emitter builds:
+
+- emitter writes `{ type: 'cssProperty', name: 'opacity' }` — the `*` **stripped**,
+  and no `value` field;
+- `isCSSPropertySelectorNode` (`commands/helpers/selector-type-detection.ts`)
+  accepts a node only when `extractSelectorValue(node)` **starts with `*`**;
+  that helper falls through to `name`, so it returns `'opacity'` and the guard
+  returns `false`.
+
+Confirmed directly: `isCSSPropertySelectorNode({type:'cssProperty',name:'opacity'})`
+→ `false`; the same call with `{value:'*opacity'}` → `true`. Whether the fix is to
+stop stripping the `*`, or to have the reader accept `cssProperty` on its
+discriminant alone, is a behaviour decision — which is why this is filed rather
+than fixed inside a types-only arc.
+
+Both are behaviour changes and neither belongs in Arc 2. Start from the table
+above (it is the oracle), and note the `the X of Y` row throws from
+`property-target.ts`, a different code path than the three silent rows.
+
+### Leftover argument tokens are dropped in silence — `log x y z` parses `log x` (2026-09-02)
+
+Arc 3 step 4 replaced the generic argument loop with a declared grammar and
+kept ONE of its behaviours on purpose: when a command's arguments end at a
+token that is neither a boundary (`then`/`and`/`else`/`end`/`on`, a command
+word) nor a marker of that command, the parser stops and leaves the token
+where it is. `log x y z` becomes `log x`; the statement loop then meets `y`,
+which is not a command, and the rest vanishes without a diagnostic. Upstream
+0.9.93 rejects `log x y z` outright, and the documented-examples gate records
+it (and `log "Result:" result`, `async a b`) as a docs defect on that basis.
+
+Turning the silent drop into a parse error is the right end state and a
+one-line change in `parseDeclaredCommand` — but it flips silent truncation
+into hard failure across every shipped page that happens to carry a stray
+token, a set nobody has measured. Do it behind the shipped-examples and
+shipped-sources gates (run both, read the allowlist diff), not as a drive-by.
+
+Two defects the same step DID fix, for the record: a zero-argument command
+at the end of a handler body swallowed the NEXT HANDLER as its argument
+(`on click focus\non keyup log 1` compiled to one handler — the loop never
+stopped at `on`, and `parsePrimary` on `on` returns a handler), and
+`call fetch("/x")` split at the command word into an empty `call` plus a
+`fetch` command that then ran. Both are pinned in
+`parser/__tests__/declared-commands.test.ts`.
 
 ## Notes
 
@@ -1519,3 +2158,24 @@ regression episode that motivates it:
   [HANDOFF-parse-success-and-doc-examples.md](HANDOFF-parse-success-and-doc-examples.md).
 - 2026-01-30 — behavior parameters shadowing command names. **Resolved**;
   archived at [PARSER_FIX_STATUS.md](PARSER_FIX_STATUS.md).
+
+### `async <command>` has no fire-and-forget execution anywhere (2026-09-03)
+
+Upstream `_hyperscript` runs `async <command>` without awaiting it. Neither
+parser honours that: the core parser used to produce a bare `async` node
+followed by a sibling command (the `async` command that consumed it was
+deleted in 3.0.0, #1102 — it was unreachable from parsed code); the semantic
+front-end's `stripAsyncModifier` removes the keyword in every language and
+parses the following command, so the async-ness is dropped and the command
+runs awaited. Measured 2026-09-03: `async fetch /api/data as json` → `fetch`
+in en/es/ja; a bare `async` does not parse. The semantic `asyncSchema` was
+deleted the same day as unreachable; the 24 profiles' `keywords.async` stay
+because the stripper matches on them.
+
+**If parity is wanted** it is a core feature, not a semantic one: the core
+parser sets `async: true` on the following command node (one token to
+consume at command position), the runtime's sequence executor does not await
+a node so flagged (and drops its Result), and only then does semantic stop
+stripping and set the same flag. Until then the degradation is sync
+execution, which is the only faithful option a runtime without the flag can
+offer. No gate currently pins the modifier's behaviour in either parser.

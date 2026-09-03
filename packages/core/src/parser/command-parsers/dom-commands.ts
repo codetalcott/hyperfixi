@@ -20,6 +20,8 @@ import {
   consumeOneOfKeywordsToArgs,
   consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
+import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotKey, SlotMap } from '../../ast/command-slots';
 
 /**
  * A `literal` node in the slot `withModifiers` types as `ExpressionNode`.
@@ -35,7 +37,7 @@ import {
  * an identifier node would be looked up as a variable and come back undefined.
  */
 function literalModifier(value: string): ExpressionNode {
-  return { type: 'literal', value, raw: value } as unknown as ExpressionNode;
+  return toLegacyExpression({ type: 'literal', value, raw: value });
 }
 
 /**
@@ -127,17 +129,16 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
     args.push(classArg);
   }
 
-  // Consume 'from' keyword and add to args
-  consumeKeywordToArgs(ctx, KEYWORDS.FROM, args);
-
-  // Parse target argument
-  const targetArg = parseOneArgument(ctx);
-  if (targetArg) {
-    args.push(targetArg);
+  // `from <target>` is the `from` slot — the key the semantic path emits.
+  const modifiers: SlotMap<'remove'> = {};
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
+    const targetArg = parseOneArgument(ctx);
+    if (targetArg) modifiers['from'] = targetArg as ExpressionNode;
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'remove'>(identifierNode)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -165,85 +166,90 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
  * @param identifierNode - The 'toggle' identifier node
  * @returns CommandNode representing the toggle command
  */
+/** `modal` / `non-modal` from an asExpression's target type (a node or a bare string). */
+function dialogModeOf(targetType: unknown): string | undefined {
+  const name =
+    typeof targetType === 'string'
+      ? targetType
+      : (targetType as { name?: unknown } | undefined)?.name;
+  return name === 'modal' || name === 'non-modal' ? name : undefined;
+}
+
 export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
+  const modifiers: SlotMap<'toggle'> = {};
 
-  // Check for "toggle between" syntax
+  // Every SYNTACTIC decision toggle has is made here and carried as a slot
+  // (Arc 3 step 3, toggle PR B): the `between A and B` pair is
+  // `modifiers.between` (an arrayLiteral of the two), the dialog mode of
+  // `as modal` / bare `modal` is `modifiers.as`, and the destination is
+  // `modifiers.on` (PR A). ToggleCommand.parseInput no longer rediscovers any
+  // of them by evaluating an argument and string-comparing the result. What it
+  // still decides — element vs class from the evaluated first value, the
+  // dialog/details/select dispatch by element type — is VALUE work, and stays.
+
   if (ctx.check(KEYWORDS.BETWEEN)) {
     ctx.advance(); // consume 'between'
-    args.push(ctx.createIdentifier('between'));
-
-    // Parse first class/attribute. `parseOneArgument` uses the full expression
-    // parser, which treats `and` as a logical operator — so `.on and .off`
-    // comes back as a single binary `and` expression. Split it back into the
-    // flat `classA, and, classB` shape the toggle command's parseInput expects.
+    // `parseOneArgument` uses the full expression parser, which treats `and`
+    // as a logical operator — so `.on and .off` comes back as one binary
+    // `and` expression. Split it into the pair; otherwise parse the pair
+    // around the keyword.
+    const pair: ASTNode[] = [];
     const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]) as
       (ASTNode & { type?: string; operator?: string; left?: ASTNode; right?: ASTNode }) | undefined;
     if (firstArg && firstArg.type === 'binaryExpression' && firstArg.operator === 'and') {
-      if (firstArg.left) args.push(firstArg.left);
-      args.push(ctx.createIdentifier('and'));
-      if (firstArg.right) args.push(firstArg.right);
+      if (firstArg.left) pair.push(firstArg.left);
+      if (firstArg.right) pair.push(firstArg.right);
     } else {
-      if (firstArg) {
-        args.push(firstArg);
-      }
-
-      // Consume 'and' keyword
-      consumeKeywordToArgs(ctx, KEYWORDS.AND, args);
-
-      // Parse second class/attribute (stops at 'on'/'from'/'for')
+      if (firstArg) pair.push(firstArg);
+      consumeOptionalKeyword(ctx, KEYWORDS.AND);
       const secondArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON, KEYWORDS.FOR]);
-      if (secondArg) {
-        args.push(secondArg);
-      }
+      if (secondArg) pair.push(secondArg);
     }
-
-    // Accept 'from' or 'on' for target specification
-    const preposition = consumeOneOfKeywordsToArgs(ctx, [KEYWORDS.FROM, KEYWORDS.ON], args);
-    if (preposition) {
-      const targetArg = parseOneArgument(ctx);
-      if (targetArg) {
-        args.push(targetArg);
-      }
+    const first = pair[0];
+    const last = pair[pair.length - 1];
+    modifiers['between'] = toLegacyExpression({
+      type: 'arrayLiteral',
+      elements: pair as never,
+      ...(first?.start !== undefined ? { start: first.start } : {}),
+      ...(last?.end !== undefined ? { end: last.end } : {}),
+      ...(first?.line !== undefined ? { line: first.line } : {}),
+      ...(first?.column !== undefined ? { column: first.column } : {}),
+    });
+  } else {
+    // Standard syntax: toggle <class|attr|element> [as modal|non-modal] [on|from <target>].
+    // The argument stops before `as` so that `as modal` is read as the mode
+    // slot rather than folded into an `asExpression` the command would have
+    // to unwrap.
+    // `as` is an expression operator, so `#dlg as modal` comes back from the
+    // expression parser as ONE asExpression; unwrap it here, once, into the
+    // target plus the mode slot. (Stopping the argument before `as` would not
+    // help — `parseOneArgument` only refuses to START at a boundary.)
+    const classArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON]) as
+      (ASTNode & { expression?: ASTNode; targetType?: unknown }) | undefined;
+    const mode = classArg?.type === 'asExpression' ? dialogModeOf(classArg.targetType) : undefined;
+    if (classArg && mode !== undefined && classArg.expression) {
+      args.push(classArg.expression);
+      modifiers['as'] = literalModifier(mode);
+    } else if (classArg) {
+      args.push(classArg);
     }
-
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .withModifiers(parseTemporalTail(ctx))
-      .endingAt(ctx.getPosition())
-      .build();
+    if (mode === undefined && ctx.check('modal')) {
+      ctx.advance();
+      modifiers['as'] = literalModifier('modal');
+    }
   }
 
-  // Standard toggle syntax: toggle <class> from <target> OR toggle <class> on <target>
-  // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
-
-  // Parse first argument (class) until 'from' or 'on'
-  const classArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON]);
-  if (classArg) {
-    args.push(classArg);
-  }
-
-  // Accept either 'from' or 'on' keyword for target specification
-  const preposition = consumeOneOfKeywordsToArgs(ctx, [KEYWORDS.FROM, KEYWORDS.ON], args);
-  if (preposition) {
-    // Parse target
+  // `on <target>` / `from <target>` — the destination slot (PR A). `from` is
+  // the HyperFixi spelling, `on` upstream's; they mean the same thing here.
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM) || consumeOptionalKeyword(ctx, KEYWORDS.ON)) {
     const targetArg = parseOneArgument(ctx);
-    if (targetArg) {
-      args.push(targetArg);
-    }
+    if (targetArg) modifiers['on'] = targetArg as ExpressionNode;
   }
 
-  // Optional bare `modal` modifier for dialogs: `toggle #dialog modal`.
-  // ToggleCommand.parseModalMode reads args[1] === 'modal'. (The `as modal`
-  // form is handled in ToggleCommand.parseInput via the asExpression target.)
-  if (ctx.check('modal')) {
-    ctx.advance();
-    args.push({ type: 'literal', value: 'modal', raw: 'modal' } as unknown as ASTNode);
-  }
-
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'toggle'>(identifierNode)
     .withArgs(...args)
-    .withModifiers(parseTemporalTail(ctx))
+    .withModifiers({ ...modifiers, ...parseTemporalTail(ctx) })
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -276,7 +282,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
  */
 export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'take'> = {};
 
   // First argument: what to take (stops at 'from'/'for' boundaries)
   const whatArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.FOR]);
@@ -285,12 +291,12 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
   }
 
   // Optional `from <source>` — flat args, same shape as remove
-  if (ctx.check(KEYWORDS.FROM)) {
-    consumeKeywordToArgs(ctx, KEYWORDS.FROM, args);
+  // `from <source>` is the source SLOT (Arc 3 step 3) — the spelling
+  // TakeCommand.parseInput already read on the semantic path — not a `from`
+  // identifier pushed into args for the command to check by name.
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
     const sourceArg = parseOneArgument(ctx, [KEYWORDS.FOR]);
-    if (sourceArg) {
-      args.push(sourceArg);
-    }
+    if (sourceArg) modifiers['from'] = sourceArg as ExpressionNode;
   }
 
   // Optional `for <recipient>` — must be consumed here or the next parse
@@ -302,7 +308,7 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
     }
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'take'>(identifierNode)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
@@ -310,31 +316,16 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
 }
 
 /**
- * Consume the optional `using view transition` tail shared by `swap` and
- * `process`.
- *
- * Both commands declare the tail in their own `commandMeta` syntax and both
- * runtimes already read it — `SwapCommand.parseInput` and
- * `ProcessPartialsCommand.parseInput` each scan the flat args for
- * `using` … `view` … `transition` — but neither parser consumed it. Since
- * `transition` is a COMMAND token, the unconsumed tail was re-parsed as a
- * fresh `transition` command and both forms died with
- * `Transition command requires a CSS property`. An unconsumed tail is never
- * inert: this is the same defect class as `toggle … for 2s` (#846) and
- * `take … for me` (#859).
- *
- * Flat identifier args, not modifiers, because that is the shape both
- * runtimes already read (and the shape the existing process unit fixtures
- * are written in).
- *
- * @param ctx - Parser context providing access to parser state and methods
- * @param args - Argument array to append the three tail keywords to
- * @returns True if a tail was present and consumed
+ * `using view transition` — the tail `swap`, `morph` and `process partials`
+ * share. Emitted as `modifiers.viewTransition` (Arc 3 step 3): the slot the
+ * semantic path has always produced from its `manner` role, and the one every
+ * command's `parseInput` reads. It used to push the three words into `args`
+ * as identifiers for each command to scan for by name.
  */
-function consumeViewTransitionTail(ctx: ParserContext, args: ASTNode[]): boolean {
-  if (!ctx.check('using')) {
-    return false;
-  }
+function parseViewTransitionTail(
+  ctx: ParserContext
+): SlotMap<'swap' | 'morph' | 'process' | 'put'> {
+  if (!ctx.check('using')) return {};
   ctx.advance(); // consume 'using'
   if (!ctx.match('view')) {
     throw new Error("expected 'view transition' after 'using'");
@@ -342,10 +333,7 @@ function consumeViewTransitionTail(ctx: ParserContext, args: ASTNode[]): boolean
   if (!ctx.match('transition')) {
     throw new Error("expected 'transition' after 'using view'");
   }
-  args.push(ctx.createIdentifier('using'));
-  args.push(ctx.createIdentifier('view'));
-  args.push(ctx.createIdentifier('transition'));
-  return true;
+  return { viewTransition: literalModifier('transition') };
 }
 
 /**
@@ -385,24 +373,22 @@ export function parseProcessCommand(ctx: ParserContext, identifierNode: Identifi
     return null;
   }
 
+  // `process partials in <content>`: both words are consumed; the content is
+  // the one positional argument — the shape the semantic path always emitted
+  // (`ast: { args: ['patient'] }`). Marker words never reach `args`.
   const args: ASTNode[] = [];
-  consumeKeywordToArgs(ctx, 'partials', args);
-
-  // `in <content>` — the keyword must be consumed here; the generic loop
-  // treats it as a boundary and silently dropped everything after it.
-  if (consumeKeywordToArgs(ctx, KEYWORDS.IN, args)) {
+  ctx.advance(); // consume 'partials'
+  if (consumeOptionalKeyword(ctx, KEYWORDS.IN)) {
     const contentArg = parseOneArgument(ctx, ['using']);
     if (contentArg) {
       args.push(contentArg);
     }
   }
+  const modifiers = parseViewTransitionTail(ctx);
+  const builder = CommandNodeBuilder.fromIdentifier<'process'>(identifierNode).withArgs(...args);
+  if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
 
-  consumeViewTransitionTail(ctx, args);
-
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+  return builder.endingAt(ctx.getPosition()).build();
 }
 
 /**
@@ -440,19 +426,16 @@ export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  // Parse optional 'to <target>'
-  if (ctx.check(KEYWORDS.TO)) {
-    ctx.advance(); // consume 'to'
-
-    // Parse target element
+  // `to <target>` is the `to` slot — the key the semantic path emits.
+  const modifiers: SlotMap<'add'> = {};
+  if (consumeOptionalKeyword(ctx, KEYWORDS.TO)) {
     const targetArg = parseOneArgument(ctx);
-    if (targetArg) {
-      args.push(targetArg);
-    }
+    if (targetArg) modifiers['to'] = targetArg as ExpressionNode;
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'add'>(commandToken)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -541,8 +524,16 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
   }
 
   // Create command node using builder pattern
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(contentExpr, ctx.createIdentifier(operation), targetExpr)
+  // The operation is the SLOT the target lives under (Arc 3 step 3):
+  // `put X into Y` is `args: [X]`, `modifiers.into: Y` — the shape the
+  // semantic path always produced from putSchema's `ast` descriptor, and the
+  // one PutCommand.parseInput already read. The multi-word operations keep
+  // their spelling as the key (`'at start of'`, `'at end of'`), which is what
+  // the command's position map is keyed on. Until now the parser pushed the
+  // operation word into `args` as an identifier for the command to find again.
+  return CommandNodeBuilder.fromIdentifier<'put'>(identifierNode)
+    .withArgs(contentExpr)
+    .withModifier(operation as SlotKey<'put'>, targetExpr as ExpressionNode)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -550,14 +541,23 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
 /**
  * Swap strategy keywords that indicate a specific swap strategy
  */
+// Every strategy word SwapCommand knows (`lib/swap-executor.ts`'s
+// STRATEGY_KEYWORDS), lower-cased: the parser recognises the same set the
+// command resolves, so a strategy the command accepts never parses as a target.
 const SWAP_STRATEGY_KEYWORDS = [
-  'innerhtml',
-  'outerhtml',
-  'into',
-  'over',
+  'afterbegin',
+  'afterend',
+  'beforebegin',
+  'beforeend',
   'delete',
+  'innerhtml',
+  'innermorph',
+  'into',
   'morph',
-  'morphouter',
+  'none',
+  'outerhtml',
+  'outermorph',
+  'over',
 ];
 
 /**
@@ -575,66 +575,43 @@ const SWAP_STRATEGY_KEYWORDS = [
  * @returns CommandNode representing the swap command
  */
 export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
+  // Every syntactic decision is a slot (Arc 3 step 3): the strategy word is
+  // `modifiers.strategy`, the content after `with` is `modifiers.with`, the
+  // `using view transition` tail is `modifiers.viewTransition`, and the one
+  // positional argument is the target. `swap innerHTML of #t with it`,
+  // `swap over #m with c`, `swap delete #n`, `swap #t with it` and the
+  // variable form `swap a with b` all land in that one shape; SwapCommand and
+  // MorphCommand no longer scan `args` for keyword identifiers.
   const args: ASTNode[] = [];
-
-  // Check for strategy keyword first (innerHTML, outerHTML, into, over, delete)
-  let strategyKeyword: string | null = null;
+  const modifiers: SlotMap<'swap' | 'morph'> = {};
 
   if (!ctx.isAtEnd()) {
     const current = ctx.peek();
-    if (current && current.value) {
-      const lowerValue = current.value.toLowerCase();
-      if (SWAP_STRATEGY_KEYWORDS.includes(lowerValue)) {
-        strategyKeyword = lowerValue;
-        ctx.advance(); // consume the strategy keyword
-        args.push(ctx.createIdentifier(strategyKeyword));
-      }
+    const lowerValue = current?.value?.toLowerCase();
+    if (lowerValue && SWAP_STRATEGY_KEYWORDS.includes(lowerValue)) {
+      ctx.advance(); // consume the strategy keyword
+      modifiers['strategy'] = literalModifier(lowerValue);
     }
   }
 
-  // Handle 'delete' strategy (no content needed)
-  if (strategyKeyword === 'delete') {
-    // Parse target: swap delete #target
-    const targetExpr = ctx.parseExpression();
-    if (targetExpr) {
-      args.push(targetExpr);
-    }
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(ctx.getPosition())
-      .build();
+  // `delete <target>` takes no content.
+  const isDelete = (modifiers['strategy'] as { value?: unknown } | undefined)?.value === 'delete';
+
+  // `of` is optional after a strategy word: `swap innerHTML of #target` and
+  // `swap innerHTML #target` are the same thing.
+  consumeOptionalKeyword(ctx, KEYWORDS.OF);
+
+  const targetExpr = isDelete ? ctx.parseExpression() : parseOneArgument(ctx, [KEYWORDS.WITH]);
+  if (targetExpr) args.push(targetExpr);
+
+  if (!isDelete && consumeOptionalKeyword(ctx, KEYWORDS.WITH)) {
+    const contentExpr = parseOneArgument(ctx, ['using']);
+    if (contentExpr) modifiers['with'] = contentExpr as ExpressionNode;
   }
 
-  // Check for 'of' keyword after strategy (e.g., "innerHTML of #target")
-  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.OF)) {
-    ctx.advance(); // consume 'of'
-    args.push(ctx.createIdentifier('of'));
-  }
-
-  // Parse target expression
-  const targetExpr = ctx.parseExpression();
-  if (targetExpr) {
-    args.push(targetExpr);
-  }
-
-  // Check for 'with' keyword - use KEYWORDS.WITH constant
-  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.WITH)) {
-    ctx.advance(); // consume 'with'
-    args.push(ctx.createIdentifier('with'));
-
-    // Parse content expression
-    const contentExpr = ctx.parseExpression();
-    if (contentExpr) {
-      args.push(contentExpr);
-    }
-  }
-
-  // Optional `using view transition` — declared by SwapCommand's own
-  // commandMeta and already read by its runtime, but never consumed here.
-  consumeViewTransitionTail(ctx, args);
-
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'swap' | 'morph'>(identifierNode)
     .withArgs(...args)
+    .withModifiers({ ...modifiers, ...parseViewTransitionTail(ctx) })
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -681,7 +658,7 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
  */
 export function parseShowHideCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'show' | 'hide'> = {};
 
   // A bare `show` / `show when <cond>` / `show with <strategy>` has no target;
   // the runtime defaults to `me`. No implicit node is forged here — a runtime
@@ -704,7 +681,7 @@ export function parseShowHideCommand(ctx: ParserContext, identifierNode: Identif
     }
   }
 
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
+  const builder = CommandNodeBuilder.fromIdentifier<'show' | 'hide'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition());
   if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);

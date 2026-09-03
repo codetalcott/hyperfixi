@@ -8,6 +8,7 @@
 import { findNodes } from './visitor.js';
 import { calculateComplexity } from './analyzer.js';
 import { generate } from './generator.js';
+import { isASTNode, field, nodeList } from './duck.js';
 import type {
   ASTNode,
   DocumentationOutput,
@@ -279,15 +280,20 @@ export function generateJSON(ast: ASTNode): string {
 // Helpers
 // ============================================================================
 
+/** `value` as a string list if it is an array, else `[]` — elements trusted, as before. */
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? (value as string[]) : [];
+}
+
 function documentEventHandlers(ast: ASTNode): EventHandlerDoc[] {
   const handlers = findNodes(ast, node => node.type === 'eventHandler');
   return handlers.map(handler => {
-    const data = handler as any;
+    const selector = handler.selector;
     return {
-      event: data.event || 'unknown',
-      selector: data.selector,
-      description: generateEventHandlerDescription(data),
-      commands: documentCommands(data.commands || []),
+      event: String(handler.event || 'unknown'),
+      ...(typeof selector === 'string' ? { selector } : {}),
+      description: generateEventHandlerDescription(handler),
+      commands: documentCommands(nodeList(handler.commands) ?? []),
       source: generate(handler),
     };
   });
@@ -296,11 +302,10 @@ function documentEventHandlers(ast: ASTNode): EventHandlerDoc[] {
 function documentBehaviors(ast: ASTNode): BehaviorDoc[] {
   const behaviors = findNodes(ast, node => node.type === 'behavior');
   return behaviors.map(behavior => {
-    const data = behavior as any;
     return {
-      name: data.name || 'unnamed',
-      parameters: data.parameters || [],
-      description: generateBehaviorDescription(data),
+      name: String(behavior.name || 'unnamed'),
+      parameters: stringList(behavior.parameters),
+      description: generateBehaviorDescription(behavior),
       eventHandlers: documentEventHandlers(behavior),
       source: generate(behavior),
     };
@@ -310,12 +315,11 @@ function documentBehaviors(ast: ASTNode): BehaviorDoc[] {
 function documentFunctions(ast: ASTNode): FunctionDoc[] {
   const functions = findNodes(ast, node => node.type === 'function' || node.type === 'def');
   return functions.map(fn => {
-    const data = fn as any;
     return {
-      name: data.name || 'unnamed',
-      parameters: data.parameters || data.params || [],
-      returns: inferReturnType(data),
-      description: generateFunctionDescription(data),
+      name: String(fn.name || 'unnamed'),
+      parameters: stringList(fn.parameters || fn.params),
+      returns: inferReturnType(fn),
+      description: generateFunctionDescription(fn),
       source: generate(fn),
     };
   });
@@ -323,29 +327,28 @@ function documentFunctions(ast: ASTNode): FunctionDoc[] {
 
 function documentCommands(commands: ASTNode[]): CommandDoc[] {
   return commands.map(cmd => {
-    const data = cmd as any;
     return {
-      name: data.name || 'unknown',
-      description: getCommandDescription(data.name),
-      target: data.target ? generate(data.target) : undefined,
+      name: String(cmd.name || 'unknown'),
+      description: getCommandDescription(String(cmd.name)),
+      target: isASTNode(cmd.target) ? generate(cmd.target) : undefined,
     };
   });
 }
 
-function generateEventHandlerDescription(handler: any): string {
+function generateEventHandlerDescription(handler: ASTNode): string {
   const event = handler.event || 'event';
   const selector = handler.selector;
-  const commandCount = (handler.commands || []).length;
+  const commandCount = nodeList(handler.commands)?.length ?? 0;
   let desc = `Handles the '${event}' event`;
   if (selector) desc += ` from elements matching '${selector}'`;
   desc += `. Executes ${commandCount} command${commandCount !== 1 ? 's' : ''}.`;
   return desc;
 }
 
-function generateBehaviorDescription(behavior: any): string {
+function generateBehaviorDescription(behavior: ASTNode): string {
   const name = behavior.name || 'This behavior';
-  const params = behavior.parameters || [];
-  const body = behavior.body || behavior.eventHandlers || [];
+  const params = stringList(behavior.parameters);
+  const body = nodeList(behavior.body || behavior.eventHandlers) ?? [];
   let desc = `${name} is a reusable behavior`;
   if (params.length > 0)
     desc += ` that takes ${params.length} parameter${params.length !== 1 ? 's' : ''} (${params.join(', ')})`;
@@ -355,9 +358,9 @@ function generateBehaviorDescription(behavior: any): string {
   return desc;
 }
 
-function generateFunctionDescription(fn: any): string {
+function generateFunctionDescription(fn: ASTNode): string {
   const name = fn.name || 'This function';
-  const params = fn.parameters || fn.params || [];
+  const params = stringList(fn.parameters || fn.params);
   let desc = `${name} is a custom function`;
   if (params.length > 0)
     desc += ` that takes ${params.length} parameter${params.length !== 1 ? 's' : ''} (${params.join(', ')})`;
@@ -386,10 +389,11 @@ function getCommandDescription(name: string): string {
   return descriptions[name] || `Executes the '${name}' command`;
 }
 
-function inferReturnType(fn: any): string | undefined {
-  if (fn.body && fn.body.type === 'returnStatement') {
-    const arg = fn.body.argument;
-    if (arg) return arg.type === 'literal' ? typeof arg.value : 'value';
+function inferReturnType(fn: ASTNode): string | undefined {
+  const body = fn.body;
+  if (isASTNode(body) && body.type === 'returnStatement') {
+    const arg = body.argument;
+    if (arg) return field(arg, 'type') === 'literal' ? typeof field(arg, 'value') : 'value';
   }
   return undefined;
 }

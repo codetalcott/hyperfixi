@@ -51,6 +51,8 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import { isNodeOfKind } from '../../ast/guards';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for ToggleCommand */
 export type ToggleCommandInput =
@@ -89,41 +91,19 @@ export type ToggleCommandInput =
       untilEvent?: string;
     };
 
-/** True when an arg is `<target> as modal` (asExpression with a `modal` target). */
-function isModalAsExpression(arg: ASTNode | undefined): boolean {
-  if (!arg || (arg as Record<string, unknown>).type !== 'asExpression') return false;
-  const targetType = (arg as Record<string, unknown>).targetType;
-  // targetType is dual-shape: an identifier node { name } or a bare string.
-  const name =
-    typeof targetType === 'string'
-      ? targetType
-      : ((targetType as Record<string, unknown>)?.name as string | undefined);
-  return typeof name === 'string' && name.toLowerCase() === 'modal';
-}
-
-/** Parse modal mode from args and modifiers */
+/**
+ * Dialog mode: `modifiers.as` — `as modal` / `as non-modal` / a bare `modal`,
+ * all carried by the parser as the one slot (Arc 3 step 3). Anything other
+ * than `modal` is non-modal, as before.
+ */
 async function parseModalMode(
-  args: ASTNode[],
   modifiers: Record<string, ExpressionNode>,
   evaluator: ExpressionEvaluator,
   context: ExecutionContext
 ): Promise<'modal' | 'non-modal'> {
-  if (modifiers?.as) {
-    const asValue = await evaluator.evaluate(modifiers.as, context);
-    if (typeof asValue === 'string' && asValue.toLowerCase() === 'modal') return 'modal';
-  }
-  if (args.length >= 2) {
-    const secondArg = await evaluator.evaluate(args[1], context);
-    if (typeof secondArg === 'string') {
-      const normalized = secondArg.toLowerCase();
-      if (normalized === 'modal' || normalized === 'as modal') return 'modal';
-      if (normalized === 'as' && args.length >= 3) {
-        const thirdArg = await evaluator.evaluate(args[2], context);
-        if (typeof thirdArg === 'string' && thirdArg.toLowerCase() === 'modal') return 'modal';
-      }
-    }
-  }
-  return 'non-modal';
+  if (!modifiers?.as) return 'non-modal';
+  const asValue = await evaluator.evaluate(modifiers.as, context);
+  return typeof asValue === 'string' && asValue.toLowerCase() === 'modal' ? 'modal' : 'non-modal';
 }
 
 /** Parse temporal modifiers (for duration, until event) */
@@ -191,6 +171,8 @@ export class ToggleCommand implements DecoratedCommand {
       'toggle @disabled',
       'toggle #myDialog as modal',
       'toggle .loading for 2s',
+      'toggle between .expanded and .collapsed',
+      'toggle .loading until click from #done',
     ],
     sideEffects: ['dom-mutation'],
     category: 'dom',
@@ -204,78 +186,39 @@ export class ToggleCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'toggle'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ToggleCommandInput> {
-    if (!raw.args?.length) throw new Error('toggle command requires an argument');
-
-    // `toggle <dialog> as modal`: the `as modal` conversion parses into an
-    // asExpression whose targetType is `modal`. Unwrap to the real target and
-    // force modal mode — `modal` is not a real type conversion.
-    let forceModal = false;
-    if (isModalAsExpression(raw.args[0])) {
-      forceModal = true;
-      const inner = (raw.args[0] as Record<string, unknown>).expression as ASTNode;
-      raw = { ...raw, args: [inner, ...raw.args.slice(1)] };
-    }
-
-    const firstArg = raw.args[0];
-
-    // Check for "toggle between" syntax
-    // Parser produces: [between, classA, and, classB, on?, target?]
-    const firstArgName = (firstArg as Record<string, unknown>)?.name as string | undefined;
-    if (firstArgName === 'between' && raw.args.length >= 4) {
+    // `toggle between A and B [on target]` — the pair arrives as the
+    // `between` slot (an arrayLiteral), the target as `modifiers.on`.
+    const between: unknown = raw.modifiers?.between;
+    if (isNodeOfKind(between, 'arrayLiteral') && between.elements.length >= 2) {
       const { duration, untilEvent } = await parseTemporalModifiers(
         raw.modifiers,
         evaluator,
         context
       );
-
-      // Extract classA (index 1) and classB (index 3, after 'and'). `.on`/`.off`
-      // here are class NAMES to alternate, not selectors to query — so read a
-      // selector node's literal value directly; only evaluate non-selector args
-      // (e.g. a variable holding a dynamic class name).
-      const classNameArg = async (arg: ASTNode): Promise<unknown> => {
-        const a = arg as Record<string, unknown>;
-        if (a?.type === 'selector') return a.value;
-        return evaluator.evaluate(arg, context);
-      };
-      const classAValue = await classNameArg(raw.args[1]);
-      const classBValue = await classNameArg(raw.args[3]);
-
-      // Find target args (skip between, classA, and, classB, and any 'on'/'from' keywords)
-      const targetArgs: ASTNode[] = [];
-      for (let i = 4; i < raw.args.length; i++) {
-        const argName = (raw.args[i] as Record<string, unknown>)?.name as string | undefined;
-        if (argName !== 'on' && argName !== 'from') {
-          targetArgs.push(raw.args[i]);
-        }
-      }
-
-      const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+      // `.on`/`.off` here are class NAMES to alternate, not selectors to query —
+      // so read a selector node's literal value directly; only evaluate
+      // non-selector elements (e.g. a variable holding a dynamic class name).
+      const classNameOf = async (node: unknown): Promise<unknown> =>
+        isNodeOfKind(node, 'selector') ? node.value : evaluator.evaluate(node as ASTNode, context);
+      const classA = String(await classNameOf(between.elements[0])).replace(/^\./, '');
+      const classB = String(await classNameOf(between.elements[1])).replace(/^\./, '');
       const targets = await resolveTargetsFromArgs(
-        targetArgs,
+        [],
         evaluator,
         context,
         'toggle',
-        resolveOpts,
+        { fallbackModifierKey: 'on' } as const,
         raw.modifiers
       );
-
-      // Parse class values - strip leading dot if present
-      const classA = String(classAValue).replace(/^\./, '');
-      const classB = String(classBValue).replace(/^\./, '');
-
-      return {
-        type: 'classes-between',
-        classA,
-        classB,
-        targets,
-        duration,
-        untilEvent,
-      };
+      return { type: 'classes-between', classA, classB, targets, duration, untilEvent };
     }
+
+    if (!raw.args?.length) throw new Error('toggle command requires an argument');
+    const firstArg = raw.args[0];
 
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
     const propertyTarget = await resolveAnyPropertyTarget(firstArg, evaluator, context);
@@ -295,7 +238,7 @@ export class ToggleCommand implements DecoratedCommand {
       let expression = (firstArg as any).value as string;
       let argsConsumed = 1;
       // Semantic parser may split '*display' — check if next arg has the property name
-      if (expression === '*' && raw.args.length > 1 && raw.args[1].type === 'identifier') {
+      if (expression === '*' && raw.args[1]?.type === 'identifier') {
         expression = '*' + ((raw.args[1] as any).name as string);
         argsConsumed = 2;
       }
@@ -332,7 +275,7 @@ export class ToggleCommand implements DecoratedCommand {
           evaluator,
           context
         );
-        const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+        const resolveOpts = { fallbackModifierKey: 'on' } as const;
         const targets = await resolveTargetsFromArgs(
           raw.args.slice(argsConsumed),
           evaluator,
@@ -361,7 +304,7 @@ export class ToggleCommand implements DecoratedCommand {
     }
 
     const { type: exprType, expression } = detectExpressionType(firstValue, firstArg);
-    const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+    const resolveOpts = { fallbackModifierKey: 'on' } as const;
 
     switch (exprType) {
       case 'attribute': {
@@ -411,9 +354,7 @@ export class ToggleCommand implements DecoratedCommand {
 
         const smartType = detectSmartElementType(elements);
         if (smartType === 'dialog') {
-          const mode = forceModal
-            ? 'modal'
-            : await parseModalMode(raw.args, raw.modifiers, evaluator, context);
+          const mode = await parseModalMode(raw.modifiers, evaluator, context);
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
         }
         if (smartType === 'details') {

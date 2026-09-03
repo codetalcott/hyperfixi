@@ -7,154 +7,145 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.0] - 2026-08-30
-
-Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
-
-`@lokascript/i18n`'s grammar transformer is gone. The whole release is the arc
-that made removing it possible: teaching `@lokascript/semantic` to _render_ as
-well as it parses, proving it had overtaken the transformer on every row of the
-translation corpus, and then deleting the loser.
-
-### ⚠ BREAKING
-
-- **`@lokascript/i18n` no longer translates** (#1001). `translate()`,
-  `toLocale()`, `toEnglish()` and the `GrammarTransformer` class are deleted,
-  along with the `createTransformer` factory — 2,747 lines of transformer and
-  2,780 lines of its tests. The package is now what the rest of it always was:
-  per-language vocabulary — keyword dictionaries, locale detection, and the
-  grammar profiles (`getProfile`, `getSupportedLocales`) that describe each
-  language's word order and role markers. Those stay. "Delete the grammar
-  directory" was never the plan; `profiles/` and `types.ts` back i18n's own
-  runtime, and `direct-mappings.ts` is part of the browser API.
-
-  _Migration:_ `import { translate } from '@lokascript/semantic'` — same
-  `(code, fromLang, toLang)` signature. One behavioural difference to plan for:
-  **semantic throws** (`SemanticParseError`) where the transformer never did.
-  The transformer substituted keywords without parsing, so it always returned
-  _something_; semantic parses first, so unparseable input is an error rather
-  than plausible-looking nonsense. Wrap the call if you were relying on the old
-  silence.
-
-  The transformer had to go because it lost. The corpus writer spent #973–#996
-  rendering every row **both** ways and keeping whichever won on the ratchet
-  signals; the count of rows where i18n still won went 229 → **0**, and a
-  per-row chooser with one surviving renderer is not a chooser.
-
-- **The classic-i18n browser bundle drops four helpers** (#998).
-  `hyperfixi-classic-i18n.js`'s `i18nApi` no longer exposes `toLocale`,
-  `toEnglish`, `translate` or `GrammarTransformer`. Nothing in the bundle
-  called them, and the multilingual _parsing_ it exists for runs through the
-  keyword providers, which are untouched — `getProfile` and `setLocale` still
-  work. Re-implementing the four on `@lokascript/semantic` was measured and
-  rejected: pulling in semantic's full index takes the bundle to **312.1 KB
-  gzip (+173)**, and a trimmed `semantic/core` build carrying only the twelve
-  registered locales still lands at 269.2 KB (+130) — a 2× bundle to serve
-  three display helpers. Removing them instead took it **down** 16,436 bytes
-  raw / 6,508 gzip (−2.9% / −4.6%), to 134,193 gzip.
-
-  _Migration:_ load a semantic browser bundle alongside and call
-  `LokaScriptSemantic.translate`, or use `hyperfixi.translate` from the
-  multilingual bundle.
-
-- **`@hyperscript-tools/i18n` translates on the semantic engine** (#999). Its
-  `translate` / `toLocale` / `toEnglish` keep their signatures but now parse.
-  In strict mode an untranslatable snippet **throws** instead of returning a
-  word-substituted approximation; in lenient mode the body is passed through
-  byte-identical rather than mangled. `GrammarTransformer` is no longer
-  re-exported. The package's dependency moved from `@lokascript/i18n` to
-  `@lokascript/semantic`.
-
-- **`@lokascript/types-browser` drops the transformer members.**
-  `LokaScriptI18nAPI` no longer declares `translate` or `createTransformer`
-  (nor the `GrammarTransformer` / `TransformerOptions` interfaces they
-  referenced). `isHyperFixiI18nAvailable` re-keys from `obj.translate` to
-  `obj.getProfile`, since the former is no longer a member of the shape it
-  detects.
-
-- **The patterns corpus writer is semantic-only** (#1000). The `best` /
-  `semantic` / `i18n` renderer modes, the `PATTERNS_RENDERER` environment
-  variable, the `--renderer` flag, the `i18n-kept-rows` gate and its baseline
-  and tools are all removed; `test:canonical` is four gates now, not five. A
-  row the renderer cannot render keeps its **English**, is counted, and is
-  reported loudly — a floor, not a fallback. Today **0 rows take it**, across
-  3,657 translatable non-English rows.
-
 ### Added
 
-- **`hyperfixi.js` and `hyperfixi-hx-v4.js` grew ~97 KB raw / ~19 KB gzip
-  each** (#931) to carry the new per-language render vocabulary
-  (`lexicons/{code}`). Both expose `translate` / `getAllTranslations` for 24
-  languages, so they legitimately pay for it. The other eight bundles are
-  unaffected — the slim ones never pull the semantic language stack, and the
-  rest parse without rendering, so the lexicon tree-shakes out.
-
-- **A gate on the bare render surface** (#953). Every corpus row wraps its
-  command in an event handler, so the plain form — `toggle .active on #panel`
-  with no `on click` — was invisible to all eleven ratchet signals _and_ to the
-  wrapped render gate. Stripping the handler head found languages that could
-  not parse their own rendered output at all. Now ratcheted at **2981/2990
-  (99.7%)** with 9 allowlisted pairs.
+- **`hyperscript.use(frontEnd)`** — register the multilingual front-end
+  `compile()` consults for a non-English program (and `toLSE`/`fromLSE` for
+  a semantic node and a renderer). The contract is `FrontEnd` in
+  `@hyperfixi/core` (`parseToAST`, optional `parse`/`render`);
+  `@lokascript/semantic` satisfies it through
+  `createBridgeFrontEnd(new SemanticGrammarBridge())` from
+  `@hyperfixi/core/multilingual`. The full browser bundle registers it at
+  boot. The library entry registers nothing and, through 3.x, builds the same
+  bridge lazily on the first non-English compile — so nothing changes for a
+  consumer with `@lokascript/semantic` installed. **4.0 will remove that
+  default:** a non-English `compile()` with no front-end registered will
+  return the same result the core-parser-only path returns today, and
+  `@lokascript/semantic` becomes an optional peer. Engine-migration plan
+  Arc 1, steps 2 and 3.
 
 ### Fixed
 
-- **The English→foreign render direction, which no gate had ever covered**
-  (#931–#996). Every ratchet signal scored _parsing_ foreign
-  surfaces; nothing scored the surfaces the renderer _emitted_. The corpus's
-  clean-render rate went **73.3% → 100%**. Against the committed baseline, all
-  24 languages now sit at:
+- **MCP `get_diagnostics`, `get_completions` and `get_document_symbols` read
+  the AST.** The bridge guarded those paths on helper names core never
+  exported, so all three had only ever taken their token-based fallback.
+  They now read the interchange: the core parser's own errors become
+  diagnostics, completions inside a command offer that command's argument
+  shapes, symbols carry their commands as children, and a document with
+  several `end`-terminated handlers keeps all of them.
 
-  | Signal                           | Mean        | Min           |
-  | -------------------------------- | ----------- | ------------- |
-  | parse rate                       | 3744 / 3744 | 0 failures    |
-  | R0 recall / precision / multiset | 1.000000    | 1.000000      |
-  | R1 role fidelity                 | 0.999944    | 0.998710 (pl) |
-  | R2 execution                     | 1.000000    | 1.000000      |
-  | R3 value recall                  | 1.000000    | 1.000000      |
+- **`hyperscript.process()` honours the event grammar.** The API-side DOM
+  processor carried its own listener installer for `on …` attributes and
+  silently dropped what the runtime's installer handles: `on
+click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
+  fired on mouseenter, `on click from document` never fired. Every browser
+  bundle already went through the runtime; `process()` now does too, and
+  `config.logAll` moved into the runtime so both paths log. Pinned by
+  `api/dom-processor.test.ts`, which runs each case on both paths.
 
-  R1 was ≈0.992 and R3 ≈0.997 with named residual families at 2.10.0. Both
-  canonical-validity allowlists are now **empty** — 134/134 English references
-  and **3105/3105** foreign renders parse on the real `hyperscript.org`
-  engine — as is the wrapped render-fidelity allowlist, at **3588/3588**.
+- **`set *<css-property>` writes inline style in every spelling upstream
+  accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
+  `set *background-color of me to "red"` were silent no-ops and
+  `set the *opacity of me to 0.5` threw; only the possessive `set my *opacity`
+  worked. The tokenizer classes `*opacity` as a selector (for `measure`), and
+  `set`'s parser now re-types it into the identifier property the runtime's
+  style rungs already handle, so one path serves all of them — bare, `of
+<target>`, `the … of <target>`, `<target>'s`. Ten rows pinned against
+  `_hyperscript` 0.9.93.
 
-  The arc is too granular to itemize; the shapes it closed were fused
-  event-handler bodies losing their then-chains (#978) or their body heads
-  (#949, #947), possessives rendering backwards or property-last (#980, #935,
-  #937, #938), optional slots eating the next command's verb (#950, #961,
-  #948), markers rendered on the wrong side of their value in SOV (#955),
-  brace-group interiors being localized as if they were code (#975), value
-  interiors not being localized at all (#931), and a long tail of per-language
-  vocabulary and homonym repairs.
-
-- **`as JSON` is part of the value, not a dropped tail** (#991). A conversion
-  suffix landed in no role and therefore scored "faithful" against its own
-  truncation — the one bug eleven ratchet signals could not see. It was caught
-  by the markup-row guard, which only translates an attribute body when its own
-  English re-render preserves its content.
-
-- **The semantic parser closes a flattened loop header** (#992), so a handler's
-  `end` is its own rather than the loop's.
-
-- **The reactivity and realtime plugins report their real versions** (#926)
-  instead of frozen constants.
-
-- **`analyze_content` is unshadowed in the MCP server** (#927), and its
-  next-step hint extends to the warning band.
-
-- **Three high-severity Dependabot alerts, plus a fourth `npm audit` found**
-  (#929).
-
-- **The `domain-flow` → `server-bridge` route-descriptor contract is pinned
-  again** (#1004), and actually checked this time. The pin dropped by the
-  domain-family move had lived in a directory the tsconfig excluded, so `tsc`
-  never compiled its `satisfies` and vitest stripped it — it had never
-  enforced anything. It is ordinary typechecked source now.
+- **`require('@hyperfixi/core')` returned `{}`, and the subpath `require`s
+  threw — since `"type": "module"`, on 3.0.0 too.** Every `exports.*.require`
+  and `main` pointed at a `.js` file built as CommonJS, which Node reads as
+  ESM under that flag. The CJS outputs are `.cjs` now (main entry, the 21
+  subpaths, the parser modules); the `import` conditions are unchanged. The
+  bare-Node check in CI now `require()`s the entries as well as importing
+  them, which is the check that would have caught this. Found by the
+  end-to-end probe that landed Arc 1's build half.
 
 ### Changed
 
-- **Deprecated `@lokascript/domain-*` references repointed** to the
-  `@lokascript/domains` subpaths (#1004) in the framework's docstring
-  examples and `protocol/docs/boundary.md`.
+- **`@hyperfixi/core`'s library entry no longer bundles the multilingual
+  front-end.** `dist/index.mjs`/`index.js` had `@lokascript/semantic`,
+  `@lokascript/intent` and `@lokascript/framework` inlined whole (3.33 MB, zero
+  dynamic imports left); they are external now (1.04 MB) and load on the first
+  non-English `compileAsync`, the way the source always said they would. No
+  API change: semantic and intent stay `dependencies`, framework stays an
+  optional peer — and is now genuinely one. A consumer that imported both core
+  and semantic no longer holds two copies of semantic. `dist/index.min.js`
+  (UMD, not in `exports`) stays self-contained. Gated by
+  `scripts/check-node-import.mjs` on the sourcemap. Engine-migration plan Arc 1
+  step 2, build half.
+
+- **`@lokascript/semantic` drops its `asyncSchema`.** Core deleted the `async`
+  command in 3.0.0 (#1102); the semantic front-end never emitted the action
+  anyway — its `stripAsyncModifier` pass removes the keyword (in all 24
+  languages) and parses the following command, so `async fetch /api as json`
+  is a `fetch`. The schema, its registration, the `'async'` `ActionType`
+  member and the AST-builder mapper row are gone. Kept on purpose: every
+  profile's `keywords.async` (the stripper matches on it) and the
+  `'then' | 'and' | 'async'` chain type (a different concept). The IR-level
+  `async all/race` node lives in `@lokascript/intent` and is untouched.
+
+## [3.0.0] - 2026-09-03
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
+
+One major, two themes. `@lokascript/i18n`'s grammar transformer is gone,
+because `@lokascript/semantic` overtook it on every row of the translation
+corpus (#973–#1001). And the engine-migration plan
+(`docs-internal/ENGINE_MIGRATION_PLAN.md`) closed its last arc, which deleted
+the exported dead code it had been carrying and collapsed the browser bundle
+lineup to two names (#1099–#1105). One arc is still open: Arc 1's steps 2
+and 3 — `@hyperfixi/core`'s library entry still bundles the semantic
+front-end (recorded in the plan's History, 2026-09-03).
+
+### ⚠ BREAKING
+
+- **`@lokascript/i18n` no longer translates** (#1001). `translate()`, `toLocale()`,
+  `toEnglish()`, `GrammarTransformer` and `createTransformer` are deleted; the
+  package is per-language vocabulary and grammar profiles. Migrate to
+  `import { translate } from '@lokascript/semantic'` (same signature; it throws
+  on unparseable input where the transformer returned nonsense). The classic-i18n
+  browser bundle, `@hyperscript-tools/i18n` and `@lokascript/types-browser` drop
+  the same members (#998, #999); the patterns corpus writer is semantic-only (#1000).
+- **The prebuilt browser bundles are two names** (#1105): `hyperfixi-hx.js`
+  (small: hybrid parser, blocks, expressions, htmx v1/v2 attributes) and
+  `hyperfixi.js` (everything); `hyperfixi-hx-v4.js` and
+  `hyperfixi-multilingual.js` stay as separate products. `hyperfixi-lite.js`,
+  `-lite-plus.js`, `-minimal.js`, `-standard.js` and their `./browser/*`
+  exports are gone — use `hyperfixi-hx.js`, `hyperfixi.js`, or the Vite
+  plugin, which picks the tier itself. `./browser/hybrid-complete` remains as
+  the plugin's internal fallback.
+- **Exported dead code deleted from `@hyperfixi/core`** — none had a
+  production caller: the six `@deprecated` `features/` families and the
+  modular bundle's `features` namespace (#1099); `Lexer`/`Tokens` (#1100 —
+  use `tokenize`); the `unified-types` `Validator`, the `types.d.ts` shim and
+  `registry/multilingual` (#1101); the `async` command (#1102 — it was
+  unreachable from parsed hyperscript; the manifest is 58 commands);
+  `ContextProviderRegistry`, the context-provider `Proxy`, the registry's
+  `context` slot and the plugin `contextProviders` field (#1104 — set
+  request-scoped values as `context.locals`).
+
+### Fixed
+
+- **A small bundle fails loudly on a command it lacks and names `hyperfixi.js`**
+  (#1103). The hybrid parser had been dropping an unrecognised word silently;
+  making it loud also exposed and fixed three silent mis-parses in the hybrid
+  bundles: unquoted `fetch /api/data` fetched `/`, `send custom:event` sent
+  `custom` to `me`, and `repeat forever` ran zero iterations.
+- **English→foreign rendering is gated** (#931–#972, #953): 3105/3105 corpus
+  renders parse on the canonical engine; the bare (handler-less) surface has its
+  own gate. `as JSON` stays part of the value (#991); a flattened loop header
+  closes (#992).
+- Plugins report their real versions (#926); `analyze_content` is unshadowed in
+  the MCP server (#927); four dependency advisories resolved; the `domain-flow`
+  → `server-bridge` route contract is pinned (#1000s).
+
+### Changed
+
+- `hyperfixi.js` and `hyperfixi-hx-v4.js` carry the 24-language render
+  vocabulary (~19 KB gzip each) so `translate` works in the browser (#931).
+- Deprecated `@lokascript/domain-*` references repoint to `@lokascript/domains`.
 
 ## [2.11.1] - 2026-08-25
 

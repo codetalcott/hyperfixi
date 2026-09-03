@@ -13,6 +13,7 @@
 // Re-export core types from unified base-types system
 export type {
   ExecutionContext,
+  Scope,
   TypedExecutionContext,
   EvaluationType,
   HyperScriptValueType,
@@ -24,11 +25,10 @@ export type {
   ASTNode,
   ParseError,
   ExpressionNode,
-  CommandNode as BaseCommandNode,
-  EventHandlerNode,
-  BehaviorNode,
-  DefNode,
 } from './base-types';
+// `EventHandlerNode`, `BehaviorNode`, `DefNode` (and the `BaseCommandNode`
+// alias nothing imported) were re-exported from base-types here until Arc 2
+// step 4 deleted the originals. They live in `ast/nodes.ts`; import from there.
 
 // Import types for use within this file
 import type {
