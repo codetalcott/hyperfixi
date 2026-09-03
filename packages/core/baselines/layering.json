@@ -1,7 +1,7 @@
 {
   "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself — known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
   "generated": "2026-09-03",
-  "totalUpwardImports": 39,
+  "totalUpwardImports": 38,
   "totalValueImports": 23,
   "upwardEdges": {
     "commands -> validation": {
@@ -77,9 +77,9 @@
       "reason": "base-types.ts imports the ExpressionRegistry TYPE for ExecutionContext.registry. Type-only, and it disappears in Arc 7 when the registry becomes Pratt-table entries."
     },
     "types -> validation": {
-      "count": 10,
+      "count": 9,
       "valueImports": 4,
-      "typeOnlyImports": 6,
+      "typeOnlyImports": 5,
       "reason": "The zod clone. Ten imports across seven type modules, four of them VALUE imports of `v`/`z` for schemas that types/context-types.ts already documents as any-typed and unused. Arc 6a deletes the schemas; the clone itself has no other consumer once features/ and context/ go."
     }
   }

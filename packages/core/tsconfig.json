@@ -37,7 +37,6 @@
       "@core/*": ["./src/core/*"],
       "@commands/*": ["./src/commands/*"],
       "@expressions/*": ["./src/expressions/*"],
-      "@features/*": ["./src/features/*"],
       "@types/*": ["./src/types/*"]
     },
 

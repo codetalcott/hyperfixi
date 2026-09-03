@@ -653,8 +653,8 @@ export async function evaluateExpressionFromSource(
     const err = result.error ?? result.errors?.[0];
     throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
   }
-  // Standalone-eval callers (Hyperscript.eval, hyperscript-adapter,
-  // features/def) are full-bundle-only paths. If the caller didn't supply
+  // Standalone-eval callers (Hyperscript.eval, hyperscript-adapter) are
+  // full-bundle-only paths. If the caller didn't supply
   // a registry, lazy-load the kitchen-sink one. The dynamic import here is
   // *only* reachable from full bundles — minimal/standard never call
   // `evaluateExpressionFromSource`, so rollup's `inlineDynamicImports` on

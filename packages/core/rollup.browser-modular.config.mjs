@@ -36,15 +36,10 @@ export default withAsciiOnly({
     // concurrently.
     chunkFileNames: 'chunks/[name]-[hash].js',
     sourcemap: true,
-    // Enable code splitting (don't inline dynamic imports)
+    // Enable code splitting (don't inline dynamic imports). The three
+    // `feature-*` manualChunks that used to sit here went with `features/`
+    // (Arc 6b); the runtime's own lazy imports still split.
     inlineDynamicImports: false,
-    // Optimize chunk splitting
-    manualChunks: {
-      // Group feature modules into separate chunks
-      'feature-sockets': ['src/features/sockets.ts'],
-      'feature-eventsource': ['src/features/eventsource.ts'],
-      'feature-webworker': ['src/features/webworker.ts'],
-    },
   },
   plugins: [
     nodeResolve({

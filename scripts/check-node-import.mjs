@@ -31,9 +31,16 @@ function assert(cond, msg) {
 
 await check('@hyperfixi/core — bare-Node import (main index)', async () => {
   const m = await import('@hyperfixi/core');
-  assert(typeof m.getElementScopeMap === 'function', 'getElementScopeMap missing');
+  // Name the entry points a Node consumer actually reaches for, rather than
+  // leaning on a raw export count: the count was `> 40` until Arc 6b deleted
+  // the 24 dead `features/` values (53 → 29), and a threshold that a
+  // deletion of dead code can trip is measuring the wrong thing. The floor
+  // below only catches an import that resolved to an empty or stub module.
+  for (const name of ['hyperscript', 'parse', 'Runtime', 'createContext', 'getElementScopeMap']) {
+    assert(name in m, `${name} missing`);
+  }
   const exportCount = Object.keys(m).length;
-  assert(exportCount > 40, `only ${exportCount} exports (expected > 40)`);
+  assert(exportCount > 20, `only ${exportCount} exports (expected > 20)`);
   return `${exportCount} exports`;
 });
 
