@@ -3,13 +3,68 @@
  * Automatically detects and processes _="" attributes on elements
  */
 
-import { hyperscript, config } from '../api/hyperscript-api';
-import type { CompileError } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
 import { debug } from '../utils/debug';
 import type { EventHandlerNode } from '../ast/nodes';
 import { toLegacyNode, type AnyNode } from '../ast/legacy';
-import type { ExecutionContext } from '../types/base-types';
+import type { ASTNode, ExecutionContext } from '../types/base-types';
+
+// =============================================================================
+// Host contract — what the processor needs from the API, by injection
+// =============================================================================
+
+/** One compile diagnostic. Structurally the API's `CompileError`. */
+export interface CompileFailure {
+  message: string;
+  line: number;
+  column: number;
+  suggestion?: string;
+}
+
+/** What the processor reads of a compile result. Structurally the API's `CompileResult`. */
+export interface ProcessorCompileResult {
+  ok: boolean;
+  ast?: ASTNode;
+  errors?: CompileFailure[];
+}
+
+/** The `config.onCompileError` payload. */
+export interface CompileErrorReport {
+  source: 'attribute' | 'script';
+  code: string;
+  errors: CompileFailure[];
+  element: Element | null;
+}
+
+/**
+ * The compiler and runtime the processor runs on. `api/hyperscript-api.ts`
+ * injects its own `compileSync` / `compile` / `execute` / `config` at module
+ * load, so this module sits UNDER the API it used to import — the layering
+ * edge `dom -> api` is gone, and both `hyperscript.process()` and every
+ * browser bundle compile through the API's one AST cache.
+ */
+export interface ProcessorHost {
+  compileSync(code: string): ProcessorCompileResult;
+  compile(code: string, options: { language: string }): Promise<ProcessorCompileResult>;
+  execute(ast: ASTNode, context: ExecutionContext): Promise<unknown>;
+  config: { onCompileError: ((report: CompileErrorReport) => void) | null };
+}
+
+let injectedHost: ProcessorHost | null = null;
+
+/** Called once by `api/hyperscript-api.ts` when it loads. */
+export function initializeAttributeProcessor(host: ProcessorHost): void {
+  injectedHost = host;
+}
+
+function host(): ProcessorHost {
+  if (!injectedHost) {
+    throw new Error(
+      '[LokaScript] The attribute processor has no compiler: import @hyperfixi/core (its API injects one) before processing elements.'
+    );
+  }
+  return injectedHost;
+}
 
 // Type declarations for window extensions used by external packages
 declare global {
@@ -130,8 +185,27 @@ function yieldToBrowser(): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, 0));
 }
 
+// =============================================================================
+// Processed state — a property of the ELEMENT, shared by every processor
+// =============================================================================
+
+/**
+ * Elements that have been initialized (or lazily stubbed). Module-level, not
+ * per instance: the DOM is one, so `hyperscript.process(el)` followed by a
+ * bundle scan must not initialize `el` twice, and `hyperscript.cleanup()` —
+ * which only knows the default instance — must be able to forget an element
+ * whichever instance processed it. Marked BEFORE the async compile, so the
+ * MutationObserver and an explicit process() racing on a freshly appended
+ * element cannot both pass the check and register the handler twice.
+ */
+const processedElements = new WeakSet<HTMLElement>();
+
+/** The pending stub per lazily-registered element, so `forget()` can remove it. */
+const lazyStubs = new WeakMap<HTMLElement, { eventType: string; listener: EventListener }>();
+
 export class AttributeProcessor {
-  private processedElements = new WeakSet<HTMLElement>();
+  private processedElements = processedElements;
+  private lazyStubs = lazyStubs;
   private options: Required<AttributeProcessorOptions>;
   private observer: MutationObserver | null = null;
   private processedCount = 0;
@@ -210,37 +284,7 @@ export class AttributeProcessor {
     const elements = document.querySelectorAll(`[${this.options.attributeName}]`);
     debug.parse(`ATTR: Found ${elements.length} elements to process`);
 
-    if (this.options.lazyParsing) {
-      // Lazy path: register lightweight stubs for event-driven attributes.
-      // Elements that need eager processing (on init, on load, non-event, multi-handler)
-      // return promises that we collect and await.
-      debug.parse('ATTR: Using lazy parsing mode');
-      const eagerPromises: Promise<void>[] = [];
-      elements.forEach(element => {
-        if (element instanceof HTMLElement) {
-          const promise = this.processElementLazy(element);
-          if (promise) {
-            eagerPromises.push(promise);
-          }
-        }
-      });
-      if (eagerPromises.length > 0) {
-        await Promise.all(eagerPromises);
-      }
-    } else if (this.options.chunkedProcessing) {
-      // Chunked path: process in batches, yielding to browser between chunks
-      debug.parse(`ATTR: Using chunked processing (chunkSize=${this.options.chunkSize})`);
-      await this.processElementsChunked(elements);
-    } else {
-      // Default eager path: process all elements in parallel
-      const processPromises: Promise<void>[] = [];
-      elements.forEach(element => {
-        if (element instanceof HTMLElement) {
-          processPromises.push(this.processElementAsync(element));
-        }
-      });
-      await Promise.all(processPromises);
-    }
+    await this.processElements(elements);
     debug.parse('ATTR: All elements processed');
 
     // Dispatch completion event for testing
@@ -254,6 +298,92 @@ export class AttributeProcessor {
   }
 
   /**
+   * Process a set of elements in the configured mode: lazy stubs, chunked
+   * batches, or all at once. Every mode STARTS every element synchronously —
+   * an `eventHandler` attribute's listener is installed before the first
+   * await — and resolves when all of them have finished.
+   */
+  private async processElements(elements: Iterable<Element>): Promise<void> {
+    const htmlElements: HTMLElement[] = [];
+    for (const el of elements) {
+      if (el instanceof HTMLElement) htmlElements.push(el);
+    }
+
+    if (this.options.lazyParsing) {
+      // Lazy path: register lightweight stubs for event-driven attributes.
+      // Elements that need eager processing (on init, on load, non-event, multi-handler)
+      // return promises that we collect and await.
+      debug.parse('ATTR: Using lazy parsing mode');
+      const eagerPromises: Promise<void>[] = [];
+      for (const element of htmlElements) {
+        const promise = this.processElementLazy(element);
+        if (promise) eagerPromises.push(promise);
+      }
+      if (eagerPromises.length > 0) {
+        await Promise.all(eagerPromises);
+      }
+    } else if (this.options.chunkedProcessing) {
+      // Chunked path: process in batches, yielding to browser between chunks
+      debug.parse(`ATTR: Using chunked processing (chunkSize=${this.options.chunkSize})`);
+      await this.processElementsChunked(htmlElements);
+    } else {
+      // Default eager path: process all elements in parallel
+      await Promise.all(htmlElements.map(element => this.processElementAsync(element)));
+    }
+  }
+
+  /**
+   * Process one element and everything under it: its `<script
+   * type="text/hyperscript">` tags first (so a behavior they define is
+   * registered before an element below installs it), then the element itself
+   * if it carries the attribute, then every descendant that does — all in the
+   * configured mode. This is what `hyperscript.process(element)` calls.
+   * Elements already processed are skipped; `forget()` un-marks a tree.
+   *
+   * When the tree holds no script tags nothing is awaited before the
+   * elements start, so a handler attribute's listener is installed before
+   * this returns its promise.
+   */
+  async processTree(root: Element): Promise<void> {
+    const scriptTags = root.querySelectorAll('script[type="text/hyperscript"]');
+    for (const script of scriptTags) {
+      if (script instanceof HTMLScriptElement) {
+        await this.processHyperscriptTag(script);
+      }
+    }
+
+    const elements: Element[] = [];
+    if (root.hasAttribute(this.options.attributeName)) elements.push(root);
+    root.querySelectorAll(`[${this.options.attributeName}]`).forEach(el => elements.push(el));
+    await this.processElements(elements);
+  }
+
+  /**
+   * Un-mark an element and its descendants so they can be processed again —
+   * the internal record and the `data-hyperscript-powered` marker both — and
+   * drop any lazy stub still waiting on them. `hyperscript.cleanup()` calls
+   * this after removing the tree's listeners: cleanup-then-process is how a
+   * morph/swap re-initializes an element whose `_=` changed.
+   */
+  forget(root: Element): void {
+    const targets: Element[] = [root];
+    root
+      .querySelectorAll(`[${this.options.attributeName}], [${POWERED_ATTRIBUTE}]`)
+      .forEach(el => targets.push(el));
+    for (const el of targets) {
+      if (!(el instanceof HTMLElement)) continue;
+      this.processedElements.delete(el);
+      el.removeAttribute(POWERED_ATTRIBUTE);
+      const stub = this.lazyStubs.get(el);
+      if (stub) {
+        el.removeEventListener(stub.eventType, stub.listener);
+        this.lazyStubs.delete(el);
+        this.lazyElements.delete(el);
+      }
+    }
+  }
+
+  /**
    * Report a compile failure for hyperscript sourced from markup.
    * Always logs via console.error with the originating element, dispatches a
    * bubbling `hyperfixi:compile-error` CustomEvent on the element, and invokes
@@ -262,7 +392,7 @@ export class AttributeProcessor {
   private reportCompileError(
     source: 'attribute' | 'script',
     code: string,
-    errors: CompileError[] | undefined,
+    errors: CompileFailure[] | undefined,
     element: Element | null
   ): void {
     const errs = errors ?? [];
@@ -273,7 +403,7 @@ export class AttributeProcessor {
     console.error(label, errs, element ?? '');
 
     try {
-      config.onCompileError?.({ source, code, errors: errs, element });
+      host().config.onCompileError?.({ source, code, errors: errs, element });
     } catch (hookError) {
       console.error('[LokaScript] onCompileError hook threw:', hookError);
     }
@@ -337,7 +467,7 @@ export class AttributeProcessor {
       );
 
       // Compile once, execute for each target
-      const compilationResult = hyperscript.compileSync(hyperscriptCode);
+      const compilationResult = host().compileSync(hyperscriptCode);
 
       if (!compilationResult.ok) {
         this.reportCompileError('script', hyperscriptCode, compilationResult.errors, script);
@@ -348,7 +478,7 @@ export class AttributeProcessor {
       for (const target of targets) {
         if (target instanceof HTMLElement) {
           const context = createContext(target); // 'me' = target element
-          await hyperscript.execute(compilationResult.ast!, context);
+          await host().execute(compilationResult.ast!, context);
         }
       }
 
@@ -377,7 +507,7 @@ export class AttributeProcessor {
       const context = createContext(null);
 
       // Compile the hyperscript code
-      const compilationResult = hyperscript.compileSync(hyperscriptCode);
+      const compilationResult = host().compileSync(hyperscriptCode);
       debug.parse('SCRIPT: Compilation result:', compilationResult.ok ? 'SUCCESS' : 'FAILED');
 
       if (!compilationResult.ok) {
@@ -394,7 +524,7 @@ export class AttributeProcessor {
 
       // Execute the compiled code (this will register behaviors)
       // Must await to ensure behaviors are registered before elements are processed
-      await hyperscript.execute(compilationResult.ast!, context);
+      await host().execute(compilationResult.ast!, context);
 
       debug.parse('ATTR: Script executed successfully');
     } catch (error) {
@@ -465,8 +595,8 @@ export class AttributeProcessor {
       const lang = detectLanguage(element);
       const compilationResult =
         lang === DEFAULT_LANGUAGE
-          ? hyperscript.compileSync(hyperscriptCode)
-          : await hyperscript.compile(hyperscriptCode, { language: lang });
+          ? host().compileSync(hyperscriptCode)
+          : await host().compile(hyperscriptCode, { language: lang });
       debug.parse('ATTR: Compilation result:', compilationResult);
 
       if (!compilationResult.ok) {
@@ -476,13 +606,18 @@ export class AttributeProcessor {
 
       debug.parse('ATTR: Compilation succeeded, processing handler type');
 
-      // Execute the compiled AST and WAIT for it to complete
-      // This ensures behavior installation is complete before continuing
+      // Execute the compiled AST. An `eventHandler` installs its listener
+      // synchronously, before the runtime's first await, so by the time
+      // execute() has returned its promise the element IS powered — the
+      // marker and `after:init` go out here, synchronously with the install,
+      // which is what `hyperscript.process()` (void-returning) promises its
+      // callers. Then WAIT for completion: behavior installation must finish
+      // before `load`, and before a scan reports done.
       debug.parse('ATTR: Executing compiled AST');
-      await hyperscript.execute(compilationResult.ast!, context);
-
+      const execution = host().execute(compilationResult.ast!, context);
       markPowered(element);
       dispatchLifecycle(element, 'hyperscript:after:init', false, { code: hyperscriptCode });
+      await execution;
 
       // Dispatch load event on the element after successful processing
       this.dispatchLoadEvent(element);
@@ -495,14 +630,8 @@ export class AttributeProcessor {
    * Process elements in batches, yielding to the browser between chunks.
    * This prevents long main-thread blocking when many elements need processing.
    */
-  private async processElementsChunked(elements: NodeListOf<Element>): Promise<void> {
+  private async processElementsChunked(htmlElements: HTMLElement[]): Promise<void> {
     const chunkSize = this.options.chunkSize;
-    const htmlElements: HTMLElement[] = [];
-    elements.forEach(el => {
-      if (el instanceof HTMLElement) {
-        htmlElements.push(el);
-      }
-    });
 
     for (let i = 0; i < htmlElements.length; i += chunkSize) {
       const chunk = htmlElements.slice(i, i + chunkSize);
@@ -527,6 +656,12 @@ export class AttributeProcessor {
    * @returns A promise if the element needs eager processing, or null if lazy-registered.
    */
   private processElementLazy(element: HTMLElement): Promise<void> | null {
+    // Same skip as the eager path. This check was missing: a second scan
+    // registered a second stub, and the first event ran the body twice.
+    if (this.options.processOnlyNewElements && this.processedElements.has(element)) {
+      return null;
+    }
+
     const code = element.getAttribute(this.options.attributeName);
     if (!code) return null;
 
@@ -556,12 +691,13 @@ export class AttributeProcessor {
     // This avoids re-dispatching synthetic events (which lose isTrusted).
     const stubListener = async (event: Event) => {
       this.lazyElements.delete(element);
+      this.lazyStubs.delete(element);
 
       try {
         // Synchronous compile within the trusted event callback.
         // compileSync() is fully synchronous for English code, preserving
         // user activation for security-sensitive APIs (clipboard, fullscreen, etc.)
-        const result = hyperscript.compileSync(code);
+        const result = host().compileSync(code);
         if (!result.ok || !result.ast) {
           this.reportCompileError('attribute', code, result.errors, element);
           return;
@@ -571,7 +707,7 @@ export class AttributeProcessor {
         // execute() for eventHandler ASTs calls addEventListener() synchronously
         // (before its first internal await), so the handler is active immediately.
         const context = createContext(element);
-        void hyperscript.execute(result.ast, context);
+        void host().execute(result.ast, context);
 
         // Execute the handler body for the current (trusted) event.
         // The real handler installed above won't fire for this event (per DOM spec:
@@ -590,7 +726,7 @@ export class AttributeProcessor {
             // No return-value propagation into `it`/`result` — commands that
             // produce a value self-assign. Mirrors the handler-body executor in
             // runtime-base.ts; see the comment there.
-            await hyperscript.execute(toLegacyNode(command), eventContext);
+            await host().execute(toLegacyNode(command), eventContext);
           }
         }
 
@@ -602,6 +738,7 @@ export class AttributeProcessor {
 
     element.addEventListener(eventType, stubListener, { once: true });
     this.lazyElements.add(element);
+    this.lazyStubs.set(element, { eventType, listener: stubListener });
     this.processedElements.add(element); // Prevent re-processing via mutation observer
     this.processedCount++;
     markPowered(element);

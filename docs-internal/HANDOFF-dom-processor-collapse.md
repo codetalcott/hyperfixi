@@ -56,9 +56,20 @@ runtime with no parser of its own and is 148 lines.
    The rows only the bundle path can pass today (`load`, compile-error
    reporting, script tags, cleanup-then-reprocess) land WITH step 2: a row
    red on one path cannot land first.
-2. Move `processHyperscriptAttribute` + `process` from `api/` into the
+2. ~~Move `processHyperscriptAttribute` + `process` from `api/` into the
    attribute processor as its element-level entry; the API imports it.
-   `dom -> api` edge → gone; regenerate `baselines/layering.json` (shrink).
+   `dom -> api` edge → gone; regenerate `baselines/layering.json` (shrink).~~
+   ✅ **DONE 2026-09-03 (PR 2).** `processTree(root)` on the attribute
+   processor is what `process()` calls; `forget(root)` is what `cleanup()`
+   calls; the API injects `compileSync`/`compile`/`execute`/`config` through
+   `initializeAttributeProcessor` (a declared `ProcessorHost` contract, typed
+   structurally so the API's shapes are checked at the call site). The row
+   is gone from `layering.json`. Found on the way: `cleanup(container)`
+   stripped the root's marker only; the lazy path never checked the
+   processed set (a second scan → a second stub); "processed" was
+   per-instance state, so `cleanup()` could not forget an element another
+   instance had stubbed — it is module-level now, a property of the element.
+   `api/dom-processor.ts` is now unimported; step 3 deletes it.
 3. Delete `api/dom-processor.ts`'s remaining duplicates (`detectLanguage` has
    a twin in the attribute processor's async path — measure which is used).
 4. Re-run: core `test:check`, the Playwright `quick` + `comprehensive`

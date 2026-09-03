@@ -1,20 +1,14 @@
 {
   "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself — known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
   "generated": "2026-09-03",
-  "totalUpwardImports": 37,
-  "totalValueImports": 23,
+  "totalUpwardImports": 35,
+  "totalValueImports": 22,
   "upwardEdges": {
     "commands -> validation": {
       "count": 3,
       "valueImports": 2,
       "typeOnlyImports": 1,
       "reason": "process-partials.ts calls the partial-template validator, formatter and its types. Arc 3: when the command gets a compile(), the validator arrives by injection instead of by import."
-    },
-    "dom -> api": {
-      "count": 2,
-      "valueImports": 1,
-      "typeOnlyImports": 1,
-      "reason": "attribute-processor.ts imports hyperscript + config from the API it is supposed to sit under. One of three DOM processors; the 4b follow-up named in the plan's risk 6 collapses them onto the Program cache."
     },
     "expressions -> performance": {
       "count": 1,

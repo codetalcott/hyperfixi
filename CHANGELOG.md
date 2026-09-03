@@ -60,6 +60,24 @@ click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
   eagerly. `api/dom-processor.test.ts` runs every row on all three paths
   (API, eager, lazy) and is the gate the DOM-processor collapse lands under.
 
+- **`hyperscript.process()` and the browser bundles share one DOM
+  processor.** `process()` and `cleanup()` now run on the attribute
+  processor every bundle uses, which receives its compiler and runtime from
+  the API by injection instead of importing it (the `dom -> api` layering
+  edge is gone). What changes for `process()` callers, all of it upstream
+  parity: an element is initialized once however many times it is passed or
+  scanned (it used to re-install on every call); `<script
+type="text/hyperscript">` tags inside the tree are processed, with or
+  without `for=`, before the elements that may `install` what they define;
+  each element gets a non-bubbling `load` event once its program has run,
+  and an unparseable attribute is reported through `console.error`, the
+  `hyperfixi:compile-error` event and `config.onCompileError` (it was logged
+  at debug level only). And `cleanup(container)` now un-marks every processed
+  descendant — it stripped the root's `data-hyperscript-powered` only — and
+  drops a lazy stub still waiting on an element, so cleanup-then-process
+  re-initializes the tree once. A second scan in `lazyParsing` mode no longer
+  registers a second stub.
+
 - **`set *<css-property>` writes inline style in every spelling upstream
   accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
   `set *background-color of me to "red"` were silent no-ops and
