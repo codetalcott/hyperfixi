@@ -2024,8 +2024,19 @@ Runs in parallel with Arc 3.
    the AST node") is deleted; the direct-import path in `parser/runtime.ts`
    is the documented one. Bundle-size gate: minimal −3.2 % gz, standard
    −3.0 %, classic −2.1 %, full +1.1 % — all within ±5 % (the two deleted
-   classes outweighed the six they replaced). Step 3 (direct-import the 33
-   non-switch `getExpr` sites) is next; the switch fold is Arc 5's.
+   classes outweighed the six they replaced). **Step 3 DONE 2026-09-04:**
+   the 23 core-set lookups outside the binary switch — `me`/`you`/`it`/
+   `result`/`window`/`document`/`elementWithSelector`/`closest`/`styleRef`
+   from `references`, `not`/`no`/`exists`/`doesNotExist`/`isEmpty`/
+   `isNotEmpty`/`between` from `logical` — are static references to the
+   category objects, which every registry-using bundle already ships (bundle
+   sizes unmoved). `getExpr` keeps 38: the binary switch's 28 (Arc 5's), the
+   names a small bundle may legitimately omit (`as`, `first`, `last`,
+   `possessive`) and the three dynamic lookups (`funcName` ×2,
+   `node.contextType`) — the registry is still, honestly, a function
+   namespace there. The `parser -> expressions` allowlist row grew 5 → 7 with
+   the reason recorded: this file is the evaluator filed under `parser/`, and
+   the edge leaves with it. The switch fold is Arc 5's.
    _Re-measured 2026-09-04 by
    [HANDOFF-engine-arc7.md](./HANDOFF-engine-arc7.md): the "fragments already
    shake" premise is false (three fragments, always merged; the registry is

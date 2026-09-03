@@ -27,6 +27,13 @@ import { resolveTargetElements } from '../commands/helpers/target-elements';
 // through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
 import { convertValue } from '../expressions/conversion/index';
+// Arc 7 step 3: the core-set expressions (`references`, `logical`) are in every
+// registry-using bundle, so the evaluator references them statically instead of
+// looking them up by name on the context's registry. `getExpr` remains for the
+// names a small bundle may legitimately omit (conversion, positional,
+// properties) and for the binary switch, which is Arc 5's.
+import { referencesExpressions } from '../expressions/references/index';
+import { logicalExpressions } from '../expressions/logical/index';
 import { isMappableCollection } from '../expressions/properties/index';
 import {
   evaluateWhere,
@@ -703,22 +710,22 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
   // you, `its` → it. Matches `_hyperscript/src/core/runtime.js:resolveSymbol`.
   if (name === 'me' || name === 'my' || name === 'I') {
-    return getExpr(context, 'me').evaluate(context);
+    return referencesExpressions.me.evaluate(context);
   }
   if (name === 'you' || name === 'your' || name === 'yourself') {
-    return getExpr(context, 'you').evaluate(context);
+    return referencesExpressions.you.evaluate(context);
   }
   if (name === 'it' || name === 'its') {
-    return getExpr(context, 'it').evaluate(context);
+    return referencesExpressions.it.evaluate(context);
   }
   if (name === 'result') {
-    return getExpr(context, 'result').evaluate(context);
+    return referencesExpressions.result.evaluate(context);
   }
   if (name === 'window') {
-    return getExpr(context, 'window').evaluate(context);
+    return referencesExpressions.window.evaluate(context);
   }
   if (name === 'document') {
-    return getExpr(context, 'document').evaluate(context);
+    return referencesExpressions.document.evaluate(context);
   }
   // Explicit-global reference (`::name`). The parser tags these with
   // scope: 'global' and a bare name. They target context.globals directly
@@ -1245,7 +1252,7 @@ async function evaluateBetweenExpression(
   // `ignoring case` applies when bounds are string (lexicographic) ranges
   const ci = (v: unknown): unknown => (typeof v === 'string' ? v.toLowerCase() : v);
   const [V, lo, hi] = node.ignoringCase ? [ci(value), ci(min), ci(max)] : [value, min, max];
-  const inRange = (await getExpr(context, 'between').evaluate(context, V, lo, hi)) as boolean;
+  const inRange = (await logicalExpressions.between.evaluate(context, V, lo, hi)) as boolean;
   return node.negated ? !inRange : inRange;
 }
 
@@ -1579,10 +1586,10 @@ async function evaluateUnaryExpression(
   switch (node.operator) {
     case 'not':
     case '!':
-      return getExpr(context, 'not').evaluate(context, value);
+      return logicalExpressions.not.evaluate(context, value);
 
     case 'no':
-      return getExpr(context, 'no').evaluate(context, value);
+      return logicalExpressions.no.evaluate(context, value);
 
     case '-':
       return -value;
@@ -1593,16 +1600,16 @@ async function evaluateUnaryExpression(
     case 'exists':
     case 'some':
       // `some` is upstream's truthy-non-empty check — same semantics as `exists`.
-      return getExpr(context, 'exists').evaluate(context, value);
+      return logicalExpressions.exists.evaluate(context, value);
 
     case 'does not exist':
-      return getExpr(context, 'doesNotExist').evaluate(context, value);
+      return logicalExpressions.doesNotExist.evaluate(context, value);
 
     case 'is empty':
-      return getExpr(context, 'isEmpty').evaluate(context, value);
+      return logicalExpressions.isEmpty.evaluate(context, value);
 
     case 'is not empty':
-      return getExpr(context, 'isNotEmpty').evaluate(context, value);
+      return logicalExpressions.isNotEmpty.evaluate(context, value);
 
     default:
       throw new Error(`Unknown unary operator: ${node.operator}`);
@@ -1784,7 +1791,7 @@ async function evaluateCallExpression(
 
     switch (funcName) {
       case 'closest':
-        return getExpr(context, 'closest').evaluate(context, ...args);
+        return referencesExpressions.closest.evaluate(context, ...args);
       case 'previous':
       case 'next': {
         // Relative positional: `next <sel> from <el> [within <el>|in <coll>]
@@ -1862,7 +1869,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
   // context element (upstream styleRef). Route to the styleRef expression rather
   // than querySelectorAll, which would throw on `*color`.
   if (typeof selector === 'string' && !node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
-    return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
+    return referencesExpressions.styleRef.evaluate(context, selector.slice(1));
   }
 
   // Query-ref `$var` / `${expr}` interpolation (upstream queryRef template form).
@@ -1876,7 +1883,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
       // `elementWithSelector` runs querySelectorAll synchronously inside
       // `.evaluate()`; markers stay set until the awaited result resolves, then
       // `finally` removes them — never leaking `data-hs-query-id` onto the DOM.
-      return await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
+      return await referencesExpressions.elementWithSelector.evaluate(context, escaped);
     } finally {
       elements.forEach(el => el.removeAttribute('data-hs-query-id'));
     }
@@ -1888,7 +1895,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
   }
 
   const escaped = typeof selector === 'string' ? escapeSelectorForQuery(node, selector) : selector;
-  const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
+  const result = await referencesExpressions.elementWithSelector.evaluate(context, escaped);
 
   return resolveTargetElements(result, selector, node.fromQuery);
 }
@@ -1916,19 +1923,19 @@ async function evaluateContextReference(
     case 'my':
     case 'myself':
     case 'I':
-      return getExpr(context, 'me').evaluate(context);
+      return referencesExpressions.me.evaluate(context);
     case 'your':
     case 'yourself':
-      return getExpr(context, 'you').evaluate(context);
+      return referencesExpressions.you.evaluate(context);
     case 'its':
-      return getExpr(context, 'it').evaluate(context);
+      return referencesExpressions.it.evaluate(context);
     case 'event':
       return (context as any).event;
     case 'target':
       return (
         (context as any).target ??
         (context as any).event?.target ??
-        getExpr(context, 'me').evaluate(context)
+        referencesExpressions.me.evaluate(context)
       );
     // Document references. The identifier path now resolves an UNBOUND
     // `body` too (after the locals/globals lookups, so a user binding still
@@ -1937,9 +1944,9 @@ async function evaluateContextReference(
     case 'body':
       return typeof document !== 'undefined' ? document.body : undefined;
     case 'document':
-      return getExpr(context, 'document').evaluate(context);
+      return referencesExpressions.document.evaluate(context);
     case 'window':
-      return getExpr(context, 'window').evaluate(context);
+      return referencesExpressions.window.evaluate(context);
     default:
       return undefined;
   }
