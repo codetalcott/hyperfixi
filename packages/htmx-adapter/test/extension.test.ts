@@ -41,6 +41,30 @@ describe('registerWith', () => {
     expect(defineExtension).toHaveBeenCalledWith(EXTENSION_NAME, expect.any(Object));
   });
 
+  it('treats a v4 rejection (registerExtension returns false) as not registered', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const registerExtension = vi.fn(() => false);
+    expect(registerWith({ registerExtension })).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('htmx.config.extensions'));
+    warn.mockRestore();
+  });
+
+  it('a rejected v4 registration keeps the removal guard: no hook will run', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // Register once successfully so the mode is 'preserve', then a page
+    // whose htmx rejects us (allowlist) must NOT leave attrs in the DOM.
+    registerWith({ registerExtension: vi.fn() });
+    expect(canonicalClaimMode()).toBe('preserve');
+    registerWith({ registerExtension: vi.fn(() => false) });
+    expect(canonicalClaimMode()).toBe('remove');
+
+    setBodyExecutor(vi.fn());
+    document.body.innerHTML = `<button hx-on:click="toggle .x"></button>`;
+    installAutoSweep(document);
+    expect(document.querySelector('button')!.hasAttribute('hx-on:click')).toBe(false);
+    vi.restoreAllMocks();
+  });
+
   it('returns null for a missing or unknown htmx global', () => {
     expect(registerWith(null)).toBeNull();
     expect(registerWith(undefined)).toBeNull();

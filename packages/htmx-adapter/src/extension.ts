@@ -37,8 +37,13 @@ export const EXTENSION_NAME = 'lokascript-i18n';
 
 /** Minimal shape of the htmx global we interact with. */
 export interface HtmxLike {
-  /** htmx v4 registration entry point. */
-  registerExtension?(name: string, extension: object): void;
+  /**
+   * htmx v4 registration entry point. Returns `false` when the name is
+   * rejected — `htmx.config.extensions` is a non-empty allowlist that
+   * omits it, or it was already registered. (`htmx.d.ts` types the
+   * return as `void`; the runtime, verified on 4.0.0, returns `false`.)
+   */
+  registerExtension?(name: string, extension: object): boolean | void;
   /** htmx v1/v2 registration entry point. */
   defineExtension?(name: string, extension: object): void;
 }
@@ -111,7 +116,23 @@ export function registerWith(htmx: HtmxLike | undefined | null): 'v4' | 'v2' | n
   if (!htmx) return null;
   const ext = createExtension();
   if (typeof htmx.registerExtension === 'function') {
-    htmx.registerExtension(EXTENSION_NAME, ext);
+    // v4 REJECTS the registration (returns false) when
+    // `htmx.config.extensions` is an allowlist that omits us, or on a
+    // duplicate name. Nothing we return from a hook can then run, so
+    // the claim mode must stay 'remove' — arming 'preserve' here would
+    // leave claimed hx-on:* bodies in the DOM for htmx to JS-eval.
+    if (htmx.registerExtension(EXTENSION_NAME, ext) === false) {
+      if (typeof console !== 'undefined') {
+        console.warn(
+          `[htmx-i18n] htmx.registerExtension("${EXTENSION_NAME}") returned false — the ` +
+            'extension is not registered. If htmx.config.extensions (the <meta name="htmx-config"> ' +
+            `allowlist) is set, add "${EXTENSION_NAME}" to it. Swapped-in content will not be ` +
+            'canonicalized; executor-mode claims fall back to removing canonical hx-on:* attrs.'
+        );
+      }
+      setCanonicalClaimMode('remove');
+      return null;
+    }
     // v4's cancelable before:on:init hook is the double-execution
     // guard, so executor-mode claims can leave canonical hx-on:* attrs
     // authored-verbatim. In browser.ts both registration paths (sync

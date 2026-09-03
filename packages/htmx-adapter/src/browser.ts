@@ -73,7 +73,9 @@ function autoRegister(): void {
     document.addEventListener(
       'DOMContentLoaded',
       () => {
-        if (!registerWith(w.htmx) && typeof console !== 'undefined') {
+        // A rejected registration warns from registerWith itself; this
+        // message is only for htmx never appearing on the page.
+        if (!registerWith(w.htmx) && !w.htmx && typeof console !== 'undefined') {
           console.warn(
             `[htmx-i18n] window.htmx not found — the "${EXTENSION_NAME}" extension was not ` +
               'registered. Dynamically swapped content will not be canonicalized ' +
