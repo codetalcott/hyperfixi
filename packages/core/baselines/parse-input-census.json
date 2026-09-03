@@ -3,64 +3,64 @@
   "generated": "2026-09-03",
   "totals": {
     "bodies": 50,
-    "lines": 2085,
+    "lines": 2039,
     "branches": 329,
-    "syntaxSites": 70,
+    "syntaxSites": 64,
     "valueSites": 190
   },
   "commands": {
     "js": {
       "file": "src/commands/advanced/js.ts",
-      "lines": 42,
+      "lines": 41,
       "branches": 6,
-      "syntaxSites": 4,
+      "syntaxSites": 2,
       "valueSites": 0
     },
     "measure": {
       "file": "src/commands/animation/measure.ts",
-      "lines": 51,
+      "lines": 50,
       "branches": 14,
       "syntaxSites": 6,
       "valueSites": 7
     },
     "settle": {
       "file": "src/commands/animation/settle.ts",
-      "lines": 34,
+      "lines": 33,
       "branches": 5,
       "syntaxSites": 0,
       "valueSites": 4
     },
     "start": {
       "file": "src/commands/animation/start-view-transition.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 3,
       "syntaxSites": 0,
       "valueSites": 3
     },
     "take": {
       "file": "src/commands/animation/take.ts",
-      "lines": 39,
+      "lines": 38,
       "branches": 4,
       "syntaxSites": 1,
       "valueSites": 6
     },
     "transition": {
       "file": "src/commands/animation/transition.ts",
-      "lines": 74,
+      "lines": 73,
       "branches": 14,
       "syntaxSites": 3,
       "valueSites": 14
     },
     "fetch": {
       "file": "src/commands/async/fetch.ts",
-      "lines": 19,
+      "lines": 18,
       "branches": 1,
       "syntaxSites": 1,
       "valueSites": 3
     },
     "wait": {
       "file": "src/commands/async/wait.ts",
-      "lines": 15,
+      "lines": 14,
       "branches": 2,
       "syntaxSites": 3,
       "valueSites": 0
@@ -74,70 +74,70 @@
     },
     "ContentInsertionCommand": {
       "file": "src/commands/content/insertion-base.ts",
-      "lines": 35,
+      "lines": 34,
       "branches": 6,
       "syntaxSites": 1,
       "valueSites": 3
     },
     "halt": {
       "file": "src/commands/control-flow/halt.ts",
-      "lines": 20,
+      "lines": 19,
       "branches": 2,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "if": {
       "file": "src/commands/control-flow/if.ts",
-      "lines": 50,
+      "lines": 49,
       "branches": 7,
-      "syntaxSites": 4,
+      "syntaxSites": 2,
       "valueSites": 1
     },
     "repeat": {
       "file": "src/commands/control-flow/repeat.ts",
-      "lines": 106,
+      "lines": 105,
       "branches": 29,
-      "syntaxSites": 3,
+      "syntaxSites": 2,
       "valueSites": 8
     },
     "return": {
       "file": "src/commands/control-flow/return.ts",
-      "lines": 12,
+      "lines": 11,
       "branches": 1,
       "syntaxSites": 1,
       "valueSites": 1
     },
     "ControlFlowSignalBase": {
       "file": "src/commands/control-flow/signal-base.ts",
-      "lines": 8,
+      "lines": 7,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 0
     },
     "throw": {
       "file": "src/commands/control-flow/throw.ts",
-      "lines": 13,
+      "lines": 12,
       "branches": 1,
       "syntaxSites": 0,
       "valueSites": 1
     },
     "clear": {
       "file": "src/commands/data/clear.ts",
-      "lines": 39,
+      "lines": 38,
       "branches": 2,
       "syntaxSites": 0,
       "valueSites": 3
     },
     "default": {
       "file": "src/commands/data/default.ts",
-      "lines": 53,
+      "lines": 52,
       "branches": 7,
       "syntaxSites": 2,
       "valueSites": 1
     },
     "get": {
       "file": "src/commands/data/get.ts",
-      "lines": 23,
+      "lines": 22,
       "branches": 3,
       "syntaxSites": 1,
       "valueSites": 1
@@ -151,133 +151,133 @@
     },
     "set": {
       "file": "src/commands/data/set.ts",
-      "lines": 122,
+      "lines": 121,
       "branches": 20,
       "syntaxSites": 1,
       "valueSites": 5
     },
     "add": {
       "file": "src/commands/dom/add.ts",
-      "lines": 53,
+      "lines": 52,
       "branches": 7,
       "syntaxSites": 2,
       "valueSites": 5
     },
     "close": {
       "file": "src/commands/dom/close.ts",
-      "lines": 17,
+      "lines": 16,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "empty": {
       "file": "src/commands/dom/empty.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "make": {
       "file": "src/commands/dom/make.ts",
-      "lines": 34,
+      "lines": 33,
       "branches": 7,
-      "syntaxSites": 2,
+      "syntaxSites": 1,
       "valueSites": 6
     },
     "open": {
       "file": "src/commands/dom/open.ts",
-      "lines": 30,
+      "lines": 29,
       "branches": 4,
       "syntaxSites": 0,
       "valueSites": 3
     },
     "process": {
       "file": "src/commands/dom/process-partials.ts",
-      "lines": 44,
+      "lines": 43,
       "branches": 5,
       "syntaxSites": 1,
       "valueSites": 2
     },
     "put": {
       "file": "src/commands/dom/put.ts",
-      "lines": 132,
+      "lines": 131,
       "branches": 31,
       "syntaxSites": 4,
       "valueSites": 7
     },
     "remove": {
       "file": "src/commands/dom/remove.ts",
-      "lines": 53,
+      "lines": 52,
       "branches": 7,
       "syntaxSites": 1,
       "valueSites": 3
     },
     "reset": {
       "file": "src/commands/dom/reset.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "select": {
       "file": "src/commands/dom/select.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "swap": {
       "file": "src/commands/dom/swap.ts",
-      "lines": 83,
+      "lines": 82,
       "branches": 13,
       "syntaxSites": 2,
       "valueSites": 3
     },
     "morph": {
       "file": "src/commands/dom/swap.ts",
-      "lines": 56,
+      "lines": 55,
       "branches": 13,
       "syntaxSites": 4,
       "valueSites": 3
     },
     "toggle": {
       "file": "src/commands/dom/toggle.ts",
-      "lines": 202,
+      "lines": 201,
       "branches": 25,
       "syntaxSites": 3,
       "valueSites": 25
     },
     "VisibilityCommandBase": {
       "file": "src/commands/dom/visibility-base.ts",
-      "lines": 19,
+      "lines": 18,
       "branches": 3,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "trigger": {
       "file": "src/commands/events/trigger.ts",
-      "lines": 47,
+      "lines": 46,
       "branches": 8,
       "syntaxSites": 1,
       "valueSites": 4
     },
     "blur": {
       "file": "src/commands/execution/blur.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
     },
     "call": {
       "file": "src/commands/execution/call.ts",
-      "lines": 11,
+      "lines": 10,
       "branches": 1,
       "syntaxSites": 1,
       "valueSites": 0
     },
     "focus": {
       "file": "src/commands/execution/focus.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 2
@@ -291,21 +291,21 @@
     },
     "go": {
       "file": "src/commands/navigation/go.ts",
-      "lines": 40,
+      "lines": 39,
       "branches": 16,
       "syntaxSites": 1,
       "valueSites": 6
     },
     "push": {
       "file": "src/commands/navigation/push-url.ts",
-      "lines": 13,
+      "lines": 12,
       "branches": 1,
       "syntaxSites": 0,
       "valueSites": 0
     },
     "scroll": {
       "file": "src/commands/navigation/scroll-to.ts",
-      "lines": 44,
+      "lines": 43,
       "branches": 12,
       "syntaxSites": 1,
       "valueSites": 4
@@ -319,42 +319,42 @@
     },
     "beep": {
       "file": "src/commands/utility/beep.ts",
-      "lines": 10,
+      "lines": 9,
       "branches": 1,
       "syntaxSites": 0,
       "valueSites": 1
     },
     "breakpoint": {
       "file": "src/commands/utility/breakpoint.ts",
-      "lines": 8,
+      "lines": 7,
       "branches": 0,
       "syntaxSites": 0,
       "valueSites": 0
     },
     "copy": {
       "file": "src/commands/utility/copy.ts",
-      "lines": 16,
+      "lines": 15,
       "branches": 1,
       "syntaxSites": 0,
       "valueSites": 1
     },
     "log": {
       "file": "src/commands/utility/log.ts",
-      "lines": 14,
+      "lines": 13,
       "branches": 1,
       "syntaxSites": 0,
       "valueSites": 1
     },
     "pick": {
       "file": "src/commands/utility/pick.ts",
-      "lines": 93,
+      "lines": 92,
       "branches": 18,
       "syntaxSites": 4,
       "valueSites": 19
     },
     "tell": {
       "file": "src/commands/utility/tell.ts",
-      "lines": 15,
+      "lines": 14,
       "branches": 1,
       "syntaxSites": 1,
       "valueSites": 1
