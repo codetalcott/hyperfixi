@@ -48,7 +48,7 @@ export type {
   LLMDocumentation,
 } from './unified-types';
 
-export { Validator, isValidationResult, isExecutionContext } from './unified-types';
+export { isValidationResult, isExecutionContext } from './unified-types';
 
 // ============================================================================
 // Type Guards (eliminates as any casts)
