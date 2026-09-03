@@ -116,7 +116,17 @@ six packages, which is why their suites are on step A's gate list.
 Order: A → B → C. A is a build-only PR and can land today; B is the API; C
 is the gate flip that turns the ratchet into an assertion. Each is one PR.
 
-### Step A — the build stops inlining the front-end (step 2, build half)
+### ~~Step A — the build stops inlining the front-end (step 2, build half)~~ — ✅ DONE 2026-09-03
+
+Landed as written, with decisions 1 (UMD kept, self-contained) and 2
+(framework external) taken as recommended. Measured: 3,331,225 →
+1,037,542 bytes; ja compiles from bare Node in 42 ms through the deferred
+load; gate mutation-verified (three FAILs against `external: []`). **It also
+found that every CJS entry point is empty** — `"type": "module"` makes
+Node load the CJS-syntax `dist/*.js` as ESM; the same file as `.cjs` yields
+all 27 keys; the published 3.0.0 has the same defect. That is queued in the
+plan's After-the-plan list ahead of step B (same two files). Original step
+text follows for the record.
 
 1. In `rollup.config.mjs`, give the main entry's `.mjs` and `.js` outputs
    `external: ['@lokascript/semantic', '@lokascript/intent', '@lokascript/i18n',
