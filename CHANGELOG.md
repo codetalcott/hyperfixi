@@ -70,6 +70,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _Migration:_ `import { tokenize } from '@hyperfixi/core'` and walk the
   returned `Token[]`; there is no drop-in `Tokens` cursor class.
 
+## [Unreleased]
+
+### ⚠ BREAKING
+
+## [Unreleased]
+
+### ⚠ BREAKING
+
+- **`ContextProviderRegistry` and the context-provider `Proxy` are deleted**
+  (Arc 6b, listed by the Arc 4c brief). `@hyperfixi/core/registry` no longer
+  exports `ContextProviderRegistry`, `createContextProviderRegistry`,
+  `getDefaultContextProviderRegistry`, the `ContextProvider` /
+  `ContextProviderFn` / `ContextProviderOptions` types, the four default
+  providers (`meProvider`, `itProvider`, `youProvider`, `eventProvider`) or
+  the `context` shorthand; `LokaScriptRegistry` loses its `context` slot,
+  `LokaScriptPlugin` its `contextProviders` field, `createRegistry()` its
+  `context` option, and `RegistryIntegration` its `enhanceContext()` /
+  `getContextProviderNames()` and the `enableContextProviders` /
+  `registry.context` options. No production caller ever registered a
+  provider (measured 2026-08-30 and again 2026-09-04), and Arc 4c step 3 had
+  already made `enhanceContext()` return the context untouched when no
+  provider exists — so the Proxy that spliced lazy getters onto every
+  behavior / event / mutation / change context was allocated for nobody.
+  The runtime now builds those contexts as plain objects and passes them on
+  directly.
+
+  _Migration:_ a caller that wants request-scoped values on the context
+  should set them as locals (`context.locals.set('request', req)`) — the
+  shape the registry's own server example already used to read them back.
 - **Three never-reachable exports deleted** (Arc 6b): the `unified-types`
   `Validator` class (a static `validateInput`/`createValidationError` pair
   wrapped around `lightweight-validators` — exported from `types/index.ts`,

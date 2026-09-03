@@ -1,7 +1,7 @@
 /**
  * HyperFixi Registry System
  *
- * Unified extensibility API for commands, event sources, and context providers.
+ * Unified extensibility API for commands and event sources.
  *
  * Usage:
  *   import { registry } from '@hyperfixi/core';
@@ -14,20 +14,10 @@
  *   registry.eventSources.register('request', requestEventSource);
  *   registry.eventSources.register('websocket', websocketEventSource);
  *
- *   // Register context providers
- *   registry.context.register('request', () => currentRequest);
- *   registry.context.register('response', () => responseBuilder);
- *
- * Server-side Example:
- *   // In Express middleware
- *   app.use((req, res, next) => {
- *     registry.context.register('request', () => req);
- *     registry.context.register('response', () => res);
- *     next();
- *   });
- *
- *   // Hyperscript can now use:
- *   // on request(GET, /api/users) respond with <json> users </json>
+ * The context-provider registry that used to sit beside these (lazy getters
+ * spliced onto every execution context through a Proxy) was deleted in Arc 6b:
+ * no production caller ever registered a provider, and Arc 4c had already
+ * taken the Proxy off the hot path.
  */
 
 // Re-export core types needed by event sources
@@ -45,19 +35,6 @@ export {
   type EventSourceSubscribeOptions,
 } from './event-source-registry';
 
-export {
-  ContextProviderRegistry,
-  createContextProviderRegistry,
-  getDefaultContextProviderRegistry,
-  type ContextProvider,
-  type ContextProviderFn,
-  type ContextProviderOptions,
-  meProvider,
-  itProvider,
-  youProvider,
-  eventProvider,
-} from './context-provider-registry';
-
 // Re-export command registry from existing location
 export {
   CommandRegistryV2,
@@ -70,13 +47,8 @@ export {
 import { CommandRegistryV2 } from '../runtime/command-adapter';
 import { debug } from '../utils/debug';
 import { EventSourceRegistry, createEventSourceRegistry } from './event-source-registry';
-import {
-  ContextProviderRegistry,
-  createContextProviderRegistry,
-} from './context-provider-registry';
 import type { CommandWithParseInput } from '../runtime/command-adapter';
 import type { EventSource } from './event-source-registry';
-import type { ContextProviderFn, ContextProviderOptions } from './context-provider-registry';
 
 /**
  * Unified registry interface
@@ -84,7 +56,6 @@ import type { ContextProviderFn, ContextProviderOptions } from './context-provid
  * Provides a single point of access to all extension registries:
  * - commands: Register custom hyperscript commands
  * - eventSources: Register custom event sources (request, websocket, etc.)
- * - context: Register dynamic context providers
  */
 export interface LokaScriptRegistry {
   /** Command registry for registering custom commands */
@@ -93,11 +64,8 @@ export interface LokaScriptRegistry {
   /** Event source registry for custom event sources */
   readonly eventSources: EventSourceRegistry;
 
-  /** Context provider registry for dynamic context values */
-  readonly context: ContextProviderRegistry;
-
   /**
-   * Register a plugin that can add commands, event sources, and context providers
+   * Register a plugin that can add commands and event sources
    */
   use(plugin: LokaScriptPlugin): void;
 
@@ -110,8 +78,8 @@ export interface LokaScriptRegistry {
 /**
  * Plugin interface for bundled extensions
  *
- * Plugins can register multiple commands, event sources, and context providers
- * in a single installation.
+ * Plugins can register multiple commands and event sources in a single
+ * installation.
  */
 export interface LokaScriptPlugin {
   /** Plugin name */
@@ -125,13 +93,6 @@ export interface LokaScriptPlugin {
 
   /** Event sources to register */
   eventSources?: EventSource[];
-
-  /** Context providers to register */
-  contextProviders?: Array<{
-    name: string;
-    provide: ContextProviderFn;
-    options?: ContextProviderOptions;
-  }>;
 
   /**
    * Optional setup function called when plugin is installed
@@ -150,18 +111,15 @@ export interface LokaScriptPlugin {
 export function createRegistry(options?: {
   commands?: CommandRegistryV2;
   eventSources?: EventSourceRegistry;
-  context?: ContextProviderRegistry;
 }): LokaScriptRegistry {
   const commands = options?.commands ?? new CommandRegistryV2();
   const eventSources = options?.eventSources ?? createEventSourceRegistry();
-  const context = options?.context ?? createContextProviderRegistry();
 
   const installedPlugins = new Set<string>();
 
   const registry: LokaScriptRegistry = {
     commands,
     eventSources,
-    context,
 
     use(plugin: LokaScriptPlugin): void {
       if (installedPlugins.has(plugin.name)) {
@@ -180,13 +138,6 @@ export function createRegistry(options?: {
       if (plugin.eventSources) {
         for (const source of plugin.eventSources) {
           eventSources.register(source.name, source);
-        }
-      }
-
-      // Register context providers
-      if (plugin.contextProviders) {
-        for (const { name, provide, options } of plugin.contextProviders) {
-          context.register(name, provide, options);
         }
       }
 
@@ -225,11 +176,10 @@ export function getDefaultRegistry(): LokaScriptRegistry {
  * Shorthand access to default registries
  *
  * Usage:
- *   import { commands, eventSources, context } from '@hyperfixi/core/registry';
+ *   import { commands, eventSources } from '@hyperfixi/core/registry';
  *
  *   commands.register('respond', respondCommand);
  *   eventSources.register('request', requestEventSource);
- *   context.register('request', () => currentRequest);
  */
 export const commands = {
   /**
@@ -277,33 +227,6 @@ export const eventSources = {
   },
 };
 
-export const context = {
-  /**
-   * Register a context provider in the default registry
-   */
-  register<T>(
-    name: string,
-    provide: ContextProviderFn<T>,
-    options?: ContextProviderOptions<T>
-  ): void {
-    getDefaultRegistry().context.register(name, provide, options);
-  },
-
-  /**
-   * Check if a context provider is registered
-   */
-  has(name: string): boolean {
-    return getDefaultRegistry().context.has(name);
-  },
-
-  /**
-   * Get all registered provider names
-   */
-  names(): string[] {
-    return getDefaultRegistry().context.getProviderNames();
-  },
-};
-
 /**
  * Type-safe plugin builder
  *
@@ -312,9 +235,6 @@ export const context = {
  *     name: 'my-server-plugin',
  *     commands: [respondCommand, redirectCommand],
  *     eventSources: [requestEventSource],
- *     contextProviders: [
- *       { name: 'request', provide: () => currentRequest },
- *     ],
  *   });
  */
 export function definePlugin(plugin: LokaScriptPlugin): LokaScriptPlugin {

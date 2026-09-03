@@ -144,9 +144,8 @@ export interface RuntimeBaseOptions {
   enableAutoCleanup?: boolean;
 
   /**
-   * Registry integration options for context providers and event sources.
-   * When enabled, registered context providers will be available in execution contexts
-   * and custom event sources can be used in 'on' commands.
+   * Registry integration options for custom event sources.
+   * When enabled, registered event sources can be used in 'on' commands.
    * Default: enabled
    */
   registryIntegration?: RegistryIntegrationOptions | boolean;
@@ -1029,17 +1028,6 @@ export class RuntimeBase {
   // Context Enhancement (Registry Integration)
   // --------------------------------------------------------------------------
 
-  /**
-   * Enhance execution context with registered context providers
-   * This makes registered providers available as lazy getters on the context
-   */
-  protected enhanceContext(baseContext: ExecutionContext): ExecutionContext {
-    if (!this.registryIntegration) {
-      return baseContext;
-    }
-    return this.registryIntegration.enhanceContext(baseContext);
-  }
-
   // --------------------------------------------------------------------------
   // Event & Behavior System (DOM Glue)
   // --------------------------------------------------------------------------
@@ -1122,7 +1110,7 @@ export class RuntimeBase {
     // the runtime. Without this, the registry is recovered later at
     // runtime.execute(), but only after every entry point. Symmetric with the
     // event/mutation/change contexts below which spread `...context`.
-    const baseBehaviorContext: ExecutionContext = {
+    const behaviorContext: ExecutionContext = {
       me: element,
       owner: element, // Element that owns `:name` scope; preserved via `...context` spreads below
       you: null,
@@ -1134,7 +1122,6 @@ export class RuntimeBase {
     };
 
     // Enhance context with registered providers
-    const behaviorContext = this.enhanceContext(baseBehaviorContext);
 
     // Hydrate parameters
     if (behavior.parameters) {
@@ -1288,7 +1275,7 @@ export class RuntimeBase {
       const customEventHandler = async (eventData: unknown) => {
         // Context Hydration
         const eventLocals = new Map(context.locals);
-        const baseEventContext: ExecutionContext = {
+        const eventContext: ExecutionContext = {
           ...context,
           locals: eventLocals,
           it: eventData,
@@ -1296,7 +1283,6 @@ export class RuntimeBase {
         };
 
         // Enhance context with registered providers
-        const eventContext = this.enhanceContext(baseEventContext);
 
         // Execute commands
         debug.runtime(`CUSTOM EVENT: Executing commands for event '${event}'`);
@@ -1548,7 +1534,7 @@ export class RuntimeBase {
 
       // Context Hydration
       const eventLocals = new Map(context.locals);
-      const baseEventContext: ExecutionContext = {
+      const eventContext: ExecutionContext = {
         ...context,
         locals: eventLocals,
         it: domEvent,
@@ -1556,11 +1542,10 @@ export class RuntimeBase {
       };
       // Only set 'target' if not already defined by the behavior's init block
       if (!eventLocals.has('target')) {
-        baseEventContext.locals.set('target', domEvent.target);
+        eventContext.locals.set('target', domEvent.target);
       }
 
       // Enhance context with registered providers
-      const eventContext = runtime.enhanceContext(baseEventContext);
 
       // Arg Destructuring (e.g. on pointerdown(x, y))
       if (args && args.length > 0) {
@@ -1688,7 +1673,7 @@ export class RuntimeBase {
             debug.event(`MUTATION DETECTED: attribute '${attr}' changed on`, targetElement);
 
             // Create context for mutation event
-            const baseMutationContext: ExecutionContext = {
+            const mutationContext: ExecutionContext = {
               ...context,
               me: targetElement,
               it: mutation,
@@ -1698,11 +1683,10 @@ export class RuntimeBase {
             // Store old and new values in context
             const oldValue = mutation.oldValue;
             const newValue = targetElement.getAttribute(attr);
-            baseMutationContext.locals.set('oldValue', oldValue);
-            baseMutationContext.locals.set('newValue', newValue);
+            mutationContext.locals.set('oldValue', oldValue);
+            mutationContext.locals.set('newValue', newValue);
 
             // Enhance context with registered providers
-            const mutationContext = this.enhanceContext(baseMutationContext);
 
             // Execute all commands
             for (const command of commands) {
@@ -1776,7 +1760,7 @@ export class RuntimeBase {
             );
 
             // Create context for change event
-            const baseChangeContext: ExecutionContext = {
+            const changeContext: ExecutionContext = {
               ...context,
               me: context.me, // Keep original 'me' (the element with the handler)
               it: mutation,
@@ -1784,18 +1768,17 @@ export class RuntimeBase {
             };
 
             // Store the watched element in context as a local variable
-            baseChangeContext.locals.set('target', watchedElement);
+            changeContext.locals.set('target', watchedElement);
 
             // Get old and new text content (if available)
             const oldValue = mutation.oldValue;
             const newValue = watchedElement.textContent;
             if (oldValue !== null) {
-              baseChangeContext.locals.set('oldValue', oldValue);
+              changeContext.locals.set('oldValue', oldValue);
             }
-            baseChangeContext.locals.set('newValue', newValue);
+            changeContext.locals.set('newValue', newValue);
 
             // Enhance context with registered providers
-            const changeContext = this.enhanceContext(baseChangeContext);
 
             // Execute all commands
             for (const command of commands) {
