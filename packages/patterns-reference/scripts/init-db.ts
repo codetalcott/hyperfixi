@@ -392,6 +392,14 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Swap two elements in the DOM',
     feature: 'dom-manipulation',
   },
+  {
+    id: 'swap-view-transition',
+    title: 'Swap Content With View Transition',
+    raw_code: 'on click swap #a with #b using view transition',
+    description:
+      'Swap two elements inside a document.startViewTransition() so the browser animates the change',
+    feature: 'dom-manipulation',
+  },
 
   // ==========================================================================
   // Visibility
@@ -1473,7 +1481,12 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'when-value-changes',
     title: 'When Computed Value Changes',
-    raw_code: "when (#price's value * #qty's value) changes put `$${it}` into me end",
+    // `"$" + it`, not `` `$${it}` ``: a `$` immediately before `${…}` inside a
+    // template literal is rejected by the upstream _hyperscript 0.9.93 lexer
+    // ("Unexpected value: $") — verified on the engine; `"$" + it` and
+    // `` `USD ${it}` `` are both VALID. The row claims `engine: 'both'`, so its
+    // code must be portable.
+    raw_code: 'when (#price\'s value * #qty\'s value) changes put "$" + it into me end',
     description: 'React to changes in a computed expression; `it` is the new value',
     feature: 'reactivity',
     engine: 'both',
@@ -1640,6 +1653,9 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Define a custom element via a hyperscript-template script tag',
     feature: 'components',
     engine: 'both',
+    translatable: false,
+    non_translatable_reason:
+      'HTML markup with NO hyperscript — a component template whose body is static markup; there is nothing to translate in any language',
   },
   {
     id: 'component-click-counter',
@@ -1676,6 +1692,9 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Component with default and named slots for content projection',
     feature: 'components',
     engine: 'both',
+    translatable: false,
+    non_translatable_reason:
+      'HTML markup with NO hyperscript — slot layout only; there is nothing to translate in any language',
   },
 
   // ==========================================================================

@@ -35,7 +35,7 @@ import type {
  * @example
  * ```typescript
  * import { generatePrompt } from '@lokascript/framework';
- * import { allSchemas } from '@lokascript/domain-flow';
+ * import { allSchemas } from '@lokascript/domains/flow';
  *
  * const prompt = generatePrompt({
  *   domain: 'flow',

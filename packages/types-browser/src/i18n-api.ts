@@ -6,34 +6,12 @@
  * HyperFixi i18n/Grammar transformation API on window.HyperFixiI18n
  */
 export interface LokaScriptI18nAPI {
-  /**
-   * Transform hyperscript statement from one language word order to another
-   *
-   * @param statement Parsed hyperscript statement
-   * @param fromLocale Source language locale (e.g., 'en')
-   * @param toLocale Target language locale (e.g., 'ja')
-   * @returns Transformed statement or null
-   */
-  translate(
-    statement: HyperscriptStatement,
-    fromLocale: string,
-    toLocale: string
-  ): HyperscriptStatement | null;
-
-  /**
-   * Transform code from English to target locale
-   */
-  toLocale(code: string, toLocale: string): string | null;
-
-  /**
-   * Transform code from any locale to English
-   */
-  toEnglish(code: string, fromLocale: string): string | null;
-
-  /**
-   * Parse hyperscript statement
-   */
-  parseStatement(code: string): HyperscriptStatement | null;
+  // RETIRED 2026-08-28 with `@lokascript/i18n`'s grammar transformer:
+  // `translate`, `toLocale`, `toEnglish`, `parseStatement`, `grammarExamples`.
+  // The global keeps its DICTIONARIES, keyword providers, locale manager,
+  // direct mappings and grammar PROFILES — everything that was not the
+  // transformer. Translation is `@lokascript/semantic`'s job; in the browser
+  // that is `hyperfixi.translate` from the multilingual bundle.
 
   /**
    * Get supported locales for grammar transformation
@@ -106,7 +84,6 @@ export interface LokaScriptI18nAPI {
   /**
    * Grammar transformer class
    */
-  GrammarTransformer: any;
 
   /**
    * Locale manager class
@@ -181,14 +158,6 @@ export interface LokaScriptI18nAPI {
    * Direct mapping configuration
    */
   directMappings: any;
-
-  /**
-   * Grammar transformation examples
-   */
-  grammarExamples: Array<{
-    english: string;
-    [locale: string]: string;
-  }>;
 }
 
 export interface HyperscriptStatement {

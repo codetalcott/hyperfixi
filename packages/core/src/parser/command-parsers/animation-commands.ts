@@ -14,6 +14,8 @@ import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
 import { parseHyphenatedName } from '../helpers/parsing-helpers';
 import { isIdentifierLike } from '../token-predicates';
+import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse measure command
@@ -46,7 +48,7 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
   //   measure <#element/> *opacity           → 2 args (target, CSS property)
   //   measure <#element/> *opacity and set x → 2 args + modifier
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'measure'> = {};
 
   // Parse optional target (selector or expression)
   // If next token is a selector, identifier, or context var, parse it as target
@@ -90,19 +92,19 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
     if (ctx.match('set')) {
       if (ctx.checkIdentifierLike()) {
         const variableName = ctx.advance();
-        modifiers['set'] = {
+        modifiers['set'] = toLegacyExpression({
           type: 'identifier',
           name: variableName.value,
           start: variableName.start,
           end: variableName.end,
           line: variableName.line,
           column: variableName.column,
-        } as unknown as ExpressionNode;
+        });
       }
     }
   }
 
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
+  const builder = CommandNodeBuilder.fromIdentifier<'measure'>(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition());
 
@@ -160,7 +162,7 @@ const CONTEXT_POSSESSIVES = new Set(['my', 'its', 'your']);
  */
 export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'transition'> = {};
 
   let property: ASTNode | null = null;
   let target: ASTNode | null = null;
@@ -255,14 +257,32 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
   }
   ctx.advance(); // consume 'to'
 
-  // Parse target value (can be template string, number, color, etc.)
-  const value = ctx.parsePrimary();
+  // Parse target value (can be template string, number, color, etc.).
+  //
+  // `parseExpression`, not `parsePrimary`: a CSS value is routinely a NUMBER
+  // PLUS A UNIT, and `100px` is two tokens — the engine already models that as
+  // a `stringPostfix` node (`Parser.tryParseStringPostfix`, mirroring upstream's
+  // StringPostfixExpression over the 15 CSS length units and `%`), but only the
+  // pratt path builds it. `parsePrimary` stops at the literal, so
+  // `transition left to 100px` silently became `to: 100` — an animation to a
+  // UNITLESS length, i.e. to nothing — with `px` discarded. Same for
+  // `transition *width to 50%`.
+  //
+  // It was invisible for two reasons at once: bare, the parser had nothing to
+  // report the drop through, and the source is TransitionCommand's own
+  // documented example, which no gate parsed until #1025. Upstream parses both
+  // this value and the duration below with `requireElement("expression")`.
+  const value = ctx.parseExpression();
   modifiers['to'] = value as ExpressionNode;
 
-  // Parse optional 'over <duration>' - store in modifiers
+  // Parse optional 'over <duration>' - store in modifiers.
+  //
+  // `parseExpression` for the same reason, and it is not redundant with the
+  // tokenizer's TIME handling: `500ms` arrives as one token, but `2 * delay`
+  // or `(base + 100) ms` do not.
   if (ctx.check('over')) {
     ctx.advance(); // consume 'over'
-    const duration = ctx.parsePrimary();
+    const duration = ctx.parseExpression();
     modifiers['over'] = duration as ExpressionNode;
   }
 
@@ -273,7 +293,7 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
     modifiers['with'] = timingFunction as ExpressionNode;
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'transition'>(commandToken)
     .withArgs(...args)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
@@ -308,7 +328,7 @@ export function parseStartCommand(
     throw new Error("start view: expected 'transition'");
   }
 
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'start'> = {};
 
   // Optional `using <name>` — sets the view-transition-name CSS property.
   if (ctx.match('using')) {
@@ -319,7 +339,7 @@ export function parseStartCommand(
   // Body: sequence of commands terminated by `end`.
   const body = ctx.parseCommandListUntilEnd('start view transition');
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'start'>(identifierNode)
     .withArgs(...body)
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())

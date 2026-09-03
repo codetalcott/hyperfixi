@@ -60,10 +60,8 @@ body:
       description: Which bundle are you using?
       options:
         - 'hyperfixi.js (full)'
-        - 'hyperfixi-hybrid-complete.js'
         - 'hyperfixi-hx.js'
-        - 'hyperfixi-lite-plus.js'
-        - 'hyperfixi-lite.js'
+        - 'hyperfixi-hybrid-complete.js (vite plugin fallback)'
         - 'hyperfixi-multilingual.js'
         - 'Vite plugin (auto-generated)'
         - 'Node.js / Server'

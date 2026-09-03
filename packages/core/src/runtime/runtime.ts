@@ -20,7 +20,7 @@
  */
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
-import { CommandRegistryV2 } from './command-adapter';
+import { CommandRegistryV2, type CommandWithParseInput } from './command-adapter';
 import { createFullExpressionRegistry } from '../expressions/index';
 import { COMMAND_MANIFEST } from '../commands/manifest';
 
@@ -92,7 +92,6 @@ import { createTakeCommand } from '../commands/animation/take';
 
 // Advanced Commands
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // Data Commands
 import { createDefaultCommand } from '../commands/data/default';
@@ -134,7 +133,7 @@ import { createRenderCommand } from '../commands/templates/render';
  * manifest itself (Finding 9). It lives here because `runtime.ts` is the one
  * module that legitimately references every command implementation.
  */
-const COMMAND_FACTORIES: Readonly<Record<string, () => unknown>> = {
+const COMMAND_FACTORIES: Readonly<Record<string, () => CommandWithParseInput>> = {
   // DOM
   hide: createHideCommand,
   show: createShowCommand,
@@ -201,7 +200,6 @@ const COMMAND_FACTORIES: Readonly<Record<string, () => unknown>> = {
 
   // Advanced
   js: createJsCommand,
-  async: createAsyncCommand,
 
   // Utility
   log: createLogCommand,
@@ -248,6 +246,9 @@ export interface RuntimeOptions {
    * Enable async command execution
    */
   enableAsyncCommands?: boolean;
+
+  /** Log every event handler that fires (`config.logAll`); read at fire time. */
+  logAll?: () => boolean;
 
   /**
    * Command timeout in milliseconds
@@ -343,6 +344,9 @@ export class Runtime extends RuntimeBase {
     }
     if (options.enableErrorReporting !== undefined) {
       baseOptions.enableErrorReporting = options.enableErrorReporting;
+    }
+    if (options.logAll !== undefined) {
+      baseOptions.logAll = options.logAll;
     }
 
     super(baseOptions);

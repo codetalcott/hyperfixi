@@ -37,7 +37,20 @@ describe('default — the target variable must survive into args[0]', () => {
 
     expect(ast.name).toBe('default');
     expect(ast.args).toHaveLength(1);
-    expect(ast.args[0]).toMatchObject({ type: 'contextReference', name: ':x' });
+    // This used to pin `{ type: 'contextReference', name: ':x' }`, which was the
+    // shape `convertReference` produced for EVERY reference — and it was wrong
+    // for a sigil-scoped variable: `ContextType` never contained `:x`, and
+    // core's `evaluateContextReference` has no case for it, so it evaluated to
+    // `undefined`. Measured end-to-end on the default parse path, before and
+    // after:
+    //
+    //   set :x to 7 then default :x to 0 then log :x   before: undefined  after: 7
+    //   default :x to 0 then log :x                    before: undefined  after: 0
+    //
+    // So `default` was neither preserving an existing value nor applying its
+    // default. The node is now the same scoped identifier the TRADITIONAL
+    // parser emits, which is what makes both paths agree.
+    expect(ast.args[0]).toMatchObject({ type: 'identifier', name: 'x', scope: 'element' });
     expect(ast.modifiers?.to).toMatchObject({ type: 'literal', value: 0 });
   });
 
@@ -45,7 +58,14 @@ describe('default — the target variable must survive into args[0]', () => {
     const ast = astOf('default my @data-count to "0"');
 
     expect(ast.args).toHaveLength(1);
-    expect(ast.args[0]).toMatchObject({ type: 'propertyAccess', property: '@data-count' });
+    // The traditional parser's exact shape (measured): memberExpression with
+    // the attribute name as the property identifier. Used to pin the old
+    // divergent flat propertyAccess (Thread B item 5 converged the spellings).
+    expect(ast.args[0]).toMatchObject({
+      type: 'memberExpression',
+      object: { type: 'identifier', name: 'me' },
+      property: { type: 'identifier', name: '@data-count' },
+    });
     expect(ast.modifiers?.to).toMatchObject({ type: 'literal', value: '0' });
   });
 
@@ -86,11 +106,13 @@ describe('scroll — the destination must be an ARG, not a modifier', () => {
   });
 });
 
-describe('swap — the AST contract is keyword-positional args, never modifiers', () => {
+describe('swap — the AST contract is keyword-positional args, plus one flag modifier', () => {
   // packages/core/src/commands/dom/swap.ts parseInput takes `const args =
-  // raw.args` and reads NOTHING else — there is no `raw.modifiers` access in the
-  // function. It then scans the arg list for keyword tokens (`with`, `of`,
-  // `delete`, `using`, `into`, `over`) and, failing all of those, falls back to
+  // raw.args` and reads exactly ONE modifier — `viewTransition`, tested for
+  // PRESENCE, seeded from swapSchema's `manner` role (`using view transition`).
+  // Everything else is positional. It scans the arg list for keyword tokens
+  // (`with`, `of`, `delete`, `using`, `into`, `over`) and, failing all of those,
+  // falls back to
   //   targetNode  = args[args.length - 2]
   //   contentNode = args[args.length - 1]
   //   strategy    = STRATEGY_KEYWORDS[argKeywords[0]]  (when args[0] names one)
@@ -114,7 +136,7 @@ describe('swap — the AST contract is keyword-positional args, never modifiers'
 
     expect(ast.args).toHaveLength(2);
     expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#target' });
-    expect(ast.args[1]).toMatchObject({ type: 'contextReference', name: 'it' });
+    expect(ast.args[1]).toMatchObject({ type: 'identifier', name: 'it' });
     expect(ast.modifiers).toBeUndefined();
   });
 
@@ -141,6 +163,18 @@ describe('swap — the AST contract is keyword-positional args, never modifiers'
     // `swap delete #t` as a zero-arg one — both throw before doing any work.
     expect(astOf('swap delete #t').args.length).toBeGreaterThan(1);
   });
+
+  it('emits `viewTransition` for the tail form, and leaves args untouched', () => {
+    // The one modifier the contract does carry. Args must stay exactly what the
+    // tail-less form produces — the three tail keywords are consumed by the
+    // pattern's optional group, not appended as positional args (which would
+    // shift `args[len-2]`/`args[len-1]` and break target/content selection).
+    const plain = astOf('swap #a with #b');
+    const withTail = astOf('swap #a with #b using view transition');
+
+    expect(withTail.modifiers?.viewTransition, 'presence is the whole request').toBeDefined();
+    expect(withTail.args).toEqual(plain.args);
+  });
 });
 
 describe('swap — the strategy forms carry their content', () => {
@@ -156,9 +190,9 @@ describe('swap — the strategy forms carry their content', () => {
   // args[len-2], content from args[len-1].
 
   const STRATEGY_FORMS: Array<[string, string, string, unknown]> = [
-    ['swap into #t with it', 'into', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap into #t with it', 'into', '#t', { type: 'identifier', name: 'it' }],
     ['swap over #modal with c', 'over', '#modal', { type: 'identifier', name: 'c' }],
-    ['swap beforebegin #t with it', 'beforebegin', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap beforebegin #t with it', 'beforebegin', '#t', { type: 'identifier', name: 'it' }],
     ['swap innerHTML of #t with "X"', 'innerHTML', '#t', { type: 'literal', value: 'X' }],
     ['swap outerHTML of #t with "Y"', 'outerHTML', '#t', { type: 'literal', value: 'Y' }],
   ];

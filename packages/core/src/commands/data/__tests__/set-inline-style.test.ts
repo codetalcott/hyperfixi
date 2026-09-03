@@ -21,7 +21,6 @@ function ctx(el: HTMLElement): ExecutionContext {
     locals: new Map(),
     globals: new Map(),
     variables: new Map(),
-    events: new Map(),
   } as unknown as ExecutionContext;
 }
 

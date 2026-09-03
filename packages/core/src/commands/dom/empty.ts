@@ -25,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface EmptyCommandInput {
   targets: HTMLElement[];
@@ -48,7 +49,7 @@ export class EmptyCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'empty'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<EmptyCommandInput> {
@@ -57,7 +58,7 @@ export class EmptyCommand implements DecoratedCommand {
       evaluator,
       context,
       'empty',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/semantic",
-  "version": "2.9.4",
+  "version": "3.0.0",
   "description": "Semantic multilingual parser for hyperscript (24 languages)",
   "type": "module",
   "main": "dist/index.cjs",
@@ -16,6 +16,11 @@
     "./core": {
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
+    },
+    "./fidelity": {
+      "types": "./dist/fidelity.d.ts",
+      "import": "./dist/fidelity.js",
+      "require": "./dist/fidelity.cjs"
     },
     "./browser": {
       "types": "./dist/index.d.ts",
@@ -49,97 +54,193 @@
       "types": "./dist/languages/en.d.ts",
       "import": "./dist/languages/en.js"
     },
+    "./lexicons/en": {
+      "types": "./dist/lexicons/en.d.ts",
+      "import": "./dist/lexicons/en.js"
+    },
     "./languages/es": {
       "types": "./dist/languages/es.d.ts",
       "import": "./dist/languages/es.js"
+    },
+    "./lexicons/es": {
+      "types": "./dist/lexicons/es.d.ts",
+      "import": "./dist/lexicons/es.js"
     },
     "./languages/ja": {
       "types": "./dist/languages/ja.d.ts",
       "import": "./dist/languages/ja.js"
     },
+    "./lexicons/ja": {
+      "types": "./dist/lexicons/ja.d.ts",
+      "import": "./dist/lexicons/ja.js"
+    },
     "./languages/ar": {
       "types": "./dist/languages/ar.d.ts",
       "import": "./dist/languages/ar.js"
+    },
+    "./lexicons/ar": {
+      "types": "./dist/lexicons/ar.d.ts",
+      "import": "./dist/lexicons/ar.js"
     },
     "./languages/ko": {
       "types": "./dist/languages/ko.d.ts",
       "import": "./dist/languages/ko.js"
     },
+    "./lexicons/ko": {
+      "types": "./dist/lexicons/ko.d.ts",
+      "import": "./dist/lexicons/ko.js"
+    },
     "./languages/zh": {
       "types": "./dist/languages/zh.d.ts",
       "import": "./dist/languages/zh.js"
+    },
+    "./lexicons/zh": {
+      "types": "./dist/lexicons/zh.d.ts",
+      "import": "./dist/lexicons/zh.js"
     },
     "./languages/tr": {
       "types": "./dist/languages/tr.d.ts",
       "import": "./dist/languages/tr.js"
     },
+    "./lexicons/tr": {
+      "types": "./dist/lexicons/tr.d.ts",
+      "import": "./dist/lexicons/tr.js"
+    },
     "./languages/pt": {
       "types": "./dist/languages/pt.d.ts",
       "import": "./dist/languages/pt.js"
+    },
+    "./lexicons/pt": {
+      "types": "./dist/lexicons/pt.d.ts",
+      "import": "./dist/lexicons/pt.js"
     },
     "./languages/fr": {
       "types": "./dist/languages/fr.d.ts",
       "import": "./dist/languages/fr.js"
     },
+    "./lexicons/fr": {
+      "types": "./dist/lexicons/fr.d.ts",
+      "import": "./dist/lexicons/fr.js"
+    },
     "./languages/de": {
       "types": "./dist/languages/de.d.ts",
       "import": "./dist/languages/de.js"
+    },
+    "./lexicons/de": {
+      "types": "./dist/lexicons/de.d.ts",
+      "import": "./dist/lexicons/de.js"
     },
     "./languages/id": {
       "types": "./dist/languages/id.d.ts",
       "import": "./dist/languages/id.js"
     },
+    "./lexicons/id": {
+      "types": "./dist/lexicons/id.d.ts",
+      "import": "./dist/lexicons/id.js"
+    },
     "./languages/qu": {
       "types": "./dist/languages/qu.d.ts",
       "import": "./dist/languages/qu.js"
+    },
+    "./lexicons/qu": {
+      "types": "./dist/lexicons/qu.d.ts",
+      "import": "./dist/lexicons/qu.js"
     },
     "./languages/sw": {
       "types": "./dist/languages/sw.d.ts",
       "import": "./dist/languages/sw.js"
     },
+    "./lexicons/sw": {
+      "types": "./dist/lexicons/sw.d.ts",
+      "import": "./dist/lexicons/sw.js"
+    },
     "./languages/bn": {
       "types": "./dist/languages/bn.d.ts",
       "import": "./dist/languages/bn.js"
+    },
+    "./lexicons/bn": {
+      "types": "./dist/lexicons/bn.d.ts",
+      "import": "./dist/lexicons/bn.js"
     },
     "./languages/he": {
       "types": "./dist/languages/he.d.ts",
       "import": "./dist/languages/he.js"
     },
+    "./lexicons/he": {
+      "types": "./dist/lexicons/he.d.ts",
+      "import": "./dist/lexicons/he.js"
+    },
     "./languages/hi": {
       "types": "./dist/languages/hi.d.ts",
       "import": "./dist/languages/hi.js"
+    },
+    "./lexicons/hi": {
+      "types": "./dist/lexicons/hi.d.ts",
+      "import": "./dist/lexicons/hi.js"
     },
     "./languages/it": {
       "types": "./dist/languages/it.d.ts",
       "import": "./dist/languages/it.js"
     },
+    "./lexicons/it": {
+      "types": "./dist/lexicons/it.d.ts",
+      "import": "./dist/lexicons/it.js"
+    },
     "./languages/ms": {
       "types": "./dist/languages/ms.d.ts",
       "import": "./dist/languages/ms.js"
+    },
+    "./lexicons/ms": {
+      "types": "./dist/lexicons/ms.d.ts",
+      "import": "./dist/lexicons/ms.js"
     },
     "./languages/pl": {
       "types": "./dist/languages/pl.d.ts",
       "import": "./dist/languages/pl.js"
     },
+    "./lexicons/pl": {
+      "types": "./dist/lexicons/pl.d.ts",
+      "import": "./dist/lexicons/pl.js"
+    },
     "./languages/ru": {
       "types": "./dist/languages/ru.d.ts",
       "import": "./dist/languages/ru.js"
+    },
+    "./lexicons/ru": {
+      "types": "./dist/lexicons/ru.d.ts",
+      "import": "./dist/lexicons/ru.js"
     },
     "./languages/th": {
       "types": "./dist/languages/th.d.ts",
       "import": "./dist/languages/th.js"
     },
+    "./lexicons/th": {
+      "types": "./dist/lexicons/th.d.ts",
+      "import": "./dist/lexicons/th.js"
+    },
     "./languages/tl": {
       "types": "./dist/languages/tl.d.ts",
       "import": "./dist/languages/tl.js"
+    },
+    "./lexicons/tl": {
+      "types": "./dist/lexicons/tl.d.ts",
+      "import": "./dist/lexicons/tl.js"
     },
     "./languages/uk": {
       "types": "./dist/languages/uk.d.ts",
       "import": "./dist/languages/uk.js"
     },
+    "./lexicons/uk": {
+      "types": "./dist/lexicons/uk.d.ts",
+      "import": "./dist/lexicons/uk.js"
+    },
     "./languages/vi": {
       "types": "./dist/languages/vi.d.ts",
       "import": "./dist/languages/vi.js"
+    },
+    "./lexicons/vi": {
+      "types": "./dist/lexicons/vi.d.ts",
+      "import": "./dist/lexicons/vi.js"
     },
     "./browser/ja": {
       "default": "./dist/browser-ja.ja.global.js"
@@ -237,7 +338,9 @@
   "sideEffects": [
     "./src/languages/*.ts",
     "./dist/languages/*.js",
-    "./src/patterns/index.ts"
+    "./src/patterns/index.ts",
+    "./src/lexicons/*.ts",
+    "./dist/lexicons/*.js"
   ],
   "keywords": [
     "hyperscript",
@@ -250,7 +353,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/framework": "^2.9.4",
+    "@lokascript/framework": "^3.0.0",
     "nearley": "^2.20.1"
   },
   "devDependencies": {

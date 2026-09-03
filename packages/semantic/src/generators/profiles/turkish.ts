@@ -123,9 +123,17 @@ export const turkishProfile: LanguageProfile = {
     on: { primary: 'üzerinde', alternatives: ['zaman'], normalized: 'on' },
     trigger: { primary: 'tetikle', normalized: 'trigger' },
     send: { primary: 'gönder', normalized: 'send' },
-    // DOM focus
-    focus: { primary: 'odak', alternatives: ['odaklanma'], normalized: 'focus' },
-    blur: { primary: 'bulanık', alternatives: ['bulanıklık', 'bulanik'], normalized: 'blur' },
+    // DOM focus. `odaklanma` (the act of focusing) leads over the static state
+    // noun `odak` — Turkish event prose says "odaklanma olayı". `bulanık` was
+    // the optical blur (CSS filters, image processing), never the DOM event;
+    // native usage is `odak kaybı` (loss of focus). 2026-07 terminology-review
+    // corrections; old forms stay as parse alternatives.
+    focus: { primary: 'odaklanma', alternatives: ['odak'], normalized: 'focus' },
+    blur: {
+      primary: 'odak kaybı',
+      alternatives: ['odak kaybi', 'bulanık', 'bulanıklık', 'bulanik'],
+      normalized: 'blur',
+    },
     // Phase 1 (v0.9.90): DOM / form state / debug
     empty: { primary: 'boşalt', alternatives: ['bosalt', 'boş'], normalized: 'empty' },
     open: { primary: 'aç', alternatives: ['ac'], normalized: 'open' },
@@ -146,7 +154,9 @@ export const turkishProfile: LanguageProfile = {
     },
     hover: { primary: 'üzerine gelme', alternatives: ['üzerinde gezinme'], normalized: 'hover' },
     submit: { primary: 'gönderme', normalized: 'submit' },
-    input: { primary: 'giriş', alternatives: ['girdi', 'giris'], normalized: 'input' },
+    // `giriş` reads as entry/login (giriş yapma) and can imply an auth event;
+    // the data-input term is `girdi` ("Girdi (Input) Eventleri").
+    input: { primary: 'girdi', alternatives: ['giriş', 'giris'], normalized: 'input' },
     change: { primary: 'değişiklik', alternatives: ['değişim', 'degisim'], normalized: 'change' },
     // `load` event: the i18n dict emits yükle for `load`. Without this keyword the
     // SOV reorder's mid-stream `yükle de` (on load) tokenized as the `install`
@@ -156,7 +166,13 @@ export const turkishProfile: LanguageProfile = {
     load: { primary: 'yükle', normalized: 'load' },
     // Navigation
     go: { primary: 'git', normalized: 'go' },
-    scroll: { primary: 'kaydır', alternatives: ['kaydir'], normalized: 'scroll' },
+    // `kaydır` is the bare imperative; the attested event noun is `kaydırma`
+    // ("kaydırma olayı"). The imperative stays as an alternative.
+    scroll: {
+      primary: 'kaydırma',
+      alternatives: ['kaydirma', 'kaydır', 'kaydir'],
+      normalized: 'scroll',
+    },
     push: { primary: 'itele', alternatives: ['push'], normalized: 'push' },
     replace: { primary: 'değiştir_url', alternatives: ['degistir_url'], normalized: 'replace' },
     process: { primary: 'işle', alternatives: ['isle'], normalized: 'process' },
@@ -168,6 +184,11 @@ export const turkishProfile: LanguageProfile = {
     if: { primary: 'eğer', normalized: 'if' },
     unless: { primary: 'değilse', normalized: 'unless' },
     when: { primary: 'iken', alternatives: ['durumunda', 'olduğunda'], normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'değiştiğinde', normalized: 'changes' },
     where: { primary: 'nerede', normalized: 'where' },
     else: { primary: 'yoksa', normalized: 'else' },
     repeat: { primary: 'tekrarla', normalized: 'repeat' },

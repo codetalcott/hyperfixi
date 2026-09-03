@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
 import type { ExecutionContext } from '../types/core';
-import { isControlFlowError } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
 import { HookRegistry } from '../types/hooks';
 
@@ -46,7 +45,6 @@ describe('Hyperscript Runtime', () => {
       locals: new Map(),
       globals: new Map(),
       variables: new Map(),
-      events: new Map(),
     };
     vi.clearAllMocks();
   });
@@ -109,11 +107,8 @@ describe('Hyperscript Runtime', () => {
       const setCommandAST = {
         type: 'command',
         name: 'set',
-        args: [
-          { type: 'identifier', name: 'myVar' },
-          { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'test value' },
-        ],
+        args: [{ type: 'identifier', name: 'myVar' }],
+        modifiers: { to: { type: 'literal', value: 'test value' } },
       };
 
       await runtime.execute(setCommandAST, context);
@@ -126,11 +121,8 @@ describe('Hyperscript Runtime', () => {
       const setCommandAST = {
         type: 'command',
         name: 'set',
-        args: [
-          { type: 'identifier', name: 'result' },
-          { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'completed' },
-        ],
+        args: [{ type: 'identifier', name: 'result' }],
+        modifiers: { to: { type: 'literal', value: 'completed' } },
       };
 
       await runtime.execute(setCommandAST, context);
@@ -339,59 +331,6 @@ describe('Hyperscript Runtime', () => {
 // ============================================================================
 
 describe('Runtime Audit Fixes', () => {
-  describe('isControlFlowError()', () => {
-    it('should detect halt signals', () => {
-      const error = new Error('HALT_EXECUTION') as any;
-      error.isHalt = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect exit signals', () => {
-      const error = new Error('EXIT_COMMAND') as any;
-      error.isExit = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect break signals', () => {
-      const error = new Error('break') as any;
-      error.isBreak = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect continue signals', () => {
-      const error = new Error('continue') as any;
-      error.isContinue = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect return signals', () => {
-      const error = new Error('return') as any;
-      error.isReturn = true;
-      expect(isControlFlowError(error)).toBe(true);
-    });
-
-    it('should detect legacy message-based halt', () => {
-      expect(isControlFlowError(new Error('HALT_EXECUTION'))).toBe(true);
-    });
-
-    it('should detect legacy message-based exit', () => {
-      expect(isControlFlowError(new Error('EXIT_COMMAND'))).toBe(true);
-      expect(isControlFlowError(new Error('EXIT_EXECUTION'))).toBe(true);
-    });
-
-    it('should return false for normal errors', () => {
-      expect(isControlFlowError(new Error('Something went wrong'))).toBe(false);
-      expect(isControlFlowError(new TypeError('type error'))).toBe(false);
-    });
-
-    it('should return false for non-Error values', () => {
-      expect(isControlFlowError('string')).toBe(false);
-      expect(isControlFlowError(42)).toBe(false);
-      expect(isControlFlowError(null)).toBe(false);
-      expect(isControlFlowError(undefined)).toBe(false);
-    });
-  });
-
   describe('queryElements() with invalid CSS selectors', () => {
     let runtime: Runtime;
     let context: ExecutionContext;
@@ -421,14 +360,20 @@ describe('Runtime Audit Fixes', () => {
   });
 
   describe('CommandRegistryV2.register() validation', () => {
+    // These two pass DELIBERATELY malformed objects to exercise the runtime
+    // throw, which is what protects callers who reach `register` from
+    // JavaScript. `register` is typed since 2026-08-01, so they need the cast —
+    // the cast IS the point of the row, not a workaround around one.
     it('should throw descriptive error for commands with no name', () => {
       const registry = new CommandRegistryV2();
-      expect(() => registry.register({})).toThrow('Cannot register command: no name found');
+      expect(() => registry.register({} as never)).toThrow(
+        'Cannot register command: no name found'
+      );
     });
 
     it('should throw for undefined name and metadata', () => {
       const registry = new CommandRegistryV2();
-      expect(() => registry.register({ metadata: {} })).toThrow(
+      expect(() => registry.register({ metadata: {} } as never)).toThrow(
         'Cannot register command: no name found'
       );
     });
@@ -446,13 +391,60 @@ describe('Runtime Audit Fixes', () => {
 
     it('should accept commands with metadata.name', () => {
       const registry = new CommandRegistryV2();
+      // Cast: `CommandWithParseInput` requires a top-level `name`, but the
+      // runtime deliberately falls back to `metadata.name` and the error message
+      // promises that fallback. No in-tree command uses it — this row is the
+      // only thing keeping the branch honest.
       expect(() =>
         registry.register({
           metadata: { name: 'meta-test' },
           execute: async () => {},
-        })
+        } as never)
       ).not.toThrow();
       expect(registry.has('meta-test')).toBe(true);
+    });
+  });
+
+  describe('CommandRegistryV2.validateCommand() reports a well-formed result', () => {
+    // The adapter LIFTS a command's boolean type guard into `ValidationResult`.
+    // Until 2026-08-01 it passed the raw boolean straight through while its
+    // signature promised the struct, so `validateCommand()` returned `true` /
+    // `false` where callers would read `.isValid` — `undefined` either way, so
+    // an invalid input read as valid. Nothing caught it because the method has
+    // no callers; these rows are what make the wrap load-bearing.
+    const guardCommand = {
+      name: 'guard-test',
+      execute: async () => undefined,
+      validate: (input: unknown): boolean => typeof input === 'number',
+    };
+
+    it('wraps a passing guard', () => {
+      const registry = new CommandRegistryV2();
+      registry.register(guardCommand);
+      expect(registry.validateCommand('guard-test', 42)).toEqual({
+        isValid: true,
+        errors: [],
+        suggestions: [],
+      });
+    });
+
+    it('wraps a FAILING guard — the row that reads `false` as valid without the wrap', () => {
+      const registry = new CommandRegistryV2();
+      registry.register(guardCommand);
+      const result = registry.validateCommand('guard-test', 'not a number');
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('defaults to valid for a command that declares no guard', () => {
+      const registry = new CommandRegistryV2();
+      registry.register({ name: 'no-guard', execute: async () => undefined });
+      expect(registry.validateCommand('no-guard', {}).isValid).toBe(true);
+    });
+
+    it('reports an unknown command as invalid rather than throwing', () => {
+      const registry = new CommandRegistryV2();
+      expect(registry.validateCommand('nope', {}).isValid).toBe(false);
     });
   });
 
@@ -686,11 +678,8 @@ describe('RuntimeBase Method Coverage', () => {
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'myVar' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 42 },
-            ],
+            args: [{ type: 'identifier', name: 'myVar' }],
+            modifiers: { to: { type: 'literal', value: 42 } },
           },
         ],
       };
@@ -708,7 +697,7 @@ describe('RuntimeBase Method Coverage', () => {
       await expect(runtime.execute(programNode, context)).resolves.not.toThrow();
     });
 
-    it('should handle halt signal in command sequence', async () => {
+    it('ends the program on halt (program boundary) and resolves', async () => {
       const seqNode = {
         type: 'sequence',
         commands: [
@@ -718,7 +707,9 @@ describe('RuntimeBase Method Coverage', () => {
       };
 
       // Halt signals propagate as exceptions from top-level execute()
-      await expect(runtime.execute(seqNode, context)).rejects.toThrow('HALT_EXECUTION');
+      // The public execute() is the PROGRAM boundary (Arc 4a): a halt ends the
+      // program and resolves; the commands after it never run.
+      await expect(runtime.execute(seqNode, context)).resolves.toBeUndefined();
     });
   });
 
@@ -786,70 +777,6 @@ describe('RuntimeBase Method Coverage', () => {
     });
   });
 
-  describe('toSignal() conversion', () => {
-    let runtime: Runtime;
-
-    beforeEach(() => {
-      runtime = new Runtime();
-    });
-
-    // Access protected method via any
-    const callToSignal = (rt: Runtime, error: unknown) => (rt as any).toSignal(error);
-
-    it('should convert isHalt error to halt signal', () => {
-      const error = new Error('halt') as any;
-      error.isHalt = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'halt' });
-    });
-
-    it('should convert isExit error to exit signal with returnValue', () => {
-      const error = new Error('exit') as any;
-      error.isExit = true;
-      error.returnValue = 'result';
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'exit', returnValue: 'result' });
-    });
-
-    it('should convert isBreak error to break signal', () => {
-      const error = new Error('break') as any;
-      error.isBreak = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'break' });
-    });
-
-    it('should convert isContinue error to continue signal', () => {
-      const error = new Error('continue') as any;
-      error.isContinue = true;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'continue' });
-    });
-
-    it('should convert isReturn error to return signal with value', () => {
-      const error = new Error('return') as any;
-      error.isReturn = true;
-      error.returnValue = 42;
-      const signal = callToSignal(runtime, error);
-      expect(signal).toEqual({ type: 'return', returnValue: 42 });
-    });
-
-    it('should convert HALT_EXECUTION message to halt signal', () => {
-      const signal = callToSignal(runtime, new Error('HALT_EXECUTION'));
-      expect(signal).toEqual({ type: 'halt' });
-    });
-
-    it('should return null for normal errors', () => {
-      const signal = callToSignal(runtime, new Error('something went wrong'));
-      expect(signal).toBeNull();
-    });
-
-    it('should return null for non-Error values', () => {
-      expect(callToSignal(runtime, 'string')).toBeNull();
-      expect(callToSignal(runtime, 42)).toBeNull();
-      expect(callToSignal(runtime, null)).toBeNull();
-    });
-  });
-
   describe('Result-based execution (enableResultPattern)', () => {
     let runtime: Runtime;
     let context: ExecutionContext;
@@ -874,20 +801,14 @@ describe('RuntimeBase Method Coverage', () => {
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 10 },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 10 } },
           },
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'y' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 20 },
-            ],
+            args: [{ type: 'identifier', name: 'y' }],
+            modifiers: { to: { type: 'literal', value: 20 } },
           },
         ],
       };
@@ -898,34 +819,30 @@ describe('RuntimeBase Method Coverage', () => {
       expect(context.locals?.get('y')).toBe(20);
     });
 
-    it('should propagate halt signal through Result pattern', async () => {
+    it('stops the sequence at halt and resolves (program boundary)', async () => {
       const seqNode = {
         type: 'sequence',
         commands: [
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 'before' },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 'before' } },
           },
           { type: 'command', name: 'halt', args: [] },
           {
             type: 'command',
             name: 'set',
-            args: [
-              { type: 'identifier', name: 'x' },
-              { type: 'identifier', name: 'to' },
-              { type: 'literal', value: 'after' },
-            ],
+            args: [{ type: 'identifier', name: 'x' }],
+            modifiers: { to: { type: 'literal', value: 'after' } },
           },
         ],
       };
 
       // Halt propagates as exception from top-level execute; 'x' is set before halt fires
-      await expect(runtime.execute(seqNode, context)).rejects.toThrow('HALT_EXECUTION');
+      // The public execute() is the PROGRAM boundary (Arc 4a): a halt ends the
+      // program and resolves; the commands after it never run.
+      await expect(runtime.execute(seqNode, context)).resolves.toBeUndefined();
       expect(context.locals?.get('x')).toBe('before');
     });
 
@@ -996,16 +913,18 @@ describe('RuntimeBase Method Coverage', () => {
       expect(await run('js return 7 end then put result into #probe')).toBe('7');
     });
 
-    it('KNOWN DEFECT (pre-existing, not Arc C): `get` is invisible to the NEXT command', async () => {
-      // `get 42 then put it into #probe` yields '' — but insert any command
-      // between them and it yields '42'. Verified identical on main before the
-      // step-3 deletion, so this is a `get`-specific sequencing defect, not a
-      // consequence of removing the propagation loop, and not the `it`/`result`
-      // alias (it reproduces through `it` alone).
-      //
-      // Pinned rather than dropped so the knowledge is not lost. If you fix
-      // `get`, this test tells you to update it — both lines should become '42'.
-      expect(await run('get 42 then put it into #probe')).toBe('');
+    it('`get` is visible to the NEXT command (defect fixed 2026-08-30)', async () => {
+      // This pinned a KNOWN DEFECT: `get 42 then put it into #probe` yielded ''
+      // while inserting any command between them yielded '42'. The semantic
+      // adoption coverage gate fixed it — `get` was not on the
+      // skipSemanticParsing list (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone), so the `get` head of a then-chain was
+      // adopted from a SEMANTIC prefix-parse while the rest of the chain
+      // parsed traditionally, and the result slot did not survive that seam.
+      // Under the gate a then-chain parses as `compound`, which the adapter's
+      // single-command check rejects, so the whole chain is traditional and
+      // the slot flows. Kept as the fixed-behavior pin, per the old test's own
+      // instruction ("both lines should become '42'").
+      expect(await run('get 42 then put it into #probe')).toBe('42');
       expect(await run('get 42 then log result then put it into #probe')).toBe('42');
     });
   });

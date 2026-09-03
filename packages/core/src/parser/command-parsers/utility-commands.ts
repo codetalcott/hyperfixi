@@ -21,6 +21,10 @@ import * as animationCommands from './animation-commands';
 import * as domCommands from './dom-commands';
 import * as variableCommands from './variable-commands';
 import * as navigationCommands from './navigation-commands';
+import { toLegacyExpression } from '../../ast/legacy';
+import { parseDeclaredCommand } from './declared-commands';
+import type { CommandGrammar } from '../command-grammar';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse compound command
@@ -47,198 +51,115 @@ import * as navigationCommands from './navigation-commands';
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The command identifier node
- * @returns CommandNode representing the command, or result of parseRegularCommand for unknown commands
+ * @returns CommandNode representing the command, or null for a name with no row commands
+ */
+type DedicatedCommandParser = (
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+) => CommandNode | null;
+
+/**
+ * The commands with a hand-written parser, keyed by name — ONE table.
+ *
+ * This used to be two things that had to agree by hand: a `COMPOUND_COMMANDS`
+ * set in `parser-constants.ts` (membership routed a command here) and a
+ * `switch` in this function (which parser it got). A member with no case fell
+ * through to a second generic argument loop — `take`, `process`,
+ * `show`/`hide`, `push`/`replace` were all found in that state, each by a
+ * behaviour bug. The set is retired (Arc 3 step 5); a command is dedicated
+ * iff it has a row here, and a row is the parser it gets.
+ */
+export const COMPOUND_COMMAND_PARSERS: ReadonlyMap<string, DedicatedCommandParser> = new Map<
+  string,
+  DedicatedCommandParser
+>([
+  ['put', domCommands.parsePutCommand],
+  ['trigger', eventCommands.parseTriggerCommand],
+  ['send', eventCommands.parseTriggerCommand],
+  ['remove', domCommands.parseRemoveCommand],
+  ['take', domCommands.parseTakeCommand],
+  ['toggle', domCommands.parseToggleCommand],
+  ['set', variableCommands.parseSetCommand],
+  // `add` reaches parseCommandCore's own keyword branch first; the row keeps
+  // the manifest's `multiword` mirror and the coverage probe honest.
+  ['add', (ctx, id) => domCommands.parseAddCommand(ctx, identifierToToken(id))],
+  ['halt', controlFlowCommands.parseHaltCommand],
+  ['measure', animationCommands.parseMeasureCommand],
+  ['js', parseJsCommand],
+  ['go', navigationCommands.parseGoCommand],
+  ['push', navigationCommands.parsePushCommand],
+  ['replace', navigationCommands.parsePushCommand],
+  // Falls back for the `scroll <dir> by <n>` branch, which has no runtime
+  // here and keeps the generic path.
+  [
+    'scroll',
+    (ctx, id) => navigationCommands.parseScrollCommand(ctx, id) ?? parseGenericFallback(ctx, id),
+  ],
+  ['tell', parseTellCommand],
+  ['pick', parsePickCommand],
+  ['start', animationCommands.parseStartCommand],
+  ['swap', domCommands.parseSwapCommand],
+  ['morph', domCommands.parseSwapCommand],
+  ['show', domCommands.parseShowHideCommand],
+  ['hide', domCommands.parseShowHideCommand],
+  // Falls back for non-`partials` input so the runtime keeps reporting its
+  // own keyword error rather than a parse error.
+  [
+    'process',
+    (ctx, id) => domCommands.parseProcessCommand(ctx, id) ?? parseGenericFallback(ctx, id),
+  ],
+]);
+
+/** The names in the table — what `COMPOUND_COMMANDS` used to list by hand. */
+export const COMPOUND_COMMAND_NAMES: ReadonlySet<string> = new Set(COMPOUND_COMMAND_PARSERS.keys());
+
+function identifierToToken(node: IdentifierNode): Token {
+  return {
+    kind: 'identifier',
+    value: node.name,
+    start: node.start ?? 0,
+    end: node.end ?? 0,
+    line: node.line ?? 0,
+    column: node.column ?? 0,
+  };
+}
+
+/**
+ * Parse a command that has a dedicated parser (see {@link COMPOUND_COMMAND_PARSERS}).
+ * Returns null for a name with no row; callers check membership first.
  */
 export function parseCompoundCommand(
   ctx: ParserContext,
   identifierNode: IdentifierNode
 ): CommandNode | null {
-  const commandName = identifierNode.name.toLowerCase();
-
-  switch (commandName) {
-    case 'put':
-      return domCommands.parsePutCommand(ctx, identifierNode);
-    case 'trigger':
-    case 'send':
-      return eventCommands.parseTriggerCommand(ctx, identifierNode);
-    case 'remove':
-      return domCommands.parseRemoveCommand(ctx, identifierNode);
-    case 'take':
-      return domCommands.parseTakeCommand(ctx, identifierNode);
-    case 'toggle':
-      return domCommands.parseToggleCommand(ctx, identifierNode);
-    case 'set':
-      return variableCommands.parseSetCommand(ctx, identifierNode);
-    case 'halt':
-      return controlFlowCommands.parseHaltCommand(ctx, identifierNode);
-    case 'measure':
-      return animationCommands.parseMeasureCommand(ctx, identifierNode);
-    case 'js':
-      return parseJsCommand(ctx, identifierNode);
-    case 'go':
-      return navigationCommands.parseGoCommand(ctx, identifierNode);
-    case 'tell':
-      return parseTellCommand(ctx, identifierNode);
-    case 'pick':
-      return parsePickCommand(ctx, identifierNode);
-    case 'start':
-      return animationCommands.parseStartCommand(ctx, identifierNode);
-    case 'swap':
-    case 'morph':
-      return domCommands.parseSwapCommand(ctx, identifierNode);
-    case 'process':
-      // Falls back for non-`partials` input so the runtime keeps reporting its
-      // own keyword error rather than a parse error.
-      return (
-        domCommands.parseProcessCommand(ctx, identifierNode) ??
-        parseRegularCommand(ctx, identifierNode)
-      );
-    default:
-      // Fallback to regular parsing
-      return parseRegularCommand(ctx, identifierNode);
-  }
+  const parse = COMPOUND_COMMAND_PARSERS.get(identifierNode.name.toLowerCase());
+  return parse ? parse(ctx, identifierNode) : null;
 }
 
 /**
- * Parse regular command
- *
- * Generic command parser that collects space-separated arguments until
- * a command boundary is reached. This is used for commands that don't
- * have special parsing requirements.
- *
- * Arguments are collected until one of these boundaries:
- * - 'then', 'and', 'else', 'end' keywords
- * - Another command token
- * - End of input
- *
- * Examples:
- *   - log "message" value
- *   - call myFunction(arg1, arg2)
- *   - send customEvent to <button/>
- *
- * @param ctx - Parser context providing access to parser state and methods
- * @param identifierNode - The command identifier node
- * @returns CommandNode representing the command
+ * The row a dedicated parser hands malformed or lenient input to: every
+ * primary up to the boundary, no marker slots — exactly what the deleted
+ * `parseRegularCommand` loop collected (`primary`, not `expression`, so a
+ * trailing adverb like `scroll #panel smoothly` keeps its `smoothly`).
  */
-export function parseRegularCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
-  const args: ASTNode[] = [];
-
-  // Parse command arguments (space-separated, not comma-separated)
-  while (!isCommandBoundary(ctx, ['catch', 'finally'])) {
-    // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
-    // checkIdentifierLike() covers: IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT
-    // checkSelector() covers: CSS_SELECTOR, ID_SELECTOR, CLASS_SELECTOR
-    // checkLiteral() covers: STRING, NUMBER, BOOLEAN, TEMPLATE_LITERAL
-    if (
-      ctx.checkIdentifierLike() ||
-      ctx.checkSelector() ||
-      ctx.checkLiteral() ||
-      ctx.checkTimeExpression() ||
-      ctx.match('<')
-    ) {
-      args.push(ctx.parsePrimary());
-    } else {
-      break;
-    }
-  }
-
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
-}
+const GENERIC_FALLBACK_GRAMMAR: CommandGrammar = {
+  positional: 'primary',
+  markers: [],
+  syntax: '<command> [<primary> …]',
+};
 
 /**
- * Parse multi-word command with modifiers
- *
- * Syntax: <command> <args> <keyword> <value> [<keyword> <value>...]
- *
- * This parser handles commands with keyword-based modifiers like:
- * - append X to Y
- * - fetch URL as json
- * - set $x to 5
- *
- * The parser:
- * 1. Gets the multi-word pattern for the command (defines valid keywords)
- * 2. Parses primary arguments until hitting a keyword or boundary
- * 3. Parses modifiers (keyword + value pairs)
- *
- * IMPORTANT: Uses parsePrimary() for arguments to avoid consuming modifiers.
- * For example, "fetch URL as json" should NOT parse "URL as json" as one expression.
- *
- * Examples:
- *   - append <div/> to <body/>
- *   - fetch "/api/data" as json
- *   - set $counter to 0
- *
- * @param ctx - Parser context providing access to parser state and methods
- * @param commandToken - The command token
- * @param commandName - The command name (for pattern lookup)
- * @returns CommandNode representing the multi-word command, or null if no pattern found
+ * Parse with {@link GENERIC_FALLBACK_GRAMMAR}. This is what
+ * `parseRegularCommand` — the second copy of the generic argument loop — used
+ * to be; Arc 3 step 5 deleted the copy so there is one generic parser.
  */
-export function parseMultiWordCommand(
-  ctx: ParserContext,
-  commandToken: Token,
-  commandName: string
-) {
-  const pattern = ctx.getMultiWordPattern(commandName);
-  if (!pattern) return null;
-
-  const args: ASTNode[] = [];
-  const modifiers: Record<string, ExpressionNode> = {};
-
-  // Parse primary arguments (before any keywords)
-  // IMPORTANT: Use parsePrimary() instead of parseExpression() to avoid consuming modifiers
-  // For example, "fetch URL as json" should NOT parse "URL as json" as one expression
-  while (
-    !isCommandBoundary(ctx, ['catch', 'finally', ...pattern.keywords]) &&
-    !isKeyword(ctx.peek(), pattern.keywords)
-  ) {
-    // Use parsePrimary() to parse just the value, not full expressions
-    // This prevents "URL as json" from being parsed as one expression
-    const expr = ctx.parsePrimary();
-    if (expr) {
-      args.push(expr);
-    } else {
-      break;
-    }
-
-    // Handle comma-separated arguments
-    if (ctx.match(',')) {
-      continue;
-    }
-
-    // Check if we're at a modifier keyword
-    if (isKeyword(ctx.peek(), pattern.keywords)) {
-      break;
-    }
-  }
-
-  // Parse modifiers (keywords + their arguments)
-  while (!ctx.isAtEnd() && isKeyword(ctx.peek(), pattern.keywords)) {
-    const keyword = ctx.advance().value;
-
-    // Parse the expression after the keyword
-    const modifierValue = ctx.parseExpression();
-    if (modifierValue) {
-      modifiers[keyword] = modifierValue as ExpressionNode;
-    }
-
-    // Check for more modifiers
-    if (!isKeyword(ctx.peek(), pattern.keywords)) {
-      break;
-    }
-  }
-
-  const builder = CommandNodeBuilder.from(commandToken)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition());
-
-  if (Object.keys(modifiers).length > 0) {
-    builder.withModifiers(modifiers);
-  }
-
-  return builder.build();
+function parseGenericFallback(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  return parseDeclaredCommand(
+    ctx,
+    identifierToToken(identifierNode),
+    identifierNode.name.toLowerCase(),
+    GENERIC_FALLBACK_GRAMMAR
+  ) as CommandNode;
 }
 
 /**
@@ -382,7 +303,7 @@ export function parseBareURLPath(ctx: ParserContext): ASTNode | null {
  * @returns CommandNode representing the fetch command
  */
 export function parseFetchCommand(ctx: ParserContext, commandToken: Token): CommandNode {
-  const modifiers: Record<string, ExpressionNode> = {};
+  const modifiers: SlotMap<'fetch'> = {};
 
   // Step 1: Parse URL — reassemble a naked URL (`/api/data`, `https://host/path`)
   // into one string literal first, then fall back to parsePrimary for quoted
@@ -396,7 +317,7 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
   }
   if (!url) {
     ctx.addError('fetch requires a URL');
-    return CommandNodeBuilder.from(commandToken).endingAt(ctx.getPosition()).build();
+    return CommandNodeBuilder.from<'fetch'>(commandToken).endingAt(ctx.getPosition()).build();
   }
 
   // Step 2: Check for object literal directly after URL (no 'with' keyword)
@@ -436,14 +357,14 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
         const doToken = ctx.advance(); // consume 'do'
         ctx.advance(); // consume 'not'
         const throwToken = ctx.advance(); // consume 'throw'
-        modifiers['doNotThrow'] = {
+        modifiers['doNotThrow'] = toLegacyExpression({
           type: 'literal',
           value: true,
           start: doToken.start,
           end: throwToken.end,
           line: doToken.line,
           column: doToken.column,
-        } as unknown as ExpressionNode;
+        });
         continue;
       }
     }
@@ -451,7 +372,9 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
     break; // Not a fetch modifier — stop
   }
 
-  const builder = CommandNodeBuilder.from(commandToken).withArgs(url).endingAt(ctx.getPosition());
+  const builder = CommandNodeBuilder.from<'fetch'>(commandToken)
+    .withArgs(url)
+    .endingAt(ctx.getPosition());
 
   if (Object.keys(modifiers).length > 0) {
     builder.withModifiers(modifiers);
@@ -691,7 +614,7 @@ export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNod
     end: ctx.getPosition().end,
   };
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'js'>(identifierNode)
     .withArgs(codeNode, paramsNode)
     .endingAt(ctx.getPosition())
     .build();
@@ -721,6 +644,21 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
 
   if (!target) {
     throw new Error('tell command requires a target expression');
+  }
+
+  // Optional `to` between target and body: `tell #modal to show`. Upstream
+  // REJECTS this form loudly (`Expected 'end' but found 'to'`), but hyperfixi
+  // cannot afford to throw here: inside a handler body,
+  // parseCommandWithErrorRecovery swallows any command-parser throw and the
+  // stranded body re-parses as top-level commands — so `on click tell #modal
+  // to show` parsed CLEAN with no tell node and `show` silently ran against
+  // the handler's `me` instead of #modal (the measured table in
+  // PARSER_NEXT_STEPS.md). Consuming the word honors the author's evident
+  // intent and is the only fix that cannot be silently un-fixed by the
+  // recovery machinery. Deliberate superset of upstream grammar, same as
+  // pick's legacy forms.
+  if (ctx.check(KEYWORDS.TO)) {
+    ctx.advance();
   }
 
   // Parse the command(s) to execute on each target
@@ -757,16 +695,23 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
 
       // Check for control flow boundaries after parsing a command.
       //
-      // KNOWN GAP: breaking on `end` is all we do with it — `tell` never CONSUMES
-      // its terminator, so `tell #x add .a end` leaves the `end` in the stream for
-      // whatever encloses us (inside a handler it is taken as the handler's own
-      // `end`). Upstream REQUIRES the terminator: TellCommand.parse calls
-      // `requireToken("end")` unless it is already at a feature start, which means
-      // hyperfixi has no real `tell … end` block form, only this inline one.
-      // Closing that is a termination-semantics change, not a separator fix, so it
-      // was deliberately left out of the `then`-separator work above.
-      // Tracked in docs-internal/PARSER_NEXT_STEPS.md.
-      if (ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
+      // `else` belongs to an enclosing `if` — leave it. A directly-following
+      // `end` is tell's OWN terminator and is CONSUMED, matching upstream
+      // (TellCommand.parse calls `requireToken("end")` unless at a feature
+      // start). Merely breaking on it — the previous behavior — left the `end`
+      // for whatever enclosed us, which mis-attributed everything after it:
+      // `on click if true tell #modal show end log "x" end` gave the leftover
+      // `end` to the IF, so `log` escaped the conditional and ran
+      // unconditionally (upstream keeps it inside; same shape with `repeat`,
+      // where the trailing command ran once instead of per-iteration). At
+      // handler level the leftover was absorbed harmlessly, which is why the
+      // gap looked cosmetic when probed casually. Measured tables in
+      // docs-internal/PARSER_NEXT_STEPS.md.
+      if (ctx.check(KEYWORDS.ELSE)) {
+        break;
+      }
+      if (ctx.check(KEYWORDS.END)) {
+        ctx.advance();
         break;
       }
 
@@ -787,7 +732,7 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
     throw new Error('tell command requires at least one command after the target');
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
+  return CommandNodeBuilder.fromIdentifier<'tell'>(identifierNode)
     .withArgs(target, ...commands)
     .endingAt(ctx.getPosition())
     .build();
@@ -813,7 +758,7 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
  * modifiers.rangeEnd / modifiers.rangeMode / modifiers.regex / modifiers.flags.
  */
 export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
-  const builder = CommandNodeBuilder.fromIdentifier(identifierNode);
+  const builder = CommandNodeBuilder.fromIdentifier<'pick'>(identifierNode);
 
   // Optional "the": `pick the first 3 of arr`
   consumeOptionalKeyword(ctx, KEYWORDS.THE);
@@ -823,12 +768,12 @@ export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierN
 
   // Helper: build a literal-value modifier node (variant tags).
   const makeStringLiteral = (value: string): ExpressionNode =>
-    ({
+    toLegacyExpression({
       type: 'literal',
       value,
       start: identifierNode.start,
       end: identifierNode.end,
-    }) as unknown as ExpressionNode;
+    });
 
   // Helper: consume `of` or `from` and parse the source expression.
   const consumeSource = (): ASTNode => {
@@ -955,6 +900,5 @@ export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierN
   }
 
   // --- Legacy fallback: `pick from <expr>` or `pick a, b, c` ---
-  // Reuse the regular parser for backward compatibility.
-  return parseRegularCommand(ctx, identifierNode);
+  return parseGenericFallback(ctx, identifierNode);
 }

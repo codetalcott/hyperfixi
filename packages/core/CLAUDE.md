@@ -68,13 +68,18 @@ src/
 
 ## Command Pattern
 
-All commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>` via the `@command`/`@meta` decorators:
+All commands implement `DecoratedCommand` via the `@command` decorator plus a type-visible `commandMeta` static:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts
-@meta({ description: '...', syntax: [...], examples: [...], sideEffects: [...] })
-@command({ name: 'increment', category: 'data' })
+@command({ name: 'increment' })
 export class IncrementCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: '...', syntax: [...], examples: [...], sideEffects: [...], category: 'data',
+  });
+  get metadata() { return IncrementCommand.metadata; }
+  declare readonly name: string;
+
   async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
 }
@@ -118,7 +123,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 ## API v2 (Recommended)
 
 ```javascript
-import { hyperscript } from 'hyperfixi';
+import { hyperscript } from '@hyperfixi/core';
 
 // Compile (sync)
 const result = hyperscript.compileSync('toggle .active');
@@ -146,13 +151,15 @@ See [docs/API.md](docs/API.md) for complete documentation.
 
 ## Browser Bundles
 
-| Bundle                         | Size (gzip) | Use Case                                          |
-| ------------------------------ | ----------- | ------------------------------------------------- |
-| `hyperfixi-lite.js`            | 1.9 KB      | Minimal (8 commands, regex parser)                |
-| `hyperfixi-hybrid-complete.js` | 11.1 KB     | Recommended (~85% coverage)                       |
-| `hyperfixi-hx.js`              | 21.5 KB     | hybrid-complete + htmx/fixi v1/v2 attributes      |
-| `hyperfixi-hx-v4.js`           | ~321 KB     | Full runtime + htmx-compat + reactivity (hx-live) |
-| `hyperfixi.js`                 | ~309 KB     | Everything + bundled reactivity/realtime plugins  |
+| Bundle                         | Size (gzip) | Use Case                                                          |
+| ------------------------------ | ----------- | ----------------------------------------------------------------- |
+| `hyperfixi-hx.js`              | 21.5 KB     | The small prebuilt: hybrid parser (~85% coverage) + htmx/fixi     |
+| `hyperfixi.js`                 | ~310 KB     | Everything + bundled reactivity/realtime plugins                  |
+| `hyperfixi-hx-v4.js`           | ~342 KB     | Separate product: full runtime + htmx v4 reactivity (hx-live)     |
+| `hyperfixi-hybrid-complete.js` | 11.1 KB     | Plugin-internal (the vite plugin's generated fallback imports it) |
+
+Vite projects use `@hyperfixi/vite-plugin` and never pick. `lite`, `lite-plus`,
+`minimal` and `standard` were retired as public names in the 4.0 cycle.
 
 ## Custom Bundle Generation
 

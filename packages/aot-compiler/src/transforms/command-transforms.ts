@@ -119,7 +119,10 @@ class AddCodegen implements CommandCodegen {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    // The target is the `to` slot (Arc 3 step 3); `node.target` is the
+    // semantic path's spelling of the same thing.
+    const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.to;
+    const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
 
@@ -186,7 +189,11 @@ class RemoveCodegen implements CommandCodegen {
 
     // No args = remove the element itself
     if (args.length === 0) {
-      const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+      // The target is the `from` slot (Arc 3 step 3); `node.target` is the
+      // semantic path's spelling of the same thing.
+      const targetSlot =
+        node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
+      const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
       return {
         code: `${target}.remove()`,
         async: false,
@@ -194,7 +201,10 @@ class RemoveCodegen implements CommandCodegen {
       };
     }
 
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    // The target is the `from` slot (Arc 3 step 3); `node.target` is the
+    // semantic path's spelling of the same thing.
+    const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
+    const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
 
@@ -800,7 +810,10 @@ class ScrollCodegen implements CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
     const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
-    const behavior = (node.modifiers as { smooth?: boolean })?.smooth ? "'smooth'" : "'auto'";
+    const mods = node.modifiers as { smooth?: boolean; behavior?: { value?: unknown } } | undefined;
+    // `smooth` is the semantic path's flag; `behavior` is the core parser's slot (Arc 3 step 3).
+    const smooth = mods?.smooth || mods?.behavior?.value === 'smooth';
+    const behavior = smooth ? "'smooth'" : "'auto'";
 
     return {
       code: `${target}.scrollIntoView({ behavior: ${behavior} })`,
@@ -1041,8 +1054,15 @@ class GoCodegen implements CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
     const roles = node.roles;
+    // The core parser's slots (Arc 3 step 3): `back` is a flag, `url` the
+    // destination; the semantic path names a destination role or a
+    // positional argument.
+    const mods = node.modifiers as Record<string, ASTNode> | undefined;
+    if (mods?.back) {
+      return { code: 'history.back()', async: false, sideEffects: true };
+    }
 
-    const target = roles?.destination ?? args[0];
+    const target = mods?.url ?? roles?.destination ?? args[0];
     if (!target) return null;
 
     // go back / go forward

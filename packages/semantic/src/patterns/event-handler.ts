@@ -561,6 +561,69 @@ export function localizeEventName(englishEvent: string, language: string): strin
 // Per-Language Event Handler Patterns
 // =============================================================================
 
+function getEventHandlerPatternsKo(): LanguagePattern[] {
+  return [
+    // ko's handler head is `<event> 할 때`. Its GENERATED trigger patterns are
+    // `[{source} 에서] {event} 을 에` — the event-role marker `을` (also the
+    // patient marker) plus the on-marker `에` (also the destination marker) —
+    // and that is what the renderer emitted, though `할 때` is what the profile
+    // declares (`eventHandler.eventMarker.primary`), what the i18n corpus writes,
+    // and the only form a CUSTOM event name round-trips in.
+    //
+    // The two-marker form parses a KNOWN event (`클릭 을 에 …`) and nothing else:
+    // `{event}` is `literal`-only, because ko is the one language excluded from
+    // onSchema's `expr-event` widening — with it, ko's own rendering of
+    // `transition opacity to 0` (`opacity 을 에 0 300ms 트랜지션`) reads as a
+    // handler named `opacity`. So a custom event (`hello`, `success`) had no
+    // pattern at all: `hello 을 에 …` did not re-parse in any form
+    // (on-custom-event-receive, announce-screen-reader).
+    //
+    // `할 때` has neither collision — it is not a role marker in ko — so this
+    // pattern can take `expression` for the event without re-opening the one the
+    // exclusion protects against. The generated pair stays for input tolerance;
+    // this outranks them so it is what the renderer picks.
+    {
+      id: 'event-handler-ko-sov',
+      language: 'ko',
+      command: 'on',
+      priority: 110,
+      template: {
+        format: '{event} 할 때',
+        tokens: [
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'literal', value: '할' },
+          { type: 'literal', value: '때' },
+        ],
+      },
+      extraction: {
+        event: { position: 0 },
+        source: { default: { type: 'reference', value: 'me' } },
+      },
+    },
+    // With source: `#button 에서 클릭 할 때 …`.
+    {
+      id: 'event-handler-ko-with-source',
+      language: 'ko',
+      command: 'on',
+      priority: 108,
+      template: {
+        format: '{source} 에서 {event} 할 때',
+        tokens: [
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference'] },
+          { type: 'literal', value: '에서' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'literal', value: '할' },
+          { type: 'literal', value: '때' },
+        ],
+      },
+      extraction: {
+        source: { position: 0 },
+        event: { position: 2 },
+      },
+    },
+  ];
+}
+
 function getEventHandlerPatternsBn(): LanguagePattern[] {
   return [
     // SOV pattern: ক্লিক তে .active কে টগল করুন
@@ -733,43 +796,28 @@ function getEventHandlerPatternsDe(): LanguagePattern[] {
   ];
 }
 
+/**
+ * English event-handler heads: `on {event} [from {source}] {body}` only.
+ *
+ * There is deliberately NO `when {event}` head. In _hyperscript (0.9.93
+ * verified) `when` is never a handler opener: it is the reactive observer
+ * (`when <expr> changes … end`, parsed structurally by the block layer) and the
+ * trailing command guard (`show .x when <cond>`). `when click toggle .active`
+ * fails on the real engine ("Cannot watch local variable 'click'"). The
+ * `event-en-when` / `event-en-when-source` patterns that used to live here were
+ * an invention — and the thing that silently claimed every reactive head and
+ * truncated it to `on <first token>` in the English REFERENCE, so all 24
+ * languages scored against the truncation. English now rejects the form, as
+ * the engine does.
+ *
+ * The foreign "when" heads (es `cuando`, de `wenn`, fr `quand`, id `ketika`,
+ * qu `maykama`, bn `যখন`, hi `जब`, ja `とき`, tr `iken`, ar `عندما`, he `כאשר`,
+ * zh `每当` / `当 … 时`) are a different thing: translations of `on` in
+ * languages whose natural handler opener IS their when-word. They make claims
+ * about our translation layer, not about English syntax, and stay.
+ */
 function getEventHandlerPatternsEn(): LanguagePattern[] {
   return [
-    {
-      id: 'event-en-when-source',
-      language: 'en',
-      command: 'on',
-      priority: 115,
-      template: {
-        format: 'when {event} from {source} {body}',
-        tokens: [
-          { type: 'literal', value: 'when' },
-          { type: 'role', role: 'event' },
-          { type: 'literal', value: 'from' },
-          { type: 'role', role: 'source' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-        source: { marker: 'from' },
-      },
-    },
-    {
-      id: 'event-en-when',
-      language: 'en',
-      command: 'on',
-      priority: 105,
-      template: {
-        format: 'when {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'when' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
     {
       id: 'event-en-source',
       language: 'en',
@@ -1112,14 +1160,15 @@ function getEventHandlerPatternsHi(): LanguagePattern[] {
         event: { marker: 'से', position: 2 },
       },
     },
-    // Prefix reactive `when` — the hi member of the ja/tr/ar/he when-family
-    // below (`जब $firstName या $lastName बदलने पर …`). Without it,
-    // `event-hi-bare` captured the जब token itself as the event (render
-    // `on when put …`) and dropped the subject list; en's `event-en-when`
-    // captures the first subject as the event. The event role is
-    // type-constrained so the `जब तक` while/until compound (repeat-while,
-    // unless-condition) never matches — तक lexes as a keyword/literal and
-    // declines, falling through to the repeat patterns unchanged.
+    // Prefix `जब {event}` handler head — the hi member of the ja/tr/ar/he
+    // when-family below: native "when <event>" idiom, a translation of `on`.
+    // (It once also caught the reactive `जब $a या $b बदलने पर …` rows as
+    // handlers — the truncation the English reference shared; the reactive
+    // head is parsed structurally now, block-parser `locateReactiveWhenHead`,
+    // and never reaches this pattern.) The event role is type-constrained so
+    // the `जब तक` while/until compound (repeat-while, unless-condition) never
+    // matches — तक lexes as a keyword/literal and declines, falling through to
+    // the repeat patterns unchanged.
     {
       id: 'event-hi-when',
       language: 'hi',
@@ -2184,14 +2233,18 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
 }
 
 /**
- * `when <condition> changes <body> end` reactive blocks for languages that
- * otherwise have no hand-crafted event-handler patterns. The grammar
- * transformer emits the dictionary `when` form as a leading conjunction
- * (ja `とき`, tr `iken`, ar `عندما`, he `כאשר`), so a prefix `{when} {event}
- * {body}` pattern — mirroring the es `cuando {event} {body}` shape — captures
- * the condition as the event and delegates the trailing command to the body
- * parser. Scoped to the `when` literal, so it never shadows `on <event>`
- * handlers (which start with the event word, not the conjunction).
+ * Prefix `{when} {event} {body}` handler heads for languages that otherwise
+ * have no hand-crafted event-handler patterns (ja `とき`, tr `iken`, ar
+ * `عندما`, he `כאשר`) — the native "when <event>" idiom, mirroring the es
+ * `cuando {event} {body}` shape: a translation of `on`, not a claim about
+ * English (which has no such head — see getEventHandlerPatternsEn). Scoped to
+ * the when-literal, so it never shadows `on <event>` handlers (which start with
+ * the event word, not the conjunction).
+ *
+ * These once doubled as the catch for the reactive `when <expr> changes` rows
+ * (`とき $a または $b 変わったら …`), truncating them to `on $a` exactly as the
+ * English reference did. The reactive head is parsed structurally now
+ * (block-parser `locateReactiveWhenHead`) and never reaches them.
  */
 function getEventHandlerPatternsJa(): LanguagePattern[] {
   return [
@@ -2288,6 +2341,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
   switch (language) {
     case 'bn':
       return getEventHandlerPatternsBn();
+    case 'ko':
+      return getEventHandlerPatternsKo();
     case 'de':
       return getEventHandlerPatternsDe();
     case 'en':

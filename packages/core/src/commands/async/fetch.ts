@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export type FetchResponseType = 'text' | 'json' | 'html' | 'response' | 'blob' | 'arrayBuffer';
 
@@ -159,6 +160,7 @@ export class FetchCommand implements DecoratedCommand {
       'fetch "/api/data"',
       'fetch "/api/users" as json',
       'fetch "/api/save" with { method:"POST" }',
+      'fetch "/api/optional" as json do not throw',
     ],
     sideEffects: ['network', 'event-dispatching'],
     category: 'async',
@@ -172,7 +174,7 @@ export class FetchCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'fetch'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<FetchCommandInput> {

@@ -83,10 +83,10 @@
   </div>
 
   <div class="test-section">
-    <h3>2. Grammar Transformation Test</h3>
+    <h3>2. Grammar Profiles Test</h3>
     <p>Convert English to other locales:</p>
     <div id="transform-results" class="result"></div>
-    <button onclick="testTransformations()">Run Transformation Test</button>
+    <button onclick="testTransformations()">Run Profiles Test</button>
   </div>
 
   <div class="test-section">
@@ -118,19 +118,25 @@
 
     function testTransformations() {
       const results = [];
-      const testCode = 'on click increment #count';
 
-      results.push(`Original (English): ${testCode}\n`);
+      // This bundle no longer carries a translator. `toLocale`/`toEnglish`/
+      // `translate`/`createTransformer` were helpers over @lokascript/i18n's
+      // GrammarTransformer, which is retired; re-implementing them on
+      // @lokascript/semantic measured +173 KB gzipped here (138.9 -> 312.1),
+      // which is the wrong trade for a bundle sold as "classic runtime, ~105 KB".
+      // For translation, pair hyperfixi-multilingual.js with a semantic bundle.
+      results.push('Translation lives in hyperfixi-multilingual.js + a semantic');
+      results.push('bundle (hyperfixi.translate). This bundle ships the PROFILES');
+      results.push('and the keyword providers that let you WRITE and RUN');
+      results.push('hyperscript in each language.\n');
 
       const locales = ['es', 'ja', 'zh', 'ar', 'ko', 'de', 'fr', 'tr'];
       for (const locale of locales) {
-        try {
-          const transformed = hyperfixi.i18n.toLocale(testCode, locale);
-          const profile = hyperfixi.i18n.getProfile(locale);
-          results.push(`${locale} (${profile?.name || 'Unknown'}): ${transformed}`);
-        } catch (e) {
-          results.push(`${locale}: Error - ${e.message}`);
-        }
+        const profile = hyperfixi.i18n.getProfile(locale);
+        const runnable = hyperfixi.locales.includes(locale) ? 'runnable' : 'profile only';
+        results.push(
+          `${locale} (${profile?.name || 'Unknown'}): ${profile?.wordOrder || '?'} word order, ${runnable}`
+        );
       }
 
       document.getElementById('transform-results').textContent = results.join('\n');

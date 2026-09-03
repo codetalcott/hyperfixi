@@ -35,6 +35,12 @@
 // by importing only specific languages (e.g., './languages/en').
 import './languages/_all';
 
+// Render-vocabulary registry. The lexicons themselves live in separate
+// `lexicons/{code}` modules so parse-only consumers can drop them; this entry
+// pulls them in via `languages/_all` above (see ./lexicon-registry.ts).
+export { registerLexicon, getLexicon, getRegisteredLexicons } from './lexicon-registry';
+export type { LanguageLexicon } from './generators/profiles/types';
+
 // Canonical list of supported languages, derived from the language-loader's
 // LANGUAGE_IMPORTERS map. Used by the public `getSupportedLanguages()` below
 // so adding a language to the loader automatically extends the public API.

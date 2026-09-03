@@ -5,6 +5,22 @@
  * Languages without hand-crafted patterns rely on auto-generation from profiles.
  *
  * Phase 3.2: Consolidated from 13 files into single file.
+ *
+ * **A `get` verb alternative must never be another command's verb.** Five of
+ * these patterns listed the language's TAKE verb among `get`'s alternatives —
+ * it `prendere`, bn `নিন`, ru `взять`/`возьми`, uk `взяти`/`візьми`, vi `lấy` —
+ * so `take .active from .tab-button <pron>` matched `get-<l>-full` at
+ * confidence 1.00 and came back as a `get`. The tokenizers keep the two verbs
+ * distinct (`prendere`→take, `ottenere`→get) and the i18n transformer renders
+ * them distinctly, so the alternatives could never match a real `get` surface;
+ * they only shadowed take.
+ *
+ * The visible symptom was one role: the fused event-handler swap re-parses
+ * `[verb..clause boundary]` standalone and swaps the richer result in only when
+ * it is the SAME action, so an action flip vetoed the swap and take's trailing
+ * `recipient` pronoun dropped — it/ru/uk/vi's rows in the baseline's
+ * `roleLossyPatterns`. STANDALONE, those four returned the wrong command
+ * outright.
  */
 
 import type { LanguagePattern } from '../types';
@@ -22,7 +38,7 @@ function getGetPatternsBn(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'source' },
           { type: 'literal', value: 'থেকে' },
-          { type: 'literal', value: 'পান', alternatives: ['নিন'] },
+          { type: 'literal', value: 'পান' },
         ],
       },
       extraction: {
@@ -38,7 +54,7 @@ function getGetPatternsBn(): LanguagePattern[] {
       template: {
         format: 'পান {source}',
         tokens: [
-          { type: 'literal', value: 'পান', alternatives: ['নিন'] },
+          { type: 'literal', value: 'পান' },
           { type: 'role', role: 'source' },
         ],
       },
@@ -125,7 +141,7 @@ function getGetPatternsIt(): LanguagePattern[] {
       template: {
         format: 'ottenere {patient} da {source}',
         tokens: [
-          { type: 'literal', value: 'ottenere', alternatives: ['ottieni', 'get', 'prendere'] },
+          { type: 'literal', value: 'ottenere', alternatives: ['ottieni', 'get'] },
           { type: 'role', role: 'patient' },
           {
             type: 'group',
@@ -217,7 +233,7 @@ function getGetPatternsRu(): LanguagePattern[] {
       template: {
         format: 'получить {patient} из {source}',
         tokens: [
-          { type: 'literal', value: 'получить', alternatives: ['получи', 'взять', 'возьми'] },
+          { type: 'literal', value: 'получить', alternatives: ['получи'] },
           { type: 'role', role: 'patient' },
           {
             type: 'group',
@@ -242,7 +258,7 @@ function getGetPatternsRu(): LanguagePattern[] {
       template: {
         format: 'получить {patient}',
         tokens: [
-          { type: 'literal', value: 'получить', alternatives: ['получи', 'взять', 'возьми'] },
+          { type: 'literal', value: 'получить', alternatives: ['получи'] },
           { type: 'role', role: 'patient' },
         ],
       },
@@ -285,7 +301,7 @@ function getGetPatternsUk(): LanguagePattern[] {
       template: {
         format: 'отримати {patient} з {source}',
         tokens: [
-          { type: 'literal', value: 'отримати', alternatives: ['отримай', 'взяти', 'візьми'] },
+          { type: 'literal', value: 'отримати', alternatives: ['отримай'] },
           { type: 'role', role: 'patient' },
           {
             type: 'group',
@@ -310,7 +326,7 @@ function getGetPatternsUk(): LanguagePattern[] {
       template: {
         format: 'отримати {patient}',
         tokens: [
-          { type: 'literal', value: 'отримати', alternatives: ['отримай', 'взяти', 'візьми'] },
+          { type: 'literal', value: 'отримати', alternatives: ['отримай'] },
           { type: 'role', role: 'patient' },
         ],
       },
@@ -327,11 +343,17 @@ function getGetPatternsVi(): LanguagePattern[] {
       id: 'get-vi-full',
       language: 'vi',
       command: 'get',
-      priority: 100,
+      // 92, not 100: at a 100/100 tie with get-vi-generated, registration
+      // order made this pattern win on `lấy giá trị từ #input.value` — its
+      // UNTYPED trailing role then ate the `từ` marker itself (normalized
+      // `source`) and the real property-path dropped (get-value vi, bare
+      // render allowlist). Above get-vi-simple (90); its own `của` surface
+      // still reaches it (the generated pattern requires `từ` and fails).
+      priority: 92,
       template: {
         format: 'lấy giá trị của {target}',
         tokens: [
-          { type: 'literal', value: 'lấy giá trị', alternatives: ['nhận', 'lấy'] },
+          { type: 'literal', value: 'lấy giá trị', alternatives: ['nhận'] },
           { type: 'group', optional: true, tokens: [{ type: 'literal', value: 'của' }] },
           { type: 'role', role: 'patient' },
         ],
@@ -342,13 +364,17 @@ function getGetPatternsVi(): LanguagePattern[] {
     },
     {
       id: 'get-vi-simple',
+      // Head was `lấy` (alt `lấy giá trị`) — but bare `lấy` is vi's TAKE verb,
+      // so this pattern claimed every `lấy .active từ …`. vi's get verb is the
+      // three-word `lấy giá trị` ("take the value of"), which is what the i18n
+      // transformer renders; the bare form has no valid `get` surface.
       language: 'vi',
       command: 'get',
       priority: 90,
       template: {
-        format: 'lấy {target}',
+        format: 'lấy giá trị {target}',
         tokens: [
-          { type: 'literal', value: 'lấy', alternatives: ['nhận', 'lấy giá trị'] },
+          { type: 'literal', value: 'lấy giá trị', alternatives: ['nhận'] },
           { type: 'role', role: 'patient' },
         ],
       },

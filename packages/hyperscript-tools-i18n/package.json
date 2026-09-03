@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/i18n",
-  "version": "2.9.4",
+  "version": "3.0.0",
   "description": "Build-time translation for hyperscript code samples — generate per-language HTML from a canonical English source",
   "type": "module",
   "main": "dist/index.js",
@@ -29,7 +29,7 @@
     "build": "tsup src/index.ts src/cli.ts src/eleventy.ts src/validate.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts src/eleventy.ts src/validate.ts --format esm --dts --watch",
     "typecheck": "tsc --noEmit",
-    "pretest": "../../scripts/ensure-fresh.sh ../i18n . && npm run build --silent",
+    "pretest": "../../scripts/ensure-fresh.sh ../semantic . && npm run build --silent",
     "test": "node --test test/*.test.mjs",
     "test:check": "bash -c 'set -o pipefail; node --test --test-reporter=spec test/*.test.mjs 2>&1 | tail -10'"
   },
@@ -48,7 +48,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/i18n": "^2.9.4",
+    "@lokascript/semantic": "^3.0.0",
     "hyperscript.org": "^0.9.93"
   },
   "devDependencies": {

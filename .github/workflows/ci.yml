@@ -5,7 +5,7 @@
 #
 #   pull_request — the authoritative gate. Runs the fast required checks
 #   (build, export-validation, lint-typecheck, unit-tests) ALWAYS, plus the
-#   heavy jobs (browser-tests, multilingual-validation, bundle-size, mcp-demos)
+#   heavy jobs (browser-tests, multilingual-validation, bundle-size)
 #   only when `changes.code == 'true'` (i.e. non-doc files changed). A doc-only
 #   PR therefore runs just the fast required checks → reports green → mergeable,
 #   while skipping the expensive jobs.
@@ -203,39 +203,6 @@ jobs:
       - name: Verify semantic bundle output
         run: bash scripts/verify-semantic-bundle.sh
 
-      - name: Build domain-bdd package
-        run: npm run build --prefix packages/domain-bdd
-
-      - name: Build domain-sql package
-        run: npm run build --prefix packages/domain-sql
-
-      - name: Build domain-jsx package
-        run: npm run build --prefix packages/domain-jsx
-
-      - name: Build domain-todo package
-        run: npm run build --prefix packages/domain-todo
-
-      - name: Build domain-behaviorspec package
-        run: npm run build --prefix packages/domain-behaviorspec
-
-      - name: Build domain-llm package
-        run: npm run build --prefix packages/domain-llm
-
-      - name: Build domain-flow package
-        run: npm run build --prefix packages/domain-flow
-
-      - name: Build domain-voice package
-        run: npm run build --prefix packages/domain-voice
-
-      - name: Build domain-learn package
-        run: npm run build --prefix packages/domain-learn
-
-      - name: Build domain-toolkit package
-        run: npm run build --prefix packages/domain-toolkit
-
-      - name: Build domain-config package
-        run: npm run build --prefix packages/domain-config
-
       - name: Build behaviors package
         run: npm run build --prefix packages/behaviors
 
@@ -265,9 +232,6 @@ jobs:
 
       - name: Build mcp-server package
         run: npm run build --prefix packages/mcp-server
-
-      - name: Build mcp-multilingual-intent package
-        run: npm run build --prefix packages/mcp-multilingual-intent
 
       - name: Build developer-tools package
         run: npm run build --prefix packages/developer-tools
@@ -325,17 +289,6 @@ jobs:
           path: |
             packages/intent/dist/
             packages/framework/dist/
-            packages/domain-bdd/dist/
-            packages/domain-sql/dist/
-            packages/domain-jsx/dist/
-            packages/domain-todo/dist/
-            packages/domain-behaviorspec/dist/
-            packages/domain-llm/dist/
-            packages/domain-flow/dist/
-            packages/domain-voice/dist/
-            packages/domain-learn/dist/
-            packages/domain-toolkit/dist/
-            packages/domain-config/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
@@ -347,7 +300,6 @@ jobs:
             packages/compilation-service/dist/
             packages/planner/dist/
             packages/mcp-server/dist/
-            packages/mcp-multilingual-intent/dist/
             packages/developer-tools/dist/
             packages/server-bridge/dist/
             packages/vite-plugin/dist/
@@ -404,11 +356,11 @@ jobs:
       matrix:
         include:
           - shard: 1
-            only: classic-i18n,lite,minimal,lite-plus
+            only: classic-i18n,hybrid-complete,hybrid-hx
           - shard: 2
-            only: standard,main,multilingual,hybrid-complete
+            only: main,multilingual
           - shard: 3
-            only: hybrid-hx-v4,modular,hybrid-hx
+            only: hybrid-hx-v4,modular
 
     steps:
       - name: Checkout
@@ -606,8 +558,6 @@ jobs:
           status=0
           if ! node scripts/validate-exports.mjs \
             behaviors compilation-service components core \
-            domain-bdd domain-behaviorspec domain-config domain-flow domain-jsx \
-            domain-learn domain-llm domain-sql domain-todo domain-voice \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
             language-server mcp-server patterns-reference planner reactivity \
             realtime semantic server-bridge speech vite-plugin \
@@ -687,12 +637,13 @@ jobs:
       - name: Verify CI unit-test package list
         run: node scripts/check-ci-test-list.cjs
 
-      # Cheap guard: the same question asked of the FOUR remaining hand-written
+      # Cheap guard: the same question asked of the remaining hand-written
       # package enumerations — export-validation's arguments, the typecheck
-      # lines below, the nightly coverage job (cross-checked against
-      # codecov.yml's flags), and the root `lint:domains` loop. #862 guarded
-      # the unit-test lists and named these four as the follow-up; when it was
-      # written all four had drifted except lint:domains.
+      # lines below, and the nightly coverage job (cross-checked against
+      # codecov.yml's flags). #862 guarded the unit-test lists and named these
+      # as the follow-up; when it was written all had drifted. (The former
+      # fourth list, the root `lint:domains` loop, left with the domain
+      # packages — they live in lokascript-domains now.)
       - name: Verify CI job package lists
         run: node scripts/check-ci-job-lists.cjs
 
@@ -700,6 +651,45 @@ jobs:
       # drifted apart (the monorepo publishes uniformly).
       - name: Validate package versions
         run: node scripts/validate-versions.cjs
+
+      # Shrink-only ratchet for the engine migration (Arc 0 of
+      # docs-internal/ENGINE_MIGRATION_PLAN.md). Fails when a packages/core/src
+      # directory gains `any` / `as any` / `as Record<string, unknown>` /
+      # `as unknown as` / `<..., any>` above its committed baseline. Arcs 2-4
+      # drive the count down and regenerate the baseline as they go; without
+      # this, they read as finished while the tree quietly refills.
+      - name: Verify type-escape ratchet
+        run: node scripts/check-type-escapes.cjs
+
+      # The guard's own tests — the stripping rules are what make the number
+      # trustworthy, so they are checked rather than assumed.
+      - name: Test the type-escape ratchet
+        run: node --test scripts/check-type-escapes.test.cjs
+
+      # Import-direction ratchet, the type-escape ratchet's sibling (Arc 0 of
+      # ENGINE_MIGRATION_PLAN.md). Every packages/core/src unit has a layer;
+      # a module importing a HIGHER layer than itself is upward debt. Today's
+      # 14 upward edges are allowlisted with a reason each and the list can
+      # only shrink: a new edge, a grown edge, a type-only edge that hardens
+      # into a value one, and a STALE row all fail.
+      - name: Verify layering ratchet
+        run: node scripts/check-layering.cjs
+
+      - name: Test the layering ratchet
+        run: node --test scripts/check-layering.test.cjs
+
+      # Engine/front-end boundary ratchet (Arc 1 of ENGINE_MIGRATION_PLAN.md).
+      # @hyperfixi/core is the engine; @lokascript/semantic is a front-end that
+      # produces its AST. The dependency is supposed to run one way. This
+      # records every place it does not, per file AND per import kind — a
+      # static-value import is real bundled debt, a type-only one erases — and
+      # fails on a new file, a risen count, a cheap import hardening into an
+      # eager one, or a stale row.
+      - name: Verify engine/front-end boundary
+        run: node scripts/check-semantic-boundary.cjs
+
+      - name: Test the engine/front-end boundary ratchet
+        run: node --test scripts/check-semantic-boundary.test.cjs
 
       - name: Install dependencies
         run: npm ci
@@ -769,24 +759,12 @@ jobs:
           npm run typecheck --prefix packages/behaviors
           npm run typecheck --prefix packages/components
           npm run typecheck --prefix packages/developer-tools
-          npm run typecheck --prefix packages/domain-bdd
-          npm run typecheck --prefix packages/domain-behaviorspec
-          npm run typecheck --prefix packages/domain-config
-          npm run typecheck --prefix packages/domain-flow
-          npm run typecheck --prefix packages/domain-jsx
-          npm run typecheck --prefix packages/domain-learn
-          npm run typecheck --prefix packages/domain-llm
-          npm run typecheck --prefix packages/domain-sql
-          npm run typecheck --prefix packages/domain-todo
-          npm run typecheck --prefix packages/domain-toolkit
-          npm run typecheck --prefix packages/domain-voice
           npm run typecheck --prefix packages/framework
           npm run typecheck --prefix packages/hyperscript-tools-i18n
           npm run typecheck --prefix packages/intent
           npm run typecheck --prefix packages/intent-element
           npm run typecheck --prefix packages/intercept
           npm run typecheck --prefix packages/language-server-hyperscript
-          npm run typecheck --prefix packages/mcp-multilingual-intent
           npm run typecheck --prefix packages/multilingual-hyperscript
           npm run typecheck --prefix packages/planner
           npm run typecheck --prefix packages/playground
@@ -843,14 +821,6 @@ jobs:
 
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
-
-      # NOTE: `npm run lint:domains` deliberately does NOT run here. It is
-      # `npm test --prefix packages/domain-<x> -- --run lint`, i.e. vitest, and
-      # each domain's vitest include is `src/**/*.test.ts` — which already
-      # contains src/__test__/lint.test.ts. The unit-tests job therefore runs all
-      # nine domain lint suites; invoking them here too paid for nine extra
-      # vitest boots and nine ensure-fresh passes for zero additional coverage.
-      # The root script is kept for local use.
 
   # ============================================
   # Job 4: Unit Tests
@@ -1011,39 +981,6 @@ jobs:
       - name: Test mcp-server
         run: npm test --prefix packages/mcp-server
 
-      - name: Test mcp-multilingual-intent
-        run: npm test --prefix packages/mcp-multilingual-intent -- --run
-
-      - name: Test domain-bdd
-        run: npm test --prefix packages/domain-bdd
-
-      - name: Test domain-sql
-        run: npm test --prefix packages/domain-sql
-
-      - name: Test domain-jsx
-        run: npm test --prefix packages/domain-jsx
-
-      - name: Test domain-todo
-        run: npm test --prefix packages/domain-todo
-
-      - name: Test domain-behaviorspec
-        run: npm test --prefix packages/domain-behaviorspec
-
-      - name: Test domain-llm
-        run: npm test --prefix packages/domain-llm
-
-      - name: Test domain-flow
-        run: npm test --prefix packages/domain-flow
-
-      - name: Test domain-voice
-        run: npm test --prefix packages/domain-voice
-
-      - name: Test domain-learn
-        run: npm test --prefix packages/domain-learn
-
-      - name: Test domain-config
-        run: npm test --prefix packages/domain-config
-
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run
 
@@ -1095,22 +1032,19 @@ jobs:
       - name: Test intent-element
         run: npm test --prefix packages/intent-element
 
-      - name: Test domain-toolkit
-        run: npm test --prefix packages/domain-toolkit -- --run
-
       - name: Test planner
         run: npm test --prefix packages/planner
 
-      # Ten of testing-framework's thirteen files ran in NO job. The three
-      # that did are invoked by id elsewhere — shipped-sources-validity in the
-      # `shipped-sources` job, canonical-validity + foreign-canonical-validity
-      # in `multilingual-validation` — so the package's own suite (assertions,
-      # runner, fidelity, vocab, the R2 execution-validator lock) was never
-      # run. Safe without a populate step: the one DB-dependent gate
-      # self-skips unless FOREIGN_CANONICAL_VALIDITY=1, which only
-      # `test:canonical` sets, after populating. The shipped-examples gate
-      # walks the git-TRACKED examples/ corpus, so it sees the same tree here
-      # as on any dev machine.
+      # Ten of testing-framework's files ran in NO job. The ones that did are
+      # invoked by id elsewhere — shipped-sources-validity in the
+      # `shipped-sources` job, and the four DB-dependent gates (canonical-validity,
+      # foreign-canonical-validity, render-fidelity, bare-render-fidelity) via
+      # `test:canonical` in `multilingual-validation` — so the package's own suite
+      # (assertions, runner, fidelity, vocab, the R2 execution-validator lock) was
+      # never run. Safe without a populate step here: those four self-skip unless
+      # FOREIGN_CANONICAL_VALIDITY=1, which only `test:canonical` sets, after
+      # populating. The shipped-examples gate walks the git-TRACKED examples/
+      # corpus, so it sees the same tree here as on any dev machine.
       - name: Test testing-framework
         run: npm test --prefix packages/testing-framework
 
@@ -1301,13 +1235,28 @@ jobs:
           echo "=== i18n bundle check ==="
           ls -la packages/i18n/dist/lokascript-i18n.min.js || echo "MISSING: lokascript-i18n.min.js"
 
+      # `comprehensive` runs here rather than on a schedule: this job is already
+      # gated on `changes.outputs.code`, so the tier runs exactly when something
+      # that could break it changes and never on a quiet tree. It costs ~20s
+      # (122 specs) on a job that is not on the critical path.
+      #
+      # It was previously unrun ANYWHERE — `quick` is the only project CI
+      # invoked — and four real bugs shipped behind that gap: a detached
+      # `startViewTransition` (broken in every browser that has the API),
+      # untracked reads of unset globals, concurrent effects clobbering
+      # dependency capture, and `put` stringifying DocumentFragments (which
+      # silently broke the htmx-compat swap path). See #904 / #905.
       - name: Run Playwright tests
-        run: npx playwright test --project=quick
+        run: npx playwright test --project=quick --project=comprehensive
         working-directory: packages/core
 
       - name: Run htmx-adapter e2e (real htmx v4/v2 + _hyperscript)
         run: npx playwright test
         working-directory: packages/htmx-adapter
+
+      - name: Run hyperscript-adapter e2e (real _hyperscript, vendored)
+        run: npx playwright test
+        working-directory: packages/hyperscript-adapter
 
       # NOTE: paths are relative to the repo root, NOT this job's
       # working-directory. The report/traces are written under
@@ -1419,14 +1368,24 @@ jobs:
           cd packages/testing-framework
           npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
-      # Canonical-validity gates: render every corpus EN reference (canonical-validity)
-      # AND every authored foreign translation (foreign-canonical-validity) to English,
-      # then parse the result on the real hyperscript.org engine — failing on any
-      # invalid render outside the committed allowlists. These are testing-framework
-      # vitest tests, so they run HERE (not in unit-tests, which never runs
-      # testing-framework vitest) because the foreign gate needs the populated
-      # translations table (populated above).
-      - name: Canonical-validity gates (en-render + foreign→English)
+      # Four DB-dependent gates, all of them testing-framework vitest files, so
+      # they run HERE (not in unit-tests, which never runs testing-framework
+      # vitest) because each needs the populated translations table:
+      #   canonical-validity        — every corpus EN reference rendered to English
+      #   foreign-canonical-validity— every authored foreign translation to English
+      #     ...both then parsed on the real hyperscript.org engine, failing on any
+      #     invalid render outside the committed allowlists.
+      #   render-fidelity           — en→foreign: render each corpus row into every
+      #     language and parse it back, failing on a lost action or role.
+      #   bare-render-fidelity      — the same, over each row's HANDLER-STRIPPED
+      #     body. Not redundant: every corpus row that exercises a command wraps it
+      #     in a handler, so the plain form — which MCP `translate_code`,
+      #     `hyperfixi.translate` and the VS Code badge are routinely handed — was
+      #     covered by nothing. 37 of its 69 known failures are invisible to the
+      #     wrapped gate, and four of those do not parse back at all.
+      # All five self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
+      # `test:canonical` sets — after the populate step above.
+      - name: Canonical-validity + render-fidelity gates (en, foreign→en, en→foreign, bare)
         run: npm run test:canonical --prefix packages/testing-framework
 
       - name: Upload test results
@@ -1561,7 +1520,6 @@ jobs:
           # (pre-dedupe "~203-208 KB" era) was being silently exceeded by the
           # real ~299 KB gz bundle. The browser/hx-v4 ceilings exist to catch
           # RE-duplication (the #616 double core+semantic class).
-          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
           # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
           # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
           # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
@@ -1572,20 +1530,27 @@ jobs:
           # first run; 24000 restores roughly the ~2 KB of headroom the old
           # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
           MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
-          MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
-          MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
+          # Raised 340000 -> 355000 / 350000 -> 368000 on 2026-08-26 (PR #931,
+          # per-language render vocabulary). Both bundles expose translate /
+          # getAllTranslations for 24 languages, so they carry the new
+          # lexicons/{code} data: measured +19 KB gz each (browser 310.8 ->
+          # 330.3, hx-v4 322.4 -> 350.9), which put hx-v4 925 B over the old
+          # ceiling.
+          # These ceilings exist to catch RE-duplication, so before raising them
+          # the growth was checked against exactly that: the all-24 lexicon costs
+          # ~19 KB gz as ONE copy, and both bundles grew by ~19 KB, not ~38 KB.
+          # Spot-checks that first looked like doubling were not: `atributos` x2
+          # is es + pt (which share the word), and the extra `desenfocar` /
+          # `dobleclic` hits are the pre-existing eventNameTranslations table and
+          # tokenizer EXTRAS, which are different structures, not copies.
+          # The lexicon is also absent from minimal/standard/classic, which parse
+          # without rendering — it tree-shakes, so only these two pay.
+          # New numbers keep ~5% headroom, matching the intent of the Arc E
+          # ceiling bump. Mirrored in ci.yml and pre-publish-check.yml.
+          MAX_BROWSER=355000      # 355 KB (hyperfixi.js actual ~330 KB gz with lexicons)
+          MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
 
           failed=0
-
-          if [[ -f "packages/core/dist/hyperfixi-lite.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-lite.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_LITE" ]]; then
-              echo "::error::hyperfixi-lite.js ($size bytes gzip) exceeds limit ($MAX_LITE bytes)"
-              failed=1
-            else
-              echo "hyperfixi-lite.js: $size bytes gzip (limit $MAX_LITE)"
-            fi
-          fi
 
           # hyperfixi-hx.js shares the hybrid ceiling; it is listed explicitly
           # because its filename matches no hyperfixi-hybrid-* glob (the same
@@ -1632,100 +1597,6 @@ jobs:
           fi
 
           exit $failed
-
-  # ============================================
-  # Job 9: MCP Multilingual Intent — demos + compat test
-  # ============================================
-  # Starts the Hono Siren API in background, runs the Siren-compat test
-  # and the three IDE integration demos (EN ≡ JA/AR/KO schema equivalence).
-  # Captures demo output as an artifact so the landing page can embed it.
-  # Reuses build artifacts from Job 1 — no rebuild cost.
-  #
-  # Slim post-merge: PR-only. The committed `demo-output.txt` staleness
-  # check is what matters here, and it already ran on the PR. Re-running
-  # against the merged code produces the same output (deterministic
-  # demos against the same build artifacts).
-  mcp-demos:
-    name: MCP Multilingual Demos
-    runs-on: ubuntu-latest
-    needs: [build, changes]
-    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
-    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts
-          path: packages
-
-      - name: Rebuild workspace links
-        run: |
-          rm -rf node_modules/@hyperfixi node_modules/@lokascript
-          npm install
-
-      - name: Start Hono Siren server
-        working-directory: packages/mcp-multilingual-intent
-        run: |
-          nohup npm run dev > /tmp/mcp-server.log 2>&1 &
-          echo $! > /tmp/mcp-server.pid
-          # Wait up to ~15s for /health to return 200
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3030/health > /dev/null 2>&1; then
-              echo "server up after ${i} tries"
-              break
-            fi
-            sleep 0.5
-          done
-          curl -fsS http://localhost:3030/health || {
-            echo "server failed to start"; cat /tmp/mcp-server.log; exit 1;
-          }
-
-      - name: Run Siren compatibility test
-        run: npm run mcp:test --prefix packages/mcp-multilingual-intent
-
-      - name: Run IDE integration demos (capture output)
-        run: npm run demos:capture --prefix packages/mcp-multilingual-intent
-
-      - name: Check committed demo-output.txt is up to date
-        run: |
-          # Fail the job if the committed landing-page artifact drifts from
-          # what the demos actually produce. To fix: run
-          # `npm run demos:capture --prefix packages/mcp-multilingual-intent`
-          # locally and commit the updated file.
-          if ! git diff --exit-code --stat \
-            packages/mcp-multilingual-intent/landing/demo-output.txt; then
-            echo "::error::demo-output.txt is out of date. Run 'npm run demos:capture --prefix packages/mcp-multilingual-intent' and commit the result."
-            exit 1
-          fi
-
-      - name: Stop server
-        if: always()
-        run: |
-          if [ -f /tmp/mcp-server.pid ]; then
-            kill "$(cat /tmp/mcp-server.pid)" 2>/dev/null || true
-          fi
-
-      - name: Upload demo output
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: mcp-demo-output
-          path: packages/mcp-multilingual-intent/landing/demo-output.txt
-          retention-days: 7
 
   # ============================================
   # Job 10: LSE protocol conformance (4 reference parsers)
@@ -1959,7 +1830,6 @@ jobs:
       - browser-tests
       - multilingual-validation
       - bundle-size
-      - mcp-demos
       - protocol-conformance
       - go-client
 

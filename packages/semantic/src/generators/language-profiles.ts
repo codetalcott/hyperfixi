@@ -18,6 +18,7 @@
 // Re-export types
 export type {
   LanguageProfile,
+  LanguageLexicon,
   WordOrder,
   MarkingStrategy,
   RoleMarker,

@@ -845,7 +845,12 @@ function getPutPatternsUk(): LanguagePattern[] {
       id: 'put-uk-before',
       language: 'uk',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-uk-full (100) —
+      // the same layering ru/pl already use. At 95, put-uk-full's partial
+      // match (patient only, conf 0.56) out-prioritized this pattern's full
+      // match (conf 1.0) and the положення destination dropped (put-before/
+      // put-after uk on the render allowlists).
+      priority: 105,
       template: {
         format: 'покласти {patient} перед {destination}',
         tokens: [
@@ -865,7 +870,12 @@ function getPutPatternsUk(): LanguagePattern[] {
       id: 'put-uk-after',
       language: 'uk',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-uk-full (100) —
+      // the same layering ru/pl already use. At 95, put-uk-full's partial
+      // match (patient only, conf 0.56) out-prioritized this pattern's full
+      // match (conf 1.0) and the положення destination dropped (put-before/
+      // put-after uk on the render allowlists).
+      priority: 105,
       template: {
         format: 'покласти {patient} після {destination}',
         tokens: [
@@ -1085,6 +1095,17 @@ function getPutPatternsZh(): LanguagePattern[] {
  * (put-after/put-before lossy in exactly these 8 languages). en/es/pl/ru/uk/vi
  * carry their own handcrafted before/after variants — this table is only for
  * the languages that had none.
+ *
+ * ar and tl were added 2026-08-27, and the way they were MISSED is worth
+ * keeping. They are not lossy in the sense above: they render, parse back, and
+ * score 1.0 on every recall signal. With no pattern pinning `before`/`after` in
+ * those two languages, the renderer's pinned-value guard has nothing to compare
+ * against, so the highest-priority candidate — `put-{lang}-at-end` (110, manner
+ * pinned to `at end of`) — wins, and `put X before me` renders as
+ * `ضع X عند النهاية من أنا` / `ilagay X sa wakas ng ako`: "put X AT END OF me".
+ * Role-identical, execution-different, invisible to every recall metric. It
+ * surfaced only once the corpus writer started storing semantic's own render
+ * (the `best` writer, #973), where the English round-trip catches it.
  */
 const PUT_POSITIONAL: ReadonlyArray<{
   lang: string;
@@ -1096,6 +1117,9 @@ const PUT_POSITIONAL: ReadonlyArray<{
   patientPrefix?: string;
   patientPrefixOptional?: boolean;
 }> = [
+  // ar/tl words come from the profiles (`arabic.ts` before/after, `tl.ts`
+  // before/after) and agree with the i18n dictionaries — nothing authored here.
+  { lang: 'ar', verb: 'ضع', verbAlts: ['اجعل'], before: 'قبل', after: 'بعد' },
   { lang: 'de', verb: 'setzen', before: 'vor', after: 'nach' },
   { lang: 'fr', verb: 'mettre', before: 'avant', after: 'après' },
   { lang: 'he', verb: 'שים', patientPrefix: 'את', before: 'לפני', after: 'אחרי' },
@@ -1109,6 +1133,7 @@ const PUT_POSITIONAL: ReadonlyArray<{
   { lang: 'ms', verb: 'letak', before: 'sebelum', after: 'selepas' },
   { lang: 'pt', verb: 'colocar', before: 'antes', after: 'depois' },
   { lang: 'sw', verb: 'weka', before: 'kabla', after: 'baada' },
+  { lang: 'tl', verb: 'ilagay', verbAlts: ['maglagay'], before: 'bago', after: 'matapos' },
   {
     lang: 'zh',
     verb: '放置',
@@ -1458,7 +1483,16 @@ function buildPositionalPutPatterns(language: string): LanguagePattern[] {
       id: `put-${spec.lang}-${manner}`,
       language: spec.lang,
       command: 'put',
-      priority: 95,
+      // 105, not 95: this must out-rank the generated into-pattern (100) in a
+      // language whose destination marker lists the positional words among its
+      // ALTERNATIVES — tl's `sa` takes `bago`/`matapos` (a parse-side tolerance
+      // added before these patterns existed), so at 95 the generated pattern
+      // won and `put X before me` parsed back as a manner-less `put X into me`.
+      // The same precedent is written out on `put-it-before` (105 over
+      // put-it-full). Languages whose positional word is not an into-alternative
+      // are unaffected: this pattern can only match a surface that contains the
+      // positional word, and it still sits under `put-{lang}-at-end` (110).
+      priority: 105,
       template: {
         format: `${spec.verb} {patient} ${posWord} {destination}`,
         tokens,

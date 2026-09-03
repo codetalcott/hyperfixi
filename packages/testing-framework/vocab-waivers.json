@@ -48,10 +48,6 @@
     "reason": "Batch 1: dead vocab — the transformer renders send.destination as `에` (corpus send-event row), never `에게`. Schema-override↔render alignment queued in MULTILINGUAL_NEXT_STEPS.md."
   },
   {
-    "key": "V4|tr|-e",
-    "reason": "Batch 1: dead vocab — aux probe shows `-e` shatters to `-` + `e(particle)`; the live tr dative allomorphs already parse via markerVariants (e/a/ye/ya). Schema-override↔render alignment queued in MULTILINGUAL_NEXT_STEPS.md."
-  },
-  {
     "key": "V4|*|como",
     "reason": "Batch 1 probe P6: es `buscar /api/user como json` captures responseType=json via the handcrafted fetch pattern's `como` literal, identical role shape to the en reference — pattern literals match by raw token.value. Corpus fetch rows faithful. (es + pt.)"
   },
@@ -256,10 +252,6 @@
     "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — `fetch .. as json` consumes `as` as a handcrafted/generated pattern literal (matched by raw token.value, Batch 1 V4 probe mechanism), so parsing works; V2's parse-side union only sees roleMarkers/schema markers, not pattern literals."
   },
   {
-    "key": "V2|en|duration:for",
-    "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — duration `for` is consumed as a pattern literal (same mechanism as method:as); V2 cannot see pattern literals."
-  },
-  {
     "key": "V1|vi|reset",
     "reason": "V3c burn-down 2026-07-14: dictionary events.reset is deliberate English passthrough — the native đặt-lại hyphen-shatters on the parse side (round-trip probe re-parsed it as `put`), the broken-listener class. The profile verb stays native for command contexts; same profile-vs-events-passthrough class as the waived ar/sw/tl reset rows (Batch 3, blocked — no candidate round-trips)."
   },
@@ -270,5 +262,13 @@
   {
     "key": "V4|ja|として",
     "reason": "Arc F round 2 / Phase F: `として` (\"as/qua\") is `open.style`'s ja markerOverride — the same word `fetch.responseType` already ships for ja, and it becomes reportable only because `open` is now a second site. Same mechanism class as every other V4 waiver here: pattern literals are consumed by raw token.value before kind, so the identifier classification does not stop the capture. Unlike most of them this one is not probe-only — `packages/semantic/test/hyphenated-word-values.test.ts` runs `translate(en→ja)` → `parse(ja)` for both `modal` and `non-modal` and asserts the action, the target AND the variant; removing the marker fails it (measured: ja renders `modal で #dlg を 開く`, whose `で` is also ja's EVENT marker, and the line parses as `on modal`)."
+  },
+  {
+    "key": "V4|zh|為",
+    "reason": "Adapter-residuals Item A probe: set.patient markerVariants zh — traditional spelling of 为, accepted by handcrafted set-zh-full for years; pattern literals match by raw token.value (kind-independent), and `设置 x 為 5` captures destination=x patient=5 on the schema-generated pattern (probed on the slim chain)."
+  },
+  {
+    "key": "V4|zh|成",
+    "reason": "Adapter-residuals Item A probe: set.patient markerVariants zh — resultative value marker, accepted by handcrafted set-zh-full for years; `设置 x 成 5` captures destination=x patient=5 on the schema-generated pattern (probed on the slim chain)."
   }
 ]

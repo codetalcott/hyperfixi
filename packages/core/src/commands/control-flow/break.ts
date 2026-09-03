@@ -40,8 +40,6 @@ export class BreakCommand extends ControlFlowSignalBase {
   }
 
   protected readonly signalType = 'break' as const;
-  protected readonly errorMessage = 'BREAK_LOOP';
-  protected readonly errorFlag = 'isBreak';
 }
 
 export const createBreakCommand = createFactory(BreakCommand);

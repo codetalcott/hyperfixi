@@ -126,8 +126,6 @@ export const AVAILABLE_BLOCKS = ['if', 'repeat', 'for', 'while', 'fetch'] as con
  * emit.
  */
 export const FULL_RUNTIME_ONLY_COMMANDS = [
-  // Advanced execution
-  'async',
   // DOM operations (complex)
   'make',
   'swap',

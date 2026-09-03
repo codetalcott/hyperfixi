@@ -34,9 +34,11 @@ describe('preprocessToEnglish', () => {
       ['ja', '自分 から .hidden を 削除'],
       ['ko', '나 에서 .hidden 을 제거'],
       ['fr', 'supprimer .hidden de moi'],
-    ])('[%s] translates remove .hidden (implicit me source suppressed)', (lang, input) => {
+    ])('[%s] translates remove .hidden (authored me source kept)', (lang, input) => {
+      // These inputs WRITE the source out (`de yo`, `自分 から`), so the render
+      // keeps it: only matcher-injected implicit defaults are suppressed.
       const result = preprocessToEnglish(input, lang);
-      expect(result).toBe('remove .hidden');
+      expect(result).toBe('remove .hidden from me');
     });
   });
 
@@ -147,6 +149,17 @@ describe('preprocessToEnglish', () => {
       // An intentionally garbled input that shouldn't match any pattern
       const result = preprocessToEnglish('xyz abc 123', 'es', {
         confidenceThreshold: 1.0,
+      });
+      expect(result).toBe('xyz abc 123');
+    });
+
+    it('falls back to the original even with fallbackToOriginal: false (deprecated, inert)', () => {
+      // The option never did anything — the string contract leaves nothing
+      // else to return on failure. Pin that so removing the dead branch is
+      // provably behavior-preserving, and so the deprecation stays honest.
+      const result = preprocessToEnglish('xyz abc 123', 'es', {
+        confidenceThreshold: 1.0,
+        fallbackToOriginal: false,
       });
       expect(result).toBe('xyz abc 123');
     });

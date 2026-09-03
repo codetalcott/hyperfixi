@@ -19,12 +19,13 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import type { CommandNode, EventHandlerNode } from '../types/base-types';
+import type { CommandNode, EventHandlerNode } from '../ast/nodes';
+import { assertNodeOfKind } from '../ast/guards';
 
 const fetchCommand = (src: string): CommandNode => {
   const result = parse(src);
   expect(result.success).toBe(true);
-  const node = result.node as CommandNode;
+  const node = assertNodeOfKind(result.node, 'command');
   expect(node.type).toBe('command');
   expect(node.name).toBe('fetch');
   return node;
@@ -89,7 +90,7 @@ describe('fetch with a naked URL', () => {
     end`);
 
     expect(result.success).toBe(true);
-    const handler = result.node as EventHandlerNode;
+    const handler = assertNodeOfKind(result.node, 'eventHandler');
     const commands = handler.commands as CommandNode[];
     expect(commands.map(c => c.name)).toEqual(['fetch', 'put']);
     expect(urlOf(commands[0])).toBe('https://example.com/todos/1');
@@ -100,7 +101,7 @@ describe('fetch with a naked URL', () => {
     // isNakedURLStart moved out of navigation-commands.ts; `go` consumes it now.
     const result = parse('go to https://example.com/page');
     expect(result.success).toBe(true);
-    const cmd = result.node as CommandNode;
+    const cmd = assertNodeOfKind(result.node, 'command');
     expect(cmd.name).toBe('go');
     const values = (cmd.args ?? []).map((a: unknown) => (a as { value?: unknown }).value);
     expect(values).toContain('https://example.com/page');
@@ -256,9 +257,11 @@ describe('naked URL termination (adjacency)', () => {
     // at 16, so the URL stops on its own.
     const result = parse('go to /api/put/1 in new window');
     expect(result.success).toBe(true);
-    const values = ((result.node as CommandNode).args ?? []).map(
-      (a: unknown) => (a as { value?: unknown }).value
-    );
-    expect(values).toEqual(['to', '/api/put/1', 'in', 'new', 'window']);
+    const node = assertNodeOfKind(result.node, 'command');
+    // The URL is the one positional argument; `in new window` is the `in` slot (Arc 3 step 3).
+    expect((node.args ?? []).map((a: unknown) => (a as { value?: unknown }).value)).toEqual([
+      '/api/put/1',
+    ]);
+    expect((node.modifiers?.in as { value?: unknown } | undefined)?.value).toBe('new window');
   });
 });

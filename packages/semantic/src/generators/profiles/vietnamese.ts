@@ -105,6 +105,16 @@ export const vietnameseProfile: LanguageProfile = {
     hover: { primary: 'di chuột', alternatives: ['rê chuột'], normalized: 'hover' },
     submit: { primary: 'nộp', alternatives: [], normalized: 'submit' },
     input: { primary: 'nhập', alternatives: ['nhập liệu'], normalized: 'input' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    // Declared BEFORE `change` on purpose: the dictionary's changes-word is the
+    // same surface as the `change` EVENT primary below, and the tokenizer's
+    // keyword map is last-writer-wins per surface — so `thay đổi` keeps reading
+    // as the event (`khi thay đổi …` = on change) while the reactive head still
+    // matches it by SURFACE (block-parser locateReactiveWhenHead).
+    changes: { primary: 'thay đổi', normalized: 'changes' },
     change: { primary: 'thay đổi', alternatives: ['đổi'], normalized: 'change' },
     // Navigation
     go: { primary: 'đi đến', alternatives: ['đi'], normalized: 'go' },

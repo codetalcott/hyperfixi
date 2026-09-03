@@ -72,6 +72,31 @@ describe('db-stamp provenance guard', () => {
     expect(computeDbInputHash(dbPath)).not.toBe(h1);
   });
 
+  it('does NOT vary with PATTERNS_RENDERER — there is one renderer', () => {
+    // This used to assert the opposite: the renderer choice was hashed into the
+    // stamp, so a `PATTERNS_RENDERER=i18n` DB read STALE to a default gate run.
+    // The env var is gone with the i18n writer (2026-08-28); a stray value left
+    // in a shell must not change the hash, or an unrelated variable becomes a
+    // freshness tripwire.
+    const { root, dbPath } = makeFakeRepo();
+    roots.push(root);
+    const prev = process.env.PATTERNS_RENDERER;
+    try {
+      delete process.env.PATTERNS_RENDERER;
+      const h1 = computeDbInputHash(dbPath);
+      process.env.PATTERNS_RENDERER = 'i18n';
+      expect(computeDbInputHash(dbPath)).toBe(h1);
+      process.env.PATTERNS_RENDERER = 'bogus';
+      expect(computeDbInputHash(dbPath)).toBe(h1);
+      writeDbStamp(dbPath);
+      delete process.env.PATTERNS_RENDERER;
+      expect(checkDbStamp(dbPath).status).toBe('ok');
+    } finally {
+      if (prev === undefined) delete process.env.PATTERNS_RENDERER;
+      else process.env.PATTERNS_RENDERER = prev;
+    }
+  });
+
   it('ignores .test.ts / .d.ts files (test churn must not flip freshness)', () => {
     const { root, dbPath } = makeFakeRepo();
     roots.push(root);

@@ -20,6 +20,9 @@
 
 // Import to register only English
 import './languages/en';
+// Render vocabulary for the same set (separate modules so parse-only
+// consumers can drop them — see ./lexicon-registry.ts).
+import './lexicons/en';
 
 // =============================================================================
 // Version

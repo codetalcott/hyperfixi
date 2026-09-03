@@ -22,30 +22,19 @@
  */
 
 import type { ExecutionContext, ExpressionImplementation } from '../../types/core';
-import type { ASTNode } from '../../types/base-types';
+import type { AnyNode } from '../../ast/legacy';
 
 export type CollectionOperator = 'where' | 'sorted by' | 'mapped to' | 'split by' | 'joined by';
 
 export type SortOrder = 'asc' | 'desc';
 
-/**
- * AST node emitted by the Pratt parser for collection operators.
- * Field meaning depends on `operator`:
- *   where/mapped to : `right` is a per-element predicate AST, evaluated with `it` bound
- *   sorted by       : `right` is a per-element key AST; `order` selects ascending/descending
- *   split by/joined by : `right` is a separator value (evaluated once)
+/*
+ * The node these evaluators serve is `ast/nodes.CollectionExpressionNode`.
+ * This module used to declare its OWN copy of it — a fifth prose description
+ * of one kind, exported and imported by nothing (`parser/runtime.ts` takes the
+ * union member and the four functions below, never the interface). Deleted by
+ * Arc 2 step 6; the field meanings it documented live on the union member.
  */
-export interface CollectionExpressionNode {
-  type: 'collectionExpression';
-  operator: CollectionOperator;
-  collection: ASTNode;
-  right: ASTNode;
-  order?: SortOrder;
-  start?: number;
-  end?: number;
-  line?: number;
-  column?: number;
-}
 
 /** Coerce a collection-like value to an array for iteration. Strings pass through for `split by`. */
 export function toIterableArray(value: unknown): unknown[] {
@@ -69,8 +58,8 @@ export function toIterableArray(value: unknown): unknown[] {
  */
 export async function evaluateWhere(
   collection: unknown,
-  predicate: ASTNode,
-  evalWithIt: (node: ASTNode, it: unknown) => Promise<unknown>
+  predicate: AnyNode,
+  evalWithIt: (node: AnyNode, it: unknown) => Promise<unknown>
 ): Promise<unknown[]> {
   const arr = toIterableArray(collection);
   const out: unknown[] = [];
@@ -84,9 +73,9 @@ export async function evaluateWhere(
 /** Evaluator for `collection sorted by <keyExpr> [asc|desc]`. Default order: `asc`. */
 export async function evaluateSortedBy(
   collection: unknown,
-  keyExpr: ASTNode,
+  keyExpr: AnyNode,
   order: SortOrder,
-  evalWithIt: (node: ASTNode, it: unknown) => Promise<unknown>
+  evalWithIt: (node: AnyNode, it: unknown) => Promise<unknown>
 ): Promise<unknown[]> {
   const arr = [...toIterableArray(collection)];
   const keys = await Promise.all(arr.map(el => evalWithIt(keyExpr, el)));
@@ -106,8 +95,8 @@ export async function evaluateSortedBy(
 /** Evaluator for `collection mapped to <expr>`. */
 export async function evaluateMappedTo(
   collection: unknown,
-  expr: ASTNode,
-  evalWithIt: (node: ASTNode, it: unknown) => Promise<unknown>
+  expr: AnyNode,
+  evalWithIt: (node: AnyNode, it: unknown) => Promise<unknown>
 ): Promise<unknown[]> {
   const arr = toIterableArray(collection);
   return Promise.all(arr.map(el => evalWithIt(expr, el)));
@@ -135,84 +124,3 @@ export function evaluateJoinedBy(value: unknown, separator: unknown): string {
 // expressions. The actual runtime dispatch happens via the `collectionExpression`
 // AST node, not by looking up these `.evaluate()` methods — the per-element ones
 // can't be invoked with plain values anyway because they need an AST on the RHS.
-
-export const whereExpression: ExpressionImplementation = {
-  name: 'where',
-  category: 'Special',
-  evaluatesTo: 'Array',
-  operators: ['where'],
-  async evaluate(_context: ExecutionContext, _collection: unknown, _predicate: unknown) {
-    throw new Error(
-      '`where` is a collection expression; it is dispatched via the `collectionExpression` AST node, not evaluate()'
-    );
-  },
-  validate() {
-    return null;
-  },
-};
-
-export const sortedByExpression: ExpressionImplementation = {
-  name: 'sortedBy',
-  category: 'Special',
-  evaluatesTo: 'Array',
-  operators: ['sorted by'],
-  async evaluate(_context: ExecutionContext, _collection: unknown, _keyExpr: unknown) {
-    throw new Error(
-      '`sorted by` is a collection expression; dispatched via the `collectionExpression` AST node'
-    );
-  },
-  validate() {
-    return null;
-  },
-};
-
-export const mappedToExpression: ExpressionImplementation = {
-  name: 'mappedTo',
-  category: 'Special',
-  evaluatesTo: 'Array',
-  operators: ['mapped to'],
-  async evaluate(_context: ExecutionContext, _collection: unknown, _expr: unknown) {
-    throw new Error(
-      '`mapped to` is a collection expression; dispatched via the `collectionExpression` AST node'
-    );
-  },
-  validate() {
-    return null;
-  },
-};
-
-export const splitByExpression: ExpressionImplementation = {
-  name: 'splitBy',
-  category: 'Special',
-  evaluatesTo: 'Array',
-  operators: ['split by'],
-  async evaluate(_context: ExecutionContext, str: unknown, separator: unknown) {
-    return evaluateSplitBy(str, separator);
-  },
-  validate() {
-    return null;
-  },
-};
-
-export const joinedByExpression: ExpressionImplementation = {
-  name: 'joinedBy',
-  category: 'Special',
-  evaluatesTo: 'String',
-  operators: ['joined by'],
-  async evaluate(_context: ExecutionContext, arr: unknown, separator: unknown) {
-    return evaluateJoinedBy(arr, separator);
-  },
-  validate() {
-    return null;
-  },
-};
-
-export const collectionExpressions = {
-  where: whereExpression,
-  sortedBy: sortedByExpression,
-  mappedTo: mappedToExpression,
-  splitBy: splitByExpression,
-  joinedBy: joinedByExpression,
-} as const;
-
-export type CollectionExpressionName = keyof typeof collectionExpressions;

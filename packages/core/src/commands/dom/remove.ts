@@ -26,6 +26,7 @@ import {
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for RemoveCommand
@@ -80,7 +81,7 @@ export class RemoveCommand extends DOMModificationBase {
   protected readonly preposition = 'from';
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'remove'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<RemoveCommandInput> {
@@ -110,24 +111,14 @@ export class RemoveCommand extends DOMModificationBase {
       // Attribute syntax: [@attr] or @attr
       if (this.isAttribute(trimmed)) {
         const name = parseAttributeName(trimmed);
-        const targets = await this.resolveTargets(
-          raw.args.slice(1),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'attribute', name, targets };
       }
 
       // CSS property shorthand: *property
       if (this.isCSSProperty(trimmed)) {
         const property = trimmed.substring(1).trim();
-        const targets = await this.resolveTargets(
-          raw.args.slice(1),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'styles', properties: [property], targets };
       }
     }
@@ -138,7 +129,7 @@ export class RemoveCommand extends DOMModificationBase {
       throw new Error('remove command: no valid class names found');
     }
 
-    const targets = await this.resolveTargets(raw.args.slice(1), evaluator, context, raw.modifiers);
+    const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
     return { type: 'classes', classes, targets };
   }
 

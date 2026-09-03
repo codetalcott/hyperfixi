@@ -441,95 +441,6 @@
         }
       ]
     },
-    "async": {
-      "roles": [],
-      "cases": [
-        {
-          "name": "no-roles",
-          "roles": {},
-          "ast": {
-            "type": "command",
-            "name": "async",
-            "args": []
-          }
-        },
-        {
-          "name": "all-relevant",
-          "roles": {},
-          "ast": {
-            "type": "command",
-            "name": "async",
-            "args": []
-          }
-        },
-        {
-          "name": "all-probe-roles",
-          "roles": {
-            "patient": {
-              "type": "selector",
-              "value": ".patient-v",
-              "selectorKind": "class"
-            },
-            "destination": {
-              "type": "selector",
-              "value": "#destination-v",
-              "selectorKind": "id"
-            },
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            },
-            "scope": {
-              "type": "selector",
-              "value": "#scope-v",
-              "selectorKind": "id"
-            },
-            "event": {
-              "type": "literal",
-              "value": "event-v"
-            },
-            "condition": {
-              "type": "literal",
-              "value": "condition-v"
-            },
-            "duration": {
-              "type": "literal",
-              "value": "duration-v"
-            },
-            "quantity": {
-              "type": "literal",
-              "value": "quantity-v"
-            },
-            "style": {
-              "type": "literal",
-              "value": "style-v"
-            },
-            "method": {
-              "type": "literal",
-              "value": "method-v"
-            },
-            "manner": {
-              "type": "literal",
-              "value": "manner-v"
-            },
-            "responseType": {
-              "type": "literal",
-              "value": "responseType-v"
-            },
-            "goal": {
-              "type": "literal",
-              "value": "goal-v"
-            }
-          },
-          "ast": {
-            "type": "command",
-            "name": "async",
-            "args": []
-          }
-        }
-      ]
-    },
     "behavior": {
       "roles": ["patient"],
       "cases": [
@@ -3165,7 +3076,7 @@
             "name": "go",
             "args": [
               {
-                "type": "literal",
+                "type": "string",
                 "value": "back"
               }
             ]
@@ -3188,7 +3099,7 @@
             "name": "go",
             "args": [
               {
-                "type": "literal",
+                "type": "string",
                 "value": "url"
               },
               {
@@ -3246,14 +3157,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
@@ -3268,14 +3180,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
@@ -3341,14 +3254,15 @@
           "ast": {
             "type": "command",
             "name": "halt",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "the": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         }
       ]
@@ -5050,7 +4964,7 @@
       ]
     },
     "morph": {
-      "roles": ["patient", "destination", "source"],
+      "roles": ["patient", "destination", "source", "manner"],
       "cases": [
         {
           "name": "no-roles",
@@ -5078,6 +4992,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5097,6 +5015,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -5136,6 +5058,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5148,7 +5074,13 @@
                 "selector": "#source-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         },
         {
@@ -5185,6 +5117,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5204,6 +5140,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -5242,6 +5182,10 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5252,6 +5196,70 @@
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ],
+            "modifiers": {
+              "on": {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-manner",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "morph",
+            "args": [],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-manner",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "source": {
+              "type": "selector",
+              "value": "#source-v",
+              "selectorKind": "id"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "morph",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
                 "selectorType": "id"
               }
             ],
@@ -5342,6 +5350,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -6341,6 +6353,215 @@
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "process": {
+      "roles": ["patient", "manner"],
+      "cases": [
+        {
+          "name": "no-roles",
+          "roles": {},
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": []
+          }
+        },
+        {
+          "name": "all-relevant",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-patient",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ]
+          }
+        },
+        {
+          "name": "without-patient",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-manner",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-manner",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ]
+          }
+        },
+        {
+          "name": "all-probe-roles",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "source": {
+              "type": "selector",
+              "value": "#source-v",
+              "selectorKind": "id"
+            },
+            "scope": {
+              "type": "selector",
+              "value": "#scope-v",
+              "selectorKind": "id"
+            },
+            "event": {
+              "type": "literal",
+              "value": "event-v"
+            },
+            "condition": {
+              "type": "literal",
+              "value": "condition-v"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            },
+            "quantity": {
+              "type": "literal",
+              "value": "quantity-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
+            },
+            "method": {
+              "type": "literal",
+              "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            },
+            "responseType": {
+              "type": "literal",
+              "value": "responseType-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "process",
+            "args": [
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -8524,7 +8745,7 @@
       ]
     },
     "swap": {
-      "roles": ["patient", "destination", "method"],
+      "roles": ["patient", "destination", "method", "manner"],
       "cases": [
         {
           "name": "no-roles",
@@ -8551,6 +8772,10 @@
             "method": {
               "type": "literal",
               "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -8573,7 +8798,13 @@
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         },
         {
@@ -8609,6 +8840,10 @@
             "method": {
               "type": "literal",
               "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -8625,7 +8860,13 @@
                 "selector": "#destination-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         },
         {
@@ -8661,6 +8902,10 @@
             "method": {
               "type": "literal",
               "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -8677,7 +8922,13 @@
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         },
         {
@@ -8711,12 +8962,83 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
             "type": "command",
             "name": "swap",
             "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              },
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-manner",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "swap",
+            "args": [],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-manner",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "method": {
+              "type": "literal",
+              "value": "method-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "swap",
+            "args": [
+              {
+                "type": "literal",
+                "value": "method-v"
+              },
               {
                 "type": "selector",
                 "value": "#destination-v",
@@ -8812,7 +9134,13 @@
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         }
       ]
@@ -10741,12 +11069,134 @@
                 "value": "transitionend"
               },
               "from": {
-                "type": "contextReference",
-                "contextType": "document",
+                "type": "identifier",
                 "name": "document"
               }
             },
             "isBlocking": true
+          }
+        }
+      ]
+    },
+    "when": {
+      "roles": ["condition"],
+      "cases": [
+        {
+          "name": "no-roles",
+          "roles": {},
+          "ast": {
+            "type": "command",
+            "name": "when",
+            "args": []
+          }
+        },
+        {
+          "name": "all-relevant",
+          "roles": {
+            "condition": {
+              "type": "literal",
+              "value": "condition-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "when",
+            "args": [
+              {
+                "type": "literal",
+                "value": "condition-v"
+              }
+            ]
+          }
+        },
+        {
+          "name": "only-condition",
+          "roles": {
+            "condition": {
+              "type": "literal",
+              "value": "condition-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "when",
+            "args": [
+              {
+                "type": "literal",
+                "value": "condition-v"
+              }
+            ]
+          }
+        },
+        {
+          "name": "all-probe-roles",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "source": {
+              "type": "selector",
+              "value": "#source-v",
+              "selectorKind": "id"
+            },
+            "scope": {
+              "type": "selector",
+              "value": "#scope-v",
+              "selectorKind": "id"
+            },
+            "event": {
+              "type": "literal",
+              "value": "event-v"
+            },
+            "condition": {
+              "type": "literal",
+              "value": "condition-v"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            },
+            "quantity": {
+              "type": "literal",
+              "value": "quantity-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
+            },
+            "method": {
+              "type": "literal",
+              "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            },
+            "responseType": {
+              "type": "literal",
+              "value": "responseType-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "when",
+            "args": [
+              {
+                "type": "literal",
+                "value": "condition-v"
+              }
+            ]
           }
         }
       ]

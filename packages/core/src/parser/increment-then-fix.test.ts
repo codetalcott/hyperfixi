@@ -1,7 +1,7 @@
 /**
  * Regression test: increment/decrement with 'then' keyword
  *
- * Fix: Added 'increment' and 'decrement' to skipSemanticParsing list.
+ * Fix: Added 'increment' and 'decrement' to skipSemanticParsing list (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone).
  * The semantic parser's quantity role lacks a markerOverride for 'by',
  * causing it to misinterpret 'then' as a modifier value.
  * The traditional parser handles 'by' correctly via KEYWORDS.BY check.

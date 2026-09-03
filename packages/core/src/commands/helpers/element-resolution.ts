@@ -282,14 +282,12 @@ export function resolvePossessive(
 }
 
 /** Default keyword prepositions to filter out */
-const KEYWORD_PREPOSITIONS = ['on', 'from', 'to', 'in', 'with', 'at'];
 
 /**
  * Options for resolveTargetsFromArgs
  */
 export interface ResolveTargetsOptions {
   /** Filter out keyword prepositions (on, from, to, etc.) - default false */
-  filterPrepositions?: boolean;
   /** Fallback modifier key to check when args are empty (for semantic parsing format) */
   fallbackModifierKey?: string;
 }
@@ -311,7 +309,7 @@ export interface ResolveTargetsOptions {
  * @param evaluator - Expression evaluator with evaluate() method
  * @param context - Execution context
  * @param commandName - Command name for error messages
- * @param options - Additional options (filterPrepositions, fallbackModifierKey)
+ * @param options - Additional options (fallbackModifierKey)
  * @param modifiers - Raw modifiers from semantic parsing (optional, for fallback)
  * @returns Array of resolved HTMLElements
  * @throws Error if no valid targets and context.me is unavailable
@@ -325,17 +323,7 @@ export async function resolveTargetsFromArgs(
   options: ResolveTargetsOptions = {},
   modifiers?: Record<string, unknown>
 ): Promise<HTMLElement[]> {
-  // Filter out keyword prepositions if requested
   let processedArgs = args;
-  if (options.filterPrepositions && args) {
-    processedArgs = args.filter(arg => {
-      const argAny = arg as Record<string, unknown>;
-      if (argAny?.type === 'identifier' && typeof argAny.name === 'string') {
-        return !KEYWORD_PREPOSITIONS.includes((argAny.name as string).toLowerCase());
-      }
-      return true;
-    });
-  }
 
   // Fallback to modifiers if args are empty (semantic parsing format)
   if ((!processedArgs || processedArgs.length === 0) && options.fallbackModifierKey && modifiers) {

@@ -43,8 +43,6 @@ export class ExitCommand extends ControlFlowSignalBase {
   }
 
   protected readonly signalType = 'exit' as const;
-  protected readonly errorMessage = 'EXIT_COMMAND';
-  protected readonly errorFlag = 'isExit';
 }
 
 export const createExitCommand = createFactory(ExitCommand);

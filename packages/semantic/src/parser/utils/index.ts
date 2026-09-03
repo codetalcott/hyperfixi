@@ -17,6 +17,7 @@ export {
   resolveMarkerForRole,
   getAllMarkersForRole,
   getDefaultRoleMarker,
+  ROLE_MARKER_CONCEPTS,
   type RoleSpecWithMarker,
   type ResolvedMarker,
 } from './marker-resolution';

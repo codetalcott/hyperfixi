@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filterable Table - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        .table-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .table-controls input[type="search"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        .table-controls label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        table.products {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        .products th, .products td {
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .products th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .products td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .products tr[data-stock="0"] td { color: #9ca3af; }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Tables & Data</strong> / Filterable Table
+        </div>
+
+        <h1>Filterable Table</h1>
+
+        <div class="description">
+            <strong>Filter server-rendered rows in place — the DOM is the data</strong><br>
+            No client-side row model, no re-rendering: the rows the server sent stay in the
+            document, and filtering toggles the platform's <code>hidden</code> attribute on them.
+        </div>
+
+        <div>
+            <span class="tag">where</span>
+            <span class="tag">@hidden</span>
+            <span class="tag">collections</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <!--
+              One delegated handler on the controls wrapper re-applies BOTH
+              filters on any input/change (input and change events bubble).
+              Two passes, no negation needed: hide everything, then unhide
+              what matches every active condition.
+            -->
+            <div class="table-controls"
+                 _="on input or change
+                      add @hidden to <tbody tr/> in #products
+                      then remove @hidden from <tbody tr/> in #products
+                        where (its textContent.toLowerCase() contains #search's value.toLowerCase()
+                          and (#stock-only's checked is false or its @data-stock as Number > 0))">
+                <input id="search" type="search" placeholder="Filter by name…" aria-label="Filter rows by name">
+                <label><input id="stock-only" type="checkbox"> In stock only</label>
+            </div>
+
+            <!-- Stands in for server-rendered output. Each row carries a stable
+                 id (morph's reconciliation key) and mirrors its sortable /
+                 filterable values as data-* attributes. -->
+            <table id="products" class="products">
+                <thead>
+                    <tr><th>Product</th><th>Category</th><th class="num">Price</th><th class="num">Stock</th></tr>
+                </thead>
+                <tbody>
+                    <tr id="p-mouse"  data-price="9"   data-stock="12" data-category="accessories"><td>Wireless Mouse</td><td>Accessories</td><td class="num">$9</td><td class="num">12</td></tr>
+                    <tr id="p-cable"  data-price="21"  data-stock="0"  data-category="accessories"><td>USB-C Cable</td><td>Accessories</td><td class="num">$21</td><td class="num">0</td></tr>
+                    <tr id="p-board"  data-price="30"  data-stock="5"  data-category="tools"><td>Breadboard Kit</td><td>Tools</td><td class="num">$30</td><td class="num">5</td></tr>
+                    <tr id="p-drill"  data-price="45"  data-stock="0"  data-category="tools"><td>Precision Drill</td><td>Tools</td><td class="num">$45</td><td class="num">0</td></tr>
+                    <tr id="p-server" data-price="100" data-stock="3"  data-category="hardware"><td>Mini Server</td><td>Hardware</td><td class="num">$100</td><td class="num">3</td></tr>
+                </tbody>
+            </table>
+
+            <p style="margin-top: 16px;">
+                <button _="on click
+                             set #search's value to ''
+                             then set #stock-only's checked to false
+                             then remove @hidden from <tbody tr/> in #products">
+                    Reset filters
+                </button>
+            </p>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;div <span class="keyword">_</span>=<span class="string">"on input or change
+      add @hidden to &lt;tbody tr/&gt; in #products
+      then remove @hidden from &lt;tbody tr/&gt; in #products
+        where (its textContent.toLowerCase() contains #search's value.toLowerCase()
+          and (#stock-only's checked is false or its @data-stock as Number &gt; 0))"</span>&gt;
+  &lt;input <span class="keyword">id</span>=<span class="string">"search"</span> <span class="keyword">type</span>=<span class="string">"search"</span>&gt;
+  &lt;label&gt;&lt;input <span class="keyword">id</span>=<span class="string">"stock-only"</span> <span class="keyword">type</span>=<span class="string">"checkbox"</span>&gt; In stock only&lt;/label&gt;
+&lt;/div&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>&lt;tbody tr/&gt; in #products</code> — a live element collection: the actual
+                    <code>&lt;tr&gt;</code> nodes, not copies.</li>
+                <li><code>where its … contains …</code> — the predicate runs once per row with
+                    <code>it</code> bound to that row. Write <code>its @data-stock</code>, never a bare
+                    <code>@data-stock</code> (a bare <code>@attr</code> reads the handler's own element).</li>
+                <li><code>as Number</code> — attribute values are strings; compare numerically on purpose.</li>
+                <li><code>add/remove @hidden</code> — the platform's <code>hidden</code> attribute. Rows never
+                    leave the DOM, assistive tech sees the same state, and the server could just as well have
+                    rendered <code>&lt;tr hidden&gt;</code> itself — filtering is symmetric between server and client.</li>
+                <li>Two passes instead of negation: hide all rows, then unhide the ones matching
+                    <em>every</em> active filter.</li>
+                <li>Parenthesize compound predicates: <code>where (A and B)</code>. Without the
+                    parentheses, <code>X where A and B</code> parses as <code>(X where A) and B</code> —
+                    a boolean, not a filtered collection.</li>
+            </ul>
+
+            <h3>Why <code>@hidden</code> and not <code>show / hide</code>?</h3>
+            <p>
+                <code>show</code>/<code>hide</code> write inline <code>style.display</code> — fine for ephemeral
+                visual toggling. Filtering is <em>state the server should be able to render</em>, so it belongs
+                in markup: the <code>hidden</code> attribute round-trips through HTML, CSS
+                (<code>[hidden]</code>), and the accessibility tree.
+            </p>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+</body>
+</html>

@@ -18,8 +18,8 @@ import { HookRegistry } from '../types/hooks';
 import { evaluateAST } from '../parser/runtime';
 import type { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
-import { isControlFlowError } from './runtime-base';
 import { COMMANDS } from '../parser/parser-constants';
+import type { BodyOps } from '../types/program';
 
 /**
  * Adapter that wraps the canonical `evaluateAST` in the `ExpressionEvaluator`
@@ -38,10 +38,21 @@ const canonicalEvaluator: ExpressionEvaluator = {
 export interface RuntimeCommand {
   name: string;
   execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown>;
+  /**
+   * The ADAPTER's outward contract — `CommandAdapterV2 implements RuntimeCommand`
+   * — so this legitimately stays a `ValidationResult`: it is what
+   * `CommandRegistryV2.validateCommand()` reports to a caller. Do NOT confuse it
+   * with {@link CommandWithParseInput.validate}, which is the boolean type guard
+   * a COMMAND writes and which the adapter lifts into this shape. The two look
+   * like twins and are opposites: one is the report, the other the predicate.
+   */
   validate?(input: unknown): ValidationResult<unknown>;
   metadata?: {
     description: string;
-    examples: string[];
+    // Readonly for the same reason as CommandMetadata's below: the adapter's
+    // getter forwards the command's own `commandMeta<const T>` tuple through.
+    examples: readonly string[];
+    // Already normalized by the getter — a `string[]` syntax is joined with ' | '.
     syntax: string;
   };
 }
@@ -53,9 +64,15 @@ export interface RuntimeCommand {
  */
 export interface CommandMetadata {
   description?: string;
-  examples?: string[];
-  syntax?: string | string[];
-  aliases?: string[];
+  // READONLY arrays, because `commandMeta<const T>` (commands/decorators) infers
+  // readonly tuples by design — the `const` type parameter is what gives it
+  // excess-property and enum checking. Declaring these mutable made every real
+  // command unassignable to this interface, which is the reason `register` could
+  // only ever have been typed `any`. The registry never mutates them; it reads
+  // `aliases` and nothing else.
+  examples?: readonly string[];
+  syntax?: string | readonly string[];
+  aliases?: readonly string[];
   [extra: string]: unknown;
 }
 
@@ -68,6 +85,8 @@ export interface CommandRawInput {
   args: ASTNode[];
   modifiers: Record<string, unknown>;
   commandName?: string;
+  /** Precompiled `block`/`command` arguments, parallel to `args` (Arc 4b). */
+  bodies?: BodyOps;
 }
 
 /**
@@ -85,78 +104,46 @@ export interface CommandWithParseInput {
     evaluator: { evaluate(node: ASTNode, context: ExecutionContext): Promise<unknown> },
     context: ExecutionContext
   ): Promise<unknown>;
-  execute(input: unknown, context: TypedExecutionContext): Promise<unknown>;
-  validate?(input: unknown): ValidationResult<unknown>;
+  /**
+   * The return is `unknown`, not `Promise<unknown>`, because the adapter AWAITS
+   * it (`result = await this.impl.execute(...)`) and several commands are
+   * legitimately synchronous — `GetCommand.execute` returns `GetCommandOutput`
+   * and `RemoveCommand.execute` returns `void`, with `get.test.ts` asserting
+   * that synchronous return directly across eight rows. Declaring
+   * `Promise<unknown>` described neither the callee nor the caller; it merely
+   * went unchecked while `register` took `any`. The PARAMETER list is where this
+   * interface earns its keep — that is what catches a drifted signature.
+   */
+  execute(input: unknown, context: TypedExecutionContext): unknown;
+  /**
+   * Narrowing TYPE GUARD over this command's own input shape — every one of the
+   * 17 implementations is written `validate(input: unknown): input is XInput`,
+   * and 185 assertions across 21 test files pin the boolean result.
+   *
+   * This was declared as `ValidationResult<unknown>` until 2026-08-01, which no
+   * command has ever returned. `CommandAdapterV2.validate()` passed the raw
+   * boolean straight through under that type; the lie went unnoticed only
+   * because its sole consumer, `CommandRegistryV2.validateCommand()`, is called
+   * by nobody. The struct shape is still what the registry method REPORTS — the
+   * adapter wraps at that boundary — but it was never the command contract.
+   */
+  validate?(input: unknown): boolean;
+  /**
+   * `true` when this command consumes `modifiers.when` / `modifiers.where`
+   * ITSELF, and the adapter's generic guard below must leave it alone.
+   *
+   * The guard treats a falsy `when` as "skip the command", which is right for
+   * every command whose `when` is a guard — and wrong for `show`/`hide`, where
+   * upstream defines it as a per-element FILTER that applies the INVERSE action
+   * to the elements it rejects (`show <li/> when <c>` hides the non-matching
+   * ones). Under the generic guard that source would evaluate the condition
+   * once, against a `it` that is not any element, and skip the whole command.
+   *
+   * A flag on the implementation rather than a name list in the adapter: the
+   * command that handles the modifier is the thing that knows it does.
+   */
+  readonly ownsConditionalModifier?: boolean;
   metadata?: CommandMetadata;
-}
-
-/**
- * Context bridge between ExecutionContext and TypedExecutionContext
- * (Copied from V1 - this part is generic and works well)
- */
-export class ContextBridge {
-  /**
-   * Convert ExecutionContext to TypedExecutionContext
-   */
-  static toTyped(context: ExecutionContext): TypedExecutionContext {
-    return {
-      // Core context elements
-      me: context.me,
-      // Owner of `:name` element scope. Must be propagated (not derived from
-      // `me`) so element-scoped vars stay with the handler's element even when
-      // `me` is retargeted — e.g. inside a `tell` block, where `me` becomes the
-      // told element but `:name` must remain bound to the owner.
-      ...(context.owner !== undefined && { owner: context.owner }),
-      it: context.it,
-      you: context.you,
-      result: context.result,
-      ...(context.event !== undefined && { event: context.event }),
-
-      // Variable storage
-      variables: context.variables || new Map(),
-      locals: context.locals || new Map(),
-      globals: context.globals || new Map(),
-
-      // Runtime state
-      ...(context.events !== undefined && { events: context.events }),
-      meta: context.meta || {},
-
-      // Bundle-supplied ExpressionRegistry. Commands like `call` invoke
-      // `evaluateAST(node, context)` directly inside their `execute()`, which
-      // requires `context.registry` for named-expression dispatch
-      // (elementWithSelector, addition, etc.). Propagate it through so the
-      // typed context isn't a registry-less downgrade of the original.
-      ...(context.registry !== undefined && { registry: context.registry }),
-
-      // Enhanced features for typed commands
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'strict',
-      evaluationHistory: [],
-    };
-  }
-
-  /**
-   * Update ExecutionContext from TypedExecutionContext
-   */
-  static fromTyped(
-    typedContext: TypedExecutionContext,
-    originalContext: ExecutionContext
-  ): ExecutionContext {
-    return {
-      ...originalContext,
-      me: typedContext.me,
-      it: typedContext.it,
-      you: typedContext.you,
-      result: typedContext.result,
-      ...(typedContext.event !== undefined && { event: typedContext.event }),
-      ...(typedContext.variables !== undefined && { variables: typedContext.variables }),
-      locals: typedContext.locals,
-      globals: typedContext.globals,
-      ...(typedContext.events !== undefined && { events: typedContext.events }),
-      ...(typedContext.meta !== undefined && { meta: typedContext.meta }),
-    };
-  }
 }
 
 /**
@@ -218,7 +205,10 @@ export class CommandAdapterV2 implements RuntimeCommand {
     return {
       description: this.impl.metadata?.description || '',
       examples: this.impl.metadata?.examples || [],
-      syntax: Array.isArray(syntax) ? syntax.join(' | ') : syntax || '',
+      // `typeof`, not `Array.isArray`: the latter narrows to `any[]` and leaves
+      // `readonly string[]` in the else branch, so the getter's own return type
+      // stopped matching `RuntimeCommand.metadata.syntax: string`.
+      syntax: typeof syntax === 'string' ? syntax : syntax ? syntax.join(' | ') : '',
     };
   }
 
@@ -261,8 +251,12 @@ export class CommandAdapterV2 implements RuntimeCommand {
         return undefined;
       }
 
-      // Convert to typed context
-      const typedContext = ContextBridge.toTyped(context);
+      // No bridge copy any more (Arc 4c step 2): the command sees the caller's
+      // context object. The one default the copy used to supply stays.
+      if (!context.variables) {
+        (context as { variables?: Map<string, unknown> }).variables = new Map();
+      }
+      const typedContext = context;
 
       // Parse input arguments. The shape is command-specific; the adapter
       // treats it opaquely and the command's own execute() narrows it.
@@ -279,9 +273,14 @@ export class CommandAdapterV2 implements RuntimeCommand {
         ) {
           // Check when/where conditional modifiers before execution
           // Both 'when' and 'where' are treated as identical conditional guards
+          //
+          // Unless the command owns the modifier — see
+          // `CommandWithParseInput.ownsConditionalModifier`. `show`/`hide` do:
+          // their `when` filters the target set per element instead of gating
+          // the command, so consuming it here would skip the command outright.
           const mods = rawInput.modifiers as Record<string, unknown> | undefined;
           const whenCondition = (mods?.when || mods?.where) as ASTNode | undefined;
-          if (whenCondition) {
+          if (whenCondition && !this.impl.ownsConditionalModifier) {
             const conditionResult = await evaluateAST(whenCondition, context);
             if (!conditionResult) {
               debug.command(
@@ -298,6 +297,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
               modifiers: mods || {},
               // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
               commandName: rawInput.commandName as string | undefined,
+              bodies: rawInput.bodies as BodyOps | undefined,
             },
             canonicalEvaluator,
             context
@@ -334,9 +334,6 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       debug.command(`CommandAdapterV2: Command result:`, result);
 
-      // Update original context with changes from typed context
-      Object.assign(context, ContextBridge.fromTyped(typedContext, context));
-
       // HOOK: afterExecute
       if (this.hookRegistry) {
         await this.hookRegistry.runAfterExecute(hookCtx, result);
@@ -344,9 +341,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       return result;
     } catch (error) {
-      if (!isControlFlowError(error)) {
-        debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
-      }
+      debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
 
       // HOOK: onError - allow hooks to transform the error
       if (this.hookRegistry && error instanceof Error) {
@@ -358,11 +353,16 @@ export class CommandAdapterV2 implements RuntimeCommand {
     }
   }
 
+  /**
+   * Lift a command's boolean type guard into the `ValidationResult` shape the
+   * registry reports. The wrap happens HERE, at the boundary, rather than in 17
+   * command bodies — the guard is what commands are written to return and what
+   * their tests assert. Before 2026-08-01 this passed the raw boolean straight
+   * through while promising a struct.
+   */
   validate(input: unknown): ValidationResult<unknown> {
-    if (this.impl.validate) {
-      return this.impl.validate(input);
-    }
-    return { isValid: true, errors: [], suggestions: [] };
+    const isValid = this.impl.validate ? this.impl.validate(input) : true;
+    return { isValid, errors: [], suggestions: [] };
   }
 }
 
@@ -413,12 +413,21 @@ export class CommandRegistryV2 {
   }
 
   /**
-   * Register a command (V1 or V2 format)
-   * Uses 'any' to accept all command implementations with compatible structure
-   * Also registers any aliases defined in metadata
+   * Register a command, and any aliases its metadata declares.
+   *
+   * Typed to the interface the registry actually stores. It took `any` until
+   * 2026-08-01, which meant all 55 manifest-driven registrations were unchecked
+   * end to end — a drifted `execute` signature compiled silently, and the
+   * `Map<string, CommandWithParseInput>` below asserted a shape nothing had
+   * verified. Typing it required fixing what the interface said, not what the
+   * commands do: readonly metadata tuples and a non-Promise `execute` return.
+   *
+   * The `metadata.name` fallback is kept because the error message promises it,
+   * but no in-tree command relies on it: `metadata` is index-signature typed, so
+   * that branch yields `unknown` and the runtime string check is what narrows.
    */
-  register(impl: any): void {
-    const rawName = impl.name || impl.metadata?.name;
+  register(impl: CommandWithParseInput): void {
+    const rawName: unknown = impl.name || impl.metadata?.name;
     if (!rawName || typeof rawName !== 'string') {
       throw new Error(
         `Cannot register command: no name found. ` +

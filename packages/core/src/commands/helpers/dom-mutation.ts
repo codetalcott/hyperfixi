@@ -10,7 +10,7 @@
  * - Safe DOM manipulation utilities
  */
 
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isInsertableNode } from '../../utils/element-check';
 
 /**
  * Extended insert positions (standard DOM InsertPosition plus 'replace')
@@ -98,7 +98,7 @@ export function looksLikeHTML(str: string): boolean {
  */
 export function insertContent(
   target: HTMLElement,
-  content: string | HTMLElement,
+  content: string | Node,
   position: ContentInsertPosition
 ): void {
   if (position === 'replace') {
@@ -106,10 +106,13 @@ export function insertContent(
     return;
   }
 
-  if (isHTMLElement(content)) {
+  // Any insertable Node — Element, Text, or the DocumentFragment that
+  // `fetch … as html` produces — goes through the node path. Only strings
+  // are parsed/escaped as markup.
+  if (isInsertableNode(content)) {
     insertElement(target, content, position);
   } else {
-    insertText(target, content, position);
+    insertText(target, content as string, position);
   }
 }
 
@@ -122,7 +125,7 @@ export function insertContent(
  */
 export function insertContentSemantic(
   target: HTMLElement,
-  content: string | HTMLElement,
+  content: string | Node,
   position: SemanticPosition
 ): void {
   insertContent(target, content, toInsertPosition(position));
@@ -134,8 +137,8 @@ export function insertContentSemantic(
  * @param target - Target element
  * @param content - New content
  */
-function insertReplace(target: HTMLElement, content: string | HTMLElement): void {
-  if (isHTMLElement(content)) {
+function insertReplace(target: HTMLElement, content: string | Node): void {
+  if (isInsertableNode(content)) {
     target.innerHTML = '';
     target.appendChild(content);
   } else {
@@ -154,11 +157,7 @@ function insertReplace(target: HTMLElement, content: string | HTMLElement): void
  * @param element - Element to insert
  * @param position - Insert position
  */
-function insertElement(
-  target: HTMLElement,
-  element: HTMLElement,
-  position: ContentInsertPosition
-): void {
+function insertElement(target: HTMLElement, element: Node, position: ContentInsertPosition): void {
   switch (position) {
     case 'beforebegin':
       target.parentElement?.insertBefore(element, target);
@@ -203,6 +202,87 @@ function insertText(target: HTMLElement, content: string, position: ContentInser
     target.insertAdjacentHTML(domPosition, content);
   } else {
     target.insertAdjacentText(domPosition, content);
+  }
+}
+
+/**
+ * Move one element to a position, preserving state when the platform can.
+ *
+ * Prefers `Node.moveBefore()` (atomic move — keeps focus, selection, iframe
+ * and playback state) when the parent implements it and the element is
+ * connected; any spec edge (cross-root, disconnected node) falls back to
+ * `insertBefore`, which still MOVES the node rather than serializing it.
+ */
+function moveOrInsert(parent: HTMLElement, element: HTMLElement, ref: Node | null): void {
+  const p = parent as HTMLElement & { moveBefore?: (node: Node, ref: Node | null) => void };
+  if (typeof p.moveBefore === 'function' && element.isConnected && parent.isConnected) {
+    try {
+      p.moveBefore(element, ref);
+      return;
+    } catch {
+      // cross-root or other spec edge — insertBefore below still moves it
+    }
+  }
+  parent.insertBefore(element, ref);
+}
+
+/**
+ * Insert (move) an ordered array of elements relative to a target.
+ *
+ * The elements are MOVED, never cloned or serialized — this is the write-back
+ * half of the collection algebra: `put <tr/> in me sorted by … at end of me`
+ * reorders the live rows in place, preserving focus and input state.
+ *
+ * Array order is preserved at every position:
+ * - `beforeend`  — appended in order (THE reorder case: appendChild on an
+ *                  existing child moves it, so a full sorted set = a reorder)
+ * - `afterbegin` — the array ends up first, in order, before prior children
+ * - `beforebegin`/`afterend` — the array sits before/after the target, in order
+ * - `replace`    — DESTRUCTIVE: target is cleared first, so children not in
+ *                  the array are removed (consistent with `put … into`)
+ *
+ * @param target - Element the position is relative to
+ * @param elements - Elements to insert, in the order they should appear
+ * @param position - Insert position
+ */
+export function insertElementsInOrder(
+  target: HTMLElement,
+  elements: readonly HTMLElement[],
+  position: ContentInsertPosition
+): void {
+  switch (position) {
+    case 'beforeend':
+      for (const el of elements) moveOrInsert(target, el, null);
+      break;
+    case 'afterbegin':
+      // Reversed, re-reading firstChild each time: the array lands at the
+      // front in its own order even when its members are already children.
+      for (let i = elements.length - 1; i >= 0; i--) {
+        moveOrInsert(target, elements[i], target.firstChild);
+      }
+      break;
+    case 'beforebegin': {
+      const parent = target.parentElement;
+      if (!parent) return; // same silent no-op contract as insertElement
+      for (const el of elements) moveOrInsert(parent, el, target);
+      break;
+    }
+    case 'afterend': {
+      const parent = target.parentElement;
+      if (!parent) return;
+      // Reversed, re-reading nextSibling each time — immune to the moved
+      // elements themselves being the original next sibling.
+      for (let i = elements.length - 1; i >= 0; i--) {
+        moveOrInsert(parent, elements[i], target.nextSibling);
+      }
+      break;
+    }
+    case 'replace':
+      // innerHTML = '' detaches current children; JS refs (including members
+      // of `elements` that were children) stay alive and re-append below.
+      target.innerHTML = '';
+      for (const el of elements) moveOrInsert(target, el, null);
+      break;
   }
 }
 

@@ -12,6 +12,7 @@ Real-world HTML-first examples showcasing declarative LokaScript patterns.
 - [Animation and Timing](#animation-and-timing)
 - [Modal Dialogs](#modal-dialogs)
 - [Dynamic Lists](#dynamic-lists)
+- [Tables and Data](#tables-and-data)
 - [Multi-Element Coordination](#multi-element-coordination)
 - [Conditional Logic](#conditional-logic)
 - [Fetch and AJAX](#fetch-and-ajax)
@@ -676,6 +677,54 @@ Animate item removal:
   }
 </style>
 ```
+
+---
+
+## Tables and Data
+
+### Filter Rows In Place
+
+Server-rendered rows stay in the DOM; filtering toggles the platform's `hidden`
+attribute on them. No client-side row model, no re-rendering:
+
+```html
+<input
+  id="search"
+  type="search"
+  _="on input
+     add @hidden to <tbody tr/> in #products
+     then remove @hidden from <tbody tr/> in #products
+       where its textContent.toLowerCase() contains my value.toLowerCase()"
+/>
+
+<table id="products">
+  <tbody>
+    <tr id="p-1" data-price="9">
+      <td>Wireless Mouse</td>
+    </tr>
+    <tr id="p-2" data-price="21">
+      <td>USB-C Cable</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+Three rules keep this idiom honest:
+
+- **Write `its @attr`, never a bare `@attr`, inside `where`/`sorted by`** — a bare
+  `@attr` reads the handler's own element, not the row being tested.
+- **Attribute values are strings** — compare numerically with `as Number`:
+  `where its @data-price as Number > 20`.
+- **Parenthesize compound predicates** — `where (A and B)`. Without parentheses,
+  `X where A and B` parses as `(X where A) and B`, a boolean.
+
+**Visibility convention:** `show`/`hide` write inline `style.display` — use them for
+ephemeral visual toggling. Filtering is _state the server should be able to render_,
+so it belongs in markup: the `hidden` attribute round-trips through HTML
+(`<tr hidden>`), CSS (`[hidden]`), and the accessibility tree, and `remove @hidden`
+restores rows without touching inline styles.
+
+Live demo: `examples/tables-and-data/filterable-table.html`.
 
 ---
 

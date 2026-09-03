@@ -103,7 +103,6 @@ export type ActionType =
   | 'render'
   // Advanced
   | 'js'
-  | 'async'
   | 'tell'
   | 'default'
   | 'init'
@@ -111,6 +110,7 @@ export type ActionType =
   // Reactivity
   | 'bind'
   | 'live'
+  | 'when'
   // Realtime / streaming
   | 'eventsource'
   | 'socket'
@@ -132,36 +132,80 @@ export type SemanticValue =
   LiteralValue | SelectorValue | ReferenceValue | PropertyPathValue | ExpressionValue | FlagValue;
 
 /**
+ * Set on a value the parser injected from a schema/extraction-rule `default`
+ * rather than captured from the source text. Renderers suppress implicit
+ * values (they were never written); authored values must survive round-trips
+ * — `add .active to me` renders its `to me`, bare `add .active` stays bare.
+ */
+export interface ImplicitTaggable {
+  readonly implicit?: true;
+}
+
+/**
+ * Where in the parsed INPUT this value's surface text sat.
+ *
+ * Optional and advisory: a value the parser materialized from a schema
+ * `default` was never written down, and several capture paths build a value
+ * from a synthesized string rather than a token run — those carry no position,
+ * and an absent span is honest where a guessed one would not be.
+ *
+ * The offsets are relative to the string handed to the parser, NOT to any
+ * larger document. A caller that parsed a SLICE (as `@hyperfixi/core` does —
+ * it hands the semantic path everything from the command token onward) owns
+ * the translation to absolute offsets.
+ */
+export interface SourceSpanned {
+  readonly position?: SourcePosition;
+}
+
+/**
  * Expected value types for role tokens.
  * Shared between RoleSpec (command-schemas) and RolePatternToken.
  */
 export type ExpectedType = SemanticValue['type'];
 
-export interface LiteralValue {
+export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
 }
 
-export interface SelectorValue {
+export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'selector';
   readonly value: string; // The CSS selector: #id, .class, [attr], etc.
   readonly selectorKind: 'id' | 'class' | 'attribute' | 'element' | 'complex';
 }
 
-export interface ReferenceValue {
+export interface ReferenceValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'reference';
   readonly value:
     'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body' | 'document' | 'window' | 'detail';
 }
 
-export interface PropertyPathValue {
+export interface PropertyPathValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
+  /**
+   * Which SURFACE the author wrote, when the parser knows it.
+   *
+   * `#input.value` and `#input's value` are the same access semantically and
+   * were the same value structurally, so the renderer had to guess — and it
+   * guessed possessive for both, turning `#input.value` into es `#input de
+   * valor`, which no target parser binds back as a property path.
+   *
+   * A renderer-side heuristic cannot recover this: `its.name` (dot) and `my
+   * value` (possessive) both have `reference` objects, so the object's type
+   * does not discriminate. Recording it at the one place that knows — the
+   * matcher, which matched a specific surface — is the only honest fix.
+   *
+   * Optional: absent means "not recorded", and the renderer keeps its existing
+   * possessive construction, so values built anywhere else are unaffected.
+   */
+  readonly access?: 'dot' | 'possessive';
 }
 
-export interface ExpressionValue {
+export interface ExpressionValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
@@ -171,7 +215,7 @@ export interface ExpressionValue {
  * A boolean flag value — present (+flag) or negated (~flag).
  * Used in declarative domains for no-value attributes like primary-key, not-null.
  */
-export interface FlagValue {
+export interface FlagValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'flag';
   readonly name: string;
   readonly enabled: boolean;
@@ -349,7 +393,7 @@ export interface DefSemanticNode extends SemanticNode {
 }
 
 /** Block-structured feature actions — see {@link FeatureSemanticNode}. */
-export type FeatureAction = 'live' | 'eventsource' | 'socket' | 'worker' | 'intercept';
+export type FeatureAction = 'live' | 'when' | 'eventsource' | 'socket' | 'worker' | 'intercept';
 
 // (kept in the union above so `FeatureSemanticNode.action` covers every feature
 // the fold handles; `worker`'s body is `def` sub-blocks rather than handlers.)
@@ -360,12 +404,22 @@ export type FeatureAction = 'live' | 'eventsource' | 'socket' | 'worker' | 'inte
  * … end end`, `socket Name url … end`, `worker Name … end end`, `intercept …
  * end`).
  *
- * These five declare `roles: []` + `bareKeyword: true` in their command schema,
- * so the generated pattern is a lone keyword literal. Before the structural
- * layer learned about them they matched that bare-keyword pattern at Stage 2 and
- * their entire body was dropped — at a vacuous confidence 1.0, because
- * `scoreRoleCoverage` returns 1 when a pattern declares no roles. This node kind
- * is what the fold produces instead; confidence is derived from the body.
+ * Five of them declare `roles: []` + `bareKeyword: true` in their command
+ * schema, so the generated pattern is a lone keyword literal. Before the
+ * structural layer learned about them they matched that bare-keyword pattern at
+ * Stage 2 and their entire body was dropped — at a vacuous confidence 1.0,
+ * because `scoreRoleCoverage` returns 1 when a pattern declares no roles. This
+ * node kind is what the fold produces instead; confidence is derived from the
+ * body.
+ *
+ * The reactive observer `when <expr> changes … end` is the one feature WITH a
+ * head role: the watched expression lives in `roles.condition` (the same role
+ * the `if`/`unless`/`while` heads use). Its schema is `structuralOnly` — no
+ * pattern is generated for it, because the REQUIRED trailing `changes` literal
+ * is what bounds the multi-token expression and what keeps the reactive head
+ * apart from the temporal `when {event}` handler patterns. Before the fold
+ * learned it, those handler patterns claimed it and kept only the FIRST token
+ * of the expression as the "event" (`when $a or $b changes` → `on $a`).
  *
  * `intercept` is the odd one out: its body is a configuration DSL (`precache …`,
  * `on /api/* use network-first`, `offline fallback …`), not hyperscript commands,
@@ -458,12 +512,32 @@ export interface RolePatternToken {
   readonly optional?: boolean;
   /** Expected value types (for validation) */
   readonly expectedTypes?: Array<ExpectedType>;
+  /**
+   * Mirrors the schema's `RoleSpec.valueShape` (see `generators/command-schemas.ts`):
+   * the slot's surface form is unambiguous on its own. Carried onto the pattern
+   * token because the MATCHER needs it too, not just the confidence model —
+   * `'keyword'` slots hold a fixed keyword phrase and are therefore exempt from
+   * the trailing-slot verb guard, which exists for marker-less slots that could
+   * swallow the next command's verb.
+   */
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object';
 }
 
 export interface GroupPatternToken {
   readonly type: 'group';
   readonly tokens: PatternToken[];
   readonly optional?: boolean;
+  /**
+   * The group is optional for PARSING but belongs in canonical output.
+   *
+   * Set on the marker-only groups `profile.markersOptional` produces (tr, whose
+   * case suffixes may be dropped colloquially, so the parse side must accept
+   * both forms). Without it the renderer drops them with every other role-less
+   * optional group, and tr rendered `add .selected to #item` as
+   * `#item .selected ekle` — no case markers at all, where the corpus has
+   * `#item e .selected i ekle`.
+   */
+  readonly renderRequired?: boolean;
 }
 
 /**
@@ -579,6 +653,14 @@ export interface PatternMatchResult {
   readonly captured: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly consumedTokens: number;
   readonly confidence: number; // 0-1, how well the pattern matched
+  /**
+   * Stream index at which each captured role's value STARTED, for callers that
+   * need to re-read a slot's own span rather than the tail after it. Populated
+   * on the same success path as `captured`, so it has exactly the same fidelity
+   * (a role left behind by a rolled-back group survives in both maps or in
+   * neither). Consumed by the fused-handler body rewind in `semantic-parser`.
+   */
+  readonly roleStarts?: ReadonlyMap<SemanticRole, number>;
 }
 
 /**
@@ -707,10 +789,37 @@ export function createReference(value: ReferenceValue['value']): ReferenceValue 
 }
 
 /**
- * Create a property path semantic value.
+ * Stamp a captured value with the span of the token run it came from.
+ *
+ * A no-op when the caller has no span, so an absent
+ * {@link SourceSpanned.position} keeps meaning "not recorded" rather than
+ * "offset zero". Called from `PatternMatcher.stampCaptureSpan`, which is the
+ * single place a role acquires one.
  */
-export function createPropertyPath(object: SemanticValue, property: string): PropertyPathValue {
-  return { type: 'property-path', object, property };
+export function withPosition<V extends SemanticValue>(
+  value: V,
+  position: SourcePosition | undefined
+): V {
+  return position ? ({ ...value, position } as V) : value;
+}
+
+/**
+ * Create a property path semantic value.
+ *
+ * `access` records which surface was matched (`#input.value` vs `#input's
+ * value`) so the renderer can reproduce it instead of guessing; see
+ * `PropertyPathValue.access`. Omit it when the caller genuinely does not know —
+ * the renderer then falls back to the possessive construction it has always
+ * used.
+ */
+export function createPropertyPath(
+  object: SemanticValue,
+  property: string,
+  access?: PropertyPathValue['access']
+): PropertyPathValue {
+  return access
+    ? { type: 'property-path', object, property, access }
+    : { type: 'property-path', object, property };
 }
 
 /**
@@ -828,12 +937,14 @@ export function createFeatureNode(
   action: FeatureAction,
   body: SemanticNode[],
   name?: string,
-  metadata?: SemanticMetadata
+  metadata?: SemanticMetadata,
+  /** Head roles — only the reactive `when` carries one (`condition`). */
+  roles?: ReadonlyMap<SemanticRole, SemanticValue>
 ): FeatureSemanticNode {
   const node: FeatureSemanticNode = {
     kind: 'feature',
     action,
-    roles: new Map(),
+    roles: roles ?? new Map(),
     body,
   };
   if (name !== undefined) {

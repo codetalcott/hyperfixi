@@ -37,7 +37,7 @@ jobs:
         run: |
           PACKAGES="${{ github.event.inputs.packages }}"
           if [ "$PACKAGES" = "all" ]; then
-            PACKAGES="intent,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,domain-sql,domain-bdd,domain-llm,domain-todo,domain-behaviorspec,domain-jsx,domain-flow,domain-voice,domain-learn,domain-config,aot-compiler,compilation-service,planner,mcp-server,vite-plugin,behaviors,reactivity,components,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
+            PACKAGES="intent,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,aot-compiler,compilation-service,planner,mcp-server,vite-plugin,behaviors,reactivity,components,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
           fi
           echo "Checking packages: $PACKAGES"
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
@@ -102,20 +102,16 @@ jobs:
           echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
 
           # Build in dependency order (matches ci.yml and publish.yml).
-          # semantic MUST precede the domain-* packages: their vocab modules
-          # import @lokascript/semantic/languages/*, so domain-bdd's
-          # build:types fails without semantic's dist. This list used to have
-          # domain-* first, which produced four spurious "⚠ build failed"
-          # warnings on every run (the packages then built fine in the later
-          # Build check step, once semantic/dist existed).
-          # The PRIVATE packages (domain-toolkit, mcp-multilingual-intent,
-          # developer-tools) must build too — publish.yml's list says why:
-          # their dist/ must exist for tsc to resolve cross-package imports
-          # (mcp-server typechecks against @hyperfixi/developer-tools), and
-          # developer-tools' dist ships the prism-hyperscript-i18n asset the
-          # bundle-compatibility harness pages load (validation v5: every
-          # bundle "failed" on that one missing asset).
-          BUILD_ORDER="intent framework semantic domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn domain-toolkit domain-config behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server mcp-multilingual-intent developer-tools server-bridge types-browser vite-plugin language-server reactivity realtime components speech intent-element htmx-adapter"
+          # The PRIVATE package developer-tools must build too — publish.yml's
+          # list says why: its dist/ must exist for tsc to resolve
+          # cross-package imports (mcp-server typechecks against
+          # @hyperfixi/developer-tools), and developer-tools' dist ships the
+          # prism-hyperscript-i18n asset the bundle-compatibility harness
+          # pages load (validation v5: every bundle "failed" on that one
+          # missing asset). The domain-* family + mcp-multilingual-intent
+          # moved to lokascript-domains in #909 — mirror such deletions here
+          # by hand; nothing guards this list.
+          BUILD_ORDER="intent framework semantic behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server developer-tools server-bridge types-browser vite-plugin language-server reactivity realtime components speech intent-element htmx-adapter"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then
@@ -335,7 +331,6 @@ jobs:
           # graph: hyperfixi.js measured ~299 KB gz, hx-v4 ~311 KB gz. These
           # ceilings exist specifically to catch RE-duplication (any change
           # that re-inlines a second core/semantic blows straight past them).
-          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
           # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
           # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
           # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
@@ -346,21 +341,27 @@ jobs:
           # first run; 24000 restores roughly the ~2 KB of headroom the old
           # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
           MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
-          MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
-          MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
+          # Raised 340000 -> 355000 / 350000 -> 368000 on 2026-08-26 (PR #931,
+          # per-language render vocabulary). Both bundles expose translate /
+          # getAllTranslations for 24 languages, so they carry the new
+          # lexicons/{code} data: measured +19 KB gz each (browser 310.8 ->
+          # 330.3, hx-v4 322.4 -> 350.9), which put hx-v4 925 B over the old
+          # ceiling.
+          # These ceilings exist to catch RE-duplication, so before raising them
+          # the growth was checked against exactly that: the all-24 lexicon costs
+          # ~19 KB gz as ONE copy, and both bundles grew by ~19 KB, not ~38 KB.
+          # Spot-checks that first looked like doubling were not: `atributos` x2
+          # is es + pt (which share the word), and the extra `desenfocar` /
+          # `dobleclic` hits are the pre-existing eventNameTranslations table and
+          # tokenizer EXTRAS, which are different structures, not copies.
+          # The lexicon is also absent from minimal/standard/classic, which parse
+          # without rendering — it tree-shakes, so only these two pay.
+          # New numbers keep ~5% headroom, matching the intent of the Arc E
+          # ceiling bump. Mirrored in ci.yml and pre-publish-check.yml.
+          MAX_BROWSER=355000      # 355 KB (hyperfixi.js actual ~330 KB gz with lexicons)
+          MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
 
           failed=0
-
-          # Check lite bundle
-          if [[ -f "packages/core/dist/hyperfixi-lite.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-lite.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_LITE" ]]; then
-              echo "❌ hyperfixi-lite.js (${size} bytes gzip) exceeds limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
-              failed=1
-            else
-              echo "✅ hyperfixi-lite.js (${size} bytes gzip) within limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
 
           # Check hybrid bundles. hyperfixi-hx.js is listed explicitly: it
           # shares the hybrid ceiling but matches no hyperfixi-hybrid-* glob

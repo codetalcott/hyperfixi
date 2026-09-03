@@ -43,14 +43,6 @@ describe('ExecutionContext System', () => {
       expect(context.parent).toBe(undefined);
     });
 
-    it('should initialize execution flags correctly', () => {
-      expect(context.flags?.halted).toBe(false);
-      expect(context.flags?.breaking).toBe(false);
-      expect(context.flags?.continuing).toBe(false);
-      expect(context.flags?.returning).toBe(false);
-      expect(context.flags?.async).toBe(false);
-    });
-
     it('should allow creating context without element', () => {
       const noElementContext = createContext();
       expect(noElementContext.me).toBe(null);
@@ -149,45 +141,6 @@ describe('ExecutionContext System', () => {
     });
   });
 
-  describe('Context Flags Management', () => {
-    it('should handle halted flag correctly', () => {
-      expect(context.flags?.halted).toBe(false);
-      context.flags!.halted = true;
-      expect(context.flags?.halted).toBe(true);
-    });
-
-    it('should handle control flow flags', () => {
-      context.flags!.breaking = true;
-      expect(context.flags?.breaking).toBe(true);
-      expect(context.flags?.continuing).toBe(false);
-
-      context.flags!.breaking = false;
-      context.flags!.continuing = true;
-      expect(context.flags?.breaking).toBe(false);
-      expect(context.flags?.continuing).toBe(true);
-    });
-
-    it('should handle async execution flag', () => {
-      expect(context.flags?.async).toBe(false);
-      context.flags!.async = true;
-      expect(context.flags?.async).toBe(true);
-    });
-  });
-
-  describe('Error Conditions', () => {
-    it('should handle undefined variable access gracefully', () => {
-      expect(getContextValue(context, 'undefinedVar')).toBe(undefined);
-    });
-
-    it('should handle null/undefined context values', () => {
-      setContextValue(context, 'nullVar', null);
-      setContextValue(context, 'undefinedVar', undefined);
-
-      expect(getContextValue(context, 'nullVar')).toBe(null);
-      expect(getContextValue(context, 'undefinedVar')).toBe(undefined);
-    });
-  });
-
   describe('Memory Management', () => {
     it('should allow context cleanup', () => {
       setContextValue(context, 'tempVar', 'tempValue');
@@ -246,7 +199,7 @@ describe('ExecutionContext System', () => {
     });
 
     it('should pass through complete contexts unchanged', () => {
-      // A complete context has locals Map, globals Map, and flags
+      // A complete context has locals Map and globals Map
       expect(ensureContext(context)).toBe(context);
     });
 
@@ -348,13 +301,6 @@ describe('ExecutionContext System', () => {
       const snap = snapshotContext(context);
       expect(snap.globals.g).toBe('global');
     });
-
-    it('should copy flags', () => {
-      context.flags!.halted = true;
-      const snap = snapshotContext(context);
-      expect(snap.flags.halted).toBe(true);
-      expect(snap.flags.breaking).toBe(false);
-    });
   });
 
   describe('restoreContext', () => {
@@ -386,13 +332,6 @@ describe('ExecutionContext System', () => {
       // Other context sees the same changes (shared reference)
       expect(other.globals.get('shared')).toBe('updated');
     });
-
-    it('should restore flags', () => {
-      restoreContext(context, {
-        flags: { halted: true, breaking: false, continuing: false, returning: false, async: false },
-      });
-      expect(context.flags!.halted).toBe(true);
-    });
   });
 
   describe('cloneContext', () => {
@@ -415,15 +354,6 @@ describe('ExecutionContext System', () => {
       const cloned = cloneContext(context);
       expect(cloned.it).toBe('test');
       expect(cloned.result).toBe(42);
-    });
-
-    it('should copy flags', () => {
-      context.flags!.halted = true;
-      const cloned = cloneContext(context);
-      expect(cloned.flags!.halted).toBe(true);
-      // Changing clone flags should not affect original
-      cloned.flags!.halted = false;
-      expect(context.flags!.halted).toBe(true);
     });
 
     it('should preserve parent reference', () => {

@@ -4,7 +4,7 @@
  * Static documentation and example resources available to MCP clients.
  */
 
-import type { Resource } from '@modelcontextprotocol/sdk/types.js';
+import type { Resource } from '@modelcontextprotocol/server';
 import {
   getCommandsReference,
   getExpressionsGuide,

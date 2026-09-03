@@ -5,7 +5,7 @@
  * These tools help LLMs understand hyperscript code structure and quality.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Tool Definitions

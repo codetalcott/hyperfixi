@@ -5,7 +5,7 @@
  * These tools help LLMs generate correct hyperscript by providing examples.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Tool Definitions

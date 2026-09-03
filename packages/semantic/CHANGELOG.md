@@ -5,6 +5,14 @@ All notable changes to @lokascript/semantic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Superseded by the root changelog.** Every package in this monorepo publishes
+> in lockstep at the root version, and the entries below use an older
+> per-package numbering that no published version ever matched. They are kept
+> for the migration notes they carry; they are not a record of recent releases.
+> **For anything since, see
+> [the monorepo CHANGELOG](https://github.com/codetalcott/hyperfixi/blob/main/CHANGELOG.md)**
+> and [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+
 ## [3.0.0] - 2026-05-19
 
 ### BREAKING CHANGES

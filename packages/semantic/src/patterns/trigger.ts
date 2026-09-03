@@ -62,25 +62,49 @@ function getTriggerPatternsEn(): LanguagePattern[] {
 function getTriggerPatternsZh(): LanguagePattern[] {
   return [
     {
-      // Verb-first BA: 触发 把 {event}. The i18n transformer marks trigger's
-      // leading argument with 把 (`当 加载 时 触发 把 init`); the generated
-      // `触发 {event}` has no 把, so the trailing trigger dropped. Same
-      // BA-tolerance family as wait-zh-ba / set-zh-vba.
+      // Verb-first BA: 触发 把 {event} 在 {destination}. The i18n transformer
+      // marks trigger's leading argument with 把 (`当 加载 时 触发 把 init`); the
+      // generated `触发 {event}` has no 把, so the trailing trigger dropped. Same
+      // BA-tolerance family as wait-zh-ba / set-zh-vba / send-zh-ba.
+      //
+      // The destination group is NOT decoration. This pattern outranks both
+      // generated ones (priority 105), so the RENDERER picks it too — and while
+      // it had no destination slot it emitted `触发 把 sortable:start`, silently
+      // dropping an AUTHORED `on me`/`on #panel` in every zh render. That is
+      // the third time a pattern written only to READ i18n output became the
+      // surface the renderer emits (after go-qu-url-dest #987 and remove-bn-full
+      // #988); send-zh-ba, its exact twin, has carried the group all along.
       id: 'trigger-zh-ba',
       language: 'zh',
       command: 'trigger',
       priority: 105,
       template: {
-        format: '触发 把 {event}',
+        format: '触发 把 {event} 在 {destination}',
         tokens: [
           { type: 'literal', value: '触发', alternatives: ['觸發'] },
           { type: 'literal', value: '把' },
           { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: '在', alternatives: ['到', '于'] },
+              {
+                type: 'role',
+                role: 'destination',
+                expectedTypes: ['selector', 'reference', 'expression'],
+              },
+            ],
+          },
         ],
       },
       extraction: {
         event: { position: 2 },
-        destination: { default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: '在',
+          markerAlternatives: ['到', '于'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
   ];

@@ -9,6 +9,15 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
       },
+  // Fidelity scorers (CJS + ESM) — pure functions over parsed node trees.
+  // Output: dist/fidelity.js / dist/fidelity.cjs (+ dist/fidelity.d.ts via build:types)
+  // Usage: import { computeFidelity } from '@lokascript/semantic/fidelity'
+  {
+    entry: ['src/fidelity.ts'],
+    format: ['cjs', 'esm'],
+    splitting: false,
+    sourcemap: true,
+  },
   // Core ESM entry (no language data) - for tree-shaking in Vite/Rollup
   // Output: dist/core.js, dist/core.d.ts
   // Usage: import { createSemanticAnalyzer, buildAST } from '@lokascript/semantic/core'
@@ -645,6 +654,30 @@ export default defineConfig([
       'languages/uk': 'src/languages/uk.ts',
       'languages/vi': 'src/languages/vi.ts',
       'languages/zh': 'src/languages/zh.ts',
+      'lexicons/ar': 'src/lexicons/ar.ts',
+      'lexicons/bn': 'src/lexicons/bn.ts',
+      'lexicons/de': 'src/lexicons/de.ts',
+      'lexicons/en': 'src/lexicons/en.ts',
+      'lexicons/es': 'src/lexicons/es.ts',
+      'lexicons/fr': 'src/lexicons/fr.ts',
+      'lexicons/he': 'src/lexicons/he.ts',
+      'lexicons/hi': 'src/lexicons/hi.ts',
+      'lexicons/id': 'src/lexicons/id.ts',
+      'lexicons/it': 'src/lexicons/it.ts',
+      'lexicons/ja': 'src/lexicons/ja.ts',
+      'lexicons/ko': 'src/lexicons/ko.ts',
+      'lexicons/ms': 'src/lexicons/ms.ts',
+      'lexicons/pl': 'src/lexicons/pl.ts',
+      'lexicons/pt': 'src/lexicons/pt.ts',
+      'lexicons/qu': 'src/lexicons/qu.ts',
+      'lexicons/ru': 'src/lexicons/ru.ts',
+      'lexicons/sw': 'src/lexicons/sw.ts',
+      'lexicons/th': 'src/lexicons/th.ts',
+      'lexicons/tl': 'src/lexicons/tl.ts',
+      'lexicons/tr': 'src/lexicons/tr.ts',
+      'lexicons/uk': 'src/lexicons/uk.ts',
+      'lexicons/vi': 'src/lexicons/vi.ts',
+      'lexicons/zh': 'src/lexicons/zh.ts',
     },
     format: ['esm'],
     splitting: false,

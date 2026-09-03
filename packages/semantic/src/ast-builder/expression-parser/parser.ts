@@ -11,10 +11,9 @@ import type {
   LiteralNode,
   TemplateLiteralNode,
   SelectorNode,
-  ContextReferenceNode,
   IdentifierNode,
   AttributeAccessNode,
-  PropertyAccessNode,
+  MemberExpressionNode,
   PossessiveExpressionNode,
   BinaryExpressionNode,
   UnaryExpressionNode,
@@ -23,7 +22,6 @@ import type {
   ObjectLiteralNode,
   TimeExpressionNode,
   ExpressionParseResult,
-  ContextType,
   SelectorKind,
 } from './types';
 
@@ -33,6 +31,10 @@ import type {
 
 /** Context vars whose SPACE form (`my value`) is a possessive property access. */
 const POSSESSIVE_CONTEXT_TYPES = new Set(['my', 'its', 'your']);
+
+/** Possessive context words → the base word the traditional parser's fold
+ *  emits as the member-expression object (`my value` → `identifier{me}`). */
+const POSSESSIVE_BASE: Record<string, string> = { my: 'me', its: 'it', your: 'you' };
 
 /**
  * Identifier-typed operator keywords that must never be folded as a possessive
@@ -252,8 +254,12 @@ export class ExpressionParser {
       if (this.match(TokenType.DOT)) {
         // Accept IDENTIFIER or CONTEXT_VAR as property name
         if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.CONTEXT_VAR)) {
-          const property = this.advance().value;
-          expr = this.createPropertyAccess(expr, property);
+          const property = this.advance();
+          expr = this.createMemberExpression(
+            expr,
+            this.createIdentifier(property.value, property),
+            false
+          );
         } else {
           break;
         }
@@ -273,29 +279,39 @@ export class ExpressionParser {
         const args = this.parseArguments();
         expr = this.createCallExpression(expr, args);
       }
-      // Array access: expr[index]
+      // Array access: expr[index] — computed member access, the traditional
+      // parser's shape (`me[0]` → memberExpression{property: literal 0,
+      // computed: true}).
       else if (this.match(TokenType.LBRACKET)) {
         const index = this.parseExpression();
         if (!this.match(TokenType.RBRACKET)) {
           throw new Error('Expected ] after index');
         }
-        expr = this.createPropertyAccess(expr, index);
+        expr = this.createMemberExpression(expr, index, true);
       }
       // Possessive SPACE form: `my value`, `its length`, `your name` — a
       // possessive context var followed directly by a plain identifier is the
-      // hyperscript possessive without the `'s`/dot. Folded to a propertyAccess
-      // (string property — the runtime resolves Element props through
-      // getElementProperty). Gated to a contextReference head so `foo bar`
-      // never folds, and the identifier must not be an operator keyword
-      // (`my value is empty` folds `my value`, leaves `is empty` alone).
+      // hyperscript possessive without the `'s`/dot. Folded to the traditional
+      // parser's exact shape: memberExpression with the possessive word
+      // normalised to its BASE (`my value` → object `identifier{me}`,
+      // property `identifier{value}`). Gated to a possessive context-word
+      // head so `foo bar` never folds, and the identifier must not be an
+      // operator keyword (`my value is empty` folds `my value`, leaves
+      // `is empty` alone).
       else if (
-        expr.type === 'contextReference' &&
-        POSSESSIVE_CONTEXT_TYPES.has((expr as { contextType?: string }).contextType ?? '') &&
+        expr.type === 'identifier' &&
+        POSSESSIVE_CONTEXT_TYPES.has((expr as IdentifierNode).name) &&
         this.check(TokenType.IDENTIFIER) &&
         !POSTFIX_STOP_WORDS.has(this.peek().value.toLowerCase())
       ) {
-        const property = this.advance().value;
-        expr = this.createPropertyAccess(expr, property);
+        const property = this.advance();
+        const head = expr as IdentifierNode;
+        const base: IdentifierNode = { ...head, name: POSSESSIVE_BASE[head.name] ?? head.name };
+        expr = this.createMemberExpression(
+          base,
+          this.createIdentifier(property.value, property),
+          false
+        );
       }
       // Postfix `exists` predicate: `#modal exists`, `result exists` — a unary
       // existence check the core runtime evaluates via its `exists` expression.
@@ -343,9 +359,21 @@ export class ExpressionParser {
     }
 
     if (this.match(TokenType.TEMPLATE_LITERAL)) {
+      // `value` is the template's CONTENT, with its backticks stripped — the
+      // tokenizer hands them over, and the one consumer that reads this field
+      // (core's evaluator, via `buildAST`) interpolates the value as-is and
+      // emits whatever it is given. Keeping the delimiters made the semantic
+      // path PRINT them: `log \`t ${1}\`` logged "`t 1`" where the traditional
+      // parser, whose own tokenizer strips them, logged "t 1".
+      //
+      // Safe here rather than at the consumer: `interchange/from-semantic.ts`
+      // reads `raw ?? value` (falling back to this content since the empty-
+      // literal fix — `raw` is never set on this node), and nothing else in
+      // this package reads it.
+      const raw = token.value;
       const templateNode: TemplateLiteralNode = {
         type: 'templateLiteral',
-        value: token.value,
+        value: raw.length >= 2 && raw.startsWith('`') && raw.endsWith('`') ? raw.slice(1, -1) : raw,
         start: token.start,
         end: token.end,
         line: token.line,
@@ -389,9 +417,13 @@ export class ExpressionParser {
       return this.createSelector(selector, 'query', token);
     }
 
-    // Context references
+    // Context words (`me`, `it`, `you`, `event`, …) — emitted as plain
+    // identifiers, the traditional parser's spelling (Thread B item 5); the
+    // core evaluator resolves them by name. Possessive forms (`my`/`its`/
+    // `your`) keep their own name here so parsePostfix's space-form fold can
+    // recognise them; the fold normalises to the base word.
     if (this.match(TokenType.CONTEXT_VAR)) {
-      return this.createContextReference(token.value as ContextType, token);
+      return this.createIdentifier(token.value, token);
     }
 
     // Identifiers
@@ -587,18 +619,6 @@ export class ExpressionParser {
     };
   }
 
-  private createContextReference(contextType: ContextType, token: Token): ContextReferenceNode {
-    return {
-      type: 'contextReference',
-      contextType,
-      name: token.value,
-      start: token.start,
-      end: token.end,
-      line: token.line,
-      column: token.column,
-    };
-  }
-
   private createIdentifier(name: string, token: Token): IdentifierNode {
     return {
       type: 'identifier',
@@ -610,19 +630,22 @@ export class ExpressionParser {
     };
   }
 
-  private createPropertyAccess(
+  /**
+   * Member access in the traditional parser's exact shape — nested nodes,
+   * `property` an expression node, explicit `computed`. Replaces the flat
+   * `propertyAccess` (string property) this parser used to emit, which
+   * forced core to carry a parallel evaluator arm for the same meaning.
+   */
+  private createMemberExpression(
     object: ExpressionNode,
-    property: string | ExpressionNode
-  ): PropertyAccessNode {
+    property: ExpressionNode,
+    computed: boolean
+  ): MemberExpressionNode {
     return {
-      type: 'propertyAccess',
+      type: 'memberExpression',
       object,
-      property:
-        typeof property === 'string'
-          ? property
-          : property.type === 'identifier'
-            ? (property as IdentifierNode).name
-            : '',
+      property,
+      computed,
       start: object.start,
       end: this.previous().end,
     };

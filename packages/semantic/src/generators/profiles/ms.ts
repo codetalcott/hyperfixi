@@ -125,6 +125,11 @@ export const malayProfile: LanguageProfile = {
     if: { primary: 'jika', alternatives: ['kalau'], normalized: 'if' },
     unless: { primary: 'kecuali', normalized: 'unless' },
     when: { primary: 'bila', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'berubah', normalized: 'changes' },
     where: { primary: 'di_mana', normalized: 'where' },
     else: { primary: 'kalau_tidak', alternatives: ['jika_tidak'], normalized: 'else' },
     repeat: { primary: 'ulang', normalized: 'repeat' },

@@ -2,7 +2,7 @@
  * Shared URL argument parsing for push-url and replace-url commands
  */
 
-import type { ExecutionContext } from '../../types/core';
+import type { ExecutionContext, ExpressionNode } from '../../types/core';
 import type { ASTNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { validateUrl } from './url-validation';
@@ -13,62 +13,24 @@ export interface UrlCommandInput {
   state?: Record<string, unknown>;
 }
 
-const KEYWORDS = ['url', 'with', 'title'];
-
 export async function parseUrlArguments(
-  args: ASTNode[],
+  raw: { args: ASTNode[]; modifiers?: Record<string, ExpressionNode> },
   evaluator: ExpressionEvaluator,
   context: ExecutionContext,
   commandName: string
 ): Promise<UrlCommandInput> {
+  // The parser emits `args: [url]` and `modifiers.title` (Arc 3 step 5);
+  // the `url` / `with title` words never reach here.
+  const { args, modifiers } = raw;
   if (!args || args.length === 0) {
     throw new Error(`${commandName} command requires a URL argument`);
   }
+  const url = String(await evaluator.evaluate(args[0], context));
+  const title = modifiers?.title
+    ? String(await evaluator.evaluate(modifiers.title, context))
+    : undefined;
 
-  const evaluatedArgs: unknown[] = [];
-  const argStrings: string[] = [];
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const argRecord = arg as unknown as Record<string, unknown>;
-    const argType = argRecord?.type || 'unknown';
-    const argName = argRecord?.name as string | undefined;
-
-    if (argType === 'identifier' && argName && KEYWORDS.includes(argName.toLowerCase())) {
-      evaluatedArgs.push(argName.toLowerCase());
-      argStrings.push(argName.toLowerCase());
-    } else {
-      const evaluated = await evaluator.evaluate(arg, context);
-      evaluatedArgs.push(evaluated);
-      if (typeof evaluated === 'string') {
-        argStrings.push(evaluated.toLowerCase());
-      }
-    }
-  }
-
-  const urlKeywordIndex = argStrings.findIndex(s => s === 'url');
-  const withIndex = argStrings.findIndex(s => s === 'with');
-  const titleIndex = argStrings.findIndex(s => s === 'title');
-
-  const debugInfo = `urlKeywordIndex=${urlKeywordIndex}, argCount=${evaluatedArgs.length}`;
-
-  let url: string;
-  if (urlKeywordIndex !== -1 && evaluatedArgs.length > urlKeywordIndex + 1) {
-    url = String(evaluatedArgs[urlKeywordIndex + 1]);
-  } else if (evaluatedArgs.length >= 1) {
-    url = String(evaluatedArgs[0]);
-  } else {
-    throw new Error(`${commandName} command: URL is required. Debug: ${debugInfo}`);
-  }
-
-  let title: string | undefined;
-  if (withIndex !== -1 && titleIndex !== -1 && titleIndex > withIndex) {
-    if (evaluatedArgs.length > titleIndex + 1) {
-      title = String(evaluatedArgs[titleIndex + 1]);
-    }
-  }
-
-  const validatedUrl = validateUrl(url, commandName, debugInfo);
+  const validatedUrl = validateUrl(url, commandName, `argCount=${args.length}`);
 
   return { url: validatedUrl, title };
 }

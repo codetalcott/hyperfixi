@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **21.5 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~310 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **21.5 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -22,9 +22,9 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
-├── i18n/           # Internationalization (24 languages + grammar transformation)
+├── i18n/           # Per-language VOCABULARY (24 languages) — no longer translates
 │   ├── src/
-│   │   ├── grammar/          # SOV/VSO word order transformation
+│   │   ├── grammar/          # SOV/VSO word-order PROFILES (transformer retired 2026-08-28)
 │   │   ├── dictionaries/     # Per-language keyword dictionaries
 │   │   └── parser/           # Multilingual keyword providers
 │   └── dist/                 # Built bundles (lokascript-i18n.min.js)
@@ -51,19 +51,9 @@ packages/
 │
 ├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 ├── compilation-service/  # Multi-target codegen (React, Vue, Svelte components; Playwright tests)
-├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs)
+├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
 ├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
 ├── server-bridge/   # Server-side route extraction from HTML
-│
-├── domain-sql/      # SQL DSL (11 languages: en, es, ja, ar, ko, zh, tr, fr, de, pt, ru)
-├── domain-bdd/      # BDD/Gherkin DSL (8 languages)
-├── domain-behaviorspec/  # Interaction testing DSL (8 languages)
-├── domain-jsx/      # JSX/React DSL (11 languages)
-├── domain-llm/      # LLM prompt DSL (11 languages)
-├── domain-todo/     # Todo management DSL (11 languages)
-├── domain-flow/     # Reactive data flow DSL (11 languages)
-├── domain-voice/    # Voice/accessibility commands DSL (11 languages)
-├── domain-learn/    # Language learning DSL (10 languages)
 │
 ├── patterns-reference/  # Queryable patterns database with multilingual translations
 ├── language-server/     # LSP implementation for LokaScript/hyperscript (21 languages)
@@ -195,13 +185,14 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
-#### Three gates `test:check` does NOT cover
+#### ~~Three~~ FOUR classes of gate `test:check` does NOT cover
 
 These are required CI checks that no `test:check` invocation reaches, so a green
-local run can still fail CI. Each cost a full CI round-trip during Arc F
-follow-ups round 2. Run all three whenever a change touches
-`packages/semantic/src/generators/command-schemas.ts`, a language profile, or
-R2's curated execution subset:
+local run can still fail CI. The first three cost a full CI round-trip during Arc
+F follow-ups round 2; the fourth cost one on #1034. Run 1–3 whenever a change
+touches `packages/semantic/src/generators/command-schemas.ts`, a language
+profile, or R2's curated execution subset — and run 4 whenever you touch
+**anything**, because it is a dozen cheap scripts that guard the whole repo:
 
 ```bash
 # 1. Vocab consistency (V1–V4 cross-surface check)
@@ -212,6 +203,22 @@ npm run test:check --prefix packages/hyperscript-adapter
 
 # 3. The R2 curated-subset lock (part of the testing-framework suite)
 npm run test:check --prefix packages/testing-framework
+
+# 4. Everything the `lint-typecheck` JOB runs that no test suite does.
+#    Nine guard scripts + their three self-tests, then oxlint, then the 32
+#    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
+#    the FIRST failure hides the rest.
+for s in check-ci-build-order check-bundle-shards check-test-check-list \
+         check-ci-test-list check-ci-job-lists validate-versions \
+         check-type-escapes check-layering check-semantic-boundary; do
+  node scripts/$s.cjs || echo "FAILED: $s"
+done
+for t in check-type-escapes check-layering check-semantic-boundary; do
+  node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
+done
+npm run lint
+npm run typecheck:scripts --prefix packages/core
+# …plus `npm run typecheck --prefix packages/<each>` for the 32 the job lists.
 ```
 
 1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
@@ -225,7 +232,17 @@ npm run test:check --prefix packages/testing-framework
    Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
    `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
    needs `--no-verify`.
-3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+3. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
+   committed baseline and fail on any increase: `check-type-escapes`
+   (`any` / `as any` / `as Record<string, unknown>` / `as unknown as`, per
+   directory), `check-layering` (upward imports), and `check-semantic-boundary`.
+   #1034 added exactly **two** `as unknown as` in `packages/core/src/parser`
+   while every test suite stayed green — both were avoidable, and the right
+   answer was to type the values, not to run `check:type-escapes:update`. Reach
+   for `:update` only when the hatch is genuinely required, and say why in the
+   PR. Note these run BEFORE `npm ci` in the job, which is why they are cheap
+   enough to run on every change.
+4. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
@@ -242,9 +259,9 @@ When you add a new internal-dep relationship between workspace packages, add the
 
 [`npm run check:test-list`](scripts/check-test-check-list.cjs) now fails on either. It's a zero-dep node script, run in CI's `lint-typecheck` job and from the pre-commit hook when a workspace `package.json` or the gate script is staged. Deliberate exclusions go in its `INTENTIONALLY_UNGATED` map, with a reason.
 
-##### The six hand-maintained package lists, and what guards each
+##### The hand-maintained package lists, and what guards each
 
-CI addresses packages by name in six places, all hand-written. **Every one is now guarded** — the last four by [`npm run check:ci-job-lists`](scripts/check-ci-job-lists.cjs), and all six by zero-dep node scripts wired into `lint-typecheck` and the pre-commit hook.
+CI addresses packages by name in six places, all hand-written (now five — `lint:domains` left with the domain packages). **Every one is now guarded** — the last four by [`npm run check:ci-job-lists`](scripts/check-ci-job-lists.cjs), and all six by zero-dep node scripts wired into `lint-typecheck` and the pre-commit hook.
 
 | List                                       | Guard                | Predicate ("must be listed iff…")                                             |
 | ------------------------------------------ | -------------------- | ----------------------------------------------------------------------------- |
@@ -254,9 +271,11 @@ CI addresses packages by name in six places, all hand-written. **Every one is no
 | `export-validation` args                   | `check:ci-job-lists` | published **and** declares an entry point **and** is built by the `build` job |
 | `lint-typecheck` typecheck lines           | `check:ci-job-lists` | the package has a `typecheck` script                                          |
 | nightly `coverage` job                     | `check:ci-job-lists` | its flag is declared in `codecov.yml` (both directions)                       |
-| root `lint:domains` loop                   | `check:ci-job-lists` | a `packages/domain-*` owning a `lint.test.ts`                                 |
 
-When the last four were guarded (2026-08-01), three had drifted: export-validation checked **8** of the 30 packages that qualify (its 9th argument, `aot-compiler`, is private, which the validator skips outright — an argument that had never done anything); the "Typecheck all packages" step ran **11** of 44; and the coverage job uploaded a `language-server` flag `codecov.yml` never declared. `lint:domains` was already correct at 9/9. Deliberate omissions go in the script's per-list `INTENTIONAL_OMISSIONS` maps, with a reason; all three start empty.
+(A seventh list, the root `lint:domains` loop, was guarded here until the domain
+packages moved to the `lokascript-domains` repo — the loop left with them.)
+
+When the last four were guarded (2026-08-01), three had drifted: export-validation checked **8** of the 30 packages that qualify (its 9th argument, `aot-compiler`, is private, which the validator skips outright — an argument that had never done anything); the "Typecheck all packages" step ran **11** of 44; and the coverage job uploaded a `language-server` flag `codecov.yml` never declared. (`lint:domains`, since removed with the domain packages, was already correct at 9/9.) Deliberate omissions go in the script's per-list `INTENTIONAL_OMISSIONS` maps, with a reason; all three start empty.
 
 **Adding a package to the typecheck list needs it to typecheck on a clean checkout**, not just in your tree. `packages/behaviors` was the trap: its `src/generated/` is gitignored, so `tsc` there fails on a fresh clone — it needs a `pretypecheck` hook, the same way it already had `prebuild`/`pretest`. This is the same "working tree ≠ clean checkout" class that cost #862/#863 two CI round-trips.
 
@@ -323,33 +342,49 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
-- **Three-tier job set**: full matrix on `pull_request`; `build` only on `push` to main/develop (tree-skew detector); `coverage` + `benchmarks` on a nightly `schedule` (also `workflow_dispatch`)
-- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient`); `build` gates on `code` and every npm job inherits the gate through `needs: build`. Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`).
+- **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` + `benchmarks` on a nightly `schedule` (also `workflow_dispatch`)
+- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient` / `docsources`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`).
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
 
 **Jobs:**
 
-| #    | Job                       | PR  | push main/develop | nightly | Notes                                                      |
-| ---- | ------------------------- | --- | ----------------- | ------- | ---------------------------------------------------------- |
-| 0    | `changes`                 | ✓   | ✓                 | —       | Path classifier (code / protocol / goclient)               |
-| 1    | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` paths             |
-| 1.5  | `shipped-sources`         | ✓   | —                 | —       | Shipped-sources validity; ungated (walks examples/, docs/) |
-| 2    | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                |
-| 3    | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                 |
-| 4    | `unit-tests`              | ✓   | —                 | —       | Vitest tests on Node 24 (27 packages)                      |
-| 5    | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)   |
-| 6    | `browser-tests`           | ✓   | —                 | —       | Playwright `--project=quick`; PR-only                      |
-| 7    | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only          |
-| 8    | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                     |
-| 9    | `mcp-demos`               | ✓   | —                 | —       | Demo capture + drift check; PR-only                        |
-| 10   | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths          |
-| 10.5 | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths           |
-| 11   | `benchmarks`              | —   | —                 | ✓       | Perf trend tracking; nightly since 2026-07-29              |
+| #   | Job                       | PR  | push main/develop | nightly | Notes                                                                |
+| --- | ------------------------- | --- | ----------------- | ------- | -------------------------------------------------------------------- |
+| 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code / protocol / goclient / docsources)            |
+| 1   | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` **or** `docsources` paths   |
+| 2   | `bundles`                 | ✓   | ✓                 | ✓       | Browser bundles, 3 shards; gated on `code`                           |
+| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped-sources validity; ungated (walks examples/, docs/)           |
+| 4   | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                          |
+| 5   | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                           |
+| 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (the two heavyweight suites)      |
+| 7   | `unit-tests-packages`     | ✓   | —                 | —       | Vitest on Node 24: every other package; split off #6 by #833         |
+| 8   | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)             |
+| 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
+| 10  | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only                    |
+| 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
+| 12  | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths                    |
+| 13  | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths                     |
+| 14  | `benchmarks`              | —   | —                 | ✓       | Perf trend tracking; nightly since 2026-07-29                        |
+| 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
 
-The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only `build`. For the reasoning see the job comments in `.github/workflows/ci.yml`.
+The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only the build tier (`changes`, `build`, `bundles`, and the `always()` `ci-gate`). For the reasoning see the job comments in `.github/workflows/ci.yml`.
 
 `coverage` and `benchmarks` moved off push-to-main on **2026-07-29**: under `strict` protection the post-merge tree is the tree the PR validated, so `coverage` was re-executing the full core + semantic + i18n + language-server suites (430 files) a second time per merge purely for a Codecov datapoint. Neither is a required check (required = Build All Packages, Lint & Typecheck, Unit Tests, Export Validation, Multilingual Validation, Browser Tests), so nightly costs no gate strength. Same change fixed `benchmarks`, which ran `bench:run` (writes no file) and uploaded from a nonexistent `./core/benchmark-results/` — its output had always been discarded; it now runs `bench:ci` and uploads `packages/core/benchmark-results/`.
+
+`browser-tests` runs the `comprehensive` Playwright project alongside `quick` as of
+**2026-08-08**, and deliberately NOT on a schedule. Before that, `quick` was the only
+project CI ever invoked, so the 122 `@comprehensive` specs ran nowhere — `npm run
+test:comprehensive` had been failing on `main` with **four** real bugs behind it (a
+detached `startViewTransition`, untracked reads of unset globals, concurrent effects
+clobbering dependency capture, and `put` stringifying DocumentFragments, which silently
+broke the htmx-compat swap path — #904/#905). The job is already gated on
+`changes.outputs.code`, so the tier runs exactly when something that could break it
+changes and never on a quiet tree; both projects together take ~26s on a job that is not
+on the critical path (`build` is). A nightly was considered and rejected: the only thing a
+time-based run adds is drift from _outside_ the repo, and Playwright pins its browser
+binaries — so a Chromium change arrives via a `@playwright/test` bump, which is a code PR
+this gate already covers.
 
 **Triggers:**
 
@@ -361,7 +396,7 @@ The PR-only jobs already ran against the merged-as-PR code (`strict` branch prot
 **Known Issues:**
 
 - Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (lowest are now th 0.9845 / ms / de / fr; corpus mean ≈ 0.992). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, the reactive `on.event` rows, swap F6) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (corpus mean 0.99994, lowest pl 0.99871 — the en→foreign render arc, #931–#996, closed nearly all of it). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -380,13 +415,12 @@ the committed baseline:
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
   history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
-- **faithful** (fid = 1.0). **3696 / 3696.** Cross-language `avgFidelity` = 1.000,
-  `avgPrecision` ≈ 0.9997, `avgRoleFidelity` ≈ 0.992, `avgMultisetRecall` = 1.000,
-  `avgValueRecall` ≈ 0.997 (the SOV six sit ≥ 0.991 on R1 after #637/#638; the
-  lowest R1 languages are now th/ms/de/fr ≈ 0.985 — the remaining headroom is
-  thin and flat).
+- **faithful** (fid = 1.0). **3744 / 3744.** Cross-language `avgFidelity` = 1.000,
+  `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
+  `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 0.99994 (min pl 0.99871).
+  R1 is the only signal not at 1.000, and its headroom is thin and flat.
 
-> **Figures snapshot:** as of the **2026-07-27** baseline (`77f9c2bc`). They drift as work lands
+> **Figures snapshot:** as of the **2026-08-27** baseline (`3a19218a`). They drift as work lands
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,
@@ -462,11 +496,11 @@ yields a 0 delta):
    Blind-spot inversion: if the **en reference itself** corrupts a value, every
    language flags at once — a 24-language R3 firestorm on one pattern means
    "suspect the en parse first" (useful signal, unlike R0 where en corruption moves
-   nothing). Known sub-1.0 rows (all triaged, tracked in
-   `docs-internal/MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug families"):
-   symmetric `swap` role-binding flips, connective-swallowed `increment.quantity`,
-   bn duration-glue, SOV `in me` qualifier glue, pl/ru/uk `fetch` URL mis-role,
-   hi `transition` duration drop, bn/qu/tr behavior trigger events.
+   nothing). **All 24 languages are at 1.000** as of the 2026-08-27 baseline; the
+   families that used to sit sub-1.0 (symmetric `swap` role-binding flips,
+   connective-swallowed `increment.quantity`, bn duration-glue, SOV `in me`
+   qualifier glue, pl/ru/uk `fetch` URL mis-role, hi `transition` duration drop,
+   bn/qu/tr behavior trigger events) were cleared by the en→foreign render arc.
 
 9. **canonical-validity ratchet (R4)** — every authored foreign translation is rendered
    to English and parsed on the real `hyperscript.org` engine; the invalid
@@ -479,9 +513,9 @@ yields a 0 delta):
    parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
    triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
    standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
-   disagree; the en-side twin (`canonical-validity.test.ts`) remains vitest-only, and
-   its allowlist is now **empty** — 134/134 corpus references render canonically
-   valid. (It formerly held one entry, `pick-text-range`.)
+   disagree. **Both allowlists are now empty** — 3105/3105 foreign renders parse on
+   the engine, and the en-side twin (`canonical-validity.test.ts`, vitest-only) is at
+   134/134. (It formerly held one entry, `pick-text-range`.)
 
 10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
     longer parses at all, at **tolerance 0**. Not redundant with signal 1: every
@@ -492,13 +526,53 @@ yields a 0 delta):
     skips a failed parse _before_ scoring, removing it from numerator and
     denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
     **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
-    that did parse. R2 covers 47 curated ids; R4's denominator excludes ~14% of
+    that did parse. R2 covers 41 curated ids (measured 2026-09-02; this said 47); R4's denominator excludes ~14% of
     the corpus and is full-mode only. This is not hypothetical — #763's
     `markerOverride.he` change stopped `לך את back` parsing and the gate would
     have gone green; two vitest cases caught it instead. The other tolerances are
     cross-machine headroom for **averages**; a binary pass→fail flip has no such
     noise to absorb. Reads the per-pattern `patterns` map the baseline already
     records, so no format change and no retro-flagging.
+
+**The corpus writer is SEMANTIC-ONLY (since 2026-08-28).** Every foreign row is
+`@lokascript/semantic`'s `render(parse_en(en), L)` — the same call MCP
+`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript` make.
+
+It used to have three modes, because there used to be two renderers. `best`
+(#973) rendered each row with BOTH semantic and `@lokascript/i18n`'s
+`GrammarTransformer` and stored the semantic one unless i18n beat it on a ratchet
+signal; the rows i18n won were a committed shrink-only baseline, ratcheted by an
+`i18n-kept-rows` gate. **That baseline reached zero on 2026-08-28** (229 of 3703
+at the flip → 0 of 3657), the transformer was retired on the strength of it, and
+a per-row chooser with one renderer is not a chooser — so the modes, the
+`PATTERNS_RENDERER` env, the `--renderer` flag, the kept-rows gate and its
+baseline/tools all went with it. `test:canonical` is four gates now, not five.
+
+Two things survive from that machinery and are worth knowing:
+
+- **A markup row's `_=` body is translated only when its own English re-render
+  preserves its content** (`src/sync/markup-attributes.ts`). A truncating parse —
+  `set ^user to attrs.data as JSON`, whose `as JSON` landed in no role and
+  therefore scored "faithful" against its own truncation — would otherwise ship
+  the truncation into 23 languages. That guard is what FOUND the `as JSON` bug
+  (#991) when eleven ratchet signals could not.
+- **A row the renderer cannot render keeps its ENGLISH**, is counted, and is
+  reported loudly at the end of a `populate` run. It is a floor, not a fallback:
+  0 rows take it today, and a row that does is a translation the corpus is
+  MISSING rather than a worse one it settled for.
+
+**What "retired" deleted, precisely** (#1001): `grammar/transformer.ts` (2,747
+lines) and the transformer half of `grammar.test.ts`. The rest of
+`packages/i18n/src/grammar/` — 8,160 lines across 6 files — stays and always was
+going to: `profiles/index.ts` (1,557) and `types.ts` (655) back i18n's own
+`runtime.ts` and `constants.ts`, and `direct-mappings.ts` (351) is part of the
+browser API. It was never "delete the directory". Seven consumers moved first,
+not the three originally listed: `@hyperscript-tools/i18n` (#999) and the
+vite-plugin's generated bundle (#997) to `semantic.translate`; the classic-i18n
+browser bundle DROPPED its four helpers rather than pay a measured +173 KB
+gzipped to keep them (#998); the corpus writer (#1000); and a vocab test, the
+`examples/multilingual/index.html` demo, and an orphaned Playwright spec (#1001).
+`packages/framework` exports its OWN `GrammarTransformer` — unrelated, untouched.
 
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
@@ -518,8 +592,8 @@ degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
 run-to-run jitter — don't read a green gate as "within noise." The per-pattern
 signals (lossy, R2, R4, R5) are all at 0: a binary flip has no such noise to
 absorb, and the lossy cushion was measured swallowing a real regression. The remaining
-fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, reactive
-`on.event` rows, swap F6) and the R3 residual rows — current queue in
+fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, swap F6,
+the non-`when` reactive `on.event` rows) and the R3 residual rows — current queue in
 `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 #### Running the multilingual `--regression` gate locally
@@ -607,18 +681,36 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > removing, or restructuring a command surface: the command set is currently
 > described in ~20 hand-maintained places and executed in 4 implementations, and
 > that doc holds the staged plan for collapsing both.
+>
+> **Cross-layer engine migration** — one typed AST, commands as grammar + op,
+> compile-to-closures, the engine/front-end boundary — is planned in
+> `docs-internal/ENGINE_MIGRATION_PLAN.md` (written 2026-08-30, no arc
+> started). Read it before moving a boundary between `parser/`, `runtime/`,
+> `commands/`, `expressions/`, or the semantic front-end.
 
 ### Command Pattern
 
-All 59 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
+All 58 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
+`@command` class decorator with a type-visible `commandMeta` static:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts
-export class IncrementCommand implements CommandImplementation<IncrementInput, void, TypedExecutionContext> {
-  parseInput(node: CommandNode, ctx: TypedExecutionContext): IncrementInput { ... }
+@command({ name: 'increment' })
+export class IncrementCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({ description: '...', syntax: [...], examples: [...] });
+  get metadata() { return IncrementCommand.metadata; }
+  declare readonly name: string;
+
+  async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
 }
+
+export const createIncrementCommand = createFactory(IncrementCommand);
 ```
+
+(The `CommandImplementation<TInput, TOutput, TContext>` interface this section
+used to name had **zero** implementers and was deleted 2026-08-30 with the rest
+of the dead type surface — see `docs-internal/ENGINE_MIGRATION_PLAN.md` Arc 6a.)
 
 ### Grammar Transformation (i18n)
 
@@ -698,11 +790,11 @@ cd packages/core && npx playwright test src/compatibility/browser-tests/bundle-c
 
 **Bundle Test Matrix:**
 
-The bundle compatibility test suite automatically tests all 7 bundles against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
+The bundle compatibility test suite automatically tests every built bundle against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (11.1 KB), hybrid-hx (21.5 KB), hybrid-hx-v4 (~321 KB), minimal (71.5 KB), standard (78 KB), browser (~309 KB)
+- Bundles: hybrid-complete (11.1 KB, plugin-internal), hybrid-hx (21.5 KB), hybrid-hx-v4 (~342 KB), browser (~310 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -821,15 +913,18 @@ registerCustomKeywords('my-lang', {
 Quick reference — full detail in [packages/core/docs/API.md](packages/core/docs/API.md).
 
 ```javascript
-// Which parser handled a compile, and with what confidence:
-hyperfixi.compile('toggle .active').metadata;
-// { parserUsed: 'semantic', semanticConfidence: 0.98, semanticLanguage: 'en', warnings: [] }
+// Which parser produced a compile's AST (English is ALWAYS the core parser;
+// 'semantic' means the multilingual front-end built it, non-English only):
+hyperfixi.compileSync('toggle .active').meta; // { parser: 'traditional', language: 'en', timeMs }
+(await hyperfixi.compile('alternar .active', { language: 'es' })).meta;
+// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs }
 
 // Debug logging (persists via localStorage, works in production builds):
 hyperfixi.debugControl.enable(); // or: localStorage.setItem('hyperfixi:debug', '*') + reload
 // Log prefixes: ATTR:/SCRIPT:/SCAN: (attribute-processor) · PARSE: · CMD: · EXPR:
 
-// Per-parse decisions and running stats:
+// Front-end consultations (one per NON-English compile — the per-command
+// in-loop attempt on English was deleted by Arc 1 step 6) and running stats:
 window.addEventListener('hyperfixi:semantic-parse', e => console.log(e.detail));
 hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanticFallbacks, averageConfidence }
 ```
@@ -837,7 +932,7 @@ hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanti
 ### API v2 (Recommended)
 
 ```javascript
-import { hyperscript } from 'hyperfixi';
+import { hyperscript } from '@hyperfixi/core';
 
 const result = hyperscript.compileSync('toggle .active'); // CompileResult { ok, errors, meta }
 await hyperscript.eval('add .clicked to me', element); // compile + execute
@@ -878,7 +973,6 @@ and narrows with `instanceof`. See
 | `packages/framework/src/api/domain-registry.ts`          | Domain registry + MCP tool generation        |
 | `packages/framework/src/api/dispatcher.ts`               | `CrossDomainDispatcher` (auto-detect domain) |
 | `packages/mcp-server/src/tools/domain-registry-setup.ts` | Domain registrations for MCP server          |
-| `packages/domain-flow/src/index.ts`                      | FlowScript DSL entry point                   |
 | `packages/compilation-service/src/`                      | Component renderers (React, Vue, Svelte)     |
 
 ## Vite Plugin (Recommended)
@@ -920,19 +1014,23 @@ generator, and semantic regional bundles — lives in
 
 Quick selection (sizes gzipped):
 
-| Bundle                         | Size      | Use case                                                                                   |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------ |
-| via `@hyperfixi/vite-plugin`   | minimal   | **Default for Vite projects** — scans usage, emits the right bundle                        |
-| `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
-| `hyperfixi-hybrid-complete.js` | 11.1 KB   | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
-| `hyperfixi-hx.js`              | 21.5 KB   | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
-| `hyperfixi-hx-v4.js`           | ~321 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | ~309 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
-| `hyperfixi-multilingual.js`    | 93 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
-| semantic bundles               | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
+| Bundle                       | Size      | Use case                                                                                                |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| via `@hyperfixi/vite-plugin` | minimal   | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
+| `hyperfixi-hx.js`            | ~21.5 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
+| `hyperfixi.js`               | ~310 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
+| `hyperfixi-hx-v4.js`         | ~342 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
+| `hyperfixi-multilingual.js`  | ~91 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
+| semantic bundles             | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
 
-Rule of thumb: start as small as you can; upgrade when you hit a missing feature.
-The vite plugin removes this decision entirely.
+Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
+with `hyperfixi-hx.js` and moves to `hyperfixi.js` the first time the console
+says a command needs it (a small bundle fails loudly and names the full one —
+pinned by the bundle-compatibility matrix). `lite`, `lite-plus`, `minimal` and
+`standard` were retired as public names in the 4.0 cycle;
+`hyperfixi-hybrid-complete.js` is still built because the plugin's generated
+fallback imports it (`@hyperfixi/core/browser/hybrid-complete`), and is
+plugin-internal.
 
 Multilingual usage (execute/translate in any of 24 languages):
 

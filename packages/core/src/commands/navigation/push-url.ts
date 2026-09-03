@@ -23,6 +23,7 @@ import {
 } from '../decorators';
 import { parseUrlArguments, type UrlCommandInput } from '../helpers/url-argument-parser';
 import { dispatchLokaScriptEvent } from '../helpers/event-helpers';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * History operation mode
@@ -80,7 +81,7 @@ export class HistoryCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
+    raw: CommandRaw<'push'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HistoryCommandInput> {
@@ -88,7 +89,7 @@ export class HistoryCommand implements DecoratedCommand {
     const mode: HistoryMode = raw.commandName?.toLowerCase().includes('replace')
       ? 'replace'
       : 'push';
-    const baseInput = await parseUrlArguments(raw.args, evaluator, context, `${mode} url`);
+    const baseInput = await parseUrlArguments(raw, evaluator, context, `${mode} url`);
     return { ...baseInput, mode };
   }
 

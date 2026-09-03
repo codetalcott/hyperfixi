@@ -35,3 +35,13 @@ fi
 if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|package\.json|codecov\.yml|\.github/workflows/ci\.yml)$'; then
   node scripts/check-ci-job-lists.cjs || exit 1
 fi
+
+# Engine-migration type-escape ratchet (Arc 0 of ENGINE_MIGRATION_PLAN.md).
+# Fires only when core engine source is staged, so unrelated commits pay
+# nothing. Shrink-only: a commit that LOWERS a count should also run
+# `npm run check:type-escapes:update` and stage the baseline.
+if git diff --cached --name-only | grep -qE '^packages/core/src/.*\.ts$'; then
+  node scripts/check-type-escapes.cjs || exit 1
+  node scripts/check-layering.cjs || exit 1
+  node scripts/check-semantic-boundary.cjs || exit 1
+fi

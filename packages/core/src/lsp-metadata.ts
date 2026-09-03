@@ -117,7 +117,6 @@ export const COMMAND_KEYWORDS = [
   'beep',
   'breakpoint',
   'js',
-  'async',
 
   // Animation Commands
   'transition',
@@ -316,8 +315,10 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   put: {
     title: 'put',
-    description: 'Sets the content of an element.',
-    example: 'put "Hello" into #message\nput response into #results',
+    description:
+      'Sets the content of an element. An array of elements is moved in order (an in-place reorder when they are already children of the target).',
+    example:
+      'put "Hello" into #message\nput response into #results\nput <tr/> in me sorted by its @data-price as Number at end of me',
     category: 'command',
   },
   set: {
@@ -409,8 +410,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   scroll: {
     title: 'scroll',
-    description: 'Scrolls an element into view.',
-    example: 'scroll to #section\nscroll to the top of me',
+    description: 'Scrolls an element into view, or by an offset.',
+    example: 'scroll to #section\nscroll to the top of me\nscroll down by 200',
     category: 'command',
   },
   process: {
@@ -620,12 +621,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'js',
     description: 'Executes inline JavaScript.',
     example: 'js(event) return event.clientX end',
-    category: 'command',
-  },
-  async: {
-    title: 'async',
-    description: 'Runs commands asynchronously (non-blocking).',
-    example: 'async do fetch /api/data end',
     category: 'command',
   },
 

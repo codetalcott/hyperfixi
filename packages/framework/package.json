@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/framework",
-  "version": "2.9.4",
+  "version": "3.0.0",
   "description": "Generic framework for building multilingual DSLs with semantic parsing and grammar transformation",
   "type": "module",
   "main": "dist/index.cjs",
@@ -96,9 +96,10 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "^2.9.4"
+    "@lokascript/intent": "^3.0.0"
   },
   "devDependencies": {
+    "@lokascript/domains": "^2.11.1",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",

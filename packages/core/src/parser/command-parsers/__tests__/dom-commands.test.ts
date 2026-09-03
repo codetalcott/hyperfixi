@@ -220,7 +220,8 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.from).toMatchObject({ type: 'selector', value: '#button' });
     });
 
     it('should parse remove with string class', () => {
@@ -233,7 +234,8 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.from).toMatchObject({ type: 'selector', value: '#el' });
     });
   });
 
@@ -248,7 +250,10 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // The destination is a SLOT (Arc 3 step 3): one positional argument, the
+      // target under `modifiers.on` — for `from` and `on` alike.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.on).toBeDefined();
     });
 
     it('should parse toggle with "on" keyword (hyperscript compatibility)', () => {
@@ -261,7 +266,10 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // The destination is a SLOT (Arc 3 step 3): one positional argument, the
+      // target under `modifiers.on` — for `from` and `on` alike.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.on).toBeDefined();
     });
 
     it('should parse toggle between syntax', () => {
@@ -274,8 +282,11 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      // Should have: 'between' keyword, classA, 'and' keyword, classB, 'on' keyword, target
-      expect(result.args.length).toBeGreaterThanOrEqual(4);
+      // The pair and the destination are slots (Arc 3 step 3): nothing
+      // positional, `modifiers.between` holds the two, `modifiers.on` the target.
+      expect(result.args).toEqual([]);
+      expect(result.modifiers?.between).toBeDefined();
+      expect(result.modifiers?.on).toBeDefined();
     });
   });
 
@@ -290,7 +301,8 @@ describe('DOM Command Parsers', () => {
       const result = parseAddCommand(ctx, createToken('add'));
 
       expect(result.name).toBe('add');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.to).toMatchObject({ type: 'selector', value: '#el' });
     });
 
     it('should parse add with CSS object literal', () => {
@@ -354,12 +366,9 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args).toHaveLength(3);
+      // The operation is the slot the target lives under (Arc 3 step 3).
+      expect(result?.args).toHaveLength(1);
       // Args: content, operation keyword, target
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'into',
-      });
     });
 
     it('should parse put before', () => {
@@ -372,10 +381,6 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'before',
-      });
     });
 
     it('should parse put after', () => {
@@ -388,10 +393,6 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1]).toMatchObject({
-        type: 'identifier',
-        name: 'after',
-      });
     });
 
     it('should parse put at start of', () => {
@@ -434,7 +435,9 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.args[1].name).toBe('at start of');
+      // The multi-word operation keeps its spelling as the slot key (Arc 3 step 3).
+      expect(result?.args).toHaveLength(1);
+      expect(result?.modifiers?.['at start of']).toBeDefined();
     });
 
     it('should return null if content expression is missing', () => {
@@ -513,7 +516,9 @@ describe('DOM Command Parsers', () => {
       const result = parseSwapCommand(ctx, createIdentifierNode('swap'));
 
       expect(result.name).toBe('swap');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      // Slots (Arc 3 step 3): the target is positional, the content is `modifiers.with`.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.with).toBeDefined();
     });
 
     it('should parse swap with innerHTML strategy', () => {
@@ -555,7 +560,10 @@ describe('DOM Command Parsers', () => {
 
       expect(result.name).toBe('swap');
       // Should include strategy keyword in arguments
-      expect(result.args.length).toBeGreaterThanOrEqual(1);
+      // The strategy word is `modifiers.strategy`; `of` is consumed, not kept.
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.strategy).toBeDefined();
+      expect(result.modifiers?.with).toBeDefined();
     });
 
     it('should parse swap delete syntax', () => {

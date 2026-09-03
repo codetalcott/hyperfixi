@@ -99,7 +99,9 @@ export const frenchProfile: LanguageProfile = {
     trigger: { primary: 'déclencher', normalized: 'trigger' },
     send: { primary: 'envoyer', alternatives: ['envoie'], normalized: 'send' },
     focus: { primary: 'focaliser', alternatives: ['concentrer'], normalized: 'focus' },
-    blur: { primary: 'défocaliser', normalized: 'blur' },
+    // `défocaliser` is an unattested infinitive; French pedagogy writes
+    // `perte de focus` for the event (2026-07 terminology review).
+    blur: { primary: 'perte de focus', alternatives: ['défocaliser'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
     // `vide` (adjective, "empty") is the i18n transformer's `is empty` predicate
     // form; `vider` is the verb ("to empty"). Accept both so the emptiness check
@@ -112,7 +114,13 @@ export const frenchProfile: LanguageProfile = {
     reset: { primary: 'réinitialiser', alternatives: ['reinitialiser'], normalized: 'reset' },
     breakpoint: { primary: 'point-arrêt', alternatives: ['point-arret'], normalized: 'breakpoint' },
     go: { primary: 'aller', alternatives: ['naviguer', 'va'], normalized: 'go' },
-    scroll: { primary: 'défiler', alternatives: ['faire-défiler'], normalized: 'scroll' },
+    // MDN fr and the OQLF standardize the noun `défilement` for the event; the
+    // infinitive stays as an alternative.
+    scroll: {
+      primary: 'défilement',
+      alternatives: ['defilement', 'défiler', 'faire-défiler'],
+      normalized: 'scroll',
+    },
     push: { primary: 'pousser', normalized: 'push' },
     replace: { primary: 'remplacer', normalized: 'replace' },
     process: { primary: 'traiter', normalized: 'process' },
@@ -122,6 +130,11 @@ export const frenchProfile: LanguageProfile = {
     if: { primary: 'si', normalized: 'if' },
     unless: { primary: 'saufsi', normalized: 'unless' },
     when: { primary: 'quand', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'change', normalized: 'changes' },
     where: { primary: 'où', normalized: 'where' },
     else: { primary: 'sinon', normalized: 'else' },
     repeat: { primary: 'répéter', normalized: 'repeat' },
@@ -178,9 +191,15 @@ export const frenchProfile: LanguageProfile = {
     after: { primary: 'après', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'clic', alternatives: ['clique'], normalized: 'click' },
-    // `resize` event (window-resize): dict emits redimensionner; register it so the
-    // event types as literal="resize" (matching en) instead of expression.
-    resize: { primary: 'redimensionner', normalized: 'resize' },
+    // `resize` event (window-resize): the noun `redimensionnement` is the
+    // attested event form ("lors du redimensionnement de la fenêtre"). The dict
+    // still emits redimensionner, kept as an alternative so the event keeps
+    // typing as literal="resize" (matching en) instead of expression.
+    resize: {
+      primary: 'redimensionnement',
+      alternatives: ['redimensionner'],
+      normalized: 'resize',
+    },
     hover: { primary: 'survol', alternatives: ['survoler'], normalized: 'hover' },
     submit: { primary: 'soumission', alternatives: ['soumettre'], normalized: 'submit' },
     input: { primary: 'saisie', alternatives: ['entrée'], normalized: 'input' },

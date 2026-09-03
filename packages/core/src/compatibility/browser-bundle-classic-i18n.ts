@@ -6,7 +6,7 @@
  * - 12 language keyword providers (es, ja, fr, de, ar, ko, zh, tr, id, pt, qu, sw)
  * - Automatic browser locale detection
  * - Runtime locale switching
- * - Grammar transformation for native word order display
+ * - Grammar profiles (word order, role markers); the transformer itself is retired
  *
  * Usage:
  * ```html
@@ -20,7 +20,7 @@
  * </script>
  * ```
  *
- * Size: ~400 KB uncompressed (~105 KB gzipped)
+ * Size: ~535 KB uncompressed (~131 KB gzipped)
  */
 
 import { parse } from '../parser/parser';
@@ -36,6 +36,7 @@ import { createExpressionRegistry } from '../core/expression-registry';
 import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { specialExpressions } from '../expressions/special/index';
+import { mathematicalExpressions } from '../expressions/mathematical/index';
 import { propertiesExpressions } from '../expressions/properties/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
@@ -116,7 +117,6 @@ import { createBreakpointCommand } from '../commands/utility/breakpoint';
 // Advanced Commands (2)
 // ============================================================================
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // ============================================================================
 // Navigation Commands (1)
@@ -155,11 +155,11 @@ import {
   createEnglishProvider,
   LocaleManager,
   detectBrowserLocale,
-  // Grammar transformation
-  GrammarTransformer,
-  toLocale,
-  toEnglish,
-  translate,
+  // Grammar transformation — PROFILES ONLY. This bundle used to expose four
+  // helpers over @lokascript/i18n's `GrammarTransformer` (`toLocale`,
+  // `toEnglish`, `translate`, `createTransformer`); they are gone with the
+  // transformer itself. See the note on `i18nApi` for what replaced them, and
+  // why not here.
   profiles,
   getProfile,
   getSupportedLocales,
@@ -177,6 +177,13 @@ import {
   qu as quDictionary,
   sw as swDictionary,
 } from '@lokascript/i18n/browser';
+// NOTE: this entry is excluded from `tsconfig.build.json` (core's declaration
+// build) the way `browser-bundle.ts` and `hybrid-hx-v4` are: `@lokascript/i18n`
+// depends on core, not the reverse, so CI's build job compiles core BEFORE
+// i18n's `browser.d.ts` exists. The bundles job (rollup + tsconfig.json) and
+// the typecheck job both run after every dist is built, so the import resolves
+// to i18n's real types there — which is what the deleted `types.d.ts` shim
+// used to fake with `any`.
 
 // ============================================================================
 // i18n Setup - Register all locale providers
@@ -220,6 +227,7 @@ const expressionRegistry = createExpressionRegistry(
   referencesExpressions,
   logicalExpressions,
   specialExpressions,
+  mathematicalExpressions,
   propertiesExpressions,
   conversionExpressions,
   positionalExpressions
@@ -290,7 +298,6 @@ const runtime = createTreeShakeableRuntime(
 
     // Advanced (2)
     createJsCommand(),
-    createAsyncCommand(),
 
     // Navigation (1)
     createGoCommand(),
@@ -336,6 +343,57 @@ const attributeProcessor = createMinimalAttributeProcessor(runtimeAdapter);
 // ============================================================================
 // i18n API
 // ============================================================================
+
+/**
+ * The bundle's i18n surface.
+ *
+ * WHAT IS NOT HERE, AND WHY: `toLocale` / `toEnglish` / `translate` /
+ * `createTransformer`. They were display helpers over @lokascript/i18n's
+ * `GrammarTransformer`, which is retired — and re-implementing them on
+ * @lokascript/semantic (the renderer this repo's corpus is written by) was
+ * MEASURED at +173 KB gzipped on this bundle, 138.9 → 312.1 KB, because it pulls
+ * the parser and twelve language datasets in to serve three helpers. Importing
+ * `semantic/core` plus only the twelve locales registered below still lands at
+ * 269.2 KB. A 2x bundle for a display convenience is the wrong trade for a bundle
+ * whose whole proposition is "classic runtime, ~105 KB".
+ *
+ * Removing them instead took the bundle DOWN, 138.9 → 131.0 KB gzipped: the
+ * transformer was carrying weight here for an API nothing in the bundle used.
+ * Recorded in scripts/bundle-snapshots/baseline.json, whose gate is two-sided —
+ * an improvement this size trips it too.
+ *
+ * What this bundle is FOR is untouched: writing hyperscript in twelve languages
+ * and having it run. That path is the keyword providers registered above —
+ * nothing here ever called the transformer internally.
+ *
+ * For translation, pair `hyperfixi-multilingual.js` with a semantic bundle;
+ * `hyperfixi.translate(code, from, to)` there is the same renderer, correctly
+ * sized for the job. See docs/BROWSER_BUNDLES.md.
+ */
+/**
+ * The dictionary objects' declared type (`Dictionary`) lives in a private
+ * chunk of `@lokascript/i18n`'s emitted `browser.d.ts`, so a type inferred
+ * from them is not portable (TS2742), and naming it from the package's main
+ * entry would add a front-end type import the semantic-boundary ratchet
+ * refuses. `object` is what a script-tag consumer of `hyperfixi.i18n.dictionaries`
+ * can rely on; it was `any` while `types.d.ts` shimmed this module. `en` is
+ * `{}`: English is the canonical vocabulary and has no dictionary.
+ */
+const dictionaries: Record<string, object> = {
+  en: {}, // English is canonical, no dictionary needed
+  es: esDictionary,
+  ja: jaDictionary,
+  fr: frDictionary,
+  de: deDictionary,
+  ar: arDictionary,
+  ko: koDictionary,
+  zh: zhDictionary,
+  tr: trDictionary,
+  id: idDictionary,
+  pt: ptDictionary,
+  qu: quDictionary,
+  sw: swDictionary,
+};
 
 const i18nApi = {
   /**
@@ -411,36 +469,6 @@ const i18nApi = {
   },
 
   /**
-   * Transform hyperscript to display in target locale's native word order
-   * @param code - English hyperscript code
-   * @param targetLocale - Target locale (default: current locale)
-   */
-  toLocale(code: string, targetLocale?: string): string {
-    return toLocale(code, targetLocale || currentLocale);
-  },
-
-  /**
-   * Transform localized hyperscript to English
-   * @param code - Localized hyperscript code
-   * @param sourceLocale - Source locale (default: current locale)
-   */
-  toEnglish(code: string, sourceLocale?: string): string {
-    return toEnglish(code, sourceLocale || currentLocale);
-  },
-
-  /**
-   * Translate hyperscript between any two locales
-   */
-  translate,
-
-  /**
-   * Create a grammar transformer for advanced transformations
-   */
-  createTransformer(sourceLocale: string, targetLocale: string): GrammarTransformer {
-    return new GrammarTransformer(sourceLocale, targetLocale);
-  },
-
-  /**
    * Get language profile for a locale
    */
   getProfile,
@@ -458,21 +486,7 @@ const i18nApi = {
   /**
    * Dictionaries for creating custom providers
    */
-  dictionaries: {
-    en: {}, // English is canonical, no dictionary needed
-    es: esDictionary,
-    ja: jaDictionary,
-    fr: frDictionary,
-    de: deDictionary,
-    ar: arDictionary,
-    ko: koDictionary,
-    zh: zhDictionary,
-    tr: trDictionary,
-    id: idDictionary,
-    pt: ptDictionary,
-    qu: quDictionary,
-    sw: swDictionary,
-  },
+  dictionaries,
 
   /**
    * Create a keyword provider from a dictionary
@@ -637,9 +651,8 @@ const api = {
     'copy',
     'pick',
     'beep',
-    // Advanced (2)
+    // Advanced (1)
     'js',
-    'async',
     // Navigation (1)
     'go',
     // Special (4)

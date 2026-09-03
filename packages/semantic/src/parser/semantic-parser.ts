@@ -9,6 +9,7 @@ import type {
   SemanticNode,
   CommandSemanticNode,
   CompoundSemanticNode,
+  ConditionalSemanticNode,
   EventHandlerSemanticNode,
   SemanticParser as ISemanticParser,
   SemanticValue,
@@ -38,6 +39,8 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
+import { isOrWordToken } from './utils/or-words';
+import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
@@ -401,6 +404,28 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // transition: a goal-less surface (`transition *max-height over 300ms` →
+    // hi `*max-height को 300ms संक्रमण`) reaches the generated-simple pattern,
+    // whose REQUIRED {goal} slot swallows the time literal — goal:literal
+    // dataType=duration with the duration role empty. No legitimate
+    // transition has a duration-typed goal while its own duration slot is
+    // vacant (a real goal is a CSS value; the schema's duration slot is where
+    // a time literal belongs), so shift goal→duration
+    // (tell/fetch relabel precedent above; slide-toggle hi, both allowlists).
+    if (node.action === 'transition') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const goal = roles.get('goal') as { type?: string; dataType?: string } | undefined;
+      if (
+        goal &&
+        goal.type === 'literal' &&
+        goal.dataType === 'duration' &&
+        !roles.has('duration')
+      ) {
+        roles.delete('goal');
+        roles.set('duration', goal as SemanticValue);
+      }
+    }
+
     // fetch: the Slavic with/from preposition collision (pl `z`, ru `с`, uk
     // `з` — the profile's source AND style markers share a surface). The
     // fused generic VSO event pattern (fetch-event-{pl,ru,uk}-vso) binds the
@@ -584,7 +609,7 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       for (const spec of schema.roles) {
         if (spec.default !== undefined && !roles.has(spec.role)) {
-          roles.set(spec.role, { ...spec.default } as SemanticValue);
+          roles.set(spec.role, { ...spec.default, implicit: true } as SemanticValue);
         }
       }
     }
@@ -601,6 +626,9 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
 }
 
 export class SemanticParserImpl implements ISemanticParser {
+  /** Source text the current token stream's positions index into. */
+  private positionSource: string | undefined;
+
   /**
    * Parse input in the specified language to a semantic node, then apply the R1
    * role-fidelity normalization (see {@link normalizeCommandRoles}) once on the
@@ -900,6 +928,30 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Tokenize the input
     const tokens = tokenizeInternal(parseInput, language);
+    // The text these tokens' `position` offsets index into. `consumeJsBlock`
+    // slices it to recover a js body's ORIGINAL spacing; every other consumer
+    // reads token values, so this is the only reason the parser keeps it.
+    // Guarded there against a stale value (a nested `this.parse` of a sub-block
+    // overwrites it), so it can never produce text the tokens do not support.
+    this.positionSource = parseInput;
+
+    // Stage 0.2: a BARE `js … end` block. `consumeJsBlock` is otherwise only
+    // reached from the clause walk, so a js block inside a handler was opaque
+    // while the same block on its own fell to the per-language `js` PATTERN —
+    // which re-spaces the JavaScript and, in zh, splits the `JS执行` compound
+    // verb and returns `js 执行`, losing the body outright. Head-form ONLY: the
+    // verb-final variant scans forward for its keyword, and at this stage the
+    // event-handler head has not been consumed yet, so it would swallow it
+    // (`クリック を で … を JS実行 終わり` → one js command whose body is the whole
+    // handler). It runs in the clause walk, where the head is already gone.
+    // Gated on the block consuming the WHOLE input, so every other parse is
+    // byte-identical.
+    {
+      const mark = tokens.mark();
+      const bareJs = this.consumeJsBlock(tokens, language);
+      if (bareJs && tokens.isAtEnd()) return withDiagnostics(bareJs, diagnostics);
+      tokens.reset(mark);
+    }
 
     // Get patterns for this language
     const patterns = getPatternsForLanguage(language);
@@ -1048,13 +1100,10 @@ export class SemanticParserImpl implements ISemanticParser {
       const arr = tokens.tokens as LanguageToken[];
       for (let i = 1; i < arr.length - 1; i++) {
         const t = arr[i];
-        const surface = t.value;
-        const norm = (t.normalized ?? t.value).toLowerCase();
-        const isOr =
-          norm === 'or' ||
-          SemanticParserImpl.OR_KEYWORDS.has(surface) ||
-          SemanticParserImpl.OR_KEYWORDS.has(norm);
-        if (!isOr) continue;
+        // Language-scoped: `o` is the or-word in es/it/tl and the BY-marker in
+        // pl, so a language-blind surface match reads `zwiększ #score o 10` as a
+        // conjunction.
+        if (!isOrWordToken(t, language)) continue;
         const evTok = arr[i + 1];
         const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
         if (!SemanticParserImpl.KNOWN_EVENTS.has(evNorm)) break;
@@ -1260,6 +1309,25 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Stage 2: Try command patterns
     const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
+
+    // A leading `unless` guard, STANDALONE (no handler around it). The clause
+    // paths reach tryParseUnlessGuard on their own; a bare `unless <cond> <cmd>`
+    // arrives here instead, where the flat `unless {condition}` pattern would
+    // capture one value and truncate the guard. Same splitter, same flat shape —
+    // see tryParseUnlessGuard. Returns null (stream reset) for anything that is
+    // not a usable leading unless, so every other input is byte-identical.
+    const standaloneUnless = this.tryParseUnlessGuard(tokens, commandPatterns, language);
+    if (standaloneUnless && standaloneUnless.length > 0) {
+      const unlessResult =
+        standaloneUnless.length === 1
+          ? standaloneUnless[0]
+          : createCompoundNode(standaloneUnless, 'then', {
+              sourceLanguage: language,
+              confidence: 1,
+            });
+      return withDiagnostics(unlessResult, diagnostics);
+    }
+
     const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
 
     if (commandMatch) {
@@ -1691,19 +1759,22 @@ export class SemanticParserImpl implements ISemanticParser {
     // builder already declare for exactly this meaning; until now nothing
     // ever populated it.
     // Gated to patterns whose id declares a handler-head source group
-    // (event-en-source and kin): the fused generated patterns also bind a
-    // `source` group — as a DEFAULT-filled reference `me`, or worse, by
-    // swallowing a BODY command's from-phrase (`remove .active from all
-    // .tab` → source=.tab) — and threading those turns a formerly-harmless
-    // dropped mis-capture into a live delegation filter (the tabs-basic /
-    // tabs-content / remove-class-from-all R2 regression, 59 curated rows,
-    // caught by the execution ratchet mid-arc). Translated window-resize
-    // renders get their from via reclaimDanglingFromTail instead, which
-    // never routes through here.
+    // (event-en-source and kin — all of them END in `-source`): the fused
+    // generated patterns also bind a `source` group — as a DEFAULT-filled
+    // reference `me`, or worse, by swallowing a BODY command's from-phrase
+    // (`remove .active from all .tab` → source=.tab) — and threading those
+    // turns a formerly-harmless dropped mis-capture into a live delegation
+    // filter (the tabs-basic / tabs-content / remove-class-from-all R2
+    // regression, 59 curated rows, caught by the execution ratchet mid-arc;
+    // then again via `-sov-source-fronted`, whose mid-id `source` satisfied
+    // the old includes() check and delegated qu's tabs handlers to `.tab` —
+    // that source is the BODY command's, hence endsWith). Translated
+    // window-resize renders get their from via reclaimDanglingFromTail
+    // instead, which never routes through here.
     const sourceValue = match.captured.get('source');
     if (
       sourceValue &&
-      match.pattern.id.includes('source') &&
+      match.pattern.id.endsWith('source') &&
       !(sourceValue.type === 'reference' && sourceValue.value === 'me')
     ) {
       eventModifiers = { ...(eventModifiers ?? {}), from: sourceValue };
@@ -1821,7 +1892,20 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
-    if (actionValue && actionValue.type === 'literal') {
+    // `js` never takes this path. Its one role is not a value but an opaque span
+    // of raw JavaScript running to the block's `end`, so building the command
+    // from CAPTURED roles hands the body to the pattern matcher, which tokenizes
+    // and re-spaces it (`console.log("x")` → `console .log ( "x" )`). Falling
+    // through to the flat path rewinds to the action's own start and re-parses
+    // through `parseBodyWithClauses`, whose `consumeJsBlock` claims the span
+    // whole. bn was the language where it showed — `ক্লিক তে জেএস …` is the one
+    // handler head whose `{action}` slot lands exactly on the js verb.
+    if (
+      actionValue &&
+      actionValue.type === 'literal' &&
+      String(actionValue.value) !== 'js' &&
+      getSchema(String(actionValue.value) as ActionType) !== undefined
+    ) {
       // Create a command node directly from captured roles
       const actionName = actionValue.value as string;
       const roles: Record<string, SemanticValue> = {};
@@ -1909,6 +1993,10 @@ export class SemanticParserImpl implements ISemanticParser {
         confidence: match.confidence,
       });
       this.registerBoundIdentifiers(commandNode);
+      // Body commands recovered by the head-only re-parse below, which sees the
+      // whole clause and so parses the loop body along with the head. Spliced in
+      // after `commandNode` wherever the body is assembled.
+      let reparsedTail: SemanticNode[] = [];
 
       // A fused event pattern captures the wrapped command's VERB + (at most) its
       // PRIMARY arg, leaving every SECONDARY role clause unconsumed: `su {event}
@@ -1955,7 +2043,21 @@ export class SemanticParserImpl implements ISemanticParser {
       // `loopType:literal="times"` (which the fused capture mistypes as the number
       // under `loopType`) WITHOUT a body — gated below on the re-parse matching a
       // `-times` HEAD pattern, which the body-swallowing generated repeat never is.
-      if (!BLOCK_BODY_ACTIONS.has(actionName) || actionName === 'repeat') {
+      // `while` joins `repeat` in the block-body exception for one shape: the
+      // fused `while-event-<lang>-sov-simple` patterns (`{event} पर जब तक`)
+      // have no condition slot, so a rendered `on click जब तक {condition}
+      // {repeat-verb} …` handler captures a bare `while` with an implicit
+      // default and drops the condition. The clause re-parses through the
+      // HEAD-ONLY `repeat-<lang>-while-head` (the while-word IS the repeat
+      // head's first literal), which stops before the loop body — same
+      // no-body-swallow contract as the counted-loop heads. The swap below is
+      // gated on exactly that pattern id, so every other `while` shape keeps
+      // the #530 exclusion.
+      if (
+        !BLOCK_BODY_ACTIONS.has(actionName) ||
+        actionName === 'repeat' ||
+        actionName === 'while'
+      ) {
         const isVerbFirst = match.pattern.id.includes('verb-first');
         const all = tokens.tokens;
         const pos = tokens.position();
@@ -1963,12 +2065,27 @@ export class SemanticParserImpl implements ISemanticParser {
           t.kind === 'conjunction' ||
           (t.kind === 'keyword' &&
             (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        // The scan-back below identifies the verb by its NORMALIZED form. That
+        // misses whenever the language's verb normalizes to something other
+        // than the action name: id `muat` normalizes to `load` (a synonym) and
+        // he `הבא` to `next` (an outright homograph — the word means both
+        // "next" and "fetch"). `verbIdx` stayed -1, no re-parse ran at all, and
+        // the `as {responseType}` tail this whole retry exists to reclaim was
+        // dropped from every he/id fetch row. The profile already carries the
+        // verb surface per command, so ask it rather than trusting the
+        // normalizer to agree with the schema's action name.
+        const verbSurfaces = new Set<string>();
+        {
+          const kw = tryGetProfile(language)?.keywords?.[actionName];
+          if (kw?.primary) verbSurfaces.add(kw.primary.toLowerCase());
+          for (const alt of kw?.alternatives ?? []) verbSurfaces.add(alt.toLowerCase());
+        }
         let verbIdx = -1;
         for (let k = pos - 1; k >= 0; k--) {
           const t = all[k];
           if (isClauseBoundary(t)) break; // don't cross into a previous clause
           const tn = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
-          if (tn === actionName) {
+          if (tn === actionName || verbSurfaces.has(t.value.toLowerCase())) {
             verbIdx = k;
             break;
           }
@@ -2065,11 +2182,57 @@ export class SemanticParserImpl implements ISemanticParser {
                 spec.expectedTypes.length > 0 && !spec.expectedTypes.includes(valType(val) as never)
               );
             };
+            // A fused capture is provably JUNK — a swallowed role MARKER, not an
+            // argument — when its literal value is a role-marker CONCEPT name.
+            // The fused event shape hardwires a required `{patient}` slot
+            // (`generators/event-handlers-vso.ts`), so on a schema that declares
+            // no patient role that slot lands on the destination MARKER of a
+            // corpus surface like `bei klick scrollen zu letzte <.message/> in
+            // #chat`; the marker keyword normalizes to its concept, and
+            // `tokenToSemanticValue` turns it into `literal="destination"`.
+            // No user ever writes a concept name as an argument, so this value
+            // can only be marker swallow — it must not veto the re-parse swap
+            // that recovers the real destination (`last <.message/> in #chat`).
+            // Scoped by the same no-real-`patient` condition as `mapRole`, so
+            // every genuine patient capture (increment, pick, the qu verb-final
+            // safety rail) keeps full superset protection.
+            const isMarkerConceptJunk = (role: string, val: unknown): boolean =>
+              role === 'patient' &&
+              !!schema &&
+              !schema.roles.some(r => r.role === 'patient') &&
+              valType(val) === 'literal' &&
+              ROLE_MARKER_CONCEPTS.has(
+                String((val as { value?: unknown }).value ?? '').toLowerCase()
+              );
+            // A role the MATCHER defaulted (`applyExtractionRules` marks it
+            // `implicit`) is not a capture at all — it is the absence of one.
+            // `toggle-event-vi-vso` is `khi {event} chuyển đổi {patient} vào
+            // {destination?}` while the renderer emits the destination marker
+            // `trên`, so the group never fires and the pattern defaults
+            // `destination:reference=me(implicit)`. Counting that as something
+            // the re-parse must "preserve" made the real `destination:selector=
+            // #menu` a TYPE MISMATCH and vetoed its own repair. Implicit
+            // defaults are therefore exempt from the superset requirement, and
+            // discounted from the FUSED side of the role count — otherwise a
+            // swap that replaces a default with a real value ties 2 > 2 and is
+            // rejected anyway. Only the fused side: on the RE-PARSE side an
+            // implicit role is the canonical reading and does count (the
+            // counted-loop head's `loopType:"times"` is implicit, and
+            // discounting it there ties 1 > 1 and re-breaks every counted loop
+            // — measured, 12 languages). The qu verb-final safety rail is
+            // untouched: it guards against the RE-PARSE inventing a default,
+            // which `preservesFused` still catches by type, and a real fused
+            // capture is never implicit.
+            const isImplicit = (val: unknown): boolean =>
+              val !== null &&
+              typeof val === 'object' &&
+              (val as { implicit?: unknown }).implicit === true;
             const preservesFused =
               !!first &&
               first.kind === 'command' &&
               Object.entries(roles).every(([role, val]) => {
-                if (isIgnorableFusedRole(role, val)) return true;
+                if (isImplicit(val)) return true;
+                if (isIgnorableFusedRole(role, val) || isMarkerConceptJunk(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 if (rv !== undefined && valType(rv) === valType(val)) return true;
                 // Pick's fused patterns bind the unit/variant word under the
@@ -2077,18 +2240,29 @@ export class SemanticParserImpl implements ISemanticParser {
                 // "characters"), while the canonical pick variant pattern
                 // re-roles that word to `method` and captures the RANGE under
                 // `patient` (`0 to 5`). The unit word reappearing under
-                // `method` with the SAME literal value IS preservation — the
-                // role moved, nothing was lost. Without this the type check
-                // above (literal vs expression) vetoes the swap and the
-                // handler body truncates to `pick characters` (the arc-3
-                // foreign canonical-validity cluster).
+                // `method` with the SAME SURFACE is preservation — the role
+                // moved, nothing was lost. Without this the type check above
+                // (literal vs expression) vetoes the swap and the handler body
+                // truncates to `pick characters` (the arc-3 foreign
+                // canonical-validity cluster).
+                //
+                // The re-parsed `method` may be a literal or an EXPRESSION: the
+                // foreign pick patterns re-type unit words to the expression
+                // shape en produces (patterns/pick.ts). Compare surfaces, not
+                // types — a type check here would re-open the truncation
+                // cluster for all 13 verb-initial languages.
                 if (role === 'patient' && actionName === 'pick' && valType(val) === 'literal') {
                   const mv = (first as CommandSemanticNode).roles.get('method');
+                  const mvType = valType(mv);
+                  const mvSurface =
+                    mvType === 'literal'
+                      ? String((mv as { value?: unknown }).value)
+                      : mvType === 'expression'
+                        ? String((mv as { raw?: unknown }).raw)
+                        : undefined;
                   return (
-                    mv !== undefined &&
-                    valType(mv) === 'literal' &&
-                    String((mv as { value?: unknown }).value) ===
-                      String((val as { value?: unknown }).value)
+                    mvSurface !== undefined &&
+                    mvSurface === String((val as { value?: unknown }).value)
                   );
                 }
                 return false;
@@ -2109,16 +2283,68 @@ export class SemanticParserImpl implements ISemanticParser {
               // the swap can never swallow a body command. The body-swallowing
               // generated repeat matches none of these ids.
               /^repeat-.*-(times|for-in|while-head|until-head)$/.test(reparsePid);
+            // A HEAD-ONLY re-parse legitimately returns MORE than one command:
+            // the head stops after its count word, and `parseClause` carries on
+            // to the loop body in the same clause (`repetir 3 times agregar
+            // "<p>Line</p>" a yo` → [repeat, add]). Requiring exactly one
+            // vetoed every counted loop inside a handler — 13 languages, one
+            // corpus row each — even though every other condition held. The
+            // extra commands ARE the body, so keep them (spliced in below)
+            // rather than dropping them with the clause. Only the four
+            // head-only families qualify, so #530's body-swallowing generated
+            // repeat is still excluded by `headOnlyOk`.
+            const headOnlyPattern = /^repeat-.*-(times|for-in|while-head|until-head)$/.test(
+              reparsePid
+            );
             if (
-              reparsed.length === 1 &&
+              (reparsed.length === 1 || (headOnlyPattern && reparsed.length > 1)) &&
               first &&
               first.kind === 'command' &&
-              first.action === actionName &&
+              // Same action — or the one sanctioned upgrade: a fused `while`
+              // whose clause re-parses as the head-only repeat while-head.
+              // The while-word is the head's first literal, so the same
+              // surface that fused as a bare `while` IS a `repeat while
+              // {condition}` — the canonical reading the en reference has.
+              (first.action === actionName ||
+                (actionName === 'while' &&
+                  first.action === 'repeat' &&
+                  /-while-head$/.test(
+                    (first as { metadata?: { patternId?: string } }).metadata?.patternId ?? ''
+                  ))) &&
               preservesFused &&
               headOnlyOk &&
-              (first as CommandSemanticNode).roles.size > Object.keys(roles).length
+              // Strictly-more: the re-parse must recover something the fused
+              // capture lacked. Junk marker captures are excluded from the
+              // count — a fused shape whose ONLY role is a swallowed marker
+              // (scroll: `destination:literal="destination"`) would otherwise
+              // tie 1 > 1 and veto its own repair.
+              // The re-parse must GAIN something. Two ways, and the union is
+              // what keeps all three measured cases right:
+              //   (i) it binds MORE roles than the fused capture — the original
+              //       test, unchanged. The counted-loop head lands here (it adds
+              //       `quantity`, which the fused shape has no slot for) even
+              //       though its own `loopType` is implicit.
+              //   (ii) it binds more REAL roles — an upgrade from a default to
+              //       an actual value, which is vi's `destination:me(implicit)`
+              //       becoming `destination:selector=#menu` at an unchanged
+              //       role count.
+              // Neither fires when the re-parse merely re-defaults what the
+              // fused capture already defaulted: SOV `add @disabled to <button/>
+              // in me` keeps a fused `destination:me(implicit)` whose real value
+              // is postposed OUTSIDE the [verb..boundary] slice, so the re-parse
+              // defaults it too. Swapping there would consume the clause and rob
+              // the trailing DESTINATION/SOURCE reclaim that does recover it
+              // (measured: ja/ko/hi form-disable-on-submit).
+              ((first as CommandSemanticNode).roles.size >
+                Object.entries(roles).filter(([r, v]) => !isMarkerConceptJunk(r, v)).length ||
+                [...(first as CommandSemanticNode).roles.values()].filter(v => !isImplicit(v))
+                  .length >
+                  Object.entries(roles).filter(
+                    ([r, v]) => !isMarkerConceptJunk(r, v) && !isImplicit(v)
+                  ).length)
             ) {
               commandNode = first as CommandSemanticNode;
+              reparsedTail = reparsed.slice(1);
               while (tokens.position() < clauseEnd) tokens.advance();
             } else {
               // Re-parse rejected — discard its speculative coverage records
@@ -2400,12 +2626,12 @@ export class SemanticParserImpl implements ISemanticParser {
 
         if (remainingCommands.length > 0) {
           // Combine first command with remaining commands
-          body = [commandNode, ...remainingCommands];
+          body = [commandNode, ...reparsedTail, ...remainingCommands];
         } else {
-          body = [commandNode];
+          body = [commandNode, ...reparsedTail];
         }
       } else {
-        body = [commandNode];
+        body = [commandNode, ...reparsedTail];
         // No trailing-body walk ran (next token is an `end` or the stream is
         // exhausted) — anything left past here is dropped. The residue filter
         // silences the bare block terminator(s), so only real content fires.
@@ -2423,11 +2649,60 @@ export class SemanticParserImpl implements ISemanticParser {
         .filter(p => p.command !== 'on')
         .sort((a, b) => b.priority - a.priority);
 
-      // Use parseBodyWithClauses() to properly handle multi-clause then-chains
-      body = this.parseBodyWithClauses(tokens, commandPatterns, language);
+      // A generic fused handler's trailing `{action}` slot is meant to capture
+      // the body's VERB, and the body is then parsed from the tail AFTER it.
+      // In a verb-FINAL language the verb is the last token of the body, so the
+      // slot instead lands on the body's leading ARGUMENT and consumes it —
+      // `event-handler-bn-sov` (`{event} তে {action}`) captures `আমি` out of
+      // `ক্লিক তে আমি থেকে .highlight কে সরান` as `action:reference="me"`, the
+      // tail parse starts at the stranded `থেকে`, and `remove.source` silently
+      // falls back to its schema default (`me`, implicit — so the strict role
+      // signature scores it as MISSING). The capture is not a literal here, so
+      // it names no command and nothing downstream can use it.
+      //
+      // Rewind to where the slot started and parse the whole body from there,
+      // the same move the `if` fold above makes for the conditional head. Only
+      // when the slot really did swallow body text: a literal action goes down
+      // the flat path above, and a handler that captured no action at all has
+      // no recorded start, so both keep their existing token-identical parse.
+      const actionStart = actionValue ? match.roleStarts?.get('action') : undefined;
+      if (actionStart !== undefined && actionStart < tokens.position()) {
+        const bodyStream = new TokenStreamImpl(
+          (tokens.tokens as LanguageToken[]).slice(actionStart),
+          language
+        );
+        body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
+        while (!tokens.isAtEnd()) tokens.advance();
+      } else {
+        // Use parseBodyWithClauses() to properly handle multi-clause then-chains
+        body = this.parseBodyWithClauses(tokens, commandPatterns, language);
+      }
     }
 
-    return createEventHandler(resolvedEventValue, body, eventModifiers, {
+    // A multi-command handler body is a THEN-CHAIN, whichever path built it.
+    //
+    // `parseBodyWithClauses` (the clause path, and English always) wraps >1
+    // clause in a compound with chainType 'then' — that is why the en reference
+    // for `on click fetch X then put Y` is body=[compound{fetch,put}], and why
+    // rendering it back to English re-emits `then`. The FUSED path above builds
+    // its body by hand (`[commandNode, ...reparsedTail, ...remainingCommands]`)
+    // and left it flat, so the same handler parsed in a language whose fused
+    // `<command>-event-*` pattern wins came back as body=[fetch, put] — no
+    // compound, no chainType, and the English re-render silently dropped every
+    // `then`. Measured 2026-08-27 across the corpus: FIFTEEN languages (bn, es,
+    // he, hi, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) lost the chain this
+    // way, while the eight whose trigger pattern wins (ar, de, fr, ja, ko, qu,
+    // tr, zh) kept it. No recall metric can see it — `then` is neither an action
+    // nor a role — so only the English round trip does.
+    //
+    // Folding here rather than re-parsing: the commands are already correct, and
+    // this is purely the shape the two paths disagreed on. A body that already
+    // came from parseBodyWithClauses is length 1 (the compound), so it never
+    // double-wraps.
+    const foldedBody =
+      body.length > 1 ? [createCompoundNode(body, 'then', { sourceLanguage: language })] : body;
+
+    return createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
       confidence: match.confidence,
@@ -2489,7 +2764,8 @@ export class SemanticParserImpl implements ISemanticParser {
         // first `end` — and parse it as one unit, so matchBest matches the single
         // `js` command (as it already does for a standalone block) and the JS body
         // never reaches the command patterns.
-        const jsNode = this.consumeJsBlock(tokens, language);
+        const jsNode =
+          this.consumeJsBlock(tokens, language) ?? this.consumeVerbFinalJsBlock(tokens, language);
         if (jsNode) {
           clauses.push(jsNode);
           continue;
@@ -2498,6 +2774,13 @@ export class SemanticParserImpl implements ISemanticParser {
         const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
         if (conditional) {
           clauses.push(conditional);
+          continue;
+        }
+
+        // Leading `unless` — same splitter, flat shape (see tryParseUnlessGuard).
+        const unlessGuard = this.tryParseUnlessGuard(tokens, commandPatterns, language);
+        if (unlessGuard) {
+          clauses.push(...unlessGuard);
           continue;
         }
       }
@@ -2940,6 +3223,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Create a TokenStream from the (guard-stripped) clause tokens
     const clauseStream = new TokenStreamImpl(bodyTokens, language);
+
     const commands: SemanticNode[] = [];
 
     // Coverage mark for this clause: if the whole-clause verb-anchoring
@@ -3086,6 +3370,7 @@ export class SemanticParserImpl implements ISemanticParser {
         this.tryAttachTrailingRole(clauseStream, cmd, language);
         this.tryAttachTrailingStyle(clauseStream, cmd, language);
         this.tryAttachTrailingExpressionRole(clauseStream, cmd, language);
+        this.tryAttachTrailingDuration(clauseStream, cmd);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -3153,10 +3438,28 @@ export class SemanticParserImpl implements ISemanticParser {
       // Mirror en's flat `[unless(cond), toggle]` order: guard first, then body.
       return [guardNode, ...bodyCommands];
     }
-    // A claimed fronted condition that never re-attached to a guard node (no
-    // body command parsed) is dropped with the trailing marker — record it.
+    // A condition-only clause: the RENDERER emits en's flat compound shape —
+    // `unless(cond)` in its own clause, the guarded command in the NEXT one
+    // (`I ない限り それから .selected を 切り替え`) — so at this point the whole
+    // clause was the fronted condition plus the trailing marker, and there is
+    // no body command to anchor on. Emit the guard alone; the following clause
+    // parses its command as a sibling, exactly the en reference's `[unless,
+    // toggle]` action set. Still precision-safe: a real condition run was
+    // captured (a bare trailing marker with nothing ahead of it stays
+    // unparsed), so no phantom `unless` can appear on a clause that never
+    // carried one.
     if (trailingGuard && cond && cond.length > 0 && bodyCommands.length === 0) {
-      this.recordDroppedTokens(cond, language, 'body clause');
+      return [
+        createCommandNode(
+          trailingGuard,
+          { condition: { type: 'expression', raw: this.joinTokenText(cond, language) } },
+          {
+            sourceLanguage: language,
+            patternId: `${trailingGuard}-${language}-trailing-guard`,
+            confidence: 0.85,
+          }
+        ),
+      ];
     }
 
     return bodyCommands;
@@ -3190,6 +3493,35 @@ export class SemanticParserImpl implements ISemanticParser {
    * would mis-capture a source phrase as a destination. The shipped `source`
    * reclaim keeps its broader primary+alternatives+normalized match.
    */
+  /**
+   * Reclaim a post-verb bare TIME literal as `duration`.
+   *
+   * A verb-final language can emit the duration AFTER the verb, where no
+   * pattern reaches it — qu's stored corpus surface is
+   * `*background-color ta "blue" man ñitiy pi pasay 500ms`, and
+   * `transition-qu-generated-simple` matches everything up to `pasay` leaving
+   * `500ms` unconsumed. That was the blocker filed against the SOV marker-side
+   * fix: it makes the standalone pattern match this shape at all, and without
+   * this reclaim the duration is then silently dropped on five qu rows (the R1
+   * role-set flip and the R3 value ratchet both catch it).
+   *
+   * The sibling of the trailing BARE-literal quantity reclaim on the fused
+   * path, and gated the same way: an OPTIONAL `duration` role the schema
+   * declares and the parse did not fill, and a next token that is literally a
+   * time literal. A selector, a `then`/`end` keyword or a bare number never
+   * matches, so nothing else can be captured by accident.
+   */
+  private tryAttachTrailingDuration(stream: TokenStream, command: CommandSemanticNode): void {
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    if (roles.has('duration' as SemanticRole)) return;
+    const schema = getSchema(command.action as ActionType);
+    if (!schema?.roles.some(r => r.role === 'duration' && !r.required)) return;
+    const next = stream.peek();
+    if (!next || !/^\d+(?:\.\d+)?(?:ms|s|m|h)$/.test(next.value)) return;
+    roles.set('duration' as SemanticRole, createLiteral(next.value, 'duration'));
+    stream.advance();
+  }
+
   private tryAttachTrailingRole(
     stream: TokenStream,
     command: CommandSemanticNode,
@@ -3382,9 +3714,17 @@ export class SemanticParserImpl implements ISemanticParser {
         const refolded = foldNakedNamedArgsRaw(stream, existing.raw);
         if (refolded) {
           roles.set('style', { type: 'expression', raw: refolded } as SemanticValue);
-          this.tryAttachResponseTypeAfterStyle(stream, command, language);
         }
       }
+      // The trailing as-phrase is stranded whenever the style run ended without
+      // one — which now includes a style the PATTERN captured, since the fused
+      // event-handler patterns gained a `[with {style}]` slot from the schema.
+      // Before that they always left the whole run to the reclaim above, so
+      // this call only ever ran on the refold path and id's `sebagai JSON`
+      // silently lost its responseType the moment the slot started matching.
+      // Self-gating (already-captured role, schema must declare it), so
+      // reaching it from the pattern path adds no new capture surface.
+      this.tryAttachResponseTypeAfterStyle(stream, command, language);
       return;
     }
 
@@ -4591,6 +4931,31 @@ export class SemanticParserImpl implements ISemanticParser {
   /**
    * Known event names for detection (common DOM events).
    */
+
+  /**
+   * Whether the ENGLISH tokenizer classifies `word` as a keyword — which is
+   * exactly how English decides a handler event is a `literal` rather than an
+   * `expression` (see buildEventHandler). Memoized: this runs once per handler
+   * built, and the answer is a property of the word alone.
+   */
+  private static readonly enEventKeywordCache = new Map<string, boolean>();
+
+  private static isEnEventKeyword(word: unknown): boolean {
+    if (typeof word !== 'string') return false;
+    const key = word.toLowerCase();
+    const cached = SemanticParserImpl.enEventKeywordCache.get(key);
+    if (cached !== undefined) return cached;
+    let isKeyword = false;
+    try {
+      const tokens = tokenizeInternal(key, 'en').tokens;
+      isKeyword = tokens.length === 1 && tokens[0]?.kind === 'keyword';
+    } catch {
+      isKeyword = false;
+    }
+    SemanticParserImpl.enEventKeywordCache.set(key, isKeyword);
+    return isKeyword;
+  }
+
   private static readonly KNOWN_EVENTS = new Set([
     'click',
     'dblclick',
@@ -5267,7 +5632,14 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     return createEventHandler(
-      { type: 'literal', value: eventName },
+      // Typed the way English types a handler event — by the token KIND of its
+      // name. See `isEnEventKeyword` and the alignment in buildEventHandler:
+      // this extraction is a separate construction site and had the same
+      // unconditional-literal bug (ko eventsource-basic / socket-basic, whose
+      // `message` head is an identifier in English and so an EXPRESSION there).
+      SemanticParserImpl.isEnEventKeyword(eventName)
+        ? { type: 'literal', value: eventName }
+        : { type: 'expression', raw: eventName },
       body,
       undefined,
       metadata,
@@ -5402,6 +5774,125 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * Whether a token is the language's own PATIENT role marker, by surface.
+   * Homonym particles carry no `normalized` (zh `把` tokenizes as a bare
+   * particle), so the profile's declared forms are what identify it.
+   */
+  private isPatientMarker(token: LanguageToken, language: string): boolean {
+    const spec = (
+      tryGetProfile(language)?.roleMarkers as
+        Record<string, { primary?: string; alternatives?: string[] } | undefined> | undefined
+    )?.patient;
+    if (!spec?.primary) return false;
+    const value = token.value.toLowerCase();
+    if (spec.primary.toLowerCase() === value) return true;
+    return !!spec.alternatives?.some(a => a.toLowerCase() === value);
+  }
+
+  /**
+   * The terminator of a js BLOCK, which is looser than {@link isEndKeyword}.
+   *
+   * A curated language's end set deliberately omits surfaces that double as the
+   * positional word `last` — bn `শেষ`, ar `آخر` — because a role-value guard
+   * must not read `last` as a terminator. But `শেষ` IS what the renderer emits
+   * for bn's `end`, so inside a js block that exclusion means the block has no
+   * recognizable close at all: `consumeJsBlock` walks past it and the JavaScript
+   * is handed to the command patterns (bn `js(me) if (…) return "cancel";` came
+   * back as `js ;`). The homonym cannot bite here — the span being scanned is
+   * raw JavaScript, which is ASCII, so a Bengali positional `last` cannot occur
+   * inside it — so the profile's own `end` word is accepted alongside the
+   * curated set.
+   */
+  private isJsBlockTerminator(value: string, language: string): boolean {
+    return (
+      this.isEndKeyword(value, language) ||
+      this.profileKeywordMatches(language, 'end', value.toLowerCase())
+    );
+  }
+
+  /**
+   * The verb-FINAL shape of the same block: `<body> <marker> <js> <end>`.
+   *
+   * SOV and agglutinative renders put the command word last — bn `console.log("x")
+   * কে জেএস শেষ`, ja `console.log("x") を JS実行 終わり`, tr `console.log("x") i js
+   * son` — so the head of the clause is the JavaScript, not the keyword, and
+   * `consumeJsBlock`'s head test never fires. The body then reached the command
+   * patterns, which is how a js body containing `if (…) return …;` produced
+   * phantom `if`/`return` commands in bn and a bare `js ;` in ja/tr (the
+   * behavior-removable action-drop rows).
+   *
+   * Gated hard, so it can only add parses: the js keyword must be followed
+   * immediately by `end` (that is what makes it verb-FINAL rather than a `js`
+   * command with a body after it), there must be at least one token before it,
+   * and the scan stops at a conjunction so it can never reach across a clause
+   * boundary into a later `js … end`.
+   */
+  private consumeVerbFinalJsBlock(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    language: string
+  ): SemanticNode | null {
+    const startMark = tokens.mark();
+
+    let offset = 0;
+    let jsAt = -1;
+    for (;;) {
+      const token = tokens.peek(offset);
+      if (!token) break;
+      if (
+        this.isThenKeyword(token.value, language) ||
+        this.isJsBlockTerminator(token.value, language)
+      ) {
+        break;
+      }
+      if (this.isJsKeyword(token)) {
+        // The verb may be an ASCII+CJK compound the tokenizer split (zh `JS执行`,
+        // ja `JS実行`) — see the same allowance in consumeJsBlock.
+        const tail = tokens.peek(offset + 1);
+        const tailIsVerb =
+          !!tail &&
+          token.position?.end !== undefined &&
+          token.position.end === tail.position?.start &&
+          this.profileKeywordMatches(language, 'js', `${token.value}${tail.value}`.toLowerCase());
+        const closer = tokens.peek(offset + (tailIsVerb ? 2 : 1));
+        if (offset > 0 && closer && this.isJsBlockTerminator(closer.value, language)) {
+          jsAt = offset;
+          break;
+        }
+      }
+      offset++;
+    }
+    if (jsAt <= 0) return null;
+
+    const bodyTokens: LanguageToken[] = [];
+    for (let i = 0; i < jsAt; i++) {
+      const token = tokens.peek(i);
+      if (token) bodyTokens.push(token);
+    }
+    // Drop a POST-posed patient marker: it belongs to the command, not the code
+    // (bn কে, ja を, ko 을, tr i, qu ta).
+    const last = bodyTokens[bodyTokens.length - 1];
+    if (last && this.isPatientMarker(last, language)) bodyTokens.pop();
+    if (bodyTokens.length === 0) {
+      tokens.reset(startMark);
+      return null;
+    }
+
+    const raw = this.rawJsBody(bodyTokens);
+    for (let i = 0; i < jsAt; i++) tokens.advance();
+    // Consume the verb (plus a split compound tail) and its closing `end`.
+    tokens.advance();
+    const afterVerb = tokens.peek();
+    if (afterVerb && !this.isJsBlockTerminator(afterVerb.value, language)) tokens.advance();
+    tokens.advance();
+
+    return createCommandNode(
+      'js' as ActionType,
+      { patient: { type: 'expression', raw: raw || '()' } },
+      { sourceLanguage: language, patternId: `js-opaque-final-${language}`, confidence: 1 }
+    );
+  }
+
+  /**
    * Consume a `js(…) … end` block from the stream as one opaque unit and return a
    * single `js` command node. The FIRST `end` after the `js` keyword closes the
    * block — the same heuristic the i18n transformer's js-masking uses (raw JS never
@@ -5445,12 +5936,21 @@ export class SemanticParserImpl implements ISemanticParser {
       tokens.advance();
     }
 
+    // A PRE-posed patient marker belongs to the command, not to the JavaScript.
+    // he renders `js את console.log(…)` and zh `JS执行 把 console.log(…)`; without
+    // this the particle is swallowed into the opaque body and comes back as
+    // `js את console.log ( … )`. Languages whose patient marker FOLLOWS the body
+    // (ja を, ko 을, bn কে, tr i, qu ta) are unaffected: the marker is never at the
+    // head, and the body walk stops at `end` before reaching it.
+    const marker = tokens.peek();
+    if (marker && this.isPatientMarker(marker, language)) tokens.advance();
+
     let sawEnd = false;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
       tokens.advance();
-      if (this.isEndKeyword(t.value, language)) {
+      if (this.isJsBlockTerminator(t.value, language)) {
         sawEnd = true;
         break;
       }
@@ -5462,15 +5962,57 @@ export class SemanticParserImpl implements ISemanticParser {
       return null;
     }
 
-    const raw = bodyTokens
-      .map(t => t.value)
-      .join(' ')
-      .trim();
+    const raw = this.rawJsBody(bodyTokens);
     return createCommandNode(
       'js' as ActionType,
       { patient: { type: 'expression', raw: raw || '()' } },
       { sourceLanguage: language, patternId: `js-opaque-${language}`, confidence: 1 }
     );
+  }
+
+  /**
+   * Recover a js block's body EXACTLY as it was written.
+   *
+   * It used to be `bodyTokens.map(t => t.value).join(' ')`, which re-spaces the
+   * JavaScript around every token boundary: `console.log("from js")` came back
+   * as `console .log ( "from js" )`. That is not cosmetic — the js body is the
+   * one role whose value is code in another language, so re-spacing it makes
+   * the rendered surface differ from the reference's own English (the round-trip
+   * veto that kept js-inline on the i18n renderer in ar/tl/zh) and, on a body
+   * carrying a `//` comment or an ASI-sensitive line break, changes what the
+   * JavaScript MEANS.
+   *
+   * The token positions index into `positionSource`, so the body is a slice of
+   * it. The slice is verified against the token values with whitespace removed
+   * before it is trusted: a nested `this.parse` of a sub-block overwrites
+   * `positionSource`, and a re-tokenized sub-stream's offsets would then index
+   * the wrong text. When it does not hold, fall back to joining on token
+   * ADJACENCY — `position.start === previous.position.end` means the two were
+   * written with nothing between them — which reproduces the original for every
+   * single-line body and is never worse than the old unconditional space.
+   */
+  private rawJsBody(bodyTokens: readonly LanguageToken[]): string {
+    if (bodyTokens.length === 0) return '';
+
+    const start = bodyTokens[0].position?.start;
+    const end = bodyTokens[bodyTokens.length - 1].position?.end;
+    const source = this.positionSource;
+    if (source !== undefined && start !== undefined && end !== undefined) {
+      const slice = source.slice(start, end);
+      const bare = (text: string): string => text.replace(/\s+/g, '');
+      if (bare(slice) === bare(bodyTokens.map(t => t.value).join(''))) return slice.trim();
+    }
+
+    let out = '';
+    for (let i = 0; i < bodyTokens.length; i++) {
+      const previous = bodyTokens[i - 1];
+      const adjacent =
+        previous?.position?.end !== undefined &&
+        bodyTokens[i].position?.start === previous.position.end;
+      if (i > 0 && !adjacent) out += ' ';
+      out += bodyTokens[i].value;
+    }
+    return out.trim();
   }
 
   /**
@@ -5582,6 +6124,73 @@ export class SemanticParserImpl implements ISemanticParser {
    * through to the existing per-clause path untouched.
    */
   /**
+   * Parse a LEADING `unless` guard, reusing the conditional block's condition
+   * splitter but emitting the FLAT `[unless(condition), …body]` shape.
+   *
+   * WHY THIS EXISTS. `unless` is deliberately never folded into a conditional
+   * node (that would relabel its action `unless`→`if` and desync the
+   * cross-language action-set comparison), so it always fell to the flat
+   * `unless {condition}` command pattern — whose role capture takes ONE value
+   * and stops. The en REFERENCE therefore truncated its own condition:
+   *
+   *   unless I match .disabled toggle .selected
+   *     -> condition: expression "I"        <- `match .disabled` silently gone
+   *
+   * That is a correctness bug in English before it is a fidelity one: the guard
+   * the runtime evaluates is not the guard the author wrote. It also poisons
+   * every multilingual signal, because all 24 languages are scored against this
+   * reference — a translation "matches" by reproducing the truncation.
+   *
+   * The block path already splits a condition correctly (operator-aware,
+   * copula-guarded, SOV verb-medial aware), so this reuses it verbatim and then
+   * FLATTENS: the conditional's condition becomes the guard's, and its
+   * then-branch becomes the guard's following siblings. Action set is unchanged
+   * (`unless` + the body commands, exactly as before); only the condition value
+   * gains the rest of the expression.
+   *
+   * Declines — leaving the previous flat parse untouched — when the block form
+   * carries an `else`, which the flat shape cannot represent faithfully.
+   */
+  private tryParseUnlessGuard(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): SemanticNode[] | null {
+    const head = tokens.peek();
+    if (!head) return null;
+    if (!this.isUnlessKeyword((head.normalized ?? head.value).toLowerCase(), language)) return null;
+
+    const mark = tokens.mark();
+    const folded = this.tryParseConditionalBlock(tokens, commandPatterns, language, true);
+    if (!folded || folded.kind !== 'conditional') {
+      tokens.reset(mark);
+      return null;
+    }
+    const conditional = folded as ConditionalSemanticNode;
+    // An else-branch has no flat equivalent; keep the old parse rather than
+    // invent one.
+    if (conditional.elseBranch && conditional.elseBranch.length > 0) {
+      tokens.reset(mark);
+      return null;
+    }
+    const condition = conditional.roles.get('condition');
+    if (!condition) {
+      tokens.reset(mark);
+      return null;
+    }
+    const guard = createCommandNode(
+      'unless' as ActionType,
+      { condition },
+      {
+        sourceLanguage: language,
+        patternId: `unless-${language}-guard`,
+        confidence: 1,
+      }
+    );
+    return [guard, ...conditional.thenBranch];
+  }
+
+  /**
    * Block-terminator check for the conditional fold, by surface OR normalized
    * form. bn renders `end` as শেষ, which the curated {@link isEndKeyword} set
    * cannot list by value (শেষ is ALSO bn's positional `last` — the ar آخر
@@ -5609,7 +6218,10 @@ export class SemanticParserImpl implements ISemanticParser {
   private tryParseConditionalBlock(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
-    language: string
+    language: string,
+    // Set only by tryParseUnlessGuard, which flattens the result back to the
+    // `unless` action rather than emitting a conditional node — see there.
+    allowUnless = false
   ): SemanticNode | null {
     const head = tokens.peek();
     if (!head) return null;
@@ -5621,7 +6233,12 @@ export class SemanticParserImpl implements ISemanticParser {
     // dropped the conditional). Folding `if` keeps the same `if` action the flat
     // parse already produced, so no action set changes — only the nesting and the
     // (previously truncated) condition do.
-    if (!this.isIfKeyword(headVal, language)) return null;
+    if (
+      !this.isIfKeyword(headVal, language) &&
+      !(allowUnless && this.isUnlessKeyword(headVal, language))
+    ) {
+      return null;
+    }
 
     const startMark = tokens.mark();
     // Speculative: a failed fold rewinds the stream, so any coverage records
@@ -5909,32 +6526,6 @@ export class SemanticParserImpl implements ISemanticParser {
    * "Or" conjunction keywords across languages for multiple events.
    * Maps lowercase keyword → true. Used to detect "click or keydown" patterns.
    */
-  private static readonly OR_KEYWORDS = new Set([
-    'or', // EN
-    'أو', // AR
-    'o', // ES, TL
-    'ou', // PT, FR
-    'oder', // DE
-    'atau', // ID
-    'atau', // MS (same as ID)
-    '或', // ZH
-    'または', // JA
-    '또는', // KO
-    'veya', // TR
-    'অথবা', // BN
-    'utaq', // QU
-    'au', // SW
-    'або', // UK
-    'или', // RU
-    'hoặc', // VI
-    'lub', // PL
-    'או', // HE
-    'หรือ', // TH
-    'o', // IT
-    'या', // HI (tokenizes as a bare identifier; matched here by surface form)
-    'অথবা', // BN (idem)
-  ]);
-
   /**
    * Extract standalone event modifiers from the beginning of input.
    * Returns the modifiers (if any) and the remaining input string.
@@ -6413,8 +7004,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const orToken = tokens.peek();
       if (!orToken) break;
 
-      const orLower = (orToken.normalized || orToken.value).toLowerCase();
-      if (!SemanticParserImpl.OR_KEYWORDS.has(orLower)) {
+      if (!isOrWordToken(orToken, _language)) {
         tokens.reset(mark);
         break;
       }

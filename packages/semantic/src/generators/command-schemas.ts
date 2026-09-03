@@ -47,13 +47,18 @@ export interface RoleSpec {
   readonly markerOverride?: Record<string, string>;
   /**
    * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
-   * own, so the slot needs no marker to be safe. Two kinds:
+   * own, so the slot needs no marker to be safe. Three kinds:
    *
    * - `'time'` — a unit-suffixed time literal (`2s`, `500ms`, `1.5s`).
    * - `'reference'` — a CLOSED-CLASS context reference (`me`, `it`, `you` and
    *   their per-language equivalents). Closed-class is the whole argument: the
    *   tokenizer already classifies these as references, so a reference-typed
    *   slot cannot swallow a selector or a literal.
+   * - `'keyword'` — a FIXED keyword phrase behind a required multi-word marker
+   *   (`using view transition` on swap/process). The marker literals must all
+   *   match before the slot can capture anything, so the slot is guarded by
+   *   construction: nothing else in the grammar can land in it, and its absence
+   *   says only that the caller didn't ask for the flag.
    *
    * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
    * role counts toward a pattern's score only when captured, so an uncaptured
@@ -75,7 +80,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time' | 'reference';
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -234,6 +239,19 @@ export interface CommandSchema {
    */
   readonly bareKeyword?: boolean;
   /**
+   * Parsed by the structural feature-block layer (`tryParseFeatureBlock`), never
+   * by a generated pattern: excluded from `getDefinedSchemas`, so no command
+   * pattern and no fused event-handler pattern is emitted for it in any
+   * language. For a head whose shape the generator cannot express — the reactive
+   * `when <expr> changes`, where the REQUIRED trailing `changes` literal is what
+   * bounds the multi-token watched expression and what keeps the reactive head
+   * apart from the temporal `when {event}` handler patterns (a generated `when
+   * {condition}` command pattern would collide with them in every language that
+   * has one). Registered all the same so the schema stays the documented role
+   * contract: the R1 reference, the adapter's syntax table, the validators.
+   */
+  readonly structuralOnly?: boolean;
+  /**
    * Generate an EXTRA, lower-priority pattern variant per listed role with
    * that role (and its marker phrase) omitted entirely. For a REQUIRED role
    * whose phrase is legitimately absent in valid hyperscript (`transition
@@ -243,6 +261,39 @@ export interface CommandSchema {
    * transition goal NOTE); a separate variant has no skippable group at all.
    */
   readonly omitRoleVariants?: ReadonlyArray<SemanticRole>;
+  /**
+   * Generate an EXTRA, LOWER-priority pattern variant whose named role accepts a
+   * wider set of value types than the schema declares.
+   *
+   * `onSchema.event` is the case: a handler's event is `literal` for the ~60
+   * names the dictionaries localize (`click` → `クリック`, a keyword token), but a
+   * CUSTOM event passes through untranslated and tokenizes as an identifier, so
+   * `on message …` bound nothing in ar/ja/ko/tr — the three whose handler
+   * patterns come from this generator rather than from a handcrafted head.
+   *
+   * Widening the MAIN pattern instead was measured and rejected: ko renders
+   * `transition opacity to 0` as `opacity 을 에 0`, the same `<x> 을 에` shape as
+   * its handler head, so at equal priority the widened `on` pattern claimed the
+   * transition and three corpus rows flipped. A lower-priority variant is inert
+   * wherever a real command pattern can match the span.
+   */
+  readonly widenTypeVariants?: ReadonlyArray<{
+    readonly role: SemanticRole;
+    readonly types: ReadonlyArray<ExpectedType>;
+    readonly idSuffix: string;
+    /** Subtracted from `basePriority`. Default 15 — below every command pattern. */
+    readonly priorityDelta?: number;
+    /**
+     * Languages that do NOT get the variant, with the measured reason. ko is the
+     * one: its on-marker `에` is also its destination marker, and its event-role
+     * marker `을` is also its patient marker, so `<x> 을 에 <value>` is BOTH a
+     * handler head and the shape ko renders `transition opacity to 0` in
+     * (`opacity 을 에 0 300ms 트랜지션`). With the variant, that bare transition
+     * reads as a handler named `opacity`. No other language has both collisions
+     * — ja's on-marker is `で` while its transition marks the goal with `に`.
+     */
+    readonly excludeLanguages?: ReadonlyArray<string>;
+  }>;
   /**
    * Generate an EXTRA, higher-priority pattern variant per entry, with a
    * REQUIRED literal keyword inserted immediately before the named role's
@@ -428,6 +479,15 @@ export const toggleSchema: CommandSchema = {
   primaryRole: 'patient',
   // `toggle .active on #btn for 2s` → args ['.active'], modifiers { on, for }.
   ast: { args: ['patient'], modifiers: { on: 'destination', for: 'duration' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `toggle .active on #panel` → args [.active, on, #panel]. This is the
+  // row that surfaced the defect (Arc 1 step 4): `destination` bound to the
+  // literal identifier 'on' and `#panel` bound to nothing. Semantic binds
+  // patient='.active', destination='me'/'#panel'.
+  argSkipTokens: ['on'],
   roles: [
     {
       role: 'patient',
@@ -437,6 +497,12 @@ export const toggleSchema: CommandSchema = {
       selectorKinds: ['class', 'attribute'],
       svoPosition: 1,
       sovPosition: 2,
+      // zh: the transformer emits `切换 把 .active` (the profile's 把 patient
+      // marker), but natural zh writes `切换 .active` bare — the handcrafted
+      // patterns' form. Optional accepts both; without it the generated
+      // pattern REQUIRED 把 and the slim bundles could not parse the bare
+      // form at all. Same treatment as go's destination.
+      markerOptional: { zh: true },
     },
     {
       role: 'destination',
@@ -620,6 +686,14 @@ export const removeSchema: CommandSchema = {
   ast: { args: ['patient'], modifiers: { from: 'source' } },
   // Trailing `from X` is captured by the core parser as `target`; map it to source.
   targetRole: 'source',
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `remove .active from me` → args [.active, from, me]. `source` has no
+  // markerOverride, so positional binding took the marker. Semantic binds
+  // patient='.active', source='me'.
+  argSkipTokens: ['from'],
   roles: [
     {
       role: 'patient',
@@ -787,6 +861,14 @@ export const setSchema: CommandSchema = {
   // modifier. `scope` carries `set @attr to V on <scope>`, which the core
   // SetCommand applies to every matched element (defaulting to `me`).
   ast: { args: ['destination'], modifiers: { to: 'patient', on: 'scope' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `set myVar to "value"` → args [myVar, to, value]; the traditional
+  // parser also desugars `increment counter` into the same shape. Semantic
+  // binds destination='myVar', patient='value'.
+  argSkipTokens: ['to'],
   roles: [
     {
       role: 'destination',
@@ -802,12 +884,23 @@ export const setSchema: CommandSchema = {
       // Arabic (VSO): no marker before variable
       markerOverride: {
         en: '', // No marker before destination in English: "set :x to 5"
+        es: '', // "establecer x a 5" - no marker before variable (profile default `en` matched nothing)
         ja: 'を', // "x を 10 に 設定" - variable gets object marker
         ko: '를', // "x 를 10 에 설정" - variable gets object marker
         tr: 'i', // "x i 10 e ayarla" - variable gets accusative marker
         ar: '', // "عيّن x إلى 10" - no marker before variable
         sw: '', // "seti x kwenye 10" - no marker before variable
         tl: '', // "itakda x sa 10" - no marker before variable
+        // th: like every other SVO profile here, the variable is UNMARKED and
+        // the value takes the destination preposition (see the patient override
+        // below). Absent from both maps, th fell to its profile defaults —
+        // destination `ใน`, patient `''` — which put the marker on the wrong
+        // operand and left the value bare: `ตั้ง ใน @disabled จริง` for `set
+        // @disabled to true`, against the transformer's `ตั้ง @disabled ใน จริง`.
+        // Every th `set` row in the corpus carried that inversion; the one it
+        // actually broke is set-color-variable, whose property-path destination
+        // then swallowed `ของ` as the value inside a handler.
+        th: '',
         bn: 'কে', // "x কে 10 তে সেট" - patient marker on variable
         qu: 'ta', // "x ta 10 man churay" - patient marker on variable
         // hi: the transformer marks the TARGET with को and the VALUE with में
@@ -817,7 +910,17 @@ export const setSchema: CommandSchema = {
         // corpus, so the whole hi set-family (set-text/inner-html/style/attribute)
         // fell to the bare-event fallback (S6 set-trio).
         hi: 'को', // target (destination) gets को
+        // zh: the transformer emits the verb-first BA form `设置 把 X 到 V`
+        // (把 before the variable), while natural zh writes `设置 X 为 V`
+        // (unmarked). 把 as the marker, optional below, accepts both. The
+        // profile default 在 matched neither form, so the generated zh set
+        // patterns were dead weight and the slim bundles (schema-generated
+        // patterns only) could not parse set at all.
+        zh: '把',
       },
+      // Accept the unmarked natural form alongside the transformer's 把 form
+      // (same treatment as go's destination).
+      markerOptional: { zh: true },
     },
     {
       role: 'patient',
@@ -844,9 +947,16 @@ export const setSchema: CommandSchema = {
         ar: 'إلى', // "عيّن x إلى 10" - value gets preposition "to"
         sw: 'kwenye', // "seti x kwenye 10" - destination prep before value
         tl: 'sa', // "itakda x sa 10" - destination prep before value
+        th: 'ใน', // "ตั้ง x ใน 10" - th's own destination preposition, on the value
         bn: 'তে', // "x কে 10 তে সেট" - destination marker on value
         qu: 'man', // "x ta 10 man churay" - destination marker on value
         hi: 'में', // value (patient) gets में — see the destination note above
+        // zh: the transformer/corpus form marks the value with 到 (`设置 把 X
+        // 到 V`); natural zh uses 为 (`设置 X 为 V`). 到 is the override,
+        // the 为-family rides along as variants (all merged as alternatives
+        // by schemaMarkerAlternatives). Profile default 把 was the PATIENT
+        // marker, which never precedes set's value in either form.
+        zh: '到',
       },
       // Turkish dative is allomorphic under vowel harmony: the i18n transformer
       // emits `e` for quoted-string values (`"red" e`) but `-ya` for a value
@@ -860,6 +970,10 @@ export const setSchema: CommandSchema = {
       // ayarla` did. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
       markerVariants: {
         tr: ['e', 'a', 'ye', 'ya'],
+        // Natural zh value markers (`设置 X 为 V`), simplified + traditional +
+        // resultative — the handcrafted set-zh-full alternatives, kept parseable
+        // alongside the transformer's 到 override above.
+        zh: ['为', '為', '成'],
       },
     },
     {
@@ -1067,6 +1181,51 @@ export const liveSchema: CommandSchema = {
 };
 
 /**
+ * When command: the reactive OBSERVER block —
+ * `when <expr> [or <expr>]* changes <body> [end]` — whose body re-runs when any
+ * watched expression's value changes (`it` is the new value).
+ *
+ * Verified against the vendored _hyperscript 0.9.93 engine: `or` is the only
+ * separator (a comma is rejected — "Expected 'changes' but found ','"),
+ * `changes` is a REQUIRED literal, `end` is optional, and the watched expression
+ * may be a variable, an `or`-run, arithmetic, a parenthesized expression, a
+ * property path or a selector. The engine has NO temporal `when <event>` form
+ * (`when click …` fails with "Cannot watch local variable 'click'").
+ *
+ * Patterns:
+ * - EN: when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end
+ * - JA: とき $firstName または $lastName 変わったら `…` を #full-name に 置く 終わり
+ *
+ * The reactive sibling of `live`, but WITH a head: the watched expression is
+ * carried in the `condition` role — the role the `if`/`unless`/`while` heads and
+ * the i18n transformer's `BlockStructure.prefixExpr` already use, so the
+ * renderer and the R1 role scorer know it. `structuralOnly`: the head is
+ * `<when-word> {condition} <changes-word>` with the trailing literal bounding a
+ * multi-token capture, which no generated pattern expresses — and the temporal
+ * `when {event}` handler patterns must keep winning for `when click …`.
+ * `tryParseFeatureBlock` parses the head; the body follows the `live` path.
+ */
+export const whenSchema: CommandSchema = {
+  action: 'when',
+  description: 'Reactive observer: re-run the body when a watched expression changes',
+  category: 'control-flow',
+  primaryRole: 'condition',
+  // Bare-command form only — the real path is ASTBuilder.buildFeature.
+  ast: { args: ['condition'] },
+  hasBody: true,
+  structuralOnly: true,
+  roles: [
+    {
+      role: 'condition',
+      description: 'The watched expression (`or`-separated expressions watch each)',
+      required: true,
+      expectedTypes: ['expression', 'reference', 'selector'],
+      svoPosition: 1,
+    },
+  ],
+};
+
+/**
  * Realtime / service-worker block commands.
  *
  * Each introduces a named, body-bearing construct whose body is a sequence of
@@ -1204,6 +1363,10 @@ export const onSchema: CommandSchema = {
       role: 'event',
       description: 'The event to handle',
       required: true,
+      // `literal` covers the localized event names (a keyword token). A CUSTOM
+      // event name passes through untranslated and tokenizes as an identifier —
+      // see `widenTypeVariants` below, which carries that case in a separate,
+      // lower-priority pattern rather than here.
       expectedTypes: ['literal'],
       svoPosition: 1,
       sovPosition: 2,
@@ -1216,6 +1379,14 @@ export const onSchema: CommandSchema = {
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
+    },
+  ],
+  widenTypeVariants: [
+    {
+      role: 'event',
+      types: ['literal', 'expression'],
+      idSuffix: 'expr-event',
+      excludeLanguages: ['ko'],
     },
   ],
 };
@@ -1231,6 +1402,13 @@ export const triggerSchema: CommandSchema = {
   primaryRole: 'event',
   // `trigger click on #btn` → args ['click'], modifiers { on: '#btn' }.
   ast: { args: ['event'], modifiers: { on: 'destination' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `trigger click on #button` → args [click, on, #button]. Semantic binds
+  // event='click', destination='#button'.
+  argSkipTokens: ['on'],
   roles: [
     {
       role: 'event',
@@ -1247,6 +1425,14 @@ export const triggerSchema: CommandSchema = {
       // or failed outright (qu/bn). ja/ko were immune only because their event
       // marker IS the object particle (を / 을·를). #588 markerVariants machinery.
       markerVariants: { hi: ['को'], qu: ['ta'], bn: ['কে'] },
+      // …and the RENDER side of the same fact: without an override the
+      // renderer emitted the profile-wide event marker (bn তে / hi पर), which
+      // doubles as the on-HANDLER head marker — `init তে ট্রিগার` read back as
+      // `on init` and the trigger's event dropped (trigger-event bn/hi, bare
+      // render allowlist). Rendering the accusative form matches the corpus
+      // and cannot re-anchor as a handler. Scoped to this slot: the
+      // profile-wide marker stays for the `on` command's own patterns.
+      markerOverride: { bn: 'কে', hi: 'को' },
     },
     {
       role: 'destination',
@@ -1317,6 +1503,24 @@ export const fetchSchema: CommandSchema = {
       // source text so the expression parser can build a real objectLiteral.
       // `style` is the role whose marker is `with` in every language profile.
       expectedTypes: ['expression'],
+      // Shape-anchored, so an UNCAPTURED style slot carries no evidence against
+      // the pattern. This is the same lever toggle's `[{duration}]` and swap's
+      // `[using view {manner}]` needed, and for the same reason: giving the 23
+      // hand-written fetch recovery patterns a `[with {style}]` group weighted an
+      // unfilled slot into every plain fetch's denominator, dropping es
+      // `buscar '/x' como json` from confidence 1.0 to 0.692 — under the 0.7 bar
+      // at which core keeps the semantic parse, so a correct parse would have
+      // been thrown away for the traditional fallback.
+      //
+      // It qualifies on the documented criterion: the slot is marker-guarded in
+      // every pattern (`con {…}`), and expression-only with an object-literal
+      // fold, so nothing else in the grammar can land in it and its absence says
+      // only that the caller passed no options. `'object'` rather than reusing
+      // `'keyword'` because the two matcher branches that read the VALUE
+      // (pattern-matcher.ts:632, :984) are keyword-specific; only the confidence
+      // model reads shape-anchoring generically, which is exactly the effect
+      // wanted here.
+      valueShape: 'object',
       svoPosition: 2,
       sovPosition: 2,
     },
@@ -1599,6 +1803,13 @@ export const takeSchema: CommandSchema = {
   primaryRole: 'patient',
   // `take .active from #parent for me` → args ['.active'], modifiers { from, for }.
   ast: { args: ['patient'], modifiers: { from: 'source', for: 'recipient' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `take class from <#source/>` → args [class, from, selector]. Same
+  // family as remove; the marker is not the source.
+  argSkipTokens: ['from'],
   roles: [
     {
       role: 'patient',
@@ -1691,7 +1902,15 @@ export const haltSchema: CommandSchema = {
   // The patient distinguishes `halt the event` (preventDefault, handler
   // CONTINUES) from bare `halt` (stops the handler). Dropping it collapsed
   // both to the bare form. HaltCommand resolves a 'the' target to context.event.
-  ast: { args: ['patient'] },
+  // `halt the event` is the `the` slot on both paths (Arc 3 step 3): the
+  // core parser emits `modifiers.the`, and this descriptor makes the
+  // semantic path emit the patient there too — HaltCommand resolves the slot
+  // to context.event, and core's role inferrer reads this map in reverse.
+  ast: { args: [], modifiers: { the: 'patient' } },
+  // Role markers the traditional parser used to leave in `args` as bare
+  // identifiers; skipped when schema-driven inference scans args for role
+  // VALUES. Semantic binds patient='event'.
+  argSkipTokens: ['the'],
   roles: [
     {
       role: 'patient',
@@ -1791,12 +2010,17 @@ export const sendSchema: CommandSchema = {
         es: 'a',
         ko: '에게',
         zh: '到',
-        tr: '-e',
+        // No leading hyphen: that is i18n's INTERNAL attachment convention
+        // (`#count-ta` → `#countta`), not a surface form. The corpus the
+        // transformer writes is spaced — tr `gönder #widget e`, qu
+        // `#widget man ñitiy pi kachay` — so a hyphenated marker matched
+        // nothing and rendered a stray `-e` / `-man` token.
+        tr: 'e',
         pt: 'para',
         fr: 'à',
         de: 'an',
         id: 'ke',
-        qu: '-man',
+        qu: 'man',
         sw: 'kwa',
       },
     },
@@ -2635,20 +2859,6 @@ export const jsSchema: CommandSchema = {
 };
 
 /**
- * Async command: runs commands asynchronously.
- */
-export const asyncSchema: CommandSchema = {
-  action: 'async',
-  description: 'Execute commands asynchronously',
-  category: 'async',
-  primaryRole: 'patient',
-  // Roleless keyword: emits a bare command node.
-  ast: {},
-  hasBody: true,
-  roles: [],
-};
-
-/**
  * Tell command: sends commands to another element.
  */
 export const tellSchema: CommandSchema = {
@@ -2891,6 +3101,76 @@ export const measureSchema: CommandSchema = {
 // =============================================================================
 
 /**
+ * `using view` is the marker half of hyperscript's `using view transition`
+ * tail (swap/process). Like `partials in` and `url`, it is a
+ * hyperscript-specific phrase with no native translation, so all 24 languages
+ * use the English form. The multi-word marker is split into separate literal
+ * tokens by the pattern generator; the trailing `transition` is the role's
+ * captured value.
+ *
+ * (Defined here, above its first schema reference — `swapSchema` — to avoid TDZ.)
+ */
+const USING_VIEW_MARKER_ALL_LANGS: Record<string, string> = {
+  en: 'using view',
+  es: 'using view',
+  pt: 'using view',
+  fr: 'using view',
+  de: 'using view',
+  it: 'using view',
+  ja: 'using view',
+  ko: 'using view',
+  zh: 'using view',
+  ar: 'using view',
+  he: 'using view',
+  hi: 'using view',
+  bn: 'using view',
+  tr: 'using view',
+  ru: 'using view',
+  uk: 'using view',
+  pl: 'using view',
+  id: 'using view',
+  vi: 'using view',
+  th: 'using view',
+  ms: 'using view',
+  tl: 'using view',
+  sw: 'using view',
+  qu: 'using view',
+};
+
+/**
+ * The shared `manner` role behind `using view transition` (swap, process).
+ *
+ * The surface is a valueless FLAG in hyperfixi's tail form — the runtime tests
+ * only for presence (`raw.modifiers?.viewTransition !== undefined`), never the
+ * value. But a role with no value slot is not expressible: `buildRoleToken`
+ * always emits a value token after a marker. So the marker takes the first two
+ * words and the third, `transition`, is captured as the role's literal value.
+ *
+ * `valueShape: 'keyword'` is what makes the optional trailing slot free: without
+ * it an uncaptured slot weighs into `scoreRoleCoverage`'s denominator and drops
+ * plain `process partials in it` / `swap #a with #b` below the 0.7 adoption
+ * threshold — the toggle-es regression class (see {@link RoleSpec.valueShape}).
+ *
+ * NO default: the runtime treats presence as the request, so a default would
+ * turn every swap and every process into a view transition.
+ */
+const VIEW_TRANSITION_MANNER_ROLE: Omit<RoleSpec, 'svoPosition' | 'sovPosition'> = {
+  role: 'manner',
+  description: 'Run the swap inside a `document.startViewTransition()` (`using view transition`)',
+  required: false,
+  // Both types, because the SAME word tokenizes differently per language and
+  // the difference is an accident of vocabulary: `transition` is a command
+  // keyword in en/fr (it is also their verb) and a bare identifier everywhere
+  // else, which types it `literal` in the first group and `expression` in the
+  // second. Measured: with `['literal']` alone only en and fr captured the
+  // tail. Widening is safe precisely because the slot is marker-guarded —
+  // nothing reaches it until `using view` has matched.
+  expectedTypes: ['literal', 'expression'],
+  valueShape: 'keyword',
+  markerOverride: USING_VIEW_MARKER_ALL_LANGS,
+};
+
+/**
  * Swap command: swaps DOM content using various strategies.
  *
  * Patterns:
@@ -2918,7 +3198,11 @@ export const swapSchema: CommandSchema = {
   // work. Preserved verbatim by the Arc F migration (a faithful migration must
   // not change output) and pinned as two `drift` exemptions; this is the
   // behavior fix those entries were waiting for.
-  ast: { args: ['method', 'destination', 'patient'] },
+  //
+  // `manner` is the exception to "keyword-positional args": it rides as
+  // `modifiers.viewTransition`, which SwapCommand.parseInput reads for presence
+  // alongside its existing flat-args `using`/`view`/`transition` scan.
+  ast: { args: ['method', 'destination', 'patient'], modifiers: { viewTransition: 'manner' } },
   roles: [
     {
       role: 'method',
@@ -2959,6 +3243,14 @@ export const swapSchema: CommandSchema = {
         vi: '',
         he: 'את', // "החלף את #a עם #b" — direct-object particle
         zh: '把', // "交换 把 #a 用 #b" — BA object marker
+        // tl was the one language with a patient with-word (`nang`, below) and
+        // no destination entry, so it fell to its profile destination marker and
+        // rendered `palitan_pwesto sa #a nang #b`. `sa` there is read as the
+        // role marker it is, both selectors bind to the wrong slots, and the
+        // parse came back `swap with destination` — both roles gone
+        // (tl swap-content). The i18n row is unmarked, like every other SVO/VSO
+        // language here.
+        tl: '',
       },
     },
     {
@@ -3009,6 +3301,11 @@ export const swapSchema: CommandSchema = {
         tl: 'nang',
       },
     },
+    {
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 4,
+      sovPosition: 4,
+    },
   ],
 };
 
@@ -3032,7 +3329,15 @@ export const morphSchema: CommandSchema = {
   primaryRole: 'patient',
   // `morph #list to it` → args [content], modifiers { on: element }.
   // Content is source or destination; the element being morphed is the patient.
-  ast: { args: [['source', 'destination']], modifiers: { on: 'patient' } },
+  //
+  // `manner` rides as `modifiers.viewTransition`, same as swap/process —
+  // MorphCommand.parseInput reads it for presence alongside its existing
+  // flat-args `using`/`view`/`transition` scan (the traditional-parser path,
+  // which owns English because morph sits on SKIP_SEMANTIC_COMMANDS).
+  ast: {
+    args: [['source', 'destination']],
+    modifiers: { on: 'patient', viewTransition: 'manner' },
+  },
   roles: [
     {
       role: 'patient',
@@ -3051,6 +3356,18 @@ export const morphSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 2,
       markerOverride: { en: 'to' }, // "morph #target to it"
+    },
+    {
+      // `morph #target to it using view transition` — the same tail as swap and
+      // process, closed here for the same reason (#870's third-schema filing):
+      // without the role the semantic parser matched morph at confidence 1.0
+      // and stranded the tail, so every semantic-only consumer (multilingual
+      // bundles, the bridge, `translate()`) silently dropped the animation
+      // request in all 24 languages. Morph has NO hand-written patterns in any
+      // language, so this schema role is the whole fix on the pattern side.
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 3,
+      sovPosition: 3,
     },
   ],
 };
@@ -3328,6 +3645,7 @@ export const replaceSchema: CommandSchema = {
  *
  * Patterns:
  * - EN: process partials in it
+ * - EN: process partials in it using view transition
  *
  * Both `partials` and `in` are required marker keywords. The multi-word
  * marker is split into separate literal tokens by the pattern generator.
@@ -3337,6 +3655,13 @@ export const processSchema: CommandSchema = {
   description: 'Process hx-partial markup in HTML content',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `process partials in it` → args ['it']; the optional tail rides as
+  // `modifiers.viewTransition`, which ProcessPartialsCommand.parseInput has
+  // read since #861 (`raw.modifiers?.viewTransition !== undefined`). Without a
+  // descriptor this schema fell through to `buildGenericCommand`, whose
+  // modifier list is fixed (destination/duration/method/style) and would have
+  // dropped a captured `manner` on the floor.
+  ast: { args: ['patient'], modifiers: { viewTransition: 'manner' } },
   roles: [
     {
       role: 'patient',
@@ -3346,6 +3671,11 @@ export const processSchema: CommandSchema = {
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: PARTIALS_IN_MARKER_ALL_LANGS,
+    },
+    {
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 2,
+      sovPosition: 2,
     },
   ],
 };
@@ -3372,7 +3702,8 @@ export const renderSchema: CommandSchema = {
       role: 'style',
       description: 'Variables to pass to the template (with keyword)',
       required: false,
-      expectedTypes: ['expression', 'reference'],
+      expectedTypes: ['expression'],
+      valueShape: 'object',
       svoPosition: 2,
       sovPosition: 1,
     },
@@ -3441,7 +3772,6 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   call: callSchema,
   return: returnSchema,
   js: jsSchema,
-  async: asyncSchema,
   tell: tellSchema,
   default: defaultSchema,
   init: initSchema,
@@ -3461,6 +3791,7 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   // Reactivity
   bind: bindSchema,
   live: liveSchema,
+  when: whenSchema,
   // Realtime / streaming + service workers
   eventsource: eventsourceSchema,
   socket: socketSchema,
@@ -3495,7 +3826,9 @@ export function getSchemasByCategory(category: CommandCategory): CommandSchema[]
  * Get all fully-defined schemas (with roles).
  */
 export function getDefinedSchemas(): CommandSchema[] {
-  return Object.values(commandSchemas).filter(s => s.roles.length > 0 || s.bareKeyword === true);
+  return Object.values(commandSchemas).filter(
+    s => s.structuralOnly !== true && (s.roles.length > 0 || s.bareKeyword === true)
+  );
 }
 
 // =============================================================================

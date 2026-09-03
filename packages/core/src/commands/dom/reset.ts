@@ -24,6 +24,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface ResetCommandInput {
   targets: HTMLElement[];
@@ -51,7 +52,7 @@ export class ResetCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'reset'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ResetCommandInput> {
@@ -60,7 +61,7 @@ export class ResetCommand implements DecoratedCommand {
       evaluator,
       context,
       'reset',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

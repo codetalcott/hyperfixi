@@ -9,6 +9,1521 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
+---
+
+> **Update 2026-08-01 — the R1 burn-down tail went 52 → 24 rows in two PRs,
+> and BOTH were smaller than their filings claimed.**
+>
+> - **#867 · `last-in-collection` (5 rows: de/fr/ms/th/vi).** Not a schema gap.
+>   The generated fused event shape hardwires a required `{patient}` slot; on a
+>   schema with no patient role (`scroll`) it swallows the destination MARKER,
+>   whose keyword normalizes to its own role concept →
+>   `destination:literal="destination"` with the real destination left
+>   unconsumed. Which languages this hits is a **tokenizer accident**: the five
+>   have keyword-kind markers (capture succeeds, junk wins); it/id/pt/ru/uk have
+>   particle-kind markers (capture returns null, the fused pattern never
+>   matches); es's `a` is a particle AND an `ENGLISH_NOISE_WORD`. **The repair
+>   already existed** — the fused body-walk re-parse swap heals this identical
+>   junk for `go-url` — and was blocked by exactly two vetoes, both
+>   mutation-verified load-bearing: the `preservesFused` type check (junk
+>   `literal` vs the re-parse's `expression`; `go-url` passes only because its
+>   real destination is a literal too) and the strictly-more size gate (`1 > 1`
+>   for scroll's single junk role — the repair vetoed itself). Both now exempt
+>   captures whose literal value IS a role-concept name. **No matcher or
+>   generator change**, so every pattern's match outcome, priority and
+>   confidence is byte-identical.
+> - **#868 · `pick-text-range` (23 rows).** See the struck-through Family F
+>   deferral below — its cost estimate was stale, the realignment having landed
+>   in arcs 1–3. One valueType divergence, fixed via `ExtractionRule.transform`
+>   plus widening the fused-swap pick preservation clause.
+>
+> Both were sized by a **whole-corpus pre/post probe** (3960 stored patterns.db
+> rows, 24 languages × the full pattern set) and both diffed to exactly their
+> target rows and nothing else.
+>
+> **#874 then closed 9 of the 10 `take.recipient` rows** — and needed no
+> rendering change at all, which is the third time this arc's filed prescription
+> was falsified by triage. R1 tail **24 → 15**; **fourteen languages are now at
+> avgRoleFidelity 1.0000** — ar, bn, de, es, fr, hi, it, ja, pt, ru, sw, tl, tr,
+> uk. What remains: ~~qu's `take.recipient` (blocked on a renderer defect, named
+> in that section)~~ and 14 scattered singletons — the "thin and flat" headroom by
+> design.
+>
+> **Update 2026-08-09 — the qu row is closed too (R1 tail 15 → 14; every
+> `take.recipient` row is now faithful).** Both halves of the named blocker
+> shipped: implicit-default tagging so the renderer suppresses only
+> matcher-injected `me` (authored `noqa man` / `to me` survives round-trips),
+> plus the `-sov-source-fronted` event-handler variant for qu's canonical
+> order. The R2 tabs flattening the deferral predicted did fire — via the
+> `includes('source')` delegation-threading gate matching the new pattern id,
+> now `endsWith('source')` — and was caught by the execution ratchet exactly as
+> designed. Detail in the take section's Resolution paragraph below. What
+> remains of the R1 tail is the 14 singletons only.
+
+> **Update 2026-08-28g — the transformer is deleted. i18n keeps the words.**
+>
+> `grammar/transformer.ts` (2,747 lines) is gone, with the transformer half of
+> `grammar.test.ts`; the ~400 lines that tested PROFILES and the role helpers
+> moved to `grammar/profiles.test.ts`. i18n's suite goes 1,142 → 843.
+>
+> **It was never "delete the directory."** `grammar/profiles/index.ts` (1,557) is
+> imported by i18n's own `runtime.ts` and re-exported to the classic-i18n browser
+> bundle; `grammar/types.ts` (655) backs `constants.ts` and the
+> `reorderRoles`/`insertMarkers`/`joinTokens` helpers; `direct-mappings.ts` (351)
+> is part of the browser API. My own "recount" in #997 had globbed `*.ts` at the
+> top level and missed `profiles/`, which is how a correction can be wrong in the
+> same way as the thing it corrects.
+>
+> **Four consumers, not three.** The fourth surfaced only because the sweep that
+> found the first three had filtered out `.test.` files:
+> `testing-framework/src/vocab/batch3-roundtrip.test.ts` rendered with
+> `new GrammarTransformer('en', lang).transform(en)` to prove i18n's DICTIONARY
+> words were fixed. Eleven of its 24 cases do not survive the swap to
+> `semantic.translate`, and correctly so: they asserted a localized EVENT name
+> (`재설정`, `zresetuj`, `сбросить`) appears in the render, and semantic
+> deliberately keeps event names English (`localizeEventName`'s round-trip
+> denylist). Migrated as-is they would have asserted that `reset` comes back as
+> `reset`. The three event-name classes are deleted with that reasoning written
+> at the top of the file; the four VERB classes migrate unchanged and still pass.
+>
+> **The measurement that justified each move**, re-run today on five canonical
+> snippets × ja/ko/tr/ar/es/zh against the real `hyperscript.org` parser:
+>
+> ```
+> i18n GrammarTransformer   canonical-valid  4/30   exact round-trip  4/30
+> semantic                  canonical-valid 24/30   exact round-trip 30/30
+> ```
+>
+> All six of semantic's "invalid" rows are the same snippet in all six languages,
+> and that snippet's ENGLISH is not canonical either (`Expected event name`) — so
+> on the fair denominator the corpus gates already use it reads 24/24 vs 4/24.
+>
+> **The one place the retirement cost something:** the classic-i18n browser bundle
+> exposed four helpers over the transformer. Re-implementing them on semantic was
+> measured at **+173 KB gzipped** (138.9 → 312.1), and 269.2 KB even importing
+> `semantic/core` plus only the twelve locales it registers — a 2× bundle to serve
+> three display helpers. They were removed instead, which took the bundle DOWN to
+> 131.0 KB; nothing in it called them internally, and the multilingual PARSING it
+> exists for runs through the keyword providers. Recorded in the two-sided
+> bundle-size baseline, since a −4.6% improvement was itself near the ±5% limit.
+> **Update 2026-08-28f — the corpus writer is semantic-only, and the kept-rows
+> gate is deleted.**
+>
+> Retiring `@lokascript/i18n`'s transformer turned out to cascade further than the
+> three named consumers: **`patterns-reference/scripts/sync-translations.ts` — the
+> corpus writer itself — imports it**, because `best` renders every row with BOTH
+> engines by definition. A per-row chooser with one renderer is not a chooser, so
+> the whole apparatus goes together:
+>
+> - the three renderer modes, `PATTERNS_RENDERER`, `--renderer`, and the
+>   `noWorseThan` chooser (`src/sync/renderer-choice.ts`);
+> - the renderer term in the DB provenance stamp — one renderer means the source
+>   files alone determine the corpus, and a stray env value must not become a
+>   freshness tripwire (the stamp test now asserts exactly that, where it used to
+>   assert the opposite);
+> - `i18n-kept-rows.{ts,test.ts}`, its baseline, `regen-i18n-kept-rows-baseline.ts`,
+>   `triage-i18n-kept-rows.ts`, and `probe-render-flip.ts` — every one of which
+>   exists only to compare two renderers. **`test:canonical` is four gates now.**
+>
+> **What is lost, stated plainly:** the ratchet that caught a rendering
+> regression by noticing i18n would have done better. Nothing replaces that
+> comparison, because there is nothing left to compare against. What remains
+> scores the semantic renderer directly and is unaffected: `render-fidelity`
+> (100%, allowlist empty), `bare-render-fidelity`, `canonical-validity`,
+> `foreign-canonical-validity`, and the 11-signal `--regression` gate.
+>
+> **What replaced the fallback.** Every mode ended in `i18nTranslate`. Now a row
+> the renderer cannot render keeps its ENGLISH, is counted, and is printed loudly
+> at the end of `populate`. Measured on the flip: **0 English fallbacks** across
+> 3,657 translatable non-English rows, 3,680 semantic renders (markup rows carry
+> several `_=` bodies each), 69 markup rows with every body carried, 0 partial. A
+> row that ever takes that path is a translation the corpus is MISSING, not a
+> worse one it settled for.
+>
+> Two pieces of the `best` machinery survive because they earned their keep
+> independently: `markup-attributes.ts`'s `reRenderPreservesContent` guard (the
+> thing that actually found the `as JSON` truncation) and the English-reference
+> helpers it needs.
+
+> **Update 2026-08-28e — ZERO. The `i18n-kept-rows` ratchet is empty, and the
+> wrapped render gate is at 100%.**
+>
+> The last two rows were both ko, and both the same defect. ko's generated
+> trigger patterns are `[{source} 에서] {event} 을 에` — the event-role marker `을`
+> (also the patient marker) plus the on-marker `에` (also the destination marker)
+> — and that two-marker form is what the renderer emitted, though `할 때` is what
+> the profile declares (`eventHandler.eventMarker.primary`) and what the i18n
+> corpus writes.
+>
+> The two-marker form parses a KNOWN event and nothing else. Its `{event}` slot is
+> `literal`-only because ko is the one language `onSchema.widenTypeVariants`
+> EXCLUDES — and that exclusion is right for the surface it protects: with the
+> widening, ko's own rendering of `transition opacity to 0`
+> (`opacity 을 에 0 300ms 트랜지션`) reads as a handler named `opacity`. So a custom
+> event had no pattern at all: `hello 을 에 …` did not re-parse in any form.
+>
+> `할 때` has neither collision — it is not a role marker in ko — so the new
+> handcrafted `event-handler-ko-sov` takes `expression` for its event without
+> re-opening the case the exclusion protects. The generated pair stays registered
+> for input tolerance; only what we EMIT changed.
+>
+> **This is the standing dead end from the handoff, and it was the RENDER half
+> that mattered.** The filing's two attempts were both parser-side: adding
+> `['을','에']` to `SOV_EVENT_MARKER_PHRASES.ko` (which makes a bare transition
+> re-parse as a handler named `opacity` — the same collision, from the other
+> direction), and "rendering `할 때` breaks the feature-block body parser, 8
+> failures across 4 files". The second was accurate and NOT a dead end: those 8
+> were one off-by-one, in one function.
+>
+> `eventHandlerHeadForms` is a set of whole strings matched one token at a time,
+> so a two-word phrase only ever matches on its LAST word. The scan lands on `때`
+> and the single-token postpositional rule then claims `할` — the phrase's own
+> first word — as the event, which silently emptied the body of every ko
+> `socket`/`eventsource`. `multiWordHeadFormLength` steps back over the whole
+> phrase, and returns 1 when nothing multi-word matches, so every language
+> without such a phrase is byte-identical.
+>
+> **Kept rows 2 → 0** (announce-screen-reader[ko], on-custom-event-receive[ko]).
+> **Wrapped render 3586 → 3588/3588 — 100%.** Bare unchanged at 2981/2990.
+>
+> ---
+>
+> ### What zero means, and what it does not
+>
+> `best` stores the semantic render unless the i18n row beats it on a ratchet
+> signal. At zero kept rows it stores a semantic render for **every** foreign row,
+> which is exactly what "switch the corpus to semantic-only" meant — there was
+> never a separate switch to throw, and `best` degenerates to semantic-only by
+> construction. The burn-down WAS the switch.
+>
+> The gate now pins the empty state directly (`the baseline is EMPTY — the
+> retirement trigger, and it stays fired`), asserted on the BASELINE rather than
+> only on the live result: every other assertion in that file is satisfied by two
+> empty lists, so without it a future `--save-baseline` could quietly ratchet back
+> up. Re-admitting a kept row now requires a deliberate edit to the test, with a
+> reason.
+>
+> **Retiring i18n's grammar half is a separate, larger job.**
+> `packages/i18n/src/grammar/` is **8,160 lines across 6 files**, and the retirement
+> is not "delete the directory" — only `transformer.ts` (2,747) and the transformer
+> half of `grammar.test.ts` (2,780) go. `profiles/index.ts` (1,557) and `types.ts`
+> (655) are imported by i18n's own `runtime.ts` and `constants.ts`;
+> `direct-mappings.ts` (351) is part of the browser API. Three runtime consumers
+> still import `GrammarTransformer` outside the corpus writer:
+>
+> - `@hyperscript-tools/i18n` — re-exports it publicly
+> - `packages/core/src/compatibility/browser-bundle-classic-i18n.ts`
+> - `packages/vite-plugin/src/semantic-integration.ts`
+>
+> (`packages/framework/src/index.ts` exports its OWN `./grammar/transformer`, not
+> i18n's — not a consumer.) Each needs migrating to `semantic.translate` before
+> the delete. The generated dictionaries/providers/runtime stay either way; only
+> the grammar half retires.
+
+> **Update 2026-08-28d — two fused slots that stopped one token short. Kept
+> rows 4 → 2.**
+>
+> A fused event pattern binds the body's roles directly, so whatever a slot does
+> not take is simply left unconsumed. The parse succeeds, every action is
+> present, and what goes missing is a ROLE or part of one — both rows below
+> scored 1.0 on action recall and were caught by the English round-trip alone.
+>
+> - **A `{condition}` slot takes ONE token.** tl's
+>   `kapag {event} maliban_kung {condition}` bound `condition: I` out of
+>   `unless I match .disabled toggle .selected` and left `match .disabled`, so
+>   the guard tested the element itself and the class it was meant to check
+>   disappeared. The fold now absorbs `<operator> [operand]` — one operator, at
+>   most one operand, never a command verb (`unless #x exists toggle .y` must
+>   leave `toggle` for the body). Fixes the shape in 22 languages.
+>
+>   **Gated to the TRAILING slot of a FUSED EVENT pattern**, and that gate was
+>   measured, not assumed: ungated, the fold fires on the bare `if #modal exists
+>   show #modal else … end`, whose en parse then collapses to `if #modal exists`
+>   with BOTH branches gone — three new bare-render failures (bn/tl/tr) on a
+>   gate the wrapped corpus could not have shown. Everywhere else the condition
+>   is followed by its own branches, and the clause walk's condition scan (which
+>   already knows these operator words) is what delimits it.
+>
+>   Residual, unchanged by this and now written down: `match`/`matches`/
+>   `contains`/`includes`/`equals` are emitted verbatim in every language, but
+>   `has` and `exists` DO localize (de `hat`, ja `ある`, ms `ada`) and their
+>   profiles do not normalize the native form back — so `unless me has .off`
+>   still truncates its condition there.
+>
+> - **bn's `set-bn-full` rendered a TWO-token verb, `সেট করুন`.** The
+>   schema-generated fused pattern uses the profile's verb, which is `সেট` alone,
+>   so it matched through `সেট` and stranded `করুন on .tab` — the trailing scope
+>   was unreachable and silently defaulted to `me` (`tabs-aria`). `করুন` is the
+>   polite imperative suffix; the i18n corpus and every other bn surface use the
+>   bare stem, so the pattern was the outlier. It is now an OPTIONAL group, so
+>   authored `সেট করুন` still parses.
+>
+> **Dropped after measuring:** a `scope` entry in `tryAttachTrailingRole` with a
+> synthetic literal-`on` marker. It was written first, on the theory that the
+> trailing `on .tab` needed reclaiming — and once the `করুন` fix let the fused
+> verb match, it moved no row and reddened no test. The trailing-body walk was
+> already handling the phrase.
+>
+> Kept rows 4 → 2, zero newly kept. Wrapped render 3584 → **3586/3588 (99.94%)**;
+> bare unchanged at 2981/2990.
+
+> **Update 2026-08-28c — a verb-FINAL `js` block puts opaque foreign code in
+> front of the only token that identifies its clause. Kept rows 10 → 4.**
+>
+> A `js … end` body is raw JavaScript: an opaque span running to the block's
+> `end`. The generated SOV pattern rendered it verb-final —
+> `<body> を JS実行 終わり` — which means nothing BEFORE the body can be
+> attributed, because the clause is not identifiable until its last token.
+>
+> Rendering `if confirmRemoval js(me) … end` gave ja
+> `もし confirmRemoval (me) ⏎ <body> を JS実行 終わり`. The backward body walk
+> swallowed `もし confirmRemoval`, the conditional vanished, the `end` count went
+> off by one, and **every command after the conditional was dropped** —
+> `behavior-removable` in all six SOV languages (bn/hi/ja/ko/qu/tr).
+>
+> The renderer now emits js verb-INITIALLY in the SOV six, against their own word
+> order. That is what the corpus and the engine already use (the i18n transformer
+> leaves `js(me) … end` verbatim in every language; canonical hyperscript has no
+> other form) and what `consumeJsBlock` parses in all 23.
+> `consumeVerbFinalJsBlock` stays for INPUT tolerance — this changes what we
+> emit, not what we accept, and `js-block-round-trip.test.ts` now writes those
+> verb-final surfaces out by hand rather than getting them from `render`.
+>
+> Two exclusions were needed to make the verb-initial surface actually reach that
+> consumer, and both were found by the languages they broke:
+>
+> - **`js` is no longer FUSED into an event-handler pattern** (`pattern-generator.ts`).
+>   Its one role is not a value; a pattern slot tokenizes and re-spaces the body
+>   (`console.log("x")` → `console .log ( "x" )`). It bit exactly where the marker
+>   shapes lined up: bn `ক্লিক তে জেএস` and hi `click पर जेएस` match
+>   `{event} <marker> <verb>` outright, while ja `クリック を で JS実行` carries a
+>   second marker that makes the same pattern miss. ja/ko/tr/qu were taking the
+>   clause walk by **coincidence of surface**, not by design.
+> - **`js` never takes `buildEventHandler`'s fused-action path** — same reason,
+>   one level down; it rewinds to the action's own start so
+>   `parseBodyWithClauses` can claim the span whole. This is what bn needed after
+>   the generator exclusion fixed hi.
+>
+> **Dropped from the change after measuring:** a guard stopping the verb-final
+> body walk at the language's own `if`/`unless` word. It was the first repair
+> tried, it made the conditional survive — and once the render went verb-initial
+> it moved no row and reddened no test. A partial repair whose completion was the
+> render change; deleted rather than shipped unexercised.
+>
+> Kept rows 10 → 4, zero newly kept. Wrapped render 3579 → **3584/3588
+> (99.89%)**; bare unchanged at 2981/2990.
+
+> **Update 2026-08-28b — `为` IS zh's `for` keyword, and one `set` was fine
+> while two collapsed the whole behavior. Kept rows 13 → 10.**
+>
+> The handcrafted `set-zh-full` rendered `设置 {destination} 为 {patient}`. The
+> zh tokenizer normalizes `为` to **`for`** — a block OPENER — so
+> `block-parser.ts`'s depth counter treated every rendered zh `set` as opening a
+> nested block. With ONE `set` the arithmetic still let a segment out; with TWO,
+> depth never returned to 0 at a segment boundary, `parseBehaviorBlock` produced
+> no segment at all, and the entire `behavior`/`on` structure collapsed to a bare
+> command chain.
+>
+> That threshold is the whole reason this survived: every smaller probe passed,
+> and only the three multi-`set` showcase behaviors (draggable, resizable,
+> sortable) crossed it.
+>
+> This is the pt `para` family — the same collision the `isBlockOpener` comment
+> already documents — but its mitigation ("trust the normalized form; the
+> tokenizer resolved the ambiguity") cannot reach zh, because zh's tokenizer
+> normalizes `为` TO `for`. There is no resolution to trust.
+>
+> The schema had already named the fix: `setSchema.patient.markerOverride.zh` is
+> **`到`**, with `为`/`為`/`成` as `markerVariants` — "the transformer/corpus form
+> marks the value with 到; natural zh uses 为". The handcrafted pattern was the
+> outlier, rendering the ambiguous member of its own alternatives list. `为` is
+> still parsed; it is no longer what we emit.
+>
+> **Second fix in the same change, worth zero corpus rows:** `trigger-zh-ba` had
+> no destination slot. Written to READ the transformer's `触发 把 init`, it
+> outranks both generated patterns (priority 105), so the RENDERER picked it too
+> and dropped an authored `on #panel` from every zh trigger — `send-zh-ba`, its
+> exact twin, has carried the group all along. This is the **fourth** pattern in
+> the arc written only to read i18n output that became the surface the renderer
+> emits (after go-qu-url-dest #987, remove-bn-full #988, repeat-qu #990).
+>
+> It moves no row because every corpus `trigger` targets `me`, which round-trips
+> through the default either way; the loss shows only on a non-`me` target. Kept
+> deliberately, with `zh-marker-homograph.test.ts` as the only thing holding it —
+> mutation-verified (reverting both fixes reddens 7 of its 10 cases; reverting
+> only the trigger half reddens 2).
+>
+> Kept rows 13 → 10, zero newly kept. Wrapped render 3576 → **3579/3588
+> (99.75%)**; bare unchanged at 2981/2990.
+
+> **Update 2026-08-28a — a flattened loop header was never closed, so the
+> enclosing handler's `end` was spent on it. Kept rows 26 → 13.**
+>
+> `repeat … end` reaches the renderer FLATTENED. The parser emits
+> `[repeat-header, stmt, stmt, …]` and attaches no body — `LoopSemanticNode`
+> exists in the type model, the AST builder handles it, and **nothing
+> constructs one**. The renderer then emitted the header and its siblings with
+> no closing `end`.
+>
+> That produced a surface the structural layer cannot segment.
+> `block-parser.ts` counts `repeat`/`for`/`while` as depth OPENERS, so the
+> enclosing handler's own `end` went to closing the loop and the NEXT feature
+> was swallowed into the handler body:
+>
+> ```
+> es  al pointerdown repeat … quitar .{dragClass} de yo
+>     fin                 ← consumed by the repeat
+>     inicio              ← now inside the handler
+> ```
+>
+> That is what merged `behavior-sortable`'s `init` block into its `on
+> pointerdown` handler in **13 languages**. Every fidelity score was 1.0 — same
+> commands, same roles, same values, wrong block — so the English round-trip
+> was the only signal of the eleven that could see it. Same family as the
+> `as JSON` drop above: a structural loss that every recall metric is
+> constitutionally unable to notice.
+>
+> The fix closes each block header with an explicit `end`, on both statement
+> paths (`renderCompound` and `joinStatements` — mutation-verified separately;
+> the second is what closes a loop inside an if-branch, `… end end then …`).
+> One `end` per header, appended at the tail, because the flat model cannot
+> express a header whose body STOPS before the list does. Restoring the true
+> extent needs the parser to build a real loop node with a body — a separate
+> arc, now filed in PARSER_NEXT_STEPS.md.
+>
+> The `end` is also the canonical form: the engine requires `repeat … end`, so
+> the unterminated render was invalid English as well as unparseable input.
+>
+> **The slim adapter path deliberately does NOT mirror this.** The same close
+> applied to its es `repeat` row turns an engine-INVALID output (host-validate
+> rejects it, the author's text stays) into a VALID `repeat … end` — and slim
+> still drops the `3 times`, so a bare `repeat` is FOREVER. That is the exact
+> committed infinite loop the slim safety pin exists to prevent (#902). Slim
+> gets the close when the repeat surface is fixed whole; the ja `tell` row is
+> recorded in `KNOWN_DIVERGENCES` with that reasoning.
+>
+> Kept rows 26 → 13, zero newly kept. Render/bare-render allowlists unchanged.
+>
+> **Residual found on the way, not fixed here:** zh drops `trigger`'s
+> destination on render — `trigger m on me` → `触发 把 m` → `trigger m`. That
+> is what keeps `behavior-sortable`/`draggable`/`resizable`[zh] on i18n, and it
+> is 3 of the 13 remaining rows.
+
+> **Update 2026-08-27w — `as JSON` was silently dropped from every value in
+> every language, and no gate could see it. Kept rows 49 → 26.**
+>
+> `as` is an EXPRESSION operator in hyperscript — `attrs.data as JSON` is one
+> value — but every role capture stopped at the value and left ` as JSON`
+> unconsumed. The pattern matched anyway (trailing tokens are dropped), so
+> `set ^user to attrs.data as JSON` re-rendered as `set ^user to attrs.data`.
+>
+> **Why eleven ratchet signals and ~9,600 semantic unit tests were blind to it:**
+> the conversion lands in no role, so every recall metric compared two equally
+> truncated things and scored a perfect 1.0. Same shape as the `bind-two-way`
+> duplicate-command blind spot, one level down — this time in the value, not the
+> command list.
+>
+> What did see it was the corpus writer's `reRenderPreservesContent` guard
+> (`patterns-reference/src/sync/markup-attributes.ts`), added when the `best`
+> writer landed precisely to keep a truncating parse out of the corpus. Its
+> response was to refuse to translate the body at all, which is why
+> `component-with-attrs` was a kept i18n row in **all 23 languages** — 47% of
+> the whole remaining ratchet. The guard was doing its job; the parse under it
+> was wrong.
+>
+> The fix folds a trailing `as <ConversionType>` into the captured value's raw —
+> the same lever `tryMatchOperatorRunExpression` uses for `"Hello, " + my value`.
+> One seam (`matchRoleToken` wraps `matchRoleTokenCore`), so it applies to every
+> role of every command in every language, not just the corpus row.
+>
+> Two halves that have to stay true together, and the second is the regression
+> the fold could cause:
+>
+> - a conversion is CARRIED — `set … as JSON`, `set x to y as Int`, `put it as
+>   JSON into #out` (which did not parse AT ALL before: confidence 0.00);
+> - `fetch … as json` still binds its real `responseType` role. Its marker IS
+>   `as`, so `patternTokenWouldMatch(nextPatternToken, …)` declines the fold.
+>   **Mutation-verified:** with that guard disabled, `fetch /api as json` matches
+>   `fetch-en-simple` with `source: "/api as json"` — one role instead of two,
+>   and the URL corrupted.
+>
+> The conversion word itself stays English in the rendered surface (no profile
+> has an `as` lexicon entry, and none is needed): what has to work is that a
+> foreign surface carrying `as JSON` re-parses as ONE value, and it does in all
+> 23 languages.
+>
+> Kept rows 49 → 26, zero newly kept. Wrapped render 3576/3588 (99.67%), bare
+> 2981/2990 (99.70%) — both unchanged, since a markup row is in neither gate's
+> denominator. That is the residual worth noting: **markup rows are scored by
+> the corpus writer and by nothing else.**
+
+> **Update 2026-08-27v — qu had a repeat-until head it could READ but not
+> RENDER. 50 → 49.**
+>
+> Two qu heads exist to read the i18n transformer's `hayk_akama ruway <event> ta
+> <source> manta kutipay`, and they carry that junk prefix IN-PATTERN
+> (`hayk_akama` tokenizes as `hayk _ a kama`, so the prefix is matched
+> literally). The renderer chooses among the patterns registered for a command —
+> so it picked one of those and emitted the junk as a SURFACE:
+>
+> ```
+> qu   maykama mousedown hayk _ a until event mouseup ta manta repeat …
+> ```
+>
+> Not Quechua, and it does not re-parse. The other SOV five have a proper head
+> from `repeatUntilHeadSOV`; qu now has the same shape in its own words
+> (`kama ruway {event} ta repeat [{source} manta]`), registered ahead of the
+> tolerances, which keep working.
+>
+> **The id collision is the trap worth recording.** `repeatUntilHeadSOV` derives
+> `repeat-{lang}-until-head`, which is exactly the tolerance's id — adding qu to
+> `SOV_UNTIL_HEADS` silently REPLACED it and the i18n form stopped parsing
+> altogether. Caught by an existing pin; the canonical head has its own id.
+>
+> **This is the third pattern in the arc whose only job was reading i18n output
+> and which the renderer then emitted** (after `go-qu-url-dest` in 27r and the
+> `event-qu-maykama` head in the standing dead-end note). The pattern-selection
+> layer does not distinguish "written to parse" from "fit to render"; a
+> `render: 'canonical' | 'parse-only'` flag was proposed in #976 and remains
+> uncommitted. Every instance so far has been cheaper to fix by giving the
+> language a renderable head than by adding the flag — but three is a trend.
+>
+> **Kept rows 50 → 49 — repeat-until-event(qu), ZERO newly kept.** Wrapped render
+> 3576/3588 (99.67%), bare 2981/2990 (99.70%). 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,607 + 3 new, whole-monorepo `test:check` green.
+>
+> **One canonical row left: on-custom-event-receive(ko), and it now has TWO
+> measured dead ends.**
+>
+> ko renders a handler head as `<event> 을 에`. The first pass of
+> `trySOVEventExtraction` anchors only on a KNOWN event name, and the custom-event
+> second pass anchors only on `할 때` (the i18n form) or an identifier immediately
+> before a command verb — so `hello 을 에 …` finds no head at all, while
+> `message 을 에 …` works because `message` is in `WAITABLE_EVENT_WORDS`.
+>
+> - **Dead end 1 (re-confirmed, was #942's).** Adding `['을','에']` to
+>   `SOV_EVENT_MARKER_PHRASES.ko` does fix the row — and `opacity 을 에 0 300ms
+>   트랜지션`, a BARE transition, then re-parses as a handler named `opacity`.
+>   `을 에` is also ko's patient+destination marker pair. Measured again here.
+> - **Dead end 2 (new).** Making ko RENDER the unambiguous `할 때` head instead —
+>   swapping the profile's `on` primary with its existing `할 때` alternative, plus
+>   an `onSchema.event` markerOverride of `''` for ko, since `클릭 을 할 때` is not
+>   Korean — fixes the row AND `클릭 할 때` round-trips at top level. But the
+>   FEATURE-BLOCK body parser does not recognize it: `eventsource ChatStream /
+>   message 할 때 …` loses the handler, and `positional-run-owed-marker`'s two ko
+>   rows go with it. **8 failures across 4 files**, including
+>   `feature-block-handler-heads`, which exists to document exactly how each
+>   language's head is found. Reverted.
+>
+> The row needs the feature-block head finder to learn ko's phrase marker first —
+> `SOV_EVENT_MARKERS.ko` is an empty set by construction (ko's marker is two
+> tokens), and that is the seam both dead ends run into.
+
+> **Update 2026-08-27u — an English possessive inside an EXPRESSION is syntax,
+> not vocabulary, and 23 languages were emitting it verbatim. 51 → 50.**
+>
+> A watched expression is captured as ONE raw string
+> (`(#price's value * #qty's value)`) and the renderer localized its interior word
+> by word. `'s` is not a word — the owner and the property have to MOVE relative
+> to each other, which only `renderPropertyPath` knows how to do — so every
+> language emitted the English clitic. Quechua could not read it back at all:
+> `'` is a word character there (`t'ikray`, `llamk'aq`), so `#qty's` tokenizes as
+> `#qty'` + `s` and the property is lost. That was the whole of
+> `when-value-changes[qu]`.
+>
+> Expressions now localize their possessives structurally, gated to a SELECTOR
+> owner — the shape `renderPropertyPath` is written for, and the one that cannot
+> occur as ordinary prose inside a quoted string. qu renders `chanin pa #price`,
+> ja `#priceの値`, es `valor de #price`.
+>
+> **Fixing it also fixed a symptom one layer down.** The protected-span mask read
+> the first `'s` as the start of a single-quoted string and closed it on the
+> second, masking `'s value * #qty'` — so the first property never localized
+> while the second did (`(#price's value * #qty's chanin)`). Removing the clitic
+> structurally happens BEFORE the mask, so the mask needs no guard of its own:
+> adding one was measured to redden nothing and move no corpus row, and is not in
+> the change. **Third dead piece caught by drop-one measurement this session**
+> (after 27m's fused-walk entry and 27n's `buildEventHandler` half).
+>
+> **The reverse direction moved too.** Rendering a foreign possessive back to
+> English produced whichever shape the source language's genitive suggested —
+> `value of #price` for the prepositional and owner-first genitives, `#price's
+> value` only where the clitic had survived — so one construct came back three
+> ways. The renderer now folds `[the] <property> of <selector>` into
+> `<selector>'s <property>`, gated to a curated DOM-property word so an ordinary
+> `of` phrase (`the first of .items`) is untouched. Two pinned test files
+> recorded the old three-way split descriptively and now record the single
+> canonical form; `foreign-canonical-validity` — the REAL engine — stayed green
+> through the change, which is the only oracle that matters for "is this valid
+> English".
+>
+> **Kept rows 51 → 50 — when-value-changes(qu), ZERO newly kept.** 11-signal gate
+> green, `test:canonical` 5/5, semantic 9,607 + 70 new, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **One canonical row left**: on-custom-event-receive(ko).
+
+> **Update 2026-08-27t — the fused SOV shape had no PRE-verb source group. 52 → 51.**
+>
+> The generated SOV event-handler shape carries an optional `[{destination}
+> <marker>]` group BEFORE the bound role and another AFTER the verb. The source
+> role had only the post-verb one, because that is where the i18n transformer
+> emits a from-phrase — but the semantic renderer emits it BEFORE the patient
+> (`ক্লিক তে আগের <li/> থেকে .highlight কে সরান`), a shape no fused pattern
+> covered. The untyped `{patient}` slot swallowed the whole run, marker and all,
+> and `remove.source` was lost inside every handler.
+>
+> Added as the exact twin of the destination group, gated on the SCHEMA the same
+> way — an unconditional group fabricates a slot for commands with no source
+> role, and its marker then eats a phrase belonging to a role that does exist
+> (the failure the destination gate's own comment records).
+>
+> **Kept rows 52 → 51 — previous-element(bn), ZERO newly kept.** Wrapped render
+> 3575/3588 (99.64%). Despite touching every SOV language and every command with
+> a source role, the corpus diff is exactly that one row and the mutation reddens
+> exactly bn — the other languages already parsed their own emission order. No
+> syntax-table drift. 11-signal gate green, `test:canonical` 5/5, semantic 9,530
+> + 13, adapter 366, vocab green, whole-monorepo `test:check` green.
+>
+> **Two canonical rows left**: when-value-changes(qu) and
+> on-custom-event-receive(ko), both written up above.
+
+> **Update 2026-08-27s — a second hand-crafted pattern that had outlived its
+> generated sibling, and was wrong in the meantime. Bare render 2979 → 2980.**
+>
+> `remove-bn-full` (`{patient} কে সরান`, priority 100) carried the same tokens as
+> `remove-bn-generated-simple`, minus a verb alternative and minus the TYPED
+> patient slot. Untyped, that leading role takes an EXPRESSION, so on
+> `আগের <li/> থেকে .highlight কে সরান` it swallowed the positional run AND the
+> source clause behind it — patient `previous <li/> থেকে .highlight` — then found
+> its own `কে` and won the priority tie against `remove-bn-generated`, which had
+> bound both roles correctly. The bn source marker came out untranslated in the
+> English, which is the visible symptom. Removed; the plain form it existed for
+> still parses through the generated sibling.
+>
+> **This clears the BARE surface only** (bare render 2979 → 2980/2990, 99.67%);
+> `previous-element` stays on the kept-row ratchet because the corpus row is a
+> HANDLER and the fused `remove-event-bn-sov` pattern has the same untyped
+> patient slot with no PRE-verb source group — the generated SOV shape offers
+> only a post-verb one, and the renderer emits the source first. Pinned
+> failing-when-fixed in `bn-remove-positional-source.test.ts` so the two halves
+> stay visible apart, and so the handler half reports the moment it clears.
+>
+> That fused-shape gap was the next step, and it is now closed — see 27t.
+
+> **Update 2026-08-27r — thirteenth burn-down: a missing marker override and a
+> hand-crafted pattern that had outlived its purpose. 55 → 52.**
+>
+> - **tl was the one language with a `swap` PATIENT with-word and no DESTINATION
+>   entry.** `swapSchema`'s destination map sets `''` for every SVO/VSO language
+>   (the i18n emission is unmarked); tl was absent, so it fell to its profile
+>   destination marker and rendered `palitan_pwesto sa #a nang #b`. `sa` there is
+>   read as the role marker it is, both selectors bind to the wrong slots, and
+>   the parse came back `swap with destination` — BOTH roles gone. Third
+>   instance of this exact shape in the arc (th `set` in 27l, and the same
+>   diagnosis in the it/pl/ru/uk residual named there).
+> - **`go-qu-url-dest` was doing harm, not nothing.** A hand-crafted pattern
+>   (priority 105) for qu's fronted `url <dest> man riy` phrase, whose extraction
+>   re-typed the capture through `transform` — and on the fused handler path that
+>   transform does not run. The pattern still won at 105 and bound `back` as a
+>   string LITERAL where English, and every other language via the generated
+>   `go-{lang}-generated-url` shape, produces an EXPRESSION: `on click go back`
+>   came back as `go url "back"`. Removed. Measured: the quoted-URL row it was
+>   written for still parses identically through the generated pattern, `go-back`
+>   is repaired, and no other corpus row moves. The loader stays as the seam,
+>   returning `[]`.
+>
+> **Kept rows 55 → 52 — 3 cleared, ZERO newly kept**: go-back(qu),
+> swap-content(tl), and swap-view-transition(tl) as a bonus. Wrapped render
+> 3574/3588 (99.61%), bare 2979/2990 (99.63%). 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,456 + 70 new, adapter 366, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **Three canonical rows left**: previous-element(bn), when-value-changes(qu),
+> on-custom-event-receive(ko).
+>
+> **Named residual — the watched expression keeps an English possessive.**
+> `when (#price's value * #qty's value) changes` renders with the FIRST
+> `#price's value` untranslated and only the second property localized, in ALL 23
+> languages (`#qty's chanin` / `#qty's valor` / `#qty's 値`). Twenty-two round-trip
+> anyway because the localized property maps back; qu does not, because `'` is a
+> word character in Quechua (`t'ikray`, `llamk'aq`) so its tokenizer cannot split
+> the English `'s` clitic. The i18n row uses qu's own genitive throughout
+> (`#price pa chanin * #qty pa chanin`). That is a render defect in the
+> watched-expression join, not a qu one — and it is what keeps
+> when-value-changes(qu) on the ratchet.
+
+> **Update 2026-08-27q — twelfth burn-down: four vocabulary/homonym repairs, and
+> one of them was leaving the verb untranslated in ALL 23 languages. 58 → 55.**
+>
+> - **The `pick` verb was hardcoded English.** Both variant patterns opened with
+>   `{ type: 'literal', value: 'pick' }`, so every language rendered `pick znaki
+>   0 to 5 z #note`. Twenty-two got away with it because the pattern's own
+>   literal matched on the way back; pl did not. Now the profile's own word, with
+>   English riding as an alternative so existing surfaces still parse.
+> - **The pick RANGE SEPARATOR too.** The range is captured as one canonical
+>   English expression (`0 to 5`) and was emitted verbatim, so the joiner stayed
+>   English while every other word localized. The parser wants the language's own
+>   joiner (`PICK_RANGE_SEPARATORS_BY_LANG` — every language has one); 22 also
+>   accept English `to`, but pl's `to` tokenizes as the PRONOUN `it`, so the
+>   range AND the source were lost and the whole `pick` action dropped. The
+>   surface is now fully localized in all 23: `0 إلى 5`, `0 から 5`, `0 do 5`.
+> - **`o` is not always `or`.** `OR_WORDS` matched by SURFACE across all
+>   languages, and `o` is the or-word in es/it/tl and the BY-marker in pl —
+>   `zwiększ #score o 10` had its `o 10` swallowed into the event name
+>   (`on click or 10 increment #score by 10`). The table is now keyed BY
+>   LANGUAGE, with a language-blind form kept for the seams that have no language
+>   in hand; three call sites now pass one.
+> - **qu's `return` rendered a word TOGGLE also owns.** `kutichiy` is listed
+>   beside `t'ikray` in the `toggle-qu-*` patterns and toggle won the match, so
+>   `return a + b` came back as `toggle +`. The profile renders `kutimuy` now —
+>   its own alternative, and the surface the i18n corpus has always emitted.
+>
+> **Kept rows 58 → 55 — 3 cleared, ZERO newly kept** (increment-by-amount pl,
+> pick-text-range pl, worker-basic qu). Wrapped render 3571/3588 (99.53%), bare
+> 2978/2990 (99.60%). 11-signal gate green, `test:canonical` 5/5, semantic 9,406
+> + 50 new, adapter 366, vocab green, whole-monorepo `test:check` green. One
+> failing-when-fixed pin promoted (`feature-block-render`, the qu worker row).
+>
+> **Batched deliberately.** Four independent one-line data/table repairs, each
+> mutation-verified against its own assertions, is cheaper to review as one PR
+> than four — and none of them touches a shared heuristic.
+
+> **Update 2026-08-27p — eleventh burn-down: a possessive property that
+> translates to a KEYWORD was refused. 59 → 58.**
+>
+> `tryMatchPossessiveSelectorExpression` accepts an `identifier` property on a
+> profile marker (and, since 27k, a `*`-sigil one). vi's `value` translates to
+> `giá trị` — a single KEYWORD token — so `#picker của giá trị` matched neither
+> this matcher nor the of-matcher (whose owner slot then held a keyword, not a
+> selector), and `bind.source` was lost outright. Every other language's property
+> is either untranslated (`textContent`) or an identifier, which is why vi was
+> the only one.
+>
+> The language's own `PROPERTY_NAME_LEXICON` is the voucher: a keyword is
+> admitted only when that table names it a property, so a command verb after the
+> marker (`#button の 切り替え`) is still refused. New predicate
+> `isKnownPropertySurface`.
+>
+> **Kept rows 59 → 58 — 1 cleared, ZERO newly kept** (bind-explicit-property vi).
+> Wrapped render 3569/3588 (99.47%). Two failing-when-fixed pins flipped to
+> positive rows (`possessive-marker-attachment`, `possessive-of-order`), vi moved
+> from `GLUED_RESIDUAL` into `BETWEEN`, and that file's BETWEEN assertion now
+> checks WHICH OPERAND is the owner rather than only that a property-path came
+> back — the blind spot 27k's `*`-sigil direction bug lived in.
+
+> **Update 2026-08-27o — tenth burn-down: bn's `empty` PREDICATE was rendered
+> as bn's `empty` COMMAND. 61 → 59.**
+>
+> hyperscript spells both with the same English word — `empty #list` is the
+> command, `if my value is empty` is the state predicate — and Bengali does not:
+> `খালি-করুন` is the imperative "empty it!", `খালি` is the adjective. The bn
+> lexicon carried the imperative in its `expressions` table, so a condition
+> rendered `… হয় খালি-করুন` and the re-parse split the verbal suffix off and
+> leaked it into the English:
+>
+> ```
+> en   on blur if my value is empty add .error to me end
+> bn   ঝাপসা তে যদি আমার মান হয় খালি-করুন আমি তে .error কে যোগ শেষ
+> bn → on blur if my value is empty - করুন add .error to me end
+> ```
+>
+> Every fidelity score is 1.0 — the stray `- করুন` is neither an action nor a
+> role — so only the English round-trip sees it. The `empty` COMMAND keeps the
+> imperative; it comes from the profile's `keywords`, untouched.
+>
+> **Kept rows 61 → 59 — 2 cleared, ZERO newly kept** (bn if-empty,
+> input-validation). The i18n dictionary needed the same edit — `lexicon-parity`
+> is a real gate and caught the divergence on the first whole-monorepo run.
+>
+> **Named residual from the same probe:** six languages (ar, hi, id, ms, qu, tr)
+> render the `empty` predicate with a word that re-parses as **`null`** — their
+> `empty` and `null` lexicon entries collide (`فارغ`, `खाली`, `kosong`, `chusaq`,
+> `boş`). None is a kept row, so no gate sees it; it is a lexicon-collision
+> family for whoever works the value-lexicon track.
+
+> **Update 2026-08-27n — ninth burn-down: a handler's event was typed
+> `literal` unconditionally outside English. 63 → 61.**
+>
+> English types `on.event` by the TOKEN KIND of the event name: a word its
+> tokenizer knows (`click`, `mousemove`, `keydown`, `pointerdown`) is a keyword
+> and becomes a `literal`; anything else (`message`, `hello`, `transitionend`,
+> `success`) is an identifier and becomes an `expression`.
+> `trySOVEventExtraction` bound its event as a literal unconditionally, so every
+> non-keyword event name came back one type off the reference it is scored
+> against:
+>
+> ```
+> en   eventsource ChatStream from /events / on message / put it into #messages
+> ko   eventsource ChatStream / message 을 에 그것 을 #messages 에 넣다
+> ko → eventsource ChatStream / on message put it into #messages   ← identical…
+>      ref roles : on.event:expression
+>      got roles : on.event:literal                                ← one type off
+> ```
+>
+> Every other signal reads 1.0 on that — same actions, same values, and the
+> English round-trip matches byte for byte. Only R1, which compares
+> `action.role:type`, sees it.
+>
+> **Keyed on the EN TOKENIZER, not on `KNOWN_EVENTS`** — and that distinction was
+> measured, not assumed. The curated set omits `mousemove` and `pointerdown`,
+> which English's own tokenizer calls keywords, so keying the rule on it re-typed
+> events English itself calls literals: **12 failures**, including the en-side
+> `on-handler event params` pin and four `analysis` rows. The tokenizer is the
+> thing English actually consults.
+>
+> **Kept rows 63 → 61 — 2 cleared, ZERO newly kept** (eventsource-basic ko,
+> socket-basic ko; both are a handler head inside a FEATURE block, which reaches
+> the SOV extraction rather than the pattern path). Wrapped render 3568/3588
+> (99.44%). 11-signal gate green, `test:canonical` 5/5, semantic 9,402 + 37 new,
+> vocab green, whole-monorepo `test:check` green.
+>
+> **Second redundant-edit catch this session.** The same alignment was written
+> into `buildEventHandler` first; it reddened NOTHING under mutation and moved no
+> corpus row when removed, because the pattern path already types those events
+> correctly. Only the SOV extraction had the bug. Same lesson as 27m's fused-walk
+> entry: write the fix, then drop each piece and re-measure — a plausible-looking
+> edit next to a real one is invisible until you do.
+
+> **Update 2026-08-27m — eighth burn-down: a `js … end` block was lossy five
+> different ways, and none of them was visible to any fidelity metric. 82 → 63.**
+>
+> The `js()` opaque-body item filed in `PARSER_NEXT_STEPS.md`, and it turned out
+> the opaque-span mechanism already existed (`consumeJsBlock`, added for the
+> phantom-`return` cluster) — what was missing was everything around it. The
+> body is ONE `expression` role whose TEXT no metric compares, so every fault
+> below scored 1.0 on R0/R1/R3 and was visible only to the English round-trip.
+>
+> 1. **Spacing.** The body was rebuilt as `bodyTokens.map(t => t.value).join(' ')`,
+>    so `console.log("from js")` came back as `console .log ( "from js" )`. Not
+>    cosmetic: a `//` comment or an ASI-sensitive break means something else once
+>    re-spaced. It is now recovered as a SLICE of the text the tokens' positions
+>    index into, verified against the token values before it is trusted, with an
+>    adjacency-based rebuild as the fallback.
+> 2. **The missing `end`.** The renderer emitted `end` only when a sibling
+>    FOLLOWED the js — fine for execution, fatal for round-tripping, because with
+>    no closing `end` there is no block for `consumeJsBlock` to claim and the
+>    per-language `js` PATTERN took over. It is now emitted unconditionally, by
+>    `render` itself rather than by the two statement-joining paths. Verified on
+>    the real engine: `js … end` is valid in every position, chained or trailing.
+> 3. **A pre-posed patient marker.** he `js את console.log(…)`, zh `JS执行 把
+>    console.log(…)` — the particle was swallowed into the opaque body. Skipped
+>    at the head of the block now; the post-posed markers (ja を, ko 을, bn কে,
+>    tr i, qu ta) were never at risk.
+> 4. **The verb-FINAL shape.** SOV renders put the command word last (`<body>
+>    <marker> <js> <end>`), so the head of the clause is the JavaScript and the
+>    head-form test never fired — bn/hi/ja/ko/qu/tr walked the raw JS with
+>    `matchBest` and produced phantom `if`/`return` commands. A verb-final
+>    variant now claims it, gated on the keyword being immediately followed by a
+>    terminator and on the scan stopping at a conjunction.
+> 5. **The body was TRANSLATED.** `localizeValueInterior` rewrites the words it
+>    recognizes, and inside a js block that means the CODE: `js(me) …` came out
+>    as de `js (ich) …`, tr `js (ben) …`. That is the one role whose value must
+>    survive a translation untouched, and it is the whole reason every non-English
+>    `behavior-removable` row differed from its own English round-trip.
+>
+> Plus a sixth, which only the BARE gate could see: bn's curated end set omits
+> `শেষ` on purpose (it doubles as the positional word `last`), but `শেষ` is what
+> the renderer emits for bn's `end` — so a bn js block had no recognizable close
+> at all. The block's terminator test now also accepts the profile's own `end`
+> word; the homonym cannot bite inside a js body, which is ASCII.
+>
+> **Kept rows 82 → 63 — 19 cleared, ZERO newly kept**: js-inline (ar/tl/zh, the
+> canonical three) and behavior-removable in sixteen languages. Wrapped render
+> 3566/3588 (99.39%), bare 2977/2990 (99.57%), both allowlists shrunk.
+> 11-signal gate green, `test:canonical` 5/5, semantic 9,346 + 79 new, adapter
+> 366, vocab green, whole-monorepo `test:check` green.
+>
+> **Method note.** Seven of the eight edits redden the new test file under
+> mutation; the eighth — a js entry in the FUSED SOV body walk — reddened
+> nothing, and re-measuring the corpus with it removed moved no row. It was
+> redundant with the clause-level entry and is not in the change. Drop-one
+> mutation is what found that; the fix looked necessary while it was being
+> written.
+>
+> **Residual, named:** `js(args) … end` still stops at the `(` in twelve
+> languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — a head-form
+> body-walk defect that predates this change and is pinned as an exclusion list
+> in `js-block-round-trip.test.ts`. The six remaining behavior-removable rows
+> (bn, hi, ja, ko, qu, tr) are the action-drop class and need their own triage.
+
+> **Update 2026-08-27l — seventh burn-down: th marked `set`'s TARGET instead of
+> its value, in every th `set` row in the corpus. 83 → 82.**
+>
+> `setSchema` is the one command whose operands are inverted — the destination
+> (the thing being written) is positional and the patient (the value) takes the
+> `to` modifier — so every language declares the arrangement explicitly in
+> `markerOverride`. **th was absent from both maps** and fell to its profile
+> defaults (`destination: 'ใน'`, `patient: ''`), which put the preposition on the
+> wrong operand and left the value bare:
+>
+> ```
+> en    set @disabled to true
+> th    ตั้ง ใน @disabled จริง      ← marker on the target, value unmarked
+> i18n  ตั้ง @disabled ใน จริง      ← the transformer's own form
+> ```
+>
+> Every th `set` row in the corpus carried that — set-attribute, set-style,
+> set-opacity, set-transform, set-text-basic, tabs-aria, breakpoint-command,
+> input-char-count, input-clear, the three behaviors. Most survived it, because
+> the parse recovers a bare target and a bare value; the one it broke is
+> `set-color-variable`, whose destination is a property PATH — inside an event
+> handler the fused parse took `ของ` (the genitive linker) as the value and
+> dropped the path (`set *background-color to ของ`). That is the last row of the
+> family 27k opened.
+>
+> The override reuses th's own `ใน`, the destination preposition its profile
+> already declares, moved onto the value — exactly as ja/ko/bn/qu/tl already do
+> ("value gets destination marker"). Nothing was authored; the i18n dictionary
+> and the th profile both already had it.
+>
+> **Kept rows 83 → 82 — 1 cleared, ZERO newly kept**; `set-color-variable` is
+> gone from the ratchet and from the wrapped render allowlist entirely (3565 →
+> 3566/3588, 99.36 → 99.39%). No syntax-table drift. 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,273 + 13 new, adapter 366, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **Named residual, found by the same probe and NOT fixed here:** it, pl, ru and
+> uk have the identical missing-override inversion — `impostare in @disabled
+> vero`, `ustaw do @disabled prawda`, `установить в @disabled истина`. They
+> ROUND-TRIP, so no gate sees them and none is a kept row; it is a native-idiom
+> defect on the surface only, and the four belong to whoever next works the
+> bare-render idiom track rather than this ratchet.
+
+> **Update 2026-08-27k — sixth burn-down: a `*`-sigil property read the
+> possessive BACKWARDS in seven languages. 90 → 83.**
+>
+> The largest canonical family left after 27j, and the whole of it was one
+> tokenizer accident. `OF_POSSESSIVE_MARKERS` lists the head-final genitive
+> clitics (ja `の`, ko `의`, zh `的`, bn `র`, hi `का`, tl `ng`, vi `của`)
+> alongside the genuine prepositional "of" linkers, because the i18n transformer
+> emitted property-FIRST in every language and `tryMatchOfPossessiveExpression`
+> was built to read that surface. In a clitic language the same marker means the
+> opposite — `A の B` is "A's B" — so on the semantic renderer's (correct)
+> owner-first surface that matcher folded the pair INVERTED:
+>
+> ```
+> en    set the *background-color of #theme to "#ff6600"
+> ja    #themeの*background-color を "#ff6600" に 設定      ← a correct render…
+> ja →  set *background-color's #theme to "#ff6600"        ← read back backwards
+> ```
+>
+> Every fidelity score is 1.0 on that — same action, same role, same value
+> types. Only the English round-trip sees it, which is why `possessive-of-order`
+> already covered these languages (`BETWEEN = bn/hi/ja/ko/tl/zh`) and passed:
+> **it asserted `role.type === 'property-path'`, and an inverted fold is still a
+> property-path.**
+>
+> Why the of-matcher got the chance at all: `tryMatchPossessiveSelectorExpression`
+> — the owner-first matcher — demands an `identifier` property on a profile
+> marker, to stop `#button の .active` ("toggle .active on #button") folding.
+> `*background-color` tokenizes as a `selector`, so the correct matcher declined
+> and the inverted one took it.
+>
+> Two guards, both keyed on the SIGIL rather than on a new per-language
+> direction table (which would have to be authored for 24 languages and kept
+> true):
+>
+> - the owner-first matcher accepts a `*`-sigil token as the property — a style
+>   property is not the class-selector shape the gate was protecting against;
+> - the of-matcher refuses a `*`/`@` sigil as the OWNER, so the property-first
+>   i18n surface (`*background-color ของ #theme`) still folds there while the
+>   owner-first surface falls through to the matcher that reads it correctly.
+>
+> Both are individually load-bearing: removing the owner guard reddens 10 of the
+> new file's 49 assertions, removing the property widening reddens 14.
+>
+> **Kept rows 90 → 83 — 7 cleared, ZERO newly kept** (set-color-variable in bn,
+> hi, ja, ko, tl, vi, zh). Both render gates shrank with it — wrapped
+> 3564 → 3565/3588 (99.33 → 99.36%), bare 2975 → 2976/2990 (99.50 → 99.53%),
+> one allowlist pair each. 11-signal gate green, `test:canonical` 5/5 after
+> regenerating the three shrunk baselines, semantic 9,224 + 49 new, adapter 366,
+> vocab green, whole-monorepo `test:check` green.
+>
+> **`set-color-variable[th]` is the one row left in the family, and it is a
+> different bug** — a render-order defect that only appears inside a handler:
+> `on click set the *background-color of #theme to "#ff6600"` renders
+> `เมื่อ click ตั้ง ใน *background-color ของ #theme "#ff6600"`, with the patient's
+> `ใน` marker emitted ahead of the property path and the literal stranded at the
+> end (and `click` left unlocalized, where the i18n row has `คลิก`). The BARE
+> form round-trips correctly, so this is squarely the "render the construct
+> outside its corpus wrapper" class.
+
+> **Update 2026-08-27j — fifth burn-down, and cluster A was one line: the
+> hand-crafted patterns never inherited the schema's role DEFAULTS. 102 → 90.**
+>
+> The eleven canonical rows the 27g triage split across two buckets
+> ("implicit-role only" ×8 and the de "value-drop" ×3) were **one mechanism**,
+> and the hypothesis in the handoff was right: the defaults live on the SCHEMA
+> and only the GENERATED patterns were carrying them. `generatePattern` runs
+> every optional role that declares a `default` through
+> `buildExtractionRulesWithDefaults`; the hand-crafted patterns in
+> `src/patterns/*.ts` hand-write their `extraction` maps and had never been
+> given those defaults. So **which pattern won a match decided whether the
+> implicit role existed**:
+>
+> ```
+> .active কে টগল        → toggle-bn-generated → destination: me (implicit)
+> .active কে টগল করুন   → toggle-bn-full      → destination MISSING
+> ```
+>
+> Both render back to byte-identical English, which is why this survived every
+> gate: the round-trip cannot see it, and it is only an R1 role-SET difference
+> against the English reference. Scope, measured over all 6,193 registered
+> patterns: **56 slots across six languages** — bn/de/hi/qu/th/zh × toggle,
+> add, remove, increment, decrement. (Plus `on.source`, which 2,803 patterns
+> lack — including four of English's seven — and which is therefore left alone
+> behind a named exclusion. Inheriting it would materialize an implicit
+> `source: me` corpus-wide with nothing asking for it, and the asymmetry is
+> symmetric across languages, so it costs no fidelity signal.)
+>
+> Fix: `buildPatternsForLanguage` applies the generated path's rule to every
+> pattern it hands out. It never overrides — a rule that already declares a
+> `default` or a static `value` keeps it, and `applyExtractionRules` consults
+> `default` only when nothing was captured, so a role the pattern actually
+> captures is untouched.
+>
+> **Kept rows 102 → 90 — 12 cleared, ZERO newly kept.** The eleven canonical
+> targets (accordion-toggle bn, halt-propagation bn, if-matches bn,
+> repeat-forever bn, increment-counter de, decrement-counter de,
+> caret-var-increment de, multiple-events qu, remove-element qu,
+> settle-animations qu, toggle-class-basic qu) plus component-click-counter de.
+> 11-signal gate green, `test:canonical` 5/5, semantic 9,209 + 15 new, core
+> 7,972, adapter 366, vocab + R2 lock green, whole-monorepo `test:check` green.
+>
+> **Correction to 27g's classification: the canonical queue is 25 rows, not 16.**
+> 27g shelved `set-color-variable` (8 rows) under "lokascript extensions", but
+> `engine-verification.json` has had it at `both` all along; `when-value-changes`
+> (qu) became `both` at #972. So clearing 11 of 27 leaves 16 from the old list
+> plus those 9. The triage that produced the split is now committed as
+> `testing-framework/tools/triage-i18n-kept-rows.ts` (`--canonical-only
+> --summary` reproduces the table), so the next split is re-derived from the DB
+> rather than transcribed:
+>
+> | first failing signal | canonical rows |
+> | --- | --- |
+> | round-trip | if-empty(bn), increment-by-amount(pl), input-validation(bn), js-inline(ar/tl/zh), set-color-variable(bn/ja/ko/tl/vi/zh), when-value-changes(qu) |
+> | role-drop | bind-explicit-property(vi), eventsource-basic(ko), go-back(qu), previous-element(bn), set-color-variable(hi/th), socket-basic(ko), swap-content(tl) |
+> | action-drop | pick-text-range(pl), repeat-until-event(qu), worker-basic(qu) |
+> | no-reparse | on-custom-event-receive(ko) |
+>
+> `set-color-variable` is a possessive-order bug and is the largest canonical
+> family left: `set the *background-color of #theme to "…"` renders to a surface
+> whose re-parse swaps the possessor and the possessed
+> (`set *background-color's #theme to …`) in eight languages, at every score 1.0.
+
+> **Update 2026-08-27i — fourth burn-down, and the he cluster was never a he
+> bug: a fused handler body lost its THEN-CHAIN in 15 languages. 134 → 102.**
+>
+> The five he rows from the canonical queue all had one cause, and it was not
+> he-specific. English has always produced `body: [compound{…, chainType:
+> 'then'}]` for a handler with more than one command (`parseBodyWithClauses`
+> wraps >1 clause), and the renderer re-emits `then` from that wrapper. The
+> FUSED path in `buildEventHandler` — taken whenever a `<command>-event-*`
+> pattern wins the parse — builds its body by hand and left it FLAT:
+>
+> ```
+> en    on click fetch "/api/data" then put it into #result
+> he    ב click הבא "/api/data" אז שים את זה ב #result
+> he →  on click fetch "/api/data" put it into #result        ← `then` gone
+> ```
+>
+> The he render is CORRECT (`אז` is `then`); the he PARSE dropped the chain.
+> Measured across the corpus: **fifteen** languages lost it (bn, es, he, hi, id,
+> it, ms, pl, pt, ru, sw, th, tl, uk, vi); the eight whose pure trigger pattern
+> wins (ar, de, fr, ja, ko, qu, tr, zh) already kept it. Only he shows up in the
+> kept-row ratchet because for the other fourteen the i18n row loses the chain
+> too, so semantic wins the tie anyway.
+>
+> No recall metric can see this — `then` is neither an action nor a role, and
+> both sides carry the same commands. Only the English round trip does, which is
+> why it took the `best` writer's round-trip veto (#973) to surface it; the
+> BARE body chains correctly in all 23 languages, so it is invisible outside a
+> handler too.
+>
+> Fix: `buildEventHandler` folds a multi-command body into the same
+> `compound`/`then` node the clause path already produces. A single-command body
+> is untouched (pinned by test), and a body that came from
+> `parseBodyWithClauses` is already length 1, so it never double-wraps.
+>
+> **Kept rows 134 → 102 — 32 cleared, zero newly kept** — 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,209, core 7,972, adapter 366, mcp-server 441,
+> compilation-service 340, vocab + R2 lock green.
+>
+> **Sixteen existing assertions changed shape, deliberately.** They compared
+> top-level body actions (`['make','put']`) and now see `['compound']`; their
+> INTENT (which commands, which roles) is untouched and still asserted through a
+> `handlerCommands()` unwrap helper. One is an AST assertion — the builder now
+> emits the `CommandSequence` that a then-chain has always produced in English.
+> Two more live downstream, in `hyperscript-adapter`, and are worth reading:
+>
+> - the parity fixture's ja `tell` row now reads `tell #panel add .open then
+>   wait 200ms then add .visible` (regenerated per its own header's
+>   instructions);
+> - `whole-string-first`'s "never emits a chain word directly after a block
+>   header" invariant listed `tell` alongside `repeat|for|while`. **Measured on
+>   the real engine:** `repeat 3 times then add …` is REJECTED ("Expected 'end'
+>   but found 'then'") but `tell #panel add .open then wait …` is VALID — `tell`
+>   without `end` runs to the end of the feature, so a chain word between its
+>   commands is just a separator, and it is exactly what English renders. `tell`
+>   came out of that regex; the engine-validity of those rows is still asserted
+>   by the sibling "translates to English the real engine accepts" row, which is
+>   the property the regex was standing in for.
+
+> **Update 2026-08-27h — third burn-down, first from the canonical queue:
+> `put X before/after Y` was rendering as "at end of" in ar and tl. 138 → 134.**
+>
+> The cheapest canonical win named in 27g, and it was a two-line data gap plus a
+> priority. `PUT_POSITIONAL` (patterns/put.ts) generates `put-{lang}-before` /
+> `-after` from a spec table; its own comment says it exists for "the languages
+> that had none" and lists eight. **ar and tl were missed.** With no pattern
+> pinning `before`/`after` in those languages, the renderer's pinned-value guard
+> has nothing to compare against, so the highest-priority candidate wins —
+> `put-{lang}-at-end` (110, manner pinned to `at end of`):
+>
+> ```
+> en   put "<p>New</p>" before me
+> ar   ضع "<p>New</p>" عند النهاية من أنا      → "put … AT END OF me"
+> tl   ilagay "<p>New</p>" sa wakas ng ako     → "put … AT END OF me"
+> ```
+>
+> Both `before` AND `after` collapsed to the same wrong position. Role-identical,
+> execution-different, and **every recall metric scores it 1.0** — `manner` is a
+> literal the scorers never compare, so only the English round trip sees it.
+> That is why it was invisible until the `best` writer stored semantic's own
+> render (#973): before that, these rows were i18n-written.
+>
+> - **No vocabulary was authored.** ar `قبل`/`بعد` and tl `bago`/`matapos`
+>   already exist in the profiles AND agree with the i18n dictionaries.
+> - **tl needed a second half.** Its profile lists `bago`/`matapos` among the
+>   destination marker's ALTERNATIVES — a deliberate parse-side tolerance added
+>   before positional patterns existed ("Without them the generated put pattern
+>   can't match a before/after target"), which meant the generated into-pattern
+>   at priority 100 matched the positional surface and dropped the manner. The
+>   positional patterns now sit at **105**, the precedent already written out on
+>   `put-it-before` ("must out-rank put-it-full"). They still sit under
+>   `put-{lang}-at-end` (110), and that form still parses — pinned by test.
+> - **Measured:** kept rows **138 → 134**, exactly the four target rows cleared,
+>   **zero newly kept**; 11-signal gate green; `test:canonical` 5/5; semantic
+>   9,123 green. All ten positional-spec languages now round-trip both forms
+>   (`test/put-positional-round-trip.test.ts`, 38 assertions).
+>
+> Canonical queue after this: **39 rows** — next cheapest are the he round-trip
+> cluster (5 rows, one language) and the de implicit `increment` quantity (3).
+
+> **Update 2026-08-27g — the kept-row queue, prioritized by CANONICAL syntax; and
+> the qu event-head swap measured as ZERO-SUM (attempted, reverted).**
+>
+> Owner priority (2026-08-27): **fix what is standard hyperscript first.** Our own
+> showcase behaviors (`behavior-removable`, `-sortable`, `-resizable`) are not
+> canonical examples, so their row count should not drive the queue. The corpus
+> already carries the discriminator — `code_examples.engine`, verified by running
+> the real hyperscript.org engine — so the 138 kept rows split:
+>
+> | class | rows | patterns |
+> | --- | --- | --- |
+> | `engine: both`, NOT our behaviors — **canonical, the priority** | **43** | 36 |
+> | `engine: both`, our showcase behaviors (removable 22, sortable 14, draggable 1) | 37 | 3 |
+> | `engine: lokascript` (our extensions: components 24, resizable 15, set-color-variable 8, tabs-aria 4, …) | 57 | 10 |
+>
+> The 43 canonical rows, triaged by first failing signal (`tools/` probe in the
+> render-flip session):
+>
+> - **21 round-trip only** — scores clean (actions, roles, values all 1.0), but
+>   the English re-render differs: he ×5 (`fetch /api/x` comes back
+>   `fetch "/api/x"`, plus a dropped `then`), ar/tl `put-after`/`put-before` ×4
+>   (variant selection), `js-inline` ×3, `template-literal-list-build` ×3
+>   (pl/ru/uk), bn `if-empty` + `input-validation`, tl form ×2, pl
+>   `increment-by-amount`, bn `repeat-while`.
+> - **8 implicit-role only** — bn ×4 (`accordion-toggle`, `halt-propagation`,
+>   `if-matches`, `repeat-forever`) and qu ×4 (`toggle-class-basic`,
+>   `remove-element`, `multiple-events`, `settle-animations`). The rendered
+>   surface round-trips to identical English; only the schema's implicit `me`
+>   is missing from the re-parse, and the non-strict R1 signature counts it.
+> - **6 value-drop** (de ×3 = the implicit `increment` quantity, bn, hi, tl) ·
+>   **4 role-drop** (ko ×2, vi, qu) · **3 action-drop** (pl `pick-text-range`,
+>   qu `repeat-until-event`, qu `worker-basic`) · **1 no-reparse**
+>   (ko `on-custom-event-receive`).
+>
+> **Attempted and REVERTED — the qu head swap.** The qu half of the implicit-role
+> class has one cause: the renderer picks `event-qu-maykama` (priority 115), a
+> pattern whose own comment says it exists to PARSE what the i18n transformer
+> emits (`maykama` = the dictionary's `when`). Its body re-parses WITHOUT the
+> toggle's implicit `me`; the canonical `{event} pi {body}`
+> (`event-qu-standard`, 100) injects it. A `render: 'canonical' | 'parse-only'`
+> flag on `LanguagePattern` (the mechanism the architecture record asked for)
+> plus marking the tolerance parse-only makes qu render `click pi .active ta
+> t'ikray` with the implicit role intact.
+>
+> **It is exactly zero-sum, measured twice.** Falling through to `kaqtin` (105)
+> and to `pi` (100) give the SAME result: the four rows above clear, and four
+> other qu rows take their place — `announce-screen-reader`,
+> `behavior-resizable`, `repeat-while`, `template-literal-list-build` — one of
+> which (`announce-screen-reader`) is a tolerance-0 **R1 role-set regression**
+> in the 11-signal gate, and the head change also falsifies the characterization
+> in `test/feature-block-handler-heads.test.ts` (which documents, for four
+> languages, that the renderer emits the temporal conjunction rather than
+> `keywords.on` — it exists to prove the feature-block body-finder copes with
+> whatever head is chosen, so it would need re-characterizing, not deleting).
+>
+> So the qu head is not the unit of work: whichever head wins, some constructs
+> need the other. The next attempt should first make the four
+> `maykama`-dependent rows work under the canonical head, and only then swap —
+> at which point it is +4 canonical rows with no regression. The parse-only flag
+> is not committed (it would be dead code until then); re-adding it is ~15 lines
+> in `types.ts` + the `candidates` filter in `explicit/renderer.ts`.
+>
+> **Cheapest canonical wins, in order:** the ar/tl `put-before`/`put-after`
+> variant-selection pair (4 rows, one known family), the he round-trip cluster
+> (5 rows, one language, likely one URL/`then` cause), and the de implicit
+> `increment` quantity (3 rows). None needs a native speaker.
+
+> **Update 2026-08-27f — second burn-down: 161 → 138 kept rows. A brace group's
+> interior is DATA, and localizing it corrupted both halves.**
+>
+> `component-with-conditional` stayed on i18n because semantic rendered
+> `{name: 'Demo', admin: true}` as `{name: 'Demo', admin: verdadero}` and the
+> parse side never reverses it — the interior is captured as one opaque literal.
+> Chasing that found the behaviour is broken in BOTH directions, and much wider
+> than booleans:
+>
+> - **Nothing inside a brace group round-trips, in any language.** Measured:
+>   `set $x to {body: my value}` → es `establecer $x a { cuerpo : mi valor }` →
+>   back to English as `{ cuerpo : mi valor }`. Not just the value — **the KEY
+>   was translated too**.
+> - **The key guard was silently not applying on the path that matters.** It
+>   protects a word IMMEDIATELY followed by `:` (`value-lexicon-keys.test.ts`),
+>   but the renderer re-spaces a literal to `body :` before the localizer runs,
+>   so the guard stopped matching. It still passed at the unit level, where the
+>   raw text has no space — a gate that tested the mechanism but not the path.
+> - **And a localized data literal would break at RUNTIME**, not just in the
+>   round trip: an object literal is evaluated as data, so `{admin: verdadero}`
+>   evaluates an undefined identifier.
+>
+> Fix: `localizeValueInterior` masks balanced brace groups (a scanner, not a
+> regex — they nest, and a brace group can contain an already-masked string, so
+> the restore pass repeats). English inside the braces is cosmetically poorer
+> and correct: it round-trips exactly and cannot corrupt a runtime contract key.
+> **Three assertions in `value-lexicon-keys.test.ts` asserted the old behaviour
+> and were superseded, with the measurement written into the file** — the
+> value-side rule itself is unchanged and is now pinned OUTSIDE braces; the
+> brace rule has its own gate (`value-lexicon-braces.test.ts`, 6 languages ×
+> object literal / nested group / dynamic class selector / string-inside-brace,
+> plus the end-to-end round trip).
+>
+> **Kept rows 161 → 138**; markup rows fully carried by semantic 22 → 45.
+> 11-signal gate green, `test:canonical` green, semantic suite 9,123 green.
+>
+> **Filed, not fixed — the structured object-literal renderer.** The right end
+> state is: localize option VALUES (they are hyperscript expressions the
+> localized parser will read), preserve KEYS (runtime contracts), and reverse
+> both on parse. That needs the object literal to be parsed structurally rather
+> than captured as one opaque literal, which is a parser-track change. Until
+> then the interior stays English. The cosmetic cost is real and named: a
+> Spanish `fetch … with {method:"POST", body:(closest <form/> as FormData)}`
+> shows English `closest` inside the braces.
+
+> **Update 2026-08-27e — first ratchet burn-down: 229 → 161 kept rows, and the
+> `component-*` family was misdiagnosed (it is markup, not a parser gap).**
+>
+> The 2026-08-27d entry called the 115 `component-*` rows "a parser-coverage
+> gap — semantic cannot parse the English". Measured: the English is
+> `<script type="text/hyperscript-template" component="…" _="…">…</script>` —
+> **HTML markup**, which no renderer was ever going to parse as hyperscript.
+> The corpus already had a category for exactly this (five `hx-live`/`sse-`/`ws-`
+> rows carry `translatable: false`), and i18n's "translation" of the component
+> rows was the English markup with its indentation changed. Three findings:
+>
+> - **Two rows have no hyperscript at all** (`component-hello-world`,
+>   `component-with-slots`) → `translatable: false` with a reason, matching the
+>   five existing markup rows. 46 rows leave the ratchet's denominator honestly.
+> - **Three rows carry `_="…"` bodies nobody translated.** The writer now has a
+>   byte-preserving markup path (`src/sync/markup-attributes.ts`): find each
+>   `_=` value, translate the BODY through the same renderer choice, splice it
+>   back by offset so indentation, quote style, inner text and every other
+>   attribute are untouched (a jsdom round-trip would reserialize all of that).
+>   `component-click-counter` is now semantic-rendered in **22 of 23** languages
+>   — the first rows this corpus has ever had with translated component
+>   hyperscript.
+> - **The guard that keeps a truncating parse out of the corpus.**
+>   `set ^user to attrs.data as JSON` parses, and `as JSON` lands in NO role — so
+>   it scores "faithful" against its own truncation in all 23 languages (the
+>   fifth vacuous-reference case, after #970 `unless` and #971 `when … changes`;
+>   now filed in `PARSER_NEXT_STEPS.md`). A body is translated only if its own
+>   English re-render preserves its content, so `component-with-attrs` stays
+>   English in 23 languages instead of shipping the truncation.
+>
+> **Kept rows 229 → 161** (denominator 3703 → 3657). Two of my own bugs were
+> caught by the ratchet's own numbers rather than by review, and both are now
+> regression-tested: the attribute regex excluded BOTH quote characters from a
+> value, so every attribute containing a hyperscript string literal was silently
+> skipped (`component-with-conditional`, 23 languages); and a markup row with one
+> carried body and one verbatim body was labelled `semantic-render`, because
+> `translateBody` advances the per-body counter — a markup row's verdict must
+> come from "every body carried", never from the counter.
+>
+> **What still keeps `component-*` rows on i18n** (46 of the 161): 23
+> `component-with-attrs` (the `as JSON` truncation above — parser track) and 23
+> `component-with-conditional`, where semantic localizes the boolean INSIDE the
+> object literal (`{name: 'Demo', admin: verdadero}`) and that does not
+> round-trip back to English, so i18n's version legitimately wins the chooser.
+> The latter is a real render-track item: a localized literal inside an object
+> literal needs to round-trip, or must not be localized there.
+
+> **Update 2026-08-27d — SHIPPED: the corpus writer defaults to `best`, and
+> the rows it leaves to i18n are a shrink-only ratchet (#973, same PR as the
+> decision below).**
+>
+> - `sync-translations` default → `best` (`DEFAULT_RENDERER` in
+>   `patterns-reference/src/sync/renderer-choice.ts`; `PATTERNS_RENDERER=i18n`
+>   reproduces the old corpus for A/B). The 18 `fix-translations.sql` pins are
+>   scoped to rows i18n still owns — a pin over a semantic-won row would make
+>   the method label lie. `TranslationMethod` now types the labels the writer
+>   actually writes.
+> - `multilingual-priority.json` regenerated on the `best` corpus — gains only
+>   (role-lossy rows 14 → 1 (cleared 13: he/set-attribute, id/fetch-do-not-throw, id/fetch-error-handling, id/fetch-json, ko/when-multiple-changes, ko/when-value-changes, ms/hide-with-transition, qu/announce-screen-reader, qu/on-custom-event-receive, th/toggle-aria-expanded, vi/its-value-possessive-dot, zh/repeat-forever, zh/repeat-until-event; remaining pl/unless-condition; added 0), lossy 0 → 0, avgRoleFidelity 0.9992 → 0.9999, avgPrecision 0.9998 → 1.0000, avgValueRecall 1.0000 → 1.0000, avgConfidence 0.839 → 0.919).
+> - **New gate: `i18n-kept-rows`** (`src/multilingual/i18n-kept-rows.test.ts`,
+>   baseline `baselines/i18n-kept-rows.json`, in `test:canonical` beside the
+>   four canonical/render gates). Seeded at **229 rows / 53
+>   patterns**; a new kept row fails, a baselined row semantic now wins must be
+>   deleted (`tools/regen-i18n-kept-rows-baseline.ts`), and it refuses a DB with
+>   no semantic rows so it cannot pass vacuously against an i18n-written corpus.
+>   **This baseline is the i18n retirement schedule**, and it is TWO classes,
+>   labelled apart in `translation_method`: **115 rows are
+>   `grammar-transform-no-reference`** — the five `component-*` patterns
+>   (`component-hello-world`, `-click-counter`, `-with-attrs`,
+>   `-with-conditional`, `-with-slots`) × 23 languages, whose ENGLISH the
+>   semantic parser cannot parse at all (component directives are a parser
+>   coverage gap, not a render loss — the render gates skip them for the same
+>   reason); **114 are `grammar-transform`** — semantic parsed but rendered
+>   worse. Burn-down order by family (largest first): the component-* parser
+>   gap (115 in one fix), `behavior-removable` 22 + `js-inline` 3 (the `js()`
+>   opaque-body tokenizer gap — `PARSER_NEXT_STEPS.md`), `behavior-resizable`
+>   15 + `behavior-sortable` 14 (round-trip drift on long bodies),
+>   `set-color-variable` 8, pl/ru/uk `tabs-aria` + `template-literal-list-build`
+>   7, he `fetch`/`morph`, ar/tl `put-before`/`put-after` (variant selection),
+>   then the implicit-role singletons. Heaviest languages: bn 17, tl 17, qu 15,
+>   he 14. To close a row: fix the renderer, `npm run populate`, run
+>   `npm run test:canonical` — the stale-entry assertion names the row — then
+>   regenerate and commit the baseline in the same change.
+
+> **Update 2026-08-27c — the corpus flip is DECIDED and measured: flip the
+> writer to `best` (semantic-first, i18n kept only where it scores strictly
+> better), not to raw `semantic`. i18n retirement stays gated on the kept-row
+> count reaching zero. (branch `feat/render-flip-probe`)**
+>
+> The architecture record (`~/.claude/plans/please-think-about-the-compiled-iverson.md`)
+> deferred two steps behind a trigger — "reopen the corpus flip to
+> `semantic.translate` and retiring i18n's transformer when the renderer passes
+> **97.0%** (i18n's own clean rate)". The renderer passed it around #952
+> (97.91%) and sits at 99.33% wrapped / 99.5% bare, but the trigger was an
+> ad-hoc probe nobody committed, so nothing reported it. Now committed as
+> `packages/testing-framework/tools/probe-render-flip.ts`: for every corpus
+> pattern × language it scores the STORED i18n row and the live
+> `render(parse_en(en), L)` against the same English reference under every
+> gate's own metric (strict render signature; scoreNodes R0/R1/R3; R5 parse;
+> the English ROUND-TRIP as the R2 proxy; `--canonical` for R4) and lists the
+> LOSSES a flip would cause and the GAINS it would bring. Whole corpus, fresh
+> populate, 3588 pairs:
+>
+> | signal | i18n (stored) | semantic (render) | flip LOSES | flip GAINS |
+> |---|---|---|---|---|
+> | R5 parse | 100.00% | 99.94% | 2 | 0 |
+> | R0 faithful | 100.00% | 99.64% | 13 | 0 |
+> | R1 role-set (non-strict, what `roleLossyPatterns` counts) | 97.77% | 98.22% | 28 | 44 |
+> | R3 value | 99.36% | 99.39% | 11 | 12 |
+> | strict (the render gate) | 98.66% | **99.33%** | 22 | 46 |
+> | English round-trip (≈R2) | 70.82% | 79.29% | 87 | 391 |
+> | R4 engine-valid | 91.03% | 90.16% | 32 | 1 |
+>
+> **Semantic out-renders i18n on every average — and a raw flip still fails.**
+> A corpus written by `sync-translations --renderer semantic` (3588 rows
+> semantic, 115 fallbacks for the 5 patterns whose English does not parse) was
+> run through the REAL 11-signal `--regression` gate: ✗ R5 ×2 (ko
+> `on-custom-event-receive`, zh `behavior-draggable`), ✗ faithful→lossy ×11
+> (`behavior-removable` ×5, the zh behaviors, qu worker/until, pl pick, ko
+> announce), ✗ R1 role-set flips ×22, ✗ **R2 execution ×7** (ar/tl
+> `put-before`/`put-after`, bn tabs-aria, ko announce, tl swap — role-identical,
+> execution-different: a `before` re-rendered as `into`, which no recall metric
+> can see), ✗ R4 ×30 (`behavior-removable` ×16 js bodies, `set-color-variable`
+> ×7, bn if-empty/input-validation, …). Averages hide binary flips at
+> tolerance 0 — the exact "re-baseline hazard" the record predicted.
+>
+> **`--renderer best` is the flip that is an upgrade.** Per row it renders with
+> BOTH, parses each back, and stores the semantic row unless the i18n row beats
+> it on any signal: scoreNodes (R0, multiset, precision, R1, R3) + the English
+> round-trip (`render(parse_L(row), 'en') === render(reference, 'en')`, the
+> proxy that catches the put-before class) + the real engine's verdict on that
+> English (R4; `hyperscript.org` loaded headlessly as the canonical gate does).
+> Ties go to semantic — the renderer every runtime surface already uses.
+> Measured through every gate, all 24 languages: **11-signal ratchet ✓ zero
+> regressions**, `test:canonical` ✓ (the round-trip veto alone cleared R2 and
+> most of R4; consulting the engine cleared the last 4 — `behavior-removable`/ms,
+> bn `if-empty` + `input-validation` whose bn `empty` lexicon renders the
+> imperative `খালি-করুন`, qu `when-value-changes`). **3474 of 3703 rows
+> (93.8%) are semantic-rendered; 229 stay on i18n** — and that list is the
+> burn-down, by construction. Baseline effect: regenerating `multilingual-priority.json` on a `best` corpus clears **13 of the 14** remaining role-lossy rows (he `set-attribute`; id `fetch-*` ×3; ko `when-*` ×2; ms `hide-with-transition`; qu `announce-screen-reader` + `on-custom-event-receive`; th `toggle-aria-expanded`; vi `its-value-possessive-dot`; zh `repeat-*` ×2 — only pl `pick-text-range` stays), avgRoleFidelity 0.9992 → 0.9999, avgPrecision 0.9998 → 1.0000, avgConfidence 0.839 → 0.919, lossy 0 → 0.
+> The default (`i18n`) writer is byte-identical after the refactor (7038 rows
+> diffed), so nothing moves until the default is flipped. The renderer choice
+> is folded into the DB provenance stamp (`PATTERNS_RENDERER`), so a `best` DB
+> reads STALE to a default gate run — no cross-variant phantom regressions.
+>
+> - **To make it the default:** `sync-translations` default → `best`; CI's
+>   populate needs no change; regenerate `multilingual-priority.json` (gains
+>   only) and **add a downward-only ratchet on the i18n-kept row count** (229
+>   today) so the residual can only shrink. That ratchet IS the i18n retirement
+>   schedule for the corpus path.
+> - **The 229 kept rows, by family** (from the probe's loss lists; overlaps —
+>   and NOTE the probe skips the five `component-*` patterns whose English does
+>   not parse: those 115 rows are kept too, as a parser-coverage class, see
+>   2026-08-27d):
+>   `behavior-removable` 16 + `js-inline` 3 (the `js()` opaque-body PARSER gap —
+>   filed in `PARSER_NEXT_STEPS.md` at last, three handoffs pointed there without
+>   writing it), `behavior-resizable` 15 + `behavior-sortable` 13 (round-trip
+>   drift on long bodies), `set-color-variable` 8, ar/tl `put-before`/`put-after`
+>   4 (variant selection), pl/ru/uk `tabs-aria` + `template-literal-list-build`
+>   6, he `fetch`/`morph` 5, bn/hi `repeat-while` 2, the bn/de/qu implicit-role
+>   asymmetries (a `toggle .active` whose qu/bn re-parse no longer injects the
+>   default `destination: me` the en parse carries; de `increment` losing the
+>   implicit `quantity`), and singletons.
+> - **Two probe columns are not what they look like.** `role` here is the
+>   NON-strict signature (implicit roles counted) — 80 i18n misses, not the
+>   baseline's 14, because the gate re-injects defaults on the L side the same
+>   way on both; the probe's absolute counts are for A/B only, the gate decides.
+>   And the round-trip is coarse (i18n 70.8%): it is a VETO in the chooser, never
+>   a score.
+>
+> **i18n retirement — considered, not started; the sequencing is now measurable.**
+> Runtime surfaces are already single-renderer (MCP `translate_code` AND
+> `translate_hyperscript`, core `MultilingualHyperscript`, the framework's
+> `createMultilingualDSL().translate()` — parse→render, its own 159-line DI
+> transformer is a fallback). What still sits on i18n's 2,747-line
+> `GrammarTransformer`: the corpus writer (229 rows after the flip),
+> `@hyperscript-tools/i18n` (published; re-exports `translate/toLocale/
+> toEnglish/GrammarTransformer` for build-time HTML translation — a behaviour
+> change for its users when migrated), core's `hyperfixi-classic-i18n.js`
+> bundle (ships the transformer behind the `LokaScriptI18n` global; size-tracked,
+> its own CI shard), the vite plugin's `grammarEnabled` codegen (emits an
+> `@lokascript/i18n` import), and 8 example pages on `lokascript-i18n.min.js`.
+> Dictionary-only consumers (developer-tools prism, testing-framework vocab V1)
+> are unaffected: the dictionaries are GENERATED from semantic profiles
+> (`generate:language-assets`) and semantic's render lexicon is parity-tested
+> against them (`lexicon-parity.test.ts`), so that duplication is already
+> derived, not authored. The thin-v3 cut the record sketched is therefore:
+> delete `i18n/src/grammar/` (5.4k lines + 249 tests) once the kept-row ratchet
+> reads 0; keep dictionaries (6.1k, generated), keyword providers (1.2k),
+> runtime/SSR/plugins/pluralization (3.7k, 165 tests); point
+> `@hyperscript-tools/i18n` and the classic bundle at `semantic.translate`.
+> **Not before:** every kept row is a case the semantic renderer still loses,
+> and the gates forbid trading one for a lossier corpus at tolerance 0.
+
+> **Update 2026-08-27 — reactive `when … changes` has a real parse in all 24
+> languages: the SECOND en-reference truncation, after #970's `unless`.**
+>
+> `when <expr> [or <expr>]* changes <body> [end]` is canonical _hyperscript
+> (0.9.93 verified: `or` is the only separator — a comma is rejected —
+> `changes` is a REQUIRED literal, `end` is optional; and the engine has NO
+> temporal `when <event>` at all: `when click …` fails with "Cannot watch local
+> variable 'click'"). Nothing modelled it. No pattern in any language carried a
+> `changes` literal, so the temporal `when {event}` handler patterns claimed
+> the head and kept its FIRST token as the event — `when $a or $b changes` →
+> `on $a`, `when (#p's value * #q's value) changes` → event `(` — in English
+> too, so every language scored clean by reproducing the truncation (measured:
+> all 48 stored rows parsed `on,put | on.event:reference`, identical to en).
+>
+> - **The vocabulary was not invented.** The handoff filed this as 24-language
+>   authoring; measured, the `@lokascript/i18n` dictionaries already carried
+>   `logical.changes` in all 24 — they are what wrote the rows — and the V1
+>   vocab gate demands the profile agree with them. Synced verbatim into
+>   `profile.keywords.changes`; ⚠️ native review is filed per word in
+>   `NATIVE_REVIEW_NEEDED.md`, with the fr `change` / id `berubah` / th
+>   `เปลี่ยน` change-event homographs and the six dictionary-vs-profile `when`
+>   head words (the `V1|*|when` waiver's list) called out.
+> - **Parse is structural** (Stage 0.1, `block-parser.ts`
+>   `locateReactiveWhenHead` / `parseReactiveWhenBlock`): the head is
+>   discriminated by the `changes` word — matched by surface as well as
+>   normalized form, because in three languages it IS the `change` event's
+>   surface — with the expression span guarded against command verbs,
+>   `then`/`end`, and string literals (`on click set x to changes` stays a
+>   handler); the body follows the `live` path. `whenSchema` carries a new
+>   `structuralOnly` flag: registered (R1 contract, syntax table, validators)
+>   but NO generated pattern, so the temporal patterns keep winning for
+>   `when click …`. The watched expression rides in `condition`; en `raw` is
+>   the byte-faithful source slice (the tokenizers lex the possessive inside
+>   parens with a stray quote), a foreign span is re-joined from normalized
+>   tokens with the or-word normalized by surface (`parser/utils/or-words.ts`,
+>   the parser's ex-private `OR_KEYWORDS`) — `$a oder $b` is what the engine
+>   rejects.
+> - **Render** emits `<when-word> <expr> <changes-word>` (`featureHeader`); the
+>   AST builder emits `[condition, block]`.
+> - **Measured:** whole-corpus pre/post diff = exactly the 48 target rows, zero
+>   collateral (3984 rows). Wrapped render gate 3557 → **3562 / 3588 (99.28%)**
+>   — the five allowlisted pairs cleared, zero new; bare unchanged. The
+>   11-signal `--regression` gate is GREEN against the stricter reference (the
+>   #970 shape again: every language re-scored, none below tolerance); both
+>   canonical gates green.
+> - **Still open, named:** `when-value-changes`'s en raw is engine-INVALID —
+>   `` `$${it}` `` is an upstream lexer limitation (`"$" + it` and
+>   `` `USD ${it}` `` are valid) — so it is outside R4's denominator and
+>   `engine-verification.json` already records `hyperscript: false` against
+>   the row's `engine: 'both'` claim. **Correcting the row was tried and
+>   REVERTED, measured:** with `put "$" + it into me` the en side is valid
+>   (engines → `both`), which pulls the pattern INTO R4's denominator and
+>   exposes **19 of 23** foreign translations as engine-invalid — the i18n
+>   transformer's possessive-inside-parens rendering (`valor de ( #price *
+>   valor ) de #qty`, ja `(#priceの 値 * #qtyの 値)`, tr `( #price ın değer …`);
+>   only he/it/ms/tl survive, and only because they leave `'s` in place. That
+>   is a tolerance-0 allowlist growing by 19 — an owner decision, and an
+>   **i18n** arc (render `X's value` inside parens faithfully), not this one.
+>   The SOV prefix-head order and zh `何时` are native-review questions, not
+>   parser ones.
+> - **Fixed in the same arc — pl `live` (`na-żywo`).** Same block-keyword
+>   family, different mechanism: a tokenizer defect. Hyphen-joined profile
+>   keywords split at `-` in EVERY language (es `en-vivo` → `en`+`-`+`vivo`
+>   survived only because `vivo` is a `live` alternative; pl's `na` is its
+>   destination marker, so the render re-parsed as a handler). The primary
+>   cannot be swapped for the dictionary's `żywy` — it is the surface behind
+>   the localized `hx-na-żywo` attribute — so the framework base tokenizer's
+>   multi-word walk now takes hyphen-joined keywords whole
+>   (`isHyphenatedWord`; leading-hyphen suffix alternatives like qu `-kama`
+>   excluded). Whole-corpus diff for that change alone: **zero rows moved**;
+>   the two pl pairs cleared; the `feature-block-render` pl pin promoted.
+
+> **Update 2026-08-27b — `when` is canonical-only in English, and
+> `when-value-changes` is engine-portable in all 24 languages (follow-up to the
+> reactive-when arc).**
+>
+> - **English `when` handler heads removed.** Upstream 0.9.93 has NO temporal
+>   `when <event>`: `when click toggle .active` fails "Cannot watch local
+>   variable 'click'" — `when` is the reactive observer plus the trailing
+>   command guard (`show .x when <cond>`). `event-en-when` /
+>   `event-en-when-source` were an invention, and the thing that had claimed
+>   every reactive head. English now REJECTS the form like the engine
+>   (`canParse` false). Scope is English-only, on purpose: the foreign
+>   when-heads (es `cuando`, de `wenn`, fr `quand`, id `ketika`, qu `maykama`,
+>   bn `যখন`, hi `जब`, ja `とき`, tr `iken`, ar `عندما`, he `כאשר`, zh `每当`/`当…时`)
+>   are translations of `on` — claims about our translation layer, not about
+>   English — and stay (measured: only zh's circumfix matches any corpus row;
+>   the rest are parse-side leniency). The `english-idioms` and README
+>   "recommended `when clicked`" claims are corrected.
+> - **`when-value-changes` corrected to `put "$" + it into me`** (`` `$${it}` `` is
+>   an upstream lexer limitation) — and the 19 foreign translations that
+>   correcting it exposed to R4 (2026-08-27 block above) are FIXED, not
+>   allowlisted, three causes: (1) the i18n transformer split a parenthesized
+>   group across a prepositional possessive (`valor de ( #price * valor ) de
+>   #qty`) — parens now ride outside the rewrite; (2) the English join read
+>   only the prepositional genitive order, so `#priceの 値` / `#price ın değer`
+>   leaked their particle — an owner-first branch (`<selector> <genitive>
+>   <property>` → `value of #price`) plus tr's eight vowel-harmony genitives;
+>   (3) the framework string extractor paired the two `'s` apostrophes into
+>   ONE string literal (`'s wartość * #qty'`), hiding the noun from the
+>   property lexicon — a word-glued apostrophe is a possessive marker now, and
+>   the join glues `'s` back and translates the noun. Also: a foreign watched
+>   span is ALWAYS re-joined (the old "only if some token normalized" rule let
+>   bn/ja/hi/pl/… spans of bare particles/nouns through verbatim). Measured:
+>   foreign→en engine validity **5/24 → 24/24**; `engine-verification.json`
+>   flips the row to `both`; whole-corpus parse diff for every one of these
+>   changes: **0 rows**; R4 green with the pattern now INSIDE its denominator.
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
@@ -206,13 +1721,30 @@ fail CI.
 >
 > **Deferred, with reasons (the standing R1 tail):**
 >
-> - **pick-text-range (Family F, all six):** the en reference itself is
+> - ~~**pick-text-range (Family F, all six):** the en reference itself is
 >   degenerate (`pick.patient:expression="characters"` — the first WORD;
 >   pickSchema models no range/source roles), so chasing SOV parity buys
 >   nothing. The proper fix (pickSchema range roles + transformer render +
 >   SOV pattern variants) RAISES the en denominator for all 24 languages —
 >   the most expensive row in the tail for ×6 misses. Take it only if pick
->   matters for a demo; budget the full 24-language realignment.
+>   matters for a demo; budget the full 24-language realignment.~~
+>   **CLEARED 2026-08-01, PR #868 — and this deferral text was STALE when it
+>   was quoted back.** The 24-language realignment it budgets for had already
+>   been paid by arcs 1–3 (2026-07-20, three entries above): the en reference
+>   is not degenerate, `pickSchema` models the range via patterns, and all 24
+>   rows already round-tripped to byte-identical English. What remained was
+>   ONE valueType divergence, identical in all 23 non-en languages — `missing
+>   pick.method:expression / captured pick.method:literal` — because en keeps
+>   `characters` off its keyword list (identifier path → expression) while
+>   all 22 foreign tokenizers register it (keyword path → literal). Fixed in
+>   two halves: `ExtractionRule.transform` on the `method` slot of both pick
+>   factories (post-confidence, so no adoption score moved), plus widening the
+>   fused-swap pick preservation clause to compare `method` by SURFACE rather
+>   than type — without the second half the 13 fused-routing languages
+>   truncate to `pick characters` and the arc-3 R4 cluster re-opens. All 23
+>   languages left `roleLossyPatterns`; ar/es/pt/sw/tl reached R1 **1.0000**.
+>   **Lesson: a standing deferral's cost estimate ages with the arcs that land
+>   around it — re-measure the row before budgeting for the filing's scope.**
 > - **Reactive on.event rows (hi/ko when-value-changes +
 >   when-multiple-changes, hi window-resize, qu announce-screen-reader +
 >   on-custom-event-receive):** event-anchor guard machinery — the hottest
@@ -2718,7 +4250,7 @@ Most map to families this file had already named:
 | positional/range qualifier tails (`0 to 5 of #note`, `in closest <form/>`, `for me`) | 70 | pick-text-range ×23, take-class-from-siblings ×23, first-in-parent ×17, last-in-collection ×6, toggle-aria-expanded ×1 | pick = named R1 deferral (Family F); rest NEW |
 | loop-head condition/keyword tails (`< 10`, `with index`, zh `forever`, id `_`-compound split) | 51 | repeat-while ×24, stagger-animation ×24, repeat-until-event ×2, repeat-forever ×1 | NEW — named here |
 | SOV/en trailing in-me destination glue | 51 | form-disable-on-submit ×19 (en-symmetric!), input-validation ×6, fetch-loading-state ×6, tabs-basic ×5, tabs-content ×5, if-empty ×5, repeat-times ×5 | = named R3 family (§ value-bug families) |
-| reactive `when … changes` heads | 48 | when-value-changes ×24, when-multiple-changes ×24 | = named reactive `on.event` deferral |
+| reactive `when … changes` heads | ~~48~~ **0** | when-value-changes ×24, when-multiple-changes ×24 | **RESOLVED — reactive-when arc (2026-08-27)**: a real `when` fold in all 24 languages; was the named reactive `on.event` deferral's `when` half |
 | set source-qualifier tails (`from #firstName` on bind rows) | 44 | two-way-binding ×22, computed-value ×22 | NEW — named here |
 | show/hide style-capture (`with *opacity`) | 38 | show-with-transition ×19, hide-with-transition ×19 | = named Batch-3 leftover |
 | go-url destination (`"/page"`) | ~~18~~ | go-url ×18 | **RESOLVED — #680** (semantic go-url capture, x24; snapshot predates #680, resweep to zero the count). Traditional/interchange sibling resolved 2026-07-14, `HANDOFF_go-interchange-inference.md` |
@@ -2904,7 +4436,7 @@ The two headlines for this side:
   `for` was an unconsumed-tail artifact and the duration role removes it. The
   corpus row parses faithfully in all 24 and needs no allowlist entry.
 
-## ~~`take` has no `recipient` role — the en reference drops `for me`~~ — SHIPPED (2026-07-31), 10-language tail open
+## ~~`take` has no `recipient` role — the en reference drops `for me`~~ — SHIPPED (2026-07-31); the 10-language tail CLOSED to 1 (2026-08-01, #874)
 
 The en half is FIXED. `takeSchema` now declares a `recipient` role
 (`markerOverride: { en: 'for' }`, `expectedTypes: ['reference']`,
@@ -2947,6 +4479,86 @@ deferred lists are pinned in `packages/semantic/test/take-recipient.test.ts`,
 so a language starting to capture is a visible test failure, not a silent
 drift: move it to CAPTURED and regenerate the baseline in the same change.
 
+### The 10-language tail — CLOSED to 1 (2026-08-01, #874)
+
+**The prescription this filing left behind was wrong in the same way its own
+two premises were.** The standing plan was per-language opt-in i18n rendering:
+retag the pronoun-valued `duration` phrase as `recipient` in the transformer,
+then author a marker particle and a `canonicalOrder` slot per opted-in profile,
+invert the `grammar.test.ts` assertions, and rewrite `ROLE_CATALOG`'s usage
+string. **None of that was needed. Not one line of rendering changed.** The
+surfaces were already right; triage found three unrelated PARSE-side causes,
+and the 10 were never one failure mode:
+
+| languages         | cause                                                                                     | fix                                  |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------ |
+| it, ru, uk, vi    | `patterns/get.ts` listed the language's TAKE verb among `get`'s alternatives                | remove the alternatives              |
+| bn, hi, ja, ko, tr | `generateSOVPatientFirstEventHandlerPattern` had no trailing recipient slot                | `appendOptionalRecipient`            |
+| qu                | canonical order fronts the source phrase — no pattern has that shape                       | deferred, see below                  |
+
+The first is much bigger than the role it was found through: `prendere .active
+da .tab-button io` (it), `взять …` (ru), `взяти …` (uk), `lấy …` (vi) returned a
+**`get`** at confidence 1.00. The tokenizers keep the two verbs distinct and the
+i18n transformer renders them distinctly, so those alternatives could never
+match a real `get` — they only shadowed `take`. The recipient loss was the
+downstream symptom: the fused event-handler swap re-parses
+`[verb..clause boundary]` standalone and swaps the richer result in only when it
+is the SAME action, so an action flip vetoed the swap.
+
+~~**qu is deferred, with its blocker named.**~~ **SHIPPED (2026-08-09).** A
+source-fronted pattern variant
+fixes it — measured: qu's take row AND `event-from-elsewhere` both go
+role-faithful, two more rows gain confidence. But it then wins on qu's compound
+rows, where the flattened body loses its `then` connectives and
+`tabs-basic`/`tabs-content` stop reproducing the en DOM effect (**R2, tolerance
+0**). The blocker underneath predates this work: qu's `add .active to me`
+renders as `add .active` in both states — the destination is captured and then
+dropped by the renderer — so the emitted English is only unambiguous while a
+`then` separates it from the preceding command. **Fix the dropped destination
+first**; the pattern variant is a few lines after that.
+
+**Resolution, in the filed order.** (1) The dropped destination was the
+renderer's blanket `me`-suppression compensating for matcher-materialized
+schema defaults — it could not tell authored `noqa man`/`to me` from injected
+`destination: me`. Injected defaults now carry `implicit: true` (SemanticValue
+`ImplicitTaggable`); the renderer suppresses ONLY those, so authored phrases
+survive round-trips (`translate('add .active to me','en','en')` is now a fixed
+point; the string-content carve-out was this same conflation patched narrowly
+and still stands for implicit values). (2) The
+`generateSOVPatientFirstSourceFrontedEventHandlerPattern` variant (required
+marked source slot between patient and event; self-gates on a source role +
+marker distinct from event/patient markers) covers qu's canonical order. The
+R2 flattening the deferral measured DID recur, via a different mechanism than
+the flattened-body ambiguity: the handler-level `source` threading gate was
+`id.includes('source')`, which the variant's mid-id `source` satisfied,
+delegating qu's tabs handlers to `.tab` — now `endsWith('source')`
+(handler-head patterns all end in `-source`), mutation-verified both ways.
+Whole-corpus probe (4150 rows incl. en): exactly 7 qu rows changed — take +
+event-from-elsewhere role-faithful, 5 compound/confidence gains, zero diffs
+elsewhere (signature includes eventModifiers). Full 11-signal gate green;
+baseline regenerated (qu drops `take-class-from-siblings` from
+`roleLossyPatterns` → **R1 tail 15 → 14, all take.recipient rows closed**; the
+regen also records pre-existing main-vs-baseline confidence drift: es
+set-family ×16 at 0.789 and qu remove-class rows, verified identical on a
+clean main worktree — not this change's doing). Downstream: the
+hyperscript-adapter full path now renders authored `from me` (4 corpus rows),
+a KNOWN, runtime-equivalent full-vs-slim divergence (slim has no
+authored/implicit distinction); the slim repeat-surface safety pin is now
+content-addressed instead of `KNOWN_DIVERGENCES[0]`.
+
+**A matcher defect found on the way, live in 90 shipped patterns.** Every
+`<cmd>-event-<lang>-sov` binds `destination` in BOTH a pre-verb and a post-verb
+optional group. `matchGroupToken`'s rollback restored the captured KEY set but
+not overwritten VALUES, so a trailing group that speculatively captured a token
+into an already-filled role and then failed its marker left the corruption
+behind: ja `クリック で #panel に .active を トグル ゴミ` returned
+`destination="ゴミ"` with the real `#panel` discarded. Fixed and pinned.
+
+Whole-corpus probe (3984 rows, pre vs post): **exactly the 9 take rows**, zero
+structural and zero confidence diffs elsewhere. Baseline: those 9 languages drop
+`take-class-from-siblings` from `roleLossyPatterns` and **seven reach
+avgRoleFidelity 1.0000** (bn, hi, it, ja, ru, tr, uk). R1 tail **24 → 15 rows**.
+
 `valueShape: 'reference'` is the second shape-anchor kind and it is
 load-bearing — **measured under mutation**: deleting it drops plain
 `take .active from .tab-button` from 1.0 to **0.6923**, below the 0.7
@@ -2959,7 +4571,93 @@ Still standing: `source` has **no** `default: me` and must not get one — bare
 `take .active` means "take from all current holders" (#859). Recipient is
 default-free for the mirror reason: the runtime supplies `me` itself.
 
-## `process` has no view-transition role — the tail is dropped (opened 2026-07-31)
+## ~~`process` has no view-transition role — the tail is dropped~~ — SHIPPED (2026-08-01)
+
+Both schemas took a shared `manner` role marked by the English phrase
+`using view` in all 24 languages (the `partials in` / `url` precedent), with the
+captured value being the trailing word `transition` itself. `swapSchema`'s
+descriptor and a new one on `processSchema` route it to
+`modifiers.viewTransition`, the key both `ProcessPartialsCommand.parseInput` and
+`SwapCommand.parseInput` read for PRESENCE. Measured with a whole-corpus probe
+(3960 stored rows, pre vs post): **zero diffs anywhere in the corpus**, exactly
+as predicted — no row exercises either command. The multilingual `--regression`
+gate is green with no baseline regeneration.
+
+**Three things the filing did not know, all of which the naive design got
+wrong:**
+
+1. **The role alone captures nothing.** The matcher has a trailing-slot verb
+   guard (added for `halt`'s optional patient, which swallowed the next
+   command's keyword) that skips a final optional slot whose token is a command
+   verb. The captured word here IS `transition`, a command verb — so the guard
+   silently skipped the slot and the tail stayed unconsumed. `valueShape` is now
+   carried onto the pattern token and the guard is exempted for the `'keyword'`
+   shape: the slot sits behind required `using view` literals, so the guard's
+   premise ("the verb starts the next command") is false there. That is the
+   third shape-anchor kind, after `'time'` (toggle duration) and `'reference'`
+   (take recipient), and it does double duty — confidence denominator AND
+   matcher reachability. Mutation-verified: deleting it drops
+   `process partials in it` from 1.0 to **0.5556** and reddens 29 rows.
+2. **`expectedTypes: ['literal']` captures in en and fr only.** `transition` is
+   a command KEYWORD in exactly the two languages whose verb it also is, and a
+   bare identifier in the other 22 — which types it `literal` vs `expression`.
+   The slot takes both. Safe because it is marker-guarded.
+3. **English swap patterns are hand-written and outrank the generated ones**
+   (110–140 vs 100), so all four in `patterns/languages/en/swap.ts` carry the
+   tail group explicitly. Only `en` has hand-crafted swap patterns; the other 23
+   get the group from the schema role.
+
+Round-trip coverage, MEASURED (`test/view-transition-manner.test.ts` pins each
+row): swap captures in **23 of 24** languages, process in **22 of 24**. The
+deferrals are pre-existing defects the tail merely rides on — `tl` loses swap's
+patient on the plain form too; `qu` cannot parse `process` at all, tail or no
+tail; `ms` mis-binds process's patient to a property-path on the tail form only.
+
+Those round-trips use semantic's `render()`. The surfaces the multilingual gate
+actually scores come from the i18n `GrammarTransformer` and are a DIFFERENT
+shape (verb-MEDIAL event handlers no generated command pattern covers), so they
+are pinned separately — `the stored corpus surfaces` in the same file, all 24
+languages, added with the corpus row in #873.
+
+**Still open, deliberately** (both filed rather than folded in):
+
+- ~~**`morph` has the identical tail and the identical gap.**~~ — **SHIPPED
+  (2026-08-01, #875).** `morphSchema` carries the shared
+  `VIEW_TRANSITION_MANNER_ROLE` (svo/sov 3) + `ast.modifiers.viewTransition`,
+  and `MorphCommand.parseInput` reads the modifier alongside its flat-args
+  scan. Simpler than swap was: morph has NO hand-written patterns in any
+  language, so the schema role is the whole pattern-side fix — 23/24 languages
+  round-trip byte-identically (`test/view-transition-manner.test.ts`). The one
+  deferral is **ms**, whose possessive fold eats `ia using` into a
+  property-path on the tail form only (plain form clean) — the same ms defect
+  family as its process deferral, pinned in the same file. Whole-corpus probe:
+  zero structural and zero confidence diffs (no corpus row carries the morph
+  tail). The mapper-parity fixture and the ast-shape exemption list both gained
+  their morph entries (intentional-AST-change branch of each oracle).
+- ~~**The corpus row + i18n rendering.**~~ — **SHIPPED (2026-08-01, #873).** The
+  transformer masks the tail before any splitting/translation and re-appends it
+  verbatim at the clause end (`maskViewTransitionTails`, the `maskCaretScopes`
+  idiom); the corpus row `swap-view-transition` is live in all 24 languages.
+  **Two things this filing did not know**, both found by re-measuring it:
+  1. The tail is NOT self-contained. Rendering it correctly was necessary but
+     not sufficient: the SOV/VSO event-handler patterns are hand-built and had
+     no slot for it, so ar/bn/hi/ja/ko/qu/tl/tr matched `swap` at confidence 1.0
+     and reported `fused body walk left 3 token(s) unconsumed`. Fixed with
+     `appendOptionalViewTransition`, the `appendOptionalScope` twin.
+  2. `transition` types `literal` in en/fr and `expression` in the other 22 —
+     the #868 pick-unit-word class in mirror image, which would have put the new
+     row into 22 languages' `roleLossyPatterns`. The matcher now normalizes a
+     `valueShape: 'keyword'` capture to the en reference's shape.
+
+  A third defect surfaced on the way: an event-handler pattern's `command` is
+  the literal `'on'`, so `scoreRoleCoverage`'s shape-anchor exemption looked up
+  `commandSchemas['on']`, found nothing, and never applied there — the
+  toggle-es class, one pattern family over. It now reads the wrapped verb from
+  `extraction.action.value`. Whole-corpus probe (3960 rows pre, 3984 post):
+  diff is EXACTLY the 24 new rows, zero structural and zero confidence changes
+  elsewhere.
+
+### Original filing (2026-07-31)
 
 Found while fixing the core-side `process` mis-parse (PARSER_NEXT_STEPS.md §
 the process entry). `processSchema` is **patient-only** — it models
@@ -3184,7 +4882,8 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    **≥ 0.9907** — they no longer trail the SVO languages (lowest are th 0.9845 / ms / de / fr).
 6. ~~**The convergent next arc — SOV bare-command / event-anchor disambiguation.**~~ **DONE**
    (increment note below, 2026-06-17). The follow-on R1 work continued through #637/#638;
-   the last standing R1 deferral is the reactive `on.event` rows — pick range-role modeling
+   the last standing R1 deferral is the reactive `on.event` rows (its `when … changes` half
+   cleared 2026-08-27; hi window-resize + qu announce/on-custom-event remain) — pick range-role modeling
    (Family F) was cleared by pick-text-range arc 3, 2026-07-20 (see the post-launch track
    at the top of this doc).
 
@@ -3825,15 +5524,71 @@ handler-head family.
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
 
-## Community review system (designed 2026-07-20, not yet built)
+## Community review — intake simplified to GitHub-native (decided 2026-08-01)
 
-The machine gates prove structure; naturalness/idiom needs native-speaker + LLM-agent
-review. The full design — tier model (anonymous flags → OAuth proposers → trusted
-per-language reviewers whose edits skip triage → founder merge), hash-pinned
-"verified by native speakers" badges that auto-invalidate on regeneration,
-git-committed ledgers under `packages/patterns-reference/data/review/`, agent
-sweep/triage harness, changeset fan-out across the five vocab surfaces, glossary =
-`vocab dump`, and a 3-stage rollout on the lokascript-docs site — lives in
-**[proposals/community-review-system.md](proposals/community-review-system.md)**.
-Targets the business plan's Days 46–90 `/community` window; builds on
-`apps/profile-editor` (apply path) and the vocab CLI (glossary/browser data).
+The machine gates prove structure; naturalness/idiom needs native-speaker review, and
+the maintainer does not read most of the 24 languages. The full design lives in
+**[proposals/community-review-system.md](proposals/community-review-system.md)**
+(2026-07-20).
+
+**Decision (2026-08-01): GitHub Issues replace the proposal's custom intake service.**
+Deleted from scope, not deferred: the Fly volume, `community.db`, hand-rolled GitHub
+OAuth + sessions, invite tokens, the write API, the admin triage UI, the NDJSON export
+cursor, and `pull.ts`. Structured intake is three issue forms on the public repo;
+endorsement is a 👍 reaction; the review queue is
+`is:open label:community-review`; spam, identity, and rate-limiting are GitHub's
+problem. The proposal's T0 anonymous category-flag tier is dropped outright — it was
+already scoped to counters-only as "founder-hours poison", and the audience has GitHub
+accounts. The trust invariant (§10) is unchanged and now enforced by construction:
+nothing reaches `main` except a maintainer-merged PR through the full CI gate.
+
+Shipped 2026-08-01 (verify: `ls .github/ISSUE_TEMPLATE/` — three `*-suggestion.yml` /
+`reviewer-application.yml` forms; `gh label list | grep community-review`):
+
+- `translation-suggestion.yml`, `vocabulary-suggestion.yml`, `reviewer-application.yml`,
+  each carrying the `community-review` label. **Their field `id`s are a public API** —
+  the docs site deep-links with `?template=X.yml&<id>=<value>` prefill, so renaming an
+  id silently breaks every generated link. The `lang` dropdown options are **bare ISO
+  codes** for the same reason (issue-form dropdown prefill is exact-match).
+- Labels `community-review` / `translations` / `vocabulary` / `reviewer-application`
+  created on the repo. GitHub silently drops template labels that do not exist, so
+  these are load-bearing, not decoration.
+
+Site side (separate repo `_hyper_min`, `sites/lokascript-docs`, ships on merge to its
+`main`; verify: `curl -sI https://lokascript.org/community/ | head -1`): `/community/`
+landing + reviewer CTA, `/community/vocabulary/{lang}/` browser generated from
+`vocab dump`, and translation provenance (`translation_method` · `confidence` ·
+"unverified") plus per-row suggest links on `/patterns/`. All build-time static — no
+auth, no runtime writes, no server routes.
+
+**Reviewer incentives are UNSTATED on both public surfaces, deliberately (2026-08-01).**
+The proposal's §2 lists three as already-defined and binding — credit, an honorarium, and
+free seats in a sibling teaching product — citing
+`~/projects/ideas/lokascript-business-plan-2026-07.md`. **That file is not on disk**, so
+the latter two are commitments of money and product that no surviving document supports.
+Both were drafted onto the landing page and the application form and then removed before
+merge, on two separate grounds: the citation is missing, and the owner considers the
+teaching product not ready to be named publicly (2026-08-01). The pages now promise only
+credit by name and final say on naturalness, and invite applicants to name what they would
+want instead. Do not re-add either from the proposal's wording alone — it is a citation to
+a missing source, not a decision record. Restore only on the owner's word, and treat the
+teaching product as unannounced until they say otherwise.
+
+Still deferred, designs in the proposal and unchanged by this decision: hash-pinned
+"verified by native speakers" badges, the `verifications.json` / `vocab-verifications.json`
+ledgers under `packages/patterns-reference/data/review/`, `verified_native*` columns +
+the `sync-translations` ledger join, the shared text-hash util, the agent sweep/triage
+harness, changeset fan-out across the five vocab surfaces, and the per-language status
+ladder. The badge work is the natural next arc: it is what turns "unverified" on the
+site into a claim, and it needs a real inflow of reviewer sign-offs first.
+
+## `settle for <timeout>` has no duration role in the schema (2026-09-02)
+
+Found by `packages/core/src/parser/__tests__/grammar-schema-parity.test.ts`
+(Arc 3 step 4): the engine's declared grammar opens a `for` slot on `settle`
+— `settle for 3000` is in the command's own `metadata.syntax` and now parses —
+but `settleSchema` carries only `patient`, so no language can express the
+timeout and `translate('settle for 3000', 'en', L)` drops it. Adding a
+`duration` role with `for` as its English marker is a schema change plus the
+usual profile sweep (`toggle … for <duration>` already has the role to copy
+from); the parity test's `settle` row is the pin to delete when it lands.

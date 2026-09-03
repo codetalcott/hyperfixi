@@ -180,6 +180,29 @@ The four shared-implementation groups:
 
 ### F-B1 — there are TWO `CommandMetadata` interfaces, and the load-bearing reader uses the loose one
 
+> **CLOSED 2026-08-01. Read the correction below before acting on anything in
+> this section.** The experiment this section asks for was run (swap the shadow
+> type for the canonical one, typecheck) and it falsifies three of the four
+> claims:
+>
+> - **`:421` does not error.** Its signature is `register(impl: any)` — the
+>   parameter's `any`, not the index signature, is what defeats checking there.
+>   The erroring sites are `:207` and `:211`.
+> - **Not contained to one file.** 7 of the 9 errors are in
+>   `registry/examples/server-commands.ts` + `registry/multilingual/examples.ts`
+>   (`category: 'server'`, absent from the canonical union) — i.e. it drags in
+>   F-B2, which is deliberately pinned.
+> - **The behavior question is vacuous in-tree.** All 55 command classes carry a
+>   top-level `name`, so the `metadata.name` fallback is dead for everything
+>   that ships (it is exercised only by `runtime.test.ts`'s third-party-shape
+>   test).
+>
+> What the experiment DID find is larger and is filed fresh in
+> COMMAND_ARCHITECTURE_NEXT_STEPS.md: `CommandWithParseInput` declares
+> `validate?(): ValidationResult<unknown>` while all 59 commands implement a
+> boolean type guard, and `register(impl: any)` + `COMMAND_FACTORIES: () => unknown`
+> are what hide it. Latent (nothing calls `validateCommand()`), owner decision.
+
 `command-adapter.ts:54-60` declares its **own** `CommandMetadata`:
 
 ```ts
@@ -691,12 +714,13 @@ It guards the thing `commandMeta` structurally cannot — `''` is a perfectly go
 `string`, so the type system will never object to an empty description, while the
 generator will happily publish it.
 
-**Still open from F-B1, deliberately not folded in:** narrowing
+~~**Still open from F-B1, deliberately not folded in:** narrowing
 `command-adapter.ts`'s shadow `CommandMetadata` and settling `:421`'s name
-fallback. It is a behavior question (the fallback is the only path for a V1
-command carrying `metadata.name`, and the canonical type has no `name` field), not
-a docs one, so it does not belong in the same PR as a docs generator. Recorded in
-the queue.
+fallback.~~ **CLOSED 2026-08-01 — see the correction banner at § F-B1.** `:421`
+does not depend on the shadow type at all (`register(impl: any)`), the narrowing
+drags in the pinned F-B2 union, and the fallback is dead for every command that
+ships. The real defect the measurement surfaced — `CommandWithParseInput`'s
+`validate` signature matching none of the 59 commands — is filed in the queue.
 
 ## Gate couplings that must move in the same diff
 

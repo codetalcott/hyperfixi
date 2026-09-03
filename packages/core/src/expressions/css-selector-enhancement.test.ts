@@ -37,11 +37,6 @@ describe('CSS Selector Enhancement (TDD)', () => {
       locals: new Map(),
       globals: new Map(),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
   });
 

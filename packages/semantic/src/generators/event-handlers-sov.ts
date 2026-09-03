@@ -17,7 +17,7 @@ import {
   eventHandlerSourceExtraction,
   eventHandlerSourceGroup,
 } from './command-schemas';
-import type { GeneratorConfig } from './pattern-generator';
+import { buildRoleToken, type GeneratorConfig } from './pattern-generator';
 import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
@@ -91,6 +91,239 @@ export function appendOptionalScope(
 }
 
 /**
+ * Append an optional trailing `[using view {manner}]` group to an event-handler
+ * pattern when the schema declares the view-transition `manner` role
+ * (`swap … using view transition`, `process … using view transition`).
+ *
+ * The tail is a passthrough phrase — the i18n transformer masks it and
+ * re-appends it verbatim at the CLAUSE END in every word order, because
+ * `using view` has no native form in any of the 24 languages
+ * (`USING_VIEW_MARKER_ALL_LANGS`). The generated command patterns get the slot
+ * from the schema role, but the SOV/VSO event-handler patterns are hand-built
+ * and had no slot, so all 8 of them (ar bn hi ja ko qu tl tr) dropped it as
+ * `fused body walk left 3 token(s) unconsumed` while still matching the command
+ * at confidence 1.0 — an R1 role loss invisible to every recall signal that
+ * scores only the actions.
+ *
+ * Marker words come from the role's own `markerOverride` so the group cannot
+ * drift from the schema. No-op for commands without the role, keeping every
+ * other pattern byte-identical.
+ */
+export function appendOptionalViewTransition(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string
+): void {
+  appendOptionalTailRole(tokens, extraction, commandSchema, languageCode, 'manner', {
+    requireMarker: true,
+  });
+}
+
+/**
+ * Append an optional trailing `[{recipient}]` group to an event-handler pattern
+ * when the schema declares a non-required `recipient` role
+ * (`take .active from .tab-button for me`).
+ *
+ * Marker-LESS in 23 of 24 languages by design (`takeSchema.recipient` overrides
+ * only `en: 'for'`), because the i18n transformer renders the recipient as a
+ * BARE trailing pronoun everywhere — `… von .tab-button ich`, `… .tab-button
+ * থেকে আমি`. Safe as a marker-less trailing slot because the role is typed
+ * `['reference']` and shape-anchored on `'reference'`: only `me`/`you`/`it`/
+ * `result` can fill it, and the shape anchor keeps the uncaptured slot out of
+ * `scoreRoleCoverage`'s denominator.
+ *
+ * Without it, bn/hi/ja/ko/tr matched take at confidence 1.0 and reported
+ * `fused body walk left 1 token(s) unconsumed: "<pronoun>"` — five of the ten
+ * rows in the baseline's `roleLossyPatterns` for `take-class-from-siblings`.
+ * The other five were unrelated: it/ru/uk/vi had `get`'s hand-written pattern
+ * claiming take's verb (`patterns/get.ts`), and qu never matches a pattern at
+ * all.
+ */
+export function appendOptionalRecipient(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string
+): void {
+  appendOptionalTailRole(tokens, extraction, commandSchema, languageCode, 'recipient', {
+    requireMarker: false,
+  });
+}
+
+/**
+ * Shared body of the two appenders above: emit `[<marker words> {role}]` as a
+ * trailing optional group, with the marker (if any) and every type/shape knob
+ * read from the schema's own `RoleSpec`, so a generated event-handler pattern
+ * cannot drift from the command patterns' version of the same slot.
+ *
+ * `requireMarker` distinguishes the two cases: `manner` is reachable only
+ * behind its required `using view` literals and must not emit a bare slot,
+ * while `recipient` is marker-less in 23 languages and would never emit at all
+ * under that rule.
+ */
+function appendOptionalTailRole(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string,
+  role: SemanticRole,
+  opts: { requireMarker: boolean }
+): void {
+  const spec = commandSchema.roles.find(r => r.role === role && !r.required);
+  if (!spec) return;
+  const marker = spec.markerOverride?.[languageCode];
+  if (opts.requireMarker && !marker) return;
+
+  tokens.push({
+    type: 'group',
+    optional: true,
+    tokens: [
+      ...(marker ? marker.split(/\s+/) : []).map((word): PatternToken => ({
+        type: 'literal',
+        value: word,
+      })),
+      {
+        type: 'role',
+        role,
+        optional: true,
+        expectedTypes: spec.expectedTypes,
+        // Load-bearing, same as on the generated command patterns: it exempts
+        // the trailing slot from the matcher's verb guard, keeps the uncaptured
+        // slot out of `scoreRoleCoverage`'s denominator, and (for `keyword`)
+        // normalizes the captured value type to the EN reference's `literal`.
+        ...(spec.valueShape !== undefined ? { valueShape: spec.valueShape } : {}),
+      },
+    ],
+  });
+  extraction[role] = { fromRole: role };
+}
+
+/**
+ * The role a fused event-handler pattern binds in its bare argument slot.
+ *
+ * `patient` for the commands that declare one; otherwise the schema's own
+ * primary required role — `fetch`/`get` bind `source`, `tell` binds
+ * `destination`, `repeat` binds `loopType`.
+ *
+ * Fourteen of the seventy schemas declare no `patient` role at all, and the
+ * fused generators bound their argument to `patient` regardless: bn
+ * `ক্লিক তে "/api/data" আনুন` produced a fetch whose URL sat in a role
+ * `fetchSchema` does not have, leaving the required `source` unbound and the
+ * profile's `from`-group free to swallow the NEXT phrase instead (pl's `z`
+ * marks both `source` and `style`, so `z {method:"POST"}` bound as the source
+ * and the style vanished).
+ *
+ * `event` is excluded because the fused pattern already owns an `event` slot
+ * for the TRIGGER (`on click send foo`), so a wrapped command whose own primary
+ * role is `event` (send/trigger/on) keeps the legacy `patient` binding.
+ */
+export function fusedBoundRole(commandSchema: CommandSchema): SemanticRole {
+  if (commandSchema.roles.some(r => r.role === 'patient')) return 'patient';
+  const required = commandSchema.roles.filter(r => r.required);
+  const primary = required.find(r => r.role === commandSchema.primaryRole) ?? required[0];
+  if (!primary || primary.role === 'event') return 'patient';
+  return primary.role;
+}
+
+/**
+ * Tokens for the fused pattern's required argument slot.
+ *
+ * `patient` is rendered bare by every fused surface, so it keeps the bare
+ * token it always had. A schema whose primary role is `source`/`destination`
+ * (fetch, get, tell, go, scroll) renders that role WITH its marker in some
+ * languages and without it in others — pl `pobierz "/api/form"` versus ms
+ * `dapatkan dari #input.value` — so the marker goes in an OPTIONAL group while
+ * the role itself stays required. Requiring the marker cost `go`/`scroll`/
+ * `tell` four languages each when it was tried; omitting it cost the same four.
+ */
+export function fusedBoundRoleTokens(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  role: SemanticRole
+): PatternToken[] {
+  const spec = commandSchema.roles.find(r => r.role === role);
+  if (!spec || role === 'patient') return [{ type: 'role', role, optional: false }];
+
+  const { marker, alternatives } = resolveRoleMarker(spec, profile);
+  // Deliberately NO `expectedTypes`: the slot this replaces was an untyped
+  // `{patient}`, and the defect being fixed is its NAME, not its permissiveness.
+  // Narrowing it to the schema's declared types stopped `unless`'s condition
+  // binding `I match .disabled` in pl/it/ru/uk/th, which is a matcher
+  // type-inference gap rather than anything this function should adjudicate.
+  const roleToken: PatternToken = {
+    type: 'role',
+    role,
+    optional: false,
+    ...(spec.valueShape !== undefined ? { valueShape: spec.valueShape } : {}),
+  };
+  if (!marker) return [roleToken];
+
+  const markerWords = marker.split(/\s+/).filter(Boolean);
+  const markerGroup: PatternToken = {
+    type: 'group',
+    optional: true,
+    tokens: markerWords.map((word): PatternToken => ({
+      type: 'literal',
+      value: word,
+      ...(markerWords.length === 1 && alternatives?.length ? { alternatives } : {}),
+    })),
+  };
+  const position = profile.roleMarkers[role]?.position ?? 'before';
+  return position === 'after' ? [roleToken, markerGroup] : [markerGroup, roleToken];
+}
+
+/**
+ * Append a trailing optional slot for every optional role the fused pattern
+ * does not already carry.
+ *
+ * The primary fused generators were hardcoded to `event + verb + patient +
+ * [destination] + [source]` and never read `commandSchema.roles`, so NO
+ * optional role could appear in any `<cmd>-event-{L}-*` pattern — and a fused
+ * pattern outranks the standalone one (basePriority + 50) whenever its verb
+ * matches. `fetch … with {style}` and `tell … to {destination}` therefore
+ * round-tripped through the fused pattern with the role silently dropped, at
+ * confidence 1.0, in every SOV/VSO language.
+ *
+ * `appendOptionalScope`/`appendOptionalViewTransition`/`appendOptionalRecipient`
+ * above are the three one-role ancestors of this function, each added by an
+ * arc that hit the same wall for a single role; they stay because they are
+ * wired into the SECONDARY generators, which keep their hand-built shapes.
+ *
+ * Slots are built by the SAME `buildRoleToken` the standalone command patterns
+ * use, so the fused slot and its standalone twin cannot drift — marker
+ * resolution (`markerOverride → profile.roleMarkers`, plus `markerLegacy ∪
+ * markerVariants` alternatives), `markerOptional`, `renderSuppress`,
+ * `expectedTypes` and `valueShape` all come along.
+ *
+ * A role with NEITHER a marker in this language NOR a `valueShape` is skipped:
+ * a bare, unanchored trailing slot has nothing to guard it and would capture
+ * whatever follows. That excludes exactly `fetch.method`, `repeat.quantity` and
+ * `repeat.event` — their surface markers live in handcrafted patterns rather
+ * than in the schema or the profile, so giving them a fused slot is authoring
+ * work, not generator work.
+ */
+export function appendRemainingOptionalRoles(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  alreadyEmitted: ReadonlySet<string>
+): void {
+  for (const spec of commandSchema.roles) {
+    if (spec.required) continue;
+    if (alreadyEmitted.has(spec.role)) continue;
+    if (extraction[spec.role]) continue;
+    const marker = spec.markerOverride?.[profile.code] ?? profile.roleMarkers[spec.role]?.primary;
+    if (!marker && spec.valueShape === undefined) continue;
+    tokens.push({ type: 'group', optional: true, tokens: buildRoleToken(spec, profile) });
+    extraction[spec.role] = spec.default
+      ? { fromRole: spec.role, default: spec.default }
+      : { fromRole: spec.role };
+  }
+}
+
+/**
  * Generate SOV event handler pattern (Japanese, Korean, Turkish).
  */
 export function generateSOVEventHandlerPattern(
@@ -123,9 +356,21 @@ export function generateSOVEventHandlerPattern(
     }
   }
 
+  // The wrapped command's bare argument slot: `patient` for the commands that
+  // declare one, otherwise the schema's own primary required role.
+  const boundRole = fusedBoundRole(commandSchema);
+
   // Optional destination with its marker
   const destMarker = profile.roleMarkers.destination;
-  if (destMarker) {
+  // Gated on the SCHEMA, not on the profile alone: an unconditional destination
+  // group fabricated a slot for commands that have no destination role, and the
+  // marker then ate a phrase belonging to a role that does exist — ru
+  // `увеличить #score на 10` bound `на 10` as increment's (nonexistent)
+  // destination, so the quantity was dropped. Same contract as
+  // eventHandlerDestinationGroup/eventHandlerSourceGroup, which have always
+  // self-gated this way.
+  const schemaHasDestination = commandSchema.roles.some(r => r.role === 'destination');
+  if (destMarker && schemaHasDestination && boundRole !== 'destination') {
     tokens.push({
       type: 'group',
       optional: true,
@@ -138,12 +383,40 @@ export function generateSOVEventHandlerPattern(
     });
   }
 
-  // Patient role
-  tokens.push({ type: 'role', role: 'patient', optional: false });
+  // Optional SOURCE with its marker, the pre-verb twin of the destination group
+  // above. Only the POST-verb source group existed, because that is where the
+  // i18n transformer emits a from-phrase — but the semantic renderer emits it
+  // BEFORE the patient (`আগের <li/> থেকে .highlight কে সরান`), a shape no fused
+  // pattern covered. The untyped `{patient}` slot then swallowed the whole run
+  // including the source marker, and `remove.source` was lost inside every
+  // handler (bn previous-element). Gated on the SCHEMA exactly like the
+  // destination group: an unconditional group fabricates a slot for commands
+  // with no source role, and its marker then eats a phrase belonging to a role
+  // that does exist.
+  const srcMarkerPre = profile.roleMarkers.source;
+  const schemaHasSource = commandSchema.roles.some(r => r.role === 'source');
+  if (srcMarkerPre && schemaHasSource && boundRole !== 'source') {
+    tokens.push({
+      type: 'group',
+      optional: true,
+      tokens: [
+        { type: 'role', role: 'source', optional: true },
+        srcMarkerPre.alternatives
+          ? {
+              type: 'literal',
+              value: srcMarkerPre.primary,
+              alternatives: srcMarkerPre.alternatives,
+            }
+          : { type: 'literal', value: srcMarkerPre.primary },
+      ],
+    });
+  }
+
+  tokens.push(...fusedBoundRoleTokens(commandSchema, profile, boundRole));
 
   // Patient marker (postposition/particle after patient)
   const patientMarker = profile.roleMarkers.patient;
-  if (patientMarker) {
+  if (patientMarker && boundRole === 'patient') {
     const patMarkerToken: PatternToken = patientMarker.alternatives
       ? { type: 'literal', value: patientMarker.primary, alternatives: patientMarker.alternatives }
       : { type: 'literal', value: patientMarker.primary };
@@ -158,8 +431,27 @@ export function generateSOVEventHandlerPattern(
 
   // Optional trailing source phrase (post-verb, where the transformer
   // emits `remove X from Y`'s from-phrase in SOV output)
-  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
-  tokens.push(...eventHandlerDestinationGroup(commandSchema, profile.roleMarkers.destination));
+  if (boundRole !== 'source') {
+    tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+  }
+  if (boundRole !== 'destination') {
+    tokens.push(...eventHandlerDestinationGroup(commandSchema, profile.roleMarkers.destination));
+  }
+
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [boundRole]: { fromRole: boundRole },
+    ...(boundRole === 'destination' ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...(boundRole === 'source' ? {} : eventHandlerSourceExtraction(commandSchema)),
+  };
+  appendRemainingOptionalRoles(
+    tokens,
+    extraction,
+    commandSchema,
+    profile,
+    new Set(['event', boundRole, 'destination', 'source'])
+  );
 
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov`,
@@ -167,16 +459,10 @@ export function generateSOVEventHandlerPattern(
     command: 'on', // This is an event handler pattern
     priority: (config.basePriority ?? 100) + 50, // Higher priority than simple commands
     template: {
-      format: `{event} ${eventMarker.primary} {destination?} {patient} ${patientMarker?.primary || ''} ${keyword.primary}`,
+      format: `{event} ${eventMarker.primary} {destination?} {${boundRole}} ${patientMarker?.primary || ''} ${keyword.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action }, // Extract the wrapped command
-      event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      ...eventHandlerDestinationExtraction(commandSchema),
-      ...eventHandlerSourceExtraction(commandSchema),
-    },
+    extraction,
   };
 }
 
@@ -281,6 +567,19 @@ export function generateSOVPatientFirstEventHandlerPattern(
       : eventHandlerDestinationGroup(commandSchema, trailingMarker))
   );
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [frontedRole]: { fromRole: frontedRole },
+    ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...eventHandlerSourceExtraction(commandSchema),
+  };
+  // take's bare trailing pronoun, then `using view transition`, both at the very
+  // end — after the with-marked operand and after the source phrase, which is
+  // where the i18n transformer puts them in verb-final output.
+  appendOptionalRecipient(tokens, extraction, commandSchema, profile.code);
+  appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
     language: profile.code,
@@ -290,13 +589,113 @@ export function generateSOVPatientFirstEventHandlerPattern(
       format: `{patient} ${patientMarker?.primary || ''} {event} ${eventMarker.primary} ${keyword.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      [frontedRole]: { fromRole: frontedRole },
-      ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
-      ...eventHandlerSourceExtraction(commandSchema),
+    extraction,
+  };
+}
+
+/**
+ * Source-fronted patient-first SOV variant: the SOURCE phrase sits between the
+ * patient and the event, pre-verb —
+ *
+ *   [patient] [patMarker] [source] [srcMarker] [event] [eventMarker] [verb] [recipient?] [manner?]
+ *
+ * qu's canonical order fronts the source phrase for source-carrying commands:
+ * take `.active ta .tab-button manta ñitiy pi hapiy noqa`, remove
+ * `.open ta noqa manta ñitiy pi qichuy`. No other generated pattern covers the
+ * shape, so qu matched nothing and the verb-anchoring fallback bound the
+ * trailing pronoun to `destination` (#874's deferred third cause).
+ *
+ * The source slot is REQUIRED, marker and all: optional, this pattern is the
+ * plain patient-first pattern plus greedy-match ambiguity (the trap the
+ * WithDest variant documents); required, it competes only when a marked source
+ * phrase truly sits between patient and event. Not generated for `swap`
+ * (no source role, and its fronted slot binds `destination`).
+ */
+export function generateSOVPatientFirstSourceFrontedEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern | null {
+  const sourceSpec = commandSchema.roles.find(r => r.role === 'source');
+  if (!sourceSpec) return null;
+  const { marker: sourceMarker, alternatives: sourceAlts } = resolveRoleMarker(sourceSpec, profile);
+  const patientMarker = profile.roleMarkers.patient;
+  // A marked source slot is the variant's whole anchor — without a marker, or
+  // with one colliding with the event/patient markers, the shape is ambiguous.
+  if (!sourceMarker) return null;
+  if (sourceMarker === eventMarker.primary || sourceMarker === patientMarker?.primary) return null;
+
+  const tokens: PatternToken[] = [];
+
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+  if (patientMarker) {
+    tokens.push(
+      patientMarker.alternatives
+        ? {
+            type: 'literal',
+            value: patientMarker.primary,
+            alternatives: patientMarker.alternatives,
+          }
+        : { type: 'literal', value: patientMarker.primary }
+    );
+  }
+
+  tokens.push({
+    type: 'role',
+    role: 'source',
+    optional: false,
+    ...(sourceSpec.expectedTypes ? { expectedTypes: sourceSpec.expectedTypes } : {}),
+    ...(sourceSpec.valueShape !== undefined ? { valueShape: sourceSpec.valueShape } : {}),
+  });
+  for (const word of sourceMarker.split(/\s+/)) {
+    tokens.push(
+      sourceAlts && sourceMarker.split(/\s+/).length === 1
+        ? { type: 'literal', value: word, alternatives: sourceAlts }
+        : { type: 'literal', value: word }
+    );
+  }
+
+  tokens.push({ type: 'role', role: 'event', optional: false });
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) tokens.push({ type: 'literal', value: word });
+    } else {
+      tokens.push(
+        eventMarker.alternatives
+          ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+          : { type: 'literal', value: eventMarker.primary }
+      );
+    }
+  }
+
+  tokens.push(
+    keyword.alternatives
+      ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+      : { type: 'literal', value: keyword.primary }
+  );
+
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    patient: { fromRole: 'patient' },
+    source: { fromRole: 'source' },
+  };
+  appendOptionalRecipient(tokens, extraction, commandSchema, profile.code);
+  appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-source-fronted`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 48,
+    template: {
+      format: `{patient} ${patientMarker?.primary || ''} {source} ${sourceMarker} {event} ${eventMarker.primary} ${keyword.primary}`,
+      tokens,
     },
+    extraction,
   };
 }
 

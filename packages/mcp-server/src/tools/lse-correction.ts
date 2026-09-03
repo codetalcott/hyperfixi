@@ -23,7 +23,7 @@
  *   5. Repeat up to maxRounds (default 3)
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import { jsonResponse, errorResponse } from './utils.js';
 
 // =============================================================================

@@ -1,0 +1,15 @@
+{
+  "name": "lokascript",
+  "version": "0.0.1",
+  "description": "Name placeholder — LokaScript ships as @lokascript/semantic (multilingual parsing) on the @hyperfixi/core engine. In Vite projects, @hyperfixi/vite-plugin serves `import 'lokascript'` as a virtual module and this package is never loaded.",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "stubs/lokascript"
+  }
+}

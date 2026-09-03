@@ -5,7 +5,7 @@
  * Generates (natural_language, LSE) pairs from domain schemas.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 export const trainingDataTools: Tool[] = [
   {
@@ -121,21 +121,21 @@ async function loadDomainSchemas(
   try {
     switch (domain) {
       case 'flow':
-        return (await import('@lokascript/domain-flow')).allSchemas;
+        return (await import('@lokascript/domains/flow')).allSchemas;
       case 'sql':
-        return (await import('@lokascript/domain-sql')).allSchemas;
+        return (await import('@lokascript/domains/sql')).allSchemas;
       case 'bdd':
-        return (await import('@lokascript/domain-bdd')).allSchemas;
+        return (await import('@lokascript/domains/bdd')).allSchemas;
       case 'llm':
-        return (await import('@lokascript/domain-llm')).allSchemas;
+        return (await import('@lokascript/domains/llm')).allSchemas;
       case 'jsx':
-        return (await import('@lokascript/domain-jsx')).allSchemas;
+        return (await import('@lokascript/domains/jsx')).allSchemas;
       case 'todo':
-        return (await import('@lokascript/domain-todo')).allSchemas;
+        return (await import('@lokascript/domains/todo')).allSchemas;
       case 'behaviorspec':
-        return (await import('@lokascript/domain-behaviorspec')).allSchemas;
+        return (await import('@lokascript/domains/behaviorspec')).allSchemas;
       case 'voice':
-        return (await import('@lokascript/domain-voice')).allSchemas;
+        return (await import('@lokascript/domains/voice')).allSchemas;
       default:
         return null;
     }

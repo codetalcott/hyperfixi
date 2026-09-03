@@ -217,34 +217,34 @@ describe('suggest_command', () => {
 });
 
 describe('get_bundle_config', () => {
-  it('recommends lite bundle for basic usage', async () => {
+  it('recommends the small prebuilt (hyperfixi-hx.js) for basic usage', async () => {
     const result = await handleValidationTool('get_bundle_config', {
       commands: ['toggle', 'add'],
     });
 
     const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.recommendedBundle).toBe('hyperfixi-lite.js');
-    expect(parsed.estimatedSize).toBe('1.9 KB');
+    expect(parsed.recommendedBundle).toBe('hyperfixi-hx.js');
+    expect(parsed.estimatedSize).toBe('21.5 KB');
   });
 
-  it('recommends hybrid for blocks usage', async () => {
+  it('recommends the same small prebuilt for blocks usage', async () => {
     const result = await handleValidationTool('get_bundle_config', {
       commands: ['toggle'],
       blocks: ['if', 'repeat'],
     });
 
     const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.recommendedBundle).toBe('hyperfixi-hybrid-complete.js');
+    expect(parsed.recommendedBundle).toBe('hyperfixi-hx.js');
   });
 
-  it('recommends hybrid for positional expressions', async () => {
+  it('recommends the same small prebuilt for positional expressions', async () => {
     const result = await handleValidationTool('get_bundle_config', {
       commands: ['toggle'],
       positional: true,
     });
 
     const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.recommendedBundle).toBe('hyperfixi-hybrid-complete.js');
+    expect(parsed.recommendedBundle).toBe('hyperfixi-hx.js');
   });
 
   it('recommends multilingual for non-English', async () => {

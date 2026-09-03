@@ -21,9 +21,11 @@ import {
   createReference,
   createPropertyPath,
   isValidReference,
+  withPosition,
 } from '../types';
 import { stripOptionalDiacritics } from '@lokascript/framework';
 import { isTypeCompatible } from './utils/type-validation';
+import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import {
@@ -32,6 +34,8 @@ import {
   joinExpressionTokens,
   matchPositionalRun,
   translatePropertyName,
+  isKnownPropertySurface,
+  CONVERSION_TYPE_NAMES,
 } from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -59,6 +63,17 @@ const BAREKEYWORD_BLOCK_ACTIONS: ReadonlySet<string> = new Set(
 // Pattern Matcher
 // =============================================================================
 
+/**
+ * A hyperscript SIGIL property — `*background-color` (style) or `@aria-expanded`
+ * (attribute). Both tokenize as `selector`, and neither can ever be the OWNER of
+ * a possessive, which is what tells an owner-first clitic surface
+ * (`#themeの*background-color`) apart from the property-first "of" surface the
+ * i18n transformer emitted (`*background-color ของ #theme`).
+ */
+function isSigilProperty(value: string): boolean {
+  return value.startsWith('*') || value.startsWith('@');
+}
+
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
@@ -77,6 +92,12 @@ export class PatternMatcher {
    * Cleared before each top-level matchBest() call.
    */
   private matchCache = new Map<string, PatternMatchResult | null>();
+  /**
+   * Stream index where each role's capture began, for the current
+   * `matchPattern` call. Rebuilt per call, written on the same success path as
+   * `captured` — see `PatternMatchResult.roleStarts`.
+   */
+  private roleStarts = new Map<SemanticRole, number>();
 
   constructor(confidenceModel?: ConfidenceModel) {
     this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
@@ -97,6 +118,7 @@ export class PatternMatcher {
     // Reset match counters for this pattern
     this.stemMatchCount = 0;
     this.totalKeywordMatches = 0;
+    this.roleStarts = new Map();
 
     const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
 
@@ -122,6 +144,7 @@ export class PatternMatcher {
       captured,
       consumedTokens: tokens.position() - mark.position,
       confidence,
+      roleStarts: this.roleStarts,
     };
   }
 
@@ -223,6 +246,60 @@ export class PatternMatcher {
         this.tryConsumeEventSourceClause(tokens, captured, patternToken);
       }
 
+      // Marker-less optional slot about to eat a command VERB, mid-pattern.
+      //
+      // The guard in matchRoleToken skips such a slot only when the pattern's
+      // very next token is a literal the verb itself satisfies. Where an
+      // OPTIONAL group sits between the slot and the verb literal
+      // (`[{method}] [using view {manner}] 交換`) that test looks at the
+      // group's first token, sees no match, and lets the slot swallow the verb
+      // — so `swap #a with #b` rendered SOV (`#a に #b を 交換`) did not parse
+      // at all in bn/hi/ja/ko/qu/tr.
+      //
+      // Widening that test to look THROUGH skippable groups was measured to
+      // work and to BREAK the ja goal-reclaim lock: the no-goal transition
+      // variant's mid-pattern slot must keep capturing 遷移 and failing, so the
+      // verb-anchoring fallback can reclaim goal+duration. Both shapes are
+      // structurally identical at the slot, so no per-slot test can separate
+      // them.
+      //
+      // What separates them is the OUTCOME. Skipping the slot lets swap's
+      // pattern consume its clause ENTIRELY (`#a に #b を 交換` → end), while
+      // the ja no-goal variant completes having eaten only `opacity を 遷移`
+      // and STRANDS `0 に 300ms` — the sloppy match the lock exists to prevent.
+      // So: speculatively skip, match the rest of THIS pattern, and adopt the
+      // skip only when it consumes the whole clause. A stranded tail falls
+      // through to the capture-and-fail below, unchanged.
+      //
+      // Bounded: fires only on an optional marker-less role slot facing a
+      // command-verb keyword the next pattern token does not want, and recurses
+      // on a strictly shorter token list — never a re-run of other patterns
+      // (the abandoned last-resort retry in matchBest, which compounded).
+      if (
+        this.shouldTrySkippingVerbSlot(
+          patternToken,
+          tokens,
+          patternTokens[i + 1] ?? nextAfterSequence
+        )
+      ) {
+        const skipMark = tokens.mark();
+        const speculative = new Map(captured);
+        if (
+          this.matchTokenSequence(
+            tokens,
+            patternTokens.slice(i + 1),
+            speculative,
+            nextAfterSequence
+          ) &&
+          this.atClauseEnd(tokens)
+        ) {
+          captured.clear();
+          for (const [role, value] of speculative) captured.set(role, value);
+          return true;
+        }
+        tokens.reset(skipMark);
+      }
+
       const matched = this.matchPatternToken(
         tokens,
         patternToken,
@@ -308,8 +385,17 @@ export class PatternMatcher {
       case 'literal':
         return this.matchLiteralToken(tokens, patternToken);
 
-      case 'role':
-        return this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
+      case 'role': {
+        // Record where this slot's own span begins, but only once it actually
+        // captured — an optional role that matched nothing must not claim a
+        // position. See `PatternMatchResult.roleStarts`.
+        const roleStart = tokens.position();
+        const matchedRole = this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
+        if (matchedRole && captured.has(patternToken.role)) {
+          this.roleStarts.set(patternToken.role, roleStart);
+        }
+        return matchedRole;
+      }
 
       case 'group':
         return this.matchGroupToken(tokens, patternToken, captured, nextPatternToken);
@@ -455,13 +541,230 @@ export class PatternMatcher {
   }
 
   /**
+   * Match a role pattern token, then absorb a trailing `as <Type>` conversion
+   * into whatever it captured.
+   *
+   * `as` is an EXPRESSION operator in hyperscript, not a command role — `attrs.data
+   * as JSON` is one value — but every role capture below stops at the value and
+   * leaves ` as JSON` unconsumed. The pattern then matched anyway (the trailing
+   * tokens are simply dropped) and the conversion vanished: `set ^user to
+   * attrs.data as JSON` re-rendered as `set ^user to attrs.data` in English and
+   * in all 23 languages. Nothing caught it — the conversion lands in no role, so
+   * every recall metric compared two equally truncated things and scored 1.0. The
+   * corpus writer's `reRenderPreservesContent` guard is what finally saw it, and
+   * it responded by refusing to translate the body at all, which is why
+   * `component-with-attrs` was kept from i18n in all 23 languages.
+   *
+   * Folding the conversion into the captured value's raw is the same lever
+   * `tryMatchOperatorRunExpression` uses for `"Hello, " + my value`: one
+   * expression value carrying the whole surface, rendered back verbatim.
+   *
+   * `fetch … as json` is untouched — it has a real `responseType` role whose
+   * marker IS `as`, so the pattern's next token wants that token and
+   * `patternTokenWouldMatch` declines the fold.
+   */
+  private matchRoleToken(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken?: PatternToken
+  ): boolean {
+    const startIdx = tokens.position();
+    const before = captured.get(patternToken.role);
+    if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
+    this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
+    this.absorbTrailingConditionOperand(tokens, patternToken, captured, nextPatternToken, startIdx);
+    this.stampCaptureSpan(tokens, patternToken.role, captured, startIdx, before);
+    return true;
+  }
+
+  /**
+   * Give a freshly captured role the span of the token run it was built from.
+   *
+   * This is the ONLY place a role gets a span, deliberately. `matchRoleTokenCore`
+   * captures through some twenty branches — a plain single token, but also a
+   * dozen folds that assemble one value from a RUN (`myFunction()`,
+   * `#dialog.showModal()`, `my value`, `first .item`, `"Hello, " + my value`,
+   * `{ left: …px }`), each returning a synthesized value with nowhere to hang a
+   * token's position. Stamping the run once, here, covers all of them, cannot
+   * be forgotten by a branch added later, and includes whatever
+   * `absorbTrailingConversion` / `absorbTrailingConditionOperand` went on to
+   * swallow — `attrs.data as JSON` is one value, so it is one span.
+   *
+   * A stamp inside `tokenToSemanticValue` (in this class and in
+   * `semantic-parser.ts`) was written first and then MEASURED dead: with both
+   * removed, the parse-path triage, the core span tests and all 9,806 semantic
+   * tests were byte-identical, and the ja/ko/tr verb-final paths still reported
+   * correct spans. Two stamps for one fact is one too many.
+   *
+   * Three guards keep it honest. A value that already carries a position keeps
+   * it. A slot that captured nothing new — a skipped optional, a marker-only
+   * match — leaves the previously captured value alone. And a run of zero
+   * tokens yields no span at all, rather than an empty one at the slot's start.
+   */
+  private stampCaptureSpan(
+    tokens: TokenStream,
+    role: SemanticRole,
+    captured: Map<SemanticRole, SemanticValue>,
+    startIdx: number,
+    before: SemanticValue | undefined
+  ): void {
+    const value = captured.get(role);
+    if (!value || value === before || value.position) return;
+    if (tokens.position() <= startIdx) return;
+    const first = tokens.tokens[startIdx];
+    const last = tokens.tokens[tokens.position() - 1];
+    if (!first || !last) return;
+    captured.set(
+      role,
+      withPosition(value, { start: first.position.start, end: last.position.end })
+    );
+  }
+
+  /**
+   * Condition operator words — the mirror of the parser's own
+   * `CONDITION_OPERATORS`, which the condition SCAN uses to know it has not
+   * reached the then-branch yet.
+   *
+   * Matched by NORMALIZED form as well as surface, but in practice it is the
+   * surface that hits: `match`/`matches`/`contains`/`includes`/`equals` are
+   * emitted verbatim in every language (the renderer has no lexicon entry for
+   * them). `has` and `exists` DO localize (de `hat`, ja `ある`, ms `ada`) and
+   * their profiles do not normalize the native form back, so
+   * `unless me has .off` still truncates its condition in those languages —
+   * pre-existing, unchanged by this fold, and the natural next step here.
+   */
+  private static readonly CONDITION_OPERATOR_WORDS: ReadonlySet<string> = new Set([
+    'matches',
+    'match',
+    'contains',
+    'exists',
+    'has',
+    'have',
+    'equals',
+    'includes',
+  ]);
+
+  /**
+   * Extend a `{condition}` capture with a trailing `<operator> [operand]`.
+   *
+   * A fused event pattern ends in a bare `{condition}` slot — tl
+   * `kapag {event} maliban_kung {condition}` — and the slot captures ONE token.
+   * `unless I match .disabled toggle .selected` therefore bound `condition: I`
+   * and left `match .disabled` unconsumed, so the guard tested the element
+   * itself and the class it was supposed to check vanished. Nine languages
+   * (ms/pl/pt/ru/sw/th/tl/uk/vi) render this shape; English escapes only because
+   * its handler pattern hands the whole body to the clause walk, whose condition
+   * scan already knows these words.
+   *
+   * One operator and at most one operand, and the operand must not be a command
+   * verb: `unless #x exists toggle .y` has to leave `toggle` for the body. A
+   * keyword-kind token is never taken, which covers the localized verbs, and
+   * `COMMAND_ACTION_KEYWORDS` covers the ones a tokenizer classifies as
+   * identifiers.
+   */
+  private absorbTrailingConditionOperand(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken: PatternToken | undefined,
+    startIdx: number
+  ): void {
+    if (patternToken.role !== 'condition') return;
+    if (!captured.has('condition')) return;
+    if (tokens.position() <= startIdx) return;
+    // Only the TRAILING condition slot of a FUSED EVENT pattern. Elsewhere the
+    // condition is followed by its own branches, and the clause walk's condition
+    // scan — which already knows these operator words — is what delimits it.
+    // Measured: without this gate the fold fires on the bare `if #modal exists
+    // show #modal else … end`, whose en parse then collapses to `if #modal
+    // exists` with both branches gone (bn/tl/tr on the bare-render gate).
+    if (nextPatternToken !== undefined || this.currentPatternCommand !== 'on') return;
+
+    const op = tokens.peek();
+    if (!op) return;
+    const words = PatternMatcher.CONDITION_OPERATOR_WORDS;
+    if (!words.has((op.normalized ?? '').toLowerCase()) && !words.has(op.value.toLowerCase())) {
+      return;
+    }
+    if (this.patternTokenWouldMatch(nextPatternToken, op)) return;
+
+    tokens.advance(); // the operator
+    const operand = tokens.peek();
+    if (
+      operand &&
+      (operand.kind === 'selector' ||
+        operand.kind === 'identifier' ||
+        operand.kind === 'literal') &&
+      !COMMAND_ACTION_KEYWORDS.has((operand.normalized ?? operand.value).toLowerCase())
+    ) {
+      tokens.advance();
+    }
+
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    captured.set(
+      'condition' as SemanticRole,
+      {
+        type: 'expression',
+        raw,
+        value: raw,
+      } as SemanticValue
+    );
+  }
+
+  /**
+   * Is the stream sitting on `as <ConversionType>`? Matched by VALUE as well as
+   * normalized form: the renderer emits the conversion verbatim inside the
+   * value's raw (no profile has an `as` lexicon entry), so a foreign surface
+   * carries the English word — which is what has to re-parse.
+   */
+  private conversionRunLength(tokens: TokenStream): number {
+    const asToken = tokens.peek();
+    if (!asToken) return 0;
+    const asWord = (asToken.normalized ?? asToken.value).toLowerCase();
+    if (asWord !== 'as' && asToken.value.toLowerCase() !== 'as') return 0;
+    const typeToken = tokens.peek(1);
+    if (!typeToken || !CONVERSION_TYPE_NAMES.has(typeToken.value)) return 0;
+    return 2;
+  }
+
+  /** Extend `patternToken.role`'s captured value with a trailing `as <Type>`. */
+  private absorbTrailingConversion(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken: PatternToken | undefined,
+    startIdx: number
+  ): void {
+    // An event name is never an operand of a conversion, and an {action} slot
+    // captures a verb.
+    if (patternToken.role === 'event' || patternToken.role === 'action') return;
+    if (!captured.has(patternToken.role)) return;
+    if (tokens.position() <= startIdx) return;
+    if (this.conversionRunLength(tokens) !== 2) return;
+    // The pattern itself wants this token (fetch's `as {responseType}`) — leave it.
+    if (this.patternTokenWouldMatch(nextPatternToken, tokens.peek()!)) return;
+
+    tokens.advance(); // `as`
+    tokens.advance(); // the type name
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
+  }
+
+  /**
    * Match a role pattern token (captures a semantic value).
    * Handles multi-token expressions like:
    * - 'my value' (possessive keyword + property)
    * - '#dialog.showModal()' (method call)
    * - "#element's *opacity" (possessive selector + property)
    */
-  private matchRoleToken(
+  private matchRoleTokenCore(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'role' },
     captured: Map<SemanticRole, SemanticValue>,
@@ -586,6 +889,27 @@ export class PatternMatcher {
       if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) {
         return patternToken.optional || false;
       }
+      // A COMMAND VERB is never a loop/count QUANTITY — nor the generated
+      // repeat's own [{event}] slot. The trailing marker-less optional slots
+      // of `repeat-<lang>-generated` otherwise swallow the NEXT command's
+      // verb: de `wiederholen forever umschalten .pulse` captured
+      // `quantity:literal="toggle"` (and with quantity guarded, the [{event}]
+      // slot behind it swallowed the verb instead), the toggle never formed,
+      // and `.pulse` dropped as junk (repeat-forever ar/de/fr/zh — the
+      // languages whose handler body reaches the generated repeat instead of
+      // a fused event pattern). The event half is scoped to `repeat`: on
+      // trigger/send a keyword event name is a legitimate custom event, and
+      // the handler-head guards above already police `on`. Same
+      // skip-don't-fail contract as the connective guard above.
+      if (
+        patternToken.role === 'quantity' ||
+        (patternToken.role === 'event' && this.currentPatternCommand === 'repeat')
+      ) {
+        const qNorm = (token.normalized ?? token.value).toLowerCase();
+        if (qNorm in commandSchemas) {
+          return patternToken.optional || false;
+        }
+      }
     }
 
     // A `duration` slot is never a positional/scope keyword. The temporal
@@ -615,23 +939,46 @@ export class PatternMatcher {
     // verb-anchoring fallback reclaims goal+duration; skipping instead lets the
     // sloppy pattern complete and strand the tail). Also away from
     // `event`/`action` roles, which carry their own bespoke guards above.
+    // EXCEPT when the slot is shape-anchored on `'keyword'`: its value IS a
+    // fixed keyword phrase sitting behind required marker literals that have
+    // already matched (`using view {manner}` — the word is `transition`, which
+    // is also a command). There the guard's premise is false: nothing can begin
+    // a new command in that position, because `using view` was consumed to get
+    // there. Without this exemption swap/process silently drop
+    // `using view transition` on the semantic path in all 24 languages, which
+    // is exactly the bug the manner role was added to fix.
+    // The second admissible case is a MID-pattern optional slot whose very next
+    // pattern token is a LITERAL the verb itself satisfies. A generated slot
+    // carries a marker only where the profile has one — ja's duration group is
+    // `[間 {duration}]`, tr's is a bare `[{duration}]` — and a bare slot sitting
+    // immediately before the verb literal takes the verb: `.card e .expanded i
+    // değiştir` bound `duration:literal="toggle"`, so the trailing `değiştir`
+    // literal had nothing left, `toggle-tr-generated` FAILED, and the fallback
+    // `-simple` dropped the destination. The premise of the final-slot scoping
+    // above — that a mid-pattern capture must fail so a richer fallback can
+    // reclaim the tail — does not hold when the pattern's own next literal is
+    // waiting for this exact token: skipping the slot lets the SAME pattern
+    // complete with more roles, not fewer.
     if (
       patternToken.optional &&
-      nextPatternToken === undefined &&
       patternToken.role !== 'event' &&
       patternToken.role !== 'action' &&
+      patternToken.valueShape !== 'keyword' &&
       token.kind === 'keyword'
     ) {
       const verbNorm = (token.normalized ?? token.value).toLowerCase();
-      if (verbNorm in commandSchemas) {
-        return true; // skip the optional slot; the verb starts the next command
+      if (
+        verbNorm in commandSchemas &&
+        (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token))
+      ) {
+        return true; // skip the optional slot; the verb is not its value
       }
     }
 
     // Check for a positional query expression (e.g., 'last <.message/> in #chat',
     // 'first <button/> in .modal'). Triggered only when the role starts with a
     // positional keyword, so non-positional roles are unaffected.
-    const positionalValue = this.tryMatchPositionalExpression(tokens);
+    const positionalValue = this.tryMatchPositionalExpression(tokens, nextPatternToken);
     if (positionalValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
         if (!isTypeCompatible(positionalValue.type, patternToken.expectedTypes)) {
@@ -961,7 +1308,24 @@ export class PatternMatcher {
       }
     }
 
-    captured.set(patternToken.role, value);
+    // A `keyword`-shaped slot holds a FIXED keyword phrase, so its value type is
+    // a property of the slot, not of the language's vocabulary. `using view
+    // {manner}` captures the word `transition`, which en/fr register as a command
+    // keyword (it is also their verb) and the other 22 tokenizers leave as a bare
+    // identifier — so the SAME word lands as `literal` in en and `expression`
+    // everywhere else. R1 compares `action.role:valueType`, so that asymmetry
+    // alone reads as a dropped role in 22 languages (the pick-unit-word class,
+    // #868, in mirror image). Normalize to the EN reference's shape. Placed after
+    // `expectedTypes` validation, so no type-compatibility or adoption decision
+    // can move — the slot still admits both types, it just reports one.
+    if (patternToken.valueShape === 'keyword' && value.type === 'expression') {
+      captured.set(
+        patternToken.role,
+        createLiteral(String((value as { raw?: unknown }).raw ?? ''))
+      );
+    } else {
+      captured.set(patternToken.role, value);
+    }
     tokens.advance();
 
     // Event-head tolerance: a bracket key-filter and/or a prepositional source
@@ -1013,6 +1377,69 @@ export class PatternMatcher {
    * match the given stream token. Used to keep the event-head source-clause
    * consumption from stealing a marker the pattern explicitly expects.
    */
+  /**
+   * Is this pattern token an optional, marker-less role slot staring at a
+   * command VERB that the pattern's next token does not want? That is the
+   * shape whose capture would fail the pattern (see the call site).
+   *
+   * Deliberately mirrors the matchRoleToken guard's exclusions — `event` and
+   * `action` carry their own bespoke guards, and a `'keyword'`-shaped slot's
+   * value legitimately IS a command word (`using view transition`). The
+   * `nextPatternToken` clauses are the complement of that guard's: where it
+   * already fires, this must not.
+   */
+  private shouldTrySkippingVerbSlot(
+    patternToken: PatternToken,
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): boolean {
+    // The generator emits a marker-less slot as a bare role token in some
+    // languages and as a single-role GROUP in others (`[{method}]`), so unwrap
+    // the group form — the skip decision is identical. A group carrying any
+    // LITERAL is marker-BEARING (`[{patient} を]`, `[using view {manner}]`):
+    // its marker is what anchors it, it cannot silently eat a verb, and it is
+    // excluded here.
+    const slot =
+      patternToken.type === 'group' && patternToken.optional
+        ? patternToken.tokens.every(t => t.type === 'role')
+          ? patternToken.tokens[0]
+          : undefined
+        : patternToken;
+    if (!slot || slot.type !== 'role' || !slot.optional) return false;
+    if (slot.role === 'event' || slot.role === 'action') return false;
+    if (slot.valueShape === 'keyword') return false;
+    const token = tokens.peek();
+    if (!token || token.kind !== 'keyword') return false;
+    // Where the existing per-slot guard already skips, leave it to it: it
+    // handles the final slot outright, and a verb the next token wants.
+    if (nextPatternToken === undefined) return false;
+    const wouldMatch = this.patternTokenWouldMatch(nextPatternToken, token);
+    if ((token.normalized ?? token.value).toLowerCase() in commandSchemas) return !wouldMatch;
+    // Not a command verb, so the existing guard never looks at it — but the
+    // pattern's very NEXT literal is waiting for this exact token, which no
+    // marker-less slot may spend. tl's verb-first swap is
+    // `palitan_pwesto [{method}] sa {destination} …`, and the bare `[{method}]`
+    // ate the `sa` its own pattern owes, so the whole pattern failed and the
+    // `-simple` fallback dropped the patient. Outcome-gated like the verb case:
+    // adopted only if skipping lets the pattern consume its whole clause.
+    return wouldMatch;
+  }
+
+  /**
+   * Is the stream out of clause? Either genuinely at the end, or facing a
+   * boundary token that belongs to the NEXT clause rather than this pattern
+   * (a conjunction, or a `then`/`end`-class keyword).
+   */
+  private atClauseEnd(tokens: TokenStream): boolean {
+    const next = tokens.peek();
+    if (!next) return true;
+    if (next.kind === 'conjunction') return true;
+    if (next.kind !== 'keyword') return false;
+    const norm = (next.normalized ?? next.value).toLowerCase();
+    if (norm === 'then' || norm === 'end') return true;
+    return isCuratedEndKeyword(next.value, this.currentProfile?.code ?? '');
+  }
+
   private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
     if (!pt) return false;
     if (pt.type === 'literal') {
@@ -1049,7 +1476,18 @@ export class PatternMatcher {
    * so each language's rendered keyword (ja もし, tr eğer, …) is covered.
    * `init` is deliberately absent — `trigger init` is a real corpus event.
    */
-  private static readonly STRUCTURAL_NEVER_EVENT = new Set(['if', 'unless', 'else', 'end', 'then']);
+  private static readonly STRUCTURAL_NEVER_EVENT = new Set([
+    'if',
+    'unless',
+    'else',
+    'end',
+    'then',
+    // A loop's while-word is a clause head, never an event name: hi's fused
+    // `जब तक` normalizes to `while`, and without this row `event-hi-bare`
+    // captured it as the handler event, hiding the SOV repeat-while head
+    // (`जब तक {condition} दोहराएं`) it introduces.
+    'while',
+  ]);
 
   /**
    * Reference bases that can lead a fused-dot property access (`it.value`,
@@ -1104,12 +1542,20 @@ export class PatternMatcher {
    * `<marker> <selector>` pair, which is safe because positional queries are
    * terminal in their role (e.g. scroll's only role is the destination).
    */
-  private tryMatchPositionalExpression(tokens: TokenStream): SemanticValue | null {
+  private tryMatchPositionalExpression(
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): SemanticValue | null {
     // Recognizer lives in expression-lexicon so the raw-expression join shares it
     // — a condition and a then-branch carrying the SAME run (focus-trap authors
     // `last <button/> in .modal` in both) can no longer disagree about `in`.
     // Joins with a plain space here, which is this seam's pre-existing rule.
-    const run = matchPositionalRun(tokens.tokens, tokens.position(), this.currentProfile);
+    //
+    // `nextPatternToken` tells the run which marker the enclosing pattern is
+    // about to require, so it cannot spend the role marker that terminates it.
+    const run = matchPositionalRun(tokens.tokens, tokens.position(), this.currentProfile, t =>
+      t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
+    );
     if (!run) return null;
     for (let n = 0; n < run.consumed; n++) tokens.advance();
     return { type: 'expression', raw: run.parts.map(p => p.text).join(' ') } as SemanticValue;
@@ -1390,6 +1836,12 @@ export class PatternMatcher {
     zh: new Set(['到']),
   };
 
+  /** The word this language joins two pick-range endpoints with. */
+  static rangeSeparatorFor(language: string): string | undefined {
+    const [first] = PatternMatcher.PICK_RANGE_SEPARATORS_BY_LANG[language] ?? [];
+    return first;
+  }
+
   /**
    * Is this token the range separator between two pick-range endpoints?
    * English `to` matches by normalized form (it tokenizes as a keyword in
@@ -1615,14 +2067,30 @@ export class PatternMatcher {
     tokens.advance();
 
     const owner = tokens.peek();
-    if (!owner || owner.kind !== 'selector') {
+    if (!owner || owner.kind !== 'selector' || isSigilProperty(owner.value)) {
       tokens.reset(mark);
       return null;
     }
     tokens.advance();
 
     // "X of #y" means the X property of #y → property-path(object: #y, property: X).
-    return createPropertyPath(createSelector(owner.value), this.toEnglishProperty(property.value));
+    // An `of`-phrase is a POSSESSIVE surface, not a member access.
+    //
+    // The owner guard above is what keeps that reading honest. OF_POSSESSIVE_MARKERS
+    // lists the head-final clitics (ja の, ko 의, zh 的, bn র, hi का) alongside the
+    // genuine "of" linkers, because the i18n transformer emitted property-first in
+    // every language and this matcher was built to read that. In a clitic language
+    // `A の B` actually means "A's B", so on the semantic renderer's (correct)
+    // owner-first surface this matcher folds the pair INVERTED. A `*`/`@` sigil can
+    // never be an OWNER, so refusing one there is enough to tell the two apart:
+    // `*background-color ของ #theme` (i18n, property-first) still folds here, while
+    // `#themeの*background-color` falls through to the selector-possessive matcher,
+    // which reads it owner-first and correctly.
+    return createPropertyPath(
+      createSelector(owner.value),
+      this.toEnglishProperty(property.value),
+      'possessive'
+    );
   }
 
   /**
@@ -1814,7 +2282,11 @@ export class PatternMatcher {
 
       // Create property-path: my value -> { object: me, property: 'value' }
       // baseRef from getPossessiveReference is always a valid reference ('me', 'you', 'it', etc.)
-      return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
+      return createPropertyPath(
+        createReference(baseRef as ReferenceValue['value']),
+        chainedProps,
+        'possessive'
+      );
     }
 
     // Not a valid property, revert
@@ -1900,7 +2372,11 @@ export class PatternMatcher {
     }
     tokens.advance();
 
-    return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
+    return createPropertyPath(
+      createReference(baseRef as ReferenceValue['value']),
+      chainedProps,
+      'possessive'
+    );
   }
 
   /**
@@ -1959,17 +2435,7 @@ export class PatternMatcher {
    * so this never blocks a genuine `my value` / `its style` possessive.
    */
   private isRoleMarkerConcept(normalized: string): boolean {
-    const markerConcepts = new Set([
-      'destination',
-      'source',
-      'patient',
-      'object',
-      'event',
-      'eventmarker',
-      'manner',
-      'instrument',
-    ]);
-    return markerConcepts.has(normalized.toLowerCase());
+    return ROLE_MARKER_CONCEPTS.has(normalized.toLowerCase());
   }
 
   /**
@@ -1991,10 +2457,11 @@ export class PatternMatcher {
     // → SOV `/api/data को लाएं`, where the bare-event pattern (priority 80, Stage 1)
     // would otherwise anchor `/api/data` as the event before the command-stage
     // fetch pattern (Stage 2) runs. Rejecting it lets the fetch command pattern win.
-    // Parens are deliberately NOT rejected: the `when (<expr>) changes` reactive
-    // patterns capture a watched EXPRESSION in the `event` role whose first token is
-    // `(` (when-value-changes), and a fronted `myFunction()` mis-anchor is already
-    // outranked by the per-command patient-first pattern (priority 145 > 80).
+    // Parens are deliberately NOT rejected: a fronted `myFunction()` mis-anchor is
+    // already outranked by the per-command patient-first pattern (priority 145 >
+    // 80). (The reactive `when (<expr>) changes` head, which once relied on this
+    // to capture its expression in the `event` role, is parsed structurally now —
+    // block-parser `locateReactiveWhenHead` — and never reaches this guard.)
     if (/[/#@*]/.test(v)) return false;
     if (v.startsWith('"') || v.startsWith("'") || v.startsWith('`')) return false;
     // A body-bearing block keyword fronting the input (`live`/`socket`/… → SOV
@@ -2005,6 +2472,13 @@ export class PatternMatcher {
     // Rejecting it lets the `live`/`socket` command pattern win at Stage 2.
     const norm = token.normalized?.toLowerCase();
     if (norm && BAREKEYWORD_BLOCK_ACTIONS.has(norm)) return false;
+    // A personal REFERENCE (me/it/you) is never an event name. The renderer
+    // fronts a command's reference destination in the postpositional languages
+    // (`add .highlight to me` → bn `আমি তে .highlight কে যোগ`), and the
+    // event-stage `{event} <marker>` pattern otherwise reads `আমি তে` as
+    // `on me` — the junk handler swallows the real destination and the command
+    // re-defaults it to an implicit `me` the strict scorers rightly ignore.
+    if (norm === 'me' || norm === 'it' || norm === 'you') return false;
     return true;
   }
 
@@ -2267,7 +2741,7 @@ export class PatternMatcher {
         fusedProps.length > 0 &&
         isValidReference(baseLower)
       ) {
-        return createPropertyPath(createReference(baseLower), fusedProps.join('.'));
+        return createPropertyPath(createReference(baseLower), fusedProps.join('.'), 'dot');
       }
       if (fusedIsMethodCall) {
         // Consume the balanced call parens into the expression. Left in the
@@ -2396,7 +2870,7 @@ export class PatternMatcher {
     const opBaseLower = token.value.toLowerCase();
     if (allowPropertyPath && isValidReference(opBaseLower)) {
       const opProps = chain.split('.').slice(1).join('.');
-      return createPropertyPath(createReference(opBaseLower), opProps);
+      return createPropertyPath(createReference(opBaseLower), opProps, 'dot');
     }
     // Create expression value: userData.name
     return {
@@ -2468,7 +2942,14 @@ export class PatternMatcher {
       !!profileMarker &&
       profileMarker !== "'s" &&
       possessiveToken.value === profileMarker &&
-      (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation') &&
+      // `identifier` belongs here alongside the clitic kinds: a language whose
+      // possessive marker is a FREE WORD (tl `ng`, vi `của`) tokenizes it as a
+      // plain identifier, not a particle, so the exact-value check above is the
+      // only thing that identifies it — and it is exact, against this profile's
+      // own declared marker.
+      (possessiveToken.kind === 'particle' ||
+        possessiveToken.kind === 'punctuation' ||
+        possessiveToken.kind === 'identifier') &&
       !markerRoleCollision;
     if (!isEnglishPossessive && !isProfilePossessive && !splitEnglishPossessive) {
       tokens.reset(mark);
@@ -2492,8 +2973,32 @@ export class PatternMatcher {
     // identifier (vi `value` → `giá trị`, a single keyword token), so without this
     // the English-possessive `#picker's giá trị` lost its property and fell back to a
     // bare `#picker` selector — mismatching the en reference's property-path.
+    // A `*`-sigil token is hyperscript's STYLE property and can only ever be a
+    // property, so it is safe on a profile marker too — and it is exactly what
+    // the danger case above is not. Without it `#themeの*background-color`
+    // (ja/ko/zh/bn) and `#theme ng *background-color` (tl/vi) fell through to
+    // the of-possessive matcher, which reads `X <marker> Y` as "X of Y" and so
+    // folded the pair INVERTED — `set *background-color's #theme`, at every
+    // fidelity score 1.0 (set-color-variable, six kept rows).
+    const propertyIsStyleSigil =
+      propertyToken.kind === 'selector' && propertyToken.value.startsWith('*');
+    // A property name that translates to a profile KEYWORD rather than a bare
+    // identifier (vi `value` → `giá trị`, one keyword token) was accepted for
+    // the English `'s` and refused for a profile marker, so vi's own possessive
+    // (`#picker của giá trị`) matched neither this matcher nor the of-matcher —
+    // whose owner slot then held a keyword, not a selector — and `bind.source`
+    // was lost outright (vi bind-explicit-property). The language's property
+    // table is the voucher: a keyword is admitted only when the table names it
+    // a property, so a command verb after the marker (`#button の 切り替え`) is
+    // still refused.
+    const propertyIsNamedProperty =
+      propertyToken.kind === 'keyword' &&
+      !!this.currentProfile &&
+      isKnownPropertySurface(this.currentProfile.code, propertyToken.value);
     const propertyOk =
       propertyToken.kind === 'identifier' ||
+      propertyIsStyleSigil ||
+      propertyIsNamedProperty ||
       ((isEnglishPossessive || splitEnglishPossessive) &&
         (propertyToken.kind === 'selector' || propertyToken.kind === 'keyword'));
     if (!propertyOk) {
@@ -2506,7 +3011,8 @@ export class PatternMatcher {
     // `#picker's 値`/`giá trị` → `#picker's value`).
     return createPropertyPath(
       createSelector(token.value),
-      this.toEnglishProperty(propertyToken.value)
+      this.toEnglishProperty(propertyToken.value),
+      'possessive'
     );
   }
 
@@ -2556,7 +3062,7 @@ export class PatternMatcher {
     // Extract property name without the leading dot
     const propertyName = propertyToken.value.slice(1);
 
-    return createPropertyPath(createSelector(token.value), propertyName);
+    return createPropertyPath(createSelector(token.value), propertyName, 'dot');
   }
 
   /**
@@ -2570,22 +3076,67 @@ export class PatternMatcher {
   ): boolean {
     const mark = tokens.mark();
 
-    // Track which roles were captured before this group
-    const capturedBefore = new Set(captured.keys());
+    // Snapshot the captured roles' VALUES, not just their keys. Clearing only
+    // the newly-added keys leaves an OVERWRITE by a failed group in place.
+    //
+    // 90 shipped patterns bind one role in TWO optional groups — every
+    // `<cmd>-event-<lang>-sov` has a pre-verb `[{destination} <marker>]` and a
+    // post-verb one, because the transformer emits the to-phrase on either side
+    // depending on the command. When the trailing group speculatively captures
+    // the next token into that role and then fails on its marker, the token
+    // stream rolls back but the corrupted value survives: ja
+    // `クリック で #panel に .active を トグル ゴミ` returned
+    // `destination="ゴミ"` with the real `#panel` captured and discarded.
+    const capturedBefore = new Map(captured);
 
-    const success = this.matchTokenSequence(
-      tokens,
-      patternToken.tokens,
-      captured,
-      nextPatternToken
-    );
+    let success = this.matchTokenSequence(tokens, patternToken.tokens, captured, nextPatternToken);
+
+    // A postpositional marker group ([{destination} [e]]) can "succeed" by
+    // capturing ONLY the role: the role is optional-in-group, the trailing
+    // marker sub-group is optional too, so `.loading i 2s değiştir` binds
+    // `.loading` as the DESTINATION and the pattern then dies on `patient` —
+    // with no backtracking, the whole (correct) parse is lost. A role captured
+    // without its own marker is indistinguishable from the next slot's value,
+    // so require the marker: if this group added a role capture but none of
+    // the tokens it consumed matched a `renderRequired` marker sub-group's
+    // literal, fail the group and roll back — the value stays available for
+    // the slot that really owns it. Scoped to groups that carry a
+    // renderRequired literal-only sub-group (the generated postpositional
+    // shape); prepositional groups ([จาก {source}]) fail fast on their leading
+    // literal and never reach this.
+    if (success) {
+      const markerLiterals: string[] = [];
+      for (const inner of patternToken.tokens) {
+        if (inner.type === 'group' && (inner as { renderRequired?: boolean }).renderRequired) {
+          for (const t of inner.tokens) {
+            if (t.type === 'literal') markerLiterals.push(t.value, ...(t.alternatives ?? []));
+          }
+        }
+      }
+      if (markerLiterals.length > 0) {
+        const addedRole = [...captured.keys()].some(role => !capturedBefore.has(role));
+        if (addedRole) {
+          const consumed = tokens.tokens.slice(mark.position, tokens.position()) as LanguageToken[];
+          const markerSeen = consumed.some(tok =>
+            markerLiterals.some(lit => this.getMatchType(tok, lit) !== 'none')
+          );
+          if (!markerSeen) success = false;
+        }
+      }
+    }
 
     if (!success) {
       tokens.reset(mark);
-      // Clear any roles that were partially captured during the failed group match
+      // Restore the pre-group capture state exactly: drop roles the failed group
+      // added, and put back the values it overwrote.
       for (const role of captured.keys()) {
         if (!capturedBefore.has(role)) {
           captured.delete(role);
+        }
+      }
+      for (const [role, value] of capturedBefore) {
+        if (captured.get(role) !== value) {
+          captured.set(role, value);
         }
       }
       return patternToken.optional || false;
@@ -2778,7 +3329,10 @@ export class PatternMatcher {
         // Static value extraction (e.g., action: { value: "toggle" })
         captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
       } else if (rule.default) {
-        captured.set(role as SemanticRole, rule.default);
+        // Copied, never aliased (the rule's default object is shared across
+        // parses), and tagged implicit: materialized from the default, not
+        // captured from source text — renderers suppress implicit values only.
+        captured.set(role as SemanticRole, { ...rule.default, implicit: true });
       }
     }
   }

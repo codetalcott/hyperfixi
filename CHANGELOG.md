@@ -7,6 +7,222 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`hyperscript.use(frontEnd)`** — register the multilingual front-end
+  `compile()` consults for a non-English program (and `toLSE`/`fromLSE` for
+  a semantic node and a renderer). The contract is `FrontEnd` in
+  `@hyperfixi/core` (`parseToAST`, optional `parse`/`render`);
+  `@lokascript/semantic` satisfies it through
+  `createBridgeFrontEnd(new SemanticGrammarBridge())` from
+  `@hyperfixi/core/multilingual`. The full browser bundle registers it at
+  boot. The library entry registers nothing and, through 3.x, builds the same
+  bridge lazily on the first non-English compile — so nothing changes for a
+  consumer with `@lokascript/semantic` installed. **4.0 will remove that
+  default:** a non-English `compile()` with no front-end registered will
+  return the same result the core-parser-only path returns today, and
+  `@lokascript/semantic` becomes an optional peer. Engine-migration plan
+  Arc 1, steps 2 and 3.
+
+### Fixed
+
+- **MCP `get_diagnostics`, `get_completions` and `get_document_symbols` read
+  the AST.** The bridge guarded those paths on helper names core never
+  exported, so all three had only ever taken their token-based fallback.
+  They now read the interchange: the core parser's own errors become
+  diagnostics, completions inside a command offer that command's argument
+  shapes, symbols carry their commands as children, and a document with
+  several `end`-terminated handlers keeps all of them.
+
+- **`hyperscript.process()` honours the event grammar.** The API-side DOM
+  processor carried its own listener installer for `on …` attributes and
+  silently dropped what the runtime's installer handles: `on
+click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
+  fired on mouseenter, `on click from document` never fired. Every browser
+  bundle already went through the runtime; `process()` now does too, and
+  `config.logAll` moved into the runtime so both paths log. Pinned by
+  `api/dom-processor.test.ts`, which runs each case on both paths.
+
+- **`set *<css-property>` writes inline style in every spelling upstream
+  accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
+  `set *background-color of me to "red"` were silent no-ops and
+  `set the *opacity of me to 0.5` threw; only the possessive `set my *opacity`
+  worked. The tokenizer classes `*opacity` as a selector (for `measure`), and
+  `set`'s parser now re-types it into the identifier property the runtime's
+  style rungs already handle, so one path serves all of them — bare, `of
+<target>`, `the … of <target>`, `<target>'s`. Ten rows pinned against
+  `_hyperscript` 0.9.93.
+
+- **`require('@hyperfixi/core')` returned `{}`, and the subpath `require`s
+  threw — since `"type": "module"`, on 3.0.0 too.** Every `exports.*.require`
+  and `main` pointed at a `.js` file built as CommonJS, which Node reads as
+  ESM under that flag. The CJS outputs are `.cjs` now (main entry, the 21
+  subpaths, the parser modules); the `import` conditions are unchanged. The
+  bare-Node check in CI now `require()`s the entries as well as importing
+  them, which is the check that would have caught this. Found by the
+  end-to-end probe that landed Arc 1's build half.
+
+### Changed
+
+- **`@hyperfixi/core`'s library entry no longer bundles the multilingual
+  front-end.** `dist/index.mjs`/`index.js` had `@lokascript/semantic`,
+  `@lokascript/intent` and `@lokascript/framework` inlined whole (3.33 MB, zero
+  dynamic imports left); they are external now (1.04 MB) and load on the first
+  non-English `compileAsync`, the way the source always said they would. No
+  API change: semantic and intent stay `dependencies`, framework stays an
+  optional peer — and is now genuinely one. A consumer that imported both core
+  and semantic no longer holds two copies of semantic. `dist/index.min.js`
+  (UMD, not in `exports`) stays self-contained. Gated by
+  `scripts/check-node-import.mjs` on the sourcemap. Engine-migration plan Arc 1
+  step 2, build half.
+
+- **`@lokascript/semantic` drops its `asyncSchema`.** Core deleted the `async`
+  command in 3.0.0 (#1102); the semantic front-end never emitted the action
+  anyway — its `stripAsyncModifier` pass removes the keyword (in all 24
+  languages) and parses the following command, so `async fetch /api as json`
+  is a `fetch`. The schema, its registration, the `'async'` `ActionType`
+  member and the AST-builder mapper row are gone. Kept on purpose: every
+  profile's `keywords.async` (the stripper matches on it) and the
+  `'then' | 'and' | 'async'` chain type (a different concept). The IR-level
+  `async all/race` node lives in `@lokascript/intent` and is untouched.
+
+## [3.0.0] - 2026-09-03
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
+
+One major, two themes. `@lokascript/i18n`'s grammar transformer is gone,
+because `@lokascript/semantic` overtook it on every row of the translation
+corpus (#973–#1001). And the engine-migration plan
+(`docs-internal/ENGINE_MIGRATION_PLAN.md`) closed its last arc, which deleted
+the exported dead code it had been carrying and collapsed the browser bundle
+lineup to two names (#1099–#1105). One arc is still open: Arc 1's steps 2
+and 3 — `@hyperfixi/core`'s library entry still bundles the semantic
+front-end (recorded in the plan's History, 2026-09-03).
+
+### ⚠ BREAKING
+
+- **`@lokascript/i18n` no longer translates** (#1001). `translate()`, `toLocale()`,
+  `toEnglish()`, `GrammarTransformer` and `createTransformer` are deleted; the
+  package is per-language vocabulary and grammar profiles. Migrate to
+  `import { translate } from '@lokascript/semantic'` (same signature; it throws
+  on unparseable input where the transformer returned nonsense). The classic-i18n
+  browser bundle, `@hyperscript-tools/i18n` and `@lokascript/types-browser` drop
+  the same members (#998, #999); the patterns corpus writer is semantic-only (#1000).
+- **The prebuilt browser bundles are two names** (#1105): `hyperfixi-hx.js`
+  (small: hybrid parser, blocks, expressions, htmx v1/v2 attributes) and
+  `hyperfixi.js` (everything); `hyperfixi-hx-v4.js` and
+  `hyperfixi-multilingual.js` stay as separate products. `hyperfixi-lite.js`,
+  `-lite-plus.js`, `-minimal.js`, `-standard.js` and their `./browser/*`
+  exports are gone — use `hyperfixi-hx.js`, `hyperfixi.js`, or the Vite
+  plugin, which picks the tier itself. `./browser/hybrid-complete` remains as
+  the plugin's internal fallback.
+- **Exported dead code deleted from `@hyperfixi/core`** — none had a
+  production caller: the six `@deprecated` `features/` families and the
+  modular bundle's `features` namespace (#1099); `Lexer`/`Tokens` (#1100 —
+  use `tokenize`); the `unified-types` `Validator`, the `types.d.ts` shim and
+  `registry/multilingual` (#1101); the `async` command (#1102 — it was
+  unreachable from parsed hyperscript; the manifest is 58 commands);
+  `ContextProviderRegistry`, the context-provider `Proxy`, the registry's
+  `context` slot and the plugin `contextProviders` field (#1104 — set
+  request-scoped values as `context.locals`).
+
+### Fixed
+
+- **A small bundle fails loudly on a command it lacks and names `hyperfixi.js`**
+  (#1103). The hybrid parser had been dropping an unrecognised word silently;
+  making it loud also exposed and fixed three silent mis-parses in the hybrid
+  bundles: unquoted `fetch /api/data` fetched `/`, `send custom:event` sent
+  `custom` to `me`, and `repeat forever` ran zero iterations.
+- **English→foreign rendering is gated** (#931–#972, #953): 3105/3105 corpus
+  renders parse on the canonical engine; the bare (handler-less) surface has its
+  own gate. `as JSON` stays part of the value (#991); a flattened loop header
+  closes (#992).
+- Plugins report their real versions (#926); `analyze_content` is unshadowed in
+  the MCP server (#927); four dependency advisories resolved; the `domain-flow`
+  → `server-bridge` route contract is pinned (#1000s).
+
+### Changed
+
+- `hyperfixi.js` and `hyperfixi-hx-v4.js` carry the 24-language render
+  vocabulary (~19 KB gzip each) so `translate` works in the browser (#931).
+- Deprecated `@lokascript/domain-*` references repoint to `@lokascript/domains`.
+
+## [2.11.1] - 2026-08-25
+
+Patch release. Fixes the release workflow itself: the build now runs **after**
+the version sync, so a published tarball carries its own version rather than
+the previous one, and `version.ts` is committed (#925). Also lands the
+agent-loop A/B benchmark with an isolated generator (#924).
+
+## [2.11.0] - 2026-08-24
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v2.11.0).
+
+### Changed
+
+- **The domain-DSL family moved out** (#909). Twelve packages left this
+  monorepo: the ten publishable `@lokascript/domain-*` packages (bdd,
+  behaviorspec, config, flow, jsx, learn, llm, sql, todo, voice) plus the
+  private `domain-toolkit` and `mcp-multilingual-intent`. They now ship as
+  **`@lokascript/domains`**, one subpath export per domain, from the
+  [lokascript-domains](https://github.com/codetalcott/lokascript-domains)
+  repository.
+
+  All ten published names are **deprecated on npm**, each naming its
+  replacement subpath (`@lokascript/domain-sql` → "import from
+  `@lokascript/domains/sql`"). Existing installs keep working — deprecation is
+  a warning, not a removal — they simply stop receiving updates. The
+  pre-deletion tree is preserved at the `moved/domain-family` tag.
+
+  _Migration:_ replace nine dependencies with one, and change
+  `from '@lokascript/domain-x'` to `from '@lokascript/domains/x'`. The root
+  entry absorbed `domain-config` and exports `createDomainRegistry`,
+  `registerAllDomains` and `DOMAIN_PRIORITY`.
+
+### Added
+
+- **"Show in My Language"** — LSP request plus VSCode command (#921).
+- **Verified-translation badge** in the compilation service (#920).
+- **`scoreFidelity` / `@lokascript/semantic/fidelity`** (#919).
+- **Inert-shape warnings** (#918) and surfaced unconsumed-input warnings (#916)
+  in the compilation service.
+- **The agent-loop benchmark** and the silent-failure finding it produced
+  (#915), and the MCP server's agent-era roadmap (#914).
+- **Element-collection write-back** for hypermedia tables, with gallery
+  examples and four system fixes (#904).
+- **The comprehensive Playwright tier now runs in CI** (#908) alongside
+  `quick`. It had never run: 122 specs, hiding four real bugs — a detached
+  `startViewTransition`, untracked reads of unset globals, concurrent effects
+  clobbering dependency capture, and `put` stringifying DocumentFragments
+  (#905).
+
+### Fixed
+
+- **The `hyperscript-adapter` review arc** (#895–#902): whole-string
+  translation first, taking canonical validity from 2849/3105 to **3105/3105**
+  (#899); a host-parser validity gate so an invalid render falls back to the
+  author's text (#900); the dead split-statement fallback deleted after
+  measuring 0 outputs (#901); and the slim divergence set burned 6 → 1 via
+  schema marker data, repairing 39 body-dropping corpus rows (#902).
+- **`qu take.recipient`** — the R1 tail's last `take` row (#910).
+- **The release workflows** no longer reference the moved-out domain family
+  (#922).
+
+## [2.10.0] - 2026-08-01
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v2.10.0).
+
+Highlights: `swap`/`process`/`morph … using view transition` across all 24
+languages (#870, #873, #875), typed command registration (#869, #871),
+`tell`/`process` parser fixes (#861, #872), the R1 role-fidelity burn-down
+(#864, #867, #868, #874, #878), and guards for the remaining hand-maintained
+CI package lists (#862, #865).
+
+## [2.9.0] - 2026-07-25
+
+> **Gap note:** 2.9.1 through 2.9.4 shipped without entries in this file; their
+> details live in [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+
 ### ⚠ BREAKING (types)
 
 - **Domain renderers return `string | null`.** `renderSQL`, `renderJSX`, `renderTodo`,
@@ -379,7 +595,12 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/codetalcott/hyperfixi/compare/v2.9.0...v2.10.0
+[2.9.0]: https://github.com/codetalcott/hyperfixi/compare/v2.8.0...v2.9.0
+[2.8.0]: https://github.com/codetalcott/hyperfixi/compare/v2.5.1...v2.8.0
+[2.5.1]: https://github.com/codetalcott/hyperfixi/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/codetalcott/hyperfixi/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/codetalcott/hyperfixi/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/codetalcott/hyperfixi/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/codetalcott/hyperfixi/compare/v2.2.1...v2.3.0

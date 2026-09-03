@@ -48,6 +48,7 @@ import {
 import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import { queryTargetElements, toElementListStrict } from '../helpers/target-elements';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Where content lands, and how scalar values combine. */
 export type InsertionPosition = Extract<SemanticPosition, 'append' | 'prepend'>;
@@ -128,7 +129,7 @@ export abstract class ContentInsertionCommand implements DecoratedCommand {
   }
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'append' | 'prepend'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<InsertionCommandInput> {

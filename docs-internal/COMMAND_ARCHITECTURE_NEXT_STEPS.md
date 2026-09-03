@@ -729,36 +729,126 @@ not the core abstractions.
     the whole episode because the pattern was not in it. Detail:
     `MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug families" item 6.
 
-- **`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
-  reader uses it.** `:54-60` defines a loose shape with an
-  `[extra: string]: unknown` index signature — which is the only reason
-  `impl.metadata?.name` at `:421` typechecks, since the canonical
-  `types/command-metadata.ts` interface has **no `name` field**. Narrowing the
-  adapter to the canonical type turns `:421` into a type error, and `readonly` vs
-  mutable arrays will bite as well. Contained to one file (the shadow type is
-  exported but imported by nobody). It is a **behavior** question — that fallback
-  is the only path for a V1 command carrying `metadata.name` — so it wants its own
-  change rather than a slot inside a refactor. Third instance of the
-  dual-type-definition pattern (see also `ASTNode`/`ExpressionMetadata`). Detail:
+- ~~**`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
+  reader uses it.**~~ **CLOSED 2026-08-01 — measured, and three of its four claims
+  are false.** The experiment (replace the shadow type with the canonical one,
+  typecheck) produces 9 errors, and none of them is the one filed:
+
+  - **`:421` does NOT error.** Its enclosing signature is `register(impl: any)`,
+    so the parameter's `any` — not the index signature — is what defeats
+    checking there. Narrowing the interface changes nothing about that line.
+    The sites that do error are `:207` (the `get name()` getter) and `:211`
+    (the `get metadata()` projection no longer satisfies `RuntimeCommand`).
+  - **The blast radius is not one file.** 7 of the 9 errors land in
+    `registry/examples/server-commands.ts` and `registry/multilingual/examples.ts`,
+    which declare `category: 'server'` — absent from the canonical union. That is
+    the F-B2 union reconciliation, deliberately pinned as "a rename with LSP and
+    docs reach".
+  - **The behavior question is vacuous in-tree.** All 55 command classes (52
+    decorated via `@command({name})`, plus `install`/`pseudo-command`/`render`
+    carrying `readonly name = '…'`) have a top-level `name`, so the
+    `metadata.name` fallback is dead for everything that ships. It is a public-API
+    affordance for third-party V1 registration only — and it IS covered, by
+    `runtime.test.ts`'s "should accept commands with metadata.name".
+
+  Not worth paying a union reconciliation to fix a hole that is not where the
+  filing put it. **What the experiment DID find is bigger and is filed fresh
+  below.**
+
+- ~~**`CommandWithParseInput` describes no real command, and `register(impl: any)`
+  is what hides it.**~~ **FIXED 2026-08-01.** `register` takes
+  `CommandWithParseInput` and `COMMAND_FACTORIES` is
+  `Readonly<Record<string, () => CommandWithParseInput>>`, so the
+  manifest-driven registration path is checked end to end. Probed for vacuity
+  rather than assumed: drifting `execute`'s input parameter produces **64
+  compile errors** across the factory map, and 0 after restore.
+
+  **The owner decision the filing asked for was answered — and three of its four
+  measurements were wrong.** Each mattered:
+
+  1. **`validate` is the type guard**, confirmed: 17 implementations (not 59 —
+     most commands declare none), all `input is XInput`, plus **185 assertions
+     across 21 test files** already pinning the boolean. The interface says
+     `boolean` now; `CommandAdapterV2.validate()` LIFTS it into
+     `ValidationResult` at the boundary, which is where the struct was always
+     the right shape.
+  2. **`RuntimeCommand.validate` is NOT its twin — it is its opposite.**
+     `CommandAdapterV2 implements RuntimeCommand`, so that signature is the
+     ADAPTER's outward contract and correctly stays a `ValidationResult`; it is
+     what `validateCommand()` reports. The filing read the two identical
+     signatures as one drift; changing both would have deleted the wrap.
+  3. **The predicted "59 errors, all the same" never appeared.** After the
+     `validate` line was fixed the remaining 60 errors were an unrelated class:
+     `commandMeta<const T>` infers **readonly** tuples by design (the `const`
+     type parameter is what buys excess-property and enum checking), while
+     `CommandMetadata` declared mutable `string[]`. That, not `validate`, is why
+     `register` could only ever have been `any`. Also surfaced: `execute` was
+     declared `Promise<unknown>` though the adapter awaits it and `GetCommand` /
+     `RemoveCommand` are synchronous, with `get.test.ts` asserting the sync
+     return across eight rows — so the interface, not those commands, was the
+     thing mis-declared.
+
+  The `boolean | ValidationResult` prohibition below was respected: nothing was
+  widened, and no `category: 'server'` error appeared (those came from the
+  different shadow-`CommandMetadata` experiment, so F-B2 stayed pinned).
+  `validateCommand()` still has no production caller, but it is now covered by
+  four mutation-verified rows in `runtime.test.ts` — restoring the pass-through
+  reddens two of them.
+
+  Original filing follows.
+
+  The registry's own private map is `Map<string, CommandWithParseInput>`
+  (`command-adapter.ts:380`), and `COMMAND_FACTORIES` was
+  `Readonly<Record<string, () => unknown>>` (`runtime.ts:137`) — so the
+  manifest-driven registration of all 59 commands is unchecked end to end.
+  Typing either one produces **59 errors, all the same**:
+
+  ```text
+  The types returned by 'validate(...)' are incompatible between these types.
+    Type 'boolean' is not assignable to type 'ValidationResult<unknown>'.
+  ```
+
+  The interface declares `validate?(input): ValidationResult<unknown>`; every
+  real command implements `validate(input): input is XInput`, a type guard
+  returning **boolean**. So `CommandAdapterV2.validate()` (`:361`) would return a
+  boolean while its signature promises `{isValid, errors, suggestions}`. It has
+  never bitten because the only consumer, `CommandRegistryV2.validateCommand()`
+  (`:489`), is **called by nobody** (the `validateCommand` hits elsewhere are
+  `CommandPatternValidator`'s unrelated static).
+
+  So this is a latent whole-registry contract lie, currently unreachable. The
+  fix is an owner decision — is `validate` a type guard or a structured
+  validator? — and then either one interface line or 59 command signatures.
+  Do NOT "fix" it by widening the interface to `boolean | ValidationResult`;
+  that preserves the ambiguity that let the two drift. Third instance of the
+  dual-type-definition pattern (see also `ASTNode`/`ExpressionMetadata`).
+  Historical detail on the shadow type:
   [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B1.
 
-- **`metadata.isBlocking` / `hasBody` publish false claims for ≥7 commands.**
-  Neither field is authored anywhere — every value comes from `@meta`'s (now
-  `commandMeta`'s) `?? false` default — and nothing in production reads them. But
-  they ARE published: `packages/core/docs/commands/commands.json` carries
-  `isBlocking: false`, `hasBody: false`, `version: '1.0.0'` on 40 of its 43
-  entries, with **zero variance**. So the shipped docs state that `wait`, `fetch`,
-  `settle` and `transition` do not block, and that `if`, `repeat` and `tell` take
-  no body. All false.
-  Arc B step 3 deliberately PRESERVED the boilerplate rather than fixing or
-  deleting it, to keep the migration a refactor (decision recorded in
-  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)).
-  Authoring the two booleans truthfully is ~59 judgment calls with its own review
-  surface, and `version` is meaningless per-command — worth its own change.
-  Note there may be derivable sources: `COMPOUND_COMMANDS` and the parser's
-  `CommandNode.isBlocking` already encode part of this, so check before hand-
-  authoring 59 rows. Discovered by Arc B while measuring what should happen to
-  `@meta`'s defaults — the queue's "score the rows already there" lesson again.
+- ~~**`metadata.isBlocking` / `hasBody` publish false claims for ≥7 commands.**~~
+  **FIXED 2026-08-01 — by deleting the fields, not by authoring them.** By the
+  time it was taken the uniformity had spread from 40/43 to **59/59**: every
+  command published `isBlocking: false`, `hasBody: false`, `version: '1.0.0'`,
+  asserting that `wait`/`fetch`/`settle`/`transition` do not block and that
+  `if`/`repeat`/`tell` take no body.
+  The filing framed the fix as ~59 judgment calls. Measured, that is the wrong
+  end. The fields are **unauthored, unread, and unrendered** — no command literal
+  sets them, nothing in production reads them, `REFERENCE.md` does not render
+  them (it is byte-identical after the change), no gate pinned them, and
+  `commands.json` is not even in `package.json`'s `files`, so it never shipped to
+  npm. **Defaulting them was the entire source of the falsehood**, so
+  `commandMeta()` no longer defaults anything and the three keys are gone from
+  all 59 JSON rows (a pure 177-line deletion).
+  They stay OPTIONAL on `CommandMetadata`, and absence now means UNDECLARED
+  rather than `false` — so a future truthful declaration carries meaning. Guarded
+  by a registry-wide row in `command-meta.test.ts` that fails if any of the three
+  reappears on *every* command (the signature of the default returning);
+  mutation-verified. If a consumer ever appears, prefer deriving:
+  `COMPOUND_COMMANDS` and the parser's `CommandNode.isBlocking` already encode
+  much of it. Original discovery credit: Arc B, while measuring what should
+  happen to `@meta`'s defaults — the queue's "score the rows already there"
+  lesson, and the follow-up is its sequel: **score the FIX the filing proposes,
+  too.**
 
 ## Risk register
 

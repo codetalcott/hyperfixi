@@ -45,38 +45,6 @@
       features: ['21 commands', 'htmx attrs', 'hx-on:*', 'lifecycle events'],
       color: '#3b82f6'
     },
-    'lite': {
-      name: 'Lite Bundle',
-      file: 'hyperfixi-lite.js',
-      size: '1.9 KB',
-      description: 'Minimal bundle for simple interactions',
-      features: ['8 commands', 'regex parser', 'basic events'],
-      color: '#f59e0b'
-    },
-    'lite-plus': {
-      name: 'Lite Plus',
-      file: 'hyperfixi-lite-plus.js',
-      size: '2.6 KB',
-      description: 'Basic apps with more commands and i18n aliases',
-      features: ['14 commands', 'regex parser', 'i18n aliases'],
-      color: '#fb923c'
-    },
-    'standard': {
-      name: 'Standard Bundle',
-      file: 'hyperfixi-browser-standard.js',
-      size: '63 KB',
-      description: 'Standard features without semantic parser',
-      features: ['43 commands', 'traditional parser'],
-      color: '#8b5cf6'
-    },
-    'minimal': {
-      name: 'Minimal Bundle',
-      file: 'hyperfixi-browser-minimal.js',
-      size: '58 KB',
-      description: 'Minimal feature set',
-      features: ['core commands', 'traditional parser'],
-      color: '#ec4899'
-    },
     'multilingual': {
       name: 'Multilingual Bundle',
       file: 'hyperfixi-multilingual.js',

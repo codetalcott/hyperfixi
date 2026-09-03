@@ -540,19 +540,6 @@ describe('Enhanced Mathematical Expressions Integration', () => {
     });
   });
 
-  describe('Performance tracking', () => {
-    // Skipped: Performance tracking removed during Phase 2 consolidation to reduce bundle size
-    it.skip('should track evaluation history', async () => {
-      const addition = mathematicalExpressions.addition;
-      await addition.evaluate(context, { left: 10, right: 5 });
-
-      expect(context.evaluationHistory).toHaveLength(1);
-      expect(context.evaluationHistory![0].expressionName).toBe('addition');
-      expect(context.evaluationHistory![0].success).toBe(true);
-      expect(context.evaluationHistory![0].duration).toBeGreaterThanOrEqual(0);
-    });
-  });
-
   describe('Type safety', () => {
     it.skip('should have consistent metadata', () => {
       const expressions = Object.values(mathematicalExpressions) as any[];

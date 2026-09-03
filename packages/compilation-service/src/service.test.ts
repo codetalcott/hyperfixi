@@ -286,6 +286,108 @@ describe('CompilationService', () => {
   // Validation Only
   // ---------------------------------------------------------------------------
 
+  describe('translate() verification (arc 5)', () => {
+    it('attaches a faithful verification to a clean cross-language translation', () => {
+      const r = service.translate({ code: 'toggle .active on #panel', from: 'en', to: 'ko' });
+      expect(r.ok).toBe(true);
+      expect(r.code).toBeTruthy();
+      expect(r.verification?.ok).toBe(true);
+      expect(r.verification?.faithful).toBe(true);
+      // The invariant value survived translation verbatim.
+      expect(r.verification?.scores?.valueRecall).toBe(1);
+    });
+
+    it('omits verification when verify:false', () => {
+      const r = service.translate({ code: 'toggle .active', from: 'en', to: 'ko', verify: false });
+      expect(r.ok).toBe(true);
+      expect(r.verification).toBeUndefined();
+    });
+
+    it('verification is advisory — its diagnostics never leak into the translate response', () => {
+      const r = service.translate({ code: 'toggle .active on #panel', from: 'en', to: 'ja' });
+      expect(r.ok).toBe(true);
+      expect(r.diagnostics).toEqual([]);
+    });
+  });
+
+  describe('scoreFidelity()', () => {
+    it('scores an identical pair as faithful 1.0 across all signals', () => {
+      const input = {
+        code: 'on click add .busy to me then put "Loading" into #output',
+        language: 'en',
+      };
+      const r = service.scoreFidelity({ reference: input, candidate: input });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(true);
+      expect(r.scores).toEqual({
+        actionRecall: 1,
+        multisetRecall: 1,
+        precision: 1,
+        roleFidelity: 1,
+        valueRecall: 1,
+      });
+    });
+
+    it('names a dropped command and its lost invariant value', () => {
+      const r = service.scoreFidelity({
+        reference: {
+          code: 'on click add .busy to me then put "Loading" into #output',
+          language: 'en',
+        },
+        candidate: { code: 'on click add .busy to me', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(false);
+      expect(r.missingActions).toContain('put');
+      expect(r.missingValues).toContain('put.destination=#output');
+      expect(r.scores?.precision).toBe(1); // nothing hallucinated
+    });
+
+    it('names a hallucinated command via precision', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'on click add .busy to me', language: 'en' },
+        candidate: { code: 'on click add .busy to me then toggle .x on me', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.spuriousActions).toContain('toggle');
+      expect(r.scores?.actionRecall).toBe(1); // recall alone cannot see this
+      expect(r.scores?.precision).toBeLessThan(1);
+    });
+
+    it('catches a silently rewritten target that every other signal misses', () => {
+      // Same action, same roles, same types — only the invariant VALUE differs.
+      const r = service.scoreFidelity({
+        reference: { code: 'on click toggle .active on #panel', language: 'en' },
+        candidate: { code: 'on click toggle .active on #other', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(false);
+      expect(r.scores?.actionRecall).toBe(1);
+      expect(r.scores?.roleFidelity).toBe(1);
+      expect(r.scores?.valueRecall).toBeLessThan(1);
+      expect(r.missingValues).toContain('toggle.destination=#panel');
+    });
+
+    it('scores a faithful cross-language pair as faithful (ko vs en)', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'toggle .active', language: 'en' },
+        candidate: { code: '토글 .active', language: 'ko' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(true);
+    });
+
+    it('returns ok:false with side-tagged diagnostics when a side fails to parse', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'toggle .active', language: 'en' },
+        candidate: { code: 'frobnicate the wibble', language: 'en' },
+      });
+      expect(r.ok).toBe(false);
+      expect(r.scores).toBeUndefined();
+      expect(r.diagnostics.some(d => d.message.startsWith('[candidate]'))).toBe(true);
+    });
+  });
+
   describe('validate()', () => {
     it('validates without compiling', () => {
       const result = service.validate({
@@ -295,6 +397,72 @@ describe('CompilationService', () => {
       expect(result.ok).toBe(true);
       expect(result.semantic).toBeDefined();
       expect(result.semantic?.action).toBe('toggle');
+    });
+
+    it("surfaces the parser's unconsumed-input warning (arc 3b)", () => {
+      // `add .highlight #item` drops `#item` — the destination silently
+      // defaults to `me`. The parser flags this on the node (severity warning,
+      // code unconsumed-input, hoisted from any depth); normalize must lift it
+      // into the response, or the validate/repair loop has nothing to react to.
+      const result = service.validate({
+        code: 'on click add .highlight #item',
+        language: 'en',
+      });
+
+      expect(result.ok).toBe(true); // lenient parse still succeeds — a warning, not an error
+      const warning = result.diagnostics.find(d => d.code === 'UNCONSUMED_INPUT');
+      expect(warning).toBeDefined();
+      expect(warning?.severity).toBe('warning');
+      expect(warning?.message).toContain('#item');
+      expect(warning?.suggestion).toContain('marker');
+
+      // And the well-formed phrasing stays warning-free.
+      const clean = service.validate({
+        code: 'on click add .highlight to #item',
+        language: 'en',
+      });
+      expect(clean.ok).toBe(true);
+      expect(clean.diagnostics.filter(d => d.code === 'UNCONSUMED_INPUT')).toHaveLength(0);
+    });
+
+    it('flags inert shapes that consume every token (arc 3b gate 4)', () => {
+      // Each of these parses at confidence 1.0 with everything consumed, and
+      // is provably useless at runtime. The gate warns; it never blocks.
+      const expectWarning = (code: string, warningCode: string) => {
+        const r = service.validate({ code, language: 'en' });
+        expect(r.ok, code).toBe(true);
+        const w = r.diagnostics.find(d => d.code === warningCode);
+        expect(w, `${code} should carry ${warningCode}`).toBeDefined();
+        expect(w?.severity).toBe('warning');
+        expect(w?.suggestion).toBeTruthy();
+      };
+      expectWarning('on click add .done to all .todo', 'INERT_QUANTIFIER_TARGET');
+      expectWarning('on click remove .active from all .row', 'INERT_QUANTIFIER_TARGET');
+      expectWarning('on click set the text of #output to "Saved"', 'INERT_PROPERTY_WRITE');
+      expectWarning(
+        'on click if #box has class .danger add .warned to #box end',
+        'HALF_PARSED_CONDITION'
+      );
+      expectWarning('on click add .modal-open to <body/>', 'UNSUPPORTED_QUERY_LITERAL');
+    });
+
+    it('inert-shape gate stays quiet on correct phrasings', () => {
+      // False positives teach agents to distrust warnings; these must be clean.
+      for (const code of [
+        'on click add .done to .todo',
+        'on click set the textContent of #output to "Saved"',
+        'on click set #output\'s innerHTML to "Done"',
+        'on click if #box matches .danger add .warned to #box end',
+        'on click add .modal-open to body',
+        'on click add .is-active to #item', // .is-* utility classes must not trip HALF_PARSED_CONDITION
+      ]) {
+        const r = service.validate({ code, language: 'en' });
+        expect(r.ok, code).toBe(true);
+        expect(
+          r.diagnostics.filter(d => d.severity === 'warning'),
+          `${code} should be warning-free`
+        ).toHaveLength(0);
+      }
     });
 
     it('returns errors for invalid input', () => {

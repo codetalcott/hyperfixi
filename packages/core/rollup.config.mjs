@@ -38,16 +38,41 @@ function createSubpathEntry(input, outputBase, external = []) {
     input,
     output: [
       { file: `${outputBase}.mjs`, format: 'es', sourcemap: true, inlineDynamicImports: true },
-      { file: `${outputBase}.js`, format: 'cjs', sourcemap: true, inlineDynamicImports: true },
+      { file: `${outputBase}.cjs`, format: 'cjs', sourcemap: true, inlineDynamicImports: true },
     ],
     plugins: commonPlugins,
     external,
   };
 }
 
+/**
+ * The multilingual FRONT-END and the framework are not part of the engine's
+ * library entry (ENGINE_MIGRATION_PLAN.md, Arc 1 step 2). Core reaches them
+ * only through `await import(...)` — the bridge, the API's translate/render
+ * path, and `lse/` — and with them external those stay real deferred loads:
+ * a Node consumer that never compiles a non-English program never loads
+ * `@lokascript/semantic`. With `external: []`, `nodeResolve()` followed the
+ * workspace symlinks and `inlineDynamicImports` flattened every one of those
+ * imports, so `dist/index.mjs` shipped the prebuilt semantic, framework and
+ * intent dist files whole: 3,331,225 bytes, against 1,037,542 with them
+ * external (measured 2026-09-03), and a consumer that also imported
+ * `@lokascript/semantic` itself loaded two copies of it.
+ *
+ * `semantic` and `intent` are `dependencies`, `framework` an optional peer
+ * (it was inlined anyway, which made `lse/index.ts`'s "install it as a peer"
+ * guard vacuous). `scripts/check-node-import.mjs` asserts the sourcemap of
+ * `dist/index.mjs` names none of them.
+ */
+const FRONT_END_EXTERNALS = [
+  '@lokascript/semantic',
+  '@lokascript/intent',
+  '@lokascript/i18n',
+  '@lokascript/framework',
+];
+
 export default [
   // ==========================================================================
-  // Main entry point
+  // Main entry point — Node/bundler library (ESM + CJS)
   // ==========================================================================
   {
     input: 'src/index.ts',
@@ -59,11 +84,27 @@ export default [
         inlineDynamicImports: true,
       },
       {
-        file: 'dist/index.js', // CommonJS output
+        // `.cjs`, not `.js`: package.json says `"type": "module"`, so Node reads a
+        // `.js` file as ESM and a CJS-syntax one exported NOTHING (3.0.0 shipped
+        // `require('@hyperfixi/core') === {}`). Every `exports.*.require` and
+        // `main` point at the `.cjs`; scripts/check-node-import.mjs require()s them.
+        file: 'dist/index.cjs', // CommonJS output
         format: 'cjs',
         sourcemap: true,
         inlineDynamicImports: true,
       },
+    ],
+    plugins: commonPlugins,
+    external: FRONT_END_EXTERNALS,
+  },
+
+  // Minified UMD of the same entry. The ONE deliberately self-contained
+  // output: a UMD cannot defer-load an external without a `globals` map and a
+  // script tag per package, so it keeps inlining the front-end. Not in
+  // `exports`; kept for script-tag consumers of `LokaScriptCore`.
+  {
+    input: 'src/index.ts',
+    output: [
       {
         file: 'dist/index.min.js', // Minified UMD for browser
         format: 'umd',
@@ -88,7 +129,7 @@ export default [
   createSubpathEntry('src/bundle-generator/index.ts', 'dist/bundle-generator/index'),
 
   // Multilingual API (for testing-framework)
-  createSubpathEntry('src/multilingual/index.ts', 'dist/multilingual/index', ['@lokascript/semantic']),
+  createSubpathEntry('src/multilingual/index.ts', 'dist/multilingual/index', FRONT_END_EXTERNALS),
 
   // Commands module
   createSubpathEntry('src/commands/index.ts', 'dist/commands/index'),
@@ -122,5 +163,5 @@ export default [
   createSubpathEntry('src/ast-utils/index.ts', 'dist/ast-utils/index'),
 
   // LSE bridge (framework IR integration)
-  createSubpathEntry('src/lse/index.ts', 'dist/lse/index', ['@lokascript/framework']),
+  createSubpathEntry('src/lse/index.ts', 'dist/lse/index', FRONT_END_EXTERNALS),
 ];

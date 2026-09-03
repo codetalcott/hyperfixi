@@ -38,6 +38,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { NodeWriterFn } from '../../parser/extensions';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -116,7 +117,7 @@ export class SetCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {
@@ -313,7 +314,7 @@ export class SetCommand implements DecoratedCommand {
 
   private async tryParseMemberExpression(
     firstArg: Record<string, unknown>,
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput | null> {
@@ -379,24 +380,18 @@ export class SetCommand implements DecoratedCommand {
   }
 
   private async extractValue(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
+    // The value is the `to` slot (Arc 3 step 3) — what both parsers emit. A
+    // bare two-argument node built directly still reads `args[1]`.
     if (raw.modifiers.to) {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
-
-    const toIndex = raw.args.findIndex(
-      arg => arg.type === 'identifier' && (arg as Record<string, unknown>).name === 'to'
-    );
-
-    if (toIndex >= 0 && raw.args.length > toIndex + 1) {
-      return evaluator.evaluate(raw.args[toIndex + 1], context);
-    }
-
-    if (raw.args.length >= 2) {
-      return evaluator.evaluate(raw.args[1], context);
+    const second = raw.args[1];
+    if (second) {
+      return evaluator.evaluate(second, context);
     }
 
     throw new Error('set command requires a value (use "to" keyword)');
@@ -427,7 +422,7 @@ export class SetCommand implements DecoratedCommand {
 
   private async parseTheXofY(
     expression: string,
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {

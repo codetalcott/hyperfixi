@@ -684,6 +684,10 @@ class HybridParser {
     if (this.match("catch", "finally")) {
       throw new Error(\`'\${this.peek().value}' needs the full parser (use hyperfixi.js)\`);
     }
+    const stray = this.peek();
+    if (!this.isAtEnd() && (stray.type === "identifier" || stray.type === "keyword") && !this.match("then", "and", "end", "else")) {
+      throw new Error(\`'\${stray.value}' needs the full parser (use hyperfixi.js)\`);
+    }
     if (!this.isAtEnd() && !this.match("then", "and", "end", "else")) {
       this.advance();
     }
@@ -736,9 +740,27 @@ class HybridParser {
     if (this.match("end")) this.advance();
     return { type: "while", condition, body };
   }
+  /**
+   * A naked URL — \`fetch /api/data …\`, \`fetch https://x/y …\` — the way upstream
+   * reads one: everything up to the next whitespace, verbatim. The tokenizer
+   * splits \`/api/data\` into \`/\`, \`api\`, \`/\`, \`data\`, and \`parseExpression\` used
+   * to return the first \`/\` as the URL; the skip fallback then dropped the rest
+   * silently, so every unquoted \`fetch /path\` in a hybrid bundle fetched \`/\`.
+   * Measured 2026-09-04 when the fallback stopped being silent.
+   */
+  parseNakedUrl() {
+    const tok = this.peek();
+    const isSlash = tok.type === "operator" && tok.value === "/";
+    const isScheme = (tok.value === "http" || tok.value === "https") && this.source.slice(tok.pos + tok.value.length, tok.pos + tok.value.length + 3) === "://";
+    if (!isSlash && !isScheme) return null;
+    let end = tok.pos;
+    while (end < this.source.length && !/\\s/.test(this.source[end])) end++;
+    while (!this.isAtEnd() && this.peek().pos < end) this.advance();
+    return { type: "literal", value: this.source.slice(tok.pos, end) };
+  }
   parseFetchBlock() {
     this.expect("fetch");
-    const url = this.parseExpression();
+    const url = this.parseNakedUrl() ?? this.parseExpression();
     let responseType = { type: "literal", value: "text" };
     let options;
     let method;
@@ -874,7 +896,14 @@ class HybridParser {
    */
   parseSend(marker) {
     this.advance();
-    const event = this.advance().value;
+    const first = this.advance();
+    let event = first.value;
+    let end = first.pos + first.value.length;
+    while (!this.isAtEnd() && this.peek().type === "localVar" && this.peek().pos === end) {
+      const piece = this.advance();
+      event += piece.value;
+      end = piece.pos + piece.value.length;
+    }
     let target;
     if (this.match(marker)) {
       this.advance();

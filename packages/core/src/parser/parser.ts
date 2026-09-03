@@ -5,7 +5,7 @@
  */
 
 // Token classification is fully predicate-based; there is no TokenType enum.
-import { tokenize } from './tokenizer';
+import { tokenize, lineColumnAt } from './tokenizer';
 import type {
   Token,
   ASTNode,
@@ -13,25 +13,19 @@ import type {
   ExpressionNode,
   ParseResult as CoreParseResult,
   ParseWarning,
-  EventHandlerNode,
-  BehaviorNode,
-  DefNode,
 } from '../types/core';
+import type { EventHandlerNode, BehaviorNode, DefNode, InitBlockNode } from '../ast/nodes';
 import type {
   ParseError as LocalParseError,
   KeywordResolver,
   ParserOptions,
   ParserRegistryIntegration,
 } from './types';
-import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
-// Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
-import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
 import { getRegisteredFeature } from './extensions';
 
 import {
   COMMANDS,
-  COMPOUND_COMMANDS,
   HYPERSCRIPT_KEYWORDS,
   CommandClassification,
   PUT_OPERATIONS,
@@ -82,6 +76,13 @@ import type {
   PossessiveExpressionNode,
 } from './parser-types';
 import * as astHelpers from './helpers/ast-helpers';
+import {
+  fromLegacyCommands,
+  fromLegacyExpression,
+  toLegacyNode,
+  toLegacyNodes,
+  type AnyNode,
+} from '../ast/legacy';
 import * as parsingHelpers from './helpers/parsing-helpers';
 
 // Extracted per-category command parsers.
@@ -91,6 +92,8 @@ import * as animationCommands from './command-parsers/animation-commands';
 import * as domCommands from './command-parsers/dom-commands';
 import * as asyncCommands from './command-parsers/async-commands';
 import * as utilityCommands from './command-parsers/utility-commands';
+import { parseDeclaredCommand } from './command-parsers/declared-commands';
+import { grammarOf, PLUGIN_COMMAND_GRAMMAR } from './command-grammar';
 import * as variableCommands from './command-parsers/variable-commands';
 
 // Pratt parser for expression parsing.
@@ -136,6 +139,27 @@ const STRING_POSTFIX_UNITS = new Set([
 ]);
 
 /**
+ * Time units recognized as a postfix on a SPACED numeric expression
+ * (`over 500 ms`, `wait 2 s`), mirroring upstream's `TimeExpression` — which
+ * accepts exactly these four and rejects `minutes`/`hours`/`days` in both
+ * spellings.
+ *
+ * The tokenizer already joins the UNSPACED form (`500ms`) into one TIME token,
+ * so this is the other half of the same surface and nothing else. The node it
+ * builds is the same `stringPostfix` the CSS units build, which evaluates to
+ * the string `"500ms"` — byte-identical to what the joined token's literal
+ * carries, so every existing duration consumer reads the two spellings the
+ * same way. (Upstream's TimeExpression evaluates to a NUMBER of ms instead;
+ * matching hyperfixi's own joined form matters more here than matching that,
+ * since the joined form is what every consumer in this repo already parses.)
+ *
+ * hyperfixi's TOKENIZER set is wider (`minutes`, `hours`, `days` join too, as
+ * an extension upstream rejects). That asymmetry is deliberate: widening the
+ * spaced form would invent syntax rather than close a gap.
+ */
+const TIME_POSTFIX_UNITS = new Set(['s', 'seconds', 'ms', 'milliseconds']);
+
+/**
  * Binding power for the string-postfix operator. Chosen to sit between binary
  * `+`/`-` (40) and unary `-`/`+` (80) so `-1px` parses as `(-1)px` → "-1px"
  * while `1em + 2px` parses as `"1em" + "2px"` → "1em2px".
@@ -145,14 +169,18 @@ const STRING_POSTFIX_BP = 60;
 /**
  * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
  * The tokenizer already validates the format (TIME_UNITS: ms, s, seconds, minutes, hours, days).
+ *
+ * The bare-`s` check MUST come last: every other unit also ends with `s`, so
+ * testing it earlier captures their suffixes ("2minutes" ended with `s` and
+ * resolved to 2000 ms — a 60× error on `debounced at 2minutes`).
  */
 function parseTimeToMs(timeStr: string): number {
   if (timeStr.endsWith('ms')) return parseInt(timeStr, 10);
   if (timeStr.endsWith('seconds')) return parseFloat(timeStr) * 1000;
-  if (timeStr.endsWith('s')) return parseFloat(timeStr) * 1000;
   if (timeStr.endsWith('minutes')) return parseFloat(timeStr) * 60000;
   if (timeStr.endsWith('hours')) return parseFloat(timeStr) * 3600000;
   if (timeStr.endsWith('days')) return parseFloat(timeStr) * 86400000;
+  if (timeStr.endsWith('s')) return parseFloat(timeStr) * 1000;
   return parseInt(timeStr, 10);
 }
 
@@ -190,7 +218,6 @@ export class Parser {
   private errors: LocalParseError[] = [];
   private warnings: ParseWarning[] = [];
   private keywordResolver?: KeywordResolver;
-  private semanticAdapter?: SemanticIntegrationAdapter;
   private originalInput?: string;
   private registryIntegration?: ParserRegistryIntegration;
 
@@ -216,17 +243,7 @@ export class Parser {
     this.keywordResolver = options?.keywords;
     this.registryIntegration = options?.registryIntegration;
 
-    // Initialize semantic integration if analyzer provided
-    if (options?.semanticAnalyzer && options?.language) {
-      this.semanticAdapter = new SemanticIntegrationAdapter({
-        analyzer: options.semanticAnalyzer as SemanticAnalyzer,
-        language: options.language,
-        confidenceThreshold: options.semanticConfidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD,
-      });
-    }
-
     // Store original input for commands that need raw code (js...end, etc.)
-    // Also used for semantic analysis if adapter is present
     // Fallback to reconstructing from tokens if not provided
     this.originalInput = originalInput || tokens.map(t => t.value).join(' ');
   }
@@ -289,7 +306,7 @@ export class Parser {
 
       // Check if this is a behavior definition (may have multiple)
       if (this.check('behavior')) {
-        const behaviors: ASTNode[] = [];
+        const behaviors: AnyNode[] = [];
 
         while (this.check('behavior')) {
           this.advance(); // consume 'behavior' keyword
@@ -305,7 +322,10 @@ export class Parser {
         if (this.error) {
           return {
             success: false,
-            node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
+            node:
+              behaviors.length === 1
+                ? toLegacyNode(behaviors[0])
+                : this.createProgramNode(behaviors),
             tokens: this.tokens,
             error: this.error,
             warnings: this.warnings,
@@ -315,7 +335,8 @@ export class Parser {
         // Return single behavior directly, or program node for multiple
         return {
           success: true,
-          node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
+          node:
+            behaviors.length === 1 ? toLegacyNode(behaviors[0]) : this.createProgramNode(behaviors),
           tokens: this.tokens,
           warnings: this.warnings,
         };
@@ -333,7 +354,7 @@ export class Parser {
         this.checkComment() ||
         topPluginFeature !== null
       ) {
-        const statements: ASTNode[] = [];
+        const statements: AnyNode[] = [];
 
         // Parse all top-level features (init blocks, event handlers, function defs,
         // plugin features), skipping comments.
@@ -442,7 +463,7 @@ export class Parser {
             debug.parse(
               '✅ PARSER: Found event handlers after command sequence, parsing as program'
             );
-            const statements: ASTNode[] = [commandSequence];
+            const statements: AnyNode[] = [commandSequence];
             debug.parse(
               `✅ PARSER: Starting with ${statements.length} statement(s) from command sequence`
             );
@@ -457,9 +478,7 @@ export class Parser {
               const eventHandler = this.parseEventHandler();
               debug.parse(
                 `✅ PARSER: parseEventHandler returned:`,
-                eventHandler
-                  ? `type=${eventHandler.type}, event=${(eventHandler as Record<string, unknown>).event}`
-                  : 'null'
+                eventHandler ? `type=${eventHandler.type}, event=${eventHandler.event}` : 'null'
               );
               if (eventHandler) {
                 statements.push(eventHandler);
@@ -766,6 +785,16 @@ export class Parser {
     let unit: string | null = null;
     if (STRING_POSTFIX_UNITS.has(v)) {
       unit = v;
+    } else if (TIME_POSTFIX_UNITS.has(v) && this.isNumericPostfixRoot(left)) {
+      // A spaced time unit (`over 500 ms`). Restricted to a NUMERIC root, which
+      // upstream does not do: upstream's TimeExpression matches `s`/`ms` after
+      // ANY expression, so `log a s` becomes the string "as" there. `s` and
+      // `ms` are perfectly ordinary variable names, and hyperfixi's generic
+      // command-argument loops parse expressions in sequence far more often
+      // than upstream's hand-written command parsers do — so the unrestricted
+      // form would silently fuse two arguments. Every real use of this syntax
+      // has a number on the left.
+      unit = v;
     } else if (v === '%') {
       // `%` is the modulo operator only when a right operand follows; otherwise
       // it's a percentage string postfix (`100%`, `100 %`, `(100 + 0) %`).
@@ -786,6 +815,28 @@ export class Parser {
       line: (left as { line?: number }).line,
       column: (left as { column?: number }).column,
     } as ASTNode;
+  }
+
+  /**
+   * Whether `left` is a numeric root a spaced TIME unit may attach to — a
+   * number literal, or a parenthesized/arithmetic expression over one
+   * (`over (2 * delay) ms`). Deliberately narrow; see TIME_POSTFIX_UNITS.
+   */
+  private isNumericPostfixRoot(left: ASTNode): boolean {
+    const node = left as {
+      type?: string;
+      value?: unknown;
+      operator?: string;
+      argument?: ASTNode;
+    };
+    if (node.type === 'literal' && typeof node.value === 'number') return true;
+    if (node.type === 'unaryExpression' && (node.operator === '-' || node.operator === '+')) {
+      return node.argument !== undefined && this.isNumericPostfixRoot(node.argument);
+    }
+    if (node.type === 'binaryExpression' && ['+', '-', '*', '/'].includes(node.operator ?? '')) {
+      return true;
+    }
+    return false;
   }
 
   /** Whether `t` can begin an operand (used to disambiguate `%` postfix vs modulo). */
@@ -940,59 +991,37 @@ export class Parser {
     return CommandClassification.isKeyword(name);
   }
 
+  /**
+   * A command met where an expression was expected (an expression statement,
+   * a conditional branch). Same routing as `parseCommandCore`: a dedicated
+   * parser if the command has one, else its declared grammar row. This used
+   * to carry its own copy of the generic argument loop (Arc 3 step 5 deleted
+   * it — one generic parser, `parseDeclaredCommand`, not two).
+   */
   private createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode | null {
-    const args: ASTNode[] = [];
     // Resolve to English canonical form for AST normalization
     const commandName = this.resolveKeyword(identifierNode.name.toLowerCase());
-
     if (this.isCompoundCommand(commandName)) {
       return this.parseCompoundCommand(identifierNode);
     }
-
-    // Parse command arguments (space-separated, not comma-separated)
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.checkIsCommand()
-    ) {
-      // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
-      if (
-        this.checkContextVar() ||
-        this.checkIdentifier() ||
-        this.checkKeyword() || // Add KEYWORD support for words like "into"
-        this.checkEvent() ||
-        this.checkCssSelector() ||
-        this.checkIdSelector() ||
-        this.checkClassSelector() ||
-        this.checkString() ||
-        this.checkNumber() ||
-        this.checkTimeExpression() ||
-        this.match('<')
-      ) {
-        args.push(this.parsePrimary());
-      } else {
-        // Stop parsing if we encounter an unrecognized token
-        break;
-      }
-    }
-
-    return {
-      type: 'command',
-      name: identifierNode.name,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
-      end: this.getPosition().end,
-      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
+    const commandToken: Token = {
+      kind: 'identifier',
+      value: identifierNode.name,
+      start: identifierNode.start ?? 0,
+      end: identifierNode.end ?? 0,
+      line: identifierNode.line ?? 0,
+      column: identifierNode.column ?? 0,
     };
+    return parseDeclaredCommand(
+      this.getContext(),
+      commandToken,
+      commandName,
+      grammarOf(commandName) ?? PLUGIN_COMMAND_GRAMMAR
+    ) as CommandNode;
   }
 
   private isCompoundCommand(commandName: string): boolean {
-    // Use centralized command list
-    return CommandClassification.isCompoundCommand(commandName);
+    return utilityCommands.COMPOUND_COMMAND_NAMES.has(commandName.toLowerCase());
   }
 
   private parseCompoundCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -1102,6 +1131,13 @@ export class Parser {
             error instanceof Error ? error.message : String(error)
           );
           this.error = savedError;
+          // Restoring the singular error keeps the parse alive, but the
+          // command is GONE from the body. Record it, or the body silently
+          // shrinks by one.
+          this.recordDropped(
+            `Discarded a command that failed to parse: ` +
+              `${error instanceof Error ? error.message : String(error)}`
+          );
         }
       } else if (this.checkIdentifier()) {
         debug.parse('❌ IDENTIFIER is not a command:', this.peek().value);
@@ -1109,11 +1145,21 @@ export class Parser {
 
       if (!parsedCommand) {
         debug.parse('❌ No command parsed, breaking. Current token:', this.peek().value);
+        // The loop gives up here with everything from this token on
+        // unconsumed. When it happens on the FIRST iteration the body is
+        // empty — `on click qqqq` — which used to be reported as a clean
+        // parse of a handler that does nothing.
+        if (!this.isAtEnd() && !isStop()) {
+          this.recordDropped(
+            `Not a command, and the rest of the body was discarded: '${this.peek().value}'`
+          );
+        }
         break;
       }
 
       debug.parse('📍 After parsing command, current token:', this.peek().value);
 
+      const skippedFrom = this.current;
       while (
         !this.isAtEnd() &&
         !isStop() &&
@@ -1126,6 +1172,10 @@ export class Parser {
         debug.parse('⚠️  Skipping unexpected token:', this.peek().value);
         this.advance();
       }
+      // Everything walked past above is input the author wrote and the parse
+      // does not contain — `on click log "a" @@@ ###` keeps the log and drops
+      // the tail. Silent until now.
+      this.recordDroppedRange(skippedFrom, this.current);
 
       if (this.match('then', 'and', ',')) {
         debug.parse('✅ Found separator, continuing');
@@ -1333,10 +1383,6 @@ export class Parser {
   /**
    * Parse regular command
    */
-  private parseRegularCommand(identifierNode: IdentifierNode): CommandNode | null {
-    return utilityCommands.parseRegularCommand(this.getContext(), identifierNode);
-  }
-
   private parseCall(): ASTNode {
     let expr = this.parsePrimary();
 
@@ -1577,7 +1623,9 @@ export class Parser {
           start: varToken.start - 2, // Include both `::` in the start position
           end: varToken.end,
           line: varToken.line,
-          column: varToken.column,
+          // The sigil moved the start back; the column has to follow it, or the
+          // node reports a column that indexes different text than its offset.
+          column: varToken.column - 2,
         } as ASTNode;
       } else {
         // This is `:variable` (element scope — persists per-element across firings)
@@ -1589,7 +1637,8 @@ export class Parser {
           start: varToken.start - 1, // Include the `:` in the start position
           end: varToken.end,
           line: varToken.line,
-          column: varToken.column,
+          // As above: the start moved back past the `:`, so the column must too.
+          column: varToken.column - 1,
         } as ASTNode;
       }
     }
@@ -1629,7 +1678,9 @@ export class Parser {
 
       // Handle special hyperscript constructs
       if (token.value === 'on') {
-        return this.parseEventHandler();
+        // `parsePrimary` is declared `ASTNode` honestly (probe E): some of its
+        // branches really do return a handler or a command, not an expression.
+        return toLegacyNode(this.parseEventHandler());
       }
 
       if (token.value === 'if') {
@@ -1840,14 +1891,22 @@ export class Parser {
         }
       }
 
-      // Wrap in a special dollar expression node
-      return {
-        type: 'dollarExpression',
-        expression,
-        raw: `$${identifierToken.value}${this.previous().value || ''}`,
-        line: identifierToken.line,
-        column: identifierToken.column - 1, // Include the $ symbol
-      };
+      // Return the expression itself rather than wrapping it.
+      //
+      // This used to emit `type: 'dollarExpression'`, a kind NOTHING in the
+      // monorepo reads — measured by `tools/classify-ast-kinds.ts` (Arc 2
+      // step 1) and confirmed by grep across every package. An unevaluatable
+      // kind does not fail at build time; it surfaces at runtime as
+      // `Unknown AST node type: dollarExpression`, which is why the vocabulary
+      // snapshot treats an unread kind as a bug rather than as tidiness.
+      //
+      // No input reaches this branch today — the tokenizer emits `$foo` as one
+      // variable token, so `$window.foo`, `$1`, `$foo.bar.baz` and friends all
+      // parse elsewhere, and `dollarExpression` never appears in the corpus
+      // vocabulary. So this is not a behaviour change; it removes a latent
+      // runtime failure and one dead kind. `expression` is already an
+      // identifier or memberExpression, both of which the evaluator handles.
+      return expression;
     }
 
     this.addError("Expected identifier or number after '$'");
@@ -2221,10 +2280,10 @@ export class Parser {
       type: 'def' as const,
       name: funcName,
       params,
-      body: bodyCommands,
+      body: fromLegacyCommands(bodyCommands),
       ...(errorSymbol !== undefined && { errorSymbol }),
-      ...(errorHandler !== undefined && { errorHandler }),
-      ...(finallyHandler !== undefined && { finallyHandler }),
+      ...(errorHandler !== undefined && { errorHandler: fromLegacyCommands(errorHandler) }),
+      ...(finallyHandler !== undefined && { finallyHandler: fromLegacyCommands(finallyHandler) }),
       start: pos.start,
       end: this.getPosition().end,
       line: pos.line,
@@ -2779,12 +2838,17 @@ export class Parser {
           }
         } else {
           // No parentheses, parse as regular command
+          const cmdToken = this.peek().value;
           const cmd = this.parseCommandWithErrorRecovery();
           if (cmd) {
             commands.push(cmd);
             debug.parse(
               `✅ parseEventHandler: Parsed command, next token: ${this.isAtEnd() ? 'END' : this.peek().value}`
             );
+          } else {
+            // Recovery swallowed the command whole. `on click unless x foo`
+            // lands here and used to yield an EMPTY handler, reported clean.
+            this.recordDropped(`Command '${cmdToken}' failed to parse and was discarded`);
           }
         }
       } else if (this.checkIdentifier()) {
@@ -2794,6 +2858,7 @@ export class Parser {
           // It's a command - parse as command
           const cmd = this.parseCommandWithErrorRecovery();
           if (cmd) commands.push(cmd);
+          else this.recordDropped(`Command '${token.value}' failed to parse and was discarded`);
         } else {
           // Parse as expression (could be function call like focus())
           let expr;
@@ -2840,16 +2905,33 @@ export class Parser {
               };
               commands.push(commandNode);
             } else {
+              this.recordDroppedExpression(expr);
               break; // Not a command pattern
             }
           } else {
+            this.recordDroppedExpression(expr);
             break; // Not a command pattern
           }
         }
       } else {
+        // Nothing here reads as a command, and everything from this token on is
+        // unconsumed. On the FIRST iteration that means an EMPTY handler —
+        // `on click qqqq` — which used to be reported as a clean parse of a
+        // handler that silently does nothing.
+        if (
+          !this.isAtEnd() &&
+          !this.check('end') &&
+          !this.check('catch') &&
+          !this.check('finally')
+        ) {
+          this.recordDropped(
+            `Not a command, and the rest of the handler body was discarded: '${this.peek().value}'`
+          );
+        }
         break; // No more commands
       }
 
+      const bodySkipFrom = this.current;
       // Skip any unexpected tokens until we find a command or separator
       // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
       // But don't skip 'on' tokens (they start new event handlers)
@@ -2869,6 +2951,10 @@ export class Parser {
       ) {
         this.advance(); // skip the unexpected token
       }
+      // Whatever the loop just walked past is input the author wrote and the
+      // handler does not contain: `on click log "a" @@@ ###` keeps the log and
+      // drops the tail. Silent before this.
+      this.recordDroppedRange(bodySkipFrom, this.current);
 
       // Handle command separators
       if (this.match('then', 'and', ',')) {
@@ -2904,19 +2990,19 @@ export class Parser {
       type: 'eventHandler',
       event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
       events: eventNames, // Store all event names for runtime
-      commands,
+      commands: fromLegacyCommands(commands),
       ...(errorSymbol !== undefined && { errorSymbol }),
-      ...(errorHandler !== undefined && { errorHandler }),
-      ...(finallyHandler !== undefined && { finallyHandler }),
+      ...(errorHandler !== undefined && { errorHandler: fromLegacyCommands(errorHandler) }),
+      ...(finallyHandler !== undefined && { finallyHandler: fromLegacyCommands(finallyHandler) }),
       // Event-argument destructure names (`on click(button)`). Emit as `args` —
       // the `EventHandlerNode.args` field the runtime binds from (and the field the
       // behavior-handler parser already uses). Previously emitted as the untyped,
       // unread `params`, so top-level `on event(args)` never bound the names.
       ...(eventParams.length > 0 && { args: eventParams }),
-      ...(condition && { condition }), // Add condition if present
+      ...(condition && { condition: fromLegacyExpression(condition) }), // Add condition if present
       ...(target && { target }), // Add target if present
       ...(attributeName && { attributeName }), // Add attributeName if present
-      ...(watchTarget && { watchTarget }), // Add watchTarget if present
+      ...(watchTarget && { watchTarget: fromLegacyExpression(watchTarget) }), // Add watchTarget if present
       ...(customEventSource && { customEventSource }), // Add custom event source if detected
       ...(Object.keys(modifiers).length > 0 && { modifiers }), // Add modifiers if present
       start: pos.start,
@@ -2976,7 +3062,7 @@ export class Parser {
 
     // Parse behavior body: event handlers and optional init block
     const eventHandlers: EventHandlerNode[] = [];
-    let initBlock: ASTNode | undefined;
+    let initBlock: InitBlockNode | undefined;
 
     // Parse body until we hit 'end'
     while (!this.isAtEnd() && !this.check('end')) {
@@ -3069,10 +3155,14 @@ export class Parser {
         const handlerNode: EventHandlerNode = {
           type: 'eventHandler',
           event: eventName,
-          commands: handlerCommands,
+          commands: fromLegacyCommands(handlerCommands),
           ...(handlerErrorSymbol !== undefined && { errorSymbol: handlerErrorSymbol }),
-          ...(handlerErrorHandler !== undefined && { errorHandler: handlerErrorHandler }),
-          ...(handlerFinallyHandler !== undefined && { finallyHandler: handlerFinallyHandler }),
+          ...(handlerErrorHandler !== undefined && {
+            errorHandler: fromLegacyCommands(handlerErrorHandler),
+          }),
+          ...(handlerFinallyHandler !== undefined && {
+            finallyHandler: fromLegacyCommands(handlerFinallyHandler),
+          }),
           ...(eventSource !== undefined && { target: eventSource }), // Add the captured target from 'from' clause
           ...(eventArgs.length > 0 && { args: eventArgs }), // Add captured event parameters
           start: handlerPos.start,
@@ -3088,7 +3178,7 @@ export class Parser {
 
         initBlock = {
           type: 'initBlock',
-          commands: initCommands,
+          commands: fromLegacyCommands(initCommands),
           start: pos.start,
           end: this.getPosition().end,
           line: pos.line,
@@ -3251,26 +3341,10 @@ export class Parser {
   }
 
   /**
-   * Get multi-word pattern definition for a command
-   */
-  private getMultiWordPattern(commandName: string): parsingHelpers.MultiWordPattern | null {
-    return parsingHelpers.getMultiWordPattern(commandName);
-  }
-
-  /**
    * Check if current token is one of the specified keywords
    */
   private isTokenKeyword(token: Token | undefined, keywords: string[]): boolean {
     return parsingHelpers.isKeyword(token, keywords);
-  }
-
-  /**
-   * Parse multi-word command with modifiers (e.g., "append X to Y", "fetch URL as json")
-   * Returns null if this command doesn't use multi-word syntax
-   */
-  private parseMultiWordCommand(commandToken: Token, commandName: string): CommandNode | null {
-    // Delegate to extracted utility command parser
-    return utilityCommands.parseMultiWordCommand(this.getContext(), commandToken, commandName);
   }
 
   /**
@@ -3304,90 +3378,6 @@ export class Parser {
   }
 
   /**
-   * Try semantic-first parsing for the current command.
-   *
-   * This method attempts to parse using the semantic analyzer when available.
-   * If successful with sufficient confidence, returns the parsed command node.
-   * Otherwise returns null to indicate fallback to traditional parsing.
-   *
-   * @param remainingInput The remaining input string from current position
-   * @returns Parsed CommandNode if successful, null otherwise
-   */
-  private trySemanticParse(remainingInput: string): CommandNode | null {
-    if (!this.semanticAdapter || !this.semanticAdapter.isAvailable()) {
-      return null;
-    }
-
-    try {
-      const result = this.semanticAdapter.trySemanticParse(remainingInput);
-
-      if (result.success && result.node) {
-        debug.parse(
-          `[Semantic] Successfully parsed with confidence ${result.confidence}:`,
-          result.node.name
-        );
-
-        // Update position tracking based on tokens consumed
-        // For now, semantic parsing handles full command - traditional parser continues from here
-        return result.node;
-      }
-
-      debug.parse(
-        `[Semantic] Low confidence (${result.confidence}), falling back to traditional parser`
-      );
-      return null;
-    } catch (error) {
-      debug.parse('[Semantic] Error during semantic parse:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get remaining input from current token position for semantic analysis.
-   */
-  private getRemainingInput(): string {
-    if (!this.originalInput) {
-      // Reconstruct from tokens if not stored
-      return this.tokens
-        .slice(this.current > 0 ? this.current - 1 : 0)
-        .map(t => t.value)
-        .join(' ');
-    }
-
-    // Get position from current token
-    const currentToken = this.current > 0 ? this.tokens[this.current - 1] : this.tokens[0];
-    if (currentToken && currentToken.start !== undefined) {
-      return this.originalInput.slice(currentToken.start);
-    }
-
-    return this.originalInput;
-  }
-
-  /**
-   * Skip tokens until a command boundary is reached.
-   * Used after semantic parsing to sync token position with parsed content.
-   * A command boundary is: then, and, else, end, or end of input.
-   */
-  private skipToCommandBoundary(): void {
-    const boundaryKeywords = ['then', 'and', 'else', 'end'];
-    while (!this.isAtEnd()) {
-      const token = this.peek();
-      const value = token.value.toLowerCase();
-      // Stop at command boundary keywords
-      if (boundaryKeywords.includes(value)) {
-        break;
-      }
-      // Stop at command tokens (next command starting)
-      if (isCommandPredicate(token)) {
-        break;
-      }
-      // Stop at newline boundaries that might indicate command separation
-      // (Handled implicitly by reaching end of relevant tokens)
-      this.advance();
-    }
-  }
-
-  /**
    * Parse a command, then attach any trailing `when`/`where` conditional guard.
    *
    * Traditional command parsers (parseAddCommand, the generic argument loop,
@@ -3400,8 +3390,9 @@ export class Parser {
    * falsy result.
    *
    * The semantic-parse path already maps its `condition` role into
-   * `modifiers.when` and consumes the tokens via skipToCommandBoundary(), so by
-   * the time we peek here there is nothing left to attach — no double handling.
+   * `modifiers.when` and consumes the rest of the token stream on adoption, so
+   * by the time we peek here there is nothing left to attach — no double
+   * handling.
    */
   private parseCommand(): CommandNode {
     const node = this.parseCommandCore();
@@ -3429,101 +3420,14 @@ export class Parser {
   }
 
   private parseCommandCore(): CommandNode {
-    // Try semantic-first parsing if available
-    // Semantic parsing uses modifiers format ({args: [patient], modifiers: {into: dest}})
-    // Command handlers now accept both formats via fallback logic
-
-    // Commands that intentionally use traditional parsing. Each entry has
-    // upstream-`_hyperscript` syntax the semantic schemas do not model:
-    //   - install: `install Behavior(param: value)` named-param block
-    //   - wait: multiline `or` continuation + `from` clauses
-    //   - repeat / for: nested command bodies and `until event X from Y`
-    //   - set / put: complex target syntax (possessive, CSS properties,
-    //     `at start/end of`, `before`, `after`, `into`)
-    //   - increment / decrement: `by N` quantity (no semantic role marker)
-    //   - add: CSS object-literal syntax
-    //   - toggle: `.class` / `@attr` / `*property` argument references —
-    //     semantic parsing drops the prefix, so `toggle @disabled` loses the
-    //     attribute reference (sibling of add / remove, which are also here)
-    //   - take: same family as toggle/add/remove. It also carries a
-    //     `for <recipient>` tail: the semantic match used to leave `for me`
-    //     unconsumed, skipToCommandBoundary() stopped at `for` (a command
-    //     token), and the next round parsed it as a for LOOP. takeSchema now
-    //     models `recipient`, but only as a REFERENCE (`for me`) — upstream's
-    //     element-expression recipients still need this path
-    //   - if / unless: condition role + multi-branch bodies
-    //   - make / measure / trigger / halt / remove / exit / return / closest:
-    //     each carries hyperscript-specific shape that semantic doesn't capture
-    //   - js: raw-body command (semantic loses the body)
-    //   - tell: command block with body
-    //   - fetch: `with { ... }` request options (where hx-headers / hx-vals live),
-    //     naked named args, and `do not throw`. This path reaches modifiers via
-    //     SemanticIntegrationAdapter.parseExpressionString(), which understands
-    //     identifiers, property access and calls — but not object literals — so
-    //     `with { ... }` would arrive as a bogus identifier node even though the
-    //     semantic schema now models the options role (it does, for the buildAST
-    //     multilingual path: fetchSchema's `style`). Before this entry existed the
-    //     URL matched at confidence 1.0 and skipToCommandBoundary() ate the rest,
-    //     dropping method/body/headers off the wire in silence.
-    //   - process: `processSchema` is patient-only — it models
-    //     `partials in <content>` and has no role for the
-    //     `using view transition` tail, so the semantic match consumed the
-    //     content at full confidence and left the tail to be re-parsed as a
-    //     fresh `transition` command (`Transition command requires a CSS
-    //     property`). Same shape as take's entry above; the multilingual half
-    //     is filed in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
-    // `call` and `get` previously lived on this list; they're now handled by
-    // SemanticIntegrationAdapter.parseExpressionString() (method calls etc.).
-    // Migrating any of the remaining commands is a multi-PR initiative
-    // touching both `packages/semantic/` schemas and the dispatch here.
+    // Traditional parsing only. Until Arc 1 step 6 (2026-09-02) this method
+    // first offered every command not on a 27-entry skip list to the semantic
+    // front-end and adopted its parse when confident; a non-English program
+    // now falls back WHOLE-PROGRAM instead — the front-end renders to English
+    // and this parser parses the English (`compileAsync`'s `fallbackText`),
+    // which is the only place the two ever meet. See ENGINE_MIGRATION_PLAN.md.
     const commandToken = this.previous();
     let commandName = commandToken.value;
-    const skipSemanticParsing: string[] = [
-      'install',
-      'wait',
-      'repeat',
-      'for',
-      'set',
-      'put',
-      'increment',
-      'decrement',
-      'add',
-      'append',
-      'prepend',
-      'toggle',
-      'take',
-      'if',
-      'unless',
-      'make',
-      'measure',
-      'trigger',
-      'halt',
-      'remove',
-      'exit',
-      'return',
-      'closest',
-      'js',
-      'tell',
-      'fetch',
-      'process',
-    ];
-
-    if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {
-      const remainingInput = this.getRemainingInput();
-      const semanticResult = this.trySemanticParse(remainingInput);
-      if (semanticResult) {
-        // Successfully parsed with semantic analyzer - advance token position
-        // Skip all tokens until we reach a command boundary
-        // This is necessary because semantic parsing operates on raw strings,
-        // not the token stream, so we need to sync the token position
-        this.skipToCommandBoundary();
-        return semanticResult;
-      }
-      // Fall through to traditional parsing
-    }
-
-    // Note: commandToken already defined above from this.previous()
-    // Re-read the command name (may have been modified above)
 
     // Handle special case for beep! command - check if beep is followed by !
     if (commandName === 'beep' && this.check('!')) {
@@ -3534,12 +3438,6 @@ export class Parser {
     // Dedicated fetch parser with extended _hyperscript-compatible syntax
     if (commandName === 'fetch') {
       return utilityCommands.parseFetchCommand(this.getContext(), commandToken);
-    }
-
-    // Check if this is a multi-word command (append...to, etc.)
-    const multiWordResult = this.parseMultiWordCommand(commandToken, commandName);
-    if (multiWordResult) {
-      return multiWordResult;
     }
 
     // Handle control flow commands
@@ -3583,83 +3481,22 @@ export class Parser {
       );
     }
 
-    const args: ASTNode[] = [];
-
     // Special handling for increment/decrement commands with 'global' and 'by' syntax
     if ((commandName === 'increment' || commandName === 'decrement') && !this.isAtEnd()) {
       return variableCommands.parseIncrementDecrementCommand(this.getContext(), commandToken);
     }
 
-    // Parse command arguments - continue until we hit a separator, end, or another command
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end') &&
-      !this.checkIsCommand()
-    ) {
-      // Always use parseExpression for arguments to handle complex expressions
-      // This allows for expressions like 'Result: ' + (#math-input's value as Math)
-      const expr = this.parseExpression();
-      if (expr) {
-        args.push(expr);
-      } else {
-        // If parseExpression fails, try parsePrimary as fallback
-        args.push(this.parsePrimary());
-      }
-
-      // For comma-separated arguments, consume the comma and continue
-      if (this.match(',')) {
-        // Comma-separated - continue to next argument
-        continue;
-      }
-
-      // For hyperscript natural language syntax, continue if we see keywords that indicate more arguments
-      // This handles patterns like "put X into Y", "add X to Y", "remove X from Y", "transition X over Yms", etc.
-      const continuationKeywords = [
-        'into',
-        'from',
-        'to',
-        'with',
-        'by',
-        'at',
-        'before',
-        'after',
-        'over',
-      ];
-      if (continuationKeywords.some(keyword => this.check(keyword))) {
-        // Continue parsing - this is likely part of the command
-        continue;
-      }
-
-      // Also continue if the previous argument was a continuation keyword
-      // This handles the case where we just parsed "from" and need to parse the target
-      const lastArg = args[args.length - 1];
-      if (
-        lastArg &&
-        (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
-        continuationKeywords.includes((lastArg.name ?? lastArg.value) as string)
-      ) {
-        // The previous argument was a continuation keyword, so continue parsing
-        continue;
-      }
-
-      // No comma and no continuation context - this argument sequence is complete
-      break;
-    }
-
-    const pos = this.getPosition();
-    return {
-      type: 'command',
-      name: commandName,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    // Every remaining command is parsed from its declared grammar row
+    // (`command-grammar.ts`) by the one generic parser. A command word the
+    // manifest does not know — one a plugin registered at runtime — gets the
+    // default row, which is what the old tail loop did for everything:
+    // positional expressions, no marker slots.
+    return parseDeclaredCommand(
+      this.getContext(),
+      commandToken,
+      commandName,
+      grammarOf(commandName) ?? PLUGIN_COMMAND_GRAMMAR
+    ) as CommandNode;
   }
 
   private parseConditional(): ASTNode {
@@ -3715,6 +3552,12 @@ export class Parser {
   }
 
   private parseNavigationFunction(funcName: string): CallExpressionNode {
+    // Every caller enters here having JUST consumed the name token, so this is
+    // that token's span. Capturing it up front matters because `createIdentifier`
+    // reads whatever was consumed LAST — and by the time the callee is built
+    // below, that is the ARGUMENT. `first .item` gave its callee `.item`'s
+    // span, so an LSP hover over `first` highlighted `.item`.
+    const namePos = this.getPosition();
     const args: ASTNode[] = [];
 
     // Handle "first of items", "closest <form/>", etc.
@@ -3722,7 +3565,7 @@ export class Parser {
       args.push(this.parseExpression());
     } else if (this.check('(')) {
       // Standard function call syntax
-      return this.finishCall(this.createIdentifier(funcName));
+      return this.finishCall(astHelpers.createIdentifier(funcName, namePos));
     } else if (
       !this.isAtEnd() &&
       !this.checkBasicOperator() &&
@@ -3733,7 +3576,10 @@ export class Parser {
       args.push(this.parsePrimary());
     }
 
-    const callNode = this.createCallExpression(this.createIdentifier(funcName), args);
+    const callNode = this.createCallExpression(
+      astHelpers.createIdentifier(funcName, namePos),
+      args
+    );
 
     // Relative positional modifiers for `next`/`previous`:
     //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
@@ -3857,6 +3703,15 @@ export class Parser {
   }
 
   private parseContextPropertyAccess(contextVar: 'me' | 'it' | 'you'): MemberExpressionNode {
+    // The possessive word (`my`/`its`/`your`) has just been consumed, and it is
+    // what the object node stands for. Build the object from ITS span rather
+    // than from `createIdentifier`'s "last token consumed", which by every
+    // return below is the PROPERTY: `copy my textContent` gave its `me` node
+    // `textContent`'s span, and the whole memberExpression started at the
+    // property too, leaving `my` outside its own expression.
+    const contextPos = this.getPosition();
+    const contextNode = () => astHelpers.createIdentifier(contextVar, contextPos);
+
     // Check for CSS style-ref syntax: `my *color`, `its *height`, `your *width`.
     const hasCssPrefix = this.match('*');
 
@@ -3866,11 +3721,7 @@ export class Parser {
 
       if (!this.checkIdentifier()) {
         this.addError("Expected property name after 'my *'");
-        return this.createMemberExpression(
-          this.createIdentifier(contextVar),
-          this.createIdentifier(''),
-          false
-        );
+        return this.createMemberExpression(contextNode(), this.createIdentifier(''), false);
       }
 
       // Build the CSS property name (e.g., "background-color")
@@ -3894,7 +3745,7 @@ export class Parser {
       // wrongly made `my *color` computed and double-prefixed `my *computed-color`.
       const cssPropertyName = `*${propertyName}`;
       return this.createMemberExpression(
-        this.createIdentifier(contextVar),
+        contextNode(),
         this.createIdentifier(cssPropertyName),
         false
       );
@@ -3907,7 +3758,7 @@ export class Parser {
         const attrToken = this.advance();
         this.consume(']', "Expected ']' after attribute reference");
         return this.createMemberExpression(
-          this.createIdentifier(contextVar),
+          contextNode(),
           {
             type: 'attributeAccess',
             attributeName: attrToken.value.substring(1),
@@ -3926,7 +3777,7 @@ export class Parser {
       if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
         const attrToken = this.advance();
         return this.createMemberExpression(
-          this.createIdentifier(contextVar),
+          contextNode(),
           this.createIdentifier(attrToken.value), // "@data-attr" including @ prefix
           false
         );
@@ -3941,7 +3792,7 @@ export class Parser {
         `Expected property name after '${contextLabels[contextVar]}'`
       );
       return this.createMemberExpression(
-        this.createIdentifier(contextVar),
+        contextNode(),
         this.createIdentifier(property.value),
         false
       );
@@ -4008,8 +3859,45 @@ export class Parser {
     return astHelpers.createUnaryExpression(operator, argument, prefix, this.getPosition());
   }
 
+  /**
+   * Span a COMPOSITE expression from its leftmost component.
+   *
+   * `getPosition()` reports the last token consumed. That is right for a leaf
+   * and wrong for every node built out of other nodes, which is what these
+   * three builders make:
+   *
+   *   get me.parentElement    memberExpression      [7, 20)  = "parentElement"
+   *   call myFunction()       callExpression        [16, 17) = ")"
+   *   log #target's innerHTML possessiveExpression  [14, 23) = "innerHTML"
+   *
+   * LSP hover and diagnostic ranges read exactly these fields, so all three
+   * highlighted the wrong text — the object/callee half of the expression was
+   * outside its own span.
+   *
+   * Found by the parse-path triage once `@lokascript/semantic` began reporting
+   * real spans of its own: the two paths disagreed, and it was the TRADITIONAL
+   * side that was wrong. The convergence handoff had named it the oracle.
+   *
+   * `line`/`column` are re-derived from the corrected start rather than carried
+   * over. Mixing one token's offset with another's column is the same defect in
+   * miniature — it is why `clear :count` reported column 8 for a value that
+   * starts at offset 6.
+   */
+  private spanFromLeftmost(leftmost: ASTNode | undefined): {
+    start: number;
+    end: number;
+    line: number;
+    column: number;
+  } {
+    const pos = this.getPosition();
+    const start = (leftmost as { start?: number } | undefined)?.start;
+    if (typeof start !== 'number' || start >= pos.start) return pos;
+    if (!this.originalInput) return { ...pos, start };
+    return { ...lineColumnAt(this.originalInput, start), start, end: pos.end };
+  }
+
   private createCallExpression(callee: ASTNode, args: ASTNode[]): CallExpressionNode {
-    return astHelpers.createCallExpression(callee, args, this.getPosition());
+    return astHelpers.createCallExpression(callee, args, this.spanFromLeftmost(callee));
   }
 
   private createMemberExpression(
@@ -4017,7 +3905,12 @@ export class Parser {
     property: ASTNode,
     computed: boolean
   ): MemberExpressionNode {
-    return astHelpers.createMemberExpression(object, property, computed, this.getPosition());
+    return astHelpers.createMemberExpression(
+      object,
+      property,
+      computed,
+      this.spanFromLeftmost(object)
+    );
   }
 
   private createSelector(value: string): SelectorNode {
@@ -4025,7 +3918,7 @@ export class Parser {
   }
 
   private createPossessiveExpression(object: ASTNode, property: ASTNode): PossessiveExpressionNode {
-    return astHelpers.createPossessiveExpression(object, property, this.getPosition());
+    return astHelpers.createPossessiveExpression(object, property, this.spanFromLeftmost(object));
   }
 
   private createErrorNode(): IdentifierNode {
@@ -4068,8 +3961,8 @@ export class Parser {
    * Create a Program node that contains multiple top-level statements
    * (e.g., commands followed by event handlers)
    */
-  private createProgramNode(statements: ASTNode[]): ASTNode {
-    return astHelpers.createProgramNode(statements);
+  private createProgramNode(statements: readonly AnyNode[]): ASTNode {
+    return astHelpers.createProgramNode(toLegacyNodes(statements));
   }
 
   // Token manipulation methods
@@ -4443,6 +4336,67 @@ export class Parser {
   }
 
   /**
+   * Record that the parser DISCARDED input it could not place.
+   *
+   * Deliberately does NOT touch the singular `this.error`, which is what
+   * `success` is derived from: the result stays `success: true` with
+   * `recovered: true` and a populated `errors` array — exactly the shape
+   * `parse()` documents for a recovered parse. A dropped body is a degraded
+   * parse, not a failed one, and callers that already tolerate recovery must
+   * keep working.
+   *
+   * Before this existed, the recovery paths in
+   * `parseCommandListUntilTerminator` discarded tokens in TOTAL SILENCE:
+   * `on click qqqq` returned an empty handler with `success: true`,
+   * `recovered: undefined` and zero diagnostics, so a typo'd command name gave
+   * the user a handler that does nothing and said nothing about it.
+   */
+  /**
+   * Record the tokens between two positions as discarded — but ONLY the ones
+   * that represent lost user intent.
+   *
+   * Two kinds of token are walked past legitimately and must not be reported,
+   * or the signal is pure noise: a structural terminator (`end`, which closes
+   * the construct and whose parse is entirely correct — `on click add .a to me
+   * end` was flagged before this filter), and COMMENTS, which are meant to be
+   * skipped. Measured against the shipped-examples corpus: without this filter
+   * 5 of the 9 flagged sources were false positives.
+   */
+  private recordDroppedRange(from: number, to: number): void {
+    const lost = this.tokens.slice(from, to).filter(t => !isComment(t) && t.value !== 'end');
+    if (lost.length === 0) return;
+    this.recordDropped(
+      `Discarded input the parser could not place: '${lost.map(t => t.value).join(' ')}'`
+    );
+  }
+
+  private recordDropped(message: string): void {
+    const token = this.peek();
+    this.errors.push({
+      message,
+      line: Math.max(1, token.line || 1),
+      column: Math.max(1, token.column || 1),
+      position: Math.max(0, token.start || 0),
+    });
+  }
+
+  /**
+   * Record an expression the handler body parsed but then THREW AWAY because it
+   * is not a command.
+   *
+   * `on click qqqq` reaches here: `qqqq` parses cleanly as an identifier, is
+   * not a command, and the body loop breaks — leaving an EMPTY handler that
+   * used to be reported as a perfectly good parse.
+   */
+  private recordDroppedExpression(
+    expr: { type?: string; name?: unknown } | null | undefined
+  ): void {
+    const what =
+      expr && typeof expr.name === 'string' ? `'${expr.name}'` : `a ${expr?.type ?? 'expression'}`;
+    this.recordDropped(`Not a command, and the rest of the handler body was discarded: ${what}`);
+  }
+
+  /**
    * Synchronize to the next command boundary after a parse error.
    * Skips tokens until: `then`, `end`, `on`, a known command, or end-of-input.
    */
@@ -4643,11 +4597,9 @@ export class Parser {
       addError: this.addError.bind(this),
       addWarning: this.addWarning.bind(this),
 
-      // Utility Functions (5 methods)
+      // Utility Functions (4 methods)
       isCommand: this.isCommand.bind(this),
-      isCompoundCommand: this.isCompoundCommand.bind(this),
       isKeyword: this.isKeyword.bind(this),
-      getMultiWordPattern: this.getMultiWordPattern.bind(this),
       resolveKeyword: this.resolveKeyword.bind(this),
 
       // Position Checkpoint Methods

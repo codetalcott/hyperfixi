@@ -36,7 +36,6 @@ export function createTestContext(overrides?: Partial<ExecutionContext>): Execut
     locals: new Map(),
     globals: new Map(),
     variables: new Map(),
-    evaluationHistory: [],
     ...overrides,
   };
 
@@ -58,15 +57,6 @@ export function createMutableTestContext(baseContext?: Partial<ExecutionContext>
   locals: Map<string, unknown>;
   globals: Map<string, unknown>;
   variables: Map<string, unknown>;
-  evaluationHistory: Array<{
-    readonly expressionName: string;
-    readonly category: string;
-    readonly input: string;
-    readonly output: unknown;
-    readonly timestamp: number;
-    readonly duration: number;
-    readonly success: boolean;
-  }>;
   event: Event | null;
 } {
   return {
@@ -77,7 +67,6 @@ export function createMutableTestContext(baseContext?: Partial<ExecutionContext>
     locals: new Map(),
     globals: new Map(),
     variables: new Map(),
-    evaluationHistory: [],
     event: null,
     ...baseContext,
   };

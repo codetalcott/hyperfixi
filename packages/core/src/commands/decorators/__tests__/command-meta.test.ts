@@ -79,6 +79,38 @@ describe('the static/instance metadata bridge', () => {
       .map(([name]) => name);
     expect(missing).toEqual([]);
   });
+
+  it('publishes no UNAUTHORED isBlocking/hasBody/version on any command', () => {
+    // The gate against the defaults coming back. `commandMeta()` used to fill
+    // all three, so the generated `docs/commands/commands.json` carried
+    // `isBlocking: false`, `hasBody: false`, `version: '1.0.0'` on all 59
+    // commands with ZERO variance — asserting that `wait`, `fetch`, `settle`
+    // and `transition` do not block and that `if`, `repeat` and `tell` take no
+    // body. Nothing authored those values and nothing read them; the defaulting
+    // was the entire source of the falsehood.
+    //
+    // Absence is now meaningful (UNDECLARED, not `false`), so this checks for
+    // *unauthored* presence: a command may still declare one truthfully, but a
+    // uniform value across the whole registry is the defaulting bug returning.
+    // Written registry-wide rather than over CONVERTED because the defect was
+    // never about those three classes — it was about all of them.
+    const present: Record<string, string[]> = { isBlocking: [], hasBody: [], version: [] };
+    const total = registryImplementations().size;
+    for (const [name, impl] of registryImplementations()) {
+      const md = (impl.metadata ?? {}) as Record<string, unknown>;
+      for (const field of Object.keys(present)) {
+        if (field in md) present[field]!.push(name);
+      }
+    }
+    for (const [field, names] of Object.entries(present)) {
+      expect(
+        names.length,
+        `${field} is declared on ${names.length}/${total} commands. If that equals the ` +
+          `registry size, commandMeta() is defaulting it again — which publishes a claim ` +
+          `no author made. A few truthful declarations are fine; all of them is the bug.`
+      ).toBeLessThan(total);
+    }
+  });
 });
 
 describe('the classes converted to commandMeta() in step 1', () => {
@@ -93,25 +125,24 @@ describe('the classes converted to commandMeta() in step 1', () => {
     }
   );
 
-  it.each(CONVERTED)('$name now carries the three defaults (step 3 MOVED this row)', ({ cls }) => {
-    // INVERTED in step 3, deliberately, and left as an explicit assertion
-    // rather than deleted so the change reads as a moved row.
+  it.each(CONVERTED)('$name carries no unauthored boilerplate', ({ cls }) => {
+    // This row has now been inverted TWICE, so the history is worth keeping.
     //
     // Step 1 shipped `commandMeta` as pure identity and asserted these three
-    // fields were ABSENT here, because that was shape-preserving for the three
-    // classes it converted. Step 3 chose the other way — `commandMeta` fills
-    // `isBlocking`/`hasBody`/`version` exactly as `@meta` did — because that is
-    // what keeps the FIFTY-TWO classes it migrated byte-identical, which is the
-    // larger preservation. The cost is these three gaining the fields, and this
-    // assertion is that cost, written down.
+    // fields were ABSENT. Step 3 inverted it — `commandMeta` filled
+    // `isBlocking`/`hasBody`/`version` exactly as `@meta` did — because that
+    // kept the 52 classes it migrated byte-identical, which was the larger
+    // preservation at the time. The comment then said, correctly, that the
+    // values were boilerplate and false for other commands, and that fixing it
+    // was a separate filed item.
     //
-    // The values are boilerplate and two of them are false for other commands
-    // (`wait`/`fetch` do block, `if`/`repeat` do take bodies). Authoring them
-    // truthfully is a separate, filed item — do NOT quietly fix it here.
+    // This is that item, resolved the other way: not by authoring 59 truthful
+    // booleans, but by not publishing a claim nobody made. See the registry-wide
+    // assertion below for why that is the safer direction.
     const md = cls.metadata as Record<string, unknown>;
-    expect(md.isBlocking).toBe(false);
-    expect(md.hasBody).toBe(false);
-    expect(md.version).toBe('1.0.0');
+    expect(md).not.toHaveProperty('isBlocking');
+    expect(md).not.toHaveProperty('hasBody');
+    expect(md).not.toHaveProperty('version');
   });
 
   it.each(CONVERTED)('$name carries a compatibility value (step 3)', ({ cls }) => {

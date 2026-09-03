@@ -17,6 +17,7 @@ import { resolveLanguage } from './language-resolver';
 import type { PluginOptions } from './plugin';
 import type { PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
+import { acceptedByHost, warnRejectedOnce, type HyperscriptParseHost } from './host-validate';
 
 // ---------------------------------------------------------------------------
 // Detect semantic global
@@ -101,14 +102,28 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       return;
     }
 
-    installAttributeTranslator(hs as HyperscriptHost, (src, elt) => {
+    const host = hs as HyperscriptHost & HyperscriptParseHost;
+    installAttributeTranslator(host, (src, elt) => {
       const lang = resolveLanguageWithOptions(elt, options);
       if (!lang || lang === 'en') return src;
 
       const english = preprocessToEnglish(src, lang, semantic, options);
 
-      if (options.debug && english !== src) {
-        console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
+      if (english !== src) {
+        // Host-parser validity gate — see plugin.ts / host-validate.ts.
+        if (options.validateWithHost !== false && !acceptedByHost(host, english)) {
+          if (options.debug) {
+            console.log(
+              `[hyperscript-i18n] ${lang}: host rejected "${english}" — keeping "${src}"`
+            );
+          } else {
+            warnRejectedOnce(lang, src, english);
+          }
+          return src;
+        }
+        if (options.debug) {
+          console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
+        }
       }
 
       return english;

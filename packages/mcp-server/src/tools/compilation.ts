@@ -5,7 +5,7 @@
  * Compile, validate, translate, generate tests, and generate components.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // Lazy-import compilation service (resolved at first call)
 let servicePromise: Promise<any> | null = null;
@@ -27,7 +27,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'compile_hyperscript',
     description:
-      'Compile hyperscript to optimized JavaScript. Accepts natural language (code + language), explicit syntax (explicit), or LLM JSON (semantic). Common roles: patient (what to act on), destination (where to), source (where from). Use get_command_docs for per-command roles. Examples: explicit="[toggle patient:.active destination:#btn]", semantic={ action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }',
+      'Compile hyperscript to optimized JavaScript — the FINAL step of the agent loop (generate → validate_and_compile → repair → compile_hyperscript). Validate first: this tool reports the same failures but returns JavaScript only on success. Accepts natural language (code + language), explicit syntax (explicit), or LLM JSON (semantic). Common roles: patient (what to act on), destination (where to), source (where from). Use get_command_docs for per-command roles. Examples: explicit="[toggle patient:.active destination:#btn]", semantic={ action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }',
     inputSchema: {
       type: 'object',
       properties: {
@@ -62,7 +62,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'validate_and_compile',
     description:
-      'Parse hyperscript into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript.',
+      'START HERE when generating hyperscript: parse into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript. On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, call compile_hyperscript for JavaScript. This validate → repair → compile loop is deterministic — no LLM in the checker.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -77,7 +77,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'translate_code',
     description:
-      'Translate hyperscript between any of 24 languages via full semantic parsing. Higher fidelity than translate_hyperscript — handles SVO/SOV/VSO grammar transformation. Preferred for production translations.',
+      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Every result carries a `verification` report (the output scored against the source via score_fidelity): verification.faithful === true is the claim "this rendering is structurally exact", so present it alongside the translation when showing code to a user for review. Higher fidelity than translate_hyperscript; preferred for production translations.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -136,6 +136,38 @@ export const compilationTools: Tool[] = [
     },
   },
   {
+    name: 'score_fidelity',
+    description:
+      "Score a candidate hyperscript snippet against a reference for structural fidelity — the multilingual CI ratchet's deterministic scorers applied to one pair. Returns actionRecall/multisetRecall/precision/roleFidelity/valueRecall (each 0–1), plus the exact missing/spurious actions and lost invariant values (e.g. a silently rewritten target: toggle.destination=#panel). Sides accept any input format and may be in DIFFERENT languages, so it also verifies a translation preserved meaning. Use after editing or translating code to prove the result faithful; diff_behaviors answers identical-or-not, this answers how-faithful-and-what-drifted.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        reference: {
+          type: 'object',
+          description: 'The trusted side (code/explicit/semantic + language)',
+          properties: {
+            code: { type: 'string' },
+            explicit: { type: 'string' },
+            semantic: { type: 'object' },
+            language: { type: 'string' },
+          },
+        },
+        candidate: {
+          type: 'object',
+          description: 'The side being checked (same shape as reference)',
+          properties: {
+            code: { type: 'string' },
+            explicit: { type: 'string' },
+            semantic: { type: 'object' },
+            language: { type: 'string' },
+          },
+        },
+        confidence: { type: 'number', description: 'Minimum confidence threshold' },
+      },
+      required: ['reference', 'candidate'],
+    },
+  },
+  {
     name: 'diff_behaviors',
     description:
       'Compare two hyperscript inputs at the behavior level. Returns whether they are semantically identical, trigger diffs, and per-operation diffs. Works across languages and input formats.',
@@ -173,6 +205,42 @@ export const compilationTools: Tool[] = [
 // Tool Handler
 // =============================================================================
 
+// Appended as a second content block on failed compile/validate results so an
+// agent's next step is always named in the result itself, not just implied by
+// the tool descriptions. Kept out of content[0], which stays pure JSON.
+const REPAIR_HINT =
+  'Next step: apply the diagnostics above and re-run validate_and_compile. ' +
+  'If an error names a code (e.g. MISSING.ARGUMENT), get_code_fixes returns concrete fixes for it; ' +
+  'get_command_docs lists the roles each command accepts.';
+
+// A parse can succeed while silently dropping part of the input — the parser
+// degrades rather than failing (UNCONSUMED_INPUT, inert shapes), so the result
+// is `ok` with a warning and no error status. That is the likeliest way an
+// agent ships something wrong, and REPAIR_HINT does not fire for it because the
+// call did not fail. This block is the same affordance for the warning band.
+// Deliberately NOT an error: the parse did succeed, so `isError` stays false.
+const REVIEW_HINT =
+  'This parsed, but the diagnostics above are non-empty. A warning such as ' +
+  'UNCONSUMED_INPUT means tokens were parsed but bound to no role, so a role may have ' +
+  'fallen back to a default (often `me`) — the result can look valid while doing something ' +
+  'other than you intended. Compare the returned action/roles/trigger against your intent ' +
+  'before compiling; score_fidelity can prove a rewrite kept the original meaning.';
+
+function compileResult(result: { ok: boolean; diagnostics?: Array<{ severity?: string }> }): {
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+} {
+  const content: Array<{ type: string; text: string }> = [
+    { type: 'text', text: JSON.stringify(result, null, 2) },
+  ];
+  if (!result.ok) {
+    content.push({ type: 'text', text: REPAIR_HINT });
+  } else if (result.diagnostics?.some(d => d.severity === 'warning')) {
+    content.push({ type: 'text', text: REVIEW_HINT });
+  }
+  return { content, isError: !result.ok };
+}
+
 export async function handleCompilationTool(
   name: string,
   args: Record<string, unknown>
@@ -189,10 +257,7 @@ export async function handleCompilationTool(
           language: args.language as string | undefined,
           confidence: args.confidence as number | undefined,
         });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
+        return compileResult(result);
       }
 
       case 'validate_and_compile': {
@@ -203,10 +268,7 @@ export async function handleCompilationTool(
           language: args.language as string | undefined,
           confidence: args.confidence as number | undefined,
         });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
+        return compileResult(result);
       }
 
       case 'translate_code': {
@@ -246,6 +308,18 @@ export async function handleCompilationTool(
           componentName: args.componentName as string | undefined,
           typescript: args.typescript as boolean | undefined,
           framework: args.framework as string | undefined,
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.ok,
+        };
+      }
+
+      case 'score_fidelity': {
+        const result = service.scoreFidelity({
+          reference: args.reference as any,
+          candidate: args.candidate as any,
+          confidence: args.confidence as number | undefined,
         });
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

@@ -20,12 +20,30 @@ import type { ASTNode, EventHandlerNode, CommandNode } from '../types/aot-types.
 let adapter: CoreParserAdapter;
 let adapterAvailable = false;
 
+let adapterError: unknown = null;
+
 try {
   adapter = await createCoreParserAdapter();
   adapterAvailable = true;
-} catch {
+} catch (error) {
   // @hyperfixi/core not available — tests will be skipped
+  adapterError = error;
 }
+
+/**
+ * `describe.runIf` below turns an unconstructable adapter into a file that
+ * passes with ZERO tests, which is how a broken factory reads as green. Since
+ * the factory now also throws when the injected role inferrer is missing (Arc 1
+ * step 4), name the reason out loud instead.
+ */
+describe('adapter availability', () => {
+  it.runIf(!adapterAvailable)('reports why the adapter could not be constructed', () => {
+    expect.fail(
+      'createCoreParserAdapter() threw, so every CoreParserAdapter test below was ' +
+        `skipped rather than run: ${String(adapterError)}`
+    );
+  });
+});
 
 // =============================================================================
 // CORE PARSER ADAPTER TESTS
@@ -42,6 +60,24 @@ describe.runIf(adapterAvailable)('CoreParserAdapter', () => {
       expect(event.event).toBe('click');
       expect(event.body).toBeDefined();
       expect(event.body!.length).toBeGreaterThan(0);
+    });
+
+    it('carries schema-driven semantic roles into the AOT AST', () => {
+      // Role inference is injected (Arc 1 step 4): the engine names roles for
+      // `set` and `go` only, and `toggle` is one of the 41 command names that
+      // get theirs from the front-end inferrer the factory wires in. Codegen
+      // reads `node.roles` in two dozen places, so this is the row that would
+      // redden if the factory stopped injecting it.
+      const ast = adapter.parse('on click toggle .active');
+      const body = (ast as EventHandlerNode).body ?? [];
+      const toggle = body.find(
+        n => n.type === 'command' && (n as CommandNode).name === 'toggle'
+      ) as (CommandNode & { roles?: Record<string, unknown> }) | undefined;
+
+      expect(toggle).toBeDefined();
+      expect(toggle!.roles).toBeDefined();
+      // toMatchObject: the converter also carries source positions through.
+      expect(toggle!.roles!.patient).toMatchObject({ type: 'selector', value: '.active' });
     });
 
     it('parses add command', () => {

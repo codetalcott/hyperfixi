@@ -92,8 +92,19 @@ export type { SupportedLanguage } from './language-keywords';
 const VIRTUAL_MODULE_ID = 'virtual:hyperfixi';
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
 
-// Import aliases that resolve to the virtual module
-const IMPORT_ALIASES = ['hyperfixi', '@hyperfixi/core', 'virtual:hyperfixi'];
+/**
+ * Import aliases that resolve to the virtual module.
+ *
+ * `lokascript` is here for a reason beyond brand symmetry: the docs consistently
+ * show `import 'lokascript'` for the plugin flow, and neither `lokascript` nor
+ * `hyperfixi` is a published npm package. Because `resolveId` runs BEFORE
+ * node_modules resolution, any specifier listed here is intercepted and can
+ * never fall through. Any specifier NOT listed here falls through — so an
+ * unlisted `lokascript` failed to resolve outright, and would silently resolve
+ * to a full ~300 KB package the day someone publishes that name, defeating the
+ * entire point of the plugin's generated ~8 KB bundle. Listing it closes both.
+ */
+const IMPORT_ALIASES = ['hyperfixi', 'lokascript', '@hyperfixi/core', 'virtual:hyperfixi'];
 
 /**
  * Compute a hash of the current usage for dev-server cache invalidation.

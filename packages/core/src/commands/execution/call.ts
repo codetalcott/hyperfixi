@@ -18,6 +18,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for CallCommand
@@ -59,7 +60,7 @@ export class CallCommand implements DecoratedCommand {
   declare readonly name: string;
 
   parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'call'>,
     _evaluator: unknown,
     _context: ExecutionContext
   ): Promise<CallCommandInput> {

@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/testing-framework",
-  "version": "2.9.4",
+  "version": "3.0.0",
   "description": "Cross-platform behavior testing suite for LokaScript applications",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../patterns-reference ../core",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../patterns-reference ../core ../aot-compiler ../compilation-service",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -40,7 +40,7 @@
     "analyze-failures": "tsx src/multilingual/tools/analyze-failures.ts",
     "typecheck": "tsc --noEmit",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
-    "test:canonical": "FOREIGN_CANONICAL_VALIDITY=1 VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/canonical-validity.test.ts src/multilingual/foreign-canonical-validity.test.ts",
+    "test:canonical": "FOREIGN_CANONICAL_VALIDITY=1 VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/canonical-validity.test.ts src/multilingual/foreign-canonical-validity.test.ts src/multilingual/render-fidelity.test.ts src/multilingual/bare-render-fidelity.test.ts",
     "test:shipped-sources": "VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/shipped-sources-validity.test.ts"
   },
   "keywords": [
@@ -57,16 +57,17 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^2.9.4",
-    "@hyperfixi/patterns-reference": "^2.9.4",
-    "@lokascript/i18n": "^2.9.4",
-    "@lokascript/semantic": "^2.9.4",
+    "@hyperfixi/core": "^3.0.0",
+    "@hyperfixi/patterns-reference": "^3.0.0",
+    "@lokascript/compilation-service": "^3.0.0",
+    "@lokascript/i18n": "^3.0.0",
+    "@lokascript/semantic": "^3.0.0",
     "diff": "^8.0.3",
     "esbuild": "^0.28.0",
     "happy-dom": "^20.10.6",
     "jsdom": "^30.0.0",
     "playwright": "^1.40.0",
-    "puppeteer": "^24.26.1",
+    "puppeteer": "^25.9.0",
     "tsx": "^4.23.1",
     "url-parse": "^1.5.10",
     "vite": "^8.1.4"

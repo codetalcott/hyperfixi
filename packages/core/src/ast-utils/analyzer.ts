@@ -15,6 +15,7 @@ import type {
   CodeSuggestion,
   PatternMatch,
 } from './types.js';
+import { isASTNode, field, nodeList } from './duck.js';
 
 // ============================================================================
 // Complexity Analysis
@@ -56,23 +57,25 @@ function calculateCognitiveComplexity(ast: ASTNode): number {
 }
 
 function calculateHalsteadMetrics(ast: ASTNode): ComplexityMetrics['halstead'] {
-  const operators = new Set<string>();
-  const operands = new Set<string>();
+  // `unknown` sets: the vocabulary is whatever the nodes carry, and only the
+  // SIZE is read, so coercing would change the count for nothing.
+  const operators = new Set<unknown>();
+  const operands = new Set<unknown>();
   let totalOperators = 0;
   let totalOperands = 0;
 
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).operator) {
-        operators.add((node as any).operator);
+      if (node.operator) {
+        operators.add(node.operator);
         totalOperators++;
       }
-      if ((node as any).name) {
-        operands.add((node as any).name);
+      if (node.name) {
+        operands.add(node.name);
         totalOperands++;
       }
-      if ((node as any).value !== undefined) {
-        operands.add(String((node as any).value));
+      if (node.value !== undefined) {
+        operands.add(String(node.value));
         totalOperands++;
       }
       if (node.type && ['command', 'conditional', 'binaryExpression'].includes(node.type)) {
@@ -93,9 +96,10 @@ function calculateHalsteadMetrics(ast: ASTNode): ComplexityMetrics['halstead'] {
 }
 
 function isDecisionNode(node: ASTNode): boolean {
+  const operator = node.operator;
   return (
     ['conditional', 'binaryExpression', 'logicalExpression'].includes(node.type) ||
-    ((node as any).operator && ['&&', '||', '?'].includes((node as any).operator))
+    (typeof operator === 'string' && ['&&', '||', '?'].includes(operator))
   );
 }
 
@@ -179,22 +183,20 @@ function detectLongCommandChains(ast: ASTNode): CodeSmell[] {
 
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).commands && Array.isArray((node as any).commands)) {
-        const commands = (node as any).commands;
-        if (commands.length > maxCommands) {
-          smells.push({
-            type: 'long-command-chain',
-            severity: 'medium',
-            location: {
-              ...(node.start !== undefined && { start: node.start }),
-              ...(node.end !== undefined && { end: node.end }),
-              ...(node.line !== undefined && { line: node.line }),
-              ...(node.column !== undefined && { column: node.column }),
-            },
-            message: `Command chain with ${commands.length} commands exceeds recommended maximum of ${maxCommands}`,
-            suggestion: 'Consider breaking into smaller, focused handlers',
-          });
-        }
+      const commands = nodeList(node.commands);
+      if (commands && commands.length > maxCommands) {
+        smells.push({
+          type: 'long-command-chain',
+          severity: 'medium',
+          location: {
+            ...(node.start !== undefined && { start: node.start }),
+            ...(node.end !== undefined && { end: node.end }),
+            ...(node.line !== undefined && { line: node.line }),
+            ...(node.column !== undefined && { column: node.column }),
+          },
+          message: `Command chain with ${commands.length} commands exceeds recommended maximum of ${maxCommands}`,
+          suggestion: 'Consider breaking into smaller, focused handlers',
+        });
       }
     },
   });
@@ -206,8 +208,8 @@ function detectComplexConditions(ast: ASTNode): CodeSmell[] {
   const smells: CodeSmell[] = [];
   const visitor = new ASTVisitor({
     enter(node) {
-      if (node.type === 'conditional' && (node as any).condition) {
-        const conditionComplexity = calculateExpressionComplexity((node as any).condition);
+      if (node.type === 'conditional' && isASTNode(node.condition)) {
+        const conditionComplexity = calculateExpressionComplexity(node.condition);
         if (conditionComplexity > 3) {
           smells.push({
             type: 'complex-condition',
@@ -233,7 +235,8 @@ function calculateExpressionComplexity(expr: ASTNode): number {
   let complexity = 1;
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).operator && ['&&', '||', '!'].includes((node as any).operator)) {
+      const operator = node.operator;
+      if (typeof operator === 'string' && ['&&', '||', '!'].includes(operator)) {
         complexity++;
       }
     },
@@ -252,12 +255,13 @@ export function analyzeDependencies(ast: ASTNode): DependencyGraph {
 
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).name === 'set' && (node as any).variable) {
-        const varName = (node as any).variable.name;
+      if (node.name === 'set' && node.variable) {
+        const varName = field(node.variable, 'name');
+        if (typeof varName !== 'string') return;
         nodes.add(varName);
 
-        if ((node as any).value) {
-          const deps = extractDependencies((node as any).value);
+        if (node.value) {
+          const deps = extractDependencies(node.value);
           if (!edges.has(varName)) edges.set(varName, new Set());
           deps.forEach(dep => {
             nodes.add(dep);
@@ -273,11 +277,12 @@ export function analyzeDependencies(ast: ASTNode): DependencyGraph {
   return { nodes, edges, cycles };
 }
 
-function extractDependencies(valueNode: ASTNode): string[] {
+function extractDependencies(valueNode: unknown): string[] {
   const deps: string[] = [];
+  if (!isASTNode(valueNode)) return deps;
   const visitor = new ASTVisitor({
     enter(node) {
-      if (node.type === 'identifier') deps.push((node as any).name);
+      if (node.type === 'identifier' && typeof node.name === 'string') deps.push(node.name);
     },
   });
   visit(valueNode, visitor);
@@ -338,14 +343,16 @@ export function findDeadCode(ast: ASTNode): Array<{
 
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).name === 'set' && (node as any).variable) {
-        const varName = (node as any).variable.name;
-        definedVars.add(varName);
-        varDefinitions.set(varName, node);
-        definitionIdentifiers.add(varName);
+      if (node.name === 'set' && node.variable) {
+        const varName = field(node.variable, 'name');
+        if (typeof varName === 'string') {
+          definedVars.add(varName);
+          varDefinitions.set(varName, node);
+          definitionIdentifiers.add(varName);
+        }
       }
-      if (node.type === 'identifier' && (node as any).name) {
-        const name = (node as any).name;
+      const name = node.name;
+      if (node.type === 'identifier' && typeof name === 'string' && name) {
         if (!definitionIdentifiers.has(name)) usedVars.add(name);
       }
     },
@@ -372,7 +379,7 @@ export function findDeadCode(ast: ASTNode): Array<{
   let afterHalt = false;
   const visitor2 = new ASTVisitor({
     enter(node) {
-      if ((node as any).name === 'halt' || (node as any).name === 'throw') {
+      if (node.name === 'halt' || node.name === 'throw') {
         afterHalt = true;
       } else if (afterHalt && node.type === 'command') {
         deadCode.push({
@@ -408,15 +415,17 @@ function suggestBatchOperations(ast: ASTNode): CodeSuggestion[] {
   const suggestions: CodeSuggestion[] = [];
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).commands && Array.isArray((node as any).commands)) {
-        const commands = (node as any).commands;
+      const commands = nodeList(node.commands);
+      if (commands) {
         const sameCmdGroups = groupConsecutiveSameCommands(commands);
         for (const group of sameCmdGroups) {
-          if (group.length >= 3 && group[0].name === 'add' && sameTarget(group)) {
+          if (group.length >= 3 && group[0]!.name === 'add' && sameTarget(group)) {
+            const classes = group.map(c => field(field(c.args, '0'), 'value')).join(' ');
+            const target = field(group[0]!.target, 'name') || 'target';
             suggestions.push({
               type: 'batch-operations',
               description: 'Group class operations',
-              suggestion: `Combine multiple add operations: add ${group.map((c: any) => c.args[0].value).join(' ')} to ${group[0].target?.name || 'target'}`,
+              suggestion: `Combine multiple add operations: add ${classes} to ${target}`,
               impact: 'high',
               confidence: 0.9,
             });
@@ -445,12 +454,12 @@ function suggestSimplifyConditionals(ast: ASTNode): CodeSuggestion[] {
   return suggestions;
 }
 
-function groupConsecutiveSameCommands(commands: any[]): any[][] {
-  const groups: any[][] = [];
-  let currentGroup: any[] = [];
+function groupConsecutiveSameCommands(commands: ASTNode[]): ASTNode[][] {
+  const groups: ASTNode[][] = [];
+  let currentGroup: ASTNode[] = [];
 
   for (const cmd of commands) {
-    if (currentGroup.length === 0 || cmd.name === currentGroup[0].name) {
+    if (currentGroup.length === 0 || cmd.name === currentGroup[0]!.name) {
       currentGroup.push(cmd);
     } else {
       if (currentGroup.length > 0) groups.push(currentGroup);
@@ -461,10 +470,10 @@ function groupConsecutiveSameCommands(commands: any[]): any[][] {
   return groups;
 }
 
-function sameTarget(commands: any[]): boolean {
+function sameTarget(commands: ASTNode[]): boolean {
   if (commands.length === 0) return true;
-  const firstTarget = commands[0].target?.name;
-  return commands.every((cmd: any) => cmd.target?.name === firstTarget);
+  const firstTarget = field(commands[0]!.target, 'name');
+  return commands.every(cmd => field(cmd.target, 'name') === firstTarget);
 }
 
 // ============================================================================
@@ -479,7 +488,7 @@ export function analyzePatterns(ast: ASTNode): PatternMatch[] {
       type: 'event-handler',
       pattern: 'event-handler',
       node: ast,
-      bindings: { event: (ast as any).event },
+      bindings: { event: ast.event },
       confidence: 0.9,
       suggestion: 'Consider using event delegation for multiple similar handlers',
     });
@@ -487,9 +496,9 @@ export function analyzePatterns(ast: ASTNode): PatternMatch[] {
 
   const visitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).commands && Array.isArray((node as any).commands)) {
-        const commands = (node as any).commands;
-        const toggleCommands = commands.filter((cmd: any) => cmd.name === 'toggle');
+      const commands = nodeList(node.commands);
+      if (commands) {
+        const toggleCommands = commands.filter(cmd => cmd.name === 'toggle');
         if (toggleCommands.length >= 2) {
           patterns.push({
             type: 'toggle-pair',
@@ -497,7 +506,9 @@ export function analyzePatterns(ast: ASTNode): PatternMatch[] {
             node,
             bindings: {
               count: toggleCommands.length,
-              targets: toggleCommands.map((cmd: any) => cmd.target?.name || cmd.target?.value),
+              targets: toggleCommands.map(
+                cmd => field(cmd.target, 'name') || field(cmd.target, 'value')
+              ),
             },
             confidence: 0.85,
             suggestion: 'Consider using a single toggle with multiple targets',

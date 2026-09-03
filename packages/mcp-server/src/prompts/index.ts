@@ -6,7 +6,7 @@
  * protocol, making them available as slash-command-style prompts in Claude Code.
  */
 
-import type { Prompt, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Prompt, GetPromptResult } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Prompt Definitions

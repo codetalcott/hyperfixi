@@ -1,7 +1,7 @@
 /**
  * Registry System Tests
  *
- * Tests for EventSourceRegistry, ContextProviderRegistry, and unified registry.
+ * Tests for EventSourceRegistry and the unified registry.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -12,16 +12,9 @@ import {
   type EventSourceSubscribeOptions,
 } from './event-source-registry';
 import {
-  ContextProviderRegistry,
-  createContextProviderRegistry,
-  meProvider,
-  itProvider,
-} from './context-provider-registry';
-import {
   createRegistry,
   commands,
   eventSources,
-  context,
   definePlugin,
   type LokaScriptPlugin,
 } from './index';
@@ -234,211 +227,6 @@ describe('EventSourceRegistry', () => {
 });
 
 // ============================================================================
-// ContextProviderRegistry Tests
-// ============================================================================
-
-describe('ContextProviderRegistry', () => {
-  let registry: ContextProviderRegistry;
-
-  beforeEach(() => {
-    registry = createContextProviderRegistry();
-  });
-
-  describe('register/unregister', () => {
-    it('should register a provider function', () => {
-      registry.register('test', () => 'test-value');
-
-      expect(registry.has('test')).toBe(true);
-    });
-
-    it('should register a full provider object', () => {
-      registry.register('test', {
-        name: 'test',
-        provide: () => 'test-value',
-        description: 'Test provider',
-      });
-
-      expect(registry.has('test')).toBe(true);
-      expect(registry.get('test')?.description).toBe('Test provider');
-    });
-
-    it('should normalize names to lowercase', () => {
-      registry.register('TEST', () => 'value');
-
-      expect(registry.has('test')).toBe(true);
-      expect(registry.has('TEST')).toBe(true);
-    });
-
-    it('should unregister a provider', () => {
-      registry.register('test', () => 'value');
-      const result = registry.unregister('test');
-
-      expect(result).toBe(true);
-      expect(registry.has('test')).toBe(false);
-    });
-  });
-
-  describe('resolve', () => {
-    it('should resolve a sync provider', async () => {
-      registry.register('test', () => 'sync-value');
-      const context = createMockContext();
-
-      const value = await registry.resolve('test', context);
-      expect(value).toBe('sync-value');
-    });
-
-    it('should resolve an async provider', async () => {
-      registry.register('test', async () => {
-        await new Promise(r => setTimeout(r, 10));
-        return 'async-value';
-      });
-      const context = createMockContext();
-
-      const value = await registry.resolve('test', context);
-      expect(value).toBe('async-value');
-    });
-
-    it('should return undefined for unknown provider', async () => {
-      const context = createMockContext();
-      const value = await registry.resolve('nonexistent', context);
-
-      expect(value).toBeUndefined();
-    });
-
-    it('should cache provider results when cache is enabled', async () => {
-      let callCount = 0;
-      registry.register(
-        'test',
-        () => {
-          callCount++;
-          return `value-${callCount}`;
-        },
-        { cache: true }
-      );
-
-      const context = createMockContext();
-      const cache = new Map();
-
-      const value1 = await registry.resolve('test', context, cache);
-      const value2 = await registry.resolve('test', context, cache);
-
-      expect(value1).toBe('value-1');
-      expect(value2).toBe('value-1'); // Same cached value
-      expect(callCount).toBe(1); // Called only once
-    });
-
-    it('should pass context to provider function', async () => {
-      registry.register('test', ctx => ctx.locals.get('myValue'));
-
-      const context = createMockContext({
-        locals: new Map([['myValue', 'from-context']]),
-      });
-
-      const value = await registry.resolve('test', context);
-      expect(value).toBe('from-context');
-    });
-
-    it('should resolve dependencies before provider', async () => {
-      const order: string[] = [];
-
-      registry.register('dep', () => {
-        order.push('dep');
-        return 'dep-value';
-      });
-
-      registry.register(
-        'main',
-        () => {
-          order.push('main');
-          return 'main-value';
-        },
-        { dependencies: ['dep'] }
-      );
-
-      const context = createMockContext();
-      const cache = new Map();
-
-      await registry.resolve('main', context, cache);
-
-      expect(order).toEqual(['dep', 'main']);
-    });
-  });
-
-  describe('resolveSync', () => {
-    it('should resolve sync provider synchronously', () => {
-      registry.register('test', () => 'sync-value');
-      const context = createMockContext();
-
-      const value = registry.resolveSync('test', context);
-      expect(value).toBe('sync-value');
-    });
-
-    it('should throw for async provider', () => {
-      registry.register('test', async () => 'async-value');
-      const context = createMockContext();
-
-      expect(() => registry.resolveSync('test', context)).toThrow(/is async/);
-    });
-  });
-
-  describe('enhance', () => {
-    it('should create proxy with provider getters', () => {
-      registry.register('custom', () => 'custom-value');
-      const context = createMockContext({ me: document.body as Element });
-
-      const enhanced = registry.enhance(context);
-
-      expect(enhanced.me).toBe(document.body);
-      expect((enhanced as any).custom).toBe('custom-value');
-    });
-
-    it('should report has() for registered providers', () => {
-      registry.register('custom', () => 'value');
-      const context = createMockContext();
-
-      const enhanced = registry.enhance(context);
-
-      expect('custom' in enhanced).toBe(true);
-      expect('unknown' in enhanced).toBe(false);
-    });
-  });
-
-  describe('resolveAll', () => {
-    it('should resolve all providers', async () => {
-      registry.register('a', () => 'value-a');
-      registry.register('b', () => 'value-b');
-      registry.registerGlobal('global', () => 'global-value');
-
-      const context = createMockContext();
-      const all = await registry.resolveAll(context);
-
-      expect(all.a).toBe('value-a');
-      expect(all.b).toBe('value-b');
-      expect(all.global).toBe('global-value');
-    });
-  });
-
-  describe('built-in providers', () => {
-    it('meProvider should return context.me', () => {
-      const el = document.createElement('div');
-      const context = createMockContext({ me: el });
-
-      const value = meProvider.provide(context);
-      expect(value).toBe(el);
-    });
-
-    it('itProvider should return context.it', () => {
-      const context = createMockContext({ it: 'test-it-value' });
-
-      const value = itProvider.provide(context);
-      expect(value).toBe('test-it-value');
-    });
-  });
-});
-
-// ============================================================================
-// Unified Registry Tests
-// ============================================================================
 
 describe('Unified Registry', () => {
   describe('createRegistry', () => {
@@ -447,7 +235,6 @@ describe('Unified Registry', () => {
 
       expect(registry.commands).toBeDefined();
       expect(registry.eventSources).toBeDefined();
-      expect(registry.context).toBeDefined();
     });
 
     it('should accept custom sub-registries', () => {
@@ -488,19 +275,6 @@ describe('Unified Registry', () => {
       registry.use(plugin);
 
       expect(registry.eventSources.has('plugin-source')).toBe(true);
-    });
-
-    it('should install plugin context providers', () => {
-      const registry = createRegistry();
-
-      const plugin: LokaScriptPlugin = {
-        name: 'test-plugin',
-        contextProviders: [{ name: 'custom', provide: () => 'custom-value' }],
-      };
-
-      registry.use(plugin);
-
-      expect(registry.context.has('custom')).toBe(true);
     });
 
     it('should call plugin setup function', () => {
@@ -585,19 +359,6 @@ describe('Shorthand Accessors', () => {
 
     it('should list source names', () => {
       const names = eventSources.names();
-      expect(Array.isArray(names)).toBe(true);
-    });
-  });
-
-  describe('context shorthand', () => {
-    it('should register context providers via shorthand', () => {
-      context.register('shorthand-ctx', () => 'value');
-
-      expect(context.has('shorthand-ctx')).toBe(true);
-    });
-
-    it('should list provider names', () => {
-      const names = context.names();
       expect(Array.isArray(names)).toBe(true);
     });
   });

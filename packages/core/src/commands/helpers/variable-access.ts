@@ -14,7 +14,7 @@
 
 import type { ExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
-import { setGlobal, notifyLocalWrite, notifyLocalRead } from '../../parser/extensions';
+import { setGlobal, notifyLocalWrite, notifyLocalRead } from '../../core/scope-hooks';
 import { getElementVar, setElementVar } from '../../core/context';
 
 /**

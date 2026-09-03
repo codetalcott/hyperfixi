@@ -181,7 +181,11 @@ export const bengaliDictionary: Dictionary = {
     random: 'এলোমেলো',
     length: 'দৈর্ঘ্য',
     index: 'সূচক',
-    empty: 'খালি-করুন',
+    // The EXPRESSION `empty` is the state predicate (`if my value is empty`),
+    // not the command: `খালি-করুন` is the imperative "empty it!" and belongs to
+    // the `empty` COMMAND, which keeps it. Kept in step with the semantic
+    // lexicon by `lexicon-parity.test.ts`.
+    empty: 'খালি',
     'starts with': 'দিয়ে_শুরু',
     'ends with': 'দিয়ে_শেষ',
     'ignoring case': 'কেস_উপেক্ষা',

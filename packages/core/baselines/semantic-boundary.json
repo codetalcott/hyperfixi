@@ -1,0 +1,42 @@
+{
+  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
+  "generated": "2026-09-03",
+  "totals": {
+    "static-value": 5,
+    "dynamic": 1,
+    "static-type": 2,
+    "typeof-import": 2
+  },
+  "files": {
+    "compatibility/browser-bundle-classic-i18n.ts": {
+      "static-value": 1,
+      "reason": "LEGITIMATE and terminal. This IS the classic-i18n bundle; importing @lokascript/i18n/browser is its entire reason to exist. Target-state row."
+    },
+    "compatibility/browser-bundle-multilingual.ts": {
+      "typeof-import": 1,
+      "reason": "LEGITIMATE. A `typeof import(...)` type query only — the module itself is loaded lazily by getSemanticModule(). Target-state row."
+    },
+    "compatibility/browser-bundle-semantic-complete.ts": {
+      "static-value": 1,
+      "reason": "LEGITIMATE and terminal. This IS the semantic-complete bundle. Target-state row."
+    },
+    "compatibility/browser-bundle.ts": {
+      "static-value": 1,
+      "reason": "LEGITIMATE. The full browser bundle ships the multilingual API on purpose (hyperfixi.semantic.*). Target-state row."
+    },
+    "multilingual/bridge.ts": {
+      "static-type": 1,
+      "typeof-import": 1,
+      "dynamic": 1,
+      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 — the engine now owns that policy."
+    },
+    "multilingual/index.ts": {
+      "static-type": 1,
+      "reason": "Type-only. MultilingualHyperscript's public surface names SemanticNode/ASTNode. Front-end module; stays after Arc 1 step 3."
+    },
+    "multilingual/schema-roles.ts": {
+      "static-value": 2,
+      "reason": "LEGITIMATE and target-state. The schema-driven role inferrer `fromCoreAST` takes by injection (Arc 1 step 4). These two imports are the SAME two that ast-utils/interchange/from-core.ts used to hold — the step moved them from a file that must not import the front-end onto the front-end side of the line, so the static-value TOTAL is unchanged at 7. Both `multilingual/` rows are target-state under the ratchet's endpoint (compatibility/browser-bundle*.ts + multilingual/ only)."
+    }
+  }
+}

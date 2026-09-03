@@ -7,6 +7,7 @@
  * Syntax:
  *   hide                    # Hide current element (me)
  *   hide <target>           # Hide specified element(s)
+ *   hide <target> when <c>  # Hide those matching <c>, show the rest
  */
 
 import type { TypedExecutionContext } from '../../types/core';
@@ -25,8 +26,14 @@ export type HideCommandInput = VisibilityInput;
 export class HideCommand extends VisibilityCommandBase {
   static readonly metadata = commandMeta({
     description: 'Hide elements by setting display to none',
-    syntax: 'hide [<target>]',
-    examples: ['hide me', 'hide #modal', 'hide .warnings', 'hide <button/>'],
+    syntax: 'hide [<target>] [when <condition>]',
+    examples: [
+      'hide me',
+      'hide #modal',
+      'hide .warnings',
+      'hide <button/>',
+      'hide <li/> when its textContent is empty',
+    ],
     sideEffects: ['dom-mutation'],
     category: 'dom',
     compatibility: 'standard',
@@ -41,6 +48,11 @@ export class HideCommand extends VisibilityCommandBase {
   async execute(input: VisibilityCommandInput, _context: TypedExecutionContext): Promise<void> {
     for (const element of input.targets) {
       this.hideElement(element);
+    }
+    // The mirror of ShowCommand's: elements the `when` filter rejected are
+    // SHOWN, so re-running `hide … when <c>` un-hides what stopped matching.
+    for (const element of input.inverse ?? []) {
+      this.showElement(element);
     }
   }
 

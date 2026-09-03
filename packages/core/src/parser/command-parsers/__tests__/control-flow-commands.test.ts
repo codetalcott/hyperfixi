@@ -191,9 +191,8 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result).not.toBeNull();
       expect(result!.name).toBe('halt');
-      expect(result!.args).toHaveLength(2);
-      expect((result!.args[0] as any).name).toBe('the');
-      expect((result!.args[1] as any).name).toBe('event');
+      expect(result!.args).toHaveLength(0);
+      expect(result!.modifiers?.the).toMatchObject({ type: 'literal', value: 'event' });
     });
 
     it('should parse halt the (without event keyword following)', () => {
@@ -205,9 +204,9 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result).not.toBeNull();
       expect(result!.name).toBe('halt');
-      // Only 'the' should be in args since 'something' !== 'event'
-      expect(result!.args).toHaveLength(1);
-      expect((result!.args[0] as any).name).toBe('the');
+      // `the` alone still names the event; `something` is left for the caller.
+      expect(result!.args).toHaveLength(0);
+      expect(result!.modifiers?.the).toMatchObject({ type: 'literal', value: 'event' });
     });
   });
 
@@ -225,7 +224,7 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = loop type identifier ('forever')
-      expect((result.args[0] as any).name).toBe('forever');
+      expect((result.modifiers?.loopType as any).value).toBe('forever');
       // Last arg should be a block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');
@@ -275,10 +274,9 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = loop type ('times')
-      expect((result.args[0] as any).name).toBe('times');
+      expect((result.modifiers?.loopType as any).value).toBe('times');
       // args should include the times count expression
-      const timesArg = result.args.find((a: any) => a.type === 'literal' && a.value === 5);
-      expect(timesArg).toBeDefined();
+      expect((result.modifiers?.times as any).value).toBe(5);
       // Last arg = block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');
@@ -322,12 +320,10 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = loop type ('for')
-      expect((result.args[0] as any).name).toBe('for');
-      // args[1] = variable name (as string node)
-      expect((result.args[1] as any).type).toBe('string');
-      expect((result.args[1] as any).value).toBe('item');
-      // args[2] = collection expression
-      expect((result.args[2] as any).name).toBe('items');
+      expect((result.modifiers?.loopType as any).value).toBe('for');
+      // The loop variable and the collection are slots (Arc 3 step 3).
+      expect((result.modifiers?.for as any).value).toBe('item');
+      expect((result.modifiers?.in as any).name).toBe('items');
       // Last arg = block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');
@@ -368,9 +364,8 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = loop type ('while')
-      expect((result.args[0] as any).name).toBe('while');
-      // args[1] = condition expression
-      expect((result.args[1] as any).name).toBe('isRunning');
+      expect((result.modifiers?.loopType as any).value).toBe('while');
+      expect((result.modifiers?.while as any).name).toBe('isRunning');
       // Last arg = block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');
@@ -412,9 +407,9 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = loop type ('until')
-      expect((result.args[0] as any).name).toBe('until');
-      // args[1] = condition expression
-      expect((result.args[1] as any).name).toBe('done');
+      expect((result.modifiers?.loopType as any).value).toBe('until');
+      // The condition is the `until` slot (Arc 3 step 3).
+      expect((result.modifiers?.until as any).name).toBe('done');
       // Last arg = block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');
@@ -462,14 +457,12 @@ describe('Control Flow Command Parsers', () => {
 
       expect(result.name).toBe('repeat');
       // args[0] = 'for'
-      expect((result.args[0] as any).name).toBe('for');
-      // args[1] = variable name 'item'
-      expect((result.args[1] as any).value).toBe('item');
-      // args[2] = collection
-      expect((result.args[2] as any).name).toBe('items');
-      // Should have an index variable arg (type: 'string', value: 'index')
-      const indexArg = result.args.find((a: any) => a.type === 'string' && a.value === 'index');
-      expect(indexArg).toBeDefined();
+      expect((result.modifiers?.loopType as any).value).toBe('for');
+      // The loop variable and the collection are slots (Arc 3 step 3).
+      expect((result.modifiers?.for as any).value).toBe('item');
+      expect((result.modifiers?.in as any).name).toBe('items');
+      // The index variable is the `index` slot (Arc 3 step 3).
+      expect((result.modifiers?.index as any).value).toBe('index');
       // Last arg = block
       const lastArg = result.args[result.args.length - 1] as any;
       expect(lastArg.type).toBe('block');

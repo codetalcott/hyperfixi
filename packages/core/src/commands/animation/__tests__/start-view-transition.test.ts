@@ -14,6 +14,62 @@ import * as viewTransitionsLib from '../../../lib/view-transitions';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode, ExpressionNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
+import { ok, err, isSignal } from '../../../types/result';
+import type { ExecutionSignal } from '../../../types/result';
+import type { Op } from '../../../types/program';
+
+/**
+ * Test stand-in for the runtime's compile step (Arc 4b). The runtime compiles
+ * a command's bodies to closures and hands them in as `raw.bodies`; these
+ * tests hand-build inputs, so they build the closures themselves. A body runs
+ * its hand-built commands through `context.locals._testExecute` when a test
+ * installed one (the old observation channel, now test-local), else calls a
+ * function or an `{ execute }` object directly.
+ */
+function testBody(commands: readonly unknown[] = []): Op {
+  return async ctx => {
+    const run = (ctx.locals as Map<string, unknown>).get('_testExecute') as
+      ((cmd: unknown, ctx: unknown) => unknown) | undefined;
+    let last: unknown;
+    for (const cmd of commands) {
+      let r: unknown;
+      if (typeof cmd === 'function') r = await (cmd as (c: unknown) => unknown)(ctx);
+      else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function')
+        r = await (cmd as { execute: (c: unknown) => unknown }).execute(ctx);
+      else if (run) r = await run(cmd, ctx);
+      else throw new Error('testBody: not an executable command');
+      if (isSignal(r)) return err(r);
+      last = r;
+    }
+    return ok(last);
+  };
+}
+/** One body per command — what the runtime hands `tell`/`start view transition`. */
+function testOps(commands: readonly unknown[]): Op[] {
+  return commands.map(c => testBody([c]));
+}
+/** What the runtime does for a raw input: compile every block/command argument. */
+function rawWithBodies<T extends { args: readonly unknown[] }>(
+  raw: T
+): T & { bodies: (Op | undefined)[] } {
+  const bodies = raw.args.map(a => {
+    const t = (a as { type?: string } | null)?.type;
+    if (t === 'block')
+      return testBody(((a as { commands?: unknown[] }).commands ?? []) as unknown[]);
+    // A `command` node — or, in these hand-built fixtures, an `{ execute }`
+    // object standing in for one.
+    if (t === 'command' || typeof (a as { execute?: unknown } | null)?.execute === 'function')
+      return testBody([a]);
+    return undefined;
+  });
+  return { ...raw, bodies };
+}
+
+/** Narrow a command's completion to its output — a signal here is a test failure. */
+function outputOf<T>(completion: T | ExecutionSignal): T {
+  if (isSignal(completion)) throw new Error(`unexpected signal: ${completion.type}`);
+  return completion;
+}
 
 // ---------- helpers ----------
 
@@ -62,17 +118,17 @@ describe('StartViewTransitionCommand', () => {
     it('extracts body from args and no transition name when modifier absent', async () => {
       const bodyCmd = { type: 'command', name: 'add' } as unknown as ASTNode;
       const input = await command.parseInput(
-        { args: [bodyCmd], modifiers: {} },
+        rawWithBodies({ args: [bodyCmd], modifiers: {} }),
         makeEvaluator(),
         ctx()
       );
-      expect(input.body).toEqual([bodyCmd]);
+      expect(input.body).toHaveLength(1);
       expect(input.transitionName).toBeUndefined();
     });
 
     it('extracts transition name from modifiers.transitionName', async () => {
       const input = await command.parseInput(
-        { args: [], modifiers: { transitionName: lit('slide-up') } },
+        rawWithBodies({ args: [], modifiers: { transitionName: lit('slide-up') } }),
         makeEvaluator(),
         ctx()
       );
@@ -101,9 +157,8 @@ describe('StartViewTransitionCommand', () => {
         ran++;
       };
 
-      const output = await command.execute(
-        { transitionName: undefined, body: [bodyCmd as unknown as ASTNode] },
-        ctx()
+      const output = outputOf(
+        await command.execute({ transitionName: undefined, body: testOps([bodyCmd]) }, ctx())
       );
 
       expect(output.usedViewTransition).toBe(false);
@@ -124,12 +179,14 @@ describe('StartViewTransitionCommand', () => {
         ran++;
       };
 
-      const output = await command.execute(
-        {
-          transitionName: 'fade',
-          body: [bodyCmd as unknown as ASTNode, bodyCmd as unknown as ASTNode],
-        },
-        ctx()
+      const output = outputOf(
+        await command.execute(
+          {
+            transitionName: 'fade',
+            body: testOps([bodyCmd, bodyCmd]),
+          },
+          ctx()
+        )
       );
 
       expect(output.usedViewTransition).toBe(true);
@@ -139,7 +196,7 @@ describe('StartViewTransitionCommand', () => {
       expect(withTransitionSpy.mock.calls[0][1]).toEqual({ transitionName: 'fade' });
     });
 
-    it('routes through context.locals._runtimeExecute when present', async () => {
+    it('routes through context.locals._testExecute when present', async () => {
       supportedSpy.mockReturnValue(false);
 
       const executed: unknown[] = [];
@@ -148,12 +205,12 @@ describe('StartViewTransitionCommand', () => {
       });
 
       const context = ctx();
-      context.locals.set('_runtimeExecute', runtimeExecute);
+      context.locals.set('_testExecute', runtimeExecute);
 
       const astCmd1 = { type: 'command', name: 'add' };
       const astCmd2 = { type: 'command', name: 'remove' };
 
-      await command.execute({ body: [astCmd1, astCmd2] as ASTNode[] }, context);
+      await command.execute({ body: testOps([astCmd1, astCmd2]) }, context);
 
       expect(runtimeExecute).toHaveBeenCalledTimes(2);
       expect(executed).toEqual([astCmd1, astCmd2]);

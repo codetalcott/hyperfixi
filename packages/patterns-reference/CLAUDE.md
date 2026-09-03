@@ -43,7 +43,14 @@ npm run populate
 
 # Individual steps
 npm run db:init:force      # Initialize with 53 patterns
-npm run sync:translations  # Generate 689 translations
+npm run sync:translations  # Regenerate every foreign row (semantic renderer)
+
+# There is ONE renderer: @lokascript/semantic's render(parse_en(en), L). The
+# `PATTERNS_RENDERER` env, the `--renderer` flag and the three modes
+# (i18n | semantic | best) were retired with @lokascript/i18n's GrammarTransformer
+# on 2026-08-28, after the `i18n-kept-rows` baseline they existed to burn down
+# reached zero. A row the renderer cannot render keeps its ENGLISH and is reported
+# as an "English fallback" at the end of the run — that count must stay 0.
 npm run seed:llm           # Generate 212 LLM examples
 npm run validate:fix       # Validate and update verified_parses
 npm run verify:engines     # Re-verify the engine column (see below)
@@ -92,8 +99,8 @@ After running `npm run populate`:
 
 | Table                | Rows  | Description                                    |
 | -------------------- | ----- | ---------------------------------------------- |
-| code_examples        | 164   | Patterns covering all hyperscript commands     |
-| pattern_translations | 3,936 | 164 patterns × 24 languages                    |
+| code_examples        | 166   | Patterns covering all hyperscript commands     |
+| pattern_translations | 3,984 | 166 patterns × 24 languages                    |
 | llm_examples         | ~600  | Few-shot examples with quality scores (varies) |
 
 ### Supported Languages (24)

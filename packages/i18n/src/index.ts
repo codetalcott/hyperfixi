@@ -223,11 +223,4 @@ export {
   malayProfile,
   quechuaProfile,
   swahiliProfile,
-  // Transformer
-  GrammarTransformer,
-  parseStatement,
-  toLocale,
-  toEnglish,
-  translate,
-  examples as grammarExamples,
 } from './grammar';

@@ -5,7 +5,44 @@ All notable changes to `@hyperfixi/mcp-server` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Superseded by the root changelog.** Every package in this monorepo publishes
+> in lockstep at the root version, and the entries below use an older
+> per-package numbering that no published version ever matched. They are kept
+> for the migration notes they carry; they are not a record of recent releases.
+> **For anything since, see
+> [the monorepo CHANGELOG](https://github.com/codetalcott/hyperfixi/blob/main/CHANGELOG.md)**
+> and [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+
 ## [Unreleased]
+
+### Changed
+
+- **MCP TypeScript SDK v2 / protocol revision 2026-07-28.** Migrated from
+  `@modelcontextprotocol/sdk` (v1) to `@modelcontextprotocol/server` `^2.0.0`.
+  The server now serves **both protocol eras** per connection via `serveStdio`:
+  the stateless `2026-07-28` revision (mandatory `server/discover`, no
+  `initialize` handshake, `resultType` stamped on every result) and the legacy
+  `initialize` dialect for current clients. Tool definitions remain plain JSON
+  Schema; the single `tools/call` dispatch path and the freshness guard are
+  unchanged.
+- **Cache hints (protocol 2026-07-28):** `tools/list`, `prompts/list`,
+  `resources/list`, and `resources/read` responses now advertise
+  `ttlMs: 3600000` / `cacheScope: "public"` — all four surfaces are static per
+  process.
+
+### Deprecated
+
+- The five sampling tools (`ask_claude`, `summarize_content`, `analyze_content`,
+  `translate_content`, `execute_llm`) rely on MCP sampling
+  (`sampling/createMessage`), which protocol revision 2026-07-28 deprecates —
+  server-initiated requests only exist on legacy-era connections whose client
+  advertises the sampling capability. They keep working there through the SDK's
+  ≥12-month deprecation window; on modern-era connections they return a clear
+  `isError` explanation. Deferred follow-up: convert them to the
+  `input_required` (MRTR) pattern before sampling's removal (~2027-07).
+  Also deferred, deliberately: per-tool `outputSchema`, tool titles/annotations,
+  and the `io.modelcontextprotocol/tasks` extension (no tool is long-running
+  enough to warrant task handles).
 
 ### Fixed
 

@@ -22,6 +22,11 @@
  * _hyperscript(english);
  */
 
-export { hyperscriptI18n, preprocess, type PluginOptions } from './plugin';
+export {
+  hyperscriptI18n,
+  preprocess,
+  resetTranslationWarnings,
+  type PluginOptions,
+} from './plugin';
 export { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
 export { resolveLanguage } from './language-resolver';

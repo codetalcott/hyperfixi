@@ -77,12 +77,8 @@ describe('EventDispatchCommand (trigger)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'click' } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
-          ],
-          modifiers: {},
+          args: [{ type: 'identifier', name: 'click' } as any],
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -105,10 +101,8 @@ describe('EventDispatchCommand (trigger)', () => {
               name: 'customEvent',
               args: [{ type: 'object', value: { count: 42 } }],
             } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -268,10 +262,8 @@ describe('EventDispatchCommand (trigger)', () => {
                 },
               ],
             } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -293,10 +285,8 @@ describe('EventDispatchCommand (trigger)', () => {
               name: 'myEvent',
               args: [{ type: 'string', value: 'some-value' }],
             } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -318,10 +308,8 @@ describe('EventDispatchCommand (trigger)', () => {
               callee: { type: 'identifier', name: 'dataEvent' },
               arguments: [{ type: 'object', value: { count: 42 } }],
             } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -363,10 +351,8 @@ describe('EventDispatchCommand (trigger)', () => {
                 },
               ],
             } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context
@@ -388,12 +374,8 @@ describe('EventDispatchCommand (trigger)', () => {
       // Parse
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'testClick' } as any,
-            { type: 'keyword', name: 'on' } as any,
-            { type: 'identifier', name: 'me' } as any,
-          ],
-          modifiers: {},
+          args: [{ type: 'identifier', name: 'testClick' } as any],
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
         context

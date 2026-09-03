@@ -5,7 +5,8 @@
     "real hyperscript.org engine when its trigger event is dispatched in jsdom.",
     "Keys embed a hash of the source: editing the handler changes the key, so entries go",
     "stale and the stale-entry assertion forces their removal — the list only ratchets down.",
-    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md."
+    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md.",
+    "2026-08-31 — recipes.html::keyup REMOVED, and this is a coverage LOSS worth stating rather than a convergence. The parser now reports the input it discards, and that handler is one of the sources it reports on, so this gate's eligibility filter ('hyperfixi does not compile it clean') now skips it. Its recorded reason here was ALSO A MISDIAGNOSIS: not a show/hide-strategy difference, but hyperfixi silently discarding the `in the next <div/> when its textContent contains my value` clause — so it showed every blockquote where upstream filtered. Upstream ACCEPTS that source, so it is a real hyperfixi parser defect; it is now tracked by the shipped-sources validity gate instead, and it comes back here the moment the parse is fixed."
   ],
   "allowedDivergences": [
     {
@@ -14,10 +15,13 @@
       "event": "keyup",
       "excerpt": "on keyup show <blockquote/> in the next <div/> when its textContent contains my value",
       "hyperfixi": [
-        "Δinput:45 cls[show] attr[placeholder=Search quotes…,type=text] style[] text[]"
+        "Δblockquote:47 cls[show] attr[] style[] text[\"Talk is cheap. Show me the code.\" — Linus Torvalds]",
+        "Δblockquote:48 cls[show] attr[] style[] text[\"Programs must be written for people to read.\" — Harold Abelson]",
+        "Δblockquote:49 cls[show] attr[] style[] text[\"Truth can only be found in one place: the code.\" — Robert C. Martin]",
+        "Δblockquote:50 cls[show] attr[] style[] text[\"I'm just a good programmer with great habits.\" — Kent Beck]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. The marker CLASS is the whole remaining divergence here — the shipped input is empty, so `contains \"\"` holds for every blockquote and both engines show all four; upstream's show is a no-op on an already-visible element, hyperfixi's adds `.show`. The FILTER itself was measured against upstream with real search terms (a run with the input pre-filled, which this gate cannot do — it dispatches the page as shipped): for `code`, `zzz` and `programmer` the two engines produce a BYTE-IDENTICAL hide set, and the only diff is `.show` on the elements hyperfixi shows. Returned to this gate by the show/hide parser fix; before it this handler was skipped as 'hyperfixi does not compile it clean'."
     },
     {
       "key": "examples/dialogs/modal.html::37ad17f250::click",

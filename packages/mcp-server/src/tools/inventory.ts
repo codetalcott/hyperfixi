@@ -5,7 +5,7 @@
  * hyperscript/htmx usage across HTML templates.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import { jsonResponse, errorResponse, getString, getNumber } from './utils.js';
 
 type ToolResponse = { content: Array<{ type: string; text: string }>; isError?: boolean };

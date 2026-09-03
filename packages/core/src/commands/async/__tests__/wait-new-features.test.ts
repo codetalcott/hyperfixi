@@ -9,8 +9,30 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WaitCommand } from '../wait';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, ExpressionNode, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
+import type { CommandRaw } from '../../../ast/command-slots';
+import { parse } from '../../../parser/parser';
+import { assertNodeOfKind } from '../../../ast/guards';
+
+/** What a hand-built node used to carry as `value`: a literal/selector's value or an identifier's name. */
+const text = (n: ASTNode): unknown =>
+  (n as unknown as { value?: unknown; name?: unknown }).value ??
+  (n as unknown as { name?: unknown }).name;
+
+/**
+ * The node the real parser emits for `src` — these forms parse to one
+ * arrayLiteral of `{ name, args }` / `{ duration }` specs (plus a source
+ * argument for `from`); the hand-built `for`/`or`/`from` slots they used to
+ * be written with never existed on any real path.
+ */
+function realInput(src: string): CommandRaw<'wait'> {
+  const node = assertNodeOfKind(parse(src).node, 'command');
+  return {
+    args: node.args as unknown as CommandRaw<'wait'>['args'],
+    modifiers: (node.modifiers ?? {}) as CommandRaw<'wait'>['modifiers'],
+  };
+}
 
 // ========== Test Utilities ==========
 
@@ -61,17 +83,7 @@ describe('WaitCommand - Race Conditions', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'click' },
-            or: { type: 'expression', value: '1s' },
-          },
-        },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput(realInput('wait for click or 1s'), evaluator, context);
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
@@ -90,50 +102,12 @@ describe('WaitCommand - Race Conditions', () => {
       ).toBe(1000);
     });
 
-    it('should parse "wait 2s or for click"', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: '2s' }],
-          modifiers: {
-            or: { type: 'expression', value: 'click' },
-          },
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.type).toBe('race');
-      expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
-      ).toBe('time');
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0]
-          .milliseconds
-      ).toBe(2000);
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
-      ).toBe('event');
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].eventName
-      ).toBe('click');
-    });
-
     it('should parse "wait for click or keypress"', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'click' },
-            or: { type: 'expression', value: 'keypress' },
-          },
-        },
+        realInput('wait for click or keypress'),
         evaluator,
         context
       );
@@ -154,51 +128,12 @@ describe('WaitCommand - Race Conditions', () => {
       ).toBe('keypress');
     });
 
-    it('should parse "wait 500ms or 1s" (multiple time conditions)', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: '500ms' }],
-          modifiers: {
-            or: { type: 'expression', value: '1s' },
-          },
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.type).toBe('race');
-      expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
-      ).toBe('time');
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0]
-          .milliseconds
-      ).toBe(500);
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
-      ).toBe('time');
-      expect(
-        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1]
-          .milliseconds
-      ).toBe(1000);
-    });
-
     it('should parse race condition with event destructuring', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'mousemove(clientX, clientY)' },
-            or: { type: 'expression', value: '2s' },
-          },
-        },
+        realInput('wait for mousemove(clientX, clientY) or 2s'),
         evaluator,
         context
       );
@@ -224,6 +159,16 @@ describe('WaitCommand - Race Conditions', () => {
       ).toBe(2000);
     });
 
+    it('KNOWN GAP: `wait <time> or …` is a binary `or` expression, not a race (no parser has ever produced the time-first race)', () => {
+      // The race form the parser supports is `wait for <event> or <time>`;
+      // the time-first spellings these tests once described were only ever
+      // hand-built nodes. Pinned so the gap is visible, not silently green.
+      for (const src of ['wait 2s or for click', 'wait 500ms or 1s']) {
+        const node = assertNodeOfKind(parse(src).node, 'command');
+        expect(node.args[0]).toMatchObject({ type: 'binaryExpression', operator: 'or' });
+      }
+    });
+
     it('should throw error if race condition has less than 2 conditions', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
@@ -232,9 +177,7 @@ describe('WaitCommand - Race Conditions', () => {
         command.parseInput(
           {
             args: [],
-            modifiers: {
-              or: { type: 'expression', value: '1s' },
-            },
+            modifiers: {},
           },
           evaluator,
           context
@@ -524,17 +467,7 @@ describe('WaitCommand - Race Conditions', () => {
       const evaluator = createMockEvaluator();
 
       // Parse input
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'click' },
-            or: { type: 'expression', value: '1s' },
-          },
-        },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput(realInput('wait for click or 1s'), evaluator, context);
 
       // Validate - method removed in decorator refactor
       // expect(command.validate(input)).toBe(true);
@@ -554,34 +487,6 @@ describe('WaitCommand - Race Conditions', () => {
       expect((output.result as Event).type).toBe('click');
       expect(output.duration).toBeLessThan(100);
     });
-
-    it('should wait 500ms or for click end-to-end (time wins)', async () => {
-      const context = createMockContext();
-      const evaluator = createMockEvaluator();
-
-      // Parse input
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: '50ms' }],
-          modifiers: {
-            or: { type: 'expression', value: 'click' },
-          },
-        },
-        evaluator,
-        context
-      );
-
-      // Validate - method removed in decorator refactor
-      // expect(command.validate(input)).toBe(true);
-
-      // Execute (don't trigger event)
-      const output = await command.execute(input, context);
-
-      // Verify
-      expect(output.type).toBe('time');
-      expect(output.result).toBe(50);
-      expect(output.duration).toBeGreaterThanOrEqual(45);
-    });
   });
 });
 
@@ -600,10 +505,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'mousemove(clientX, clientY)' } },
-        },
+        realInput('wait for mousemove(clientX, clientY)'),
         evaluator,
         context
       );
@@ -618,10 +520,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'keydown(key, code)' } },
-        },
+        realInput('wait for keydown(key, code)'),
         evaluator,
         context
       );
@@ -636,10 +535,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'scroll(scrollY)' } },
-        },
+        realInput('wait for scroll(scrollY)'),
         evaluator,
         context
       );
@@ -654,10 +550,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'click(clientX, clientY, button)' } },
-        },
+        realInput('wait for click(clientX, clientY, button)'),
         evaluator,
         context
       );
@@ -676,10 +569,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'mousemove(clientX,clientY)' } },
-        },
+        realInput('wait for mousemove(clientX,clientY)'),
         evaluator,
         context
       );
@@ -693,14 +583,7 @@ describe('WaitCommand - Event Destructuring', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'click' } },
-        },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput(realInput('wait for click'), evaluator, context);
 
       expect(input.type).toBe('event');
       expect((input as { eventName: string }).eventName).toBe('click');
@@ -945,10 +828,7 @@ describe('WaitCommand - Event Destructuring', () => {
 
       // Parse input
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'mousemove(clientX, clientY)' } },
-        },
+        realInput('wait for mousemove(clientX, clientY)'),
         evaluator,
         context
       );
@@ -984,10 +864,7 @@ describe('WaitCommand - Event Destructuring', () => {
 
       // Parse input
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: { for: { type: 'expression', value: 'keydown(key, code)' } },
-        },
+        realInput('wait for keydown(key, code)'),
         evaluator,
         context
       );
@@ -1034,22 +911,16 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'load') return 'load';
-            if ((node as unknown as { value: unknown }).value === '<iframe/>') return iframe;
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'load') return 'load';
+            if (text(node) === 'iframe') return iframe;
           }
           return (node as unknown as { value: unknown }).value;
         },
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'load' },
-            from: { type: 'expression', value: '<iframe/>' },
-          },
-        },
+        realInput('wait for load from <iframe/>'),
         evaluator,
         context
       );
@@ -1069,23 +940,16 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'click') return 'click';
-            if ((node as unknown as { value: unknown }).value === '#other-element')
-              return otherElement;
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'click') return 'click';
+            if (text(node) === '#other-element') return otherElement;
           }
           return (node as unknown as { value: unknown }).value;
         },
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'click' },
-            from: { type: 'expression', value: '#other-element' },
-          },
-        },
+        realInput('wait for click from #other-element'),
         evaluator,
         context
       );
@@ -1102,22 +966,16 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'message') return 'message';
-            if ((node as unknown as { value: unknown }).value === 'window') return window;
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'message') return 'message';
+            if (text(node) === 'window') return window;
           }
           return (node as unknown as { value: unknown }).value;
         },
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'message' },
-            from: { type: 'expression', value: 'window' },
-          },
-        },
+        realInput('wait for message from window'),
         evaluator,
         context
       );
@@ -1131,16 +989,7 @@ describe('WaitCommand - Custom Event Sources', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'click' },
-          },
-        },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput(realInput('wait for click'), evaluator, context);
 
       expect(input.type).toBe('event');
       expect((input as { eventName: string }).eventName).toBe('click');
@@ -1152,27 +1001,16 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'click') return 'click';
-            if ((node as unknown as { value: unknown }).value === 'invalid')
-              return 'not an EventTarget';
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'click') return 'click';
+            if (text(node) === 'invalid') return 'not an EventTarget';
           }
           return (node as unknown as { value: unknown }).value;
         },
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       await expect(
-        command.parseInput(
-          {
-            args: [{ type: 'literal', value: 'placeholder' }],
-            modifiers: {
-              for: { type: 'expression', value: 'click' },
-              from: { type: 'expression', value: 'invalid' },
-            },
-          },
-          evaluator,
-          context
-        )
+        command.parseInput(realInput('wait for click from invalid'), evaluator, context)
       ).rejects.toThrow('target must be an EventTarget');
     });
 
@@ -1183,25 +1021,18 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'mousemove(clientX, clientY)') {
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'mousemove(clientX, clientY)') {
               return 'mousemove(clientX, clientY)';
             }
-            if ((node as unknown as { value: unknown }).value === 'customElement')
-              return customElement;
+            if (text(node) === 'customElement') return customElement;
           }
           return (node as unknown as { value: unknown }).value;
         },
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'mousemove(clientX, clientY)' },
-            from: { type: 'expression', value: 'customElement' },
-          },
-        },
+        realInput('wait for mousemove(clientX, clientY) from customElement'),
         evaluator,
         context
       );
@@ -1344,9 +1175,9 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'load') return 'load';
-            if ((node as unknown as { value: unknown }).value === '<iframe/>') return iframe;
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'load') return 'load';
+            if (text(node) === 'iframe') return iframe;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1354,13 +1185,7 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       // Parse input
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'load' },
-            from: { type: 'expression', value: '<iframe/>' },
-          },
-        },
+        realInput('wait for load from <iframe/>'),
         evaluator,
         context
       );
@@ -1393,12 +1218,11 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
-          if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value === 'mousemove(clientX, clientY)') {
+          if (typeof node === 'object' && ('value' in node || 'name' in node)) {
+            if (text(node) === 'mousemove(clientX, clientY)') {
               return 'mousemove(clientX, clientY)';
             }
-            if ((node as unknown as { value: unknown }).value === 'customElement')
-              return customElement;
+            if (text(node) === 'customElement') return customElement;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1406,13 +1230,7 @@ describe('WaitCommand - Custom Event Sources', () => {
 
       // Parse input
       const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'placeholder' }],
-          modifiers: {
-            for: { type: 'expression', value: 'mousemove(clientX, clientY)' },
-            from: { type: 'expression', value: 'customElement' },
-          },
-        },
+        realInput('wait for mousemove(clientX, clientY) from customElement'),
         evaluator,
         context
       );

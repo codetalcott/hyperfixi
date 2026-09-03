@@ -23,10 +23,15 @@ export interface HyperscriptHost {
   config?: { attributes?: string };
 }
 
-/** Marks an element as already translated so a later `processNode()` call over
- *  the same subtree (e.g. a sibling swap re-scanning a shared ancestor) doesn't
- *  re-translate already-English text as if it were still the original language. */
-const TRANSLATED_MARKER = 'data-hyperscript-i18n-translated';
+/** Elements already processed, so a later `processNode()` call over the same
+ *  subtree (e.g. a sibling swap re-scanning a shared ancestor) doesn't
+ *  re-translate already-English text as if it were still the original language.
+ *  A WeakSet instead of a marker attribute: the same idempotency with zero DOM
+ *  mutation (devtools/serialization show exactly what the author wrote).
+ *  Serialize→reparse (e.g. an innerHTML round-trip) produces NEW elements that
+ *  are re-processed — safe, because re-translating already-English text is
+ *  confidence-gated into a no-op. */
+const processed = new WeakSet<Element>();
 
 function scriptAttributeNames(hs: HyperscriptHost): string[] {
   const raw = hs.config?.attributes ?? '_, script, data-script';
@@ -68,13 +73,13 @@ export function installAttributeTranslator(
   const selector = [...attrNames.map(a => `[${a}]`), 'script[type="text/hyperscript"]'].join(', ');
 
   const translateOne = (elt: Element): void => {
-    if (elt.hasAttribute(TRANSLATED_MARKER)) return;
+    if (processed.has(elt)) return;
 
     if (elt instanceof HTMLScriptElement && elt.type === 'text/hyperscript') {
       const src = elt.textContent ?? '';
       if (!src) return;
       const english = translate(src, elt);
-      elt.setAttribute(TRANSLATED_MARKER, '');
+      processed.add(elt);
       if (english != null && english !== src) elt.textContent = english;
       return;
     }
@@ -84,7 +89,7 @@ export function installAttributeTranslator(
     const src = elt.getAttribute(attr);
     if (!src) return;
     const english = translate(src, elt);
-    elt.setAttribute(TRANSLATED_MARKER, '');
+    processed.add(elt);
     if (english != null && english !== src) elt.setAttribute(attr, english);
   };
 

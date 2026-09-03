@@ -203,6 +203,46 @@ describe('renderToHyperscript', () => {
       expect(renderToHyperscript(node)).toBe('on click toggle .active');
     });
 
+    // The slim parser produces event literals WITH dataType: 'string'
+    // (`{type:'literal', value:'click', dataType:'string'}`), which
+    // renderValue would wrap in quotes — and `on "click"` is a hard parse
+    // error on the real engine ("Expected event name"). Event names are
+    // identifiers, never quoted; colon-qualified names included.
+    it('renders a string-typed event literal bare, not quoted', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        action: 'on' as any,
+        roles: new Map([['event', lit('click', 'string')]]) as any,
+        body: [cmd('toggle', [['patient', sel('.active')]])],
+      } as EventHandlerSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('on click toggle .active');
+    });
+
+    it('renders a colon-qualified string-typed event name bare', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        action: 'on' as any,
+        roles: new Map([['event', lit('draggable:start', 'string')]]) as any,
+        body: [cmd('add', [['patient', sel('.dragging')]])],
+      } as EventHandlerSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('on draggable:start add .dragging');
+    });
+
+    // NOTE the string-content exception semantic's renderer carries
+    // (`add "<p>Line</p>" to me` keeps the destination) is deliberately NOT
+    // mirrored yet — see the KNOWN GAP comment at the suppression site in
+    // hyperscript-renderer.ts: alone, it converts the es repeat parity row
+    // from a safe host-validate fallback into a committed infinite loop.
+    it('still suppresses `to me` for a class patient', () => {
+      const node = cmd('add', [
+        ['patient', sel('.active')],
+        ['destination', { type: 'reference', value: 'me' } as SemanticValue],
+      ]);
+      expect(renderToHyperscript(node)).toBe('add .active');
+    });
+
     it('renders on click with source', () => {
       const node: EventHandlerSemanticNode = {
         kind: 'event-handler',
@@ -217,7 +257,12 @@ describe('renderToHyperscript', () => {
       expect(renderToHyperscript(node)).toBe('on click from #btn toggle .active');
     });
 
-    it('renders multi-command body with then', () => {
+    // Space-joined, matching the semantic package's renderer: the connector
+    // between sibling body commands is OPTIONAL in canonical hyperscript, and
+    // emitting ` then ` unconditionally injected one after a block header —
+    // `on click tell #panel then add .open` is a hard parse error on the real
+    // engine ("Expected 'end' but found 'then'"). See whole-string-first.test.ts.
+    it('renders a multi-command body space-joined', () => {
       const node: EventHandlerSemanticNode = {
         kind: 'event-handler',
         action: 'on' as any,
@@ -228,7 +273,21 @@ describe('renderToHyperscript', () => {
         ],
       } as EventHandlerSemanticNode;
 
-      expect(renderToHyperscript(node)).toBe('on click add .loading then remove .loaded');
+      expect(renderToHyperscript(node)).toBe('on click add .loading remove .loaded');
+    });
+
+    it('renders a block-header body without a connector after the header', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        action: 'on' as any,
+        roles: new Map([['event', lit('click')]]) as any,
+        body: [
+          cmd('tell', [['destination', sel('#panel')]]),
+          cmd('add', [['patient', sel('.open')]]),
+        ],
+      } as EventHandlerSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('on click tell #panel add .open');
     });
   });
 
@@ -250,6 +309,53 @@ describe('renderToHyperscript', () => {
       } as CompoundSemanticNode;
 
       expect(renderToHyperscript(node)).toBe('add .active then remove .hidden');
+    });
+
+    // The three seams where a chain word is REJECTED by the real engine, so the
+    // slim renderer suppresses/closes it the way the semantic renderer does.
+    it('suppresses the chain word after a block header', () => {
+      const node: CompoundSemanticNode = {
+        kind: 'compound',
+        action: 'compound' as any,
+        roles: new Map() as any,
+        statements: [
+          cmd('repeat', [['quantity', lit(3)]]),
+          cmd('add', [['patient', sel('.active')]]),
+        ],
+        chainType: 'then',
+      } as CompoundSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('repeat 3 add .active');
+    });
+
+    it('space-joins consecutive bind features', () => {
+      const node: CompoundSemanticNode = {
+        kind: 'compound',
+        action: 'compound' as any,
+        roles: new Map() as any,
+        statements: [
+          cmd('bind', [['destination', expr('$name')], ['source', sel('#input-a')]]),
+          cmd('bind', [['destination', expr('$name')], ['source', sel('#input-b')]]),
+        ],
+        chainType: 'then',
+      } as CompoundSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('bind $name to #input-a bind $name to #input-b');
+    });
+
+    it('closes an open js body with end before a sibling command', () => {
+      const node: CompoundSemanticNode = {
+        kind: 'compound',
+        action: 'compound' as any,
+        roles: new Map() as any,
+        statements: [
+          cmd('js', [['patient', expr('alert(1)')]]),
+          cmd('add', [['patient', sel('.active')]]),
+        ],
+        chainType: 'then',
+      } as CompoundSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('js alert(1) end then add .active');
     });
   });
 

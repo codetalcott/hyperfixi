@@ -4,7 +4,39 @@
  * Hand-crafted patterns for swap command without prepositions.
  */
 
-import type { LanguagePattern } from '../../../types';
+import type { LanguagePattern, PatternToken } from '../../../types';
+
+/**
+ * The optional `using view transition` tail, shared by every hand-crafted
+ * English swap pattern.
+ *
+ * These four all outrank the generated `swap-en-generated` (110–140 vs 100), so
+ * without the tail here the English semantic parse of
+ * `swap #a with #b using view transition` matches a pattern that cannot see the
+ * tail and strands `transition` — which is what `swapSchema`'s `manner` role was
+ * added to fix. The generated patterns for the other 23 languages get this group
+ * from the schema role; English needs it spelled out because it is the one
+ * language whose swap patterns are hand-written.
+ *
+ * `valueShape: 'keyword'` is load-bearing, not decoration: `transition` is
+ * itself a command keyword, so the matcher's trailing-slot verb guard skips the
+ * slot without it (see `matchRoleToken`).
+ */
+const VIEW_TRANSITION_TAIL: PatternToken = {
+  type: 'group',
+  optional: true,
+  tokens: [
+    { type: 'literal', value: 'using' },
+    { type: 'literal', value: 'view' },
+    {
+      type: 'role',
+      role: 'manner',
+      optional: true,
+      expectedTypes: ['literal', 'expression'],
+      valueShape: 'keyword',
+    },
+  ],
+};
 
 /**
  * English: "swap <strategy> <target>" without prepositions.
@@ -19,11 +51,12 @@ export const swapSimpleEnglish: LanguagePattern = {
   command: 'swap',
   priority: 110, // Higher than generated patterns
   template: {
-    format: 'swap {method} {destination}',
+    format: 'swap {method} {destination} [using view {manner}]',
     tokens: [
       { type: 'literal', value: 'swap' },
       { type: 'role', role: 'method' },
       { type: 'role', role: 'destination' },
+      VIEW_TRANSITION_TAIL,
     ],
   },
   extraction: {
@@ -47,12 +80,13 @@ export const swapElementEnglish: LanguagePattern = {
   command: 'swap',
   priority: 120,
   template: {
-    format: 'swap {destination} with {patient}',
+    format: 'swap {destination} with {patient} [using view {manner}]',
     tokens: [
       { type: 'literal', value: 'swap' },
       { type: 'role', role: 'destination' },
       { type: 'literal', value: 'with' },
       { type: 'role', role: 'patient' },
+      VIEW_TRANSITION_TAIL,
     ],
   },
   extraction: {},
@@ -73,7 +107,7 @@ export const swapStrategyOfEnglish: LanguagePattern = {
   command: 'swap',
   priority: 140,
   template: {
-    format: 'swap {method} of {destination} with {patient}',
+    format: 'swap {method} of {destination} with {patient} [using view {manner}]',
     tokens: [
       { type: 'literal', value: 'swap' },
       { type: 'role', role: 'method' },
@@ -81,6 +115,7 @@ export const swapStrategyOfEnglish: LanguagePattern = {
       { type: 'role', role: 'destination' },
       { type: 'literal', value: 'with' },
       { type: 'role', role: 'patient' },
+      VIEW_TRANSITION_TAIL,
     ],
   },
   extraction: {},
@@ -105,13 +140,14 @@ export const swapStrategyEnglish: LanguagePattern = {
   command: 'swap',
   priority: 130,
   template: {
-    format: 'swap {method} {destination} with {patient}',
+    format: 'swap {method} {destination} with {patient} [using view {manner}]',
     tokens: [
       { type: 'literal', value: 'swap' },
       { type: 'role', role: 'method' },
       { type: 'role', role: 'destination' },
       { type: 'literal', value: 'with' },
       { type: 'role', role: 'patient' },
+      VIEW_TRANSITION_TAIL,
     ],
   },
   extraction: {},

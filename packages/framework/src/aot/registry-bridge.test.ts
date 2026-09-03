@@ -12,7 +12,7 @@ describe('registryToAOTBackends', () => {
       languages: ['en'],
       inputLabel: 'input',
       inputDescription: 'Test input',
-      getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
+      getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
       scanConfig: {
         attributes: ['data-test'],
         scriptTypes: ['text/test'],
@@ -38,7 +38,7 @@ describe('registryToAOTBackends', () => {
       languages: ['en'],
       inputLabel: 'input',
       inputDescription: 'Test',
-      getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
+      getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
       scanConfig: {
         attributes: ['data-with'],
         defaultLanguage: 'en',
@@ -51,7 +51,7 @@ describe('registryToAOTBackends', () => {
       languages: ['en'],
       inputLabel: 'input',
       inputDescription: 'Test',
-      getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
+      getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
       // no scanConfig
     });
 
@@ -69,7 +69,7 @@ describe('registryToAOTBackends', () => {
       languages: ['en'],
       inputLabel: 'input',
       inputDescription: 'Test',
-      getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
+      getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
     });
 
     const backends = await registryToAOTBackends(registry);
@@ -85,7 +85,7 @@ describe('registryToAOTBackends', () => {
       languages: ['en'],
       inputLabel: 'input',
       inputDescription: 'Test',
-      getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
+      getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
       scanConfig: {
         attributes: ['data-gen'],
         defaultLanguage: 'en',
