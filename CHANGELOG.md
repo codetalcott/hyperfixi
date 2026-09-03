@@ -43,6 +43,23 @@ click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
   `config.logAll` moved into the runtime so both paths log. Pinned by
   `api/dom-processor.test.ts`, which runs each case on both paths.
 
+- **The browser bundles' attribute processor now runs the element lifecycle,
+  and its lazy stub only takes the shapes it can run faithfully.** Measured
+  side by side with `hyperscript.process()`: the bundle path never dispatched
+  `hyperscript:before:init` / `hyperscript:after:init` and never set
+  `data-hyperscript-powered` — both lived only in the API processor, so a
+  morph engine reading the marker saw nothing on a bundle-processed page, and
+  canceling `before:init` was impossible there. It also compiled every
+  attribute as English; it now detects the element's language (`data-lang`,
+  closest `lang`, the document's) the way `process()` always did. And the
+  `lazyParsing` stub read only the event NAME from the header, so for the
+  first event it ignored a filter (`on click[event.shiftKey]` fired on a
+  plain click), listened for the first name of an `or` list only, and never
+  saw `from <target>` at all; a header with a filter, `(args)`, `or`, `from`,
+  `elsewhere`, `queue`, `debounced`, `throttled` or `in` is now processed
+  eagerly. `api/dom-processor.test.ts` runs every row on all three paths
+  (API, eager, lazy) and is the gate the DOM-processor collapse lands under.
+
 - **`set *<css-property>` writes inline style in every spelling upstream
   accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
   `set *background-color of me to "red"` were silent no-ops and

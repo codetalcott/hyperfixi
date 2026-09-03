@@ -7,6 +7,9 @@ import { hyperscript, config } from '../api/hyperscript-api';
 import type { CompileError } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
 import { debug } from '../utils/debug';
+import type { EventHandlerNode } from '../ast/nodes';
+import { toLegacyNode, type AnyNode } from '../ast/legacy';
+import type { ExecutionContext } from '../types/base-types';
 
 // Type declarations for window extensions used by external packages
 declare global {
@@ -31,8 +34,19 @@ export interface AttributeProcessorOptions {
 // Lazy Parsing Constants
 // =============================================================================
 
-/** Regex to extract event type from hyperscript code: "on click ...", "on mouseover ..." */
-const EVENT_REGEX = /^on\s+(\w+)/;
+/**
+ * The ONLY handler shape the lazy stub may take: `on <event> <command…>` —
+ * one event name, then whitespace, then something that is not part of the
+ * event header. The stub listens for exactly one event on exactly one target
+ * and runs the body for the first event WITHOUT evaluating the header, so any
+ * header feature makes it wrong for that first event (measured 2026-09-03,
+ * `api/dom-processor.test.ts`): a filter `[…]` fired on a plain click, an
+ * `or` list lost the first event of its second name, `from <target>` never
+ * fired, and `(args)` would have left the destructured locals unbound.
+ * Those shapes fall back to eager processing, which compiles the header.
+ */
+const LAZY_HEADER =
+  /^on\s+(\w+)\s+(?![[(]|or\b|from\b|elsewhere\b|queue\b|debounced\b|throttled\b|in\b)/;
 
 /** Events that must be processed immediately (cannot be deferred).
  * Note: `init` is a standalone block keyword, not an event name, so it's not listed here.
@@ -46,6 +60,61 @@ const IMMEDIATE_EVENTS = new Set([
 ]);
 
 // =============================================================================
+// Element lifecycle (upstream _hyperscript 0.9.90)
+// =============================================================================
+
+const DEFAULT_LANGUAGE = 'en';
+const POWERED_ATTRIBUTE = 'data-hyperscript-powered';
+
+/**
+ * Detect the language of an element's hyperscript: `data-lang` on the element,
+ * else the closest `lang` attribute (`en-US` → `en`), else the document's.
+ */
+export function detectLanguage(element: Element): string {
+  const dataLang = element.getAttribute('data-lang');
+  if (dataLang) return dataLang;
+
+  const langAttr = element.closest('[lang]')?.getAttribute('lang');
+  if (langAttr) return langAttr.split('-')[0];
+
+  if (typeof document !== 'undefined') {
+    const docLang = document.documentElement?.lang;
+    if (docLang) return docLang.split('-')[0];
+  }
+
+  return DEFAULT_LANGUAGE;
+}
+
+/** The compile result's `ast` is the legacy `ASTNode`; the handler shape lives in `ast/nodes`. */
+function isEventHandler(node: AnyNode): node is EventHandlerNode {
+  return node.type === 'eventHandler';
+}
+
+/**
+ * Dispatch a lifecycle event on an element. A cancelable event returns false
+ * when a listener called `preventDefault()`, and the caller skips the work.
+ */
+function dispatchLifecycle(
+  element: Element,
+  name: string,
+  cancelable: boolean,
+  detail: Record<string, unknown>
+): boolean {
+  return element.dispatchEvent(new CustomEvent(name, { bubbles: true, cancelable, detail }));
+}
+
+/**
+ * Mark an element as hyperscript-powered. Morph engines (idiomorph, htmx 4)
+ * read it to find elements that need re-processing after a swap;
+ * `hyperscript.cleanup()` removes it.
+ */
+function markPowered(element: Element): void {
+  if (!element.hasAttribute(POWERED_ATTRIBUTE)) {
+    element.setAttribute(POWERED_ATTRIBUTE, '');
+  }
+}
+
+// =============================================================================
 // Chunked Processing Utilities
 // =============================================================================
 
@@ -54,12 +123,9 @@ const IMMEDIATE_EVENTS = new Set([
  * Uses scheduler.yield() when available (modern browsers), else setTimeout(0).
  */
 function yieldToBrowser(): Promise<void> {
-  if (
-    typeof globalThis !== 'undefined' &&
-    'scheduler' in globalThis &&
-    typeof (globalThis as any).scheduler?.yield === 'function'
-  ) {
-    return (globalThis as any).scheduler.yield();
+  const { scheduler } = globalThis as { scheduler?: { yield?: () => Promise<void> } };
+  if (typeof scheduler?.yield === 'function') {
+    return scheduler.yield();
   }
   return new Promise(resolve => setTimeout(resolve, 0));
 }
@@ -374,6 +440,15 @@ export class AttributeProcessor {
     this.processedElements.add(element);
     this.processedCount++;
 
+    // `hyperscript:before:init` is cancelable: a listener that calls
+    // preventDefault() keeps the element un-initialized, and un-marked, so a
+    // later explicit process() can try again.
+    if (!dispatchLifecycle(element, 'hyperscript:before:init', true, { code: hyperscriptCode })) {
+      this.processedElements.delete(element);
+      this.processedCount--;
+      return;
+    }
+
     try {
       debug.parse('ATTR: Processing element with code:', hyperscriptCode);
 
@@ -381,9 +456,17 @@ export class AttributeProcessor {
       const context = createContext(element);
       debug.parse('ATTR: Created context for element');
 
-      // Parse and prepare the hyperscript code
+      // Compile. English takes the synchronous core parser; any other
+      // language goes through `compile()`, which consults the registered
+      // front-end and falls back to the core parser itself. Both share the
+      // API's AST cache, so a re-scan after a swap re-uses the compiled
+      // program rather than re-parsing it.
       debug.parse('ATTR: About to compile hyperscript code');
-      const compilationResult = hyperscript.compileSync(hyperscriptCode);
+      const lang = detectLanguage(element);
+      const compilationResult =
+        lang === DEFAULT_LANGUAGE
+          ? hyperscript.compileSync(hyperscriptCode)
+          : await hyperscript.compile(hyperscriptCode, { language: lang });
       debug.parse('ATTR: Compilation result:', compilationResult);
 
       if (!compilationResult.ok) {
@@ -397,6 +480,9 @@ export class AttributeProcessor {
       // This ensures behavior installation is complete before continuing
       debug.parse('ATTR: Executing compiled AST');
       await hyperscript.execute(compilationResult.ast!, context);
+
+      markPowered(element);
+      dispatchLifecycle(element, 'hyperscript:after:init', false, { code: hyperscriptCode });
 
       // Dispatch load event on the element after successful processing
       this.dispatchLoadEvent(element);
@@ -444,11 +530,23 @@ export class AttributeProcessor {
     const code = element.getAttribute(this.options.attributeName);
     if (!code) return null;
 
-    const match = code.match(EVENT_REGEX);
+    const match = code.match(LAZY_HEADER);
 
-    // Not an event handler, or is an immediate event, or has multiple handlers -> eager
-    if (!match || IMMEDIATE_EVENTS.has(match[1]) || this.hasMultipleHandlers(code)) {
+    // Anything but the plain `on <event> <body>` shape is eager: no header
+    // features (see LAZY_HEADER), no immediate event, one handler, and English
+    // only — the stub's compile inside the trusted event must be synchronous,
+    // and only the core parser is.
+    if (
+      !match ||
+      IMMEDIATE_EVENTS.has(match[1]) ||
+      this.hasMultipleHandlers(code) ||
+      detectLanguage(element) !== DEFAULT_LANGUAGE
+    ) {
       return this.processElementAsync(element);
+    }
+
+    if (!dispatchLifecycle(element, 'hyperscript:before:init', true, { code })) {
+      return null;
     }
 
     const eventType = match[1];
@@ -478,21 +576,21 @@ export class AttributeProcessor {
         // Execute the handler body for the current (trusted) event.
         // The real handler installed above won't fire for this event (per DOM spec:
         // listeners added during dispatch are not invoked for the current event).
-        const ast = result.ast as any;
-        if (ast.type === 'eventHandler' && ast.commands?.length > 0) {
-          if (ast.modifiers?.prevent) event.preventDefault();
-          if (ast.modifiers?.stop) event.stopPropagation();
+        if (isEventHandler(result.ast)) {
+          const handler = result.ast;
+          if (handler.modifiers?.prevent) event.preventDefault();
+          if (handler.modifiers?.stop) event.stopPropagation();
 
-          const eventContext = createContext(element);
+          // Mirrors the runtime's per-event hydration (runtime-base.ts).
+          const eventContext: ExecutionContext = { ...createContext(element), it: event, event };
           eventContext.locals.set('event', event);
           eventContext.locals.set('target', event.target);
-          (eventContext as any).event = event;
 
-          for (const command of ast.commands) {
+          for (const command of handler.commands) {
             // No return-value propagation into `it`/`result` — commands that
             // produce a value self-assign. Mirrors the handler-body executor in
             // runtime-base.ts; see the comment there.
-            await hyperscript.execute(command, eventContext);
+            await hyperscript.execute(toLegacyNode(command), eventContext);
           }
         }
 
@@ -506,6 +604,8 @@ export class AttributeProcessor {
     this.lazyElements.add(element);
     this.processedElements.add(element); // Prevent re-processing via mutation observer
     this.processedCount++;
+    markPowered(element);
+    dispatchLifecycle(element, 'hyperscript:after:init', false, { code });
     return null;
   }
 
