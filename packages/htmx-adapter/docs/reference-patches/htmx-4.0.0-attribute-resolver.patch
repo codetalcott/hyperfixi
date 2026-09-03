@@ -1,38 +1,40 @@
---- htmx-4.0.0-beta5.js	2026-07-20 20:55:23.176200844 +0000
-+++ htmx-4.0.0-beta5-resolver-patched.js	2026-07-20 21:06:49.522118333 +0000
-@@ -156,6 +156,7 @@
+--- htmx-4.0.0.js
++++ htmx-4.0.0-resolver-patched.js
+@@ -141,6 +141,7 @@
          #boostSelector = "a,form";
-         #verbs = ["get", "post", "put", "patch", "delete"];
+         #verbs = ["get", "post", "put", "patch", "delete", "query"];
          #hxOnQuery
 +        #extraSelectorKey
          #transitionQueue
          #historyAbort
-         #processingTransition
-@@ -163,8 +164,7 @@
+         #historyInitialized
+@@ -149,8 +150,7 @@
          constructor() {
              this.#initHtmxConfig();
              this.#initRequestIndicatorCss();
--            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete]');
+-            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete],[hx-query]');
 -            this.#hxOnQuery = new XPathEvaluator().createExpression(`.//*[@*[${this.#prefixes("hx-on").map(p => `starts-with(name(), "${p}")`).join(' or ')}]]`);
 +            this.#rebuildDiscoverySelectors();
              this.#internalAPI = {
+                 HCON,
                  attributeValue: this.#attributeValue.bind(this),
-                 parseTriggerSpecs: this.#parseTriggerSpecs.bind(this),
-@@ -218,7 +218,9 @@
-                 morphScanLimit: 10,
+@@ -202,7 +202,9 @@
                  noSwap: [204, 304],
                  implicitInheritance: false,
--                defaultSettleDelay: 1
-+                defaultSettleDelay: 1,
+                 defaultSettleDelay: 1,
+-                allowEmptySwapAfterOOB: false
++                allowEmptySwapAfterOOB: false,
 +                attributeResolver: null,
 +                additionalAttributeSelectors: []
              }
              let metaConfig = document.querySelector('meta[name="htmx-config"]');
              if (metaConfig) {
-@@ -250,6 +252,19 @@
+@@ -232,6 +234,19 @@
+             Object.entries(extension).forEach(([key, value]) => {
+                 if(!this.#extMethods.get(key)?.push(value)) this.#extMethods.set(key, [value]);
              });
-         }
- 
++        }
++
 +        // Discovery selectors are rebuilt whenever config.additionalAttributeSelectors
 +        // changes (cheap string-key check), so alternate attribute spellings served
 +        // by config.attributeResolver are also DISCOVERED — a per-element resolver
@@ -42,14 +44,12 @@
 +            let key = extra.join(',');
 +            if (key === this.#extraSelectorKey) return;
 +            this.#extraSelectorKey = key;
-+            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete]') + (key ? ',' + key : '');
++            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete],[hx-query]') + (key ? ',' + key : '');
 +            this.#hxOnQuery = new XPathEvaluator().createExpression(`.//*[@*[${this.#prefixes("hx-on").map(p => `starts-with(name(), "${p}")`).join(' or ')}]]`);
-+        }
-+
+         }
+ 
          #ignore(elt) {
-             let p = this.config.prefix;
-             return !elt.closest || elt.closest('[hx-ignore]') != null || (p && elt.closest(`[${p}ignore]`) != null);
-@@ -257,12 +272,20 @@
+@@ -241,12 +256,20 @@
  
          #attr(elt, name) {
              let p = this.config.prefix;
@@ -72,7 +72,7 @@
          }
  
          #prefixSelector(s) {
-@@ -941,6 +964,7 @@
+@@ -919,6 +942,7 @@
           */
          process(root, force) {
              if (!root?.isConnected) return;

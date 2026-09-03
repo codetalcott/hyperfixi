@@ -1,6 +1,6 @@
 /**
  * End-to-end truth tests: the adapter driving REAL vendored libraries
- * (htmx 4.0.0-beta5, htmx 2.0.10, _hyperscript 0.9.93 — see
+ * (htmx 4.0.0, htmx 2.0.10, _hyperscript 0.9.93 — see
  * vendor/README.md). Everything the jsdom suite mocks is exercised for
  * real here: extension registration, the htmx_before_process hook name
  * and firing granularity, initial-page ordering, swapped-content
@@ -19,7 +19,7 @@ async function routeGreeting(page: Page): Promise<void> {
   );
 }
 
-test.describe('htmx v4 (4.0.0-beta5)', () => {
+test.describe('htmx v4 (4.0.0)', () => {
   test('localized button drives a real GET + swap @smoke', async ({ page }) => {
     await routeGreeting(page);
     await page.goto(`${FIXTURES}/v4-basic.html`);

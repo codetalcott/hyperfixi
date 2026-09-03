@@ -1,6 +1,6 @@
 # Proposal: an attribute-name resolver seam for htmx v4
 
-Status: **draft, validated against htmx 4.0.0-beta5** (`dist/htmx.js`, vendored
+Status: **draft, validated against htmx 4.0.0** (`dist/htmx.js`, vendored
 at `../test/browser/vendor/` — see its README for the extracted ground truth).
 This document is the design rationale; the persuasive form for upstream is a
 small reference patch against `src/htmx.js` plus this text.
@@ -20,7 +20,7 @@ htmx.config.attributeResolver = (elt, name) => string | null;
 ## Why
 
 htmx v4 funnels essentially all attribute reads through two private helpers —
-verified in 4.0.0-beta5: `#attr(elt, name)` (raw read) and
+verified in 4.0.0: `#attr(elt, name)` (raw read) and
 `#attributeValue(elt, name, …)` (adds `:inherited`/`:append` handling). That
 is a rare property: **one chokepoint covers every attribute** — current and
 future — without per-attribute wiring.
@@ -73,7 +73,7 @@ Design properties worth preserving in review:
   (nearest `lang` ancestor) work; a global rename table is the degenerate case.
 - **Name-level, not value-level** — values are not touched; anything
   value-shaped (trigger specs, vals) stays core's business.
-- **Selector caveat** (learned from loka-js, confirmed in beta5): a
+- **Selector caveat** (learned from loka-js, confirmed in 4.0.0): a
   per-element resolver cannot drive core's _document-level discovery
   selectors_. v4's scan IS compiled — `#actionSelector`, `#boostSelector`,
   and the `#hxOnQuery` XPath — so discovery needs a companion seam (e.g.
@@ -107,13 +107,13 @@ and load-order guidance are unchanged.
 ## Filing plan
 
 1. ~~Re-validate hook names/internals against the current v4 source.~~ Done
-   against the 4.0.0-beta5 dist (see `../test/browser/vendor/README.md`):
+   against the 4.0.0 dist (see `../test/browser/vendor/README.md`):
    chokepoints are `#attr`/`#attributeValue`; discovery selectors are
    compiled but already union-built via `#prefixes()`; extension hooks are
    event-name-derived (`htmx_before_process`). Re-check against `src/htmx.js`
-   at HEAD when filing — betas move.
+   at HEAD when filing — the API can still move between releases.
 2. ~~Produce the reference patch.~~ Done:
-   [`reference-patches/htmx-4.0.0-beta5-attribute-resolver.patch`](./reference-patches/htmx-4.0.0-beta5-attribute-resolver.patch)
+   [`reference-patches/htmx-4.0.0-attribute-resolver.patch`](./reference-patches/htmx-4.0.0-attribute-resolver.patch)
    (~30 added lines; resolver as last-fallback in `#attr`/`#attrName`, plus
    `additionalAttributeSelectors` folded into a `process()`-time
    `#rebuildDiscoverySelectors()`). The patched build is vendored and driven

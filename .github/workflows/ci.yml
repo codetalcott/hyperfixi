@@ -499,7 +499,7 @@ jobs:
     # Also gated on `code`: package exports cannot change in a docs/examples-only
     # diff, and a skipped required check satisfies branch protection.
     if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout

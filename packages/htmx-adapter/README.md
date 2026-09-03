@@ -39,7 +39,7 @@ All three consumers share one vocabulary source: the generated modules under
 
 htmx v4 has no hook to override attribute-name resolution — core reads `hx-get`
 literally. We maintain a proposed upstream seam plus a working ~30-line
-reference patch against beta5 and a ready-to-file Discussion draft
+reference patch against 4.0.0 and a ready-to-file Discussion draft
 ([docs/UPSTREAM_HOOK_PROPOSAL.md](docs/UPSTREAM_HOOK_PROPOSAL.md)); against a
 patched build, `installResolverMode(htmx)` localizes with **zero DOM
 mutation** (proven in the e2e suite). Until the seam exists upstream, the
@@ -177,11 +177,11 @@ The unit suite includes a reuse guard that loads every generated
 `packages/core/vocab/htmx/{lang}.js` module against this adapter's registry, so
 generator drift fails here rather than in a browser.
 
-The Playwright suite drives **real vendored libraries** — htmx `4.0.0-beta5`,
+The Playwright suite drives **real vendored libraries** — htmx `4.0.0`,
 htmx `2.0.10`, `_hyperscript` `0.9.93` (`test/browser/vendor/`) — verifying the
 end-to-end truths mocks can't: the v4 extension hook name and firing
 granularity (`htmx_before_process`, per processed root — validated against the
-beta5 source), request/swap from a localized button, both script orders,
+4.0.0 source), request/swap from a localized button, both script orders,
 localized attributes inside swapped-in content, executor-mode `hx-on` bodies
 running through real `_hyperscript` with `me` bound, and the htmx 2.x
 `defineExtension` fallback.
