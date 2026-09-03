@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_="…"` attribute or `hyperscript.eval` touched these. A caller constructing
   `createDefFeature()` directly should use the runtime's `def` support.
 
+- **`Lexer` and `Tokens` are no longer exported from `@hyperfixi/core`**, and
+  the root `src/tokenizer.ts` that defined them is deleted (Arc 6b). It was a
+  second tokenizer — a port of upstream `_hyperscript`'s `Lexer`/`Tokens` API
+  — that nothing in the engine called: the parser, the hybrid parser, the
+  browser bundles and every downstream package tokenize through
+  `parser/tokenizer.ts` (`tokenize`, exported and unchanged). The only
+  importer was its own test file.
+
+  _Migration:_ `import { tokenize } from '@hyperfixi/core'` and walk the
+  returned `Token[]`; there is no drop-in `Tokens` cursor class.
+
 ## [3.0.0] - 2026-08-30
 
 Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
