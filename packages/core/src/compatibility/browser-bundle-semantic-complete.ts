@@ -103,7 +103,6 @@ import { createTakeCommand } from '../commands/animation/take';
 
 // Advanced Commands (2)
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // Utility Commands (5)
 import { createLogCommand } from '../commands/utility/log';
@@ -184,9 +183,8 @@ const SUPPORTED_COMMANDS = [
   'measure',
   'settle',
   'take',
-  // Advanced (2)
+  // Advanced (1)
   'js',
-  'async',
   // Utility (5)
   'log',
   'tell',
@@ -272,7 +270,6 @@ const runtime = createTreeShakeableRuntime(
     createTakeCommand(),
     // Advanced (2)
     createJsCommand(),
-    createAsyncCommand(),
     // Utility (6)
     createLogCommand(),
     createTellCommand(),

@@ -690,7 +690,7 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 ### Command Pattern
 
-All 59 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
+All 58 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
 `@command` class decorator with a type-visible `commandMeta` static:
 
 ```typescript

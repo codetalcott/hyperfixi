@@ -25,7 +25,6 @@
 | ---------------- | ------------ | -------------------------------------------------------------------------------------------- |
 | `add`            | dom          | Add CSS classes, attributes, or styles to elements.                                          |
 | `append`         | content      | Add content to the end of a string, array, Set, or HTML element.                             |
-| `async`          | advanced     | Execute commands asynchronously without blocking.                                            |
 | `beep`           | utility      | Debug output for expressions with type information.                                          |
 | `blur`           | execution    | Remove focus from an element (calls HTMLElement.                                             |
 | `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                      |
@@ -1860,34 +1859,6 @@ tell closest <form/> submit
 ---
 
 ## Advanced Commands
-
-### async
-
-Execute commands asynchronously without blocking
-
-**Syntax:**
-
-```hyperscript
-async <command> [<command> ...]
-```
-
-**Examples:**
-
-```hyperscript
-async command1 command2
-```
-
-```hyperscript
-async fetchData processData
-```
-
-```hyperscript
-async animateIn showContent
-```
-
-**Side Effects:** async-execution
-
----
 
 ### js
 

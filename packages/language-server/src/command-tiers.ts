@@ -154,7 +154,6 @@ export const LOKASCRIPT_ONLY_COMMANDS = [
   'process', // `process "<p>x</p>"`     → Unexpected Token : process
 
   // Added by Arc A step 4.1 — the omissions that produced NO diagnostic.
-  'async', //   `async do log "x" end`   → Unexpected Token : async
   'copy', //    `copy "x"`               → Unexpected Token : copy
   'push', //    `push url "/x"`          → Unexpected Token : push
   'replace', // `replace url "/x"`       → Unexpected Token : replace

@@ -117,7 +117,6 @@ import { createBreakpointCommand } from '../commands/utility/breakpoint';
 // Advanced Commands (2)
 // ============================================================================
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // ============================================================================
 // Navigation Commands (1)
@@ -299,7 +298,6 @@ const runtime = createTreeShakeableRuntime(
 
     // Advanced (2)
     createJsCommand(),
-    createAsyncCommand(),
 
     // Navigation (1)
     createGoCommand(),
@@ -653,9 +651,8 @@ const api = {
     'copy',
     'pick',
     'beep',
-    // Advanced (2)
+    // Advanced (1)
     'js',
-    'async',
     // Navigation (1)
     'go',
     // Special (4)

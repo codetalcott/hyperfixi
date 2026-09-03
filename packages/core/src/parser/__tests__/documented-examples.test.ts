@@ -240,28 +240,11 @@ const ALLOWED: readonly Allowed[] = [
       'docs defect: upstream rejects it too (\"Expected event name\"). Since Arc 3 step 4 the declared grammar stops a command\'s arguments at `on`, so this fails to parse instead of swallowing `<input/>` (and, at the end of a handler body, the NEXT handler) as an argument',
   },
 
-  // Space-separated argument lists. Upstream rejects all five ("Unexpected
-  // Token : <second arg>") — its `log` wants commas and its `async` takes one
-  // command — so these are docs defects, and the parser quietly keeping only
-  // the first argument is how they read as fine for years.
-  {
-    command: 'async',
-    source: 'async command1 command2',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
-  {
-    command: 'async',
-    source: 'async fetchData processData',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
-  {
-    command: 'async',
-    source: 'async animateIn showContent',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
-  },
+  // Space-separated argument lists. Upstream rejects them ("Unexpected
+  // Token : <second arg>") — its `log` wants commas — so these are docs
+  // defects, and the parser quietly keeping only the first argument is how
+  // they read as fine for years. (The three `async` rows that sat here left
+  // with the command in Arc 6b.)
   {
     command: 'log',
     source: 'log x y z',

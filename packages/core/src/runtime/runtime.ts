@@ -92,7 +92,6 @@ import { createTakeCommand } from '../commands/animation/take';
 
 // Advanced Commands
 import { createJsCommand } from '../commands/advanced/js';
-import { createAsyncCommand } from '../commands/advanced/async';
 
 // Data Commands
 import { createDefaultCommand } from '../commands/data/default';
@@ -201,7 +200,6 @@ const COMMAND_FACTORIES: Readonly<Record<string, () => CommandWithParseInput>> =
 
   // Advanced
   js: createJsCommand,
-  async: createAsyncCommand,
 
   // Utility
   log: createLogCommand,

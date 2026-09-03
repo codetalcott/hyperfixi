@@ -501,7 +501,6 @@ export const TOKENIZER_KEYWORDS = new Set([
   'by',
   'at',
   'between',
-  'async',
   'no',
   // Compound syntax keywords
   'start',

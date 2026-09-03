@@ -38,7 +38,6 @@ export type GenericSlotKey = (typeof GENERIC_SLOT_KEYS)[number];
 export const COMMAND_SLOTS = {
   add: ['to'],
   append: ['to'],
-  async: [],
   beep: [],
   blur: [],
   break: [],
@@ -120,7 +119,6 @@ export type SlottedCommandName = keyof typeof COMMAND_SLOTS;
 export const COMMAND_ARITY = {
   add: [1, 2],
   append: [1, 1],
-  async: [0, null],
   beep: [0, null],
   blur: [0, 1],
   break: [0, 0],

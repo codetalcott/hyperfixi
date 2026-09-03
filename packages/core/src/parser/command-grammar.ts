@@ -164,7 +164,6 @@ export const COMMAND_GRAMMAR: Readonly<Record<string, CommandGrammar>> = {
   throw: { positional: 'primary', markers: [], syntax: 'throw <error>' },
 
   // --- the 23 that fell through to the tail loop --------------------------
-  async: ONE_EXPR('async <command>'),
   'beep!': BEEP,
   beep: BEEP,
   blur: ONE_EXPR('blur [<target>]'),

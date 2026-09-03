@@ -304,7 +304,7 @@ export async function evalHyperScriptAsync(
  */
 export function isAsyncExpression(expression: string): boolean {
   // Simple heuristics for detecting async expressions
-  const asyncKeywords = ['fetch', 'wait', 'settle', 'async', 'promise'];
+  const asyncKeywords = ['fetch', 'wait', 'settle', 'promise'];
   const lowerExpression = expression.toLowerCase();
 
   return asyncKeywords.some(keyword => lowerExpression.includes(keyword));
