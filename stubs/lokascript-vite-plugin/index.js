@@ -1,3 +1,0 @@
-// @lokascript/vite-plugin has been renamed to @hyperfixi/vite-plugin
-// This package is a backward-compatibility stub. Install @hyperfixi/vite-plugin directly.
-module.exports = require('@hyperfixi/vite-plugin');
