@@ -1,5 +1,8 @@
 # Handoff — engine migration, Arc 1 (the engine / front-end boundary), steps 2 and 3
 
+> **ARC 1 IS COMPLETE (2026-09-03, evening) — this brief is a record now.**
+> Steps A, B and C below all landed; nothing here is open.
+>
 > **Rewritten 2026-09-03 on `79052242` (post-3.0.0).** The previous brief
 > (2026-08-30, updated 2026-09-02) carried the decision that unblocked step 6;
 > step 6 landed (#1058), the decision is history, and the measurements below
@@ -155,7 +158,13 @@ Original step text follows for the record.
    local tarball (its README says it installs from the registry; if it cannot,
    say so in the PR rather than skipping silently).
 
-### Step B — `hyperscript.use(frontEnd)` (step 2, API half)
+### ~~Step B — `hyperscript.use(frontEnd)` (step 2, API half)~~ — ✅ DONE 2026-09-03
+
+Landed as written below, with one deviation: `FrontEnd.parse`/`render` return
+`unknown` rather than a semantic-node type, so `parser/` declares no front-end
+type. Ten strict tests in `api/front-end-registration.test.ts`. The stub's AST
+is a `log` the source cannot contain, so "the default answered instead" fails
+every assertion. Original text follows.
 
 The plan's wording: `getSemanticAnalyzer()` reads an analyzer a front-end
 registered. That function is gone (step 6 deleted `createSemanticAdapter` and
@@ -195,7 +204,11 @@ the in-loop path), so the shape today is smaller:
    `compileAsync` with no front-end registered returns the same "no
    analyzer" result the traditional-only path returns today."
 
-### Step C — the ratchet becomes an assertion (step 3)
+### ~~Step C — the ratchet becomes an assertion (step 3)~~ — ✅ DONE 2026-09-03 (same PR as B)
+
+The `tsconfig` `paths` route was not taken — by reasoning, not trial: `paths`
+maps specifiers program-wide and cannot forbid one per directory. The script fails engine-side imports outright and
+`--update` refuses them; 25 self-tests. Original text follows.
 
 When B lands, every remaining row in `semantic-boundary.json` is a
 target-state row (bundles + `multilingual/`). Turn the ratchet's endpoint into
