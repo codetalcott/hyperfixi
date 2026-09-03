@@ -2087,6 +2087,29 @@ hybrid-complete 11,376 (44,090 raw). The spike is a build experiment — one
 tsup entry that imports the command parsers and a minimal statement loop,
 gz-measured — and it is Arc 5's first and possibly only step.
 
+**Spike DONE 2026-09-04 — and it was the only step. Arc 5 CLOSES as
+"measured, not worth it."** Three esbuild builds (`--bundle --minify`,
+gzip −9), each a one-line entry under `compatibility/`, not committed:
+
+| entry                                                | raw      | gz         |
+| ---------------------------------------------------- | -------- | ---------- |
+| the full parser alone (`export { parse }`)           | 118.0 KB | **29,236** |
+| the nine command-parser files alone (the fragments)  | 39.1 KB  | **10,965** |
+| the Pratt table alone                                | 6.7 KB   | 1,812      |
+
+Against `MAX_HYBRID=24000` and today's hybrid-complete at 11,376 gz (parser
+AND executor AND runtime): the fragments by themselves — no statement loop,
+no tokenizer, no expressions, no executor — already weigh what the whole
+hybrid bundle weighs, and the full parser alone is over the ceiling by a
+fifth. No fragment selection can get under a bundle that is smaller than
+its own inputs. So, exactly as step 1 says: the hybrid parser stays as a
+second producer of the typed AST (Arc 2 types it, Arc E's generator keeps it
+in sync), the regex lite family stays hand-written, and this arc is a
+record. Consequence for Arc 7 step 4: the binary switch's registry lookups
+were to fold into table entries once "tiers are fragment subsets"; with no
+such tiers, the switch and `context.registry` STAY as the small bundles'
+shaking mechanism — filed as measured, not deferred.
+
 ### Arc 6b — Delete exported dead code (small, needs 4.0)
 
 The `@deprecated` exports: the six `features/` families from `index.ts`,
@@ -2473,3 +2496,17 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   boundary per command and would have run on past `halt`; the matrix has no
   observer row. Next: Arc 4b, opened by
   [HANDOFF-engine-arc4b.md](./HANDOFF-engine-arc4b.md).
+
+- **2026-09-04** — **Arcs 4b, 4c and 7 closed; Arc 5 measured and closed.**
+  4b (#1088, #1091, #1092): compile to closures, bodies as Ops, the
+  `_runtimeExecute` channel gone; 4c (#1093, #1094, #1095): dead context
+  fields, opt-in evaluation tracking, `ContextBridge` and the provider Proxy
+  off the hot path, scope hooks in `core/`, `Scope` named; 7 (#1096 +
+  step 3): one arithmetic in every registry, `collection`'s dead shape gone,
+  core-set expressions referenced statically. Arc 5's spike measured the
+  fragments at the size of the whole hybrid bundle and the full parser over
+  the ceiling — closed as not worth it, and with it Arc 7 step 4's fold.
+  What remains of the plan is Arc 6b, which waits for the 4.0 cycle by
+  design. Bench vs the step 0 baseline: execute-only +3 %, compile+execute
+  +14 %, `toggle` +11 %. Type-escapes 884 → 869; layering allowlist 14 → 13
+  edges.
