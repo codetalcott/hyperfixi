@@ -8,8 +8,8 @@ import {
   hasBodyTranslator,
   autoDetectBodyHooks,
   resetBodyHooks,
-  setCanonicalClaimMode,
-  canonicalClaimMode,
+  setNeutralizeOnClaim,
+  neutralizesOnClaim,
 } from '../src/hx-on.js';
 import { installAutoSweep } from '../src/extension.js';
 
@@ -144,9 +144,9 @@ describe('executor mode: canonical-named hx-on', () => {
   });
 });
 
-describe("executor mode: 'preserve' claim mode (htmx v4)", () => {
+describe('executor mode: claim-time neutralization OFF (htmx v4 accepted the extension)', () => {
   it('claims WITHOUT removing the canonical attribute; listener still fires once', () => {
-    setCanonicalClaimMode('preserve');
+    setNeutralizeOnClaim(false);
     const executor = vi.fn();
     setBodyExecutor(executor);
     document.body.innerHTML = `<button hx-on:click="toggle .active"></button>`;
@@ -164,7 +164,7 @@ describe("executor mode: 'preserve' claim mode (htmx v4)", () => {
 
   it('keeps BOTH authored attrs when localized and canonical name the same event', () => {
     register('es', ES);
-    setCanonicalClaimMode('preserve');
+    setNeutralizeOnClaim(false);
     const executor = vi.fn();
     setBodyExecutor(executor);
     document.body.innerHTML = `<section lang="es"><button hx-en:clic="a" hx-on:click="b"></button></section>`;
@@ -179,10 +179,41 @@ describe("executor mode: 'preserve' claim mode (htmx v4)", () => {
     expect(executor).toHaveBeenCalledWith('a', btn, expect.any(Event));
   });
 
-  it('resetBodyHooks restores the remove default', () => {
-    setCanonicalClaimMode('preserve');
+  it('resetBodyHooks restores the safe default (neutralize on claim)', () => {
+    setNeutralizeOnClaim(false);
     resetBodyHooks();
-    expect(canonicalClaimMode()).toBe('remove');
+    expect(neutralizesOnClaim()).toBe(true);
+  });
+
+  it('a re-claim after the author edited the attribute runs the NEW body (force re-process)', () => {
+    setNeutralizeOnClaim(false);
+    const executor = vi.fn();
+    setBodyExecutor(executor);
+    document.body.innerHTML = `<button hx-on:click="add .a to me"></button>`;
+    const btn = document.querySelector('button')!;
+    canonicalizeElement(btn);
+    btn.setAttribute('hx-on:click', 'add .b to me');
+    canonicalizeElement(btn); // what htmx.process(btn, true) → before:process does
+    click(btn);
+    expect(executor).toHaveBeenCalledTimes(1); // still one listener
+    expect(executor).toHaveBeenCalledWith('add .b to me', btn, expect.any(Event));
+  });
+
+  it('removes an ADAPTER-CREATED canonical sibling on re-claim even with neutralization off', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es"><button hx-en:clic="alternar .activo"></button></section>`;
+    const btn = document.querySelector('button')!;
+    canonicalizeElement(btn); // no executor yet: v1 sweep copies to hx-on:click
+    expect(btn.getAttribute('hx-on:click')).toBe('alternar .activo');
+
+    setNeutralizeOnClaim(false); // v4 accepted
+    const executor = vi.fn();
+    setBodyExecutor(executor);
+    canonicalizeElement(btn); // executor re-sweep
+    expect(btn.getAttribute('hx-en:clic')).toBe('alternar .activo'); // authored: kept
+    expect(btn.hasAttribute('hx-on:click')).toBe(false); // adapter-created: gone
+    click(btn);
+    expect(executor).toHaveBeenCalledWith('alternar .activo', btn, expect.any(Event));
   });
 });
 

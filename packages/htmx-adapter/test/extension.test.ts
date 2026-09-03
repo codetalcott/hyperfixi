@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { register, resetRegistry } from '../src/registry.js';
+import { setTriggerSpecSplitter, translateTriggerValue } from '../src/canonicalize.js';
 import {
   EXTENSION_NAME,
   createExtension,
@@ -9,8 +10,8 @@ import {
 import {
   setBodyExecutor,
   resetBodyHooks,
-  setCanonicalClaimMode,
-  canonicalClaimMode,
+  neutralizesOnClaim,
+  setNeutralizeOnClaim,
 } from '../src/hx-on.js';
 
 const ES = {
@@ -49,14 +50,14 @@ describe('registerWith', () => {
     warn.mockRestore();
   });
 
-  it('a rejected v4 registration keeps the removal guard: no hook will run', () => {
+  it('a rejected v4 registration keeps claim-time removal: no hook will run', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     // Register once successfully so the mode is 'preserve', then a page
     // whose htmx rejects us (allowlist) must NOT leave attrs in the DOM.
     registerWith({ registerExtension: vi.fn() });
-    expect(canonicalClaimMode()).toBe('preserve');
+    expect(neutralizesOnClaim()).toBe(false);
     registerWith({ registerExtension: vi.fn(() => false) });
-    expect(canonicalClaimMode()).toBe('remove');
+    expect(neutralizesOnClaim()).toBe(true);
 
     setBodyExecutor(vi.fn());
     document.body.innerHTML = `<button hx-on:click="toggle .x"></button>`;
@@ -72,15 +73,15 @@ describe('registerWith', () => {
   });
 });
 
-describe('registerWith selects the canonical claim mode', () => {
-  it("v4 → 'preserve' (the cancelable before:on:init hook is the guard)", () => {
+describe('registerWith decides claim-time neutralization from the registration OUTCOME', () => {
+  it('an accepted v4 registration turns claim-time removal off (the hook is the guard)', () => {
     registerWith({ registerExtension: vi.fn() });
-    expect(canonicalClaimMode()).toBe('preserve');
+    expect(neutralizesOnClaim()).toBe(false);
   });
 
-  it("v2 → 'remove' (no cancelable per-node hx-on hook exists)", () => {
+  it('v2 keeps claim-time removal (2.0.10 binds hx-on before beforeProcessNode)', () => {
     registerWith({ defineExtension: vi.fn() });
-    expect(canonicalClaimMode()).toBe('remove');
+    expect(neutralizesOnClaim()).toBe(true);
   });
 });
 
@@ -99,7 +100,7 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
   });
 
   it('cancels binding when every hx-on attr is the claimed colon form; attrs stay', () => {
-    setCanonicalClaimMode('preserve');
+    setNeutralizeOnClaim(false);
     const executor = vi.fn();
     setBodyExecutor(executor);
     const ext = createExtension() as Ext;
@@ -117,7 +118,7 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
   });
 
   it('falls back to removal on a mixed node (legacy composite hx-on) and lets htmx proceed', () => {
-    setCanonicalClaimMode('preserve');
+    setNeutralizeOnClaim(false);
     setBodyExecutor(vi.fn());
     const ext = createExtension() as Ext;
     document.body.innerHTML = `<button hx-on:click="toggle .x" hx-on="blur -> doB()"></button>`;
@@ -130,7 +131,7 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
   });
 
   it('data-hx-on* spellings also take the removal fallback', () => {
-    setCanonicalClaimMode('preserve');
+    setNeutralizeOnClaim(false);
     setBodyExecutor(vi.fn());
     const ext = createExtension() as Ext;
     document.body.innerHTML = `<button hx-on:click="toggle .x" data-hx-on:change="js()"></button>`;
@@ -142,6 +143,76 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
     expect(btn.getAttribute('data-hx-on:change')).toBe('js()');
   });
 
+  it('a data-hx-on* name htmx would NOT bind (data-hx-online) does not force the fallback', () => {
+    setNeutralizeOnClaim(false);
+    setBodyExecutor(vi.fn());
+    const ext = createExtension() as Ext;
+    document.body.innerHTML = `<button hx-on:click="toggle .x" data-hx-online="1"></button>`;
+    const btn = document.querySelector('button')!;
+    ext.htmx_before_process(document.body);
+    expect(ext.htmx_before_on_init(btn)).toBe(false);
+    expect(btn.getAttribute('hx-on:click')).toBe('toggle .x');
+  });
+
+  it('reads htmx.config.prefix: a custom-prefix spelling htmx binds forces the fallback', () => {
+    setNeutralizeOnClaim(false);
+    setBodyExecutor(vi.fn());
+    const ext = createExtension({ config: { prefix: 'x-' } }) as Ext;
+    document.body.innerHTML = `<button hx-on:click="toggle .x" x-on:blur="doB()"></button>`;
+    const btn = document.querySelector('button')!;
+    ext.htmx_before_process(document.body);
+    expect(ext.htmx_before_on_init(btn)).toBeUndefined(); // htmx must still bind x-on:blur
+    expect(btn.hasAttribute('hx-on:click')).toBe(false);
+    expect(btn.getAttribute('x-on:blur')).toBe('doB()');
+  });
+
+  it('reads htmx.config.prefix: with the prefix disabled, data-hx-on:* is not bindable → cancel', () => {
+    setNeutralizeOnClaim(false);
+    setBodyExecutor(vi.fn());
+    const ext = createExtension({ config: { prefix: '' } }) as Ext;
+    document.body.innerHTML = `<button hx-on:click="toggle .x" data-hx-on:change="js()"></button>`;
+    const btn = document.querySelector('button')!;
+    ext.htmx_before_process(document.body);
+    expect(ext.htmx_before_on_init(btn)).toBe(false);
+    expect(btn.getAttribute('hx-on:click')).toBe('toggle .x'); // nothing to protect → preserved
+  });
+
+  it('reads htmx.config.metaCharacter: hx-on-click is bindable under "-" and forces the fallback', () => {
+    setNeutralizeOnClaim(false);
+    setBodyExecutor(vi.fn());
+    const ext = createExtension({ config: { metaCharacter: '-' } }) as Ext;
+    document.body.innerHTML = `<button hx-on:click="toggle .x" hx-on-click="js()"></button>`;
+    const btn = document.querySelector('button')!;
+    ext.htmx_before_process(document.body);
+    expect(ext.htmx_before_on_init(btn)).toBeUndefined();
+    expect(btn.hasAttribute('hx-on:click')).toBe(false);
+    expect(btn.getAttribute('hx-on-click')).toBe('js()');
+  });
+
+  it('keys on the CLAIM RECORD, not on the executor being set at process time', () => {
+    setNeutralizeOnClaim(false);
+    setBodyExecutor(vi.fn());
+    const ext = createExtension() as Ext;
+    document.body.innerHTML = `<button hx-on:click="toggle .x"></button>`;
+    const btn = document.querySelector('button')!;
+    ext.htmx_before_process(document.body);
+    setBodyExecutor(null); // cleared between the claim and htmx's process()
+    expect(ext.htmx_before_on_init(btn)).toBe(false); // still cancelled: the body is hyperscript
+    expect(btn.getAttribute('hx-on:click')).toBe('toggle .x');
+  });
+
+  it('init(internalAPI) adopts htmx\'s own HCON.split for trigger-spec boundaries', () => {
+    const split = vi.fn((v: string) => v.split(','));
+    const ext = createExtension() as Ext & { init(api: object): void };
+    ext.init({ HCON: { split } });
+    try {
+      translateTriggerValue('clic, cambiar', { clic: 'click', cambiar: 'change' });
+      expect(split).toHaveBeenCalledWith('clic, cambiar');
+    } finally {
+      setTriggerSpecSplitter(null);
+    }
+  });
+
   it('leaves nodes without hx-on attributes alone', () => {
     setBodyExecutor(vi.fn());
     const ext = createExtension() as Ext;
@@ -149,7 +220,7 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
     expect(ext.htmx_before_on_init(document.querySelector('button')!)).toBeUndefined();
   });
 
-  it('full v4 flow: registerWith flips the mode, sweep preserves, hook cancels', () => {
+  it('full v4 flow: registerWith turns removal off, sweep preserves, hook cancels', () => {
     let captured: Ext | undefined;
     registerWith({
       registerExtension: (_name: string, ext: object) => {

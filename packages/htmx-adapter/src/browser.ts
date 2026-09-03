@@ -23,7 +23,12 @@ import { register } from './registry.js';
 import { registerWith, installAutoSweep, EXTENSION_NAME, type HtmxLike } from './extension.js';
 import { canonicalizeTree, canonicalizeElement, translateTriggerValue } from './canonicalize.js';
 import { langOf, normLang } from './lang-resolver.js';
-import { autoDetectBodyHooks, setBodyExecutor, setBodyTranslator } from './hx-on.js';
+import {
+  autoDetectBodyHooks,
+  setBodyExecutor,
+  setBodyTranslator,
+  setNeutralizeOnClaim,
+} from './hx-on.js';
 import { installResolverMode } from './resolver.js';
 
 // Bracket-with-string-constant access, NOT dot access: Terser's
@@ -63,10 +68,13 @@ function autoRegister(): void {
   // DOMContentLoaded for scripts that load after this one. Explicit
   // setBodyExecutor/setBodyTranslator calls always win.
   autoDetectBodyHooks(window);
-  document.addEventListener('DOMContentLoaded', () => autoDetectBodyHooks(window), {
-    once: true,
-  });
 
+  // LISTENER ORDER MATTERS: the registration retry below must be added
+  // BEFORE the executor re-detect, so that at DOMContentLoaded a late
+  // _hyperscript is detected only after htmx has accepted the extension
+  // (which turns claim-time removal off). The sweep itself waits for
+  // DOMContentLoaded to have fired (installAutoSweep), so both run
+  // ahead of the first claim.
   if (!registerWith(w.htmx)) {
     // Adapter loaded before htmx (the recommended order) — htmx isn't on
     // window yet. All sync scripts have run by DOMContentLoaded.
@@ -87,6 +95,10 @@ function autoRegister(): void {
     );
   }
 
+  document.addEventListener('DOMContentLoaded', () => autoDetectBodyHooks(window), {
+    once: true,
+  });
+
   installAutoSweep(document);
 }
 
@@ -106,5 +118,6 @@ export {
   EXTENSION_NAME,
   setBodyExecutor,
   setBodyTranslator,
+  setNeutralizeOnClaim,
   installResolverMode,
 };

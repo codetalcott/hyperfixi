@@ -160,6 +160,15 @@ describe('canonicalizeElement', () => {
     expect(btn.getAttribute('hx-trigger:inherited:append')).toBe('click');
   });
 
+  it('never treats Object.prototype keys as vocabulary', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es"><button hx-trigger="constructor" hx-en:toString="x"></button></section>`;
+    const btn = document.querySelector('button')!;
+    expect(() => canonicalizeElement(btn)).not.toThrow();
+    expect(btn.getAttribute('hx-trigger')).toBe('constructor');
+    expect(btn.getAttribute('hx-on:tostring')).toBe('x'); // suffix passed through, lower-cased by HTML
+  });
+
   it('never overwrites an existing canonical attribute', () => {
     register('es', ES);
     const btn = esButton(`hx-get="/canonical" hx-obtener="/localized"`);

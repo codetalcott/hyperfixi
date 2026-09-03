@@ -28,7 +28,15 @@ export {
   type HtmxVocab,
   type VocabPayload,
 } from './registry.js';
-export { canonicalizeElement, canonicalizeTree, translateTriggerValue } from './canonicalize.js';
+export {
+  canonicalizeElement,
+  canonicalizeTree,
+  translateTriggerValue,
+  setTriggerSpecSplitter,
+  wasCreatedByAdapter,
+  TOP_LEVEL_COMMA_RE,
+  type TriggerSpecSplitter,
+} from './canonicalize.js';
 export {
   EXTENSION_NAME,
   createExtension,
@@ -50,8 +58,14 @@ export {
   hasBodyTranslator,
   onBodyHooksChanged,
   claimHxOnAttribute,
+  claimedAttrNames,
+  isClaimed,
+  removeClaimedCanonicalAttrs,
+  setNeutralizeOnClaim,
+  neutralizesOnClaim,
   autoDetectBodyHooks,
   resetBodyHooks,
   type BodyExecutor,
   type BodyTranslator,
+  type ClaimOptions,
 } from './hx-on.js';

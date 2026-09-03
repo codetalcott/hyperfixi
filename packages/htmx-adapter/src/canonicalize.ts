@@ -13,11 +13,13 @@
  * allows):
  *
  * - **The authored attribute is never removed or rewritten** — devtools
- *   keeps showing what the author wrote. The one exception is an
- *   author-written canonical `hx-trigger` whose *value* uses localized
- *   event names (`hx-trigger="clic"`): there is no separate canonical
- *   target to write to, so the value is translated in place (idempotent —
- *   the maps are localized → canonical, so a second pass is a no-op).
+ *   keeps showing what the author wrote. Two documented exceptions:
+ *   an author-written canonical `hx-trigger` whose *value* uses localized
+ *   event names (`hx-trigger="clic"`) has no separate canonical target,
+ *   so the value is translated in place (idempotent — the maps are
+ *   localized → canonical, so a second pass is a no-op); and in executor
+ *   mode a canonical-named `hx-on:*` attribute may be removed by the
+ *   claim when no htmx hook exists to cancel htmx's binding (hx-on.ts).
  * - **An existing canonical attribute always wins.** If the element
  *   already has `hx-get`, a localized `hx-obtener` never overwrites it.
  * - **No vocab, no work.** With no languages registered every function
@@ -34,16 +36,43 @@ import { hasAnyVocab, vocabFor, warnMissingLangOnce } from './registry.js';
 import { claimHxOnAttribute, hasBodyExecutor } from './hx-on.js';
 import { isResolverMode } from './resolver.js';
 
+/** Own-key lookup: vocab maps are plain objects, and `constructor` is not an event. */
+const hasOwn = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+
 /** Attribute namespaces the adapter touches. */
 const NS_RE = /^(?:hx|sse|ws)-/;
 
 /**
  * Byte-mirror of htmx v4's `HCON.split` top-level-comma regex (vendored
- * 4.0.0, `HCON.split`). Spec boundaries must match core's grammar:
+ * 4.0.0, `HCON.split`; pinned against the vendored file by
+ * test/vendor-mirror.test.ts). Spec boundaries must match core's grammar:
  * commas inside `[filters]`, `(calls)`, and quoted strings — e.g.
  * `from:".a, .b"` — are NOT separators.
+ *
+ * On htmx 4.0.0 the extension's `init(internalAPI)` swaps in htmx's own
+ * `HCON.split` (see setTriggerSpecSplitter), so the mirror is the
+ * fallback for v2 and for pages where the extension is not registered.
  */
-const TOP_LEVEL_COMMA_RE = /,(?![^\[]*\])(?![^(]*\))(?![^<]*\/>)(?=(?:[^"']|"[^"]*"|'[^']*')*$)/;
+export const TOP_LEVEL_COMMA_RE =
+  /,(?![^\[]*\])(?![^(]*\))(?![^<]*\/>)(?=(?:[^"']|"[^"]*"|'[^']*')*$)/;
+
+export type TriggerSpecSplitter = (value: string) => string[];
+
+const mirrorSplit: TriggerSpecSplitter = value => value.split(TOP_LEVEL_COMMA_RE);
+let splitSpecs: TriggerSpecSplitter = mirrorSplit;
+
+/**
+ * Use htmx's own top-level splitter (`internalAPI.HCON.split` on 4.0.0)
+ * instead of the mirror. Pass `null` to restore the mirror.
+ */
+export function setTriggerSpecSplitter(fn: TriggerSpecSplitter | null): void {
+  splitSpecs = fn ?? mirrorSplit;
+}
+
+/** `hx-trigger` and its v4 modifier forms (`hx-trigger:inherited`, …). */
+function isTriggerAttr(name: string): boolean {
+  return name === 'hx-trigger' || name.startsWith('hx-trigger:');
+}
 
 /**
  * Translate localized event names inside an `hx-trigger` value.
@@ -51,23 +80,42 @@ const TOP_LEVEL_COMMA_RE = /,(?![^\[]*\])(?![^(]*\))(?![^<]*\/>)(?=(?:[^"']|"[^"
  * hx-trigger grammar: comma-separated specs, each `eventName[filter]
  * modifier…`. Only the leading event token of each spec is translated
  * (an attached `[...]` filter, all modifiers like `delay:500ms` /
- * `from:body` / `once`, and the authored spacing stay byte-identical).
- * When nothing translates, the original string is returned verbatim, so
- * an all-canonical value is never rewritten. Unknown tokens pass
+ * `from:body` / `once`, and the authored spacing stay byte-identical —
+ * the split removes exactly the commas the join restores, so an
+ * all-canonical value comes back verbatim). Unknown tokens pass
  * through untouched, which also makes translation idempotent (the maps
- * are localized → canonical only).
+ * are localized → canonical only). Only the map's OWN keys translate:
+ * `constructor` is not an event.
  */
 export function translateTriggerValue(value: string, events: Record<string, string>): string {
-  let changed = false;
-  const specs = value.split(TOP_LEVEL_COMMA_RE).map(spec =>
-    spec.replace(/^(\s*)([^[\s]+)/, (whole, ws: string, evt: string) => {
-      const translated = events[evt];
-      if (!translated) return whole;
-      changed = true;
-      return ws + translated;
-    })
-  );
-  return changed ? specs.join(',') : value;
+  return splitSpecs(value)
+    .map(spec =>
+      spec.replace(/^(\s*)([^[\s]+)/, (whole, ws: string, evt: string) =>
+        hasOwn(events, evt) ? ws + events[evt] : whole
+      )
+    )
+    .join(',');
+}
+
+/**
+ * Canonical attributes THIS module wrote (per element), as opposed to
+ * authored ones. Lets executor mode tell an adapter-created `hx-on:*`
+ * sibling from an authored one when both name the same event.
+ */
+const created = new WeakMap<Element, Set<string>>();
+
+function markCreated(elt: Element, name: string): void {
+  let names = created.get(elt);
+  if (!names) {
+    names = new Set();
+    created.set(elt, names);
+  }
+  names.add(name);
+}
+
+/** True when `name` on `elt` was written by canonicalization, not authored. */
+export function wasCreatedByAdapter(elt: Element, name: string): boolean {
+  return created.get(elt)?.has(name) ?? false;
 }
 
 /**
@@ -102,23 +150,51 @@ export function canonicalizeElement(elt: Element): boolean {
 
   const attrs = vocab?.attrs ?? {};
   const events = vocab?.events ?? {};
+  let hasEvents = false;
+  for (const _ in events) {
+    hasEvents = true;
+    break;
+  }
   let changed = false;
 
-  // Snapshot — we mutate the attribute list while iterating.
+  // Snapshot — we mutate the attribute list while iterating, and the
+  // canonical attributes written below must not be revisited.
   for (const attr of Array.from(elt.attributes)) {
     const name = attr.name;
     if (!NS_RE.test(name)) continue;
 
     // Executor mode owns the hx-on family outright: canonical-named
-    // attrs are claimed (listener installed, attr removed so htmx never
-    // JS-evals the hyperscript body)…
+    // attrs are claimed (listener installed; removal is the claim's
+    // call — see hx-on.ts)…
     if (executorMode && name.startsWith('hx-on:')) {
-      if (claimHxOnAttribute(elt, name, lang, events)) changed = true;
+      if (
+        claimHxOnAttribute(elt, name, lang, events, {
+          adapterCreated: wasCreatedByAdapter(elt, name),
+        })
+      ) {
+        changed = true;
+      }
+      continue;
+    }
+
+    // Author-written canonical hx-trigger (including modifier forms like
+    // hx-trigger:inherited) with localized event values
+    // (`hx-trigger="clic"`). Translated in place — a documented mutation
+    // of an authored attribute, because there is no separate canonical
+    // target. Idempotent by construction.
+    if (isTriggerAttr(name)) {
+      if (hasEvents) {
+        const translated = translateTriggerValue(attr.value, events);
+        if (translated !== attr.value) {
+          elt.setAttribute(name, translated);
+          changed = true;
+        }
+      }
       continue;
     }
 
     // Exact match: hx-obtener → hx-get.
-    let canonical = attrs[name];
+    let canonical = hasOwn(attrs, name) ? attrs[name] : undefined;
 
     // Colon family: the base is looked up in attrs; what the suffix
     // means depends on the base. For hx-on the suffix is an EVENT name
@@ -132,12 +208,13 @@ export function canonicalizeElement(elt: Element): boolean {
     if (!canonical) {
       const colon = name.indexOf(':');
       if (colon > 0) {
-        colonBase = attrs[name.slice(0, colon)];
+        const base = name.slice(0, colon);
+        colonBase = hasOwn(attrs, base) ? attrs[base] : undefined;
         if (colonBase) {
           const suffix = name.slice(colon + 1);
           canonical =
             colonBase === 'hx-on'
-              ? `${colonBase}:${events[suffix] ?? suffix}`
+              ? `${colonBase}:${hasOwn(events, suffix) ? events[suffix] : suffix}`
               : `${colonBase}:${suffix}`;
         }
       }
@@ -156,28 +233,12 @@ export function canonicalizeElement(elt: Element): boolean {
     if (canonical === name || elt.hasAttribute(canonical)) continue;
 
     let value = attr.value;
-    // hx-trigger and its modifier forms (hx-trigger:inherited etc.)
-    // carry event names in the VALUE — translate on the way over.
-    if (canonical === 'hx-trigger' || canonical.startsWith('hx-trigger:')) {
-      value = translateTriggerValue(value, events);
-    }
+    // hx-trigger and its modifier forms carry event names in the VALUE —
+    // translate on the way over.
+    if (isTriggerAttr(canonical)) value = translateTriggerValue(value, events);
     elt.setAttribute(canonical, value);
+    markCreated(elt, canonical);
     changed = true;
-  }
-
-  // Author-written canonical hx-trigger (including modifier forms like
-  // hx-trigger:inherited) with localized event values
-  // (`hx-trigger="clic"`). Translated in place — the only mutation of an
-  // authored attribute, because there is no separate canonical target.
-  if (Object.keys(events).length > 0) {
-    for (const attr of Array.from(elt.attributes)) {
-      if (attr.name !== 'hx-trigger' && !attr.name.startsWith('hx-trigger:')) continue;
-      const translated = translateTriggerValue(attr.value, events);
-      if (translated !== attr.value) {
-        elt.setAttribute(attr.name, translated);
-        changed = true;
-      }
-    }
   }
 
   return changed;
