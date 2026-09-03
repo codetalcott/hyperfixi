@@ -26,9 +26,11 @@ Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/
 One major, two themes. `@lokascript/i18n`'s grammar transformer is gone,
 because `@lokascript/semantic` overtook it on every row of the translation
 corpus (#973–#1001). And the engine-migration plan
-(`docs-internal/ENGINE_MIGRATION_PLAN.md`) is complete: its last arc deleted
+(`docs-internal/ENGINE_MIGRATION_PLAN.md`) closed its last arc, which deleted
 the exported dead code it had been carrying and collapsed the browser bundle
-lineup to two names (#1099–#1105).
+lineup to two names (#1099–#1105). One arc is still open: Arc 1's steps 2
+and 3 — `@hyperfixi/core`'s library entry still bundles the semantic
+front-end (recorded in the plan's History, 2026-09-03).
 
 ### ⚠ BREAKING
 

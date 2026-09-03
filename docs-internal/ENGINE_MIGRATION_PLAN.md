@@ -12,7 +12,9 @@
 > single-layer structure; this one holds the **cross-layer** structure that the
 > six command arcs, deliberately, did not touch.
 >
-> **Status: PLANNED — no arc has started.** Every claim in
+> **Status (2026-09-03): every arc has closed except Arc 1, whose steps 2 and
+> 3 are OPEN** — the post-plan queue is [After the plan](#after-the-plan).
+> Every claim in
 > [Verified state](#verified-state-measured-2026-08-30-on-e3b3e34a) was measured
 > on the tree named above, not inherited from an earlier doc. Line refs will
 > drift — re-verify by symbol (`grep -n`), not by number.
@@ -426,10 +428,18 @@ step 2 deletes; each deletion is its own PR. Tag the tree
 
 ### Arc 1 — Engine / front-end boundary (medium)
 
-> **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (2026-08-30).
-> Steps 1 and 5 are done; it carries the measured state, the open decision step
-> 5 surfaced, and the recommended order for the rest. Read it before starting
-> step 2, 3, 4 or 6.
+> **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (rewritten
+> 2026-09-03). **Steps 1, 4, 5 and 6 are done; steps 2 and 3 are OPEN** — the
+> only open steps in the plan. The 2026-09-03 re-measurement moved the debt: at
+> the SOURCE level the boundary is already at the ratchet's endpoint (the five
+> `static-value` rows are the four bundle entries plus
+> `multilingual/schema-roles.ts`, all target-state), but at the BUILD level it
+> is not — `rollup.config.mjs` gives the main entry `external: []` with
+> `inlineDynamicImports: true`, so `dist/index.mjs` inlines the prebuilt
+> `semantic`, `framework` and `intent` dist files whole: 3.33 MB, against
+> 1.04 MB with them external (measured). Step 2's "the library entry stops
+> pulling semantic into every Node consumer" is therefore a build change first
+> and an API change second. Read the brief before starting either step.
 
 The semantic package becomes a front-end the engine does not know about.
 The seam is already there; the arc is about the one call site that ignores it
@@ -2177,6 +2187,35 @@ exports (53 → 29); it names five entry points now.
   ceilings, `metadata.ts` and `verify:reference` follow. Brief and recipe:
   `~/.claude/plans/hyperfixi-arc6b-and-bundle-lineup-handoff.md`.
 
+## After the plan
+
+What the 2026-09-03 post-release review left open, in the order it should be
+worked. None needs an arc; the first has a brief.
+
+1. **Arc 1 steps 2 and 3** — the one target-design point (6) the plan did not
+   reach. Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). Build
+   half first (externalize the front-end in `rollup.config.mjs`; 3.33 MB →
+   1.04 MB measured; no API change), then `hyperscript.use(frontEnd)` with the
+   library entry keeping a default registration through 3.x so no Node
+   consumer changes; moving `@lokascript/semantic` from `dependencies` to an
+   optional peer is a 4.0 entry.
+2. **Collapse the three DOM processors onto the Program cache** — risk 6
+   below, named as a 4b follow-up and never filed. `api/dom-processor.ts`
+   (444 lines), `dom/attribute-processor.ts` (664) and
+   `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
+   runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
+3. **Arc 3's honest endpoint is `syntaxSites: 0`, not "`parseInput` deleted".**
+   The census (`baselines/parse-input-census.json`) still holds 50 bodies /
+   2,085 lines, and 30 of them still discriminate syntax at runtime (70
+   `syntaxSites`). Ratchet that column to zero, largest-first
+   (`pseudo-command` 7, `measure` 6, `put` 4, `pick` 4, `morph` 4); lines fall
+   as a side effect. Do not chase the line count.
+4. **`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
+   four of five shapes broken, three silently, upstream is the oracle.
+   `PARSER_NEXT_STEPS.md`.
+5. **The two LSP consumers of `fromCoreAST` have no role-path test** (Arc 1
+   step 4's finding; their hover tests assert `toBeDefined()` only). Two tests.
+
 ## Non-goals
 
 - **No hyperscript-language changes.** Every arc preserves observable
@@ -2556,9 +2595,10 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   +14 %, `toggle` +11 %. Type-escapes 884 → 869; layering allowlist 14 → 13
   edges.
 
-- **2026-09-05** — **Arc 6b is COMPLETE, and with it the plan** (#1099–#1104
+- **2026-09-05** — **Arc 6b is COMPLETE** ~~, and with it the plan~~ (#1099–#1104
   for the five exported-dead-code families; #1103 + #1105 for the bundle
-  lineup). Every arc of the plan is now closed. Type-escapes 869 →
+  lineup). ~~Every arc of the plan is now closed.~~ (Corrected 2026-09-03: Arc 1's steps
+  2 and 3 never landed — see the entry below.) Type-escapes 869 →
   656 over the six deletions; the command manifest is 58; the prebuilt
   lineup is two public names plus two separate products, and a small bundle
   that meets a command it lacks says so and names `hyperfixi.js`. Three
@@ -2570,3 +2610,39 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   the 4.0.0 breaking entries — whether they ship as one major or two is the
   owner's call. Filed, not done: `@lokascript/semantic`'s `asyncSchema` now
   describes a command core does not register (a semantic-package change).
+
+- **2026-09-03** — **The close-out was overstated, and the record is corrected.**
+  A post-release review found Arc 1 open: steps 2 (`hyperscript.use(frontEnd)`)
+  and 3 (the multilingual module as the only importer) never landed, the plan
+  never marked the arc either way, and the 3.0.0 changelog called the plan
+  complete. Re-measured on `79052242`:
+  - **Source level: the boundary ratchet's stated endpoint is reached.** Its
+    five `static-value` rows are all target-state (four bundle entries plus
+    `multilingual/schema-roles.ts`); `api/hyperscript-api.ts` reaches the
+    front-end only through two dynamic imports and the lazily-imported bridge.
+  - **Build level: it is not.** `rollup.config.mjs` gives the main entry
+    `external: []` with `inlineDynamicImports: true`, so `dist/index.mjs`
+    (3,331,225 bytes) inlines `semantic/dist/index.js`,
+    `framework/dist/index.js` and `intent/dist/index.js` whole (the sourcemap's
+    `sources` names them), and every `await import('@lokascript/semantic')` is
+    flattened away. Rebuilt with the three front-end packages and
+    `@lokascript/framework` external: **1,036,964 bytes**, with three
+    `import('@lokascript/semantic')` and one `import('@lokascript/framework')`
+    surviving as real deferred loads. `package.json` still lists semantic and
+    intent under `dependencies`, and framework — already an optional peer — is
+    inlined regardless, which makes `lse/index.ts`'s "install it as a peer"
+    check vacuous. The subpath entries are clean (`commands`, `expressions`,
+    `parser/full`, `registry`, `behaviors`, `bundle-generator` inline no
+    workspace package); `multilingual/index.mjs` externalizes semantic but
+    inlines `intent/dist`.
+  - **Consumers.** Every package that depends on `@hyperfixi/core` and compiles
+    non-English through the library entry (aot-compiler, i18n, language-server,
+    mcp-server, playground, testing-framework) already depends on
+    `@lokascript/semantic` itself; none of the ten that do not appears among
+    the library entry's `compile`/`compileAsync` callers. So a default
+    registration kept through 3.x changes nobody's behaviour.
+  - The History dates 2026-09-04/05 above are session-clock drift — git dates
+    every commit from #1088 to #1111 on 2026-09-03.
+
+  The brief is rewritten (`HANDOFF-engine-arc1.md`) and the post-plan queue is
+  [After the plan](#after-the-plan).
