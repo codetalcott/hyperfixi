@@ -8,6 +8,9 @@ import { debug } from '../utils/debug';
 import type { EventHandlerNode } from '../ast/nodes';
 import { toLegacyNode, type AnyNode } from '../ast/legacy';
 import type { ASTNode, ExecutionContext } from '../types/base-types';
+import { DEFAULT_LANGUAGE, detectLanguage } from './detect-language';
+
+export { detectLanguage };
 
 // =============================================================================
 // Host contract — what the processor needs from the API, by injection
@@ -118,28 +121,8 @@ const IMMEDIATE_EVENTS = new Set([
 // Element lifecycle (upstream _hyperscript 0.9.90)
 // =============================================================================
 
-const DEFAULT_LANGUAGE = 'en';
 const POWERED_ATTRIBUTE = 'data-hyperscript-powered';
 const SCRIPT_SELECTOR = 'script[type="text/hyperscript"]';
-
-/**
- * Detect the language of an element's hyperscript: `data-lang` on the element,
- * else the closest `lang` attribute (`en-US` → `en`), else the document's.
- */
-export function detectLanguage(element: Element): string {
-  const dataLang = element.getAttribute('data-lang');
-  if (dataLang) return dataLang;
-
-  const langAttr = element.closest('[lang]')?.getAttribute('lang');
-  if (langAttr) return langAttr.split('-')[0];
-
-  if (typeof document !== 'undefined') {
-    const docLang = document.documentElement?.lang;
-    if (docLang) return docLang.split('-')[0];
-  }
-
-  return DEFAULT_LANGUAGE;
-}
 
 /** The compile result's `ast` is the legacy `ASTNode`; the handler shape lives in `ast/nodes`. */
 function isEventHandler(node: AnyNode): node is EventHandlerNode {

@@ -2849,7 +2849,11 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   `detectLanguage` twin the brief placed "in the attribute processor's async
   path" was in `browser-bundle-multilingual.ts`: measured against the shared
   walk, the only differences were a `SUPPORTED_LANGUAGES` check and a
-  lowercase, so it calls the shared function and keeps the check. The
+  lowercase, so it calls the shared function and keeps the check. That
+  function lives in `dom/detect-language.ts`, import-free, because the
+  first cut imported it from the processor and CI's size job caught the
+  parser-free multilingual bundle growing 91.2 → 93.2 KB gzipped (2.2%):
+  a helper imported from a side-effectful module brings the module. The
   `MutationObserver`'s hand-rolled walk — script tags, element, descendants
   — is `processTree()`, which now also takes a script tag as its root. (A
   first draft called the old walk a race; dropping the `await` on the script

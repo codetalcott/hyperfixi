@@ -34,7 +34,7 @@
 import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
 import { createFullExpressionRegistry } from '../expressions/index';
 import { createContext, ensureContext } from '../core/context';
-import { detectLanguage as detectElementLanguage } from '../dom/attribute-processor';
+import { detectLanguage as detectElementLanguage } from '../dom/detect-language';
 import type { ASTNode } from '../types/base-types';
 
 // Import the 52 commands this bundle ships (was labelled 41; the label had
@@ -438,8 +438,9 @@ const processedElements = new WeakSet<HTMLElement>();
 let domObserver: MutationObserver | null = null;
 
 /**
- * The element's language, as `dom/attribute-processor.ts` detects it
- * (`data-lang`, closest `lang`, the document's), narrowed to what THIS bundle
+ * The element's language, as `dom/detect-language.ts` walks it (`data-lang`,
+ * closest `lang`, the document's — the same walk the attribute processor and
+ * `hyperscript.process()` use), narrowed to what THIS bundle
  * ships: a code outside `SUPPORTED_LANGUAGES` falls back to English rather
  * than reaching a parser that is not here. This used to be a second copy of
  * the walk (measured 2026-09-03: the only differences were this check and a

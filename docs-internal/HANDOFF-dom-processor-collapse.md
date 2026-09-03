@@ -79,7 +79,11 @@ runtime with no parser of its own and is 148 lines.
    all — PR 1 gave it the API's) but in `browser-bundle-multilingual.ts`,
    which walked the ancestors itself; measured against the shared function
    the only differences were a `SUPPORTED_LANGUAGES` check and a lowercase,
-   so it now calls the shared one and keeps the check. Also folded: the
+   so it now calls the shared one and keeps the check — from
+   `dom/detect-language.ts`, a module with no imports: the first cut imported
+   it from the processor, and CI's size job measured the parser-free
+   multilingual bundle growing 91.2 → 93.2 KB gzipped (2.2%, out of
+   tolerance) because the whole processor came along. Also folded: the
    `MutationObserver`'s hand-rolled script-tag + element + descendant block
    is `processTree()` (which now also takes a root that is itself a script
    tag) — a dedupe, not a fix: dropping the script-tag `await` reddened no
