@@ -24,11 +24,7 @@
  * fact; the metadata count mirrors it.
  */
 export const BUNDLES_WITH_COMMAND_LISTS: Readonly<Record<string, string>> = {
-  lite: 'browser-bundle-lite.ts',
-  'lite-plus': 'browser-bundle-lite-plus.ts',
   'hybrid-complete': 'browser-bundle-hybrid-complete.ts',
-  minimal: 'browser-bundle-minimal-v2.ts',
-  standard: 'browser-bundle-standard-v2.ts',
 };
 
 /**

@@ -24,18 +24,6 @@ const rootDir = path.resolve(__dirname, '../..');
 
 const BUNDLE_CONFIGS = [
   {
-    name: 'hyperfixi-lite.js',
-    path: 'packages/core/dist/hyperfixi-lite.js',
-    maxGzip: 4000, // 4 KB
-    description: 'Minimal bundle (8 commands)',
-  },
-  {
-    name: 'hyperfixi-lite-plus.js',
-    path: 'packages/core/dist/hyperfixi-lite-plus.js',
-    maxGzip: 5000, // 5 KB
-    description: 'Lite + i18n aliases',
-  },
-  {
     name: 'hyperfixi-hybrid-complete.js',
     path: 'packages/core/dist/hyperfixi-hybrid-complete.js',
     maxGzip: 15000, // 15 KB
@@ -46,18 +34,6 @@ const BUNDLE_CONFIGS = [
     path: 'packages/core/dist/hyperfixi-hybrid-hx.js',
     maxGzip: 18000, // 18 KB
     description: 'Hybrid + htmx support',
-  },
-  {
-    name: 'hyperfixi-browser-minimal.js',
-    path: 'packages/core/dist/hyperfixi-browser-minimal.js',
-    maxGzip: 60000, // 60 KB
-    description: 'Minimal with full parser',
-  },
-  {
-    name: 'hyperfixi-browser-standard.js',
-    path: 'packages/core/dist/hyperfixi-browser-standard.js',
-    maxGzip: 80000, // 80 KB
-    description: 'Standard bundle',
   },
   {
     name: 'hyperfixi-multilingual.js',

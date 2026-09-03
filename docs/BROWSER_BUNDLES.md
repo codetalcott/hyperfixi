@@ -7,66 +7,60 @@
 
 ## Choosing your bundle
 
-Decision tree for the most common cases:
+**Using Vite?** Add `@hyperfixi/vite-plugin` and stop reading: it scans your
+project and emits a bundle with only the commands you use, picking the parser
+tier itself (lite when your commands allow, hybrid otherwise, the full runtime
+when it spots htmx v4 features). See the
+[vite plugin README](../packages/vite-plugin/README.md).
 
-1. **Using `@hyperfixi/vite-plugin`?** Don't pick a bundle by hand — the plugin scans your project and emits the right one (minimal handcrafted when possible, falls back to `hx-v4` when it spots htmx v4 features). See [vite plugin README](../packages/vite-plugin/README.md).
-2. **Need `hx-live`, `bind`, `when`, SSE, or WebSocket?** Use `hyperfixi-hx-v4.js` (~322 KB gz). Single script tag, everything auto-installed. The size cost buys correctness — the slim runtime can't satisfy these features (its `set` doesn't fire `notifyGlobalWrite`, the slim parser doesn't know reactive features, and SSE/WS modules aren't wired).
-3. **Need only htmx v1/v2 attributes (`hx-get`/`hx-post`/etc.)?** Use `hyperfixi-hx.js` (~21.5 KB gz). Includes htmx-compat + the slim hybrid runtime for `_=` attributes. No reactivity, no streaming.
-4. **Pure hyperscript (`_=` attributes), ~85% feature coverage, smallest realistic size?** Use `hyperfixi-hybrid-complete.js` (~11.1 KB gz). Full AST parser, expressions, event modifiers, block commands (`if`, `for`, `repeat`, `while`, `fetch`).
-5. **Tiny static page (toggle / show / hide / put / set)?** Use `hyperfixi-lite.js` (~1.9 KB gz). Regex parser, 8 commands. Drops to `hyperfixi-lite-plus.js` (~2.6 KB gz) if you need a few more commands + i18n aliases.
-6. **Authoring in multiple languages (Japanese, Korean, Arabic, etc.) or need the full semantic parser at runtime?** Use `hyperfixi.js` (full bundle, ~310 KB gz) or `hyperfixi-multilingual.js` (~93 KB, parser-free i18n via the semantic bundle loaded separately).
+**Script tag?** Two prebuilt names:
 
-Rule of thumb: start as small as you can; upgrade when you hit a missing feature. The vite plugin removes this decision entirely for projects that use it.
+| Bundle            | Size (gzip) | What it is                                                                                          |
+| ----------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| `hyperfixi-hx.js` | ~21.5 KB    | The small one. Hybrid AST parser, blocks, expressions, event modifiers, plus htmx v1/v2 attributes. |
+| `hyperfixi.js`    | ~310 KB     | Everything. Full parser, reactivity and realtime plugins, 24 languages, `window.hyperfixi`.         |
 
-## Core Bundles
+Start with `hyperfixi-hx.js`. A command it does not ship fails **loudly** —
+the console names the command and `hyperfixi.js` — so the upgrade moment is
+the first time it is needed, not a table read in advance.
 
-| Bundle                                               | Global                  | Size (gzip) | Use Case                             |
-| ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
-| `packages/core/dist/hyperfixi.js`                    | `window.hyperfixi`      | ~310 KB     | Full bundle with parser              |
-| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | Lazy behavior resolver (8 behaviors) |
-| `packages/core/dist/hyperfixi-multilingual.js`       | `window.hyperfixi`      | 96.8 KB     | Multilingual (no parser)             |
-| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 43.3 KB     | Grammar transformation               |
+Two further bundles are separate products, not sizes of the same thing:
 
-> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Backward-compatible aliases (`lokascript-*.js`) are provided but will be removed in v3.0.0. See [MIGRATION.md](../MIGRATION.md).
+| Bundle                      | Size (gzip) | Product                                                                                                                       |
+| --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `hyperfixi-hx-v4.js`        | ~342 KB     | htmx v4 on the full runtime: `hx-live`, `bind`, `when`, SSE and WebSocket, auto-installed. The Vite plugin selects it itself. |
+| `hyperfixi-multilingual.js` | ~91 KB      | Parser-free multilingual runtime; pair with a `@lokascript/semantic` browser bundle (below).                                  |
 
-## Lite Bundles (Size-Optimized)
+> **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
+> `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
+> exported. The regex "lite" tier lives on inside the Vite plugin's generated
+> bundles (and `@hyperfixi/core/parser/regex`); `minimal`/`standard` were the
+> full parser with a hand-picked command subset, which the plugin does better.
+> `hyperfixi-hybrid-complete.js` is still built and exported as
+> `@hyperfixi/core/browser/hybrid-complete` because the plugin's generated
+> fallback imports it — treat it as plugin-internal, not a name to reach for.
 
-For projects prioritizing bundle size over features:
+## What `hyperfixi-hx.js` runs
 
-| Bundle                         | Size (gzip) | Commands  | Features                                                      |
-| ------------------------------ | ----------- | --------- | ------------------------------------------------------------- |
-| `hyperfixi-lite.js`            | 1.9 KB      | 8         | Regex parser, basic commands                                  |
-| `hyperfixi-lite-plus.js`       | 2.6 KB      | 14        | Regex parser, more commands, i18n aliases                     |
-| `hyperfixi-hybrid-complete.js` | 11.1 KB     | 38+blocks | Full AST parser, expressions, event modifiers                 |
-| `hyperfixi-hx.js`              | 21.5 KB     | 38+blocks | hybrid-complete + htmx/fixi attribute support                 |
-| `hyperfixi-hx-v4.js`           | ~322 KB     | 40+blocks | Full runtime + htmx-compat + reactivity (hx-live, bind, when) |
-
-**Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
+The hybrid parser covers ~85% of everyday hyperscript:
 
 - Full expression parser with operator precedence
-- Block commands: `repeat N times`, `for each`, `if/else/else if`, `unless`, `fetch`, `while`, `async`
+- Block commands: `repeat N times`, `for each`, `if/else/else if`, `unless`, `fetch`, `while`
 - Event modifiers: `.once`, `.prevent`, `.stop`, `.debounce(N)`, `.throttle(N)`
 - Positional expressions: `first`, `last`, `next`, `previous`, `closest`, `parent`
 - Function calls and method chaining: `str.toUpperCase()`, `arr.join('-')`
 - HTML selectors: `<button.class#id/>`
 - i18n keyword aliases
 
-> **`catch` / `finally` on event handlers need the full AST parser.** `on click … catch e … end`
-> is supported by `hyperfixi.js`, `hyperfixi-hx-v4.js`, `hyperfixi-minimal.js` and
-> `hyperfixi-standard.js`.
->
-> The **hybrid** bundles (`hyperfixi-hybrid-complete.js`, `hyperfixi-hx.js`) **reject** them:
-> the attribute fails to parse and the error is logged to the console naming the keyword and
-> the remedy. They used to absorb the keywords into the handler body, which put the catch
-> commands on the **success** path — a failure message overwriting a successful render.
->
-> The **lite** bundles' regex parser does not recognise the keywords at all and silently
-> ignores the attribute.
->
-> Use one of the full bundles if you rely on handler-level error handling.
+What it does not run, it refuses at parse time with a message that names the
+remedy: `on click … catch e … end` / `finally`, `repeat forever` / `until` /
+`while` (its `repeat` takes a count), and any command outside its set —
+`'make' needs the full parser (use hyperfixi.js)`. A refused attribute is
+inert; nothing runs on the wrong path. Use `hyperfixi.js` for handler-level
+error handling.
 
 ```html
-<!-- Example: Hybrid Complete with expressions and blocks -->
+<!-- Expressions and blocks -->
 <button
   _="on click
   set :total to #price's textContent then
@@ -92,10 +86,10 @@ For projects prioritizing bundle size over features:
 </button>
 ```
 
-**Hybrid-HX** adds htmx and fixi attribute compatibility for declarative AJAX:
+It also carries htmx and fixi attribute compatibility for declarative AJAX:
 
 ```html
-<!-- htmx-style attributes (hybrid-hx bundle) -->
+<!-- htmx-style attributes -->
 <button hx-get="/api/users" hx-target="#users-list" hx-swap="innerHTML">Load Users</button>
 
 <!-- fixi-style attributes (also supported) -->
@@ -106,6 +100,15 @@ For projects prioritizing bundle size over features:
 ```
 
 Fixi features include request dropping (anti-double-submit), `fx-ignore` attribute, and a rich event lifecycle (`fx:init`, `fx:config`, `fx:before`, `fx:after`, `fx:error`, `fx:finally`, `fx:swapped`).
+
+## Companion bundles
+
+| Bundle                                               | Global                  | Size (gzip) | Use Case                             |
+| ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
+| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | Lazy behavior resolver (8 behaviors) |
+| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 43.3 KB     | Per-language vocabulary and profiles |
+
+> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Backward-compatible aliases (`lokascript-*.js`) are provided but will be removed in v3.0.0. See [MIGRATION.md](../MIGRATION.md).
 
 ## `hx-live` reactive expressions (htmx v4)
 

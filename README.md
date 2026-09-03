@@ -47,13 +47,7 @@ No server, no npm, no build step. Just save and open.
 
 ## Install
 
-**CDN** (simplest):
-
-```html
-<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"></script>
-```
-
-**Vite** (recommended for production):
+**Vite** — the default. One plugin, zero options: it scans your files for `_="..."` attributes and emits a bundle with only the commands you use, choosing the parser tier for you.
 
 ```bash
 npm install @hyperfixi/vite-plugin
@@ -65,7 +59,16 @@ import { hyperfixi } from '@hyperfixi/vite-plugin';
 export default { plugins: [hyperfixi()] };
 ```
 
-The plugin scans your files for `_="..."` attributes and generates a minimal bundle with only the commands you use.
+**Script tag** — two prebuilt names, no table to read:
+
+```html
+<!-- small: hyperscript + htmx v1/v2 attributes (~21.5 KB gz) -->
+<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js"></script>
+<!-- everything: full parser, reactivity, 24 languages (~310 KB gz) -->
+<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js"></script>
+```
+
+Start with the small one. When it meets a command it does not ship, it says so in the console and names `hyperfixi.js`; that is the moment to switch.
 
 ## For LLM Agents
 
@@ -77,7 +80,7 @@ The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `v
 
 - **43 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
 - **\_hyperscript compatible** -- existing hyperscript code works as-is
-- **Tree-shakeable** -- ship only the commands you use (1.9 KB lite to ~299 KB full)
+- **Tree-shakeable** -- the Vite plugin ships only the commands you use; the small prebuilt is ~21.5 KB gz, the full one ~310 KB
 - **TypeScript types** -- full type safety with comprehensive definitions
 - **Agent-ready** -- MCP server with a deterministic validate/repair/compile loop ([AGENTS.md](./AGENTS.md))
 - **Optional multilingual** -- read and write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
