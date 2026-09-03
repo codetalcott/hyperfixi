@@ -1,33 +1,36 @@
 /**
- * The DOM processors agree, case by case.
+ * The DOM processor's entry points agree, case by case.
  *
- * Two modules compile `_` attributes: `api/dom-processor.ts` behind
- * `hyperscript.process()`, and `dom/attribute-processor.ts` behind every
- * browser bundle — eagerly by default, or through a lazy stub that compiles
- * on the first event so user activation survives. This table runs every row
- * on all three and asserts the same observable outcome from each.
+ * One module compiles `_` attributes — `dom/attribute-processor.ts` — behind
+ * three entries: `hyperscript.process()`, the bundles' eager scan, and the
+ * lazy stub that compiles on the first event so user activation survives.
+ * This table runs every row on all three and asserts the same observable
+ * outcome from each.
  *
- * It is the gate the collapse of the processors lands under, and it has
- * already earned its keep twice (2026-09-03):
+ * It was the gate the collapse of the two former processors landed under
+ * (`api/dom-processor.ts`, deleted 2026-09-03), and it earned its keep on
+ * the way:
  *
  * - The API path carried its OWN listener installer and silently dropped
  *   what the runtime's grammar adds: `on click[event.shiftKey]` fired on a
  *   plain click, `on mouseenter or click` never fired on mouseenter, `on
- *   click from document` never fired at all. Both paths now hand the AST to
- *   the runtime.
+ *   click from document` never fired at all.
+ * - The bundle path never dispatched `hyperscript:before:init` / `after:init`
+ *   and never set `data-hyperscript-powered`; both lived only in the API path.
  * - The lazy stub read only the event NAME from the header, so for the first
- *   event it ignored a filter (fired on a plain click), listened for the first
- *   name of an `or` list only, and never saw `from <target>` at all. Those
- *   shapes now fall back to eager processing.
+ *   event it ignored a filter, listened for the first name of an `or` list
+ *   only, and never saw `from <target>`. Those shapes now go eager.
+ * - `cleanup(container)` stripped the root's marker only; a second lazy scan
+ *   registered a second stub; "processed" was per-instance state.
  *
  * Strict: every row asserts the OBSERVABLE outcome, never that a function was
  * called. The `logAll` row is the one feature the old API installer had that
- * the runtime did not; it moved into the runtime, so the bundle path gets it.
+ * the runtime did not; it moved into the runtime, so every path gets it.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hyperscript, config } from './hyperscript-api';
-import { AttributeProcessor, defaultAttributeProcessor } from '../dom/attribute-processor';
+import { hyperscript, config } from '../api/hyperscript-api';
+import { AttributeProcessor, defaultAttributeProcessor } from './attribute-processor';
 
 type Install = (el: HTMLElement) => Promise<void>;
 const PATHS: Array<[string, Install]> = [
@@ -348,4 +351,50 @@ describe('a tree is processed the same way by hyperscript.process() and the bund
       expect(b2.classList.contains('two')).toBe(true);
     });
   }
+});
+
+describe('the MutationObserver takes the same entry as hyperscript.process()', () => {
+  it('a subtree appended at runtime has its script tag run before the element that installs what it defines', async () => {
+    const processor = new AttributeProcessor({ autoScan: false });
+    await processor.init(); // no scan; installs the observer
+    try {
+      const c = document.createElement('div');
+      c.innerHTML = `
+        <script type="text/hyperscript">
+          behavior Observed()
+            on click
+              add .observed to me
+            end
+          end
+        </script>
+        <button _="install Observed">b</button>`;
+      document.body.appendChild(c);
+      await tick();
+      await tick();
+      const b = c.querySelector('button')!;
+      b.click();
+      await tick();
+      expect(b.classList.contains('observed')).toBe(true);
+    } finally {
+      processor.destroy();
+    }
+  });
+
+  it('hyperscript.process() on a script tag itself runs it', async () => {
+    document.body.innerHTML = '';
+    const target = document.createElement('button');
+    target.id = 'script-root-target';
+    document.body.appendChild(target);
+    const script = document.createElement('script');
+    script.type = 'text/hyperscript';
+    script.setAttribute('for', '#script-root-target');
+    script.textContent = 'on click add .from-script-root to me';
+    document.body.appendChild(script);
+
+    hyperscript.process(script);
+    await tick();
+    target.click();
+    await tick();
+    expect(target.classList.contains('from-script-root')).toBe(true);
+  });
 });

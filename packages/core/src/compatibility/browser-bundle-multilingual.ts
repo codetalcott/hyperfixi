@@ -34,6 +34,7 @@
 import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
 import { createFullExpressionRegistry } from '../expressions/index';
 import { createContext, ensureContext } from '../core/context';
+import { detectLanguage as detectElementLanguage } from '../dom/detect-language';
 import type { ASTNode } from '../types/base-types';
 
 // Import the 52 commands this bundle ships (was labelled 41; the label had
@@ -437,31 +438,17 @@ const processedElements = new WeakSet<HTMLElement>();
 let domObserver: MutationObserver | null = null;
 
 /**
- * Detect language for an element by checking data-lang, lang attributes,
- * or walking up the DOM tree. Falls back to 'en'.
+ * The element's language, as `dom/detect-language.ts` walks it (`data-lang`,
+ * closest `lang`, the document's — the same walk the attribute processor and
+ * `hyperscript.process()` use), narrowed to what THIS bundle
+ * ships: a code outside `SUPPORTED_LANGUAGES` falls back to English rather
+ * than reaching a parser that is not here. This used to be a second copy of
+ * the walk (measured 2026-09-03: the only differences were this check and a
+ * lowercase).
  */
 function detectLanguage(element: HTMLElement): string {
-  // Check data-lang first (explicit lokascript language override)
-  const dataLang = element.getAttribute('data-lang');
-  if (dataLang && SUPPORTED_LANGUAGES.includes(dataLang as any)) {
-    return dataLang;
-  }
-
-  // Walk up the DOM checking lang attributes
-  let current: HTMLElement | null = element;
-  while (current) {
-    const lang = current.getAttribute('lang');
-    if (lang) {
-      // Normalize lang attribute (e.g., "ja-JP" → "ja")
-      const code = lang.split('-')[0].toLowerCase();
-      if (SUPPORTED_LANGUAGES.includes(code as any)) {
-        return code;
-      }
-    }
-    current = current.parentElement;
-  }
-
-  return 'en';
+  const lang = detectElementLanguage(element).toLowerCase();
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang) ? lang : 'en';
 }
 
 /**

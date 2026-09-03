@@ -8,6 +8,9 @@ import { debug } from '../utils/debug';
 import type { EventHandlerNode } from '../ast/nodes';
 import { toLegacyNode, type AnyNode } from '../ast/legacy';
 import type { ASTNode, ExecutionContext } from '../types/base-types';
+import { DEFAULT_LANGUAGE, detectLanguage } from './detect-language';
+
+export { detectLanguage };
 
 // =============================================================================
 // Host contract — what the processor needs from the API, by injection
@@ -95,7 +98,7 @@ export interface AttributeProcessorOptions {
  * event header. The stub listens for exactly one event on exactly one target
  * and runs the body for the first event WITHOUT evaluating the header, so any
  * header feature makes it wrong for that first event (measured 2026-09-03,
- * `api/dom-processor.test.ts`): a filter `[…]` fired on a plain click, an
+ * `processor-parity.test.ts`): a filter `[…]` fired on a plain click, an
  * `or` list lost the first event of its second name, `from <target>` never
  * fired, and `(args)` would have left the destructured locals unbound.
  * Those shapes fall back to eager processing, which compiles the header.
@@ -118,27 +121,8 @@ const IMMEDIATE_EVENTS = new Set([
 // Element lifecycle (upstream _hyperscript 0.9.90)
 // =============================================================================
 
-const DEFAULT_LANGUAGE = 'en';
 const POWERED_ATTRIBUTE = 'data-hyperscript-powered';
-
-/**
- * Detect the language of an element's hyperscript: `data-lang` on the element,
- * else the closest `lang` attribute (`en-US` → `en`), else the document's.
- */
-export function detectLanguage(element: Element): string {
-  const dataLang = element.getAttribute('data-lang');
-  if (dataLang) return dataLang;
-
-  const langAttr = element.closest('[lang]')?.getAttribute('lang');
-  if (langAttr) return langAttr.split('-')[0];
-
-  if (typeof document !== 'undefined') {
-    const docLang = document.documentElement?.lang;
-    if (docLang) return docLang.split('-')[0];
-  }
-
-  return DEFAULT_LANGUAGE;
-}
+const SCRIPT_SELECTOR = 'script[type="text/hyperscript"]';
 
 /** The compile result's `ast` is the legacy `ASTNode`; the handler shape lives in `ast/nodes`. */
 function isEventHandler(node: AnyNode): node is EventHandlerNode {
@@ -211,8 +195,6 @@ export class AttributeProcessor {
   private processedCount = 0;
   private readyEventDispatched = false;
   private initialized = false;
-  /** Elements with lazy stubs registered (not yet fully parsed) */
-  private lazyElements = new WeakSet<HTMLElement>();
 
   constructor(options: AttributeProcessorOptions = {}) {
     this.options = {
@@ -271,7 +253,7 @@ export class AttributeProcessor {
 
     // Process <script type="text/hyperscript"> tags FIRST
     // This ensures behaviors are defined before elements try to install them
-    const scriptTags = document.querySelectorAll('script[type="text/hyperscript"]');
+    const scriptTags = document.querySelectorAll(SCRIPT_SELECTOR);
     debug.parse(`ATTR: Found ${scriptTags.length} script tags`);
     for (const script of scriptTags) {
       if (script instanceof HTMLScriptElement) {
@@ -345,7 +327,8 @@ export class AttributeProcessor {
    * this returns its promise.
    */
   async processTree(root: Element): Promise<void> {
-    const scriptTags = root.querySelectorAll('script[type="text/hyperscript"]');
+    const scriptTags: Element[] = root.matches(SCRIPT_SELECTOR) ? [root] : [];
+    root.querySelectorAll(SCRIPT_SELECTOR).forEach(script => scriptTags.push(script));
     for (const script of scriptTags) {
       if (script instanceof HTMLScriptElement) {
         await this.processHyperscriptTag(script);
@@ -378,7 +361,6 @@ export class AttributeProcessor {
       if (stub) {
         el.removeEventListener(stub.eventType, stub.listener);
         this.lazyStubs.delete(el);
-        this.lazyElements.delete(el);
       }
     }
   }
@@ -690,7 +672,6 @@ export class AttributeProcessor {
     // One-shot stub: on first event, compile synchronously and execute directly.
     // This avoids re-dispatching synthetic events (which lose isTrusted).
     const stubListener = async (event: Event) => {
-      this.lazyElements.delete(element);
       this.lazyStubs.delete(element);
 
       try {
@@ -737,7 +718,6 @@ export class AttributeProcessor {
     };
 
     element.addEventListener(eventType, stubListener, { once: true });
-    this.lazyElements.add(element);
     this.lazyStubs.set(element, { eventType, listener: stubListener });
     this.processedElements.add(element); // Prevent re-processing via mutation observer
     this.processedCount++;
@@ -818,51 +798,16 @@ export class AttributeProcessor {
     }
 
     this.observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        // Process added nodes
+      for (const mutation of mutations) {
         mutation.addedNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node as HTMLElement;
-
-            // Process hyperscript script tags (including those with 'for' attribute)
-            if (
-              element.tagName === 'SCRIPT' &&
-              element.getAttribute('type') === 'text/hyperscript'
-            ) {
-              this.processHyperscriptTag(element as HTMLScriptElement).catch(err => {
-                console.error('[LokaScript] Error processing dynamically added script tag:', err);
-              });
-            }
-
-            // Process descendant script tags
-            const scriptTags = element.querySelectorAll?.('script[type="text/hyperscript"]');
-            scriptTags?.forEach(script => {
-              if (script instanceof HTMLScriptElement) {
-                this.processHyperscriptTag(script).catch(err => {
-                  console.error('[LokaScript] Error processing dynamically added script tag:', err);
-                });
-              }
-            });
-
-            // Process the element itself if it has hyperscript attribute
-            if (element.getAttribute && element.getAttribute(this.options.attributeName)) {
-              this.processElementAsync(element).catch(err => {
-                console.error('[LokaScript] Error processing dynamically added element:', err);
-              });
-            }
-
-            // Process any descendant elements with hyperscript attributes
-            const descendants = element.querySelectorAll?.(`[${this.options.attributeName}]`);
-            descendants?.forEach(descendant => {
-              if (descendant instanceof HTMLElement) {
-                this.processElementAsync(descendant).catch(err => {
-                  console.error('[LokaScript] Error processing dynamically added element:', err);
-                });
-              }
-            });
-          }
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+          // The same entry `hyperscript.process()` takes: script tags first,
+          // then the element and its descendants, each initialized once.
+          this.processTree(node as Element).catch(err => {
+            console.error('[LokaScript] Error processing dynamically added node:', err);
+          });
         });
-      });
+      }
     });
 
     // Start observing
@@ -883,7 +828,6 @@ export class AttributeProcessor {
     this.initialized = false;
     this.readyEventDispatched = false;
     this.processedCount = 0;
-    this.lazyElements = new WeakSet<HTMLElement>();
   }
 
   /**
