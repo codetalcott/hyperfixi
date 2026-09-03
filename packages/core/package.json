@@ -3,14 +3,14 @@
   "version": "3.0.0",
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     },
     "./browser": {
       "types": "./dist/index.d.ts",
@@ -32,47 +32,47 @@
     "./commands": {
       "types": "./dist/commands/index.d.ts",
       "import": "./dist/commands/index.mjs",
-      "require": "./dist/commands/index.js"
+      "require": "./dist/commands/index.cjs"
     },
     "./expressions": {
       "types": "./dist/expressions/index.d.ts",
       "import": "./dist/expressions/index.mjs",
-      "require": "./dist/expressions/index.js"
+      "require": "./dist/expressions/index.cjs"
     },
     "./parser/full": {
       "types": "./dist/parser/full-parser.d.ts",
       "import": "./dist/parser/full-parser.mjs",
-      "require": "./dist/parser/full-parser.js"
+      "require": "./dist/parser/full-parser.cjs"
     },
     "./parser/hybrid": {
       "types": "./dist/parser/hybrid-parser.d.ts",
       "import": "./dist/parser/hybrid-parser.mjs",
-      "require": "./dist/parser/hybrid-parser.js"
+      "require": "./dist/parser/hybrid-parser.cjs"
     },
     "./parser/hybrid/parser-core": {
       "types": "./dist/parser/hybrid/parser-core.d.ts",
       "import": "./dist/parser/hybrid/parser-core.mjs",
-      "require": "./dist/parser/hybrid/parser-core.js"
+      "require": "./dist/parser/hybrid/parser-core.cjs"
     },
     "./parser/hybrid/ast-types": {
       "types": "./dist/parser/hybrid/ast-types.d.ts",
       "import": "./dist/parser/hybrid/ast-types.mjs",
-      "require": "./dist/parser/hybrid/ast-types.js"
+      "require": "./dist/parser/hybrid/ast-types.cjs"
     },
     "./parser/hybrid/tokenizer": {
       "types": "./dist/parser/hybrid/tokenizer.d.ts",
       "import": "./dist/parser/hybrid/tokenizer.mjs",
-      "require": "./dist/parser/hybrid/tokenizer.js"
+      "require": "./dist/parser/hybrid/tokenizer.cjs"
     },
     "./parser/hybrid/aliases": {
       "types": "./dist/parser/hybrid/aliases.d.ts",
       "import": "./dist/parser/hybrid/aliases.mjs",
-      "require": "./dist/parser/hybrid/aliases.js"
+      "require": "./dist/parser/hybrid/aliases.cjs"
     },
     "./parser/regex": {
       "types": "./dist/parser/regex-parser.d.ts",
       "import": "./dist/parser/regex-parser.mjs",
-      "require": "./dist/parser/regex-parser.js"
+      "require": "./dist/parser/regex-parser.cjs"
     },
     "./browser/modular": {
       "default": "./dist/hyperfixi.mjs"
@@ -80,63 +80,63 @@
     "./behaviors": {
       "types": "./dist/behaviors/index.d.ts",
       "import": "./dist/behaviors/index.mjs",
-      "require": "./dist/behaviors/index.js"
+      "require": "./dist/behaviors/index.cjs"
     },
     "./multilingual": {
       "types": "./dist/multilingual/index.d.ts",
       "import": "./dist/multilingual/index.mjs",
-      "require": "./dist/multilingual/index.js"
+      "require": "./dist/multilingual/index.cjs"
     },
     "./bundle-generator": {
       "types": "./dist/bundle-generator/index.d.ts",
       "import": "./dist/bundle-generator/index.mjs",
-      "require": "./dist/bundle-generator/index.js"
+      "require": "./dist/bundle-generator/index.cjs"
     },
     "./registry": {
       "types": "./dist/registry/index.d.ts",
       "import": "./dist/registry/index.mjs",
-      "require": "./dist/registry/index.js"
+      "require": "./dist/registry/index.cjs"
     },
     "./registry/browser": {
       "types": "./dist/registry/browser-types.d.ts",
       "import": "./dist/registry/browser-types.mjs",
-      "require": "./dist/registry/browser-types.js"
+      "require": "./dist/registry/browser-types.cjs"
     },
     "./registry/universal": {
       "types": "./dist/registry/universal-types.d.ts",
       "import": "./dist/registry/universal-types.mjs",
-      "require": "./dist/registry/universal-types.js"
+      "require": "./dist/registry/universal-types.cjs"
     },
     "./registry/environment": {
       "types": "./dist/registry/environment.d.ts",
       "import": "./dist/registry/environment.mjs",
-      "require": "./dist/registry/environment.js"
+      "require": "./dist/registry/environment.cjs"
     },
     "./package.json": "./package.json",
     "./reference": {
       "types": "./dist/reference/index.d.ts",
       "import": "./dist/reference/index.mjs",
-      "require": "./dist/reference/index.js"
+      "require": "./dist/reference/index.cjs"
     },
     "./metadata": {
       "types": "./dist/metadata.d.ts",
       "import": "./dist/metadata.mjs",
-      "require": "./dist/metadata.js"
+      "require": "./dist/metadata.cjs"
     },
     "./lsp-metadata": {
       "types": "./dist/lsp-metadata.d.ts",
       "import": "./dist/lsp-metadata.mjs",
-      "require": "./dist/lsp-metadata.js"
+      "require": "./dist/lsp-metadata.cjs"
     },
     "./ast-utils": {
       "types": "./dist/ast-utils/index.d.ts",
       "import": "./dist/ast-utils/index.mjs",
-      "require": "./dist/ast-utils/index.js"
+      "require": "./dist/ast-utils/index.cjs"
     },
     "./lse": {
       "types": "./dist/lse/index.d.ts",
       "import": "./dist/lse/index.mjs",
-      "require": "./dist/lse/index.js"
+      "require": "./dist/lse/index.cjs"
     }
   },
   "files": [

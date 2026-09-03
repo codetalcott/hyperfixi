@@ -89,7 +89,7 @@ function watchedPackages(): string[] {
  * path, because those resolve to genuinely different files and would watch the wrong one:
  *
  *   @lokascript/semantic   require → dist/index.cjs   import → dist/index.js
- *   @hyperfixi/core        require → dist/index.js    import → dist/index.mjs
+ *   @hyperfixi/core        require → dist/index.cjs   import → dist/index.mjs
  *
  * This server is ESM, so it loads the `import` column; watching the `require` column would
  * mean watching a file the process never opened — a guard that reports fresh forever.
