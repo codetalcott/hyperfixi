@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ⚠ BREAKING
+
+- **The six `@deprecated` `features/` families are deleted** (Arc 6b of
+  `docs-internal/ENGINE_MIGRATION_PLAN.md`). `@hyperfixi/core` no longer
+  exports `TypedDefFeatureImplementation` / `createDefFeature` / `createDef` /
+  `enhancedDefImplementation` (+ `DefInput`, `DefOutput`) or the same four
+  names and two types for `On`, `Behaviors`, `Sockets`, `WebWorker` and
+  `EventSource`. They were dead scaffolding: no production caller, and the
+  `def` family could not execute a `DefNode` the parser produces (real `def`
+  execution lives in `RuntimeBase.installFunction`; real `on`/`behavior`
+  handling lives in the runtime; `sockets`/`eventsource`/`webworker` had no
+  parser entry). `types/feature-types.ts` goes with them. The `./browser/modular`
+  bundle (`hyperfixi.mjs`) loses its `features` namespace and the
+  `loadRequiredFeatures` / `detectFeatures` / `preloadFeatures` /
+  `preloadDocumentFeatures` / `isFeatureLoaded` / `getLoadedFeatures` named
+  exports: the modules they dynamically imported registered nothing on load,
+  so every call was a no-op. Its `processNode` and auto-init keep working;
+  they just no longer wait on a loader that loaded nothing.
+
+  _Migration:_ none needed for parsed hyperscript — nothing reachable from an
+  `_="…"` attribute or `hyperscript.eval` touched these. A caller constructing
+  `createDefFeature()` directly should use the runtime's `def` support.
+
 ## [3.0.0] - 2026-08-30
 
 Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
