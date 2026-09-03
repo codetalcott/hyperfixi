@@ -2110,7 +2110,7 @@ were to fold into table entries once "tiers are fragment subsets"; with no
 such tiers, the switch and `context.registry` STAY as the small bundles'
 shaking mechanism — filed as measured, not deferred.
 
-### ~~Arc 6b — Delete exported dead code (small, needs 4.0)~~ — DONE 2026-09-04/05 (#1099–#1104), lineup #1103 + the lineup PR
+### ~~Arc 6b — Delete exported dead code (small, needs 4.0)~~ — DONE 2026-09-04/05 (#1099–#1104), lineup #1103 + #1105
 
 The `@deprecated` exports: the six `features/` families from `index.ts`,
 `Lexer`/`Tokens` and root `tokenizer.ts`, the `unified-types` `Validator`
@@ -2147,7 +2147,7 @@ exports (53 → 29); it names five entry points now.
   `context` slot are exported via `@hyperfixi/core/registry`, so the deletion
   waits here.
 - ✅ **The bundle lineup collapses to two names** — DONE 2026-09-05 (#1103 +
-  the lineup PR that carries this edit). Step 1 measured the feared failure
+  #1105). Step 1 measured the feared failure
   and found it real: the hybrid bundles ran `on click make a <div/> then
   toggle .x` as just the toggle, silently — the parser's fallback dropped an
   unclaimed word a token at a time, and the same fallback hid `fetch
@@ -2557,8 +2557,8 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   edges.
 
 - **2026-09-05** — **Arc 6b is COMPLETE, and with it the plan** (#1099–#1104
-  for the five exported-dead-code families; #1103 + the lineup PR for the
-  bundle lineup). Every arc of the plan is now closed. Type-escapes 869 →
+  for the five exported-dead-code families; #1103 + #1105 for the bundle
+  lineup). Every arc of the plan is now closed. Type-escapes 869 →
   656 over the six deletions; the command manifest is 58; the prebuilt
   lineup is two public names plus two separate products, and a small bundle
   that meets a command it lacks says so and names `hyperfixi.js`. Three
