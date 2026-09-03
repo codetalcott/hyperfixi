@@ -532,12 +532,17 @@ describe('no template emits a case label the parser cannot produce', () => {
     expect(dead).toEqual([]);
   });
 
-  it('an unrecognized command is still skipped silently — the mechanism to guard against', () => {
-    // Unchanged and deliberately kept: the parser's unknown-command fallback
-    // advances one token and returns null, with no throw and no warning. That is
-    // why a dead case label is invisible without this file, and it is still true
-    // for anything genuinely not a command.
-    expect(commandNamesIn(new HybridParser('zzznotacommand "hi"').parse())).toEqual([]);
+  it('an unrecognized command word is rejected loudly, naming the full bundle', () => {
+    // This used to pin the opposite: the parser's fallback advanced one token
+    // and returned null, no throw, no warning — which is why a dead case label
+    // was invisible without this file, and why `make a <div/>` in a hybrid
+    // bundle ran as nothing. Since the bundle-lineup measurement (2026-09-04)
+    // a WORD at command position that no rule claims throws, and the message
+    // names the bundle that has it. Stray non-word tokens still skip.
+    expect(() => new HybridParser('zzznotacommand "hi"').parse()).toThrow(
+      /'zzznotacommand' needs the full parser \(use hyperfixi\.js\)/
+    );
+    expect(commandNamesIn(new HybridParser('@ toggle .x').parse())).toEqual(['toggle']);
   });
 });
 

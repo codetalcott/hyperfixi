@@ -41,10 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _Migration:_ `import { tokenize } from '@hyperfixi/core'` and walk the
   returned `Token[]`; there is no drop-in `Tokens` cursor class.
 
-## [Unreleased]
-
-### ⚠ BREAKING
-
 - **Three never-reachable exports deleted** (Arc 6b): the `unified-types`
   `Validator` class (a static `validateInput`/`createValidationError` pair
   wrapped around `lightweight-validators` — exported from `types/index.ts`,
@@ -79,6 +75,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _Migration:_ none for hyperscript source, which could never use it. A
   programmatic caller that queued functions through `createAsyncCommand()`
   should `Promise.all` them directly.
+
+### Fixed
+
+- **A small bundle now fails LOUDLY on a command it does not ship, and names
+  the bundle that does.** Measured for the 4.0 bundle-lineup decision
+  (`ENGINE_MIGRATION_PLAN` Arc 6b): `make a <div/>` in `hyperfixi-lite.js` /
+  `-lite-plus.js` logged a bare `console.warn('Unknown command: make')`, and in
+  `hyperfixi-hybrid-complete.js` / `hyperfixi-hx.js` it ran as **nothing** —
+  the hybrid parser's fallback dropped an unrecognised word one token at a
+  time, so `on click make a <div/> then toggle .x` executed only the toggle.
+  The lite executors now `console.error` with the remedy (`… — not in this
+bundle. Use hyperfixi.js (full bundle).`), and the hybrid parser rejects a
+  word at command position that no rule claims (`'make' needs the full parser
+(use hyperfixi.js)`), the way it already rejected `catch`/`finally`. Pinned
+  by a `@comprehensive` bundle-compatibility row for all four small bundles.
+
+  Making the fallback loud exposed three silent mis-parses in the hybrid
+  bundles, fixed in the same change: an unquoted URL — `fetch /api/data as
+json` — parsed as `/` and fetched `/` (the URL is now read verbatim up to
+  whitespace, as upstream does); a colon-qualified event name — `send
+custom:event to #t` / `trigger my:thing on #t` — sent `custom` to `me` (the
+  pieces rejoin); and `repeat forever … end` "parsed" by dropping `forever`
+  and running zero iterations — it now says it needs the full parser, which
+  is true (the hybrid `repeat` takes a count).
 
 ## [3.0.0] - 2026-08-30
 

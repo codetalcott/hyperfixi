@@ -407,10 +407,15 @@ describe('HybridParser', () => {
       expect(block.condition).toBeDefined();
     });
 
-    it('should parse repeat without count', () => {
-      const ast = parse('on click repeat forever log "hi" end');
-      const block = ast.body[0];
-      expect(block.type).toBe('repeat');
+    it('rejects repeat forever, which the hybrid executor cannot run', () => {
+      // This used to assert only that a `repeat` block came out — and one did,
+      // because the skip fallback dropped `forever` and the executor then
+      // evaluated an undefined count (zero iterations, no message). The
+      // bundle's repeat takes a count; `forever` / `until` / `while` need the
+      // full parser, and the parse now says so.
+      expect(() => parse('on click repeat forever log "hi" end')).toThrow(
+        /'forever' needs the full parser/
+      );
     });
   });
 
@@ -673,6 +678,35 @@ describe('HybridParser', () => {
       // Parser should advance past unknown tokens and return null
       const ast = parse('on click @ then toggle .active');
       expect(ast.type).toBe('event');
+    });
+
+    it('reads a naked URL verbatim and a colon-qualified event name whole', () => {
+      // Both were silently wrong until the skip fallback stopped being silent:
+      // `fetch /api/data` fetched `/` (the tokenizer splits the path and
+      // parseExpression took the first slash); `send custom:event to #t` sent
+      // `custom` to `me`. Measured 2026-09-04.
+      const fetch = parse('fetch /api/data via POST as json then log it');
+      expect(fetch.commands[0].condition.url).toEqual({ type: 'literal', value: '/api/data' });
+      expect(fetch.commands[0].condition.method).toEqual({ type: 'identifier', value: 'POST' });
+      const https = parse('fetch https://x.test/a?b=1 as json');
+      expect(https.commands[0].condition.url.value).toBe('https://x.test/a?b=1');
+      const send = parse('send custom:event to #t');
+      expect(send.commands[0].args[0].value).toBe('custom:event');
+      expect(send.commands[0].target).toEqual({ type: 'selector', value: '#t' });
+      const trig = parse('trigger my:thing on #t');
+      expect(trig.commands[0].args[0].value).toBe('my:thing');
+    });
+
+    it('rejects a command word this parser has no rule for, naming the full bundle', () => {
+      // `make` is full-runtime-only. Before this pin the skip fallback dropped
+      // it token by token and the hybrid bundles ran `make a <div/>` as
+      // nothing, silently — the one failure mode a small bundle must not have,
+      // because the escape hatch to hyperfixi.js is only discoverable if the
+      // failure names it.
+      expect(() => parse('make a <div/>')).toThrow(
+        /'make' needs the full parser \(use hyperfixi\.js\)/
+      );
+      expect(() => parse('on click make a <div/>')).toThrow(/'make' needs the full parser/);
     });
   });
 
