@@ -1,3 +1,0 @@
-// @lokascript/core has been renamed to @hyperfixi/core
-// This package is a backward-compatibility stub. Install @hyperfixi/core directly.
-module.exports = require('@hyperfixi/core');
