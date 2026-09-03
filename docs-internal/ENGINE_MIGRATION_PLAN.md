@@ -310,7 +310,10 @@ implementation would choose; the arcs approach it from the current tree.
    `def` see only it.
 
 5. **A small typed `Scope`, not a bag.** `{ me, you, it, event, owner, locals,
-globals }` plus `elementVars(owner)`, with an explicit `child()`. Runtime
+globals }` ~~plus `elementVars(owner)`, with an explicit `child()`~~ (struck
+   2026-09-04, Arc 4c step 5: contexts are spread objects in four places, so the
+   free functions `createChildContext` and `getElementVar`/`setElementVar` are
+   the shape, not methods). Runtime
    services (`execute`, behaviors, cleanup, the expression table) live on the
    `Runtime` passed to every `Op`. One flag set. No `Proxy`. Context providers,
    if kept, are compile-time expression resolvers.
@@ -1919,6 +1922,30 @@ above noise, and the per-command cost the plan promised for 4b, credited
 here. Core suite green, matrix and output-contract unmoved, type-escapes
 870 → 869.
 
+**Steps 3, 4 and 5 DONE 2026-09-04 (one PR; decisions 3 and 4 as
+recommended) — Arc 4c's numbered steps are CLOSED.** Step 3: with zero
+providers registered — every production caller — `enhanceContext` returns
+the context; the `Proxy` exists only once a provider is registered
+(`runtime-integration-proxy.test.ts` pins both), so the five per-context
+allocations are gone. The `ContextProviderRegistry` API stays callable and is
+listed under Arc 6b (it is exported via `@hyperfixi/core/registry`; deleting
+it is a 4.0 surface change). Step 4: the scope read/write hooks and
+`setGlobal` moved to `core/scope-hooks.ts`; `parser/extensions.ts` re-exports
+them and its `register*Hook`/`snapshot`/`restore` delegate, so reactivity's
+wiring is untouched; `expressions/special` and `commands/helpers/variable-access`
+import from `core/` — the layering allowlist ratcheted 14 → 13 upward edges
+(the `core → parser` row is gone). The three node-writer edges into
+`parser/extensions` are a different registry and are FILED, not moved (Arc 7
+or 6b). Step 5: the interface is `Scope`, `ExecutionContext` is its alias on
+the public surface (`Scope` exported too), and `types/__tests__/scope-shape.test.ts`
+pins the twelve keys at the type level and the seven `createContext` builds.
+Target item 5's `child()`/`elementVars()` METHODS are struck: contexts are
+spread in four places, so the free functions (`createChildContext`,
+`getElementVar`/`setElementVar`) are the shape. Bench: execute-only +3 %,
+compile+execute +14 %, `toggle` +11 % vs the step 0 baseline. Core 7973.
+Left in Arc 4c: nothing numbered; the `variables` migration onto `locals`
+(decision 1 kept it) is a behaviour arc if ever wanted.
+
 Blast radius: ~~`ExecutionContext` is exported and used downstream as a type
 (reactivity, realtime, components).~~ Measured 2026-09-04 (the 4c brief):
 reactivity, realtime, intercept and components each declare their OWN
@@ -1976,9 +2003,19 @@ Runs in parallel with Arc 3.
    now uniformly guarded — 21 already spent `Date.now()` only when the
    context carries `evaluationHistory` (a test/devtools context), and the
    last three (`is`, `and`, `matches`) paid it on every evaluation; they
-   guard the same way. The wrapper-in-`DebugController` shape is the
-   remaining half, and it can wait for Arc 7 step 4's table entries.
-4. **Operators as table entries with `compile`.** `evaluateBinaryExpression`
+   guard the same way. ~~The wrapper-in-`DebugController` shape is the
+   remaining half, and it can wait for Arc 7 step 4's table entries.~~
+   ✅ **DONE 2026-09-04 by Arc 4c step 2:** tracking is an opt-in sink
+   (`expressions/shared/tracking.ts` — `setEvaluationTracker`,
+   `collectEvaluations`); the 24 sites guard on `isTrackingEvaluations()` and
+   the context carries nothing. A `DebugController` convenience that installs
+   `collectEvaluations()` is a one-liner for whoever wants it; the hot path is
+   done.
+4. **Operators as table entries with `compile`.** _Re-measured 2026-09-04 by
+   [HANDOFF-engine-arc7.md](./HANDOFF-engine-arc7.md): the "fragments already
+   shake" premise is false (three fragments, always merged; the registry is
+   what shakes), so this step splits — the cheap half stays in Arc 7, the
+   binary-switch fold moves under Arc 5. Read the brief before starting._ `evaluateBinaryExpression`
    switches on the operator string and then calls `getExpr('equals')` — the
    registry is indirection over a switch that already knows the answer. Fold
    the switch INTO the Pratt entries (`{ token, bp, compile }`) so grammar and
@@ -2038,6 +2075,13 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   it runs a body of functions or `{ execute }` objects that no parser
   produces (no parser entry; its `executeCommand` throws on an AST node), so
   from parsed hyperscript it is unreachable. Exported, so it waits here.
+- **`ContextProviderRegistry` and the context-provider `Proxy`** — listed
+  2026-09-04 by the Arc 4c brief's decision 4: no production caller has ever
+  registered a provider, the only named consumer (server-integration) is not
+  under `packages/` any more, and step 3 took the Proxy off the hot path. The
+  class, `enhance()`, the four default providers and the unified registry's
+  `context` slot are exported via `@hyperfixi/core/registry`, so the deletion
+  waits here.
 
 ## Non-goals
 

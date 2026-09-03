@@ -47,6 +47,27 @@ import type { BindingPower, BindingPowerEntry, InfixHandler, PrefixHandler } fro
 import type { ASTNode, ExecutionContext } from '../types/base-types';
 import type { Token } from '../types/core';
 import type { ParserContext } from './parser-types';
+import * as hooks from '../core/scope-hooks';
+// The scope hooks moved to `core/scope-hooks.ts` (Arc 4c step 4); re-exported
+// so every importer of this module keeps its names.
+export {
+  setGlobal,
+  notifyGlobalRead,
+  notifyLocalWrite,
+  notifyLocalRead,
+  getGlobalWriteHooks,
+  getLocalWriteHooks,
+  type GlobalWriteHook,
+  type GlobalReadHook,
+  type LocalWriteHook,
+  type LocalReadHook,
+} from '../core/scope-hooks';
+import type {
+  GlobalWriteHook,
+  GlobalReadHook,
+  LocalWriteHook,
+  LocalReadHook,
+} from '../core/scope-hooks';
 
 /**
  * Handler signature for a plugin-provided top-level feature parser.
@@ -63,35 +84,6 @@ export type NodeEvaluatorFn = (
   node: ASTNode,
   context: ExecutionContext
 ) => unknown | Promise<unknown>;
-
-/**
- * Callback invoked on every global-variable write (e.g. `set $foo to 42`).
- * Used by the reactivity plugin to notify dependent effects. The hook is
- * fire-and-forget; return value is ignored.
- */
-export type GlobalWriteHook = (name: string, value: unknown, context: ExecutionContext) => void;
-
-/**
- * Callback invoked on every global-variable read. Used by the reactivity
- * plugin to record dependency subscriptions — when an effect reads `$foo`
- * during evaluation, the plugin subscribes that effect to `foo` so writes
- * trigger a re-run. Fire-and-forget; return value is ignored.
- */
-export type GlobalReadHook = (name: string, context: ExecutionContext) => void;
-
-/**
- * Callback invoked on every local-variable write (e.g. `set :foo to 42`).
- * Mirror-image of `GlobalWriteHook` — used by the reactivity plugin to notify
- * effects subscribed to per-element local state. Fire-and-forget.
- */
-export type LocalWriteHook = (name: string, value: unknown, context: ExecutionContext) => void;
-
-/**
- * Callback invoked on every local-variable read. Mirror-image of
- * `GlobalReadHook` — used by the reactivity plugin to track dependencies on
- * `:name` reads. Fire-and-forget.
- */
-export type LocalReadHook = (name: string, context: ExecutionContext) => void;
 
 /**
  * Writer for a custom AST-node assignment target. Registered by plugins so
@@ -113,10 +105,6 @@ export type NodeWriterFn = (
 const FEATURE_REGISTRY = new Map<string, FeatureParseFn>();
 const NODE_EVALUATORS = new Map<string, NodeEvaluatorFn>();
 const NODE_WRITERS = new Map<string, NodeWriterFn>();
-const GLOBAL_WRITE_HOOKS = new Set<GlobalWriteHook>();
-const GLOBAL_READ_HOOKS = new Set<GlobalReadHook>();
-const LOCAL_WRITE_HOOKS = new Set<LocalWriteHook>();
-const LOCAL_READ_HOOKS = new Set<LocalReadHook>();
 
 /**
  * Look up a registered feature parse function. The parser calls this at the
@@ -142,75 +130,6 @@ export function getRegisteredNodeEvaluator(type: string): NodeEvaluatorFn | unde
  */
 export function getRegisteredNodeWriter(type: string): NodeWriterFn | undefined {
   return NODE_WRITERS.get(type);
-}
-
-/**
- * Iterate registered global-write hooks. Intended for internal use by the
- * runtime's `setGlobal()` helper.
- */
-export function getGlobalWriteHooks(): Iterable<GlobalWriteHook> {
-  return GLOBAL_WRITE_HOOKS;
-}
-
-/**
- * Notify all registered read hooks that a `$name` global was just read.
- * Called by identifier evaluators. No-op when no hooks are installed (common
- * case); keep this check fast.
- */
-export function notifyGlobalRead(name: string, context: ExecutionContext): void {
-  if (GLOBAL_READ_HOOKS.size === 0) return;
-  for (const hook of GLOBAL_READ_HOOKS) {
-    try {
-      hook(name, context);
-    } catch (err) {
-      if (typeof console !== 'undefined') {
-        console.error('[hyperfixi] globalReadHook threw:', err);
-      }
-    }
-  }
-}
-
-/**
- * Iterate registered local-write hooks. Intended for internal use by
- * `setVariableValue` / any other path that mutates `context.locals`.
- */
-export function getLocalWriteHooks(): Iterable<LocalWriteHook> {
-  return LOCAL_WRITE_HOOKS;
-}
-
-/**
- * Notify all registered hooks that a `:name` local was just written. No-op
- * when no hooks are installed (common case); keep this check fast.
- */
-export function notifyLocalWrite(name: string, value: unknown, context: ExecutionContext): void {
-  if (LOCAL_WRITE_HOOKS.size === 0) return;
-  for (const hook of LOCAL_WRITE_HOOKS) {
-    try {
-      hook(name, value, context);
-    } catch (err) {
-      if (typeof console !== 'undefined') {
-        console.error('[hyperfixi] localWriteHook threw:', err);
-      }
-    }
-  }
-}
-
-/**
- * Notify all registered hooks that a `:name` local was just read. Called by
- * identifier evaluators in both the explicit `scope === 'local'` branch and
- * the implicit-scope fallback. No-op when no hooks are installed.
- */
-export function notifyLocalRead(name: string, context: ExecutionContext): void {
-  if (LOCAL_READ_HOOKS.size === 0) return;
-  for (const hook of LOCAL_READ_HOOKS) {
-    try {
-      hook(name, context);
-    } catch (err) {
-      if (typeof console !== 'undefined') {
-        console.error('[hyperfixi] localReadHook threw:', err);
-      }
-    }
-  }
 }
 
 /**
@@ -343,8 +262,7 @@ export class ParserExtensionRegistry {
    * that removes the hook.
    */
   registerGlobalWriteHook(hook: GlobalWriteHook): () => void {
-    GLOBAL_WRITE_HOOKS.add(hook);
-    return () => GLOBAL_WRITE_HOOKS.delete(hook);
+    return hooks.registerGlobalWriteHook(hook);
   }
 
   /**
@@ -354,8 +272,7 @@ export class ParserExtensionRegistry {
    * disposer that removes the hook.
    */
   registerGlobalReadHook(hook: GlobalReadHook): () => void {
-    GLOBAL_READ_HOOKS.add(hook);
-    return () => GLOBAL_READ_HOOKS.delete(hook);
+    return hooks.registerGlobalReadHook(hook);
   }
 
   /**
@@ -364,8 +281,7 @@ export class ParserExtensionRegistry {
    * effects subscribed to per-element local state. Returns a disposer.
    */
   registerLocalWriteHook(hook: LocalWriteHook): () => void {
-    LOCAL_WRITE_HOOKS.add(hook);
-    return () => LOCAL_WRITE_HOOKS.delete(hook);
+    return hooks.registerLocalWriteHook(hook);
   }
 
   /**
@@ -374,8 +290,7 @@ export class ParserExtensionRegistry {
    * dependencies on local reads. Returns a disposer.
    */
   registerLocalReadHook(hook: LocalReadHook): () => void {
-    LOCAL_READ_HOOKS.add(hook);
-    return () => LOCAL_READ_HOOKS.delete(hook);
+    return hooks.registerLocalReadHook(hook);
   }
 
   /**
@@ -390,10 +305,7 @@ export class ParserExtensionRegistry {
       features: Array.from(FEATURE_REGISTRY.entries()),
       nodeEvaluators: Array.from(NODE_EVALUATORS.entries()),
       nodeWriters: Array.from(NODE_WRITERS.entries()),
-      globalWriteHooks: Array.from(GLOBAL_WRITE_HOOKS),
-      globalReadHooks: Array.from(GLOBAL_READ_HOOKS),
-      localWriteHooks: Array.from(LOCAL_WRITE_HOOKS),
-      localReadHooks: Array.from(LOCAL_READ_HOOKS),
+      ...hooks.snapshotScopeHooks(),
     };
   }
 
@@ -415,14 +327,7 @@ export class ParserExtensionRegistry {
     for (const [k, v] of snapshot.nodeEvaluators) NODE_EVALUATORS.set(k, v);
     NODE_WRITERS.clear();
     for (const [k, v] of snapshot.nodeWriters ?? []) NODE_WRITERS.set(k, v);
-    GLOBAL_WRITE_HOOKS.clear();
-    for (const h of snapshot.globalWriteHooks) GLOBAL_WRITE_HOOKS.add(h);
-    GLOBAL_READ_HOOKS.clear();
-    for (const h of snapshot.globalReadHooks ?? []) GLOBAL_READ_HOOKS.add(h);
-    LOCAL_WRITE_HOOKS.clear();
-    for (const h of snapshot.localWriteHooks ?? []) LOCAL_WRITE_HOOKS.add(h);
-    LOCAL_READ_HOOKS.clear();
-    for (const h of snapshot.localReadHooks ?? []) LOCAL_READ_HOOKS.add(h);
+    hooks.restoreScopeHooks(snapshot);
   }
 }
 
@@ -462,28 +367,4 @@ export function getParserExtensionRegistry(): ParserExtensionRegistry {
     g[WINDOW_KEY] = SINGLETON;
   }
   return SINGLETON;
-}
-
-/**
- * Centralized writer for `$name` globals. Routes through registered
- * GlobalWriteHook callbacks so plugins (e.g. @hyperfixi/reactivity) are
- * notified on every write. All core write paths for `$name` go through this
- * helper.
- *
- * Kept here (not in parser/runtime.ts) so command helpers can depend on it
- * without pulling in the full expression evaluator graph.
- */
-export function setGlobal(context: ExecutionContext, name: string, value: unknown): void {
-  context.globals.set(name, value);
-  if (GLOBAL_WRITE_HOOKS.size === 0) return;
-  for (const hook of GLOBAL_WRITE_HOOKS) {
-    try {
-      hook(name, value, context);
-    } catch (err) {
-      // Hooks are best-effort; don't let a plugin throw break the runtime.
-      if (typeof console !== 'undefined') {
-        console.error('[hyperfixi] globalWriteHook threw:', err);
-      }
-    }
-  }
 }
