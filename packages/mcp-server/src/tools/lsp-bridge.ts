@@ -62,6 +62,57 @@ try {
   );
 }
 
+/**
+ * Parse hyperscript to the interchange node list every AST-based tool reads.
+ *
+ * `core.parse()` returns a ParseResult — the AST is its `.node`, and a failed
+ * parse carries `.errors` rather than throwing. The four AST paths (hover,
+ * diagnostics, completions, symbols) used to guard on `astToolkit.astToLSP*`,
+ * names core never exported, so three of them silently took their token-based
+ * fallback for the life of the package; hover reached `fromCoreAST` but
+ * passed the whole ParseResult (#1114). All four go through here now.
+ */
+function parseToInterchange(code: string): { nodes: any[]; errors: ParseErrorLike[] } | null {
+  if (!astToolkit?.fromCoreAST || !parseFunction) return null;
+  const result = parseFunction(code);
+  const errors: ParseErrorLike[] = Array.isArray(result?.errors) ? result.errors : [];
+  const ast = result?.node ?? null;
+  // Empty or unparseable input yields the parser's `__ERROR__` sentinel
+  // identifier; it is not a node to convert or complete against.
+  if (!ast || (ast.type === 'identifier' && ast.name === '__ERROR__')) return { nodes: [], errors };
+  // The converter has no arm for every statement kind (`def`, `behavior`
+  // throw "Unknown core AST node type"). That is a converter limit, not a
+  // parse error — the tool falls back to its token path, silently.
+  try {
+    const opts = roleInferrer ? { inferRoles: roleInferrer } : undefined;
+    // `fromCoreAST(Program)` converts the FIRST statement only (the
+    // interchange has no program node — a recorded, intentional gap), so a
+    // document with two `end`-terminated handlers would lose the second.
+    // Convert each top-level statement on its own.
+    const statements: any[] =
+      ast.type === 'Program' && Array.isArray(ast.statements) ? ast.statements : [ast];
+    const interchange = statements.flatMap((stmt: any) => {
+      const converted = astToolkit.fromCoreAST(stmt, opts);
+      return Array.isArray(converted) ? converted : [converted];
+    });
+    const nodes = interchange.filter(
+      // `fromCoreAST` emits an `error` node for a kind it cannot represent
+      // (`def`, `behavior`, …) rather than throwing. That is a converter limit,
+      // not a user error: it must not become a diagnostic or a hover.
+      (n: { type?: string }) => n?.type !== 'error'
+    );
+    return { nodes, errors };
+  } catch {
+    return { nodes: [], errors };
+  }
+}
+
+interface ParseErrorLike {
+  message: string;
+  line?: number;
+  column?: number;
+}
+
 // Log capability summary
 console.error(
   `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, parse=${!!parseFunction}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}, roles=${!!roleInferrer}`
@@ -355,13 +406,26 @@ async function getDiagnostics(
     }
   }
 
-  // Try AST-based analysis if semantic didn't find issues
-  if (diagnostics.length === 0 && astToolkit && parseFunction) {
+  // AST-based analysis: the parser's own errors first (a failed parse does
+  // not throw — it reports), then the interchange complexity diagnostics.
+  if (diagnostics.length === 0 && astToolkit?.interchangeToLSPDiagnostics && parseFunction) {
     try {
-      const ast = parseFunction(code);
-      if (ast && astToolkit.astToLSPDiagnostics) {
-        const astDiagnostics = astToolkit.astToLSPDiagnostics(ast);
-        diagnostics.push(...astDiagnostics);
+      const parsed = parseToInterchange(code);
+      for (const err of parsed?.errors ?? []) {
+        const line = Math.max(0, (err.line ?? 1) - 1);
+        const character = Math.max(0, err.column ?? 0);
+        diagnostics.push({
+          range: { start: { line, character }, end: { line, character: character + 10 } },
+          severity: 1, // Error
+          code: 'parse-error',
+          source: 'hyperfixi-mcp',
+          message: err.message,
+        });
+      }
+      if (parsed?.nodes.length) {
+        diagnostics.push(
+          ...astToolkit.interchangeToLSPDiagnostics(parsed.nodes, { source: 'hyperfixi-mcp' })
+        );
       }
     } catch (parseError: any) {
       // Parse error becomes a diagnostic
@@ -679,13 +743,14 @@ async function getCompletions(
 ): Promise<CallToolResult> {
   const completions: CompletionItem[] = [];
 
-  // Try AST-based completions first
-  if (astToolkit && parseFunction) {
+  // Try AST-based completions first: the node at the cursor decides them
+  if (astToolkit?.interchangeToLSPCompletions && parseFunction) {
     try {
-      const ast = parseFunction(code);
-      if (ast && astToolkit.astToLSPCompletions) {
-        const astCompletions = astToolkit.astToLSPCompletions(ast, { line, character });
-        completions.push(...astCompletions);
+      const parsed = parseToInterchange(code);
+      if (parsed?.nodes.length) {
+        completions.push(
+          ...astToolkit.interchangeToLSPCompletions(parsed.nodes, { line, character })
+        );
       }
     } catch {
       // Fall through to default completions
@@ -900,17 +965,9 @@ async function getHoverInfo(
   // Try AST-based hover first (interchange format with optional LSE bracket notation)
   if (astToolkit && parseFunction && astToolkit.fromCoreAST && astToolkit.interchangeToLSPHover) {
     try {
-      // `parse()` returns a ParseResult; the AST is its `.node`. Passing the
-      // result object itself converted to an `error` interchange node, so
-      // every AST-path hover rendered as `[get patient:]` and the role-path
-      // tests in lsp-bridge.test.ts could not see the schema-inferred roles.
-      const ast = parseFunction(code)?.node ?? null;
-      if (ast) {
-        const interchange = astToolkit.fromCoreAST(
-          ast,
-          roleInferrer ? { inferRoles: roleInferrer } : undefined
-        );
-        const nodes = Array.isArray(interchange) ? interchange : [interchange];
+      const parsed = parseToInterchange(code);
+      if (parsed?.nodes.length) {
+        const nodes = parsed.nodes;
 
         // Build renderLSE callback if framework is available
         const hoverOptions: Record<string, unknown> = {};
@@ -1096,12 +1153,11 @@ async function getDocumentSymbols(code: string, language: string): Promise<CallT
   const symbols: DocumentSymbol[] = [];
 
   // Try AST-based symbols first
-  if (astToolkit && parseFunction) {
+  if (astToolkit?.interchangeToLSPSymbols && parseFunction) {
     try {
-      const ast = parseFunction(code);
-      if (ast && astToolkit.astToLSPSymbols) {
-        const astSymbols = astToolkit.astToLSPSymbols(ast);
-        symbols.push(...astSymbols);
+      const parsed = parseToInterchange(code);
+      if (parsed?.nodes.length) {
+        symbols.push(...astToolkit.interchangeToLSPSymbols(parsed.nodes));
       }
     } catch {
       // Fall through to pattern-based extraction
