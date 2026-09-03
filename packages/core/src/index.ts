@@ -49,7 +49,6 @@ export {
   getElementVar,
   setElementVar,
 } from './core/context';
-export { Lexer, Tokens } from './tokenizer';
 
 // Export enhanced context types
 export type {
