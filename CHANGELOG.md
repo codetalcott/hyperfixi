@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`@hyperfixi/core`'s library entry no longer bundles the multilingual
+  front-end.** `dist/index.mjs`/`index.js` had `@lokascript/semantic`,
+  `@lokascript/intent` and `@lokascript/framework` inlined whole (3.33 MB, zero
+  dynamic imports left); they are external now (1.04 MB) and load on the first
+  non-English `compileAsync`, the way the source always said they would. No
+  API change: semantic and intent stay `dependencies`, framework stays an
+  optional peer — and is now genuinely one. A consumer that imported both core
+  and semantic no longer holds two copies of semantic. `dist/index.min.js`
+  (UMD, not in `exports`) stays self-contained. Gated by
+  `scripts/check-node-import.mjs` on the sourcemap. Engine-migration plan Arc 1
+  step 2, build half.
+
 - **`@lokascript/semantic` drops its `asyncSchema`.** Core deleted the `async`
   command in 3.0.0 (#1102); the semantic front-end never emitted the action
   anyway — its `stripAsyncModifier` pass removes the keyword (in all 24

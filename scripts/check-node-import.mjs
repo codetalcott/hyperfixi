@@ -44,6 +44,57 @@ await check('@hyperfixi/core — bare-Node import (main index)', async () => {
   return `${exportCount} exports`;
 });
 
+// ---------------------------------------------------------------------------
+// The engine / front-end boundary, at the ARTIFACT level.
+//
+// `packages/core/src` reaches `@lokascript/semantic`, `/intent`, `/i18n` and
+// `@lokascript/framework` only through `await import(...)` (the source-level
+// ratchet, scripts/check-semantic-boundary.cjs, records every site). That
+// proves nothing about what ships: with `external: []` rollup followed the
+// workspace symlinks and `inlineDynamicImports` flattened every one of those
+// imports, so dist/index.mjs carried the three packages whole — 3.33 MB with
+// zero dynamic imports left, and a consumer that also imported semantic loaded
+// two copies. The sourcemap is the oracle: its `sources` names every inlined
+// file by path. ENGINE_MIGRATION_PLAN.md, Arc 1 step 2.
+// ---------------------------------------------------------------------------
+
+const FRONT_END_DIRS = ['/semantic/', '/intent/', '/i18n/', '/framework/'];
+
+async function sourcemapSources(relPath) {
+  const { readFile } = await import('node:fs/promises');
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const pkgJson = require.resolve('@hyperfixi/core/package.json');
+  const file = new URL(relPath, `file://${pkgJson.replace(/package\.json$/, '')}`).pathname;
+  const map = JSON.parse(await readFile(`${file}.map`, 'utf8'));
+  return { file, sources: map.sources };
+}
+
+for (const entry of ['dist/index.mjs', 'dist/index.js', 'dist/multilingual/index.mjs']) {
+  await check(`@hyperfixi/core — ${entry} inlines no front-end package`, async () => {
+    const { sources } = await sourcemapSources(entry);
+    // Workspace paths look like `../../semantic/dist/index.js`; a consumer's
+    // node_modules copy would be `node_modules/@lokascript/semantic/...`.
+    const inlined = sources.filter(
+      s => FRONT_END_DIRS.some(d => s.includes(d)) && !s.includes('/core/')
+    );
+    assert(inlined.length === 0, `inlined from the front-end: ${inlined.slice(0, 3).join(', ')}`);
+    return `${sources.length} sources, all engine`;
+  });
+}
+
+await check(
+  '@hyperfixi/core — dist/index.mjs defers the front-end with a real import()',
+  async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { file } = await sourcemapSources('dist/index.mjs');
+    const text = await readFile(file, 'utf8');
+    const hits = text.match(/import\(['"]@lokascript\/semantic['"]\)/g) ?? [];
+    assert(hits.length > 0, 'no import("@lokascript/semantic") left — the front-end was inlined');
+    return `${hits.length} deferred import(s)`;
+  }
+);
+
 await check('@hyperfixi/core/commands — bare-Node import', async () => {
   const m = await import('@hyperfixi/core/commands');
   assert(typeof m.swap === 'function', 'swap factory missing');
