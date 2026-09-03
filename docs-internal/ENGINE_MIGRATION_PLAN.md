@@ -2221,7 +2221,14 @@ worked. None needs an arc; the first has a brief.
    `scripts/check-node-import.mjs` a `require()` check per entry (it only
    ever `import()`ed, which is why this was invisible). Do it before step B.
 2. **Collapse the three DOM processors onto the Program cache** — risk 6
-   below, named as a 4b follow-up and never filed. `api/dom-processor.ts`
+   below, named as a 4b follow-up and never filed. **First slice landed
+   2026-09-03:** measuring the two live processors side by side found
+   `hyperscript.process()` installing `on …` handlers through its own
+   `addEventListener` and dropping filters, `or` lists and `from` (the bundle
+   path was right); the private installer is deleted, both paths hand the AST
+   to the runtime, `config.logAll` lives in the runtime, and
+   `api/dom-processor.test.ts` pins the two paths against each other.
+   `api/dom-processor.ts` 444 → 285 lines. The collapse proper still stands. `api/dom-processor.ts`
    (444 lines), `dom/attribute-processor.ts` (664) and
    `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
    runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.

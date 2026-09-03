@@ -34,11 +34,7 @@ import { emitSemanticParseEvent, updateDebugStats, isDebugEnabled } from '../uti
 import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
 import { VERSION } from '../version';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import {
-  process as processDOMElements,
-  initializeDOMProcessor,
-  setDOMProcessorConfig,
-} from './dom-processor';
+import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
 import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
@@ -579,6 +575,9 @@ function getDefaultRuntime(): Runtime {
     // Lazy loading causes race conditions since preloading is async but constructor is sync
     _defaultRuntime = new Runtime({
       lazyLoad: false, // Eager load all expressions synchronously
+      // Upstream _hyperscript 0.9.90 `config.logAll`: read at fire time, so
+      // toggling `hyperscript.config.logAll` takes effect on the next event.
+      logAll: () => config.logAll,
     });
 
     // Register built-in behaviors (HistorySwap, Boosted)
@@ -1022,9 +1021,6 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
 // Initialize DOM processor with compile functions and runtime
 initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
-// Share the hyperscript.config object so toggling `config.logAll` takes
-// effect on the next event (upstream _hyperscript 0.9.90).
-setDOMProcessorConfig(config);
 
 /**
  * Compiles and executes hyperscript code in a single call.

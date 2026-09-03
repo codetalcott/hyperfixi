@@ -29,18 +29,6 @@ let compileSyncFn: CompileFunction;
 let compileAsyncFn: CompileAsyncFunction;
 let getRuntimeFn: GetRuntimeFunction;
 
-// Injected ref to the hyperscript `config` object. Read with `logAllEnabled()`
-// at event-fire time so toggling `hyperscript.config.logAll` is immediate.
-let configRef: { logAll?: boolean } | null = null;
-function logAllEnabled(): boolean {
-  return configRef?.logAll === true;
-}
-
-/** Injected by hyperscript-api.ts so dom-processor can observe config.logAll. */
-export function setDOMProcessorConfig(cfg: { logAll?: boolean }): void {
-  configRef = cfg;
-}
-
 /**
  * Initialize the DOM processor with compile functions
  * Called from hyperscript-api.ts to avoid circular dependency
@@ -109,83 +97,6 @@ export function detectLanguage(element: Element): string {
 // =============================================================================
 
 /**
- * Type guard for EventHandler AST nodes
- */
-interface EventHandlerAST extends ASTNode {
-  type: 'eventHandler';
-  event?: string;
-  commands?: ASTNode[];
-}
-
-function isEventHandlerAST(ast: ASTNode): ast is EventHandlerAST {
-  return ast.type === 'eventHandler';
-}
-
-/**
- * Type guard for Feature AST nodes (legacy)
- */
-interface FeatureAST extends ASTNode {
-  type: 'FeatureNode';
-  name?: string;
-  args?: Array<{ value?: string }>;
-  body?: ASTNode;
-}
-
-function isFeatureAST(ast: ASTNode): ast is FeatureAST {
-  return ast.type === 'FeatureNode';
-}
-
-/**
- * Extract event information from AST
- */
-export function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | null {
-  try {
-    // Handle the actual HyperFixi AST structure
-    if (isEventHandlerAST(ast)) {
-      const eventType = ast.event || DEFAULT_EVENT_TYPE;
-      const commands = ast.commands;
-
-      // Create a body node from the commands
-      const body: ASTNode = {
-        type: 'CommandSequence',
-        commands: commands || [],
-        start: ast.start || 0,
-        end: ast.end || 0,
-        line: ast.line || 1,
-        column: ast.column || 1,
-      };
-
-      debug.event('Extracted event info:', {
-        type: ast.type,
-        eventType,
-        commandCount: commands?.length || 0,
-      });
-      return { eventType, body };
-    }
-
-    // Handle legacy AST structures
-    if (isFeatureAST(ast) && ast.name === 'on') {
-      const eventType = ast.args?.[0]?.value || DEFAULT_EVENT_TYPE;
-      const body = ast.body || ast;
-      debug.event('Extracted event info:', { type: ast.type, eventType });
-      return { eventType, body };
-    }
-
-    // Handle direct command sequences
-    if (ast.type === 'CommandSequence' || ast.type === 'Block') {
-      debug.event('Extracted event info:', { type: ast.type, eventType: DEFAULT_EVENT_TYPE });
-      return { eventType: DEFAULT_EVENT_TYPE, body: ast };
-    }
-
-    debug.event('Unknown AST structure for event extraction:', ast.type);
-    return null;
-  } catch (error) {
-    debug.event('Error extracting event info:', error);
-    return null;
-  }
-}
-
-/**
  * Execute hyperscript AST
  */
 async function executeHyperscriptAST(ast: ASTNode, context: ExecutionContext): Promise<unknown> {
@@ -194,63 +105,6 @@ async function executeHyperscriptAST(ast: ASTNode, context: ExecutionContext): P
   } catch (error) {
     debug.runtime('Error executing hyperscript AST:', error);
     throw error;
-  }
-}
-
-/**
- * Set up event handler for hyperscript "on" statements
- */
-export function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionContext): void {
-  try {
-    // Parse the event from the AST (simplified - assumes "on eventName" structure)
-    const eventInfo = extractEventInfo(ast);
-
-    if (!eventInfo) {
-      debug.event('Could not extract event information from AST:', ast);
-      return;
-    }
-
-    debug.event('Setting up event handler:', {
-      element: element.tagName,
-      eventType: eventInfo.eventType,
-    });
-
-    // Add event listener
-    const eventHandler = async (event: Event) => {
-      // Upstream _hyperscript 0.9.90 `config.logAll`: when true, log every
-      // handler that fires — matches htmx's logAll behavior.
-      if (logAllEnabled()) {
-        // eslint-disable-next-line no-console
-        console.log('[hyperfixi]', eventInfo.eventType, element, event);
-      }
-      try {
-        // Set event context
-        context.locals.set('event', event);
-        context.locals.set('target', event.target);
-
-        // Execute the event handler body
-        await executeHyperscriptAST(eventInfo.body, context);
-      } catch (error) {
-        debug.event('Error executing hyperscript event handler:', error);
-        debug.event('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-        debug.event('Event info body:', eventInfo.body);
-        debug.event('Context:', context);
-      }
-    };
-
-    element.addEventListener(eventInfo.eventType, eventHandler);
-    // Track the listener so `hyperfixi.cleanup(element)` can remove it later —
-    // required for morph/swap compat (upstream _hyperscript 0.9.90).
-    try {
-      const rt = getRuntimeFn?.();
-      rt?.trackListener?.(element, element, eventInfo.eventType, eventHandler);
-    } catch {
-      // Runtime may not be initialized in some test harnesses; listener still
-      // works, it just won't be cleaned up automatically.
-    }
-    debug.event('Event handler attached:', eventInfo.eventType);
-  } catch (error) {
-    debug.event('Error setting up event handler:', error);
   }
 }
 
@@ -295,14 +149,15 @@ async function processHyperscriptAttributeAsync(
     // Create execution context for this element
     const context = createHyperscriptContext(element as HTMLElement);
 
-    // Check if this is an event handler (starts with "on ")
-    if (hyperscriptCode.trim().startsWith('on ') || compileResult.ast.type === 'eventHandler') {
-      debug.event('Setting up multilingual event handler:', { code: hyperscriptCode, lang });
-      setupEventHandler(element, compileResult.ast, context);
-    } else {
-      debug.runtime('Executing immediate multilingual hyperscript:', hyperscriptCode);
-      void executeHyperscriptAST(compileResult.ast, context);
-    }
+    // Hand the AST to the runtime, whatever it is. An `eventHandler` AST
+    // installs its listener there — synchronously, before the first await —
+    // with the full event grammar (filters, `or` lists, `from`, modifiers,
+    // cleanup tracking, `config.logAll`). This file used to carry its OWN
+    // installer for the `on …` case and silently dropped all of that: a
+    // filter fired on every event, an `or` list fired on its first name only,
+    // `from <target>` never fired (measured 2026-09-03, dom-processor.test.ts).
+    // Anything else executes immediately, as before.
+    void executeHyperscriptAST(compileResult.ast, context);
   } catch (error) {
     debug.runtime('Error processing multilingual hyperscript:', error, 'on element:', element);
   }
@@ -334,29 +189,15 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
     // Create execution context for this element
     const context = createHyperscriptContext(element as HTMLElement);
 
-    // Check if this is an event handler (starts with "on ")
-    if (hyperscriptCode.trim().startsWith('on ')) {
-      debug.event('Setting up event handler for:', hyperscriptCode);
-      debug.event('Element for event handler:', element);
-      debug.event('AST for event handler:', compileResult.ast);
-
-      try {
-        debug.event('About to call setupEventHandler...');
-        setupEventHandler(element, compileResult.ast, context);
-        debug.event('setupEventHandler completed successfully');
-      } catch (setupError) {
-        debug.event('Error in setupEventHandler:', setupError);
-        debug.event(
-          'setupError stack:',
-          setupError instanceof Error ? setupError.stack : 'No stack trace'
-        );
-        throw setupError; // Re-throw to see it in outer catch
-      }
-    } else {
-      debug.runtime('Executing immediate hyperscript:', hyperscriptCode);
-      // Execute immediately for non-event code
-      void executeHyperscriptAST(compileResult.ast, context);
-    }
+    // Hand the AST to the runtime, whatever it is. An `eventHandler` AST
+    // installs its listener there — synchronously, before the first await —
+    // with the full event grammar (filters, `or` lists, `from`, modifiers,
+    // cleanup tracking, `config.logAll`). This file used to carry its OWN
+    // installer for the `on …` case and silently dropped all of that: a
+    // filter fired on every event, an `or` list fired on its first name only,
+    // `from <target>` never fired (measured 2026-09-03, dom-processor.test.ts).
+    // Anything else executes immediately, as before.
+    void executeHyperscriptAST(compileResult.ast, context);
   } catch (error) {
     debug.runtime('Error processing hyperscript attribute:', error, 'on element:', element);
   }

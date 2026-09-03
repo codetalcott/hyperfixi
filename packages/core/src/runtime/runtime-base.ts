@@ -111,6 +111,13 @@ function collectIdentifierNames(node: unknown, out: Set<string> = new Set()): Se
 
 export interface RuntimeBaseOptions {
   /**
+   * Upstream _hyperscript 0.9.90 `config.logAll`: when it returns true, every
+   * event handler that fires logs `['[hyperfixi]', event.type, me, event]`.
+   * A function, read at fire time, so the flag can be toggled live. Lives here
+   * — not in the DOM processors — because the runtime installs every listener.
+   */
+  logAll?: () => boolean;
+  /**
    * The registry instance containing allowed commands.
    * MUST be provided externally to enable tree-shaking.
    */
@@ -1513,6 +1520,10 @@ export class RuntimeBase {
       ? runtime.compileSequence(errorBlocks.finallyHandler)
       : undefined;
     return async (domEvent: Event) => {
+      if (runtime.options.logAll?.()) {
+        // eslint-disable-next-line no-console
+        console.log('[hyperfixi]', domEvent.type, context.me, domEvent);
+      }
       // Recursion Guard (uses WeakMap instead of expando property on Event)
       const currentDepth = eventRecursionDepth.get(domEvent) ?? 0;
       if (currentDepth >= 100) {
