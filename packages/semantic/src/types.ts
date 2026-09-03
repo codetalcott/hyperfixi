@@ -103,7 +103,6 @@ export type ActionType =
   | 'render'
   // Advanced
   | 'js'
-  | 'async'
   | 'tell'
   | 'default'
   | 'init'

@@ -2148,3 +2148,24 @@ regression episode that motivates it:
   [HANDOFF-parse-success-and-doc-examples.md](HANDOFF-parse-success-and-doc-examples.md).
 - 2026-01-30 — behavior parameters shadowing command names. **Resolved**;
   archived at [PARSER_FIX_STATUS.md](PARSER_FIX_STATUS.md).
+
+### `async <command>` has no fire-and-forget execution anywhere (2026-09-03)
+
+Upstream `_hyperscript` runs `async <command>` without awaiting it. Neither
+parser honours that: the core parser used to produce a bare `async` node
+followed by a sibling command (the `async` command that consumed it was
+deleted in 3.0.0, #1102 — it was unreachable from parsed code); the semantic
+front-end's `stripAsyncModifier` removes the keyword in every language and
+parses the following command, so the async-ness is dropped and the command
+runs awaited. Measured 2026-09-03: `async fetch /api/data as json` → `fetch`
+in en/es/ja; a bare `async` does not parse. The semantic `asyncSchema` was
+deleted the same day as unreachable; the 24 profiles' `keywords.async` stay
+because the stripper matches on them.
+
+**If parity is wanted** it is a core feature, not a semantic one: the core
+parser sets `async: true` on the following command node (one token to
+consume at command position), the runtime's sequence executor does not await
+a node so flagged (and drops its Result), and only then does semantic stop
+stripping and set the same flag. Until then the degradation is sync
+execution, which is the only faithful option a runtime without the flag can
+offer. No gate currently pins the modifier's behaviour in either parser.

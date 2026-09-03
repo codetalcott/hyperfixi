@@ -242,8 +242,12 @@ function readingsForCached(lang: string): Map<string, Set<string>> {
  * `catch`/`pushUrl`/`replaceUrl` are real _hyperscript commands not yet ported to
  * the semantic schema set; `until` is only a loop sub-keyword (`repeat until …`).
  * Kept (not deleted) so the translations survive for when the commands gain schemas.
+ * `async` joined 2026-09-03: core deleted the command in 3.0.0 (#1102) and the
+ * semantic `asyncSchema` went with it — the parser strips the keyword as a
+ * transparent modifier (`stripAsyncModifier`), so the dicts' `async` word is
+ * still read, just never as an action.
  */
-const DEAD_SCHEMA_COMMANDS = new Set(['catch', 'pushUrl', 'replaceUrl', 'until']);
+const DEAD_SCHEMA_COMMANDS = new Set(['catch', 'pushUrl', 'replaceUrl', 'until', 'async']);
 
 function parseKey(key: string): { lang: string; action: string; word: string } {
   const [lang, action, ...rest] = key.split(':');

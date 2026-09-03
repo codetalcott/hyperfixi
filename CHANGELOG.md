@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/semantic` drops its `asyncSchema`.** Core deleted the `async`
+  command in 3.0.0 (#1102); the semantic front-end never emitted the action
+  anyway — its `stripAsyncModifier` pass removes the keyword (in all 24
+  languages) and parses the following command, so `async fetch /api as json`
+  is a `fetch`. The schema, its registration, the `'async'` `ActionType`
+  member and the AST-builder mapper row are gone. Kept on purpose: every
+  profile's `keywords.async` (the stripper matches on it) and the
+  `'then' | 'and' | 'async'` chain type (a different concept). The IR-level
+  `async all/race` node lives in `@lokascript/intent` and is untouched.
+
 ## [3.0.0] - 2026-09-03
 
 Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).

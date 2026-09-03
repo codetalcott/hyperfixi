@@ -2859,20 +2859,6 @@ export const jsSchema: CommandSchema = {
 };
 
 /**
- * Async command: runs commands asynchronously.
- */
-export const asyncSchema: CommandSchema = {
-  action: 'async',
-  description: 'Execute commands asynchronously',
-  category: 'async',
-  primaryRole: 'patient',
-  // Roleless keyword: emits a bare command node.
-  ast: {},
-  hasBody: true,
-  roles: [],
-};
-
-/**
  * Tell command: sends commands to another element.
  */
 export const tellSchema: CommandSchema = {
@@ -3786,7 +3772,6 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   call: callSchema,
   return: returnSchema,
   js: jsSchema,
-  async: asyncSchema,
   tell: tellSchema,
   default: defaultSchema,
   init: initSchema,

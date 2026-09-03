@@ -13,7 +13,12 @@ import {
   type CommandSequenceNode,
   type CommandNode,
 } from '../src/ast-builder/index';
-import { convertValue, convertLiteral, convertSelector, convertReference } from '../src/ast-builder/value-converters';
+import {
+  convertValue,
+  convertLiteral,
+  convertSelector,
+  convertReference,
+} from '../src/ast-builder/value-converters';
 import { resolveCommandMapper } from '../src/ast-builder/command-mappers';
 import type {
   SemanticNode,
@@ -93,7 +98,11 @@ describe('Value Converters', () => {
       // `set @disabled to true` / `toggle @hidden` — feeding `@disabled` to
       // querySelector throws "Invalid selector"; the canonical core-parser
       // shape is attributeAccess, which set/toggle route to setAttribute.
-      const value: SelectorValue = { type: 'selector', value: '@disabled', selectorKind: 'complex' };
+      const value: SelectorValue = {
+        type: 'selector',
+        value: '@disabled',
+        selectorKind: 'complex',
+      };
       const result = convertSelector(value);
 
       expect(result).toMatchObject({ type: 'attributeAccess', attributeName: 'disabled' });
@@ -141,9 +150,9 @@ describe('Value Converters', () => {
         ['<[data-x]/>', '[data-x]'],
         ['< button />', 'button'],
       ] as const) {
-        expect(convertSelector({ type: 'selector', value: raw, selectorKind: 'complex' })).toMatchObject(
-          { value: stripped, selector: stripped, fromQuery: true, raw }
-        );
+        expect(
+          convertSelector({ type: 'selector', value: raw, selectorKind: 'complex' })
+        ).toMatchObject({ value: stripped, selector: stripped, fromQuery: true, raw });
       }
     });
 
@@ -260,9 +269,7 @@ describe('Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'wait',
-        roles: new Map([
-          ['duration', { type: 'literal', value: '2s', dataType: 'duration' }],
-        ]),
+        roles: new Map([['duration', { type: 'literal', value: '2s', dataType: 'duration' }]]),
       };
 
       const mapper = resolveCommandMapper('wait');
@@ -320,9 +327,7 @@ describe('Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'log',
-        roles: new Map([
-          ['patient', { type: 'literal', value: 'hello', dataType: 'string' }],
-        ]),
+        roles: new Map([['patient', { type: 'literal', value: 'hello', dataType: 'string' }]]),
       };
 
       const mapper = resolveCommandMapper('log');
@@ -363,9 +368,7 @@ describe('ASTBuilder', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'custom-command' as any,
-        roles: new Map([
-          ['patient', { type: 'literal', value: 'test', dataType: 'string' }],
-        ]),
+        roles: new Map([['patient', { type: 'literal', value: 'test', dataType: 'string' }]]),
       };
 
       const result = builder.build(node);
@@ -379,9 +382,7 @@ describe('ASTBuilder', () => {
     it('should build event handler node', () => {
       const node: EventHandlerSemanticNode = {
         kind: 'event-handler',
-        roles: new Map([
-          ['event', { type: 'literal', value: 'click', dataType: 'string' }],
-        ]),
+        roles: new Map([['event', { type: 'literal', value: 'click', dataType: 'string' }]]),
         body: [
           {
             kind: 'command',
@@ -475,9 +476,7 @@ describe('ASTBuilder', () => {
     it('should build conditional node', () => {
       const node: ConditionalSemanticNode = {
         kind: 'conditional',
-        roles: new Map([
-          ['condition', { type: 'expression', raw: 'x > 5' }],
-        ]),
+        roles: new Map([['condition', { type: 'expression', raw: 'x > 5' }]]),
         thenBranch: [
           {
             kind: 'command',
@@ -502,9 +501,7 @@ describe('ASTBuilder', () => {
     it('should handle else branch', () => {
       const node: ConditionalSemanticNode = {
         kind: 'conditional',
-        roles: new Map([
-          ['condition', { type: 'literal', value: true, dataType: 'boolean' }],
-        ]),
+        roles: new Map([['condition', { type: 'literal', value: true, dataType: 'boolean' }]]),
         thenBranch: [
           {
             kind: 'command',
@@ -546,9 +543,7 @@ describe('buildAST', () => {
     const node: CommandSemanticNode = {
       kind: 'command',
       action: 'increment',
-      roles: new Map([
-        ['patient', { type: 'selector', value: '#count', selectorKind: 'id' }],
-      ]),
+      roles: new Map([['patient', { type: 'selector', value: '#count', selectorKind: 'id' }]]),
     };
 
     const result = buildAST(node);
@@ -689,9 +684,7 @@ describe('Tier 2 Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'return',
-        roles: new Map([
-          ['patient', { type: 'literal', value: 42, dataType: 'number' }],
-        ]),
+        roles: new Map([['patient', { type: 'literal', value: 42, dataType: 'number' }]]),
       };
 
       const mapper = resolveCommandMapper('return');
@@ -827,9 +820,7 @@ describe('Tier 3 Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'if',
-        roles: new Map([
-          ['condition', { type: 'expression', raw: 'x > 5' }],
-        ]),
+        roles: new Map([['condition', { type: 'expression', raw: 'x > 5' }]]),
       };
 
       const mapper = resolveCommandMapper('if');
@@ -867,9 +858,7 @@ describe('Tier 3 Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'while',
-        roles: new Map([
-          ['condition', { type: 'expression', raw: 'count < 10' }],
-        ]),
+        roles: new Map([['condition', { type: 'expression', raw: 'count < 10' }]]),
       };
 
       const mapper = resolveCommandMapper('while');
@@ -886,9 +875,7 @@ describe('Tier 3 Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'repeat',
-        roles: new Map([
-          ['quantity', { type: 'literal', value: 5, dataType: 'number' }],
-        ]),
+        roles: new Map([['quantity', { type: 'literal', value: 5, dataType: 'number' }]]),
       };
 
       const mapper = resolveCommandMapper('repeat');
@@ -905,9 +892,7 @@ describe('Tier 3 Command Mappers', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'behavior',
-        roles: new Map([
-          ['patient', { type: 'literal', value: 'Draggable', dataType: 'string' }],
-        ]),
+        roles: new Map([['patient', { type: 'literal', value: 'Draggable', dataType: 'string' }]]),
       };
 
       const mapper = resolveCommandMapper('behavior');
@@ -940,23 +925,6 @@ describe('Tier 3 Command Mappers', () => {
     });
   });
 
-  describe('async mapper', () => {
-    it('should map async command with no args', () => {
-      const node: CommandSemanticNode = {
-        kind: 'command',
-        action: 'async',
-        roles: new Map(),
-      };
-
-      const mapper = resolveCommandMapper('async');
-      const builder = new ASTBuilder();
-      const result = mapper!.toAST(node, builder);
-
-      expect(result.name).toBe('async');
-      expect(result.args).toHaveLength(0);
-    });
-  });
-
   describe('continue mapper', () => {
     it('should map continue command with no args', () => {
       const node: CommandSemanticNode = {
@@ -983,19 +951,54 @@ describe('Command Mapper Coverage', () => {
   it('should have mappers for all 47 commands', () => {
     const expectedCommands = [
       // Tier 1
-      'toggle', 'add', 'remove', 'set', 'show', 'hide',
-      'increment', 'decrement', 'wait', 'log', 'put', 'fetch',
+      'toggle',
+      'add',
+      'remove',
+      'set',
+      'show',
+      'hide',
+      'increment',
+      'decrement',
+      'wait',
+      'log',
+      'put',
+      'fetch',
       // Tier 2
-      'append', 'prepend', 'get', 'take', 'trigger', 'send', 'on',
-      'go', 'transition', 'focus', 'blur',
-      'call', 'return', 'halt', 'throw', 'settle',
+      'append',
+      'prepend',
+      'get',
+      'take',
+      'trigger',
+      'send',
+      'on',
+      'go',
+      'transition',
+      'focus',
+      'blur',
+      'call',
+      'return',
+      'halt',
+      'throw',
+      'settle',
       // Tier 3
-      'swap', 'pick', 'morph', 'clone', 'measure',
-      'make', 'tell', 'default',
-      'js', 'async',
-      'if', 'unless',
-      'repeat', 'for', 'while', 'continue',
-      'init', 'behavior', 'install',
+      'swap',
+      'pick',
+      'morph',
+      'clone',
+      'measure',
+      'make',
+      'tell',
+      'default',
+      'js',
+      'if',
+      'unless',
+      'repeat',
+      'for',
+      'while',
+      'continue',
+      'init',
+      'behavior',
+      'install',
     ];
 
     for (const command of expectedCommands) {
@@ -1003,7 +1006,7 @@ describe('Command Mapper Coverage', () => {
       expect(mapper, `Missing mapper for: ${command}`).toBeDefined();
     }
 
-    expect(expectedCommands.length).toBe(47);
+    expect(expectedCommands.length).toBe(46);
   });
 });
 
@@ -1019,9 +1022,7 @@ describe('Enhanced Event Handler Building', () => {
       const node: EventHandlerSemanticNode = {
         kind: 'event-handler',
         action: 'on',
-        roles: new Map([
-          ['event', { type: 'literal', value: 'click', dataType: 'string' }],
-        ]),
+        roles: new Map([['event', { type: 'literal', value: 'click', dataType: 'string' }]]),
         body: [
           {
             kind: 'command',
@@ -1050,9 +1051,7 @@ describe('Enhanced Event Handler Building', () => {
           {
             kind: 'command',
             action: 'hide',
-            roles: new Map([
-              ['patient', { type: 'reference', value: 'me' }],
-            ]),
+            roles: new Map([['patient', { type: 'reference', value: 'me' }]]),
           },
         ],
       };
@@ -1076,9 +1075,7 @@ describe('Enhanced Event Handler Building', () => {
           {
             kind: 'command',
             action: 'hide',
-            roles: new Map([
-              ['patient', { type: 'reference', value: 'me' }],
-            ]),
+            roles: new Map([['patient', { type: 'reference', value: 'me' }]]),
           },
         ],
       };
@@ -1170,9 +1167,7 @@ describe('Enhanced Event Handler Building', () => {
           {
             kind: 'command',
             action: 'hide',
-            roles: new Map([
-              ['patient', { type: 'reference', value: 'me' }],
-            ]),
+            roles: new Map([['patient', { type: 'reference', value: 'me' }]]),
           },
         ],
       };
@@ -1233,9 +1228,7 @@ describe('Compound Statement Building', () => {
           {
             kind: 'command',
             action: 'hide',
-            roles: new Map([
-              ['patient', { type: 'reference', value: 'me' }],
-            ]),
+            roles: new Map([['patient', { type: 'reference', value: 'me' }]]),
           },
         ],
         chainType: 'then',
@@ -1305,9 +1298,7 @@ describe('Compound Statement Building', () => {
           {
             kind: 'command',
             action: 'log',
-            roles: new Map([
-              ['patient', { type: 'reference', value: 'result' }],
-            ]),
+            roles: new Map([['patient', { type: 'reference', value: 'result' }]]),
           },
         ],
         chainType: 'async',
@@ -1371,9 +1362,7 @@ describe('Conditional Node Building', () => {
       const node: ConditionalSemanticNode = {
         kind: 'conditional',
         action: 'if',
-        roles: new Map([
-          ['condition', { type: 'expression', raw: 'x > 5' }],
-        ]),
+        roles: new Map([['condition', { type: 'expression', raw: 'x > 5' }]]),
         thenBranch: [
           {
             kind: 'command',
@@ -1400,9 +1389,7 @@ describe('Conditional Node Building', () => {
       const node: ConditionalSemanticNode = {
         kind: 'conditional',
         action: 'if',
-        roles: new Map([
-          ['condition', { type: 'expression', raw: 'isLoggedIn' }],
-        ]),
+        roles: new Map([['condition', { type: 'expression', raw: 'isLoggedIn' }]]),
         thenBranch: [
           {
             kind: 'command',
@@ -1437,9 +1424,7 @@ describe('Conditional Node Building', () => {
       const node: ConditionalSemanticNode = {
         kind: 'conditional',
         action: 'if',
-        roles: new Map([
-          ['condition', { type: 'literal', value: true }],
-        ]),
+        roles: new Map([['condition', { type: 'literal', value: true }]]),
         thenBranch: [
           {
             kind: 'command',
@@ -1451,9 +1436,7 @@ describe('Conditional Node Building', () => {
           {
             kind: 'command',
             action: 'wait',
-            roles: new Map([
-              ['duration', { type: 'literal', value: '1s', dataType: 'duration' }],
-            ]),
+            roles: new Map([['duration', { type: 'literal', value: '1s', dataType: 'duration' }]]),
           },
           {
             kind: 'command',
@@ -1507,9 +1490,7 @@ describe('ASTBuilder.buildBlock', () => {
       {
         kind: 'command',
         action: 'wait',
-        roles: new Map([
-          ['duration', { type: 'literal', value: '500ms', dataType: 'duration' }],
-        ]),
+        roles: new Map([['duration', { type: 'literal', value: '500ms', dataType: 'duration' }]]),
       },
     ];
 
