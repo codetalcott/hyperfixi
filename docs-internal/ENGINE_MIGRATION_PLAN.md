@@ -439,7 +439,10 @@ step 2 deletes; each deletion is its own PR. Tag the tree
 > `semantic`, `framework` and `intent` dist files whole: 3.33 MB, against
 > 1.04 MB with them external (measured). Step 2's "the library entry stops
 > pulling semantic into every Node consumer" is therefore a build change first
-> and an API change second. Read the brief before starting either step.
+> and an API change second. **The build half landed 2026-09-03** (step A of
+> the brief: `rollup.config.mjs` externalizes the four packages, 3,331,225 →
+> 1,037,542 bytes, gated on the sourcemap by `scripts/check-node-import.mjs`).
+> Read the brief before starting the API half.
 
 The semantic package becomes a front-end the engine does not know about.
 The seam is already there; the arc is about the one call site that ignores it
@@ -2193,12 +2196,23 @@ What the 2026-09-03 post-release review left open, in the order it should be
 worked. None needs an arc; the first has a brief.
 
 1. **Arc 1 steps 2 and 3** — the one target-design point (6) the plan did not
-   reach. Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). Build
+   reach. Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md). ~~Build
    half first (externalize the front-end in `rollup.config.mjs`; 3.33 MB →
-   1.04 MB measured; no API change), then `hyperscript.use(frontEnd)` with the
-   library entry keeping a default registration through 3.x so no Node
-   consumer changes; moving `@lokascript/semantic` from `dependencies` to an
-   optional peer is a 4.0 entry.
+   1.04 MB measured; no API change)~~ ✅ **build half DONE 2026-09-03**, then
+   `hyperscript.use(frontEnd)` with the library entry keeping a default
+   registration through 3.x so no Node consumer changes; moving
+   `@lokascript/semantic` from `dependencies` to an optional peer is a 4.0
+   entry.
+1. **The CJS entry points are empty — every one, since `"type": "module"`.**
+   Found by step A's bare-Node probe: `require('@hyperfixi/core')` returns
+   `{}` (27 exports expected) and `require('@hyperfixi/core/commands')` (and
+   `/expressions`, `/registry`, `/multilingual`) throws — on the published
+   3.0.0 tarball too, so it predates this cycle. Cause: core's `package.json`
+   says `"type": "module"`, so Node loads the CJS-syntax `dist/*.js` as ESM;
+   the identical file renamed `.cjs` yields all 27 keys. Fix is mechanical —
+   emit `.cjs`, point `main` and every `exports.*.require` at it, and give
+   `scripts/check-node-import.mjs` a `require()` check per entry (it only
+   ever `import()`ed, which is why this was invisible). Do it before step B.
 2. **Collapse the three DOM processors onto the Program cache** — risk 6
    below, named as a 4b follow-up and never filed. `api/dom-processor.ts`
    (444 lines), `dom/attribute-processor.ts` (664) and
@@ -2646,3 +2660,29 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
 
   The brief is rewritten (`HANDOFF-engine-arc1.md`) and the post-plan queue is
   [After the plan](#after-the-plan).
+
+- **2026-09-03** — **Arc 1 step 2, build half (step A of the brief), landed.**
+  `rollup.config.mjs` gives the main ESM/CJS entry and the `multilingual` and
+  `lse` subpaths `external: ['@lokascript/semantic', '@lokascript/intent',
+  '@lokascript/i18n', '@lokascript/framework']`; the UMD `index.min.js` is
+  split into its own config block and stays the one self-contained output
+  (decision 1: kept; decision 2: framework external — it was already an
+  optional peer). `dist/index.mjs` **3,331,225 → 1,037,542 bytes**, with three
+  `import('@lokascript/semantic')` and one `import('@lokascript/framework')`
+  surviving as deferred loads; `dist/multilingual/index.mjs` stops inlining
+  `intent/dist`. Proven end-to-end, not by size: a bare-Node ESM import of the
+  built entry compiles `.active を 切り替え` (`language: 'ja'`) through the
+  deferred front-end in 42 ms, `parser: 'semantic'`, confidence 0.82. Gate:
+  `scripts/check-node-import.mjs` (CI `export-validation`) reads the
+  sourcemap's `sources` and fails on any `/semantic/`, `/intent/`, `/i18n/`
+  or `/framework/` path, and requires at least one real
+  `import('@lokascript/semantic')` in the entry — mutation-verified by
+  rebuilding with the old `external: []` (three FAILs). Also deleted:
+  `packages/core/test-includes-simple.cjs`, the UMD's only in-repo consumer,
+  which required the `Lexer` Arc 6b removed.
+
+  **What the probe found that the size could not:** the CJS surface is empty
+  and has been since `"type": "module"` — see After the plan, item 2. It is
+  not caused by this change (the published 3.0.0 `dist/index.js` requires to
+  `{}` too) and is not fixed by it; it is queued ahead of step B because the
+  fix and the gate live in the same two files.
