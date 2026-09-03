@@ -53,7 +53,7 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**Composite expressions span only their LAST token**~~ | **FIXED 2026-09-01** — `memberExpression` / `callExpression` / `possessiveExpression` all took `getPosition()` (the token consumed last), so `call myFunction()` spanned `)` and `get me.parentElement` spanned `parentElement`. Two synthesized CHILDREN had it in mirror image (`first .item`'s callee took `.item`'s span; `copy my textContent`'s `me` took the property's), and `clear :count` moved `start` back over the sigil without moving `column`. All six are read by LSP hover and diagnostic ranges. Found by the parse-path triage once `@lokascript/semantic` began reporting spans — the two paths disagreed and TRADITIONAL was the wrong one, contradicting the handoff that named it the oracle. | ✅ `composite-expression-spans.test.ts` (asserts against the SOURCE TEXT, not against the other path; mutation-verified — each of the four fixes reddens a different row count) + the regenerated `ast-equivalence` baseline | `HANDOFF-convergence-next.md`, "What the measurement falsified" |
 | **`pick`'s `variant` modifier is given the command's own span** | low — `pick first 3 of items` gives `modifiers.variant` the span `[0, 4)`, which is `pick`, not `first`. Same class as the composite-span defects fixed above, in a hand-built modifier the fix did not reach. | ⚠️ NONE — the semantic path emits no span there at all, so it reads as `field-only-trad` in the triage rather than as a disagreement | found 2026-09-01 while measuring the span residual; `HANDOFF-convergence-next.md`, "The residual, precisely" group 3 |
 | **Seven producers emit an INCOMPLETE position** | low-medium — 24 of 857 typed nodes in a traditional parse of the engine corpus lack a full `{start,end,line,column}`, so LSP range and diagnostic consumers get nothing for them. Producers: `js … end` bodies (9 sites — body literal + params arrayLiteral), `pick`'s `variant`/`rangeMode` (7), `propertyOfExpression` (`asExpression` inherits its `undefined`s, so fixing one fixes both), `betweenExpression`, a `when`-modifier `unaryExpression`, an object-literal `properties[].key`, and `set`'s sigil-variable destination — which sets `start`/`end` but omits `line`/`column`, so the same `:count` surface is positioned two different ways inside one parse of `on click set :count to 1 then increment :count`. **Not the same as a materialized default**, which is correctly span-free (`focus`'s implicit `me`) and must stay that way. | ⚠️ NONE — no gate asserts position completeness on either path | measured 2026-09-01 after #1042; blocks nothing, but it is why `ENGINE_MIGRATION_PLAN.md` Arc 2 step 2 can NOT make positions required (that entry carries the full measurement) |
-| **`set *<css-prop> of <target>` silently no-ops** | **medium-high — upstream ACCEPTS all five shapes and we break four**, three of them SILENTLY. Only the possessive `set my *opacity to 0.5` works. Same class as `show … in … when …` above: real, with an oracle, and silent. | ⚠️ NONE — no gate covers `*`-property `set` destinations on either path | measured 2026-09-01 while listing the kinds that never reach the evaluators (Arc 2 step 3); section below |
+| ~~**`set *<css-prop> of <target>` silently no-ops**~~ | **FIXED 2026-09-03** — the tokenizer classes `*opacity` as a selector (for `measure`), and set's parser now re-types that selector into the identifier property the runtime's style rungs already split on, folding `*x of T` into the `the *x of T` propertyOfExpression. All five filed shapes plus `of #target`, `the … of #target`, `#target's` and `of the first <div/>` write inline style; oracle re-run on 0.9.93 the same day. | ✅ `set-css-property.test.ts` (10 rows, strict — the target rows also assert `me` was NOT written; mutation: reverting the parser change reddens 8) | section below |
 
 ### ~~`and` in a semantically-parsed command's arguments~~ — FIXED (2026-08-30)
 
@@ -1991,7 +1991,17 @@ were broken identically and are fixed together, which is precisely the class a
 convergence triage cannot see.
 
 
-### `set *<css-property>` — four of five shapes broken (2026-09-01)
+### ~~`set *<css-property>` — four of five shapes broken~~ — FIXED (2026-09-03)
+
+**Resolution.** Parse-time, in `parseSetCommand`: a `*prop` star lands as a
+`selector` node (the tokenizer's classification, kept for `measure`), and
+`retypeStylePropertyTarget` turns it into the `identifier` the runtime's
+`write-target`/`property-target` rungs already split on — bare, as the left
+of an `of` binaryExpression (folded into a propertyOfExpression), or as a
+propertyOfExpression's property. One runtime path serves every spelling; no
+`parseInput` scan was added. The second defect filed below (`cssProperty`'s
+reader vs its emitter) is MOOT for these surfaces and its emitter is gone
+with Arc 1 step 6; the kind is now unemitted in core. Original filing follows.
 
 Found while answering Arc 2 step 3's question "which union kinds never reach the
 evaluators, and where is each actually handled?". `cssProperty` is one of the

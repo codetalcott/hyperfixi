@@ -267,6 +267,10 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
     fallbackTokens = fallback.tokens;
   }
 
+  if (targetExpression) {
+    targetExpression = retypeStylePropertyTarget(targetExpression);
+  }
+
   // Expect 'to' keyword
   if (!ctx.check(KEYWORDS.TO)) {
     const found = ctx.isAtEnd() ? 'end of input' : ctx.peek().value;
@@ -312,6 +316,69 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
     builder.withModifier('on', scopeTarget as ExpressionNode);
   }
   return builder.endingAt(ctx.getPosition()).build();
+}
+
+/**
+ * `*<css-property>` as a set destination is a PROPERTY NAME, not a CSS
+ * selector — but the tokenizer classifies `*opacity` as a selector token (for
+ * `measure`'s sake), so the expression parser hands set a `selector` node
+ * wherever the star lands. Upstream accepts every spelling and writes inline
+ * style; measured on 0.9.93 (2026-09-03):
+ *
+ *   set *opacity to 0.5              → me.style.opacity
+ *   set *opacity of me to 0.5        → me
+ *   set the *opacity of me to 0.5    → me
+ *   set *opacity of #target to 0.5   → #target   (also `the … of`, `#target's`)
+ *   set my *opacity to 0.5           → me
+ *
+ * Only the last worked here: `my *opacity` is a memberExpression whose
+ * property is an IDENTIFIER named `*opacity`, and every runtime rung that
+ * writes a property already splits a leading `*` into a style write
+ * (`helpers/write-target.ts`, `helpers/property-target.ts`). The other four
+ * carried the star as a `selector` node: the bare one was evaluated as a CSS
+ * query and silently no-op'd, `*x of T` was an `of` binaryExpression that
+ * evaluated to nothing, and `the *x of T` threw from the evaluator because a
+ * propertyOfExpression's property "must be an identifier". This re-types the
+ * star selector into that identifier, in the three positions it can occupy,
+ * and folds the bare `of` form into the same propertyOfExpression the `the`
+ * form already builds — so one runtime path serves all five spellings.
+ */
+function retypeStylePropertyTarget(target: ASTNode): ASTNode {
+  const asStyleIdentifier = (node: ASTNode | undefined): ASTNode | null => {
+    if (!node || node.type !== 'selector') return null;
+    const value = (node as { value?: unknown }).value;
+    if (typeof value !== 'string' || !value.startsWith('*')) return null;
+    return createIdentifier(value, {
+      start: node.start ?? 0,
+      end: node.end ?? 0,
+      line: node.line ?? 1,
+      column: node.column ?? 1,
+    });
+  };
+  const pos = {
+    start: target.start ?? 0,
+    end: target.end ?? 0,
+    line: target.line ?? 1,
+    column: target.column ?? 1,
+  };
+
+  // `set *opacity to …` — the star alone; the style write lands on `me`.
+  const bare = asStyleIdentifier(target);
+  if (bare) return bare;
+
+  // `set *opacity of <target> to …` — parsed as an `of` binaryExpression.
+  if (target.type === 'binaryExpression' && target.operator === KEYWORDS.OF) {
+    const property = asStyleIdentifier(target.left as ASTNode | undefined);
+    if (property) return createPropertyOfExpression(property, target.right as ASTNode, pos);
+  }
+
+  // `set the *opacity of <target> to …` — already a propertyOfExpression.
+  if (target.type === 'propertyOfExpression') {
+    const property = asStyleIdentifier(target.property as ASTNode | undefined);
+    if (property) return createPropertyOfExpression(property, target.target as ASTNode, pos);
+  }
+
+  return target;
 }
 
 /**
