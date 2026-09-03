@@ -23,11 +23,18 @@ Importers, non-test: `compatibility/browser-bundle.ts`, `browser-modular.ts`,
 What only the attribute processor has, and the collapse must keep:
 `MutationObserver` re-scan, the **lazy stub** (compile on first trusted event
 so user activation survives — clipboard, fullscreen), `<script
-type="text/hyperscript">` with and without `for=`, `hyperscript:before:init` /
-`after:init` lifecycle, `data-hyperscript-powered`, the `IMMEDIATE_EVENTS` set,
-and multi-handler detection. What only the API processor has: language
-detection per element (`detectLanguage` → `compileAsync` for non-English),
-which the bundle path does through the same API anyway.
+type="text/hyperscript">` with and without `for=`, the `load` element event,
+compile-error reporting (`console.error` + `hyperfixi:compile-error` +
+`config.onCompileError`), the `IMMEDIATE_EVENTS` set, and multi-handler
+detection. What only the API processor had — **corrected 2026-09-03, the
+first draft of this paragraph had it backwards**: the `hyperscript:before:init`
+/ `after:init` lifecycle, `data-hyperscript-powered`, and language detection
+per element (`detectLanguage` → `compileAsync` for non-English). The bundle
+path had NONE of the three: it compiled every attribute as English, so the
+morph-engine marker was absent on every bundle-processed page. **PR 1 moved
+all three into the attribute processor** (the survivor), and found the lazy
+stub wrong on the first event for every header feature (filter, `or`, `from`,
+`(args)`) — `LAZY_HEADER` now admits only `on <event> <body>`.
 
 ## The shape to reach
 
@@ -41,11 +48,14 @@ runtime with no parser of its own and is 148 lines.
 
 ## Order
 
-1. **Parity gate first.** Extend `api/dom-processor.test.ts`'s two-path table
-   to the attribute processor's features: lifecycle events, `powered`
-   marker, lazy stub (a `click` handler installed lazily must run for the
-   first trusted click), script tags. Every row asserts BOTH paths. This is
-   the gate the merge lands under.
+1. ~~**Parity gate first.**~~ ✅ **DONE 2026-09-03 (PR 1).**
+   `api/dom-processor.test.ts` runs 36 rows on THREE paths — API, eager,
+   lazy — for the event grammar, the lifecycle (dispatch order, cancel,
+   marker), event identity (the lazy stub passes the real event) and
+   `logAll`. Four mutations each redden exactly the rows that claim them.
+   The rows only the bundle path can pass today (`load`, compile-error
+   reporting, script tags, cleanup-then-reprocess) land WITH step 2: a row
+   red on one path cannot land first.
 2. Move `processHyperscriptAttribute` + `process` from `api/` into the
    attribute processor as its element-level entry; the API imports it.
    `dom -> api` edge → gone; regenerate `baselines/layering.json` (shrink).

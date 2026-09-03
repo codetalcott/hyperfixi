@@ -2228,7 +2228,11 @@ worked. None needs an arc; the first has a brief.
    path was right); the private installer is deleted, both paths hand the AST
    to the runtime, `config.logAll` lives in the runtime, and
    `api/dom-processor.test.ts` pins the two paths against each other.
-   `api/dom-processor.ts` 444 → 285 lines. The collapse proper still stands. `api/dom-processor.ts`
+   `api/dom-processor.ts` 444 → 285 lines. **Second slice (parity gate, PR 1
+   of 3) landed 2026-09-03** — see the History entry: the attribute processor
+   gained the lifecycle, the `powered` marker and language detection it never
+   had, the lazy stub lost the header shapes it ran wrong, and the gate runs
+   36 rows on three paths. The collapse proper still stands. `api/dom-processor.ts`
    (444 lines), `dom/attribute-processor.ts` (664) and
    `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
    runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
@@ -2787,3 +2791,23 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   newlines — anchored to `[ \t]*`). Baseline regenerated: 50 bodies, 2,039
   lines, 329 branches, 64 syntax sites, 190 value sites. The decomposition of
   the 64 is on the item; the honest remainder is six named sites, not a number.
+
+- **2026-09-03** — **DOM-processor collapse, PR 1 of 3: the parity gate, and the
+  survivor grows to the union.** The brief had the inventory backwards:
+  `hyperscript:before:init` / `after:init` and `data-hyperscript-powered` lived
+  ONLY in `api/dom-processor.ts` — the bundle path (every browser bundle) never
+  dispatched or set them, so the morph-engine marker was absent on every
+  bundle-processed page and the lifecycle was uncancelable there. The attribute
+  processor now carries the lifecycle, the marker, and per-element language
+  detection (it compiled everything as English; `process()` detected). Running
+  the existing rows on the LAZY path found the stub wrong on the first event
+  for every header feature — filter ignored (fired on a plain click), `or`
+  list heard on its first name only, `from <target>` never — so `LAZY_HEADER`
+  now admits only `on <event> <body>` and the rest goes eager. Gate:
+  `api/dom-processor.test.ts`, 36 rows across three paths (API, eager, lazy),
+  four mutations each reddening exactly the rows that claim them. `dom/` type
+  escapes 6 → 2 (the stub is typed through `ast/legacy`). Left for PR 2: the
+  rows only the bundle path can pass today (`load`, compile-error reporting,
+  script tags, cleanup-then-reprocess) land WITH the move that makes
+  `process()` call the attribute processor, since a row red on one path cannot
+  land first.

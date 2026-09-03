@@ -1,7 +1,7 @@
 {
   "$comment": "Shrink-only ratchet for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Counts comment- and string-stripped occurrences of `: any`, `as any`, `as Record<string, unknown>` and `as unknown as` in packages/core/src non-test source, per top-level directory. Regenerate with `npm run check:type-escapes:update` in the SAME PR that lowers a count; a rise fails scripts/check-type-escapes.cjs.",
   "generated": "2026-09-03",
-  "total": 640,
+  "total": 636,
   "directories": {
     ".": {
       "total": 2,
@@ -84,9 +84,9 @@
       "genericAny": 0
     },
     "dom": {
-      "total": 6,
+      "total": 2,
       "colonAny": 1,
-      "asAny": 4,
+      "asAny": 0,
       "asRecordUnknown": 0,
       "asUnknownAs": 0,
       "genericAny": 1
