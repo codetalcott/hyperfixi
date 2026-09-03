@@ -2011,7 +2011,11 @@ Runs in parallel with Arc 3.
    the context carries nothing. A `DebugController` convenience that installs
    `collectEvaluations()` is a one-liner for whoever wants it; the hot path is
    done.
-4. **Operators as table entries with `compile`.** `evaluateBinaryExpression`
+4. **Operators as table entries with `compile`.** _Re-measured 2026-09-04 by
+   [HANDOFF-engine-arc7.md](./HANDOFF-engine-arc7.md): the "fragments already
+   shake" premise is false (three fragments, always merged; the registry is
+   what shakes), so this step splits — the cheap half stays in Arc 7, the
+   binary-switch fold moves under Arc 5. Read the brief before starting._ `evaluateBinaryExpression`
    switches on the operator string and then calls `getExpr('equals')` — the
    registry is indirection over a switch that already knows the answer. Fold
    the switch INTO the Pratt entries (`{ token, bp, compile }`) so grammar and
