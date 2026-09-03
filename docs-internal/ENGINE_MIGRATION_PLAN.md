@@ -2110,7 +2110,7 @@ were to fold into table entries once "tiers are fragment subsets"; with no
 such tiers, the switch and `context.registry` STAY as the small bundles'
 shaking mechanism — filed as measured, not deferred.
 
-### Arc 6b — Delete exported dead code (small, needs 4.0)
+### ~~Arc 6b — Delete exported dead code (small, needs 4.0)~~ — DONE 2026-09-04/05 (#1099–#1104), lineup #1103 + the lineup PR
 
 The `@deprecated` exports: the six `features/` families from `index.ts`,
 `Lexer`/`Tokens` and root `tokenizer.ts`, the `unified-types` `Validator`
@@ -2119,6 +2119,21 @@ i18n's own `.d.ts`), and — if Arc 1 moved them — the `registry/multilingual`
 subpath. Each has a ghost test from 6a proving no internal consumer; the PR is
 the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
 3.0.0 format. Land as the first PRs of the 4.0 cycle, not the last.
+
+✅ **Landed 2026-09-04/05, one family per PR:** features/ (#1099 — with
+`feature-loader.ts` and `./browser/modular`'s no-op `features` namespace;
+type-escapes 869 → 689), `Lexer`/`Tokens` (#1100), the three never-reachable
+names (#1101 — `Validator` was exported only from `types/index.ts`, which no
+entry point re-exports; `registry/multilingual` was never in `exports` or
+`dist/`), `async` (#1102 — manifest 59 → 58, seven gates moved with their
+numbers), `ContextProviderRegistry` + the Proxy (#1104). Two of the plan's
+claims were false and cost a CI round-trip each, as the rule predicts:
+"replaced by real types from i18n's own `.d.ts`" — the `build` job compiles
+core BEFORE i18n (i18n depends on core, not the reverse), which is what the
+`any` shim was for; the classic-i18n bundle entry is now excluded from
+`tsconfig.build.json` like `browser-bundle.ts` already was. And the bare-Node
+import check's `> 40` export-count heuristic tripped on a deletion of dead
+exports (53 → 29); it names five entry points now.
 
 - **`async` (the command)** — listed 2026-09-04 by the Arc 4b brief's decision 4:
   it runs a body of functions or `{ execute }` objects that no parser
@@ -2131,7 +2146,23 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   class, `enhance()`, the four default providers and the unified registry's
   `context` slot are exported via `@hyperfixi/core/registry`, so the deletion
   waits here.
-- **The bundle lineup collapses to two names** — DECIDED 2026-09-04, after
+- ✅ **The bundle lineup collapses to two names** — DONE 2026-09-05 (#1103 +
+  the lineup PR that carries this edit). Step 1 measured the feared failure
+  and found it real: the hybrid bundles ran `on click make a <div/> then
+  toggle .x` as just the toggle, silently — the parser's fallback dropped an
+  unclaimed word a token at a time, and the same fallback hid `fetch
+  /api/data` fetching `/`, `send custom:event` sending `custom` to `me`, and
+  `repeat forever` running zero iterations. All loud or fixed now, pinned by
+  a `@comprehensive` matrix row (the compatibility spec was untagged — CI had
+  never run it). Steps 2+3 in one PR: public names are `hyperfixi-hx.js` and
+  `hyperfixi.js`; `hx-v4` and `multilingual` stay as separate products;
+  `lite`/`lite-plus`/`minimal`/`standard` are retired (not built, no
+  `exports`, no docs row). Measured and KEPT: `hyperfixi-hybrid-complete.js`
+  and its export (the vite plugin's generated fallback imports it — it is
+  plugin-internal, not a name to reach for) and the `browser-bundle-lite.ts`
+  MODULE (`@hyperfixi/core/parser/regex` is built on it). Original decision
+  text follows.
+  DECIDED 2026-09-04, after
   Arc 5's spike (keep the hybrid parser, delete the CHOICE): the hybrid parser
   is the engine under the Vite plugin, and what confuses prospective users is
   the nine-row bundle table, not the parser. Three steps: (1) measure what a
@@ -2524,3 +2555,18 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   design. Bench vs the step 0 baseline: execute-only +3 %, compile+execute
   +14 %, `toggle` +11 %. Type-escapes 884 → 869; layering allowlist 14 → 13
   edges.
+
+- **2026-09-05** — **Arc 6b is COMPLETE, and with it the plan** (#1099–#1104
+  for the five exported-dead-code families; #1103 + the lineup PR for the
+  bundle lineup). Every arc of the plan is now closed. Type-escapes 869 →
+  656 over the six deletions; the command manifest is 58; the prebuilt
+  lineup is two public names plus two separate products, and a small bundle
+  that meets a command it lacks says so and names `hyperfixi.js`. Three
+  hybrid-parser mis-parses that the silent fallback had hidden (naked URLs,
+  colon event names, `repeat forever`) were found by making it loud and fixed
+  in the same PR. What the 4.0 cycle still owes is a release: `CHANGELOG.md`
+  carries a `[3.0.0]` heading but no `v3.0.0` tag or npm publish exists
+  (npm is at 2.11.1), so the `[Unreleased]` block holds both the 3.0.0 and
+  the 4.0.0 breaking entries — whether they ship as one major or two is the
+  owner's call. Filed, not done: `@lokascript/semantic`'s `asyncSchema` now
+  describes a command core does not register (a semantic-package change).

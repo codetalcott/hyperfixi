@@ -356,11 +356,11 @@ jobs:
       matrix:
         include:
           - shard: 1
-            only: classic-i18n,lite,minimal,lite-plus
+            only: classic-i18n,hybrid-complete,hybrid-hx
           - shard: 2
-            only: standard,main,multilingual,hybrid-complete
+            only: main,multilingual
           - shard: 3
-            only: hybrid-hx-v4,modular,hybrid-hx
+            only: hybrid-hx-v4,modular
 
     steps:
       - name: Checkout
@@ -1520,7 +1520,6 @@ jobs:
           # (pre-dedupe "~203-208 KB" era) was being silently exceeded by the
           # real ~299 KB gz bundle. The browser/hx-v4 ceilings exist to catch
           # RE-duplication (the #616 double core+semantic class).
-          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
           # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
           # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
           # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
@@ -1552,16 +1551,6 @@ jobs:
           MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
 
           failed=0
-
-          if [[ -f "packages/core/dist/hyperfixi-lite.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-lite.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_LITE" ]]; then
-              echo "::error::hyperfixi-lite.js ($size bytes gzip) exceeds limit ($MAX_LITE bytes)"
-              failed=1
-            else
-              echo "hyperfixi-lite.js: $size bytes gzip (limit $MAX_LITE)"
-            fi
-          fi
 
           # hyperfixi-hx.js shares the hybrid ceiling; it is listed explicitly
           # because its filename matches no hyperfixi-hybrid-* glob (the same

@@ -718,10 +718,7 @@ const BUNDLE_COMMAND_COUNTS: Record<string, number> = {
   // carries every name the templates implement (Finding 17 — it advertised 35
   // and executed 24). See scripts/generate-bundles.ts.
   'browser-bundle-hybrid-complete.ts': 38,
-  'browser-bundle-lite-plus.ts': 19,
   'browser-bundle-lite.ts': 8,
-  'browser-bundle-minimal-v2.ts': 10,
-  'browser-bundle-standard-v2.ts': 25,
   'browser-bundle-textshelf-minimal.ts': 10,
   'browser-bundle-textshelf-profile.ts': 10,
 };

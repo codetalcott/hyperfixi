@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ⚠ BREAKING
 
+- **The prebuilt bundle lineup collapses to two names** (the 4.0
+  bundle-lineup decision, `ENGINE_MIGRATION_PLAN` Arc 6b). For script-tag
+  users there are now `hyperfixi-hx.js` (the small one: hybrid AST parser,
+  blocks, expressions, event modifiers, htmx v1/v2 attributes, ~21.5 KB gz)
+  and `hyperfixi.js` (everything, ~310 KB gz); `hyperfixi-hx-v4.js` and
+  `hyperfixi-multilingual.js` stay as separate products. Vite projects use
+  `@hyperfixi/vite-plugin`, which picks the parser tier itself. Retired as
+  public names — no longer built, no `exports` entry, no docs row:
+  `hyperfixi-lite.js` (`./browser/lite`), `hyperfixi-lite-plus.js`
+  (`./browser/lite-plus`), `hyperfixi-minimal.js` (`./browser/minimal`) and
+  `hyperfixi-standard.js` (`./browser/standard`). Their rollup configs, the
+  `lite-plus` / `minimal-v2` / `standard-v2` entry modules, the CI shards and
+  ceilings (`MAX_LITE`), the size-snapshot rows, `metadata.ts` /
+  `reference` rows, the examples' bundle selector and the bundle-compatibility
+  matrix columns go with them. What confused prospective users was the
+  nine-row table, not the parser: the hybrid parser stays (it is the engine
+  under the plugin), and `hyperfixi-hybrid-complete.js` is still built and
+  exported as `@hyperfixi/core/browser/hybrid-complete` because the plugin's
+  generated fallback imports it — measured, and documented as
+  plugin-internal. The MCP `get_bundle_config` tool now recommends
+  `hyperfixi-hx.js` (or `hyperfixi-multilingual.js`) instead of lite /
+  hybrid-complete.
+
+  _Migration:_ `hyperfixi-lite.js` / `-lite-plus.js` → `hyperfixi-hx.js` (or
+  the Vite plugin, which still emits a regex-tier bundle when your commands
+  allow); `hyperfixi-minimal.js` / `-standard.js` → `hyperfixi.js`. The
+  `browser-bundle-lite.ts` module itself stays: `@hyperfixi/core/parser/regex`
+  is built on it.
+
 - **The six `@deprecated` `features/` families are deleted** (Arc 6b of
   `docs-internal/ENGINE_MIGRATION_PLAN.md`). `@hyperfixi/core` no longer
   exports `TypedDefFeatureImplementation` / `createDefFeature` / `createDef` /

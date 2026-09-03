@@ -208,8 +208,8 @@ loadExample('toggle');
 
 <!-- Load HyperFixi from CDN -->
 <script
-  src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"
-  onload="document.getElementById('status').textContent = 'hyperfixi-hybrid-complete.js loaded'; document.getElementById('status').className = 'status loaded'; setTimeout(() => { if (document.getElementById('preview').querySelector('[_]')) { try { var p = document.getElementById('preview'); if (window.hyperfixi) { p.querySelectorAll('[_]').forEach(el => window.hyperfixi.processNode(el)); } else if (window._hyperscript) { window._hyperscript.processNode(p); } } catch(e) {} } }, 100);"
+  src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js"
+  onload="document.getElementById('status').textContent = 'hyperfixi-hx.js loaded'; document.getElementById('status').className = 'status loaded'; setTimeout(() => { if (document.getElementById('preview').querySelector('[_]')) { try { var p = document.getElementById('preview'); if (window.hyperfixi) { p.querySelectorAll('[_]').forEach(el => window.hyperfixi.processNode(el)); } else if (window._hyperscript) { window._hyperscript.processNode(p); } } catch(e) {} } }, 100);"
   onerror="document.getElementById('status').textContent = 'CDN load failed — try again online'; document.getElementById('status').className = 'status error';"
 ></script>
 

@@ -17,40 +17,6 @@ const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 // Bundle configurations with expected capabilities (sizes are gzipped)
 const BUNDLES = {
-  lite: {
-    file: 'hyperfixi-lite.js',
-    size: '2.0 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true, // Discovered: Works via regex parser
-      show: true, // Maps to 'remove .hidden'
-      hide: true, // Maps to 'add .hidden'
-      blocks: false, // Has inline if/unless but not full blocks
-      eventModifiers: false,
-      i18nAliases: false,
-      semanticParser: false,
-      fetch: true, // Discovered: Basic command parsing works
-    },
-  },
-  'lite-plus': {
-    file: 'hyperfixi-lite-plus.js',
-    size: '2.6 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true,
-      show: true,
-      hide: true,
-      blocks: false,
-      eventModifiers: false,
-      i18nAliases: true,
-      semanticParser: false,
-      fetch: false,
-    },
-  },
   'hybrid-complete': {
     file: 'hyperfixi-hybrid-complete.js',
     size: '7.7 KB',
@@ -106,40 +72,6 @@ const BUNDLES = {
       fetch: true,
     },
   },
-  minimal: {
-    file: 'hyperfixi-browser-minimal.js',
-    size: '76 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: false, // Not in 10-command minimal set
-      show: true,
-      hide: true,
-      blocks: false, // No block commands
-      eventModifiers: false, // No event modifiers
-      i18nAliases: false,
-      semanticParser: false,
-      fetch: false, // Not in 10-command minimal set
-    },
-  },
-  standard: {
-    file: 'hyperfixi-browser-standard.js',
-    size: '82 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true, // Has increment/decrement in 16-command set
-      show: true,
-      hide: true,
-      blocks: false, // No block commands
-      eventModifiers: false, // No event modifiers
-      i18nAliases: false,
-      semanticParser: false,
-      fetch: true, // Has fetch in 16-command set
-    },
-  },
   browser: {
     file: 'hyperfixi.js',
     size: '~310 KB',
@@ -160,7 +92,7 @@ const BUNDLES = {
 };
 
 /** The bundles that hand-pick their commands and cannot fall back to the full parser. */
-const SMALL_BUNDLES = new Set(['lite', 'lite-plus', 'hybrid-complete', 'hybrid-hx']);
+const SMALL_BUNDLES = new Set(['hybrid-complete', 'hybrid-hx']);
 
 // Gallery examples with functional tests
 const GALLERY_EXAMPLES = [
@@ -592,42 +524,32 @@ test.describe('Bundle Summary', () => {
     ];
 
     const bundleKeys = Object.keys(BUNDLES);
+    const col = (text: string) => text.padStart(6).padEnd(7);
 
-    // Header
-    console.log('║ Feature         │ lite │lite+│h-cmp│ h-hx│ min │ std │ brow ║');
-    console.log('╟─────────────────┼──────┼─────┼─────┼─────┼─────┼─────┼──────╢');
+    // Header — one column per bundle key, so the matrix follows the lineup.
+    const label = (k: string) =>
+      ({
+        'hybrid-complete': 'h-cmp',
+        'hybrid-hx': 'h-hx',
+        'hybrid-hx-v4': 'hx-v4',
+        browser: 'brow',
+      })[k] ?? k.slice(0, 6);
+    console.log(`║ Feature         │${bundleKeys.map(k => col(label(k))).join('│')}║`);
+    console.log(`╟─────────────────┼${bundleKeys.map(() => '─'.repeat(7)).join('┼')}╢`);
 
     // Rows
     for (const feature of features) {
       const cols = bundleKeys.map(key => {
         const bundle = BUNDLES[key as keyof typeof BUNDLES];
-        return bundle.features[feature as keyof typeof bundle.features] ? ' ✅ ' : ' ❌ ';
+        return bundle.features[feature as keyof typeof bundle.features] ? '  ✅  ' : '  ❌  ';
       });
-      const featureName = feature.padEnd(15);
-      console.log(
-        `║ ${featureName} │ ${cols[0]}│ ${cols[1]}│ ${cols[2]}│ ${cols[3]}│ ${cols[4]}│ ${cols[5]}│  ${cols[6]} ║`
-      );
+      console.log(`║ ${feature.padEnd(15)} │${cols.join('│')}║`);
     }
 
-    console.log(
-      '╠════════════════════════════════════════════════════════════════════════════════════════════════════╣'
-    );
-    const sizes = bundleKeys.map(key => BUNDLES[key as keyof typeof BUNDLES].size.padStart(5));
-    console.log(
-      `║ SIZE (gzipped)  │${sizes[0]}│${sizes[1]}│${sizes[2]}│${sizes[3]}│${sizes[4]}│${sizes[5]}│${sizes[6]}║`
-    );
-    console.log(
-      '╠════════════════════════════════════════════════════════════════════════════════════════════════════╣'
-    );
-    console.log(
-      '║ BUNDLES: lite=Lite, lite+=Lite Plus, h-cmp=Hybrid Complete, h-hx=Hybrid HX,                       ║'
-    );
-    console.log(
-      '║          min=Minimal, std=Standard, brow=Browser                                                   ║'
-    );
-    console.log(
-      '╚════════════════════════════════════════════════════════════════════════════════════════════════════╝'
-    );
+    console.log(`╠═════════════════╪${bundleKeys.map(() => '═'.repeat(7)).join('╪')}╣`);
+    const sizes = bundleKeys.map(key => col(BUNDLES[key as keyof typeof BUNDLES].size));
+    console.log(`║ SIZE (gzipped)  │${sizes.join('│')}║`);
+    console.log(`╚═════════════════╧${bundleKeys.map(() => '═'.repeat(7)).join('╧')}╝`);
 
     expect(true).toBe(true);
   });

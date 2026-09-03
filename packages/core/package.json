@@ -20,20 +20,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/hyperfixi-multilingual.js"
     },
-    "./browser/minimal": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi-minimal.js"
-    },
-    "./browser/standard": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi-standard.js"
-    },
-    "./browser/lite": {
-      "default": "./dist/hyperfixi-lite.js"
-    },
-    "./browser/lite-plus": {
-      "default": "./dist/hyperfixi-lite-plus.js"
-    },
     "./browser/hybrid-complete": {
       "default": "./dist/hyperfixi-hybrid-complete.js"
     },
@@ -175,18 +161,14 @@
     "build:browser:dev": "rollup -c rollup.browser.dev.config.mjs",
     "build:browser:prod": "rollup -c rollup.browser.prod.config.mjs",
     "build:browser:llm": "rollup -c rollup.browser.llm.config.mjs",
-    "build:browser:lite": "rollup -c rollup.browser-lite.config.mjs",
-    "build:browser:lite-plus": "rollup -c rollup.browser-lite-plus.config.mjs",
     "build:browser:hybrid-complete": "rollup -c rollup.browser-hybrid-complete.config.mjs",
     "build:browser:hybrid-hx": "rollup -c rollup.browser-hybrid-hx.config.mjs",
     "build:browser:hybrid-hx-v4": "rollup -c rollup.browser-hybrid-hx-v4.config.mjs",
-    "build:browser:minimal": "rollup -c rollup.browser-minimal.config.mjs",
-    "build:browser:standard": "rollup -c rollup.browser-standard.config.mjs",
     "build:browser:classic": "rollup -c rollup.browser-classic.config.mjs",
     "build:browser:classic-i18n": "rollup -c rollup.browser-classic-i18n.config.mjs",
     "build:browser:multilingual": "rollup -c rollup.browser-multilingual.config.mjs",
     "build:browser:semantic-complete": "rollup -c rollup.browser-semantic-complete.config.mjs",
-    "build:browser:all": "npm run build:browser:dev && npm run build:browser:prod && npm run build:browser:llm && npm run build:browser:lite && npm run build:browser:minimal && npm run build:browser:standard && npm run build:browser:classic && npm run build:browser:classic-i18n && npm run build:browser:multilingual && npm run build:browser:semantic-complete",
+    "build:browser:all": "npm run build:browser:dev && npm run build:browser:prod && npm run build:browser:llm && npm run build:browser:classic && npm run build:browser:classic-i18n && npm run build:browser:multilingual && npm run build:browser:semantic-complete",
     "build:browser:modular": "rm -rf dist/chunks && rollup -c rollup.browser-modular.config.mjs",
     "build:parser-modules": "rollup -c rollup.parser-modules.config.mjs",
     "snapshot:bundle-size": "node scripts/bundle-size-snapshot.mjs --check",

@@ -113,40 +113,6 @@ export interface BundleInfo {
  */
 export const bundleInfo: BundleInfo[] = [
   {
-    id: 'lite',
-    name: 'Lite',
-    filename: 'hyperfixi-lite.js',
-    gzipSize: '2.0 KB',
-    rawSize: '5 KB',
-    commandCount: 8,
-    parser: 'regex',
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    hasFetch: false,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/lite',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite.js',
-    useCase: 'Minimal interactivity: toggle, show, hide, add, remove, set, put',
-  },
-  {
-    id: 'lite-plus',
-    name: 'Lite Plus',
-    filename: 'hyperfixi-lite-plus.js',
-    gzipSize: '2.7 KB',
-    rawSize: '8 KB',
-    commandCount: 19,
-    parser: 'regex',
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    hasFetch: false,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/lite-plus',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite-plus.js',
-    useCase: 'Basic interactivity with wait, log, increment, trigger, go',
-  },
-  {
     id: 'hybrid-complete',
     name: 'Hybrid Complete',
     filename: 'hyperfixi-hybrid-complete.js',
@@ -204,48 +170,6 @@ export const bundleInfo: BundleInfo[] = [
     importPath: '@hyperfixi/core/browser/hybrid-hx-v4',
     cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx-v4.js',
     useCase: 'htmx v4 compat: hx-live reactivity, SSE/WebSocket streaming, full runtime',
-  },
-  {
-    id: 'minimal',
-    name: 'Minimal',
-    filename: 'hyperfixi-minimal.js',
-    gzipSize: '69.0 KB',
-    rawSize: '278 KB',
-    // Was 30, ungated and wrong by 20. `browser-bundle-minimal-v2.ts`
-    // advertises 10 in its own `commands: [...]` array, which is what this
-    // mirrors. Note it REGISTERS 11: `createSendCommand` also registers the
-    // consolidation alias `trigger`, so `trigger` works there but is not
-    // advertised. Left as-is deliberately — changing a shipped bundle's
-    // advertised surface is a behavior call, not part of a derivation step.
-    commandCount: 10,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/minimal',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-minimal.js',
-    useCase: 'Full parser with essential commands',
-  },
-  {
-    id: 'standard',
-    name: 'Standard',
-    filename: 'hyperfixi-standard.js',
-    gzipSize: '75.7 KB',
-    rawSize: '306 KB',
-    // Was 35, ungated and wrong by 10. `browser-bundle-standard-v2.ts`
-    // registers 25, matching its own published `commands: [...]` array exactly.
-    commandCount: 25,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/standard',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-standard.js',
-    useCase: 'Full parser with common commands',
   },
   {
     id: 'browser',

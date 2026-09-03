@@ -44,23 +44,10 @@ const BUNDLES = {
     critical: true,
   },
 
-  // === Lite bundles (size-optimized, exported in package.json) ===
-  lite: {
-    name: 'lite',
-    script: 'build:browser:lite',
-    config: 'rollup.browser-lite.config.mjs',
-    output: 'dist/hyperfixi-lite.js',
-    critical: true,
-  },
-  'lite-plus': {
-    name: 'lite-plus',
-    script: 'build:browser:lite-plus',
-    config: 'rollup.browser-lite-plus.config.mjs',
-    output: 'dist/hyperfixi-lite-plus.js',
-    critical: true,
-  },
 
-  // === Hybrid bundles (AST parser with tree-shaking) ===
+  // === The small prebuilt (hybrid-hx) and its plugin-internal base (hybrid-complete) ===
+  // lite / lite-plus / minimal / standard were retired as public names in the
+  // 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b, bundle lineup).
   'hybrid-complete': {
     name: 'hybrid-complete',
     script: 'build:browser:hybrid-complete',
@@ -83,21 +70,6 @@ const BUNDLES = {
     critical: true,
   },
 
-  // === Standard bundles (full features) ===
-  minimal: {
-    name: 'minimal',
-    script: 'build:browser:minimal',
-    config: 'rollup.browser-minimal.config.mjs',
-    output: 'dist/hyperfixi-minimal.js',
-    critical: true,
-  },
-  standard: {
-    name: 'standard',
-    script: 'build:browser:standard',
-    config: 'rollup.browser-standard.config.mjs',
-    output: 'dist/hyperfixi-standard.js',
-    critical: true,
-  },
   modular: {
     name: 'modular',
     script: 'build:browser:modular',

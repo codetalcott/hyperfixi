@@ -331,7 +331,6 @@ jobs:
           # graph: hyperfixi.js measured ~299 KB gz, hx-v4 ~311 KB gz. These
           # ceilings exist specifically to catch RE-duplication (any change
           # that re-inlines a second core/semantic blows straight past them).
-          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
           # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
           # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
           # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
@@ -363,17 +362,6 @@ jobs:
           MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
 
           failed=0
-
-          # Check lite bundle
-          if [[ -f "packages/core/dist/hyperfixi-lite.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-lite.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_LITE" ]]; then
-              echo "❌ hyperfixi-lite.js (${size} bytes gzip) exceeds limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
-              failed=1
-            else
-              echo "✅ hyperfixi-lite.js (${size} bytes gzip) within limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
 
           # Check hybrid bundles. hyperfixi-hx.js is listed explicitly: it
           # shares the hybrid ceiling but matches no hyperfixi-hybrid-* glob
