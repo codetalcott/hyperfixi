@@ -34,7 +34,7 @@
  *
  * ## Pre-configured Registry Factories
  *
- * - `createCoreRegistry()`: references + logical + special
+ * - `createCoreRegistry()`: references + logical + special + mathematical
  * - `createCommonRegistry()`: core + conversion + positional
  * - `createFullRegistry()`: all 6 standard categories
  * - `createFullExpressionRegistry()`: all 7 categories (kitchen-sink, includes mathematical)
@@ -48,6 +48,7 @@
 export { referencesExpressions as references } from './bundles/core-expressions';
 export { logicalExpressions as logical } from './bundles/core-expressions';
 export { specialExpressions as special } from './bundles/core-expressions';
+export { mathematicalExpressions as mathematical } from './bundles/core-expressions';
 
 // Extended categories
 export { conversionExpressions as conversion } from './bundles/common-expressions';

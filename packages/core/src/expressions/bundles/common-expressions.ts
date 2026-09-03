@@ -28,6 +28,7 @@ import type { ExpressionRegistry } from '../../core/expression-registry';
 import { referencesExpressions } from '../references/index';
 import { logicalExpressions } from '../logical/index';
 import { specialExpressions } from '../special/index';
+import { mathematicalExpressions } from '../mathematical/index';
 import { conversionExpressions } from '../conversion/index';
 import { positionalExpressions } from '../positional/index';
 
@@ -40,6 +41,7 @@ export function createCommonRegistry(): ExpressionRegistry {
     referencesExpressions,
     logicalExpressions,
     specialExpressions,
+    mathematicalExpressions,
     conversionExpressions,
     positionalExpressions
   );
@@ -50,6 +52,7 @@ export {
   referencesExpressions,
   logicalExpressions,
   specialExpressions,
+  mathematicalExpressions,
   conversionExpressions,
   positionalExpressions,
 };

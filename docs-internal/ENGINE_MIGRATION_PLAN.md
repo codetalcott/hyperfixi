@@ -2011,7 +2011,22 @@ Runs in parallel with Arc 3.
    the context carries nothing. A `DebugController` convenience that installs
    `collectEvaluations()` is a one-liner for whoever wants it; the hot path is
    done.
-4. **Operators as table entries with `compile`.** _Re-measured 2026-09-04 by
+4. **Operators as table entries with `compile`.** **Brief steps 1 and 2 DONE
+   2026-09-04 (decisions 2 and 3 as recommended):** `special`'s `addition`
+   and `multiplication` — the raw-result pair — are deleted; every registry
+   (`createCoreRegistry`, `createCommonRegistry`, `createFullRegistry`, the
+   full kitchen-sink one, and the two `classic` bundles) now takes
+   `mathematical`, so `+`/`*` mean one thing everywhere and a non-finite
+   result is a failure in every bundle. `bundles/arithmetic-parity.test.ts`
+   pins the six arithmetic names to `mathematical`'s implementations in each
+   registry. `collection`'s never-registered registry shape (five
+   `ExpressionImplementation` objects whose `evaluate` threw "dispatched via
+   the AST node") is deleted; the direct-import path in `parser/runtime.ts`
+   is the documented one. Bundle-size gate: minimal −3.2 % gz, standard
+   −3.0 %, classic −2.1 %, full +1.1 % — all within ±5 % (the two deleted
+   classes outweighed the six they replaced). Step 3 (direct-import the 33
+   non-switch `getExpr` sites) is next; the switch fold is Arc 5's.
+   _Re-measured 2026-09-04 by
    [HANDOFF-engine-arc7.md](./HANDOFF-engine-arc7.md): the "fragments already
    shake" premise is false (three fragments, always merged; the registry is
    what shakes), so this step splits — the cheap half stays in Arc 7, the

@@ -86,6 +86,10 @@ because they are the shaking mechanism, however indirect.
 
 ## Decisions to put to the owner before the first PR
 
+> **All three DECIDED 2026-09-04, each as recommended** (split; keep
+> `mathematical`'s; delete `collection`'s shape). Steps 1 and 2 shipped the
+> same day; step 3 follows.
+
 1. **Split step 4** into the cheap half (Arc 7, now) and the expensive half
    (folded into Arc 5, conditional as Arc 5 is). Recommended: split. The
    alternative — doing it as written — trades a working shake for a
@@ -103,8 +107,8 @@ because they are the shaking mechanism, however indirect.
 | step | does                                                                                                                                                                                                                             | gate it leaves                                                              | size |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---- |
 | 0    | ~~Measure: do the two `addition`/`multiplication` pairs behave identically?~~ (measured: no — finite-ness). Which wins in each bundle is measured too (`mathematical` in full, `special` in `classic`). Left: add a bundle-compatibility row for `+`/`*` in every registry-using bundle. | the matrix row; the numbers in the plan                                     | S    |
-| 1    | Resolve the duplicate (decision 2) and make the `classic` bundles' category list explicit.                                                                                                                                       | bundle-size snapshot (both directions); the new matrix row                  | S    |
-| 2    | Delete the `collection` registry shape; its direct-import path is the documented one.                                                                                                                                            | escape/layering ratchets                                                    | S    |
+| 1 ✅  | Resolve the duplicate (decision 2) and make the `classic` bundles' category list explicit.                                                                                                                                       | bundle-size snapshot (both directions); the new matrix row                  | S    |
+| 2 ✅  | Delete the `collection` registry shape; its direct-import path is the documented one.                                                                                                                                            | escape/layering ratchets                                                    | S    |
 | 3    | Direct-import the 33 non-switch `getExpr` sites; `getExpr` shrinks to the binary switch's 28.                                                                                                                                    | parity tests; core suite; bundle-size unchanged (same categories)           | M    |
 | 4    | FILE the binary switch → table-entries fold under Arc 5, with this brief's claim 4 as the reason.                                                                                                                                 | plan text                                                                   | —    |
 
