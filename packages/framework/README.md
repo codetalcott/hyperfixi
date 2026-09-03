@@ -124,8 +124,6 @@ const schema = {
 ## Examples
 
 - [SQL DSL](./examples/sql-dsl/) - Query language in English + Spanish
-- [Animation DSL](./examples/animation-dsl/) - Animation commands in English + Japanese
-- [Form Validation DSL](./examples/validation-dsl/) - Validation rules
 
 ## Status
 

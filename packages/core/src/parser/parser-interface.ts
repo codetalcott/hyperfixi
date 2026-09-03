@@ -27,7 +27,8 @@
  * ```
  */
 
-import type { ASTNode, CommandNode } from '../types/base-types';
+import type { ASTNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 /**
  * Parser interface for tree-shakeable parser selection.

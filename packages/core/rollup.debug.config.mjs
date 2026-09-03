@@ -3,7 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 
 export default {
-  input: 'src/compatibility/browser-bundle-minimal-v2.ts',
+  input: 'src/compatibility/browser-bundle-hybrid-complete.ts',
   output: {
     file: 'dist/hyperfixi-debug.js',
     format: 'iife',

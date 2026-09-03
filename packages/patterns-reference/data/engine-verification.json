@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
       "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
     },
-    "lokascriptVersion": "2.9.4",
+    "lokascriptVersion": "2.11.1",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -169,7 +169,7 @@
     "wait-for-event": "both",
     "wait-then": "both",
     "when-multiple-changes": "both",
-    "when-value-changes": "lokascript",
+    "when-value-changes": "both",
     "window-keydown": "both",
     "window-resize": "both",
     "window-scroll": "both",
@@ -847,8 +847,7 @@
     },
     "when-value-changes": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected value: $"
+      "hyperscript": true
     },
     "window-keydown": {
       "lokascript": true,

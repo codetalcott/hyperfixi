@@ -5,7 +5,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { Runtime } from './runtime';
-import { ContextBridge } from './command-adapter';
 import type { ExecutionContext } from '../types/base-types';
 
 // Skipped: Tests expect methods/properties that don't exist in current Runtime implementation
@@ -18,22 +17,6 @@ describe.skip('Simple Integration Test', () => {
   it('should create runtime with enhanced commands disabled', () => {
     const runtime = new Runtime({ useEnhancedCommands: false });
     expect((runtime as any).isUsingEnhancedCommands()).toBe(false);
-  });
-
-  it('should have ContextBridge functionality', () => {
-    const context: ExecutionContext = {
-      me: null,
-      it: null,
-      you: null,
-      result: undefined,
-      event: undefined,
-      locals: new Map(),
-      globals: new Map(),
-    };
-
-    const typedContext = ContextBridge.toTyped(context) as any;
-    expect(typedContext.validationMode).toBe('strict');
-    expect(Array.isArray(typedContext.errors)).toBe(true);
   });
 
   it('should provide available commands list', () => {

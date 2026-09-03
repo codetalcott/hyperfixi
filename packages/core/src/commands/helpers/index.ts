@@ -181,6 +181,7 @@ export {
   looksLikeHTML,
   insertContent,
   insertContentSemantic,
+  insertElementsInOrder,
   removeElement,
   removeElements,
   swapElements,

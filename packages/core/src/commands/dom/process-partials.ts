@@ -34,6 +34,7 @@ import {
 } from '../../validation/partial-warning-formatter';
 import type { PartialValidationResult } from '../../validation/partial-validation-types';
 import { dispatchLokaScriptEvent } from '../helpers/event-helpers';
+import type { CommandRaw } from '../../ast/command-slots';
 
 // ============================================================================
 // Types
@@ -234,7 +235,7 @@ export class ProcessPartialsCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'process'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ProcessPartialsCommandInput> {
@@ -250,37 +251,9 @@ export class ProcessPartialsCommand implements DecoratedCommand {
     // the comparison entirely — `process partials in it` then failed with
     // `expects "partials" keyword`, naming the one keyword it had been given.
     // Same defect #859 fixed in TakeCommand.parseInput.
-    const keywordOf = (node: ASTNode | undefined): string | null => {
-      const n = node as { type?: string; name?: unknown; value?: unknown } | undefined;
-      if (!n || typeof n !== 'object') return null;
-      if (n.type === 'identifier' && typeof n.name === 'string') return n.name.toLowerCase();
-      if (n.type === 'literal' && typeof n.value === 'string') return n.value.toLowerCase();
-      return null;
-    };
-    const keywords = args.map(keywordOf);
-
-    const partialsIndex = keywords.indexOf('partials');
-    const inIndex = keywords.indexOf('in');
-
-    let contentNode: ASTNode | undefined;
-    if (partialsIndex === -1) {
-      if (inIndex !== -1) {
-        throw new Error(
-          'process command expects "partials" keyword: process partials in <content>'
-        );
-      }
-      // Semantic shape: `processSchema` is patient-only, so buildAST hands
-      // over the bare content with the keywords stripped.
-      contentNode = args[0];
-    } else {
-      if (inIndex === -1 || inIndex <= partialsIndex) {
-        throw new Error(
-          'process partials command expects "in" keyword: process partials in <content>'
-        );
-      }
-      contentNode = args[inIndex + 1];
-    }
-
+    // The parser emits `args: [content]` (Arc 3 step 3); `partials in` never
+    // reaches here. A node with no content is a hand-built or foreign one.
+    const contentNode: ASTNode | undefined = args[0];
     const contentArg = contentNode ? await evaluator.evaluate(contentNode, context) : undefined;
 
     let html: string;
@@ -294,18 +267,9 @@ export class ProcessPartialsCommand implements DecoratedCommand {
       throw new Error('process partials: content must be an HTML string or element');
     }
 
-    // `using view transition` arrives as three flat identifier args (the shape
-    // the traditional parser emits and `SwapCommand` also reads), or as
-    // `modifiers.viewTransition` from the semantic path — processSchema's
-    // `manner` role binds the tail and its `ast` descriptor emits it there.
-    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
-    const usingIndex = keywords.indexOf('using');
-    if (usingIndex !== -1) {
-      const remaining = keywords.slice(usingIndex + 1);
-      if (remaining.includes('view') && remaining.includes('transition')) {
-        useViewTransition = true;
-      }
-    }
+    // `using view transition` is the `viewTransition` slot on both paths
+    // (parseViewTransitionTail; processSchema's `manner` role).
+    const useViewTransition = raw.modifiers?.viewTransition !== undefined;
 
     return {
       html,

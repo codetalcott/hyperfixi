@@ -19,13 +19,17 @@ import { resolve } from 'path';
 import {
   KNOWN_PROFILES,
   calculateTranslationConfidence,
+  parseSemantic,
+  render as semanticRender,
+  translate as semanticTranslate,
   type LanguageProfile,
 } from '@lokascript/semantic';
 import {
-  GrammarTransformer,
-  getProfile as getGrammarProfile,
-} from '@lokascript/i18n';
-import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
+  findHyperscriptAttributes,
+  isMarkupRow,
+  reRenderPreservesContent,
+  spliceHyperscriptAttributes,
+} from '../src/sync/markup-attributes';
 import { writeDbStamp } from '../src/sync/db-stamp';
 
 // =============================================================================
@@ -40,6 +44,36 @@ const dryRun = args.includes('--dry-run');
 const verbose = args.includes('--verbose');
 const dbPathIndex = args.indexOf('--db-path');
 const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1] : DEFAULT_DB_PATH;
+
+/**
+ * The writer is SEMANTIC-ONLY.
+ *
+ * `@lokascript/semantic`'s `translate()` = `render(parse_en(en), L)` — the same
+ * function MCP `translate_code`, `hyperfixi.translate` and core's
+ * `MultilingualHyperscript` call. Every foreign row in the corpus comes from it.
+ *
+ * There used to be three modes (`i18n`, `semantic`, `best`), because there used
+ * to be two renderers. `best` rendered each row with both and kept whichever won
+ * on the ratchet's own signals; the rows it left to i18n were a committed,
+ * shrink-only baseline. That baseline reached **zero on 2026-08-28** — semantic
+ * wins all 3,657 rows — and `@lokascript/i18n`'s `GrammarTransformer` was retired
+ * on the strength of it. A per-row chooser with one renderer is not a chooser, so
+ * the modes, the `PATTERNS_RENDERER` env, the `--renderer` flag and the
+ * `i18n-kept-rows` gate all go with it.
+ *
+ * A row semantic cannot render keeps its ENGLISH and is counted (see
+ * `semanticFallbacks`). That path is unreachable today — the kept-rows check
+ * counted `grammar-transform`, `grammar-transform-no-reference` AND
+ * `keyword-substitute` as non-semantic, and all three were zero — so it is a
+ * loud floor, not a fallback anyone should rely on.
+ */
+let semanticRendered = 0;
+/** Rows the semantic renderer could not render — kept in ENGLISH. Zero today. */
+let semanticFallbacks = 0;
+/** Markup rows whose `_=` bodies were all carried by the semantic renderer. */
+let markupSemantic = 0;
+/** Markup rows where at least one `_=` body could not be translated. */
+let markupKept = 0;
 
 // =============================================================================
 // Derive language data from @lokascript/semantic profiles
@@ -75,12 +109,16 @@ const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.from
     // Extract possessive adjective translations (my, its, your)
     // Needed for dot notation patterns like my.textContent → mi.textContent
     const englishPossessives: Record<string, string> = {
-      me: 'my', it: 'its', you: 'your',
+      me: 'my',
+      it: 'its',
+      you: 'your',
     };
 
     // specialForms maps ref → target possessive adj (e.g., Spanish: { me: 'mi' })
     if ((profile as any).possessive?.specialForms) {
-      for (const [ref, targetPossessive] of Object.entries((profile as any).possessive.specialForms)) {
+      for (const [ref, targetPossessive] of Object.entries(
+        (profile as any).possessive.specialForms
+      )) {
         const enPoss = englishPossessives[ref];
         if (enPoss && typeof targetPossessive === 'string' && !targetPossessive.includes(' ')) {
           keywords[enPoss] = targetPossessive;
@@ -118,22 +156,15 @@ interface CodeExample {
   translatable: number;
 }
 
-// =============================================================================
-// Transformer Cache (98% reduction in instantiations)
-// =============================================================================
-
-const transformerCache = new Map<string, GrammarTransformer>();
-
-function getCachedTransformer(language: string): GrammarTransformer {
-  if (!transformerCache.has(language)) {
-    transformerCache.set(language, new GrammarTransformer('en', language));
-  }
-  return transformerCache.get(language)!;
-}
-
 /**
  * Fallback keyword substitution for languages without grammar transformation.
+ *
+ * Unreferenced since the semantic-only flip and kept deliberately: it is the only
+ * translation path in this file that needs neither a parse nor a renderer, and
+ * `KEYWORD_TRANSLATIONS` is still built above. Delete it with the table, not
+ * before.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function keywordSubstitute(code: string, language: string): string {
   const translations = KEYWORD_TRANSLATIONS[language];
   if (!translations) {
@@ -159,6 +190,26 @@ function keywordSubstitute(code: string, language: string): string {
   return translated;
 }
 
+// =============================================================================
+// English-reference helpers (used by the markup path's content guard)
+// =============================================================================
+
+function safeParseNode(code: string, language: string): unknown | null {
+  try {
+    return parseSemantic(code, language)?.node ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeRenderEn(node: unknown): string | null {
+  try {
+    return semanticRender(node as Parameters<typeof semanticRender>[0], 'en');
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Generate a translated version of hyperscript code for a given language.
  * Uses GrammarTransformer for proper word order (SOV/VSO) when available,
@@ -168,37 +219,85 @@ function translateHyperscript(code: string, language: string): string {
   if (language === 'en') {
     return code;
   }
+  // HTML-markup rows are not hyperscript: handing the whole markup string to a
+  // hyperscript renderer is why every one of them used to fall through to the
+  // i18n path (which only re-indented them). Translate the `_=` bodies instead
+  // and leave every other byte alone.
+  if (isMarkupRow(code)) {
+    return translateMarkupRow(code, language);
+  }
+  return translateBody(code, language);
+}
 
-  // Mask non-translatable spans (string literals, URLs, HTML inner text,
-  // bracket expressions, component directives) before handing the surface
-  // to the transformer or keyword substituter. Both treat input as a flat
-  // token stream and would otherwise reorder content inside HTML elements,
-  // translate words inside string literals, etc.
-  const { masked, spans } = maskSpans(code);
-
-  // Check if language has grammar transformation support
-  const grammarProfile = getGrammarProfile(language);
-  if (grammarProfile) {
-    try {
-      // Use cached transformer for performance (98% fewer instantiations)
-      const transformer = getCachedTransformer(language);
-      const transformed = transformer.transform(masked);
-      const result = unmaskSpans(transformed, spans);
-      if (verbose) {
-        console.log(`  [grammar] ${language}: "${code}" -> "${result}"`);
-      }
-      return result;
-    } catch (error) {
-      // Fall back to keyword substitution if transformation fails
-      if (verbose) {
-        console.log(`  [fallback] ${language}: grammar transform failed (${error}), using keywords`);
-      }
-      return unmaskSpans(keywordSubstitute(masked, language), spans);
+/**
+ * Translate one hyperscript body — a whole row, or one `_=` attribute value.
+ *
+ * Unmasked on purpose: the semantic parser keeps string literals, URLs and
+ * selectors typed, and the render-fidelity gate scores exactly this call. (The
+ * retired i18n path needed `maskSpans` because a transformer treats its input as
+ * a flat token stream and would reorder content inside an HTML element or
+ * translate words inside a string literal.)
+ *
+ * On failure the ENGLISH is kept. Not a translation — a visible hole, counted in
+ * `semanticFallbacks` and reported at the end of the run. Zero rows take it today.
+ */
+function translateBody(code: string, language: string): string {
+  try {
+    const rendered = semanticTranslate(code, 'en', language);
+    if (rendered && rendered.trim().length > 0) {
+      semanticRendered++;
+      if (verbose) console.log(`  [semantic] ${language}: "${code}" -> "${rendered}"`);
+      return rendered;
     }
+  } catch (error) {
+    if (verbose) console.log(`  [semantic-failed] ${language}: ${error}`);
+  }
+  semanticFallbacks++;
+  return code;
+}
+
+/**
+ * Translate the hyperscript inside an HTML-markup row, byte-preserving.
+ *
+ * Each `_="…"` body goes through the same renderer as a standalone row,
+ * behind one extra guard: the body is replaced only if the ENGLISH parse carries
+ * its whole content (`reRenderPreservesContent`). A truncating parse — `set
+ * ^user to attrs.data as JSON`, whose `as JSON` lands in no role and therefore
+ * scores "faithful" against its own truncation in all 23 languages — leaves the
+ * body in English rather than shipping the truncation into every language.
+ * The row counts as semantic only when EVERY body was carried.
+ */
+function translateMarkupRow(code: string, language: string): string {
+  const spans = findHyperscriptAttributes(code);
+  if (spans.length === 0) {
+    // Markup with no hyperscript at all: nothing to translate, in any language.
+    // (The corpus flags such rows non-translatable, so this is belt-and-braces —
+    // it keeps the row verbatim rather than handing markup to a renderer.)
+    markupKept++;
+      return code;
   }
 
-  // Languages without grammar support use keyword substitution
-  return unmaskSpans(keywordSubstitute(masked, language), spans);
+  let allSemantic = true;
+  const replacements = spans.map(span => {
+    const body = span.body;
+    const reference = safeParseNode(body, 'en');
+    const referenceEn = reference ? safeRenderEn(reference) : null;
+    if (!reference || referenceEn === null || !reRenderPreservesContent(body, referenceEn)) {
+      allSemantic = false;
+      if (verbose) {
+        console.log(`  [markup→verbatim] ${language}: "${body}" (parse drops content)`);
+      }
+      return body;
+    }
+    const before = semanticRendered;
+    const translated = translateBody(body, language);
+    if (semanticRendered === before) allSemantic = false;
+    return translated;
+  });
+
+  if (allSemantic) markupSemantic++;
+  else markupKept++;
+  return spliceHyperscriptAttributes(code, spans, replacements);
 }
 
 /**
@@ -214,7 +313,9 @@ function getConfidence(language: string, translatedCode: string): number {
     // Use actual confidence if parsing succeeded, minimum 0.5 otherwise
     const confidence = result.parseSuccess ? result.confidence : 0.5;
     if (verbose) {
-      console.log(`  [confidence] ${language}: ${confidence.toFixed(2)} (parse: ${result.parseSuccess})`);
+      console.log(
+        `  [confidence] ${language}: ${confidence.toFixed(2)} (parse: ${result.parseSuccess})`
+      );
     }
     return confidence;
   } catch (error) {
@@ -230,7 +331,7 @@ function getConfidence(language: string, translatedCode: string): number {
 // =============================================================================
 
 async function syncTranslations() {
-  console.log('Syncing translations with grammar transformation...');
+  console.log('Syncing translations with the semantic renderer...');
   console.log(`Database path: ${dbPath}`);
   if (dryRun) {
     console.log('DRY RUN - no changes will be made\n');
@@ -269,9 +370,8 @@ async function syncTranslations() {
 
     let inserted = 0;
     let updated = 0;
-    let skipped = 0;
+    const skipped = 0;
     let grammarUsed = 0;
-    let keywordUsed = 0;
 
     // Generate translations for each example and language
     for (const example of examples) {
@@ -287,32 +387,44 @@ async function syncTranslations() {
       const isTranslatable = example.translatable !== 0;
 
       for (const [langCode, langInfo] of Object.entries(LANGUAGES)) {
+        const beforeSemantic = semanticRendered;
+        const beforeMarkupSemantic = markupSemantic;
         const translated = isTranslatable
           ? translateHyperscript(example.raw_code, langCode)
           : example.raw_code;
+        // A whole-row semantic render returns the semantic surface itself. A
+        // markup row is a splice of N bodies, and `translateBody` advances the
+        // body counter for each carried one — so for markup the ONLY honest row
+        // verdict is `markupSemantic`, which rises only when EVERY body was
+        // carried. Mixing the two labelled a partially-carried row semantic.
+        const rowIsMarkup = isTranslatable && isMarkupRow(example.raw_code);
+        const markupWasSemantic = markupSemantic > beforeMarkupSemantic;
+        const semanticSurface = rowIsMarkup
+          ? null
+          : semanticRendered > beforeSemantic
+            ? translated
+            : null;
         const confidence = isTranslatable
           ? getConfidence(langCode, translated)
-          : (langCode === 'en' ? 1.0 : 0.5);
+          : langCode === 'en'
+            ? 1.0
+            : 0.5;
         const verifiedParses = langCode === 'en' ? 1 : 0;
 
-        // Track which method was used
-        const hasGrammarProfile = getGrammarProfile(langCode) !== undefined;
-        if (langCode !== 'en' && isTranslatable) {
-          if (hasGrammarProfile) {
-            grammarUsed++;
-          } else {
-            keywordUsed++;
-          }
-        }
+        if (langCode !== 'en' && isTranslatable) grammarUsed++;
 
-        // Determine translation method
+        // Determine translation method. Two outcomes now, where there were five:
+        // the renderer carried the row, or it did not and the English stands.
+        // `english-fallback` is a floor, not a mode — no row takes it today, and
+        // a row that does is a translation the corpus is missing, not a worse
+        // one it settled for.
         const translationMethod = !isTranslatable
           ? 'non-translatable-identity'
           : langCode === 'en'
             ? 'original'
-            : hasGrammarProfile
-              ? 'grammar-transform'
-              : 'keyword-substitute';
+            : (rowIsMarkup ? markupWasSemantic : translated === semanticSurface)
+              ? 'semantic-render'
+              : 'english-fallback';
 
         // Check if translation exists
         const existing = checkExists.get(example.id, langCode) as { id: number } | undefined;
@@ -365,8 +477,17 @@ async function syncTranslations() {
     console.log(`  - Updated: ${updated}`);
     console.log(`  - Skipped: ${skipped}`);
     console.log(`  - Orphan language rows deleted: ${orphansDeleted}`);
-    console.log(`  - Grammar transforms: ${grammarUsed}`);
-    console.log(`  - Keyword substitutes: ${keywordUsed}`);
+    console.log(`  - Translatable non-English rows: ${grammarUsed}`);
+    console.log(`  - Semantic renders: ${semanticRendered}`);
+    console.log(`  - markup rows with every \`_=\` body carried: ${markupSemantic}`);
+    console.log(`  - markup rows keeping >=1 body in English: ${markupKept}`);
+    // Loud on purpose: this is the number that must stay 0. A row here is a
+    // translation the corpus is MISSING, not a worse one it settled for.
+    if (semanticFallbacks > 0) {
+      console.log(`  ! ENGLISH FALLBACKS (renderer failed): ${semanticFallbacks}`);
+    } else {
+      console.log('  - English fallbacks (renderer failed): 0');
+    }
 
     // Print stats
     const stats = db

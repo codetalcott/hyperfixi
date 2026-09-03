@@ -184,7 +184,7 @@ export type ExpressionCategory =
  *        ↓
  *   TypedExecutionContext - Type registry + validation cache
  */
-export interface ExecutionContext extends CoreExecutionContext {
+export interface Scope extends CoreExecutionContext {
   /** Result of last operation — mutable for runtime context updates */
   result: unknown;
 
@@ -201,25 +201,11 @@ export interface ExecutionContext extends CoreExecutionContext {
    */
   registry?: ExpressionRegistry;
 
-  // Control flow flags
-  readonly halted?: boolean;
-  readonly returned?: boolean;
-  readonly broke?: boolean;
-  readonly continued?: boolean;
-  readonly async?: boolean;
-
-  // Legacy compatibility properties
+  // Legacy compatibility properties. (The control-flow flags, `events` and
+  // `meta` that used to sit here had no reader — Arc 4c step 1 deleted them;
+  // a signal is a Result since Arc 4a.)
   readonly variables?: Map<string, unknown>;
-  readonly events?: Map<string, { target: HTMLElement; event: string; handler: Function }>;
   readonly parent?: ExecutionContext;
-  readonly meta?: Record<string, unknown>;
-  readonly flags?: {
-    halted: boolean;
-    breaking: boolean;
-    continuing: boolean;
-    returning: boolean;
-    async: boolean;
-  };
 
   /**
    * Optional convenience for plugin commands to register per-element
@@ -233,36 +219,20 @@ export interface ExecutionContext extends CoreExecutionContext {
 }
 
 /**
- * Enhanced execution context for typed expressions and features.
- * Extends ExecutionContext with additional type safety and tracking.
- *
- * All enhanced properties are optional to support:
- * - Tree-shakeable minimal bundles (don't need tracking)
- * - Test code (can provide only what's needed)
- * - Gradual adoption (add tracking as needed)
+ * The public name of {@link Scope}. Kept as an alias (Arc 4c step 5): the
+ * target design calls the runtime's context a `Scope`, and `ExecutionContext`
+ * is what every importer — inside and outside this package — has always
+ * written. The two are one type.
  */
-export interface TypedExecutionContext extends ExecutionContext {
-  /** Stack of expression names for debugging nested evaluations */
-  readonly expressionStack?: string[];
-  /** Current nesting depth of expression evaluation */
-  readonly evaluationDepth?: number;
-  /** Validation strictness mode */
-  readonly validationMode?: 'strict' | 'permissive';
-  /** History of expression evaluations for debugging/performance */
-  readonly evaluationHistory?: Array<{
-    expressionName: string;
-    category: string;
-    input: unknown;
-    output: unknown;
-    timestamp: number;
-    duration: number;
-    success: boolean;
-  }>;
-  /** Type registry for runtime type checking (optional for tree-shaking) */
-  readonly typeRegistry?: Map<string, unknown>;
-  /** Validation cache for performance (optional for tree-shaking) */
-  readonly validationCache?: Map<string, unknown>;
-}
+export type ExecutionContext = Scope;
+
+/**
+ * Alias kept for the 141 files that import it. It used to add evaluation
+ * tracking fields (`evaluationHistory` and three others) that the command
+ * adapter allocated on every execution; Arc 4c step 2 moved tracking onto
+ * an opt-in sink (`expressions/shared/tracking.ts`) and the split folded.
+ */
+export type TypedExecutionContext = ExecutionContext;
 
 // NOTE: TypedExpressionImplementation is intentionally NOT defined here to avoid conflicts
 // Files should import it directly from enhanced-expressions.ts or enhanced-core.ts
@@ -437,10 +407,7 @@ export interface ExpressionEvaluationOptions {
 /**
  * Enhanced expression context with additional evaluation state
  */
-export interface TypedExpressionContext extends TypedExecutionContext {
-  // Inherits all properties from TypedExecutionContext
-  // This ensures compatibility while maintaining the enhanced typing
-}
+export type TypedExpressionContext = ExecutionContext;
 
 // ============================================================================
 // Feature System Types
@@ -531,63 +498,18 @@ export interface BaseCommand {
 // ============================================================================
 // AST Integration Types
 // ============================================================================
-
-// ASTNode is already defined above - this was a duplicate
-
-/**
- * Binary expression AST node
- */
-export interface BinaryExpressionNode extends ASTNode {
-  readonly type: 'binaryExpression';
-  readonly operator: string;
-  readonly left: ASTNode;
-  readonly right: ASTNode;
-}
-
-/**
- * Unary expression AST node
- */
-export interface UnaryExpressionNode extends ASTNode {
-  readonly type: 'unaryExpression';
-  readonly operator: string;
-  readonly operand: ASTNode;
-}
-
-/**
- * Property access AST node
- */
-export interface PropertyAccessNode extends ASTNode {
-  readonly type: 'propertyAccess';
-  readonly object: ASTNode;
-  readonly property: string;
-}
-
-/**
- * Member expression AST node
- */
-export interface MemberExpressionNode extends ASTNode {
-  readonly type: 'memberExpression';
-  readonly expression: ASTNode;
-  readonly member: string;
-}
-
-/**
- * Context reference AST node
- */
-export interface ContextReferenceNode extends ASTNode {
-  readonly type: 'contextReference';
-  readonly contextType: 'me' | 'you' | 'it' | 'target' | 'event';
-}
-
-/**
- * Command AST node
- */
-export interface CommandNode extends ASTNode {
-  readonly type: 'command';
-  readonly name: string;
-  readonly args?: ASTNode[];
-  readonly source?: string;
-}
+//
+// The per-kind node interfaces that used to live here were deleted by Arc 2
+// step 4 (2026-09-01). `ast/nodes.ts` is the single description of what the
+// parser emits; every consumer resolves `CommandNode`, `EventHandlerNode`,
+// `BehaviorNode` and `DefNode` from there. Seven of the eleven had no importer
+// at all (`MemberExpressionNode` described a `{expression, member}` shape
+// nothing ever produced); the other four were live and MORE complete than the
+// union — the catch/finally, `of @attr` and `in <sel>` fields were declared
+// here and nowhere else — so the union absorbed them first. `ASTNode` and
+// `ExpressionNode` stay: `ASTNode` carries the index signature the union
+// members extend (step 6 decides its fate), `ExpressionNode` is the frozen
+// public type `ast/legacy.ts` crosses into.
 
 /**
  * Expression AST node
@@ -599,194 +521,9 @@ export interface ExpressionNode extends ASTNode {
   readonly operands?: ExpressionNode[];
 }
 
-/**
- * Literal AST node
- */
-export interface LiteralNode extends ASTNode {
-  readonly type: 'literal';
-  readonly value: string | number | boolean;
-}
-
-/**
- * Event handler AST node
- */
-export interface EventHandlerNode extends ASTNode {
-  readonly type: 'eventHandler';
-  readonly event: string; // Primary event name (for backward compatibility)
-  readonly events?: string[]; // All event names when using "on event1 or event2" syntax
-  readonly target?: string;
-  readonly selector?: string; // CSS selector for event delegation ("from" keyword)
-  readonly condition?: ASTNode; // Optional event condition ("[condition]" syntax)
-  readonly attributeName?: string; // Attribute name for mutation events ("of @attribute" syntax)
-  readonly watchTarget?: ASTNode; // Target element to watch for changes ("in <target>" syntax)
-  readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
-  readonly commands: ASTNode[];
-  readonly customEventSource?: string; // Name of registered custom event source (e.g., 'request', 'websocket')
-  /**
-   * Error symbol name bound in the catch block (`on click … catch e … end`).
-   * Same shape as {@link DefNode} — upstream _hyperscript shares one
-   * `parseErrorAndFinally` between its `on` and `def` features.
-   */
-  readonly errorSymbol?: string;
-  /** Error handler commands (catch block) */
-  readonly errorHandler?: ASTNode[];
-  /** Finally handler commands — run after the body whether or not it threw */
-  readonly finallyHandler?: ASTNode[];
-  readonly modifiers?: {
-    // Event modifiers for controlling event behavior
-    once?: boolean; // Fire event handler only once (.once)
-    prevent?: boolean; // Call preventDefault() on the event (.prevent)
-    stop?: boolean; // Call stopPropagation() on the event (.stop)
-    debounce?: number; // Debounce delay in milliseconds (.debounce(N))
-    throttle?: number; // Throttle delay in milliseconds (.throttle(N))
-  };
-}
-
-/**
- * Behavior definition AST node
- * Represents a reusable behavior that can be installed on elements
- */
-export interface BehaviorNode extends ASTNode {
-  readonly type: 'behavior';
-  readonly name: string;
-  readonly parameters: string[];
-  readonly eventHandlers: EventHandlerNode[];
-  readonly initBlock?: ASTNode;
-  readonly namespace?: string;
-}
-
-/**
- * Function definition AST node (def feature)
- * Represents a user-defined function in hyperscript
- *
- * Syntax:
- *   def <name>(<params>)
- *     <commands>
- *   [catch <errorSymbol>
- *     <commands>]
- *   [finally
- *     <commands>]
- *   end
- */
-export interface DefNode extends ASTNode {
-  readonly type: 'def';
-  /** Function name (can be namespaced, e.g., "utils.calculate") */
-  readonly name: string;
-  /** Parameter names */
-  readonly params: string[];
-  /** Function body commands */
-  readonly body: CommandNode[];
-  /** Error symbol name for catch block (if present) */
-  readonly errorSymbol?: string;
-  /** Error handler commands (catch block) */
-  readonly errorHandler?: CommandNode[];
-  /** Finally handler commands */
-  readonly finallyHandler?: CommandNode[];
-}
-
-/**
- * Enhanced AST node with type information
- */
-export interface TypedASTNode extends ASTNode {
-  readonly evaluationType: EvaluationType;
-  readonly validationResult: ValidationResult;
-  readonly metadata?: Record<string, unknown>;
-}
-
 // ============================================================================
 // Bridge Utilities
 // ============================================================================
-
-/**
- * Type system bridge for converting between legacy and enhanced systems
- */
-export class TypeSystemBridge {
-  /**
-   * Convert ExecutionContext to TypedExecutionContext
-   */
-  static toEnhanced(context: ExecutionContext): TypedExecutionContext {
-    return {
-      ...context,
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'permissive',
-      evaluationHistory: [],
-    };
-  }
-
-  /**
-   * Extract core ExecutionContext from TypedExecutionContext
-   */
-  static toLegacy(context: TypedExecutionContext): ExecutionContext {
-    return {
-      me: context.me,
-      you: context.you,
-      it: context.it,
-      result: context.result,
-      locals: context.locals,
-      globals: context.globals,
-      event: context.event,
-    };
-  }
-
-  /**
-   * Normalize ValidationResult from any source
-   */
-  static normalizeValidationResult(result: unknown): ValidationResult {
-    const res = result as any; // Type assertion for property access
-    return {
-      isValid: Boolean(res?.isValid),
-      errors: Array.isArray(res?.errors) ? res.errors : [],
-      suggestions: Array.isArray(res?.suggestions) ? res.suggestions : [],
-      warnings: Array.isArray(res?.warnings) ? res.warnings : undefined,
-      performance: res?.performance,
-    };
-  }
-
-  /**
-   * Convert EvaluationType to HyperScriptValueType
-   */
-  static toHyperScriptType(evaluationType: EvaluationType): HyperScriptValueType {
-    return evaluationToHyperScriptType[evaluationType];
-  }
-
-  /**
-   * Create a TypedResult from legacy result data
-   */
-  static createTypedResult<T>(
-    success: boolean,
-    value?: T,
-    error?: string | EnhancedError,
-    type?: HyperScriptValueType
-  ): TypedResult<T> {
-    if (success && value !== undefined) {
-      return {
-        success: true,
-        value,
-        type: type || 'object',
-      };
-    } else {
-      const errorObj =
-        typeof error === 'string'
-          ? {
-              name: 'GenericError',
-              message: error,
-              code: 'UNKNOWN_ERROR',
-              suggestions: [],
-            }
-          : error || {
-              name: 'UnknownError',
-              message: 'An unknown error occurred',
-              code: 'UNKNOWN_ERROR',
-              suggestions: [],
-            };
-      return {
-        success: false,
-        error: errorObj,
-      };
-    }
-  }
-}
 
 // ============================================================================
 // Utility Functions
@@ -809,33 +546,6 @@ export function createExecutionContext(
     event: null,
     ...overrides,
   };
-}
-
-/**
- * Create a new TypedExecutionContext with default values
- */
-export function createTypedExecutionContext(
-  base?: Partial<ExecutionContext>,
-  overrides: Partial<TypedExecutionContext> = {}
-): TypedExecutionContext {
-  const executionContext = createExecutionContext(base?.me, base);
-  return {
-    ...executionContext,
-    expressionStack: [],
-    evaluationDepth: 0,
-    validationMode: 'strict',
-    evaluationHistory: [],
-    ...overrides,
-  };
-}
-
-/**
- * Type guard to check if a context is typed
- */
-export function isTypedExecutionContext(
-  context: ExecutionContext | TypedExecutionContext
-): context is TypedExecutionContext {
-  return 'expressionStack' in context && 'evaluationDepth' in context;
 }
 
 /**

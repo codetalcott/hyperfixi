@@ -14,7 +14,7 @@ the in-repo test suites structurally cannot — because vitest aliases
    404 that shipped in v2.4.0.
 2. **Node import surface** — imports each Node-safe package and asserts its
    `exports` map resolves and key symbols (`speechPlugin`, `reactivityPlugin`,
-   `parseSemantic`, `GrammarTransformer`, the vite plugin factory) are intact.
+   `parseSemantic`, `translate`, i18n's `getProfile`, the vite plugin factory) are intact.
 3. **Browser bundles** — serves the published `hyperfixi.js` and
    `hyperfixi-hx-v4.js` bundles and drives them with Playwright/chromium:
    a `toggle`/`put` round-trip on the full bundle, and an `hx-live` reactive

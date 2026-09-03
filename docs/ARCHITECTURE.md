@@ -37,16 +37,6 @@ packages/
 ├── framework/          # @lokascript/framework — Generic DSL framework
 │                       # (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 │
-├── domain-sql/         # @lokascript/domain-sql — SQL DSL (8 languages)
-├── domain-bdd/         # @lokascript/domain-bdd — BDD/Gherkin DSL (8 languages)
-├── domain-behaviorspec/# @lokascript/domain-behaviorspec — Interaction testing DSL
-├── domain-jsx/         # @lokascript/domain-jsx — JSX/React DSL
-├── domain-llm/         # @lokascript/domain-llm — LLM prompt DSL
-├── domain-todo/        # @lokascript/domain-todo — Todo management DSL
-├── domain-flow/        # @lokascript/domain-flow — Reactive data flow DSL
-├── domain-voice/       # @lokascript/domain-voice — Voice/accessibility DSL
-├── domain-learn/       # @lokascript/domain-learn — Language learning DSL
-│
 ├── compilation-service/# @lokascript/compilation-service — Multi-target codegen
 ├── hyperscript-adapter/# @lokascript/hyperscript-adapter — Plugin for original _hyperscript
 ├── language-server/    # @lokascript/language-server — LSP implementation (21 languages)
@@ -61,16 +51,18 @@ packages/
 
 ## Bundle Tiers
 
-**Core bundles** (pure hyperscript, no multilingual):
+**Prebuilt bundles** (script-tag users; Vite users let the plugin choose):
 
-| Bundle                       | Size (gzip) | Use Case                                    |
-| ---------------------------- | ----------- | ------------------------------------------- |
-| hyperfixi-lite.js            | 1.9 KB      | Minimal (8 commands, regex parser)          |
-| hyperfixi-lite-plus.js       | 2.6 KB      | More commands + i18n aliases                |
-| hyperfixi-hybrid-complete.js | 7.7 KB      | **Recommended** (~85% hyperscript coverage) |
-| hyperfixi-hx.js              | 21.5 KB     | hybrid-complete + htmx/fixi support         |
-| hyperfixi-minimal.js         | 76 KB       | Full parser + 30 commands                   |
-| hyperfixi.js                 | ~299 KB     | Everything + reactivity/realtime plugins    |
+| Bundle                    | Size (gzip) | Use Case                                                           |
+| ------------------------- | ----------- | ------------------------------------------------------------------ |
+| hyperfixi-hx.js           | ~21.5 KB    | The small one: hybrid AST parser (~85% coverage) + htmx/fixi attrs |
+| hyperfixi.js              | ~310 KB     | Everything: full parser, reactivity/realtime plugins, 24 languages |
+| hyperfixi-hx-v4.js        | ~342 KB     | Separate product: htmx v4 (`hx-live`, `bind`, `when`, SSE, WS)     |
+| hyperfixi-multilingual.js | ~91 KB      | Separate product: parser-free multilingual, pairs with semantic    |
+
+`hyperfixi-hybrid-complete.js` is still built for the Vite plugin's generated
+fallback (`@hyperfixi/core/browser/hybrid-complete`); the lite / lite-plus /
+minimal / standard names were retired in the 4.0 cycle.
 
 **Semantic bundles** (optional, for multilingual support):
 
@@ -104,7 +96,7 @@ node scripts/generate-bundle.mjs --group western
 ### 1. CDN Script Tag (Simplest)
 
 ```html
-<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"></script>
+<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js"></script>
 <button _="on click toggle .active on me">Toggle</button>
 ```
 

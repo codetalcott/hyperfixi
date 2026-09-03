@@ -12,6 +12,7 @@ import type {
   ReferenceValue,
   PropertyPathValue,
   ExpressionValue,
+  SourcePosition,
 } from '../types';
 
 import {
@@ -19,11 +20,8 @@ import {
   type ExpressionNode,
   type LiteralNode,
   type SelectorNode,
-  type ContextReferenceNode,
   type AttributeAccessNode,
-  type PropertyAccessNode,
   type IdentifierNode,
-  type ContextType,
   type SelectorKind,
 } from './expression-parser';
 
@@ -39,6 +37,28 @@ import {
  * @returns The corresponding AST expression node
  */
 export function convertValue(value: SemanticValue, warnings?: string[]): ExpressionNode {
+  return stampSpan(convertValueShape(value, warnings), value.position);
+}
+
+/**
+ * Give a converted node the span of the token run its value came from.
+ *
+ * Only `start`/`end` — the tokenizer records offsets, not line/column, and a
+ * value's offsets are relative to whatever string was parsed. A caller that
+ * parsed a slice of a larger document owns both the rebasing and the
+ * line/column derivation (see {@link SourceSpanned}); `@hyperfixi/core` does
+ * exactly that on adoption.
+ *
+ * A node that already carries a `start` keeps it: {@link convertExpression}
+ * has sub-parsed nodes whose spans are finer-grained than the whole role's,
+ * and it has already rebased them onto the role's span.
+ */
+function stampSpan(node: ExpressionNode, position: SourcePosition | undefined): ExpressionNode {
+  if (!position || typeof (node as { start?: unknown }).start === 'number') return node;
+  return { ...node, start: position.start, end: position.end } as ExpressionNode;
+}
+
+function convertValueShape(value: SemanticValue, warnings?: string[]): ExpressionNode {
   switch (value.type) {
     case 'literal':
       return convertLiteral(value);
@@ -61,6 +81,24 @@ export function convertValue(value: SemanticValue, warnings?: string[]): Express
 }
 
 /**
+ * Is this role value a MATERIALIZED DEFAULT rather than something the author wrote?
+ *
+ * The pattern matcher tags every value it fills in from a schema `default` with
+ * `implicit: true` (see `pattern-matcher.ts`'s default materialization) — a
+ * bare `focus` gets `patient: {reference me, implicit: true}`, while an authored
+ * `focus me` gets the same value WITHOUT the tag. The multilingual renderers
+ * already read this to suppress an injected `me` when rendering to 24 languages.
+ *
+ * The AST builder reads it for the same reason: `args` and `modifiers` are the
+ * SYNTAX surface — what the author actually wrote — so a materialized default
+ * does not belong there. It stays on `semanticRoles`, the SEMANTICS surface,
+ * where a consumer that wants the resolved target can read it.
+ */
+export function isImplicitValue(value: { implicit?: true } | undefined): boolean {
+  return value?.implicit === true;
+}
+
+/**
  * Convert a LiteralValue to a LiteralNode.
  */
 export function convertLiteral(value: LiteralValue): LiteralNode {
@@ -75,6 +113,20 @@ export function convertLiteral(value: LiteralValue): LiteralNode {
   }
 
   return result;
+}
+
+/**
+ * Recognize a query reference (`<button/>`, `<.card/>`, `<#id/>`) and return the
+ * css inside the brackets.
+ *
+ * Deliberately narrower than "starts with `<`": the trailing `/>` is what makes
+ * the surface a query reference, and core's `isQueryReference` +
+ * `queryValue.slice(1, -2)` pair assume it. Returns undefined for anything else.
+ */
+function matchQueryReference(raw: string): { selector: string } | undefined {
+  if (!raw.startsWith('<') || !raw.endsWith('/>') || raw.length <= 3) return undefined;
+  const selector = raw.slice(1, -2).trim();
+  return selector ? { selector } : undefined;
 }
 
 /**
@@ -109,9 +161,38 @@ export function convertSelector(
     );
   }
 
-  // An element LITERAL (`<div.card/>`) is creation markup, not a query — carry
-  // it on `raw` (the canonical parser's element-literal field) so consumers
-  // like MakeCommand use the markup directly instead of querySelector-ing it.
+  // A QUERY REFERENCE (`<button/>`, `<div.card/>`) is one surface with two
+  // meanings, and the core AST resolves the ambiguity with a single shape
+  // rather than by knowing the command:
+  //
+  //   value/selector -> the STRIPPED css (`button`), what querySelectorAll gets
+  //   fromQuery      -> true, so the evaluator returns the whole collection
+  //                     even for `<#id/>` (upstream QueryRef -> ElementCollection)
+  //   raw            -> the full `<…>` markup, which MakeCommand reads FIRST and
+  //                     uses to CREATE an element instead of querying it
+  //
+  // Carrying the markup on `value` too — which this converter used to do — hands
+  // `<button/>` straight to the DOM, and `hide <button/>` / `add .x to <button/>`
+  // die with `SyntaxError: Invalid selector <button/>` in every language and on
+  // every buildAST consumer (core's default English path, the multilingual
+  // browser bundles, the R2 execution validator). `raw` is what keeps `make`
+  // working, so no command-awareness is needed here. Mirrors
+  // `parser.ts`'s `matchQueryReference()` branch exactly.
+  const queryRef = matchQueryReference(value.value);
+  if (queryRef) {
+    return {
+      type: 'selector',
+      value: queryRef.selector,
+      selector: queryRef.selector,
+      selectorType: value.selectorKind as SelectorKind,
+      fromQuery: true,
+      raw: value.value,
+    } as SelectorNode;
+  }
+
+  // A `<`-prefixed value that is NOT a query reference (a stray `<` or `<=` the
+  // tokenizers classify as a selector before reaching their operator list)
+  // keeps its verbatim shape — stripping it would corrupt it.
   if (value.value.startsWith('<')) {
     return {
       type: 'selector',
@@ -131,32 +212,112 @@ export function convertSelector(
 }
 
 /**
- * Convert a ReferenceValue to a ContextReferenceNode.
+ * Convert a ReferenceValue to the identifier the traditional parser emits —
+ * scoped for a SIGIL-prefixed variable, plain for everything else.
+ *
+ * Every reference converges on `identifier` (Thread B item 5, the alias
+ * normalisation): the traditional parser emits `identifier{name:'me'}` for
+ * `me` / `it` / `you` / `event` / … — measured across every context word —
+ * and its evaluator resolves them by name. This function used to emit a
+ * dedicated `contextReference` node instead, which forced core's
+ * `parser/runtime.ts` to carry a parallel dispatch arm for the same meaning.
+ * All 12 node-type divergence sites were executed on both paths first
+ * (`node-type-alias-parity.test.ts`) — the shapes behave identically, so this
+ * is a spelling change, not a behavioural one.
+ *
+ * `:count` and `$total` are **variables**, and calling them context references
+ * was a live defect, not a spelling difference: `ContextType` is a closed
+ * union that never contained them, so `value.value as ContextType` was a
+ * lying cast, and core's
+ * `evaluateContextReference` has no case for `:count` — it returns `undefined`.
+ *
+ * The blast radius was larger than it looks, because of WHERE the semantic path
+ * gets used. Core parses a command sequence traditionally and hands only the
+ * final remainder to the semantic analyzer, so it is the LAST command of a
+ * handler that gets this node. Measured on the default parse path:
+ *
+ *   set :v to 5 then log :v then log :v      →  ["5", "5", undefined]
+ *   set $v to 5 then log $v then log $v      →  ["5", "5", undefined]
+ *   set  v to 5 then log  v then log  v      →  ["5", "5", "5"]      (unscoped: fine)
+ *
+ * So any handler ENDING in a `:`/`$` variable read silently produced
+ * `undefined` — `on click increment :count then log :count` being the ordinary
+ * shape of it. The traditional path was correct throughout.
+ *
+ * The two spellings below are the traditional parser's, matched exactly so both
+ * paths build the same node: `:name` strips the sigil and tags
+ * `scope: 'element'`, while `$name` KEEPS its sigil in the name and carries no
+ * scope (that is what `getVariableValue` expects of each — not an inconsistency
+ * introduced here).
  */
-export function convertReference(value: ReferenceValue): ContextReferenceNode {
-  return {
-    type: 'contextReference',
-    contextType: value.value as ContextType,
-    name: value.value,
-  };
+export function convertReference(value: ReferenceValue): IdentifierNode {
+  const raw = value.value;
+
+  if (typeof raw === 'string') {
+    if (raw.startsWith(':') && raw.length > 1) {
+      return { type: 'identifier', name: raw.slice(1), scope: 'element' };
+    }
+    if (raw.startsWith('$') && raw.length > 1) {
+      return { type: 'identifier', name: raw };
+    }
+  }
+
+  // Possessive surface forms normalise to their base word, matching what the
+  // traditional parser's fold emits (`my value` → object `identifier{me}`).
+  // Reference values are normally already base words; this is a safety net.
+  const POSSESSIVE_BASE: Record<string, string> = { my: 'me', its: 'it', your: 'you' };
+  const name = String(raw);
+  return { type: 'identifier', name: POSSESSIVE_BASE[name] ?? name };
 }
 
 /**
- * Convert a PropertyPathValue to a PropertyAccessNode.
- * Recursively converts the object part.
+ * Convert a PropertyPathValue to the node the traditional parser emits for
+ * the same surface (Thread B item 5, the alias normalisation):
+ *
+ * - dot access (`event.detail.message`) → a NESTED `memberExpression` chain,
+ *   one link per path segment, `property` an identifier node, `computed`
+ *   false — the traditional parser's exact shape. This function used to emit
+ *   a single flat `propertyAccess` carrying the whole dotted path as a
+ *   string, which forced core's evaluator to carry a parallel dot-splitting
+ *   arm for the same meaning.
+ * - possessive access (`#target's innerHTML`, recorded by the matcher in
+ *   `value.access`) → `possessiveExpression`, again the traditional shape.
+ *   An unrecorded surface falls back to the memberExpression chain.
+ * - EXCEPT a possessive whose object is a pronoun base (`me`/`it`/`you`):
+ *   that surface can only be the space form `my`/`its`/`your` + property,
+ *   which the traditional parser folds to a memberExpression
+ *   (`copy my textContent` → object `identifier{me}`, measured), never to a
+ *   possessiveExpression. `event's detail` / `bob's name` keep
+ *   possessiveExpression on both paths — also measured.
  *
  * @param value - The property path value to convert
  * @param warnings - Optional array to collect warnings
  */
-export function convertPropertyPath(
-  value: PropertyPathValue,
-  warnings?: string[]
-): PropertyAccessNode {
-  return {
-    type: 'propertyAccess',
-    object: convertValue(value.object, warnings),
-    property: value.property,
-  };
+export function convertPropertyPath(value: PropertyPathValue, warnings?: string[]): ExpressionNode {
+  const object = convertValue(value.object, warnings);
+
+  const isPronounBase =
+    object.type === 'identifier' && ['me', 'it', 'you'].includes((object as IdentifierNode).name);
+
+  if (value.access === 'possessive' && !isPronounBase) {
+    return {
+      type: 'possessiveExpression',
+      object,
+      property: { type: 'identifier', name: value.property },
+    } as ExpressionNode;
+  }
+
+  let node: ExpressionNode = object;
+  for (const part of String(value.property).split('.')) {
+    if (!part) continue;
+    node = {
+      type: 'memberExpression',
+      object: node,
+      property: { type: 'identifier', name: part },
+      computed: false,
+    } as ExpressionNode;
+  }
+  return node;
 }
 
 /**
@@ -176,7 +337,46 @@ export function convertExpression(value: ExpressionValue): ExpressionNode {
     return identifier;
   }
 
-  return result.node;
+  return rebaseSpans(result.node, value.position);
+}
+
+/**
+ * Rebase a sub-parsed expression tree onto the span of the role it came from.
+ *
+ * `parseExpression` runs on the role's OWN substring, so every span it emits
+ * counts from zero — `clear myVar` reported `args[0]` at `[0, 5)` where the
+ * traditional parser reports `[6, 11)`. That is not a missing span but a wrong
+ * one, and it leaked all the way to LSP ranges. Adding the role's start offset
+ * makes the tree agree with the traditional parse of the same source.
+ *
+ * `line`/`column` are DROPPED rather than shifted: they described a position
+ * inside the substring, and recovering the real ones needs the full document,
+ * which this package never sees. Absent beats wrong — and the one caller that
+ * does hold the document (`@hyperfixi/core`) derives them from the rebased
+ * offsets.
+ */
+function rebaseSpans(node: ExpressionNode, position: SourcePosition | undefined): ExpressionNode {
+  if (!position || position.start === 0) return node;
+  const shift = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(shift);
+    if (!input || typeof input !== 'object') return input;
+    // Plain objects and arrays are rebuilt; anything else passes by reference,
+    // so a generic walk cannot flatten a `Map` field into `{}`.
+    const proto = Object.getPrototypeOf(input) as unknown;
+    if (proto !== Object.prototype && proto !== null) return input;
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(input)) {
+      if ((key === 'start' || key === 'end') && typeof v === 'number') {
+        out[key] = v + position.start;
+      } else if (key === 'line' || key === 'column') {
+        continue;
+      } else {
+        out[key] = shift(v);
+      }
+    }
+    return out;
+  };
+  return shift(node) as ExpressionNode;
 }
 
 // =============================================================================

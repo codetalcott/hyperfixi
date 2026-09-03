@@ -293,13 +293,6 @@ describe('Event System', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        flags: {
-          halted: false,
-          breaking: false,
-          continuing: false,
-          returning: false,
-          async: false,
-        },
       };
 
       const contextHandler = vi.fn((event: HyperscriptEvent) => {

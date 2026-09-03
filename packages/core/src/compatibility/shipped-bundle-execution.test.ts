@@ -49,7 +49,6 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import hybridComplete from './browser-bundle-hybrid-complete';
-import litePlus from './browser-bundle-lite-plus';
 import { AVAILABLE_COMMANDS, resolveCommandKey } from '../bundle-generator/template-capabilities';
 import { COMMAND_IMPLEMENTATIONS } from '../bundle-generator/templates';
 
@@ -384,119 +383,6 @@ const HYBRID_BLOCKS: Record<string, Surface> = {
   },
 };
 
-// ===========================================================================
-// lite-plus — the regex bundle
-// ===========================================================================
-
-/**
- * lite-plus is a deliberately reduced dialect, not a smaller hybrid-complete,
- * and two rows below encode differences that are DESIGN, not drift:
- *
- *   - `show`/`hide` are desugared at parse time to `remove .hidden` /
- *     `add .hidden`. The bundle's contract is the CSS class convention, not
- *     `style.display`, so asserting display here would be asserting the other
- *     bundle's semantics.
- *   - `send`/`trigger` accept `to <target>` only. The canonical spelling for
- *     trigger is `on <target>`, which this parser does not reach (it falls to
- *     the generic split and warns `Unknown command`). Recorded as a divergence
- *     for Arc E step 2 rather than widened here — the regex dialect is the
- *     bundle's documented surface, and changing it is a behavior decision, not
- *     a crash fix.
- */
-const LITE_PLUS_COMMANDS: Record<string, Surface> = {
-  toggle: {
-    code: 'toggle .x on #t',
-    setup: d => t(d).classList.add('x'),
-    check: o => ok(o, !t(o.doc).classList.contains('x')),
-  },
-  add: { code: 'add .x to #t', check: o => ok(o, t(o.doc).classList.contains('x')) },
-  remove: { code: 'remove .seed from #t', check: o => ok(o, !t(o.doc).classList.contains('seed')) },
-  take: {
-    code: 'take .x from #t',
-    setup: d => {
-      t(d).classList.add('x');
-      t(d).innerHTML = '<button id="prev" class="x"></button>';
-    },
-    check: o => ok(o, o.me.classList.contains('x')),
-  },
-  put: { code: 'put "PUT" into #t', check: o => ok(o, t(o.doc).innerHTML === 'PUT') },
-  append: {
-    code: 'append "AP" to #t',
-    setup: d => {
-      t(d).innerHTML = "<input id='keep'>";
-      (d.getElementById('keep') as HTMLInputElement).value = 'typed';
-    },
-    check: o => {
-      const kept = o.doc.getElementById('keep') as HTMLInputElement | null;
-      return ok(o, kept?.value === 'typed' && t(o.doc).innerHTML.endsWith('AP'));
-    },
-  },
-  prepend: {
-    code: 'prepend "PR" to #t',
-    setup: d => {
-      t(d).innerHTML = "<input id='keep'>";
-      (d.getElementById('keep') as HTMLInputElement).value = 'typed';
-    },
-    check: o => {
-      const kept = o.doc.getElementById('keep') as HTMLInputElement | null;
-      return ok(o, kept?.value === 'typed' && t(o.doc).innerHTML.startsWith('PR'));
-    },
-  },
-  set: {
-    code: 'set #t.title to "TITLED"',
-    check: o => ok(o, (t(o.doc) as HTMLElement).title === 'TITLED'),
-  },
-  increment: {
-    code: 'increment #t',
-    setup: d => (t(d).textContent = '4'),
-    check: o => ok(o, t(o.doc).textContent === '5'),
-  },
-  decrement: {
-    code: 'decrement #t',
-    setup: d => (t(d).textContent = '4'),
-    check: o => ok(o, t(o.doc).textContent === '3'),
-  },
-  // Desugars to `.hidden` class manipulation — see the block comment above.
-  show: {
-    code: 'show #t',
-    setup: d => t(d).classList.add('hidden'),
-    check: o => ok(o, !t(o.doc).classList.contains('hidden')),
-  },
-  hide: { code: 'hide #t', check: o => ok(o, t(o.doc).classList.contains('hidden')) },
-  focus: { code: 'focus #i', check: o => ok(o, o.doc.activeElement?.id === 'i') },
-  blur: {
-    code: 'blur #i',
-    setup: d => (d.getElementById('i') as HTMLElement).focus(),
-    check: o => ok(o, o.doc.activeElement?.id !== 'i'),
-  },
-  log: {
-    code: 'log "LOGGED"',
-    check: o =>
-      ok(
-        o,
-        consoleLines.some(l => l.includes('LOGGED'))
-      ),
-  },
-  send: {
-    code: 'send foo to #t',
-    setup: (d, me) => {
-      t(d).addEventListener('foo', () => t(d).setAttribute('data-got', '1'));
-      me.addEventListener('foo', () => me.setAttribute('data-got', '1'));
-    },
-    check: o => ok(o, t(o.doc).hasAttribute('data-got') && !o.me.hasAttribute('data-got')),
-  },
-  trigger: {
-    code: 'trigger foo to #t',
-    setup: (d, me) => {
-      t(d).addEventListener('foo', () => t(d).setAttribute('data-got', '1'));
-      me.addEventListener('foo', () => me.setAttribute('data-got', '1'));
-    },
-    check: o => ok(o, t(o.doc).hasAttribute('data-got') && !o.me.hasAttribute('data-got')),
-  },
-  wait: { code: 'wait 25ms', check: o => ok(o, o.result === 25 && o.elapsedMs >= 20) },
-  go: { code: 'go to url "#gone-lite"', check: o => ok(o, location.hash === '#gone-lite') },
-};
-
 // ---------------------------------------------------------------------------
 // The eleven orphans, plus `removeClass` and the two url aliases (Arc E step 4)
 // ---------------------------------------------------------------------------
@@ -634,7 +520,6 @@ const BUNDLES: Array<{
     commands: HYBRID_COMMANDS,
     blocks: HYBRID_BLOCKS,
   },
-  { id: 'lite-plus', api: litePlus as unknown as BundleApi, commands: LITE_PLUS_COMMANDS },
 ];
 
 for (const bundle of BUNDLES) {

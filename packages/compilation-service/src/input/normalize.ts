@@ -79,6 +79,47 @@ export function normalize(request: CompileRequest): NormalizeResult {
 // Format-Specific Normalization
 // =============================================================================
 
+/** Shape of the diagnostics the semantic parser attaches to its nodes. */
+interface NodeDiagnostic {
+  severity?: string;
+  code?: string;
+  message?: string;
+}
+
+/**
+ * Lift warning/error diagnostics off the parsed node into the response.
+ *
+ * The semantic parser deliberately parses leniently — it records problems as
+ * node-level diagnostics instead of failing (e.g. `unconsumed-input` when
+ * `add .x #el` drops `#el` and the destination silently defaults to `me`,
+ * hoisted to the top node from any depth). Until 2026-08 this function never
+ * read them, so `validate()` reported ok with ZERO diagnostics for parses the
+ * parser itself had flagged — the agent-bench probe measured 18/37 plausible
+ * phrasings misbehaving with nothing for the validate/repair loop to react to
+ * (arc 3b, AGENT_ERA_ROADMAP.md). `info` entries stay behind: they are match
+ * commentary ("pattern matched: …"), not actionable signal.
+ */
+function liftNodeDiagnostics(node: unknown, diagnostics: Diagnostic[]): void {
+  const nodeDiags = (node as { diagnostics?: NodeDiagnostic[] }).diagnostics;
+  if (!Array.isArray(nodeDiags)) return;
+  for (const d of nodeDiags) {
+    if (d.severity !== 'warning' && d.severity !== 'error') continue;
+    const diag: Diagnostic = {
+      severity: d.severity,
+      // Parser codes are kebab-case; this surface uses UPPER_SNAKE (PARSE_ERROR &c).
+      code: (d.code ?? 'PARSE_DIAGNOSTIC').replace(/-/g, '_').toUpperCase(),
+      message: d.message ?? 'parser diagnostic',
+    };
+    if (d.code === 'unconsumed-input') {
+      diag.suggestion =
+        'Dropped tokens were parsed but bound to no role — usually a missing role ' +
+        "marker (e.g. 'to'/'on'/'from' before the target), so the role fell back to " +
+        'a default like `me`. Compare the returned roles against your intent.';
+    }
+    diagnostics.push(diag);
+  }
+}
+
 function normalizeNatural(code: string, language: string): NormalizeResult {
   const diagnostics: Diagnostic[] = [];
 
@@ -102,6 +143,8 @@ function normalizeNatural(code: string, language: string): NormalizeResult {
       });
       return { node: null, confidence: result.confidence, format: 'natural', diagnostics };
     }
+
+    liftNodeDiagnostics(result.node, diagnostics);
 
     return {
       node: result.node,

@@ -25,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface BlurCommandInput {
   targets: HTMLElement[];
@@ -48,7 +49,7 @@ export class BlurCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'blur'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<BlurCommandInput> {
@@ -57,7 +58,7 @@ export class BlurCommand implements DecoratedCommand {
       evaluator,
       context,
       'blur',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

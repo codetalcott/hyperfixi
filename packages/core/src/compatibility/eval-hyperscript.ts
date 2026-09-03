@@ -15,34 +15,7 @@ import { COMMANDS } from '../parser/parser-constants';
 import { setGlobal } from '../parser/extensions';
 import { getSharedGlobals } from '../core/context';
 import type { ExecutionContext } from '../types/core';
-import type { SemanticAnalyzerInterface } from '../parser/types';
-import { createSemanticAdapter } from '../parser/semantic-integration';
-import {
-  parseSemantic,
-  isLanguageRegistered,
-  getRegisteredLanguages,
-  buildAST,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-} from '@lokascript/semantic';
-
-// Singleton semantic analyzer instance (lazy-initialized)
-let semanticAnalyzerInstance: SemanticAnalyzerInterface | null = null;
-
-/**
- * Get or create the singleton semantic analyzer instance.
- * Lazy initialization to avoid overhead if not used.
- */
-function getSemanticAnalyzer(): SemanticAnalyzerInterface {
-  if (!semanticAnalyzerInstance) {
-    semanticAnalyzerInstance = createSemanticAdapter({
-      parse: parseSemantic,
-      isRegistered: isLanguageRegistered,
-      registered: getRegisteredLanguages,
-      buildAST,
-    }) as unknown as SemanticAnalyzerInterface;
-  }
-  return semanticAnalyzerInstance;
-}
+import type { ASTNode } from '../types/base-types';
 
 /**
  * Context interface matching _hyperscript's expected format
@@ -94,11 +67,6 @@ function convertContext(
     result: hyperScriptContext?.result,
     locals: new Map(),
     globals: initialGlobals,
-    halted: false,
-    returned: false,
-    broke: false,
-    continued: false,
-    async: false,
   };
 
   if (!hyperScriptContext) {
@@ -267,31 +235,39 @@ function isCommand(script: string): boolean {
 }
 
 /**
- * Execute script as a command using full parser + runtime with semantic analysis
+ * Execute script as a command using the full parser + runtime.
+ *
+ * English goes straight to the core parser. A non-English script takes the
+ * API's whole-program path (the front-end's direct AST, or its English
+ * rendering parsed by core) — the same route `hyperscript.compile(code,
+ * { language })` takes — instead of the per-command in-loop attempt this
+ * harness used to wire up on its own (Arc 1 step 6). The API is imported
+ * lazily so the harness keeps its own parser/runtime for the English case.
  */
 async function executeAsCommand(
   script: string,
   context: ExecutionContext,
   language: string = 'en'
 ): Promise<any> {
-  // Tokenize
-  const tokens = tokenize(script);
-
-  // Parse with full parser, using semantic analyzer for multilingual support
-  const parser = new Parser(tokens, {
-    semanticAnalyzer: getSemanticAnalyzer(),
-    language,
-    semanticConfidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
-  });
-  const parseResult = parser.parse();
-
-  if (!parseResult.success || !parseResult.node) {
-    throw new Error(`Parse error: ${parseResult.error?.message || 'Unknown parse error'}`);
+  let node: ASTNode;
+  if (language !== 'en') {
+    const { hyperscript } = await import('../api/hyperscript-api');
+    const compiled = await hyperscript.compile(script, { language });
+    if (!compiled.ok || !compiled.ast) {
+      throw new Error(`Parse error: ${compiled.errors?.[0]?.message || 'Unknown parse error'}`);
+    }
+    node = compiled.ast;
+  } else {
+    const parseResult = new Parser(tokenize(script)).parse();
+    if (!parseResult.success || !parseResult.node) {
+      throw new Error(`Parse error: ${parseResult.error?.message || 'Unknown parse error'}`);
+    }
+    node = parseResult.node;
   }
 
   // Execute with runtime
   const runtime = new Runtime();
-  const result = await runtime.execute(parseResult.node, context);
+  const result = await runtime.execute(node, context);
 
   return result;
 }
@@ -328,7 +304,7 @@ export async function evalHyperScriptAsync(
  */
 export function isAsyncExpression(expression: string): boolean {
   // Simple heuristics for detecting async expressions
-  const asyncKeywords = ['fetch', 'wait', 'settle', 'async', 'promise'];
+  const asyncKeywords = ['fetch', 'wait', 'settle', 'promise'];
   const lowerExpression = expression.toLowerCase();
 
   return asyncKeywords.some(keyword => lowerExpression.includes(keyword));

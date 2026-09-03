@@ -88,7 +88,6 @@ function createMockContext(element: HTMLElement | null = null): TypedExecutionCo
     locals: new Map(),
     globals: new Map(),
     result: undefined,
-    halted: false,
     it: undefined,
   };
 }

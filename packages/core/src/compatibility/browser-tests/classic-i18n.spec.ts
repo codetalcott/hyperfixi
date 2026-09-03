@@ -79,16 +79,37 @@ test.describe('LokaScript Classic i18n Bundle', () => {
     expect(newLocale).toBe('ja');
   });
 
-  test('grammar transformation works @quick', async ({ page }) => {
-    const transformed = await page.evaluate(() => {
+  test('the transformer helpers are NOT in this bundle @quick', async ({ page }) => {
+    // This used to be `grammar transformation works`, asserting
+    // `i18n.toLocale('on click increment #count', 'ja')` produced something
+    // different. The four helpers it covered (toLocale / toEnglish / translate /
+    // createTransformer) were the bundle's only users of @lokascript/i18n's
+    // `GrammarTransformer`, and they are gone with it.
+    //
+    // Re-implementing them on @lokascript/semantic was measured at +173 KB
+    // gzipped here (138.9 -> 312.1), so their absence is a decision, not an
+    // oversight — pinned so a re-add has to come with the size answer. What the
+    // bundle is FOR runs through the keyword providers and is covered by the
+    // locale tests around this one.
+    const surface = await page.evaluate(() => {
       const h = (window as any).hyperfixi;
-      return h.i18n.toLocale('on click increment #count', 'ja');
+      return {
+        toLocale: typeof h.i18n.toLocale,
+        toEnglish: typeof h.i18n.toEnglish,
+        translate: typeof h.i18n.translate,
+        createTransformer: typeof h.i18n.createTransformer,
+        // Still present: this is the half the bundle actually needs.
+        getProfile: typeof h.i18n.getProfile,
+        setLocale: typeof h.i18n.setLocale,
+      };
     });
 
-    // Japanese should have particles like を (wo) and で (de)
-    expect(transformed).toContain('#count');
-    // The transformation should produce something different
-    expect(transformed).not.toBe('on click increment #count');
+    expect(surface.toLocale).toBe('undefined');
+    expect(surface.toEnglish).toBe('undefined');
+    expect(surface.translate).toBe('undefined');
+    expect(surface.createTransformer).toBe('undefined');
+    expect(surface.getProfile).toBe('function');
+    expect(surface.setLocale).toBe('function');
   });
 
   test('all language profiles are available @quick', async ({ page }) => {

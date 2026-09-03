@@ -23,6 +23,7 @@ describe('Tool definition contracts', () => {
     'translate_code',
     'generate_tests',
     'generate_component',
+    'score_fidelity',
     'diff_behaviors',
   ];
 
@@ -324,10 +325,22 @@ describe('Error wrapping consistency', () => {
       // Empty args — service.compile({}) should produce diagnostics, not crash
     });
 
-    // Whether it fails or succeeds, the response should be well-formed
+    // Whether it fails or succeeds, the response should be well-formed:
+    // content[0] is the JSON result; a second block is appended either as the
+    // repair hint (failure) or the review hint (parsed, but with warnings), so
+    // length is 1 or 2, never more. isError tracks ok, not the hint's presence.
     expect(result.content).toBeDefined();
-    expect(result.content).toHaveLength(1);
+    expect(result.content.length).toBeGreaterThanOrEqual(1);
+    expect(result.content.length).toBeLessThanOrEqual(2);
     expect(result.content[0].type).toBe('text');
+    if (result.content.length === 2) {
+      const hint = result.content[1].text;
+      if (result.isError) {
+        expect(hint).toContain('validate_and_compile');
+      } else {
+        expect(hint).toContain('score_fidelity');
+      }
+    }
 
     // Text should be valid JSON (wrapped response or error message)
     const text = result.content[0].text;
@@ -343,6 +356,52 @@ describe('Error wrapping consistency', () => {
 
     // Should either return an error via service or via exception handling
     expect(result.content).toBeDefined();
+    expect(result.content).toHaveLength(1);
+  }, 30000);
+});
+
+// =============================================================================
+// Agent-loop hint blocks
+// =============================================================================
+
+describe('Next-step hint blocks', () => {
+  it('appends the repair hint when the parse fails', async () => {
+    const result = await handleCompilationTool('validate_and_compile', { code: '((((' });
+
+    expect(result.isError).toBe(true);
+    expect(result.content).toHaveLength(2);
+    expect(result.content[1].text).toContain('re-run validate_and_compile');
+    expect(result.content[1].text).toContain('get_code_fixes');
+  }, 30000);
+
+  it('appends the review hint when the parse succeeds but drops input', async () => {
+    // Parses to a bare `on click` with empty roles: the body is left
+    // unconsumed, so the result is `ok` with a warning and no error status —
+    // the silent band the repair hint cannot reach.
+    const result = await handleCompilationTool('validate_and_compile', {
+      code: 'on click frobnicate the .widget onto',
+    });
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.diagnostics.some((d: { severity: string }) => d.severity === 'warning')).toBe(
+      true
+    );
+
+    // isError stays false — the parse did succeed — but the hint is present.
+    expect(result.isError).toBe(false);
+    expect(result.content).toHaveLength(2);
+    expect(result.content[1].text).toContain('score_fidelity');
+  }, 30000);
+
+  it('appends no hint when the parse is clean', async () => {
+    const result = await handleCompilationTool('validate_and_compile', {
+      code: 'on click toggle .active on #panel',
+    });
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.diagnostics).toHaveLength(0);
     expect(result.content).toHaveLength(1);
   }, 30000);
 });

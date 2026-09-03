@@ -239,8 +239,8 @@ export function binaryHandler(left: ASTNode, token: Token, ctx: PrattContext): A
     operator: token.value,
     left,
     right: ctx.parseExpr(0), // right bp should be passed; see createInfixEntry
-    start: (left as any).start,
-    end: (ctx.peek() as any)?.start,
+    start: left.start,
+    end: ctx.peek()?.start,
   };
 }
 
@@ -254,7 +254,7 @@ export function unaryHandler(token: Token, ctx: PrattContext): ASTNode {
     argument: operand,
     prefix: true,
     start: token.start,
-    end: (operand as any).end,
+    end: operand.end,
     line: token.line,
     column: token.column,
   };
@@ -281,10 +281,10 @@ export function leftAssoc(bp: number, handler?: InfixHandler): Pick<BindingPower
             operator: token.value,
             left,
             right,
-            start: (left as any).start,
-            end: (right as any).end ?? token.end,
-            line: (left as any).line ?? token.line,
-            column: (left as any).column ?? token.column,
+            start: left.start,
+            end: right.end ?? token.end,
+            line: left.line ?? token.line,
+            column: left.column ?? token.column,
           };
         }),
     },
@@ -308,10 +308,10 @@ export function rightAssoc(bp: number, handler?: InfixHandler): Pick<BindingPowe
             operator: token.value,
             left,
             right,
-            start: (left as any).start,
-            end: (right as any).end ?? token.end,
-            line: (left as any).line ?? token.line,
-            column: (left as any).column ?? token.column,
+            start: left.start,
+            end: right.end ?? token.end,
+            line: left.line ?? token.line,
+            column: left.column ?? token.column,
           };
         }),
     },
@@ -337,7 +337,7 @@ export function prefix(bp: number, handler?: PrefixHandler): Pick<BindingPowerEn
             argument: operand,
             prefix: true,
             start: token.start,
-            end: (operand as any).end ?? token.end,
+            end: operand.end ?? token.end,
             line: token.line,
             column: token.column,
           };
@@ -399,8 +399,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         min,
         max,
         negated: false,
-        start: (left as any).start,
-        end: (max as any).end,
+        start: left.start,
+        end: max.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -422,8 +422,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         min,
         max,
         negated: true,
-        start: (left as any).start,
-        end: (max as any).end,
+        start: left.start,
+        end: max.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -446,8 +446,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         min,
         max,
         negated: false,
-        start: (left as any).start,
-        end: (max as any).end,
+        start: left.start,
+        end: max.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -469,8 +469,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         min,
         max,
         negated: true,
-        start: (left as any).start,
-        end: (max as any).end,
+        start: left.start,
+        end: max.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -509,8 +509,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         operator: 'where',
         collection: left,
         right: predicate,
-        start: (left as any).start,
-        end: (predicate as any).end,
+        start: left.start,
+        end: predicate.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -537,8 +537,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         collection: left,
         right: keyExpr,
         order,
-        start: (left as any).start,
-        end: (keyExpr as any).end,
+        start: left.start,
+        end: keyExpr.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -551,8 +551,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         operator: 'mapped to',
         collection: left,
         right: expr,
-        start: (left as any).start,
-        end: (expr as any).end,
+        start: left.start,
+        end: expr.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -565,8 +565,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         operator: 'split by',
         collection: left,
         right: sep,
-        start: (left as any).start,
-        end: (sep as any).end,
+        start: left.start,
+        end: sep.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -579,8 +579,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         operator: 'joined by',
         collection: left,
         right: sep,
-        start: (left as any).start,
-        end: (sep as any).end,
+        start: left.start,
+        end: sep.end,
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
@@ -614,17 +614,19 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         }
         const targetType = ctx.parseExpr(71);
         const peeked = ctx.peek();
-        if (
-          peeked &&
-          peeked.value === ':' &&
-          targetType &&
-          (targetType as any).type === 'identifier'
-        ) {
+        if (peeked && peeked.value === ':' && targetType && targetType.type === 'identifier') {
           ctx.advance(); // consume ':'
           const suffix = ctx.advance();
           if (suffix && suffix.value !== undefined) {
-            (targetType as any).name = `${(targetType as any).name}:${suffix.value}`;
-            (targetType as any).end = suffix.end;
+            // Rebuild rather than mutate. The three casts this replaces existed
+            // only to write through `ASTNode`'s readonly position fields and a
+            // `name` it does not declare; the node is a fresh parse result with
+            // no other reference, so a copy is equivalent.
+            return {
+              ...targetType,
+              name: `${String(targetType['name'])}:${suffix.value}`,
+              end: suffix.end,
+            };
           }
         }
         return targetType;
@@ -635,10 +637,10 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
         type: 'asExpression',
         expression: left,
         targetType: firstType,
-        start: (left as any).start,
-        end: (firstType as any).end ?? token.end,
-        line: (left as any).line ?? token.line,
-        column: (left as any).column ?? token.column,
+        start: left.start,
+        end: firstType.end ?? token.end,
+        line: left.line ?? token.line,
+        column: left.column ?? token.column,
       } as unknown as ASTNode;
 
       // Pipe chaining: `value as JSONString | JSON` applies conversions
@@ -650,10 +652,10 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
           type: 'asExpression',
           expression: node,
           targetType: nextType,
-          start: (node as any).start,
-          end: (nextType as any).end ?? (node as any).end,
-          line: (node as any).line,
-          column: (node as any).column,
+          start: node.start,
+          end: nextType.end ?? node.end,
+          line: node.line,
+          column: node.column,
         } as unknown as ASTNode;
       }
       return node;
@@ -702,7 +704,7 @@ function makeTypeCheckHandler(negated: boolean): InfixHandler {
       typeName: typeToken.value,
       nullOk,
       negated,
-      start: (left as any).start,
+      start: left.start,
       end: typeToken.end,
     } as unknown as ASTNode;
   };
@@ -801,7 +803,7 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
           operator: token.value,
           operand: left,
           prefix: false,
-          start: (left as any).start,
+          start: left.start,
         }),
       },
     },
@@ -816,7 +818,7 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
           operator: token.value,
           operand: left,
           prefix: false,
-          start: (left as any).start,
+          start: left.start,
         }),
       },
     },
@@ -831,7 +833,7 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
           operator: token.value,
           operand: left,
           prefix: false,
-          start: (left as any).start,
+          start: left.start,
         }),
       },
     },
@@ -846,7 +848,7 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
           operator: token.value,
           operand: left,
           prefix: false,
-          start: (left as any).start,
+          start: left.start,
         }),
       },
     },

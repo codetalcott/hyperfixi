@@ -14,6 +14,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isNodeOfKind } from '../../ast/guards';
 import { isHTMLElement } from '../../utils/element-check';
 import { createCustomEvent, parseEventValue } from '../helpers/event-helpers';
 import type { EventOptions } from '../helpers/event-helpers';
@@ -24,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export type { EventOptions } from '../helpers/event-helpers';
 
@@ -69,6 +71,7 @@ export class EventDispatchCommand implements DecoratedCommand {
       'trigger customEvent on me',
       'send dataEvent to #target',
       'send myEvent(count: 42) to me',
+      'send saved to #form with bubbles cancelable',
     ],
     sideEffects: ['event-dispatch'],
     aliases: ['send'],
@@ -83,7 +86,7 @@ export class EventDispatchCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
+    raw: CommandRaw<'trigger'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<EventDispatchInput> {
@@ -115,33 +118,17 @@ export class EventDispatchCommand implements DecoratedCommand {
 
     // Check for semantic parsing format first (modifiers.on or modifiers.to)
     let targets: EventTarget[];
+    // The target is the `on` slot (`to` on a hand-built node); with no slot,
+    // the event fires on `me`. The parser used to leave `on`/`to` in args as
+    // identifiers for a scan here to find.
     const targetModifier = raw.modifiers?.on || raw.modifiers?.to;
-
     if (targetModifier) {
-      // Semantic parsing format: target is in modifiers
       targets = await this.resolveTargets([targetModifier as ASTNode], evaluator, context, cmdName);
     } else {
-      // Traditional format: find target keyword in args
-      const targetKeywordIndex = raw.args.findIndex((a, i) => {
-        if (i === 0) return false;
-        const val = (a as any).name || (a as any).value;
-        return val === 'on' || val === 'to';
-      });
-
-      if (targetKeywordIndex === -1 || targetKeywordIndex >= raw.args.length - 1) {
-        if (!context.me) throw new Error(`${cmdName}: no target specified and context.me is null`);
-        targets = [context.me as EventTarget];
-      } else {
-        const afterTarget = raw.args.slice(targetKeywordIndex + 1);
-        const withIdx = afterTarget.findIndex(
-          a => ((a as any).name || (a as any).value) === 'with'
-        );
-        const targetArgs = withIdx === -1 ? afterTarget : afterTarget.slice(0, withIdx);
-        targets = await this.resolveTargets(targetArgs, evaluator, context, cmdName);
-      }
+      if (!context.me) throw new Error(`${cmdName}: no target specified and context.me is null`);
+      targets = [context.me as EventTarget];
     }
-
-    const options = await this.parseEventOptions(raw.args, evaluator, context);
+    const options = await this.parseEventOptions(raw.modifiers?.with, evaluator, context);
     return { eventName, detail, targets, options, mode };
   }
 
@@ -235,14 +222,19 @@ export class EventDispatchCommand implements DecoratedCommand {
   }
 
   private async parseEventOptions(
-    args: ASTNode[],
+    withSlot: ExpressionNode | undefined,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<EventOptions> {
     const options: EventOptions = { bubbles: true, cancelable: true, composed: false };
-    const withIdx = args.findIndex(a => ((a as any).name || (a as any).value) === 'with');
-    if (withIdx === -1) return options;
-    for (const arg of args.slice(withIdx + 1)) {
+    if (!withSlot) return options;
+    // The `with` slot is the list of option words the parser collected (an
+    // arrayLiteral), or a single node on a hand-built input.
+    const slot: unknown = withSlot;
+    const words: ASTNode[] = isNodeOfKind(slot, 'arrayLiteral')
+      ? (slot.elements as unknown as ASTNode[])
+      : [withSlot as ASTNode];
+    for (const arg of words) {
       const ev = await evaluator.evaluate(arg, context);
       if (typeof ev === 'string') {
         const n = ev.toLowerCase();

@@ -1,0 +1,198 @@
+{
+  "note": "Deterministic parse-vs-behavior verdicts for plausible phrasings. Regenerate with: tsx src/agent-bench/cli.ts probe-variants --json",
+  "totals": {
+    "phrasings": 37,
+    "parse": 36,
+    "behaveCorrectly": 19,
+    "warnedWrong": 15,
+    "silentBand": 2,
+    "silentNoop": 1
+  },
+  "phrasings": [
+    {
+      "taskId": "custom-event",
+      "code": "on \"refresh\" put \"Refreshed\" into #output",
+      "band": "rejected"
+    },
+    {
+      "taskId": "two-commands",
+      "code": "on click add .busy to me and put \"Loading\" into #output",
+      "band": "correct"
+    },
+    {
+      "taskId": "two-commands",
+      "code": "on click add .busy to me, put \"Loading\" into #output",
+      "band": "correct"
+    },
+    {
+      "taskId": "add-class-multiple",
+      "code": "on click add .done to all .todo",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "add-class-multiple",
+      "code": "on click add .done to every .todo",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "hide-element",
+      "code": "on click add .hidden to #menu",
+      "band": "silent-wrong"
+    },
+    {
+      "taskId": "add-class-other",
+      "code": "on click add .highlight #item",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "add-class-other",
+      "code": "on click add .highlight on #item",
+      "band": "correct"
+    },
+    {
+      "taskId": "add-to-body",
+      "code": "on click add .modal-open to <body/>",
+      "band": "correct"
+    },
+    {
+      "taskId": "add-to-body",
+      "code": "on click add .modal-open to the body",
+      "band": "correct"
+    },
+    {
+      "taskId": "closest-ancestor",
+      "code": "on click add .selected to closest .card to me",
+      "band": "correct"
+    },
+    {
+      "taskId": "closest-ancestor",
+      "code": "on click add .selected to the closest .card",
+      "band": "correct"
+    },
+    {
+      "taskId": "set-attribute",
+      "code": "on click add @aria-expanded=\"true\" to #panel",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "hide-element",
+      "code": "on click hide the #menu",
+      "band": "correct"
+    },
+    {
+      "taskId": "conditional-class",
+      "code": "on click if #box has class .danger add .warned to #box end",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "conditional-class",
+      "code": "on click if #box matches .danger then add .warned to #box end",
+      "band": "correct"
+    },
+    {
+      "taskId": "put-text",
+      "code": "on click put \"Saved\" in #output",
+      "band": "correct"
+    },
+    {
+      "taskId": "put-text",
+      "code": "on click put \"Saved\" into the #output",
+      "band": "correct"
+    },
+    {
+      "taskId": "tabs-switch",
+      "code": "on click remove .active from .tab and add .active to #tab2",
+      "band": "correct"
+    },
+    {
+      "taskId": "remove-class-all",
+      "code": "on click remove .active from all .row",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "remove-element",
+      "code": "on click remove element #item",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "remove-element",
+      "code": "on click remove the #item",
+      "band": "correct"
+    },
+    {
+      "taskId": "set-inner-html",
+      "code": "on click set #output.innerHTML to \"Done\"",
+      "band": "correct"
+    },
+    {
+      "taskId": "set-style",
+      "code": "on click set #swatch's *background-color to \"red\"",
+      "band": "correct"
+    },
+    {
+      "taskId": "set-attribute",
+      "code": "on click set @aria-expanded of #panel to \"true\"",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "set-attribute",
+      "code": "on click set @aria-expanded on #panel to \"true\"",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "set-inner-html",
+      "code": "on click set the innerHTML of #output to \"Done\"",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "set-style",
+      "code": "on click set the style.backgroundColor of #swatch to \"red\"",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "put-text",
+      "code": "on click set the text of #output to \"Saved\"",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "show-element",
+      "code": "on click show the #modal",
+      "band": "correct"
+    },
+    {
+      "taskId": "toggle-self-class",
+      "code": "on click toggle .active",
+      "band": "correct"
+    },
+    {
+      "taskId": "toggle-self-class",
+      "code": "on click toggle .active on this",
+      "band": "correct"
+    },
+    {
+      "taskId": "toggle-other-class",
+      "code": "on click toggle .open #panel",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "toggle-other-class",
+      "code": "on click toggle .open in #panel",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "toggle-attribute",
+      "code": "on click toggle @hidden of #message",
+      "band": "warned-wrong"
+    },
+    {
+      "taskId": "toggle-self-class",
+      "code": "on click toggle class .active on me",
+      "band": "correct"
+    },
+    {
+      "taskId": "mouseenter-hover",
+      "code": "on mouseover add .hover to me",
+      "band": "silent-noop"
+    }
+  ]
+}

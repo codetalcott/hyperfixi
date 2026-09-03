@@ -102,6 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ── Commands ──────────────────────────────────────────────────────
   context.subscriptions.push(
+    vscode.commands.registerCommand('lokascript.showInMyLanguage', () => showInMyLanguage()),
     vscode.commands.registerCommand('lokascript.restartServer', async () => {
       if (client) {
         await client.stop();
@@ -354,4 +355,129 @@ function formatValue(value: unknown): string {
 
 function timestamp(): string {
   return new Date().toLocaleTimeString('en-US', { hour12: false });
+}
+
+// ── Show in My Language (arc 5 slice 2) ─────────────────────────────────────
+
+/** The 24 supported review languages (stable; mirrors the semantic package). */
+const REVIEW_LANGUAGES: ReadonlyArray<{ code: string; label: string }> = [
+  { code: 'ar', label: 'العربية (Arabic)' },
+  { code: 'bn', label: 'বাংলা (Bengali)' },
+  { code: 'de', label: 'Deutsch (German)' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español (Spanish)' },
+  { code: 'fr', label: 'Français (French)' },
+  { code: 'he', label: 'עברית (Hebrew)' },
+  { code: 'hi', label: 'हिन्दी (Hindi)' },
+  { code: 'id', label: 'Bahasa Indonesia' },
+  { code: 'it', label: 'Italiano (Italian)' },
+  { code: 'ja', label: '日本語 (Japanese)' },
+  { code: 'ko', label: '한국어 (Korean)' },
+  { code: 'ms', label: 'Bahasa Melayu (Malay)' },
+  { code: 'pl', label: 'Polski (Polish)' },
+  { code: 'pt', label: 'Português (Portuguese)' },
+  { code: 'qu', label: 'Runasimi (Quechua)' },
+  { code: 'ru', label: 'Русский (Russian)' },
+  { code: 'sw', label: 'Kiswahili (Swahili)' },
+  { code: 'th', label: 'ไทย (Thai)' },
+  { code: 'tl', label: 'Tagalog' },
+  { code: 'tr', label: 'Türkçe (Turkish)' },
+  { code: 'uk', label: 'Українська (Ukrainian)' },
+  { code: 'vi', label: 'Tiếng Việt (Vietnamese)' },
+  { code: 'zh', label: '中文 (Chinese)' },
+];
+
+interface TranslateWithVerificationResult {
+  ok: boolean;
+  code?: string;
+  verification?: {
+    ok: boolean;
+    faithful?: boolean;
+    scores?: Record<string, number | undefined>;
+    missingValues?: string[];
+    missingActions?: string[];
+    spuriousActions?: string[];
+  };
+  error?: string;
+}
+
+/**
+ * Render the selected hyperscript (or the current line) in a language the
+ * reviewer chooses, with the fidelity badge, in a Markdown preview beside the
+ * editor. Backed by the server's `lokascript/translateWithVerification`
+ * custom request; the badge comes from the same scorer as the multilingual CI
+ * ratchet, so "structurally exact" here means what it means there.
+ */
+async function showInMyLanguage(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !client) {
+    vscode.window.showWarningMessage('Open a file containing hyperscript first.');
+    return;
+  }
+
+  const code = editor.selection.isEmpty
+    ? editor.document.lineAt(editor.selection.active.line).text.trim()
+    : editor.document.getText(editor.selection).trim();
+  if (!code) {
+    vscode.window.showWarningMessage('Select the hyperscript to translate.');
+    return;
+  }
+
+  const config = vscode.workspace.getConfiguration('lokascript');
+  const configured = config.get<string>('reviewLanguage', '');
+  let to = configured;
+  if (!to) {
+    const picked = await vscode.window.showQuickPick(
+      REVIEW_LANGUAGES.map(l => ({ label: l.label, description: l.code })),
+      { placeHolder: 'Show this hyperscript in…' }
+    );
+    if (!picked) return;
+    to = picked.description;
+  }
+
+  const from = config.get<string>('language', 'en');
+  const result = await client.sendRequest<TranslateWithVerificationResult>(
+    'lokascript/translateWithVerification',
+    { code, from, to }
+  );
+
+  if (!result.ok || !result.code) {
+    vscode.window.showErrorMessage(`Translation failed: ${result.error ?? 'unknown error'}`);
+    return;
+  }
+
+  const v = result.verification;
+  const badge = !v?.ok
+    ? '⚠ **Unverified** — the rendering could not be round-trip parsed; treat with care.'
+    : v.faithful
+      ? '✓ **Verified structurally exact** — every fidelity signal is 1.0 (same scorer as the multilingual CI gate).'
+      : [
+          '⚠ **Not fully faithful.**',
+          v.missingActions?.length ? `Missing actions: \`${v.missingActions.join('`, `')}\`` : '',
+          v.spuriousActions?.length
+            ? `Spurious actions: \`${v.spuriousActions.join('`, `')}\``
+            : '',
+          v.missingValues?.length ? `Lost values: \`${v.missingValues.join('`, `')}\`` : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+  const langLabel = REVIEW_LANGUAGES.find(l => l.code === to)?.label ?? to;
+  const content = [
+    `### ${langLabel}`,
+    '',
+    '```hyperscript',
+    result.code,
+    '```',
+    '',
+    badge,
+    '',
+    `<sub>Source (${from}): \`${code}\` · deterministic grammar transformation, not LLM translation</sub>`,
+  ].join('\n');
+
+  const doc = await vscode.workspace.openTextDocument({ content, language: 'markdown' });
+  await vscode.window.showTextDocument(doc, {
+    viewColumn: vscode.ViewColumn.Beside,
+    preview: true,
+  });
 }

@@ -26,7 +26,8 @@
  */
 
 import type { ParserInterface } from './parser-interface';
-import type { ASTNode, CommandNode } from '../types/base-types';
+import type { ASTNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 // Import the lite bundle API
 import liteApi from '../compatibility/browser-bundle-lite';
@@ -91,7 +92,7 @@ class RegexParserImpl implements ParserInterface {
           value: cmd.target,
         },
       }),
-    } as CommandNode;
+    } as CommandNode; // no `isBlocking`: the lite family emits a narrower command than the full parser (Arc 5's)
   }
 
   parseCommands(code: string): (CommandNode | ASTNode)[] {

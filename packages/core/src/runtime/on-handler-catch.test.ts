@@ -51,7 +51,6 @@ describe('event handler catch/finally — execution', () => {
       locals: new Map(),
       globals: new Map(),
       variables: new Map(),
-      events: new Map(),
     };
   });
 

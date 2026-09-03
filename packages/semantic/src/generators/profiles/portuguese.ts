@@ -140,6 +140,11 @@ export const portugueseProfile: LanguageProfile = {
     // (a + _ + menos), so the compound could never tokenize as one keyword.
     unless: { primary: 'salvo', alternatives: ['a_menos'], normalized: 'unless' },
     when: { primary: 'quando', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'muda', normalized: 'changes' },
     where: { primary: 'onde', normalized: 'where' },
     else: { primary: 'senão', normalized: 'else' },
     repeat: { primary: 'repetir', normalized: 'repeat' },

@@ -53,87 +53,11 @@ function createMockEventSource(name: string): EventSource {
 // ============================================================================
 
 describe('RegistryIntegration', () => {
-  describe('Context Provider Integration', () => {
-    it('should enhance context with registered providers', () => {
-      const registry = createRegistry();
-
-      // Create integration with the same registry
-      const integration = createRegistryIntegration({
-        registry: {
-          context: registry.context,
-          eventSources: registry.eventSources,
-        },
-      });
-
-      // Register a provider
-      registry.context.register('myData', () => ({ foo: 'bar' }));
-
-      // Create base context
-      const baseContext = createMockContext();
-
-      // Enhance context
-      const enhanced = integration.enhanceContext(baseContext);
-
-      // Provider should be accessible as a property
-      expect((enhanced as any).myData).toEqual({ foo: 'bar' });
-    });
-
-    it('should lazily evaluate providers', () => {
-      const registry = createRegistry();
-      const integration = createRegistryIntegration({
-        registry: {
-          context: registry.context,
-          eventSources: registry.eventSources,
-        },
-      });
-
-      const providerFn = vi.fn(() => 'computed-value');
-      registry.context.register('computed', providerFn);
-
-      const baseContext = createMockContext();
-      const enhanced = integration.enhanceContext(baseContext);
-
-      // Provider should not be called yet
-      expect(providerFn).not.toHaveBeenCalled();
-
-      // Access the provider
-      const value = (enhanced as any).computed;
-
-      // Provider should now be called
-      expect(providerFn).toHaveBeenCalledOnce();
-      expect(value).toBe('computed-value');
-    });
-
-    it('should cache enhanced contexts', () => {
-      const integration = createRegistryIntegration();
-      const baseContext = createMockContext();
-
-      const enhanced1 = integration.enhanceContext(baseContext);
-      const enhanced2 = integration.enhanceContext(baseContext);
-
-      // Should return the same enhanced context
-      expect(enhanced1).toBe(enhanced2);
-    });
-
-    it('should respect enableContextProviders option', () => {
-      const integration = createRegistryIntegration({
-        enableContextProviders: false,
-      });
-
-      const baseContext = createMockContext();
-      const enhanced = integration.enhanceContext(baseContext);
-
-      // Should return the same context (not enhanced)
-      expect(enhanced).toBe(baseContext);
-    });
-  });
-
   describe('Event Source Integration', () => {
     it('should get registered event source by name', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -150,7 +74,6 @@ describe('RegistryIntegration', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -176,7 +99,6 @@ describe('RegistryIntegration', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -193,7 +115,6 @@ describe('RegistryIntegration', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -242,7 +163,6 @@ describe('RegistryIntegration', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -255,24 +175,6 @@ describe('RegistryIntegration', () => {
       expect(names).toContain('source1');
       expect(names).toContain('source2');
     });
-
-    it('should list context provider names', () => {
-      const registry = createRegistry();
-      const integration = createRegistryIntegration({
-        registry: {
-          context: registry.context,
-          eventSources: registry.eventSources,
-        },
-      });
-
-      registry.context.register('provider1', () => 'value1');
-      registry.context.register('provider2', () => 'value2');
-
-      const names = integration.getContextProviderNames();
-
-      expect(names).toContain('provider1');
-      expect(names).toContain('provider2');
-    });
   });
 
   describe('Cleanup', () => {
@@ -280,7 +182,6 @@ describe('RegistryIntegration', () => {
       const registry = createRegistry();
       const integration = createRegistryIntegration({
         registry: {
-          context: registry.context,
           eventSources: registry.eventSources,
         },
       });
@@ -311,15 +212,11 @@ describe('createRegistryIntegration', () => {
 
   it('should accept options', () => {
     const integration = createRegistryIntegration({
-      enableContextProviders: false,
       enableEventSources: false,
     });
 
-    const baseContext = createMockContext();
-    const enhanced = integration.enhanceContext(baseContext);
-
-    // Should not enhance
-    expect(enhanced).toBe(baseContext);
+    // Disabled event sources resolve nothing, even for a registered name.
+    expect(integration.getEventSource('anything')).toBeUndefined();
   });
 });
 

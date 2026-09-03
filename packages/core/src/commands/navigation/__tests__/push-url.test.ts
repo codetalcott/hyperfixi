@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HistoryCommand, PushUrlCommand, ReplaceUrlCommand } from '../push-url';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, TypedExecutionContext, ExpressionNode } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 
 // ========== Test Utilities ==========
@@ -84,14 +84,11 @@ describe('HistoryCommand (push-url)', () => {
   describe('parseInput - push mode', () => {
     it('should parse simple URL', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/path']);
+      const evaluator = createMockEvaluator(['/path']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/path' },
-          ],
+          args: [{ type: 'string', value: '/path' }],
           modifiers: {},
           commandName: 'push',
         },
@@ -105,18 +102,14 @@ describe('HistoryCommand (push-url)', () => {
 
     it('should parse with title', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/page', 'with', 'title', 'Page Title']);
+      const evaluator = createMockEvaluator(['/page', 'Page Title']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/page' },
-            { type: 'keyword', value: 'with' },
-            { type: 'keyword', value: 'title' },
-            { type: 'string', value: 'Page Title' },
-          ],
-          modifiers: {},
+          args: [{ type: 'string', value: '/page' }],
+          modifiers: {
+            title: { type: 'string', value: 'Page Title' } as ASTNode as ExpressionNode,
+          },
           commandName: 'push',
         },
         evaluator,
@@ -130,14 +123,11 @@ describe('HistoryCommand (push-url)', () => {
 
     it('should default to push mode if command name not specified', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/test']);
+      const evaluator = createMockEvaluator(['/test']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/test' },
-          ],
+          args: [{ type: 'string', value: '/test' }],
           modifiers: {},
         },
         evaluator,
@@ -151,14 +141,11 @@ describe('HistoryCommand (push-url)', () => {
   describe('parseInput - replace mode', () => {
     it('should detect replace mode from command name', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/replaced']);
+      const evaluator = createMockEvaluator(['/replaced']);
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/replaced' },
-          ],
+          args: [{ type: 'string', value: '/replaced' }],
           modifiers: {},
           commandName: 'replace',
         },
@@ -273,19 +260,13 @@ describe('HistoryCommand (push-url)', () => {
   describe('integration', () => {
     it('should parse and execute push end-to-end', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/new-page', 'with', 'title', 'New Page']);
+      const evaluator = createMockEvaluator(['/new-page', 'New Page']);
 
       // Parse
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/new-page' },
-            { type: 'keyword', value: 'with' },
-            { type: 'keyword', value: 'title' },
-            { type: 'string', value: 'New Page' },
-          ],
-          modifiers: {},
+          args: [{ type: 'string', value: '/new-page' }],
+          modifiers: { title: { type: 'string', value: 'New Page' } as ASTNode as ExpressionNode },
           commandName: 'push',
         },
         evaluator,
@@ -304,15 +285,12 @@ describe('HistoryCommand (push-url)', () => {
 
     it('should parse and execute replace end-to-end', async () => {
       const context = createMockContext();
-      const evaluator = createMockEvaluator(['url', '/current']);
+      const evaluator = createMockEvaluator(['/current']);
 
       // Parse
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'keyword', value: 'url' },
-            { type: 'string', value: '/current' },
-          ],
+          args: [{ type: 'string', value: '/current' }],
           modifiers: {},
           commandName: 'replace',
         },

@@ -163,21 +163,25 @@ LokaScript accepts multiple beginner-friendly English forms to make hyperscript 
 
 ### Event Handler Alternatives
 
-| Form               | Example                                    | Notes                            |
-| ------------------ | ------------------------------------------ | -------------------------------- |
-| Standard           | `on click toggle .active`                  | Original hyperscript             |
-| When (temporal)    | `when clicked toggle .active`              | **Recommended** - most intuitive |
-| When (with source) | `when clicked from #button toggle .active` | With element filter              |
-| Upon (formal)      | `upon clicking toggle .active`             | Formal/technical style           |
-| If (conditional)   | `if clicked toggle .active`                | Conditional framing              |
+| Form             | Example                        | Notes                  |
+| ---------------- | ------------------------------ | ---------------------- |
+| Standard         | `on click toggle .active`      | Original hyperscript   |
+| Upon (formal)    | `upon clicking toggle .active` | Formal/technical style |
+| If (conditional) | `if clicked toggle .active`    | Conditional framing    |
 
 ```typescript
 // All parse to equivalent event handler nodes:
 parse('on click toggle .active', 'en');
-parse('when clicked toggle .active', 'en'); // Native idiom
 parse('upon clicking toggle .active', 'en'); // Formal alternative
 parse('if clicked toggle .active', 'en'); // Conditional style
 ```
+
+> **`when` is not an event-handler alias.** In \_hyperscript `when` is the reactive
+> observer — `when <expr> [or <expr>]* changes … end` re-runs its body whenever a
+> watched expression's value changes — and the trailing command guard
+> (`show .x when <cond>`). `when clicked toggle .active` is rejected, exactly as
+> the reference engine rejects it ("Cannot watch local variable 'click'"). The
+> reactive form parses and renders in all 24 languages.
 
 ### Command Synonyms
 

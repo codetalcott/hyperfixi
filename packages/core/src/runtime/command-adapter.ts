@@ -18,8 +18,8 @@ import { HookRegistry } from '../types/hooks';
 import { evaluateAST } from '../parser/runtime';
 import type { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
-import { isControlFlowError } from './runtime-base';
 import { COMMANDS } from '../parser/parser-constants';
+import type { BodyOps } from '../types/program';
 
 /**
  * Adapter that wraps the canonical `evaluateAST` in the `ExpressionEvaluator`
@@ -85,6 +85,8 @@ export interface CommandRawInput {
   args: ASTNode[];
   modifiers: Record<string, unknown>;
   commandName?: string;
+  /** Precompiled `block`/`command` arguments, parallel to `args` (Arc 4b). */
+  bodies?: BodyOps;
 }
 
 /**
@@ -126,76 +128,22 @@ export interface CommandWithParseInput {
    * adapter wraps at that boundary — but it was never the command contract.
    */
   validate?(input: unknown): boolean;
+  /**
+   * `true` when this command consumes `modifiers.when` / `modifiers.where`
+   * ITSELF, and the adapter's generic guard below must leave it alone.
+   *
+   * The guard treats a falsy `when` as "skip the command", which is right for
+   * every command whose `when` is a guard — and wrong for `show`/`hide`, where
+   * upstream defines it as a per-element FILTER that applies the INVERSE action
+   * to the elements it rejects (`show <li/> when <c>` hides the non-matching
+   * ones). Under the generic guard that source would evaluate the condition
+   * once, against a `it` that is not any element, and skip the whole command.
+   *
+   * A flag on the implementation rather than a name list in the adapter: the
+   * command that handles the modifier is the thing that knows it does.
+   */
+  readonly ownsConditionalModifier?: boolean;
   metadata?: CommandMetadata;
-}
-
-/**
- * Context bridge between ExecutionContext and TypedExecutionContext
- * (Copied from V1 - this part is generic and works well)
- */
-export class ContextBridge {
-  /**
-   * Convert ExecutionContext to TypedExecutionContext
-   */
-  static toTyped(context: ExecutionContext): TypedExecutionContext {
-    return {
-      // Core context elements
-      me: context.me,
-      // Owner of `:name` element scope. Must be propagated (not derived from
-      // `me`) so element-scoped vars stay with the handler's element even when
-      // `me` is retargeted — e.g. inside a `tell` block, where `me` becomes the
-      // told element but `:name` must remain bound to the owner.
-      ...(context.owner !== undefined && { owner: context.owner }),
-      it: context.it,
-      you: context.you,
-      result: context.result,
-      ...(context.event !== undefined && { event: context.event }),
-
-      // Variable storage
-      variables: context.variables || new Map(),
-      locals: context.locals || new Map(),
-      globals: context.globals || new Map(),
-
-      // Runtime state
-      ...(context.events !== undefined && { events: context.events }),
-      meta: context.meta || {},
-
-      // Bundle-supplied ExpressionRegistry. Commands like `call` invoke
-      // `evaluateAST(node, context)` directly inside their `execute()`, which
-      // requires `context.registry` for named-expression dispatch
-      // (elementWithSelector, addition, etc.). Propagate it through so the
-      // typed context isn't a registry-less downgrade of the original.
-      ...(context.registry !== undefined && { registry: context.registry }),
-
-      // Enhanced features for typed commands
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'strict',
-      evaluationHistory: [],
-    };
-  }
-
-  /**
-   * Update ExecutionContext from TypedExecutionContext
-   */
-  static fromTyped(
-    typedContext: TypedExecutionContext,
-    originalContext: ExecutionContext
-  ): ExecutionContext {
-    return {
-      ...originalContext,
-      me: typedContext.me,
-      it: typedContext.it,
-      you: typedContext.you,
-      result: typedContext.result,
-      ...(typedContext.event !== undefined && { event: typedContext.event }),
-      ...(typedContext.variables !== undefined && { variables: typedContext.variables }),
-      locals: typedContext.locals,
-      globals: typedContext.globals,
-      ...(typedContext.events !== undefined && { events: typedContext.events }),
-      ...(typedContext.meta !== undefined && { meta: typedContext.meta }),
-    };
-  }
 }
 
 /**
@@ -303,8 +251,12 @@ export class CommandAdapterV2 implements RuntimeCommand {
         return undefined;
       }
 
-      // Convert to typed context
-      const typedContext = ContextBridge.toTyped(context);
+      // No bridge copy any more (Arc 4c step 2): the command sees the caller's
+      // context object. The one default the copy used to supply stays.
+      if (!context.variables) {
+        (context as { variables?: Map<string, unknown> }).variables = new Map();
+      }
+      const typedContext = context;
 
       // Parse input arguments. The shape is command-specific; the adapter
       // treats it opaquely and the command's own execute() narrows it.
@@ -321,9 +273,14 @@ export class CommandAdapterV2 implements RuntimeCommand {
         ) {
           // Check when/where conditional modifiers before execution
           // Both 'when' and 'where' are treated as identical conditional guards
+          //
+          // Unless the command owns the modifier — see
+          // `CommandWithParseInput.ownsConditionalModifier`. `show`/`hide` do:
+          // their `when` filters the target set per element instead of gating
+          // the command, so consuming it here would skip the command outright.
           const mods = rawInput.modifiers as Record<string, unknown> | undefined;
           const whenCondition = (mods?.when || mods?.where) as ASTNode | undefined;
-          if (whenCondition) {
+          if (whenCondition && !this.impl.ownsConditionalModifier) {
             const conditionResult = await evaluateAST(whenCondition, context);
             if (!conditionResult) {
               debug.command(
@@ -340,6 +297,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
               modifiers: mods || {},
               // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
               commandName: rawInput.commandName as string | undefined,
+              bodies: rawInput.bodies as BodyOps | undefined,
             },
             canonicalEvaluator,
             context
@@ -376,9 +334,6 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       debug.command(`CommandAdapterV2: Command result:`, result);
 
-      // Update original context with changes from typed context
-      Object.assign(context, ContextBridge.fromTyped(typedContext, context));
-
       // HOOK: afterExecute
       if (this.hookRegistry) {
         await this.hookRegistry.runAfterExecute(hookCtx, result);
@@ -386,9 +341,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       return result;
     } catch (error) {
-      if (!isControlFlowError(error)) {
-        debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
-      }
+      debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
 
       // HOOK: onError - allow hooks to transform the error
       if (this.hookRegistry && error instanceof Error) {

@@ -8,7 +8,7 @@
 
 import type { Tool } from '@modelcontextprotocol/server';
 import { CrossDomainDispatcher, type DomainRegistry } from '@lokascript/framework';
-import { DOMAIN_PRIORITY } from '@lokascript/domain-config';
+import { DOMAIN_PRIORITY } from '@lokascript/domains';
 import { getString, getNumber, jsonResponse, errorResponse } from './utils.js';
 
 // =============================================================================

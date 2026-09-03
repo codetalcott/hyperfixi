@@ -55,7 +55,30 @@ export type ComplexityLevel =
 // =============================================================================
 
 export type WordOrder = 'SVO' | 'SOV' | 'VSO' | 'V2';
-export type TranslationMethod = 'auto-generated' | 'hand-crafted' | 'verified';
+/**
+ * How a `pattern_translations` row was produced. The first three are the
+ * values `sync-translations` writes today; the rest are legacy/aspirational
+ * labels kept so existing rows and `getTranslationPriority` keep typing.
+ *
+ * - `semantic-render`: @lokascript/semantic `render(parse_en(en), L)` chosen by
+ *   the `best` writer (or the `semantic` writer).
+ * - `grammar-transform`: @lokascript/i18n GrammarTransformer — under the `best`
+ *   writer, a row i18n still renders better than semantic (the kept-row ratchet).
+ * - `grammar-transform-no-reference`: `best` only — the i18n row because semantic
+ *   cannot parse the ENGLISH source (a parser-coverage gap, not a render loss).
+ * - `keyword-substitute`: word-for-word fallback for a language with no grammar profile.
+ * - `original`: the English row; `non-translatable-identity`: markup rows copied verbatim.
+ */
+export type TranslationMethod =
+  | 'semantic-render'
+  | 'grammar-transform'
+  | 'grammar-transform-no-reference'
+  | 'keyword-substitute'
+  | 'original'
+  | 'non-translatable-identity'
+  | 'auto-generated'
+  | 'hand-crafted'
+  | 'verified';
 
 /**
  * Pattern priority levels for translation selection.

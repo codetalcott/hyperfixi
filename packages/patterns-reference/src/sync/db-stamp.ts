@@ -74,6 +74,10 @@ export function computeDbInputHash(dbPath: string): string {
   const root = repoRootFromDbPath(dbPath);
   const files = dbInputFiles(dbPath);
   const h = createHash('sha256');
+  // The renderer used to be hashed in here, because a DB written under
+  // PATTERNS_RENDERER=i18n|semantic|best was a DIFFERENT corpus from the same
+  // source and a gate expecting the default had to see it as stale. There is one
+  // renderer now, so the source files alone determine the corpus.
   h.update(`files:${files.length}\0`);
   for (const f of files) {
     h.update(relative(root, f).split(sep).join('/'));

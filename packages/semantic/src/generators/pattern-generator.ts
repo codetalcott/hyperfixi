@@ -19,6 +19,7 @@ import { resolveMarkerForRole, schemaMarkerAlternatives } from '../parser/utils/
 import {
   generateSOVEventHandlerPattern,
   generateSOVPatientFirstEventHandlerPattern,
+  generateSOVPatientFirstSourceFrontedEventHandlerPattern,
   generateSOVPatientFirstWithDestEventHandlerPattern,
   generateSOVCompactEventHandlerPattern,
   generateSOVSimpleEventHandlerPattern,
@@ -258,6 +259,27 @@ export function generatePatternVariants(
     });
   }
 
+  // Widened-type variants: an EXTRA pattern per entry whose named role accepts a
+  // wider set of value types. Deliberately BELOW every command pattern, so it is
+  // inert on any span a real command can claim — see the schema field's doc for
+  // the ko `transition opacity to 0` collision that rules out widening the main
+  // pattern in place.
+  for (const widen of schema.widenTypeVariants ?? []) {
+    if (widen.excludeLanguages?.includes(profile.code)) continue;
+    const cloneSchema: CommandSchema = {
+      ...schema,
+      roles: schema.roles.map(r =>
+        r.role === widen.role ? { ...r, expectedTypes: [...widen.types] } : r
+      ),
+    };
+    const main = generatePattern(cloneSchema, profile, config);
+    patterns.push({
+      ...main,
+      id: `${schema.action}-${profile.code}-generated-${widen.idSuffix}`,
+      priority: (config.basePriority ?? 100) - (widen.priorityDelta ?? 15),
+    });
+  }
+
   // Verb-first fallback for SOV languages (lower priority than the above).
   if (config.generateVerbFirstVariants !== false) {
     const verbFirst = generateVerbFirstPattern(schema, profile, config);
@@ -430,6 +452,23 @@ export function generateEventHandlerPatterns(
     return [];
   }
 
+  // `js` is never fused either, for the opposite reason: its one role is not a
+  // value, it is an opaque span of raw JavaScript that runs to the block's `end`.
+  // No pattern slot can capture that — the matcher tokenizes and re-spaces it,
+  // and `console.log("x")` comes back as `console .log ( "x" )`. The clause walk
+  // has the two purpose-built consumers (`consumeJsBlock` /
+  // `consumeVerbFinalJsBlock`), and a fused pattern's only effect is to reach the
+  // verb FIRST and strand the body.
+  //
+  // It bit exactly where the marker shapes happened to line up: bn `ক্লিক তে জেএস`
+  // and hi `click पर जेएस` match `{event} <marker> <verb>` outright, while ja
+  // `クリック を で JS実行` and ko `클릭 을 에 JS실행` carry a second marker that
+  // makes the same pattern miss — so ja/ko/tr/qu already took the clause walk and
+  // bn/hi did not. That is a coincidence of surface, not a design.
+  if (commandSchema.action === 'js') {
+    return [];
+  }
+
   // Check if this is a two-role command (like put, set)
   const requiredRoles = commandSchema.roles.filter(r => r.required);
   const hasTwoRequiredRoles = requiredRoles.length === 2;
@@ -492,6 +531,19 @@ export function generateEventHandlerPatterns(
           config
         )
       );
+
+      // Variant 1b: Source-fronted (source phrase between patient and event,
+      // both required) — qu's canonical order for source-carrying commands
+      // (take/remove). Self-gates: null unless the schema has a source role
+      // with a usable marker distinct from the event/patient markers.
+      const sourceFronted = generateSOVPatientFirstSourceFrontedEventHandlerPattern(
+        commandSchema,
+        profile,
+        keyword,
+        eventMarker,
+        config
+      );
+      if (sourceFronted) patterns.push(sourceFronted);
 
       // Variant 2: With destination (required, not optional) — lower priority
       // Only add if destination marker differs from event marker to avoid collision
@@ -731,8 +783,13 @@ function buildRoleTokens(schema: CommandSchema, profile: LanguageProfile): Patte
 
 /**
  * Build token(s) for a single role.
+ *
+ * Exported so the fused event-handler generators can build a wrapped command's
+ * optional-role slots from the very same code the standalone command patterns
+ * use — a hand-rolled copy there is what let the two drift apart in the first
+ * place (see `appendRemainingOptionalRoles` in event-handlers-sov.ts).
  */
-function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternToken[] {
+export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
   // Check for command-specific marker override first
@@ -776,7 +833,20 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     // in an optional group (`go to /page` and `go back` both parse — the
     // render side drops the preposition, so the parse side can't require it).
     const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
-    const position = defaultMarker?.position ?? 'before';
+    // Where the profile carries no RoleMarker for this role there is nothing to
+    // take a side from, and 'before' is wrong in a verb-final language: ja
+    // rendered `opacity を に 0` and bn `opacity কে তে 0`, the override marker
+    // stranded AHEAD of its own value. Default to 'after' for SOV.
+    //
+    // EXEMPT a PASSTHROUGH override — one whose marker is the same string en
+    // uses (`scope`, `manner`). Those are English words carried verbatim into
+    // every language, so they keep English's prepositional side; without the
+    // exemption ja/ko/qu lose `set`'s scope.
+    const isPassthroughOverride =
+      overrideMarker !== undefined && overrideMarker === roleSpec.markerOverride?.en;
+    const position =
+      defaultMarker?.position ??
+      (profile.wordOrder === 'SOV' && !isPassthroughOverride ? 'after' : 'before');
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
     // Single-word overrides also accept every schema-declared alternative
     // (markerLegacy ∪ markerVariants), so correcting an override's marker does
@@ -826,11 +896,23 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
       };
     };
     const pushMarker = (marker: PatternToken): void => {
-      tokens.push(
-        profile.markersOptional || roleSpec.markerOptional?.[profile.code]
-          ? { type: 'group', optional: true, tokens: [marker] }
-          : marker
-      );
+      if (!profile.markersOptional && !roleSpec.markerOptional?.[profile.code]) {
+        tokens.push(marker);
+        return;
+      }
+      // A profile-wide `markersOptional` says the marker may be DROPPED
+      // colloquially, not that it is absent from canonical output — so the group
+      // still renders. A per-role `markerOptional` is the opposite: the render
+      // side genuinely omits that marker (`go to /page` vs `go back`), so it
+      // stays render-optional too.
+      tokens.push({
+        type: 'group',
+        optional: true,
+        ...(profile.markersOptional && !roleSpec.markerOptional?.[profile.code]
+          ? { renderRequired: true }
+          : {}),
+        tokens: [marker],
+      });
     };
     if (defaultMarker.position === 'before') {
       // Preposition: "on #button"

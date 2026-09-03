@@ -361,7 +361,7 @@ export const setHeaderCommand: CommandWithParseInput = {
 import { definePlugin } from '../index';
 
 /**
- * Server plugin - Bundle of server-side commands and context providers
+ * Server plugin - Bundle of server-side commands
  *
  * Installation:
  *   import { registry } from '@hyperfixi/core';
@@ -374,43 +374,6 @@ export const serverPlugin = definePlugin({
   version: '1.0.0',
 
   commands: [respondCommand, redirectCommand, setHeaderCommand],
-
-  contextProviders: [
-    {
-      name: 'request',
-      provide: ctx => ctx.locals.get('request'),
-      options: { description: 'Current HTTP request', cache: false },
-    },
-    {
-      name: 'response',
-      provide: ctx => ctx.locals.get('response'),
-      options: { description: 'HTTP response builder', cache: false },
-    },
-    {
-      name: 'body',
-      provide: ctx => {
-        const request = ctx.locals.get('request') as { body?: unknown } | undefined;
-        return request?.body;
-      },
-      options: { description: 'Request body', cache: true },
-    },
-    {
-      name: 'query',
-      provide: ctx => {
-        const request = ctx.locals.get('request') as { query?: unknown } | undefined;
-        return request?.query;
-      },
-      options: { description: 'Query parameters', cache: true },
-    },
-    {
-      name: 'params',
-      provide: ctx => {
-        const request = ctx.locals.get('request') as { params?: unknown } | undefined;
-        return request?.params;
-      },
-      options: { description: 'Route parameters', cache: true },
-    },
-  ],
 
   setup(registry) {
     console.log('[hyperfixi-server] Server plugin installed');

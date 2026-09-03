@@ -19,11 +19,13 @@ export {
 
 // Compatibility: hyperscript (deprecated, use lokascript)
 export { hyperscript } from './api/hyperscript-api';
+export type { FrontEnd, FrontEndParseResult } from './parser/semantic-integration';
 
 // Export core types for advanced usage
 export type {
   ASTNode,
   ExecutionContext,
+  Scope,
   ParseResult,
   ParseError,
   Token,
@@ -48,69 +50,6 @@ export {
   getElementVar,
   setElementVar,
 } from './core/context';
-export { Lexer, Tokens } from './tokenizer';
-
-// Export enhanced feature implementations
-/**
- * @deprecated These four are dead scaffolding with no production callers, and
- * they cannot execute a `DefNode` from the parser (see the module docblock in
- * `./features/def`). Real `def` execution lives in
- * `RuntimeBase.installFunction`. Slated for removal in the next breaking-change
- * batch; they remain only because dropping a public export is semver-visible.
- */
-export {
-  TypedDefFeatureImplementation,
-  createDefFeature,
-  createDef,
-  enhancedDefImplementation,
-  type DefInput,
-  type DefOutput,
-} from './features/def';
-
-export {
-  TypedOnFeatureImplementation,
-  createOnFeature,
-  createOn,
-  enhancedOnImplementation,
-  type EnhancedOnInput,
-  type EnhancedOnOutput,
-} from './features/on';
-
-export {
-  TypedBehaviorsFeatureImplementation,
-  createBehaviorsFeature,
-  createBehaviors,
-  enhancedBehaviorsImplementation,
-  type BehaviorsInput,
-  type BehaviorsOutput,
-} from './features/behaviors';
-
-export {
-  TypedSocketsFeatureImplementation,
-  createSocketsFeature,
-  createSockets,
-  enhancedSocketsImplementation,
-  type SocketsInput,
-  type SocketsOutput,
-} from './features/sockets';
-
-export {
-  TypedWebWorkerFeatureImplementation,
-  createWebWorkerFeature,
-  createWebWorker,
-  enhancedWebWorkerImplementation,
-  type WebWorkerInput,
-  type WebWorkerOutput,
-} from './features/webworker';
-
-export {
-  TypedEventSourceFeatureImplementation,
-  createEventSourceFeature,
-  createEventSource,
-  enhancedEventSourceImplementation,
-  type EventSourceInput,
-  type EventSourceOutput,
-} from './features/eventsource';
 
 // Export enhanced context types
 export type {

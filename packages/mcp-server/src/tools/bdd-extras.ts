@@ -18,13 +18,13 @@ async function getBDDExtras() {
     return { parseScenario: bddScenarioParser, generator: bddGenerator, renderer: bddRenderer };
 
   try {
-    const mod = await import('@lokascript/domain-bdd');
+    const mod = await import('@lokascript/domains/bdd');
     bddScenarioParser = mod.parseBDDScenario;
     bddGenerator = mod.bddCodeGenerator;
     bddRenderer = mod.renderBDD ?? null;
     return { parseScenario: bddScenarioParser, generator: bddGenerator, renderer: bddRenderer };
   } catch {
-    throw new Error('@lokascript/domain-bdd not available for multi-step parsing.');
+    throw new Error('@lokascript/domains/bdd not available for multi-step parsing.');
   }
 }
 

@@ -39,6 +39,19 @@ import './languages/ko';
 import './languages/ar';
 import './languages/tr';
 import './languages/id';
+// Render vocabulary for the same set (separate modules so parse-only
+// consumers can drop them — see ./lexicon-registry.ts).
+import './lexicons/en';
+import './lexicons/es';
+import './lexicons/pt';
+import './lexicons/fr';
+import './lexicons/de';
+import './lexicons/ja';
+import './lexicons/zh';
+import './lexicons/ko';
+import './lexicons/ar';
+import './lexicons/tr';
+import './lexicons/id';
 
 // =============================================================================
 // Version

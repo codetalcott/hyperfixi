@@ -8,6 +8,12 @@
 import { resolveLanguage } from './language-resolver';
 import { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
+import {
+  acceptedByHost,
+  warnRejectedOnce,
+  resetHostValidationWarnings,
+  type HyperscriptParseHost,
+} from './host-validate';
 
 export interface PluginOptions extends Partial<PreprocessorConfig> {
   /** Default language for all elements (overridable per-element). */
@@ -16,6 +22,38 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
   languageAttribute?: string;
   /** Enable debug logging to console. Default: false */
   debug?: boolean;
+  /**
+   * Validate rendered English on the HOST parser before committing the
+   * rewrite; on rejection, fall back to the original text (so parse errors
+   * name the author's code, not generated English). Default: true.
+   * No-op on host builds that expose no `parse()`.
+   */
+  validateWithHost?: boolean;
+}
+
+/** Languages already warned about an unchanged translation this page load.
+ *  Unchanged output is common and often legitimate (canonical-English
+ *  hyperscript under a non-en lang scope), so warning per element per
+ *  processNode was pure noise — mirror htmx-adapter's warn-once-per-lang
+ *  convention and leave per-element detail to `debug: true`. */
+const warnedUnchangedLang = new Set<string>();
+
+/** Reset the warn-once state (unchanged + host-rejected). Mainly for tests. */
+export function resetTranslationWarnings(): void {
+  warnedUnchangedLang.clear();
+  resetHostValidationWarnings();
+}
+
+function warnUnchangedOnce(lang: string, src: string): void {
+  if (warnedUnchangedLang.has(lang)) return;
+  warnedUnchangedLang.add(lang);
+  console.warn(
+    `[hyperscript-i18n] Translation unchanged for lang="${lang}": "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
+      'This is fine if the source is already canonical English; otherwise the input may not match ' +
+      'any known pattern, or the language may not be registered. Original text is passed to ' +
+      '_hyperscript as-is. Further elements in this language stay quiet — enable { debug: true } ' +
+      'for per-element detail.'
+  );
 }
 
 /**
@@ -35,7 +73,8 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
  */
 export function hyperscriptI18n(options: PluginOptions = {}) {
   return function plugin(hs: unknown): void {
-    installAttributeTranslator(hs as HyperscriptHost, (src, elt) => {
+    const host = hs as HyperscriptHost & HyperscriptParseHost;
+    installAttributeTranslator(host, (src, elt) => {
       // Resolve language
       const lang = resolveLanguageWithOptions(elt, options);
 
@@ -46,16 +85,27 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       const english = preprocessToEnglish(src, lang, options);
 
       if (english !== src) {
+        // Validity gate: the host parser is the consumer of this rewrite —
+        // if it rejects the English, committing it would only trade a
+        // translation gap for a parse error naming code the author never
+        // wrote. Fall back to the original text instead.
+        if (options.validateWithHost !== false && !acceptedByHost(host, english)) {
+          if (options.debug) {
+            console.log(
+              `[hyperscript-i18n] ${lang}: host rejected "${english}" — keeping "${src}"`
+            );
+          } else {
+            warnRejectedOnce(lang, src, english);
+          }
+          return src;
+        }
         if (options.debug) {
           console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
         }
+      } else if (options.debug) {
+        console.log(`[hyperscript-i18n] ${lang}: unchanged "${src}"`);
       } else {
-        // Translation produced no change — likely a failure
-        console.warn(
-          `[hyperscript-i18n] Translation unchanged for lang="${lang}": "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
-            'The input may not match any known pattern, or the language may not be registered. ' +
-            'Original text will be passed to _hyperscript as-is.'
-        );
+        warnUnchangedOnce(lang, src);
       }
 
       return english;

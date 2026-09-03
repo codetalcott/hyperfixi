@@ -24,7 +24,7 @@ import type {
   SemanticRole,
 } from '../types';
 
-import { convertValue } from './value-converters';
+import { convertValue, isImplicitValue } from './value-converters';
 import { resolveCommandMapper, type CommandMapperResult } from './command-mappers';
 import type { ExpressionNode } from './expression-parser';
 
@@ -225,12 +225,18 @@ export class ASTBuilder {
    * validator, whose curated subset excludes all of these. Emitting the genuine
    * feature nodes belongs with the work that adds them to that subset. What this
    * DOES guarantee is that the body survives into the AST rather than being
-   * silently dropped.
+   * silently dropped — and, for the reactive `when`, that the watched
+   * expression leads the args (`[condition, block]`, the `buildConditional`
+   * shape), so `when $a or $b changes …` no longer loses what it watches.
    */
   private buildFeature(node: FeatureSemanticNode): CommandNode {
     const args: ExpressionNode[] = [];
     if (node.name !== undefined) {
       args.push({ type: 'literal', value: node.name } as unknown as ExpressionNode);
+    }
+    const watched = node.roles.get('condition');
+    if (watched) {
+      args.push(convertValue(watched));
     }
     args.push({
       type: 'block',
@@ -268,7 +274,12 @@ export class ASTBuilder {
       cmd = this.buildGenericCommand(node);
     }
 
-    // Attach semantic roles for downstream consumers (interchange format, AOT compiler)
+    // Attach semantic roles for downstream consumers (interchange format, AOT
+    // compiler). This reads the FULL role map deliberately — including the
+    // materialized defaults `getRole` withholds from `args`/`modifiers`. The
+    // split is the point: `args` is the syntax the author wrote,
+    // `semanticRoles` is the resolved semantics, and a consumer that wants a
+    // bare `focus`'s target reads `semanticRoles.patient`.
     if (node.roles && node.roles.size > 0) {
       const roles: Record<string, ReturnType<typeof convertValue>> = {};
       for (const [role, value] of node.roles) {
@@ -295,10 +306,13 @@ export class ASTBuilder {
     const argRoles: SemanticRole[] = ['patient', 'source', 'quantity'];
     const modifierRoles: SemanticRole[] = ['destination', 'duration', 'method', 'style'];
 
-    // Convert argument roles
+    // Convert argument roles. A materialized schema default (tagged `implicit`)
+    // is skipped: `args`/`modifiers` record what the author WROTE, and the
+    // runtime already applies every default at execution. The value survives on
+    // `semanticRoles` below, which carries the full role map untouched.
     for (const role of argRoles) {
       const value = node.roles.get(role);
-      if (value) {
+      if (value && !isImplicitValue(value)) {
         args.push(convertValue(value));
       }
     }
@@ -306,7 +320,7 @@ export class ASTBuilder {
     // Convert modifier roles
     for (const role of modifierRoles) {
       const value = node.roles.get(role);
-      if (value) {
+      if (value && !isImplicitValue(value)) {
         // Map semantic roles to hyperscript modifier keywords
         const modifierKey = this.roleToModifierKey(role);
         modifiers[modifierKey] = convertValue(value);

@@ -70,6 +70,15 @@ export { extractOperations } from './operations/extract.js';
 // Diff engine (for custom pipelines)
 export { diffBehaviors, canonicalizeOp } from './diff/diff.js';
 
+// Fidelity scoring (agent-era arc 4) — scorers live in @lokascript/semantic/fidelity
+export { scoreNodes } from './scoring/score.js';
+export type {
+  ScoreRequest,
+  ScoreResponse,
+  FidelityScores,
+  FidelityReport,
+} from './scoring/score.js';
+
 // Test renderers
 export { PlaywrightRenderer } from './renderers/playwright.js';
 export type { TestRenderer, TestRenderOptions, GeneratedTest } from './renderers/types.js';

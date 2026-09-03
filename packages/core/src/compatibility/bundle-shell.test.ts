@@ -30,7 +30,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import hybridComplete from './browser-bundle-hybrid-complete';
 import lite from './browser-bundle-lite';
-import litePlus from './browser-bundle-lite-plus';
 import { SHELL_CORE_KEYS, createProcessElements } from './bundle-shell';
 import { generateBundleCode } from '../bundle-generator/generator';
 
@@ -57,12 +56,6 @@ const SHIPPED_SHELLS = [
     api: lite as unknown as Record<string, unknown>,
     hasBlocks: false,
     extras: [],
-  },
-  {
-    name: 'lite-plus',
-    api: litePlus as unknown as Record<string, unknown>,
-    hasBlocks: false,
-    extras: ['addAliases', 'addEventAliases'],
   },
 ] as const;
 
@@ -385,20 +378,6 @@ describe('witnessed extras', () => {
     await api.execute('basculer .fr on me', me);
 
     expect(me.classList.contains('fr')).toBe(true);
-  });
-
-  it('lite-plus: addAliases makes the alias actually execute', async () => {
-    const api = litePlus as unknown as {
-      addAliases: (a: Record<string, string>) => void;
-      execute: (code: string, el?: Element) => Promise<unknown>;
-    };
-    const me = document.createElement('div');
-    container.appendChild(me);
-
-    api.addAliases({ agregar: 'add' });
-    await api.execute('agregar .es to me', me);
-
-    expect(me.classList.contains('es')).toBe(true);
   });
 
   it('hybrid-complete: tokenize returns tokens for real source', () => {

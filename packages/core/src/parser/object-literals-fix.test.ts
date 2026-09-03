@@ -17,11 +17,6 @@ const context: ExecutionContext = {
   locals: new Map(),
   globals: new Map(),
   parent: undefined,
-  halted: false,
-  returned: false,
-  broke: false,
-  continued: false,
-  async: false,
 };
 
 describe('Object Literal - TDD Fix', () => {

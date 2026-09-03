@@ -133,24 +133,6 @@ describe('CopyCommand', () => {
       expect(input.source).toBe('Hello World');
       expect(input.format).toBe('text');
     });
-
-    it('should parse format from modifier', async () => {
-      const context = createMockContext();
-      // First call returns source, second call returns format
-      const evaluator = createMockEvaluator(['<p>HTML</p>', 'html']);
-
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: '<p>HTML</p>' }],
-          modifiers: { format: { type: 'literal', value: 'html' } as any },
-        },
-        evaluator,
-        context
-      );
-
-      expect(input.source).toBe('<p>HTML</p>');
-      expect(input.format).toBe('html');
-    });
   });
 
   // ==========================================================================

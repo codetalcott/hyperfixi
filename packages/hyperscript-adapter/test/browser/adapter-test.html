@@ -75,9 +75,19 @@
   <button id="btn-ar-toggle" _="on click بدّل .active" data-lang="ar">Toggle AR</button>
 </section>
 
+<!-- Standard lang cascade: <section lang="es"> localizes _ inside it (no data-* attrs) -->
+<section id="test-lang-cascade" lang="es">
+  <button id="btn-lang-es" _="on click alternar .active">Toggle via lang=es</button>
+  <!-- Nested lang="en" opts back out: canonical English under an es scope -->
+  <div lang="en">
+    <button id="btn-lang-nested-en" _="on click toggle .highlight on me">Nested EN</button>
+  </div>
+</section>
+
 <!-- Load scripts -->
-<!-- 1. Original _hyperscript runtime -->
-<script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
+<!-- 1. Original _hyperscript runtime (vendored — see vendor/README.md; the
+     adapter requires addBeforeProcessHook, absent before 0.9.9x) -->
+<script src="vendor/_hyperscript-0.9.93.min.js"></script>
 
 <!-- 2. Adapter plugin (full bundle with all 24 languages) -->
 <script src="../../dist/hyperscript-i18n.global.js"></script>

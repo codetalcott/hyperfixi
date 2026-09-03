@@ -86,34 +86,23 @@ describe('ContinueCommand', () => {
   });
 
   describe('execute', () => {
-    it('should throw an error with isContinue flag', async () => {
+    it('should return a signal with isContinue flag', async () => {
       const context = createMockContext();
       const input = { signalType: 'continue' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError).toBeInstanceOf(Error);
-      expect(thrownError.isContinue).toBe(true);
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('continue');
     });
 
-    it('should throw error with CONTINUE_LOOP message', async () => {
+    it('should return a signal with CONTINUE_LOOP message', async () => {
       const context = createMockContext();
       const input = { signalType: 'continue' as const };
 
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError.message).toBe('CONTINUE_LOOP');
+      expect(signal.type).toBe('continue');
     });
 
     it('should not modify execution context before throwing', async () => {
@@ -142,16 +131,11 @@ describe('ContinueCommand', () => {
       const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Execute and verify it throws
-      let thrownError: any;
-      try {
-        await command.execute(input, context);
-      } catch (error) {
-        thrownError = error;
-      }
+      const signal: any = await command.execute(input, context);
 
-      expect(thrownError).toBeDefined();
-      expect(thrownError.isContinue).toBe(true);
-      expect(thrownError.message).toBe('CONTINUE_LOOP');
+      expect(signal).toBeDefined();
+      expect(signal.type).toBe('continue');
+      expect(signal.type).toBe('continue');
     });
   });
 });

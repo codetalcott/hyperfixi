@@ -18,13 +18,13 @@ async function getBehaviorSpecExtras() {
     return { parseSpec: behaviorSpecParser, compile: behaviorCompiler, render: behaviorRenderer };
 
   try {
-    const mod = await import('@lokascript/domain-behaviorspec');
+    const mod = await import('@lokascript/domains/behaviorspec');
     behaviorSpecParser = mod.parseBehaviorSpec;
     behaviorCompiler = mod.compileBehaviorSpec;
     behaviorRenderer = mod.renderBehaviorSpec;
     return { parseSpec: behaviorSpecParser, compile: behaviorCompiler, render: behaviorRenderer };
   } catch {
-    throw new Error('@lokascript/domain-behaviorspec not available for multi-line parsing.');
+    throw new Error('@lokascript/domains/behaviorspec not available for multi-line parsing.');
   }
 }
 

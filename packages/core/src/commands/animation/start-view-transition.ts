@@ -23,6 +23,10 @@
  * resolves with no captured snapshot.
  */
 
+import { isOk } from '../../types/result';
+import type { ExecutionSignal } from '../../types/result';
+import type { Op } from '../../types/program';
+import { bodyOps } from '../helpers/body-ops';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
@@ -34,12 +38,13 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface StartViewTransitionInput {
-  /** Optional CSS view-transition-name. */
+  /** Optional `using <type>` — mapped to the View Transitions API `types` */
   transitionName?: string;
-  /** AST nodes representing the commands inside the transition body. */
-  body: ASTNode[];
+  /** The compiled body commands — closures handed in by the runtime (Arc 4b) */
+  body: Op[];
 }
 
 export interface StartViewTransitionOutput {
@@ -56,6 +61,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     syntax: ['start view transition [using <type>] <body> end'],
     examples: [
       'start view transition add .highlight to me end',
+      'start view transition using "slide" add .active to #panel end',
       'start view transition using "slide" then put result into #panel end',
     ],
     sideEffects: ['animation', 'dom-mutation'],
@@ -70,13 +76,13 @@ export class StartViewTransitionCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'start'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<StartViewTransitionInput> {
     // Body is in args (the parser packs the command list there). Transition
     // name is in modifiers.transitionName (a literal node from parseStartCommand).
-    const body = raw.args ?? [];
+    const body = bodyOps(raw, 0);
     let transitionName: string | undefined;
     if (raw.modifiers?.transitionName) {
       const value = await evaluator.evaluate(raw.modifiers.transitionName, context);
@@ -88,20 +94,18 @@ export class StartViewTransitionCommand implements DecoratedCommand {
   async execute(
     input: StartViewTransitionInput,
     context: TypedExecutionContext
-  ): Promise<StartViewTransitionOutput> {
-    const runtimeExecute = context.locals.get('_runtimeExecute') as
-      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
-
+  ): Promise<StartViewTransitionOutput | ExecutionSignal> {
     let commandsExecuted = 0;
+    // A signal from the body ends it and passes through to the boundary that
+    // owns it, once the transition has run.
+    let signal: ExecutionSignal | undefined;
 
     const runBody = async () => {
       for (const cmd of input.body) {
-        if (runtimeExecute) {
-          await runtimeExecute(cmd, context);
-        } else if (cmd && typeof (cmd as any).execute === 'function') {
-          await (cmd as any).execute(context);
-        } else if (typeof cmd === 'function') {
-          await (cmd as any)(context);
+        const result = await cmd(context);
+        if (!isOk(result)) {
+          signal = result.error;
+          break;
         }
         commandsExecuted++;
       }
@@ -110,7 +114,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     if (!isViewTransitionsSupported()) {
       // Fallback: run body directly. No animation, but commands still execute.
       await runBody();
-      return { usedViewTransition: false, commandsExecuted };
+      return signal ?? { usedViewTransition: false, commandsExecuted };
     }
 
     // Forward the parsed `transitionName` (upstream `start view transition
@@ -121,7 +125,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     // `view-transition-name`).
     const options = input.transitionName ? { transitionName: input.transitionName } : undefined;
     await withViewTransition(runBody, options);
-    return { usedViewTransition: true, commandsExecuted };
+    return signal ?? { usedViewTransition: true, commandsExecuted };
   }
 }
 

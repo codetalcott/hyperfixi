@@ -35,6 +35,8 @@ import { getEnglishOnlyPatterns } from './languages/en';
 
 // Import generator directly (not from barrel)
 import { generatePatternsForLanguage } from '../generators/pattern-generator';
+import { getSchema } from '../generators/command-schemas';
+import type { ActionType, ExtractionRule } from '../types';
 
 // Import registry functions for lazy loading support
 import { tryGetProfile } from '../registry';
@@ -158,7 +160,57 @@ export function buildPatternsForLanguage(language: string): LanguagePattern[] {
   // Add generated patterns for this language (per-language cache supports lazy loading)
   patterns.push(...getGeneratedPatternsForLanguage(language));
 
-  return patterns;
+  return patterns.map(inheritSchemaDefaults);
+}
+
+/**
+ * Roles whose schema default is inherited only by the GENERATED patterns that
+ * declare them. `on.source` is the one exclusion: only a minority of the `on`
+ * patterns in every language (English included) carry the default, so
+ * inheriting it here would materialize an implicit `source: me` on ~2800
+ * patterns at once — a corpus-wide change with nothing asking for it. The
+ * asymmetry is symmetric across languages, so it costs no fidelity signal.
+ */
+const DEFAULT_INHERITANCE_EXCLUSIONS: ReadonlySet<string> = new Set(['on.source']);
+
+/**
+ * Give a hand-crafted pattern the schema defaults the generated ones already get.
+ *
+ * `generatePattern` runs every optional role with a `default` through
+ * `buildExtractionRulesWithDefaults`, so a generated pattern that does not
+ * capture, say, `toggle.destination` still materializes the schema's implicit
+ * `me` (`applyExtractionRules` tags it `implicit: true`). The hand-crafted
+ * patterns in `src/patterns/*.ts` hand-write their `extraction` maps and had
+ * simply never been given those defaults, so which pattern won a match decided
+ * whether the implicit role existed: `.active কে টগল` (generated) kept
+ * `toggle.destination`, `.active কে টগল করুন` (`toggle-bn-full`, hand-crafted)
+ * dropped it. That is invisible to a bare-command gate — the English round-trip
+ * is identical either way — and shows up only as an R1 role-set difference
+ * against the English reference, which is where the `i18n-kept-rows` ratchet
+ * found it (bn/de/qu/hi/th/zh toggle, add, remove, increment, decrement).
+ *
+ * Inheritance never overrides: a rule that already declares a `default` (or a
+ * static `value`) keeps it, and a role the pattern actually captures is
+ * unaffected — `applyExtractionRules` consults `default` only when nothing was
+ * captured.
+ */
+function inheritSchemaDefaults(pattern: LanguagePattern): LanguagePattern {
+  const schema = getSchema(pattern.command as ActionType);
+  if (!schema) return pattern;
+
+  let extraction: Record<string, ExtractionRule> | undefined;
+  for (const roleSpec of schema.roles) {
+    if (roleSpec.required || !roleSpec.default) continue;
+    if (DEFAULT_INHERITANCE_EXCLUSIONS.has(`${pattern.command}.${roleSpec.role}`)) continue;
+    const existing = (pattern.extraction as Record<string, ExtractionRule> | undefined)?.[
+      roleSpec.role
+    ];
+    if (existing?.default !== undefined || existing?.value !== undefined) continue;
+    extraction ??= { ...(pattern.extraction as Record<string, ExtractionRule>) };
+    extraction[roleSpec.role] = { ...existing, default: roleSpec.default };
+  }
+
+  return extraction ? { ...pattern, extraction } : pattern;
 }
 
 // Languages with hand-crafted patterns

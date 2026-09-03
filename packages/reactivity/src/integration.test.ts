@@ -112,6 +112,139 @@ describe('@hyperfixi/reactivity — integration', () => {
 
       document.body.removeChild(el);
     });
+
+    // Regression: reading a global that does not exist YET is still a read.
+    // Every notifyGlobalRead call used to sit inside a `globals.has(name)`
+    // guard, so a live block whose variable was unset on first pass — the
+    // common case for a counter starting from nothing — subscribed to
+    // nothing and never re-rendered. The pre-seeded test above could not see
+    // it. Browser symptom: examples/hx-v4-i18n/live-multilang.html counters
+    // stuck at 0.
+    it('subscribes to a global that is UNSET on the first pass', async () => {
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+      // deliberately no ctx.globals.set('count', …)
+
+      const r = parse('live\n  put $count into me\nend');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      ctx.globals.set('count', 7);
+      reactive.notifyGlobal('count');
+      await settle();
+      expect(el.textContent).toBe('7');
+
+      document.body.removeChild(el);
+    });
+
+    it('subscribes through an `or` default when the global is unset', async () => {
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+
+      const r = parse('live\n  put $count or 0 into me\nend');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+      expect(el.textContent).toBe('0'); // the `or` default rendered
+
+      ctx.globals.set('count', 3);
+      reactive.notifyGlobal('count');
+      await settle();
+      expect(el.textContent).toBe('3');
+
+      document.body.removeChild(el);
+    });
+
+    // The tests above hand-fire `reactive.notifyGlobal(...)`, which proves the
+    // subscription but NOT the write path. This one drives the whole loop the
+    // way a page does — a second script does `set $count to …` — so a missing
+    // write-notify (or a write that bypasses setGlobal) fails here.
+    it('re-runs when a real `set $count` executes, with no manual notify', async () => {
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+
+      const live = parse('live\n  put $count or 0 into me\nend');
+      expect(live.success).toBe(true);
+      await runtime.execute(live.node!, ctx);
+      await settle();
+      expect(el.textContent).toBe('0');
+
+      // Separate execution, separate context — exactly like a button handler.
+      // Contexts share ONE globals map at runtime (`getSharedGlobals()`), so
+      // the harness must share it too; a fresh Map here would make the test
+      // pass or fail for reasons the product never sees.
+      const writer = createContext(document.createElement('button'));
+      (writer as { globals: Map<string, unknown> }).globals = ctx.globals;
+      const setter = parse('set $count to 5');
+      expect(setter.success).toBe(true);
+      await runtime.execute(setter.node!, writer);
+      await settle();
+
+      expect(el.textContent).toBe('5');
+
+      document.body.removeChild(el);
+    });
+
+    // Regression: several `live` blocks on one page initialize concurrently
+    // (each is queued as its own microtask, and each body `await`s). Dependency
+    // capture uses a single "current effect" slot, so interleaved async runs
+    // can attribute one effect's reads to another — leaving blocks subscribed
+    // to nothing. Browser symptom: live-multilang.html's three counters froze
+    // while the single-counter page worked. One effect per test can never see
+    // this; this test needs THREE.
+    it('tracks dependencies correctly when several live blocks initialize concurrently', async () => {
+      const els = [0, 1, 2].map(() => {
+        const el = document.createElement('div');
+        document.body.appendChild(el);
+        return el;
+      });
+      const shared = new Map<string, unknown>();
+
+      for (const el of els) {
+        const ctx = createContext(el);
+        (ctx as { globals: Map<string, unknown> }).globals = shared;
+        const r = parse('live\n  put $count or 0 into me\nend');
+        expect(r.success).toBe(true);
+        // Deliberately NOT awaited between blocks — a page starts them all.
+        void runtime.execute(r.node!, ctx);
+      }
+      await settle();
+      expect(els.map(e => e.textContent)).toEqual(['0', '0', '0']);
+
+      shared.set('count', 4);
+      reactive.notifyGlobal('count');
+      await settle();
+
+      expect(els.map(e => e.textContent)).toEqual(['4', '4', '4']);
+
+      els.forEach(e => document.body.removeChild(e));
+    });
+
+    it('does not register a global dep for a bare (non-$) identifier', async () => {
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+      ctx.locals.set('count', 1);
+
+      const r = parse('live\n  put count into me\nend');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+      expect(el.textContent).toBe('1');
+
+      // A GLOBAL named `count` changing must not re-run a body that read the
+      // LOCAL `count` — otherwise the top-of-function hook is over-firing.
+      ctx.globals.set('count', 99);
+      reactive.notifyGlobal('count');
+      await settle();
+      expect(el.textContent).toBe('1');
+
+      document.body.removeChild(el);
+    });
   });
 
   describe('when ... changes', () => {

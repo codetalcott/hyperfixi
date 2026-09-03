@@ -523,7 +523,12 @@ function getTogglePatternsTh(): LanguagePattern[] {
       id: 'toggle-th-simple',
       language: 'th',
       command: 'toggle',
-      priority: 100,
+      // 90, not 100: the GENERATED th pattern carries the optional marker
+      // groups ([จาก {source}] / [ใน {destination}] [{duration}]) this bare
+      // form lacks; at a 100/100 tie registration order made this one win and
+      // silently drop the marked phrase (the th rows of the bare-render
+      // allowlist). Same layering as bn's -simple (90 under its -full/-generated).
+      priority: 90,
       template: {
         format: 'สลับ {patient}',
         tokens: [

@@ -23,7 +23,8 @@
 import { Parser } from './parser';
 import { tokenize } from './tokenizer';
 import type { ParserInterface } from './parser-interface';
-import type { ASTNode, CommandNode } from '../types/base-types';
+import type { ASTNode } from '../types/base-types';
+import type { CommandNode } from '../ast/nodes';
 
 /**
  * Full parser implementation.
@@ -90,7 +91,6 @@ class FullParserImpl implements ParserInterface {
     'take',
     // Advanced
     'js',
-    'async',
     // Behaviors
     'install',
     // Templates

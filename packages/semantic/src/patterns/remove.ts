@@ -11,24 +11,14 @@ import type { LanguagePattern } from '../types';
 
 function getRemovePatternsBn(): LanguagePattern[] {
   return [
-    // Full pattern: .active কে সরান
-    {
-      id: 'remove-bn-full',
-      language: 'bn',
-      command: 'remove',
-      priority: 100,
-      template: {
-        format: '{patient} কে সরান',
-        tokens: [
-          { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'কে' },
-          { type: 'literal', value: 'সরান', alternatives: ['মুছুন'] },
-        ],
-      },
-      extraction: {
-        patient: { position: 0 },
-      },
-    },
+    // `remove-bn-full` (`{patient} কে সরান`, priority 100) lived here. It was
+    // redundant with `remove-bn-generated-simple`, which carries the same tokens
+    // plus a TYPED patient slot and one more verb alternative — and it was doing
+    // harm: its untyped leading role takes an EXPRESSION, so on
+    // `আগের <li/> থেকে .highlight কে সরান` it swallowed the positional run AND
+    // the source clause behind it (`previous <li/> থেকে .highlight`), found its
+    // own `কে`, and won the priority tie against `remove-bn-generated`, which
+    // had bound both roles correctly (bn previous-element, bare surface).
     // Simple pattern: সরান .active
     {
       id: 'remove-bn-simple',
@@ -391,7 +381,12 @@ function getRemovePatternsTh(): LanguagePattern[] {
       id: 'remove-th-simple',
       language: 'th',
       command: 'remove',
-      priority: 100,
+      // 90, not 100: the GENERATED th pattern carries the optional marker
+      // groups ([จาก {source}] / [ใน {destination}] [{duration}]) this bare
+      // form lacks; at a 100/100 tie registration order made this one win and
+      // silently drop the marked phrase (the th rows of the bare-render
+      // allowlist). Same layering as bn's -simple (90 under its -full/-generated).
+      priority: 90,
       template: {
         format: 'ลบ {patient}',
         tokens: [

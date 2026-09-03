@@ -137,6 +137,15 @@ export const hindiProfile: LanguageProfile = {
     // Control flow
     if: { primary: 'अगर', alternatives: ['यदि'], normalized: 'if' },
     when: { primary: 'जब', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    // SPACED whole phrase, matched by the tokenizer's multi-word keyword walk.
+    // NEVER register bare `बदलने`: the stem `बदल` is a registered toggle-verb
+    // alternative (patterns/toggle.ts) and the morphological normalizer strips
+    // conjugations — a bare entry re-opens the आकार_बदलें phantom-toggle class.
+    changes: { primary: 'बदलने पर', normalized: 'changes' },
     where: { primary: 'कहाँ', normalized: 'where' },
     else: { primary: 'वरना', alternatives: ['नहीं तो'], normalized: 'else' },
     repeat: { primary: 'दोहराएं', alternatives: ['दोहरा'], normalized: 'repeat' },

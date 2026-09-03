@@ -77,6 +77,21 @@ describe('Animation Command Parsers', () => {
         return token;
       }),
 
+      // `parseExpression` delegates to `parsePrimary` below, which ADVANCES.
+      //
+      // The shared mock's default returns a fixed `mock-expr` node WITHOUT
+      // advancing (its own docblock flags this as a hazard), so a parser that
+      // switches a consumption site from `parsePrimary` to `parseExpression`
+      // silently stops consuming under this mock: `transition opacity to 1 over
+      // 2s` left the position on `1`, `check('over')` was false, and
+      // `modifiers.over` came back undefined — a MOCK artifact that looks
+      // exactly like a real regression. (Verified against the real parser:
+      // both `over` and `with` are consumed correctly.) Same class as the
+      // `checkSelector` → `checkAnySelector` episode that made a mocked loop
+      // spin to a 4 GB OOM: when production changes WHICH context method a
+      // consumption site calls, the mock has to follow.
+      parseExpression: vi.fn(() => ctx.parsePrimary()),
+
       // parsePrimary creates appropriate nodes based on token kind
       parsePrimary: vi.fn(() => {
         if (position >= tokens.length) {

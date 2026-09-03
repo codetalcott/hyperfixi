@@ -43,7 +43,8 @@ The `execute_llm` tool bridges LLM commands to MCP sampling:
 execute_llm({ command: "summarize this paragraph as bullets", language: "en" })
 ```
 
-Also available as direct sampling shortcuts:
+Also available as direct sampling shortcuts (opt-in — the server must be
+started with `LOKASCRIPT_MCP_LLM_TOOLS=1`):
 
 - `ask_claude` -- General questions
 - `summarize_content` -- Summarization

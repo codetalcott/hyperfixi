@@ -12,7 +12,6 @@
  *   TypedExecutionContext - Type registry + validation cache
  */
 
-import type { RuntimeValidator } from '../validation/lightweight-validators';
 import type { CoreExecutionContext } from './core-context';
 import type { ExecutionContext, ValidationError, ValidationResult } from './base-types';
 
@@ -253,102 +252,6 @@ export interface LLMDocumentation {
 // Validation Utilities
 // ============================================================================
 
-/**
- * Unified validator class for consistent validation across codebase
- */
-export class Validator {
-  /**
-   * Validate input against a Zod schema with unified error formatting
-   */
-  static validateInput<T>(input: unknown, schema: RuntimeValidator<T>): ValidationResult<T> {
-    try {
-      const parsed = schema.safeParse(input);
-
-      if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch' as const,
-              message: `Invalid input: ${err.message}`,
-              suggestions: [
-                'Check input structure',
-                'Verify all required properties are provided',
-                'Ensure property types match schema',
-              ],
-              path: Array.isArray(err.path) ? err.path.join('.') : String(err.path),
-            })) || [],
-          suggestions: ['Review input format and try again'],
-        };
-      }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-        ...(parsed.data !== undefined && { data: parsed.data }),
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error' as const,
-            message: 'Validation failed with exception',
-            suggestions: ['Check input structure and types'],
-          },
-        ],
-        suggestions: ['Verify input is in correct format'],
-      };
-    }
-  }
-
-  /**
-   * Create a validation error with consistent format
-   */
-  static createValidationError(
-    type: ValidationError['type'],
-    message: string,
-    suggestions: string[] = [],
-    path?: string,
-    code?: string
-  ): ValidationError {
-    return {
-      type,
-      message,
-      suggestions,
-      ...(path !== undefined && { path }),
-      ...(code !== undefined && { code }),
-    };
-  }
-
-  /**
-   * Create a validation result for success cases
-   */
-  static createSuccessResult<T>(data: T): ValidationResult<T> {
-    return {
-      isValid: true,
-      errors: [],
-      suggestions: [],
-      data,
-    };
-  }
-
-  /**
-   * Create a validation result for error cases
-   */
-  static createErrorResult<T>(
-    errors: ValidationError[],
-    suggestions: string[] = []
-  ): ValidationResult<T> {
-    return {
-      isValid: false,
-      errors,
-      suggestions,
-    };
-  }
-}
-
 // ============================================================================
 // Type Guards
 // ============================================================================
@@ -390,7 +293,6 @@ export function isExecutionContext(value: unknown): value is ExecutionContext {
 // ============================================================================
 
 export const CoreTypes = {
-  Validator,
   isValidationResult,
   isExecutionContext,
 };

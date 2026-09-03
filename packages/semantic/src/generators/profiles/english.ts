@@ -99,6 +99,11 @@ export const englishProfile: LanguageProfile = {
     settle: { primary: 'settle' },
     if: { primary: 'if' },
     when: { primary: 'when', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'changes', normalized: 'changes' },
     where: { primary: 'where', normalized: 'where' },
     else: { primary: 'else' },
     repeat: { primary: 'repeat' },

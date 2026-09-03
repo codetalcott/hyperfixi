@@ -1,0 +1,305 @@
+[
+  {
+    "lang": "es",
+    "input": "alternar .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "ja",
+    "input": ".active を 切り替え",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "ko",
+    "input": ".active 을 토글",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "zh",
+    "input": "切换 .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "fr",
+    "input": "basculer .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "ar",
+    "input": "بدّل .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "agregar .highlight en #box",
+    "full": "add .highlight to #box",
+    "slim": "add .highlight to #box"
+  },
+  {
+    "lang": "ja",
+    "input": "#box に .highlight を 追加",
+    "full": "add .highlight to #box",
+    "slim": "add .highlight to #box"
+  },
+  {
+    "lang": "ko",
+    "input": "#box 에 .highlight 을 추가",
+    "full": "add .highlight to #box",
+    "slim": "add .highlight to #box"
+  },
+  {
+    "lang": "fr",
+    "input": "ajouter .highlight sur #box",
+    "full": "add .highlight to #box",
+    "slim": "add .highlight to #box"
+  },
+  {
+    "lang": "ar",
+    "input": "أضف .highlight إلى #box",
+    "full": "add .highlight to #box",
+    "slim": "add .highlight to #box"
+  },
+  {
+    "lang": "es",
+    "input": "quitar .hidden de yo",
+    "full": "remove .hidden from me",
+    "slim": "remove .hidden"
+  },
+  {
+    "lang": "ja",
+    "input": "自分 から .hidden を 削除",
+    "full": "remove .hidden from me",
+    "slim": "remove .hidden"
+  },
+  {
+    "lang": "ko",
+    "input": "나 에서 .hidden 을 제거",
+    "full": "remove .hidden from me",
+    "slim": "remove .hidden"
+  },
+  {
+    "lang": "fr",
+    "input": "supprimer .hidden de moi",
+    "full": "remove .hidden from me",
+    "slim": "remove .hidden"
+  },
+  {
+    "lang": "es",
+    "input": "poner \"hello\" en #msg",
+    "full": "put \"hello\" into #msg",
+    "slim": "put \"hello\" into #msg"
+  },
+  {
+    "lang": "ja",
+    "input": "\"hello\" を #msg に 置く",
+    "full": "put \"hello\" into #msg",
+    "slim": "put \"hello\" into #msg"
+  },
+  {
+    "lang": "ko",
+    "input": "\"hello\" 을 #msg 에 넣다",
+    "full": "put \"hello\" into #msg",
+    "slim": "put \"hello\" into #msg"
+  },
+  {
+    "lang": "fr",
+    "input": "mettre \"hello\" sur #msg",
+    "full": "put \"hello\" into #msg",
+    "slim": "put \"hello\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "establecer x a 5",
+    "full": "set x to 5",
+    "slim": "set x to 5"
+  },
+  {
+    "lang": "ja",
+    "input": "x を 5 に 設定",
+    "full": "set x to 5",
+    "slim": "set x to 5"
+  },
+  {
+    "lang": "zh",
+    "input": "设置 x 为 5",
+    "full": "set x to 5",
+    "slim": "set x to 5"
+  },
+  {
+    "lang": "es",
+    "input": "mostrar #modal",
+    "full": "show #modal",
+    "slim": "show #modal"
+  },
+  {
+    "lang": "es",
+    "input": "ocultar #tooltip",
+    "full": "hide #tooltip",
+    "slim": "hide #tooltip"
+  },
+  {
+    "lang": "ja",
+    "input": "#modal を 表示",
+    "full": "show #modal",
+    "slim": "show #modal"
+  },
+  {
+    "lang": "ja",
+    "input": "#tooltip を 非表示",
+    "full": "hide #tooltip",
+    "slim": "hide #tooltip"
+  },
+  {
+    "lang": "ar",
+    "input": "أظهر #modal",
+    "full": "show #modal",
+    "slim": "show #modal"
+  },
+  {
+    "lang": "ar",
+    "input": "أخفِ #tooltip",
+    "full": "hide #tooltip",
+    "slim": "hide #tooltip"
+  },
+  {
+    "lang": "es",
+    "input": "alternar .active entonces poner \"ok\" en #msg",
+    "full": "toggle .active then put \"ok\" into #msg",
+    "slim": "toggle .active then put \"ok\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "alternar .active then mostrar #modal",
+    "full": "toggle .active then show #modal",
+    "slim": "toggle .active then show #modal"
+  },
+  {
+    "lang": "es",
+    "input": "alternar .active\nmostrar #modal",
+    "full": "toggle .active then show #modal",
+    "slim": "toggle .active then show #modal"
+  },
+  {
+    "lang": "ja",
+    "input": ".active を 切り替え それから #modal を 表示",
+    "full": "toggle .active then show #modal",
+    "slim": "toggle .active then show #modal"
+  },
+  {
+    "lang": "es",
+    "input": "poner \"hola entonces adios\" en #msg",
+    "full": "put \"hola entonces adios\" into #msg",
+    "slim": "put \"hola entonces adios\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "poner 'ahora entonces luego' en #msg",
+    "full": "put \"ahora entonces luego\" into #msg",
+    "slim": "put \"ahora entonces luego\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "poner \"  entonces  \" en #msg\nmostrar #a",
+    "full": "put \"  entonces  \" into #msg then show #a",
+    "slim": "put \"  entonces  \" into #msg then show #a"
+  },
+  {
+    "lang": "es",
+    "input": "alternar .a entonces alternar .b entonces alternar .c entonces alternar .d entonces alternar .e",
+    "full": "toggle .a then toggle .b then toggle .c then toggle .d then toggle .e",
+    "slim": "toggle .a then toggle .b then toggle .c then toggle .d then toggle .e"
+  },
+  {
+    "lang": "es",
+    "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
+    "full": "on click repeat 3 times add \"<p>Line</p>\" to me end",
+    "slim": "on click repeat add \"<p>Line</p>\""
+  },
+  {
+    "lang": "ja",
+    "input": "#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加",
+    "full": "on click tell #panel add .open then wait 200ms then add .visible end",
+    "slim": "on click tell #panel add .open then wait 200ms then add .visible"
+  },
+  {
+    "lang": "fr",
+    "input": "bind $name à #input-a alors bind $name à #input-b",
+    "full": "bind $name to #input-a bind $name to #input-b",
+    "slim": "bind $name to #input-a bind $name to #input-b"
+  },
+  {
+    "lang": "es",
+    "input": "on click alternar .active",
+    "full": "on click toggle .active",
+    "slim": "on click toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "on every keyup establecer x a 5",
+    "full": "on every keyup set x to 5",
+    "slim": "on every keyup set x to 5"
+  },
+  {
+    "lang": "es",
+    "input": "on click.debounce(300) alternar .active",
+    "full": "on click.debounce(300) toggle .active",
+    "slim": "on click.debounce(300) toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "on keyup[key=='Enter'] establecer x a 1",
+    "full": "on keyup[key=='Enter'] set x to 1",
+    "slim": "on keyup[key=='Enter'] set x to 1"
+  },
+  {
+    "lang": "es",
+    "input": "on click from body alternar .active",
+    "full": "on click from body toggle .active",
+    "slim": "on click from body toggle .active"
+  },
+  {
+    "lang": "ja",
+    "input": "on click .active を 切り替え",
+    "full": "on click toggle .active",
+    "slim": "on click toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "xyz abc 123",
+    "full": "xyz abc 123",
+    "slim": "xyz abc 123"
+  },
+  {
+    "lang": "es",
+    "input": "xyz abc 123",
+    "config": {
+      "confidenceThreshold": 1
+    },
+    "full": "xyz abc 123",
+    "slim": "xyz abc 123"
+  },
+  {
+    "lang": "en",
+    "input": "toggle .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "xx",
+    "input": "toggle .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "toggle .active",
+    "full": "toggle .active",
+    "slim": "toggle .active"
+  }
+]

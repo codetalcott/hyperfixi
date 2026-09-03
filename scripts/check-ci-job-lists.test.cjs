@@ -16,7 +16,6 @@ const {
   check,
   checkCoverage,
   checkExportValidation,
-  checkLintDomains,
   checkTypecheck,
   joinContinuedLine,
   loadAll,
@@ -24,7 +23,6 @@ const {
   loadCodecovFlags,
   loadCoverageSteps,
   loadExportValidationArgs,
-  loadLintDomains,
   loadTypecheckDirs,
   loadWorkspaces,
 } = require('./check-ci-job-lists.cjs');
@@ -39,9 +37,8 @@ function workspaces(defs) {
     hasEntryPoint = true,
     hasTypecheck = false,
     hasTest = true,
-    hasLintSuite = false,
   } of defs) {
-    byDir.set(dir, { name, isPrivate, hasEntryPoint, hasTypecheck, hasTest, hasLintSuite });
+    byDir.set(dir, { name, isPrivate, hasEntryPoint, hasTypecheck, hasTest });
   }
   return byDir;
 }
@@ -113,7 +110,6 @@ const SAMPLE_CI = [
   '',
   '  unit-tests:',
   '    steps:',
-  '      # NOTE: lint:domains is `npm test --prefix packages/domain-<x> -- --run lint`',
   '      - name: Test alpha',
   '        run: npm test --prefix packages/alpha',
 ].join('\n');
@@ -135,13 +131,6 @@ const SAMPLE_CODECOV = [
   'comment:',
   '  layout: header',
 ].join('\n');
-
-const SAMPLE_ROOT_PKG = JSON.stringify({
-  scripts: {
-    'lint:domains':
-      'for pkg in sql bdd; do npm test --prefix packages/domain-$pkg -- --run lint || exit 1; done',
-  },
-});
 
 // ---------------------------------------------------------------------------
 // (1) export-validation
@@ -381,64 +370,6 @@ test('coverage: flags a codecov flag whose paths point elsewhere', () => {
 });
 
 // ---------------------------------------------------------------------------
-// (4) lint:domains
-// ---------------------------------------------------------------------------
-
-test('lint:domains: passes when every domain with a lint suite is in the loop', () => {
-  const ws = workspaces([
-    { dir: 'domain-sql', hasLintSuite: true },
-    { dir: 'domain-bdd', hasLintSuite: true },
-  ]);
-  assert.deepEqual(checkLintDomains(ws, ['sql', 'bdd'], NONE), []);
-});
-
-test('lint:domains: flags a domain with a lint suite the loop skips', () => {
-  const ws = workspaces([
-    { dir: 'domain-sql', hasLintSuite: true },
-    { dir: 'domain-new', name: '@x/domain-new', hasLintSuite: true },
-  ]);
-  const failures = checkLintDomains(ws, ['sql'], NONE);
-  assert.equal(failures.length, 1);
-  assert.match(failures[0], /owns a lint\.test\.ts but is not in the root "lint:domains" loop/);
-  assert.match(failures[0], /Add "new"/);
-});
-
-test('lint:domains: a domain package without a lint suite is not required', () => {
-  const ws = workspaces([{ dir: 'domain-sql', hasLintSuite: true }, { dir: 'domain-toolkit' }]);
-  assert.deepEqual(checkLintDomains(ws, ['sql'], NONE), []);
-});
-
-test('lint:domains: flags a listed suffix with no such package', () => {
-  const ws = workspaces([{ dir: 'domain-sql', hasLintSuite: true }]);
-  const failures = checkLintDomains(ws, ['sql', 'ghost'], NONE);
-  assert.equal(failures.length, 1);
-  assert.match(failures[0], /the loop exits 1 on a healthy tree/);
-});
-
-test('lint:domains: flags a listed package with no lint suite', () => {
-  const ws = workspaces([{ dir: 'domain-sql', hasLintSuite: true }, { dir: 'domain-toolkit' }]);
-  const failures = checkLintDomains(ws, ['sql', 'toolkit'], NONE);
-  assert.equal(failures.length, 1);
-  assert.match(failures[0], /has no lint\.test\.ts under src\//);
-});
-
-test('lint:domains: flags a duplicated suffix', () => {
-  const ws = workspaces([{ dir: 'domain-sql', hasLintSuite: true }]);
-  const failures = checkLintDomains(ws, ['sql', 'sql'], NONE);
-  assert.equal(failures.length, 1);
-  assert.match(failures[0], /twice/);
-});
-
-test('lint:domains: an omission suppresses the skipped-domain failure', () => {
-  const ws = workspaces([
-    { dir: 'domain-sql', hasLintSuite: true },
-    { dir: 'domain-new', hasLintSuite: true },
-  ]);
-  const omit = new Map([['domain-new', 'quarantined']]);
-  assert.deepEqual(checkLintDomains(ws, ['sql'], omit), []);
-});
-
-// ---------------------------------------------------------------------------
 // Loaders
 // ---------------------------------------------------------------------------
 
@@ -534,24 +465,11 @@ test('loadCodecovFlags: a missing flags block is a hard error', () => {
   assert.throws(() => loadCodecovFlags('codecov:\n  require_ci_to_pass: yes\n'), /no top-level/);
 });
 
-test('loadLintDomains: reads the shell loop suffixes', () => {
-  assert.deepEqual(loadLintDomains(SAMPLE_ROOT_PKG), ['sql', 'bdd']);
-});
-
-test('loadLintDomains: a reshaped script is a hard error, not an empty list', () => {
-  const reshaped = JSON.stringify({ scripts: { 'lint:domains': 'npm run lint --workspaces' } });
-  assert.throws(() => loadLintDomains(reshaped), /cannot parse "lint:domains"/);
-});
-
-test('loadLintDomains: a removed script is a hard error', () => {
-  assert.throws(() => loadLintDomains(JSON.stringify({ scripts: {} })), /no "lint:domains" script/);
-});
-
 // ---------------------------------------------------------------------------
 // Integration — the real repository
 // ---------------------------------------------------------------------------
 
-test('integration: real repository state passes all four checks', () => {
+test('integration: real repository state passes all checks', () => {
   const byList = check(loadAll());
   for (const [listName, failures] of byList) {
     assert.deepEqual(failures, [], `${listName} reported failures`);
@@ -560,11 +478,13 @@ test('integration: real repository state passes all four checks', () => {
 
 test('integration: the loaders return non-trivial real lists', () => {
   const input = loadAll();
+  // Floors are non-triviality checks, not exact counts — recalibrated after
+  // the 12 domain-family packages moved to lokascript-domains.
   assert.ok(input.byDir.size > 20, `expected >20 packages, got ${input.byDir.size}`);
-  assert.ok(input.builtInCi.size > 20, `expected >20 built packages, got ${input.builtInCi.size}`);
+  assert.ok(input.builtInCi.size > 15, `expected >15 built packages, got ${input.builtInCi.size}`);
   assert.ok(
-    input.exportArgs.length > 20,
-    `expected >20 export args, got ${input.exportArgs.length}`
+    input.exportArgs.length > 15,
+    `expected >15 export args, got ${input.exportArgs.length}`
   );
   assert.ok(
     input.typecheckDirs.length > 20,
@@ -574,7 +494,6 @@ test('integration: the loaders return non-trivial real lists', () => {
     input.codecovFlags.size >= 4,
     `expected >=4 codecov flags, got ${input.codecovFlags.size}`
   );
-  assert.equal(input.lintDomains.length, 9, 'the nine-domain loop');
   assert.ok(input.coverage.generates.length >= 4);
   assert.ok(input.coverage.uploads.length >= 4);
 });
@@ -591,12 +510,4 @@ test('integration: no real list names a package twice or a phantom package', () 
       assert.ok(input.byDir.has(dir), `${label} names packages/${dir}, which does not exist`);
     }
   }
-});
-
-test('integration: loadWorkspaces sees the domain lint suites on disk', () => {
-  // hasLintSuite is the one fact derived from the filesystem rather than
-  // package.json; a broken walk would silently make class (4) vacuous.
-  const byDir = loadWorkspaces();
-  const withSuites = [...byDir].filter(([, pkg]) => pkg.hasLintSuite).map(([dir]) => dir);
-  assert.equal(withSuites.length, 9, `expected 9 domain lint suites, got ${withSuites.join(', ')}`);
 });

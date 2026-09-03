@@ -1,9 +1,10 @@
 {
   "description": "Allowlist for the shipped-sources validity gate (packages/testing-framework/src/multilingual/shipped-sources-validity.test.ts). Each entry is a hyperscript source we ship that hyperfixi parses in the recovers-with-errors state (ok:true with a non-empty errors array). A NEW such source outside this list, or an allowlisted key that becomes clean, both fail the gate. Shrink this list as fixes land.",
-  "note": "The `key` is file::sha1(source)[0:10], so it CHANGES when the source is edited — a fix cannot silently keep its allowlist cover, it drops off and the stale-entry test demands removal. `upstream` records the real hyperscript.org verdict, which is what distinguishes a malformed example (upstream also rejects) from a hyperfixi parser defect (upstream accepts). Three of the original four entries were cleared by the `then`-as-command-separator work: native-dialog and infinite-scroll by the parser fix (parseIfCommand's branch loops dropped BOTH the `then` separator and `--` comments, which every sibling body loop already handled), and fetch-data by deleting its `log 'typeof it:', (typeof it)` line — `typeof` is JavaScript, not a hyperscript operator.",
+  "note": "The `key` is file::sha1(source)[0:10], so it CHANGES when the source is edited — a fix cannot silently keep its allowlist cover, it drops off and the stale-entry test demands removal. `upstream` records the real hyperscript.org verdict, which is what distinguishes a malformed example (upstream also rejects) from a hyperfixi parser defect (upstream accepts). Three of the original four entries were cleared by the `then`-as-command-separator work: native-dialog and infinite-scroll by the parser fix (parseIfCommand's branch loops dropped BOTH the `then` separator and `--` comments, which every sibling body loop already handled), and fetch-data by deleting its `log 'typeof it:', (typeof it)` line — `typeof` is JavaScript, not a hyperscript operator. 2026-08-31: FOUR entries added at once when the parser learned to REPORT discarded input (previously these five parsed ok:true in total silence). None is a new defect; all five are pre-existing losses that had no channel to surface through. recipes.html is the one upstream accepts. 2026-08-31 (later the same day): the recipes.html entry is GONE — the defect it recorded is fixed. `show`/`hide` were COMPOUND_COMMANDS members with no case in `parseCompoundCommand`, so they fell to `parseRegularCommand`'s parsePrimary() loop, which parses one operand and can see neither the `in` scope operator nor the `when` tail; both now have a dedicated parser and the runtime treats `when` as the per-element FILTER upstream defines. The handler is therefore eligible again for the sibling shipped-examples-execution gate, where it lands in that gate's existing show/hide-strategy family: its only remaining divergence from upstream is hyperfixi's `show` MARKER CLASS, not the filter.",
   "infiniteScrollFollowUp": "The handoff's guess that infinite-scroll.html also had a genuinely missing `end` was WRONG — its `end`s were balanced all along, and the whole hyperfixi error was the comment-in-if-body defect. Upstream still rejects it (\"Expected 'end' but found 'on'\", \"Unexpected Token : {\") over the multi-line `make a <li>…</li>` element literal with `#{}` interpolation, which upstream does not support in that form. So we are now MORE permissive than upstream on that file. That laxness divergence is real but out of this gate's scope — the gate tracks hyperfixi's recovered state only.",
-  "checkedAtGeneration": 454,
-  "cleanAtGeneration": 411,
+  "checkedAtGeneration": 387,
+  "cleanAtGeneration": 367,
+  "generationCountsNote": "These two are DOCUMENTATION, not assertions (the sanity test only requires >100 each). They read 454/411 until 2026-08-31 because they were stamped when the gate walked the working TREE; #1026 moved the corpus to `git ls-files` and did not restamp them, leaving them 67 sources too high. Re-measured on the git-tracked corpus. Restamp them whenever the corpus definition moves.",
   "allowedRecovered": [
     {
       "key": "examples/drag-and-drop/sortable-list.html::d64eff65f5",
@@ -11,6 +12,28 @@
       "error": "Expected property name after '.' - malformed member access",
       "upstream": "You must parenthesize math operations with different operators",
       "reason": "MIXED — both engines reject, but for unrelated reasons, so this is two bugs in one file. Upstream's is an authoring bug with a known fix: `set midpoint to box.top + box.height / 2` mixes `+` and `/` without parens, which hyperscript forbids (x2 occurrences); `box.top + (box.height / 2)` is the fix. Hyperfixi's complaint is DIFFERENT ('malformed member access') and survives that fix, so it is likely a second parser-side gap around the `add { prop: value; }` inline-style syntax — confirm before editing the example."
+    },
+    {
+      "key": "examples/swap-and-morph/swap-morph.html::4971c13759",
+      "file": "examples/swap-and-morph/swap-morph.html",
+      "error": "Discarded input the parser could not place: 'item : last-child'",
+      "upstream": "rejects — Expected 'with' but found '.item:last-child'",
+      "reason": "MIXED, and the two engines disagree about WHY. Upstream rejects the `swap delete <target>` form outright (it wants `with`); we accept the form but mis-tokenize the pseudo-class, splitting `.item:last-child` at the `:` — the same colon-splitting class as the colon-event-names arc. Fixing the tokenizer would leave upstream's objection standing, so check whether `swap delete` is a hyperfixi extension before editing the example."
+    },
+    {
+      "key": "packages/core/docs/EXAMPLES.md::186c0304cc",
+      "file": "packages/core/docs/EXAMPLES.md",
+      "error": "Discarded input the parser could not place: 'try'",
+      "upstream": "rejects — Unexpected Token : try",
+      "reason": "DOCS DEFECT, both engines. The example documents `try … catch error … end` as a command block; neither engine has that (upstream attaches `catch` to the handler, not to a `try`). We drop the `try` keyword, run its body, and discard the ENTIRE catch branch — so a docs example about error handling ships with its error handling silently removed."
+    },
+    {
+      "key": "packages/core/docs/README.md::936f48e1e4",
+      "file": "packages/core/docs/README.md",
+      "error": "Discarded input the parser could not place: '( me )'",
+      "upstream": "rejects — Expected ')' but found '{'",
+      "reason": "DOCS DEFECT / feature gap, both engines. `send profileUpdated({user: it})` passes an object literal as a call argument; upstream rejects the `{` and we drop the `formToJSON(me)` call arguments. The documented `send <event>(<detail>)` shape needs checking against what either engine actually supports before the example is rewritten."
     }
-  ]
+  ],
+  "localOnlyTrap": "The walk is restricted to `git ls-files` (2026-08-31). It previously walked the working TREE, which is not a clean checkout: 10 untracked/ignored files under examples/experiments, examples/playground, examples/vite-plugin-multilingual, examples/vite-plugin-test and one docs/*.md were scored locally and never existed in CI (local denominator 183 vs CI's 173). That is unfixable from the allowlist — an entry for such a file fails in CI as STALE, and no entry fails locally as NEW. The sibling shipped-examples-execution gate had derived its corpus from git since #862 for exactly this reason; this gate was never brought into line, and the gap cost a CI round-trip on 2026-08-31 (a fifth allowlist entry, the Spanish `on click alternar .active on me`, came from a local-only file and had to be withdrawn)."
 }

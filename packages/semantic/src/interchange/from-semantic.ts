@@ -113,7 +113,11 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
     case 'timeExpression':
       return { type: 'literal', value: node.value as number, ...pos(node) };
     case 'templateLiteral':
-      return { type: 'literal', value: (node.raw ?? '') as string, ...pos(node) };
+      // The expression parser's node carries the template CONTENT (backticks
+      // stripped, `${…}` intact) in `value` and never sets `raw` — reading
+      // `raw` alone turned every parser-produced template literal into an
+      // EMPTY literal. `raw` is kept first for synthetic nodes that set it.
+      return { type: 'literal', value: (node.raw ?? node.value ?? '') as string, ...pos(node) };
     case 'variable':
       return {
         type: 'variable',

@@ -126,9 +126,9 @@ describe('the English reference no longer drops `for me`', () => {
     const node = parse('take .active from .tab-button for me', 'en') as CommandSemanticNode;
     const ast = buildAST(node).ast as unknown as Record<string, any>;
     expect(ast.modifiers?.from).toMatchObject({ value: '.tab-button' });
-    // A reference lands as the contextReference node the evaluator resolves —
+    // A reference lands as the identifier node the evaluator resolves —
     // `evaluator.evaluate(raw.modifiers.for)` is what TakeCommand calls.
-    expect(ast.modifiers?.for).toMatchObject({ type: 'contextReference', contextType: 'me' });
+    expect(ast.modifiers?.for).toMatchObject({ type: 'identifier', name: 'me' });
   });
 });
 
@@ -273,18 +273,21 @@ describe('the three causes behind the 10, pinned directly', () => {
     expect(walkCommands(parse(source, lang)).map(c => c.action), `${lang}`).toEqual(['get']);
   });
 
-  it('qu still binds the pronoun to destination — the one language not fixed', () => {
-    // Pinning the CURRENT measured state and its cause, not a desired one: qu
-    // matches no pattern for this surface (its canonical order fronts the source
-    // phrase), so verb-anchoring assigns the trailing pronoun. See the header
-    // for why the pattern variant that fixes it is blocked on a renderer defect.
+  it('qu captures the recipient — the source-fronted variant covers its canonical order', () => {
+    // qu's canonical order fronts the source phrase (`.active ta .tab-button
+    // manta ñitiy pi hapiy noqa`), a shape no pattern covered, so this test used
+    // to pin the DEFECT: verb-anchoring bound the trailing pronoun to
+    // `destination`. The `-sov-source-fronted` event-handler variant (required
+    // marked source slot between patient and event) now matches it, and the
+    // renderer half of the blocker — authored `to me` dropped on render — is
+    // fixed via implicit-default tagging.
     const node = walkCommands(
       parse('.active ta .tab-button manta ñitiy pi hapiy noqa', 'qu')
     )[0] as unknown as CommandSemanticNode;
     expect(roleValue(node, 'patient')).toBe('.active');
     expect(roleValue(node, 'source')).toBe('.tab-button');
-    expect(node.roles.has('recipient' as never)).toBe(false);
-    expect(roleValue(node, 'destination')).toBe('me');
+    expect(roleValue(node, 'recipient')).toBe('me');
+    expect(node.roles.has('destination' as never)).toBe(false);
   });
 
   it('a failed optional group cannot corrupt an already-captured role', () => {

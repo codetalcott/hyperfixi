@@ -48,11 +48,6 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ]),
       globals: new Map([['app', { name: 'TestApp', version: '1.0' }]]),
       parent: undefined,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
   });
 

@@ -16,6 +16,8 @@ import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { isIdentifierLike, isEvent, isComment } from '../token-predicates';
+import { toLegacyExpression } from '../../ast/legacy';
+import type { SlotMap } from '../../ast/command-slots';
 
 /**
  * Parse halt command
@@ -39,39 +41,26 @@ export function parseHaltCommand(
 ): CommandNode | null {
   // Parse "halt" or "halt the event"
   // We need to keep "the" and "event" as separate tokens for the command adapter
-  const args: ASTNode[] = [];
-
-  // Check if next tokens are "the event"
+  // `halt the event`: the `the` slot names what is halted (the current
+  // event). It used to arrive as two identifier words in `args` for the
+  // command to recognise by name (Arc 3 step 3).
+  const builder = CommandNodeBuilder.fromIdentifier<'halt'>(identifierNode);
   if (ctx.check(KEYWORDS.THE)) {
     const theToken = ctx.advance();
-    args.push({
-      type: 'identifier',
-      name: KEYWORDS.THE,
-      start: theToken.start,
-      end: theToken.end,
-      line: theToken.line,
-      column: theToken.column,
-    } as IdentifierNode);
-
-    // Check if followed by "event"
-    if (ctx.check(KEYWORDS.EVENT)) {
-      const eventToken = ctx.advance();
-      args.push({
-        type: 'identifier',
-        name: KEYWORDS.EVENT,
-        start: eventToken.start,
-        end: eventToken.end,
-        line: eventToken.line,
-        column: eventToken.column,
-      } as IdentifierNode);
-    }
+    const last = ctx.check(KEYWORDS.EVENT) ? ctx.advance() : theToken;
+    builder.withModifier(
+      'the',
+      toLegacyExpression({
+        type: 'literal',
+        value: 'event',
+        start: theToken.start,
+        end: last.end,
+        line: theToken.line,
+        column: theToken.column,
+      })
+    );
   }
-
-  // Use CommandNodeBuilder for consistent node construction
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+  return builder.endingAt(ctx.getPosition()).build();
 }
 
 /**
@@ -265,55 +254,46 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   }
 
   // Build args array based on loop type
-  args.push({
-    type: 'identifier',
-    name: loopType,
-    start: commandToken.start,
-    end: commandToken.end,
-    line: commandToken.line,
-    column: commandToken.column,
-  } as IdentifierNode);
-
+  // Every operand is a SLOT keyed by the word that introduced it (Arc 3 step
+  // 3): `modifiers.loopType` names the form, `for` the loop variable, `in` the
+  // collection, `times` the count, `while`/`until` the condition, `event` the
+  // event name, `from` its target, `index` the index variable. Only the body
+  // block (and an `else` block) stay positional. RepeatCommand.parseInput
+  // used to re-derive all of this from `args[0].name` and the positions after
+  // it; now it reads the slots.
   const pos = {
     start: commandToken.start,
     end: commandToken.end,
     line: commandToken.line,
     column: commandToken.column,
   };
-
-  if (variable) {
-    args.push(createStringLiteral(variable, pos));
-  }
-
-  if (collection) args.push(collection);
-  if (condition) args.push(condition);
-  if (times) args.push(times);
-
-  if (eventName) {
-    args.push(createStringLiteral(eventName, pos));
-  }
-
-  if (eventTarget) args.push(eventTarget);
-
-  if (indexVariable) {
-    args.push(createStringLiteral(indexVariable, pos));
-  }
-
-  // Add commands as a block
+  const modifiers: Record<string, ExpressionNode> = {
+    loopType: toLegacyExpression(createStringLiteral(loopType, pos)),
+  };
+  if (variable) modifiers['for'] = toLegacyExpression(createStringLiteral(variable, pos));
+  if (collection) modifiers['in'] = collection as ExpressionNode;
+  if (times) modifiers['times'] = times as ExpressionNode;
+  if (condition) modifiers[loopType === 'while' ? 'while' : 'until'] = condition as ExpressionNode;
+  if (eventName) modifiers['event'] = toLegacyExpression(createStringLiteral(eventName, pos));
+  if (eventTarget) modifiers['from'] = eventTarget as ExpressionNode;
+  if (indexVariable)
+    modifiers['index'] = toLegacyExpression(createStringLiteral(indexVariable, pos));
   args.push(createBlock(commands, { ...pos, end: pos.end || 0 }));
-
-  // Optional else branch (executed when loop completes with 0 iterations)
   if (elseCommands !== null) {
     args.push(createBlock(elseCommands, { ...pos, end: pos.end || 0 }));
   }
-
-  const builder = CommandNodeBuilder.from(commandToken).withArgs(...args);
+  const builder = CommandNodeBuilder.from<'repeat'>(commandToken)
+    .withArgs(...args)
+    .withModifiers(modifiers);
   if (bottomTested) {
-    builder.withModifier('bottomTested', {
-      type: 'literal',
-      value: true,
-      ...pos,
-    } as unknown as ExpressionNode);
+    builder.withModifier(
+      'bottomTested',
+      toLegacyExpression({
+        type: 'literal',
+        value: true,
+        ...pos,
+      })
+    );
   }
   return builder.endingAt(ctx.getPosition()).build();
 }
@@ -747,9 +727,23 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       }
     }
 
-    // Consume 'end' for multi-line form
-    // Skip if we consumed 'else if' because the nested if already consumed 'end'
-    if (!consumedElseIf) {
+    // Consume 'end' for multi-line form.
+    //
+    // Skipped when we consumed 'else if' (the nested if already consumed 'end')
+    // and when there is NO INPUT LEFT — the upstream rule, verbatim:
+    //
+    //   if (parser.hasMore() && !nestedIfStmt) parser.requireToken("end");
+    //
+    // Measured on the vendored 0.9.93 engine, which ACCEPTS every one of
+    // `if x > 5 then add .active`, `if 1 is 1 then log 'a' then log 'b'` and
+    // `on click if x > 5 then add .active`. Requiring `end` unconditionally
+    // made the parser report "Expected 'end' after if block" on NINE of this
+    // repo's own `metadata.examples` — sources that parse completely correctly,
+    // whose AST is exactly right, and which then carry a diagnostic saying
+    // otherwise into every gate that reads `errors`. `end` is still required
+    // the moment anything follows, which is what keeps a genuinely
+    // unterminated block inside a larger body an error.
+    if (!consumedElseIf && !ctx.isAtEnd()) {
       ctx.consume(KEYWORDS.END, "Expected 'end' after if block");
     }
   } else {
@@ -773,7 +767,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     }
   }
 
-  return CommandNodeBuilder.from(commandToken)
+  return CommandNodeBuilder.from<'if' | 'unless'>(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();

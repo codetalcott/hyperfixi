@@ -66,12 +66,8 @@ describe('SendCommand (send syntax)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'dataEvent' } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
-          ],
-          modifiers: {},
+          args: [{ type: 'identifier', name: 'dataEvent' } as any],
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,
@@ -115,10 +111,8 @@ describe('SendCommand (send syntax)', () => {
               name: 'notification',
               args: [{ type: 'string', value: 'Hello' }],
             } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
           ],
-          modifiers: {},
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,
@@ -181,12 +175,8 @@ describe('SendCommand (send syntax)', () => {
       // Parse with send commandName
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'message' } as any,
-            { type: 'keyword', name: 'to' } as any,
-            { type: 'identifier', name: 'me' } as any,
-          ],
-          modifiers: {},
+          args: [{ type: 'identifier', name: 'message' } as any],
+          modifiers: { on: { type: 'identifier', name: 'me' } as any },
           commandName: 'send',
         },
         evaluator,

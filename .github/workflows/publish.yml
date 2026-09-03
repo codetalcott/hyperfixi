@@ -25,7 +25,7 @@ on:
         type: boolean
         default: false
       packages:
-        description: 'Packages: "all", or a comma-separated subset by directory name (domain-learn) or npm name (@lokascript/domain-learn). A filter matching nothing fails the run.'
+        description: 'Packages: "all", or a comma-separated subset by directory name (mcp-server) or npm name (@hyperfixi/mcp-server). A filter matching nothing fails the run.'
         required: false
         type: string
         default: 'all'
@@ -82,31 +82,69 @@ jobs:
           # bumps.
           npm ci
 
+      # Version calculation + sync run BEFORE the build, not after.
+      # They used to sit after it, which meant every tarball was built
+      # from the PREVIOUS version's sources: set-version.cjs rewrites two
+      # generated files (packages/core/src/version.ts and
+      # packages/developer-tools/src/version.ts), so a build that ran
+      # first baked the stale literal into dist. v2.11.0 shipped to npm
+      # with package.json 2.11.0 and dist reporting version:"2.10.0".
+      # Building after the sync also means the test + export-validation
+      # steps below now run against the bumped tree, so the version
+      # equality assertions become a release-time gate rather than
+      # something only PR CI notices afterwards.
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT=$(node -p "require('./packages/core/package.json').version")
+          echo "Current version: $CURRENT"
+          VERSION_TYPE="${{ github.event.inputs.version-type }}"
+
+          if [ "$VERSION_TYPE" = "current" ]; then
+            NEW="$CURRENT"
+          else
+            cd packages/core
+            # --no-workspaces-update: npm's `workspaces-update` config (default
+            # true) makes `npm version` inside a workspace REIFY the tree after
+            # the bump. On npm 11.19 (the runner since 2026-09) that reify saw
+            # core@3.0.0 against every other package's ^2.11.1 range, rewrote
+            # package-lock.json (+498 lines) and DELETED the
+            # node_modules/@lokascript/framework link — so core's own build then
+            # failed with TS2307 on `@lokascript/framework`, and the
+            # `git checkout` below restored only the manifest. Reproduced and
+            # fixed locally against npm@11.19.0 on the v3.0.0 dry run; npm 11.12
+            # (the 2.11.1 runner) did not reify here.
+            npm version "$VERSION_TYPE" --no-git-tag-version --no-workspaces-update > /dev/null 2>&1
+            NEW=$(node -p "require('./package.json').version")
+            cd ../..
+            git checkout packages/core/package.json
+          fi
+
+          echo "New version: $NEW"
+          echo "version=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Sync all package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
+          # set-version.cjs bumps every package + root + lerna.json AND rewrites
+          # internal workspace dep ranges to ^VERSION — so published tarballs
+          # carry accurate constraints (npm has no workspace: protocol).
+          node scripts/set-version.cjs "$VERSION"
+
       - name: Build all packages
         run: |
           # Build order mirrors .github/workflows/ci.yml (which is known-green).
-          # Every workspace dep is built — including the private ones
-          # (domain-toolkit, mcp-multilingual-intent, developer-tools) — because
-          # their dist/ must exist for tsc to resolve cross-package imports.
-          # (intent and domain-config are public, published packages.)
+          # Every workspace dep is built — including the private one
+          # (developer-tools) — because their dist/ must exist for tsc to
+          # resolve cross-package imports. The domain-* family +
+          # mcp-multilingual-intent left for the lokascript-domains repo in
+          # #909; the stale entries here broke the first post-#909 dry run
+          # (this workflow is a hand-maintained list the ci.yml guards do not
+          # cover — mirror #909-class deletions here by hand).
           npm run build --prefix packages/intent
           npm run build --prefix packages/framework
-          # semantic must precede the domain-* packages: their vocab modules
-          # import @lokascript/semantic/languages/* (bridge migration), so
-          # domain-bdd's build:types (tsc) fails without semantic's dist first.
-          # Mirrors the known-green order in ci.yml (build job).
           npm run build --prefix packages/semantic
-          npm run build --prefix packages/domain-bdd
-          npm run build --prefix packages/domain-sql
-          npm run build --prefix packages/domain-jsx
-          npm run build --prefix packages/domain-todo
-          npm run build --prefix packages/domain-behaviorspec
-          npm run build --prefix packages/domain-llm
-          npm run build --prefix packages/domain-flow
-          npm run build --prefix packages/domain-voice
-          npm run build --prefix packages/domain-learn
-          npm run build --prefix packages/domain-toolkit
-          npm run build --prefix packages/domain-config
           npm run build --prefix packages/behaviors
           npm run build --prefix packages/core
           npm run build --prefix packages/patterns-reference
@@ -116,7 +154,6 @@ jobs:
           npm run build --prefix packages/compilation-service
           npm run build --prefix packages/planner
           npm run build --prefix packages/mcp-server
-          npm run build --prefix packages/mcp-multilingual-intent
           npm run build --prefix packages/developer-tools
           npm run build --prefix packages/server-bridge
           npm run build --prefix packages/vite-plugin
@@ -167,35 +204,6 @@ jobs:
           node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict
           node scripts/check-node-import.mjs
 
-      - name: Calculate new version
-        id: version
-        run: |
-          CURRENT=$(node -p "require('./packages/core/package.json').version")
-          echo "Current version: $CURRENT"
-          VERSION_TYPE="${{ github.event.inputs.version-type }}"
-
-          if [ "$VERSION_TYPE" = "current" ]; then
-            NEW="$CURRENT"
-          else
-            cd packages/core
-            npm version "$VERSION_TYPE" --no-git-tag-version > /dev/null 2>&1
-            NEW=$(node -p "require('./package.json').version")
-            cd ../..
-            git checkout packages/core/package.json
-          fi
-
-          echo "New version: $NEW"
-          echo "version=$NEW" >> $GITHUB_OUTPUT
-
-      - name: Sync all package versions
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
-          # set-version.cjs bumps every package + root + lerna.json AND rewrites
-          # internal workspace dep ranges to ^VERSION — so published tarballs
-          # carry accurate constraints (npm has no workspace: protocol).
-          node scripts/set-version.cjs "$VERSION"
-
       - name: Stage CHANGELOG into each package
         run: |
           # Every publishable package lists CHANGELOG.md in `files`; this puts the
@@ -225,19 +233,18 @@ jobs:
           # because components depends on reactivity; both depend on @hyperfixi/core
           # (which is in position 2). speech depends on core only.
           # intent is first — @hyperfixi/core and @lokascript/framework depend on it.
-          # domain-config sits after the domain-* packages + framework (its deps).
           # planner sits before mcp-server (which depends on it).
           # intent-element depends on intent + core, so it follows them.
+          # (The domain-* family moved to lokascript-domains in #909.)
           ALL_PACKAGES="intent semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
-                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn domain-config \
                         compilation-service planner mcp-server vite-plugin \
                         behaviors reactivity realtime components speech intent-element testing-framework language-server \
                         language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n htmx-adapter"
 
-          # A filter entry may be either the DIRECTORY name (`domain-learn`) or the
-          # npm name (`@lokascript/domain-learn`). It used to match the npm name
+          # A filter entry may be either the DIRECTORY name (`mcp-server`) or the
+          # npm name (`@hyperfixi/mcp-server`). It used to match the npm name
           # only, while the sibling pre-publish-check workflow takes directory
           # names for an identically-described input — so passing directory names
           # here silently matched NOTHING, published zero packages, and still
@@ -252,8 +259,8 @@ jobs:
             # Skip if not in filter (unless filter is "all")
             if [ "$FILTER" != "all" ]; then
               PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
-              # Exact match on either form, comma-delimited so `domain-learn`
-              # cannot also match `domain-learn-extras`.
+              # Exact match on either form, comma-delimited so `intent`
+              # cannot also match `intent-element`.
               echo ",$FILTER," | grep -qF ",$pkg," || \
                 echo ",$FILTER," | grep -qF ",$PKG_NAME," || continue
             fi
@@ -293,7 +300,7 @@ jobs:
           # wrong naming convention — and used to pass as a green no-op that
           # still cut a tag and a GitHub Release. Fail loudly instead.
           if [ "$MATCHED" -eq 0 ]; then
-            echo "::error::packages filter '$FILTER' matched none of ALL_PACKAGES — nothing was published. Use directory names (domain-learn) or npm names (@lokascript/domain-learn), comma-separated."
+            echo "::error::packages filter '$FILTER' matched none of ALL_PACKAGES — nothing was published. Use directory names (mcp-server) or npm names (@hyperfixi/mcp-server), comma-separated."
             exit 1
           fi
           echo "published=$MATCHED" >> $GITHUB_OUTPUT
@@ -383,7 +390,13 @@ jobs:
           # already satisfied by the existing lockfile are kept.
           npm install --package-lock-only
 
-          git add packages/*/package.json package.json lerna.json package-lock.json 2>/dev/null || true
+          # packages/*/src/version.ts: set-version.cjs rewrites these GENERATED
+          # sources alongside the manifests, and they were missing here — so the
+          # v2.11.0 bump was written on the runner and never committed, leaving
+          # main with package.json at 2.11.0 and VERSION at '2.10.0' and every
+          # subsequent PR red on the equality assertions. Add a path here for any
+          # new file set-version.cjs learns to rewrite.
+          git add packages/*/package.json packages/*/src/version.ts package.json lerna.json package-lock.json 2>/dev/null || true
 
           # `git commit || echo "No changes to commit"` masked two very different
           # things: a legitimately empty diff, and a commit that actually failed.

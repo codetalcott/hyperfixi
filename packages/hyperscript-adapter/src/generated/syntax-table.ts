@@ -6,7 +6,6 @@
 export const SYNTAX: Record<string, readonly [string, string][]> = {
   add: [['patient', ''], ['destination', 'to']],
   append: [['patient', ''], ['destination', 'to']],
-  async: [],
   beep: [['patient', '']],
   behavior: [['patient', '']],
   bind: [['destination', ''], ['source', 'to']],
@@ -73,6 +72,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   trigger: [['event', ''], ['destination', 'on']],
   unless: [['condition', '']],
   wait: [['duration', '']],
+  when: [['condition', '']],
   while: [['condition', '']],
   worker: [],
 };

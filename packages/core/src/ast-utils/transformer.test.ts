@@ -145,7 +145,7 @@ describe('AST Transformer - Basic', () => {
       },
     });
 
-    const selector = (transformed.commands[0] as any).args[0];
+    const selector = (transformed as any).commands[0].args[0];
     expect(selector.value).toBe('.new');
   });
 
@@ -309,8 +309,8 @@ describe('Transformation Utilities', () => {
 
     const normalized = normalize(ast);
 
-    expect((normalized.commands[0] as any).extraProperty).toBeUndefined();
-    expect((normalized.commands[0] as any).name).toBe('add');
+    expect((normalized as any).commands[0].extraProperty).toBeUndefined();
+    expect((normalized as any).commands[0].name).toBe('add');
   });
 
   it('should inline simple variables', () => {
@@ -397,7 +397,7 @@ describe('Custom Optimization Passes', () => {
 
     const optimized = applyOptimizationPasses(ast, [customPass]);
 
-    const selector = (optimized.commands[0] as any).args[0];
+    const selector = (optimized as any).commands[0].args[0];
     expect(selector.value).toBe('.new');
   });
 
@@ -440,7 +440,7 @@ describe('Custom Optimization Passes', () => {
 
     const optimized = applyOptimizationPasses(ast, [pass1, pass2]);
 
-    const selector = (optimized.commands[0] as any).args[0];
+    const selector = (optimized as any).commands[0].args[0];
     expect(selector.value).toBe('.final');
   });
 });

@@ -94,39 +94,6 @@ export interface SourceLocation {
 // ============================================================================
 
 /**
- * Generic command interface with input/output type constraints
- */
-export interface TypedCommandImplementation<
-  TInput extends readonly HyperScriptValue[] = readonly HyperScriptValue[],
-  TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends TypedExecutionContext = TypedExecutionContext,
-> {
-  /** Command name - must be literal for LLM understanding */
-  readonly name: string;
-
-  /** Human-readable syntax - for LLM documentation */
-  readonly syntax: string;
-
-  /** Detailed description for LLMs */
-  readonly description: string;
-
-  /** Input parameter schema for validation */
-  readonly inputSchema: RuntimeValidator<TInput>;
-
-  /** Output type information for LLMs */
-  readonly outputType: HyperScriptValueType;
-
-  /** Type-safe execution with validated inputs */
-  execute(context: TContext, ...args: TInput): Promise<EvaluationResult<TOutput>>;
-
-  /** Compile-time validation for static analysis */
-  validate(args: unknown[]): ValidationResult;
-
-  /** Runtime metadata */
-  readonly metadata: CommandMetadata;
-}
-
-/**
  * Command metadata for LLM understanding
  */
 export interface CommandMetadata {

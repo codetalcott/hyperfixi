@@ -88,6 +88,15 @@ const MARKER_CONCEPT_NORMALIZEDS: ReadonlySet<string> = new Set([
   'without',
 ]);
 
+/**
+ * A hyphen-JOINED keyword surface (`na-żywo`, `ao-vivo`): letters on both sides
+ * of every hyphen. A leading/trailing hyphen (qu's `-kama` / `-manta` suffix
+ * alternatives) or a bare `-` is not one — those stay with the word walk.
+ */
+function isHyphenatedWord(native: string): boolean {
+  return native.includes('-') && /^[\p{L}\p{N}_]+(-[\p{L}\p{N}_]+)+$/u.test(native);
+}
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -561,8 +570,15 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       (a, b) => b.native.length - a.native.length
     );
 
-    // Multi-word (space-containing) keywords, for longest-phrase matching at a
-    // token boundary. Already longest-first (profileKeywords is sorted above).
+    // Multi-word keywords — space-containing (hi `मेल खाता`, vi `chuyển đổi`)
+    // or HYPHENATED (pl `na-żywo`, pt `ao-vivo`, fr `point-arrêt`) — for
+    // longest-phrase matching at a token boundary. Already longest-first
+    // (profileKeywords is sorted above). Hyphenated ones were left to the word
+    // walk, which stops at the `-` and hands the parts to whatever they happen
+    // to be: pl `na-żywo` (live) read as `na`(→destination) + `-` + `żywo`, so
+    // every pl `live … koniec` render parsed back as a handler with the `live`
+    // action gone; es `en-vivo` / pt `ao-vivo` survived only because their
+    // second half is a `live` alternative.
     // Marker/modifier concepts are EXCLUDED: those are matched positionally by
     // the pattern matcher (role markers), and greedily consuming a multi-word
     // marker phrase shadows the single-word marker patterns rely on — e.g. id
@@ -572,7 +588,9 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     // keydown, bn `তৈরি করুন`=make) are kept — the pattern matcher treats those
     // as keyword literals, so one-token matching is strictly better.
     this.multiWordKeywords = this.profileKeywords.filter(
-      k => k.native.includes(' ') && !MARKER_CONCEPT_NORMALIZEDS.has(k.normalized)
+      k =>
+        (k.native.includes(' ') || isHyphenatedWord(k.native)) &&
+        !MARKER_CONCEPT_NORMALIZEDS.has(k.normalized)
     );
 
     // Build Map for O(1) lookups (case-insensitive + diacritic-insensitive)

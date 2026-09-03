@@ -1,0 +1,24 @@
+{
+  "_comment": "Hot-path throughput (hz, higher is faster) from bench/hot-path.bench.ts. Regenerate with `npm run bench:check:update` and say why in the PR. One-sided: a row slower by more than tolerance_percent fails `npm run bench:check`.",
+  "measured": "2026-09-02",
+  "commit": "603e2cc9",
+  "tolerance_percent": 15,
+  "rows": {
+    "Hot path: compile once, execute many > execute only — toggle + put sequence": {
+      "hz": 115341,
+      "rme": 2.94
+    },
+    "Hot path: compile once, execute many > compile + execute — toggle + put sequence": {
+      "hz": 108514,
+      "rme": 2.88
+    },
+    "Hot path: per-execution parseInput > execute only — toggle (242-line parseInput)": {
+      "hz": 235686,
+      "rme": 2.84
+    },
+    "Hot path: per-execution parseInput > execute only — add (66-line parseInput)": {
+      "hz": 214621,
+      "rme": 2.2
+    }
+  }
+}

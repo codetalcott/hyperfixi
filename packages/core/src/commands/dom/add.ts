@@ -24,6 +24,7 @@ import {
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for AddCommand
@@ -74,7 +75,7 @@ export class AddCommand extends DOMModificationBase {
   protected readonly preposition = 'to';
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'add'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<AddCommandInput> {
@@ -87,12 +88,7 @@ export class AddCommand extends DOMModificationBase {
     // Check for object literal (inline styles)
     if (typeof firstValue === 'object' && firstValue !== null && !Array.isArray(firstValue)) {
       const styles = firstValue as Record<string, string>;
-      const targets = await this.resolveTargets(
-        raw.args.slice(1),
-        evaluator,
-        context,
-        raw.modifiers
-      );
+      const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
       return { type: 'styles', styles, targets };
     }
 
@@ -103,29 +99,20 @@ export class AddCommand extends DOMModificationBase {
       // Attribute syntax: [@attr="value"] or @attr
       if (this.isAttribute(trimmed)) {
         const { name, value } = parseAttributeWithValue(trimmed);
-        const targets = await this.resolveTargets(
-          raw.args.slice(1),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'attribute', name, value, targets };
       }
 
       // CSS property shorthand: *property
       if (this.isCSSProperty(trimmed)) {
         const property = trimmed.substring(1).trim();
-        if (raw.args.length < 2) {
+        const valueNode = raw.args[1];
+        if (!valueNode) {
           throw new Error('add *property requires a value argument');
         }
-        const valueArg = await evaluator.evaluate(raw.args[1], context);
+        const valueArg = await evaluator.evaluate(valueNode, context);
         const styles = { [property]: String(valueArg) };
-        const targets = await this.resolveTargets(
-          raw.args.slice(2),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'styles', styles, targets };
       }
     }
@@ -136,7 +123,7 @@ export class AddCommand extends DOMModificationBase {
       throw new Error('add command: no valid class names found');
     }
 
-    const targets = await this.resolveTargets(raw.args.slice(1), evaluator, context, raw.modifiers);
+    const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
     return { type: 'classes', classes, targets };
   }
 

@@ -112,7 +112,19 @@ export const bengaliProfile: LanguageProfile = {
     settle: { primary: 'স্থির', alternatives: [], normalized: 'settle' },
     // Control flow
     if: { primary: 'যদি', alternatives: [], normalized: 'if' },
+    // "যদি না" ("if not") — the standard Bengali negated conditional. The
+    // SPACED multi-word form, like hi's `जब तक नहीं` and qu's `mana sichus`,
+    // so the tokenizer fuses it ahead of the bare `যদি` (longest match). bn
+    // was the ONLY profile without an unless keyword, so the generator built
+    // no unless pattern and render(unless, bn) fell to the explicit
+    // `[unless condition:…]` placeholder, which nothing parses back.
+    unless: { primary: 'যদি না', normalized: 'unless' },
     when: { primary: 'যখন', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'পরিবর্তিত হলে', normalized: 'changes' },
     where: { primary: 'কোথায়', normalized: 'where' },
     else: { primary: 'নতুবা', alternatives: ['না হলে'], normalized: 'else' },
     repeat: { primary: 'পুনরাবৃত্তি', alternatives: ['বার বার'], normalized: 'repeat' },

@@ -119,28 +119,37 @@ const EN_ROW = 'on click pick characters 0 to 5 of #note';
  * confidence model — a fix that moved adoption scores would be a different,
  * riskier change than the one made here.
  *
+ * The thirteen verb-initial rows moved 0.5556 → 0.7143 when the fused
+ * event-handler generators became schema-driven. `pickSchema` declares no
+ * `destination` role, and the fused pattern used to emit a `to {destination}`
+ * group anyway (gated on the PROFILE having a destination marker, not on the
+ * schema having the role). The slot could never be filled, so it sat in
+ * `scoreRoleCoverage`'s denominator forever: 2 / (2 + 0.8 + 0.8) rather than
+ * 2 / (2 + 0.8). Removing a question the command cannot answer is what raised
+ * the score; the ADOPTION is unchanged, which is what this pin is really for.
+ *
  * `verbFinal` marks the SOV six, which reach `pick` through the verb-final
  * factory. They are the languages that stay green under the B-only mutation.
  */
 const CORPUS: Array<{ lang: string; src: string; conf: number; verbFinal?: true }> = [
   { lang: 'ar', src: 'اختر حروف 0 إلى 5 من #note عند نقر', conf: 0.75 },
   { lang: 'bn', src: '#note র অক্ষর 0 থেকে 5 কে ক্লিক এ বাছুন', conf: 0.75, verbFinal: true },
-  { lang: 'de', src: 'bei klick auswählen Zeichen 0 zu 5 von #note', conf: 0.5555555555555556 },
-  { lang: 'es', src: 'en clic escoger caracteres 0 a 5 de #note', conf: 0.5555555555555556 },
-  { lang: 'fr', src: 'sur clic choisir caractères 0 à 5 de #note', conf: 0.5555555555555556 },
+  { lang: 'de', src: 'bei klick auswählen Zeichen 0 zu 5 von #note', conf: 0.7142857142857143 },
+  { lang: 'es', src: 'en clic escoger caracteres 0 a 5 de #note', conf: 0.7142857142857143 },
+  { lang: 'fr', src: 'sur clic choisir caractères 0 à 5 de #note', conf: 0.7142857142857143 },
   { lang: 'he', src: 'ב לחיצה בחר את תווים 0 על 5 of #note', conf: 0.8222222222222222 },
   { lang: 'hi', src: '#note का अक्षर 0 से 5 को क्लिक पर चुनें', conf: 0.75, verbFinal: true },
-  { lang: 'id', src: 'pada klik pilih karakter 0 ke 5 dari #note', conf: 0.5555555555555556 },
-  { lang: 'it', src: 'su clic scegliere caratteri 0 a 5 di #note', conf: 0.5555555555555556 },
+  { lang: 'id', src: 'pada klik pilih karakter 0 ke 5 dari #note', conf: 0.7142857142857143 },
+  { lang: 'it', src: 'su clic scegliere caratteri 0 a 5 di #note', conf: 0.7142857142857143 },
   { lang: 'ja', src: '#note の 文字 0 から 5 を クリック で 選択', conf: 0.75, verbFinal: true },
   { lang: 'ko', src: '#note 의 문자 0 부터 5 를 클릭 할 때 선택', conf: 0.75, verbFinal: true },
-  { lang: 'ms', src: 'apabila click pilih aksara 0 ke 5 daripada #note', conf: 0.5555555555555556 },
-  { lang: 'pl', src: 'na kliknięcie wybierz znaki 0 do 5 z #note', conf: 0.5555555555555556 },
-  { lang: 'pt', src: 'em clique escolher caracteres 0 a 5 de #note', conf: 0.5555555555555556 },
+  { lang: 'ms', src: 'apabila click pilih aksara 0 ke 5 daripada #note', conf: 0.7142857142857143 },
+  { lang: 'pl', src: 'na kliknięcie wybierz znaki 0 do 5 z #note', conf: 0.7142857142857143 },
+  { lang: 'pt', src: 'em clique escolher caracteres 0 a 5 de #note', conf: 0.7142857142857143 },
   { lang: 'qu', src: '#note pa sanampa 0 kama 5 ta ñitiy pi akllay', conf: 0.75, verbFinal: true },
-  { lang: 'ru', src: 'при клик выбрать символы 0 в 5 из #note', conf: 0.5555555555555556 },
-  { lang: 'sw', src: 'kwenye bofya chagua herufi 0 hadi 5 ya #note', conf: 0.5555555555555556 },
-  { lang: 'th', src: 'เมื่อ คลิก เลือก อักขระ 0 ถึง 5 ของ #note', conf: 0.5555555555555556 },
+  { lang: 'ru', src: 'при клик выбрать символы 0 в 5 из #note', conf: 0.7142857142857143 },
+  { lang: 'sw', src: 'kwenye bofya chagua herufi 0 hadi 5 ya #note', conf: 0.7142857142857143 },
+  { lang: 'th', src: 'เมื่อ คลิก เลือก อักขระ 0 ถึง 5 ของ #note', conf: 0.7142857142857143 },
   { lang: 'tl', src: 'pumili karakter 0 sa 5 ng #note kapag click', conf: 0.75 },
   {
     lang: 'tr',
@@ -148,8 +157,8 @@ const CORPUS: Array<{ lang: string; src: string; conf: number; verbFinal?: true 
     conf: 0.75,
     verbFinal: true,
   },
-  { lang: 'uk', src: 'при клік вибрати символи 0 в 5 з #note', conf: 0.5555555555555556 },
-  { lang: 'vi', src: 'khi nhấp chọn ký tự 0 đến 5 của #note', conf: 0.5555555555555556 },
+  { lang: 'uk', src: 'при клік вибрати символи 0 в 5 з #note', conf: 0.7142857142857143 },
+  { lang: 'vi', src: 'khi nhấp chọn ký tự 0 đến 5 của #note', conf: 0.7142857142857143 },
   { lang: 'zh', src: '当 点击 时 选取 把 字符 0 到 5 的 #note', conf: 1 },
 ];
 

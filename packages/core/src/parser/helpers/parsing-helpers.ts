@@ -12,60 +12,8 @@ import type { ParserContext } from '../parser-types';
 import { KEYWORDS } from '../parser-constants';
 
 /**
- * MultiWordPattern - Local type for command syntax patterns
- *
- * Different from parser-types.ts MultiWordPattern which is for type checking.
- * This version includes syntax string for pattern matching.
- */
-export interface MultiWordPattern {
-  command: string;
-  keywords: string[];
-  syntax: string;
-}
-
-/**
- * Multi-word command patterns
- *
- * These patterns define which keywords indicate modifiers for specific commands.
- * Used for commands like "append X to Y", etc.
- * Note: fetch has a dedicated parser (parseFetchCommand) for extended syntax support.
- */
-export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
-  { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
-  { command: 'prepend', keywords: ['to'], syntax: 'prepend <value> [to <target>]' },
-  {
-    command: 'make',
-    keywords: ['a', 'an', 'from', 'called'],
-    syntax: 'make (a|an) <type> [from <args>] [called <name>]',
-  },
-  // NOTE: `send` deliberately has NO entry. It is trigger's alias, and
-  // COMPOUND_COMMANDS routes both to parseTriggerCommand — which already
-  // understands `to <target>`, colon-qualified event names (`draggable:start`)
-  // and named event detail. But parseMultiWordCommand runs BEFORE the compound
-  // dispatch, so an entry here shadowed that: `send` reached the generic
-  // arg loop, whose parsePrimary() choked on the `:` in `send evt(id: 1)` with
-  // "Expected closing parenthesis" — on syntax upstream accepts, and which the
-  // identical `trigger evt(id: 1)` parsed correctly because `trigger` was never
-  // listed here.
-  { command: 'throw', keywords: [], syntax: 'throw <error>' },
-];
-
-/**
  * Parsing Utility Functions
  */
-
-/**
- * Get multi-word pattern for a command
- *
- * Looks up the pattern definition for commands that use multi-word syntax
- * (e.g., "append X to Y", "fetch URL as json")
- *
- * @param commandName - Command name to look up
- * @returns Pattern definition or null if not a multi-word command
- */
-export function getMultiWordPattern(commandName: string): MultiWordPattern | null {
-  return MULTI_WORD_PATTERNS.find(p => p.command === commandName.toLowerCase()) || null;
-}
 
 /**
  * Check if token is one of the specified keywords

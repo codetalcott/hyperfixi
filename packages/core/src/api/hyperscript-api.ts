@@ -28,23 +28,13 @@ import { Runtime, type RuntimeOptions } from '../runtime/runtime';
 import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
 import type { RuntimeHooks } from '../types/hooks';
-import type { SemanticAnalyzerInterface } from '../parser/types';
-import { createSemanticAdapter } from '../parser/semantic-integration';
+import { DEFAULT_CONFIDENCE_THRESHOLD } from '../parser/semantic-integration';
+import type { FrontEnd } from '../parser/semantic-integration';
+import { emitSemanticParseEvent, updateDebugStats, isDebugEnabled } from '../utils/debug-events';
 import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
 import { VERSION } from '../version';
-import {
-  parseSemantic,
-  isLanguageRegistered,
-  getRegisteredLanguages,
-  buildAST,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-} from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import {
-  process as processDOMElements,
-  initializeDOMProcessor,
-  setDOMProcessorConfig,
-} from './dom-processor';
+import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
 import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
@@ -82,7 +72,9 @@ class ASTCache {
   private makeKey(code: string, options?: NewCompileOptions): string {
     const lang = options?.language || DEFAULT_LANGUAGE;
     const trad = options?.traditional ? '1' : '0';
-    return `${lang}\0${trad}\0${code}`;
+    // `config.semantic` is part of the key: a non-English program compiled with
+    // the front-end on and then off must not be served the front-end's AST.
+    return `${lang}\0${trad}\0${config.semantic ? 1 : 0}\0${code}`;
   }
 
   get(code: string, options?: NewCompileOptions): CompileResult | undefined {
@@ -150,11 +142,10 @@ declare global {
   }
 }
 
-// Singleton semantic analyzer instance (lazy-initialized)
-let semanticAnalyzerInstance: SemanticAnalyzerInterface | null = null;
-
-// Singleton bridge instance for direct AST path (lazy-initialized)
-let bridgeInstance: import('../multilingual/bridge').SemanticGrammarBridge | null = null;
+// The registered multilingual front-end (`hyperscript.use`), and the 3.x
+// default built lazily from `multilingual/bridge.ts` when nothing is registered.
+let registeredFrontEnd: FrontEnd | null = null;
+let defaultFrontEnd: FrontEnd | null = null;
 
 // =============================================================================
 // Global Configuration
@@ -244,51 +235,36 @@ export const config: HyperscriptConfig = {
 };
 
 /**
- * Get or create the singleton bridge instance for direct AST path.
- * Lazy initialization to avoid overhead if not used.
+ * Register the multilingual front-end `compile()` consults for a non-English
+ * program (and `toLSE`/`fromLSE` for a semantic node and a renderer). One at
+ * a time — a second call replaces the first. Clears the AST cache, since a
+ * cached non-English result belongs to the front-end that produced it.
+ *
+ * The full browser bundle registers `@lokascript/semantic`'s bridge at boot.
+ * The library entry registers nothing; through 3.x it builds the same bridge
+ * lazily on the first non-English compile, so a Node consumer with
+ * `@lokascript/semantic` installed sees no change. That default goes in 4.0.
  */
-async function getOrCreateBridge(): Promise<
-  import('../multilingual/bridge').SemanticGrammarBridge
-> {
-  if (!bridgeInstance) {
-    const { SemanticGrammarBridge } = await import('../multilingual/bridge');
-    bridgeInstance = new SemanticGrammarBridge();
-    await bridgeInstance.initialize();
-  }
-  return bridgeInstance;
+function use(frontEnd: FrontEnd): void {
+  registeredFrontEnd = frontEnd;
+  astCache.clear();
 }
 
 /**
- * Get or create the singleton semantic analyzer instance.
- * Lazy initialization to avoid overhead if not used.
+ * The front-end to consult: the registered one, else the lazily-built
+ * 3.x default. This is the ONE place the API reaches for
+ * `multilingual/bridge.ts`, and the only import edge from `api/` toward the
+ * front-end (dynamic, so the library entry stays free of it — #1113).
  */
-function getSemanticAnalyzer(): SemanticAnalyzerInterface {
-  if (!semanticAnalyzerInstance) {
-    semanticAnalyzerInstance = createSemanticAdapter({
-      parse: parseSemantic,
-      isRegistered: isLanguageRegistered,
-      registered: getRegisteredLanguages,
-      buildAST,
-    }) as unknown as SemanticAnalyzerInterface;
+async function getFrontEnd(): Promise<FrontEnd> {
+  if (registeredFrontEnd) return registeredFrontEnd;
+  if (!defaultFrontEnd) {
+    const { SemanticGrammarBridge, createBridgeFrontEnd } = await import('../multilingual/bridge');
+    const bridge = new SemanticGrammarBridge({ confidenceThreshold: config.confidenceThreshold });
+    await bridge.initialize();
+    defaultFrontEnd = createBridgeFrontEnd(bridge);
   }
-  return semanticAnalyzerInstance;
-}
-
-/**
- * Default parser options based on global config.
- * Returns semantic analyzer only if config.semantic is true.
- */
-function getDefaultParserOptions() {
-  if (!config.semantic) {
-    // Traditional parsing only - no semantic analyzer
-    return {};
-  }
-
-  return {
-    semanticAnalyzer: getSemanticAnalyzer(),
-    language: config.language,
-    semanticConfidenceThreshold: config.confidenceThreshold,
-  };
+  return defaultFrontEnd;
 }
 
 // ============================================================================
@@ -556,6 +532,13 @@ export interface HyperscriptAPI {
   /** Clear the AST compilation cache */
   clearCache(): void;
 
+  /**
+   * Register the multilingual front-end `compile()` consults for non-English
+   * programs. See `FrontEnd`. Replaces any previous registration and clears
+   * the AST cache.
+   */
+  use(frontEnd: FrontEnd): void;
+
   /** Get cache hit/miss statistics */
   getCacheStats(): { size: number; hits: number; misses: number; hitRate: number };
 }
@@ -592,6 +575,9 @@ function getDefaultRuntime(): Runtime {
     // Lazy loading causes race conditions since preloading is async but constructor is sync
     _defaultRuntime = new Runtime({
       lazyLoad: false, // Eager load all expressions synchronously
+      // Upstream _hyperscript 0.9.90 `config.logAll`: read at fire time, so
+      // toggling `hyperscript.config.logAll` takes effect on the next event.
+      logAll: () => config.logAll,
     });
 
     // Register built-in behaviors (HistorySwap, Boosted)
@@ -728,13 +714,16 @@ async function compileLSECode(lse: string): Promise<CompileResult> {
 async function toLSECode(code: string, language?: string): Promise<string> {
   const lang = language || DEFAULT_LANGUAGE;
 
-  // For English: parse with core parser, convert to SemanticNode, render as LSE
-  // For other languages: use semantic parser
-  const { parseSemantic } = await import('@lokascript/semantic');
+  // The registered front-end parses (every language, English included) to
+  // its semantic node; the LSE renderer takes it from there.
+  const frontEnd = await getFrontEnd();
+  if (!frontEnd.parse) {
+    throw new Error(`Front-end "${frontEnd.name}" cannot parse to a semantic node (toLSE)`);
+  }
   const { renderExplicit } = await import('../lse/index');
 
-  const result = parseSemantic(code, lang);
-  if (!result || !result.node) {
+  const node = await frontEnd.parse(code, lang);
+  if (!node) {
     throw new Error(`Failed to parse "${code}" as ${lang} hyperscript`);
   }
 
@@ -742,7 +731,7 @@ async function toLSECode(code: string, language?: string): Promise<string> {
   // that the intent-typed LSE renderer doesn't enumerate; the structures are
   // otherwise compatible, so bridge the type at this boundary (block constructs
   // aren't rendered to LSE bracket syntax).
-  return await renderExplicit(result.node as Parameters<typeof renderExplicit>[0]);
+  return await renderExplicit(node as Parameters<typeof renderExplicit>[0]);
 }
 
 /**
@@ -750,13 +739,14 @@ async function toLSECode(code: string, language?: string): Promise<string> {
  * Uses semantic renderer.
  */
 async function fromLSECode(lse: string, language: string): Promise<string> {
-  const { render } = await import('@lokascript/semantic');
+  const frontEnd = await getFrontEnd();
+  if (!frontEnd.render) {
+    throw new Error(`Front-end "${frontEnd.name}" cannot render a semantic node (fromLSE)`);
+  }
   const { parseExplicit } = await import('../lse/index');
 
   const node = await parseExplicit(lse);
-  // Cast needed: framework and semantic SemanticNode types are structurally
-  // compatible but TypeScript sees them as nominally distinct
-  return render(node as Parameters<typeof render>[0], language);
+  return frontEnd.render(node, language);
 }
 
 // ============================================================================
@@ -856,11 +846,10 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
   const lang = options?.language || DEFAULT_LANGUAGE;
 
   try {
-    const disableSemantic = options?.traditional ?? false;
-    const parserOptions = disableSemantic ? {} : getDefaultParserOptions();
-    const usesSemanticParser = !disableSemantic;
-
-    const parseResult = parseToResult(code, parserOptions);
+    // English is parsed by the core parser alone (Arc 1 step 6). `traditional`
+    // is a no-op here; `compileAsync` honours it by skipping the front-end for
+    // a non-English program.
+    const parseResult = parseToResult(code, {});
     const timeMs = performance.now() - startTime;
 
     if (parseResult.success && parseResult.node) {
@@ -874,7 +863,7 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
         ast: parseResult.node,
         ...(recovered.length > 0 ? { errors: recovered.map(toCompileError) } : {}),
         meta: {
-          parser: usesSemanticParser ? 'semantic' : 'traditional',
+          parser: 'traditional',
           language: lang,
           timeMs,
         },
@@ -886,7 +875,7 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
         ok: false,
         errors: parseResult.error ? [toCompileError(parseResult.error)] : [],
         meta: {
-          parser: usesSemanticParser ? 'semantic' : 'traditional',
+          parser: 'traditional',
           language: lang,
           timeMs,
         },
@@ -949,8 +938,12 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
   const lang = options?.language || DEFAULT_LANGUAGE;
 
-  // For English or when traditional parsing is requested, use sync path (includes cache)
-  if (lang === DEFAULT_LANGUAGE || options?.traditional) {
+  // English, `traditional`, and `config.semantic === false` all mean "core
+  // parser only" — the front-end is not consulted, so a non-English program
+  // under `semantic: false` fails to parse exactly as it would with no semantic
+  // bundle loaded. Before Arc 1 step 6 the flag also governed an in-loop
+  // attempt on every English command; that path is gone.
+  if (lang === DEFAULT_LANGUAGE || options?.traditional || !config.semantic) {
     return compileSync(code, options);
   }
 
@@ -964,8 +957,29 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
   // For non-English, try direct AST path
   try {
-    const bridge = await getOrCreateBridge();
-    const astResult = await bridge.parseToASTWithDetails(code, lang);
+    const frontEnd = await getFrontEnd();
+    const astResult = await frontEnd.parseToAST(code, lang);
+
+    if (isDebugEnabled()) {
+      // The `hyperfixi:semantic-parse` event and `semanticDebug.getStats()`
+      // used to be fed by the per-command in-loop attempt; since Arc 1 step 6
+      // the front-end is consulted exactly here, once per program.
+      const command = (astResult.ast as { name?: unknown } | null)?.name;
+      const detail = {
+        input: code.substring(0, 100),
+        language: lang,
+        confidence: astResult.confidence,
+        threshold: config.confidenceThreshold,
+        semanticSuccess: astResult.usedDirectPath,
+        fallbackTriggered: !astResult.usedDirectPath && astResult.fallbackText !== null,
+        ...(typeof command === 'string' ? { command } : {}),
+        ...(astResult.warnings?.length ? { errors: astResult.warnings } : {}),
+        timestamp: Date.now(),
+        duration: performance.now() - startTime,
+      };
+      emitSemanticParseEvent(detail);
+      updateDebugStats(detail);
+    }
 
     if (astResult.usedDirectPath && astResult.ast) {
       const timeMs = performance.now() - startTime;
@@ -1007,9 +1021,6 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
 // Initialize DOM processor with compile functions and runtime
 initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
-// Share the hyperscript.config object so toggling `config.logAll` takes
-// effect on the next event (upstream _hyperscript 0.9.90).
-setDOMProcessorConfig(config);
 
 /**
  * Compiles and executes hyperscript code in a single call.
@@ -1248,6 +1259,9 @@ export const hyperscript: HyperscriptAPI = {
 
   // Cache management
   clearCache: () => astCache.clear(),
+
+  // Register a multilingual front-end (Arc 1 step 2)
+  use,
   getCacheStats: () => astCache.getStats(),
 
   // Interactive step-through debugger (lazy-initialized)

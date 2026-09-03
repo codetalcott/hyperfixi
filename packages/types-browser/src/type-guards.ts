@@ -37,7 +37,10 @@ export function isHyperFixiI18nAvailable(obj?: any): obj is LokaScriptI18nAPI {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    typeof obj.translate === 'function' &&
+    // `translate` used to be the marker here; it left with the grammar
+    // transformer (2026-08-28). `getProfile` is the surviving half of the same
+    // module and is what makes this global distinguishable.
+    typeof obj.getProfile === 'function' &&
     typeof obj.getSupportedLocales === 'function'
   );
 }

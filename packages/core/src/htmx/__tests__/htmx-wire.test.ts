@@ -41,8 +41,9 @@ afterEach(() => {
  * Emits the handler for `config`, then runs just its command body.
  *
  * Runs through the DEFAULT parser, exactly as the hx bundles' `executeOnElement`
- * does. `fetch` is on the parser's `skipSemanticParsing` list, so its
- * `with { ... }` options clause reaches `parseFetchCommand` and stays on the wire.
+ * does. `fetch` was on the parser's `skipSemanticParsing` list, so its
+ * `with { ... }` options clause reached `parseFetchCommand` and stayed on the
+ * wire (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone).
  */
 async function issueRequest(config: HtmxConfig, tag = 'button'): Promise<CapturedRequest> {
   const element = document.createElement(tag);
@@ -149,8 +150,8 @@ describe('htmx request wire format', () => {
 });
 
 describe('the default parser carries fetch options', () => {
-  // `fetch` is on the parser's `skipSemanticParsing` list, so `with { ... }`
-  // reaches `parseFetchCommand` instead of being eaten at a command boundary.
+  // `fetch` was on the parser's `skipSemanticParsing` list, so `with { ... }`
+  // reached `parseFetchCommand` instead of being eaten at a command boundary (historical: the in-loop semantic path this describes was deleted by Arc 1 step 6, 2026-09-02 — English is parsed by the core parser alone).
   // Without that, the semantic parser captures only the URL — at confidence 1.0,
   // with no warning — and method/body never reach the wire.
   it('transmits method and body, and parses the response as JSON', async () => {

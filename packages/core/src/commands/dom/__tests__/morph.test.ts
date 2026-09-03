@@ -126,7 +126,7 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -156,7 +156,10 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [overNode, targetNode, withNode, contentNode], modifiers: {} },
+        {
+          args: [targetNode],
+          modifiers: { strategy: overNode as never, with: contentNode as never },
+        },
         evaluator,
         context
       );
@@ -189,8 +192,8 @@ describe('MorphCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [targetNode, withNode, contentNode, usingNode, viewNode, transitionNode],
-          modifiers: {},
+          args: [targetNode],
+          modifiers: { with: contentNode as never, viewTransition: transitionNode as never },
         },
         evaluator,
         context
@@ -200,7 +203,7 @@ describe('MorphCommand (Standalone V2)', () => {
       expect(input.useViewTransition).toBe(true);
     });
 
-    it('honours a viewTransition modifier (the shape morphSchema\'s manner role emits)', async () => {
+    it("honours a viewTransition modifier (the shape morphSchema's manner role emits)", async () => {
       // The semantic path binds `using view transition` to morphSchema's
       // `manner` role and delivers it as `modifiers.viewTransition` — the flat
       // three-keyword args above are the TRADITIONAL parser's shape only.
@@ -220,8 +223,11 @@ describe('MorphCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [targetNode, withNode, contentNode],
-          modifiers: { viewTransition: mockLiteral('transition') as never },
+          args: [targetNode],
+          modifiers: {
+            with: contentNode as never,
+            viewTransition: mockLiteral('transition') as never,
+          },
         },
         inlineEvaluator(valueMap),
         context
@@ -275,7 +281,7 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -312,7 +318,11 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       await expect(
-        command.parseInput({ args: [withNode, contentNode], modifiers: {} }, evaluator, context)
+        command.parseInput(
+          { args: [], modifiers: { with: contentNode as never } },
+          evaluator,
+          context
+        )
       ).rejects.toThrow('could not determine target');
     });
 
@@ -334,7 +344,7 @@ describe('MorphCommand (Standalone V2)', () => {
 
       await expect(
         command.parseInput(
-          { args: [targetNode, withNode, contentNode], modifiers: {} },
+          { args: [targetNode], modifiers: { with: contentNode as never } },
           evaluator,
           context
         )
@@ -367,7 +377,7 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [targetNode, withKeyword, contentVar], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentVar as never } },
         evaluator,
         context
       );
@@ -395,7 +405,7 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [targetNode, withKeyword, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );
@@ -468,7 +478,7 @@ describe('MorphCommand (Standalone V2)', () => {
 
       // Parse
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode], modifiers: {} },
+        { args: [targetNode], modifiers: { with: contentNode as never } },
         evaluator,
         context
       );

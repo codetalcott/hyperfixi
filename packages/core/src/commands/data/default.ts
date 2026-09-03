@@ -30,6 +30,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * Typed input for DefaultCommand (discriminated union).
@@ -131,7 +132,7 @@ export class DefaultCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'default'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<DefaultCommandInput> {
@@ -168,7 +169,7 @@ export class DefaultCommand implements DecoratedCommand {
     // Evaluated tail: shapes the ladder does not name. A selector or expression
     // whose VALUE is the element to fill (`default #out to "x"`) — here
     // evaluation is correct, because the element is the target, not its name.
-    const evaluated = await evaluator.evaluate(raw.args[0], context);
+    const evaluated = await evaluator.evaluate(raw.args[0] as ASTNode, context);
     if (isHTMLElement(evaluated)) {
       return { type: 'element', element: evaluated as HTMLElement, value };
     }
@@ -186,17 +187,15 @@ export class DefaultCommand implements DecoratedCommand {
   /**
    * The value to install: `to <value>`.
    *
-   * Three shapes reach here, and the middle one was silently broken. The
-   * semantic path emits `modifiers.to`; the TRADITIONAL parser emits the
-   * positional `[target, identifier('to'), value]` triple that
-   * `SetCommand.parseInput` also reads — and the old code took `args[1]` for
-   * it, which is the `to` KEYWORD, so every `default X to Y` parsed
-   * traditionally installed `undefined` (measured: `default #out to "x"` wrote
-   * the string "undefined"). The bare two-arg form is kept for callers that
-   * build the node directly.
+   * Both parsers emit `modifiers.to` (the traditional one since Arc 3 step
+   * 3's `set` migration — before that it emitted a positional
+   * `[target, identifier('to'), value]` triple, and the code here once took
+   * `args[1]` for the value, which was the KEYWORD, so every traditionally
+   * parsed `default X to Y` installed `undefined`). The bare two-arg form is
+   * kept for callers that build the node directly.
    */
   private async extractValue(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'default'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
@@ -204,14 +203,9 @@ export class DefaultCommand implements DecoratedCommand {
       return evaluator.evaluate(raw.modifiers.to, context);
     }
 
-    const second = raw.args[1] as unknown as Record<string, unknown> | undefined;
-    const isToMarker =
-      second?.['type'] === 'identifier' && String(second['name']).toLowerCase() === 'to';
-    if (isToMarker && raw.args.length >= 3) {
-      return evaluator.evaluate(raw.args[2], context);
-    }
-    if (!isToMarker && raw.args.length >= 2) {
-      return evaluator.evaluate(raw.args[1], context);
+    const second = raw.args[1];
+    if (second) {
+      return evaluator.evaluate(second, context);
     }
 
     throw new Error('default command requires a value (use "to <value>")');

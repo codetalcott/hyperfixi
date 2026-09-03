@@ -93,18 +93,6 @@
       "category": "content",
       "compatibility": "standard"
     },
-    "async": {
-      "description": "Execute commands asynchronously without blocking",
-      "syntax": ["async <command> [<command> ...]"],
-      "examples": [
-        "async command1 command2",
-        "async fetchData processData",
-        "async animateIn showContent"
-      ],
-      "sideEffects": ["async-execution"],
-      "category": "advanced",
-      "compatibility": "lokascript-extension"
-    },
     "beep": {
       "description": "Debug output for expressions with type information",
       "syntax": ["beep!", "beep! <expression>", "beep! <expression>, <expression>, ..."],
@@ -233,7 +221,8 @@
       "examples": [
         "fetch \"/api/data\"",
         "fetch \"/api/users\" as json",
-        "fetch \"/api/save\" with { method:\"POST\" }"
+        "fetch \"/api/save\" with { method:\"POST\" }",
+        "fetch \"/api/optional\" as json do not throw"
       ],
       "sideEffects": ["network", "event-dispatching"],
       "category": "async",
@@ -258,7 +247,13 @@
     "go": {
       "description": "Navigation functionality including URL navigation, element scrolling, and browser history",
       "syntax": ["go back", "go to url <url> [in new window]", "go to [position] [of] <element>"],
-      "examples": ["go back", "go to url \"https://example.com\"", "go to top of #header"],
+      "examples": [
+        "go back",
+        "go to url \"https://example.com\"",
+        "go to url \"https://example.com\" in new window",
+        "go to top of #header",
+        "go to bottom of #footer smoothly"
+      ],
       "sideEffects": ["navigation", "scrolling"],
       "category": "navigation",
       "compatibility": "standard"
@@ -278,8 +273,14 @@
     },
     "hide": {
       "description": "Hide elements by setting display to none",
-      "syntax": ["hide [<target>]"],
-      "examples": ["hide me", "hide #modal", "hide .warnings", "hide <button/>"],
+      "syntax": ["hide [<target>] [when <condition>]"],
+      "examples": [
+        "hide me",
+        "hide #modal",
+        "hide .warnings",
+        "hide <button/>",
+        "hide <li/> when its textContent is empty"
+      ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
       "compatibility": "standard"
@@ -541,7 +542,11 @@
         "repeat until <condition> { <commands> }",
         "repeat forever { <commands> }"
       ],
-      "examples": ["repeat for item in items { log item }", "repeat 5 times { log \"hello\" }"],
+      "examples": [
+        "repeat for item in items { log item }",
+        "repeat 5 times { log \"hello\" }",
+        "repeat for item in items index i log i end"
+      ],
       "sideEffects": ["iteration", "conditional-execution"],
       "category": "control-flow",
       "compatibility": "standard"
@@ -583,8 +588,18 @@
     },
     "scroll": {
       "description": "Scroll an element into view (upstream _hyperscript 0.9.90)",
-      "syntax": ["scroll to <target>", "scroll to top of <target>", "scroll to <target> smoothly"],
-      "examples": ["scroll to #top", "scroll to bottom of #chat", "scroll to me smoothly"],
+      "syntax": [
+        "scroll to <target>",
+        "scroll to top of <target>",
+        "scroll to <target> smoothly",
+        "scroll [<target>] [up|down|left|right] by <n> [px]"
+      ],
+      "examples": [
+        "scroll to #top",
+        "scroll to bottom of #chat",
+        "scroll to me smoothly",
+        "scroll down by 200"
+      ],
       "sideEffects": ["scrolling"],
       "category": "navigation",
       "compatibility": "standard"
@@ -609,7 +624,8 @@
         "trigger click on #button",
         "trigger customEvent on me",
         "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
+        "send myEvent(count: 42) to me",
+        "send saved to #form with bubbles cancelable"
       ],
       "sideEffects": ["event-dispatch"],
       "aliases": ["send"],
@@ -638,8 +654,14 @@
     },
     "show": {
       "description": "Show elements by restoring display property",
-      "syntax": ["show [<target>]"],
-      "examples": ["show me", "show #modal", "show .hidden", "show <button/>"],
+      "syntax": ["show [<target>] [when <condition>]"],
+      "examples": [
+        "show me",
+        "show #modal",
+        "show .hidden",
+        "show <button/>",
+        "show <li/> when its textContent contains my value"
+      ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
       "compatibility": "standard"
@@ -649,6 +671,7 @@
       "syntax": ["start view transition [using <type>] <body> end"],
       "examples": [
         "start view transition add .highlight to me end",
+        "start view transition using \"slide\" add .active to #panel end",
         "start view transition using \"slide\" then put result into #panel end"
       ],
       "sideEffects": ["animation", "dom-mutation"],
@@ -723,7 +746,9 @@
         "toggle .active on me",
         "toggle @disabled",
         "toggle #myDialog as modal",
-        "toggle .loading for 2s"
+        "toggle .loading for 2s",
+        "toggle between .expanded and .collapsed",
+        "toggle .loading until click from #done"
       ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
@@ -755,7 +780,8 @@
         "trigger click on #button",
         "trigger customEvent on me",
         "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
+        "send myEvent(count: 42) to me",
+        "send saved to #form with bubbles cancelable"
       ],
       "sideEffects": ["event-dispatch"],
       "aliases": ["send"],

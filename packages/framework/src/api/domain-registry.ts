@@ -18,8 +18,8 @@
  *   languages: ['en', 'es', 'ja', 'ar'],
  *   inputLabel: 'query',
  *   inputDescription: 'SQL query in natural language',
- *   getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
- *   getRenderer: () => import('@lokascript/domain-sql').then(m => m.renderSQL),
+ *   getDSL: () => import('@lokascript/domains/sql').then(m => m.createSQLDSL()),
+ *   getRenderer: () => import('@lokascript/domains/sql').then(m => m.renderSQL),
  * });
  *
  * // Auto-generate MCP tool definitions

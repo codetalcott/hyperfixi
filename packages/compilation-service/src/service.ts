@@ -25,6 +25,7 @@ import type {
   Diagnostic,
 } from './types.js';
 import { diffBehaviors } from './diff/diff.js';
+import { scoreNodes, type ScoreRequest, type ScoreResponse } from './scoring/score.js';
 import { normalize, initNormalizer } from './input/normalize.js';
 import {
   runValidationGates,
@@ -278,9 +279,22 @@ export class CompilationService {
 
     try {
       const result = this.translateFn(request.code, request.from, request.to);
+
+      // Arc 5's verified-translation badge: score the rendering against its
+      // source (cross-language scoreFidelity). Advisory — verification can
+      // fail to parse without flipping ok, and its diagnostics stay inside it.
+      let verification: ScoreResponse | undefined;
+      if (request.verify !== false) {
+        verification = this.scoreFidelity({
+          reference: { code: request.code, language: request.from },
+          candidate: { code: result, language: request.to },
+        });
+      }
+
       return {
         ok: true,
         code: result,
+        ...(verification !== undefined ? { verification } : {}),
         diagnostics: [],
       };
     } catch (error) {
@@ -551,6 +565,46 @@ export class CompilationService {
       summary: result.summary,
       diagnostics,
     };
+  }
+
+  /**
+   * Score a candidate against a reference for structural fidelity — the
+   * multilingual ratchet's scorers (docs/FIDELITY.md) applied to one pair of
+   * inputs. Sides accept any input format and may be in different languages;
+   * see src/scoring/score.ts for signal semantics. Complementary to diff():
+   * diff answers "identical, and where not?", this answers "how faithful, and
+   * what exactly is missing or hallucinated?".
+   */
+  scoreFidelity(request: ScoreRequest): ScoreResponse {
+    const diagnostics: Diagnostic[] = [];
+    const threshold = request.confidence ?? this.confidenceThreshold;
+
+    const normRef = normalize({ ...request.reference, confidence: request.confidence });
+    diagnostics.push(
+      ...normRef.diagnostics.map(d => ({ ...d, message: `[reference] ${d.message}` }))
+    );
+    const normCand = normalize({ ...request.candidate, confidence: request.confidence });
+    diagnostics.push(
+      ...normCand.diagnostics.map(d => ({ ...d, message: `[candidate] ${d.message}` }))
+    );
+
+    if (!normRef.node || !normCand.node) {
+      return { ok: false, diagnostics };
+    }
+
+    const gateRef = runValidationGates(normRef.node, normRef.confidence, threshold);
+    const gateCand = runValidationGates(normCand.node, normCand.confidence, threshold);
+    diagnostics.push(
+      ...gateRef.diagnostics.map(d => ({ ...d, message: `[reference] ${d.message}` }))
+    );
+    diagnostics.push(
+      ...gateCand.diagnostics.map(d => ({ ...d, message: `[candidate] ${d.message}` }))
+    );
+    if (!gateRef.pass || !gateCand.pass) {
+      return { ok: false, diagnostics };
+    }
+
+    return { ok: true, diagnostics, ...scoreNodes(normRef.node, normCand.node) };
   }
 
   /**

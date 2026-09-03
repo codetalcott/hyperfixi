@@ -159,25 +159,6 @@ export interface ProgramNode extends ASTNode {
   statements: ASTNode[];
 }
 
-/**
- * MultiWordPattern - Defines structure for multi-word commands
- *
- * Example: "fetch URL as json" has keywords ["as"]
- */
-export interface MultiWordPattern {
-  /** Command name (e.g., "fetch") */
-  command: string;
-
-  /** Keywords that can appear as modifiers (e.g., ["as", "with"]) */
-  keywords: string[];
-
-  /** Optional: Minimum number of arguments required */
-  minArgs?: number;
-
-  /** Optional: Maximum number of arguments allowed */
-  maxArgs?: number;
-}
-
 // ============================================================================
 // Focused Sub-Interfaces
 //
@@ -371,14 +352,8 @@ export interface ParserUtilities {
   /** Check if identifier is a command */
   isCommand(name: string): boolean;
 
-  /** Check if command is a compound command */
-  isCompoundCommand(name: string): boolean;
-
   /** Check if identifier is a keyword */
   isKeyword(name: string): boolean;
-
-  /** Get multi-word pattern for command */
-  getMultiWordPattern(commandName: string): MultiWordPattern | null;
 
   /**
    * Resolve a keyword to its canonical English form.

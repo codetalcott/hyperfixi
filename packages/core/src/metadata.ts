@@ -113,40 +113,6 @@ export interface BundleInfo {
  */
 export const bundleInfo: BundleInfo[] = [
   {
-    id: 'lite',
-    name: 'Lite',
-    filename: 'hyperfixi-lite.js',
-    gzipSize: '2.0 KB',
-    rawSize: '5 KB',
-    commandCount: 8,
-    parser: 'regex',
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    hasFetch: false,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/lite',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite.js',
-    useCase: 'Minimal interactivity: toggle, show, hide, add, remove, set, put',
-  },
-  {
-    id: 'lite-plus',
-    name: 'Lite Plus',
-    filename: 'hyperfixi-lite-plus.js',
-    gzipSize: '2.6 KB',
-    rawSize: '8 KB',
-    commandCount: 19,
-    parser: 'regex',
-    hasBlocks: false,
-    hasEventModifiers: false,
-    hasPositional: false,
-    hasFetch: false,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/lite-plus',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite-plus.js',
-    useCase: 'Basic interactivity with wait, log, increment, trigger, go',
-  },
-  {
     id: 'hybrid-complete',
     name: 'Hybrid Complete',
     filename: 'hyperfixi-hybrid-complete.js',
@@ -155,8 +121,8 @@ export const bundleInfo: BundleInfo[] = [
     // generated from `bundle-generator/templates.ts`, so the count is the full
     // advertised list. +2967 B gz, of which 2057 is `morphlex` (the `morph`
     // case's dependency).
-    gzipSize: '11.1 KB',
-    rawSize: '43 KB',
+    gzipSize: '11.4 KB',
+    rawSize: '44 KB',
     commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
@@ -174,8 +140,8 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-hx.js',
     // Inherits hybrid-complete's runtime wholesale, so it inherits the Arc E
     // step 4 command set and its size move too (+2972 B gz).
-    gzipSize: '21.5 KB',
-    rawSize: '81 KB',
+    gzipSize: '21.8 KB',
+    rawSize: '82 KB',
     commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
@@ -191,8 +157,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-hx-v4',
     name: 'Hybrid HX v4',
     filename: 'hyperfixi-hx-v4.js',
-    gzipSize: '320.9 KB',
-    rawSize: '1490 KB',
+    gzipSize: '342.4 KB',
+    rawSize: '1587 KB',
     // Re-exports `browser-bundle.ts`, so it inherits the full registry.
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
@@ -206,53 +172,11 @@ export const bundleInfo: BundleInfo[] = [
     useCase: 'htmx v4 compat: hx-live reactivity, SSE/WebSocket streaming, full runtime',
   },
   {
-    id: 'minimal',
-    name: 'Minimal',
-    filename: 'hyperfixi-minimal.js',
-    gzipSize: '71.5 KB',
-    rawSize: '289 KB',
-    // Was 30, ungated and wrong by 20. `browser-bundle-minimal-v2.ts`
-    // advertises 10 in its own `commands: [...]` array, which is what this
-    // mirrors. Note it REGISTERS 11: `createSendCommand` also registers the
-    // consolidation alias `trigger`, so `trigger` works there but is not
-    // advertised. Left as-is deliberately — changing a shipped bundle's
-    // advertised surface is a behavior call, not part of a derivation step.
-    commandCount: 10,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/minimal',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-minimal.js',
-    useCase: 'Full parser with essential commands',
-  },
-  {
-    id: 'standard',
-    name: 'Standard',
-    filename: 'hyperfixi-standard.js',
-    gzipSize: '78.3 KB',
-    rawSize: '317 KB',
-    // Was 35, ungated and wrong by 10. `browser-bundle-standard-v2.ts`
-    // registers 25, matching its own published `commands: [...]` array exactly.
-    commandCount: 25,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/standard',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-standard.js',
-    useCase: 'Full parser with common commands',
-  },
-  {
     id: 'browser',
     name: 'Full Browser',
     filename: 'hyperfixi.js',
-    gzipSize: '309.1 KB',
-    rawSize: '1453 KB',
+    gzipSize: '330.7 KB',
+    rawSize: '1550 KB',
     // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
     // gaps and no extras vs the manifest).
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
@@ -270,14 +194,14 @@ export const bundleInfo: BundleInfo[] = [
     id: 'multilingual',
     name: 'Multilingual',
     filename: 'hyperfixi-multilingual.js',
-    gzipSize: '93.4 KB',
-    rawSize: '380 KB',
-    // NOT a full-runtime bundle, despite the old 59. It hand-picks 52 via
+    gzipSize: '91.2 KB',
+    rawSize: '369 KB',
+    // NOT a full-runtime bundle, despite the old 59. It hand-picks 51 via
     // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
     // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it
-    // SHOULD ship all 59 is a behavior question, deliberately left to its own
+    // SHOULD ship all 58 is a behavior question, deliberately left to its own
     // PR — this step only stops the number from lying.
-    commandCount: 52,
+    commandCount: 51,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -499,7 +423,7 @@ export const ecosystem = {
   },
   i18n: {
     name: '@lokascript/i18n',
-    description: 'Grammar transformation and keyword translation',
+    description: 'Keyword dictionaries, keyword providers and grammar profiles',
     npm: 'https://www.npmjs.com/package/@lokascript/i18n',
   },
   vitePlugin: {

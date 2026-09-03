@@ -12,6 +12,7 @@ import { isHTMLElement } from '../../utils/element-check';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
 import {
   parseVisibilityInput,
+  partitionByCondition,
   type VisibilityRawInput,
   type VisibilityInput,
 } from '../helpers/visibility-target-parser';
@@ -25,6 +26,13 @@ export type VisibilityMode = 'show' | 'hide';
 export interface VisibilityCommandInput extends VisibilityInput {
   mode: VisibilityMode;
   defaultDisplay?: string;
+  /**
+   * Targets that FAILED a `when`/`where` filter, and therefore get the INVERSE
+   * of this command's action — upstream's `show … when` hides the non-matching
+   * elements, and `hide … when` shows them. Absent when the command carried no
+   * filter, which is not the same as present-and-empty.
+   */
+  inverse?: HTMLElement[];
 }
 
 /**
@@ -45,14 +53,28 @@ export abstract class VisibilityCommandBase implements DecoratedCommand {
   /** Subclasses must define this to identify their mode */
   protected abstract readonly mode: VisibilityMode;
 
+  /**
+   * `when`/`where` on show/hide is a per-element FILTER, so this command — not
+   * `CommandAdapterV2`'s generic guard — is what consumes the modifier. See
+   * {@link partitionByCondition} for the semantics and
+   * `CommandWithParseInput.ownsConditionalModifier` for the hand-off.
+   */
+  readonly ownsConditionalModifier = true;
+
   async parseInput(
     raw: VisibilityRawInput,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<VisibilityCommandInput> {
     const { targets } = await parseVisibilityInput(raw, evaluator, context, this.mode);
+    const condition = raw.modifiers?.when ?? raw.modifiers?.where;
+    const { matched, unmatched } = condition
+      ? await partitionByCondition(targets, condition, evaluator, context)
+      : { matched: targets, unmatched: undefined };
+
     return {
-      targets,
+      targets: matched,
+      ...(unmatched !== undefined && { inverse: unmatched }),
       mode: this.mode,
       defaultDisplay: this.mode === 'show' ? 'block' : undefined,
     };

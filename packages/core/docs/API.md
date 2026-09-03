@@ -323,7 +323,7 @@ interface CompileResult {
   ast?: ASTNode; // Compiled AST (if ok is true)
   errors?: CompileError[]; // Compilation errors (if ok is false)
   meta: {
-    parser: 'semantic' | 'traditional'; // Which parser was used
+    parser: 'semantic' | 'traditional'; // 'semantic' = the multilingual front-end built the AST (non-English direct path); English is always 'traditional'
     confidence?: number; // Confidence score (0-1, semantic only)
     language: string; // Language code used
     timeMs: number; // Compilation time in milliseconds
@@ -356,7 +356,7 @@ Options for the v2 compilation methods.
 ```typescript
 interface NewCompileOptions {
   language?: string; // Language code (e.g., 'en', 'ja', 'es')
-  confidenceThreshold?: number; // Min confidence for semantic parsing (0-1)
+  confidenceThreshold?: number; // Min front-end confidence to accept its direct AST (0-1); below it, its English rendering is parsed by core
   traditional?: boolean; // Force traditional parser
 }
 ```

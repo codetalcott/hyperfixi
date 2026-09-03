@@ -15,7 +15,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isInsertableNode } from '../../utils/element-check';
 import {
   isPropertyTargetString,
   resolveAnyPropertyTarget,
@@ -23,6 +23,8 @@ import {
 } from '../helpers/property-target';
 import {
   insertContentSemantic,
+  insertElementsInOrder,
+  toInsertPosition,
   type ContentInsertPosition,
   type SemanticPosition,
 } from '../helpers/dom-mutation';
@@ -34,6 +36,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 /**
  * @deprecated Use `ContentInsertPosition` from `commands/helpers/dom-mutation`,
@@ -82,52 +85,32 @@ export class PutCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'put'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PutCommandInput> {
     if (!raw.args?.length) throw new Error('put requires arguments');
 
-    const nodeType = (n: ASTNode): string => (n as any)?.type || 'unknown';
-    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'];
-
-    let prepIdx = -1,
-      prepKw: string | null = null;
-    for (let i = 0; i < raw.args.length; i++) {
-      const arg = raw.args[i];
-      const t = nodeType(arg);
-      const v = (t === 'literal' ? (arg as any).value : (arg as any).name) as string;
-      if ((t === 'literal' || t === 'identifier') && validPreps.includes(v)) {
-        prepIdx = i;
-        prepKw = v;
-        break;
-      }
-    }
-
-    let contentArg: ASTNode | null = null,
-      targetArg: ASTNode | null = null;
-    if (prepIdx === -1) {
-      // Check modifiers for semantic parsing format (e.g., { args: [content], modifiers: { into: target } })
-      // Any valid preposition can arrive as a modifier key, including the
-      // multi-word positional forms ('at start of' / 'at end of').
-      const prepKey = validPreps.find(p => raw.modifiers[p]);
-      if (prepKey) {
-        contentArg = raw.args[0];
-        prepKw = prepKey;
-        targetArg = raw.modifiers[prepKey] as ASTNode;
-      } else if (raw.args.length >= 3) {
-        contentArg = raw.args[0];
-        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || null;
-        targetArg = raw.args[2];
-      } else if (raw.args.length >= 2) {
-        contentArg = raw.args[0];
-        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || 'into';
-      } else throw new Error('put requires content and position');
+    const nodeType = (n: ASTNode): string => n?.type || 'unknown';
+    const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'] as const;
+    // The parser carries the operation as the slot the target lives under
+    // (`{ args: [content], modifiers: { into: target } }`, Arc 3 step 3) —
+    // the shape the semantic path always produced. Any operation can arrive
+    // as the key, including the multi-word ones. A bare two-argument node
+    // (`put X Y`, built directly) still defaults to `into`.
+    const prepKey = validPreps.find(p => raw.modifiers?.[p]);
+    let contentArg: ASTNode | null = raw.args[0] ?? null;
+    let prepKw: string | null = null;
+    let targetArg: ASTNode | null = null;
+    if (prepKey) {
+      prepKw = prepKey;
+      targetArg = raw.modifiers[prepKey] as ASTNode;
+    } else if (raw.args[1]) {
+      prepKw = 'into';
+      targetArg = raw.args[1];
     } else {
-      contentArg = raw.args.slice(0, prepIdx)[0] || null;
-      targetArg = raw.args.slice(prepIdx + 1)[0] || null;
+      throw new Error('put requires content and position');
     }
-
     if (!contentArg) throw new Error('put requires content');
     if (!prepKw) throw new Error('put requires position keyword');
 
@@ -250,7 +233,14 @@ export class PutCommand implements DecoratedCommand {
         const content = this.parseValue(value);
         // NOTE: an Element value can only exist in one place, so across multiple
         // targets it MOVES and ends up inside the last one. Strings are copied.
-        insertContentSemantic(t, content, position);
+        // A homogeneous element ARRAY moves the same way, order preserved —
+        // `put <tr/> in me sorted by … at end of me` is an in-place reorder
+        // (state-preserving; the anti-morph — nothing is serialized).
+        if (Array.isArray(content)) {
+          insertElementsInOrder(t, content, toInsertPosition(position));
+        } else {
+          insertContentSemantic(t, content, position);
+        }
       }
     }
     return targets;
@@ -283,8 +273,23 @@ export class PutCommand implements DecoratedCommand {
     return queryTargetElements(sel);
   }
 
-  private parseValue(v: any): string | HTMLElement {
+  private parseValue(v: any): string | HTMLElement | HTMLElement[] {
     if (isHTMLElement(v)) return v as HTMLElement;
+    // A non-empty homogeneous element array passes through for ordered
+    // insertion. Mixed or empty arrays keep the string fallback (previously
+    // "[object HTMLElement],…" — output nothing could have relied on).
+    if (Array.isArray(v) && v.length > 0 && v.every(isHTMLElement)) {
+      return v as HTMLElement[];
+    }
+    // `fetch … as html` resolves to a DocumentFragment (see FetchCommand's
+    // parseHTML), and the htmx-compat layer's whole swap path is
+    // `fetch … as html then put it into <target>`. Without this branch the
+    // fragment fell to String(v) and every such swap inserted the literal
+    // text "[object DocumentFragment]". Insertion helpers accept any Node —
+    // insertBefore/appendChild splice a fragment's children in place — so
+    // pass it straight through. Checked after the Element and array cases,
+    // which have their own handling.
+    if (isInsertableNode(v)) return v as unknown as HTMLElement;
     return v == null ? '' : String(v);
   }
 

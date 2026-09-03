@@ -17,6 +17,7 @@ import { conversionExpressions } from './conversion/index';
 import { positionalExpressions } from './positional/index';
 import { propertiesExpressions } from './properties/index';
 import { specialExpressions } from './special/index';
+import { mathematicalExpressions } from './mathematical/index';
 
 describe('Expression Integration Tests', () => {
   let context: TestExpressionContext;
@@ -341,10 +342,14 @@ describe('Expression Integration Tests', () => {
       const intValue = await conversionExpressions.as.evaluate(context, dataValue, 'Int');
 
       // Step 2: Add 5
-      const sum = await (specialExpressions.addition as any).evaluate(context, intValue, 5);
+      const sum = await (mathematicalExpressions.addition as any).evaluate(context, intValue, 5);
 
       // Step 3: Multiply by 2
-      const result = await (specialExpressions.multiplication as any).evaluate(context, sum, 2);
+      const result = await (mathematicalExpressions.multiplication as any).evaluate(
+        context,
+        sum,
+        2
+      );
 
       expect(result).toBe(30); // (10 + 5) * 2 = 30
     });

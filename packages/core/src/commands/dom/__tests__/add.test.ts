@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AddCommand } from '../add';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
+import type { ExecutionContext, ExpressionNode, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 
@@ -195,8 +195,8 @@ describe('AddCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [mockNode('active'), mockNode(targetElement)],
-          modifiers: {},
+          args: [mockNode('active')],
+          modifiers: { to: mockNode(targetElement) as ExpressionNode },
         },
         evaluator,
         context
@@ -215,8 +215,8 @@ describe('AddCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [mockNode('active'), mockNode('#test-target')],
-          modifiers: {},
+          args: [mockNode('active')],
+          modifiers: { to: mockNode('#test-target') as ExpressionNode },
         },
         evaluator,
         context
@@ -242,8 +242,8 @@ describe('AddCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [mockNode('active'), mockNode('.test-class')],
-          modifiers: {},
+          args: [mockNode('active')],
+          modifiers: { to: mockNode('.test-class') as ExpressionNode },
         },
         evaluator,
         context
@@ -264,8 +264,8 @@ describe('AddCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [mockNode('active'), mockNode(':::invalid:::')],
-            modifiers: {},
+            args: [mockNode('active')],
+            modifiers: { to: mockNode(':::invalid:::') as ExpressionNode },
           },
           evaluator,
           context
@@ -280,8 +280,8 @@ describe('AddCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [mockNode('active'), mockNode('.nonexistent-element')],
-            modifiers: {},
+            args: [mockNode('active')],
+            modifiers: { to: mockNode('.nonexistent-element') as ExpressionNode },
           },
           evaluator,
           context
@@ -523,8 +523,8 @@ describe('AddCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         {
-          args: [mockNode('.active'), mockNode('#test-button')],
-          modifiers: {},
+          args: [mockNode('.active')],
+          modifiers: { to: mockNode('#test-button') as ExpressionNode },
         },
         evaluator,
         context

@@ -132,7 +132,9 @@ const OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
   bn: new Set(['র']),
   hi: new Set(['का']),
   qu: new Set(['pa']),
-  tr: new Set(['nin']),
+  // Genitive suffix with 4-way vowel harmony, buffered `n` after a vowel; the
+  // profile renders `ın` for every owner, so all eight forms must read back.
+  tr: new Set(['nin', 'nın', 'nun', 'nün', 'in', 'ın', 'un', 'ün']),
 };
 
 /**
@@ -141,6 +143,34 @@ const OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
  * a property head sits before it and a selector after, so it never shadows a
  * real source role.
  */
+/**
+ * The of-marker to EMIT when rendering a prepositional possessive.
+ *
+ * The renderer previously built this construction from
+ * `profile.possessive.marker`, which disagrees with what the parser accepts in
+ * two ways at once. That table is EMPTY for de/ar/id/pl/ru/sw/uk/ms, so those
+ * languages skipped the marker switch entirely and fell through to the English
+ * `'s` default — which is why corpus rows read `#picker's wartość`. And where it
+ * was non-empty the operands were emitted object-first, while the parser's
+ * of-possessive matcher wants the property first.
+ *
+ * Reading {@link OF_POSSESSIVE_MARKERS} here is the point: its own contract is
+ * that "the possessive matchers and the raw-expression join cannot disagree
+ * about what an of-marker is", and the renderer is a third party to that
+ * agreement. Languages absent from the table are the ones whose marker
+ * tokenizes to a `source` normalized form (es `de`, de `von`, fr/pt `de`, id
+ * `dari`, ru `из`), so their source marker IS the of-marker.
+ */
+export function getOfPossessiveMarker(profile: LanguageProfile | undefined): string | undefined {
+  if (!profile?.code) return undefined;
+  const table = OF_POSSESSIVE_MARKERS[profile.code];
+  if (table) {
+    const [first] = table;
+    if (first) return first;
+  }
+  return profile.roleMarkers?.source?.primary;
+}
+
 export function isOfPossessiveMarker(
   profile: LanguageProfile | undefined,
   token: LanguageToken
@@ -326,7 +356,14 @@ export interface PositionalRun {
 export function matchPositionalRun(
   tokens: readonly LanguageToken[],
   start: number,
-  profile: LanguageProfile | undefined
+  profile: LanguageProfile | undefined,
+  /**
+   * "The enclosing pattern requires this exact token next." Supplied by the role
+   * capture, which knows the pattern token following the slot it is filling; the
+   * raw-expression join has no pattern context and omits it. See the source
+   * clause below for what it disambiguates.
+   */
+  isMarkerOwedByPattern?: (token: LanguageToken | undefined) => boolean
 ): PositionalRun | null {
   const head = tokens[start];
   if (!head) return null;
@@ -392,7 +429,28 @@ export function matchPositionalRun(
     // (`hide closest .modal remove .modal-open from body`) the next clause's verb
     // (`remove`) would otherwise be swallowed as the source marker and the
     // following command lost.
-    !COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
+    !COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
+    // Nor is it the marker the enclosing pattern is about to REQUIRE and would
+    // then be unable to find. A verb-final clause puts the positional phrase in
+    // a MARKED role, so the run's own `<marker> <selector>` window lands on the
+    // role marker that TERMINATES the run plus the NEXT role's value: bn
+    // `নিকটতম .card তে .expanded কে টগল` ("toggle .expanded on closest .card")
+    // read `তে .expanded` as "in .expanded", so `toggle-event-bn-sov`'s
+    // `[{destination} তে]` group lost its marker, the whole run fell into
+    // `{patient}`, and BOTH roles vanished — the same shape in ja/ko/tr/zh
+    // across the toggle/add/remove positional rows.
+    //
+    // Membership in LOCATIVE_SURFACES cannot decide this: 17 of 22 languages
+    // spell a role marker and their own locative alike, so gating on the table
+    // fixes ja and not ko. Ownership can, and the second half is what keeps it
+    // exact. tr's destination marker `e` lists `in` among its suffix
+    // alternatives, so in `sonuncu <.message/> in #chat e kaydırma` the run's
+    // English `in` LOOKS owed — but the real `e` sits right after `#chat`, so
+    // the pattern loses nothing by letting the run have its source clause.
+    // Refuse only when the marker is owed AND nothing after the source selector
+    // could satisfy the same requirement, which is precisely the case where
+    // consuming it strands the enclosing pattern.
+    !(isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(tokens[i + 2]) !== true)
   ) {
     // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
     // runtime reads — normalize it; the source selector is code. Role markers
@@ -431,6 +489,21 @@ export function translatePropertyName(languageCode: string, surface: string): st
   const map = PROPERTY_NAME_LEXICON[languageCode];
   if (!map) return surface;
   return map[surface.toLowerCase()] ?? surface;
+}
+
+/**
+ * Whether the language's own table names this surface as a DOM property.
+ *
+ * Unlike {@link translatePropertyName}, which is consulted at a slot already
+ * known to be a property head and so may pass anything through, this is a
+ * VOUCHER: it is what lets the possessive matcher accept a `keyword` token as
+ * the property. A bare `identifier` after a possessive marker can only be a
+ * property, but a keyword could equally be a command verb (`#button の
+ * 切り替え`), so it is admitted only when the table says the word is a property
+ * name — vi `giá trị`, th `ค่า`, tl `halaga`.
+ */
+export function isKnownPropertySurface(languageCode: string, surface: string): boolean {
+  return PROPERTY_NAME_LEXICON[languageCode]?.[surface.toLowerCase()] !== undefined;
 }
 
 /**
@@ -555,8 +628,9 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
 const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
 
 /** Canonical `as` conversion targets (both `json` casings occur: `fetch … as
-    json` and `… as JSON`). */
-const CONVERSION_TYPE_NAMES = new Set([
+    json` and `… as JSON`). Exported for the pattern matcher's trailing-`as`
+    fold, which must agree with this list about what a conversion type is. */
+export const CONVERSION_TYPE_NAMES = new Set([
   'Number',
   'Int',
   'Float',
@@ -685,6 +759,32 @@ export function joinExpressionTokens(
     const reference = profile ? possessiveReferenceOf(profile, token) : undefined;
 
     const next = tokens[i + 1];
+
+    // English `'s` possessive, tokenized as `'` + `s` glued to its owner
+    // (`#price` `'` `s` `wartość`) — the shape every language that renders the
+    // `'s` fallback produces (hi/pl/ru/uk/th/vi/it/ms/tl/he). Glue the marker
+    // back onto the owner and translate the property noun through the lexicon,
+    // so `#price's wartość` comes back as `#price's value` rather than a
+    // non-ASCII identifier the canonical parser rejects ("Unknown token: ś").
+    // A lone `'` token can only be this marker: a quoted string is one token.
+    if (
+      token.value === "'" &&
+      previous !== undefined &&
+      next?.value === 's' &&
+      token.position?.end !== undefined &&
+      next.position?.start === token.position.end
+    ) {
+      out += "'s";
+      previous = next;
+      const prop = tokens[i + 2];
+      if (prop && translatePropertyName(languageCode, prop.value) !== prop.value) {
+        append(translatePropertyName(languageCode, prop.value), prop);
+        i += 2;
+      } else {
+        i += 1;
+      }
+      continue;
+    }
     if (reference !== undefined && next) {
       // A possessor may be separated from its property by a CONNECTOR: id
       // `saya punya nilai` = "I have value" = "my value" (`punya` = "have/own").
@@ -768,6 +868,29 @@ export function joinExpressionTokens(
       append(translatePropertyName(languageCode, token.value), token);
       append('of', next);
       append(owner.value, owner);
+      i += 2;
+      continue;
+    }
+
+    // OWNER-FIRST genitive — `<selector> <genitive> <property>` → `value of
+    // #price` — the shape every suffix/particle-genitive language renders
+    // (ja `#priceの 値`, ko `#price의 값`, zh `#price的 值`, bn `#priceর মান`,
+    // qu `#price pa chanin`, tr `#price ın değer`). The branch above reads the
+    // prepositional order only, so these leaked verbatim and the canonical
+    // parser threw on the particle ("Unknown token: の"). Same marker table,
+    // same property lexicon; gated on the property head being one the lexicon
+    // knows, so `#modal に 表示` (a dative marker before a verb) is untouched.
+    if (
+      token.kind === 'selector' &&
+      next &&
+      owner &&
+      isOfPossessiveMarker(profile, next) &&
+      isPropertyHeadCandidate(owner, languageCode) &&
+      translatePropertyName(languageCode, owner.value) !== owner.value
+    ) {
+      append(translatePropertyName(languageCode, owner.value), owner);
+      append('of', next);
+      append(token.value, token);
       i += 2;
       continue;
     }

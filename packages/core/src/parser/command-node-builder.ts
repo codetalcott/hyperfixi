@@ -4,6 +4,7 @@
  */
 
 import type { Token, CommandNode, ExpressionNode, ASTNode, StatementNode } from '../types/core';
+import type { SlotKey, SlotMap, SlottedCommandName } from '../ast/command-slots';
 
 /**
  * Position information for AST nodes
@@ -41,13 +42,20 @@ interface Position {
  *   .endingAt(parser.getPosition())
  *   .build();
  */
-export class CommandNodeBuilder {
+/**
+ * `K` is the command whose row types the slot keys this builder accepts:
+ * `CommandNodeBuilder.fromIdentifier<'toggle'>(id).withModifier('on', …)`
+ * compiles and `.withModifier('onto', …)` does not. The default is every
+ * command's keys, so a builder that names no `K` is checked only against
+ * the union — the emit-side twin of `CommandRaw<K>` (Arc 3 step 2).
+ */
+export class CommandNodeBuilder<K extends SlottedCommandName = SlottedCommandName> {
   private name: string;
   private args: ExpressionNode[] = [];
   private body?: StatementNode[];
   private implicitTarget?: ExpressionNode;
   private isBlocking = false;
-  private modifiers?: Record<string, ExpressionNode>;
+  private modifiers?: SlotMap<K>;
   private originalCmd?: string;
   private startPos?: Position;
   private endPos?: Position;
@@ -60,8 +68,10 @@ export class CommandNodeBuilder {
    * Create a builder from a token
    * @param token Token containing command name and position info
    */
-  static from(token: Token): CommandNodeBuilder {
-    const builder = new CommandNodeBuilder(token.value);
+  static from<K extends SlottedCommandName = SlottedCommandName>(
+    token: Token
+  ): CommandNodeBuilder<K> {
+    const builder = new CommandNodeBuilder<K>(token.value);
     builder.startPos = {
       start: token.start ?? 0,
       end: token.end ?? 0,
@@ -75,14 +85,14 @@ export class CommandNodeBuilder {
    * Create a builder from an identifier node
    * @param node Identifier node with name and position info
    */
-  static fromIdentifier(node: {
+  static fromIdentifier<K extends SlottedCommandName = SlottedCommandName>(node: {
     name: string;
     start?: number;
     end?: number;
     line?: number;
     column?: number;
-  }): CommandNodeBuilder {
-    const builder = new CommandNodeBuilder(node.name);
+  }): CommandNodeBuilder<K> {
+    const builder = new CommandNodeBuilder<K>(node.name);
     if (node.start !== undefined) {
       builder.startPos = {
         start: node.start,
@@ -98,8 +108,10 @@ export class CommandNodeBuilder {
    * Create a builder with a command name (position must be set separately)
    * @param name Command name
    */
-  static named(name: string): CommandNodeBuilder {
-    return new CommandNodeBuilder(name);
+  static named<K extends SlottedCommandName = SlottedCommandName>(
+    name: string
+  ): CommandNodeBuilder<K> {
+    return new CommandNodeBuilder<K>(name);
   }
 
   /**
@@ -134,7 +146,7 @@ export class CommandNodeBuilder {
    * @param key Modifier keyword
    * @param value Expression node for the modifier value
    */
-  withModifier(key: string, value: ExpressionNode): this {
+  withModifier(key: SlotKey<K>, value: ExpressionNode): this {
     if (!this.modifiers) {
       this.modifiers = {};
     }
@@ -146,7 +158,7 @@ export class CommandNodeBuilder {
    * Add multiple modifiers at once
    * @param modifiers Record of modifier key-value pairs
    */
-  withModifiers(modifiers: Record<string, ExpressionNode>): this {
+  withModifiers(modifiers: SlotMap<K>): this {
     this.modifiers = { ...this.modifiers, ...modifiers };
     return this;
   }
@@ -238,7 +250,8 @@ export class CommandNodeBuilder {
       node.implicitTarget = this.implicitTarget;
     }
     if (this.modifiers) {
-      node.modifiers = this.modifiers;
+      // `SlotMap<K>` narrows the keys; the node's public shape stays the wide record.
+      node.modifiers = this.modifiers as Record<string, ExpressionNode>;
     }
     if (this.originalCmd) {
       node.originalCommand = this.originalCmd;

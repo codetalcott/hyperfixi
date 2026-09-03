@@ -55,7 +55,7 @@ The **Explicit Syntax IR** is the universal interchange format:
 [given patient:#button condition:exists]        -- BDD tests
 ```
 
-Six domain packages are built on the framework today: SQL, BDD, LLM, Todo, JSX, and BehaviorSpec. See the [Explicit Syntax IR docs](../packages/framework/docs/EXPLICIT_SYNTAX_IR.md) and [Domain Author Guide](../packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) for details.
+A family of domain DSLs is built on the framework — SQL, BDD, LLM, Todo, JSX, BehaviorSpec, Flow, Voice, Learn and more — shipped from the [lokascript-domains](https://github.com/codetalcott/lokascript-domains) repo as the `@lokascript/domains` aggregate. See the [Explicit Syntax IR docs](../packages/framework/docs/EXPLICIT_SYNTAX_IR.md) and [Domain Author Guide](../packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) for details.
 
 ## MCP Server
 

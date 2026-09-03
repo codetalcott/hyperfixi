@@ -11,9 +11,6 @@
  * URL Parameters:
  *   ?bundle=browser   - Full bundle (default)
  *   ?bundle=hybrid    - Mid-size hybrid bundle
- *   ?bundle=lite      - Minimal lite bundle
- *   ?bundle=standard  - Standard bundle
- *   ?bundle=minimal   - Minimal bundle
  *   ?bundle=multilingual - Multilingual bundle
  *   ?bundle=dev       - Development bundle
  *   ?bundle=prod      - Production bundle
@@ -31,10 +28,6 @@
     'hybrid-complete': 'hyperfixi-hybrid-complete.js',
     'hybrid-hx': 'hyperfixi-hybrid-hx.js',
     'hybrid-hx-v4': 'hyperfixi-hx-v4.js',
-    'lite': 'hyperfixi-lite.js',
-    'lite-plus': 'hyperfixi-lite-plus.js',
-    'standard': 'hyperfixi-browser-standard.js',
-    'minimal': 'hyperfixi-browser-minimal.js',
     'multilingual': 'hyperfixi-multilingual.js',
     'semantic-complete': 'hyperfixi-semantic-complete.js',
     'dev': 'hyperfixi-browser.dev.js',

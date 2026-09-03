@@ -4,52 +4,57 @@
  * Designed for tree-shaking: strict dependency injection pattern.
  */
 
+import type { ASTNode, ExecutionContext } from '../types/base-types';
 import type {
-  ASTNode,
-  ExecutionContext,
+  Expr,
   CommandNode,
   EventHandlerNode,
   DefNode,
-} from '../types/base-types';
+  BehaviorNode,
+  ProgramNode,
+  BlockNode,
+  InitBlockNode,
+  CommandSequenceNode,
+  ObjectLiteralNode,
+  Stmt,
+} from '../ast/nodes';
+import type {
+  EventNode as HybridEventNode,
+  SequenceNode as HybridSequenceNode,
+} from '../parser/hybrid/ast-types';
+import { fromHybridStatements, toLegacyNode, type AnyNode } from '../ast/legacy';
 
-import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../types/result';
+import type { ExecutionResult, ExecutionSignal } from '../types/result';
 
 import type { RuntimeHooks } from '../types/hooks';
 import { HookRegistry } from '../types/hooks';
 
-import { ok, err, isOk, asControlFlowError } from '../types/result';
+import { ok, err, isOk, isSignal } from '../types/result';
 
 import { evaluateAST, evaluateASTWithResult } from '../parser/runtime';
 import type { ExpressionRegistry } from '../core/expression-registry';
 
 /**
- * Convert an ExecutionSignal to a legacy Error for backward compatibility.
- * Used when Result-based execution returns a signal that must be re-thrown
- * as an exception for callers expecting exception-based control flow.
+ * The only thrown form left (Arc 4a step 3, last slice). Every signal travels
+ * as a `Result` from the command that produced it to the boundary that
+ * consumes it — the loop for `break`/`continue`, the function, the handler
+ * or the program for `halt`/`exit`/`return`. A `break`/`continue` that
+ * reaches a boundary with no loop around it is not control flow any more; it
+ * is an authoring error, and it is thrown as one. Named so that a handler's
+ * `catch` block can decline it: upstream routes real errors to `catch`, and a
+ * stray `break` is not one the author wrote a `catch` for.
  */
-function signalToError(signal: ExecutionSignal): Error {
-  const error = new Error(signal.type.toUpperCase() + '_EXECUTION') as Error & {
-    [key: string]: unknown;
-  };
-  error['is' + signal.type.charAt(0).toUpperCase() + signal.type.slice(1)] = true;
-  if ('returnValue' in signal) {
-    error.returnValue = signal.returnValue;
-  }
-  return error;
+/** A command argument that is itself executable: a branch/loop body or a told command. */
+function isBodyNode(arg: unknown): arg is AnyNode {
+  const t = (arg as { type?: unknown } | null)?.type;
+  return t === 'block' || t === 'command';
 }
 
-/**
- * Check if an error is a control-flow signal (halt, exit, break, continue, return).
- * These are expected signals used for flow control, not actual errors.
- */
-export function isControlFlowError(e: unknown): e is ControlFlowError {
-  if (!(e instanceof Error)) return false;
-  return (
-    asControlFlowError(e) !== null ||
-    e.message === 'HALT_EXECUTION' ||
-    e.message === 'EXIT_COMMAND' ||
-    e.message === 'EXIT_EXECUTION'
-  );
+export class StrayControlFlowError extends Error {
+  constructor(readonly signal: ExecutionSignal) {
+    super(`'${signal.type}' used outside of a loop`);
+    this.name = 'StrayControlFlowError';
+  }
 }
 // NOTE: ExpressionEvaluator import removed for tree-shaking.
 // Use ConfigurableExpressionEvaluator or ExpressionEvaluator explicitly in your bundle.
@@ -61,6 +66,7 @@ import {
   RegistryIntegration,
   type RegistryIntegrationOptions,
 } from '../registry/runtime-integration';
+import type { Op, BodyOps } from '../types/program';
 
 /**
  * Pattern from expression evaluator where a space-separated "word token" is
@@ -105,6 +111,13 @@ function collectIdentifierNames(node: unknown, out: Set<string> = new Set()): Se
 
 export interface RuntimeBaseOptions {
   /**
+   * Upstream _hyperscript 0.9.90 `config.logAll`: when it returns true, every
+   * event handler that fires logs `['[hyperfixi]', event.type, me, event]`.
+   * A function, read at fire time, so the flag can be toggled live. Lives here
+   * — not in the DOM processors — because the runtime installs every listener.
+   */
+  logAll?: () => boolean;
+  /**
    * The registry instance containing allowed commands.
    * MUST be provided externally to enable tree-shaking.
    */
@@ -113,14 +126,6 @@ export interface RuntimeBaseOptions {
   enableAsyncCommands?: boolean;
   commandTimeout?: number; // Default 10000ms
   enableErrorReporting?: boolean;
-
-  /**
-   * Enable Result-based execution pattern (napi-rs inspired).
-   * When enabled, uses Result<T, ExecutionSignal> instead of exceptions
-   * for control flow, providing ~12-18% performance improvement.
-   * Default: true
-   */
-  enableResultPattern?: boolean;
 
   /**
    * Bundle-supplied expression registry threaded through to
@@ -146,9 +151,8 @@ export interface RuntimeBaseOptions {
   enableAutoCleanup?: boolean;
 
   /**
-   * Registry integration options for context providers and event sources.
-   * When enabled, registered context providers will be available in execution contexts
-   * and custom event sources can be used in 'on' commands.
+   * Registry integration options for custom event sources.
+   * When enabled, registered event sources can be used in 'on' commands.
    * Default: enabled
    */
   registryIntegration?: RegistryIntegrationOptions | boolean;
@@ -217,7 +221,6 @@ export class RuntimeBase {
     this.options = {
       commandTimeout: 10000,
       enableErrorReporting: true,
-      enableResultPattern: true, // Default on for ~12-18% performance improvement
       enableAutoCleanup: true, // Default on to prevent memory leaks
       ...options,
     };
@@ -428,7 +431,7 @@ export class RuntimeBase {
   /**
    * Check if an AST node has error-severity diagnostics (resilient parsing).
    */
-  private hasErrorDiagnostics(node: ASTNode): boolean {
+  private hasErrorDiagnostics(node: AnyNode): boolean {
     const diagnostics = node.diagnostics as Array<{ severity: string }> | undefined;
     return !!diagnostics?.some(d => d.severity === 'error');
   }
@@ -443,222 +446,208 @@ export class RuntimeBase {
   /**
    * Main Entry Point: Execute an AST node
    */
-  async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
-    const nodeName = (node as { name?: string })?.name || '';
-    debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
-
-    // Thread the bundle's ExpressionRegistry through context. Commands receive
-    // this context and forward it to evaluator.evaluate(), which dispatches
-    // named-expression lookups via context.registry. Without this, parseInput()
-    // calls that evaluate AST nodes (e.g. tell's target, send's target) fail
-    // with "Expression X not in ExecutionContext.registry".
-    //
-    // Mutate in place rather than spread into a new object — `locals`/`globals`
-    // are already populated via the caller's reference (see the `.set()` calls
-    // below), so command writes to `context.result` / `context.it` need to
-    // propagate to the caller too. Cloning here would silently swallow those
-    // writes at the outer boundary while letting them flow within the runtime.
-    if (!context.registry) {
-      context.registry = this.expressionRegistry;
+  /**
+   * The PROGRAM boundary (Arc 4a): the entry every outside caller uses — the
+   * API's eval/execute, handler and observer bodies, behavior init. A
+   * `return` that reaches it hands its value to the caller (the embedded-
+   * evaluator use: `hyperscript.eval('return x + 1')`); a `halt`/`exit`
+   * ends the program. `break`/`continue` have no loop to reach and stay
+   * errors. Structural callers inside the runtime — the statement loops,
+   * the compiled bodies of `if`/`repeat`/`tell`, the handler's command
+   * loop — call `executeNode` instead, so a signal keeps travelling to the
+   * boundary that consumes it.
+   */
+  async execute(node: AnyNode, context: ExecutionContext): Promise<unknown> {
+    const result = await this.executeNode(node, context);
+    if (isOk(result)) return result.value;
+    const signal = result.error;
+    if (signal.type === 'return') {
+      const rv = signal.returnValue;
+      if (rv !== undefined) Object.assign(context, { it: rv, result: rv });
+      return rv;
     }
+    if (signal.type === 'halt' || signal.type === 'exit') return undefined;
+    throw new StrayControlFlowError(signal);
+  }
 
-    // Inject behavior API
-    if (!context.locals.has('_behaviors')) {
-      context.locals.set('_behaviors', this.behaviorAPI);
-    }
-
-    // Inject self-reference for recursive execution (needed by control flow commands)
-    if (!context.locals.has('_runtimeExecute')) {
-      context.locals.set('_runtimeExecute', (n: ASTNode, ctx?: ExecutionContext) =>
-        this.execute(n, ctx || context)
-      );
-    }
-
-    try {
-      // Resilient parsing: skip error-diagnosed nodes
-      if (this.hasErrorDiagnostics(node)) {
-        const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
-        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
-        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
-        return undefined;
-      }
-
-      switch (node.type) {
-        case 'command': {
-          // A standalone `return <expr>` reaches here as a single-command
-          // program — there is no `then`-joined sequence around it to catch the
-          // control-flow signal (executeCommandSequenceWithResult handles the
-          // multi-command case). Surface the returned value the same way the
-          // sequence executor does, rather than leaking the raw
-          // RETURN_EXECUTION signal to the caller.
-          // Use Result-based execution when enabled (~12-18% faster)
-          if (this.options.enableResultPattern) {
-            const result = await this.processCommandWithResult(node as CommandNode, context);
-            if (!isOk(result)) {
-              if (result.error.type === 'return') {
-                const rv = (result.error as { returnValue?: unknown }).returnValue;
-                if (rv !== undefined) {
-                  Object.assign(context, { it: rv, result: rv });
-                }
-                return rv;
-              }
-              throw signalToError(result.error);
-            }
-            return result.value;
-          }
-          try {
-            return await this.processCommand(node as CommandNode, context);
-          } catch (e) {
-            const cfe = asControlFlowError(e);
-            if (cfe?.isReturn) {
-              const rv = cfe.returnValue;
-              if (rv !== undefined) {
-                Object.assign(context, { it: rv, result: rv });
-              }
-              return rv;
-            }
-            throw e;
-          }
-        }
-
-        case 'eventHandler': {
-          return await this.executeEventHandler(node as EventHandlerNode, context);
-        }
-
-        case 'event': {
-          // Handle EventNode from hybrid parser (different structure from EventHandlerNode)
-          // EventNode has: event, filter, modifiers, body
-          // EventHandlerNode expects: event, events, commands, target, args, selector
-          const adaptedNode: EventHandlerNode = {
-            type: 'eventHandler',
-            event: node.event as string,
-            events: [node.event as string],
-            commands: (node.body as ASTNode[]) || [],
-            target: node.filter as string | undefined,
-            modifiers: (node.modifiers as Record<string, unknown>) || {},
-          };
-          return await this.executeEventHandler(adaptedNode, context);
-        }
-
-        case 'behavior': {
-          return await this.executeBehaviorDefinition(
-            node as ASTNode & {
-              name: string;
-              parameters?: string[];
-              eventHandlers?: EventHandlerNode[];
-              initBlock?: ASTNode;
-            },
-            context
-          );
-        }
-
-        case 'def': {
-          return this.installFunction(node as DefNode, context);
-        }
-
-        case 'Program': {
-          return await this.executeProgram(node as ASTNode & { features?: ASTNode[] }, context);
-        }
-
-        case 'initBlock':
-        case 'block': {
-          return await this.executeBlock(node as ASTNode & { commands?: ASTNode[] }, context);
-        }
-
-        case 'sequence':
-        case 'CommandSequence': {
-          // Use Result-based execution when enabled
-          if (this.options.enableResultPattern) {
-            const seqNode = node as unknown as { commands: ASTNode[] };
-            const result = await this.executeCommandSequenceWithResult(
-              seqNode.commands || [],
-              context
-            );
-            if (!isOk(result)) {
-              throw signalToError(result.error);
-            }
-            return result.value;
-          }
-          return await this.executeCommandSequence(
-            node as unknown as { commands: ASTNode[] },
-            context
-          );
-        }
-
-        case 'objectLiteral': {
-          return await this.executeObjectLiteral(
-            node as unknown as { properties: Array<{ key: ASTNode; value: ASTNode }> },
-            context
-          );
-        }
-
-        case 'templateLiteral':
-        case 'memberExpression':
-        default: {
-          // For expressions, use Result-based evaluation when enabled
-          if (this.options.enableResultPattern) {
-            const result = await this.evaluateExpressionWithResult(node, context);
-            if (!isOk(result)) {
-              throw signalToError(result.error);
-            }
-            return result.value;
-          }
-          // For expressions, delegate to evaluator
-          return await this.evaluateExpression(node, context);
-        }
-      }
-    } catch (error) {
-      if (this.options.enableErrorReporting) {
-        // Optional: Add hook for error reporting service
-      }
-      throw error;
-    }
+  /** The recursive dispatcher. Signals leave it as control-flow errors. */
+  protected async executeNode(
+    node: AnyNode,
+    context: ExecutionContext
+  ): Promise<ExecutionResult<unknown>> {
+    this.prepareContext(context);
+    return this.compile(node)(context);
   }
 
   /**
-   * Generic Command Processor
-   * Unlike the legacy Runtime, this does NOT contain specific logic for 'put', 'set', etc.
-   * It delegates strictly to the Registry.
+   * Every context that runs a node carries the registry and the behavior API.
+   *
+   * Thread the bundle's ExpressionRegistry through context. Commands receive
+   * this context and forward it to evaluator.evaluate(), which dispatches
+   * named-expression lookups via context.registry. Mutate in place rather than
+   * spread into a new object — `locals`/`globals` are already populated via
+   * the caller's reference, so command writes to `context.result` / `context.it`
+   * need to propagate to the caller too.
    */
-  protected async processCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
-    const { name, args, modifiers } = node;
-    const commandName = name.toLowerCase();
+  private prepareContext(context: ExecutionContext): void {
+    if (!context.registry) {
+      context.registry = this.expressionRegistry;
+    }
+    if (!context.locals.has('_behaviors')) {
+      context.locals.set('_behaviors', this.behaviorAPI);
+    }
+  }
 
-    debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
+  // ---------------------------------------------------------------------------
+  // Compile (Arc 4b)
+  // ---------------------------------------------------------------------------
 
-    // 1. check registry
-    if (this.registry.has(commandName)) {
-      const adapter = await this.registry.getAdapter(commandName);
+  private readonly ops = new WeakMap<object, Op>();
 
-      if (!adapter) {
-        throw new Error(`Command '${commandName}' is registered but failed to load adapter.`);
+  /**
+   * Bind a node to a closure ONCE. Memoised on the node object, so the API's
+   * cached ASTs yield cached closures and a handler body compiles on its
+   * first event, never again. Statement kinds compile structurally — a
+   * command's `block`/`command` arguments are compiled and handed to it as
+   * `bodies` — and everything else is a closure over {@link dispatch}, the
+   * per-execution path the uncompiled kinds still take.
+   */
+  compile(node: AnyNode): Op {
+    const cached = this.ops.get(node);
+    if (cached) return cached;
+    const op = this.compileNode(node);
+    this.ops.set(node, op);
+    return op;
+  }
+
+  /**
+   * A body — a handler's, a `def`'s, a `catch`/`finally` block's — compiled
+   * ONCE as a plain sequence: every statement in order, the first signal
+   * returned to the boundary that owns it, nothing consumed here.
+   */
+  protected compileSequence(nodes: readonly AnyNode[]): Op {
+    const ops = nodes.map(n => this.compile(n));
+    return async context => {
+      let last: unknown;
+      for (const op of ops) {
+        const result = await op(context);
+        if (!isOk(result)) return result;
+        last = result.value;
+      }
+      return ok(last);
+    };
+  }
+
+  private compileNode(node: AnyNode): Op {
+    // Resilient parsing: an error-diagnosed node runs as a warning.
+    if (this.hasErrorDiagnostics(node)) {
+      const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
+      const message = diag?.message || 'Skipped error node';
+      return async () => {
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${message}`);
+        this.runtimeWarnings.push(message);
+        return ok(undefined);
+      };
+    }
+    switch (node.type) {
+      case 'command': {
+        // The signal, if any, travels as a Result to the boundary that
+        // consumes it — the loop, the function, the handler, or the program.
+        const command = node as CommandNode;
+        const bodies: BodyOps = (command.args ?? []).map(arg =>
+          isBodyNode(arg) ? this.compile(arg) : undefined
+        );
+        const hasBodies = bodies.some(Boolean);
+        return context =>
+          this.processCommandWithResult(command, context, hasBodies ? bodies : undefined);
+      }
+      case 'initBlock':
+      case 'block': {
+        const block = node as BlockNode | InitBlockNode;
+        const ops = (Array.isArray(block.commands) ? block.commands : []).map(c => this.compile(c));
+        // An `init` block consumes `halt` (as `executeBlock` always did for
+        // it). A command body — an `if` branch, a loop body — is a plain
+        // block and passes EVERY signal to the command that owns it; those
+        // bodies never went through `executeBlock`, and the control-flow
+        // matrix's "inside if"/"inside repeat" columns pin that.
+        const consumesHalt = node.type === 'initBlock';
+        return async context => {
+          for (const op of ops) {
+            const result = await op(context);
+            if (isOk(result)) continue;
+            if (consumesHalt && result.error.type === 'halt') break;
+            return result;
+          }
+          return ok(undefined);
+        };
+      }
+      case 'sequence':
+      case 'CommandSequence': {
+        // Two producers reach this arm: the full parser's `CommandSequence`
+        // and the hybrid parser's `sequence`. Both carry `commands`.
+        const seqNode = node as CommandSequenceNode | HybridSequenceNode;
+        return context => this.executeCommandSequenceWithResult(seqNode.commands || [], context);
+      }
+      case 'Program': {
+        return context => this.executeProgram(node as ProgramNode, context);
+      }
+      default:
+        return context => this.dispatch(node, context);
+    }
+  }
+
+  /** The per-execution path for the kinds `compile` does not bind structurally. */
+  private async dispatch(
+    node: AnyNode,
+    context: ExecutionContext
+  ): Promise<ExecutionResult<unknown>> {
+    debug.runtime(`RUNTIME BASE: dispatch node type: '${node.type}'`);
+    switch (node.type) {
+      case 'eventHandler': {
+        return ok(await this.executeEventHandler(node as EventHandlerNode, context));
       }
 
-      // 2. Delegate entirely to Adapter
-      // We pass the raw AST nodes (args/modifiers) and the Context.
-      // The Adapter (or the Command Implementation inside it) determines
-      // if it needs to evaluate arguments or treat them as raw AST.
-      try {
-        return await adapter.execute(context, {
-          args: args || [],
-          modifiers: modifiers || {},
-          // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
-          commandName,
-          // Pass runtime reference just in case command needs to re-enter runtime
-          runtime: this,
-        });
-      } catch (e) {
-        if (!isControlFlowError(e)) {
-          this.logError(`Error executing command '${commandName}':`, e);
-        }
-        throw e;
+      case 'event': {
+        // The hybrid parser's `event` node (a separate producer — Arc 5 owns
+        // it) is adapted into a union `EventHandlerNode` before execution.
+        // Typed as that converter (Arc 2 step 4): `body` crosses through
+        // `fromHybridStatements`, the one sanctioned crossing for it.
+        //
+        // `filter` is a hybrid AST node, not a string. It was always handed
+        // to `target` under a string cast, and the runtime's target
+        // resolution then falls through to `queryElements(target)`. That is
+        // pre-existing behaviour a types-only step must not change, so the
+        // cast stays — visibly, on one line, with this note.
+        const hybrid = node as HybridEventNode;
+        const adaptedNode: EventHandlerNode = {
+          type: 'eventHandler',
+          event: hybrid.event,
+          events: [hybrid.event],
+          commands: fromHybridStatements(hybrid.body || []),
+          target: hybrid.filter as string | undefined,
+          modifiers: hybrid.modifiers || {},
+        };
+        return ok(await this.executeEventHandler(adaptedNode, context));
+      }
+
+      case 'behavior': {
+        return ok(await this.executeBehaviorDefinition(node as BehaviorNode, context));
+      }
+
+      case 'def': {
+        return ok(this.installFunction(node as DefNode, context));
+      }
+
+      case 'objectLiteral': {
+        return ok(await this.executeObjectLiteral(node as ObjectLiteralNode, context));
+      }
+
+      case 'templateLiteral':
+      case 'memberExpression':
+      default: {
+        return await this.evaluateExpressionWithResult(node, context);
       }
     }
-
-    // 3. Fallback / Error
-    const errorMsg = `Unknown command: ${name}. Ensure it is registered in the Runtime options.`;
-    this.logWarn(errorMsg);
-    throw new Error(errorMsg);
   }
 
   // --------------------------------------------------------------------------
@@ -666,37 +655,6 @@ export class RuntimeBase {
   // --------------------------------------------------------------------------
   // These methods use the Result<T, E> pattern instead of exceptions for
   // control flow, providing ~18% performance improvement on hot paths.
-
-  /**
-   * Convert exception-based control flow error to ExecutionSignal.
-   * Used for bridging legacy exception-throwing code with Result pattern.
-   */
-  protected toSignal(error: unknown): ExecutionSignal | null {
-    const cfe = asControlFlowError(error);
-    if (cfe) {
-      if (cfe.isHalt || cfe.message === 'HALT_EXECUTION') {
-        return { type: 'halt' };
-      }
-      if (cfe.isExit || cfe.message === 'EXIT_COMMAND') {
-        return { type: 'exit', returnValue: cfe.returnValue };
-      }
-      if (cfe.isBreak) {
-        return { type: 'break' };
-      }
-      if (cfe.isContinue) {
-        return { type: 'continue' };
-      }
-      if (cfe.isReturn) {
-        return { type: 'return', returnValue: cfe.returnValue };
-      }
-    }
-    // Legacy message-based signals (no signal properties set)
-    if (error instanceof Error) {
-      if (error.message === 'HALT_EXECUTION') return { type: 'halt' };
-      if (error.message === 'EXIT_COMMAND') return { type: 'exit' };
-    }
-    return null;
-  }
 
   /**
    * Result-based command processor (internal).
@@ -711,7 +669,8 @@ export class RuntimeBase {
    */
   protected async processCommandWithResult(
     node: CommandNode,
-    context: ExecutionContext
+    context: ExecutionContext,
+    bodies?: BodyOps
   ): Promise<ExecutionResult<unknown>> {
     const { name, args, modifiers } = node;
     const commandName = name.toLowerCase();
@@ -737,18 +696,17 @@ export class RuntimeBase {
       const result = await adapter.execute(context, {
         args: args || [],
         modifiers: modifiers || {},
+        bodies,
         // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
         commandName,
         runtime: this,
       });
+      // A signal command RETURNS its signal (Arc 4a); route it as control flow.
+      if (isSignal(result)) return err(result);
       return ok(result);
     } catch (e) {
-      // Check if this is a control flow signal
-      const signal = this.toSignal(e);
-      if (signal) {
-        return err(signal);
-      }
-      // Real error - log and re-throw
+      // Signals never throw (a signal command RETURNS its signal); anything
+      // caught here is a real error.
       this.logError(`Error executing command '${commandName}':`, e);
       throw e;
     }
@@ -761,7 +719,7 @@ export class RuntimeBase {
    * exception-based control flow.
    */
   protected async executeCommandSequenceWithResult(
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
     let lastResult: unknown = undefined;
@@ -777,7 +735,7 @@ export class RuntimeBase {
 
       // For commands, use Result-based execution
       if (command.type === 'command') {
-        const result = await this.processCommandWithResult(command as CommandNode, context);
+        const result = await this.compile(command)(context);
 
         if (!isOk(result)) {
           // Handle control flow signals
@@ -814,7 +772,7 @@ export class RuntimeBase {
    * Evaluate Expression (Delegator)
    * Handles standard expressions + the "implicit command pattern" (space operator)
    */
-  protected async evaluateExpression(node: ASTNode, context: ExecutionContext): Promise<unknown> {
+  protected async evaluateExpression(node: AnyNode, context: ExecutionContext): Promise<unknown> {
     // Canonical AST evaluation. The bundle's ExpressionRegistry is threaded
     // through `context.registry` so named-expression operators (`ends with`,
     // `is in`, `as`, etc.) resolve via the registry instead of static imports.
@@ -824,7 +782,17 @@ export class RuntimeBase {
     // Check for "Implicit Command Pattern" (e.g. "add .class") — happens when
     // the parser sees "word token" but interprets as property access.
     if (isImplicitCommand(result)) {
-      return await this.executeCommandFromPattern(result.command, result.selector, context);
+      // The implicit `add .class` pattern, on the Result path (the only path).
+      const commandNode: CommandNode = {
+        type: 'command',
+        name: result.command,
+        args: [{ type: 'literal', value: result.selector }],
+        isBlocking: false,
+      };
+      const executed = await this.processCommandWithResult(commandNode, context);
+      // `add`/`remove`/`toggle` never signal; a signal here is a stray.
+      if (!isOk(executed)) throw new StrayControlFlowError(executed.error);
+      return executed.value;
     }
 
     return result;
@@ -837,7 +805,7 @@ export class RuntimeBase {
    * Provides performance improvement by eliminating try-catch overhead.
    */
   protected async evaluateExpressionWithResult(
-    node: ASTNode,
+    node: AnyNode,
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
     const ctx = context.registry ? context : { ...context, registry: this.expressionRegistry };
@@ -851,58 +819,18 @@ export class RuntimeBase {
 
     // Check for "Implicit Command Pattern" (e.g. "add .class")
     if (isImplicitCommand(value)) {
-      // Execute command and wrap in Result
-      if (this.options.enableResultPattern) {
-        const commandNode: CommandNode = {
-          type: 'command',
-          name: value.command,
-          args: [{ type: 'literal', value: value.selector }],
-        };
-        return this.processCommandWithResult(commandNode, context);
-      } else {
-        try {
-          const cmdResult = await this.executeCommandFromPattern(
-            value.command,
-            value.selector,
-            context
-          );
-          return ok(cmdResult);
-        } catch (e) {
-          const signal = this.toSignal(e);
-          if (signal) {
-            return err(signal);
-          }
-          throw e;
-        }
-      }
+      // The runtime is a second PRODUCER of command nodes here (the implicit
+      // `add .class` pattern). `isBlocking: false` is what its absence meant.
+      const commandNode: CommandNode = {
+        type: 'command',
+        name: value.command,
+        args: [{ type: 'literal', value: value.selector }],
+        isBlocking: false,
+      };
+      return this.processCommandWithResult(commandNode, context);
     }
 
     return ok(value);
-  }
-
-  /**
-   * Handles the "Implicit Command Pattern"
-   * e.g., "add .active" where parser returned { command: 'add', selector: '.active' }
-   */
-  protected async executeCommandFromPattern(
-    commandName: string,
-    selector: string,
-    context: ExecutionContext
-  ): Promise<unknown> {
-    // Convert the pattern back into a standard Command structure and execute
-    // This ensures it goes through the standard Registry lookup
-
-    // Heuristic: Implicit commands usually treat the selector as a Literal arg
-    // unless specific commands override this behavior.
-    const args: ASTNode[] = [{ type: 'literal', value: selector }];
-
-    const commandNode: CommandNode = {
-      type: 'command',
-      name: commandName,
-      args: args,
-    };
-
-    return this.processCommand(commandNode, context);
   }
 
   // --------------------------------------------------------------------------
@@ -935,10 +863,14 @@ export class RuntimeBase {
   protected installFunction(node: DefNode, context: ExecutionContext): void {
     const runtime = this;
     const params = node.params ?? [];
-    const body = (node.body ?? []) as ASTNode[];
-    const errorHandler = node.errorHandler as ASTNode[] | undefined;
-    const finallyHandler = node.finallyHandler as ASTNode[] | undefined;
+    const body = node.body ?? [];
+    const errorHandler = node.errorHandler;
+    const finallyHandler = node.finallyHandler;
     const errorSymbol = node.errorSymbol;
+    // The FUNCTION's bodies compile once, at installation (Arc 4b step 3).
+    const bodyOp = this.compileSequence(body);
+    const errorOp = errorHandler ? this.compileSequence(errorHandler) : undefined;
+    const finallyOp = finallyHandler ? this.compileSequence(finallyHandler) : undefined;
 
     const fn = async (...args: unknown[]): Promise<unknown> => {
       // Fresh locals per call, seeded from the declaring scope. Globals stay by
@@ -951,27 +883,35 @@ export class RuntimeBase {
         if (name) fnContext.locals.set(name, args[i]);
       });
 
-      const run = async (commands: ASTNode[]): Promise<unknown> => {
-        // executeCommandSequenceWithResult already turns the `return` signal
-        // into ok(returnValue), so this is the whole of return handling.
-        const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
-        if (!isOk(result)) throw asControlFlowError(result.error);
+      // The FUNCTION boundary (Arc 4a): `halt`/`exit` end the function (the
+      // call returns undefined; halt's event side effect already happened),
+      // `return` hands its value to the caller, and the caller continues —
+      // upstream's rule. `break`/`continue` have no loop here and stay errors.
+      const run = async (op: Op): Promise<unknown> => {
+        const result = await op(fnContext);
+        if (!isOk(result)) {
+          const signal = result.error;
+          if (signal.type === 'break' || signal.type === 'continue') {
+            throw new StrayControlFlowError(signal);
+          }
+          return signal.type === 'return' ? signal.returnValue : undefined;
+        }
         return result.value;
       };
 
-      if (!errorHandler && !finallyHandler) {
-        return await run(body);
+      if (!errorOp && !finallyOp) {
+        return await run(bodyOp);
       }
 
       try {
-        return await run(body);
+        return await run(bodyOp);
       } catch (e) {
-        if (!errorHandler || isControlFlowError(e)) throw e;
+        if (!errorOp || e instanceof StrayControlFlowError) throw e;
         if (errorSymbol) fnContext.locals.set(errorSymbol, e);
-        return await run(errorHandler);
+        return await run(errorOp);
       } finally {
-        if (finallyHandler) {
-          await run(finallyHandler);
+        if (finallyOp) {
+          await run(finallyOp);
         }
       }
     };
@@ -980,20 +920,20 @@ export class RuntimeBase {
   }
 
   protected async executeProgram(
-    node: ASTNode & { statements?: ASTNode[] },
+    node: ProgramNode,
     context: ExecutionContext
-  ): Promise<unknown> {
-    if (!node.statements || !Array.isArray(node.statements)) return;
+  ): Promise<ExecutionResult<unknown>> {
+    if (!node.statements || !Array.isArray(node.statements)) return ok(undefined);
 
     let lastResult: unknown = undefined;
 
     // Separate statements into categories for proper execution order
     // Event handlers MUST be registered before init blocks run
     // This ensures that events sent during init are properly received
-    const eventHandlers: ASTNode[] = [];
-    const defs: ASTNode[] = [];
-    const initBlocks: ASTNode[] = [];
-    const otherStatements: ASTNode[] = [];
+    const eventHandlers: Stmt[] = [];
+    const defs: Stmt[] = [];
+    const initBlocks: Stmt[] = [];
+    const otherStatements: Stmt[] = [];
 
     for (const statement of node.statements) {
       if (statement.type === 'eventHandler') {
@@ -1012,96 +952,62 @@ export class RuntimeBase {
     // callable before init runs, exactly as a handler has to be registered
     // before init can send to it.
     for (const def of defs) {
-      this.execute(def, context);
+      void this.executeNode(def, context);
     }
 
+    // The statement loops read Results (Arc 4a step 3): `halt`/`exit` end
+    // the program, `return` ends it with a value, and a stray
+    // `break`/`continue` propagates to the program boundary, which throws it.
     // Phase 1: Register all event handlers first
     for (const handler of eventHandlers) {
-      try {
-        await this.execute(handler, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        throw error;
-      }
+      const result = await this.executeNode(handler, context);
+      if (isOk(result)) continue;
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      return result;
     }
 
     // Phase 2: Execute init blocks (now handlers are registered)
     for (const init of initBlocks) {
-      try {
-        lastResult = await this.execute(init, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        throw error;
+      const result = await this.executeNode(init, context);
+      if (isOk(result)) {
+        lastResult = result.value;
+        continue;
       }
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      if (result.error.type === 'return') {
+        lastResult = result.error.returnValue;
+        break;
+      }
+      return result;
     }
 
     // Execute the remaining non-event-handler statements.
     for (const statement of otherStatements) {
-      try {
-        lastResult = await this.execute(statement, context);
-      } catch (error) {
-        if (isControlFlowError(error) && (error.isHalt || error.isExit)) {
-          break;
-        }
-        throw error;
+      const result = await this.executeNode(statement, context);
+      if (isOk(result)) {
+        lastResult = result.value;
+        continue;
       }
+      if (result.error.type === 'halt' || result.error.type === 'exit') break;
+      if (result.error.type === 'return') {
+        lastResult = result.error.returnValue;
+        break;
+      }
+      return result;
     }
 
-    return lastResult;
+    return ok(lastResult);
   }
 
   protected async executeBlock(
-    node: { commands?: ASTNode[] },
+    node: BlockNode | InitBlockNode,
     context: ExecutionContext
-  ): Promise<void> {
-    if (!node.commands || !Array.isArray(node.commands)) return;
-
-    for (const command of node.commands) {
-      try {
-        await this.execute(command, context);
-      } catch (error) {
-        if (isControlFlowError(error) && error.isHalt) break;
-        throw error;
-      }
-    }
-  }
-
-  protected async executeCommandSequence(
-    node: { commands: ASTNode[] },
-    context: ExecutionContext
-  ): Promise<unknown> {
-    if (!node.commands || !Array.isArray(node.commands)) return;
-
-    let lastResult: unknown = undefined;
-
-    for (const command of node.commands) {
-      try {
-        lastResult = await this.execute(command, context);
-      } catch (error) {
-        // Handle Flow Control Signals
-        if (isControlFlowError(error)) {
-          if (error.isHalt || error.isExit) break;
-          if (error.isReturn) {
-            if (error.returnValue !== undefined) {
-              Object.assign(context, { it: error.returnValue, result: error.returnValue });
-              return error.returnValue;
-            }
-            break;
-          }
-          if (error.isBreak) throw error; // Caught by loop
-        }
-        throw error;
-      }
-    }
-    return lastResult;
+  ): Promise<ExecutionResult<unknown>> {
+    return this.compile(node)(context);
   }
 
   protected async executeObjectLiteral(
-    node: { properties: Array<{ key: ASTNode; value: ASTNode }> },
+    node: ObjectLiteralNode,
     context: ExecutionContext
   ): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {};
@@ -1111,9 +1017,9 @@ export class RuntimeBase {
       let key: string;
       // Key evaluation logic
       if (property.key.type === 'identifier') {
-        key = (property.key as unknown as { name: string }).name;
+        key = property.key.name;
       } else if (property.key.type === 'literal') {
-        key = String((property.key as unknown as { value: unknown }).value);
+        key = String(property.key.value);
       } else {
         const evalKey = await this.execute(property.key, context);
         key = String(evalKey);
@@ -1129,28 +1035,24 @@ export class RuntimeBase {
   // Context Enhancement (Registry Integration)
   // --------------------------------------------------------------------------
 
-  /**
-   * Enhance execution context with registered context providers
-   * This makes registered providers available as lazy getters on the context
-   */
-  protected enhanceContext(baseContext: ExecutionContext): ExecutionContext {
-    if (!this.registryIntegration) {
-      return baseContext;
-    }
-    return this.registryIntegration.enhanceContext(baseContext);
-  }
-
   // --------------------------------------------------------------------------
   // Event & Behavior System (DOM Glue)
   // --------------------------------------------------------------------------
 
   protected async executeBehaviorDefinition(
-    node: ASTNode & {
-      name: string;
-      parameters?: string[];
-      eventHandlers?: EventHandlerNode[];
-      initBlock?: ASTNode;
-      imperativeInstaller?: (element: HTMLElement, parameters: Record<string, any>) => void;
+    // `imperativeInstaller` is NOT a union field, on purpose. Nothing in this
+    // repo emits it — `parser.ts:3230` is the only `type: 'behavior'` producer
+    // and it writes name/parameters/eventHandlers/initBlock — so promoting it
+    // into `BehaviorNode` would put a shape the parser never builds into the
+    // file that describes what the parser builds. But `execute` is public and
+    // this method is `protected` on a published class, so the branch below is
+    // reachable from outside and deleting it would be a behaviour change a
+    // types-only arc cannot make. It stays as an intersection at this one site.
+    node: BehaviorNode & {
+      readonly imperativeInstaller?: (
+        element: HTMLElement,
+        parameters: Record<string, any>
+      ) => void;
     },
     _context: ExecutionContext
   ): Promise<void> {
@@ -1168,7 +1070,14 @@ export class RuntimeBase {
       debug.runtime(`RUNTIME BASE: Registered imperative behavior '${name}'`);
     } else {
       // Hyperscript behavior: store AST for event-handler-based installation
-      this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
+      // `BehaviorEntry.initBlock` is the frozen public `ASTNode`; the union's
+      // is a `Stmt`. Same node, crossed once (see `ast/legacy.ts`).
+      this.behaviorRegistry.set(name, {
+        name,
+        parameters,
+        eventHandlers,
+        initBlock: initBlock && toLegacyNode(initBlock),
+      });
       debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
     }
   }
@@ -1208,7 +1117,7 @@ export class RuntimeBase {
     // the runtime. Without this, the registry is recovered later at
     // runtime.execute(), but only after every entry point. Symmetric with the
     // event/mutation/change contexts below which spread `...context`.
-    const baseBehaviorContext: ExecutionContext = {
+    const behaviorContext: ExecutionContext = {
       me: element,
       owner: element, // Element that owns `:name` scope; preserved via `...context` spreads below
       you: null,
@@ -1217,15 +1126,9 @@ export class RuntimeBase {
       locals: new Map(),
       globals: this.globalVariables,
       registry: this.expressionRegistry,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     // Enhance context with registered providers
-    const behaviorContext = this.enhanceContext(baseBehaviorContext);
 
     // Hydrate parameters
     if (behavior.parameters) {
@@ -1261,7 +1164,7 @@ export class RuntimeBase {
         debug.runtime(`BEHAVIOR: Init block completed for ${behaviorName}`);
       } catch (e) {
         debug.runtime(`BEHAVIOR: Init block error for ${behaviorName}:`, e);
-        if (!(e instanceof Error && isControlFlowError(e))) throw e;
+        throw e;
       }
     }
 
@@ -1379,7 +1282,7 @@ export class RuntimeBase {
       const customEventHandler = async (eventData: unknown) => {
         // Context Hydration
         const eventLocals = new Map(context.locals);
-        const baseEventContext: ExecutionContext = {
+        const eventContext: ExecutionContext = {
           ...context,
           locals: eventLocals,
           it: eventData,
@@ -1387,7 +1290,6 @@ export class RuntimeBase {
         };
 
         // Enhance context with registered providers
-        const eventContext = this.enhanceContext(baseEventContext);
 
         // Execute commands
         debug.runtime(`CUSTOM EVENT: Executing commands for event '${event}'`);
@@ -1597,18 +1499,31 @@ export class RuntimeBase {
    */
   private static createEventHandler(
     runtime: RuntimeBase,
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext,
     selector: string | undefined,
     args: string[] | undefined,
     errorBlocks?: {
       errorSymbol?: string;
-      errorHandler?: ASTNode[];
-      finallyHandler?: ASTNode[];
+      errorHandler?: readonly AnyNode[];
+      finallyHandler?: readonly AnyNode[];
     },
-    condition?: ASTNode
+    condition?: AnyNode
   ): (domEvent: Event) => Promise<void> {
+    // The handler's bodies compile ONCE, here at registration (Arc 4b step 3);
+    // the listener below runs the closures on every event.
+    const bodyOp = runtime.compileSequence(commands);
+    const errorOp = errorBlocks?.errorHandler
+      ? runtime.compileSequence(errorBlocks.errorHandler)
+      : undefined;
+    const finallyOp = errorBlocks?.finallyHandler
+      ? runtime.compileSequence(errorBlocks.finallyHandler)
+      : undefined;
     return async (domEvent: Event) => {
+      if (runtime.options.logAll?.()) {
+        // eslint-disable-next-line no-console
+        console.log('[hyperfixi]', domEvent.type, context.me, domEvent);
+      }
       // Recursion Guard (uses WeakMap instead of expando property on Event)
       const currentDepth = eventRecursionDepth.get(domEvent) ?? 0;
       if (currentDepth >= 100) {
@@ -1630,7 +1545,7 @@ export class RuntimeBase {
 
       // Context Hydration
       const eventLocals = new Map(context.locals);
-      const baseEventContext: ExecutionContext = {
+      const eventContext: ExecutionContext = {
         ...context,
         locals: eventLocals,
         it: domEvent,
@@ -1638,11 +1553,10 @@ export class RuntimeBase {
       };
       // Only set 'target' if not already defined by the behavior's init block
       if (!eventLocals.has('target')) {
-        baseEventContext.locals.set('target', domEvent.target);
+        eventContext.locals.set('target', domEvent.target);
       }
 
       // Enhance context with registered providers
-      const eventContext = runtime.enhanceContext(baseEventContext);
 
       // Arg Destructuring (e.g. on pointerdown(x, y))
       if (args && args.length > 0) {
@@ -1699,33 +1613,36 @@ export class RuntimeBase {
       // wrapper objects leaking into `it` plus an array collapse that took the
       // first element of `toggle`/`put`'s element list. See
       // docs-internal/HANDOFF-command-arch-output-contract.md.
-      const runCommands = async (toRun: ASTNode[]): Promise<void> => {
-        for (const command of toRun) {
-          try {
-            await runtime.execute(command, eventContext);
-          } catch (e) {
-            if (isControlFlowError(e)) {
-              if (e.isHalt || e.isExit) break;
-              if (e.isReturn) {
-                if (e.returnValue !== undefined) {
-                  Object.assign(eventContext, { it: e.returnValue, result: e.returnValue });
-                }
-                break;
-              }
-            }
-            runtime.logError(`COMMAND FAILED:`, e);
-            throw e;
-          }
+      // The HANDLER boundary (Arc 4a): `halt`/`exit` end the handler,
+      // `return` ends it and its value lands in `it`/`result`. A stray
+      // `break`/`continue` is thrown as the error it is.
+      // The HANDLER's bodies were compiled once at registration (Arc 4b
+      // step 3); each event runs the closures. halt/exit end the handler,
+      // return ends it with its value in it/result, a stray break/continue
+      // is thrown as the error it is.
+      runtime.prepareContext(eventContext);
+      const runBody = async (op: Op): Promise<void> => {
+        let outcome: ExecutionResult<unknown>;
+        try {
+          outcome = await op(eventContext);
+        } catch (e) {
+          runtime.logError(`COMMAND FAILED:`, e);
+          throw e;
+        }
+        if (isOk(outcome)) return;
+        const signal = outcome.error;
+        if (signal.type === 'return' && signal.returnValue !== undefined) {
+          Object.assign(eventContext, { it: signal.returnValue, result: signal.returnValue });
+        }
+        if (signal.type === 'break' || signal.type === 'continue') {
+          throw new StrayControlFlowError(signal);
         }
       };
 
-      const errorHandler = errorBlocks?.errorHandler;
-      const finallyHandler = errorBlocks?.finallyHandler;
-
       // No `catch`/`finally` on this handler — behave exactly as before, including
       // letting the error escape to the page after the COMMAND FAILED log.
-      if (!errorHandler && !finallyHandler) {
-        await runCommands(commands);
+      if (!errorOp && !finallyOp) {
+        await runBody(bodyOp);
         return;
       }
 
@@ -1733,18 +1650,18 @@ export class RuntimeBase {
       // the error is bound as a local under the author's symbol, a handled error
       // does NOT propagate, and `finally` runs on both paths).
       try {
-        await runCommands(commands);
+        await runBody(bodyOp);
       } catch (e) {
-        // Control-flow signals (a stray break/continue) are not author-visible
-        // errors and must not be routed to `catch`; `finally` alone never swallows.
-        if (!errorHandler || isControlFlowError(e)) throw e;
+        // A stray break/continue is not an error the author wrote a `catch`
+        // for and is not routed to it; `finally` alone never swallows.
+        if (!errorOp || e instanceof StrayControlFlowError) throw e;
         if (errorBlocks?.errorSymbol) {
           eventContext.locals.set(errorBlocks.errorSymbol, e);
         }
-        await runCommands(errorHandler);
+        await runBody(errorOp);
       } finally {
-        if (finallyHandler) {
-          await runCommands(finallyHandler);
+        if (finallyOp) {
+          await runBody(finallyOp);
         }
       }
     };
@@ -1753,7 +1670,7 @@ export class RuntimeBase {
   protected setupMutationObserver(
     targets: HTMLElement[],
     attr: string,
-    commands: ASTNode[],
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): void {
     debug.runtime(
@@ -1767,7 +1684,7 @@ export class RuntimeBase {
             debug.event(`MUTATION DETECTED: attribute '${attr}' changed on`, targetElement);
 
             // Create context for mutation event
-            const baseMutationContext: ExecutionContext = {
+            const mutationContext: ExecutionContext = {
               ...context,
               me: targetElement,
               it: mutation,
@@ -1777,22 +1694,24 @@ export class RuntimeBase {
             // Store old and new values in context
             const oldValue = mutation.oldValue;
             const newValue = targetElement.getAttribute(attr);
-            baseMutationContext.locals.set('oldValue', oldValue);
-            baseMutationContext.locals.set('newValue', newValue);
+            mutationContext.locals.set('oldValue', oldValue);
+            mutationContext.locals.set('newValue', newValue);
 
             // Enhance context with registered providers
-            const mutationContext = this.enhanceContext(baseMutationContext);
 
             // Execute all commands
             for (const command of commands) {
+              let outcome: ExecutionResult<unknown> | undefined;
               try {
-                await this.execute(command, mutationContext);
+                outcome = await this.executeNode(command, mutationContext);
               } catch (error) {
-                if (isControlFlowError(error)) {
-                  if (error.isHalt || error.isExit || error.isReturn) break;
-                } else {
-                  this.logError(`Error executing mutation handler command:`, error);
-                }
+                this.logError(`Error executing mutation handler command:`, error);
+              }
+              // halt/exit/return end the mutation body; a stray break/continue is
+              // ignored here, as it always was.
+              if (outcome && !isOk(outcome)) {
+                const t = outcome.error.type;
+                if (t === 'halt' || t === 'exit' || t === 'return') break;
               }
             }
           }
@@ -1818,8 +1737,8 @@ export class RuntimeBase {
   }
 
   protected async setupChangeObserver(
-    watchTarget: ASTNode,
-    commands: ASTNode[],
+    watchTarget: AnyNode,
+    commands: readonly AnyNode[],
     context: ExecutionContext
   ): Promise<void> {
     debug.runtime(`RUNTIME BASE: Setting up MutationObserver for content changes on watch target`);
@@ -1852,7 +1771,7 @@ export class RuntimeBase {
             );
 
             // Create context for change event
-            const baseChangeContext: ExecutionContext = {
+            const changeContext: ExecutionContext = {
               ...context,
               me: context.me, // Keep original 'me' (the element with the handler)
               it: mutation,
@@ -1860,29 +1779,31 @@ export class RuntimeBase {
             };
 
             // Store the watched element in context as a local variable
-            baseChangeContext.locals.set('target', watchedElement);
+            changeContext.locals.set('target', watchedElement);
 
             // Get old and new text content (if available)
             const oldValue = mutation.oldValue;
             const newValue = watchedElement.textContent;
             if (oldValue !== null) {
-              baseChangeContext.locals.set('oldValue', oldValue);
+              changeContext.locals.set('oldValue', oldValue);
             }
-            baseChangeContext.locals.set('newValue', newValue);
+            changeContext.locals.set('newValue', newValue);
 
             // Enhance context with registered providers
-            const changeContext = this.enhanceContext(baseChangeContext);
 
             // Execute all commands
             for (const command of commands) {
+              let outcome: ExecutionResult<unknown> | undefined;
               try {
-                await this.execute(command, changeContext);
+                outcome = await this.executeNode(command, changeContext);
               } catch (error) {
-                if (isControlFlowError(error)) {
-                  if (error.isHalt || error.isExit || error.isReturn) break;
-                } else {
-                  this.logError(`Error executing change handler command:`, error);
-                }
+                this.logError(`Error executing change handler command:`, error);
+              }
+              // halt/exit/return end the change body; a stray break/continue is
+              // ignored here, as it always was.
+              if (outcome && !isOk(outcome)) {
+                const t = outcome.error.type;
+                if (t === 'halt' || t === 'exit' || t === 'return') break;
               }
             }
           }

@@ -10,4 +10,4 @@
  * only in the latter, so no single filesystem anchor works for both. The
  * literal here was '0.1.0' while the package shipped 2.10.0.
  */
-export const VERSION = '2.10.0';
+export const VERSION = '3.0.0';

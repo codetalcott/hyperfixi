@@ -120,6 +120,11 @@ export const chineseProfile: LanguageProfile = {
     if: { primary: '如果', normalized: 'if' },
     unless: { primary: '除非', normalized: 'unless' },
     when: { primary: '何时', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: '改变时', normalized: 'changes' },
     where: { primary: '哪里', normalized: 'where' },
     else: { primary: '否则', normalized: 'else' },
     // `matches` is a comparison operator (core territory), so it had always
@@ -131,6 +136,11 @@ export const chineseProfile: LanguageProfile = {
     // the comparison operator — no non-operator collision (cf. §7r ko/ru/uk).
     matches: { primary: '匹配', normalized: 'matches' },
     repeat: { primary: '重复', normalized: 'repeat' },
+    // `repeat forever` loop keyword — same as de/fr/ar/es: the corpus leaves
+    // `forever` English, and without the keyword the bare `重复 forever`
+    // (exactly what the renderer emits) did not parse at all — zh was the
+    // only bare repeat-forever row left on the bare-render allowlist.
+    forever: { primary: 'forever', normalized: 'forever' },
     for: { primary: '为', normalized: 'for' },
     while: { primary: '持续', normalized: 'while' },
     continue: { primary: '继续', normalized: 'continue' },
@@ -191,6 +201,10 @@ export const chineseProfile: LanguageProfile = {
     // Pattern: 当 [event] [verb] [patient] 在 [destination?]
     // Example: 当 点击 切换 .active 在 #button
     eventMarker: { primary: '当', alternatives: ['在'], position: 'before' },
-    temporalMarkers: ['当', '在...时'], // temporal conjunctions (when)
+    // `一 X 就 Y` ("as soon as X, then Y") is zh's correlative handler head, and
+    // it is what the renderer emits (`event-zh-immediate`). Listed here rather
+    // than in `keywords.on` because `一` is also the numeral one: it opens a
+    // handler only where a handler head is already expected.
+    temporalMarkers: ['当', '在...时', '一'], // temporal conjunctions (when)
   },
 };

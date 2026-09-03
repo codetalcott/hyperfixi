@@ -25,13 +25,6 @@ function createMockHookContext(commandName = 'toggle', element?: Element): HookC
       result: null,
       locals: new Map<string, unknown>(),
       globals: new Map<string, unknown>(),
-      flags: {
-        halted: false,
-        breaking: false,
-        continuing: false,
-        returning: false,
-        async: false,
-      },
     } as unknown as ExecutionContext,
   };
 }

@@ -10,10 +10,9 @@ import {
   StringLiteralExpression,
   NumberLiteralExpression,
   BooleanLiteralExpression,
-  AdditionExpression,
-  MultiplicationExpression,
   specialExpressions,
 } from './index';
+import { collectEvaluations, setEvaluationTracker } from '../shared/tracking';
 
 describe('Enhanced Special Expressions', () => {
   let context: TypedExpressionContext;
@@ -249,15 +248,21 @@ describe('Enhanced Special Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory!.length;
+        const records = collectEvaluations();
+        setEvaluationTracker(records);
+        const initialHistoryLength = 0;
 
-        await expression.evaluate(context, {
-          value: 'test',
-        });
+        try {
+          await expression.evaluate(context, {
+            value: 'test',
+          });
+        } finally {
+          setEvaluationTracker(null);
+        }
 
-        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
+        expect(records.records.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
+        const evaluation = records.records[records.records.length - 1];
         expect(evaluation.expressionName).toBe('stringLiteral');
         expect(evaluation.category).toBe('Special');
         expect(evaluation.success).toBe(true);
@@ -459,278 +464,11 @@ describe('Enhanced Special Expressions', () => {
     });
   });
 
-  describe('AdditionExpression', () => {
-    let expression: AdditionExpression;
-
-    beforeEach(() => {
-      expression = new AdditionExpression();
-    });
-
-    it('should have correct metadata', () => {
-      expect(expression.name).toBe('addition');
-      expect(expression.category).toBe('Special');
-      expect(expression.syntax).toBe('left + right');
-      expect(expression.outputType).toBe('Number');
-    });
-
-    describe('Numeric Addition', () => {
-      it.skip('should add integers', async () => {
-        const result = await expression.evaluate(context, {
-          left: 5,
-          right: 3,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(8);
-          expect(result.type).toBe('Number');
-        }
-      });
-
-      it('should add decimals', async () => {
-        const result = await expression.evaluate(context, {
-          left: 3.14,
-          right: 2.86,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBeCloseTo(6.0);
-        }
-      });
-
-      it('should add negative numbers', async () => {
-        const result = await expression.evaluate(context, {
-          left: -5,
-          right: 3,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(-2);
-        }
-      });
-
-      it('should handle zero addition', async () => {
-        const result = await expression.evaluate(context, {
-          left: 42,
-          right: 0,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(42);
-        }
-      });
-    });
-
-    describe('Type Conversion', () => {
-      it('should convert string numbers', async () => {
-        const result = await expression.evaluate(context, {
-          left: '5',
-          right: '3',
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(8);
-        }
-      });
-
-      it('should convert boolean values', async () => {
-        const result = await expression.evaluate(context, {
-          left: true,
-          right: false,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(1); // true = 1, false = 0
-        }
-      });
-
-      it('should convert null and undefined to zero', async () => {
-        const result = await expression.evaluate(context, {
-          left: null,
-          right: undefined,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(0);
-        }
-      });
-
-      it('should handle mixed types', async () => {
-        const result = await expression.evaluate(context, {
-          left: 5,
-          right: '3',
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(8);
-        }
-      });
-    });
-
-    describe('Error Handling', () => {
-      it.skip('should reject infinite operands', async () => {
-        const result = await expression.evaluate(context, {
-          left: Infinity,
-          right: 5,
-        });
-
-        expect(result.success).toBe(false);
-        expect((result as any).errors).toHaveLength(1);
-        expect((result as any).errors![0].message).toContain('finite number');
-      });
-
-      it.skip('should reject non-convertible strings', async () => {
-        const result = await expression.evaluate(context, {
-          left: 'abc',
-          right: 5,
-        });
-
-        expect(result.success).toBe(false);
-        expect((result as any).errors).toHaveLength(1);
-        expect((result as any).errors![0].message).toContain('cannot be converted');
-      });
-
-      it('should validate correct input', () => {
-        const validation = expression.validate({
-          left: 5,
-          right: 3,
-        });
-
-        expect(validation.isValid).toBe(true);
-        expect(validation.errors).toHaveLength(0);
-      });
-
-      it('should reject missing operands', () => {
-        const validation = expression.validate({
-          left: 5,
-          // missing right operand - this should fail because strict schema requires both
-        });
-
-        // Note: Since we use strict schema, missing required fields should fail validation
-        expect(validation.isValid).toBe(false);
-        expect(validation.errors.length).toBeGreaterThan(0);
-      });
-    });
-  });
-
-  describe('MultiplicationExpression', () => {
-    let expression: MultiplicationExpression;
-
-    beforeEach(() => {
-      expression = new MultiplicationExpression();
-    });
-
-    it('should have correct metadata', () => {
-      expect(expression.name).toBe('multiplication');
-      expect(expression.category).toBe('Special');
-      expect(expression.syntax).toBe('left * right');
-      expect(expression.outputType).toBe('Number');
-    });
-
-    describe('Numeric Multiplication', () => {
-      it.skip('should multiply integers', async () => {
-        const result = await expression.evaluate(context, {
-          left: 5,
-          right: 3,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(15);
-          expect(result.type).toBe('Number');
-        }
-      });
-
-      it('should multiply decimals', async () => {
-        const result = await expression.evaluate(context, {
-          left: 3.14,
-          right: 2,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBeCloseTo(6.28);
-        }
-      });
-
-      it('should handle zero multiplication', async () => {
-        const result = await expression.evaluate(context, {
-          left: 42,
-          right: 0,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(0);
-        }
-      });
-
-      it('should handle negative multiplication', async () => {
-        const result = await expression.evaluate(context, {
-          left: -5,
-          right: 3,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(-15);
-        }
-      });
-    });
-
-    describe('Type Conversion in Multiplication', () => {
-      it('should convert and multiply strings', async () => {
-        const result = await expression.evaluate(context, {
-          left: '5',
-          right: '3',
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(15);
-        }
-      });
-
-      it('should handle boolean multiplication', async () => {
-        const result = await expression.evaluate(context, {
-          left: 5,
-          right: true,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(5); // 5 * 1
-        }
-      });
-
-      it('should handle null and undefined', async () => {
-        const result = await expression.evaluate(context, {
-          left: 5,
-          right: null,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(0); // 5 * 0
-        }
-      });
-    });
-  });
-
   describe('Expression Registry', () => {
     it('should export all enhanced special expressions', () => {
       expect(specialExpressions.stringLiteral).toBeInstanceOf(StringLiteralExpression);
       expect(specialExpressions.numberLiteral).toBeInstanceOf(NumberLiteralExpression);
       expect(specialExpressions.booleanLiteral).toBeInstanceOf(BooleanLiteralExpression);
-      expect(specialExpressions.addition).toBeInstanceOf(AdditionExpression);
-      expect(specialExpressions.multiplication).toBeInstanceOf(MultiplicationExpression);
     });
 
     it.skip('should have consistent metadata across all expressions', () => {
@@ -762,54 +500,6 @@ describe('Enhanced Special Expressions', () => {
         expect(result.value!).toContain('User Jane');
         expect(result.value!).toContain('3 scores');
       }
-    });
-
-    it('should combine multiple expressions for calculations', async () => {
-      const addExpr = new AdditionExpression();
-      const mulExpr = new MultiplicationExpression();
-
-      // First calculate 5 + 3 = 8
-      const addResult = await addExpr.evaluate(context, {
-        left: 5,
-        right: 3,
-      });
-
-      expect(addResult.success).toBe(true);
-
-      if (addResult.success) {
-        // Then multiply by 2 = 16
-        const mulResult = await mulExpr.evaluate(context, {
-          left: addResult.value,
-          right: 2,
-        });
-
-        expect(mulResult.success).toBe(true);
-        if (mulResult.success) {
-          expect(mulResult.value).toBe(16);
-        }
-      }
-    });
-
-    it.skip('should handle large-scale operations efficiently', async () => {
-      const addExpr = new AdditionExpression();
-
-      const startTime = Date.now();
-
-      // Perform many addition operations
-      for (let i = 0; i < 1000; i++) {
-        const result = await addExpr.evaluate(context, {
-          left: i,
-          right: i + 1,
-        });
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value!).toBe(i + (i + 1));
-        }
-      }
-
-      const duration = Date.now() - startTime;
-      expect(duration).toBeLessThan(100); // Should complete quickly
     });
 
     it('should work with all literal types together', async () => {
@@ -850,47 +540,6 @@ describe('Enhanced Special Expressions', () => {
 
       // No memory leaks should occur
       expect(true).toBe(true); // Test completes successfully
-    });
-
-    it('should maintain consistent performance', async () => {
-      const addExpr = new AdditionExpression();
-      const durations: number[] = [];
-
-      for (let i = 0; i < 10; i++) {
-        const startTime = Date.now();
-        const result = await addExpr.evaluate(context, {
-          left: Math.random() * 1000,
-          right: Math.random() * 1000,
-        });
-        const duration = Date.now() - startTime;
-
-        expect(result.success).toBe(true);
-        durations.push(duration);
-      }
-
-      // Performance should be consistent (all operations under 5ms)
-      durations.forEach(duration => {
-        expect(duration).toBeLessThan(5);
-      });
-    });
-
-    it('should track performance history correctly', async () => {
-      const addExpr = new AdditionExpression();
-      const initialHistoryLength = context.evaluationHistory!.length;
-
-      await addExpr.evaluate(context, { left: 1, right: 2 });
-      await addExpr.evaluate(context, { left: 3, right: 4 });
-      await addExpr.evaluate(context, { left: 5, right: 6 });
-
-      expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 3);
-
-      const recentEvaluations = context.evaluationHistory!.slice(-3);
-      recentEvaluations.forEach(evaluation => {
-        expect(evaluation.expressionName).toBe('addition');
-        expect(evaluation.category).toBe('Special');
-        expect(evaluation.success).toBe(true);
-        expect(evaluation.duration).toBeGreaterThanOrEqual(0);
-      });
     });
   });
 });

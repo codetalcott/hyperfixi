@@ -131,11 +131,19 @@ describe('the marker-swallow languages recover the destination', () => {
 
   it.each(MARKER_SWALLOW_ROWS)('%s keeps the fused match adopted (confidence)', (lang, src) => {
     // The repair is the SWAP, not a re-route: the fused pattern still wins its
-    // race at the same score. `parse()` reports no confidence — `parseSemantic`
-    // is the export that scores, and asserting through `parse` passes vacuously.
+    // race. `parse()` reports no confidence — `parseSemantic` is the export
+    // that scores, and asserting through `parse` passes vacuously.
+    //
+    // The score was 0.7143 until the fused generators became schema-driven and
+    // rose to a clean 1.0. `scrollSchema` declares `destination` as its ONE
+    // required role and nothing else; the fused pattern used to bind the
+    // argument to `patient` (a role scroll does not have) and then add a
+    // separate `to {destination}` group that could never fill, so the parse
+    // scored 2 / (2 + 0.8). It now binds `destination` directly and asks no
+    // unanswerable question — every slot in the pattern is captured.
     const result = parseSemantic(src, lang);
     expect(result.node).not.toBeNull();
-    expect(result.confidence).toBeCloseTo(0.7142857142857143, 6);
+    expect(result.confidence).toBeCloseTo(1, 6);
   });
 });
 

@@ -35,6 +35,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../ast/command-slots';
 
 export interface CloseCommandInput {
   targets: HTMLElement[];
@@ -62,7 +63,7 @@ export class CloseCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'close'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<CloseCommandInput> {
@@ -71,7 +72,7 @@ export class CloseCommand implements DecoratedCommand {
       evaluator,
       context,
       'close',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     const targets = resolveSmartElementTargets(rawTargets);

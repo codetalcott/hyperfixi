@@ -13,6 +13,7 @@ import type {
   OptimizationPass,
   VisitorContext,
 } from './types.js';
+import { isASTNode, field, nodeList } from './duck.js';
 
 /**
  * Helper to normalize visitor result to a single ASTNode
@@ -116,8 +117,8 @@ function createBatchOperationsPass(): OptimizationPass {
   return {
     name: 'batch-operations',
     transform: (node, context) => {
-      if ((node as any).commands && Array.isArray((node as any).commands)) {
-        const commands = (node as any).commands;
+      const commands = nodeList(node.commands);
+      if (commands) {
         const batched = batchSimilarCommands(commands);
 
         if (batched.length !== commands.length) {
@@ -133,8 +134,8 @@ function createRemoveRedundantOperationsPass(): OptimizationPass {
   return {
     name: 'remove-redundant',
     transform: (node, context) => {
-      if ((node as any).commands && Array.isArray((node as any).commands)) {
-        const commands = (node as any).commands;
+      const commands = nodeList(node.commands);
+      if (commands) {
         const optimized = removeRedundantOperations(commands);
 
         if (optimized.length !== commands.length) {
@@ -150,9 +151,12 @@ function createSimplifyConditionsPass(): OptimizationPass {
   return {
     name: 'simplify-conditions',
     transform: (node, context) => {
-      if (node.type === 'conditional' && (node as any).condition) {
-        const simplified = simplifyCondition((node as any).condition);
-        if (simplified !== (node as any).condition) {
+      // `conditional` is a kind no core parser emits (measured 2026-09-01: a
+      // phantom in the kind classifier). The arm is kept because this module's
+      // tests hand-build it; a types-only arc does not delete it.
+      if (node.type === 'conditional' && isASTNode(node.condition)) {
+        const simplified = simplifyCondition(node.condition);
+        if (simplified !== node.condition) {
           context.replace({ ...node, condition: simplified });
         }
       }
@@ -171,7 +175,7 @@ function createSimplifyConditionsPass(): OptimizationPass {
 export function normalize(ast: ASTNode): ASTNode {
   const visitor = new ASTVisitor({
     exit(node, context) {
-      const normalized: any = {
+      const normalized: ASTNode = {
         type: node.type,
         start: node.start,
         end: node.end,
@@ -180,18 +184,18 @@ export function normalize(ast: ASTNode): ASTNode {
       };
 
       if (node.type === 'command') {
-        normalized.name = (node as any).name;
-        normalized.args = (node as any).args;
-        normalized.target = (node as any).target;
+        normalized.name = node.name;
+        normalized.args = node.args;
+        normalized.target = node.target;
       } else if (node.type === 'eventHandler') {
-        normalized.event = (node as any).event;
-        normalized.commands = (node as any).commands;
+        normalized.event = node.event;
+        normalized.commands = node.commands;
       } else if (node.type === 'selector') {
-        normalized.value = (node as any).value;
+        normalized.value = node.value;
       } else if (node.type === 'identifier') {
-        normalized.name = (node as any).name;
+        normalized.name = node.name;
       } else if (node.type === 'literal') {
-        normalized.value = (node as any).value;
+        normalized.value = node.value;
       }
 
       context.replace(normalized);
@@ -205,18 +209,15 @@ export function normalize(ast: ASTNode): ASTNode {
  * Inline simple variable assignments
  */
 export function inlineVariables(ast: ASTNode): ASTNode {
-  const variables = new Map<string, any>();
+  // Keyed by whatever the `variable` node's `name` is — the untyped code used
+  // the value as-is, and `unknown` keys keep that rather than coercing.
+  const variables = new Map<unknown, ASTNode>();
 
   const collectVisitor = new ASTVisitor({
     enter(node) {
-      if (
-        (node as any).name === 'set' &&
-        (node as any).variable &&
-        (node as any).value &&
-        isSimpleValue((node as any).value)
-      ) {
-        const varName = (node as any).variable.name;
-        variables.set(varName, (node as any).value);
+      const value = node.value;
+      if (node.name === 'set' && node.variable && isASTNode(value) && isSimpleValue(value)) {
+        variables.set(field(node.variable, 'name'), value);
       }
     },
   });
@@ -225,8 +226,8 @@ export function inlineVariables(ast: ASTNode): ASTNode {
 
   const inlineVisitor = new ASTVisitor({
     enter(node, context) {
-      if (node.type === 'identifier' && variables.has((node as any).name)) {
-        context.replace(variables.get((node as any).name));
+      if (node.type === 'identifier' && variables.has(node.name)) {
+        context.replace(variables.get(node.name)!);
       }
     },
   });
@@ -258,7 +259,7 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
 
   let varCounter = 0;
   const extractions = new Map<string, string>();
-  const newCommands: any[] = [];
+  const newCommands: ASTNode[] = [];
 
   for (const [expr, data] of expressionCounts) {
     if (data.count > 1) {
@@ -290,7 +291,7 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
             end: node.end ?? 0,
             line: node.line ?? 1,
             column: node.column ?? 1,
-          } as ASTNode);
+          });
         }
       }
     },
@@ -298,11 +299,12 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
 
   let result = normalizeVisitResult(replaceVisitor.visit(ast, createVisitorContext()), ast);
 
-  if (newCommands.length > 0 && (result as any).commands) {
+  const existing = nodeList(result.commands);
+  if (newCommands.length > 0 && existing) {
     result = {
       ...result,
-      commands: [...newCommands, ...(result as any).commands],
-    } as any;
+      commands: [...newCommands, ...existing],
+    };
   }
 
   return result;
@@ -328,13 +330,13 @@ export function createOptimizationPass(config: {
 // Helper Functions
 // ============================================================================
 
-function batchSimilarCommands(commands: any[]): any[] {
-  const groups = new Map<string, any[]>();
-  const result: any[] = [];
+function batchSimilarCommands(commands: ASTNode[]): ASTNode[] {
+  const groups = new Map<string, ASTNode[]>();
+  const result: ASTNode[] = [];
 
   for (const cmd of commands) {
     if (cmd.name === 'add' || cmd.name === 'remove') {
-      const key = `${cmd.name}:${cmd.target?.name || 'default'}`;
+      const key = `${cmd.name}:${field(cmd.target, 'name') || 'default'}`;
       if (!groups.has(key)) {
         groups.set(key, []);
       }
@@ -363,23 +365,23 @@ function batchSimilarCommands(commands: any[]): any[] {
   return result;
 }
 
-function createBatchedCommand(commands: any[]): any {
+function createBatchedCommand(commands: ASTNode[]): ASTNode {
   return {
-    ...commands[0],
-    args: commands.map(cmd => cmd.args[0]).filter(Boolean),
+    ...commands[0]!,
+    args: commands.map(cmd => field(cmd.args, '0')).filter(Boolean),
   };
 }
 
-function removeRedundantOperations(commands: any[]): any[] {
-  const result: any[] = [];
-  const operationTracker = new Map<string, { operation: string; index: number }>();
+function removeRedundantOperations(commands: ASTNode[]): ASTNode[] {
+  const result: ASTNode[] = [];
+  const operationTracker = new Map<string, { operation: unknown; index: number }>();
 
   for (let i = 0; i < commands.length; i++) {
-    const cmd = commands[i];
+    const cmd = commands[i]!;
 
     if (cmd.name === 'add' || cmd.name === 'remove') {
-      const target = cmd.target?.name || 'default';
-      const selector = cmd.args?.[0]?.value;
+      const target = field(cmd.target, 'name') || 'default';
+      const selector = field(field(cmd.args, '0'), 'value');
       const key = `${target}:${selector}`;
 
       const lastOp = operationTracker.get(key);
@@ -409,14 +411,16 @@ function removeRedundantOperations(commands: any[]): any[] {
 }
 
 function simplifyCondition(condition: ASTNode): ASTNode {
-  if ((condition as any).operator === '&&') {
-    const left = (condition as any).left;
-    const right = (condition as any).right;
+  if (condition.operator === '&&') {
+    const left = condition.left;
+    const right = condition.right;
 
-    if (left.type === 'literal' && left.value === true) return right;
-    if (right.type === 'literal' && right.value === true) return left;
-    if (left.type === 'literal' && left.value === false) return left;
-    if (right.type === 'literal' && right.value === false) return right;
+    if (isASTNode(left) && isASTNode(right)) {
+      if (left.type === 'literal' && left.value === true) return right;
+      if (right.type === 'literal' && right.value === true) return left;
+      if (left.type === 'literal' && left.value === false) return left;
+      if (right.type === 'literal' && right.value === false) return right;
+    }
   }
 
   return condition;
@@ -429,21 +433,21 @@ function isSimpleValue(node: ASTNode): boolean {
 function isComplexExpression(node: ASTNode): boolean {
   return (
     node.type === 'binaryExpression' &&
-    ((node as any).left?.type === 'binaryExpression' ||
-      (node as any).right?.type === 'binaryExpression')
+    (field(node.left, 'type') === 'binaryExpression' ||
+      field(node.right, 'type') === 'binaryExpression')
   );
 }
 
 function minifyAST(ast: ASTNode): ASTNode {
   const visitor = new ASTVisitor({
     enter(node, context) {
-      const minified: any = {
+      const minified: ASTNode = {
         type: node.type,
       };
 
       for (const [key, value] of Object.entries(node)) {
         if (!['start', 'end', 'line', 'column'].includes(key)) {
-          (minified as any)[key] = value;
+          minified[key] = value;
         }
       }
 

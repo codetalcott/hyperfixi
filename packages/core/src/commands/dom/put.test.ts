@@ -37,7 +37,6 @@ function createMockContext(element?: HTMLElement): TypedExecutionContext {
     locals: new Map(),
     globals: new Map(),
     result: undefined,
-    halted: false,
     it: undefined,
   };
 }
@@ -106,7 +105,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -148,7 +147,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -165,7 +164,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, beforeNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { before: targetNode as never } },
         evaluator,
         context
       );
@@ -182,7 +181,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, afterNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { after: targetNode as never } },
         evaluator,
         context
       );
@@ -199,7 +198,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, atStartNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { 'at start of': targetNode as never } },
         evaluator,
         context
       );
@@ -216,7 +215,7 @@ describe('PutCommand', () => {
       const targetNode = { type: 'selector', value: '#target' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, atEndNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { 'at end of': targetNode as never } },
         evaluator,
         context
       );
@@ -288,7 +287,7 @@ describe('PutCommand', () => {
       const meNode = { type: 'identifier', name: 'me' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, meNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: meNode as never } },
         evaluator,
         context
       );
@@ -306,7 +305,7 @@ describe('PutCommand', () => {
 
       await expect(
         command.parseInput(
-          { args: [contentNode, intoNode, targetNode], modifiers: {} },
+          { args: [contentNode], modifiers: { into: targetNode as never } },
           evaluator,
           context
         )
@@ -330,7 +329,7 @@ describe('PutCommand', () => {
       const intoNode = { type: 'literal', value: 'into' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -354,7 +353,7 @@ describe('PutCommand', () => {
       const intoNode = { type: 'literal', value: 'into' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: targetNode as never } },
         evaluator,
         context
       );
@@ -374,7 +373,7 @@ describe('PutCommand', () => {
       const varNode = { type: 'identifier', name: 'myVar' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -392,7 +391,7 @@ describe('PutCommand', () => {
       const varNode = { type: 'literal', value: 'count' } as ASTNode;
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -537,6 +536,160 @@ describe('PutCommand', () => {
 
       expect(target1.textContent).toBe('Shared Content');
       expect(target2.textContent).toBe('Shared Content');
+    });
+  });
+
+  describe('Execution - Element Arrays (ordered move, never serialized)', () => {
+    /** A ul with three li children, appended to body. */
+    function createList(): { list: HTMLElement; items: HTMLElement[] } {
+      const list = document.createElement('ul');
+      list.id = 'list';
+      const items = ['a', 'b', 'c'].map(key => {
+        const li = document.createElement('li');
+        li.id = `li-${key}`;
+        li.textContent = key;
+        list.appendChild(li);
+        return li;
+      });
+      document.body.appendChild(list);
+      return { list, items };
+    }
+
+    it('appends a reordered child array in order — an in-place reorder', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, a, b],
+        targets: [list],
+        position: 'append',
+      };
+      await command.execute(input, context);
+
+      expect(Array.from(list.children)).toEqual([c, a, b]);
+      expect(list.children).toHaveLength(3); // moved, not duplicated
+    });
+
+    it('prepends an array preserving array order', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, b],
+        targets: [list],
+        position: 'prepend',
+      };
+      await command.execute(input, context);
+
+      expect(Array.from(list.children)).toEqual([c, b, a]);
+    });
+
+    it('inserts an array before / after a sibling target, in order', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      await command.execute(
+        { value: [b, c], targets: [a], position: 'before' } as PutCommandInput,
+        context
+      );
+      expect(Array.from(list.children)).toEqual([b, c, a]);
+
+      await command.execute(
+        { value: [b], targets: [c], position: 'after' } as PutCommandInput,
+        context
+      );
+      expect(Array.from(list.children)).toEqual([c, b, a]);
+    });
+
+    it('into is destructive: target is cleared, array members survive by reference', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, , c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, a],
+        targets: [list],
+        position: 'into',
+      };
+      await command.execute(input, context);
+
+      // b was not in the array — replaced away, like any `put … into`.
+      expect(Array.from(list.children)).toEqual([c, a]);
+      expect(document.getElementById('li-b')).toBeNull();
+    });
+
+    it('a mixed array still stringifies (only homogeneous element arrays move)', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+      const el = document.createElement('span');
+
+      const input: PutCommandInput = {
+        value: [el, 'not-an-element'],
+        targets: [target],
+        position: 'into',
+      };
+      await command.execute(input, context);
+
+      // Stringified (environment-dependent flavor), NOT the ordered-move path:
+      // whatever landed in the target, it is not the original element moved in.
+      expect(el.parentElement).toBeNull();
+      expect(target.textContent).toContain('not-an-element');
+    });
+  });
+
+  describe('Execution - DocumentFragment content', () => {
+    // `fetch … as html` resolves to a DocumentFragment, and the htmx-compat
+    // layer's entire swap path is `fetch … as html then put it into <target>`.
+    // Before this was handled, every such swap inserted the literal string
+    // "[object DocumentFragment]".
+    function fragmentOf(html: string): DocumentFragment {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = html;
+      const frag = document.createDocumentFragment();
+      Array.from(tpl.content.childNodes).forEach(n => frag.appendChild(n));
+      return frag;
+    }
+
+    it("inserts a fragment's children rather than stringifying it", async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+
+      await command.execute(
+        { value: fragmentOf('<p>Fetched: /api/users</p>'), targets: [target], position: 'into' },
+        context
+      );
+
+      expect(target.textContent).toBe('Fetched: /api/users');
+      expect(target.querySelector('p')).not.toBeNull();
+      expect(target.textContent).not.toContain('DocumentFragment');
+    });
+
+    it('appends fragment children at a position', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+      target.innerHTML = '<span>first</span>';
+
+      await command.execute(
+        { value: fragmentOf('<span>second</span>'), targets: [target], position: 'append' },
+        context
+      );
+
+      expect(target.textContent).toBe('firstsecond');
+    });
+
+    it('inserts a bare text node without stringifying', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+
+      await command.execute(
+        { value: document.createTextNode('plain text'), targets: [target], position: 'into' },
+        context
+      );
+
+      expect(target.textContent).toBe('plain text');
     });
   });
 
@@ -751,7 +904,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
@@ -775,7 +928,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
@@ -799,7 +952,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -821,7 +974,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -843,7 +996,7 @@ describe('PutCommand', () => {
       const context = createMockContext();
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, varNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: varNode as never } },
         evaluator,
         context
       );
@@ -865,7 +1018,7 @@ describe('PutCommand', () => {
       const context = createMockContext(meElement);
 
       const input = await command.parseInput(
-        { args: [contentNode, intoNode, complexNode], modifiers: {} },
+        { args: [contentNode], modifiers: { into: complexNode as never } },
         evaluator,
         context
       );
