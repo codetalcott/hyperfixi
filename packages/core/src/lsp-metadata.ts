@@ -117,7 +117,6 @@ export const COMMAND_KEYWORDS = [
   'beep',
   'breakpoint',
   'js',
-  'async',
 
   // Animation Commands
   'transition',
@@ -622,12 +621,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'js',
     description: 'Executes inline JavaScript.',
     example: 'js(event) return event.clientX end',
-    category: 'command',
-  },
-  async: {
-    title: 'async',
-    description: 'Runs commands asynchronously (non-blocking).',
-    example: 'async do fetch /api/data end',
     category: 'command',
   },
 

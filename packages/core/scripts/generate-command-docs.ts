@@ -31,7 +31,6 @@ import {
 // shipped commands were simply undocumented.
 import { AddCommand } from '../src/commands/dom/add';
 import { AppendCommand } from '../src/commands/content/append';
-import { AsyncCommand } from '../src/commands/advanced/async';
 import { BeepCommand } from '../src/commands/utility/beep';
 import { BlurCommand } from '../src/commands/execution/blur';
 import { BreakCommand } from '../src/commands/control-flow/break';
@@ -114,7 +113,6 @@ interface CommandEntry {
 const COMMANDS: CommandEntry[] = [
   { name: 'add', class: AddCommand },
   { name: 'append', class: AppendCommand },
-  { name: 'async', class: AsyncCommand },
   { name: 'beep', class: BeepCommand },
   { name: 'blur', class: BlurCommand },
   { name: 'break', class: BreakCommand },

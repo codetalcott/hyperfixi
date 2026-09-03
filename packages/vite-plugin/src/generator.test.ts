@@ -208,8 +208,8 @@ describe('Generator', () => {
 
   describe('Full Runtime Fallback', () => {
     it('should fall back to full runtime when full-runtime-only commands detected', () => {
-      // 'async' and 'js' are full-runtime-only commands
-      const usage = createUsage(['toggle', 'async', 'js']);
+      // 'make' and 'js' are full-runtime-only commands
+      const usage = createUsage(['toggle', 'make', 'js']);
       const code = generator.generate(usage, {});
 
       // Should generate full runtime fallback bundle
@@ -244,7 +244,7 @@ describe('Generator', () => {
 
     it('should identify full-runtime-only commands', () => {
       // These commands require full runtime
-      const fullRuntimeCommands = ['async', 'make', 'swap'];
+      const fullRuntimeCommands = ['process', 'make', 'swap'];
 
       for (const cmd of fullRuntimeCommands) {
         expect(FULL_RUNTIME_ONLY_COMMANDS).toContain(cmd);

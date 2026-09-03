@@ -44,7 +44,7 @@
  * The registry is now DERIVED from the manifest (`runtime.ts` loops it), so
  * "the manifest names equal the registry names" no longer compares two
  * independently-authored lists. Two things carry that weight instead, and
- * neither may be softened into a derivation: the hardcoded 59-name list in §1,
+ * neither may be softened into a derivation: the hardcoded 58-name list in §1,
  * and the per-command factory identity check in §2 (each factory builds a
  * command that calls itself what the manifest calls it).
  *
@@ -132,7 +132,7 @@ const normalize = toRegisteredName;
 // ===========================================================================
 
 describe('the registry', () => {
-  it('registers exactly the 59 documented commands', () => {
+  it('registers exactly the 58 documented commands', () => {
     // Adding or removing a command must edit this list deliberately, the same
     // way command-output-contract.test.ts demands a row per command.
     //
@@ -144,7 +144,6 @@ describe('the registry', () => {
     expect(REGISTRY).toEqual([
       'add',
       'append',
-      'async',
       'beep',
       'blur',
       'break',
@@ -267,13 +266,13 @@ describe('the four core lists agree with the registry', () => {
     const aliases = [...source.slice(0, cut).matchAll(/create\w+Command\s+as\s+(\w+)/g)].map(m =>
       normalize(m[1])
     );
-    expect(aliases.length).toBe(59);
+    expect(aliases.length).toBe(58);
     expect([...aliases].sort()).toEqual(REGISTRY);
   });
 
   it('reference/index.ts documents exactly the registered set', () => {
     const documented = Object.keys(referenceCommands).map(normalize);
-    expect(documented.length).toBe(59);
+    expect(documented.length).toBe(58);
     expect([...documented].sort()).toEqual(REGISTRY);
   });
 
@@ -308,12 +307,12 @@ describe('the four core lists agree with the registry', () => {
       ...block![1].matchAll(/^\s{2}'?([\w-]+)'?:\s*create\w+Command,\s*(?:\/\/.*)?$/gm),
     ].map(m => m[1]);
 
-    // 59 commands, 55 factories: the four consolidation-alias rows are
+    // 58 commands, 54 factories: the four consolidation-alias rows are
     // registered from their primary's metadata.aliases, not from a factory of
     // their own. Set equality both ways, so a factory for a command the
     // manifest does not name fails just as loudly as a missing one.
     const needsFactory = COMMAND_MANIFEST.filter(e => !e.consolidationAliasOf).map(e => e.name);
-    expect(needsFactory).toHaveLength(55);
+    expect(needsFactory).toHaveLength(54);
     expect([...keys].sort()).toEqual([...needsFactory].sort());
   });
 
@@ -323,7 +322,7 @@ describe('the four core lists agree with the registry', () => {
     // — this is not. A map entry pointing at the wrong factory (`toggle:
     // createAddCommand`) would register `add` twice and leave `toggle` absent,
     // and the identity below is what names the mistake instead of leaving it
-    // to the hardcoded 59-name list above to report as a bare diff.
+    // to the hardcoded 58-name list above to report as a bare diff.
     const registered = new Runtime().getRegistry();
     for (const entry of COMMAND_MANIFEST) {
       const impl = registered.getImplementation(entry.name) as
@@ -412,18 +411,17 @@ const TIER_UNCLASSIFIED = new Set<string>([]);
 /**
  * The classification, counted. Step 4.1's judgment calls are only reviewable
  * if a later change has to move a number as well as a row — the same
- * discipline as §8's headline counts. 51 + 8 = the 59 registered commands.
+ * discipline as §8's headline counts. 51 + 7 = the 58 registered commands (`async` left in Arc 6b).
  */
-const TIER_COUNTS = { upstream: 51, extension: 8 };
+const TIER_COUNTS = { upstream: 51, extension: 7 };
 
 /**
- * The eight extensions, named. A count alone would let two rows swap sides
+ * The seven extensions, named. A count alone would let two rows swap sides
  * unnoticed, and this list is what `detectLokascriptFeatures()` raises editor
  * ERRORS from, so moving a command into or out of it is a user-visible change
  * that should never be incidental to another edit.
  */
 const EXTENSIONS = new Set([
-  'async',
   'beep', // upstream spells it `beep!`; the bare spelling is ours
   'copy',
   'prepend',
@@ -714,8 +712,8 @@ describe('COMMAND_KEYWORDS', () => {
  * must be removed.
  */
 const BUNDLE_COMMAND_COUNTS: Record<string, number> = {
-  'browser-bundle-classic-i18n.ts': 43,
-  'browser-bundle-classic.ts': 52,
+  'browser-bundle-classic-i18n.ts': 42,
+  'browser-bundle-classic.ts': 51,
   // 24 -> 38 in Arc E step 4: the array became the generation input, so it now
   // carries every name the templates implement (Finding 17 — it advertised 35
   // and executed 24). See scripts/generate-bundles.ts.
@@ -840,7 +838,7 @@ const ALLOWED_KEYS = new Set([
 
 /**
  * `send` and `trigger` are `'events'` in `reference/index.ts` and `'event'` in
- * the `@command` decorator — the only two of 59 where the two category sources
+ * the `@command` decorator — the only two of 58 where the two category sources
  * disagree, and not a typo: `reference/index.ts` and `types/command-metadata.ts`
  * declare two independent `CommandCategory` unions that differ in exactly two
  * members (`'events'` vs `'event'`, and `'storage'` present only in the latter).
@@ -863,8 +861,8 @@ describe('the command manifest', () => {
     expect(gapsIn(names)).toEqual([]);
     // A duplicated entry satisfies both checks above and COLLAPSES in the Map,
     // so the Map's size cannot see it — the array length is what rules it out.
-    expect(COMMAND_MANIFEST.length).toBe(59);
-    expect(MANIFEST_BY_NAME.size).toBe(59);
+    expect(COMMAND_MANIFEST.length).toBe(58);
+    expect(MANIFEST_BY_NAME.size).toBe(58);
   });
 
   it('is sorted in registry order, so the diff of an added command is one line', () => {
@@ -1037,7 +1035,7 @@ describe('the classification debt, counted', () => {
 // ===========================================================================
 
 /**
- * `metadata.compatibility` is UNSET on all 59 registered commands, deliberately:
+ * `metadata.compatibility` is UNSET on all 58 registered commands, deliberately:
  * Arc A step 4.1 declined to populate it so Arc B could copy 59 *finished*
  * values instead of 23 `'unknown'`s. This section is the coupling that makes
  * that copy reviewable, and it lands **before** the values do — so the gate is
@@ -1135,7 +1133,7 @@ function servedCompatibility(): Map<string, unknown> {
 
 describe('metadata.compatibility', () => {
   it('every populated row matches the manifest projection', () => {
-    // THE live gate. Vacuous over values today (all 59 unset) and deliberately
+    // THE live gate. Vacuous over values today (all 58 unset) and deliberately
     // so — mutation-verified when it landed by setting one command's
     // compatibility to the wrong side and watching this fail. Step 3 populates
     // into a gate that already works rather than one written to fit its output.

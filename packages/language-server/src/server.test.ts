@@ -1787,7 +1787,6 @@ describe('Command Tiers', () => {
       // A step 4.1 measured them and moved them (see the test below).
       expect(isLokascriptOnlyCommand('prepend')).toBe(true);
       expect(isLokascriptOnlyCommand('process')).toBe(true);
-      expect(isLokascriptOnlyCommand('async')).toBe(true);
       expect(isLokascriptOnlyCommand('copy')).toBe(true);
       expect(isLokascriptOnlyCommand('push')).toBe(true);
       expect(isLokascriptOnlyCommand('replace')).toBe(true);
@@ -1924,7 +1923,6 @@ describe('LokaScript Feature Detection', () => {
       // The other half: these were in NEITHER tier list, so detection returned
       // nothing at all and non-portable code shipped unflagged.
       for (const [code, cmd] of [
-        ['async do log "x" end', 'async'],
         ['copy "text"', 'copy'],
         ['push url "/next"', 'push'],
         ['replace url "/next"', 'replace'],

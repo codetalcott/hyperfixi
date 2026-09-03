@@ -272,12 +272,12 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-multilingual.js',
     gzipSize: '92.3 KB',
     rawSize: '378 KB',
-    // NOT a full-runtime bundle, despite the old 59. It hand-picks 52 via
+    // NOT a full-runtime bundle, despite the old 59. It hand-picks 51 via
     // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
     // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it
-    // SHOULD ship all 59 is a behavior question, deliberately left to its own
+    // SHOULD ship all 58 is a behavior question, deliberately left to its own
     // PR — this step only stops the number from lying.
-    commandCount: 52,
+    commandCount: 51,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,

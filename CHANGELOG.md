@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   _Migration:_ `import { tokenize } from '@hyperfixi/core'` and walk the
   returned `Token[]`; there is no drop-in `Tokens` cursor class.
 
+## [Unreleased]
+
+### ⚠ BREAKING
+
 - **Three never-reachable exports deleted** (Arc 6b): the `unified-types`
   `Validator` class (a static `validateInput`/`createValidationError` pair
   wrapped around `lightweight-validators` — exported from `types/index.ts`,
@@ -58,6 +62,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   _Migration:_ none possible or needed — no published entry point reached
   any of the three.
+
+- **The `async` command is deleted** (Arc 6b, listed by the Arc 4b brief).
+  `AsyncCommand`, `createAsyncCommand` and `AsyncCommandInput` leave
+  `@hyperfixi/core/commands`; the runtime, the four bundles that registered
+  it (`classic`, `classic-i18n`, `multilingual`, `semantic-complete`) and the
+  reference/LSP metadata drop it; the manifest is 58 commands. It was
+  unreachable from parsed hyperscript: `async do fetch /api end` parsed as a
+  bare `async` node followed by a sibling `fetch`, and the command's
+  `execute` accepted only a body of functions or `{ execute }` objects that no
+  parser produces — so every `async …` in an `_="…"` attribute already failed,
+  with "Async command execution failed". It now fails as an unknown command.
+  `async` also stops being a tokenizer keyword, so it is an ordinary
+  identifier (`set async to 1` works).
+
+  _Migration:_ none for hyperscript source, which could never use it. A
+  programmatic caller that queued functions through `createAsyncCommand()`
+  should `Promise.all` them directly.
 
 ## [3.0.0] - 2026-08-30
 

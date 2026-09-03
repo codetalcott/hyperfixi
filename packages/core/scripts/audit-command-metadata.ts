@@ -64,7 +64,6 @@ import { CallCommand } from '../src/commands/execution/call';
 import { PseudoCommand } from '../src/commands/execution/pseudo-command';
 
 import { JsCommand } from '../src/commands/advanced/js';
-import { AsyncCommand } from '../src/commands/advanced/async';
 
 import { GoCommand } from '../src/commands/navigation/go';
 
@@ -139,7 +138,6 @@ const COMMANDS: CommandEntry[] = [
 
   // Advanced
   { name: 'js', class: JsCommand, file: 'advanced/js.ts' },
-  { name: 'async', class: AsyncCommand, file: 'advanced/async.ts' },
 
   // Navigation
   { name: 'go', class: GoCommand, file: 'navigation/go.ts' },

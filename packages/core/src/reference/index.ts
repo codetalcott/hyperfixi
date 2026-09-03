@@ -569,14 +569,6 @@ export const commands: Record<string, CommandRef> = {
     availability: 'full',
     examples: ['js(console.log("hi"))', 'js(return Date.now())'],
   },
-  async: {
-    name: 'async',
-    description: 'Execute commands asynchronously',
-    syntax: 'async do ... end',
-    category: 'advanced',
-    availability: 'hybrid',
-    examples: ['async do fetch /api/data then put result into #output end'],
-  },
 
   // Behavior Commands
   install: {

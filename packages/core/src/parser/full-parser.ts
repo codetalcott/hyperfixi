@@ -91,7 +91,6 @@ class FullParserImpl implements ParserInterface {
     'take',
     // Advanced
     'js',
-    'async',
     // Behaviors
     'install',
     // Templates

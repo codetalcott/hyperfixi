@@ -1,21 +1,14 @@
 {
   "$comment": "Arc 3 step 1 census of every parseInput body (docs-internal/ENGINE_MIGRATION_PLAN.md). Per command: line count, branch count, syntax-discrimination sites (positional args[i] reads + keyword-name compares) and value-evaluation sites (evaluator calls + raw.modifiers reads). Shrink-only: parse-input-census.test.ts fails on any increase. Regenerate with `npx tsx scripts/generate-parse-input-census.ts --update` in the SAME PR that lowers a number.",
-  "generated": "2026-09-02",
+  "generated": "2026-09-03",
   "totals": {
-    "bodies": 51,
-    "lines": 2102,
-    "branches": 331,
-    "syntaxSites": 73,
+    "bodies": 50,
+    "lines": 2085,
+    "branches": 329,
+    "syntaxSites": 70,
     "valueSites": 190
   },
   "commands": {
-    "async": {
-      "file": "src/commands/advanced/async.ts",
-      "lines": 17,
-      "branches": 1,
-      "syntaxSites": 0,
-      "valueSites": 0
-    },
     "js": {
       "file": "src/commands/advanced/js.ts",
       "lines": 42,
@@ -40,7 +33,7 @@
     "start": {
       "file": "src/commands/animation/start-view-transition.ts",
       "lines": 16,
-      "branches": 4,
+      "branches": 3,
       "syntaxSites": 0,
       "valueSites": 3
     },
@@ -97,7 +90,7 @@
       "file": "src/commands/control-flow/if.ts",
       "lines": 50,
       "branches": 7,
-      "syntaxSites": 7,
+      "syntaxSites": 4,
       "valueSites": 1
     },
     "repeat": {

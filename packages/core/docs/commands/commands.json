@@ -93,18 +93,6 @@
       "category": "content",
       "compatibility": "standard"
     },
-    "async": {
-      "description": "Execute commands asynchronously without blocking",
-      "syntax": ["async <command> [<command> ...]"],
-      "examples": [
-        "async command1 command2",
-        "async fetchData processData",
-        "async animateIn showContent"
-      ],
-      "sideEffects": ["async-execution"],
-      "category": "advanced",
-      "compatibility": "lokascript-extension"
-    },
     "beep": {
       "description": "Debug output for expressions with type information",
       "syntax": ["beep!", "beep! <expression>", "beep! <expression>, <expression>, ..."],

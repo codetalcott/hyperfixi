@@ -233,7 +233,6 @@ export interface CommandManifestEntry {
 export const COMMAND_NAMES = [
   'add',
   'append',
-  'async',
   'beep',
   'blur',
   'break',
@@ -317,13 +316,6 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     category: 'content',
     tier: 'hybrid',
     upstreamOrExtension: 'upstream',
-    multiword: false,
-  },
-  {
-    name: 'async',
-    category: 'advanced',
-    tier: 'hybrid',
-    upstreamOrExtension: 'extension',
     multiword: false,
   },
   {
