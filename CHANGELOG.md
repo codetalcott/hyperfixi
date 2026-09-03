@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`require('@hyperfixi/core')` returned `{}`, and the subpath `require`s
+  threw — since `"type": "module"`, on 3.0.0 too.** Every `exports.*.require`
+  and `main` pointed at a `.js` file built as CommonJS, which Node reads as
+  ESM under that flag. The CJS outputs are `.cjs` now (main entry, the 21
+  subpaths, the parser modules); the `import` conditions are unchanged. The
+  bare-Node check in CI now `require()`s the entries as well as importing
+  them, which is the check that would have caught this. Found by the
+  end-to-end probe that landed Arc 1's build half.
+
 ### Changed
 
 - **`@hyperfixi/core`'s library entry no longer bundles the multilingual

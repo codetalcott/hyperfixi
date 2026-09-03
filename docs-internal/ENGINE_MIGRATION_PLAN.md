@@ -2203,7 +2203,10 @@ worked. None needs an arc; the first has a brief.
    registration through 3.x so no Node consumer changes; moving
    `@lokascript/semantic` from `dependencies` to an optional peer is a 4.0
    entry.
-1. **The CJS entry points are empty — every one, since `"type": "module"`.**
+1. ~~**The CJS entry points are empty — every one, since `"type": "module"`.**~~
+   ✅ **FIXED 2026-09-03** — the CJS outputs are `.cjs`; `main` and all 22
+   `require` conditions point at them; the bare-Node check `require()`s three
+   entries; the three freshness guards accept `index.{js,mjs,cjs}`. Record:
    Found by step A's bare-Node probe: `require('@hyperfixi/core')` returns
    `{}` (27 exports expected) and `require('@hyperfixi/core/commands')` (and
    `/expressions`, `/registry`, `/multilingual`) throws — on the published
@@ -2227,8 +2230,23 @@ worked. None needs an arc; the first has a brief.
 4. **`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
    four of five shapes broken, three silently, upstream is the oracle.
    `PARSER_NEXT_STEPS.md`.
-5. **The two LSP consumers of `fromCoreAST` have no role-path test** (Arc 1
-   step 4's finding; their hover tests assert `toBeDefined()` only). Two tests.
+5. ~~**The two LSP consumers of `fromCoreAST` have no role-path test** (Arc 1
+   step 4's finding; their hover tests assert `toBeDefined()` only). Two tests.~~
+   ✅ **DONE 2026-09-03 (#1114)** — and the obvious test was vacuous: the
+   framework's `fromInterchangeNode` re-infers simple roles itself, so only the
+   4 of 28 corpus feature sources that render differently without the inferrer
+   (`add .x to me` → `destination:me`, `halt the event` → `patient:event`)
+   prove the wiring. Writing it found the MCP hover passing the whole
+   ParseResult to `fromCoreAST` (every AST hover rendered `[get patient:]`);
+   fixed in the same PR.
+6. **The MCP LSP bridge guards three AST paths on names core never exported.**
+   `lsp-bridge.ts` checks `astToolkit.astToLSPDiagnostics` / `astToLSPCompletions`
+   / `astToLSPSymbols` before using them; none exists, so `get_diagnostics`,
+   `get_completions` and `get_document_symbols` silently take the token-based
+   fallback. Core exports `interchangeToLSPDiagnostics` / `Completions` /
+   `Symbols` (the language server uses the first). Wire them through
+   `fromCoreAST(parse(code).node, { inferRoles })` — the hover path is the
+   template — with a strict test per tool.
 
 ## Non-goals
 
@@ -2686,3 +2704,19 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   not caused by this change (the published 3.0.0 `dist/index.js` requires to
   `{}` too) and is not fixed by it; it is queued ahead of step B because the
   fix and the gate live in the same two files.
+
+- **2026-09-03** — **The CJS surface is fixed, and After-the-plan item 5 closed
+  by finding a bug.** The `.cjs` rename: main entry, the 21 `createSubpathEntry`
+  outputs and the parser modules emit `.cjs`; `main` and all 22 `require`
+  conditions follow; `scripts/check-node-import.mjs` `require()`s the main
+  entry, `/commands` and `/multilingual` (this is the check that would have
+  caught it — the script only ever `import()`ed); and the three freshness
+  guards (`ensure-fresh.sh`, the multilingual CLI, the vocab CLI) take the
+  first of `dist/index.{js,mjs,cjs}` as the marker instead of the literal
+  `index.js` that no longer exists for core. Known limit, left: a TypeScript
+  CJS consumer under `node16` resolution still sees ESM-flavoured `.d.ts`
+  (there is no `.d.cts`) — pre-existing, and the JS was empty before.
+  Item 5 (#1114): the two LSP role-path tests exist, are strict, and pin the
+  4-of-28 cases the framework cannot re-infer; the MCP hover was passing a
+  ParseResult to `fromCoreAST` and rendering an `error` node for every AST
+  hover — fixed. The three dead `astToLSP*` guards it sits beside are item 6.

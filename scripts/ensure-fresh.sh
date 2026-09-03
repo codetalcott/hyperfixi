@@ -4,7 +4,7 @@
 # Usage:
 #   ./scripts/ensure-fresh.sh <package-dir> [<package-dir> ...]
 #
-# Compares newest src/ timestamp to dist/index.js. If src/ is newer,
+# Compares newest src/ timestamp to dist/index.{js,mjs,cjs}. If src/ is newer,
 # rebuilds the package silently. Skips packages with no dist/ or src/.
 #
 # Designed for use in pretest hooks:
@@ -21,8 +21,16 @@ for pkg in "$@"; do
   fi
 
   name=$(basename "$pkg")
-  dist_marker="$pkg/dist/index.js"
   src_dir="$pkg/src"
+  # The freshness marker is the package's built entry, whichever extension its
+  # build emits: `.js` for most, `.mjs` for core (whose `.js` CJS twin became
+  # `.cjs` when `"type": "module"` made Node read it as ESM — an empty
+  # `require()` surface, shipped through 3.0.0).
+  dist_marker=""
+  for candidate in "$pkg/dist/index.js" "$pkg/dist/index.mjs" "$pkg/dist/index.cjs"; do
+    [[ -f "$candidate" ]] && { dist_marker="$candidate"; break; }
+  done
+  [[ -n "$dist_marker" ]] || dist_marker="$pkg/dist/index.js"
 
   # Skip if no dist or src
   [[ -d "$src_dir" ]] || continue
@@ -33,7 +41,7 @@ for pkg in "$@"; do
     continue
   }
 
-  # Check if any src/ file is newer than dist/index.js
+  # Check if any src/ file is newer than the dist marker
   stale=$(find "$src_dir" -name '*.ts' -newer "$dist_marker" -print -quit 2>/dev/null)
   if [[ -n "$stale" ]]; then
     echo "  ⚙  $name: src/ changed since last build, rebuilding..."

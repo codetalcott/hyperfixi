@@ -38,7 +38,7 @@ function createSubpathEntry(input, outputBase, external = []) {
     input,
     output: [
       { file: `${outputBase}.mjs`, format: 'es', sourcemap: true, inlineDynamicImports: true },
-      { file: `${outputBase}.js`, format: 'cjs', sourcemap: true, inlineDynamicImports: true },
+      { file: `${outputBase}.cjs`, format: 'cjs', sourcemap: true, inlineDynamicImports: true },
     ],
     plugins: commonPlugins,
     external,
@@ -84,7 +84,11 @@ export default [
         inlineDynamicImports: true,
       },
       {
-        file: 'dist/index.js', // CommonJS output
+        // `.cjs`, not `.js`: package.json says `"type": "module"`, so Node reads a
+        // `.js` file as ESM and a CJS-syntax one exported NOTHING (3.0.0 shipped
+        // `require('@hyperfixi/core') === {}`). Every `exports.*.require` and
+        // `main` point at the `.cjs`; scripts/check-node-import.mjs require()s them.
+        file: 'dist/index.cjs', // CommonJS output
         format: 'cjs',
         sourcemap: true,
         inlineDynamicImports: true,
