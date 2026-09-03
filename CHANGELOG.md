@@ -57,8 +57,8 @@ click[event.shiftKey]` fired on a plain click, `on mouseenter or click` never
   plain click), listened for the first name of an `or` list only, and never
   saw `from <target>` at all; a header with a filter, `(args)`, `or`, `from`,
   `elsewhere`, `queue`, `debounced`, `throttled` or `in` is now processed
-  eagerly. `api/dom-processor.test.ts` runs every row on all three paths
-  (API, eager, lazy) and is the gate the DOM-processor collapse lands under.
+  eagerly. `dom/processor-parity.test.ts` runs every row on all three paths
+  (API, eager, lazy) and is the gate the DOM-processor collapse landed under.
 
 - **`hyperscript.process()` and the browser bundles share one DOM
   processor.** `process()` and `cleanup()` now run on the attribute
@@ -77,6 +77,10 @@ type="text/hyperscript">` tags inside the tree are processed, with or
   drops a lazy stub still waiting on an element, so cleanup-then-process
   re-initializes the tree once. A second scan in `lazyParsing` mode no longer
   registers a second stub.
+  The API-side processor module is deleted; the multilingual bundle's own
+  copy of the language walk now calls the shared one, narrowed to the
+  languages that bundle ships; and a subtree the `MutationObserver` picks up
+  takes the same entry as `process()`.
 
 - **`set *<css-property>` writes inline style in every spelling upstream
   accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and

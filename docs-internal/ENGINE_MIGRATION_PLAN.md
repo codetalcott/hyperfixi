@@ -2220,7 +2220,12 @@ worked. None needs an arc; the first has a brief.
    emit `.cjs`, point `main` and every `exports.*.require` at it, and give
    `scripts/check-node-import.mjs` a `require()` check per entry (it only
    ever `import()`ed, which is why this was invisible). Do it before step B.
-2. **Collapse the three DOM processors onto the Program cache** — risk 6
+2. ~~**Collapse the three DOM processors onto the Program cache**~~ ✅ **DONE
+   2026-09-03** in three PRs (parity gate → move → delete); the History
+   entries of that date carry the measurements. `api/dom-processor.ts` is
+   gone, `dom/attribute-processor.ts` is the one processor behind
+   `hyperscript.process()` and every bundle, the minimal processor stays for
+   the parser-free bundles. Original text follows. — risk 6
    below, named as a 4b follow-up and never filed. **First slice landed
    2026-09-03:** measuring the two live processors side by side found
    `hyperscript.process()` installing `on …` handlers through its own
@@ -2235,8 +2240,8 @@ worked. None needs an arc; the first has a brief.
    36 rows on three paths. **Third slice (the move, PR 2 of 3) landed
    2026-09-03** — `process()`/`cleanup()` run on the attribute processor, the
    API injects the compiler, the `dom -> api` edge is gone; 57 rows. What
-   remains is deleting `api/dom-processor.ts` and the `detectLanguage` twin
-   (PR 3). `api/dom-processor.ts`
+   remained — deleting `api/dom-processor.ts` and the `detectLanguage` twin —
+   landed as PR 3 the same day. `api/dom-processor.ts`
    (444 lines), `dom/attribute-processor.ts` (664) and
    `dom/minimal-attribute-processor.ts` (148) each wire `compileSync` + a
    runtime. Also deletes the `dom -> api` row in `baselines/layering.json`.
@@ -2836,3 +2841,20 @@ any` to `unknown` FIRST**. Stripping the same casts without that flip
   upstream parity and are in the CHANGELOG. `api/dom-processor.ts` is
   unimported; PR 3 deletes it and measures `detectLanguage`'s remaining twin
   in `browser-bundle-multilingual.ts`.
+
+- **2026-09-03** — **DOM-processor collapse, PR 3 of 3: the deletions, and
+  After-the-plan item 2 is CLOSED.** `api/dom-processor.ts` deleted (285
+  lines); the parity table moved beside the survivor as
+  `dom/processor-parity.test.ts` and grew two observer rows. The
+  `detectLanguage` twin the brief placed "in the attribute processor's async
+  path" was in `browser-bundle-multilingual.ts`: measured against the shared
+  walk, the only differences were a `SUPPORTED_LANGUAGES` check and a
+  lowercase, so it calls the shared function and keeps the check. The
+  `MutationObserver`'s hand-rolled walk — script tags, element, descendants
+  — is `processTree()`, which now also takes a script tag as its root. (A
+  first draft called the old walk a race; dropping the `await` on the script
+  tags and re-running the new observer row reddened nothing — a behavior
+  definition registers synchronously, so the old order already held. The
+  row pins the path, not a fix.) `lazyElements`, written and never read,
+  is gone. Three DOM processors → two: the full one and the 148-line minimal
+  one for the parser-free bundles, which stays by design.

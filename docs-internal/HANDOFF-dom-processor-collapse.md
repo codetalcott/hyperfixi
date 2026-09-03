@@ -11,7 +11,7 @@
 
 | Processor | Lines | Behind | Compiles via | Installs handlers via |
 | --- | --- | --- | --- | --- |
-| `api/dom-processor.ts` | 285 (was 444) | `hyperscript.process()`, `hyperscript.cleanup()` | injected `compileSync`/`compileAsync` (initialized from the API to dodge a cycle) | the runtime (since the first slice) |
+| ~~`api/dom-processor.ts`~~ | ~~285 (was 444)~~ **deleted 2026-09-03** | ~~`hyperscript.process()`, `hyperscript.cleanup()`~~ — both now call the attribute processor | — | — |
 | `dom/attribute-processor.ts` | 664 | every browser bundle (`defaultAttributeProcessor`); `browser-modular` | `hyperscript.compileSync` directly | the runtime |
 | `dom/minimal-attribute-processor.ts` | 148 | the small bundles' `MinimalRuntime` (`createMinimalAttributeProcessor`) | none — hands SOURCE to `runtime.execute(code, ctx)` | the minimal runtime |
 
@@ -70,8 +70,21 @@ runtime with no parser of its own and is 148 lines.
    per-instance state, so `cleanup()` could not forget an element another
    instance had stubbed — it is module-level now, a property of the element.
    `api/dom-processor.ts` is now unimported; step 3 deletes it.
-3. Delete `api/dom-processor.ts`'s remaining duplicates (`detectLanguage` has
-   a twin in the attribute processor's async path — measure which is used).
+3. ~~Delete `api/dom-processor.ts`'s remaining duplicates (`detectLanguage` has
+   a twin in the attribute processor's async path — measure which is used).~~
+   ✅ **DONE 2026-09-03 (PR 3).** `api/dom-processor.ts` deleted whole (its
+   last importer left in PR 2); the parity table moved beside the survivor as
+   `dom/processor-parity.test.ts`. The `detectLanguage` twin was NOT in the
+   attribute processor's async path (that path had no language detection at
+   all — PR 1 gave it the API's) but in `browser-bundle-multilingual.ts`,
+   which walked the ancestors itself; measured against the shared function
+   the only differences were a `SUPPORTED_LANGUAGES` check and a lowercase,
+   so it now calls the shared one and keeps the check. Also folded: the
+   `MutationObserver`'s hand-rolled script-tag + element + descendant block
+   is `processTree()` (which now also takes a root that is itself a script
+   tag) — a dedupe, not a fix: dropping the script-tag `await` reddened no
+   row, because a behavior definition registers synchronously — and the
+   `lazyElements` set that was written and never read.
 4. Re-run: core `test:check`, the Playwright `quick` + `comprehensive`
    projects (the bundle path), the bundle-size snapshot (no bundle may grow —
    the full bundle already carries both processors, so this should shrink).
