@@ -19,6 +19,7 @@ export {
 
 // Compatibility: hyperscript (deprecated, use lokascript)
 export { hyperscript } from './api/hyperscript-api';
+export type { FrontEnd, FrontEndParseResult } from './parser/semantic-integration';
 
 // Export core types for advanced usage
 export type {
