@@ -27,7 +27,9 @@ async function routeGreeting(page: Page): Promise<void> {
  * navigation. (Deleting the before:on:init hook used to leave the suite
  * green; with this collector it goes red.)
  */
-async function collectHtmxErrors(page: Page): Promise<{ console: string[]; warnings: string[]; htmx: () => Promise<string[]> }> {
+async function collectHtmxErrors(
+  page: Page
+): Promise<{ console: string[]; warnings: string[]; htmx: () => Promise<string[]> }> {
   const consoleErrors: string[] = [];
   const warnings: string[] = [];
   page.on('console', msg => {

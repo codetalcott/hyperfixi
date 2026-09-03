@@ -53,8 +53,11 @@ const NS_RE = /^(?:hx|sse|ws)-/;
  * `HCON.split` (see setTriggerSpecSplitter), so the mirror is the
  * fallback for v2 and for pages where the extension is not registered.
  */
+// The `\[` spelling is htmx's own and must stay byte-identical (the drift guard compares sources).
+/* oxlint-disable no-useless-escape */
 export const TOP_LEVEL_COMMA_RE =
   /,(?![^\[]*\])(?![^(]*\))(?![^<]*\/>)(?=(?:[^"']|"[^"]*"|'[^']*')*$)/;
+/* oxlint-enable no-useless-escape */
 
 export type TriggerSpecSplitter = (value: string) => string[];
 

@@ -18,7 +18,10 @@ describe('TOP_LEVEL_COMMA_RE mirrors the vendored htmx v4 HCON.split', () => {
   it('is byte-identical to the regex literal in ' + VENDORED_V4, () => {
     const src = readFileSync(path.join(VENDOR_DIR, VENDORED_V4), 'utf8');
     const m = src.match(/\bsplit\(string\) \{\s*return string\.split\(\/(.*?)\/\);/s);
-    expect(m, 'HCON.split not found in the vendored build — update this test with the bump').not.toBeNull();
+    expect(
+      m,
+      'HCON.split not found in the vendored build — update this test with the bump'
+    ).not.toBeNull();
     expect(TOP_LEVEL_COMMA_RE.source).toBe(m![1]);
   });
 });

@@ -201,7 +201,7 @@ describe('v4 hook: htmx_before_on_init (executor double-execution guard)', () =>
     expect(btn.getAttribute('hx-on:click')).toBe('toggle .x');
   });
 
-  it('init(internalAPI) adopts htmx\'s own HCON.split for trigger-spec boundaries', () => {
+  it("init(internalAPI) adopts htmx's own HCON.split for trigger-spec boundaries", () => {
     const split = vi.fn((v: string) => v.split(','));
     const ext = createExtension() as Ext & { init(api: object): void };
     ext.init({ HCON: { split } });
