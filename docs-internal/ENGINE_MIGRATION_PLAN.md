@@ -2231,9 +2231,11 @@ worked. None needs an arc; the first has a brief.
    `syntaxSites`). Ratchet that column to zero, largest-first
    (`pseudo-command` 7, `measure` 6, `put` 4, `pick` 4, `morph` 4); lines fall
    as a side effect. Do not chase the line count.
-4. **`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
+4. ~~**`set *<css-prop> of <target>`** — the only filed defect rated medium-high:
    four of five shapes broken, three silently, upstream is the oracle.
-   `PARSER_NEXT_STEPS.md`.
+   `PARSER_NEXT_STEPS.md`.~~ ✅ **FIXED 2026-09-03** — parse-time re-typing of
+   the star selector in `parseSetCommand`; ten oracle rows, mutation reddens
+   eight. Record in `PARSER_NEXT_STEPS.md`.
 5. ~~**The two LSP consumers of `fromCoreAST` have no role-path test** (Arc 1
    step 4's finding; their hover tests assert `toBeDefined()` only). Two tests.~~
    ✅ **DONE 2026-09-03 (#1114)** — and the obvious test was vacuous: the

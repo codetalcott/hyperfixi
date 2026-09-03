@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`set *<css-property>` writes inline style in every spelling upstream
+  accepts.** `set *opacity to 0.5`, `set *opacity of me to 0.5` and
+  `set *background-color of me to "red"` were silent no-ops and
+  `set the *opacity of me to 0.5` threw; only the possessive `set my *opacity`
+  worked. The tokenizer classes `*opacity` as a selector (for `measure`), and
+  `set`'s parser now re-types it into the identifier property the runtime's
+  style rungs already handle, so one path serves all of them — bare, `of
+<target>`, `the … of <target>`, `<target>'s`. Ten rows pinned against
+  `_hyperscript` 0.9.93.
+
 - **`require('@hyperfixi/core')` returned `{}`, and the subpath `require`s
   threw — since `"type": "module"`, on 3.0.0 too.** Every `exports.*.require`
   and `main` pointed at a `.js` file built as CommonJS, which Node reads as
