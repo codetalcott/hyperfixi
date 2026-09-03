@@ -2,7 +2,8 @@
  * Runtime Integration for Registry System
  *
  * Provides integration layer between the registry system and runtime,
- * enabling automatic context enhancement and custom event source handling.
+ * enabling custom event source handling. (Its context-provider half — lazy
+ * getters spliced onto every execution context — was deleted in Arc 6b.)
  *
  * Usage in Runtime:
  *   import { RegistryIntegration } from '../registry/runtime-integration';
@@ -10,16 +11,12 @@
  *   // In runtime constructor:
  *   this.registryIntegration = new RegistryIntegration(this);
  *
- *   // When creating execution contexts:
- *   const context = this.registryIntegration.enhanceContext(baseContext);
- *
  *   // When handling 'on' commands:
  *   const eventSource = this.registryIntegration.getEventSource(eventName);
  */
 
 import type { ExecutionContext } from '../types/core';
 import type { EventSource, EventSourceSubscribeOptions } from './event-source-registry';
-import type { ContextProviderRegistry } from './context-provider-registry';
 import type { EventSourceRegistry } from './event-source-registry';
 import { getDefaultRegistry } from './index';
 import { debug } from '../utils/debug';
@@ -28,15 +25,11 @@ import { debug } from '../utils/debug';
  * Options for runtime integration
  */
 export interface RegistryIntegrationOptions {
-  /** Enable automatic context enhancement (default: true) */
-  enableContextProviders?: boolean;
-
   /** Enable custom event sources (default: true) */
   enableEventSources?: boolean;
 
   /** Use specific registry instead of default */
   registry?: {
-    context?: ContextProviderRegistry;
     eventSources?: EventSourceRegistry;
   };
 }
@@ -46,67 +39,19 @@ export interface RegistryIntegrationOptions {
  */
 export class RegistryIntegration {
   private options: Required<RegistryIntegrationOptions>;
-  private contextRegistry: ContextProviderRegistry;
   private eventSourceRegistry: EventSourceRegistry;
-  private contextCache: WeakMap<ExecutionContext, ExecutionContext> = new WeakMap();
 
   constructor(options: RegistryIntegrationOptions = {}) {
     const defaultRegistry = getDefaultRegistry();
 
     this.options = {
-      enableContextProviders: options.enableContextProviders ?? true,
       enableEventSources: options.enableEventSources ?? true,
       registry: options.registry ?? {},
     };
 
-    this.contextRegistry = this.options.registry.context ?? defaultRegistry.context;
     this.eventSourceRegistry = this.options.registry.eventSources ?? defaultRegistry.eventSources;
 
-    debug.runtime(
-      `[RegistryIntegration] Initialized (context=${this.options.enableContextProviders}, events=${this.options.enableEventSources})`
-    );
-  }
-
-  /**
-   * Enhance an execution context with registered context providers
-   *
-   * Providers are added as lazy getters on the context object, allowing
-   * hyperscript code to access them naturally:
-   *   set user to request.user
-   *   log session.id
-   */
-  enhanceContext(baseContext: ExecutionContext): ExecutionContext {
-    if (!this.options.enableContextProviders) {
-      return baseContext;
-    }
-    // Arc 4c step 3: with no provider registered — every production caller,
-    // measured — there is nothing to resolve, so no Proxy. The five contexts
-    // the runtime builds per event/mutation/change/behavior stay plain objects.
-    if (this.contextRegistry.getProviderNames().length === 0) {
-      return baseContext;
-    }
-
-    // Check cache first
-    const cached = this.contextCache.get(baseContext);
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      const enhanced = this.contextRegistry.enhance(baseContext);
-      this.contextCache.set(baseContext, enhanced);
-
-      debug.runtime(
-        `[RegistryIntegration] Enhanced context with ${this.contextRegistry.getProviderNames().length} providers`
-      );
-
-      return enhanced;
-    } catch (error) {
-      debug.runtime(
-        `[RegistryIntegration] Failed to enhance context: ${error instanceof Error ? error.message : String(error)}`
-      );
-      return baseContext;
-    }
+    debug.runtime(`[RegistryIntegration] Initialized (events=${this.options.enableEventSources})`);
   }
 
   /**
@@ -184,18 +129,10 @@ export class RegistryIntegration {
   }
 
   /**
-   * Get all registered context provider names
-   */
-  getContextProviderNames(): string[] {
-    return this.contextRegistry.getProviderNames();
-  }
-
-  /**
    * Cleanup: destroy all event sources
    */
   destroy(): void {
     this.eventSourceRegistry.destroy();
-    this.contextCache = new WeakMap();
     debug.runtime('[RegistryIntegration] Destroyed');
   }
 }

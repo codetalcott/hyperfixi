@@ -89,7 +89,6 @@ describe('Parser Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -116,7 +115,6 @@ describe('Parser Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -139,7 +137,6 @@ describe('Parser Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -188,7 +185,6 @@ describe('Runtime Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -234,7 +230,6 @@ describe('Runtime Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -268,7 +263,6 @@ describe('Runtime Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
@@ -305,7 +299,6 @@ describe('Runtime Integration', () => {
     const registry = createRegistry();
     const integration = createRegistryIntegration({
       registry: {
-        context: registry.context,
         eventSources: registry.eventSources,
       },
     });
