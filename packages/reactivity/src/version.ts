@@ -11,4 +11,4 @@
  * shipped that way inside the browser bundle for many releases. The equality
  * check in `version.test.ts` is what keeps this one honest.
  */
-export const VERSION = '2.11.1';
+export const VERSION = '3.0.0';

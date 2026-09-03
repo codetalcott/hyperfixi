@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/intent-element",
-  "version": "2.11.1",
+  "version": "3.0.0",
   "description": "<lse-intent> custom element — validates LSE protocol JSON and executes it via the hyperfixi runtime.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -44,10 +44,10 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "^2.11.1"
+    "@lokascript/intent": "^3.0.0"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^2.11.1"
+    "@hyperfixi/core": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {
@@ -55,7 +55,7 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "^2.11.1",
+    "@hyperfixi/core": "^3.0.0",
     "@types/node": "^26.1.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
