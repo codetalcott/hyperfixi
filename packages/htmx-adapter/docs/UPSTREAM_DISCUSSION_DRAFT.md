@@ -1,6 +1,6 @@
 # [Ready-to-file Discussion draft for bigskysoftware/htmx]
 
-> Status: prepared against `htmx.org@4.0.0-beta5`. Before filing:
+> Status: prepared against `htmx.org@4.0.0`. Before filing:
 > re-diff against `src/htmx.js` at HEAD, run htmx's own test suite with
 > the patch applied (requires an htmx checkout — not done here), and
 > update the version references. File as a **Discussion**, not a PR.
@@ -55,8 +55,8 @@ processing.
 
 ## Reference patch
 
-Attached: `htmx-4.0.0-beta5-attribute-resolver.patch` (~30 added lines
-against the published beta5 build):
+Attached: `htmx-4.0.0-attribute-resolver.patch` (~30 added lines
+against the published 4.0.0 build):
 
 1. Two config defaults (`attributeResolver: null`,
    `additionalAttributeSelectors: []`).

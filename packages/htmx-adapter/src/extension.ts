@@ -4,7 +4,7 @@
  * Primary target is **htmx v4**, whose extensions register via
  * `htmx.registerExtension(name, ext)` and hook lifecycle events through
  * underscore-named methods (event name with `:` → `_`), each receiving
- * `(elt, detail)`. Verified against htmx 4.0.0-beta5 (see
+ * `(elt, detail)`. Verified against htmx 4.0.0 (see
  * test/browser/vendor/README.md): `process(root)` fires
  * `htmx:before:process` on the processed root — `document.body`
  * initially, each swapped-in subtree afterwards — BEFORE any element
@@ -45,7 +45,7 @@ export interface HtmxLike {
  */
 export function createExtension(): object {
   return {
-    // htmx v4 (verified on 4.0.0-beta5): fires on each process() root
+    // htmx v4 (verified on 4.0.0): fires on each process() root
     // before element init and hx-on binding.
     htmx_before_process(elt: Element): void {
       canonicalizeTree(elt);

@@ -30,7 +30,7 @@ test/
 └── browser/               # Playwright e2e against REAL vendored libraries
     ├── adapter.spec.ts    # v4 request/swap/order/re-process, executor mode w/ real _hyperscript, v2 fallback
     ├── fixtures/*.html
-    └── vendor/            # htmx 4.0.0-beta5, htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README
+    └── vendor/            # htmx 4.0.0, htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README
 docs/
 └── UPSTREAM_HOOK_PROPOSAL.md  # Mechanism (c): the attribute-name resolver seam for htmx core
 ```

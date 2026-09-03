@@ -41,7 +41,7 @@ describe('registerWith', () => {
   });
 });
 
-describe('v4 hook: htmx_before_process (verified name on 4.0.0-beta5)', () => {
+describe('v4 hook: htmx_before_process (verified name on 4.0.0)', () => {
   it('canonicalizes the processed subtree', () => {
     register('es', ES);
     document.body.innerHTML = `<section lang="es"><button hx-obtener="/a"></button></section>`;
