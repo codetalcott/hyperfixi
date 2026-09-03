@@ -47,7 +47,10 @@ function findStaleDists(): string[] {
     // twin is `.cjs`; see scripts/ensure-fresh.sh).
     const marker = ['index.js', 'index.mjs', 'index.cjs']
       .map(f => path.join(packagesRoot, name, 'dist', f))
-      .find(f => fs.existsSync(f));
+      .filter(f => fs.existsSync(f))
+      // Newest wins — a stale `index.js` left beside a fresh `index.mjs` by a
+      // pre-`.cjs`-rename build must not become the marker.
+      .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
     if (!marker || hasNewerTs(srcDir, fs.statSync(marker).mtimeMs)) {
       stale.push(name);
     }
