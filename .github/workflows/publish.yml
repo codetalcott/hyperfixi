@@ -132,6 +132,16 @@ jobs:
           # carry accurate constraints (npm has no workspace: protocol).
           node scripts/set-version.cjs "$VERSION"
 
+      # The version being published must satisfy the peer ranges of the
+      # @lokascript/domains the lockfile pins (framework/semantic/intent live
+      # here; domains peers on them from its own repo, and mcp-server depends
+      # on domains back). 3.1.0 shipped mcp-server pinning domains ^2.11.1,
+      # whose framework was a hard 2.x dependency — every clean install got two
+      # framework copies and forked singletons. Runs BEFORE the build so a
+      # framework major that outran domains fails in seconds, not after 10 min.
+      - name: Domains peer-major guard
+        run: node scripts/check-domains-peer-major.cjs
+
       - name: Build all packages
         run: |
           # Build order mirrors .github/workflows/ci.yml (which is known-green).

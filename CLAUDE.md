@@ -205,15 +205,16 @@ npm run test:check --prefix packages/hyperscript-adapter
 npm run test:check --prefix packages/testing-framework
 
 # 4. Everything the `lint-typecheck` JOB runs that no test suite does.
-#    Nine guard scripts + their three self-tests, then oxlint, then the 32
+#    Ten guard scripts + their four self-tests, then oxlint, then the 32
 #    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
 #    the FIRST failure hides the rest.
 for s in check-ci-build-order check-bundle-shards check-test-check-list \
          check-ci-test-list check-ci-job-lists validate-versions \
+         check-domains-peer-major \
          check-type-escapes check-layering check-semantic-boundary; do
   node scripts/$s.cjs || echo "FAILED: $s"
 done
-for t in check-type-escapes check-layering check-semantic-boundary; do
+for t in check-type-escapes check-layering check-semantic-boundary check-domains-peer-major; do
   node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
 done
 npm run lint
@@ -246,6 +247,19 @@ npm run typecheck:scripts --prefix packages/core
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
+5. **`check-domains-peer-major`** is the cross-repo half of the version story.
+   `@lokascript/domains` (repo `lokascript-domains`) PEERS on framework /
+   semantic / intent, and mcp-server depends on it back — a cycle across two
+   repos. The guard reads the lockfile's domains entry and fails unless the
+   contract packages are peers (not bundled dependencies) at a range the
+   version this repo publishes satisfies. It also runs first thing in
+   `publish.yml` after the bump, and `examples/release-smoke/run.mjs` asserts
+   one installed copy of each contract package. It exists because 3.1.0
+   shipped mcp-server pinning domains `^2.11.1` (framework a hard 2.x dep):
+   every clean install got two framework copies and forked singletons, and
+   nothing on either side could see it. Release order for a framework MAJOR:
+   publish hyperfixi → the domains upstream Dependabot PR goes red → domains
+   `version:set` + publish → bump the range here → hyperfixi patch.
 
 #### Stale-dist auto-rebuild
 

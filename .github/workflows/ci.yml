@@ -652,6 +652,16 @@ jobs:
       - name: Validate package versions
         run: node scripts/validate-versions.cjs
 
+      # Cheap guard: the @lokascript/domains version the lockfile pins must
+      # peer (not depend) on the contract packages this repo publishes, at a
+      # range the repo's own version satisfies. Reads only manifests + the
+      # lockfile, so it runs pre-`npm ci`. The publish workflow runs the same
+      # script after the version bump; this catches a bad range bump at PR time.
+      - name: Domains peer-major guard
+        run: node scripts/check-domains-peer-major.cjs
+      - name: Domains peer-major guard self-test
+        run: node --test scripts/check-domains-peer-major.test.cjs
+
       # Shrink-only ratchet for the engine migration (Arc 0 of
       # docs-internal/ENGINE_MIGRATION_PLAN.md). Fails when a packages/core/src
       # directory gains `any` / `as any` / `as Record<string, unknown>` /

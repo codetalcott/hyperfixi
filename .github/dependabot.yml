@@ -9,6 +9,19 @@ updates:
       day: 'monday'
     open-pull-requests-limit: 10
     groups:
+      # @lokascript/domains lives in its own repo and PEERS on the contract
+      # packages published from here (framework/semantic/intent); mcp-server
+      # depends on it back. A domains release is therefore a cross-repo
+      # contract event, not a tooling bump: it gets its own PR so it is
+      # visible on its own, runs scripts/check-domains-peer-major.cjs in
+      # lint-typecheck, and can auto-merge on green. Majors are grouped in too
+      # — the aggregate's major tracks the framework major (lokascript-domains
+      # README "Versioning"), so a domains major is the one that says "the
+      # framework line you are on is now supported". Mirror of the
+      # `lokascript-upstream` group in lokascript-domains' dependabot.yml.
+      lokascript-domains:
+        patterns:
+          - '@lokascript/domains'
       # One weekly PR for everything non-major. The former themed groups
       # (typescript/testing/build-tools/linting) were folded in here
       # 2026-07-13: each landed as its own weekly PR and every PR runs the
@@ -38,6 +51,7 @@ updates:
         # prettier: 3.9.5 reflows enough files to add lint errors.
         exclude-patterns:
           - 'vitest'
+          - '@lokascript/domains'
           - '@vitest/*'
           - 'prettier'
         update-types:

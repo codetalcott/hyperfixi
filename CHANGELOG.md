@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@hyperfixi/mcp-server` no longer installs two copies of the contract
+  packages.** 3.1.0 pinned `@lokascript/domains ^2.11.1`, whose framework /
+  semantic / intent were hard 2.x dependencies — a clean install got 3.1.0 at
+  the top level and 2.11.1 nested under domains, and every `DomainRegistry` /
+  schema singleton forked across that boundary. mcp-server, framework and
+  server-bridge now range on `@lokascript/domains ^3.0.0`, which peers on
+  framework 3.x instead.
+
+### Added
+
+- **`scripts/check-domains-peer-major.cjs`** — the cross-repo guard for that
+  class: the domains version the lockfile pins must PEER (not depend) on
+  framework / semantic / intent at a range the version this repo publishes
+  satisfies. Runs in `lint-typecheck`, first thing in `publish.yml` after the
+  version bump, and from the pre-commit hook. `examples/release-smoke/run.mjs`
+  additionally asserts one installed copy of each contract package, and
+  Dependabot now gives `@lokascript/domains` its own PR group so a domains
+  release is visible on its own instead of riding the weekly tooling PR.
+
 ## [3.1.0] - 2026-09-04
 
 ### Added
