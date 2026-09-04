@@ -120,7 +120,7 @@
     "@hyperfixi/core": "^3.1.1",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.11"
   },
   "keywords": [
     "hyperscript",
