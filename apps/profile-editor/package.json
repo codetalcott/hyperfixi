@@ -14,11 +14,11 @@
     "@elysiajs/static": "^1.1.0",
     "@kitajs/html": "^4.2.0",
     "@lokascript/semantic": "*",
-    "elysia": "^1.4.29"
+    "elysia": "^1.4.30"
   },
   "devDependencies": {
     "@kitajs/ts-html-plugin": "^4.1.0",
-    "bun-types": "*",
+    "bun-types": "^1.4.0",
     "typescript": "^5.0.0"
   }
 }
