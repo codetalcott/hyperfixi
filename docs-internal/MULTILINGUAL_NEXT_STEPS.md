@@ -5592,3 +5592,31 @@ timeout and `translate('settle for 3000', 'en', L)` drops it. Adding a
 `duration` role with `for` as its English marker is a schema change plus the
 usual profile sweep (`toggle … for <duration>` already has the role to copy
 from); the parity test's `settle` row is the pin to delete when it lands.
+
+## `hx-query` — htmx 4.0.0's new verb has no localized spelling (filed 2026-09-03)
+
+htmx 4.0.0 (released; vendored by #1126) adds a sixth verb, `hx-query`
+(`#verbs` and the action selector). The generated vocab modules
+(`packages/core/vocab/htmx/{lang}.js`) do not know it, so an authored
+`hx-query` passes through the htmx-adapter untranslated as its own canonical
+name — **nothing breaks**, there is just no `hx-consultar` / `hx-requête` /
+… to author.
+
+Giving it a localized spelling is a 24-language authoring arc, not an adapter
+change. Every site the other five verbs touch:
+
+- `KEYS.hx` in `packages/core/src/htmx/i18n-hooks.ts` (the canonical key list)
+- the registry in `packages/core/scripts/gen-htmx-vocab.mjs` ("must stay in
+  sync" with the above)
+- every `packages/i18n/src/dictionaries/*.ts` (`get: 'obtener'` style entries)
+  and `packages/semantic/src/generators/profiles/*.ts`
+- regenerate the vocab modules; `packages/vite-plugin/scripts/sync-htmx-vocab.ts`
+- core's embedded htmx-compat layer, if it should honour `hx-query` at all:
+  the verb lists in `packages/core/src/htmx/htmx-attribute-processor.ts`
+- the vocab consistency gate (`testing-framework` `vocab/cli.ts validate`)
+  and the adapter's `vocab-modules.test.ts` reuse guard
+
+Not started. Owner decision first: does the embedded htmx-compat layer adopt
+`hx-query` semantics (a GET with a body, per htmx 4), or is this a
+vocab-only addition for the upstream adapter? The answer decides whether the
+core processor is in scope.
