@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-04
+
 ### Added
 
 - **`hyperscript.use(frontEnd)`** — register the multilingual front-end
@@ -691,7 +693,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/codetalcott/hyperfixi/compare/v3.0.0...v3.1.0
 [2.10.0]: https://github.com/codetalcott/hyperfixi/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/codetalcott/hyperfixi/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/codetalcott/hyperfixi/compare/v2.5.1...v2.8.0
