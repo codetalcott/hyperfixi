@@ -36,6 +36,13 @@ if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|pack
   node scripts/check-ci-job-lists.cjs || exit 1
 fi
 
+# Verify the @lokascript/domains the lockfile pins still peers on THIS repo's
+# contract line. Fires when a workspace package.json (a range bump), the
+# lockfile (a relock), or core's manifest (a version bump) is staged.
+if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|package-lock\.json)$'; then
+  node scripts/check-domains-peer-major.cjs || exit 1
+fi
+
 # Engine-migration type-escape ratchet (Arc 0 of ENGINE_MIGRATION_PLAN.md).
 # Fires only when core engine source is staged, so unrelated commits pay
 # nothing. Shrink-only: a commit that LOWERS a count should also run

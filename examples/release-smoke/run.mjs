@@ -34,6 +34,7 @@ import {
   readFileSync,
   existsSync,
   symlinkSync,
+  readdirSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, extname, resolve } from 'node:path';
@@ -85,6 +86,49 @@ const CONTENT_TYPES = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
 };
+
+/**
+ * Packages that must exist exactly ONCE in the installed tree. They hold
+ * module-level singletons (DomainRegistry, schema objects, the command
+ * registry); a second nested copy — the shape npm produces when a transitive
+ * dep such as @lokascript/domains asks for a different line of one of them —
+ * forks those singletons silently. 3.1.0 shipped that way (mcp-server pinned
+ * domains ^2.11.1, whose framework was a hard 2.x dependency) and every check
+ * below passed, because each stage only imports and never counts.
+ */
+const SINGLE_COPY = [
+  '@hyperfixi/core',
+  '@lokascript/framework',
+  '@lokascript/semantic',
+  '@lokascript/intent',
+];
+
+/** Every `node_modules/**\/<name>/package.json` under root, with its version. */
+function findInstalledCopies(root, name) {
+  const found = [];
+  const walk = (nm, depth) => {
+    if (depth > 12 || !existsSync(nm)) return;
+    for (const scope of readdirSync(nm)) {
+      if (scope.startsWith('.')) continue;
+      const entries = scope.startsWith('@')
+        ? readdirSync(join(nm, scope)).map((p) => `${scope}/${p}`)
+        : [scope];
+      for (const pkgName of entries) {
+        const dir = join(nm, pkgName);
+        const manifest = join(dir, 'package.json');
+        if (pkgName === name && existsSync(manifest)) {
+          found.push({
+            dir: dir.slice(root.length + 1),
+            version: JSON.parse(readFileSync(manifest, 'utf8')).version,
+          });
+        }
+        walk(join(dir, 'node_modules'), depth + 1);
+      }
+    }
+  };
+  walk(join(root, 'node_modules'), 0);
+  return found;
+}
 
 const results = [];
 function record(name, ok, detail) {
@@ -283,6 +327,21 @@ async function main() {
       const msg = (e.stderr?.toString() || e.message).split('\n').filter(Boolean).slice(-2).join(' ');
       record(`install @${VERSION}`, false, msg);
       throw new Error('install failed — cannot continue');
+    }
+
+    // ---- 1b. one copy of each singleton-bearing package -------------------
+    for (const name of SINGLE_COPY) {
+      const copies = findInstalledCopies(tmp, name);
+      const ok = copies.length === 1;
+      record(
+        `single copy of ${name}`,
+        ok,
+        ok
+          ? copies[0].version
+          : copies.length === 0
+            ? 'not installed at all'
+            : copies.map((c) => `${c.version} at ${c.dir}`).join(', '),
+      );
     }
 
     // ---- 2. Node import surface --------------------------------------------
