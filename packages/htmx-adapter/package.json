@@ -37,8 +37,8 @@
   "license": "MIT",
   "sideEffects": false,
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@types/node": "^26.1.2",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
     "jsdom": "^30.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
