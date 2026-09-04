@@ -75,7 +75,7 @@
   "devDependencies": {
     "@types/diff": "^5.0.0",
     "@types/node": "^26.1.2",
-    "@vitest/coverage-v8": "^4.0.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "hyperscript.org": "0.9.93",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
