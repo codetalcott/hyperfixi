@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/smart-bundling",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "description": "Intelligent bundling system for LokaScript applications based on usage patterns",
   "main": "dist/index.js",
@@ -50,7 +50,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^3.0.0",
+    "@hyperfixi/core": "^3.1.0",
     "@rollup/plugin-terser": "^1.0.0",
     "acorn": "^8.17.0",
     "acorn-walk": "^8.2.0",

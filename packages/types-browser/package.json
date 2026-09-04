@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/types-browser",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "TypeScript type definitions for LokaScript browser globals",
   "type": "module",
   "types": "dist/index.d.ts",

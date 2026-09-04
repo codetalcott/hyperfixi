@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/language-server",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Language Server Protocol implementation for LokaScript/hyperscript with 24 language support",
   "type": "module",
   "main": "dist/server.js",
@@ -28,13 +28,13 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/framework": "^3.0.0",
-    "@lokascript/semantic": "^3.0.0",
+    "@lokascript/framework": "^3.1.0",
+    "@lokascript/semantic": "^3.1.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^3.0.0"
+    "@hyperfixi/core": "^3.1.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {
@@ -42,7 +42,7 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "^3.0.0",
+    "@hyperfixi/core": "^3.1.0",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.0.0",
     "tsup": "^8.0.0",
