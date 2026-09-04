@@ -1,7 +1,7 @@
 {
   "name": "lokascript-vscode",
   "displayName": "Hyperscript Language Support",
-  "description": "Language support for _hyperscript and LokaScript — syntax highlighting, completions, hover docs, diagnostics, 21 language i18n, and interactive debugging",
+  "description": "Language support for _hyperscript and LokaScript \u2014 syntax highlighting, completions, hover docs, diagnostics, 21 language i18n, and interactive debugging",
   "version": "3.0.0",
   "publisher": "lokascript",
   "engines": {
@@ -131,6 +131,23 @@
       "type": "object",
       "title": "Hyperscript",
       "properties": {
+        "lokascript.mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "hyperscript",
+            "hyperscript-i18n",
+            "lokascript"
+          ],
+          "enumDescriptions": [
+            "Detect based on available packages",
+            "Restrict to _hyperscript-compatible syntax, English only",
+            "Restrict to _hyperscript-compatible syntax with multilingual support (for hyperscript-adapter users)",
+            "Allow all LokaScript features including extensions"
+          ],
+          "default": "auto",
+          "description": "Operating mode for syntax validation."
+        },
         "lokascript.language": {
           "type": "string",
           "default": "en",
@@ -243,7 +260,7 @@
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
     "generate:grammar": "npx tsx scripts/generate-grammar.ts",
-    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --alias:@lokascript/semantic/fidelity=../../packages/semantic/src/fidelity.ts --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@hyperfixi/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --alias:@lokascript/semantic/fidelity=../../packages/semantic/src/fidelity.ts --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@lokascript/framework=../../packages/framework/src/index.ts --alias:@hyperfixi/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --alias:@hyperfixi/core/multilingual=../../packages/core/src/multilingual/index.ts --alias:@hyperfixi/core/ast-utils=../../packages/core/src/ast-utils/index.ts --alias:@hyperfixi/core=../../packages/core/src/index.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
     "package": "npx --yes @vscode/vsce@^3.9.1 package --no-dependencies",
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },

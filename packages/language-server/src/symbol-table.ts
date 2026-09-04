@@ -75,17 +75,27 @@ export function buildSymbolTable(
   const installKws = variants('install');
   const callKws = variants('call');
 
+  // Keyword alternation with UNICODE word boundaries. `\b` is ASCII-only, so
+  // `\b設定` could never match and definitions were silently absent in every
+  // non-Latin language. Variants are escaped: they come from language
+  // profiles, and one metacharacter would otherwise throw and take every
+  // symbol feature down with it.
+  const kw = (words: readonly string[]) =>
+    `(?<![\\p{L}\\p{N}_])(${words.map(escapeRegExp).join('|')})(?![\\p{L}\\p{N}_])`;
+
   // Patterns for definitions
-  const behaviorDefPat = new RegExp(`\\b(${behaviorKws.join('|')})\\s+(\\w+)`, 'gi');
-  const funcDefPat = new RegExp(`\\b(${defKws.join('|')})\\s+(\\w+)`, 'gi');
+  const behaviorDefPat = new RegExp(`${kw(behaviorKws)}\\s+(\\w+)`, 'giu');
+  const funcDefPat = new RegExp(`${kw(defKws)}\\s+(\\w+)`, 'giu');
   // Variable definitions: set :x, set $x, default :x
-  const varDefPat = new RegExp(`\\b(${[...setKws, ...defaultKws].join('|')})\\s+([:$]\\w+)`, 'gi');
+  const varDefPat = new RegExp(`${kw([...setKws, ...defaultKws])}\\s+([:$]\\w+)`, 'giu');
 
   // Patterns for usages
-  const installPat = new RegExp(`\\b(${installKws.join('|')})\\s+(\\w+)`, 'gi');
-  const callPat = new RegExp(`\\b(${callKws.join('|')})\\s+(\\w+)`, 'gi');
-  // Variable references: :x or $x anywhere
-  const varRefPat = /[:$]\w+/g;
+  const installPat = new RegExp(`${kw(installKws)}\\s+(\\w+)`, 'giu');
+  const callPat = new RegExp(`${kw(callKws)}\\s+(\\w+)`, 'giu');
+  // Variable references: :x or $x at a token start. The lookbehind keeps
+  // colon-qualified event names (`draggable:start`), CSS pseudo-selectors
+  // (`.item:first-child`) and time literals (`12:30`) from becoming variables.
+  const varRefPat = /(?<![\p{L}\p{N}_)\]\-])[:$]\w+/gu;
   // Function calls: word followed by (
   const funcCallPat = /\b(\w+)\s*\(/g;
 
@@ -94,7 +104,7 @@ export function buildSymbolTable(
   // occurrences count as reads. Owner-tracked at runtime, but for LSP purposes
   // we treat `set ^name` as a definition site and bare `^name` as usage.
   // Captures the name without the `^` so symbol lookups remain stable.
-  const caretWritePat = new RegExp(`\\b(${setKws.join('|')})\\s+\\^([A-Za-z_]\\w*)`, 'gi');
+  const caretWritePat = new RegExp(`${kw(setKws)}\\s+\\^([A-Za-z_]\\w*)`, 'giu');
   const caretRefPat = /\^([A-Za-z_]\w*)/g;
   // Component attrs: `attrs.name` reads. We don't track writes (rare and
   // discouraged by upstream — attrs is essentially read-only from hyperscript).
@@ -130,6 +140,16 @@ export function buildSymbolTable(
       character: toDocChar(region, localLine, localChar),
       length,
     };
+    // Two patterns can hit the same span (`install Foo(x)` matches both the
+    // install and the call-syntax scans). Record it once: duplicate locations
+    // become overlapping TextEdits, which VS Code rejects on rename.
+    if (
+      locationIndex.some(
+        l => l.name === entry.name && l.line === loc.line && l.start === loc.character
+      )
+    ) {
+      return;
+    }
     if (kind === 'def') {
       entry.definitions.push(loc);
     } else {

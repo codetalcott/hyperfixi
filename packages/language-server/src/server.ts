@@ -25,7 +25,6 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   DocumentSymbol,
-  SymbolKind,
   CodeAction,
   CodeActionKind,
   TextDocumentPositionParams,
@@ -50,6 +49,8 @@ import { getWordAtPosition } from './utils.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
 import { getSymbolTable } from './symbol-table.js';
+import { inferContext } from './completion-context.js';
+import { extractDocumentSymbols } from './document-symbols.js';
 
 // Localized descriptions for completions and hover (Phase 7.3)
 import { getCommandDescription } from './localized-descriptions.js';
@@ -58,8 +59,10 @@ import { getCommandDescription } from './localized-descriptions.js';
 // Optional Package Imports
 // =============================================================================
 
-// Semantic package is bundled into the server for multilingual LSP support.
-// Static import ensures all 25 languages are registered at startup.
+// @lokascript/semantic is a hard dependency of this package (see package.json):
+// the static import registers all 24 languages at startup. Bundled builds that
+// want an English-only server replace it with a shim (vscode-extension-hyperscript),
+// which is why the capability probes below still exist.
 import * as semanticImport from '@lokascript/semantic';
 import {
   translateWithVerification,
@@ -95,8 +98,8 @@ try {
     ({ schemaRoleInferrer: inferRoles } = await import('@hyperfixi/core/multilingual'));
   } catch {
     console.error(
-      '[lokascript-ls] @lokascript/semantic not available — hover shows roles for ' +
-        '`set` and `go` only. Install the semantic package for full role inference.'
+      '[lokascript-ls] @hyperfixi/core/multilingual not available — hover shows roles for ' +
+        '`set` and `go` only. Install a core build that ships the multilingual entry.'
     );
   }
   fromCoreASTFn = (node: unknown) =>
@@ -506,15 +509,99 @@ function getSemanticAnalyzer(): any {
   return cachedAnalyzer;
 }
 
-let globalSettings: ServerSettings = envDefaultMode
-  ? { ...defaultSettings, mode: envDefaultMode }
-  : defaultSettings;
+const VALID_MODES: ReadonlySet<string> = new Set([
+  'hyperscript',
+  'hyperscript-i18n',
+  'lokascript',
+  'auto',
+]);
+
+/** Settings before any client input: package defaults plus the env-var mode override. */
+function baseSettings(): ServerSettings {
+  return envDefaultMode ? { ...defaultSettings, mode: envDefaultMode } : { ...defaultSettings };
+}
+
+/**
+ * Overlay a client-supplied (possibly partial, possibly malformed) settings
+ * object on a complete base. Editors send whatever their configuration
+ * section holds — a bare `{ maxDiagnostics: 50 }`, extra keys like `trace`,
+ * or nothing — so every field is validated individually and unknown keys are
+ * ignored. Previously a partial object REPLACED the defaults, which left
+ * `language` undefined and produced an error diagnostic on every document.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function mergeSettings(base: ServerSettings, partial: unknown): ServerSettings {
+  const out: ServerSettings = { ...base };
+  if (!isRecord(partial)) return out;
+  const p = partial;
+  if (typeof p.mode === 'string' && VALID_MODES.has(p.mode)) out.mode = p.mode as ServerMode;
+  if (typeof p.language === 'string' && p.language.trim()) out.language = p.language.trim();
+  if (typeof p.maxDiagnostics === 'number' && p.maxDiagnostics > 0) {
+    out.maxDiagnostics = Math.floor(p.maxDiagnostics);
+  }
+  return out;
+}
+
+let globalSettings: ServerSettings = baseSettings();
+
+// Whether the client supports `workspace/configuration` (pull model). Set at
+// initialize; used when a didChangeConfiguration notification carries no
+// settings payload (vscode-languageclient sends `settings: null` unless the
+// client set `synchronize.configurationSection`).
+let hasConfigurationCapability = false;
+
+/**
+ * The configuration section this server reads first. A wrapper that sets
+ * HYPERSCRIPT_LS_DEFAULT_MODE is the `hyperscript` product, so its namespace
+ * wins there; otherwise `lokascript` wins. The other namespace is the fallback,
+ * so both work regardless of which extension launched the server.
+ */
+const configSections: readonly string[] = envDefaultMode
+  ? ['hyperscript', 'lokascript']
+  : ['lokascript', 'hyperscript'];
+
+function applySettings(next: ServerSettings): void {
+  globalSettings = next;
+  const previousMode = resolvedMode;
+  resolvedMode = resolveMode(globalSettings);
+  if (previousMode !== resolvedMode) {
+    connection.console.log(`Mode changed to '${resolvedMode}' (${getBranding(resolvedMode)})`);
+  }
+  // Clear keyword caches so they rebuild for the new language
+  translationCache = null;
+  reverseKeywordCache = null;
+  documents.all().forEach(validateDocument);
+}
+
+/** Pull settings from the client via workspace/configuration and apply them. */
+async function pullConfiguration(): Promise<void> {
+  if (!hasConfigurationCapability) return;
+  try {
+    const items = await connection.workspace.getConfiguration(
+      configSections.map(section => ({ section }))
+    );
+    // A client that advertises the capability but answers null is not an error.
+    const [primary, fallback] = Array.isArray(items) ? items : [];
+    // Only the primary section's DEFINED keys override the fallback's.
+    let merged = mergeSettings(baseSettings(), fallback);
+    merged = mergeSettings(merged, primary);
+    applySettings(merged);
+  } catch (e) {
+    connection.console.log(`[lokascript-ls] workspace/configuration failed: ${e}`);
+  }
+}
 
 // =============================================================================
 // Initialization
 // =============================================================================
 
-connection.onInitialize((_params: InitializeParams): InitializeResult => {
+connection.onInitialize((params: InitializeParams): InitializeResult => {
+  hasConfigurationCapability = !!params.capabilities.workspace?.configuration;
+  // Both VS Code extensions pass `{ language }` here; wrappers may pass more.
+  globalSettings = mergeSettings(baseSettings(), params.initializationOptions);
   // Resolve mode on initialization
   resolvedMode = resolveMode(globalSettings);
   const brand = getBranding(resolvedMode);
@@ -544,6 +631,8 @@ connection.onInitialized(() => {
   connection.client.register(DidChangeConfigurationNotification.type, undefined);
   const brand = getBranding(resolvedMode);
   connection.console.log(`${brand} Language Server initialized`);
+  // Pull-model clients never push a settings payload; fetch once at startup.
+  void pullConfiguration();
 });
 
 // =============================================================================
@@ -551,29 +640,21 @@ connection.onInitialized(() => {
 // =============================================================================
 
 connection.onDidChangeConfiguration(change => {
-  // Accept settings from either 'lokascript' or 'hyperscript' namespace
-  const envDefaults = envDefaultMode
-    ? { ...defaultSettings, mode: envDefaultMode }
-    : defaultSettings;
-  globalSettings =
-    (change.settings?.lokascript as ServerSettings) ||
-    (change.settings?.hyperscript as ServerSettings) ||
-    envDefaults;
-
-  // Re-resolve mode when settings change
-  const previousMode = resolvedMode;
-  resolvedMode = resolveMode(globalSettings);
-
-  if (previousMode !== resolvedMode) {
-    const brand = getBranding(resolvedMode);
-    connection.console.log(`Mode changed to '${resolvedMode}' (${brand})`);
+  // Push model: the client sent its configuration section(s). Accept either
+  // namespace, primary first. Pull model: `settings` is null/empty — ask.
+  const settings: unknown = change.settings;
+  const pushed = isRecord(settings)
+    ? (settings[configSections[0]] ?? settings[configSections[1]])
+    : undefined;
+  if (pushed !== undefined) {
+    applySettings(mergeSettings(baseSettings(), pushed));
+    return;
   }
-
-  // Clear keyword caches so they rebuild for the new language
-  translationCache = null;
-  reverseKeywordCache = null;
-
-  documents.all().forEach(validateDocument);
+  if (hasConfigurationCapability) {
+    void pullConfiguration();
+    return;
+  }
+  applySettings(baseSettings());
 });
 
 // =============================================================================
@@ -660,6 +741,10 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
   // In multilingual modes: try semantic analysis (works for all supported languages)
   // In hyperscript-compat mode: skip semantic analysis
   const analyzer = isMultilingualEnabled(resolvedMode) ? getSemanticAnalyzer() : null;
+  // Set when the semantic front-end accepted the code in a NON-English
+  // language. Core's parser is English-only, so its "Unexpected token: hacer"
+  // on valid Spanish is noise, not a diagnostic — it is suppressed below.
+  let semanticParsedForeign = false;
   if (analyzer) {
     try {
       // First try with configured language
@@ -718,6 +803,8 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
         });
       }
 
+      semanticParsedForeign = result.confidence >= 0.5 && usedLanguage !== 'en';
+
       // Validate semantic roles
       if (result.confidence >= 0.5 && result.command) {
         const cmd = result.command.name;
@@ -754,8 +841,9 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     try {
       const parseResult = parseFunction(code);
 
-      // Surface parse errors as diagnostics
-      if (parseResult.errors?.length) {
+      // Surface parse errors as diagnostics — unless the semantic front-end
+      // already accepted this as non-English code (see semanticParsedForeign).
+      if (parseResult.errors?.length && !semanticParsedForeign) {
         for (const err of parseResult.errors) {
           diagnostics.push({
             range: {
@@ -788,16 +876,18 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
         }
       }
     } catch (parseError: any) {
-      diagnostics.push({
-        range: {
-          start: { line: 0, character: 0 },
-          end: { line: 0, character: Math.min(code.length, 80) },
-        },
-        severity: DiagnosticSeverity.Error,
-        code: 'parse-error',
-        source: brand,
-        message: parseError.message || 'Failed to parse',
-      });
+      if (!semanticParsedForeign) {
+        diagnostics.push({
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: Math.min(code.length, 80) },
+          },
+          severity: DiagnosticSeverity.Error,
+          code: 'parse-error',
+          source: brand,
+          message: parseError.message || 'Failed to parse',
+        });
+      }
     }
   }
 
@@ -975,25 +1065,6 @@ function getAttrsCompletions(): CompletionItem[] {
       insertText: '${1:propertyName}',
     },
   ];
-}
-
-function inferContext(beforeCursor: string): string {
-  // Caret-var: cursor right after `^` or after `^name` (partial). Tested
-  // against the raw beforeCursor (not trimmed) so `^` at end of input wins.
-  if (/\^\w*$/.test(beforeCursor)) return 'caret';
-  // attrs.: cursor right after `attrs.` or partial `attrs.foo`.
-  if (/\battrs\.\w*$/.test(beforeCursor)) return 'attrs-property';
-
-  const trimmed = beforeCursor.trim();
-
-  if (/\bon\s*$/.test(trimmed)) return 'event';
-  if (/\bthen\s*$/.test(trimmed)) return 'command';
-  if (/^(on\s+\w+\s*)$/.test(trimmed)) return 'command';
-  if (/(to|from|into|on)\s*$/.test(trimmed)) return 'selector';
-  if (/\bif\s*$/.test(trimmed)) return 'expression';
-  if (/\bset\s+:\w+\s+to\s*$/.test(trimmed)) return 'expression';
-
-  return 'default';
 }
 
 function getContextualCompletions(context: string, language: string): CompletionItem[] {
@@ -1859,10 +1930,7 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
 });
 
 function extractSymbols(code: string, language: string): DocumentSymbol[] {
-  const symbols: DocumentSymbol[] = [];
-  const lines = code.split('\n');
-
-  // Get multilingual keyword variants
+  // Localized keyword variants for the configured language (English first).
   const getVariants = (eng: string): string[] => {
     const variants = [eng];
     if (!semanticPackage || language === 'en') return variants;
@@ -1880,94 +1948,7 @@ function extractSymbols(code: string, language: string): DocumentSymbol[] {
     }
     return variants;
   };
-
-  const onVariants = getVariants('on');
-  const behaviorVariants = getVariants('behavior');
-  const defVariants = getVariants('def');
-  const initVariants = getVariants('init');
-
-  const onPattern = new RegExp(`\\b(${onVariants.join('|')})\\s+(\\w+(?:\\[.*?\\])?)`, 'gi');
-  const behaviorPattern = new RegExp(`\\b(${behaviorVariants.join('|')})\\s+(\\w+)`, 'gi');
-  const defPattern = new RegExp(`\\b(${defVariants.join('|')})\\s+(\\w+)`, 'gi');
-  const initPattern = new RegExp(`\\b(${initVariants.join('|')})\\b`, 'gi');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Event handlers
-    for (const match of line.matchAll(onPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        detail: 'Event Handler',
-        kind: SymbolKind.Event,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-        selectionRange: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    // Behaviors
-    for (const match of line.matchAll(behaviorPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        detail: 'Behavior Definition',
-        kind: SymbolKind.Class,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-        selectionRange: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    // Functions
-    for (const match of line.matchAll(defPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        detail: 'Function Definition',
-        kind: SymbolKind.Function,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-        selectionRange: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    // Init blocks
-    for (const match of line.matchAll(initPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: match[1],
-        detail: 'Initialization',
-        kind: SymbolKind.Constructor,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[1].length },
-        },
-        selectionRange: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[1].length },
-        },
-      });
-    }
-  }
-
-  return symbols;
+  return extractDocumentSymbols(code, getVariants);
 }
 
 // =============================================================================

@@ -6,13 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  Diagnostic,
-  DiagnosticSeverity,
-  CompletionItem,
-  CompletionItemKind,
-  SymbolKind,
-} from 'vscode-languageserver/node';
+import { DiagnosticSeverity, SymbolKind } from 'vscode-languageserver/node';
 
 // =============================================================================
 // Test Utilities
@@ -21,174 +15,47 @@ import {
 /**
  * Mock semantic analyzer for testing multilingual support.
  */
-function createMockSemanticAnalyzer() {
-  return {
-    analyze: (code: string, language: string) => {
-      // Simple mock analysis
-      if (code.includes('toggle') && !code.includes('.')) {
-        return {
-          confidence: 0.8,
-          command: { name: 'toggle', roles: new Map() },
-          errors: [],
-        };
-      }
-      if (code.includes('put') && !code.includes('into')) {
-        return {
-          confidence: 0.8,
-          command: { name: 'put', roles: new Map() },
-          errors: [],
-        };
-      }
-      return {
-        confidence: 0.95,
-        command: { name: 'toggle', roles: new Map([['patient', '.active']]) },
-        errors: [],
-      };
-    },
-  };
-}
 
-// Import the real runSimpleDiagnostics from extracted module
+// The functions under test are the SHIPPED modules. server.ts is an entry
+// script (no exports; it calls connection.listen() at import), so the handler
+// logic that can be unit-tested lives in the modules imported below; the rest
+// is covered end-to-end by lsp-integration.test.ts. This file used to carry
+// hand-copied twins of these functions, which had silently diverged from the
+// real ones (the copied getWordAtPosition was ASCII-only; the copied
+// go-to-definition algorithm never shipped at all).
 import { runSimpleDiagnostics } from './simple-diagnostics.js';
+import { inferContext } from './completion-context.js';
+import { getWordAtPosition, escapeRegExp } from './utils.js';
+import { extractDocumentSymbols } from './document-symbols.js';
+import {
+  isHtmlDocument,
+  offsetToPosition,
+  extractHyperscriptRegions,
+  findRegionAtPosition,
+  findLineInRegion,
+  findCharInLine,
+} from './extraction.js';
+import { formatHyperscript } from './formatting.js';
+import { buildSymbolTable } from './symbol-table.js';
+import type { HyperscriptRegion } from './types.js';
+
+const extractSymbols = (code: string) => extractDocumentSymbols(code);
 
 /**
  * Infer context from text before cursor.
  */
-function inferContext(beforeCursor: string): string {
-  const trimmed = beforeCursor.trim();
-
-  if (/\bon\s*$/.test(trimmed)) return 'event';
-  if (/\bthen\s*$/.test(trimmed)) return 'command';
-  if (/^(on\s+\w+\s*)$/.test(trimmed)) return 'command';
-  if (/(to|from|into|on)\s*$/.test(trimmed)) return 'selector';
-  if (/\bif\s*$/.test(trimmed)) return 'expression';
-  if (/\bset\s+:\w+\s+to\s*$/.test(trimmed)) return 'expression';
-
-  return 'default';
-}
 
 /**
  * Get word at cursor position.
  */
-function getWordAtPosition(
-  line: string,
-  character: number
-): { text: string; start: number; end: number } | null {
-  let start = character;
-  let end = character;
-
-  while (start > 0 && /[\w.-]/.test(line[start - 1])) {
-    start--;
-  }
-  while (end < line.length && /[\w.-]/.test(line[end])) {
-    end++;
-  }
-
-  if (start === end) return null;
-  return { text: line.slice(start, end), start, end };
-}
 
 /**
  * Get hover documentation for a keyword.
  */
-function getHoverDocumentation(word: string): string | null {
-  const wordLower = word.toLowerCase();
-
-  const docs: Record<string, string> = {
-    toggle:
-      '**toggle**\n\nToggles a class, attribute, or visibility state.\n\n```hyperscript\ntoggle .active on me\n```',
-    add: '**add**\n\nAdds a class or attribute to an element.\n\n```hyperscript\nadd .highlight to me\n```',
-    remove:
-      '**remove**\n\nRemoves a class, attribute, or element.\n\n```hyperscript\nremove .highlight from me\n```',
-    show: '**show**\n\nMakes an element visible.\n\n```hyperscript\nshow #modal\n```',
-    hide: '**hide**\n\nHides an element.\n\n```hyperscript\nhide #modal\n```',
-    put: '**put**\n\nSets the content of an element.\n\n```hyperscript\nput "Hello" into #message\n```',
-    set: '**set**\n\nSets a variable or property.\n\n```hyperscript\nset :count to 0\n```',
-    me: '**me**\n\nReferences the current element (the element with this hyperscript).',
-    you: '**you**\n\nReferences the element that triggered the event.',
-    it: '**it**\n\nReferences the result of the last expression.',
-  };
-
-  return docs[wordLower] || null;
-}
 
 /**
  * Extract document symbols from code.
  */
-function extractSymbols(
-  code: string,
-  _language: string = 'en'
-): Array<{
-  name: string;
-  kind: SymbolKind;
-  range: { start: { line: number; character: number }; end: { line: number; character: number } };
-}> {
-  const symbols: Array<{
-    name: string;
-    kind: SymbolKind;
-    range: { start: { line: number; character: number }; end: { line: number; character: number } };
-  }> = [];
-  const lines = code.split('\n');
-
-  const onPattern = /\b(on)\s+(\w+(?:\[.*?\])?)/gi;
-  const behaviorPattern = /\b(behavior)\s+(\w+)/gi;
-  const defPattern = /\b(def)\s+(\w+)/gi;
-  const initPattern = /\b(init)\b/gi;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    for (const match of line.matchAll(onPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        kind: SymbolKind.Event,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    for (const match of line.matchAll(behaviorPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        kind: SymbolKind.Class,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    for (const match of line.matchAll(defPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: `${match[1]} ${match[2]}`,
-        kind: SymbolKind.Function,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[0].length },
-        },
-      });
-    }
-
-    for (const match of line.matchAll(initPattern)) {
-      const matchIndex = match.index ?? 0;
-      symbols.push({
-        name: match[1],
-        kind: SymbolKind.Constructor,
-        range: {
-          start: { line: i, character: matchIndex },
-          end: { line: i, character: matchIndex + match[1].length },
-        },
-      });
-    }
-  }
-
-  return symbols;
-}
 
 // =============================================================================
 // Diagnostic Tests
@@ -378,44 +245,6 @@ describe('Word Detection', () => {
 // Hover Documentation Tests
 // =============================================================================
 
-describe('Hover Documentation', () => {
-  describe('getHoverDocumentation', () => {
-    it('returns documentation for "toggle"', () => {
-      const doc = getHoverDocumentation('toggle');
-      expect(doc).not.toBeNull();
-      expect(doc).toContain('**toggle**');
-      expect(doc).toContain('Toggles a class');
-    });
-
-    it('returns documentation for "add"', () => {
-      const doc = getHoverDocumentation('add');
-      expect(doc).not.toBeNull();
-      expect(doc).toContain('**add**');
-    });
-
-    it('returns documentation for "me" reference', () => {
-      const doc = getHoverDocumentation('me');
-      expect(doc).not.toBeNull();
-      expect(doc).toContain('current element');
-    });
-
-    it('returns documentation for "it" reference', () => {
-      const doc = getHoverDocumentation('it');
-      expect(doc).not.toBeNull();
-      expect(doc).toContain('last expression');
-    });
-
-    it('returns null for unknown words', () => {
-      expect(getHoverDocumentation('unknownKeyword')).toBeNull();
-    });
-
-    it('is case insensitive', () => {
-      expect(getHoverDocumentation('TOGGLE')).not.toBeNull();
-      expect(getHoverDocumentation('Toggle')).not.toBeNull();
-    });
-  });
-});
-
 // =============================================================================
 // Document Symbol Tests
 // =============================================================================
@@ -474,33 +303,6 @@ def helper()`;
 // Semantic Analyzer Mock Tests
 // =============================================================================
 
-describe('Semantic Analyzer', () => {
-  let analyzer: ReturnType<typeof createMockSemanticAnalyzer>;
-
-  beforeEach(() => {
-    analyzer = createMockSemanticAnalyzer();
-  });
-
-  it('detects missing target for toggle command', () => {
-    const result = analyzer.analyze('toggle', 'en');
-    expect(result.confidence).toBeGreaterThan(0);
-    expect(result.command?.name).toBe('toggle');
-    expect(result.command?.roles.has('patient')).toBe(false);
-  });
-
-  it('detects missing destination for put command', () => {
-    const result = analyzer.analyze('put "hello"', 'en');
-    expect(result.command?.name).toBe('put');
-    expect(result.command?.roles.has('destination')).toBe(false);
-  });
-
-  it('returns high confidence for valid code', () => {
-    const result = analyzer.analyze('toggle .active on me', 'en');
-    expect(result.confidence).toBeGreaterThan(0.9);
-    expect(result.command?.roles.has('patient')).toBe(true);
-  });
-});
-
 // =============================================================================
 // Integration Tests
 // =============================================================================
@@ -517,14 +319,6 @@ describe('Integration', () => {
     const context = inferContext('on click ');
     expect(context).toBe('command');
     // In real implementation, getContextualCompletions(context, 'en') would return command completions
-  });
-
-  it('full hover flow', () => {
-    const line = 'on click toggle .active';
-    const word = getWordAtPosition(line, 10); // "toggle"
-    expect(word?.text).toBe('toggle');
-    const doc = getHoverDocumentation(word!.text);
-    expect(doc).not.toBeNull();
   });
 
   it('full symbol extraction flow', () => {
@@ -569,173 +363,27 @@ describe('Edge Cases', () => {
 // HTML Extraction Test Utilities
 // =============================================================================
 
-interface HyperscriptRegion {
-  code: string;
-  startLine: number;
-  startChar: number;
-  endLine: number;
-  endChar: number;
-  type: 'attribute' | 'script';
-}
-
 /**
  * Checks if a document is HTML based on URI or content.
  * Mirrors the implementation in server.ts.
  */
-function isHtmlDocument(uri: string, content: string): boolean {
-  if (uri.endsWith('.html') || uri.endsWith('.htm')) return true;
-  if (content.trim().startsWith('<!DOCTYPE') || content.trim().startsWith('<html')) return true;
-  // Check for HTML tags
-  if (/<\w+[^>]*>/.test(content) && !content.trim().startsWith('on ')) return true;
-  return false;
-}
 
 /**
  * Converts a character offset to line/character position.
  * Handles both Unix (LF) and Windows (CRLF) line endings.
  * Mirrors the implementation in server.ts.
  */
-function offsetToPosition(content: string, offset: number): { line: number; character: number } {
-  let line = 0;
-  let character = 0;
-
-  // Clamp offset to valid range
-  const maxOffset = Math.min(offset, content.length);
-
-  for (let i = 0; i < maxOffset; i++) {
-    if (content[i] === '\r' && content[i + 1] === '\n') {
-      // CRLF: count as single newline, skip the \r
-      line++;
-      character = 0;
-      i++; // Skip the \n in next iteration
-    } else if (content[i] === '\n') {
-      // LF only
-      line++;
-      character = 0;
-    } else if (content[i] === '\r') {
-      // CR only (old Mac style, rare)
-      line++;
-      character = 0;
-    } else {
-      character++;
-    }
-  }
-
-  return { line, character };
-}
 
 /**
  * Extracts hyperscript regions from HTML content.
  * Returns regions for _="..." and _='...' attributes and <script type="text/hyperscript"> tags.
  * Mirrors the implementation in server.ts.
  */
-function extractHyperscriptRegions(content: string): HyperscriptRegion[] {
-  const regions: HyperscriptRegion[] = [];
-
-  // Track position for multiline matching
-  let fullContent = content;
-
-  // Extract _="..." attributes (double quotes, handles multiline)
-  const doubleQuoteRegex = /_="([^"\\]*(?:\\.[^"\\]*)*)"/g;
-  let match;
-
-  while ((match = doubleQuoteRegex.exec(fullContent)) !== null) {
-    const code = match[1].replace(/\\"/g, '"'); // Unescape quotes
-    const startOffset = match.index + 3; // After _="
-    const endOffset = match.index + match[0].length - 1; // Before final "
-
-    // Convert offset to line/character
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'attribute',
-    });
-  }
-
-  // Extract _='...' attributes (single quotes, handles multiline)
-  const singleQuoteRegex = /_='([^'\\]*(?:\\.[^'\\]*)*)'/g;
-
-  while ((match = singleQuoteRegex.exec(fullContent)) !== null) {
-    const code = match[1].replace(/\\'/g, "'"); // Unescape quotes
-    const startOffset = match.index + 3; // After _='
-    const endOffset = match.index + match[0].length - 1; // Before final '
-
-    // Convert offset to line/character
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'attribute',
-    });
-  }
-
-  // Extract <script type="text/hyperscript">...</script>
-  const scriptRegex = /<script\s+type=["']text\/hyperscript["'][^>]*>([\s\S]*?)<\/script>/gi;
-
-  while ((match = scriptRegex.exec(fullContent)) !== null) {
-    const code = match[1];
-    const startOffset = match.index + match[0].indexOf('>') + 1;
-    const endOffset = match.index + match[0].lastIndexOf('</script>');
-
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'script',
-    });
-  }
-
-  return regions;
-}
 
 /**
  * Finds which hyperscript region (if any) contains the given position.
  * Mirrors the implementation in server.ts.
  */
-function findRegionAtPosition(
-  regions: HyperscriptRegion[],
-  line: number,
-  character: number
-): { region: HyperscriptRegion; localLine: number; localChar: number } | null {
-  for (const region of regions) {
-    // Check if position is within region bounds
-    const afterStart =
-      line > region.startLine || (line === region.startLine && character >= region.startChar);
-    const beforeEnd =
-      line < region.endLine || (line === region.endLine && character <= region.endChar);
-
-    if (afterStart && beforeEnd) {
-      // Calculate local position within the region
-      let localLine = line - region.startLine;
-      let localChar: number;
-
-      if (line === region.startLine) {
-        localChar = character - region.startChar;
-      } else {
-        localChar = character;
-      }
-
-      return { region, localLine, localChar };
-    }
-  }
-  return null;
-}
 
 // =============================================================================
 // HTML Document Detection Tests
@@ -1073,227 +721,25 @@ describe('Region Position Lookup', () => {
 /**
  * Helper: Escape special regex characters
  */
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 /**
  * Helper: Find line number within a region given a character offset
  */
-function findLineInRegion(code: string, offset: number): number {
-  let line = 0;
-  for (let i = 0; i < offset && i < code.length; i++) {
-    if (code[i] === '\n') line++;
-  }
-  return line;
-}
 
 /**
  * Helper: Find character position in line given a character offset
  */
-function findCharInLine(code: string, offset: number): number {
-  let lastNewline = -1;
-  for (let i = 0; i < offset && i < code.length; i++) {
-    if (code[i] === '\n') lastNewline = i;
-  }
-  return offset - lastNewline - 1;
-}
-
-interface Definition {
-  uri: string;
-  range: {
-    start: { line: number; character: number };
-    end: { line: number; character: number };
-  };
-}
 
 /**
  * Find definitions of a symbol in hyperscript code.
  * Searches for behavior and function definitions.
  */
-function findDefinitions(
-  text: string,
-  targetWord: string,
-  uri: string,
-  isHtml: boolean
-): Definition[] {
-  const locations: Definition[] = [];
-
-  // Pattern for behavior definitions: behavior Name
-  const behaviorPattern = new RegExp(`\\b(behavior)\\s+(${escapeRegExp(targetWord)})\\b`, 'gi');
-
-  // Pattern for function definitions: def functionName
-  const defPattern = new RegExp(`\\b(def)\\s+(${escapeRegExp(targetWord)})\\b`, 'gi');
-
-  if (isHtml) {
-    const regions = extractHyperscriptRegions(text);
-
-    for (const region of regions) {
-      // Search for behavior definitions
-      for (const match of region.code.matchAll(behaviorPattern)) {
-        const matchLine = findLineInRegion(region.code, match.index ?? 0);
-        const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-        locations.push({
-          uri,
-          range: {
-            start: {
-              line: region.startLine + matchLine,
-              character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-            },
-            end: {
-              line: region.startLine + matchLine,
-              character:
-                (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-            },
-          },
-        });
-      }
-
-      // Search for function definitions
-      for (const match of region.code.matchAll(defPattern)) {
-        const matchLine = findLineInRegion(region.code, match.index ?? 0);
-        const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-        locations.push({
-          uri,
-          range: {
-            start: {
-              line: region.startLine + matchLine,
-              character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-            },
-            end: {
-              line: region.startLine + matchLine,
-              character:
-                (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-            },
-          },
-        });
-      }
-    }
-  } else {
-    // Pure hyperscript file - search entire text
-    for (const match of text.matchAll(behaviorPattern)) {
-      const pos = offsetToPosition(text, match.index ?? 0);
-      locations.push({
-        uri,
-        range: {
-          start: pos,
-          end: { line: pos.line, character: pos.character + match[0].length },
-        },
-      });
-    }
-
-    for (const match of text.matchAll(defPattern)) {
-      const pos = offsetToPosition(text, match.index ?? 0);
-      locations.push({
-        uri,
-        range: {
-          start: pos,
-          end: { line: pos.line, character: pos.character + match[0].length },
-        },
-      });
-    }
-  }
-
-  return locations;
-}
 
 // =============================================================================
 // Go to Definition Tests
 // =============================================================================
 
 describe('Go to Definition', () => {
-  describe('findDefinitions', () => {
-    it('finds behavior definition in pure hyperscript', () => {
-      const code = `behavior Modal
-  on open show me
-  on close hide me
-end
-
-on click send open to #modal`;
-
-      const definitions = findDefinitions(code, 'Modal', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(1);
-      expect(definitions[0].range.start.line).toBe(0);
-      expect(definitions[0].range.start.character).toBe(0);
-    });
-
-    it('finds function definition in pure hyperscript', () => {
-      const code = `def greet(name)
-  log "Hello " + name
-end
-
-on click call greet("World")`;
-
-      const definitions = findDefinitions(code, 'greet', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(1);
-      expect(definitions[0].range.start.line).toBe(0);
-      expect(definitions[0].range.start.character).toBe(0);
-    });
-
-    it('finds behavior definition in HTML', () => {
-      const html = `<script type="text/hyperscript">
-behavior Modal
-  on open show me
-end
-</script>
-<div _="on click send open to #modal">Open</div>`;
-
-      const definitions = findDefinitions(html, 'Modal', 'file:///test.html', true);
-      expect(definitions).toHaveLength(1);
-      expect(definitions[0].range.start.line).toBe(1);
-    });
-
-    it('finds function definition in HTML script tag', () => {
-      const html = `<script type="text/hyperscript">
-def calculate(x, y)
-  return x + y
-end
-</script>
-<button _="on click call calculate(1, 2)">Calc</button>`;
-
-      const definitions = findDefinitions(html, 'calculate', 'file:///test.html', true);
-      expect(definitions).toHaveLength(1);
-      expect(definitions[0].range.start.line).toBe(1);
-    });
-
-    it('returns empty array when no definition found', () => {
-      const code = 'on click toggle .active';
-      const definitions = findDefinitions(code, 'nonexistent', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(0);
-    });
-
-    it('is case-insensitive for behavior names', () => {
-      const code = `behavior MyModal
-  on open show me
-end`;
-
-      const definitions = findDefinitions(code, 'mymodal', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(1);
-    });
-
-    it('handles multiple definitions with same name', () => {
-      const code = `behavior Counter
-  on click increment
-end
-
-def Counter()
-  return 0
-end`;
-
-      const definitions = findDefinitions(code, 'Counter', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(2);
-    });
-
-    it('escapes special regex characters in target word', () => {
-      // This shouldn't match anything but also shouldn't crash
-      const code = 'behavior Test';
-      const definitions = findDefinitions(code, 'Test.*', 'file:///test.hs', false);
-      expect(definitions).toHaveLength(0);
-    });
-  });
-
   describe('findLineInRegion', () => {
     it('returns 0 for offset on first line', () => {
       expect(findLineInRegion('hello world', 5)).toBe(0);
@@ -1342,165 +788,13 @@ end`;
 // Find References Helper Functions
 // =============================================================================
 
-interface Reference {
-  uri: string;
-  range: {
-    start: { line: number; character: number };
-    end: { line: number; character: number };
-  };
-}
-
 /**
  * Find all references to a symbol in hyperscript code.
  */
-function findReferences(
-  text: string,
-  targetWord: string,
-  uri: string,
-  isHtml: boolean
-): Reference[] {
-  const locations: Reference[] = [];
-
-  // Pattern to find all occurrences of the word
-  const wordPattern = new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, 'gi');
-
-  if (isHtml) {
-    const regions = extractHyperscriptRegions(text);
-
-    for (const region of regions) {
-      for (const match of region.code.matchAll(wordPattern)) {
-        const matchLine = findLineInRegion(region.code, match.index ?? 0);
-        const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-        locations.push({
-          uri,
-          range: {
-            start: {
-              line: region.startLine + matchLine,
-              character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-            },
-            end: {
-              line: region.startLine + matchLine,
-              character:
-                (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-            },
-          },
-        });
-      }
-    }
-  } else {
-    for (const match of text.matchAll(wordPattern)) {
-      const pos = offsetToPosition(text, match.index ?? 0);
-      locations.push({
-        uri,
-        range: {
-          start: pos,
-          end: { line: pos.line, character: pos.character + match[0].length },
-        },
-      });
-    }
-  }
-
-  return locations;
-}
 
 // =============================================================================
 // Find References Tests
 // =============================================================================
-
-describe('Find References', () => {
-  describe('findReferences', () => {
-    it('finds all references in pure hyperscript', () => {
-      const code = `behavior Modal
-  on open show me
-  on close hide me
-end
-
-on click send open to Modal
-on keydown send close to Modal`;
-
-      const references = findReferences(code, 'Modal', 'file:///test.hs', false);
-      expect(references).toHaveLength(3); // Definition + 2 usages
-    });
-
-    it('finds function references in pure hyperscript', () => {
-      const code = `def greet(name)
-  log "Hello " + name
-end
-
-on click call greet("World")
-on load call greet("User")`;
-
-      const references = findReferences(code, 'greet', 'file:///test.hs', false);
-      expect(references).toHaveLength(3); // Definition + 2 calls
-    });
-
-    it('finds references in HTML', () => {
-      const html = `<script type="text/hyperscript">
-behavior Modal
-  on open show me
-end
-</script>
-<div _="on click send open to Modal">Open</div>
-<div _="on keydown send close to Modal">Close</div>`;
-
-      const references = findReferences(html, 'Modal', 'file:///test.html', true);
-      expect(references).toHaveLength(3);
-    });
-
-    it('is case-insensitive', () => {
-      const code = `def Counter()
-  return 0
-end
-
-set :myvar to Counter()`;
-
-      // "Counter" appears twice: definition and usage
-      const references = findReferences(code, 'counter', 'file:///test.hs', false);
-      expect(references).toHaveLength(2);
-    });
-
-    it('returns empty array when no references found', () => {
-      const code = 'on click toggle .active';
-      const references = findReferences(code, 'nonexistent', 'file:///test.hs', false);
-      expect(references).toHaveLength(0);
-    });
-
-    it('does not find partial matches', () => {
-      const code = `set :counter to 0
-set :counterMax to 10
-set :myCounter to 5`;
-
-      // Should find "counter" but not "counterMax" or "myCounter"
-      const references = findReferences(code, 'counter', 'file:///test.hs', false);
-      expect(references).toHaveLength(1);
-    });
-
-    it('handles multiple regions in HTML', () => {
-      const html = `
-        <button _="on click toggle .active">Toggle</button>
-        <button _="on click toggle .highlight">Highlight</button>
-        <div _="on mouseenter toggle .hover">Hover</div>
-      `;
-
-      const references = findReferences(html, 'toggle', 'file:///test.html', true);
-      expect(references).toHaveLength(3);
-    });
-
-    it('returns correct positions for multiline code', () => {
-      const code = `behavior Test
-  on click
-    send event to Test
-  end
-end`;
-
-      const references = findReferences(code, 'Test', 'file:///test.hs', false);
-      expect(references).toHaveLength(2);
-      expect(references[0].range.start.line).toBe(0); // Definition
-      expect(references[1].range.start.line).toBe(2); // Usage
-    });
-  });
-});
 
 // =============================================================================
 // Code Formatting Helper Functions
@@ -1510,73 +804,6 @@ end`;
  * Simple pattern-based hyperscript formatter.
  * Handles indentation for blocks and normalizes whitespace.
  */
-function formatHyperscript(code: string, indentStr: string = '  '): string {
-  const lines = code.split('\n');
-  const formattedLines: string[] = [];
-  let indentLevel = 0;
-
-  // Block-starting keywords that always increase indent (require matching 'end')
-  const blockKeywords = /^(behavior|def|if|repeat|for|while)\b/i;
-  // Keywords that decrease indent
-  const dedentKeywords = /^(end|else)\b/i;
-  // 'on' is special - only increases indent if it's a multiline declaration
-  const onKeyword = /^on\b/i;
-
-  /**
-   * Find the next non-empty line starting from index
-   */
-  function findNextNonEmptyLine(startIndex: number): string | null {
-    for (let i = startIndex; i < lines.length; i++) {
-      const trimmed = lines[i].trim();
-      if (trimmed) return trimmed;
-    }
-    return null;
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // Skip empty lines
-    if (!trimmed) {
-      formattedLines.push('');
-      continue;
-    }
-
-    // Decrease indent for dedent keywords (before adding line)
-    if (dedentKeywords.test(trimmed)) {
-      indentLevel = Math.max(0, indentLevel - 1);
-    }
-
-    // Add the formatted line
-    const indent = indentStr.repeat(indentLevel);
-    formattedLines.push(indent + trimmed);
-
-    // Increase indent for block keywords (after adding line)
-    // But not if the line also contains 'end' (single-line blocks)
-    if (blockKeywords.test(trimmed) && !/\bend\s*$/i.test(trimmed)) {
-      indentLevel++;
-    }
-
-    // 'on' keyword: increase indent unless next non-empty line is 'end' or another 'on'
-    // Single-line handlers like "on click toggle .active" followed by "end" or another handler
-    // don't need extra indentation
-    if (onKeyword.test(trimmed)) {
-      const nextLine = findNextNonEmptyLine(i + 1);
-      // Only skip indent increase if next line is 'end' or another 'on' at same level
-      if (nextLine && !/^(end|on)\b/i.test(nextLine)) {
-        indentLevel++;
-      }
-    }
-
-    // Special case: "else" increases indent after itself
-    if (/^else\b/i.test(trimmed)) {
-      indentLevel++;
-    }
-  }
-
-  return formattedLines.join('\n');
-}
 
 // =============================================================================
 // Code Formatting Tests
@@ -1936,10 +1163,10 @@ describe('LokaScript Feature Detection', () => {
       }
     });
 
-    it('detects dot notation syntax', () => {
+    it('does not flag my.property — upstream resolves `my` as a plain symbol', () => {
+      // Measured on hyperscript.org 0.9.93: `my.tagName` evaluates to "DIV".
       const features = detectLokascriptFeatures('set x to my.textContent');
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
-      expect(features.some(f => f.description.includes('my.property'))).toBe(true);
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(false);
     });
 
     it('detects "its" dot notation', () => {
@@ -1947,9 +1174,9 @@ describe('LokaScript Feature Detection', () => {
       expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
     });
 
-    it('detects "your" dot notation', () => {
+    it('does not flag your.property either', () => {
       const features = detectLokascriptFeatures('log your.classList');
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(false);
     });
 
     it('detects optional chaining', () => {
@@ -1957,20 +1184,24 @@ describe('LokaScript Feature Detection', () => {
       expect(features.some(f => f.pattern === 'optional-chaining')).toBe(true);
     });
 
-    it('detects extended as conversions', () => {
-      const features = detectLokascriptFeatures('set x to y as Int');
-      expect(features.some(f => f.feature === 'conversion')).toBe(true);
-      expect(features.some(f => f.description.includes('as Int'))).toBe(true);
+    it('detects the extended as conversions core registers and upstream lacks', () => {
+      expect(
+        detectLokascriptFeatures('set x to y as Math').some(f => f.description.includes('as Math'))
+      ).toBe(true);
+      expect(
+        detectLokascriptFeatures('set x to #f as Values:Form').some(f => f.pattern === 'as-values')
+      ).toBe(true);
     });
 
-    it('detects as JSON conversion', () => {
-      const features = detectLokascriptFeatures('put data as JSON into #output');
-      expect(features.some(f => f.description.includes('as JSON'))).toBe(true);
-    });
-
-    it('detects as FormData conversion', () => {
-      const features = detectLokascriptFeatures('set formData to #myForm as FormData');
-      expect(features.some(f => f.description.includes('as FormData'))).toBe(true);
+    it('does not flag the upstream conversions that used to be listed as extensions', () => {
+      // Int, Float, JSON, Date, Set, Map are keys of upstream config.conversions.
+      for (const target of ['Int', 'Float', 'JSON', 'Date', 'Set', 'Map', 'String']) {
+        const features = detectLokascriptFeatures(`set x to y as ${target}`);
+        expect(
+          features.filter(f => f.feature === 'conversion'),
+          target
+        ).toHaveLength(0);
+      }
     });
 
     it('detects debounce modifier', () => {
@@ -2002,7 +1233,7 @@ describe('LokaScript Feature Detection', () => {
 
     it('detects multiple feature types in one code block', () => {
       const code = `on input.debounce(300)
-        set val to my.value as Int
+        set val to its.value as Math
         prepend val to #preview`;
       const features = detectLokascriptFeatures(code);
 
@@ -2032,8 +1263,8 @@ describe('Mode-Specific Behavior', () => {
       expect(features).toHaveLength(0);
     });
 
-    it('should flag dot notation as incompatible', () => {
-      const features = detectLokascriptFeatures('my.textContent');
+    it('should flag its.property dot notation as incompatible', () => {
+      const features = detectLokascriptFeatures('its.textContent');
       expect(features.some(f => f.description.includes('_hyperscript compatibility'))).toBe(true);
     });
   });
@@ -2053,97 +1284,6 @@ describe('Mode-Specific Behavior', () => {
     });
   });
 });
-
-// =============================================================================
-// ServerMode Type Tests
-// =============================================================================
-
-import type { ServerMode } from './types.js';
-
-describe('Server Mode Types', () => {
-  describe('ServerMode', () => {
-    it('accepts all valid mode values', () => {
-      const modes: ServerMode[] = ['auto', 'hyperscript', 'hyperscript-i18n', 'lokascript'];
-      expect(modes).toHaveLength(4);
-    });
-
-    it('hyperscript-i18n is a valid mode', () => {
-      const mode: ServerMode = 'hyperscript-i18n';
-      expect(mode).toBe('hyperscript-i18n');
-    });
-  });
-
-  describe('Mode behavior characteristics', () => {
-    // These tests document the expected behavior of each mode
-    // The actual implementation is in server.ts
-
-    it('hyperscript mode: English only, hyperscript commands only', () => {
-      // hyperscript mode should:
-      // - Use English keywords only (no multilingual)
-      // - Flag LokaScript-only features as errors
-      // - Use "hyperscript" branding in diagnostics
-      const expectedBehavior = {
-        multilingual: false,
-        lokascriptExtensions: false,
-        branding: 'hyperscript',
-      };
-      expect(expectedBehavior.multilingual).toBe(false);
-      expect(expectedBehavior.lokascriptExtensions).toBe(false);
-    });
-
-    it('hyperscript-i18n mode: multilingual, hyperscript commands only', () => {
-      // hyperscript-i18n mode should:
-      // - Enable multilingual keyword support (24 languages)
-      // - Flag LokaScript-only features as errors
-      // - Use "hyperscript" branding in diagnostics
-      const expectedBehavior = {
-        multilingual: true,
-        lokascriptExtensions: false,
-        branding: 'hyperscript',
-      };
-      expect(expectedBehavior.multilingual).toBe(true);
-      expect(expectedBehavior.lokascriptExtensions).toBe(false);
-    });
-
-    it('lokascript mode: multilingual, all commands', () => {
-      // lokascript mode should:
-      // - Enable multilingual keyword support (24 languages)
-      // - Allow all LokaScript extensions
-      // - Use "lokascript" branding in diagnostics
-      const expectedBehavior = {
-        multilingual: true,
-        lokascriptExtensions: true,
-        branding: 'lokascript',
-      };
-      expect(expectedBehavior.multilingual).toBe(true);
-      expect(expectedBehavior.lokascriptExtensions).toBe(true);
-    });
-
-    it('hyperscript-i18n differs from hyperscript only in multilingual support', () => {
-      // Both should flag LokaScript-only features
-      // Both should use hyperscript branding
-      // Only hyperscript-i18n enables multilingual
-      const features = detectLokascriptFeatures('prepend "x" to #target');
-      expect(features.length).toBeGreaterThan(0); // Flagged in both modes
-    });
-
-    it('hyperscript-i18n differs from lokascript only in command restrictions', () => {
-      // Both enable multilingual
-      // hyperscript-i18n restricts to hyperscript commands
-      // lokascript allows all commands
-      const hyperscriptCommands = getCommandsForMode('hyperscript');
-      const lokascriptCommands = getCommandsForMode('lokascript');
-
-      // hyperscript-i18n would use hyperscript command set
-      expect(hyperscriptCommands).not.toContain('prepend');
-      expect(lokascriptCommands).toContain('prepend');
-    });
-  });
-});
-
-// =============================================================================
-// Language Coverage Tests
-// =============================================================================
 
 describe('Language Coverage', () => {
   let semanticPackage: any;
@@ -2225,5 +1365,176 @@ describe('Language Coverage', () => {
     }
     // At least 15 languages should have keywords (we have 25 total)
     expect(languagesWithKeywords.size).toBeGreaterThanOrEqual(15);
+  });
+});
+
+// =============================================================================
+// Regressions from the 2026-09 audit — each case was a real false diagnostic
+// or a real miss against the shipped code, and each is checked against the
+// upstream engine where it is a compatibility claim.
+// =============================================================================
+
+describe('Audit regressions', () => {
+  describe('extraction.isHtmlDocument', () => {
+    it('never treats a .hs file as HTML, even when it contains a query literal', () => {
+      const code = 'behavior Removable\n  on click remove the closest <li/>\nend';
+      expect(isHtmlDocument('file:///x.hs', code)).toBe(false);
+      expect(isHtmlDocument('file:///x.hyperscript', code)).toBe(false);
+      // The content heuristic still applies to unknown extensions.
+      expect(isHtmlDocument('file:///x.txt', '<div _="on click log 1"></div>')).toBe(true);
+    });
+  });
+
+  describe('simple-diagnostics possessives and comments', () => {
+    it.each([
+      "on click put (first .item)'s textContent into me",
+      "on click put .items[0]'s value into me",
+      "on click put <form/>'s action into me",
+      "on click -- don't do this\n  log 1",
+    ])('accepts %s', code => {
+      expect(runSimpleDiagnostics(code)).toHaveLength(0);
+    });
+
+    it('still reports a genuinely unterminated single-quoted string', () => {
+      expect(runSimpleDiagnostics("on click put 'x into me").map(d => d.code)).toEqual([
+        'unmatched-quote',
+      ]);
+    });
+  });
+
+  describe('command-tiers scan scoping', () => {
+    it.each([
+      ['method call', 'set x to y.replace("a","b")'],
+      ['method call on array', 'call arr.push(1)'],
+      ['string literal', 'put "copy" into me'],
+      ['variable name', 'set :process to 1'],
+      ['comment', 'toggle .x -- process later'],
+      ['string with a command word', 'log "beep boop"'],
+      ['trailing unless modifier (upstream)', 'log "x" unless me matches .foo'],
+    ])('does not flag %s', (_label, code) => {
+      expect(detectLokascriptFeatures(code).filter(f => f.feature === 'command')).toHaveLength(0);
+    });
+
+    it.each([
+      ['prepend', 'on click prepend "x" to #a'],
+      ['copy', 'on click copy "x"'],
+      ['leading unless block', 'unless me matches .foo log "x" end'],
+      ['unless after then', 'on click log 1 then unless :done log 2 end'],
+    ])('still flags the real %s extension', (_label, code) => {
+      expect(detectLokascriptFeatures(code).some(f => f.feature === 'command')).toBe(true);
+    });
+  });
+
+  describe('document-symbols command position', () => {
+    it('does not report the `on` of a target clause as an event handler', () => {
+      expect(extractSymbols('on click toggle .active on me').map(s => s.name)).toEqual([
+        'on click',
+      ]);
+    });
+
+    it('does not report a class named .init as an init block', () => {
+      expect(extractSymbols('on click add .init to me').map(s => s.name)).toEqual(['on click']);
+    });
+
+    it('reports a handler that follows a block-closing end on the same line', () => {
+      expect(extractSymbols('on click log 1 end on mouseover log 2').map(s => s.name)).toEqual([
+        'on click',
+        'on mouseover',
+      ]);
+    });
+
+    it('keeps colon-qualified event names whole', () => {
+      expect(extractSymbols('on draggable:start add .dragging').map(s => s.name)).toEqual([
+        'on draggable:start',
+      ]);
+    });
+
+    it('matches a non-Latin keyword variant (ASCII \\b never could)', () => {
+      const symbols = extractDocumentSymbols('動作 モーダル\nend', eng =>
+        eng === 'behavior' ? ['behavior', '動作'] : [eng]
+      );
+      expect(symbols.map(s => s.name)).toEqual(['動作 モーダル']);
+    });
+  });
+
+  describe('completion-context sigils', () => {
+    it('classifies a caret-var prefix', () => {
+      expect(inferContext('set ^cou')).toBe('caret');
+      expect(inferContext('put ^')).toBe('caret');
+    });
+    it('classifies an attrs. property prefix', () => {
+      expect(inferContext('log attrs.')).toBe('attrs-property');
+      expect(inferContext('log attrs.ti')).toBe('attrs-property');
+    });
+  });
+
+  describe('utils.getWordAtPosition is Unicode-aware', () => {
+    it('returns a CJK word', () => {
+      expect(getWordAtPosition('クリック で .active を 切り替え', 2)?.text).toBe('クリック');
+    });
+    it('returns a word with diacritics whole', () => {
+      expect(getWordAtPosition('añadir .x', 3)?.text).toBe('añadir');
+    });
+  });
+});
+
+// =============================================================================
+// Symbol table — the algorithm behind Go to Definition, Find References and
+// Rename. (The former tests here exercised a hand-written findDefinitions /
+// findReferences that never shipped; shipped behaviour contradicted them.)
+// =============================================================================
+
+describe('Symbol table', () => {
+  const region = (code: string): HyperscriptRegion[] => [
+    { code, startLine: 0, startChar: 0, endLine: 0, endChar: 0, type: 'script' },
+  ];
+  const summary = (code: string, variants?: (eng: string) => string[]) =>
+    [...buildSymbolTable(region(code), variants).symbols.values()].map(
+      e => `${e.kind}:${e.name} d${e.definitions.length}/u${e.usages.length}`
+    );
+
+  it('links a behavior definition to its install sites', () => {
+    const code = 'behavior Modal\n  on open show me\nend\ninstall Modal\ninstall Modal';
+    expect(summary(code)).toContain('behavior:Modal d1/u2');
+  });
+
+  it('links a function definition to call sites (call and paren syntax)', () => {
+    const code = 'def greet(name)\n  log name\nend\ncall greet("a")\ngreet("b")';
+    expect(summary(code)).toContain('function:greet d1/u2');
+  });
+
+  it('tracks local and global variables', () => {
+    const code = 'set :n to 1\nset $g to 2\nlog :n\nlog $g';
+    expect(summary(code)).toEqual(
+      expect.arrayContaining(['variable::n d1/u1', 'variable:$g d1/u1'])
+    );
+  });
+
+  it('records a parameterised install once (overlapping rename edits crash VS Code)', () => {
+    const code = 'behavior Toggleable(cls)\nend\ninstall Toggleable(cls: "hi")';
+    const entry = buildSymbolTable(region(code)).symbols.get('Toggleable')!;
+    expect(entry.definitions).toHaveLength(1);
+    expect(entry.usages).toHaveLength(1);
+  });
+
+  it('does not turn colon-qualified events, pseudo-selectors or times into variables', () => {
+    const code = 'on draggable:start add .x to .item:first-child\nset :t to 12:30';
+    expect(summary(code)).toEqual(['variable::t d1/u0']);
+  });
+
+  it('recognises a definition written with a non-Latin keyword', () => {
+    const jaVariants = (eng: string) => (eng === 'set' ? ['set', '設定'] : [eng]);
+    expect(summary('設定 :x を 1 に', jaVariants)).toEqual(['variable::x d1/u0']);
+  });
+
+  it('escapes keyword variants before interpolating them into a RegExp', () => {
+    const odd = (eng: string) => (eng === 'set' ? ['set', 'a(b'] : [eng]);
+    expect(() => buildSymbolTable(region('set :x to 1'), odd)).not.toThrow();
+  });
+
+  it('symbolAt resolves the entry under the cursor', () => {
+    const table = buildSymbolTable(region('behavior Modal\nend\ninstall Modal'));
+    expect(table.symbolAt(2, 10)?.name).toBe('Modal');
+    expect(table.symbolAt(0, 2)).toBeUndefined();
   });
 });

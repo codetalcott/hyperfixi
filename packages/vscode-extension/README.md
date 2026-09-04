@@ -1,6 +1,6 @@
 # LokaScript for VS Code
 
-Official VS Code extension for LokaScript/hyperscript with support for 21 human languages.
+Official VS Code extension for LokaScript/hyperscript with support for 24 human languages.
 
 ## Features
 
@@ -18,7 +18,7 @@ Full syntax highlighting for hyperscript in HTML files and standalone `.hs` file
 
 - **Completions**: Context-aware suggestions for commands, events, and selectors
 - **Hover Documentation**: Detailed documentation for hyperscript commands
-- **Multilingual Support**: Keywords in 21 languages
+- **Multilingual Support**: Keywords in 24 languages
 
 ### Diagnostics
 
@@ -97,13 +97,10 @@ Configure the extension in your VS Code settings:
 
 ## Requirements
 
-The extension works best when the following packages are installed in your project:
-
-```bash
-npm install @lokascript/semantic @lokascript/ast-toolkit @lokascript/core
-```
-
-Without these, the extension falls back to pattern-based analysis.
+None. The language server is bundled into the extension together with
+`@lokascript/semantic`, `@lokascript/framework` and `@hyperfixi/core`, so every
+feature — AST diagnostics, hover role inference, 24-language support — works
+without installing anything in your project.
 
 ## Development
 
@@ -131,7 +128,7 @@ npm run package
 ## Related
 
 - [@lokascript/language-server](../language-server) - The LSP server
-- [@lokascript/core](../core) - Core hyperscript runtime
+- [@hyperfixi/core](../core) - Core hyperscript runtime
 - [@lokascript/semantic](../semantic) - Semantic analysis
 
 ## License
