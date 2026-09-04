@@ -229,7 +229,7 @@
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.3.0",
     "@vitest/coverage-v8": "^4.0.17",
-    "@vitest/ui": "^4.0.17",
+    "@vitest/ui": "^4.1.11",
     "better-sqlite3": "^13.0.1",
     "esbuild": "^0.28.0",
     "happy-dom": "^20.10.6",
