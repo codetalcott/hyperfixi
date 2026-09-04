@@ -31,7 +31,10 @@ with a prefixed spelling, and `#prefixes()` unions the prefixed forms into the
 compiled discovery selectors (`#actionSelector`, `#boostSelector`, the
 `#hxOnQuery` XPath). The resolver proposed here is a per-element
 generalization of that existing, shipped mechanism — not a new concept for
-core. A resolver consulted there enables, with zero cost when unset:
+core. There is precedent for the _extension-injects-policy_ shape too:
+`internalAPI.initSecurity` already lets an extension replace core's private
+`Function`/`AsyncFunction` constructors and Trusted Types policy — a far
+stronger injection than a read-only name resolver. A resolver consulted there enables, with zero cost when unset:
 
 - **Localized authoring** (our use case): `hx-obtener` read as `hx-get` for
   elements under `lang="es"`, resolved per element, with the DOM left exactly

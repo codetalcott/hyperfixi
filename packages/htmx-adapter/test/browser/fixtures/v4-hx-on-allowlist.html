@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 with an extension allowlist that omits the adapter</title>
+    <!-- htmx.config.extensions is a non-empty allowlist without
+         "lokascript-i18n": registerExtension returns false and installs
+         nothing. The adapter must notice, warn, and keep the
+         hook-independent guard (remove the claimed canonical attr) so
+         htmx never JS-evals the hyperscript body. -->
+    <meta name="htmx-config" content="extensions:'hx-head'" />
+    <script src="/packages/htmx-adapter/test/browser/vendor/_hyperscript-0.9.93.min.js"></script>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <div data-hyperfixi-lang="en">
+      <button id="canonical" hx-on:click="toggle .marcado on me">canonical</button>
+    </div>
+  </body>
+</html>

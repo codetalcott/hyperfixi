@@ -51,19 +51,27 @@ attribute is copied to its canonical name on the same element
    _before_ the htmx `<script>` so the sweep listener registers first
    (loka-js's "orchestrator before libraries" rule).
 2. **Swapped-in content** — a registered htmx v4 extension
-   (`lokascript-i18n`) canonicalizes each subtree in
-   `htmx_before_process_node`. (A best-effort `defineExtension`/`onEvent`
-   fallback covers htmx v1/v2.)
+   (`lokascript-i18n`) canonicalizes each subtree in `htmx_before_process`
+   (`htmx_before_process_node` is kept as an inert alias). (A best-effort
+   `defineExtension`/`onEvent` fallback covers htmx v1/v2.)
 
 Guarantees, mirroring loka-js where the mechanism allows:
 
 - **Authored attributes are never removed or rewritten** — devtools shows what
-  the author wrote. Two documented exceptions: an author-written canonical
+  the author wrote. Documented exceptions: an author-written canonical
   `hx-trigger` whose _value_ uses localized event names (`hx-trigger="clic"`)
   is translated in place (idempotently), since there is no separate canonical
-  target; and canonical-named `hx-on:*` attrs are removed in opt-in executor
-  mode (see below), since htmx would otherwise JS-eval their hyperscript
-  bodies.
+  target; and in opt-in executor mode a canonical-named `hx-on:*` attr may be
+  removed so htmx never JS-evals its hyperscript body. On htmx **v4 with the
+  extension accepted** that removal does not happen: the extension cancels
+  the node's `htmx:before:on:init` instead and the claimed attr stays
+  authored-verbatim (removal survives only as a per-node fallback when the
+  element also carries an hx-on form htmx must still bind — the legacy
+  composite `hx-on="…"`, the `config.prefix` spelling, a custom
+  `metaCharacter`). On htmx **v2**, or when v4 **rejected** the registration
+  (`htmx.config.extensions` allowlist), or with no htmx at all, the attr is
+  removed at claim time — the only guard that needs no hook. Adapter-created
+  canonical siblings are not authored and are always cleaned up.
 - **An existing canonical attribute always wins** — `hx-get` is never
   overwritten by `hx-obtener`.
 - **No vocab loaded → no-op.** Stock htmx pages pay nothing.
@@ -141,15 +149,35 @@ reliable detection):
   unchanged.
 - **Localized-named attrs** (`hx-en:clic`) stay verbatim in the DOM and get
   no canonical sibling — htmx never recognized them anyway.
-- **Canonical-named attrs** (`hx-on:click`) are **removed** after claiming —
-  the second (and last) documented exception to the never-mutate rule: left
-  in place, htmx would eval the hyperscript body as JS, giving a console
-  error plus a double-execution attempt on every fire.
+- **Canonical-named attrs** (`hx-on:click`) must be kept away from htmx's own
+  binder — left bound, htmx would eval the hyperscript body as JS, giving a
+  console error plus a double-execution attempt on every fire. A claim
+  _records_ the attribute; what keeps htmx off it depends on the runtime:
+  - **htmx v4, extension accepted** (the `registerWith` result, not the API's
+    shape): no mutation. The extension's `htmx:before:on:init` hook consults
+    the record per node and cancels htmx's binding; the authored attribute
+    stays in the DOM, and `htmx.process(elt, true)` after editing it runs the
+    new body. If the node also carries an hx-on form htmx must bind and the
+    adapter never claims (composite `hx-on="event -> code"`, the
+    `config.prefix` spelling, a custom `metaCharacter`), per-node cancellation
+    would kill that too, so the hook removes the claimed canonical attrs and
+    lets htmx bind the rest.
+  - **htmx v2** (2.0.10 binds `hx-on` before it fires `beforeProcessNode`, so
+    there is no pre-bind seam), **a rejected v4 registration** (the adapter
+    warns, naming `htmx.config.extensions`), or **no htmx**: the attr is
+    removed at claim time — the documented exception to the never-mutate
+    rule, and the only guard that does not depend on a hook being installed.
+  - Wiring `createExtension()` into `htmx.registerExtension` yourself? Call
+    `setNeutralizeOnClaim(false)` after it succeeds to get the v4 behaviour.
 - The `hx-on::after-swap` shorthand maps to the `htmx:` event namespace and
   works unchanged (the listener hears htmx's real CustomEvents).
 - Re-sweeps never stack duplicate listeners (claims are keyed per element by
   resolved event name), and an executor configured _after_ the initial sweep
-  triggers a healing re-sweep.
+  triggers a healing re-sweep. The initial sweep waits for `DOMContentLoaded`
+  to have fired (a `load` listener covers a script injected in between), and
+  the browser entry registers the extension before it re-detects
+  `_hyperscript`, so a late `_hyperscript`, a `defer`ed adapter, or a
+  module script all see the same behaviour as the recommended order.
 
 A side benefit: executor mode never uses `eval`, so hyperscript bodies work on
 CSP-restricted pages where htmx's native `hx-on` JS eval cannot.
@@ -169,7 +197,7 @@ only the suffix is localized. The `_=` attribute is
 ## Tests
 
 ```bash
-npm test --prefix packages/htmx-adapter                  # vitest, jsdom (60 tests)
+npm test --prefix packages/htmx-adapter                  # vitest, jsdom
 npm run test:browser --prefix packages/htmx-adapter      # Playwright e2e (build dist first)
 ```
 

@@ -46,8 +46,8 @@ describe('translateTriggerValue', () => {
   });
 
   it('preserves attached filters and modifiers', () => {
-    expect(translateTriggerValue("clic[ctrlKey] delay:500ms", events)).toBe(
-      "click[ctrlKey] delay:500ms"
+    expect(translateTriggerValue('clic[ctrlKey] delay:500ms', events)).toBe(
+      'click[ctrlKey] delay:500ms'
     );
   });
 
@@ -55,6 +55,26 @@ describe('translateTriggerValue', () => {
     expect(translateTriggerValue('every 2s', events)).toBe('every 2s');
     const once = translateTriggerValue('clic delay:500ms', events);
     expect(translateTriggerValue(once, events)).toBe(once);
+  });
+
+  it('does not split inside quoted from: selectors (HCON top-level grammar)', () => {
+    expect(translateTriggerValue('clic from:".a, .b"', events)).toBe('click from:".a, .b"');
+  });
+
+  it('does not split inside filter brackets or parens', () => {
+    expect(translateTriggerValue('clic[foo(a,b)], cambiar', events)).toBe(
+      'click[foo(a,b)], change'
+    );
+  });
+
+  it('returns the original string verbatim when nothing translates', () => {
+    // No whitespace normalization on all-canonical values — an authored
+    // attribute must never be rewritten without an actual translation.
+    expect(translateTriggerValue('click ,keyup', events)).toBe('click ,keyup');
+  });
+
+  it('preserves authored spacing around translated tokens', () => {
+    expect(translateTriggerValue('clic ,  teclaabajo', events)).toBe('click ,  keydown');
   });
 });
 
@@ -91,6 +111,62 @@ describe('canonicalizeElement', () => {
     canonicalizeElement(btn);
     expect(btn.getAttribute('hx-on:click')).toBe('console.log(1)');
     expect(btn.getAttribute('hx-en:clic')).toBe('console.log(1)');
+  });
+
+  it('maps a localized attr with a modifier suffix to the canonical modifier form', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es" hx-objetivo:inherited="#out"><button hx-obtener="/x"></button></section>`;
+    const sec = document.querySelector('section')!;
+    expect(canonicalizeElement(sec)).toBe(true);
+    expect(sec.getAttribute('hx-target:inherited')).toBe('#out');
+    expect(sec.getAttribute('hx-objetivo:inherited')).toBe('#out'); // authored stays
+  });
+
+  it('translates event values when creating hx-trigger modifier forms', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es" hx-disparar:inherited="clic"><button hx-obtener="/x"></button></section>`;
+    const sec = document.querySelector('section')!;
+    canonicalizeElement(sec);
+    expect(sec.getAttribute('hx-trigger:inherited')).toBe('click');
+  });
+
+  it('never routes a non-hx-on suffix through the events map (collision-proof)', () => {
+    register('xx', {
+      hyperfixi: {
+        attrs: { 'hx-blanco': 'hx-target' },
+        // Adversarial vocab: an event key that collides with the
+        // canonical modifier word. The modifier must pass through.
+        events: { inherited: 'click' },
+      },
+    });
+    document.body.innerHTML = `<section lang="xx" hx-blanco:inherited="#out"><button hx-blanco="#x"></button></section>`;
+    const sec = document.querySelector('section')!;
+    canonicalizeElement(sec);
+    expect(sec.getAttribute('hx-target:inherited')).toBe('#out');
+    expect(sec.hasAttribute('hx-target:click')).toBe(false);
+  });
+
+  it('translates an authored canonical hx-trigger:inherited value in place', () => {
+    register('es', ES);
+    const btn = esButton(`hx-trigger:inherited="clic"`);
+    expect(canonicalizeElement(btn)).toBe(true);
+    expect(btn.getAttribute('hx-trigger:inherited')).toBe('click');
+  });
+
+  it('handles the chained :inherited:append modifier suffix', () => {
+    register('es', ES);
+    const btn = esButton(`hx-disparar:inherited:append="clic"`);
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-trigger:inherited:append')).toBe('click');
+  });
+
+  it('never treats Object.prototype keys as vocabulary', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es"><button hx-trigger="constructor" hx-en:toString="x"></button></section>`;
+    const btn = document.querySelector('button')!;
+    expect(() => canonicalizeElement(btn)).not.toThrow();
+    expect(btn.getAttribute('hx-trigger')).toBe('constructor');
+    expect(btn.getAttribute('hx-on:tostring')).toBe('x'); // suffix passed through, lower-cased by HTML
   });
 
   it('never overwrites an existing canonical attribute', () => {
