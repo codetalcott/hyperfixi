@@ -178,24 +178,42 @@ export const LOKASCRIPT_ONLY_COMMANDS = [
 export const ALL_COMMANDS = [...HYPERSCRIPT_COMMANDS, ...LOKASCRIPT_ONLY_COMMANDS] as const;
 
 /**
- * Type conversion targets available in original _hyperscript.
+ * Type conversion targets available in original _hyperscript — the keys of
+ * upstream's `_hyperscript.config.conversions` (0.9.x). `Int`, `Float`,
+ * `JSON`, `Date`, `Set` and `Map` are upstream and were wrongly listed as
+ * extensions until the 2026-09 audit.
  */
-export const HYPERSCRIPT_AS_TARGETS = ['String', 'Number', 'Boolean', 'Array', 'Object'] as const;
-
-/**
- * Extended type conversion targets (LokaScript only).
- */
-export const LOKASCRIPT_ONLY_AS_TARGETS = [
+export const HYPERSCRIPT_AS_TARGETS = [
+  'String',
   'Int',
-  'Integer',
   'Float',
-  'JSON',
-  'FormData',
+  'Number',
+  'Boolean',
   'Date',
-  'URLSearchParams',
+  'Array',
+  'JSON',
+  'JSONString',
+  'Object',
+  'FormEncoded',
   'Set',
   'Map',
+  'Keys',
+  'Entries',
+  'Reversed',
+  'Unique',
+  'Flat',
+  'HTML',
+  'Stream',
+  'Fragment',
 ] as const;
+
+/**
+ * Extended type conversion targets (LokaScript only): the keys core's
+ * `defaultConversions` registers that upstream does not. `Values` also
+ * covers the qualified `Values:Form` / `Values:JSON` forms. (The former list
+ * — Integer, FormData, URLSearchParams — named conversions NEITHER engine has.)
+ */
+export const LOKASCRIPT_ONLY_AS_TARGETS = ['Math', 'Values'] as const;
 
 /**
  * Event modifiers available in original _hyperscript.
@@ -219,10 +237,11 @@ export const LOKASCRIPT_ONLY_EVENT_MODIFIERS = ['debounce', 'throttle'] as const
  */
 export const LOKASCRIPT_SYNTAX_PATTERNS = {
   /**
-   * Possessive dot notation: my.textContent, its.value, your.classList
-   * Original _hyperscript uses space: my textContent
+   * Possessive dot notation on `its`: its.value
+   * Upstream resolves `my.x` and `your.x` (they are plain symbols), so only
+   * `its.` is non-portable; write `its value` for _hyperscript compatibility.
    */
-  dotNotation: /\b(my|your|its)\.\w+/,
+  dotNotation: /\bits\.\w+/,
 
   /**
    * Optional chaining: my?.value
@@ -232,7 +251,7 @@ export const LOKASCRIPT_SYNTAX_PATTERNS = {
   /**
    * Extended 'as' conversions
    */
-  extendedAsConversion: /\bas\s+(Int|Integer|Float|JSON|FormData|Date|URLSearchParams|Set|Map)\b/i,
+  extendedAsConversion: /\bas\s+(Math|Values)\b/i,
 
   /**
    * Debounce/throttle modifiers with duration: .debounce(300), .throttle(1s)
@@ -257,6 +276,43 @@ export function isLokascriptOnlyCommand(cmd: string): boolean {
 }
 
 /**
+ * Replace string literals and `--` line comments with spaces (same length, so
+ * offsets survive). Single quotes open a string only at a token start, which
+ * leaves possessives (`#el's value`) alone.
+ */
+export function blankStringsAndComments(code: string): string {
+  let out = '';
+  let i = 0;
+  while (i < code.length) {
+    const ch = code[i];
+    if (ch === '-' && code[i + 1] === '-') {
+      const eol = code.indexOf('\n', i);
+      const end = eol === -1 ? code.length : eol;
+      out += ' '.repeat(end - i);
+      i = end;
+      continue;
+    }
+    const prev = i === 0 ? ' ' : code[i - 1];
+    const opensString = ch === '"' || ch === '`' || (ch === "'" && /[\s(,\[=]/.test(prev));
+    if (opensString) {
+      let j = i + 1;
+      while (j < code.length && code[j] !== ch) {
+        if (code[j] === '\\') j++;
+        if (code[j] === '\n' && ch !== '`') break;
+        j++;
+      }
+      const end = Math.min(j + 1, code.length);
+      out += ' '.repeat(end - i);
+      i = end;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/**
  * Detect LokaScript-only features in code.
  * Returns an array of detected features with their descriptions.
  */
@@ -265,10 +321,18 @@ export function detectLokascriptFeatures(
 ): Array<{ feature: string; description: string; pattern: string }> {
   const detected: Array<{ feature: string; description: string; pattern: string }> = [];
 
-  // Check for LokaScript-only commands
+  // Check for LokaScript-only commands. The scan runs over code with string
+  // literals and `--` comments blanked, and a name only counts when it is not
+  // part of a larger token (`y.replace(`, `arr.push(`, `:process`) and is not
+  // a method call. `unless` is special: upstream has the TRAILING form
+  // (`log "x" unless done`), so only the LEADING block form is an extension.
+  const scannable = blankStringsAndComments(code);
   for (const cmd of LOKASCRIPT_ONLY_COMMANDS) {
-    const pattern = new RegExp(`\\b${cmd}\\b`, 'i');
-    if (pattern.test(code)) {
+    const pattern =
+      cmd === 'unless'
+        ? /(?<=^[ \t]*|\bthen\s+|\bend\s+|\belse\s+)unless(?![\w-])/im
+        : new RegExp(`(?<![\\w.:$@^#-])${cmd}(?![\\w-])(?!\\s*\\()`, 'i');
+    if (pattern.test(scannable)) {
       detected.push({
         feature: 'command',
         description: `'${cmd}' command is a LokaScript extension`,

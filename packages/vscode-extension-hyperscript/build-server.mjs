@@ -25,7 +25,7 @@ const shimDir = resolve(__dirname, 'src/shims');
 const cleanLogsPlugin = {
   name: 'clean-standalone-logs',
   setup(build) {
-    build.onEnd(async (result) => {
+    build.onEnd(async result => {
       if (result.errors.length > 0) return;
 
       const fs = await import('fs');
@@ -79,6 +79,7 @@ await build({
     '@lokascript/framework': resolve(shimDir, 'lokascript-framework.ts'),
     '@hyperfixi/core': resolve(shimDir, 'hyperfixi-core.ts'),
     '@hyperfixi/core/ast-utils': resolve(shimDir, 'hyperfixi-core-ast-utils.ts'),
+    '@hyperfixi/core/multilingual': resolve(shimDir, 'hyperfixi-core-multilingual.ts'),
     // lsp-metadata is a pure data module with no core deps — bundle it directly
     '@hyperfixi/core/lsp-metadata': resolve(__dirname, '../core/src/lsp-metadata.ts'),
   },

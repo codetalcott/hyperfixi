@@ -11,6 +11,10 @@ import type { HyperscriptRegion, RegionPosition } from './types.js';
  */
 export function isHtmlDocument(uri: string, content: string): boolean {
   if (uri.endsWith('.html') || uri.endsWith('.htm')) return true;
+  // A hyperscript file is never HTML, whatever it contains: the content
+  // heuristic below matched query literals like `<li/>` and switched every
+  // LSP feature off for the file.
+  if (/\.(hs|_hs|hyperscript)$/i.test(uri)) return false;
   if (content.trim().startsWith('<!DOCTYPE') || content.trim().startsWith('<html')) return true;
   // Check for HTML tags
   if (/<\w+[^>]*>/.test(content) && !content.trim().startsWith('on ')) return true;

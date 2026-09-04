@@ -1,7 +1,7 @@
 {
   "name": "hyperscript-vscode",
   "displayName": "_hyperscript Language Support",
-  "description": "Language support for _hyperscript — syntax highlighting, completions, hover docs, diagnostics, formatting, and interactive debugging",
+  "description": "Language support for _hyperscript \u2014 syntax highlighting, completions, hover docs, diagnostics, formatting, and interactive debugging",
   "version": "3.0.0",
   "publisher": "hyperscript-tools",
   "engines": {
@@ -105,6 +105,28 @@
       "type": "object",
       "title": "_hyperscript",
       "properties": {
+        "hyperscript.mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "hyperscript",
+            "hyperscript-i18n",
+            "lokascript"
+          ],
+          "enumDescriptions": [
+            "Detect based on available packages",
+            "Restrict to _hyperscript-compatible syntax, English only",
+            "Restrict to _hyperscript-compatible syntax with multilingual support",
+            "Allow all LokaScript features"
+          ],
+          "default": "hyperscript",
+          "description": "Operating mode for syntax validation."
+        },
+        "hyperscript.language": {
+          "type": "string",
+          "default": "en",
+          "description": "Primary language for multilingual keyword support (hyperscript-i18n mode)."
+        },
         "hyperscript.maxDiagnostics": {
           "type": "number",
           "default": 100,

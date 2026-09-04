@@ -43,6 +43,11 @@ export function activate(context: vscode.ExtensionContext): void {
     ],
     synchronize: {
       fileEvents: vscode.workspace.createFileSystemWatcher('**/*.hs'),
+      // Push the `lokascript` section to the server on change. Without this,
+      // vscode-languageclient sends `didChangeConfiguration` with
+      // `settings: null` and the server never saw mode/language/maxDiagnostics.
+      // (The server also supports the pull model via workspace/configuration.)
+      configurationSection: 'lokascript',
     },
     initializationOptions: {
       language: vscode.workspace.getConfiguration('lokascript').get('language', 'en'),

@@ -778,6 +778,17 @@ jobs:
           npm run typecheck --prefix packages/vscode-extension
           npm run typecheck --prefix packages/vscode-extension-hyperscript
 
+      # Both VS Code extensions bundle the language server from SOURCE with
+      # esbuild aliases (semantic/framework/core → src). Typecheck cannot see a
+      # missing alias: the hyperscript extension's bundle broke on 2026-08-30
+      # (#1016 added an `@hyperfixi/core/multilingual` import with no shim) and
+      # stayed broken until the 2026-09 language-server audit, because this
+      # step did not exist. Runs after `npm ci`, needs no dist/.
+      - name: Bundle the VS Code extension language servers
+        run: |
+          npm run bundle:server --prefix packages/vscode-extension
+          npm run bundle:server --prefix packages/vscode-extension-hyperscript
+
       # The main tsconfig includes only src/**, so packages/core/scripts/ was
       # typechecked by nothing — that is how the doc generators kept importing
       # deleted commands (persist/bind) for six months while crashing on every

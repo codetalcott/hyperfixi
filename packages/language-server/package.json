@@ -1,19 +1,20 @@
 {
   "name": "@lokascript/language-server",
   "version": "3.0.0",
-  "description": "Language Server Protocol implementation for LokaScript/hyperscript with 21 language support",
+  "description": "Language Server Protocol implementation for LokaScript/hyperscript with 24 language support",
   "type": "module",
   "main": "dist/server.js",
   "bin": {
     "lokascript-language-server": "./dist/server.js"
   },
   "scripts": {
-    "build": "tsup src/server.ts --format esm --dts",
+    "build": "tsup src/server.ts --format esm --clean",
     "start": "node dist/server.js --stdio",
     "dev": "tsx src/server.ts --stdio",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
+    "test:check": "npm run pretest --silent && VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
+    "pretest": "bash ../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../core && npm run build --silent"
   },
   "keywords": [
     "lsp",
@@ -27,24 +28,21 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
+    "@lokascript/framework": "^3.0.0",
+    "@lokascript/semantic": "^3.0.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^3.0.0",
-    "@lokascript/semantic": "^3.0.0"
+    "@hyperfixi/core": "^3.0.0"
   },
   "peerDependenciesMeta": {
-    "@lokascript/semantic": {
-      "optional": true
-    },
     "@hyperfixi/core": {
       "optional": true
     }
   },
   "devDependencies": {
     "@hyperfixi/core": "^3.0.0",
-    "@lokascript/semantic": "^3.0.0",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.0.0",
     "tsup": "^8.0.0",

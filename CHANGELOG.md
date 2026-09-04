@@ -26,6 +26,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Language server: valid non-English code no longer gets a `parse-error`.**
+  In `lokascript`/`hyperscript-i18n` mode the server ran core's English
+  parser on every region regardless of what the semantic front-end said, so
+  `al hacer clic alternar .activo` (accepted at 0.89 confidence) was published
+  as `Unexpected token: hacer`. Core's errors are now suppressed for a region
+  the front-end accepted in a non-English language. The integration suite
+  that claimed to cover this had been discarding every notification; it now
+  records `publishDiagnostics` and asserts on it.
+
+- **Language server: settings actually reach the server.** Neither VS Code
+  extension set `synchronize.configurationSection`, so the client pushed
+  `settings: null` and every `mode`/`language`/`maxDiagnostics` value was
+  ignored; `initializationOptions` was ignored too. The server now reads
+  `initializationOptions`, a pushed `lokascript`/`hyperscript` section, or
+  pulls `workspace/configuration` when the push is empty — and merges partial
+  objects over the defaults instead of replacing them (a bare
+  `{ maxDiagnostics }` used to leave `language` undefined and error on every
+  document). Both extensions push their section, and the LokaScript one now
+  contributes `lokascript.mode`.
+
+- **Both VS Code extension server bundles build and run.** The standalone
+  hyperscript extension's `bundle:server` had failed since #1016 (no shim for
+  `@hyperfixi/core/multilingual`); the LokaScript extension externalized
+  `@hyperfixi/core` without shipping it, so every install ran with core
+  absent ("diagnostics and hover degraded"). Core is bundled in now, and CI
+  runs both bundle scripts.
+
+- **`@lokascript/language-server` declares what it imports.**
+  `@lokascript/semantic` was an optional peer but a static import (the
+  server crashed at startup without it); `@lokascript/framework` was
+  undeclared and got inlined together with `@lokascript/intent` (261 KB) —
+  and without `--clean`, `dist/` shipped every previous build's chunk (three
+  dead ones, 63% of the tarball). Both are regular dependencies now, the
+  build cleans, the 20-byte `--dts` output is gone, and `npm test` rebuilds
+  the server it spawns.
+
+- **Hyperscript-compat mode stops flagging portable code.** `as Int`, `Float`,
+  `JSON`, `Date`, `Set`, `Map` are upstream conversions (the extension list
+  is now `Math`/`Values`, the ones core registers and upstream lacks);
+  `my.x`/`your.x` evaluate upstream (only `its.` is flagged); and the
+  extension-command scan no longer fires inside `y.replace(`, `arr.push(`,
+  string literals, `:process`, `--` comments, or the upstream trailing
+  `… unless …` modifier.
+
+- **Language-server false positives and misses.** A `.hs` file containing a
+  query literal like `<li/>` was classified as HTML and lost every feature;
+  possessives after `)`/`]`/`>` and apostrophes in `--` comments raised
+  `unmatched-quote`; the outline reported the `on` in `toggle .x on me` as a
+  handler and `.init` as an init block; `install Foo(args)` produced
+  overlapping rename edits VS Code rejects; `on draggable:start` became a
+  variable named `:start`; and keyword boundaries were ASCII `\b`, so
+  definitions and symbols were silently absent in the ten non-Latin
+  languages. Completion-context and document-symbol logic moved out of the
+  entry script into `completion-context.ts` / `document-symbols.ts` so the
+  unit suite tests the shipped code rather than the hand-copied twins it
+  used to carry.
+
 - **MCP `get_diagnostics`, `get_completions` and `get_document_symbols` read
   the AST.** The bridge guarded those paths on helper names core never
   exported, so all three had only ever taken their token-based fallback.

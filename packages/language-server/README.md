@@ -15,7 +15,7 @@ The language server supports four operating modes:
 
 ### Mode Selection
 
-- **auto** (default): If `@lokascript/semantic` is available, uses `lokascript` mode; otherwise uses `hyperscript` mode
+- **auto** (default): `lokascript` mode when the semantic package exposes its API; `hyperscript` mode in builds that replace it with a shim (the standalone `hyperscript-vscode` extension does this)
 - **hyperscript**: Enforces \_hyperscript-compatible syntax, English keywords only
 - **hyperscript-i18n**: Enforces \_hyperscript-compatible syntax with multilingual keyword support. Use this if you have original \_hyperscript with `@lokascript/hyperscript-adapter` for writing in non-English languages
 - **lokascript**: Enables all features including LokaScript extensions and multilingual support
@@ -50,9 +50,11 @@ This allows LokaScript users to maintain \_hyperscript compatibility by using `h
 
 ### Multilingual Support
 
-Works with hyperscript written in any of 21 supported languages:
+Works with hyperscript written in any of the 24 supported languages:
 
-en (English), es (Spanish), pt (Portuguese), fr (French), de (German), it (Italian), ru (Russian), pl (Polish), uk (Ukrainian), ja (Japanese), ko (Korean), zh (Chinese), ar (Arabic), he (Hebrew), tr (Turkish), id (Indonesian), ms (Malay), th (Thai), vi (Vietnamese), tl (Tagalog), sw (Swahili)
+ar (Arabic), bn (Bengali), de (German), en (English), es (Spanish), fr (French), he (Hebrew), hi (Hindi), id (Indonesian), it (Italian), ja (Japanese), ko (Korean), ms (Malay), pl (Polish), pt (Portuguese), qu (Quechua), ru (Russian), sw (Swahili), th (Thai), tl (Tagalog), tr (Turkish), uk (Ukrainian), vi (Vietnamese), zh (Chinese)
+
+In `lokascript` and `hyperscript-i18n` modes the server parses each region with the semantic front-end in the configured `language`, falling back to auto-detection across the other languages when that fails. When the front-end accepts a region in a non-English language, the English core parser's errors for that region are suppressed (the core parser is English-only, and its "unexpected token" on valid Spanish is noise, not a diagnostic).
 
 ### HTML Support
 
@@ -113,7 +115,13 @@ require('lspconfig').lokascript.setup{}
 
 ## Configuration
 
-The server accepts configuration via the LSP `workspace/configuration` mechanism:
+The server reads its settings three ways, and every field is optional (a partial object is merged over the defaults):
+
+1. `initializationOptions` on `initialize` (both VS Code extensions pass `{ language }` here);
+2. a `workspace/didChangeConfiguration` push carrying a `lokascript` or `hyperscript` section (vscode-languageclient only sends one when the client sets `synchronize.configurationSection`; both bundled extensions do);
+3. a `workspace/configuration` pull for the `lokascript` and `hyperscript` sections, made at startup and whenever a push arrives with no payload, for clients that advertise the capability.
+
+When both namespaces are present the `lokascript` one wins, unless the server was launched with `HYPERSCRIPT_LS_DEFAULT_MODE` set (the standalone hyperscript product), in which case `hyperscript` wins.
 
 ```json
 {
@@ -218,13 +226,10 @@ For users who prefer the `hyperscript` namespace:
 
 ## Dependencies
 
-The language server works best with these optional peer dependencies installed:
+- `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
+- `@hyperfixi/core` is an **optional** peer. With it the server surfaces real parse errors, complexity diagnostics and schema-inferred roles in hover; without it, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs.
 
-- `@lokascript/semantic` - Enables 21-language support and semantic analysis
-- `@lokascript/ast-toolkit` - Enables AST-based analysis and complexity metrics
-- `@lokascript/core` - Enables full hyperscript parsing and AST-based formatting
-
-Without these dependencies, the server falls back to pattern-based analysis (English only).
+A bundler that wants an English-only, dependency-free server (the standalone `hyperscript-vscode` extension) replaces the semantic, framework and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
 
 ## Development
 
@@ -247,7 +252,7 @@ npm test -- --coverage
 
 ## Architecture
 
-The language server is implemented as a single `server.ts` file that:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback
@@ -299,13 +304,10 @@ npm test -- --run src/server.test.ts
 
 Test categories:
 
-- HTML document detection
-- Hyperscript region extraction
-- Position mapping (offset to line/character)
-- Go to Definition
-- Find References
-- Code Formatting
-- LSP integration tests
+- Unit tests against the shipped modules: HTML document detection, region extraction, position mapping, the symbol table (definition, references, rename), document symbols, completion context, formatting, diagnostics, and the compatibility allowlists
+- `lsp-integration.test.ts` spawns the built `dist/server.js` over stdio and speaks JSON-RPC: diagnostics publishing (including the non-English cases), completions, hover, symbols, definition, references, rename, formatting, code actions, configuration changes in both push and pull form, and the `lokascript/translateWithVerification` request
+
+`npm test` rebuilds this package first (`pretest`), and refreshes any stale sibling `dist/` the integration suite resolves through the workspace.
 
 ## License
 

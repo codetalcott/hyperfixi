@@ -21,10 +21,12 @@ const enum QuoteState {
  * (e.g., #element's property), not the start of a string literal.
  */
 function isPossessive(code: string, i: number): boolean {
-  // Must be preceded by a word character (letter, digit, hyphen, underscore)
+  // Must be preceded by something that can own a property: a word character,
+  // a selector char, or a closing `)` `]` `>` (`(first .item)'s`, `.items[0]'s`,
+  // `<form/>'s`).
   if (i === 0) return false;
   const prev = code[i - 1];
-  if (!/[\w\-#.]/.test(prev)) return false;
+  if (!/[\w\-#.)\]>]/.test(prev)) return false;
   // Must be followed by 's' then a non-word-quote char (whitespace, punctuation, or end)
   if (i + 1 >= code.length || code[i + 1] !== 's') return false;
   if (i + 2 >= code.length) return true; // 's at end of code
@@ -74,6 +76,14 @@ export function runSimpleDiagnostics(code: string, _language: string = 'en'): Di
     }
 
     // NORMAL state
+    // `--` starts a line comment: an apostrophe in "don't" is not a quote.
+    if (ch === '-' && code[i + 1] === '-') {
+      const eol = code.indexOf('\n', i);
+      if (eol === -1) break;
+      col += eol - i;
+      i = eol - 1; // the loop's i++ lands on the newline
+      continue;
+    }
     switch (ch) {
       case "'":
         if (isPossessive(code, i)) {
