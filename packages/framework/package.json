@@ -101,7 +101,7 @@
   "devDependencies": {
     "@lokascript/domains": "^3.0.0",
     "@types/node": "^26.1.2",
-    "@vitest/coverage-v8": "^4.0.17",
+    "@vitest/coverage-v8": "^4.1.11",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"
