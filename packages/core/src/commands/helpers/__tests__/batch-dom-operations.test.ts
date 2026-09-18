@@ -268,10 +268,12 @@ describe('Batch DOM Operations', () => {
 
       const result = batchSetStyles(elements, styles);
 
+      // camelCase keys (what `add {fontSize: '16px'}` produces) must land under
+      // their CSS names — browsers ignore setProperty('fontSize', …).
       elements.forEach(el => {
         expect(el.style.getPropertyValue('color')).toBe('red');
-        expect(el.style.getPropertyValue('fontSize')).toBe('16px');
-        expect(el.style.getPropertyValue('backgroundColor')).toBe('blue');
+        expect(el.style.getPropertyValue('font-size')).toBe('16px');
+        expect(el.style.getPropertyValue('background-color')).toBe('blue');
       });
       expect(result).toBe(elements);
     });
@@ -280,6 +282,8 @@ describe('Batch DOM Operations', () => {
       const styles: Record<string, string> = {
         '--primary-color': '#ff0000',
         '--spacing': '8px',
+        // Custom properties are case-sensitive: must not be kebab-cased.
+        '--brandColor': 'teal',
       };
 
       batchSetStyles(elements, styles);
@@ -287,6 +291,7 @@ describe('Batch DOM Operations', () => {
       elements.forEach(el => {
         expect(el.style.getPropertyValue('--primary-color')).toBe('#ff0000');
         expect(el.style.getPropertyValue('--spacing')).toBe('8px');
+        expect(el.style.getPropertyValue('--brandColor')).toBe('teal');
       });
     });
 
@@ -303,16 +308,16 @@ describe('Batch DOM Operations', () => {
     it('should remove styles from all elements', () => {
       elements.forEach(el => {
         el.style.setProperty('color', 'red');
-        el.style.setProperty('fontSize', '16px');
-        el.style.setProperty('backgroundColor', 'blue');
+        el.style.setProperty('font-size', '16px');
+        el.style.setProperty('background-color', 'blue');
       });
 
       const result = batchRemoveStyles(elements, ['color', 'fontSize']);
 
       elements.forEach(el => {
         expect(el.style.getPropertyValue('color')).toBe('');
-        expect(el.style.getPropertyValue('fontSize')).toBe('');
-        expect(el.style.getPropertyValue('backgroundColor')).toBe('blue');
+        expect(el.style.getPropertyValue('font-size')).toBe('');
+        expect(el.style.getPropertyValue('background-color')).toBe('blue');
       });
       expect(result).toBe(elements);
     });

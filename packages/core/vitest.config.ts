@@ -1,11 +1,44 @@
 /// <reference types="vitest" />
+import { readFileSync } from 'node:fs';
+import { transform } from 'esbuild';
 import { defineConfig } from 'vitest/config';
 
+// Handed to esbuild verbatim, so test code compiles with the same class-field
+// semantics as the build (target ES2020 ⇒ useDefineForClassFields=false).
+const tsconfigRaw = readFileSync(new URL('./tsconfig.json', import.meta.url), 'utf8');
+
 export default defineConfig({
-  // Enable esbuild for TypeScript compilation
-  esbuild: {
-    target: 'node20',
-  },
+  plugins: [
+    {
+      // Core's commands use TC39 (Stage 3) decorators — `@command({ name })`.
+      // Vite 8 compiles TypeScript with Oxc, which lowers only legacy
+      // (`experimentalDecorators`) decorators: Stage 3 ones pass through
+      // verbatim, Node cannot parse them, and every test that imports a command
+      // dies at load with "SyntaxError: Invalid or unexpected token" (~150
+      // files). Vite 7 compiled with esbuild, which lowers them, so keep
+      // TS → JS on esbuild under both.
+      name: 'hyperfixi:esbuild-typescript',
+      enforce: 'pre',
+      config() {
+        // Turn off the built-in transform so each file is compiled once:
+        // `esbuild` is Vite 7's, `oxc` is Vite 8's. `oxc` is spread in because
+        // Vite 7's UserConfig type does not declare it.
+        return { esbuild: false, ...{ oxc: false } };
+      },
+      async transform(code, id) {
+        const file = id.split('?')[0];
+        if (!/\.[cm]?ts$/.test(file) || file.includes('/node_modules/')) return null;
+        const result = await transform(code, {
+          loader: 'ts',
+          target: 'node20',
+          tsconfigRaw,
+          sourcefile: file,
+          sourcemap: true,
+        });
+        return { code: result.code, map: result.map };
+      },
+    },
+  ],
 
   test: {
     // Use happy-dom for DOM testing (faster than jsdom)

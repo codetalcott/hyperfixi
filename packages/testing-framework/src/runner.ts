@@ -243,7 +243,13 @@ export class CoreTestRunner implements TestRunner {
     // Setup global DOM variables
     global.window = dom.window as any;
     global.document = dom.window.document;
-    global.navigator = dom.window.navigator;
+    // Node 21+ defines `navigator` as a getter-only (but configurable) global,
+    // so plain assignment throws in strict mode — redefine it instead.
+    Object.defineProperty(globalThis, 'navigator', {
+      value: dom.window.navigator,
+      configurable: true,
+      writable: true,
+    });
     global.location = dom.window.location;
     global.HTMLElement = dom.window.HTMLElement;
     global.Event = dom.window.Event;
