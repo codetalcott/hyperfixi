@@ -8,15 +8,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { JSDOM } from 'jsdom';
 import { ToggleCommand } from '../toggle';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
 import type { CommandRaw } from '../../../ast/command-slots';
 
 describe('ToggleCommand - CSS Property Syntax', () => {
-  let dom: JSDOM;
-  let document: Document;
   let testElement: HTMLElement;
   let command: ToggleCommand;
 
@@ -49,12 +46,9 @@ describe('ToggleCommand - CSS Property Syntax', () => {
   });
 
   beforeEach(() => {
-    dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-      url: 'http://localhost',
-    });
-    document = dom.window.document;
-
-    // Create test element
+    // Use the environment's own document: toggleCSSProperty calls the global
+    // window.getComputedStyle, which rejects an element from another DOM (a
+    // private JSDOM instance) as not being an Element.
     testElement = document.createElement('div');
     testElement.id = 'test-element';
     testElement.style.display = 'block';
@@ -64,7 +58,7 @@ describe('ToggleCommand - CSS Property Syntax', () => {
   });
 
   afterEach(() => {
-    dom.window.close();
+    testElement.remove();
   });
 
   describe('parseInput - CSS Property Detection', () => {
