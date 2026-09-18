@@ -9,8 +9,6 @@
  * tarball. Keeping the ranges in lockstep with the version here means a bump
  * never leaves a published package depending on `*` or a stale version.
  *
- * Also keeps lerna.json's version in sync (lerna runs in fixed mode).
- *
  * Usage: node scripts/set-version.cjs <version>
  */
 
@@ -139,24 +137,6 @@ GENERATED_VERSION_FILES.forEach(relPath => {
     errors++;
   }
 });
-
-// Keep lerna.json in sync (fixed-mode lerna). Skip while it is still on
-// "independent" — that flip is a deliberate one-time change, not ours to make.
-const lernaPath = path.join(__dirname, '../lerna.json');
-try {
-  if (fs.existsSync(lernaPath)) {
-    const lerna = JSON.parse(fs.readFileSync(lernaPath, 'utf8'));
-    if (lerna.version && lerna.version !== 'independent' && lerna.version !== version) {
-      const oldVersion = lerna.version;
-      lerna.version = version;
-      fs.writeFileSync(lernaPath, JSON.stringify(lerna, null, 2) + '\n');
-      console.log(`✅ lerna.json: ${oldVersion} → ${version}`);
-    }
-  }
-} catch (err) {
-  console.error(`❌ lerna.json: ${err.message}`);
-  errors++;
-}
 
 console.log(`\n📊 Summary:`);
 console.log(`   Updated: ${updated} files`);

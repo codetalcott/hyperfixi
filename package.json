@@ -90,14 +90,12 @@
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "lerna": "^10.0.1",
     "lint-staged": "^17.2.0",
     "oxlint": "^1.74.0",
     "prettier": "3.9.6",
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "tar": "^7.5.22",
     "esbuild": "^0.25.11",
     "hono": "^4.12.18",
     "minimatch": "^10.2.3",
@@ -105,15 +103,10 @@
     "yauzl": "^3.2.1",
     "basic-ftp": "^5.3.1",
     "fast-uri": "^3.1.4",
-    "ip-address": "^10.1.1",
     "follow-redirects": "^1.16.0",
-    "axios": "^1.16.0",
-    "tmp": "^0.2.7",
     "qs": "^6.16.0",
     "yaml": "^2.9.0",
     "brace-expansion": "^5.0.9",
-    "js-yaml": "^4.3.2",
-    "smol-toml": "^1.7.1",
     "nanoid": "^3.3.18"
   },
   "lint-staged": {
