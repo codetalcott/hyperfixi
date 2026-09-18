@@ -17,7 +17,6 @@
 # Build and configuration files
 /package.json @codetalcott
 /package-lock.json @codetalcott
-/lerna.json @codetalcott
 /tsconfig*.json @codetalcott
 /.oxlintrc.json @codetalcott
 /.prettierrc @codetalcott

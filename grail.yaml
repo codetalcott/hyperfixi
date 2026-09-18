@@ -131,7 +131,7 @@ affordances:
     effects: []
     action:
       type: shell
-      cmd: 'lerna version --conventional-commits'
+      cmd: 'npm run version:bump -- patch'
       cwd: '{cwd}'
     cost: 3
 
@@ -144,6 +144,6 @@ affordances:
     effects: []
     action:
       type: shell
-      cmd: 'lerna publish from-git'
+      cmd: 'gh workflow run publish.yml -f version-type=current'
       cwd: '{cwd}'
     cost: 5
