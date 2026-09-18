@@ -3,7 +3,7 @@
  * Comprehensive validation of the complete hyperscript system integration
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '../test-setup.js';
 import { evalHyperScript } from './eval-hyperscript';
 
@@ -349,13 +349,16 @@ describe('Core System Validation', () => {
         key: () => null,
       };
 
-      (globalThis as Record<string, unknown>).localStorage = mockStorage;
+      // stubGlobal, not assignment: the environment's localStorage is a
+      // getter-only global under vitest 5, and unstubbing restores the real one
+      // rather than deleting it for the rest of the file.
+      vi.stubGlobal('localStorage', mockStorage);
 
       try {
         const result = await evalHyperScript('localStorage.getItem("test")');
         expect(result).toBe('stored-value');
       } finally {
-        delete (globalThis as Record<string, unknown>).localStorage;
+        vi.unstubAllGlobals();
       }
     });
   });

@@ -622,14 +622,15 @@ describe('StyleBatcher', () => {
 
   describe('Edge Cases', () => {
     it('should handle very long property names', async () => {
-      const longProperty = 'very-very-very-long-property-name';
-      batcher.add(testElement, { [longProperty]: 'value' });
+      // A real property: CSSStyleDeclaration drops names it does not know.
+      const longProperty = 'border-bottom-right-radius';
+      batcher.add(testElement, { [longProperty]: '4px' });
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      // Should convert to camelCase
-      const camelCase = 'veryVeryVeryLongPropertyName';
-      expect((testElement.style as unknown as Record<string, string>)[camelCase]).toBe('value');
+      // Set through its camelCase accessor, readable under its CSS name
+      expect(testElement.style.borderBottomRightRadius).toBe('4px');
+      expect(testElement.style.getPropertyValue(longProperty)).toBe('4px');
     });
 
     it('should handle special characters in values', async () => {

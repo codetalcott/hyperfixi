@@ -7,6 +7,8 @@
  * Estimated savings: ~80 lines across toggle.ts, add.ts, remove.ts
  */
 
+import { camelToKebab } from './duration-parsing';
+
 // ============================================================================
 // Generic Batch Operations
 // ============================================================================
@@ -191,6 +193,16 @@ export function toggleAttribute(element: HTMLElement, name: string, value?: stri
 // ============================================================================
 
 /**
+ * `setProperty`/`removeProperty` take CSS names; browsers silently ignore a
+ * camelCase one (`fontSize`), which is what a hyperscript object literal
+ * (`add {fontSize: '16px'}`) produces. Custom properties are case-sensitive,
+ * so they pass through untouched.
+ */
+function toCssPropertyName(property: string): string {
+  return property.startsWith('--') ? property : camelToKebab(property);
+}
+
+/**
  * Set styles on multiple elements
  *
  * @param targets - Target elements
@@ -203,7 +215,7 @@ export function batchSetStyles(
 ): HTMLElement[] {
   const entries = Object.entries(styles);
   return batchApplyItems(targets, entries, (element, [property, value]) => {
-    element.style.setProperty(property, value);
+    element.style.setProperty(toCssPropertyName(property), value);
   });
 }
 
@@ -216,6 +228,6 @@ export function batchSetStyles(
  */
 export function batchRemoveStyles(targets: HTMLElement[], properties: string[]): HTMLElement[] {
   return batchApplyItems(targets, properties, (element, property) => {
-    element.style.removeProperty(property);
+    element.style.removeProperty(toCssPropertyName(property));
   });
 }
