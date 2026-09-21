@@ -81,7 +81,7 @@
     "@lokascript/compilation-service": "^3.1.1",
     "@lokascript/framework": "^3.1.1",
     "@lokascript/semantic": "^3.1.1",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.1",
     "tsup": "^8.0.0",
     "tsx": "^4.23.13",
     "typescript": "^5.0.0",
