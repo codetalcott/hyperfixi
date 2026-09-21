@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/indonesian.ts
 // or packages/i18n/src/dictionaries/id.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -29,17 +31,9 @@
       },
       events: {
         "klik": "click",
-        "klik_ganda": "dblclick",
-        "tekan_mouse": "mousedown",
-        "lepas_mouse": "mouseup",
-        "mouse_masuk": "mouseenter",
-        "mouse_keluar": "mouseleave",
-        "mouse_atas": "mouseover",
-        "mouse_luar": "mouseout",
-        "gerak_mouse": "mousemove",
+        "arahkan": "mouseover",
+        "tinggalkan": "mouseout",
         "tekan_tombol": "keydown",
-        "lepas_tombol": "keyup",
-        "pencet_tombol": "keypress",
         "fokus": "focus",
         "ubah": "change",
         "masukan": "input",
@@ -48,6 +42,16 @@
         "bongkar": "unload",
         "ubah_ukuran": "resize",
         "gulir": "scroll",
+        "klik_ganda": "dblclick",
+        "tekan_mouse": "mousedown",
+        "lepas_mouse": "mouseup",
+        "mouse_masuk": "mouseenter",
+        "mouse_keluar": "mouseleave",
+        "mouse_atas": "mouseover",
+        "mouse_luar": "mouseout",
+        "gerak_mouse": "mousemove",
+        "lepas_tombol": "keyup",
+        "pencet_tombol": "keypress",
         "mulai_sentuh": "touchstart",
         "akhir_sentuh": "touchend",
         "gerak_sentuh": "touchmove",

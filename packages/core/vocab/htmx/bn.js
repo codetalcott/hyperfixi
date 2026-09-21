@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/bengali.ts
 // or packages/i18n/src/dictionaries/bn.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -37,13 +39,13 @@
         "ফোকাস": "focus",
         "ঝাপসা": "blur",
         "রিসেট": "reset",
+        "স্ক্রোল": "scroll",
+        "রিসাইজ": "resize",
+        "প্রতি": "every",
         "কি-ডাউন": "keydown",
         "কি-আপ": "keyup",
         "মাউস-ওভার": "mouseover",
-        "মাউস-আউট": "mouseout",
-        "স্ক্রোল": "scroll",
-        "রিসাইজ": "resize",
-        "প্রতি": "every"
+        "মাউস-আউট": "mouseout"
       },
     },
   });

@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/arabic.ts
 // or packages/i18n/src/dictionaries/ar.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -30,31 +32,13 @@
       },
       events: {
         "نقر": "click",
-        "نقر مزدوج": "dblclick",
-        "فأرة أسفل": "mousedown",
-        "فأرة أعلى": "mouseup",
-        "فأرة دخول": "mouseenter",
-        "فأرة خروج": "mouseleave",
-        "فأرة فوق": "mouseover",
-        "فأرة خارج": "mouseout",
-        "فأرة تحرك": "mousemove",
-        "مفتاح أسفل": "keydown",
-        "مفتاح أعلى": "keyup",
-        "مفتاح ضغط": "keypress",
         "تركيز": "focus",
         "ضبابية": "blur",
         "تغيير": "change",
         "إدخال": "input",
         "إرسال": "submit",
-        "إعادة تعيين": "reset",
         "تحميل": "load",
-        "إلغاء تحميل": "unload",
-        "تغيير حجم": "resize",
-        "تمرير": "scroll",
-        "بداية لمس": "touchstart",
-        "نهاية لمس": "touchend",
-        "تحرك لمس": "touchmove",
-        "إلغاء لمس": "touchcancel"
+        "تمرير": "scroll"
       },
     },
   });

@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/german.ts
 // or packages/i18n/src/dictionaries/de.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -31,30 +33,32 @@
       events: {
         "klick": "click",
         "doppelklick": "dblclick",
-        "mausunten": "mousedown",
-        "mausoben": "mouseup",
         "mauseintreten": "mouseenter",
         "mausverlassen": "mouseleave",
-        "mausüber": "mouseover",
-        "maushinaus": "mouseout",
         "mausbewegen": "mousemove",
-        "tasteunten": "keydown",
-        "tasteoben": "keyup",
         "tastedrücken": "keypress",
         "fokus": "focus",
-        "unscharf": "blur",
+        "defokussieren": "blur",
         "ändern": "change",
         "eingabe": "input",
         "absenden": "submit",
         "zurücksetzen": "reset",
         "laden": "load",
         "entladen": "unload",
-        "größeändern": "resize",
+        "größenänderung": "resize",
         "scrollen": "scroll",
         "berührungstart": "touchstart",
         "berührungend": "touchend",
         "berührungbewegen": "touchmove",
-        "berührungabbrechen": "touchcancel"
+        "berührungabbrechen": "touchcancel",
+        "mausunten": "mousedown",
+        "mausoben": "mouseup",
+        "mausüber": "mouseover",
+        "maushinaus": "mouseout",
+        "tasteunten": "keydown",
+        "tasteoben": "keyup",
+        "unscharf": "blur",
+        "größeändern": "resize"
       },
     },
   });

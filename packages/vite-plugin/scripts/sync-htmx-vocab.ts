@@ -35,8 +35,11 @@ function extractLiveEntries(): LiveEntry[] {
   for (const file of files) {
     const lang = file.replace('.js', '');
     const source = readFileSync(resolve(VOCAB_DIR, file), 'utf-8');
-    const m = source.match(/"hx-([^"]+)":\s*"hx-live"/);
-    if (m) entries.push({ suffix: m[1], lang });
+    // Every form, not the first: a vocab may list aliases after the primary,
+    // and a page authored with an alias needs the same bundle routing.
+    for (const m of source.matchAll(/"hx-([^"]+)":\s*"hx-live"/g)) {
+      entries.push({ suffix: m[1], lang });
+    }
   }
   return entries;
 }

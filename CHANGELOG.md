@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Localized htmx attributes: ja, es, pt and ko now cover every attribute the
+  _Hypermedia Systems_ Contact.app uses** — `hx-post`, `hx-delete`,
+  `hx-confirm`, `hx-push-url`, `hx-boost`, `hx-indicator` and `hx-include` join
+  the existing five (e.g. `hx-削除`, `hx-eliminar`, `hx-excluir`, `hx-삭제`).
+  `hx-indicator` / `hx-include` localize under `@hyperfixi/htmx-adapter` (stock
+  htmx implements them; the embedded layer does not).
+- **Vocab aliases.** Several localized names may map to one attribute or event;
+  the first is the form to teach, later ones keep already-authored pages
+  working. Core's embedded orchestrator now reads whichever form an element
+  carries (it previously kept a single name per attribute).
+
+### Changed
+
+- **Audited primaries for `hx-trigger` / `hx-swap`** in ja (`hx-トリガー`,
+  `hx-置換`), es (`hx-disparador`, `hx-intercambio`), pt (`hx-gatilho`,
+  `hx-troca`) and ko (`hx-교체`), following loka-js's terminology reviews. The
+  names that shipped before (`hx-引き金`, `hx-disparar`, …) still resolve.
+- The vocab modules are regenerated against the current i18n dictionaries.
+  **No working name was removed** — 141 retired event names and three attribute
+  names are kept as aliases. One name changed meaning with its dictionary: sw
+  `panya_juu` is now `mouseup` (was `mouseover`).
+
+### Fixed
+
+- **Vietnamese `hx-get` / `hx-target` / `hx-swap` / `hx-trigger` / `sse-swap`
+  never worked**: the names were emitted with spaces (`hx-lấy giá trị`), which
+  HTML reads as three attributes. They are now hyphen-joined
+  (`hx-lấy-giá-trị`), like vi's existing `hx-trực-tiếp`.
+- 29 multi-word event names (ar, vi) were removed from the vocab modules: an
+  event is a single token of an `hx-trigger` value, so they could never match.
+
 ## [3.1.1] - 2026-09-04
 
 ### Fixed

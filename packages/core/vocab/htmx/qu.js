@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/quechua.ts
 // or packages/i18n/src/dictionaries/qu.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -18,7 +20,7 @@
       attrs: {
         "hx-taripay": "hx-get",
         "hx-churay": "hx-put",
-        "hx-ñawpaqman": "hx-target",
+        "hx-punta": "hx-target",
         "hx-t'inkuy": "hx-swap",
         "hx-kuyuchiy": "hx-trigger",
         "hx-chaypim": "hx-on",
@@ -26,10 +28,22 @@
         "sse-tinkiy": "sse-connect",
         "sse-t'inkuy": "sse-swap",
         "ws-tinkiy": "ws-connect",
-        "ws-kachay": "ws-send"
+        "ws-kachay": "ws-send",
+        "hx-ñawpaqman": "hx-target"
       },
       events: {
         "ñitiy": "click",
+        "ratñitiy": "mousedown",
+        "rathuqariy": "mouseup",
+        "qhaway": "focus",
+        "paqariy": "blur",
+        "kambiay": "change",
+        "yaykuchiy": "input",
+        "apaykachay": "submit",
+        "musuqchay": "reset",
+        "apakuy": "load",
+        "hatun_kay": "resize",
+        "kunray": "scroll",
         "iskay_ñitiy": "dblclick",
         "rat_ñitiy": "mousedown",
         "rat_huqariy": "mouseup",
@@ -41,16 +55,10 @@
         "yupana_ñitiy": "keydown",
         "yupana_huqariy": "keyup",
         "yupana_ñitana": "keypress",
-        "qhaway": "focus",
-        "paqariy": "blur",
         "tikray": "change",
-        "yaykuchiy": "input",
         "kachay": "submit",
         "qallariy": "reset",
-        "apakuy": "load",
         "urmay": "unload",
-        "hatun_kay": "resize",
-        "kunray": "scroll",
         "llamiy_qallay": "touchstart",
         "llamiy_tukuy": "touchend",
         "llamiy_kuyuy": "touchmove",

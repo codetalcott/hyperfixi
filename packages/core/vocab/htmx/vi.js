@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/vietnamese.ts
 // or packages/i18n/src/dictionaries/vi.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -16,36 +18,26 @@
   window.__hyperfixi_i18n.register('vi', {
     hyperfixi: {
       attrs: {
-        "hx-lấy giá trị": "hx-get",
+        "hx-lấy-giá-trị": "hx-get",
         "hx-đặt": "hx-put",
-        "hx-mục tiêu": "hx-target",
-        "hx-hoán đổi": "hx-swap",
-        "hx-kích hoạt": "hx-trigger",
+        "hx-mục-tiêu": "hx-target",
+        "hx-hoán-đổi": "hx-swap",
+        "hx-kích-hoạt": "hx-trigger",
         "hx-khi": "hx-on",
         "hx-trực-tiếp": "hx-live",
         "sse-kết-nối": "sse-connect",
-        "sse-hoán đổi": "sse-swap",
+        "sse-hoán-đổi": "sse-swap",
         "ws-kết-nối": "ws-connect",
         "ws-gửi": "ws-send"
       },
       events: {
         "nhấp": "click",
-        "nhấp đúp": "dblclick",
         "nhập": "input",
-        "thay đổi": "change",
-        "gửi": "submit",
-        "phím xuống": "keydown",
-        "phím lên": "keyup",
-        "nhấn phím": "keypress",
-        "chuột vào": "mouseenter",
-        "chuột ra": "mouseout",
-        "chuột rời": "mouseleave",
-        "tập trung": "focus",
-        "mất tập trung": "blur",
-        "đặt-lại": "reset",
-        "tải": "load",
+        "nộp": "submit",
         "cuộn": "scroll",
-        "đổi kích thước": "resize"
+        "gửi": "submit",
+        "đặt-lại": "reset",
+        "tải": "load"
       },
     },
   });

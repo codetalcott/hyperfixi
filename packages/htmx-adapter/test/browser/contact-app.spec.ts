@@ -2,7 +2,7 @@
  * The book's Contact.app (Hypermedia Systems, ch10) authored with localized
  * attribute names, driven by REAL stock htmx 4.0.0. Covers the attributes the
  * basic fixtures never touch — hx-delete, hx-confirm, hx-push-url, hx-post,
- * hx-boost, hx-indicator, hx-include — whose ja/es names come from core's
+ * hx-boost, hx-indicator, hx-include — whose names come from core's
  * hand-authored `scripts/htmx-attr-vocab.mjs`, not the semantic profile.
  *
  * Each assertion is on htmx's BEHAVIOR (the verb on the wire, the dialog
@@ -16,6 +16,8 @@ const FIXTURES = '/packages/htmx-adapter/test/browser/fixtures';
 const CASES = [
   { lang: 'ja', confirmText: 'この連絡先を削除しますか？', query: '田中' },
   { lang: 'es', confirmText: '¿Eliminar este contacto?', query: 'García' },
+  { lang: 'pt', confirmText: 'Excluir este contato?', query: 'Conceição' },
+  { lang: 'ko', confirmText: '이 연락처를 삭제할까요?', query: '김민준' },
 ];
 
 for (const { lang, confirmText, query } of CASES) {

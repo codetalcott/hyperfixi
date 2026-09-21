@@ -1,0 +1,192 @@
+{
+  "//": "Retired htmx vocab names, kept as parse aliases so pages authored with them keep working. Read by gen-htmx-vocab.mjs, which appends them AFTER the current names (the first name per canonical is the primary). Add a name here whenever a regeneration would otherwise delete it. Seeded 2026-09-21 from the modules as first generated: the i18n dictionaries' event words and two profile words (hi swap, qu target) had since moved. Multi-word event names are not listed — they could never match an hx-trigger token.",
+  "attrs": {
+    "hi": {
+      "hx-बदलें_स्थान": "hx-swap",
+      "sse-बदलें_स्थान": "sse-swap"
+    },
+    "qu": {
+      "hx-ñawpaqman": "hx-target"
+    }
+  },
+  "events": {
+    "es": {
+      "ratónabajo": "mousedown",
+      "ratónarriba": "mouseup",
+      "ratónencima": "mouseover",
+      "ratónfuera": "mouseout",
+      "teclaabajo": "keydown",
+      "teclaarriba": "keyup",
+      "enviar": "submit"
+    },
+    "fr": {
+      "sourisappuyée": "mousedown",
+      "sourisrelâchée": "mouseup",
+      "sourissur": "mouseover",
+      "sourisdehors": "mouseout",
+      "toucheappuyée": "keydown",
+      "toucherelâchée": "keyup"
+    },
+    "ja": {
+      "ダブルクリック": "dblclick",
+      "マウス入る": "mouseenter",
+      "マウス離れる": "mouseleave",
+      "マウス上": "mouseover",
+      "マウス外": "mouseout",
+      "マウス移動": "mousemove",
+      "キー押下": "keydown",
+      "キー解放": "keyup",
+      "キー押す": "keypress",
+      "読み込み解除": "unload",
+      "タッチ開始": "touchstart",
+      "タッチ終了": "touchend",
+      "タッチ移動": "touchmove",
+      "タッチキャンセル": "touchcancel"
+    },
+    "zh": {
+      "鼠标按下": "mousedown",
+      "鼠标抬起": "mouseup",
+      "鼠标进入": "mouseenter",
+      "鼠标离开": "mouseleave",
+      "鼠标悬停": "mouseover",
+      "按键抬起": "keyup",
+      "按键": "keypress",
+      "触摸结束": "touchend",
+      "触摸取消": "touchcancel"
+    },
+    "ar": {},
+    "ko": {
+      "리셋": "reset",
+      "언로드": "unload",
+      "터치시작": "touchstart",
+      "터치이동": "touchmove"
+    },
+    "de": {
+      "mausunten": "mousedown",
+      "mausoben": "mouseup",
+      "mausüber": "mouseover",
+      "maushinaus": "mouseout",
+      "tasteunten": "keydown",
+      "tasteoben": "keyup",
+      "unscharf": "blur",
+      "größeändern": "resize"
+    },
+    "pt": {
+      "mouseBaixo": "mousedown",
+      "mouseCima": "mouseup",
+      "mouseSobre": "mouseover",
+      "mouseFora": "mouseout",
+      "teclaBaixo": "keydown",
+      "teclaCima": "keyup",
+      "reiniciar": "reset"
+    },
+    "it": {
+      "mousegiù": "mousedown",
+      "mousesu": "mouseup",
+      "sfuocatura": "blur"
+    },
+    "ru": {
+      "мышь_вниз": "mousedown",
+      "мышь_вверх": "mouseup",
+      "сброс": "reset",
+      "изменение_размера": "resize"
+    },
+    "uk": {
+      "миша_вниз": "mousedown",
+      "миша_вгору": "mouseup",
+      "скидання": "reset",
+      "зміна_розміру": "resize"
+    },
+    "pl": {
+      "myszdół": "mousedown",
+      "myszgóra": "mouseup",
+      "wyślij": "submit",
+      "resetuj": "reset",
+      "zmieńrozmiar": "resize"
+    },
+    "tr": {
+      "çift_tıklama": "dblclick",
+      "fare_bas": "mousedown",
+      "fare_bırak": "mouseup",
+      "fare_gir": "mouseenter",
+      "fare_çık": "mouseleave",
+      "fare_üstü": "mouseover",
+      "fare_dışı": "mouseout",
+      "fare_hareket": "mousemove",
+      "tuş_bas": "keydown",
+      "tuş_bırak": "keyup",
+      "tuş_basım": "keypress",
+      "gönder": "submit",
+      "yükle_kaldır": "unload",
+      "boyut_değiştir": "resize",
+      "dokunma_başla": "touchstart",
+      "dokunma_bitir": "touchend",
+      "dokunma_hareket": "touchmove",
+      "dokunma_iptal": "touchcancel"
+    },
+    "hi": {
+      "माउस_नीचे": "mousedown",
+      "माउस_ऊपर": "mouseup"
+    },
+    "bn": {
+      "কি-ডাউন": "keydown",
+      "কি-আপ": "keyup",
+      "মাউস-ওভার": "mouseover",
+      "মাউস-আউট": "mouseout"
+    },
+    "vi": {
+      "gửi": "submit",
+      "đặt-lại": "reset",
+      "tải": "load"
+    },
+    "id": {
+      "klik_ganda": "dblclick",
+      "tekan_mouse": "mousedown",
+      "lepas_mouse": "mouseup",
+      "mouse_masuk": "mouseenter",
+      "mouse_keluar": "mouseleave",
+      "mouse_atas": "mouseover",
+      "mouse_luar": "mouseout",
+      "gerak_mouse": "mousemove",
+      "lepas_tombol": "keyup",
+      "pencet_tombol": "keypress",
+      "mulai_sentuh": "touchstart",
+      "akhir_sentuh": "touchend",
+      "gerak_sentuh": "touchmove",
+      "batal_sentuh": "touchcancel"
+    },
+    "sw": {
+      "bonyeza_mara_mbili": "dblclick",
+      "kitufe_bonyeza": "keypress",
+      "zingatia": "focus",
+      "poteza_macho": "blur",
+      "badilisha": "change",
+      "weka_upya": "reset",
+      "gusa_anza": "touchstart",
+      "gusa_mwisho": "touchend",
+      "gusa_sogea": "touchmove",
+      "gusa_ghairi": "touchcancel"
+    },
+    "qu": {
+      "iskay_ñitiy": "dblclick",
+      "rat_ñitiy": "mousedown",
+      "rat_huqariy": "mouseup",
+      "rat_yaykuy": "mouseenter",
+      "rat_lluqsiy": "mouseleave",
+      "rat_hawapi": "mouseover",
+      "rat_hawamanta": "mouseout",
+      "rat_kuyuy": "mousemove",
+      "yupana_ñitiy": "keydown",
+      "yupana_huqariy": "keyup",
+      "yupana_ñitana": "keypress",
+      "tikray": "change",
+      "kachay": "submit",
+      "qallariy": "reset",
+      "urmay": "unload",
+      "llamiy_qallay": "touchstart",
+      "llamiy_tukuy": "touchend",
+      "llamiy_kuyuy": "touchmove",
+      "llamiy_hark_ay": "touchcancel"
+    }
+  }
+}

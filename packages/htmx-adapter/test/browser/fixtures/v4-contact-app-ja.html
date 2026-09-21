@@ -8,15 +8,18 @@
     <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
   </head>
   <body>
-    <!-- Mirrors the controls in Hypermedia Systems' Contact.app (ch10). -->
+    <!-- Mirrors the controls in Hypermedia Systems' Contact.app (ch10).
+         Every attribute name is the vocab's PRIMARY form. -->
     <input id="q" type="search" name="q" value="田中" />
     <span id="spinner">…</span>
     <button
       id="search"
       hx-取得="/api/contacts"
+      hx-トリガー="クリック"
       hx-含める="#q"
       hx-インジケーター="#spinner"
       hx-ターゲット="#out"
+      hx-置換="innerHTML"
     >
       検索
     </button>

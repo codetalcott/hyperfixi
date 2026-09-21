@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/swahili.ts
 // or packages/i18n/src/dictionaries/sw.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -30,26 +32,28 @@
       },
       events: {
         "bonyeza": "click",
-        "bonyeza_mara_mbili": "dblclick",
         "panya_shuka": "mousedown",
-        "panya_juu": "mouseover",
+        "panya_juu": "mouseup",
         "panya_ingia": "mouseenter",
         "panya_toka": "mouseleave",
         "panya_nje": "mouseout",
         "panya_sogea": "mousemove",
         "kitufe_shuka": "keydown",
         "kitufe_juu": "keyup",
-        "kitufe_bonyeza": "keypress",
-        "zingatia": "focus",
-        "poteza_macho": "blur",
-        "badilisha": "change",
+        "lenga": "focus",
+        "kubadilisha": "change",
         "ingizo": "input",
         "wasilisha": "submit",
-        "weka_upya": "reset",
         "pakia": "load",
         "shuka": "unload",
         "badilisha_ukubwa": "resize",
         "sogeza": "scroll",
+        "bonyeza_mara_mbili": "dblclick",
+        "kitufe_bonyeza": "keypress",
+        "zingatia": "focus",
+        "poteza_macho": "blur",
+        "badilisha": "change",
+        "weka_upya": "reset",
         "gusa_anza": "touchstart",
         "gusa_mwisho": "touchend",
         "gusa_sogea": "touchmove",

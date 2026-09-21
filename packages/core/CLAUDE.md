@@ -203,20 +203,35 @@ Attribute names resolve from two sources, in order: the hand-authored table
 `scripts/htmx-attr-vocab.mjs`, then the semantic profile. The table exists
 because most htmx attributes are not hyperscript keywords, and their natural
 words are often already a command's (ja `削除` / es `eliminar` are `remove`) —
-**do not add htmx-only names to a semantic profile.** ja and es are authored
-for the 12 attributes the _Hypermedia Systems_ Contact.app uses; to add a
-language, add an entry there. `hx-indicator` / `hx-include` are generator-only
-keys (`ADAPTER_ONLY_KEYS`): stock htmx implements them under
-`@hyperfixi/htmx-adapter`; the embedded layer does not, so they are not in
-`i18n-hooks.ts` `KEYS`.
+**do not add htmx-only names to a semantic profile.** It also _leads_ the
+profile where the profile's word suits a command but not an attribute name
+(ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
+terminology reviews). ja, es, pt and ko are authored for the 12 attributes the
+_Hypermedia Systems_ Contact.app uses; to add a language, add an entry there.
+`hx-indicator` / `hx-include` are generator-only keys (`ADAPTER_ONLY_KEYS`):
+stock htmx implements them under `@hyperfixi/htmx-adapter`; the embedded layer
+does not, so they are not in `i18n-hooks.ts` `KEYS`.
 
-> **The committed modules are behind the generator's other inputs.** They were
-> generated once; the i18n dictionaries' event words (every language) and two
-> profile words (hi `swap`, qu `target`) have moved since. A plain regeneration
-> therefore RENAMES shipped event names (ja `キー解放` → `キーアップ`) and
-> introduces spaced ones (fr `touche haut`) that an `hx-trigger` value cannot
-> carry. Until that is decided deliberately, regenerate and keep only the
-> `attrs` hunks you intended.
+**Names are additive — never delete a shipped name, demote it.** Several
+localized names may map to one canonical; the first is the primary (the form
+to teach) and the rest are parse aliases. The orchestrator's `nameOf` answers
+with whichever registered form the element actually carries. A name retired by
+a profile/dictionary change goes in `scripts/htmx-vocab-legacy.json`, which the
+generator appends after the current names.
+
+`npm run check:htmx-vocab` (also a test in `i18n-vocab-modules.test.ts`) fails
+when the committed modules differ from what the generator emits — so editing a
+profile keyword or a dictionary event word that feeds the vocab now reddens
+core until you regenerate. **Read that diff**: a disappearing name breaks pages
+authored with it. The gate exists because the modules once sat months behind
+their inputs and a plain regeneration would have deleted 165 shipped event
+names.
+
+Two generator rules for multi-word words: an **event** name is skipped and
+reported (it is one `\S+` token of an `hx-trigger` value or an `hx-on:` suffix
+in both consumers, and a joined form would be an unreviewed coinage); an
+**attribute** name is hyphen-joined (vi `lấy giá trị` → `hx-lấy-giá-trị`, the
+convention the vi profile already uses for `trực-tiếp`).
 
 Tests:
 

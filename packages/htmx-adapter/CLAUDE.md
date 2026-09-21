@@ -32,7 +32,7 @@ test/
 └── browser/               # Playwright e2e against REAL vendored libraries
     ├── adapter.spec.ts    # v4 request/swap/order/re-process, executor mode w/ real _hyperscript (4 load orders,
     │                      #   allowlist rejection, mixed node; console + htmx:error collectors), v2 fallback
-    ├── contact-app.spec.ts # ja/es Contact.app attrs on stock htmx 4: delete+confirm+push-url, include,
+    ├── contact-app.spec.ts # ja/es/pt/ko Contact.app attrs on stock htmx 4: delete+confirm+push-url, include,
     │                      #   indicator, post, boost:inherited — asserts htmx BEHAVIOR, not sibling attrs
     ├── fixtures/*.html
     └── vendor/            # htmx 4.0.0, htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README

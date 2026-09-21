@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/italian.ts
 // or packages/i18n/src/dictionaries/it.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -31,8 +33,6 @@
       events: {
         "clic": "click",
         "doppioclic": "dblclick",
-        "mousegiù": "mousedown",
-        "mousesu": "mouseup",
         "mouseentra": "mouseenter",
         "mouseesce": "mouseleave",
         "mousesopra": "mouseover",
@@ -42,9 +42,10 @@
         "tastosu": "keyup",
         "tastopremi": "keypress",
         "fuoco": "focus",
-        "sfuocatura": "blur",
+        "sfuocare": "blur",
         "cambio": "change",
         "invio": "submit",
+        "reimpostare": "reset",
         "carica": "load",
         "scarica": "unload",
         "ridimensiona": "resize",
@@ -52,7 +53,10 @@
         "toccoinizia": "touchstart",
         "toccofine": "touchend",
         "toccomuovi": "touchmove",
-        "toccoannulla": "touchcancel"
+        "toccoannulla": "touchcancel",
+        "mousegiù": "mousedown",
+        "mousesu": "mouseup",
+        "sfuocatura": "blur"
       },
     },
   });

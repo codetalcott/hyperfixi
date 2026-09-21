@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/spanish.ts
 // or packages/i18n/src/dictionaries/es.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -21,7 +23,9 @@
         "hx-poner": "hx-put",
         "hx-eliminar": "hx-delete",
         "hx-objetivo": "hx-target",
+        "hx-intercambio": "hx-swap",
         "hx-intercambiar": "hx-swap",
+        "hx-disparador": "hx-trigger",
         "hx-disparar": "hx-trigger",
         "hx-confirmar": "hx-confirm",
         "hx-impulsar": "hx-boost",
@@ -31,6 +35,7 @@
         "hx-indicador": "hx-indicator",
         "hx-incluir": "hx-include",
         "sse-conectar": "sse-connect",
+        "sse-intercambio": "sse-swap",
         "sse-intercambiar": "sse-swap",
         "ws-conectar": "ws-connect",
         "ws-enviar": "ws-send"
@@ -38,21 +43,15 @@
       events: {
         "clic": "click",
         "dobleclic": "dblclick",
-        "ratónabajo": "mousedown",
-        "ratónarriba": "mouseup",
         "ratónentrar": "mouseenter",
         "ratónsalir": "mouseleave",
-        "ratónencima": "mouseover",
-        "ratónfuera": "mouseout",
         "ratónmover": "mousemove",
-        "teclaabajo": "keydown",
-        "teclaarriba": "keyup",
         "teclapresar": "keypress",
         "enfocar": "focus",
         "desenfocar": "blur",
         "cambiar": "change",
         "entrada": "input",
-        "enviar": "submit",
+        "envío": "submit",
         "reiniciar": "reset",
         "cargar": "load",
         "descargar": "unload",
@@ -61,7 +60,14 @@
         "toqueempezar": "touchstart",
         "toqueterminar": "touchend",
         "toquemover": "touchmove",
-        "toquecancelar": "touchcancel"
+        "toquecancelar": "touchcancel",
+        "ratónabajo": "mousedown",
+        "ratónarriba": "mouseup",
+        "ratónencima": "mouseover",
+        "ratónfuera": "mouseout",
+        "teclaabajo": "keydown",
+        "teclaarriba": "keyup",
+        "enviar": "submit"
       },
     },
   });

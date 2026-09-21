@@ -176,6 +176,7 @@
     "generate:bundle": "tsx scripts/generate-inline-bundle.ts",
     "generate:bundle:textshelf": "tsx scripts/generate-inline-bundle.ts --config bundle-configs/textshelf.config.json",
     "generate:htmx-vocab": "node scripts/gen-htmx-vocab.mjs",
+    "check:htmx-vocab": "node scripts/gen-htmx-vocab.mjs --check",
     "dev": "rollup -c -w",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:watch": "vitest",

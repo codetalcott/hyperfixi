@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/russian.ts
 // or packages/i18n/src/dictionaries/ru.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -31,8 +33,8 @@
       events: {
         "клик": "click",
         "двойной_клик": "dblclick",
-        "мышь_вниз": "mousedown",
-        "мышь_вверх": "mouseup",
+        "мышьвниз": "mousedown",
+        "мышьвверх": "mouseup",
         "мышь_вход": "mouseenter",
         "мышь_выход": "mouseleave",
         "наведение": "mouseover",
@@ -46,15 +48,19 @@
         "изменение": "change",
         "ввод": "input",
         "отправка": "submit",
-        "сброс": "reset",
+        "сбросить": "reset",
         "загрузка": "load",
         "выгрузка": "unload",
-        "изменение_размера": "resize",
+        "изменениеразмера": "resize",
         "прокрутка": "scroll",
         "касание_начало": "touchstart",
         "касание_конец": "touchend",
         "касание_движение": "touchmove",
-        "касание_отмена": "touchcancel"
+        "касание_отмена": "touchcancel",
+        "мышь_вниз": "mousedown",
+        "мышь_вверх": "mouseup",
+        "сброс": "reset",
+        "изменение_размера": "resize"
       },
     },
   });

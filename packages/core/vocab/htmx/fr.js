@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/french.ts
 // or packages/i18n/src/dictionaries/fr.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -31,15 +33,9 @@
       events: {
         "clic": "click",
         "doubleclic": "dblclick",
-        "sourisappuyée": "mousedown",
-        "sourisrelâchée": "mouseup",
         "sourisentrer": "mouseenter",
         "sourissortir": "mouseleave",
-        "sourissur": "mouseover",
-        "sourisdehors": "mouseout",
         "sourisbouger": "mousemove",
-        "toucheappuyée": "keydown",
-        "toucherelâchée": "keyup",
         "touchepressée": "keypress",
         "flou": "blur",
         "changer": "change",
@@ -53,7 +49,13 @@
         "touchercommencer": "touchstart",
         "toucherfin": "touchend",
         "toucherbouger": "touchmove",
-        "toucherannuler": "touchcancel"
+        "toucherannuler": "touchcancel",
+        "sourisappuyée": "mousedown",
+        "sourisrelâchée": "mouseup",
+        "sourissur": "mouseover",
+        "sourisdehors": "mouseout",
+        "toucheappuyée": "keydown",
+        "toucherelâchée": "keyup"
       },
     },
   });

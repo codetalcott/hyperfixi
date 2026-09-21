@@ -3,6 +3,8 @@
 // Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
 // packages/semantic/src/generators/profiles/polish.ts
 // or packages/i18n/src/dictionaries/pl.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -31,8 +33,6 @@
       events: {
         "kliknięcie": "click",
         "podwójnekliknięcie": "dblclick",
-        "myszdół": "mousedown",
-        "myszgóra": "mouseup",
         "myszwejście": "mouseenter",
         "myszwyjście": "mouseleave",
         "mysznad": "mouseover",
@@ -45,16 +45,20 @@
         "rozmycie": "blur",
         "zmiana": "change",
         "wejście": "input",
-        "wyślij": "submit",
-        "resetuj": "reset",
+        "wysłaniu": "submit",
+        "zresetuj": "reset",
         "załaduj": "load",
         "wyładuj": "unload",
-        "zmieńrozmiar": "resize",
         "przewiń": "scroll",
         "dotykstart": "touchstart",
         "dotykkoniec": "touchend",
         "dotykruch": "touchmove",
-        "dotykanuluj": "touchcancel"
+        "dotykanuluj": "touchcancel",
+        "myszdół": "mousedown",
+        "myszgóra": "mouseup",
+        "wyślij": "submit",
+        "resetuj": "reset",
+        "zmieńrozmiar": "resize"
       },
     },
   });
