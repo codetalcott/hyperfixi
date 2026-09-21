@@ -38,8 +38,8 @@
     "directory": "protocol/typescript"
   },
   "devDependencies": {
-    "@types/node": "^25.9.6",
+    "@types/node": "^25.9.7",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   }
 }
