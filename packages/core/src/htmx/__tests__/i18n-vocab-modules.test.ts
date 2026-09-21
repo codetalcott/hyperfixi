@@ -14,7 +14,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resetOrchestrator, isLangRegistered } from '../i18n-orchestrator.js';
-import { resetHooks } from '../i18n-hooks.js';
+import { getHooks, KEYS, resetHooks } from '../i18n-hooks.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../../../..');
 const VOCAB_DIR = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
@@ -202,6 +202,59 @@ describe('generated htmx vocab modules', () => {
       const source = await readFile(path, 'utf-8');
       expect(source).toContain('"sse-接続": "sse-connect"');
       expect(source).toContain('"hx-ライブ": "hx-live"');
+    });
+  });
+
+  // Attribute names that are NOT hyperscript keywords come from the
+  // hand-authored table in scripts/htmx-attr-vocab.mjs (the profile's words
+  // for them are taken — ja 削除 / es eliminar are the `remove` command).
+  // Resolved through the installed hooks, not by grepping the source, so the
+  // orchestrator's canonical → localized inversion is part of what is pinned.
+  describe('authored attribute names (htmx-attr-vocab.mjs)', () => {
+    const AUTHORED: Record<string, Record<string, string>> = {
+      ja: {
+        post: 'hx-投稿',
+        delete: 'hx-削除',
+        confirm: 'hx-確認',
+        boost: 'hx-ブースト',
+        'push-url': 'hx-プッシュ-url',
+      },
+      es: {
+        post: 'hx-publicar',
+        delete: 'hx-eliminar',
+        confirm: 'hx-confirmar',
+        boost: 'hx-impulsar',
+        'push-url': 'hx-empujar-url',
+      },
+    };
+
+    for (const [lang, expected] of Object.entries(AUTHORED)) {
+      it(`${lang} resolves each authored name per element language`, async () => {
+        await loadVocabModule(lang);
+        const host = document.createElement('div');
+        host.setAttribute('lang', lang);
+        const elt = document.createElement('button');
+        host.appendChild(elt);
+        for (const [key, name] of Object.entries(expected)) {
+          expect(getHooks().nameOf(elt, 'hx', key)).toBe(name);
+          expect(getHooks().selectorFor('hx', key)).toContain(`[${name}]`);
+        }
+        // Profile-derived names are untouched by the table.
+        expect(getHooks().nameOf(elt, 'hx', 'get')).toBe(lang === 'ja' ? 'hx-取得' : 'hx-obtener');
+      });
+
+      it(`${lang} emits the adapter-only keys (indicator, include)`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source).toMatch(/"hx-[^"]+": "hx-indicator"/);
+        expect(source).toMatch(/"hx-[^"]+": "hx-include"/);
+      });
+    }
+
+    it('adapter-only keys stay out of the embedded layer KEYS', () => {
+      // Core's htmx-compat layer does not implement them; listing them would
+      // advertise support through the exported HTMX_ATTRS.
+      expect(KEYS.hx).not.toContain('indicator');
+      expect(KEYS.hx).not.toContain('include');
     });
   });
 

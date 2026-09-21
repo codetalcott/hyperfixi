@@ -199,6 +199,25 @@ npm run build --prefix packages/semantic   # ensure profiles dist is fresh
 npm run generate:htmx-vocab                # emits vocab/htmx/{lang}.js
 ```
 
+Attribute names resolve from two sources, in order: the hand-authored table
+`scripts/htmx-attr-vocab.mjs`, then the semantic profile. The table exists
+because most htmx attributes are not hyperscript keywords, and their natural
+words are often already a command's (ja `削除` / es `eliminar` are `remove`) —
+**do not add htmx-only names to a semantic profile.** ja and es are authored
+for the 12 attributes the _Hypermedia Systems_ Contact.app uses; to add a
+language, add an entry there. `hx-indicator` / `hx-include` are generator-only
+keys (`ADAPTER_ONLY_KEYS`): stock htmx implements them under
+`@hyperfixi/htmx-adapter`; the embedded layer does not, so they are not in
+`i18n-hooks.ts` `KEYS`.
+
+> **The committed modules are behind the generator's other inputs.** They were
+> generated once; the i18n dictionaries' event words (every language) and two
+> profile words (hi `swap`, qu `target`) have moved since. A plain regeneration
+> therefore RENAMES shipped event names (ja `キー解放` → `キーアップ`) and
+> introduces spaced ones (fr `touche haut`) that an `hx-trigger` value cannot
+> carry. Until that is decided deliberately, regenerate and keep only the
+> `attrs` hunks you intended.
+
 Tests:
 
 - `src/htmx/__tests__/i18n-hooks.test.ts` — contract surface (defaults, install/reset)

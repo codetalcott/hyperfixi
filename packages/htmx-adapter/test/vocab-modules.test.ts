@@ -75,6 +75,61 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     expect(btn.getAttribute('hx-get')).toBe('/api');
   });
 
+  // The book's Contact.app (Hypermedia Systems, ch10) uses exactly these 12
+  // hx- attributes. ja/es must localize all of them — the five that come from
+  // the semantic profile plus the seven authored in core's
+  // scripts/htmx-attr-vocab.mjs. Parsed from markup, not setAttribute, so the
+  // HTML parser's handling of each name is part of what is pinned.
+  const CONTACT_APP: Record<string, Record<string, string>> = {
+    ja: {
+      'hx-取得': 'hx-get',
+      'hx-投稿': 'hx-post',
+      'hx-削除': 'hx-delete',
+      'hx-ターゲット': 'hx-target',
+      'hx-交換': 'hx-swap',
+      'hx-引き金': 'hx-trigger',
+      'hx-確認': 'hx-confirm',
+      'hx-ブースト': 'hx-boost',
+      'hx-プッシュ-url': 'hx-push-url',
+      'hx-インジケーター': 'hx-indicator',
+      'hx-含める': 'hx-include',
+    },
+    es: {
+      'hx-obtener': 'hx-get',
+      'hx-publicar': 'hx-post',
+      'hx-eliminar': 'hx-delete',
+      'hx-objetivo': 'hx-target',
+      'hx-intercambiar': 'hx-swap',
+      'hx-disparar': 'hx-trigger',
+      'hx-confirmar': 'hx-confirm',
+      'hx-impulsar': 'hx-boost',
+      'hx-empujar-url': 'hx-push-url',
+      'hx-indicador': 'hx-indicator',
+      'hx-incluir': 'hx-include',
+    },
+  };
+
+  for (const [lang, expected] of Object.entries(CONTACT_APP)) {
+    it(`${lang} vocab canonicalizes every Contact.app attribute from parsed markup`, () => {
+      loadVocabModule(lang);
+      const names = Object.keys(expected);
+      const markup = names.map((n, i) => `${n}="v${i}"`).join(' ');
+      document.body.innerHTML = `<section lang="${lang}"><button ${markup}></button></section>`;
+      canonicalizeTree(document.body);
+      const btn = document.querySelector('button')!;
+      names.forEach((n, i) => {
+        expect(btn.getAttribute(expected[n]), `${n} → ${expected[n]}`).toBe(`v${i}`);
+        expect(btn.getAttribute(n), `${n} stays authored`).toBe(`v${i}`);
+      });
+    });
+
+    it(`${lang} vocab localizes the hx-on: family Contact.app uses`, () => {
+      loadVocabModule(lang);
+      const attrs = vocabFor(lang)?.attrs ?? {};
+      expect(Object.values(attrs)).toContain('hx-on');
+    });
+  }
+
   it('the en module registers an empty (identity) vocab', () => {
     loadVocabModule('en');
     expect(isLangRegistered('en')).toBe(true);
