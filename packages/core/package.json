@@ -229,7 +229,7 @@
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.3.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.1",
     "@vitest/ui": "^5.0.0",
     "better-sqlite3": "^13.0.3",
     "esbuild": "^0.25.12",
