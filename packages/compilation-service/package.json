@@ -36,13 +36,13 @@
   },
   "dependencies": {
     "@lokascript/framework": "^3.1.1",
-    "hono": "^4.13.7"
+    "hono": "^4.13.8"
   },
   "devDependencies": {
     "@hono/node-server": "^2.1.1",
     "@hyperfixi/aot-compiler": "^3.1.1",
     "@lokascript/semantic": "^3.1.1",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.2",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
     "vitest": "^5.0.1"
