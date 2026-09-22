@@ -9,10 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Localized htmx attributes: ja, es, pt and ko now cover every attribute the
-  _Hypermedia Systems_ book's code listings use** — `hx-vals`, `hx-select`,
-  `hx-swap-oob` and `hx-sync` join the Contact.app twelve (`hx-値`,
-  `hx-valores`, `hx-값`, `hx-選択`, `hx-selección`, `hx-seleção`, `hx-선택`, …). `hx-ext` is left in English on
+- **Localized htmx attributes: ja, es, pt, ko, tr, de, fr and zh now cover
+  every attribute the _Hypermedia Systems_ book's code listings use** —
+  `hx-vals`, `hx-select`, `hx-swap-oob` and `hx-sync` join the Contact.app
+  twelve (`hx-値`, `hx-valores`, `hx-값`, `hx-werte`, `hx-選択`, `hx-selección`,
+  `hx-seçim`, `hx-auswahl`, `hx-sélection`, `hx-选择`, …). tr/de/fr/zh are new
+  in the table: the Contact.app seven they lacked (`hx-sil`, `hx-löschen`,
+  `hx-supprimer`, `hx-删除`, …) plus audited trigger/swap primaries following
+  loka-js (`hx-tetikleyici`, `hx-auslöser`, `hx-déclencheur`, `hx-替换`; the
+  profile words `hx-tetikle`, `hx-auslösen`, `hx-déclencher`, `hx-交换` still
+  resolve). de gains a lowercase `hx-ziel`: the profile's `hx-Ziel` could never
+  match a parsed attribute, since HTML lowercases attribute names. `hx-ext` is left in English on
   purpose: htmx 4 removed it. The vocab table gains an `events` block for
   trigger heads the i18n dictionaries do not name; ja, es, pt and ko author
   the DOM `search` event (`検索`, `buscar`, `검색`), which the book's and

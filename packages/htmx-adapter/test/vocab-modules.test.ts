@@ -143,6 +143,12 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     es: { 'hx-disparar': 'hx-trigger', 'hx-intercambiar': 'hx-swap' },
     pt: { 'hx-disparar': 'hx-trigger', 'hx-trocar': 'hx-swap', 'hx-eliminar': 'hx-delete' },
     ko: { 'hx-교환': 'hx-swap', 'hx-타겟': 'hx-target' },
+    tr: { 'hx-tetikle': 'hx-trigger', 'hx-takas': 'hx-swap' },
+    // `hx-Ziel` was never reachable from markup (HTML lowercases attribute
+    // names); it resolves now because the lowercase primary exists.
+    de: { 'hx-auslösen': 'hx-trigger', 'hx-austauschen': 'hx-swap', 'hx-Ziel': 'hx-target' },
+    fr: { 'hx-déclencher': 'hx-trigger', 'hx-échanger': 'hx-swap' },
+    zh: { 'hx-交换': 'hx-swap' },
     hi: { 'hx-बदलें_स्थान': 'hx-swap' },
     qu: { 'hx-ñawpaqman': 'hx-target' },
   };
@@ -219,6 +225,35 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
       'hx-교체-oob': 'hx-swap-oob',
       'hx-동기화': 'hx-sync',
     },
+    // Second wave: the Contact.app twelve minus hx-on, plus the four — primaries only.
+    tr: {
+      'hx-al': 'hx-get', 'hx-gönder': 'hx-post', 'hx-sil': 'hx-delete', 'hx-hedef': 'hx-target',
+      'hx-değiştirme': 'hx-swap', 'hx-tetikleyici': 'hx-trigger', 'hx-onayla': 'hx-confirm',
+      'hx-hızlandır': 'hx-boost', 'hx-itele-url': 'hx-push-url', 'hx-gösterge': 'hx-indicator',
+      'hx-içer': 'hx-include', 'hx-değerler': 'hx-vals', 'hx-seçim': 'hx-select',
+      'hx-değiştirme-oob': 'hx-swap-oob', 'hx-eşitle': 'hx-sync',
+    },
+    de: {
+      'hx-holen': 'hx-get', 'hx-posten': 'hx-post', 'hx-löschen': 'hx-delete', 'hx-ziel': 'hx-target',
+      'hx-ersetzung': 'hx-swap', 'hx-auslöser': 'hx-trigger', 'hx-bestätigen': 'hx-confirm',
+      'hx-beschleunigen': 'hx-boost', 'hx-verlauf-url': 'hx-push-url', 'hx-indikator': 'hx-indicator',
+      'hx-einbeziehen': 'hx-include', 'hx-werte': 'hx-vals', 'hx-auswahl': 'hx-select',
+      'hx-ersetzung-oob': 'hx-swap-oob', 'hx-synchronisieren': 'hx-sync',
+    },
+    fr: {
+      'hx-obtenir': 'hx-get', 'hx-publier': 'hx-post', 'hx-supprimer': 'hx-delete', 'hx-cible': 'hx-target',
+      'hx-remplacement': 'hx-swap', 'hx-déclencheur': 'hx-trigger', 'hx-confirmer': 'hx-confirm',
+      'hx-booster': 'hx-boost', 'hx-pousser-url': 'hx-push-url', 'hx-indicateur': 'hx-indicator',
+      'hx-inclure': 'hx-include', 'hx-valeurs': 'hx-vals', 'hx-sélection': 'hx-select',
+      'hx-remplacement-oob': 'hx-swap-oob', 'hx-synchronisation': 'hx-sync',
+    },
+    zh: {
+      'hx-获取': 'hx-get', 'hx-发布': 'hx-post', 'hx-删除': 'hx-delete', 'hx-目标': 'hx-target',
+      'hx-替换': 'hx-swap', 'hx-触发': 'hx-trigger', 'hx-确认': 'hx-confirm',
+      'hx-增强': 'hx-boost', 'hx-推送-url': 'hx-push-url', 'hx-指示器': 'hx-indicator',
+      'hx-包含': 'hx-include', 'hx-值': 'hx-vals', 'hx-选择': 'hx-select',
+      'hx-替换-oob': 'hx-swap-oob', 'hx-同步': 'hx-sync',
+    },
   };
 
   for (const [lang, expected] of Object.entries(BOOK_LISTINGS)) {
@@ -242,6 +277,10 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     es: ['hx-disparador', 'buscar, teclaarriba delay:200ms changed'],
     pt: ['hx-gatilho', 'buscar, teclaCima delay:200ms changed'],
     ko: ['hx-트리거', '검색, 키업 delay:200ms changed'],
+    tr: ['hx-tetikleyici', 'arama, tuşbırakma delay:200ms changed'],
+    de: ['hx-auslöser', 'suchen, tasteoben delay:200ms changed'],
+    fr: ['hx-déclencheur', 'rechercher, toucherelâchée delay:200ms changed'],
+    zh: ['hx-触发', '搜索, 松键 delay:200ms changed'],
   };
 
   for (const [lang, [attr, value]] of Object.entries(SEARCH_TRIGGER)) {

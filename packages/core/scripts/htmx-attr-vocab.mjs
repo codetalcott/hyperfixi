@@ -238,4 +238,156 @@ export const HTMX_ATTR_VOCAB = {
       'swap-oob': 'oob is left as-is, like url in 푸시-url; a reviewer may prefer a different shape',
     },
   },
+
+  // The second wave (2026-09-22): the four languages the companion adds after
+  // ja/es/pt/ko. None is reviewed. Where loka-js authored a fixi noun for
+  // trigger/swap (fx-auslöser, fx-déclencheur, fx-tetikleyici, fx-替换) it
+  // leads here for the same reason as ja/es: the attribute names a thing, and
+  // the families are taught side by side. The profile's word follows as an
+  // alias automatically.
+  tr: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-tetikleyici (noun); the profile's imperative `tetikle` is the alias.
+      trigger: 'tetikleyici',
+      // loka-js fx-değiştirme ("replacing"); the profile's `takas` (barter) is
+      // the alias. loka-js's second form `değişim` is NOT taken: it is the
+      // dictionary's `change` event word, and hx-değişim="değişim" would be
+      // a trap.
+      swap: 'değiştirme',
+      post: 'gönder',
+      delete: 'sil',
+      confirm: 'onayla',
+      boost: 'hızlandır',
+      // `itele` is the profile's `push` (hyperscript `push url`).
+      'push-url': 'itele-url',
+      indicator: 'gösterge',
+      include: 'içer',
+      vals: 'değerler',
+      // Noun; the profile's `select` (vurgula, "highlight") is text selection
+      // and does not follow.
+      select: 'seçim',
+      'swap-oob': 'değiştirme-oob',
+      sync: 'eşitle',
+    },
+    sse: { swap: 'değiştirme' },
+    events: {
+      // Noun, like the dictionary's tıklama (click) / değişim (change).
+      search: 'arama',
+    },
+    lowConfidence: {
+      post: 'gönder is "send"; yayınla ("publish") would match es/pt publicar. ws-send is already ws-gönder',
+      'push-url': "itele is the profile's `push`, a calque; a Turkish reviewer may prefer geçmiş-url (history)",
+      include: 'içer vs dahil-et — dahil et is the UI phrase but needs a hyphen',
+      sync: 'eşitle vs senkronize-et',
+      boost: 'hızlandır ("speed up"); Turkish htmx writing may leave boost untranslated',
+    },
+  },
+
+  de: {
+    reviewed: false,
+    hx: {
+      // HTML lowercases attribute names, so the profile's `Ziel` shipped as
+      // `hx-Ziel` — a name no parsed attribute can ever match. The lowercase
+      // form leads; `hx-Ziel` stays as the (unreachable) alias.
+      target: 'ziel',
+      // loka-js fx-auslöser (noun); the profile's infinitive `auslösen` is the alias.
+      trigger: 'auslöser',
+      // loka-js fx-ersetzung ("replacement", the htmx sense) + fx-tausch; the
+      // profile's `austauschen` is the alias.
+      swap: ['ersetzung', 'tausch'],
+      post: 'posten',
+      delete: 'löschen',
+      confirm: 'bestätigen',
+      boost: 'beschleunigen',
+      // NOT the profile's `push` (drücken, "press"): "press url" is a
+      // mis-calque. verlauf = browser history, which is what the attribute
+      // touches.
+      'push-url': 'verlauf-url',
+      indicator: 'indikator',
+      include: 'einbeziehen',
+      vals: 'werte',
+      // Noun; the profile's `select` (markieren, "highlight") is text
+      // selection and does not follow.
+      select: 'auswahl',
+      'swap-oob': 'ersetzung-oob',
+      sync: 'synchronisieren',
+    },
+    sse: { swap: ['ersetzung', 'tausch'] },
+    events: {
+      // Verb, like the dictionary's ändern (change) / laden (load).
+      search: 'suchen',
+    },
+    lowConfidence: {
+      post: 'posten is colloquial; senden collides in sense with ws-senden; German htmx writing keeps "POST"',
+      'push-url': 'verlauf-url is a paraphrase, not the profile word; schieben-url is the literal alternative',
+      boost: 'beschleunigen ("speed up"); German htmx writing mostly leaves boost untranslated',
+      sync: 'synchronisieren is long; abgleich (noun) is the alternative',
+    },
+  },
+
+  fr: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-déclencheur (noun); the profile's infinitive `déclencher` is the alias.
+      trigger: 'déclencheur',
+      // loka-js fx-remplacement (the htmx sense) + fx-échange; the profile's
+      // `échanger` is the alias.
+      swap: ['remplacement', 'échange'],
+      post: 'publier',
+      delete: 'supprimer',
+      confirm: 'confirmer',
+      // French developers say "booster"; it is a conjugable French verb.
+      boost: 'booster',
+      // `pousser` is the profile's `push` (hyperscript `push url`), as es empujar-url.
+      'push-url': 'pousser-url',
+      indicator: 'indicateur',
+      include: 'inclure',
+      vals: 'valeurs',
+      // Noun; the profile's `sélectionner` does not follow (adapter-only key).
+      select: 'sélection',
+      'swap-oob': 'remplacement-oob',
+      sync: 'synchronisation',
+    },
+    sse: { swap: ['remplacement', 'échange'] },
+    events: {
+      // Verb, like the dictionary's changer (change) / charger (load).
+      search: 'rechercher',
+    },
+    lowConfidence: {
+      'push-url': "pousser is the profile's `push`, a calque; French describes pushState as \"ajouter à l'historique\"",
+      sync: 'synchronisation (noun) vs synchroniser (verb) — the fr attrs are mostly verbs',
+    },
+  },
+
+  zh: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-替换 ("replace", what a hypermedia swap does); the
+      // profile's 交换 (exchange) is the alias. Same reasoning as ja 置換.
+      swap: ['替换', '交换'],
+      post: '发布',
+      delete: '删除',
+      confirm: '确认',
+      boost: '增强',
+      // `推送` is the profile's `push` (hyperscript `push url`), as ja プッシュ-url.
+      'push-url': '推送-url',
+      indicator: '指示器',
+      include: '包含',
+      vals: '值',
+      // The profile's `select` happens to be 选择 too, but adapter-only keys
+      // take no profile fallback, so it is authored here.
+      select: '选择',
+      'swap-oob': '替换-oob',
+      sync: '同步',
+    },
+    sse: { swap: ['替换', '交换'] },
+    events: {
+      search: '搜索',
+    },
+    lowConfidence: {
+      post: '发布 is "publish/post (content)"; 提交 ("submit") is the alternative',
+      boost: '增强 ("enhance") follows Chinese htmx write-ups; a reviewer may prefer 加速',
+    },
+  },
 };

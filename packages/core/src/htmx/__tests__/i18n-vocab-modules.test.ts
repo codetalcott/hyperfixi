@@ -241,6 +241,34 @@ describe('generated htmx vocab modules', () => {
         boost: 'hx-부스트',
         'push-url': 'hx-푸시-url',
       },
+      tr: {
+        post: 'hx-gönder',
+        delete: 'hx-sil',
+        confirm: 'hx-onayla',
+        boost: 'hx-hızlandır',
+        'push-url': 'hx-itele-url',
+      },
+      de: {
+        post: 'hx-posten',
+        delete: 'hx-löschen',
+        confirm: 'hx-bestätigen',
+        boost: 'hx-beschleunigen',
+        'push-url': 'hx-verlauf-url',
+      },
+      fr: {
+        post: 'hx-publier',
+        delete: 'hx-supprimer',
+        confirm: 'hx-confirmer',
+        boost: 'hx-booster',
+        'push-url': 'hx-pousser-url',
+      },
+      zh: {
+        post: 'hx-发布',
+        delete: 'hx-删除',
+        confirm: 'hx-确认',
+        boost: 'hx-增强',
+        'push-url': 'hx-推送-url',
+      },
     };
 
     // Where the table LEADS the profile: [primary, shipped name kept as alias].
@@ -252,6 +280,16 @@ describe('generated htmx vocab modules', () => {
       },
       pt: { trigger: ['hx-gatilho', 'hx-disparar'], swap: ['hx-troca', 'hx-trocar'] },
       ko: { swap: ['hx-교체', 'hx-교환'] },
+      tr: { trigger: ['hx-tetikleyici', 'hx-tetikle'], swap: ['hx-değiştirme', 'hx-takas'] },
+      // de `target` is not listed: the profile's `Ziel` shipped capitalized,
+      // and setAttribute/markup lowercase it to `hx-ziel` — the new primary.
+      // The adapter suite pins that `hx-Ziel` in markup now resolves.
+      de: { trigger: ['hx-auslöser', 'hx-auslösen'], swap: ['hx-ersetzung', 'hx-austauschen'] },
+      fr: {
+        trigger: ['hx-déclencheur', 'hx-déclencher'],
+        swap: ['hx-remplacement', 'hx-échanger'],
+      },
+      zh: { swap: ['hx-替换', 'hx-交换'] },
     };
 
     for (const [lang, keys] of Object.entries(LEADS)) {
@@ -286,6 +324,10 @@ describe('generated htmx vocab modules', () => {
           es: 'hx-obtener',
           pt: 'hx-obter',
           ko: 'hx-얻다',
+          tr: 'hx-al',
+          de: 'hx-holen',
+          fr: 'hx-obtenir',
+          zh: 'hx-获取',
         };
         expect(getHooks().nameOf(elt, 'hx', 'get')).toBe(GET[lang]);
       });
@@ -316,6 +358,25 @@ describe('generated htmx vocab modules', () => {
         sync: 'hx-sincronização',
       },
       ko: { vals: 'hx-값', select: 'hx-선택', 'swap-oob': 'hx-교체-oob', sync: 'hx-동기화' },
+      tr: {
+        vals: 'hx-değerler',
+        select: 'hx-seçim',
+        'swap-oob': 'hx-değiştirme-oob',
+        sync: 'hx-eşitle',
+      },
+      de: {
+        vals: 'hx-werte',
+        select: 'hx-auswahl',
+        'swap-oob': 'hx-ersetzung-oob',
+        sync: 'hx-synchronisieren',
+      },
+      fr: {
+        vals: 'hx-valeurs',
+        select: 'hx-sélection',
+        'swap-oob': 'hx-remplacement-oob',
+        sync: 'hx-synchronisation',
+      },
+      zh: { vals: 'hx-值', select: 'hx-选择', 'swap-oob': 'hx-替换-oob', sync: 'hx-同步' },
     };
 
     for (const [lang, expected] of Object.entries(BOOK)) {
@@ -333,7 +394,7 @@ describe('generated htmx vocab modules', () => {
       // 22 profiles carry a `select` keyword that means mark/highlight text
       // (de `markieren`, tr `vurgula`). It is not hx-select, and an emitted
       // name is permanent, so only the table may name an adapter-only key.
-      for (const lang of ['de', 'tr', 'fr', 'zh']) {
+      for (const lang of ['it', 'pl', 'ru', 'hi']) {
         const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
         expect(source, `${lang} leaks the profile's select word`).not.toMatch(/"hx-select"/);
       }
@@ -343,6 +404,9 @@ describe('generated htmx vocab modules', () => {
         es: 'hx-seleccionar',
         pt: 'hx-selecionar',
         ko: 'hx-고르기',
+        tr: 'hx-vurgula',
+        de: 'hx-markieren',
+        fr: 'hx-sélectionner',
       };
       for (const [lang, word] of Object.entries(PROFILE_SELECT)) {
         const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
@@ -359,6 +423,10 @@ describe('generated htmx vocab modules', () => {
       es: 'buscar',
       pt: 'buscar',
       ko: '검색',
+      tr: 'arama',
+      de: 'suchen',
+      fr: 'rechercher',
+      zh: '搜索',
     };
 
     for (const [lang, name] of Object.entries(AUTHORED_EVENTS)) {
