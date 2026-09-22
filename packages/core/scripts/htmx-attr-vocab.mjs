@@ -390,4 +390,465 @@ export const HTMX_ATTR_VOCAB = {
       boost: '增强 ("enhance") follows Chinese htmx write-ups; a reviewer may prefer 加速',
     },
   },
+
+  // The third wave (2026-09-22): the remaining 15 languages, so every language
+  // the profiles cover offers the full book-listing set as a hook for readers.
+  // No readership signal drove the order; the hope is that the hooks create
+  // it. Every entry is Claude-drafted and unreviewed — the review invitation
+  // on the docs site is the path to fixing them. Where loka-js authored a
+  // fixi noun for trigger/swap/target it leads, as in the earlier waves; the
+  // profile's word follows as an alias. `events` also fills trigger heads the
+  // dictionaries leave as English passthrough or as multi-word phrases
+  // (hyphen-joined here: a head may contain hyphens, as `contacts-updated`
+  // shows). Languages whose dictionary already names the six heads the book
+  // uses get only `search`.
+  ar: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-محفز (noun); the profile's تشغيل ("run") is the alias.
+      trigger: 'محفز',
+      // loka-js fx-تبديل; the profile's imperative استبدل is the alias.
+      swap: 'تبديل',
+      post: 'انشر',
+      delete: 'احذف',
+      confirm: 'تأكيد',
+      boost: 'تعزيز',
+      'push-url': 'ادفع-url',
+      indicator: 'مؤشر',
+      include: 'تضمين',
+      vals: 'قيم',
+      select: 'اختيار',
+      'swap-oob': 'تبديل-oob',
+      sync: 'مزامنة',
+    },
+    sse: { swap: 'تبديل' },
+    events: {
+      search: 'بحث',
+      // The dictionary's "مفتاح أعلى" is two words; hyphen-joined here.
+      keyup: 'مفتاح-أعلى',
+      mouseenter: 'دخول-الفأرة',
+    },
+    lowConfidence: {
+      post: 'انشر ("publish"); أرسل is already ws-send',
+      keyup: 'hyphen-join of the dictionary phrase, unreviewed',
+      mouseenter: 'coinage',
+    },
+  },
+
+  bn: {
+    reviewed: false,
+    hx: {
+      post: 'পোস্ট',
+      delete: 'মুছুন',
+      confirm: 'নিশ্চিত',
+      boost: 'বুস্ট',
+      // `পুশ` is the profile's `push`.
+      'push-url': 'পুশ-url',
+      indicator: 'সূচক',
+      include: 'অন্তর্ভুক্ত',
+      vals: 'মান',
+      select: 'নির্বাচন',
+      'swap-oob': 'বদল-oob',
+      sync: 'সিঙ্ক',
+    },
+    events: { search: 'খোঁজ', mouseenter: 'মাউস-প্রবেশ' },
+    lowConfidence: {
+      post: 'পোস্ট (loanword); Bengali developer writing keeps POST',
+      sync: 'সিঙ্ক (loanword) vs সমন্বয়',
+      mouseenter: 'coinage',
+    },
+  },
+
+  he: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-מפעיל (noun); the profile's imperative הפעל is the alias.
+      trigger: 'מפעיל',
+      // loka-js fx-החלפה (noun); the profile's imperative החלף is the alias.
+      swap: 'החלפה',
+      post: 'פרסם',
+      delete: 'מחק',
+      confirm: 'אישור',
+      boost: 'האצה',
+      // `דחוף` is the profile's `push`.
+      'push-url': 'דחוף-url',
+      indicator: 'מחוון',
+      include: 'כלול',
+      vals: 'ערכים',
+      select: 'בחירה',
+      'swap-oob': 'החלפה-oob',
+      sync: 'סנכרון',
+    },
+    sse: { swap: 'החלפה' },
+    events: {
+      search: 'חיפוש',
+      keyup: 'שחרור-מקש',
+      load: 'טעינה',
+      mouseenter: 'כניסת-עכבר',
+    },
+    lowConfidence: {
+      'push-url': "דחוף is the profile's `push`, a calque",
+      keyup: 'coinage',
+      mouseenter: 'coinage',
+    },
+  },
+
+  hi: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-अदला-बदली; the profile's विनिमय ("exchange") is the alias.
+      swap: 'अदला-बदली',
+      post: 'पोस्ट',
+      delete: 'हटाएं',
+      confirm: 'पुष्टि',
+      boost: 'बूस्ट',
+      // NOT the profile's `push` (धकेलें, "shove"); the loanword, as bn.
+      'push-url': 'पुश-url',
+      indicator: 'संकेतक',
+      include: 'शामिल',
+      vals: 'मान',
+      select: 'चयन',
+      'swap-oob': 'अदला-बदली-oob',
+      sync: 'सिंक',
+    },
+    sse: { swap: 'अदला-बदली' },
+    events: { search: 'खोज' },
+    lowConfidence: {
+      post: 'पोस्ट (loanword); Hindi developer writing keeps POST',
+      'push-url': 'पुश (loanword) rather than the profile\'s धकेलें',
+    },
+  },
+
+  id: {
+    reviewed: false,
+    hx: {
+      // The profile's `target` is the English identity; sasaran is the
+      // common Indonesian word (ms uses it too).
+      target: 'sasaran',
+      // loka-js fx-pemicu (noun); the profile's `picu` is the alias.
+      trigger: 'pemicu',
+      post: 'kirim',
+      delete: 'hapus',
+      confirm: 'konfirmasi',
+      boost: 'percepat',
+      // `dorong` is the profile's `push`.
+      'push-url': 'dorong-url',
+      indicator: 'indikator',
+      include: 'sertakan',
+      vals: 'nilai',
+      select: 'pilihan',
+      'swap-oob': 'tukar-oob',
+      sync: 'sinkron',
+    },
+    events: { search: 'cari' },
+    lowConfidence: {
+      target: 'sasaran vs leaving target (loka-js keeps the identity)',
+      post: 'kirim ("send"); ws-send is already ws-kirim. terbitkan ("publish") is the alternative',
+    },
+  },
+
+  it: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-attivatore (noun); the profile's `scatenare` is the alias.
+      trigger: 'attivatore',
+      // loka-js fx-scambio (noun); the profile's `scambiare` is the alias.
+      swap: 'scambio',
+      // The profile's obiettivo leads; loka-js's destinazione is an alias.
+      target: ['obiettivo', 'destinazione'],
+      post: 'pubblicare',
+      delete: 'eliminare',
+      confirm: 'confermare',
+      boost: 'potenziare',
+      // `spingere` is the profile's `push`.
+      'push-url': 'spingere-url',
+      indicator: 'indicatore',
+      include: 'includere',
+      vals: 'valori',
+      select: 'selezione',
+      'swap-oob': 'scambio-oob',
+      sync: 'sincronizzazione',
+    },
+    sse: { swap: 'scambio' },
+    events: { search: 'cercare' },
+    lowConfidence: {
+      boost: 'potenziare; Italian htmx writing mostly leaves boost untranslated',
+      'push-url': "spingere is the profile's `push`, a calque",
+    },
+  },
+
+  ms: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-pencetus (noun); the profile's `cetuskan` is the alias.
+      trigger: 'pencetus',
+      // loka-js fx-tukar; the profile's `tukar_tempat` is the alias.
+      swap: 'tukar',
+      post: 'hantar',
+      delete: 'padam',
+      confirm: 'sahkan',
+      boost: 'percepat',
+      // `tolak` is the profile's `push`.
+      'push-url': 'tolak-url',
+      indicator: 'penunjuk',
+      include: 'sertakan',
+      vals: 'nilai',
+      select: 'pilihan',
+      'swap-oob': 'tukar-oob',
+      sync: 'segerak',
+    },
+    sse: { swap: 'tukar' },
+    // The ms dictionary leaves every event as English passthrough.
+    events: {
+      click: 'klik',
+      keyup: 'lepas-kekunci',
+      change: 'ubah',
+      load: 'muat',
+      mouseenter: 'tetikus-masuk',
+      search: 'cari',
+    },
+    lowConfidence: {
+      post: 'hantar ("send"); ws-send is already ws-hantar',
+      keyup: 'coinage',
+      mouseenter: 'coinage',
+    },
+  },
+
+  pl: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-wyzwalacz (noun); the profile's imperative `wyzwól` is the alias.
+      trigger: 'wyzwalacz',
+      // loka-js fx-zamiana (noun); the profile's imperative `zamień` is the alias.
+      swap: 'zamiana',
+      post: 'opublikuj',
+      delete: 'usuń',
+      confirm: 'potwierdź',
+      boost: 'przyspiesz',
+      // The profile has no `push`; historia = browser history, as de verlauf-url.
+      'push-url': 'historia-url',
+      indicator: 'wskaźnik',
+      include: 'dołącz',
+      vals: 'wartości',
+      select: 'wybór',
+      'swap-oob': 'zamiana-oob',
+      sync: 'synchronizacja',
+    },
+    sse: { swap: 'zamiana' },
+    events: { search: 'szukaj' },
+    lowConfidence: {
+      'push-url': 'historia-url is a paraphrase; wypchnij-url is the literal alternative',
+    },
+  },
+
+  qu: {
+    reviewed: false,
+    hx: {
+      // The profile's t'inkuy has an apostrophe, which the HTML parser
+      // tolerates but this table forbids; tikray ("turn over") leads and
+      // t'inkuy stays the alias.
+      swap: 'tikray',
+      post: 'apachiy',
+      delete: 'pichay',
+      confirm: 'takyachiy',
+      boost: 'utqhaychiy',
+      // `tanqay` is the profile's `push`.
+      'push-url': 'tanqay-url',
+      indicator: 'rikuchiq',
+      include: 'yapay',
+      vals: 'chanikuna',
+      select: 'akllay',
+      'swap-oob': 'tikray-oob',
+      sync: 'kuskachay',
+    },
+    sse: { swap: 'tikray' },
+    events: { search: 'maskay' },
+    lowConfidence: {
+      post: 'every qu entry is a draft by a non-speaker; apachiy ("send off") for post',
+      swap: 'tikray vs the profile\'s t\'inkuy',
+      boost: 'utqhaychiy ("make fast") is a derivation',
+      sync: 'kuskachay ("bring together") is a derivation',
+    },
+  },
+
+  ru: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-триггер; the profile's `инициировать` is the alias.
+      trigger: 'триггер',
+      // loka-js fx-обмен (noun); the profile's `поменять` is the alias.
+      swap: 'обмен',
+      post: 'опубликовать',
+      delete: 'удалить',
+      confirm: 'подтвердить',
+      boost: 'ускорить',
+      // The profile has no `push`; история = browser history.
+      'push-url': 'история-url',
+      indicator: 'индикатор',
+      include: 'включить',
+      vals: 'значения',
+      select: 'выбор',
+      'swap-oob': 'обмен-oob',
+      sync: 'синхронизация',
+    },
+    sse: { swap: 'обмен' },
+    events: { search: 'поиск' },
+    lowConfidence: {
+      'push-url': 'история-url is a paraphrase',
+      swap: 'обмен ("exchange") follows loka-js; замена ("replacement") is the htmx sense',
+    },
+  },
+
+  sw: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-kichocheo (noun); the profile's `chochea` is the alias.
+      trigger: 'kichocheo',
+      // loka-js fx-badilisha; the profile's `badilishana` is the alias.
+      swap: 'badilisha',
+      post: 'chapisha',
+      delete: 'futa',
+      confirm: 'thibitisha',
+      boost: 'harakisha',
+      // `sukuma` is the profile's `push`.
+      'push-url': 'sukuma-url',
+      indicator: 'kiashiria',
+      include: 'jumuisha',
+      vals: 'thamani',
+      select: 'uteuzi',
+      'swap-oob': 'badilisha-oob',
+      sync: 'sawazisha',
+    },
+    sse: { swap: 'badilisha' },
+    events: { search: 'tafuta' },
+    lowConfidence: {
+      boost: 'harakisha ("hasten")',
+      select: 'uteuzi (noun) vs chagua (verb)',
+    },
+  },
+
+  th: {
+    reviewed: false,
+    hx: {
+      // The profile's สลับที่ leads; loka-js's สลับ is an alias.
+      swap: ['สลับที่', 'สลับ'],
+      post: 'โพสต์',
+      delete: 'ลบ',
+      confirm: 'ยืนยัน',
+      boost: 'เร่ง',
+      // `ดัน` is the profile's `push`.
+      'push-url': 'ดัน-url',
+      indicator: 'ตัวบ่งชี้',
+      include: 'รวม',
+      vals: 'ค่า',
+      select: 'เลือก',
+      'swap-oob': 'สลับที่-oob',
+      sync: 'ซิงค์',
+    },
+    sse: { swap: ['สลับที่', 'สลับ'] },
+    events: { search: 'ค้นหา', mouseenter: 'เมาส์เข้ามา' },
+    lowConfidence: {
+      post: 'โพสต์ (loanword); Thai developer writing keeps POST',
+      mouseenter: 'coinage',
+    },
+  },
+
+  tl: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-pampukaw; the profile's `palitawin` is the alias.
+      trigger: 'pampukaw',
+      // loka-js fx-palit; the profile's `palitan_pwesto` is the alias.
+      swap: 'palit',
+      // `target` stays English: the everyday Tagalog word IS target, and
+      // loka-js keeps the identity too.
+      post: 'ilathala',
+      delete: 'burahin',
+      confirm: 'kumpirmahin',
+      boost: 'pabilisin',
+      // `itulak` is the profile's `push`.
+      'push-url': 'itulak-url',
+      indicator: 'indikador',
+      include: 'isama',
+      vals: 'halaga',
+      select: 'pilian',
+      'swap-oob': 'palit-oob',
+      sync: 'pagsabay',
+    },
+    sse: { swap: 'palit' },
+    // The tl dictionary leaves every event as English passthrough.
+    events: {
+      click: 'pindot',
+      keyup: 'bitaw-tiklado',
+      change: 'pagbabago',
+      load: 'karga',
+      mouseenter: 'pasok-mouse',
+      search: 'hanap',
+    },
+    lowConfidence: {
+      post: 'ilathala ("publish"); ipadala is already ws-send',
+      click: 'pindot ("press") vs the loanword klik',
+      keyup: 'coinage',
+      mouseenter: 'coinage',
+      sync: 'pagsabay ("doing together") is a derivation',
+    },
+  },
+
+  uk: {
+    reviewed: false,
+    hx: {
+      // loka-js fx-тригер; the profile's `ініціювати` is the alias.
+      trigger: 'тригер',
+      // loka-js fx-обмін (noun); the profile's `поміняти` is the alias.
+      swap: 'обмін',
+      post: 'опублікувати',
+      delete: 'видалити',
+      confirm: 'підтвердити',
+      boost: 'прискорити',
+      // The profile has no `push`; історія = browser history.
+      'push-url': 'історія-url',
+      indicator: 'індикатор',
+      include: 'включити',
+      vals: 'значення',
+      select: 'вибір',
+      'swap-oob': 'обмін-oob',
+      sync: 'синхронізація',
+    },
+    sse: { swap: 'обмін' },
+    events: { search: 'пошук' },
+    lowConfidence: {
+      'push-url': 'історія-url is a paraphrase',
+      swap: 'обмін ("exchange") follows loka-js; заміна ("replacement") is the htmx sense',
+    },
+  },
+
+  vi: {
+    reviewed: false,
+    hx: {
+      // Hyphen-joined, the vi convention (trực-tiếp, kết-nối).
+      post: 'đăng',
+      delete: 'xóa',
+      confirm: 'xác-nhận',
+      boost: 'tăng-tốc',
+      // `đẩy` is the profile's `push`.
+      'push-url': 'đẩy-url',
+      indicator: 'chỉ-báo',
+      include: 'bao-gồm',
+      vals: 'giá-trị',
+      select: 'chọn',
+      'swap-oob': 'hoán-đổi-oob',
+      sync: 'đồng-bộ',
+    },
+    // The vi dictionary leaves keyup/change/mouseenter as English passthrough.
+    events: {
+      search: 'tìm-kiếm',
+      keyup: 'nhả-phím',
+      change: 'thay-đổi',
+      mouseenter: 'chuột-vào',
+    },
+    lowConfidence: {
+      select: 'chọn (verb) vs lựa-chọn (noun)',
+      keyup: 'nhả-phím, hyphen-joined',
+    },
+  },
 };

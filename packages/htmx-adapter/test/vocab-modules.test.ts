@@ -294,6 +294,54 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     });
   }
 
+  // Third wave: every language. Derived from the module itself rather than a
+  // hand table — the first name listed per canonical is the primary — and
+  // pinned the same way as CONTACT_APP: parsed from markup, so the HTML
+  // parser's handling of each name (lowercasing, script, hyphens) is part of
+  // what is checked.
+  const ALL_LANGS = readdirSync(VOCAB_DIR)
+    .filter(f => f.endsWith('.js') && f !== 'en.js')
+    .map(f => f.replace(/\.js$/, ''));
+  const BOOK_SET = [
+    'hx-get', 'hx-post', 'hx-delete', 'hx-target', 'hx-swap', 'hx-trigger', 'hx-confirm',
+    'hx-boost', 'hx-push-url', 'hx-include', 'hx-indicator', 'hx-vals', 'hx-select',
+    'hx-sync', 'hx-swap-oob',
+  ];
+  const IDENTITY: Record<string, string[]> = { tl: ['hx-target'] };
+
+  for (const lang of ALL_LANGS) {
+    it(`${lang} canonicalizes the primary of every book-listing attribute from parsed markup`, () => {
+      loadVocabModule(lang);
+      const attrs = vocabFor(lang)?.attrs ?? {};
+      const primary: Record<string, string> = {};
+      for (const [name, canonical] of Object.entries(attrs)) {
+        if (!(canonical in primary)) primary[canonical] = name;
+      }
+      const wanted = BOOK_SET.filter(c => !IDENTITY[lang]?.includes(c));
+      expect(wanted.filter(c => !primary[c]), `${lang} has no name for`).toEqual([]);
+      const markup = wanted.map((c, i) => `${primary[c]}="v${i}"`).join(' ');
+      document.body.innerHTML = `<section lang="${lang}"><div ${markup}></div></section>`;
+      canonicalizeTree(document.body);
+      const div = document.querySelector('div')!;
+      wanted.forEach((c, i) => {
+        expect(div.getAttribute(c), `${lang} ${primary[c]} → ${c}`).toBe(`v${i}`);
+      });
+    });
+
+    it(`${lang} translates the search trigger head`, () => {
+      loadVocabModule(lang);
+      const events = vocabFor(lang)?.events ?? {};
+      const search = Object.entries(events).find(([, c]) => c === 'search')?.[0];
+      expect(search, `${lang} has no search head`).toBeTruthy();
+      const trigger = Object.entries(vocabFor(lang)?.attrs ?? {}).find(([, c]) => c === 'hx-trigger')![0];
+      document.body.innerHTML = `<section lang="${lang}"><input ${trigger}="${search}, keyup delay:200ms changed" /></section>`;
+      canonicalizeTree(document.body);
+      expect(document.querySelector('input')!.getAttribute('hx-trigger')).toBe(
+        'search, keyup delay:200ms changed'
+      );
+    });
+  }
+
   it('the en module registers an empty (identity) vocab', () => {
     loadVocabModule('en');
     expect(isLangRegistered('en')).toBe(true);

@@ -394,11 +394,8 @@ describe('generated htmx vocab modules', () => {
       // 22 profiles carry a `select` keyword that means mark/highlight text
       // (de `markieren`, tr `vurgula`). It is not hx-select, and an emitted
       // name is permanent, so only the table may name an adapter-only key.
-      for (const lang of ['it', 'pl', 'ru', 'hi']) {
-        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
-        expect(source, `${lang} leaks the profile's select word`).not.toMatch(/"hx-select"/);
-      }
-      // Languages that DO author hx-select still get no profile alias behind it.
+      // Every language authors hx-select now, and none gets the profile's
+      // word appended behind it.
       const PROFILE_SELECT: Record<string, string> = {
         ja: 'hx-選ぶ',
         es: 'hx-seleccionar',
@@ -407,6 +404,19 @@ describe('generated htmx vocab modules', () => {
         tr: 'hx-vurgula',
         de: 'hx-markieren',
         fr: 'hx-sélectionner',
+        it: 'hx-selezionare',
+        pl: 'hx-zaznacz',
+        ru: 'hx-выделить',
+        uk: 'hx-виділити',
+        hi: 'hx-चिह्नित-करें',
+        id: 'hx-tandai',
+        ms: 'hx-tandai',
+        sw: 'hx-alama',
+        th: 'hx-ทำเครื่องหมาย',
+        tl: 'hx-piliin',
+        vi: 'hx-đánh-dấu',
+        he: 'hx-סמן',
+        qu: 'hx-marcay',
       };
       for (const [lang, word] of Object.entries(PROFILE_SELECT)) {
         const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
@@ -433,6 +443,44 @@ describe('generated htmx vocab modules', () => {
       it(`${lang} emits the authored \`search\` trigger head`, async () => {
         const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
         expect(source).toContain(`"${name}": "search"`);
+      });
+    }
+
+    // The third wave (2026-09-22) authored the remaining 15 languages so every
+    // language offers the full book-listing set. A per-language table would be
+    // 15 more hand copies; this pins the property instead: every non-en module
+    // maps SOME name to each of the 16 canonicals the book's listings use and
+    // to the `search` head, and no module leaks a spaced or uppercase name.
+    const BOOK_SET = [
+      'hx-get',
+      'hx-post',
+      'hx-put',
+      'hx-delete',
+      'hx-target',
+      'hx-swap',
+      'hx-trigger',
+      'hx-confirm',
+      'hx-boost',
+      'hx-push-url',
+      'hx-include',
+      'hx-indicator',
+      'hx-vals',
+      'hx-select',
+      'hx-sync',
+      'hx-swap-oob',
+    ];
+    // tl leaves hx-target as the English identity on purpose (loka-js does too).
+    const IDENTITY: Record<string, string[]> = { tl: ['hx-target'] };
+
+    for (const lang of PRIORITY_LANGS.filter(l => l !== 'en')) {
+      it(`${lang} covers every attribute the book's listings use, and the search head`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        const canonicals = new Set(
+          [...source.matchAll(/"[^"]+": "((?:hx|sse|ws)-[^"]+)"/g)].map(m => m[1])
+        );
+        const missing = BOOK_SET.filter(c => !canonicals.has(c) && !IDENTITY[lang]?.includes(c));
+        expect(missing, `${lang} has no name for`).toEqual([]);
+        expect(source, `${lang} search head`).toMatch(/"[^"]+": "search"/);
       });
     }
 

@@ -206,10 +206,13 @@ words are often already a command's (ja `削除` / es `eliminar` are `remove`) �
 **do not add htmx-only names to a semantic profile.** It also _leads_ the
 profile where the profile's word suits a command but not an attribute name
 (ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
-terminology reviews). ja, es, pt, ko, tr, de, fr and zh are authored for the 12
+terminology reviews). All 23 non-English languages are authored for the 12
 attributes the _Hypermedia Systems_ Contact.app uses plus the four more the
-book's code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`);
-to add a language, add an entry there. (de also authors a lowercase `target`:
+book's code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`),
+and for the `search` trigger head; only ja, es, pt, ko, tr, de, fr and zh
+were authored with any care — the other 15 (2026-09-22) are unreviewed
+drafts meant as hooks for readers, every one flagged `lowConfidence`. tl
+leaves `hx-target` as the English identity on purpose (so does loka-js). (de also authors a lowercase `target`:
 the profile's `Ziel` shipped as `hx-Ziel`, which no parsed attribute can match
 because HTML lowercases attribute names.) `hx-indicator` / `hx-include` / `hx-select` /
 `hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
