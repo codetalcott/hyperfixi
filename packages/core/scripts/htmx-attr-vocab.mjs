@@ -32,6 +32,12 @@
  *     not `URL`), no whitespace.
  *   - `reviewed` is true only after a native-speaker review. `lowConfidence`
  *     lists the keys a reviewer should look at first, with the reason.
+ *   - `events` holds trigger heads (canonical DOM event → localized name, or
+ *     `[primary, ...aliases]`) that the i18n dictionaries do not name. A
+ *     dictionary event must also be in the semantic profile's lexicon
+ *     (i18n's lexicon-parity test), so an htmx-only head lives here. Only
+ *     real DOM events: htmx's own trigger words (`revealed`, `every`,
+ *     `intersect`) are trigger syntax, like `delay:`, and stay English.
  *
  * Adding a language: add an entry, run `npm run generate:htmx-vocab --prefix
  * packages/core`, then `npm run sync-htmx-vocab --prefix packages/vite-plugin`.
@@ -45,6 +51,7 @@
  *   hx?: Record<string, string>,
  *   sse?: Record<string, string>,
  *   ws?: Record<string, string>,
+ *   events?: Record<string, string | string[]>,
  *   lowConfidence?: Record<string, string>,
  * }} HtmxAttrVocab
  */
@@ -74,10 +81,28 @@ export const HTMX_ATTR_VOCAB = {
       // `プッシュ` is the profile's `push` (hyperscript `push url`), kept
       // identical so the attribute and the command read the same.
       'push-url': 'プッシュ-url',
+      // The rest of the book's listings (beyond Contact.app). `値` is the
+      // plain word for a value; hx-vals holds extra request values.
+      vals: '値',
+      // 選択 is the noun (a selection). Adapter-only keys take no profile
+      // fallback (the profile's `select` is text selection), so 選ぶ does
+      // not follow as an alias.
+      select: '選択',
+      // Compound: the swap primary + the untranslated `oob` suffix, the same
+      // shape as `プッシュ-url`.
+      'swap-oob': '置換-oob',
+      sync: '同期',
     },
     sse: { swap: ['置換', 'スワップ'] },
+    events: {
+      // The DOM `search` event (input type=search): the book's search box
+      // uses `hx-trigger="search, keyup delay:200ms changed"`.
+      search: '検索',
+    },
     lowConfidence: {
       post: '投稿 is "post (content)"; 送信 is the alternative but is already the `submit` event in this vocab',
+      vals: '値 is generic; 追加値 ("extra values") was considered but is a coinage',
+      'swap-oob': 'oob is left as-is, like url in プッシュ-url; a reviewer may prefer 帯域外 or a different shape',
     },
   },
 
@@ -98,12 +123,30 @@ export const HTMX_ATTR_VOCAB = {
       boost: 'impulsar',
       // `empujar` is the profile's `push` (hyperscript `push url`).
       'push-url': 'empujar-url',
+      // The rest of the book's listings (beyond Contact.app). Nouns, as
+      // above: the attribute names a thing.
+      vals: 'valores',
+      // `selección` is the noun. Adapter-only keys take no profile fallback
+      // (the profile's `select` is text selection), so `seleccionar` does
+      // not follow as an alias.
+      select: 'selección',
+      // Compound: the swap primary + the untranslated `oob` suffix, the same
+      // shape as `empujar-url`.
+      'swap-oob': 'intercambio-oob',
+      sync: 'sincronización',
     },
     sse: { swap: 'intercambio' },
+    events: {
+      // The DOM `search` event (input type=search). Verb, like the
+      // dictionary's cambiar / cargar / enfocar.
+      search: 'buscar',
+    },
     lowConfidence: {
       boost: 'impulsar vs potenciar — Spanish htmx writing mostly leaves "boost" untranslated',
       'push-url':
         'empujar is the profile\'s `push`, a calque; Spanish describes pushState as "añadir al historial"',
+      search: 'buscar (verb, matching cambiar/cargar) vs búsqueda (noun, matching entrada/envío) — the dictionary mixes both',
+      'swap-oob': 'oob is left as-is, like url in empujar-url; a reviewer may prefer a different shape',
     },
   },
 
@@ -130,7 +173,12 @@ export const HTMX_ATTR_VOCAB = {
       'push-url': 'empurrar-url',
     },
     sse: { swap: 'troca' },
+    events: {
+      // The DOM `search` event: Contact.app's search box.
+      search: 'buscar',
+    },
     lowConfidence: {
+      search: 'buscar vs pesquisar — both current; buscar matches the es choice',
       delete: 'regional split: excluir (pt-BR) leads, eliminar (pt-PT) is the alias',
       boost: 'impulsionar — Portuguese htmx writing mostly leaves "boost" untranslated',
       'push-url': "empurrar is the profile's `push`, a calque of the History API verb",
@@ -160,6 +208,10 @@ export const HTMX_ATTR_VOCAB = {
       'push-url': '푸시-url',
     },
     sse: { swap: ['교체', '스왑'] },
+    events: {
+      // The DOM `search` event: Contact.app's search box.
+      search: '검색',
+    },
     lowConfidence: {
       post: '게시 is "post (content)"; 전송 is the alternative but reads as send/submit',
     },

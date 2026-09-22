@@ -43,6 +43,7 @@
         "ws-보내다": "ws-send"
       },
       events: {
+        "검색": "search",
         "클릭": "click",
         "더블클릭": "dblclick",
         "마우스다운": "mousedown",

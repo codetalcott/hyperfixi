@@ -207,10 +207,23 @@ words are often already a command's (ja `削除` / es `eliminar` are `remove`) �
 profile where the profile's word suits a command but not an attribute name
 (ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
 terminology reviews). ja, es, pt and ko are authored for the 12 attributes the
-_Hypermedia Systems_ Contact.app uses; to add a language, add an entry there.
-`hx-indicator` / `hx-include` are generator-only keys (`ADAPTER_ONLY_KEYS`):
-stock htmx implements them under `@hyperfixi/htmx-adapter`; the embedded layer
-does not, so they are not in `i18n-hooks.ts` `KEYS`.
+_Hypermedia Systems_ Contact.app uses, and ja/es for the four more the book's
+code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`); to add
+a language, add an entry there. `hx-indicator` / `hx-include` / `hx-select` /
+`hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
+htmx implements them under `@hyperfixi/htmx-adapter`; the embedded layer does
+not, so they are not in `i18n-hooks.ts` `KEYS`. **An adapter-only key resolves
+from the table alone, never the profile** — 22 profiles carry a `select`
+keyword meaning mark/highlight text (de `markieren`), which would otherwise
+have shipped as `hx-select`, permanently. `hx-ext` has no name on purpose:
+htmx 4 removed it.
+
+The table also has an `events` block for trigger heads no i18n dictionary
+names (`search`, the DOM event the book's search box fires). A dictionary
+event must also exist in the semantic profile's lexicon
+(`lexicon-parity.test.ts`), so an htmx-only head lives in the table. htmx's
+own trigger words (`revealed`, `every`, `intersect`) are trigger syntax, like
+`delay:`, and stay English.
 
 **Names are additive — never delete a shipped name, demote it.** Several
 localized names may map to one canonical; the first is the primary (the form

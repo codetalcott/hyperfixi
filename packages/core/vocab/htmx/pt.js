@@ -43,6 +43,7 @@
         "ws-enviar": "ws-send"
       },
       events: {
+        "buscar": "search",
         "clique": "click",
         "duploClique": "dblclick",
         "mouseEntrar": "mouseenter",

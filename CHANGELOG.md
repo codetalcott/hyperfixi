@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Localized htmx attributes: ja and es now cover every attribute the
+  _Hypermedia Systems_ book's code listings use** — `hx-vals`, `hx-select`,
+  `hx-swap-oob` and `hx-sync` join the Contact.app twelve (`hx-値`,
+  `hx-valores`, `hx-選択`, `hx-selección`, …). `hx-ext` is left in English on
+  purpose: htmx 4 removed it. The vocab table gains an `events` block for
+  trigger heads the i18n dictionaries do not name; ja, es, pt and ko author
+  the DOM `search` event (`検索`, `buscar`, `검색`), which the book's and
+  Contact.app's search box fires. htmx's own trigger words (`revealed`,
+  `every`) stay English, like the `delay:` / `from:` modifiers.
+- Adapter-only vocab keys now resolve from the authored table alone, never
+  from a semantic profile: 22 profiles carry a `select` keyword that means
+  mark/highlight text (de `markieren`, tr `vurgula`), and it would otherwise
+  have shipped as `hx-select` in 22 unreviewed languages.
+
 - **Localized htmx attributes: ja, es, pt and ko now cover every attribute the
   _Hypermedia Systems_ Contact.app uses** — `hx-post`, `hx-delete`,
   `hx-confirm`, `hx-push-url`, `hx-boost`, `hx-indicator` and `hx-include` join

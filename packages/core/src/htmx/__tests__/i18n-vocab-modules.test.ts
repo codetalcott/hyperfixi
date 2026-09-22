@@ -297,11 +297,67 @@ describe('generated htmx vocab modules', () => {
       });
     }
 
+    // The book's code listings (all 18 published chapters, inventoried
+    // 2026-09-22) use four attributes beyond Contact.app's twelve. ja/es carry
+    // them so no listing falls back to English. `hx-ext` is deliberately
+    // absent: htmx 4 removed it, so a localized name would have nowhere to run.
+    const BOOK: Record<string, Record<string, string>> = {
+      ja: { vals: 'hx-値', select: 'hx-選択', 'swap-oob': 'hx-置換-oob', sync: 'hx-同期' },
+      es: {
+        vals: 'hx-valores',
+        select: 'hx-selección',
+        'swap-oob': 'hx-intercambio-oob',
+        sync: 'hx-sincronización',
+      },
+    };
+
+    for (const [lang, expected] of Object.entries(BOOK)) {
+      it(`${lang} emits a primary for every attribute the book's listings use`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        for (const [key, name] of Object.entries(expected)) {
+          // First name listed for the canonical = the primary.
+          const first = source.match(new RegExp(`"(hx-[^"]+)": "hx-${key}"`));
+          expect(first?.[1], `${lang} hx-${key}`).toBe(name);
+        }
+      });
+    }
+
+    it('an adapter-only key takes no profile fallback', async () => {
+      // 22 profiles carry a `select` keyword that means mark/highlight text
+      // (de `markieren`, tr `vurgula`). It is not hx-select, and an emitted
+      // name is permanent, so only the table may name an adapter-only key.
+      for (const lang of ['de', 'tr', 'ko', 'pt']) {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source, `${lang} leaks the profile's select word`).not.toMatch(/"hx-select"/);
+      }
+      const ja = await readFile(resolve(VOCAB_DIR, 'ja.js'), 'utf-8');
+      expect(ja).not.toContain('"hx-選ぶ"');
+    });
+
+    // Trigger heads are one token of an hx-trigger value. `search` is the one
+    // DOM event the book and Contact.app fire that no i18n dictionary names,
+    // so it is authored in the table's `events` block (a dictionary entry
+    // would also need the semantic profile's lexicon — lexicon-parity.test).
+    const AUTHORED_EVENTS: Record<string, string> = {
+      ja: '検索',
+      es: 'buscar',
+      pt: 'buscar',
+      ko: '검색',
+    };
+
+    for (const [lang, name] of Object.entries(AUTHORED_EVENTS)) {
+      it(`${lang} emits the authored \`search\` trigger head`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source).toContain(`"${name}": "search"`);
+      });
+    }
+
     it('adapter-only keys stay out of the embedded layer KEYS', () => {
       // Core's htmx-compat layer does not implement them; listing them would
       // advertise support through the exported HTMX_ATTRS.
-      expect(KEYS.hx).not.toContain('indicator');
-      expect(KEYS.hx).not.toContain('include');
+      for (const key of ['indicator', 'include', 'select', 'swap-oob', 'sync']) {
+        expect(KEYS.hx).not.toContain(key);
+      }
     });
   });
 

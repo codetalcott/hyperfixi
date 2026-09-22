@@ -30,11 +30,15 @@
         "hx-引き金": "hx-trigger",
         "hx-確認": "hx-confirm",
         "hx-ブースト": "hx-boost",
+        "hx-値": "hx-vals",
         "hx-プッシュ-url": "hx-push-url",
         "hx-で": "hx-on",
         "hx-ライブ": "hx-live",
         "hx-インジケーター": "hx-indicator",
         "hx-含める": "hx-include",
+        "hx-選択": "hx-select",
+        "hx-置換-oob": "hx-swap-oob",
+        "hx-同期": "hx-sync",
         "sse-接続": "sse-connect",
         "sse-置換": "sse-swap",
         "sse-スワップ": "sse-swap",
@@ -43,6 +47,7 @@
         "ws-送る": "ws-send"
       },
       events: {
+        "検索": "search",
         "クリック": "click",
         "マウス押下": "mousedown",
         "マウス解放": "mouseup",

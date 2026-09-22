@@ -76,7 +76,11 @@ const KEYS = {
  * from the emitted attrs map — so emitting the name is all it takes.
  */
 const ADAPTER_ONLY_KEYS = {
-  hx: ['indicator', 'include'],
+  // indicator/include: Contact.app. select/swap-oob/sync: the rest of the
+  // book's code listings (inventoried across the 18 published chapters,
+  // 2026-09-22). `hx-ext` is NOT here: htmx 4 removed it, so a localized
+  // name would have nowhere to run.
+  hx: ['indicator', 'include', 'select', 'swap-oob', 'sync'],
   sse: [],
   ws: [],
 };
@@ -219,8 +223,23 @@ function validateAuthoredVocab() {
         }
       }
     }
+    for (const [canonical, authored] of Object.entries(vocab.events ?? {})) {
+      // A trigger head is one `\S+` token of an hx-trigger value, or the
+      // suffix of an `hx-on:` attribute name — either way no whitespace.
+      if (!/^[a-z][a-z0-9:-]*$/i.test(canonical)) {
+        throw new Error(`htmx-attr-vocab: ${lang}.events.${canonical} is not a valid event name`);
+      }
+      for (const name of [authored].flat()) {
+        if (!name || /[\s"'<>\/=\[\],]/.test(name)) {
+          throw new Error(
+            `htmx-attr-vocab: ${lang}.events.${canonical} = "${name}" is not a valid trigger head ` +
+              `(no whitespace, quotes, "=", "/", "<", ">", "[", "]" or ",")`
+          );
+        }
+      }
+    }
     for (const key of Object.keys(vocab.lowConfidence ?? {})) {
-      if (!Object.keys(ALL_KEYS).some(ns => vocab[ns]?.[key])) {
+      if (!Object.keys(ALL_KEYS).some(ns => vocab[ns]?.[key]) && !vocab.events?.[key]) {
         throw new Error(`htmx-attr-vocab: ${lang}.lowConfidence.${key} flags a key with no entry`);
       }
     }
@@ -247,8 +266,15 @@ function buildAttrs(lang, profile, legacy, notes) {
   for (const ns of Object.keys(ALL_KEYS)) {
     for (const key of ALL_KEYS[ns]) {
       const canonical = `${ns}-${key}`;
+      // Adapter-only keys are htmx-only concepts, so they resolve from the
+      // table alone: a profile keyword that happens to share the key names
+      // a hyperscript idea, not the attribute. `select` is the case that
+      // proved it — 22 profiles carry a `select` word meaning mark/highlight
+      // text (de `markieren`, tr `vurgula`), which would have shipped as
+      // `hx-select` in 22 unreviewed languages, permanently.
+      const fallback = KEYS[ns].includes(key) ? profile : undefined;
       // E.g. `sse-conectar: sse-connect` for Spanish.
-      for (const localized of localizedNames(profile, key, HTMX_ATTR_VOCAB[lang]?.[ns]?.[key])) {
+      for (const localized of localizedNames(fallback, key, HTMX_ATTR_VOCAB[lang]?.[ns]?.[key])) {
         // A multi-word profile primary (vi `lấy giá trị`) cannot be an
         // attribute name — HTML would read three attributes. Join with
         // hyphens, the convention the profiles already use for their own
@@ -275,7 +301,17 @@ function buildAttrs(lang, profile, legacy, notes) {
 }
 
 /**
- * Build the `events` map from an i18n dictionary's events block.
+ * Build the `events` map: the table's authored trigger heads first (primary
+ * first), then the i18n dictionary's events block, then retired names.
+ *
+ * The table exists for events the dictionaries do not name — `search`, the
+ * DOM event the book's search box fires. A dictionary entry is the wrong
+ * place for it: every dictionary event must also be in the semantic
+ * profile's lexicon with the same rendering (i18n's lexicon-parity test), so
+ * one htmx trigger head would drag a hyperscript vocabulary change along.
+ * htmx's own trigger words (`revealed`, `intersect`, `every`) are NOT
+ * authored: they are trigger syntax, like the `delay:` / `from:` modifiers,
+ * and stay English.
  *
  * The dictionary serves hyperscript's `on <event>`, where a multi-word name
  * parses. Here it cannot: an event name is one whitespace-delimited token of
@@ -285,6 +321,11 @@ function buildAttrs(lang, profile, legacy, notes) {
  */
 function buildEvents(lang, dict, legacy, notes) {
   const events = {};
+  for (const [canonical, authored] of Object.entries(HTMX_ATTR_VOCAB[lang]?.events ?? {})) {
+    for (const name of [authored].flat()) {
+      if (name !== canonical) events[name] = canonical;
+    }
+  }
   const raw = dict?.events ?? {};
   for (const [canonical, localized] of Object.entries(raw)) {
     if (typeof localized !== 'string') continue;
@@ -292,6 +333,14 @@ function buildEvents(lang, dict, legacy, notes) {
     if (/\s/.test(localized)) {
       notes.push(`${lang}: event "${localized}" (${canonical}) is multi-word — not emitted`);
       continue;
+    }
+    // An authored head that equals a dictionary word for a DIFFERENT event
+    // would shadow it silently; that is an authoring error, not a demotion.
+    if (localized in events && events[localized] !== canonical) {
+      throw new Error(
+        `[${lang}] event "${localized}" is authored as ${events[localized]} but the dictionary ` +
+          `uses it for ${canonical} — pick a different word in htmx-attr-vocab.mjs`
+      );
     }
     // localized name → canonical English event name.
     events[localized] = canonical;
