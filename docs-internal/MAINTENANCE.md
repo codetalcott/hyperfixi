@@ -184,8 +184,9 @@ npm run packages:list:public        # Should see 14 packages
 ### Publishing to npm
 
 ```bash
-# Option 1: Publish all packages with lerna
-npm run release:publish
+# Option 1: Publish all packages via the release workflow (bumps, publishes,
+# and lands the version bump on main — see CLAUDE.md "Release prerequisite")
+gh workflow run publish.yml -f version-type=patch
 
 # Option 2: Publish individually (testing)
 cd packages/core && npm publish

@@ -127,7 +127,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
-          # set-version.cjs bumps every package + root + lerna.json AND rewrites
+          # set-version.cjs bumps every package + root AND rewrites
           # internal workspace dep ranges to ^VERSION — so published tarballs
           # carry accurate constraints (npm has no workspace: protocol).
           node scripts/set-version.cjs "$VERSION"
@@ -406,7 +406,7 @@ jobs:
           # main with package.json at 2.11.0 and VERSION at '2.10.0' and every
           # subsequent PR red on the equality assertions. Add a path here for any
           # new file set-version.cjs learns to rewrite.
-          git add packages/*/package.json packages/*/src/version.ts package.json lerna.json package-lock.json 2>/dev/null || true
+          git add packages/*/package.json packages/*/src/version.ts package.json package-lock.json 2>/dev/null || true
 
           # `git commit || echo "No changes to commit"` masked two very different
           # things: a legitimately empty diff, and a commit that actually failed.
