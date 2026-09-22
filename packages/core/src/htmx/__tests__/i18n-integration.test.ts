@@ -152,6 +152,26 @@ describe('htmx-compat localization integration', () => {
       expect(generated).toContain("fetch '/api'");
     });
 
+    // es.js lists `hx-disparador` (primary) and `hx-disparar` (the shipped
+    // name, now an alias) for hx-trigger. A page authored with EITHER must
+    // reach the processor — the single-name inversion this replaced would
+    // have kept only the last one listed.
+    for (const name of ['hx-disparador', 'hx-disparar']) {
+      it(`reads hx-trigger through ${name}`, () => {
+        const section = document.createElement('section');
+        section.setAttribute('lang', 'es');
+        const button = document.createElement('button');
+        button.setAttribute('hx-obtener', '/api');
+        button.setAttribute(name, 'enfocar');
+        section.appendChild(button);
+        container.appendChild(section);
+
+        processor.processElement(button);
+        // Not `click`: a missed read would fall back to the button default.
+        expect(button.getAttribute('data-hx-generated')).toContain('on focus');
+      });
+    }
+
     it('translates hx-trigger event name (clic → click) via eventNameOf', () => {
       const section = document.createElement('section');
       section.setAttribute('lang', 'es');

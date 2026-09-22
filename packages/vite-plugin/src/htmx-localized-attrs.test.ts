@@ -23,8 +23,8 @@ function extractLiveSuffixes(): Set<string> {
   for (const file of files) {
     const source = readFileSync(resolve(VOCAB_DIR, file), 'utf-8');
     // Match `"hx-<localized>": "hx-live"` (skip the canonical line in en.js — already excluded).
-    const m = source.match(/"hx-([^"]+)":\s*"hx-live"/);
-    if (m) out.add(m[1]);
+    // Every form — a vocab may list aliases after the primary.
+    for (const m of source.matchAll(/"hx-([^"]+)":\s*"hx-live"/g)) out.add(m[1]);
   }
   return out;
 }

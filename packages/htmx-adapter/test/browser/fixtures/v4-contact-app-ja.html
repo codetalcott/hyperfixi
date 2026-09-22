@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + adapter — Contact.app の属性を日本語で</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/ja.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <!-- Mirrors the controls in Hypermedia Systems' Contact.app (ch10).
+         Every attribute name is the vocab's PRIMARY form. -->
+    <input id="q" type="search" name="q" value="田中" />
+    <span id="spinner">…</span>
+    <button
+      id="search"
+      hx-取得="/api/contacts"
+      hx-トリガー="クリック"
+      hx-含める="#q"
+      hx-インジケーター="#spinner"
+      hx-ターゲット="#out"
+      hx-置換="innerHTML"
+    >
+      検索
+    </button>
+
+    <button
+      id="delete"
+      hx-削除="/api/contacts/1"
+      hx-確認="この連絡先を削除しますか？"
+      hx-プッシュ-url="/contacts"
+      hx-ターゲット="#out"
+    >
+      削除
+    </button>
+
+    <button id="create" hx-投稿="/api/contacts" hx-ターゲット="#out">作成</button>
+
+    <!-- htmx 4 inheritance is explicit: the app's layout boosts with
+         :inherited on <body>, and the archive download link opts out. -->
+    <nav hx-ブースト:inherited="true">
+      <a id="boosted" href="/api/page2">次へ</a>
+      <a id="unboosted" hx-ブースト="false" href="/api/download">ダウンロード</a>
+    </nav>
+
+    <div id="out"></div>
+  </body>
+</html>

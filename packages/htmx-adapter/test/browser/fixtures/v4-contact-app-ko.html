@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + adapter — Contact.app 속성을 한국어로</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/ko.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <!-- Mirrors the controls in Hypermedia Systems' Contact.app (ch10).
+         Every attribute name is the vocab's PRIMARY form. -->
+    <input id="q" type="search" name="q" value="김민준" />
+    <span id="spinner">…</span>
+    <button
+      id="search"
+      hx-얻다="/api/contacts"
+      hx-트리거="클릭"
+      hx-포함="#q"
+      hx-인디케이터="#spinner"
+      hx-대상="#out"
+      hx-교체="innerHTML"
+    >
+      검색
+    </button>
+
+    <button
+      id="delete"
+      hx-삭제="/api/contacts/1"
+      hx-확인="이 연락처를 삭제할까요?"
+      hx-푸시-url="/contacts"
+      hx-대상="#out"
+    >
+      삭제
+    </button>
+
+    <button id="create" hx-게시="/api/contacts" hx-대상="#out">만들기</button>
+
+    <!-- htmx 4 inheritance is explicit: the app's layout boosts with
+         :inherited on <body>, and the archive download link opts out. -->
+    <nav hx-부스트:inherited="true">
+      <a id="boosted" href="/api/page2">다음</a>
+      <a id="unboosted" hx-부스트="false" href="/api/download">다운로드</a>
+    </nav>
+
+    <div id="out"></div>
+  </body>
+</html>

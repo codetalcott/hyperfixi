@@ -36,6 +36,10 @@ export interface HyperfixiVocab {
    * Map of localized attribute name → canonical English form.
    * Both must be fully-qualified (e.g. `'sse-conectar': 'sse-connect'`),
    * not just suffixes. Identity mappings are valid but redundant.
+   *
+   * Several names may map to one canonical. The FIRST listed is the primary
+   * (the form to teach); the rest are parse aliases — superseded spellings
+   * that must keep working for pages already authored with them.
    */
   attrs?: Record<string, string>;
   /**
@@ -57,10 +61,11 @@ interface VocabPayload {
 const REG = new Map<string, HyperfixiVocab>();
 
 /**
- * Inverted index keyed by `${ns}-${key}` (canonical) → localized name,
- * per language. Built once on register() so the hot path is a Map lookup.
+ * Inverted index keyed by `${ns}-${key}` (canonical) → localized names
+ * (primary first, then aliases), per language. Built once on register() so
+ * the hot path is a Map lookup.
  */
-const localizedNameByKey = new Map<string, Map<string, string>>();
+const localizedNameByKey = new Map<string, Map<string, string[]>>();
 
 /** Languages we've already warned about being missing. */
 const warnedMissingLang = new Set<string>();
@@ -88,7 +93,7 @@ export function onVocabUpdate(listener: () => void): () => void {
 export function getAllLocalizedAttrs(): string[] {
   const names = new Set<string>();
   for (const localized of localizedNameByKey.values()) {
-    for (const name of localized.values()) names.add(name);
+    for (const forms of localized.values()) for (const name of forms) names.add(name);
   }
   return [...names];
 }
@@ -102,18 +107,20 @@ export function getAllLocalizedAttrs(): string[] {
 export function getAllHxOnPrefixes(): string[] {
   const prefixes = new Set<string>(['hx-on:']);
   for (const localized of localizedNameByKey.values()) {
-    const onForm = localized.get('hx-on');
-    if (onForm) prefixes.add(`${onForm}:`);
+    for (const onForm of localized.get('hx-on') ?? []) prefixes.add(`${onForm}:`);
   }
   return [...prefixes];
 }
 
-function invertAttrs(attrs: Record<string, string> | undefined): Map<string, string> {
-  const out = new Map<string, string>();
+function invertAttrs(attrs: Record<string, string> | undefined): Map<string, string[]> {
+  const out = new Map<string, string[]>();
   if (!attrs) return out;
   for (const [localized, canonical] of Object.entries(attrs)) {
     // Key by canonical so the hook can do `nameByKey.get('hx-get')`.
-    out.set(canonical, localized);
+    // Insertion order is kept: the first name listed stays the primary.
+    const forms = out.get(canonical);
+    if (forms) forms.push(localized);
+    else out.set(canonical, [localized]);
   }
   return out;
 }
@@ -124,8 +131,13 @@ function buildVocabAwareHooks(): I18nHooks {
       const canonical = `${ns}-${key}`;
       const lang = langOf(elt);
       if (lang === 'en') return canonical;
-      const localized = localizedNameByKey.get(lang)?.get(canonical);
-      if (localized) return localized;
+      const forms = localizedNameByKey.get(lang)?.get(canonical);
+      if (forms) {
+        // Callers read the returned name off THIS element, so answer with
+        // whichever registered form it actually carries; the primary when it
+        // carries none (the read then misses, as it should).
+        return forms.find(name => elt.hasAttribute(name)) ?? forms[0];
+      }
       // Lang scope exists but no entry for this key — fall back to canonical.
       // Warn once per missing-language so authors notice unregistered vocab.
       if (!REG.has(lang) && !warnedMissingLang.has(lang)) {
@@ -147,8 +159,7 @@ function buildVocabAwareHooks(): I18nHooks {
       const canonical = `${ns}-${key}`;
       const names = new Set<string>([canonical]);
       for (const localized of localizedNameByKey.values()) {
-        const v = localized.get(canonical);
-        if (v) names.add(v);
+        for (const name of localized.get(canonical) ?? []) names.add(name);
       }
       return [...names].map(n => `[${n}]`).join(', ');
     },

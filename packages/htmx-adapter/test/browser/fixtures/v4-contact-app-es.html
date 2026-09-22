@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + adapter — los atributos de Contact.app en español</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <!-- Mirrors the controls in Hypermedia Systems' Contact.app (ch10).
+         Every attribute name is the vocab's PRIMARY form. -->
+    <input id="q" type="search" name="q" value="García" />
+    <span id="spinner">…</span>
+    <button
+      id="search"
+      hx-obtener="/api/contacts"
+      hx-disparador="clic"
+      hx-incluir="#q"
+      hx-indicador="#spinner"
+      hx-objetivo="#out"
+      hx-intercambio="innerHTML"
+    >
+      Buscar
+    </button>
+
+    <button
+      id="delete"
+      hx-eliminar="/api/contacts/1"
+      hx-confirmar="¿Eliminar este contacto?"
+      hx-empujar-url="/contacts"
+      hx-objetivo="#out"
+    >
+      Eliminar
+    </button>
+
+    <button id="create" hx-publicar="/api/contacts" hx-objetivo="#out">Crear</button>
+
+    <!-- htmx 4 inheritance is explicit: the app's layout boosts with
+         :inherited on <body>, and the archive download link opts out. -->
+    <nav hx-impulsar:inherited="true">
+      <a id="boosted" href="/api/page2">Siguiente</a>
+      <a id="unboosted" hx-impulsar="false" href="/api/download">Descargar</a>
+    </nav>
+
+    <div id="out"></div>
+  </body>
+</html>

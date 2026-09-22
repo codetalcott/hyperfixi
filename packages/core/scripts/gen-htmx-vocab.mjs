@@ -17,15 +17,25 @@
  * placement); regeneration is tracked via `npm run generate:htmx-vocab`.
  *
  * Usage:
- *   node packages/core/scripts/gen-htmx-vocab.mjs
+ *   node packages/core/scripts/gen-htmx-vocab.mjs           # write the modules
+ *   node packages/core/scripts/gen-htmx-vocab.mjs --check   # exit 1 if any is stale
+ *
+ * NAMES ARE ADDITIVE. A page authored against a shipped name must keep
+ * working, so a name never disappears because a profile or dictionary word
+ * moved: the new word becomes the primary (listed first) and the old one stays
+ * as a parse alias via `htmx-vocab-legacy.json`. `--check` runs in core's test
+ * suite, so the modules cannot silently fall behind their inputs again — they
+ * once did, for months, and a plain regeneration would have deleted 165
+ * shipped event names.
  *
  * The semantic profile and i18n dictionary packages must be built first
  * (the script imports from dist/). CI runs build for both before invoking.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { HTMX_ATTR_VOCAB } from './htmx-attr-vocab.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../../..');
@@ -57,6 +67,24 @@ const KEYS = {
   sse: ['connect', 'swap'],
   ws: ['connect', 'send'],
 };
+
+/**
+ * Keys localized for the htmx-adapter only. Core's embedded htmx-compat
+ * layer does not implement these attributes, so they stay OUT of `KEYS`
+ * (which mirrors core and feeds its discovery/observer lists). Under the
+ * adapter stock htmx implements them, and canonicalization is data-driven
+ * from the emitted attrs map — so emitting the name is all it takes.
+ */
+const ADAPTER_ONLY_KEYS = {
+  hx: ['indicator', 'include'],
+  sse: [],
+  ws: [],
+};
+
+/** Every key the generator resolves, per namespace, in emission order. */
+const ALL_KEYS = Object.fromEntries(
+  Object.keys(KEYS).map(ns => [ns, [...KEYS[ns], ...ADAPTER_ONLY_KEYS[ns]]])
+);
 
 /**
  * Languages to emit vocab modules for. Originally the eight Phase 0
@@ -140,50 +168,135 @@ async function loadDictionaries() {
 }
 
 /**
- * Resolve a localized keyword from a profile. Returns null if no
- * translation exists — the generator omits it from `attrs` so the
+ * Resolve the localized names for one key, primary first. Empty when no
+ * translation exists — the generator then omits the key from `attrs` and the
  * runtime falls back to the canonical English form.
  *
- * Lookup order:
- *   1. `profile.keywords[key].primary` (the usual source for command/modifier keywords)
- *   2. `profile.references[key]` (for `target`, `event`, etc. which are
+ * Order:
+ *   1. `HTMX_ATTR_VOCAB[lang][ns][key]` — hand-authored names (a string, or
+ *      `[primary, ...aliases]`), for keys that are not hyperscript keywords or
+ *      whose profile word is the wrong register for an attribute name
+ *      (see htmx-attr-vocab.mjs)
+ *   2. `profile.keywords[key].primary` (the usual source for command/modifier keywords)
+ *   3. `profile.references[key]` (for `target`, `event`, etc. which are
  *      stored in `references` because they're context-variable names)
+ *
+ * The profile word is appended even when the table leads: it is what shipped
+ * before the table existed, so it stays a parse alias.
  */
-function localizedKeyword(profile, key) {
+function localizedNames(profile, key, authored) {
+  const names = [authored ?? []].flat();
   const fromKeywords = profile?.keywords?.[key]?.primary;
-  if (fromKeywords && fromKeywords !== key) return fromKeywords;
   const fromReferences = profile?.references?.[key];
-  if (typeof fromReferences === 'string' && fromReferences && fromReferences !== key) {
-    return fromReferences;
-  }
-  return null;
+  if (fromKeywords && fromKeywords !== key) names.push(fromKeywords);
+  else if (typeof fromReferences === 'string' && fromReferences) names.push(fromReferences);
+  return [...new Set(names)].filter(name => name !== key);
 }
 
-/** Build the `attrs` map for one language. */
-function buildAttrs(profile) {
-  const attrs = {};
-  for (const ns of Object.keys(KEYS)) {
-    for (const key of KEYS[ns]) {
-      const localized = localizedKeyword(profile, key);
-      if (!localized) continue;
-      // Localized attribute name → canonical English attribute name.
-      // E.g. `sse-conectar: sse-connect` for Spanish.
-      attrs[`${ns}-${localized}`] = `${ns}-${key}`;
+/**
+ * Reject a hand-authored table that cannot work: a key the generator never
+ * resolves (a typo would otherwise be silently dropped), or a name the HTML
+ * parser would mangle (it lowercases attribute names and splits on
+ * whitespace, `=`, `/`, `>` and quotes).
+ */
+function validateAuthoredVocab() {
+  for (const [lang, vocab] of Object.entries(HTMX_ATTR_VOCAB)) {
+    if (!PROFILE_MODULES[lang]) {
+      throw new Error(`htmx-attr-vocab: unknown language "${lang}"`);
+    }
+    for (const ns of Object.keys(ALL_KEYS)) {
+      for (const [key, authored] of Object.entries(vocab[ns] ?? {})) {
+        if (!ALL_KEYS[ns].includes(key)) {
+          throw new Error(`htmx-attr-vocab: ${lang}.${ns}.${key} is not a known ${ns}- key`);
+        }
+        for (const name of [authored].flat()) {
+          if (!name || /[\s"'<>\/=]/.test(name) || name !== name.toLowerCase()) {
+            throw new Error(
+              `htmx-attr-vocab: ${lang}.${ns}.${key} = "${name}" is not a valid attribute name ` +
+                `(no whitespace, quotes, "=", "/", "<", ">" or uppercase)`
+            );
+          }
+        }
+      }
+    }
+    for (const key of Object.keys(vocab.lowConfidence ?? {})) {
+      if (!Object.keys(ALL_KEYS).some(ns => vocab[ns]?.[key])) {
+        throw new Error(`htmx-attr-vocab: ${lang}.lowConfidence.${key} flags a key with no entry`);
+      }
     }
   }
+}
+
+/**
+ * Append retired names after the current ones. A retired name the current
+ * vocabulary now uses for a DIFFERENT canonical cannot be kept — the current
+ * meaning wins and the loss is reported.
+ */
+function appendLegacy(lang, kind, map, legacy, notes) {
+  for (const [name, canonical] of Object.entries(legacy ?? {})) {
+    if (!(name in map)) map[name] = canonical;
+    else if (map[name] !== canonical) {
+      notes.push(`${lang}: legacy ${kind} "${name}" meant ${canonical}, now ${map[name]} — dropped`);
+    }
+  }
+}
+
+/** Build the `attrs` map for one language: localized name → canonical, primary first. */
+function buildAttrs(lang, profile, legacy, notes) {
+  const attrs = {};
+  for (const ns of Object.keys(ALL_KEYS)) {
+    for (const key of ALL_KEYS[ns]) {
+      const canonical = `${ns}-${key}`;
+      // E.g. `sse-conectar: sse-connect` for Spanish.
+      for (const localized of localizedNames(profile, key, HTMX_ATTR_VOCAB[lang]?.[ns]?.[key])) {
+        // A multi-word profile primary (vi `lấy giá trị`) cannot be an
+        // attribute name — HTML would read three attributes. Join with
+        // hyphens, the convention the profiles already use for their own
+        // multi-word attribute words (vi `trực-tiếp`, `kết-nối`). The spaced
+        // form is not kept as an alias: it never could have matched.
+        const name = `${ns}-${localized.trim().replace(/\s+/g, '-')}`;
+        if (/\s/.test(localized)) {
+          notes.push(`${lang}: attr "${ns}-${localized}" is multi-word — emitted as "${name}"`);
+        }
+        // Two canonicals sharing one localized name would silently drop the
+        // first — an authored word that equals a profile keyword's primary.
+        if (attrs[name] && attrs[name] !== canonical) {
+          throw new Error(
+            `[${lang}] "${name}" resolves for both ${attrs[name]} and ${canonical} — ` +
+              `pick a different word in htmx-attr-vocab.mjs`
+          );
+        }
+        attrs[name] = canonical;
+      }
+    }
+  }
+  appendLegacy(lang, 'attr', attrs, legacy, notes);
   return attrs;
 }
 
-/** Build the `events` map from an i18n dictionary's events block. */
-function buildEvents(dict) {
+/**
+ * Build the `events` map from an i18n dictionary's events block.
+ *
+ * The dictionary serves hyperscript's `on <event>`, where a multi-word name
+ * parses. Here it cannot: an event name is one whitespace-delimited token of
+ * an `hx-trigger` value (`keyup delay:200ms`) or the suffix of an `hx-on:`
+ * attribute NAME. Multi-word names are skipped and reported, never joined —
+ * a fused or hyphenated form would be a coinage nobody reviewed.
+ */
+function buildEvents(lang, dict, legacy, notes) {
   const events = {};
   const raw = dict?.events ?? {};
   for (const [canonical, localized] of Object.entries(raw)) {
     if (typeof localized !== 'string') continue;
     if (localized === canonical) continue;
+    if (/\s/.test(localized)) {
+      notes.push(`${lang}: event "${localized}" (${canonical}) is multi-word — not emitted`);
+      continue;
+    }
     // localized name → canonical English event name.
     events[localized] = canonical;
   }
+  appendLegacy(lang, 'event', events, legacy, notes);
   return events;
 }
 
@@ -205,8 +318,11 @@ function emitModule(lang, attrs, events) {
 
   return `// Auto-generated by packages/core/scripts/gen-htmx-vocab.mjs — do not edit by hand.
 // Localized htmx-compat attribute vocab for language: ${lang}
-// Re-generate after editing packages/semantic/src/generators/profiles/${PROFILE_MODULES[lang]}.ts
+// Re-generate after editing packages/core/scripts/htmx-attr-vocab.mjs,
+// packages/semantic/src/generators/profiles/${PROFILE_MODULES[lang]}.ts
 // or packages/i18n/src/dictionaries/${lang}.ts.
+// Several names may map to one canonical: the first is the primary (the form
+// to teach), later ones are aliases kept so already-authored pages still work.
 (function () {
   if (typeof window === 'undefined' || !window.__hyperfixi_i18n) {
     if (typeof console !== 'undefined') {
@@ -227,32 +343,77 @@ function emitModule(lang, attrs, events) {
 `;
 }
 
-async function main() {
-  const outDir = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
-  await mkdir(outDir, { recursive: true });
-
+/** Render every module. Returns `{ files: [{ lang, path, content, ... }], notes }`. */
+async function renderAll() {
+  validateAuthoredVocab();
   const profiles = await loadProfiles();
   const dicts = await loadDictionaries();
+  const legacy = JSON.parse(await readFile(resolve(__dirname, 'htmx-vocab-legacy.json'), 'utf-8'));
+  const outDir = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
 
-  let emitted = 0;
-  for (const lang of PRIORITY_LANGS) {
-    const attrs = buildAttrs(profiles[lang]);
-    const events = buildEvents(dicts[lang]);
+  const notes = [];
+  const files = PRIORITY_LANGS.map(lang => {
+    const attrs = buildAttrs(lang, profiles[lang], legacy.attrs?.[lang], notes);
+    const events = buildEvents(lang, dicts[lang], legacy.events?.[lang], notes);
     // English emits as an empty registration — useful for explicit
     // "no-op opt-in" pages that want to confirm the orchestrator loaded.
-    const content = emitModule(lang, attrs, events);
-    const outPath = resolve(outDir, `${lang}.js`);
-    await writeFile(outPath, content, 'utf-8');
-    emitted++;
-    console.log(
-      `[gen-htmx-vocab] ${lang}: ${Object.keys(attrs).length} attrs, ` +
-        `${Object.keys(events).length} events → ${outPath.replace(REPO_ROOT + '/', '')}`
-    );
-  }
-  console.log(`\n[gen-htmx-vocab] emitted ${emitted} vocab modules.`);
+    return {
+      lang,
+      path: resolve(outDir, `${lang}.js`),
+      content: emitModule(lang, attrs, events),
+      attrCount: Object.keys(attrs).length,
+      eventCount: Object.keys(events).length,
+    };
+  });
+  return { outDir, files, notes };
 }
 
-main().catch(err => {
-  console.error('[gen-htmx-vocab] failed:', err);
-  process.exit(1);
-});
+async function main() {
+  const check = process.argv.includes('--check');
+  const { outDir, files, notes } = await renderAll();
+  const rel = path => path.replace(REPO_ROOT + '/', '');
+
+  if (check) {
+    const stale = [];
+    for (const file of files) {
+      const current = await readFile(file.path, 'utf-8').catch(() => null);
+      if (current !== file.content) stale.push(rel(file.path));
+    }
+    if (stale.length === 0) {
+      console.log(`[gen-htmx-vocab] ${files.length} vocab modules are up to date.`);
+      return;
+    }
+    console.error(
+      `[gen-htmx-vocab] ${stale.length} vocab module(s) are stale:\n` +
+        stale.map(f => `  ${f}`).join('\n') +
+        `\n\nA semantic profile, an i18n dictionary or htmx-attr-vocab.mjs changed. Rebuild\n` +
+        `packages/semantic and packages/i18n, run \`npm run generate:htmx-vocab --prefix\n` +
+        `packages/core\`, and READ THE DIFF: if a name disappears, pages authored with it\n` +
+        `break. Keep it as an alias by adding it to scripts/htmx-vocab-legacy.json.`
+    );
+    process.exit(1);
+  }
+
+  await mkdir(outDir, { recursive: true });
+  for (const file of files) {
+    await writeFile(file.path, file.content, 'utf-8');
+    console.log(
+      `[gen-htmx-vocab] ${file.lang}: ${file.attrCount} attrs, ` +
+        `${file.eventCount} events → ${rel(file.path)}`
+    );
+  }
+  console.log(`\n[gen-htmx-vocab] emitted ${files.length} vocab modules.`);
+  if (notes.length) {
+    console.log(`\n[gen-htmx-vocab] ${notes.length} name(s) adjusted or not emitted:`);
+    for (const note of notes) console.log(`  ${note}`);
+  }
+}
+
+export { renderAll };
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(err => {
+    console.error('[gen-htmx-vocab] failed:', err);
+    process.exit(1);
+  });
+}

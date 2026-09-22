@@ -4,7 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { register, isLangRegistered, resetOrchestrator } from '../i18n-orchestrator.js';
+import {
+  register,
+  isLangRegistered,
+  resetOrchestrator,
+  getAllLocalizedAttrs,
+  getAllHxOnPrefixes,
+} from '../i18n-orchestrator.js';
 import { getHooks, resetHooks } from '../i18n-hooks.js';
 import { langOf, normLang } from '../lang-resolver.js';
 
@@ -178,6 +184,64 @@ describe('i18n-orchestrator', () => {
       register('es', { hyperfixi: { attrs: { 'hx-objetivo': 'hx-target' } } });
       // 'hx-get' has no localized form even though Spanish is registered.
       expect(getHooks().selectorFor('hx', 'get')).toBe('[hx-get]');
+    });
+  });
+
+  // Several localized names may map to one canonical: the first is the
+  // primary, the rest are superseded spellings that must keep working. The
+  // inversion used to be last-wins single-name, which made an alias REPLACE
+  // the primary instead of joining it.
+  describe('aliases (several names, one canonical)', () => {
+    let scope: HTMLElement;
+
+    beforeEach(() => {
+      register('ja', {
+        hyperfixi: {
+          attrs: {
+            'hx-トリガー': 'hx-trigger',
+            'hx-引き金': 'hx-trigger',
+            'hx-で': 'hx-on',
+            'hx-時': 'hx-on',
+          },
+        },
+      });
+      scope = document.createElement('div');
+      scope.setAttribute('lang', 'ja');
+      document.body.appendChild(scope);
+    });
+
+    afterEach(() => scope.remove());
+
+    function child(attr?: string): HTMLElement {
+      const el = document.createElement('button');
+      if (attr) el.setAttribute(attr, 'x');
+      scope.appendChild(el);
+      return el;
+    }
+
+    it('nameOf answers with the form the element actually carries', () => {
+      expect(getHooks().nameOf(child('hx-トリガー'), 'hx', 'trigger')).toBe('hx-トリガー');
+      expect(getHooks().nameOf(child('hx-引き金'), 'hx', 'trigger')).toBe('hx-引き金');
+    });
+
+    it('nameOf answers with the primary (first listed) when the element carries none', () => {
+      expect(getHooks().nameOf(child(), 'hx', 'trigger')).toBe('hx-トリガー');
+    });
+
+    it('prefers the primary when an element carries both', () => {
+      const el = child('hx-引き金');
+      el.setAttribute('hx-トリガー', 'y');
+      expect(getHooks().nameOf(el, 'hx', 'trigger')).toBe('hx-トリガー');
+    });
+
+    it('selectorFor, the observer list and the hx-on prefixes cover every form', () => {
+      const sel = getHooks().selectorFor('hx', 'trigger');
+      expect(sel).toContain('[hx-トリガー]');
+      expect(sel).toContain('[hx-引き金]');
+      expect(getAllLocalizedAttrs()).toEqual(
+        expect.arrayContaining(['hx-トリガー', 'hx-引き金', 'hx-で', 'hx-時'])
+      );
+      expect(getAllHxOnPrefixes()).toEqual(expect.arrayContaining(['hx-on:', 'hx-で:', 'hx-時:']));
     });
   });
 
