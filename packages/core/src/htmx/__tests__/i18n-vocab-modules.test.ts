@@ -309,6 +309,13 @@ describe('generated htmx vocab modules', () => {
         'swap-oob': 'hx-intercambio-oob',
         sync: 'hx-sincronización',
       },
+      pt: {
+        vals: 'hx-valores',
+        select: 'hx-seleção',
+        'swap-oob': 'hx-troca-oob',
+        sync: 'hx-sincronização',
+      },
+      ko: { vals: 'hx-값', select: 'hx-선택', 'swap-oob': 'hx-교체-oob', sync: 'hx-동기화' },
     };
 
     for (const [lang, expected] of Object.entries(BOOK)) {
@@ -326,12 +333,21 @@ describe('generated htmx vocab modules', () => {
       // 22 profiles carry a `select` keyword that means mark/highlight text
       // (de `markieren`, tr `vurgula`). It is not hx-select, and an emitted
       // name is permanent, so only the table may name an adapter-only key.
-      for (const lang of ['de', 'tr', 'ko', 'pt']) {
+      for (const lang of ['de', 'tr', 'fr', 'zh']) {
         const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
         expect(source, `${lang} leaks the profile's select word`).not.toMatch(/"hx-select"/);
       }
-      const ja = await readFile(resolve(VOCAB_DIR, 'ja.js'), 'utf-8');
-      expect(ja).not.toContain('"hx-選ぶ"');
+      // Languages that DO author hx-select still get no profile alias behind it.
+      const PROFILE_SELECT: Record<string, string> = {
+        ja: 'hx-選ぶ',
+        es: 'hx-seleccionar',
+        pt: 'hx-selecionar',
+        ko: 'hx-고르기',
+      };
+      for (const [lang, word] of Object.entries(PROFILE_SELECT)) {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source, `${lang} appends the profile's select word`).not.toContain(`"${word}"`);
+      }
     });
 
     // Trigger heads are one token of an hx-trigger value. `search` is the one

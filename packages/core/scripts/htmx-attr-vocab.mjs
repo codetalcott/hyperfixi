@@ -171,6 +171,15 @@ export const HTMX_ATTR_VOCAB = {
       boost: 'impulsionar',
       // `empurrar` is the profile's `push` (hyperscript `push url`).
       'push-url': 'empurrar-url',
+      // The rest of the book's listings (beyond Contact.app). Nouns, as the
+      // es entries: the attribute names a thing.
+      vals: 'valores',
+      // `seleção` is the noun; the profile's `selecionar` does not follow
+      // (adapter-only keys take no profile fallback).
+      select: 'seleção',
+      // The swap primary + the untranslated `oob` suffix, like `empurrar-url`.
+      'swap-oob': 'troca-oob',
+      sync: 'sincronização',
     },
     sse: { swap: 'troca' },
     events: {
@@ -179,6 +188,8 @@ export const HTMX_ATTR_VOCAB = {
     },
     lowConfidence: {
       search: 'buscar vs pesquisar — both current; buscar matches the es choice',
+      vals: 'valores is generic, as in es',
+      'swap-oob': 'oob is left as-is, like url in empurrar-url; a reviewer may prefer a different shape',
       delete: 'regional split: excluir (pt-BR) leads, eliminar (pt-PT) is the alias',
       boost: 'impulsionar — Portuguese htmx writing mostly leaves "boost" untranslated',
       'push-url': "empurrar is the profile's `push`, a calque of the History API verb",
@@ -206,6 +217,15 @@ export const HTMX_ATTR_VOCAB = {
       boost: '부스트',
       // `푸시` is the profile's `push` (hyperscript `push url`).
       'push-url': '푸시-url',
+      // The rest of the book's listings (beyond Contact.app). Sino-Korean
+      // nouns, like 확인 / 포함 above.
+      vals: '값',
+      // 선택 is the noun; the profile's 고르기 does not follow (adapter-only
+      // keys take no profile fallback).
+      select: '선택',
+      // The swap primary + the untranslated `oob` suffix, like `푸시-url`.
+      'swap-oob': '교체-oob',
+      sync: '동기화',
     },
     sse: { swap: ['교체', '스왑'] },
     events: {
@@ -214,6 +234,8 @@ export const HTMX_ATTR_VOCAB = {
     },
     lowConfidence: {
       post: '게시 is "post (content)"; 전송 is the alternative but reads as send/submit',
+      vals: '값 is the bare word for "value(s)"; Korean does not mark plural, which is fine for an attribute',
+      'swap-oob': 'oob is left as-is, like url in 푸시-url; a reviewer may prefer a different shape',
     },
   },
 };

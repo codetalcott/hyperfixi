@@ -207,6 +207,18 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
       'hx-intercambio-oob': 'hx-swap-oob',
       'hx-sincronización': 'hx-sync',
     },
+    pt: {
+      'hx-valores': 'hx-vals',
+      'hx-seleção': 'hx-select',
+      'hx-troca-oob': 'hx-swap-oob',
+      'hx-sincronização': 'hx-sync',
+    },
+    ko: {
+      'hx-값': 'hx-vals',
+      'hx-선택': 'hx-select',
+      'hx-교체-oob': 'hx-swap-oob',
+      'hx-동기화': 'hx-sync',
+    },
   };
 
   for (const [lang, expected] of Object.entries(BOOK_LISTINGS)) {

@@ -207,9 +207,9 @@ words are often already a command's (ja `削除` / es `eliminar` are `remove`) �
 profile where the profile's word suits a command but not an attribute name
 (ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
 terminology reviews). ja, es, pt and ko are authored for the 12 attributes the
-_Hypermedia Systems_ Contact.app uses, and ja/es for the four more the book's
-code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`); to add
-a language, add an entry there. `hx-indicator` / `hx-include` / `hx-select` /
+_Hypermedia Systems_ Contact.app uses plus the four more the book's code
+listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`); to add a
+language, add an entry there. `hx-indicator` / `hx-include` / `hx-select` /
 `hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
 htmx implements them under `@hyperfixi/htmx-adapter`; the embedded layer does
 not, so they are not in `i18n-hooks.ts` `KEYS`. **An adapter-only key resolves
