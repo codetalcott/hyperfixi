@@ -29,7 +29,7 @@
     "happy-dom": "^20.14.5",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "files": [
     "dist",
