@@ -661,6 +661,15 @@ export interface PatternMatchResult {
    * neither). Consumed by the fused-handler body rewind in `semantic-parser`.
    */
   readonly roleStarts?: ReadonlyMap<SemanticRole, number>;
+  /**
+   * A source phrase the matcher found in the event HEAD (`from #btn` right
+   * after the event, `#btn から` before the next head literal) rather than in a
+   * pattern slot. Not in `captured`, so a fused pattern's own `[de {source}]`
+   * group (the body command's from-phrase) can neither overwrite it nor be
+   * overwritten. Whose it is — the handler's `from`, or in a postpositional
+   * language the fused body command's own source — is the parser's call.
+   */
+  readonly eventSource?: SemanticValue;
 }
 
 /**

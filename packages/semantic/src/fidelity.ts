@@ -256,6 +256,53 @@ export function collectRoleSignatureStrict(node: unknown): string[] {
   return [...acc].sort();
 }
 
+/**
+ * An event handler's modifiers (`on X from <source> debounced at 200ms`) live
+ * in `eventModifiers`, not in `roles`, so a walk over roles alone never sees
+ * them. That blind spot let the semantic renderer drop every `from <source>`
+ * in all 23 languages with the corpus ratchet green (measured 2026-09-23: the
+ * committed patterns.db still had `ウィンドウ から` for window-resize while a
+ * live render did not). They are scored as pseudo-roles of the handler,
+ * `on.<modifier>:<kind>` / `on.<modifier>=<surface>`, beside the `on.event`
+ * role the handler already carries.
+ */
+function eventModifiers(rec: Record<string, unknown>): Array<[string, unknown]> {
+  if (rec.kind !== 'event-handler') return [];
+  const em = rec.eventModifiers;
+  if (!em || typeof em !== 'object') return [];
+  return Object.entries(em as Record<string, unknown>).filter(
+    ([, v]) => v !== undefined && v !== null && v !== false
+  );
+}
+
+function eventModifierKinds(rec: Record<string, unknown>): Array<[string, string]> {
+  return eventModifiers(rec).map(([name, v]) => [
+    name,
+    typeof v === 'object' && typeof (v as { type?: unknown }).type === 'string'
+      ? (v as { type: string }).type
+      : typeof v,
+  ]);
+}
+
+/**
+ * Modifier values that are language-invariant: a selector/sigil/reference-shaped
+ * source (via the same whole-surface rule as role values), and the numeric /
+ * enumerated modifiers (`debounce`, `throttle`, `queue`, `once`), which no
+ * language ever translates.
+ */
+function eventModifierSurfaces(rec: Record<string, unknown>): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  for (const [name, v] of eventModifiers(rec)) {
+    if (typeof v === 'object') {
+      const surface = roleValueSurface(v);
+      if (surface !== undefined && isInvariantSurface(surface)) out.push([name, surface]);
+    } else {
+      out.push([name, String(v)]);
+    }
+  }
+  return out;
+}
+
 function walkRoles(
   node: unknown,
   acc: Set<string>,
@@ -290,6 +337,7 @@ function walkRoles(
       acc.add(`${action}.${String(role)}:${kind}`);
     }
   }
+  for (const [name, kind] of eventModifierKinds(rec)) acc.add(`on.${name}:${kind}`);
 
   for (const field of CHILD_FIELDS) {
     const child = rec[field];
@@ -410,6 +458,7 @@ function walkRoleValues(node: unknown, acc: string[], depth: number): void {
       acc.push(`${action}.${String(role)}=${surface}`);
     }
   }
+  for (const [name, surface] of eventModifierSurfaces(rec)) acc.push(`on.${name}=${surface}`);
 
   for (const field of CHILD_FIELDS) {
     const child = rec[field];

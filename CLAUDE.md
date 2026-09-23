@@ -410,7 +410,7 @@ this gate already covers.
 **Known Issues:**
 
 - Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (corpus mean 0.99994, lowest pl 0.99871 — the en→foreign render arc, #931–#996, closed nearly all of it). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (all 23 at 1.0 since the 2026-09-23 baseline — the en→foreign render arc, #931–#996, closed nearly all of it; the event-modifier arc, which added `eventModifiers` to the R1/R3 walkers, the last pl row). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -431,10 +431,12 @@ the committed baseline:
   history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
 - **faithful** (fid = 1.0). **3744 / 3744.** Cross-language `avgFidelity` = 1.000,
   `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
-  `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 0.99994 (min pl 0.99871).
-  R1 is the only signal not at 1.000, and its headroom is thin and flat.
+  `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 1.000 (all 23). Since
+  2026-09-23 R1/R3 also score a handler's `eventModifiers` (`from`, `once`,
+  `debounced at`, `throttled at`) as `on.<mod>` pseudo-roles — before that the
+  renderer dropped every one of them with all eleven signals green.
 
-> **Figures snapshot:** as of the **2026-08-27** baseline (`3a19218a`). They drift as work lands
+> **Figures snapshot:** as of the **2026-09-23** baseline (`8067f098`). They drift as work lands
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,

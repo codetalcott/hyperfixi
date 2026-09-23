@@ -609,7 +609,7 @@ function getEventHandlerPatternsKo(): LanguagePattern[] {
       template: {
         format: '{source} 에서 {event} 할 때',
         tokens: [
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
           { type: 'literal', value: '에서' },
           { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
           { type: 'literal', value: '할' },
@@ -1561,14 +1561,29 @@ function getEventHandlerPatternsQu(): LanguagePattern[] {
       command: 'on',
       priority: 115,
       template: {
-        format: 'maykama {event} {body}',
+        // The handler's event source is FRONTED (`#btn manta maykama click …`),
+        // where qu's postpositional marker puts it and where a body command's
+        // own `manta` phrase (which follows the event) can never sit — see the
+        // note below on why a post-event `{event} pi {source} manta` wrapper
+        // was removed. The renderer fronts it for every `position: 'after'`
+        // marker (spliceEventModifiers).
+        format: '[{source} manta] maykama {event} {body}',
         tokens: [
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+              { type: 'literal', value: 'manta', alternatives: ['-manta'] },
+            ],
+          },
           { type: 'literal', value: 'maykama' },
           { type: 'role', role: 'event' },
         ],
       },
       extraction: {
-        event: { position: 1 },
+        event: { position: 2 },
+        source: { position: 0 },
       },
     },
     // NOTE: there is deliberately no `event-qu-source` ({event} pi {source}

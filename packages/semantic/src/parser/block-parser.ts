@@ -393,6 +393,13 @@ export function tryParseProgram(
     ? markerSurfaceForms(profile.keywords?.on)
     : new Set<string>();
   const signatureSplit = eventMarkerForms.size > 0 && onMarkerForms.size > 0;
+  // A handler's event SOURCE is fronted in these languages (`#btn から keyup を
+  // で …`, `#btn 에서 keyup 을 에 …` — spliceEventModifiers), so the two tokens
+  // before a signature's event may be that phrase, which belongs to the SAME
+  // handler and must not be cut off as a bodiless segment of its own.
+  const sourceMarkerForms = signatureSplit
+    ? markerSurfaceForms(profile.roleMarkers?.source)
+    : new Set<string>();
 
   // Cheap pre-guard: a multi-handler program needs either ≥1 `end` keyword (the
   // end-delimited form) or — for trigger/signature-split languages — ≥2 `on`-marker
@@ -471,9 +478,13 @@ export function tryParseProgram(
       // marker is the same particle but is followed by a verb (not the on-marker),
       // so this pair only matches a real trigger.
       const eventTok = tokens[j - 1];
-      const text = input.slice(tokens[segStart].position.start, eventTok.position.start).trim();
-      if (text) segments.push(text);
-      segStart = j - 1;
+      const before = tokens.slice(segStart, j - 1);
+      const frontedSource = before.length === 2 && tokenMatches(before[1], sourceMarkerForms);
+      if (!frontedSource) {
+        const text = input.slice(tokens[segStart].position.start, eventTok.position.start).trim();
+        if (text) segments.push(text);
+        segStart = j - 1;
+      }
     }
   }
   if (segStart < tokens.length) {
