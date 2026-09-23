@@ -429,7 +429,7 @@ the committed baseline:
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
   history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
-- **faithful** (fid = 1.0). **3744 / 3744.** Cross-language `avgFidelity` = 1.000,
+- **faithful** (fid = 1.0). **3792 / 3792.** Cross-language `avgFidelity` = 1.000,
   `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
   `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 1.000 (all 23). Since
   2026-09-23 R1/R3 also score a handler's `eventModifiers` (`from`, `once`,
@@ -529,9 +529,9 @@ yields a 0 delta):
    parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
    triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
    standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
-   disagree. **Both allowlists are now empty** — 3105/3105 foreign renders parse on
+   disagree. **Both allowlists are now empty** — 3174/3174 foreign renders parse on
    the engine, and the en-side twin (`canonical-validity.test.ts`, vitest-only) is at
-   134/134. (It formerly held one entry, `pick-text-range`.)
+   138/138 (measured 2026-09-23). (It formerly held one entry, `pick-text-range`.)
 
 10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
     longer parses at all, at **tolerance 0**. Not redundant with signal 1: every

@@ -8,6 +8,7 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { COUNTER_TYPES } from './increment';
 
 function getDecrementPatternsBn(): LanguagePattern[] {
   return [
@@ -73,7 +74,36 @@ function getDecrementPatternsBn(): LanguagePattern[] {
 }
 
 function getDecrementPatternsDe(): LanguagePattern[] {
+  const verbAlternatives = [
+    'verringern',
+    'dekrementiere',
+    'dekrementieren',
+    'reduziere',
+    'decrement',
+  ];
   return [
+    // With quantity: verringere :counter um 5 — the mirror of
+    // `increment-de-with-quantity`. Without it the bare pattern below won and
+    // `um 2` stranded, so every de decrement-by ran with the default 1.
+    {
+      id: 'decrement-de-with-quantity',
+      language: 'de',
+      command: 'decrement',
+      priority: 105,
+      template: {
+        format: 'verringere {patient} um {quantity}',
+        tokens: [
+          { type: 'literal', value: 'verringere', alternatives: verbAlternatives },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
+          { type: 'literal', value: 'um' },
+          { type: 'role', role: 'quantity' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        quantity: { marker: 'um', position: 3 },
+      },
+    },
     {
       id: 'decrement-de-full',
       language: 'de',
@@ -82,18 +112,8 @@ function getDecrementPatternsDe(): LanguagePattern[] {
       template: {
         format: 'verringere {patient}',
         tokens: [
-          {
-            type: 'literal',
-            value: 'verringere',
-            alternatives: [
-              'verringern',
-              'dekrementiere',
-              'dekrementieren',
-              'reduziere',
-              'decrement',
-            ],
-          },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'literal', value: 'verringere', alternatives: verbAlternatives },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
         ],
       },
       extraction: {
@@ -324,7 +344,10 @@ function getDecrementPatternsTh(): LanguagePattern[] {
       id: 'decrement-th-simple',
       language: 'th',
       command: 'decrement',
-      priority: 100,
+      // 90, not 100 — see `increment-th-simple`: at a tie with the generated
+      // pattern (which carries the optional `[{quantity}]` slot) this bare form
+      // won and dropped the amount (`ลดค่า :n 2` decremented by 1).
+      priority: 90,
       template: {
         format: 'ลดค่า {patient}',
         tokens: [
@@ -468,7 +491,7 @@ function getDecrementPatternsZh(): LanguagePattern[] {
         format: '减少 {patient}',
         tokens: [
           { type: 'literal', value: '减少', alternatives: ['递减', '减', '降低', 'decrement'] },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
         ],
       },
       extraction: {

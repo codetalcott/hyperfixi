@@ -180,10 +180,26 @@ describe('validate_hyperscript reports what the parsers actually did', () => {
   });
 
   it('surfaces tokens the semantic parser left unconsumed', async () => {
-    const r = await run('on click increment the textContent of the previous <output/>');
-    expect(r.valid).toBe(true);
+    // The book's counter (`… of the previous <output/>`) was the example here
+    // until the semantic parser learned positional of-paths; an unclosed call
+    // is a tail it will never read.
+    const r = await run('on click add .x to me frob(1', 'en');
     const w = r.warnings.find((x: any) => x.code === 'UNCONSUMED_INPUT');
-    expect(w?.message).toMatch(/of the previous/);
+    expect(w?.message).toMatch(/frob/);
+  });
+
+  it('the book counter and pseudo-command parse with nothing unconsumed', async () => {
+    for (const code of [
+      'on click increment the textContent of the previous <output/>',
+      'on load call me.click()',
+    ]) {
+      const r = await run(code);
+      expect(r.valid, code).toBe(true);
+      expect(
+        r.warnings.some((x: any) => x.code === 'UNCONSUMED_INPUT'),
+        code
+      ).toBe(false);
+    }
   });
 
   it('accepts a namespaced event (htmx:beforeRequest)', async () => {

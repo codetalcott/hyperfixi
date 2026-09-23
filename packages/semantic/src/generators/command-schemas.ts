@@ -1585,7 +1585,10 @@ export const incrementSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to increment',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      // 'property-path' opts this role into the "of"-possessive matcher
+      // (`increment the textContent of #out`), as set's destination does; without
+      // it the owner was stranded and the command incremented a bare word.
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -1622,7 +1625,10 @@ export const decrementSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to decrement',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      // 'property-path' opts this role into the "of"-possessive matcher
+      // (`decrement the textContent of #out`), as set's destination does; without
+      // it the owner was stranded and the command decremented a bare word.
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },

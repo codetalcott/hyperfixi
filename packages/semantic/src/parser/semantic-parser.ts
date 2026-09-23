@@ -48,6 +48,7 @@ import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-pa
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
+import { rewritePseudoCommand } from './pseudo-command';
 import { findEventModifierPhrase } from './event-modifier-lift';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
@@ -1612,6 +1613,17 @@ export class SemanticParserImpl implements ISemanticParser {
       )
     );
 
+    // Stage 5 (en): a bare pseudo-command (`click() me`) — the same rewrite the
+    // clause parser applies inside a handler body.
+    if (language === 'en') {
+      const pseudoStream = tokenizeInternal(parseInput, language);
+      const pseudo = this.tryParsePseudoCommand(pseudoStream, commandPatterns, language);
+      if (pseudo && pseudoStream.isAtEnd()) {
+        diagnostics.push(parseDiagnostic('pseudo-command parsed as call', 'info', 'stage-pseudo'));
+        return withDiagnostics(pseudo, diagnostics);
+      }
+    }
+
     // All stages failed
     diagnostics.push(
       parseDiagnostic(`all parse stages exhausted for "${parseInput}"`, 'error', 'parse-failed')
@@ -1623,6 +1635,36 @@ export class SemanticParserImpl implements ISemanticParser {
       parseInput,
       diagnostics
     );
+  }
+
+  /**
+   * An English pseudo-command at the stream's position, parsed as its `call`
+   * equivalent (see `./pseudo-command`). The rewrite is matched by the ordinary
+   * `call` patterns and must be consumed in full, so the node is exactly what
+   * `call <target>.<method>(<args>)` parses to — renders and round-trips
+   * included. Advances `stream` only on success.
+   */
+  private tryParsePseudoCommand(
+    stream: TokenStream,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): CommandSemanticNode | null {
+    if (language !== 'en') return null;
+    const rewrite = rewritePseudoCommand(
+      stream.tokens,
+      stream.position(),
+      tryGetProfile(language),
+      t => !!getSchema((t.normalized ?? t.value).toLowerCase() as ActionType)
+    );
+    if (!rewrite) return null;
+    const rewritten = tokenizeInternal(rewrite.text, language);
+    const match = patternMatcher.matchBest(
+      rewritten,
+      commandPatterns.filter(p => p.command === 'call')
+    );
+    if (!match || !rewritten.isAtEnd()) return null;
+    for (let n = 0; n < rewrite.consumed; n++) stream.advance();
+    return this.buildCommand(match, language);
   }
 
   /**
@@ -3420,6 +3462,20 @@ export class SemanticParserImpl implements ISemanticParser {
         this.tryAttachTrailingExpressionRole(clauseStream, cmd, language);
         this.tryAttachTrailingDuration(clauseStream, cmd);
       } else {
+        // English pseudo-command (`click() me`): parsed as the `call` it is.
+        // Only at a command boundary — never inside a skipped run, where a
+        // glued `name(…)` is an event with params (`wait for pointermove(x) or
+        // pointerup(x) from document`), not a command.
+        const pseudo =
+          skipped.length === 0
+            ? this.tryParsePseudoCommand(clauseStream, commandPatterns, language)
+            : null;
+        if (pseudo) {
+          flushSkipped();
+          commands.push(pseudo);
+          directHits++;
+          continue;
+        }
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
         // <coll>`), so the bare `repeat` keyword carries no matchable variant

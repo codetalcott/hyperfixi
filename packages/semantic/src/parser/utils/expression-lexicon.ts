@@ -423,6 +423,11 @@ export function matchPositionalRun(
     marker &&
     source &&
     source.kind === 'selector' &&
+    // A `*` style property or `@` attribute tokenizes as a selector but never
+    // names an ELEMENT, so it cannot be a locative source. Without this, the
+    // owner-first possessive `前 <div/> の *--x` read `の *--x` as "in *--x" and
+    // the run swallowed the property it owns.
+    !/^[*@]/.test(source.value) &&
     (marker.kind === 'keyword' || marker.kind === 'particle' || marker.kind === 'identifier') &&
     !POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
     // A command verb is never a locative marker: in a juxtaposed body

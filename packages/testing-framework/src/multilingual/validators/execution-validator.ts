@@ -213,6 +213,14 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Fixture adds `#a`/`#b` with distinguishable content (appended last, so
   // existing snapshot indices are preserved).
   'swap-content',
+  // Expansion wave 12 (hxi18n Arc 3): `increment the textContent of the previous
+  // <output/>` — Hypermedia Systems ch. 9, verbatim. It parsed lossily in every
+  // language (the owner dropped) until the of-possessive matcher took positional
+  // owners, and even then it ran and changed nothing on the semantic path: the
+  // AST handed `increment` a property access, which the command evaluated and
+  // wrote nowhere. The semantic mapper now desugars a property counter to core's
+  // own `set X to (X + 1)`. PATTERN_SETUP puts an <output> before #btn.
+  'book-counter-increment',
 ];
 
 /**
@@ -264,6 +272,13 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   'modal-close-button': doc => {
     doc.querySelector('.card')!.classList.add('modal');
     doc.body.classList.add('modal-open');
+  },
+  // `increment the textContent of the previous <output/>` needs an <output>
+  // before #btn, as in the book's counter (`<output>0</output><button …>`).
+  'book-counter-increment': doc => {
+    const out = doc.createElement('output');
+    out.textContent = '5';
+    doc.getElementById('btn')!.before(out);
   },
 };
 

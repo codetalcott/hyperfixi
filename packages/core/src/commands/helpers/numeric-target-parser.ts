@@ -9,6 +9,7 @@ import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 import { isLiteralNode } from '../../ast/guards';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -50,6 +51,34 @@ function getNodeType(node: ASTNode): string {
 }
 
 /**
+ * The owner and property name of a property-access target — `#out's
+ * textContent`, `the value of #n`, `#out.textContent` — or null when the node
+ * is not one, or names its property by a computed or sigil expression.
+ */
+function propertyTarget(node: ASTNode): { owner: ASTNode; name: string } | null {
+  const n = node as {
+    type?: string;
+    object?: ASTNode;
+    target?: ASTNode;
+    property?: unknown;
+    computed?: boolean;
+  };
+  const owner =
+    n.type === 'propertyOfExpression'
+      ? n.target
+      : n.type === 'possessiveExpression' ||
+          n.type === 'memberExpression' ||
+          n.type === 'propertyAccess'
+        ? n.object
+        : undefined;
+  if (!owner || n.computed) return null;
+  const p = n.property as { name?: unknown } | string | undefined;
+  const name = typeof p === 'string' ? p : typeof p?.name === 'string' ? p.name : undefined;
+  if (!name || !/^[A-Za-z_$][\w$-]*$/.test(name)) return null;
+  return { owner, name };
+}
+
+/**
  * Parse raw AST input into structured NumericTargetInput
  *
  * This is the shared parser for increment/decrement commands.
@@ -74,7 +103,8 @@ export async function parseNumericTargetInput(
 
   // Extract target from first argument
   const targetArg = raw.args[0];
-  let target: string | number;
+  let target: string | number | HTMLElement;
+  let property: string | undefined;
   let extractedScope: 'global' | 'local' | undefined;
   let customWrite: NumericCustomWrite | undefined;
 
@@ -93,7 +123,19 @@ export async function parseNumericTargetInput(
     // the reactivity plugin's caretVar writer. We read the current value via
     // the standard expression evaluator and let `execute` dispatch the write.
     const writer = getRegisteredNodeWriter(nodeType);
-    if (writer) {
+    const prop = writer ? null : propertyTarget(targetArg);
+    const owner = prop ? await evaluator.evaluate(prop.owner, context) : undefined;
+    const ownerElement = Array.isArray(owner) ? owner[0] : owner;
+    if (prop && isHTMLElement(ownerElement)) {
+      // A PROPERTY of an element (`increment the textContent of the previous
+      // <output/>`): read and write that property. Evaluating the whole access
+      // yielded only its value, which the write below then sent nowhere. Core's
+      // own parser never reaches here — it desugars increment to `set X to
+      // X + n` — but the multilingual front-end hands the command the access
+      // itself, so every translated property counter ran and changed nothing.
+      target = ownerElement;
+      property = prop.name;
+    } else if (writer) {
       const currentRaw = await evaluator.evaluate(targetArg, context);
       const currentValue =
         typeof currentRaw === 'number'
@@ -155,6 +197,7 @@ export async function parseNumericTargetInput(
   return {
     target,
     amount,
+    ...(property && { property }),
     ...(scope && { scope }),
     ...(customWrite && { customWrite }),
   };

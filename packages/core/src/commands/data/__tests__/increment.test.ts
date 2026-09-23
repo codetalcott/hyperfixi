@@ -445,4 +445,81 @@ describe('IncrementCommand (Standalone V2)', () => {
       expect(context.globals.get('score')).toBe(600);
     });
   });
+
+  describe('execute - property of an element (the multilingual front-end shape)', () => {
+    // Core's parser desugars `increment X` to `set X to X + 1`, so it never
+    // hands this command a property access. The semantic (multilingual)
+    // front-end does: `increment the textContent of the previous <output/>` in
+    // any of 23 languages arrives as a possessive/propertyOf/member node. The
+    // command evaluated it to its VALUE and then wrote the result to no
+    // property, so the counter ran and never changed.
+    let out: HTMLElement;
+    const owner: ASTNode = { type: 'selector', value: '#out' };
+    const textContent: ASTNode = { type: 'identifier', name: 'textContent' };
+    const elementEvaluator = {
+      evaluate: async (node: ASTNode) => (node === owner ? out : undefined),
+    } as unknown as ExpressionEvaluator;
+
+    beforeEach(() => {
+      out = document.createElement('output');
+      out.textContent = '5';
+    });
+
+    const shapes: Array<[string, ASTNode]> = [
+      [
+        'possessiveExpression',
+        { type: 'possessiveExpression', object: owner, property: textContent },
+      ],
+      [
+        'propertyOfExpression',
+        { type: 'propertyOfExpression', target: owner, property: textContent },
+      ],
+      [
+        'memberExpression',
+        { type: 'memberExpression', object: owner, property: textContent, computed: false },
+      ],
+    ];
+
+    for (const [name, target] of shapes) {
+      it(`writes back through a ${name} target`, async () => {
+        const input = await command.parseInput(
+          { args: [target], modifiers: {}, commandName: 'increment' },
+          elementEvaluator,
+          context
+        );
+        expect(input.target).toBe(out);
+        expect(input.property).toBe('textContent');
+        await command.execute(input, context);
+        expect(out.textContent).toBe('6');
+      });
+    }
+
+    it('applies a `by` amount and decrements', async () => {
+      const input = await command.parseInput(
+        {
+          args: [shapes[0][1]],
+          modifiers: { by: { type: 'literal', value: 2 } },
+          commandName: 'decrement',
+        },
+        elementEvaluator,
+        context
+      );
+      await command.execute(input, context);
+      expect(out.textContent).toBe('3');
+    });
+
+    it('a computed member is not a property name, and keeps the old path', async () => {
+      const input = await command.parseInput(
+        {
+          args: [
+            { type: 'memberExpression', object: owner, property: textContent, computed: true },
+          ],
+          modifiers: {},
+        },
+        elementEvaluator,
+        context
+      );
+      expect(input.property).toBeUndefined();
+    });
+  });
 });

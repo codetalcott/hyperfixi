@@ -84,6 +84,13 @@ export class PatternMatcher {
    * (`send "hello"`) or identifier (`trigger refresh`), and must not be gated.
    */
   private currentPatternCommand: string | undefined;
+  /**
+   * The command whose roles the current pattern's slots belong to. Equal to
+   * `currentPatternCommand` except for the fused `<cmd>-event-*` handler
+   * patterns, which are `command: 'on'` and name the wrapped command in
+   * `extraction.action.value` — their `patient` slot is `<cmd>`'s patient.
+   */
+  private currentRoleCommand: string | undefined;
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
   /**
@@ -123,6 +130,7 @@ export class PatternMatcher {
     // Get language profile for possessive keyword lookup
     this.currentProfile = tryGetProfile(pattern.language);
     this.currentPatternCommand = pattern.command;
+    this.currentRoleCommand = pattern.extraction?.action?.value ?? pattern.command;
 
     // Reset match counters for this pattern
     this.stemMatchCount = 0;
@@ -1012,6 +1020,22 @@ export class PatternMatcher {
       }
     }
 
+    // Owner-first possessive with a POSITIONAL owner (ja `前 <output/> の textContent`,
+    // ko `이전 <output/> 의 …`, zh/bn/hi/tl/vi alike) — the render of `the
+    // textContent of the previous <output/>` in the clitic languages. Must run
+    // before the positional matcher below, which would take the run alone and
+    // strand `の textContent`. Gated like the of-possessive matcher.
+    if (this.roleAcceptsPropertyPath(patternToken)) {
+      const positionalPossessive = this.tryMatchPositionalPossessiveExpression(
+        tokens,
+        nextPatternToken
+      );
+      if (positionalPossessive) {
+        captured.set(patternToken.role, positionalPossessive);
+        return true;
+      }
+    }
+
     // Check for a positional query expression (e.g., 'last <.message/> in #chat',
     // 'first <button/> in .modal'). Triggered only when the role starts with a
     // positional keyword, so non-positional roles are unaffected.
@@ -1040,6 +1064,24 @@ export class PatternMatcher {
         }
       }
       captured.set(patternToken.role, caretScopeValue);
+      return true;
+    }
+
+    // A method call on a parenthesized receiver: `(closest <form/>).submit()` —
+    // the `call` spelling of a pseudo-command whose target is a query (see
+    // ../parser/pseudo-command.ts). Requires the `.method(…)` tail, so an
+    // ordinary parenthesized operand (`(the value of #price as Number) * …`)
+    // is left to the operator-run matcher below.
+    const parenCallValue = this.tryMatchParenReceiverCall(tokens);
+    if (parenCallValue) {
+      if (
+        patternToken.expectedTypes &&
+        patternToken.expectedTypes.length > 0 &&
+        !patternToken.expectedTypes.includes('expression')
+      ) {
+        return patternToken.optional || false;
+      }
+      captured.set(patternToken.role, parenCallValue);
       return true;
     }
 
@@ -1116,11 +1158,12 @@ export class PatternMatcher {
 
     // Check for an "of"-possessive expression (e.g. "*--primary-color of #theme",
     // AR "*--primary-color من #theme", TL "*--primary-color ng #theme"). Gated to
-    // roles that opt into property-path (currently `set`'s destination), so the
-    // "of"/source marker can't be confused with a real source role on other
-    // commands (e.g. `get data from #input`).
-    if (patternToken.expectedTypes?.includes('property-path')) {
-      const ofPossessive = this.tryMatchOfPossessiveExpression(tokens);
+    // roles that opt into property-path (set/default's destination, bind's
+    // source, increment/decrement's patient), so the "of"/source marker can't be
+    // confused with a real source role on other commands (e.g. `get data from
+    // #input`).
+    if (this.roleAcceptsPropertyPath(patternToken)) {
+      const ofPossessive = this.tryMatchOfPossessiveExpression(tokens, nextPatternToken);
       if (ofPossessive) {
         captured.set(patternToken.role, ofPossessive);
         return true;
@@ -2075,6 +2118,27 @@ export class PatternMatcher {
   }
 
   /**
+   * Whether a role slot opts into the property-path matchers.
+   *
+   * A typed slot answers for itself. An UNTYPED slot inherits its schema role's
+   * answer: the fused `<cmd>-event-*` patterns (event-handlers-vso/-sov) emit
+   * their command's role slots with no `expectedTypes`, so `al clic incrementar
+   * textContent de #out` captured the bare property word and stranded the owner,
+   * while the same command outside a handler (the generated pattern, typed from
+   * the schema) captured the whole path. Only the opt-in is inherited — the
+   * untyped slot still accepts whatever it accepted before.
+   */
+  private roleAcceptsPropertyPath(patternToken: PatternToken): boolean {
+    if (patternToken.type !== 'role') return false;
+    if (patternToken.expectedTypes) return patternToken.expectedTypes.includes('property-path');
+    const command = this.currentRoleCommand;
+    if (!command) return false;
+    const schema = (commandSchemas as Record<string, CommandSchema | undefined>)[command];
+    const spec = schema?.roles.find(r => r.role === patternToken.role);
+    return spec?.expectedTypes?.includes('property-path') ?? false;
+  }
+
+  /**
    * Try to match a prepositional "of" possessive:
    *   <property> <of-marker> <owner-selector>
    * e.g. "*--primary-color of #theme" → property-path(#theme, *--primary-color),
@@ -2084,7 +2148,10 @@ export class PatternMatcher {
    * across languages (`set #y's X` would be the alternative, but the transformer
    * uses the `of` form). Only called for property-path roles (see matchRoleToken).
    */
-  private tryMatchOfPossessiveExpression(tokens: TokenStream): SemanticValue | null {
+  private tryMatchOfPossessiveExpression(
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): SemanticValue | null {
     const property = tokens.peek();
     if (!property) return null;
     // A selector head is the historical form (`*--primary-color of #theme`). A
@@ -2104,6 +2171,29 @@ export class PatternMatcher {
       return null;
     }
     tokens.advance();
+
+    // English `of the previous <output/>`: the article is noise before an owner.
+    if (tokens.peek()?.value.toLowerCase() === 'the') tokens.advance();
+
+    // A POSITIONAL owner — `the textContent of the previous <output/>`, the
+    // book's counter (Hypermedia Systems ch. 9). The run is captured the way
+    // tryMatchPositionalExpression captures it for any other role (one
+    // expression, English positional keyword), so the object renders and
+    // re-parses exactly as a bare positional role value does.
+    const positional = matchPositionalRun(
+      tokens.tokens,
+      tokens.position(),
+      this.currentProfile,
+      t => (t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t))
+    );
+    if (positional) {
+      for (let n = 0; n < positional.consumed; n++) tokens.advance();
+      return createPropertyPath(
+        { type: 'expression', raw: positional.parts.map(p => p.text).join(' ') },
+        this.toEnglishProperty(property.value),
+        'possessive'
+      );
+    }
 
     const owner = tokens.peek();
     if (!owner || owner.kind !== 'selector' || isSigilProperty(owner.value)) {
@@ -2127,6 +2217,48 @@ export class PatternMatcher {
     // which reads it owner-first and correctly.
     return createPropertyPath(
       createSelector(owner.value),
+      this.toEnglishProperty(property.value),
+      'possessive'
+    );
+  }
+
+  /**
+   * Owner-first possessive whose owner is a positional run:
+   *   <positional> <selector> <possessive-marker> <property>
+   * e.g. ja `前 <output/> の textContent` → property-path(previous <output/>,
+   * textContent). Only for the languages whose possessive marker sits BETWEEN
+   * owner and property and reads owner-first; th's `ของ` reads property-first
+   * and goes through the of-possessive matcher instead.
+   */
+  private tryMatchPositionalPossessiveExpression(
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): SemanticValue | null {
+    const profile = this.currentProfile;
+    const marker = profile?.possessive?.marker;
+    if (!profile || !marker || profile.possessive?.markerPosition !== 'between') return null;
+    if (profile.code === 'th') return null;
+
+    const run = matchPositionalRun(tokens.tokens, tokens.position(), profile, t =>
+      t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
+    );
+    if (!run) return null;
+    const markerTok = tokens.peek(run.consumed);
+    const property = tokens.peek(run.consumed + 1);
+    if (!markerTok || markerTok.value !== marker) return null;
+    // Same property admission as the selector-possessive matcher's profile-marker
+    // branch: a bare word, a `*` style property, or a keyword the language's
+    // property table vouches for (vi `giá trị`). A command verb is none of them.
+    const propertyOk =
+      !!property &&
+      (this.isBareWordPropertyHead(property) ||
+        (property.kind === 'selector' && property.value.startsWith('*')) ||
+        (property.kind === 'keyword' && isKnownPropertySurface(profile.code, property.value)));
+    if (!property || !propertyOk) return null;
+
+    for (let n = 0; n < run.consumed + 2; n++) tokens.advance();
+    return createPropertyPath(
+      { type: 'expression', raw: run.parts.map(p => p.text).join(' ') },
       this.toEnglishProperty(property.value),
       'possessive'
     );
@@ -2717,6 +2849,82 @@ export class PatternMatcher {
   }
 
   /**
+   * `( <expr> ) .method ( <args> )` → expression `(<expr>).method(<args>)`.
+   * The receiver's keywords contribute their English form (`(más_cercano
+   * <form/>)` → `(closest <form/>)`), as every raw expression does, so a
+   * localized receiver re-parses to the same English. Null, consuming
+   * nothing, unless the whole shape is present.
+   */
+  private tryMatchParenReceiverCall(tokens: TokenStream): SemanticValue | null {
+    if (tokens.peek()?.value !== '(') return null;
+    const mark = tokens.mark();
+    const inner: LanguageToken[] = [];
+    tokens.advance();
+    let depth = 1;
+    while (!tokens.isAtEnd() && inner.length <= PatternMatcher.MAX_METHOD_ARGS * 4) {
+      const t = tokens.peek()!;
+      tokens.advance();
+      if (t.value === '(') depth++;
+      else if (t.value === ')' && --depth === 0) break;
+      inner.push(t);
+    }
+    const closer = tokens.tokens[tokens.position() - 1];
+    const method = tokens.peek();
+    if (
+      depth !== 0 ||
+      inner.length === 0 ||
+      !method ||
+      method.kind !== 'selector' ||
+      !/^\.[A-Za-z_$][\w$]*$/.test(method.value) ||
+      !PatternMatcher.abuts(closer, method)
+    ) {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.advance();
+    const argsOpen = tokens.peek();
+    if (argsOpen?.value !== '(' || !PatternMatcher.abuts(method, argsOpen)) {
+      tokens.reset(mark);
+      return null;
+    }
+    const args = this.consumeCallParens(tokens);
+    if (args === null) {
+      tokens.reset(mark);
+      return null;
+    }
+    const receiver = joinExpressionTokens(inner, this.currentProfile);
+    return { type: 'expression', raw: `(${receiver})${method.value}${args}` } as SemanticValue;
+  }
+
+  /** Whether `b` directly follows `a` in the source, with no whitespace between. */
+  private static abuts(a: LanguageToken | undefined, b: LanguageToken | undefined): boolean {
+    return !!a && !!b && a.position.end === b.position.start;
+  }
+
+  /**
+   * Consume a balanced `(…)` run at the stream position and return its text
+   * joined without spaces (`(1,2)`), or null — consuming nothing — when the
+   * parens do not balance. The paren tokens are plain identifiers in the
+   * multilingual tokenizers, so this balances by VALUE, mirroring
+   * tryConsumeRunOperand's group logic.
+   */
+  private consumeCallParens(tokens: TokenStream): string | null {
+    const callMark = tokens.mark();
+    const callParts: string[] = [];
+    let parenDepth = 0;
+    while (!tokens.isAtEnd()) {
+      const t = tokens.peek();
+      if (!t) break;
+      callParts.push(t.value);
+      tokens.advance();
+      if (t.value === '(') parenDepth++;
+      else if (t.value === ')' && --parenDepth === 0) return callParts.join('');
+    }
+    tokens.reset(callMark); // unbalanced — leave the parens unconsumed
+    return null;
+  }
+
+  /**
    * Try to match a property access expression like 'userData.name' or 'it.data'.
    * Pattern: (identifier | keyword) + '.' + identifier [+ '.' + identifier ...]
    * Returns an expression value if matched, or null if not.
@@ -2788,35 +2996,8 @@ export class PatternMatcher {
         // after the role slot (`… に 設定`) met `(` instead, the whole set
         // pattern died, and the command fell to the role-swapping
         // verb-anchoring fallback (behavior-sortable `set item to the
-        // target.closest("li")`, session-5 residue). The paren tokens are
-        // plain identifiers in the multilingual tokenizers, so this balances
-        // by VALUE, mirroring tryConsumeRunOperand's group logic.
-        const callMark = tokens.mark();
-        const callParts: string[] = [];
-        let parenDepth = 0;
-        let closed = false;
-        while (!tokens.isAtEnd()) {
-          const t = tokens.peek();
-          if (!t) break;
-          if (t.value === '(') parenDepth++;
-          else if (t.value === ')') {
-            callParts.push(t.value);
-            tokens.advance();
-            parenDepth--;
-            if (parenDepth === 0) {
-              closed = true;
-            }
-            if (closed) break;
-            continue;
-          }
-          callParts.push(t.value);
-          tokens.advance();
-        }
-        if (closed) {
-          fusedChain += callParts.join('');
-        } else {
-          tokens.reset(callMark); // unbalanced — leave the parens unconsumed
-        }
+        // target.closest("li")`, session-5 residue).
+        fusedChain += this.consumeCallParens(tokens) ?? '';
       }
       return { type: 'expression', raw: fusedChain } as SemanticValue;
     }
@@ -3096,6 +3277,23 @@ export class PatternMatcher {
     }
 
     tokens.advance(); // consume property selector
+
+    // A method CALL on the element (`call #dialog.showModal()`, `call
+    // #x.foo(1, 2)`) is an expression, not a property path: folding it to
+    // `#x.foo` stranded the argument list and turned the call into a property
+    // read — the render came back `call #x.foo`, which calls nothing. Only a
+    // GLUED `(` is an argument list: a spaced one is the next operand
+    // (it/pl/ru/uk render `set` as `impostare in #total.innerText ( … ) * …`).
+    const openParen = tokens.peek();
+    if (openParen?.value === '(' && PatternMatcher.abuts(propertyToken, openParen)) {
+      const args = this.consumeCallParens(tokens);
+      if (args !== null) {
+        return {
+          type: 'expression',
+          raw: `${token.value}${propertyToken.value}${args}`,
+        } as SemanticValue;
+      }
+    }
 
     // Create property-path: #output.innerText
     // Extract property name without the leading dot
