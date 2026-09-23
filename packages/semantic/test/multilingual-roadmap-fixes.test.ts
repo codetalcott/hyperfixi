@@ -14359,13 +14359,16 @@ describe('Foreign-validity Phase 11: th ปรับขนาด→resize (windo
   // ป + รับ(→take) + ขนาด, rendering `on ป take ขนาด call adjustLayout()` —
   // canonically invalid. The handoff filed this row "structural, NOT data";
   // measured, it was a plain missing EXTRAS entry (12th mis-filing). The
-  // from/debounced tail is dropped exactly like the en reference's own render.
+  // from/debounced tail used to be dropped "exactly like the en reference's
+  // own render" — which was the renderer never emitting eventModifiers at all
+  // (event-source-round-trip.test.ts, 2026-09-23). Both are carried now, so the
+  // row renders the whole en reference, not just its head.
   it('th window-resize row renders the en-identical head', () => {
     const out = render(
       parse('เมื่อ ปรับขนาด เรียก adjustLayout() จาก window debounced ที่ 200ms', 'th'),
       'en'
     );
-    expect(out).toBe('on resize call adjustLayout()');
+    expect(out).toBe('on resize from window debounced at 200ms call adjustLayout()');
     expect(/[฀-๿]/.test(out)).toBe(false);
   });
 });
@@ -14474,11 +14477,12 @@ describe('Foreign-validity Phase 11: window-keydown fused-if event excision (ar/
   }
 
   it('en window-keydown reference shape is the convergence target', () => {
+    // The condition-led tl case above carries no `from window` (the shape the
+    // transformer emitted never did), and the renderer now emits a handler's
+    // event source (event-source-round-trip.test.ts, 2026-09-23), so the
+    // convergence target is the reference WITHOUT its source clause.
     const en = render(
-      parse(
-        'on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument()',
-        'en'
-      ),
+      parse('on keydown[key=="s"] if event.ctrlKey halt then call saveDocument()', 'en'),
       'en'
     );
     const tl = render(parse(cases[0][1], 'tl'), 'en');

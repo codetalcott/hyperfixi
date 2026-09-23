@@ -598,18 +598,78 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return scored.length > 0 ? scored[0].pattern : null;
   }
 
+
+  /**
+   * Emit an event handler's modifiers into the rendered head. They live in
+   * `eventModifiers`, not in roles, so no pattern slot ever rendered them: every
+   * `on X from <source>` lost its source in all 23 languages, silently (the
+   * parse consumed the tokens, so no coverage diagnostic fired), and the book's
+   * abort button listened on the wrong element in every language.
+   *
+   * Placement follows what each language's parser recovers:
+   * - `.once` / `.queue(x)` glue to the event token (the tokenizer's
+   *   event-modifier form, which the canonical engine also accepts).
+   * - the source goes where the profile's source marker sits — prepositional
+   *   markers (en from, es de, de von, ar من, zh 从) right after the event, where
+   *   the matcher's source-clause window and the generated `[من {source}]`
+   *   groups look; postpositional markers (ja から, ko 에서, bn থেকে, hi से, tr
+   *   den, qu manta) fronted before the whole head, the `[{source} から] {event}`
+   *   shape the SOV head patterns and ko's `{source} 에서 {event} 할 때` declare.
+   * - `debounced at` / `throttled at` follow the source, in English: every
+   *   parser's standalone-modifier pre-pass reads that phrase, and the engine
+   *   rejects the other order (`debounced at 200ms from window`).
+   */
+  private spliceEventModifiers(
+    node: EventHandlerSemanticNode,
+    parts: string[],
+    eventPart: number,
+    language: string
+  ): void {
+    const em = node.eventModifiers;
+    if (!em) return;
+    if (eventPart >= 0) {
+      if (em.once) parts[eventPart] += '.once';
+      if (em.queue) parts[eventPart] += `.queue(${em.queue})`;
+    }
+    const tail: string[] = [];
+    if (em.from) {
+      const noun = this.valueToNaturalString(em.from, language);
+      const marker = tryGetProfile(language)?.roleMarkers?.source;
+      const word = marker?.primary ?? 'from';
+      if (marker?.position === 'after') {
+        parts.unshift(`${noun} ${word}`);
+      } else {
+        tail.push(`${word} ${noun}`);
+      }
+    }
+    const duration = (ms: number): string => (ms % 1000 === 0 ? `${ms / 1000}s` : `${ms}ms`);
+    if (typeof em.debounce === 'number') tail.push(`debounced at ${duration(em.debounce)}`);
+    if (typeof em.throttle === 'number') tail.push(`throttled at ${duration(em.throttle)}`);
+    if (tail.length === 0) return;
+    // After the event when the head carries one; else after the head (SOV heads
+    // end in their event marker, which the modifiers must follow).
+    const at = eventPart >= 0 && tryGetProfile(language)?.roleMarkers?.source?.position !== 'after' ? eventPart + 1 : parts.length;
+    parts.splice(at, 0, ...tail);
+  }
+
   /**
    * Render a semantic node using a specific pattern.
    */
   private renderWithPattern(node: SemanticNode, pattern: LanguagePattern): string {
     const parts: string[] = [];
     const language = pattern.language;
+    let eventPart = -1;
 
     for (const token of pattern.template.tokens) {
       const rendered = this.renderPatternToken(token, node, language);
       if (rendered !== null) {
         parts.push(rendered);
+        if (token.type === 'role' && token.role === 'event') eventPart = parts.length - 1;
       }
+    }
+
+    if (node.kind === 'event-handler') {
+      this.spliceEventModifiers(node as EventHandlerSemanticNode, parts, eventPart, language);
     }
 
     // Handle event handler body (render separately after pattern).

@@ -98,6 +98,15 @@ export class PatternMatcher {
    * `captured` — see `PatternMatchResult.roleStarts`.
    */
   private roleStarts = new Map<SemanticRole, number>();
+  /**
+   * A source phrase found in the event HEAD (`from #btn` right after the event,
+   * `#btn から` before the next head literal) by the two head-tolerance sites
+   * below. Kept OUT of `captured`: a fused pattern's own `[de {source}]` group
+   * later in the template would otherwise overwrite it with the body command's
+   * source (`al … de #contacts-btn quitar @disabled de yo` lost `#contacts-btn`
+   * that way). The parser decides whose it is — see PatternMatchResult.eventSource.
+   */
+  private eventSource: SemanticValue | undefined;
 
   constructor(confidenceModel?: ConfidenceModel) {
     this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
@@ -119,6 +128,7 @@ export class PatternMatcher {
     this.stemMatchCount = 0;
     this.totalKeywordMatches = 0;
     this.roleStarts = new Map();
+    this.eventSource = undefined;
 
     const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
 
@@ -145,6 +155,7 @@ export class PatternMatcher {
       consumedTokens: tokens.position() - mark.position,
       confidence,
       roleStarts: this.roleStarts,
+      ...(this.eventSource ? { eventSource: this.eventSource } : {}),
     };
   }
 
@@ -338,7 +349,7 @@ export class PatternMatcher {
     captured: Map<SemanticRole, SemanticValue>,
     upcoming: PatternToken & { type: 'literal' }
   ): void {
-    if (captured.has('source')) return;
+    if (captured.has('source') || this.eventSource) return;
     const tok0 = tokens.peek();
     const tok1 = tokens.peek(1);
     if (!tok0 || !tok1) return;
@@ -357,19 +368,37 @@ export class PatternMatcher {
     const position = src?.position;
 
     // Prepositional `from .modal` (pl z, uk з, zh 从, de von, sw kutoka).
-    if (position !== 'after' && isMarker(tok0) && tok1.kind === 'selector') {
+    if (position !== 'after' && isMarker(tok0)) {
+      const v = this.sourceNounValue(tok1);
+      if (!v) return;
       tokens.advance();
-      const v = this.tokenToSemanticValue(tokens.advance());
-      if (v) captured.set('source', v);
+      tokens.advance();
+      this.eventSource = v;
       return;
     }
     // Postpositional `.modal から` (ja から, ko 에서, bn থেকে, hi से, tr den).
-    if (position === 'after' && tok0.kind === 'selector' && isMarker(tok1)) {
-      const v = this.tokenToSemanticValue(tok0);
+    if (position === 'after' && isMarker(tok1)) {
+      const v = this.sourceNounValue(tok0);
+      if (!v) return;
       tokens.advance();
       tokens.advance();
-      if (v) captured.set('source', v);
+      this.eventSource = v;
     }
+  }
+
+  /**
+   * The value of an event-source noun, or undefined when the token cannot be
+   * one. A source is a selector (`#btn`, `.modal`) or a reference the profile
+   * knows — `window` / `document` / `body` in the language's own word
+   * (ウィンドウ, fenster, نافذة) or left in English — never a bare identifier or
+   * `me`: a body command's first noun must not be eaten by the head.
+   */
+  private sourceNounValue(t: LanguageToken): SemanticValue | undefined {
+    if (t.kind === 'selector') return this.tokenToSemanticValue(t) ?? undefined;
+    if (t.kind !== 'keyword' && t.kind !== 'identifier') return undefined;
+    const name = (t.normalized ?? t.value).toLowerCase();
+    if (name === 'me' || !isValidReference(name)) return undefined;
+    return { type: 'reference', value: name };
   }
 
   /**
@@ -1351,6 +1380,9 @@ export class PatternMatcher {
       // `<source-marker> <element>` (`von .modal` / `kutoka .modal` / `from window`).
       // Skipped when the pattern itself expects the marker next (e.g. the
       // handcrafted `event-de-bei-source` carries an explicit `von {source}`).
+      // Captured into `eventSource`, never into `captured.source`: the pattern's
+      // own trailing `[de {source}]` group is the BODY command's from-phrase
+      // and must neither overwrite this nor be overwritten by it.
       const srcMarker = tokens.peek();
       if (
         srcMarker &&
@@ -1359,12 +1391,11 @@ export class PatternMatcher {
         !this.patternTokenWouldMatch(nextPatternToken, srcMarker)
       ) {
         const srcValueTok = tokens.peek(1);
-        if (srcValueTok && (srcValueTok.kind === 'selector' || srcValueTok.kind === 'identifier')) {
+        const srcValue = srcValueTok ? this.sourceNounValue(srcValueTok) : undefined;
+        if (srcValue && !this.eventSource) {
           tokens.advance(); // the source marker
-          const srcValue = this.tokenToSemanticValue(tokens.advance());
-          if (srcValue && !captured.has('source')) {
-            captured.set('source', srcValue);
-          }
+          tokens.advance(); // the noun
+          this.eventSource = srcValue;
         }
       }
     }

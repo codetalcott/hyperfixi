@@ -29,6 +29,7 @@ import {
   createSelector,
   createLiteral,
   createReference,
+  isValidReference,
 } from '../types';
 import {
   tokenize as tokenizeInternal,
@@ -1771,13 +1772,56 @@ export class SemanticParserImpl implements ISemanticParser {
     // that source is the BODY command's, hence endsWith). Translated
     // window-resize renders get their from via reclaimDanglingFromTail
     // instead, which never routes through here.
+    //
+    // Widened 2026-09-23 (event-source round trip): the `-source` id gate also
+    // discarded the two captures that ARE the handler's by construction —
+    // (a) the marker-explicit source-clause consumer (`match.sourceClause`:
+    // `al clic de #btn …`, `クリック を #btn から で …`), which then LEAKED into
+    // the fused body command as a phantom `source` role, and (b) the generated
+    // handler-head patterns' own source group (`on-ja-generated` `[{source}
+    // から] {event} を で`, `on-ar-generated` `على {event} [من {source}]`), whose
+    // ids start with `on-`/`event-` and contain no command that could own the
+    // slot. The `<cmd>-event-…` fused patterns keep the old gate: their slot is
+    // the body command's `from`. A default-filled `me` is still not a source.
+    const notMe = (v: SemanticValue): boolean =>
+      !(v.type === 'reference' && v.value === 'me') &&
+      (v as { implicit?: unknown }).implicit !== true;
     const sourceValue = match.captured.get('source');
+    const pureHandlerPattern =
+      match.pattern.command === 'on' && /^(on|event)-/.test(match.pattern.id);
+    let sourceThreaded = false;
     if (
       sourceValue &&
-      match.pattern.id.endsWith('source') &&
-      !(sourceValue.type === 'reference' && sourceValue.value === 'me')
+      (match.pattern.id.endsWith('source') || pureHandlerPattern) &&
+      notMe(sourceValue)
     ) {
       eventModifiers = { ...(eventModifiers ?? {}), from: sourceValue };
+      sourceThreaded = true;
+    }
+    // A head-position source the matcher found beside the event. In a
+    // prepositional language it can only be the handler's (`al clic de #btn
+    // quitar …` — a body command's from-phrase follows its verb). In a
+    // postpositional one the renderer FRONTS the handler's source (`#btn から
+    // クリック …`), so a phrase after the event marker is the fused body
+    // command's own — when that command has a `source` role and its pattern
+    // captured none (`クリック で .tab から .active を 削除`, the tabs rows).
+    let bodySourceFromHead: SemanticValue | undefined;
+    if (match.eventSource && !sourceThreaded) {
+      const fusedAction = match.captured.get('action');
+      const schema =
+        fusedAction?.type === 'literal'
+          ? getSchema(String(fusedAction.value) as ActionType)
+          : undefined;
+      const postpositional = tryGetProfile(language)?.roleMarkers?.source?.position === 'after';
+      if (
+        postpositional &&
+        schema?.roles.some(r => r.role === 'source') &&
+        !match.captured.has('source')
+      ) {
+        bodySourceFromHead = match.eventSource;
+      } else if (notMe(match.eventSource)) {
+        eventModifiers = { ...(eventModifiers ?? {}), from: match.eventSource };
+      }
     }
 
     // Extract "or" conjunction events (e.g., "click or keydown")
@@ -1910,12 +1954,16 @@ export class SemanticParserImpl implements ISemanticParser {
       const actionName = actionValue.value as string;
       const roles: Record<string, SemanticValue> = {};
 
-      // Copy relevant roles (excluding event, action, and continues which are structural)
+      // Copy relevant roles (excluding event, action, and continues which are
+      // structural, and a `source` already threaded to the handler's
+      // eventModifiers.from — it is the handler's, not this command's).
       for (const [role, value] of match.captured) {
         if (role !== 'event' && role !== 'action' && role !== 'continues') {
+          if (role === 'source' && sourceThreaded) continue;
           roles[role] = value;
         }
       }
+      if (bodySourceFromHead) roles.source = bodySourceFromHead;
 
       // SOV repeat: recover a dropped `forever` loop keyword. The verb-first SOV
       // loop head is `{repeat-verb} forever <body>` (ja `繰り返し forever .pulse を
@@ -6732,6 +6780,19 @@ export class SemanticParserImpl implements ISemanticParser {
     };
   }
 
+  /**
+   * Type a reclaimed event-source noun the way the matcher's head captures do:
+   * a selector, or a reference the tokenizer normalized (ar نافذة / vi `window`
+   * → `window`), so the English render says `from window`, not `from "نافذة"`.
+   * Anything else keeps the legacy string literal.
+   */
+  private static sourceNounValue(noun: LanguageToken): SemanticValue {
+    if (noun.kind === 'selector') return createSelector(noun.value);
+    const name = (noun.normalized ?? noun.value).toLowerCase();
+    if (isValidReference(name)) return { type: 'reference', value: name };
+    return { type: 'literal', value: noun.value, dataType: 'string' };
+  }
+
   private reclaimDanglingFromTail(
     handler: EventHandlerSemanticNode,
     input: string,
@@ -6776,7 +6837,7 @@ export class SemanticParserImpl implements ISemanticParser {
               ...hoisted,
               eventModifiers: {
                 ...hoisted.eventModifiers,
-                from: { type: 'literal', value: noun.value, dataType: 'string' },
+                from: SemanticParserImpl.sourceNounValue(noun),
               },
             },
             input: excised,
