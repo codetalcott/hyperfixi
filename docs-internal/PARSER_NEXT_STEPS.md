@@ -2074,6 +2074,43 @@ stopped at `on`, and `parsePrimary` on `on` returns a handler), and
 `fetch` command that then ran. Both are pinned in
 `parser/__tests__/declared-commands.test.ts`.
 
+### ~~Three upstream-valid handler forms from *Hypermedia Systems*~~ — FIXED (hxi18n Arc 4, 2026-09-23)
+
+Found by round-tripping the book's four hyperscript bodies; the engine
+(`loadCanonicalParser()`, 0.9.93) accepts all three. Pinned by
+`parser/__tests__/book-handler-forms.test.ts`, which also RUNS each form.
+
+- **C1 — `from <source>` took one token.** `from the window` stored the
+  source `the`, `from closest <form/>` stored `closest`, and the rest of the
+  handler was discarded. `the` is now an article (as the behavior-handler path
+  already treated it), and a positional source (`closest`/`next`/`previous`/
+  `first`/`last`) parses as an expression carried in the new
+  `EventHandlerNode.targetExpression`, which the runtime evaluates against the
+  handler's element. `target` keeps the source text. The semantic AST builder
+  emits the same field, so `最も近い <form/> から 送信 …` listens on the form too.
+- **C2 — an EVENT-named pseudo-command was not a command.** `click() me` and
+  `submit() me` failed with "Not a command"; `foo() me` never did. The body
+  loop took commands and identifiers only; an identifier-like token glued to
+  `(` now takes the identifier path. `the` is also a pseudo-command article
+  now (upstream lists it among the prepositions), so `reset() the closest
+  <form/>` no longer drops its target — the documented example `reload() the
+  location of the window` moved from `lossy` to `ok-wrapped` with it.
+- **C4 — `send`/`trigger` read EVERY `on` as a target marker.** The book's
+  abort button (`on click send htmx:abort to #contacts-btn on
+  htmx:beforeRequest from #contacts-btn …`) parsed as two handlers with the
+  second one's head in `send`'s arguments. Once a target is taken, `on` now
+  ends the command. Before a target, `on <x>` is still the target — upstream
+  reads `send foo on keyup log me` that way too.
+
+**C3, a compatibility note rather than a defect:** `focus` and `blur` are
+COMMANDS in 0.9.93, so upstream rejects `focus() me` (the book's own
+spelling). hyperfixi accepts any command name as a pseudo-command inside a
+handler, with a `PSEUDO_CMD_SHADOW` warning. `focus me` is the portable form.
+Bare (top-level) pseudo-commands are errors on both engines.
+
+The AST-equivalence hashes did not move: no engine-corpus source parses
+differently.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

@@ -69,6 +69,12 @@ export interface EventHandlerNode extends ASTNode {
   readonly selector?: string;
   /** Target for "from" clause (as string or expression) */
   readonly target?: string;
+  /**
+   * A positional `from` source (`from closest <form/>`) as an expression the
+   * runtime evaluates against the handler's element — mirrors @hyperfixi/core
+   * EventHandlerNode.targetExpression. `target` still carries its text.
+   */
+  readonly targetExpression?: ExpressionNode;
   /** Optional event condition ("[condition]" syntax) */
   readonly condition?: ASTNode;
   /** Attribute name for mutation events ("of @attribute" syntax) */
@@ -421,8 +427,18 @@ export class ASTBuilder {
     // the `source` role branch above (the parser lands `on resize from window`
     // and the reclaimed multilingual from-tails here, not in roles).
     let finalSelector = selector;
+    let targetExpression: ExpressionNode | undefined;
     if (semanticModifiers?.from) {
       const fromMod = semanticModifiers.from;
+      // A positional source cannot be resolved from its text by the runtime
+      // (it would query the selector `closest <form/>`), so it also travels as
+      // the expression core's own parser emits for it.
+      if (
+        fromMod.type === 'expression' &&
+        /^(closest|next|previous|first|last)\s/.test(fromMod.raw)
+      ) {
+        targetExpression = convertValue(fromMod);
+      }
       if (fromMod.type === 'selector' && !selector) {
         finalSelector = fromMod.value;
         target = target ?? fromMod.value;
@@ -456,6 +472,7 @@ export class ASTBuilder {
       ...(events && events.length > 1 ? { events } : {}),
       ...(finalSelector ? { selector: finalSelector } : {}),
       ...(target ? { target } : {}),
+      ...(targetExpression ? { targetExpression } : {}),
       ...(condition ? { condition: condition as ASTNode } : {}),
       ...(watchTarget ? { watchTarget } : {}),
       ...(args && args.length > 0 ? { args, params: args } : {}),

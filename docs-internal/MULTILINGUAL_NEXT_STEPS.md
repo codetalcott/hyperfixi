@@ -5662,9 +5662,11 @@ Residuals, not started:
   handcrafted patterns and noise-word path. Not in the corpus or the book.
 - **Command-name pseudo heads** — `reset() the closest <form/>` parses as
   `reset me` (target silently lost); `focus() on #x` alike. The engine rejects
-  both (`focus`/`reset` are commands in 0.9.93) and core mis-parses them (a
-  phantom `on #x` handler), so there is no oracle to align to. Core half is
-  hxi18n Arc 4.
+  both (`focus`/`reset` are commands in 0.9.93). Core's half is done (hxi18n
+  Arc 4: inside a handler it parses them as pseudo-commands, `the` included);
+  the semantic half is open. It needs the pseudo-command rewrite to run BEFORE
+  the command patterns when a command word is glued to `(` and followed by a
+  target — excluding `js(…)`, whose parens are parameters.
 - **`set-color-variable` confidence 1.0 → 0.79** in es/it/pl/ru/th/uk: the
   fused `set-event-*-vso-2role` pattern now matches the whole row instead of
   failing over to the head-only handler pattern. Same roles, same render; not a

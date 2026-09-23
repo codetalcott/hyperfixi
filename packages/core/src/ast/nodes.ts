@@ -417,6 +417,12 @@ export interface EventHandlerNode extends BaseNode {
   readonly events?: string[];
   readonly condition?: Expr;
   readonly target?: string;
+  /**
+   * `on submit from closest <form/>` — a source that is an EXPRESSION (a
+   * positional query), evaluated against the handler's element at install
+   * time. `target` still carries its source text.
+   */
+  readonly targetExpression?: Expr;
   readonly selector?: string;
   /** `on click(button, clientX)` — event properties destructured into locals. */
   readonly args?: string[];

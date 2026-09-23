@@ -16,7 +16,7 @@
  * happens to re-parse into the right English by accident cannot pass.
  */
 import { describe, it, expect } from 'vitest';
-import { parse, translate } from '../src';
+import { parse, translate, buildAST } from '../src';
 import { scoreNodes, collectRoleSignature, collectRoleValueSignature } from '../src/fidelity';
 import type { EventHandlerSemanticNode, SemanticNode } from '../src/types';
 
@@ -228,3 +228,32 @@ describe('fidelity scorers see event modifiers', () => {
     expect(scoreNodes(a, b).faithful).toBe(true);
   });
 });
+
+describe('a positional source reaches the runtime as an expression', () => {
+  // The runtime resolves `target` by NAME (window/document/me/a local) or as a
+  // selector, so `closest <form/>` as text queried nothing and the handler
+  // never listened. Core's parser now emits `targetExpression` for it
+  // (hxi18n Arc 4); the semantic builder mirrors that for every language.
+  const astOf = (src: string, lang: string) =>
+    buildAST(parse(src, lang)!).ast as unknown as {
+      target?: string;
+      targetExpression?: { type: string; callee?: { name?: string } };
+    };
+
+  for (const lang of ['en', 'ja', 'es', 'ar', 'ko', 'tr'] as const) {
+    it(`${lang}: from closest <form/>`, () => {
+      const src = translate('on submit from closest <form/> log me', 'en', lang);
+      const ast = astOf(src, lang);
+      expect(ast.target, src).toBe('closest <form/>');
+      expect(ast.targetExpression?.type, src).toBe('callExpression');
+      expect(ast.targetExpression?.callee?.name, src).toBe('closest');
+    });
+  }
+
+  it('a named source stays a name', () => {
+    for (const src of ['on keydown from window log me', 'on click from triggerEl log me']) {
+      expect(astOf(src, 'en').targetExpression, src).toBeUndefined();
+    }
+  });
+});
+

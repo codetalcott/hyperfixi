@@ -174,9 +174,17 @@ describe('validate_hyperscript reports what the parsers actually did', () => {
     );
 
   it('reports hyperfixi core rejecting an English line', async () => {
-    const r = await run('on load click() me');
+    // `on load click() me` was the example until core learned event-named
+    // pseudo-commands (hxi18n Arc 4); a non-command body is one it never will.
+    const r = await run('on click qqqq');
     expect(r.valid).toBe(false);
     expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(true);
+  });
+
+  it("the book's `on load click() me` is valid on both parsers now", async () => {
+    const r = await run('on load click() me');
+    expect(r.valid).toBe(true);
+    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(false);
   });
 
   it('surfaces tokens the semantic parser left unconsumed', async () => {
