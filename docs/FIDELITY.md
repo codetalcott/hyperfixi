@@ -205,6 +205,16 @@ present, `add.destination:reference` missing) is recall-perfect but R1 < 1.
 Cross-language comparison is by role **name + value type**, never value string —
 the value is supposed to be translated; the _shape_ is not.
 
+**Event-handler modifiers are roles too.** A handler's `from <source>`, `once`,
+`debounced at` and `throttled at` live in `eventModifiers`, not in `roles`, so
+until 2026-09-23 no walker saw them — and the renderer dropped every one of them
+in all 23 languages with every signal green (the corpus rows `window-resize`,
+`two-way-binding`, `event-once`, `event-from-elsewhere`, `behavior-removable`
+and eight more). They are now scored as pseudo-roles of the handler:
+`on.from:selector` for R1, and `on.from=#firstName` / `on.debounce=200` for R3
+(a selector-shaped source and the numeric modifiers are language-invariant). A
+mutation that disables their rendering fails the gate with 299 role-set flips.
+
 ### Execution (R2): the ground truth, rationed
 
 Two parses can share an identical action set _and_ role signature yet still
