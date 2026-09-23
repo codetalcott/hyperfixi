@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 48 curated patterns', () => {
+  it('contains exactly the 49 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -128,6 +128,10 @@ describe('R2 execution subset (lock)', () => {
         // execution-validator.ts.
         'append-content',
         'increment-by-amount',
+        // Wave 12 (hxi18n Arc 3): the book's counter — a property counter with
+        // a positional owner, which ran and changed nothing in every language
+        // until the semantic increment mapper desugared it to `set X to X + 1`.
+        'book-counter-increment',
       ].sort()
     );
   });
@@ -229,6 +233,29 @@ describe('R2 execution validator (lock)', () => {
     // No PATTERN_TRIGGER for toggle-class-basic → click dispatched → success
     // handler never runs → empty signature.
     expect(clickOnly.effects).toEqual([]);
+  });
+
+  it('the book counter increments its <output> in en and in the clitic languages', async () => {
+    // Hypermedia Systems ch. 9. The ja/ko renders are owner-first
+    // (`前 <output/> の textContent`), which neither parsed nor executed before
+    // hxi18n Arc 3; a property counter built by the semantic path also wrote
+    // nowhere until the increment mapper desugared it to `set X to X + 1`.
+    const en = await validator.execute(
+      'book-counter-increment',
+      'on click increment the textContent of the previous <output/>',
+      'en'
+    );
+    expect(en.error, en.error).toBeUndefined();
+    expect(en.effects).toHaveLength(1);
+    expect(en.effects[0]).toMatch(/^Δoutput.*text\[6\]$/);
+    for (const [lang, code] of [
+      ['ja', 'クリック を で 前 <output/> の textContent を 増加'],
+      ['ko', '클릭 할 때 이전 <output/> 의 textContent 을 증가'],
+    ] as const) {
+      const res = await validator.execute('book-counter-increment', code, lang);
+      expect(res.error, `${lang}: ${res.error}`).toBeUndefined();
+      expect(res.effects, lang).toEqual(en.effects);
+    }
   });
 
   it('wave-6 en references execute with their locked signatures', async () => {

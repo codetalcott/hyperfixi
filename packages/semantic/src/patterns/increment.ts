@@ -7,7 +7,19 @@
  * Phase 3.2: Consolidated from 17 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+
+/**
+ * The counter slot's value types. `property-path` opts it into the
+ * of-possessive matcher (`erhöhe textContent von #out`), mirroring the schema
+ * role; a hand-crafted pattern types its own slot, so it has to say so too.
+ */
+export const COUNTER_TYPES: ExpectedType[] = [
+  'selector',
+  'reference',
+  'expression',
+  'property-path',
+];
 
 function getIncrementPatternsBn(): LanguagePattern[] {
   return [
@@ -88,7 +100,7 @@ function getIncrementPatternsDe(): LanguagePattern[] {
         format: 'erhöhe {patient} um {quantity}',
         tokens: [
           { type: 'literal', value: 'erhöhe', alternatives: verbAlternatives },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
           { type: 'literal', value: 'um' },
           { type: 'role', role: 'quantity' },
         ],
@@ -107,7 +119,7 @@ function getIncrementPatternsDe(): LanguagePattern[] {
         format: 'erhöhe {patient}',
         tokens: [
           { type: 'literal', value: 'erhöhe', alternatives: verbAlternatives },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
         ],
       },
       extraction: {
@@ -535,7 +547,7 @@ function getIncrementPatternsZh(): LanguagePattern[] {
         format: '增加 {patient}',
         tokens: [
           { type: 'literal', value: '增加', alternatives: ['递增', '加', '增', 'increment'] },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: COUNTER_TYPES },
         ],
       },
       extraction: {

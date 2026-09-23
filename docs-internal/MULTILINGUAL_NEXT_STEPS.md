@@ -5620,3 +5620,59 @@ Not started. Owner decision first: does the embedded htmx-compat layer adopt
 `hx-query` semantics (a GET with a body, per htmx 4), or is this a
 vocab-only addition for the upstream adapter? The answer decides whether the
 core processor is in scope.
+
+## ~~`of`-paths and pseudo-commands~~ — SHIPPED (hxi18n Arc 3, 2026-09-23)
+
+Found by round-tripping the four hyperscript bodies in *Hypermedia Systems*
+(plan: `~/.claude/plans/handoff-hxi18n-roundtrip-validator.md`). Two of them
+came back from all 23 languages with their only command gutted, at every
+fidelity signal green:
+
+- **ch. 9 counter**, `increment the textContent of the previous <output/>` →
+  `increment textContent`. The of-possessive matcher was gated to roles typed
+  `property-path` (increment/decrement were not), took only a SELECTOR owner,
+  and the fused `<cmd>-event-*` patterns (`command: 'on'`, untyped slots) never
+  reached it. Now: increment/decrement opt in; an untyped slot inherits its
+  schema role's opt-in (through `extraction.action` for the fused patterns); a
+  positional owner is read property-first (`textContent de anterior <output/>`)
+  and, in the owner-first clitic languages, owner-first (`前 <output/> の
+  textContent`); en renders `the X of <owner>` (the engine rejects
+  `previous <output/>'s X`). Corpus row `book-counter-increment`, R2 wave 12.
+- **ch. 10**, `on load click() me` → `on load`. A pseudo-command is exactly
+  `call <target>.<method>(<args>)`, so the en front-end rewrites it to that and
+  parses it with the ordinary `call` patterns — `call me.click()` renders
+  natively in every language and is executable by core, which rejects
+  `click() me` (hxi18n C2). Query targets are parenthesized
+  (`call (closest <form/>).submit()`). Corpus row `book-archive-download-click`
+  (engine column `hyperscript` — core rejects the raw).
+
+Found and fixed on the way: `call #x.foo(1, 2)` dropped its argument list in
+every language (read as property `#x.foo`); de/th `decrement … by N` ran with
+1 (the mirror patterns increment had); the positional run swallowed a `*`/`@`
+property as a locative source (`の *opacity`); and core's increment command
+wrote a PROPERTY target nowhere (`parseNumericTargetInput` never filled the
+`property` field its helpers already honour) — every semantic-built property
+counter, `increment #out's textContent` included, ran and changed nothing.
+
+Residuals, not started:
+
+- **`put X into the Y of Z`** loses the owner in en (`destination` becomes the
+  article `the` when the patient is a string) and the whole command in ar/de.
+  Opting `put.destination` into `property-path` made en WORSE — put has its own
+  handcrafted patterns and noise-word path. Not in the corpus or the book.
+- **Command-name pseudo heads** — `reset() the closest <form/>` parses as
+  `reset me` (target silently lost); `focus() on #x` alike. The engine rejects
+  both (`focus`/`reset` are commands in 0.9.93) and core mis-parses them (a
+  phantom `on #x` handler), so there is no oracle to align to. Core half is
+  hxi18n Arc 4.
+- **`set-color-variable` confidence 1.0 → 0.79** in es/it/pl/ru/th/uk: the
+  fused `set-event-*-vso-2role` pattern now matches the whole row instead of
+  failing over to the head-only handler pattern. Same roles, same render; not a
+  ratchet signal, and above the 0.5 default threshold.
+- **`data/engine-verification.json` is stale** (stamped at lokascript 2.11.1).
+  A full `verify:engines` re-run on 2026-09-23 flipped ~20 unrelated rows
+  (repeat-times, event-once, slide-toggle, morph-*, fetch-with-method, …) to
+  `hyperscript`/null. Not committed — the run used a tree whose core `dist/`
+  was built by `build:multilingual-dist`, so harness drift and real core
+  regressions are not yet separated. Re-run after a full core build and triage.
+

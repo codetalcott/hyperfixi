@@ -545,7 +545,8 @@ function validateHyperscript(
 
       // Tokens the parser read but bound to no role. The line may still be
       // valid hyperscript — but the semantic IR, and so any translation made
-      // from it, silently lacks them (`on load click() me` → `ロード を で`).
+      // from it, silently lacks them (the book's `on load click() me` rendered
+      // as the empty `ロード を で` until the parser learned pseudo-commands).
       for (const msg of result.unconsumed ?? []) {
         warnings.push({
           code: 'UNCONSUMED_INPUT',

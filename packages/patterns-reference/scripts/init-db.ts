@@ -560,6 +560,16 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Decrement a numeric counter element',
     feature: 'counters',
   },
+  {
+    // Hypermedia Systems ch. 9, verbatim. The corpus's only `of`-possessive on
+    // a counter and the only POSITIONAL owner: every language used to return
+    // `increment textContent`, the owner dropped.
+    id: 'book-counter-increment',
+    title: 'Increment a Sibling Counter',
+    raw_code: 'on click increment the textContent of the previous <output/>',
+    description: 'Increment the text of the output element just before this one',
+    feature: 'counters',
+  },
 
   // ==========================================================================
   // Control Flow
@@ -692,6 +702,17 @@ const SEED_EXAMPLES: SeedExample[] = [
     title: 'Call Function',
     raw_code: 'on click call myFunction()',
     description: 'Call a JavaScript function',
+    feature: 'advanced',
+  },
+  {
+    // Hypermedia Systems ch. 10, verbatim: a PSEUDO-COMMAND (a method call used
+    // as a command). Upstream-only — hyperfixi core rejects an event-named
+    // method (`click`) here; the translations render it as `call me.click()`,
+    // which both engines accept. Every language used to render an empty `on load`.
+    id: 'book-archive-download-click',
+    title: 'Pseudo-Command',
+    raw_code: 'on load click() me',
+    description: 'Call a method on an element as if it were a command',
     feature: 'advanced',
   },
   {

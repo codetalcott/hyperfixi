@@ -29,7 +29,12 @@ import {
 const ALLOWED_WARNINGS: Record<string, string[]> = {
   add: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
   bind: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  // increment/decrement: the counter can be an `of`-possessive property path
+  // (`increment the textContent of the previous <output/>`), as set's
+  // destination can.
+  decrement: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   default: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  increment: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   morph: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
   set: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   transition: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],

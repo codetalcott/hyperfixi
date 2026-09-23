@@ -598,7 +598,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return scored.length > 0 ? scored[0].pattern : null;
   }
 
-
   /**
    * Emit an event handler's modifiers into the rendered head. They live in
    * `eventModifiers`, not in roles, so no pattern slot ever rendered them: every
@@ -654,7 +653,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (tail.length === 0) return;
     // After the event when the head carries one; else after the head (SOV heads
     // end in their event marker, which the modifiers must follow).
-    const at = eventPart >= 0 && tryGetProfile(language)?.roleMarkers?.source?.position !== 'after' ? eventPart + 1 : parts.length;
+    const at =
+      eventPart >= 0 && tryGetProfile(language)?.roleMarkers?.source?.position !== 'after'
+        ? eventPart + 1
+        : parts.length;
     parts.splice(at, 0, ...tail);
   }
 
@@ -1127,6 +1129,28 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
     // Get the rendered object string
     const objectStr = this.valueToNaturalString(value.object, language);
+
+    // An EXPRESSION owner is a positional query (`the textContent of the previous
+    // <output/>`; see the of-possessive matcher). It is a phrase, not a word, so
+    // it takes each language's phrasal "of" construction, never an owner-glued
+    // clitic or English `'s`:
+    //  - en: `the X of <owner>`. `previous <output/>'s textContent` is rejected
+    //    by the engine (measured on hyperscript.org 0.9.93).
+    //  - owner-first clitic languages (ja/ko/zh/bn/hi, and vi): `<owner> の X`,
+    //    SPACED — the owner ends in a query literal the particle cannot glue to,
+    //    and the positional-possessive matcher reads the spaced form.
+    //  - th and the of-marker languages: property-first `X <of> <owner>`, which
+    //    the of-possessive matcher reads with a positional owner.
+    if (value.object.type === 'expression') {
+      if (language === 'en' || !profile?.possessive) return `the ${property} of ${objectStr}`;
+      const { marker, markerPosition } = profile.possessive;
+      if (marker && markerPosition === 'between' && language !== 'th') {
+        return `${objectStr} ${marker} ${property}`;
+      }
+      const ofMarker = language === 'th' ? marker : getOfPossessiveMarker(profile);
+      if (ofMarker) return `${property} ${ofMarker} ${objectStr}`;
+      return `the ${property} of ${objectStr}`;
+    }
 
     // Use language-specific possessive construction
     if (profile?.possessive) {

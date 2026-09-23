@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-09-23T17:15:09.472Z",
-  "commit": "8067f098",
+  "timestamp": "2026-09-23T19:33:58.290Z",
+  "commit": "da7a1c3d",
   "languages": {
     "ar": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.847507122507123,
+      "avgConfidence": 0.8471870604782002,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -17,7 +17,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "modal-close-escape": {
           "success": true,
@@ -267,6 +267,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "if-condition": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -324,6 +328,10 @@
           "confidence": 0.8222222222222222
         },
         "call-function": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -646,10 +654,10 @@
       }
     },
     "bn": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9319447122078691,
+      "avgConfidence": 0.9328061715470101,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -660,7 +668,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -758,6 +766,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -811,6 +823,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -1289,10 +1305,10 @@
       }
     },
     "de": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9956552706552707,
+      "avgConfidence": 0.9957102672292546,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -1303,7 +1319,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1457,6 +1473,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -1510,6 +1530,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -1932,11 +1956,11 @@
       }
     },
     "en": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2090,6 +2114,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -2147,6 +2175,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -2565,10 +2597,10 @@
       }
     },
     "es": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9234726774200462,
+      "avgConfidence": 0.9223856053636204,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -2579,7 +2611,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -2701,6 +2733,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-archive-download-click": {
+          "success": true,
+          "confidence": 1
+        },
         "js-inline": {
           "success": true,
           "confidence": 1
@@ -2766,10 +2802,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-color-variable": {
           "success": true,
           "confidence": 1
         },
@@ -3029,6 +3061,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "caret-var-increment": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -3062,6 +3098,10 @@
           "confidence": 0.7894736842105263
         },
         "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-color-variable": {
           "success": true,
           "confidence": 0.7894736842105263
         },
@@ -3208,10 +3248,10 @@
       }
     },
     "fr": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9956552706552707,
+      "avgConfidence": 0.9957102672292546,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -3222,7 +3262,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3376,6 +3416,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -3429,6 +3473,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -3851,10 +3899,10 @@
       }
     },
     "he": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8624033374033376,
+      "avgConfidence": 0.8630198915009047,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -3865,7 +3913,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3904,6 +3952,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -4196,6 +4248,10 @@
           "confidence": 0.8222222222222222
         },
         "decrement-counter": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "book-counter-increment": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -4494,10 +4550,10 @@
       }
     },
     "hi": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9548229548229543,
+      "avgConfidence": 0.9553948161543093,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -4508,7 +4564,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -4618,6 +4674,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -4671,6 +4731,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -5137,10 +5201,10 @@
       }
     },
     "id": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9472629222629232,
+      "avgConfidence": 0.947930480208962,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -5151,7 +5215,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5245,6 +5309,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -5290,6 +5358,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -5780,10 +5852,10 @@
       }
     },
     "it": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9256704796178484,
+      "avgConfidence": 0.9252789145860435,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -5794,7 +5866,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5876,6 +5948,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -5921,6 +5997,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -5989,10 +6069,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-color-variable": {
           "success": true,
           "confidence": 1
         },
@@ -6280,6 +6356,10 @@
           "success": true,
           "confidence": 0.7894736842105263
         },
+        "set-color-variable": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
         "two-way-binding": {
           "success": true,
           "confidence": 0.7894736842105263
@@ -6423,10 +6503,10 @@
       }
     },
     "ja": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8486467236467242,
+      "avgConfidence": 0.8483122362869203,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -6437,7 +6517,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "modal-close-escape": {
           "success": true,
@@ -6691,6 +6771,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "if-condition": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -6748,6 +6832,10 @@
           "confidence": 0.8222222222222222
         },
         "call-function": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -7066,10 +7154,10 @@
       }
     },
     "ko": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9323720626352198,
+      "avgConfidence": 0.9332281124752803,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -7080,7 +7168,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7182,6 +7270,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -7231,6 +7323,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -7709,10 +7805,10 @@
       }
     },
     "ms": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9472629222629232,
+      "avgConfidence": 0.947930480208962,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -7723,7 +7819,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7817,6 +7913,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -7862,6 +7962,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -8352,10 +8456,10 @@
       }
     },
     "pl": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9108556648030335,
+      "avgConfidence": 0.9117768048814021,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -8366,7 +8470,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8440,6 +8544,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -8481,6 +8589,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -8788,10 +8900,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "set-color-variable": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "repeat-until-event": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -8849,6 +8957,10 @@
           "confidence": 0.7894736842105263
         },
         "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-color-variable": {
           "success": true,
           "confidence": 0.7894736842105263
         },
@@ -8995,10 +9107,10 @@
       }
     },
     "pt": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9450651200651209,
+      "avgConfidence": 0.9450371709865388,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -9009,7 +9121,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9140,6 +9252,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -9523,6 +9639,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "caret-var-increment": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -9638,10 +9758,10 @@
       }
     },
     "qu": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.6224358974358988,
+      "avgConfidence": 0.6215893108298185,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -9652,7 +9772,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "modal-close-escape": {
           "success": true,
@@ -9902,6 +10022,10 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.5555555555555556
+        },
         "if-condition": {
           "success": true,
           "confidence": 0.5555555555555556
@@ -9955,6 +10079,10 @@
           "confidence": 0.5555555555555556
         },
         "call-function": {
+          "success": true,
+          "confidence": 0.5555555555555556
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 0.5555555555555556
         },
@@ -10281,10 +10409,10 @@
       }
     },
     "ru": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9108556648030335,
+      "avgConfidence": 0.9117768048814021,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -10295,7 +10423,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10369,6 +10497,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -10410,6 +10542,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -10717,10 +10853,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "set-color-variable": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "repeat-until-event": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -10778,6 +10910,10 @@
           "confidence": 0.7894736842105263
         },
         "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-color-variable": {
           "success": true,
           "confidence": 0.7894736842105263
         },
@@ -10924,10 +11060,10 @@
       }
     },
     "sw": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9472629222629232,
+      "avgConfidence": 0.947930480208962,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -10938,7 +11074,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11032,6 +11168,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -11077,6 +11217,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -11567,10 +11711,10 @@
       }
     },
     "th": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9192602232075918,
+      "avgConfidence": 0.9189498006619928,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -11581,7 +11725,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11663,6 +11807,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -11708,6 +11856,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -11776,10 +11928,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-color-variable": {
           "success": true,
           "confidence": 1
         },
@@ -12059,6 +12207,10 @@
           "success": true,
           "confidence": 0.7894736842105263
         },
+        "set-color-variable": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
         "two-way-binding": {
           "success": true,
           "confidence": 0.7894736842105263
@@ -12210,10 +12362,10 @@
       }
     },
     "tl": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9124161900477689,
+      "avgConfidence": 0.9135248458699492,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -12224,7 +12376,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12306,6 +12458,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -12351,6 +12507,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -12853,10 +13013,10 @@
       }
     },
     "tr": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8486467236467242,
+      "avgConfidence": 0.8483122362869203,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -12867,7 +13027,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "modal-close-escape": {
           "success": true,
@@ -13121,6 +13281,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "if-condition": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -13178,6 +13342,10 @@
           "confidence": 0.8222222222222222
         },
         "call-function": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13496,10 +13664,10 @@
       }
     },
     "uk": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9119952659426346,
+      "avgConfidence": 0.9129019806901223,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -13510,7 +13678,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13588,6 +13756,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -13629,6 +13801,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -13932,10 +14108,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "set-color-variable": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "repeat-until-event": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -13993,6 +14165,10 @@
           "confidence": 0.7894736842105263
         },
         "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-color-variable": {
           "success": true,
           "confidence": 0.7894736842105263
         },
@@ -14139,10 +14315,10 @@
       }
     },
     "vi": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9090862840862849,
+      "avgConfidence": 0.9102370906168387,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -14153,7 +14329,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -14219,6 +14395,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -14260,6 +14440,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -14782,10 +14966,10 @@
       }
     },
     "zh": {
-      "parseSuccess": 156,
+      "parseSuccess": 158,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9668091168091169,
+      "avgConfidence": 0.9672292545710267,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -14796,7 +14980,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 624961,
+      "bundleSize": 629739,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14950,6 +15134,10 @@
           "success": true,
           "confidence": 1
         },
+        "book-counter-increment": {
+          "success": true,
+          "confidence": 1
+        },
         "if-condition": {
           "success": true,
           "confidence": 1
@@ -15003,6 +15191,10 @@
           "confidence": 1
         },
         "call-function": {
+          "success": true,
+          "confidence": 1
+        },
+        "book-archive-download-click": {
           "success": true,
           "confidence": 1
         },
@@ -15427,20 +15619,8 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 624961,
-      "languages": [
-        "en",
-        "es",
-        "pt",
-        "fr",
-        "de",
-        "ja",
-        "zh",
-        "ko",
-        "ar",
-        "tr",
-        "id"
-      ]
+      "size": 629739,
+      "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
 }

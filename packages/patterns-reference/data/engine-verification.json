@@ -26,6 +26,8 @@
     "bind-non-form-display": "both",
     "bind-two-way": "both",
     "blur-element": "both",
+    "book-archive-download-click": "hyperscript",
+    "book-counter-increment": "both",
     "breakpoint-command": "both",
     "call-function": "both",
     "caret-var-increment": "both",
@@ -245,6 +247,15 @@
       "hyperscript": true
     },
     "blur-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "book-archive-download-click": {
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Unexpected token: click"
+    },
+    "book-counter-increment": {
       "lokascript": true,
       "hyperscript": true
     },
