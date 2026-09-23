@@ -194,6 +194,12 @@ mode (above). The `hx-`/`sse-`/`ws-` prefixes are preserved across languages —
 only the suffix is localized. The `_=` attribute is
 `@lokascript/hyperscript-adapter`'s job, not this package's.
 
+Anything read off an attribute **name** is matched the way HTML matches names:
+the parser lowercases ASCII letters in them, so Portuguese's camelCase events
+work as authored (`hx-em:teclaBaixo` → `hx-on:keydown`, although the element
+carries `hx-em:teclabaixo`). Event names in `hx-trigger` **values** keep exact,
+case-sensitive matching, as DOM event names do.
+
 ## Tests
 
 ```bash

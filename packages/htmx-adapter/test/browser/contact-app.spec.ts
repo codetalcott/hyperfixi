@@ -103,3 +103,15 @@ for (const { lang, confirmText, query } of CASES) {
     });
   });
 }
+
+// pt authors key and pointer events in camelCase (`teclaBaixo`). The HTML
+// parser lowercases attribute NAMES, so the adapter sees `hx-em:teclabaixo`;
+// it used to write `hx-on:teclabaixo`, which htmx bound to an event no key
+// press fires.
+test('pt: a camelCase hx-on event runs on stock htmx 4 (hx-em:teclaBaixo → keydown)', async ({
+  page,
+}) => {
+  await page.goto(`${FIXTURES}/v4-contact-app-pt.html`);
+  await page.locator('#atalho').press('s');
+  await expect(page.locator('#out')).toHaveText('tecla s');
+});

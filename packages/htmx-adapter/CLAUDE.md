@@ -110,6 +110,17 @@ npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
   lookups are own-key only (`constructor` is not an event). Non-`hx-on`
   colon suffixes (`:inherited`/`:append`) pass through as modifiers —
   never through the events map.
+- **Keys read off an attribute NAME fold like HTML does** (`lookupByAttrName`
+  in registry.ts): the parser ASCII-lowercases names, so pt's
+  `hx-em:teclaBaixo` arrives as `hx-em:teclabaixo`. Exact own key first,
+  then the ASCII-folded key — never a full `toLowerCase()` (`É` survives the
+  parser). Used for localized attr names, colon-family bases and `hx-on:`
+  event suffixes; trigger VALUES stay exact (event names are case-sensitive).
+  pt's 15 camelCase events came out `hx-on:teclabaixo` until this;
+  `vocab-modules.test.ts` now drives every event of every language through an
+  `hx-on` name parsed from markup, and the generator refuses two names of one
+  language that fold together. Core's embedded layer does the same through
+  `eventNameOf(…, { fromAttrName: true })`.
 - **`init(internalAPI)` takes ONE thing**: `HCON.split`. The rest of
   4.0.0's 14-member surface was evaluated and passed over — see the
   rationale on `createExtension` in extension.ts (notably `htmxProp`'s

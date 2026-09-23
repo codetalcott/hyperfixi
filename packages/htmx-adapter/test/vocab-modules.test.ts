@@ -342,6 +342,32 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     });
   }
 
+  // Every event name of every language, as the suffix of that language's
+  // hx-on attribute NAME, parsed from markup. HTML lowercases names, so pt's
+  // 15 camelCase events (`teclaBaixo`) came out `hx-on:teclabaixo` until the
+  // lookup matched names the way the parser writes them.
+  for (const lang of ALL_LANGS) {
+    it(`${lang}: every event name survives an hx-on attribute name`, () => {
+      loadVocabModule(lang);
+      const { attrs = {}, events = {} } = vocabFor(lang) ?? {};
+      const on = Object.entries(attrs).find(([, c]) => c === 'hx-on')?.[0] ?? 'hx-on';
+      const names = Object.keys(events);
+      expect(names.length, `${lang} has no events`).toBeGreaterThan(0);
+      document.body.innerHTML =
+        `<section lang="${lang}">` +
+        names.map((n, i) => `<button ${on}:${n}="v${i}"></button>`).join('') +
+        '</section>';
+      canonicalizeTree(document.body);
+      const wrong = names
+        .map((n, i) => {
+          const btn = document.querySelectorAll('button')[i];
+          return btn.getAttribute(`hx-on:${events[n]}`) === `v${i}` ? null : `${n} → ${events[n]}`;
+        })
+        .filter(Boolean);
+      expect(wrong, `${lang}: ${on}:<name> did not become hx-on:<event>`).toEqual([]);
+    });
+  }
+
   it('the en module registers an empty (identity) vocab', () => {
     loadVocabModule('en');
     expect(isLangRegistered('en')).toBe(true);

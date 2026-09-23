@@ -43,6 +43,14 @@
       <a id="unboosted" hx-impulsionar="false" href="/api/download">Baixar</a>
     </nav>
 
+    <!-- The book's keyboard shortcut is an hx-on keydown. pt names key and
+         pointer events in camelCase, and the HTML parser lowercases
+         attribute names, so this reaches the adapter as hx-em:teclabaixo. -->
+    <input
+      id="atalho"
+      hx-em:teclaBaixo="document.getElementById('out').textContent = 'tecla ' + event.key"
+    />
+
     <div id="out"></div>
   </body>
 </html>

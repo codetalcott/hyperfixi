@@ -14,8 +14,10 @@
  * - `selectorFor(ns, key)` — return a CSS selector that matches any
  *   localization of this attribute. Default is `[${ns}-${key}]`. Vocab impls
  *   union over registered languages.
- * - `eventNameOf(elt, value)` — translate event-name strings from
+ * - `eventNameOf(elt, value, opts?)` — translate event-name strings from
  *   `hx-trigger` (e.g. Spanish `clic` → `click`). Default is identity.
+ *   `opts.fromAttrName` marks a name read off an attribute NAME (an `hx-on:`
+ *   suffix), which the HTML parser has ASCII-lowercased.
  *
  * 8a is behavior-preserving by design — defaults route through the hooks
  * but resolve to today's literals. 8b wires the orchestrator that swaps
@@ -24,10 +26,20 @@
 
 export type AttrNamespace = 'hx' | 'sse' | 'ws';
 
+export interface EventNameOptions {
+  /**
+   * The event name was read off an attribute NAME (`hx-on:<event>`), not a
+   * value. HTML ASCII-lowercases names, so pt's `hx-em:teclaBaixo` arrives as
+   * `teclabaixo` and must match the vocab's `teclaBaixo`. Values keep exact
+   * matching: DOM event names are case-sensitive.
+   */
+  fromAttrName?: boolean;
+}
+
 export interface I18nHooks {
   nameOf(elt: Element, ns: AttrNamespace, key: string): string;
   selectorFor(ns: AttrNamespace, key: string): string;
-  eventNameOf(elt: Element, value: string): string;
+  eventNameOf(elt: Element, value: string, opts?: EventNameOptions): string;
 }
 
 const DEFAULT_HOOKS: I18nHooks = {

@@ -689,8 +689,9 @@ export class HtmxAttributeProcessor {
     for (const [rawEventName, body] of Object.entries(onHandlers)) {
       // Translate localized event names via the vocab hook — Spanish
       // `hx-on:clic` registers a `click` listener, not `clic`.
-      // Identity by default.
-      const eventName = getHooks().eventNameOf(element, rawEventName);
+      // Identity by default. The name came off the attribute NAME, which
+      // HTML lowercased (pt `hx-em:teclaBaixo` → `teclabaixo`).
+      const eventName = getHooks().eventNameOf(element, rawEventName, { fromAttrName: true });
       const listener = (_evt: Event): void => {
         void exec(body, element).catch(err => {
           if (typeof console !== 'undefined') {

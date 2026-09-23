@@ -21,7 +21,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HtmxAttributeProcessor, type WSEventSourceCtor } from '../htmx-attribute-processor.js';
 import { register, resetOrchestrator } from '../i18n-orchestrator.js';
-import { resetHooks } from '../i18n-hooks.js';
+import { getHooks, resetHooks } from '../i18n-hooks.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../../../..');
 const VOCAB_DIR = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
@@ -443,6 +443,54 @@ describe('htmx-compat localization integration', () => {
       // for the imperative `احصل` form in the profile, scan must not
       // throw and the union selector must remain valid CSS.
       expect(() => processor.scanForHtmxElements(container)).not.toThrow();
+    });
+  });
+
+  // HTML lowercases attribute NAMES, so an hx-on event suffix arrives
+  // lowercased: pt authors 15 camelCase events (`teclaBaixo`), and
+  // `hx-em:teclaBaixo` registered a `teclabaixo` listener that no key press
+  // ever fires. Parsed from markup, so the parser's fold is what is tested.
+  describe('Portuguese camelCase events in an hx-on attribute name', () => {
+    beforeEach(async () => {
+      await loadVocab('pt');
+    });
+
+    it('hx-em:teclaBaixo listens for keydown', () => {
+      container.innerHTML = `<section lang="pt"><input hx-em:teclaBaixo="log me"></section>`;
+      const input = container.querySelector('input')!;
+      expect(input.hasAttribute('hx-em:teclabaixo')).toBe(true);
+      processor.processElement(input);
+
+      input.dispatchEvent(new Event('teclabaixo'));
+      expect(executeCallback).not.toHaveBeenCalled();
+      input.dispatchEvent(new Event('keydown'));
+      expect(executeCallback).toHaveBeenCalledWith('log me', input);
+    });
+
+    it('every pt event name survives the attribute name', async () => {
+      const source = await readFile(resolve(VOCAB_DIR, 'pt.js'), 'utf-8');
+      const names = [...source.matchAll(/^\s+"([^"]+)": "([^"]+)",?$/gm)]
+        .map(m => [m[1], m[2]] as const)
+        .filter(([n]) => !n.startsWith('hx-') && !n.startsWith('sse-') && !n.startsWith('ws-'));
+      expect(names.filter(([n]) => n !== n.toLowerCase()).length).toBe(15);
+      for (const [name, event] of names) {
+        executeCallback.mockClear();
+        container.innerHTML = `<section lang="pt"><button hx-em:${name}="b"></button></section>`;
+        const button = container.querySelector('button')!;
+        processor.processElement(button);
+        button.dispatchEvent(new Event(event));
+        expect(executeCallback, `hx-em:${name} → ${event}`).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('a trigger VALUE keeps exact matching — DOM event names are case-sensitive', () => {
+      container.innerHTML = `<section lang="pt"><button></button></section>`;
+      const button = container.querySelector('button')!;
+      expect(getHooks().eventNameOf(button, 'teclaBaixo')).toBe('keydown');
+      expect(getHooks().eventNameOf(button, 'teclabaixo')).toBe('teclabaixo');
+      expect(getHooks().eventNameOf(button, 'teclabaixo', { fromAttrName: true })).toBe('keydown');
+      // Own keys only: `constructor` is not an event.
+      expect(getHooks().eventNameOf(button, 'constructor')).toBe('constructor');
     });
   });
 });
