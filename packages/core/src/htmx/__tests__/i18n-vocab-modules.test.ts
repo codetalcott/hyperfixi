@@ -241,6 +241,34 @@ describe('generated htmx vocab modules', () => {
         boost: 'hx-부스트',
         'push-url': 'hx-푸시-url',
       },
+      tr: {
+        post: 'hx-gönder',
+        delete: 'hx-sil',
+        confirm: 'hx-onayla',
+        boost: 'hx-hızlandır',
+        'push-url': 'hx-itele-url',
+      },
+      de: {
+        post: 'hx-posten',
+        delete: 'hx-löschen',
+        confirm: 'hx-bestätigen',
+        boost: 'hx-beschleunigen',
+        'push-url': 'hx-verlauf-url',
+      },
+      fr: {
+        post: 'hx-publier',
+        delete: 'hx-supprimer',
+        confirm: 'hx-confirmer',
+        boost: 'hx-booster',
+        'push-url': 'hx-pousser-url',
+      },
+      zh: {
+        post: 'hx-发布',
+        delete: 'hx-删除',
+        confirm: 'hx-确认',
+        boost: 'hx-增强',
+        'push-url': 'hx-推送-url',
+      },
     };
 
     // Where the table LEADS the profile: [primary, shipped name kept as alias].
@@ -252,6 +280,16 @@ describe('generated htmx vocab modules', () => {
       },
       pt: { trigger: ['hx-gatilho', 'hx-disparar'], swap: ['hx-troca', 'hx-trocar'] },
       ko: { swap: ['hx-교체', 'hx-교환'] },
+      tr: { trigger: ['hx-tetikleyici', 'hx-tetikle'], swap: ['hx-değiştirme', 'hx-takas'] },
+      // de `target` is not listed: the profile's `Ziel` shipped capitalized,
+      // and setAttribute/markup lowercase it to `hx-ziel` — the new primary.
+      // The adapter suite pins that `hx-Ziel` in markup now resolves.
+      de: { trigger: ['hx-auslöser', 'hx-auslösen'], swap: ['hx-ersetzung', 'hx-austauschen'] },
+      fr: {
+        trigger: ['hx-déclencheur', 'hx-déclencher'],
+        swap: ['hx-remplacement', 'hx-échanger'],
+      },
+      zh: { swap: ['hx-替换', 'hx-交换'] },
     };
 
     for (const [lang, keys] of Object.entries(LEADS)) {
@@ -286,6 +324,10 @@ describe('generated htmx vocab modules', () => {
           es: 'hx-obtener',
           pt: 'hx-obter',
           ko: 'hx-얻다',
+          tr: 'hx-al',
+          de: 'hx-holen',
+          fr: 'hx-obtenir',
+          zh: 'hx-获取',
         };
         expect(getHooks().nameOf(elt, 'hx', 'get')).toBe(GET[lang]);
       });
@@ -297,11 +339,157 @@ describe('generated htmx vocab modules', () => {
       });
     }
 
+    // The book's code listings (all 18 published chapters, inventoried
+    // 2026-09-22) use four attributes beyond Contact.app's twelve. ja/es carry
+    // them so no listing falls back to English. `hx-ext` is deliberately
+    // absent: htmx 4 removed it, so a localized name would have nowhere to run.
+    const BOOK: Record<string, Record<string, string>> = {
+      ja: { vals: 'hx-値', select: 'hx-選択', 'swap-oob': 'hx-置換-oob', sync: 'hx-同期' },
+      es: {
+        vals: 'hx-valores',
+        select: 'hx-selección',
+        'swap-oob': 'hx-intercambio-oob',
+        sync: 'hx-sincronización',
+      },
+      pt: {
+        vals: 'hx-valores',
+        select: 'hx-seleção',
+        'swap-oob': 'hx-troca-oob',
+        sync: 'hx-sincronização',
+      },
+      ko: { vals: 'hx-값', select: 'hx-선택', 'swap-oob': 'hx-교체-oob', sync: 'hx-동기화' },
+      tr: {
+        vals: 'hx-değerler',
+        select: 'hx-seçim',
+        'swap-oob': 'hx-değiştirme-oob',
+        sync: 'hx-eşitle',
+      },
+      de: {
+        vals: 'hx-werte',
+        select: 'hx-auswahl',
+        'swap-oob': 'hx-ersetzung-oob',
+        sync: 'hx-synchronisieren',
+      },
+      fr: {
+        vals: 'hx-valeurs',
+        select: 'hx-sélection',
+        'swap-oob': 'hx-remplacement-oob',
+        sync: 'hx-synchronisation',
+      },
+      zh: { vals: 'hx-值', select: 'hx-选择', 'swap-oob': 'hx-替换-oob', sync: 'hx-同步' },
+    };
+
+    for (const [lang, expected] of Object.entries(BOOK)) {
+      it(`${lang} emits a primary for every attribute the book's listings use`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        for (const [key, name] of Object.entries(expected)) {
+          // First name listed for the canonical = the primary.
+          const first = source.match(new RegExp(`"(hx-[^"]+)": "hx-${key}"`));
+          expect(first?.[1], `${lang} hx-${key}`).toBe(name);
+        }
+      });
+    }
+
+    it('an adapter-only key takes no profile fallback', async () => {
+      // 22 profiles carry a `select` keyword that means mark/highlight text
+      // (de `markieren`, tr `vurgula`). It is not hx-select, and an emitted
+      // name is permanent, so only the table may name an adapter-only key.
+      // Every language authors hx-select now, and none gets the profile's
+      // word appended behind it.
+      const PROFILE_SELECT: Record<string, string> = {
+        ja: 'hx-選ぶ',
+        es: 'hx-seleccionar',
+        pt: 'hx-selecionar',
+        ko: 'hx-고르기',
+        tr: 'hx-vurgula',
+        de: 'hx-markieren',
+        fr: 'hx-sélectionner',
+        it: 'hx-selezionare',
+        pl: 'hx-zaznacz',
+        ru: 'hx-выделить',
+        uk: 'hx-виділити',
+        hi: 'hx-चिह्नित-करें',
+        id: 'hx-tandai',
+        ms: 'hx-tandai',
+        sw: 'hx-alama',
+        th: 'hx-ทำเครื่องหมาย',
+        tl: 'hx-piliin',
+        vi: 'hx-đánh-dấu',
+        he: 'hx-סמן',
+        qu: 'hx-marcay',
+      };
+      for (const [lang, word] of Object.entries(PROFILE_SELECT)) {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source, `${lang} appends the profile's select word`).not.toContain(`"${word}"`);
+      }
+    });
+
+    // Trigger heads are one token of an hx-trigger value. `search` is the one
+    // DOM event the book and Contact.app fire that no i18n dictionary names,
+    // so it is authored in the table's `events` block (a dictionary entry
+    // would also need the semantic profile's lexicon — lexicon-parity.test).
+    const AUTHORED_EVENTS: Record<string, string> = {
+      ja: '検索',
+      es: 'buscar',
+      pt: 'buscar',
+      ko: '검색',
+      tr: 'arama',
+      de: 'suchen',
+      fr: 'rechercher',
+      zh: '搜索',
+    };
+
+    for (const [lang, name] of Object.entries(AUTHORED_EVENTS)) {
+      it(`${lang} emits the authored \`search\` trigger head`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        expect(source).toContain(`"${name}": "search"`);
+      });
+    }
+
+    // The third wave (2026-09-22) authored the remaining 15 languages so every
+    // language offers the full book-listing set. A per-language table would be
+    // 15 more hand copies; this pins the property instead: every non-en module
+    // maps SOME name to each of the 16 canonicals the book's listings use and
+    // to the `search` head, and no module leaks a spaced or uppercase name.
+    const BOOK_SET = [
+      'hx-get',
+      'hx-post',
+      'hx-put',
+      'hx-delete',
+      'hx-target',
+      'hx-swap',
+      'hx-trigger',
+      'hx-confirm',
+      'hx-boost',
+      'hx-push-url',
+      'hx-include',
+      'hx-indicator',
+      'hx-vals',
+      'hx-select',
+      'hx-sync',
+      'hx-swap-oob',
+    ];
+    // tl leaves hx-target as the English identity on purpose (loka-js does too).
+    const IDENTITY: Record<string, string[]> = { tl: ['hx-target'] };
+
+    for (const lang of PRIORITY_LANGS.filter(l => l !== 'en')) {
+      it(`${lang} covers every attribute the book's listings use, and the search head`, async () => {
+        const source = await readFile(resolve(VOCAB_DIR, `${lang}.js`), 'utf-8');
+        const canonicals = new Set(
+          [...source.matchAll(/"[^"]+": "((?:hx|sse|ws)-[^"]+)"/g)].map(m => m[1])
+        );
+        const missing = BOOK_SET.filter(c => !canonicals.has(c) && !IDENTITY[lang]?.includes(c));
+        expect(missing, `${lang} has no name for`).toEqual([]);
+        expect(source, `${lang} search head`).toMatch(/"[^"]+": "search"/);
+      });
+    }
+
     it('adapter-only keys stay out of the embedded layer KEYS', () => {
       // Core's htmx-compat layer does not implement them; listing them would
       // advertise support through the exported HTMX_ATTRS.
-      expect(KEYS.hx).not.toContain('indicator');
-      expect(KEYS.hx).not.toContain('include');
+      for (const key of ['indicator', 'include', 'select', 'swap-oob', 'sync']) {
+        expect(KEYS.hx).not.toContain(key);
+      }
     });
   });
 

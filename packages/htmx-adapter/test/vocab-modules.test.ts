@@ -143,6 +143,12 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
     es: { 'hx-disparar': 'hx-trigger', 'hx-intercambiar': 'hx-swap' },
     pt: { 'hx-disparar': 'hx-trigger', 'hx-trocar': 'hx-swap', 'hx-eliminar': 'hx-delete' },
     ko: { 'hx-교환': 'hx-swap', 'hx-타겟': 'hx-target' },
+    tr: { 'hx-tetikle': 'hx-trigger', 'hx-takas': 'hx-swap' },
+    // `hx-Ziel` was never reachable from markup (HTML lowercases attribute
+    // names); it resolves now because the lowercase primary exists.
+    de: { 'hx-auslösen': 'hx-trigger', 'hx-austauschen': 'hx-swap', 'hx-Ziel': 'hx-target' },
+    fr: { 'hx-déclencher': 'hx-trigger', 'hx-échanger': 'hx-swap' },
+    zh: { 'hx-交换': 'hx-swap' },
     hi: { 'hx-बदलें_स्थान': 'hx-swap' },
     qu: { 'hx-ñawpaqman': 'hx-target' },
   };
@@ -188,6 +194,151 @@ describe('generated vocab modules (packages/core/vocab/htmx)', () => {
       loadVocabModule(lang);
       const attrs = vocabFor(lang)?.attrs ?? {};
       expect(Object.values(attrs)).toContain('hx-on');
+    });
+  }
+
+  // Beyond Contact.app, the book's code listings use four more attributes
+  // (inventoried across all 18 published chapters, 2026-09-22). Same
+  // markup-parsed pin as CONTACT_APP: these are the PRIMARY forms.
+  const BOOK_LISTINGS: Record<string, Record<string, string>> = {
+    ja: {
+      'hx-値': 'hx-vals',
+      'hx-選択': 'hx-select',
+      'hx-置換-oob': 'hx-swap-oob',
+      'hx-同期': 'hx-sync',
+    },
+    es: {
+      'hx-valores': 'hx-vals',
+      'hx-selección': 'hx-select',
+      'hx-intercambio-oob': 'hx-swap-oob',
+      'hx-sincronización': 'hx-sync',
+    },
+    pt: {
+      'hx-valores': 'hx-vals',
+      'hx-seleção': 'hx-select',
+      'hx-troca-oob': 'hx-swap-oob',
+      'hx-sincronização': 'hx-sync',
+    },
+    ko: {
+      'hx-값': 'hx-vals',
+      'hx-선택': 'hx-select',
+      'hx-교체-oob': 'hx-swap-oob',
+      'hx-동기화': 'hx-sync',
+    },
+    // Second wave: the Contact.app twelve minus hx-on, plus the four — primaries only.
+    tr: {
+      'hx-al': 'hx-get', 'hx-gönder': 'hx-post', 'hx-sil': 'hx-delete', 'hx-hedef': 'hx-target',
+      'hx-değiştirme': 'hx-swap', 'hx-tetikleyici': 'hx-trigger', 'hx-onayla': 'hx-confirm',
+      'hx-hızlandır': 'hx-boost', 'hx-itele-url': 'hx-push-url', 'hx-gösterge': 'hx-indicator',
+      'hx-içer': 'hx-include', 'hx-değerler': 'hx-vals', 'hx-seçim': 'hx-select',
+      'hx-değiştirme-oob': 'hx-swap-oob', 'hx-eşitle': 'hx-sync',
+    },
+    de: {
+      'hx-holen': 'hx-get', 'hx-posten': 'hx-post', 'hx-löschen': 'hx-delete', 'hx-ziel': 'hx-target',
+      'hx-ersetzung': 'hx-swap', 'hx-auslöser': 'hx-trigger', 'hx-bestätigen': 'hx-confirm',
+      'hx-beschleunigen': 'hx-boost', 'hx-verlauf-url': 'hx-push-url', 'hx-indikator': 'hx-indicator',
+      'hx-einbeziehen': 'hx-include', 'hx-werte': 'hx-vals', 'hx-auswahl': 'hx-select',
+      'hx-ersetzung-oob': 'hx-swap-oob', 'hx-synchronisieren': 'hx-sync',
+    },
+    fr: {
+      'hx-obtenir': 'hx-get', 'hx-publier': 'hx-post', 'hx-supprimer': 'hx-delete', 'hx-cible': 'hx-target',
+      'hx-remplacement': 'hx-swap', 'hx-déclencheur': 'hx-trigger', 'hx-confirmer': 'hx-confirm',
+      'hx-booster': 'hx-boost', 'hx-pousser-url': 'hx-push-url', 'hx-indicateur': 'hx-indicator',
+      'hx-inclure': 'hx-include', 'hx-valeurs': 'hx-vals', 'hx-sélection': 'hx-select',
+      'hx-remplacement-oob': 'hx-swap-oob', 'hx-synchronisation': 'hx-sync',
+    },
+    zh: {
+      'hx-获取': 'hx-get', 'hx-发布': 'hx-post', 'hx-删除': 'hx-delete', 'hx-目标': 'hx-target',
+      'hx-替换': 'hx-swap', 'hx-触发': 'hx-trigger', 'hx-确认': 'hx-confirm',
+      'hx-增强': 'hx-boost', 'hx-推送-url': 'hx-push-url', 'hx-指示器': 'hx-indicator',
+      'hx-包含': 'hx-include', 'hx-值': 'hx-vals', 'hx-选择': 'hx-select',
+      'hx-替换-oob': 'hx-swap-oob', 'hx-同步': 'hx-sync',
+    },
+  };
+
+  for (const [lang, expected] of Object.entries(BOOK_LISTINGS)) {
+    it(`${lang} vocab canonicalizes every attribute the book's listings use`, () => {
+      loadVocabModule(lang);
+      const names = Object.keys(expected);
+      const markup = names.map((n, i) => `${n}="v${i}"`).join(' ');
+      document.body.innerHTML = `<section lang="${lang}"><div ${markup}></div></section>`;
+      canonicalizeTree(document.body);
+      const div = document.querySelector('div')!;
+      names.forEach((n, i) => {
+        expect(div.getAttribute(expected[n]), `${n} → ${expected[n]}`).toBe(`v${i}`);
+      });
+    });
+  }
+
+  // The search box in the book (and Contact.app) fires the DOM `search`
+  // event; no i18n dictionary names it, so the vocab table authors it.
+  const SEARCH_TRIGGER: Record<string, [string, string]> = {
+    ja: ['hx-トリガー', '検索, キーアップ delay:200ms changed'],
+    es: ['hx-disparador', 'buscar, teclaarriba delay:200ms changed'],
+    pt: ['hx-gatilho', 'buscar, teclaCima delay:200ms changed'],
+    ko: ['hx-트리거', '검색, 키업 delay:200ms changed'],
+    tr: ['hx-tetikleyici', 'arama, tuşbırakma delay:200ms changed'],
+    de: ['hx-auslöser', 'suchen, tasteoben delay:200ms changed'],
+    fr: ['hx-déclencheur', 'rechercher, toucherelâchée delay:200ms changed'],
+    zh: ['hx-触发', '搜索, 松键 delay:200ms changed'],
+  };
+
+  for (const [lang, [attr, value]] of Object.entries(SEARCH_TRIGGER)) {
+    it(`${lang} translates the \`search\` trigger head`, () => {
+      loadVocabModule(lang);
+      document.body.innerHTML = `<section lang="${lang}"><input ${attr}="${value}" /></section>`;
+      canonicalizeTree(document.body);
+      expect(document.querySelector('input')!.getAttribute('hx-trigger')).toBe(
+        'search, keyup delay:200ms changed'
+      );
+    });
+  }
+
+  // Third wave: every language. Derived from the module itself rather than a
+  // hand table — the first name listed per canonical is the primary — and
+  // pinned the same way as CONTACT_APP: parsed from markup, so the HTML
+  // parser's handling of each name (lowercasing, script, hyphens) is part of
+  // what is checked.
+  const ALL_LANGS = readdirSync(VOCAB_DIR)
+    .filter(f => f.endsWith('.js') && f !== 'en.js')
+    .map(f => f.replace(/\.js$/, ''));
+  const BOOK_SET = [
+    'hx-get', 'hx-post', 'hx-delete', 'hx-target', 'hx-swap', 'hx-trigger', 'hx-confirm',
+    'hx-boost', 'hx-push-url', 'hx-include', 'hx-indicator', 'hx-vals', 'hx-select',
+    'hx-sync', 'hx-swap-oob',
+  ];
+  const IDENTITY: Record<string, string[]> = { tl: ['hx-target'] };
+
+  for (const lang of ALL_LANGS) {
+    it(`${lang} canonicalizes the primary of every book-listing attribute from parsed markup`, () => {
+      loadVocabModule(lang);
+      const attrs = vocabFor(lang)?.attrs ?? {};
+      const primary: Record<string, string> = {};
+      for (const [name, canonical] of Object.entries(attrs)) {
+        if (!(canonical in primary)) primary[canonical] = name;
+      }
+      const wanted = BOOK_SET.filter(c => !IDENTITY[lang]?.includes(c));
+      expect(wanted.filter(c => !primary[c]), `${lang} has no name for`).toEqual([]);
+      const markup = wanted.map((c, i) => `${primary[c]}="v${i}"`).join(' ');
+      document.body.innerHTML = `<section lang="${lang}"><div ${markup}></div></section>`;
+      canonicalizeTree(document.body);
+      const div = document.querySelector('div')!;
+      wanted.forEach((c, i) => {
+        expect(div.getAttribute(c), `${lang} ${primary[c]} → ${c}`).toBe(`v${i}`);
+      });
+    });
+
+    it(`${lang} translates the search trigger head`, () => {
+      loadVocabModule(lang);
+      const events = vocabFor(lang)?.events ?? {};
+      const search = Object.entries(events).find(([, c]) => c === 'search')?.[0];
+      expect(search, `${lang} has no search head`).toBeTruthy();
+      const trigger = Object.entries(vocabFor(lang)?.attrs ?? {}).find(([, c]) => c === 'hx-trigger')![0];
+      document.body.innerHTML = `<section lang="${lang}"><input ${trigger}="${search}, keyup delay:200ms changed" /></section>`;
+      canonicalizeTree(document.body);
+      expect(document.querySelector('input')!.getAttribute('hx-trigger')).toBe(
+        'search, keyup delay:200ms changed'
+      );
     });
   }
 

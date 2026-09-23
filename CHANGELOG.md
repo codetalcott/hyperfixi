@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Localized htmx attributes: all 23 non-English languages now cover
+  every attribute the _Hypermedia Systems_ book's code listings use** —
+  `hx-vals`, `hx-select`, `hx-swap-oob` and `hx-sync` join the Contact.app
+  twelve (`hx-値`, `hx-valores`, `hx-값`, `hx-werte`, `hx-選択`, `hx-selección`,
+  `hx-seçim`, `hx-auswahl`, `hx-sélection`, `hx-选择`, …). tr/de/fr/zh are new
+  in the table: the Contact.app seven they lacked (`hx-sil`, `hx-löschen`,
+  `hx-supprimer`, `hx-删除`, …) plus audited trigger/swap primaries following
+  loka-js (`hx-tetikleyici`, `hx-auslöser`, `hx-déclencheur`, `hx-替换`; the
+  profile words `hx-tetikle`, `hx-auslösen`, `hx-déclencher`, `hx-交换` still
+  resolve). de gains a lowercase `hx-ziel`: the profile's `hx-Ziel` could never
+  match a parsed attribute, since HTML lowercases attribute names. The other
+  15 languages (ar, bn, he, hi, id, it, ms, pl, qu, ru, sw, th, tl, uk, vi)
+  are unreviewed drafts, every entry flagged `lowConfidence`; they also gain
+  the trigger heads their dictionaries left in English (ms and tl all six,
+  vi/he/ar some). id gains `hx-sasaran` for a target that was the English
+  identity; tl keeps `hx-target` on purpose. `hx-ext` is left in English on
+  purpose: htmx 4 removed it. The vocab table gains an `events` block for
+  trigger heads the i18n dictionaries do not name; ja, es, pt and ko author
+  the DOM `search` event (`検索`, `buscar`, `검색`), which the book's and
+  Contact.app's search box fires. htmx's own trigger words (`revealed`,
+  `every`) stay English, like the `delay:` / `from:` modifiers.
+- Adapter-only vocab keys now resolve from the authored table alone, never
+  from a semantic profile: 22 profiles carry a `select` keyword that means
+  mark/highlight text (de `markieren`, tr `vurgula`), and it would otherwise
+  have shipped as `hx-select` in 22 unreviewed languages.
+
 - **Localized htmx attributes: ja, es, pt and ko now cover every attribute the
   _Hypermedia Systems_ Contact.app uses** — `hx-post`, `hx-delete`,
   `hx-confirm`, `hx-push-url`, `hx-boost`, `hx-indicator` and `hx-include` join

@@ -31,11 +31,15 @@
         "hx-disparar": "hx-trigger",
         "hx-confirmar": "hx-confirm",
         "hx-impulsionar": "hx-boost",
+        "hx-valores": "hx-vals",
         "hx-empurrar-url": "hx-push-url",
         "hx-em": "hx-on",
         "hx-ao-vivo": "hx-live",
         "hx-indicador": "hx-indicator",
         "hx-incluir": "hx-include",
+        "hx-seleção": "hx-select",
+        "hx-troca-oob": "hx-swap-oob",
+        "hx-sincronização": "hx-sync",
         "sse-conectar": "sse-connect",
         "sse-troca": "sse-swap",
         "sse-trocar": "sse-swap",
@@ -43,6 +47,7 @@
         "ws-enviar": "ws-send"
       },
       events: {
+        "buscar": "search",
         "clique": "click",
         "duploClique": "dblclick",
         "mouseEntrar": "mouseenter",
