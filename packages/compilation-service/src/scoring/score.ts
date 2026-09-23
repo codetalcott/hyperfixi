@@ -29,4 +29,11 @@ export interface ScoreResponse extends Partial<FidelityReport> {
   /** Whether both sides parsed successfully. */
   ok: boolean;
   diagnostics: Diagnostic[];
+  /**
+   * False when the reference parse left tokens unconsumed (UNCONSUMED_INPUT):
+   * the scores then compare only what parsed, and `faithful` is false.
+   */
+  referenceComplete?: boolean;
+  /** The same, for the candidate. */
+  candidateComplete?: boolean;
 }

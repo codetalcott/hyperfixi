@@ -23,6 +23,17 @@ try {
   // semantic not available - will use English-only fallback
 }
 
+// hyperfixi's own parser — the one that EXECUTES English. validate_hyperscript
+// used to consult only the semantic parser, so it called `on load click() me`
+// valid while get_diagnostics (which runs this parser) reported two errors for
+// the same line. Optional peer: absent, the check is skipped.
+let coreParse: typeof import('@hyperfixi/core').parse | null = null;
+try {
+  coreParse = (await import('@hyperfixi/core')).parse;
+} catch {
+  // core not installed
+}
+
 // =============================================================================
 // Cached Semantic Analyzer (Phase 6 - Performance)
 // =============================================================================
@@ -38,6 +49,8 @@ let cachedAnalyzer: {
     command?: { name: string; roles: Map<string, unknown> };
     errors?: string[];
     tokensConsumed?: number;
+    /** The parser's own unconsumed-input messages (tokens bound to no role). */
+    unconsumed?: string[];
   };
   supportsLanguage: (language: string) => boolean;
   supportedLanguages: () => string[];
@@ -67,6 +80,12 @@ function getSemanticAnalyzer(): typeof cachedAnalyzer {
         if (result.tokensConsumed !== undefined) out.tokensConsumed = result.tokensConsumed;
         if (result.node) {
           out.command = { name: result.node.action, roles: result.node.roles };
+          const unconsumed = (
+            (result.node.diagnostics ?? []) as Array<{ code?: string; message?: string }>
+          )
+            .filter(d => d.code === 'unconsumed-input' && d.message)
+            .map(d => d.message as string);
+          if (unconsumed.length > 0) out.unconsumed = unconsumed;
         }
         if (result.error) out.errors = [result.error];
         return out;
@@ -90,7 +109,7 @@ export const validationTools: Tool[] = [
   {
     name: 'validate_hyperscript',
     description:
-      'Check hyperscript code for syntax errors and role warnings. Use as the FIRST validation step before returning code to users. For detailed line/column positions, use get_diagnostics instead.',
+      'Check hyperscript code for syntax errors and role warnings. Use as the FIRST validation step before returning code to users. English is also checked against hyperfixi\'s own parser (errors with source "core-parser"); tokens the semantic parser could not bind are warned as UNCONSUMED_INPUT, and a translation of that code drops them. It checks one snippet on its own, so it cannot tell whether a translation kept every clause: use score_fidelity (or translate_code\'s verification) for that. For detailed line/column positions, use get_diagnostics instead.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -471,8 +490,10 @@ function validateHyperscript(
   code: string,
   language: string
 ): { content: Array<{ type: string; text: string }>; isError?: boolean } {
-  const errors: Array<{ message: string; suggestion?: string; source?: string }> = [];
-  const warnings: Array<{ message: string; suggestion?: string; source?: string }> = [];
+  const errors: Array<{ message: string; suggestion?: string; source?: string; code?: string }> =
+    [];
+  const warnings: Array<{ message: string; suggestion?: string; source?: string; code?: string }> =
+    [];
 
   // Get language-specific commands
   const validCommands = getValidCommandsForLanguage(language);
@@ -485,6 +506,9 @@ function validateHyperscript(
     roles?: Record<string, unknown>;
     usedSemanticParsing: boolean;
   } | null = null;
+  // The event name the semantic parse resolved (a localized `carga` → `load`,
+  // a namespaced `htmx:beforeRequest` as written), when it found a handler.
+  let semanticEvent: string | undefined;
 
   const analyzer = getSemanticAnalyzer();
   if (analyzer) {
@@ -512,6 +536,26 @@ function validateHyperscript(
         for (const err of result.errors) {
           errors.push({ message: err, source: 'semantic-parser' });
         }
+      }
+
+      const ev = result.command?.roles?.get('event') as
+        { value?: unknown; raw?: unknown } | undefined;
+      const evName = ev?.value ?? ev?.raw;
+      if (result.command?.name === 'on' && typeof evName === 'string') semanticEvent = evName;
+
+      // Tokens the parser read but bound to no role. The line may still be
+      // valid hyperscript — but the semantic IR, and so any translation made
+      // from it, silently lacks them (`on load click() me` → `ロード を で`).
+      for (const msg of result.unconsumed ?? []) {
+        warnings.push({
+          code: 'UNCONSUMED_INPUT',
+          message: `Semantic parser ${msg.replace(/^body clause /, 'left part of the body unbound: ')}`,
+          suggestion:
+            'translate_code and the semantic IR drop these tokens. Rephrase with an explicit ' +
+            "command or role marker (e.g. `call me.click()`), or check the translation's " +
+            'verification.referenceComplete.',
+          source: 'semantic-parser',
+        });
       }
 
       // Add confidence warning if parsing succeeded but with low confidence
@@ -652,7 +696,7 @@ function validateHyperscript(
   // Check for valid event handlers (multilingual)
   // Only match at start of code, after newline, or after command separators (then, ;)
   const eventPattern = new RegExp(
-    `(?:^|\\n|;|\\bthen\\b)\\s*(${eventKeywords.join('|')})\\s+(\\w+)`,
+    `(?:^|\\n|;|\\bthen\\b)\\s*(${eventKeywords.join('|')})\\s+([\\w:.-]+)`,
     'gim'
   );
   const eventMatches = code.matchAll(eventPattern);
@@ -706,9 +750,21 @@ function validateHyperscript(
     'window',
     'document',
   ];
-  for (const match of eventMatches) {
-    const event = match[2].toLowerCase();
-    if (!validEvents.includes(event) && !event.includes('.') && !targetKeywords.includes(event)) {
+  // Judge the event the SEMANTIC parse resolved when there is one: the regex
+  // below sees raw words, so a localized name (es `carga` = load) looked
+  // unknown, and its `\w+` capture cut `htmx:beforeRequest` to `htmx`. A
+  // namespaced event (`htmx:*`, `draggable:start`) is a custom event by
+  // construction and never "unknown".
+  const judged = semanticEvent
+    ? [semanticEvent.toLowerCase().split('[')[0]]
+    : [...eventMatches].map(m => m[2].toLowerCase());
+  for (const event of judged) {
+    if (
+      !validEvents.includes(event) &&
+      !event.includes('.') &&
+      !event.includes(':') &&
+      !targetKeywords.includes(event)
+    ) {
       warnings.push({
         message: `Unknown event type: ${event}`,
         suggestion: `Did you mean one of: ${validEvents.slice(0, 5).join(', ')}...?`,
@@ -716,8 +772,29 @@ function validateHyperscript(
     }
   }
 
-  // Build command pattern for matching (now multilingual)
-  const commandPattern = new RegExp(`\\b(${validCommands.slice(0, 30).join('|')})\\b`, 'gi');
+  // English only: does hyperfixi's own parser (the one that runs English)
+  // accept the line? Other languages go through the semantic front-end, which
+  // is what the checks above measure.
+  if (coreParse && (language === 'en' || language.startsWith('en-'))) {
+    try {
+      for (const err of coreParse(code).errors ?? []) {
+        errors.push({
+          message: err.message,
+          source: 'core-parser',
+          suggestion:
+            "hyperfixi's parser rejects this, so hyperfixi cannot run it as written " +
+            '(get_diagnostics gives the position).',
+        });
+      }
+    } catch (e) {
+      errors.push({ message: e instanceof Error ? e.message : String(e), source: 'core-parser' });
+    }
+  }
+
+  // Build command pattern for matching (now multilingual). Every command the
+  // language knows: a `slice(0, 30)` here meant `take` (#33) and later were
+  // never listed.
+  const commandPattern = new RegExp(`\\b(${validCommands.join('|')})\\b`, 'gi');
   const commandMatches = code.match(commandPattern);
 
   // Validate command usage patterns (check for toggle without class/attr)

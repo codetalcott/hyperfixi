@@ -67,8 +67,10 @@ export function extractOperations(node: unknown): BehaviorSpec {
 // =============================================================================
 
 function extractEventHandler(n: NodeLike): BehaviorSpec {
-  const eventRole = n.roles?.get('event') as RoleValue | undefined;
-  const eventName = String(eventRole?.value ?? 'click');
+  // A colon-qualified event is an expression (`raw`), not a literal (`value`).
+  const eventRole = n.roles?.get('event') as (RoleValue & { raw?: unknown }) | undefined;
+  const named = eventRole?.value ?? eventRole?.raw;
+  const eventName = typeof named === 'string' && named.length > 0 ? named : 'click';
 
   const operations: AbstractOperation[] = [];
 
