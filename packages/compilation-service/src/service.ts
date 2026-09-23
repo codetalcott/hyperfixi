@@ -604,7 +604,39 @@ export class CompilationService {
       return { ok: false, diagnostics };
     }
 
-    return { ok: true, diagnostics, ...scoreNodes(normRef.node, normCand.node) };
+    // A side whose parse left tokens unconsumed was scored on a TRUNCATED
+    // node, so every score compares less than was written. Scoring a
+    // translation against a truncated reference is how `on load click() me`
+    // → `ロード を で` came out faithful 1.0 on every axis: both sides had
+    // dropped the same command. The scores stay as measured; `faithful` — the
+    // claim "this rendering is structurally exact" — needs both parses whole.
+    const truncated = (...lists: Diagnostic[][]): boolean =>
+      lists.some(ds => ds.some(d => d.code === 'UNCONSUMED_INPUT'));
+    const referenceComplete = !truncated(normRef.diagnostics, gateRef.diagnostics);
+    const candidateComplete = !truncated(normCand.diagnostics, gateCand.diagnostics);
+    if (!referenceComplete || !candidateComplete) {
+      const sides = [!referenceComplete && 'reference', !candidateComplete && 'candidate']
+        .filter(Boolean)
+        .join(' and ');
+      diagnostics.push({
+        severity: 'warning',
+        code: 'INCOMPLETE_PARSE',
+        message: `The ${sides} parse left tokens unconsumed, so the scores compare only what parsed; not faithful.`,
+        suggestion:
+          'The unconsumed tokens are named in the UNCONSUMED_INPUT diagnostics above. ' +
+          'If the reference is truncated, a translation of it drops the same clause.',
+      });
+    }
+
+    const report = scoreNodes(normRef.node, normCand.node);
+    return {
+      ok: true,
+      diagnostics,
+      ...report,
+      faithful: report.faithful && referenceComplete && candidateComplete,
+      referenceComplete,
+      candidateComplete,
+    };
   }
 
   /**
@@ -855,7 +887,7 @@ function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
   if (n.kind === 'event-handler' || n.action === 'on') {
     const eventRole =
       n.roles && typeof n.roles.get === 'function'
-        ? (n.roles.get('event') as { value?: string } | undefined)
+        ? (n.roles.get('event') as { value?: unknown; raw?: unknown } | undefined)
         : undefined;
 
     // For event handlers, return the body command's semantic JSON
@@ -863,7 +895,7 @@ function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
       const bodyJSON = nodeToSemanticJSON(n.body[0]);
       if (bodyJSON) {
         bodyJSON.trigger = {
-          event: eventRole?.value ?? 'click',
+          event: eventNameOf(eventRole),
           modifiers: n.eventModifiers,
         };
         return bodyJSON;
@@ -874,11 +906,22 @@ function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
       action: n.action,
       roles,
       trigger: {
-        event: eventRole?.value ?? 'click',
+        event: eventNameOf(eventRole),
         modifiers: n.eventModifiers,
       },
     };
   }
 
   return { action: n.action, roles };
+}
+
+/**
+ * The event name of a handler's `event` role. A colon-qualified event
+ * (`htmx:beforeRequest`, `draggable:start`) arrives as an `expression` with
+ * `raw`, not a literal with `value`, and reading `value` alone reported every
+ * one of them as `click`.
+ */
+export function eventNameOf(eventRole: { value?: unknown; raw?: unknown } | undefined): string {
+  const name = eventRole?.value ?? eventRole?.raw;
+  return typeof name === 'string' && name.length > 0 ? name : 'click';
 }

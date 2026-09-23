@@ -23,6 +23,15 @@ arc 4), surfaced pairwise via `CompilationService.scoreFidelity()` and the
 (the `--regression` gate). The committed scoreboard is
 [`packages/testing-framework/baselines/multilingual-priority.json`](../packages/testing-framework/baselines/multilingual-priority.json).
 
+**The pairwise `faithful` also requires both parses to be complete.** The
+scores compare parsed nodes, so a side whose parse left tokens unconsumed
+(`UNCONSUMED_INPUT`) was scored on a truncated node. `scoreFidelity()` — and so
+`translate_code`'s `verification` — reports `referenceComplete` /
+`candidateComplete`, adds an `INCOMPLETE_PARSE` warning, and sets `faithful`
+false when either is false. Before 2026-09-23 it did not: `on load click() me`
+translated to `ロード を で` and scored faithful 1.0 on every axis, because the
+English reference had dropped the same command.
+
 ---
 
 ## The problem: the two obvious checks are both blind

@@ -158,6 +158,62 @@ describe('validate_hyperscript', () => {
   });
 });
 
+describe('validate_hyperscript reports what the parsers actually did', () => {
+  // Found round-tripping the hyperscript in *Hypermedia Systems* (2026-09-23):
+  // the tool said `valid: true` with no warning for `on load click() me`, which
+  // hyperfixi's own parser rejects (get_diagnostics reported two errors for the
+  // same line), and never surfaced the semantic parser's unconsumed tokens.
+  const run = async (code: string, language?: string) =>
+    JSON.parse(
+      (
+        await handleValidationTool('validate_hyperscript', {
+          code,
+          ...(language ? { language } : {}),
+        })
+      ).content[0].text
+    );
+
+  it('reports hyperfixi core rejecting an English line', async () => {
+    const r = await run('on load click() me');
+    expect(r.valid).toBe(false);
+    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(true);
+  });
+
+  it('surfaces tokens the semantic parser left unconsumed', async () => {
+    const r = await run('on click increment the textContent of the previous <output/>');
+    expect(r.valid).toBe(true);
+    const w = r.warnings.find((x: any) => x.code === 'UNCONSUMED_INPUT');
+    expect(w?.message).toMatch(/of the previous/);
+  });
+
+  it('accepts a namespaced event (htmx:beforeRequest)', async () => {
+    const r = await run('on htmx:beforeRequest from #contacts-btn remove @disabled from me');
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some((w: any) => /Unknown event type/.test(w.message))).toBe(false);
+  });
+
+  it('accepts a localized event name (es carga = load)', async () => {
+    const r = await run('al carga llamar me.click()', 'es');
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some((w: any) => /Unknown event type/.test(w.message))).toBe(false);
+  });
+
+  it('still warns about a misspelled English event', async () => {
+    const r = await run('on clik toggle .active');
+    expect(r.warnings.some((w: any) => /Unknown event type: clik/.test(w.message))).toBe(true);
+  });
+
+  it('lists every command it finds, not only the first thirty it knows', async () => {
+    const r = await run('on click transition my opacity to 0 then take .active from .tab for me');
+    expect(r.commandsFound).toEqual(expect.arrayContaining(['transition', 'take']));
+  });
+
+  it('does not run the English parser on another language', async () => {
+    const r = await run('クリック で .active を 切り替え', 'ja');
+    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(false);
+  });
+});
+
 describe('suggest_command', () => {
   it('suggests show for modal task', async () => {
     const result = await handleValidationTool('suggest_command', {
