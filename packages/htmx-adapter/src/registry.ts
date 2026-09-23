@@ -60,6 +60,43 @@ export function vocabFor(lang: string): HtmxVocab | undefined {
   return REG.get(lang);
 }
 
+const hasOwn = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+
+/** ASCII-lowercase — the only case change the HTML parser makes to an attribute name. */
+const asciiLower = (s: string): string => s.replace(/[A-Z]+/g, m => m.toLowerCase());
+
+/** Per vocab map: ASCII-lowercased key → value, for the keys the fold changes. */
+const foldedKeys = new WeakMap<Record<string, string>, Map<string, string>>();
+
+/**
+ * Look up a vocab key that was read off an attribute NAME — a localized
+ * attribute (`hx-obter`), a colon-family base, or an `hx-on:` event suffix.
+ *
+ * The HTML parser (and `setAttribute` on an HTML element) ASCII-lowercases
+ * attribute names, so pt's `hx-em:teclaBaixo` reaches us as
+ * `hx-em:teclabaixo` and an exact lookup of `teclaBaixo` misses. The exact
+ * own key is tried first (it is the only match in an XML document, and every
+ * all-lowercase key), then the key as the parser would have written it. Only
+ * ASCII letters fold — `toqueInício` becomes `toqueinício`, as in the DOM.
+ *
+ * Values never come through here: an event name in `hx-trigger="…"` keeps its
+ * case, and DOM event names are case-sensitive. Own keys only — `constructor`
+ * is not an event.
+ */
+export function lookupByAttrName(map: Record<string, string>, name: string): string | undefined {
+  if (hasOwn(map, name)) return map[name];
+  let folded = foldedKeys.get(map);
+  if (!folded) {
+    folded = new Map();
+    for (const key of Object.keys(map)) {
+      const lower = asciiLower(key);
+      if (lower !== key && !hasOwn(map, lower) && !folded.has(lower)) folded.set(lower, map[key]);
+    }
+    foldedKeys.set(map, folded);
+  }
+  return folded.get(name);
+}
+
 /** Inspect whether any vocab is registered for a language. Mainly for tests. */
 export function isLangRegistered(code: string): boolean {
   return REG.has(normLang(code));

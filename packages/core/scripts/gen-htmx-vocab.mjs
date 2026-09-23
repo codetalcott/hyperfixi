@@ -350,6 +350,28 @@ function buildEvents(lang, dict, legacy, notes) {
 }
 
 /**
+ * Both consumers match a key read off an attribute NAME ASCII-case-insensitively,
+ * because the HTML parser lowercases names: pt `hx-em:teclaBaixo` arrives as
+ * `hx-em:teclabaixo` (the adapter's `lookupByAttrName`, the orchestrator's
+ * `fromAttrName`). Two names of one language that fold together must therefore
+ * mean the same thing, or which one a page gets is an accident of key order.
+ */
+function assertFoldUnambiguous(lang, kind, map) {
+  const seen = new Map();
+  for (const [name, canonical] of Object.entries(map)) {
+    const folded = name.replace(/[A-Z]+/g, m => m.toLowerCase());
+    const prior = seen.get(folded);
+    if (!prior) seen.set(folded, [name, canonical]);
+    else if (prior[1] !== canonical) {
+      throw new Error(
+        `[${lang}] ${kind} "${prior[0]}" (${prior[1]}) and "${name}" (${canonical}) are one ` +
+          `attribute name to HTML, which lowercases names — pick a different word`
+      );
+    }
+  }
+}
+
+/**
  * Emit one vocab module for a language. Pretty-printed JSON inside a
  * self-registering IIFE so dropping the file in via <script src> just
  * works — no parser knowledge of object literals needed in older
@@ -404,6 +426,8 @@ async function renderAll() {
   const files = PRIORITY_LANGS.map(lang => {
     const attrs = buildAttrs(lang, profiles[lang], legacy.attrs?.[lang], notes);
     const events = buildEvents(lang, dicts[lang], legacy.events?.[lang], notes);
+    assertFoldUnambiguous(lang, 'attr', attrs);
+    assertFoldUnambiguous(lang, 'event', events);
     // English emits as an empty registration — useful for explicit
     // "no-op opt-in" pages that want to confirm the orchestrator loaded.
     return {

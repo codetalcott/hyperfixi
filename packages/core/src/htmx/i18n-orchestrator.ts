@@ -28,7 +28,12 @@
  * `normLang` rather than walking `LanguageProfile.extends`.
  */
 
-import { installHooks, type AttrNamespace, type I18nHooks } from './i18n-hooks.js';
+import {
+  installHooks,
+  type AttrNamespace,
+  type EventNameOptions,
+  type I18nHooks,
+} from './i18n-hooks.js';
 import { langOf, normLang } from './lang-resolver.js';
 
 export interface HyperfixiVocab {
@@ -66,6 +71,29 @@ const REG = new Map<string, HyperfixiVocab>();
  * the hot path is a Map lookup.
  */
 const localizedNameByKey = new Map<string, Map<string, string[]>>();
+
+/**
+ * Per language: event names ASCII-lowercased → canonical, for the names the
+ * fold changes (pt `teclaBaixo` → `teclabaixo`). An `hx-on:` suffix is read off
+ * an attribute NAME, which the HTML parser lowercases (ASCII letters only), so
+ * it can only ever match a camelCase event through this index.
+ */
+const foldedEventsByLang = new Map<string, Map<string, string>>();
+
+const hasOwn = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+
+/** ASCII-lowercase — the only case change the HTML parser makes to an attribute name. */
+const asciiLower = (s: string): string => s.replace(/[A-Z]+/g, m => m.toLowerCase());
+
+function foldEvents(events: Record<string, string> | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!events) return out;
+  for (const [name, canonical] of Object.entries(events)) {
+    const lower = asciiLower(name);
+    if (lower !== name && !hasOwn(events, lower) && !out.has(lower)) out.set(lower, canonical);
+  }
+  return out;
+}
 
 /** Languages we've already warned about being missing. */
 const warnedMissingLang = new Set<string>();
@@ -163,10 +191,14 @@ function buildVocabAwareHooks(): I18nHooks {
       }
       return [...names].map(n => `[${n}]`).join(', ');
     },
-    eventNameOf: (elt: Element, value: string): string => {
+    eventNameOf: (elt: Element, value: string, opts?: EventNameOptions): string => {
       const lang = langOf(elt);
       if (lang === 'en') return value;
-      return REG.get(lang)?.events?.[value] ?? value;
+      const events = REG.get(lang)?.events;
+      if (!events) return value;
+      // Own keys only: `constructor` is not an event.
+      if (hasOwn(events, value)) return events[value];
+      return (opts?.fromAttrName && foldedEventsByLang.get(lang)?.get(value)) || value;
     },
   };
 }
@@ -185,6 +217,7 @@ export function register(code: string, data: VocabPayload): void {
   const vocab = data?.hyperfixi ?? {};
   REG.set(lang, vocab);
   localizedNameByKey.set(lang, invertAttrs(vocab.attrs));
+  foldedEventsByLang.set(lang, foldEvents(vocab.events));
   warnedMissingLang.delete(lang); // we know about it now
   if (!hooksInstalled) {
     installHooks(buildVocabAwareHooks());
@@ -208,6 +241,7 @@ export function isLangRegistered(code: string): boolean {
 export function resetOrchestrator(): void {
   REG.clear();
   localizedNameByKey.clear();
+  foldedEventsByLang.clear();
   warnedMissingLang.clear();
   vocabUpdateListeners.clear();
   hooksInstalled = false;

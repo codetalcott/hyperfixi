@@ -32,7 +32,7 @@
  */
 
 import { langOf } from './lang-resolver.js';
-import { hasAnyVocab, vocabFor, warnMissingLangOnce } from './registry.js';
+import { hasAnyVocab, lookupByAttrName, vocabFor, warnMissingLangOnce } from './registry.js';
 import { claimHxOnAttribute, hasBodyExecutor } from './hx-on.js';
 import { isResolverMode } from './resolver.js';
 
@@ -196,8 +196,9 @@ export function canonicalizeElement(elt: Element): boolean {
       continue;
     }
 
-    // Exact match: hx-obtener → hx-get.
-    let canonical = hasOwn(attrs, name) ? attrs[name] : undefined;
+    // Exact match: hx-obtener → hx-get. Every key below is read off the
+    // attribute NAME, which HTML has lowercased (lookupByAttrName).
+    let canonical = lookupByAttrName(attrs, name);
 
     // Colon family: the base is looked up in attrs; what the suffix
     // means depends on the base. For hx-on the suffix is an EVENT name
@@ -212,12 +213,12 @@ export function canonicalizeElement(elt: Element): boolean {
       const colon = name.indexOf(':');
       if (colon > 0) {
         const base = name.slice(0, colon);
-        colonBase = hasOwn(attrs, base) ? attrs[base] : undefined;
+        colonBase = lookupByAttrName(attrs, base);
         if (colonBase) {
           const suffix = name.slice(colon + 1);
           canonical =
             colonBase === 'hx-on'
-              ? `${colonBase}:${hasOwn(events, suffix) ? events[suffix] : suffix}`
+              ? `${colonBase}:${lookupByAttrName(events, suffix) ?? suffix}`
               : `${colonBase}:${suffix}`;
         }
       }

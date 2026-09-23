@@ -315,3 +315,21 @@ describe('autoDetectBodyHooks', () => {
     expect(hasBodyTranslator()).toBe(false);
   });
 });
+
+describe('executor mode: a camelCase event read off the attribute name', () => {
+  it('pt hx-em:teclaBaixo claims a keydown listener (HTML lowercased the name)', () => {
+    register('pt', {
+      hyperfixi: { attrs: { 'hx-em': 'hx-on' }, events: { teclaBaixo: 'keydown' } },
+    });
+    const executor = vi.fn();
+    setBodyExecutor(executor);
+    document.body.innerHTML = `<section lang="pt"><input hx-em:teclaBaixo="log me"></section>`;
+    const input = document.querySelector('input')!;
+    canonicalizeElement(input);
+
+    input.dispatchEvent(new Event('teclabaixo'));
+    expect(executor).not.toHaveBeenCalled();
+    input.dispatchEvent(new Event('keydown'));
+    expect(executor).toHaveBeenCalledWith('log me', input, expect.any(Event));
+  });
+});

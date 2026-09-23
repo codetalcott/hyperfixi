@@ -249,3 +249,51 @@ describe('canonicalizeTree', () => {
     expect(canonicalizeTree(null)).toBe(0);
   });
 });
+
+// HTML lowercases attribute NAMES (ASCII letters only), so a vocab key read
+// off a name must match that way. pt authors 15 camelCase events
+// (`teclaBaixo`); `hx-em:teclaBaixo` reaches the adapter as
+// `hx-em:teclabaixo` and an exact lookup came out `hx-on:teclabaixo`.
+describe('keys read off an attribute name match the way HTML matches names', () => {
+  const PT = {
+    hyperfixi: {
+      attrs: { 'hx-em': 'hx-on', 'hx-gatilho': 'hx-trigger', 'hx-Obter': 'hx-get' },
+      events: { teclaBaixo: 'keydown', toqueInício: 'touchstart', MouseÉntrar: 'mouseenter' },
+    },
+  };
+  function ptButton(attrs: string): HTMLElement {
+    document.body.innerHTML = `<section lang="pt"><button ${attrs}>x</button></section>`;
+    return document.querySelector('button')!;
+  }
+
+  it('a camelCase hx-on event suffix resolves (hx-em:teclaBaixo → hx-on:keydown)', () => {
+    register('pt', PT);
+    const btn = ptButton('hx-em:teclaBaixo="log me"');
+    expect(btn.hasAttribute('hx-em:teclabaixo')).toBe(true); // what the parser left
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-on:keydown')).toBe('log me');
+    expect(btn.hasAttribute('hx-on:teclabaixo')).toBe(false);
+  });
+
+  it('the fold is ASCII-only, like the parser: a non-ASCII capital keeps its case', () => {
+    register('pt', PT);
+    const btn = ptButton('hx-em:toqueInício="a" hx-em:MouseÉntrar="b"');
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-on:touchstart')).toBe('a');
+    expect(btn.getAttribute('hx-on:mouseenter')).toBe('b');
+  });
+
+  it('a camelCase attribute key resolves too (the class that shipped de `hx-Ziel`)', () => {
+    register('pt', PT);
+    const btn = ptButton('hx-Obter="/x"');
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-get')).toBe('/x');
+  });
+
+  it('a trigger VALUE keeps exact matching — DOM event names are case-sensitive', () => {
+    register('pt', PT);
+    const btn = ptButton('hx-gatilho="teclaBaixo, teclabaixo"');
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-trigger')).toBe('keydown, teclabaixo');
+  });
+});

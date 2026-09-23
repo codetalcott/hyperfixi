@@ -46,11 +46,10 @@
  * `htmx.process(elt, true)` after editing the attribute runs the new body.
  */
 
+import { lookupByAttrName } from './registry.js';
+
 export type BodyExecutor = (code: string, elt: Element, evt: Event) => unknown;
 export type BodyTranslator = (body: string, lang: string) => string;
-
-/** Own-key lookup: vocab maps are plain objects, and `constructor` is not an event. */
-const hasOwn = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
 
 let executor: BodyExecutor | null = null;
 let translator: BodyTranslator | null = null;
@@ -163,12 +162,13 @@ export function removeClaimedCanonicalAttrs(elt: Element): number {
 /**
  * Resolve the DOM event name for an hx-on attribute suffix.
  * `hx-on::after-swap` shorthand (leading `:`) means the `htmx:` namespace;
- * plain suffixes translate through the vocab events map (own keys only —
- * `constructor` is not an event).
+ * plain suffixes translate through the vocab events map, matched the way
+ * HTML wrote the name (`teclaBaixo` arrives as `teclabaixo`; see
+ * lookupByAttrName).
  */
 function eventNameForSuffix(rawSuffix: string, events: Record<string, string>): string {
   if (rawSuffix.startsWith(':')) return `htmx${rawSuffix}`;
-  return hasOwn(events, rawSuffix) ? events[rawSuffix] : rawSuffix;
+  return lookupByAttrName(events, rawSuffix) ?? rawSuffix;
 }
 
 export interface ClaimOptions {
