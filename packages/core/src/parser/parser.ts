@@ -2366,6 +2366,18 @@ export class Parser {
   private static readonly PSEUDO_COMMAND_PREPOSITIONS = ['from', 'on', 'with', 'into', 'at', 'to'];
 
   /**
+   * Heads of an event SOURCE that is a positional query (`on submit from
+   * closest <form/>`), parsed as an expression rather than a single token.
+   */
+  private static readonly POSITIONAL_SOURCE_HEADS = new Set([
+    'closest',
+    'next',
+    'previous',
+    'first',
+    'last',
+  ]);
+
+  /**
    * Convert a CallExpressionNode into a regular CommandNode.
    * Used when a function call like add(5, 10) should be treated as a command.
    */
@@ -2459,8 +2471,13 @@ export class Parser {
     const methodName = (callExpr.callee as IdentifierNode).name;
     const nextToken = this.peek();
 
-    // Check if this looks like a pseudo-command pattern
+    // Check if this looks like a pseudo-command pattern. `the` introduces the
+    // target on its own (`reset() the closest <form/>`) — upstream lists it
+    // among the pseudo-command prepositions; here it is an article, consumed
+    // below and not recorded.
+    const nextIsArticle = nextToken.value.toLowerCase() === 'the';
     const hasPseudoCommandPattern =
+      nextIsArticle ||
       Parser.PSEUDO_COMMAND_PREPOSITIONS.includes(nextToken.value.toLowerCase()) ||
       (isIdentifier(nextToken) && !this.isCommand(nextToken.value)) ||
       isContextVar(nextToken);
@@ -2492,7 +2509,9 @@ export class Parser {
 
     // Parse optional preposition
     let preposition: string | undefined;
-    if (Parser.PSEUDO_COMMAND_PREPOSITIONS.includes(this.peek().value.toLowerCase())) {
+    if (nextIsArticle) {
+      this.advance();
+    } else if (Parser.PSEUDO_COMMAND_PREPOSITIONS.includes(this.peek().value.toLowerCase())) {
       preposition = this.advance().value.toLowerCase();
     }
 
@@ -2727,12 +2746,26 @@ export class Parser {
     // Optional: handle "from <target>" for event source delegation
     // Supports: identifiers (me, window, myVar), CSS selectors (#id, .class), query refs (<div/>)
     let target: string | undefined;
+    let targetExpression: ASTNode | undefined;
     if (this.match('from')) {
-      const targetToken = this.advance();
-      target = targetToken.value;
-      debug.parse(
-        `🔧 parseEventHandler: Parsed 'from' target: ${target} (kind: ${targetToken.kind})`
-      );
+      // `from the window` / `from the document`: `the` is an article, as the
+      // behavior-handler path (parseBehaviorEventHandler) already treats it.
+      // Taking one token here made the source `the` and discarded the body.
+      if (this.check('the')) this.advance();
+      if (Parser.POSITIONAL_SOURCE_HEADS.has(this.peek().value.toLowerCase())) {
+        // `from closest <form/>`: a positional query is an EXPRESSION, resolved
+        // against the handler's element at install time. `target` keeps the
+        // source text for readers that only know the string field.
+        const startIndex = this.current;
+        targetExpression = this.parseExpression();
+        target = this.tokens
+          .slice(startIndex, this.current)
+          .map(t => t.value)
+          .join(' ');
+      } else {
+        target = this.advance().value;
+      }
+      debug.parse(`🔧 parseEventHandler: Parsed 'from' target: ${target}`);
 
       // Upstream _hyperscript grammar puts temporal modifiers AFTER the from
       // clause ("on resize from window debounced at 200ms"), so accept them
@@ -2851,7 +2884,7 @@ export class Parser {
             this.recordDropped(`Command '${cmdToken}' failed to parse and was discarded`);
           }
         }
-      } else if (this.checkIdentifier()) {
+      } else if (this.checkIdentifier() || this.checkEventNamedCall()) {
         // Check if this identifier is a command or function call
         const token = this.peek();
         if (this.isCommand(token.value)) {
@@ -3001,6 +3034,7 @@ export class Parser {
       ...(eventParams.length > 0 && { args: eventParams }),
       ...(condition && { condition: fromLegacyExpression(condition) }), // Add condition if present
       ...(target && { target }), // Add target if present
+      ...(targetExpression && { targetExpression: fromLegacyExpression(targetExpression) }),
       ...(attributeName && { attributeName }), // Add attributeName if present
       ...(watchTarget && { watchTarget: fromLegacyExpression(watchTarget) }), // Add watchTarget if present
       ...(customEventSource && { customEventSource }), // Add custom event source if detected
@@ -4047,6 +4081,20 @@ export class Parser {
    */
   private checkLiteral(): boolean {
     return this.checkPredicate(isLiteral);
+  }
+
+  /**
+   * An EVENT-named method call in command position — the pseudo-command
+   * `click() me` / `submit() on the closest <form/>`. The body loop took only
+   * commands and identifiers, so an event-token method name fell to "not a
+   * command" and the rest of the handler was discarded (upstream accepts it).
+   * The `(` must be glued: a spaced one is not a call.
+   */
+  private checkEventNamedCall(): boolean {
+    if (this.isAtEnd() || !this.checkIdentifierLike() || this.checkIsCommand()) return false;
+    const token = this.peek();
+    const next = this.tokens[this.current + 1];
+    return next?.value === '(' && next.start === token.end;
   }
 
   /**

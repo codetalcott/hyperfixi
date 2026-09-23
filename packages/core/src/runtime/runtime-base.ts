@@ -1203,6 +1203,7 @@ export class RuntimeBase {
       events,
       commands,
       target,
+      targetExpression,
       args,
       selector,
       condition,
@@ -1220,7 +1221,14 @@ export class RuntimeBase {
     let globalTarget: Window | Document | null = null;
 
     // Target Resolution
-    if (target) {
+    if (targetExpression) {
+      // `from closest <form/>`: evaluate the source against this element.
+      const resolved = await this.execute(targetExpression, context);
+      if (resolved === window) globalTarget = window;
+      else if (resolved === document) globalTarget = document;
+      else if (this.isElement(resolved)) targets = [resolved];
+      else if (Array.isArray(resolved)) targets = resolved.filter(el => this.isElement(el));
+    } else if (target) {
       // Check for global event sources (window, document)
       const targetLower = typeof target === 'string' ? target.toLowerCase() : '';
       if (targetLower === 'window' || targetLower === 'the window') {

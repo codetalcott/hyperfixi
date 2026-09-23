@@ -148,6 +148,11 @@ export function parseTriggerCommand(
   const modifiers: SlotMap<'trigger' | 'send'> = {};
   while (!isCommandBoundary(ctx)) {
     if (ctx.check(KEYWORDS.ON) || ctx.check(KEYWORDS.TO)) {
+      // One target. An `on` after it opens the NEXT handler, as upstream reads
+      // it: `send htmx:abort to #btn on htmx:beforeRequest from #btn …` (the
+      // abort button in Hypermedia Systems ch. 8) swallowed the second handler
+      // into this command's arguments.
+      if (modifiers['on']) break;
       ctx.advance();
       const target = parseOneArgument(ctx, [KEYWORDS.WITH]);
       if (target) modifiers['on'] = target as ExpressionNode;

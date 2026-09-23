@@ -84,7 +84,9 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'pseudo-command',
     source: 'reload() the location of the window',
-    status: 'lossy',
+    // Was `lossy` wrapped: `the` was not a pseudo-command article, so the
+    // target was discarded (hxi18n Arc 4).
+    status: 'ok-wrapped',
     reason: 'pseudo-commands are only legal inside a feature; canonical engine agrees',
   },
   {
