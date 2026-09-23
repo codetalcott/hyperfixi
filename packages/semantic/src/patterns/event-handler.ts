@@ -609,7 +609,7 @@ function getEventHandlerPatternsKo(): LanguagePattern[] {
       template: {
         format: '{source} 에서 {event} 할 때',
         tokens: [
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
           { type: 'literal', value: '에서' },
           { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
           { type: 'literal', value: '할' },
@@ -1573,7 +1573,7 @@ function getEventHandlerPatternsQu(): LanguagePattern[] {
             type: 'group',
             optional: true,
             tokens: [
-              { type: 'role', role: 'source', expectedTypes: ['selector', 'reference'] },
+              { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
               { type: 'literal', value: 'manta', alternatives: ['-manta'] },
             ],
           },

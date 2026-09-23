@@ -58,6 +58,20 @@ const ROWS: Row[] = [
     from: 'window',
     body: { action: 'focus' },
   },
+  {
+    // Upstream's `elsewhere` (corpus event-from-elsewhere): an identifier the
+    // en parse types `expression`. Rendering it made ja/qu/tr unparseable and
+    // ar/he strand it until the `on` schema's source slot took expressions.
+    en: 'on click from elsewhere remove .open from me',
+    from: 'elsewhere',
+    body: { action: 'remove', mustHave: { source: 'me' } },
+  },
+  {
+    // A variable / behavior parameter (behavior-removable's `from triggerEl`).
+    en: 'on click from triggerEl remove me',
+    from: 'triggerEl',
+    body: { action: 'remove' },
+  },
 ];
 
 function handler(src: string, lang: string): EventHandlerSemanticNode {
@@ -105,6 +119,64 @@ describe('event source survives en → L → en', () => {
           expect(translate(rendered, lang, 'en')).toBe(row.en);
         });
       }
+    });
+  }
+});
+
+describe('a multi-handler program keeps every handler\'s source', () => {
+  // The book's abort button (Hypermedia Systems ch. 8), verbatim: three
+  // handlers, two of them delegated to #contacts-btn. The English reference is
+  // the renderer's own normalization of the source (`end`-separated), which is
+  // what the corpus gate compares against.
+  const en =
+    'on click send htmx:abort to #contacts-btn on htmx:beforeRequest from #contacts-btn remove @disabled from me on htmx:afterRequest from #contacts-btn add @disabled to me';
+  const reference = translate(en, 'en', 'en');
+
+  it('the en reference carries both sources', () => {
+    expect(reference.match(/from #contacts-btn/g)).toHaveLength(2);
+    expect(reference.match(/^on /gm)).toHaveLength(3);
+  });
+
+  for (const lang of LANGS) {
+    it(`${lang}: three handlers, both sources, back to the en reference`, () => {
+      const rendered = translate(en, 'en', lang);
+      expect(rendered.match(/#contacts-btn/g), rendered).toHaveLength(3);
+      expect(translate(rendered, lang, 'en')).toBe(reference);
+    });
+  }
+});
+
+describe('`once` survives en → L → en', () => {
+  // en renders `click.once` (core rejects `on click once`); every other
+  // language a leading `once`, which a glued `クリック.once` broke in five.
+  const en = 'on click once add .initialized to me call setup()';
+  const reference = translate(en, 'en', 'en');
+  it('en renders the form core executes', () => {
+    expect(reference).toBe('on click.once add .initialized to me then call setup()');
+  });
+  for (const lang of LANGS) {
+    it(`${lang}: once is re-parsed and the body kept`, () => {
+      const rendered = translate(en, 'en', lang);
+      const n = handler(rendered, lang);
+      expect(n.eventModifiers?.once, rendered).toBe(true);
+      expect(n.body.length, rendered).toBeGreaterThan(0);
+      expect(translate(rendered, lang, 'en')).toBe(reference);
+    });
+  }
+});
+
+describe('a behavior handler keeps a parameter source', () => {
+  const en = 'behavior Removable(triggerEl)\n  on click from triggerEl\n    remove me\n  end\nend';
+  for (const lang of LANGS) {
+    it(`${lang}: the handler survives with from = triggerEl`, () => {
+      const rendered = translate(en, 'en', lang);
+      const node = parse(rendered, lang) as unknown as {
+        kind: string;
+        eventHandlers: EventHandlerSemanticNode[];
+      };
+      expect(node?.kind, rendered).toBe('behavior');
+      expect(node.eventHandlers, rendered).toHaveLength(1);
+      expect(fromOf(node.eventHandlers[0]), rendered).toBe('triggerEl');
     });
   }
 });

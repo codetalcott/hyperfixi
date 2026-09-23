@@ -1375,7 +1375,12 @@ export const onSchema: CommandSchema = {
       role: 'source',
       description: 'The element to listen on (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      // `expression`: a variable or behavior parameter (`on click from
+      // triggerEl`, behavior-removable) and upstream's `elsewhere`, both typed
+      // expression by the en parse. Without it every generated head pattern's
+      // `[{source} から]` / `[من {source}]` slot rejected them and the render the
+      // handler source now gets (spliceEventModifiers) did not parse back.
+      expectedTypes: ['selector', 'reference', 'expression'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,

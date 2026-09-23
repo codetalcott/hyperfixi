@@ -397,8 +397,16 @@ export class PatternMatcher {
     if (t.kind === 'selector') return this.tokenToSemanticValue(t) ?? undefined;
     if (t.kind !== 'keyword' && t.kind !== 'identifier') return undefined;
     const name = (t.normalized ?? t.value).toLowerCase();
-    if (name === 'me' || !isValidReference(name)) return undefined;
-    return { type: 'reference', value: name };
+    if (name === 'me') return undefined;
+    if (isValidReference(name)) return { type: 'reference', value: name };
+    // A plain identifier is a variable or behavior parameter (`from triggerEl`)
+    // or the `elsewhere` keyword upstream leaves untranslated — typed exactly
+    // as the en parse types it. A KEYWORD that is not a reference is a verb or
+    // marker, never a source.
+    if (t.kind === 'identifier' && /^[A-Za-z_$][\w$]*$/.test(t.value)) {
+      return { type: 'expression', raw: t.value };
+    }
+    return undefined;
   }
 
   /**
