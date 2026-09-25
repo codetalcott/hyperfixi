@@ -45,7 +45,9 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**Four upstream-valid forms compiled clean and failed at run time**~~ | **FIXED 2026-09-25** — a command word before a group read as a method call (`put (1 + 2) into #x` threw), `beep!` aborted its handler, EVERY bare `for` loop threw, and a failing `tell` body command vanished with 0 errors | ✅ `command-misreads.test.ts`, `for-in.test.ts`, `tell-to-and-end.test.ts`, AOT `core-parser-adapter.test.ts` (all mutation-checked) | section below |
 | ~~**`repeat while` / `repeat until` never evaluated their condition**~~ | **FIXED 2026-09-25** — `while` ran to the 10,000-iteration cap, `until` never ran its body, bottom-tested loops ran once; every unit test passed a boolean. Found alongside gaps 1 and 2 (block `end` at end of input, `morph … to`), both also FIXED | ✅ `repeat-conditions.test.ts`, `block-end-at-eof.test.ts`, `morph-to.test.ts` (all mutation-checked) | the "Gaps 1 and 2 closed" section below |
 | ~~**`beep!` in an expression; `render … with name: value`**~~ | **FIXED 2026-09-25** — gaps 3 and 4. `log beep! 3` was silently an empty `log`; the documented `with (name: value)` was a docs defect (upstream rejects it too). Running the rows found `my value` undefined on a `<button>`, also FIXED | ✅ `render-named-args.test.ts`, `beep-expression.test.ts`, `property-access-utils.test.ts` | the "Gaps 3 and 4 closed" section below |
-| **`def` / `behavior` demand their own `end`; `transition` owners (`next .p's *x`, `*x of #p`, `the *x`), the multi-property form and `… from` rejected** | medium — upstream-valid, rejected loudly, except that a multi-property value misparses SILENTLY at top level (`100px * height`) | ⚠️ NONE | the five-gaps table and "Filed, still open" in the 2026-09-25 sections |
+| ~~**`transition` owners, several properties, `from`, `using`**~~ | **FIXED 2026-09-25** — gap 5; the multi-property value had misparsed SILENTLY at top level (`100px * height`), and a collection owner moved only its first element | ✅ `transition-owners.test.ts` (mutation-checked) | the "Gap 5 closed" section below |
+| **`def` / `behavior` demand their own `end`** | medium — upstream-valid, rejected loudly | ⚠️ NONE | "Filed, still open" in the "Gaps 1 and 2 closed" section |
+| **AOT `transition` is a no-op for almost every form; AOT throws on any CSS length** | medium — `*opacity` keeps its sigil, an owner is read as the property, `over 200ms` becomes `200msms`; `100px` has no interchange case, so AOT throws | ⚠️ NONE | the "Gap 5 closed" section below |
 | **`render`'s result and `fetch`'s named values diverge from upstream** | medium — `render … into`/`here` rejected loudly; a multi-root render's `it` is a wrapper element where upstream's is a string; `fetch /x with m: "POST" as json` parses on both engines and runs differently | ⚠️ NONE | "Filed, still open" in the "Gaps 3 and 4 closed" section |
 | **Core has no collection `add`/`remove`** | **medium-high, silent** — `add "x" to $arr` / `remove "x" from $arr` do nothing where upstream pushes/removes; a parenthesized operand (`remove (.a)`, upstream: delete the elements) cannot be expressed, and `(.a)` does not even lex | ⚠️ NONE | the 2026-09-25 section below (why a lexing-only fix was reverted) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
@@ -2142,7 +2144,7 @@ errors; upstream `hs.parse(src).errors`):
 | ~~`on click morph #list to it` / `morph me to it` / `morph (#list) to it`~~ **FIXED 2026-09-25**, with `closest … to` and the root merge (section below) | was `Discarded input … 'to it'`; the parenthesized form only LOOKED like it worked (a method call that threw at run time) | morph-fetch-result, morph-form-update (now `both`) |
 | ~~`on click render #row with row: $data` (naked named args)~~ **FIXED 2026-09-25** — and the parenthesized form "filed above" was a docs defect: upstream rejects it too (section below) | was `Discarded input … ': $data'` | render-template-with-data, morph-with-template (now `both`) |
 | ~~`on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position)~~ **FIXED 2026-09-25** (section below) | was `Discarded input … '! my value'` | beep-debug-expression (now `both`) |
-| `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` / `transition the *opacity to 0` — and `transition *width to 100px *height to 50px`, whose value silently becomes `100px * height` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
+| ~~`transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` / `transition the *opacity to 0` — and `transition *width to 100px *height to 50px`, whose value silently becomes `100px * height`~~ **FIXED 2026-09-25** (section below) | was discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
 
 The `transition` row narrows the 2026-07-31 fix above: that fix covers a
 possessive whose owner is a primary (`#a's`, `my`, `its`). It does not cover a
@@ -2177,7 +2179,7 @@ Filed, still open — upstream-valid, core rejects:
 | ------ | ---- |
 | `def f() log 1` (no `end`) | `Expected 'end' after function definition` |
 | `behavior B on click log 1` / `… end` (one `end`) | `Expected "end" to close behavior event handler` / `… behavior definition`. Core needs the handler's AND the behavior's |
-| `transition opacity from 0 to 1` / `transition *opacity from 0 to 1 over 1s` | `Command 'transition' failed to parse and was discarded` |
+| ~~`transition opacity from 0 to 1` / `transition *opacity from 0 to 1 over 1s`~~ **FIXED 2026-09-25** (gap 5, section below) | was `Command 'transition' failed to parse and was discarded` |
 
 ### Gaps 3 and 4 closed — and what running them found (2026-09-25)
 
@@ -2216,11 +2218,47 @@ Filed, still open:
 | `fetch /x with method: "POST" as json` | `as json` is fetch's conversion | parses too, but `as json` joins the VALUE (`"POST" as json`) and the response stays text: same parse verdict, different program |
 | `render #t with {a: 1}`, `render #t with $vars` | accepted, as an object (a superset) | rejected |
 
-Gap 5, `transition` owners and the multi-property form, is still open (the
-table above) and gets its own change. Making the multi-property form work
-touches the command's AST contract, its runtime and AOT's codegen, and the fix
-for `100px *height` (upstream lexes a spaced `*` glued to a name as a style
-reference) reaches every expression.
+Gap 5, `transition` owners and the multi-property form, closed in its own
+change: the section below.
+
+### Gap 5 closed: `transition` as upstream parses it (2026-09-25)
+
+Upstream parses each property as an EXPRESSION with its own owner, loops over
+properties, and takes `from` and `using`. Every row was run on 0.9.93 as well
+as parsed.
+
+| form | core before | now |
+| ---- | ----------- | --- |
+| a positional or parenthesized owner (`next .panel's *max-height`, `(first .p)'s *x`), `the *opacity`, the `of` form (`*max-height of #panel`, `the opacity of #a`) | rejected | the property is parsed as an expression and taken apart; the owner is whatever the expression names |
+| several properties: `*width to 100px *height to 50px` | the second `*` read as MULTIPLICATION, so `to: 100px * height` (discarded in a handler, SILENT at top level) | every pair, each moving its OWN owner, and `me` for a pair without one (upstream's semantics: `*width of #a to 10px *height to 5px` moves #a's width and me's height) |
+| `a *b` anywhere | multiplication | a `*` with a space before it and a name glued after it is a style reference, so the expression ends at `a` (upstream lexes `*` + a letter as one token and rejects `a *b` too). `a * b` and `a*b` still multiply |
+| `the *opacity` anywhere | `the * opacity`, a multiplication | the article, then the style |
+| a collection owner (`<.p/>'s *opacity`) | moved the FIRST element | every element, as upstream's implicit loop |
+| `from <value>` | rejected | applied before the transition starts, then a reflow |
+| `using <css>` | rejected | the element's whole `transition` while it runs, restored after; the wait allows for the longest duration + delay in it |
+
+Kept, though upstream rejects them: the space-separated owner (`#a *opacity`,
+`me *opacity`: the `measure` shape) and `with <timing-function>`. The first
+pair keeps the AST shape every consumer reads (`args: [owner, property]`,
+`to`); later pairs go in a new `pairs` slot. Pinned by
+`transition-owners.test.ts`; 13 mutants, all killed.
+
+Found alongside, and **filed**:
+
+- **AOT's `transition` does nothing for almost every real form.** It passes
+  the sigil through (`_rt.transition(_ctx.me, "*opacity", …)`, a
+  `setProperty('*opacity')` no-op), reads an owner as the PROPERTY
+  (`#a's *opacity` → `_rt.transition(_ctx.me, <#a>, …)`), and concatenates a
+  duration string (`over 200ms` → `transition: opacity 200msms`). It ignores
+  `from`, `using` and `pairs`. All of it predates this change.
+- **AOT throws on every CSS length.** The interchange converter
+  (`ast-utils/interchange/from-core.ts`) has no case for `stringPostfix`, so
+  `100px` becomes an `error` node and AOT's expression codegen throws "Unknown
+  expression type: error": `set $x to 100px` and `transition *width to 100px`
+  both fail to compile.
+- Upstream's own `transition first .p's *opacity to 0` parses and then throws
+  at run time (`propExprs[j].set is not a function`); the parenthesized
+  `(first .p)'s` runs. Core runs both.
 
 ### ~~Four upstream-valid forms that compiled clean and failed at run time~~ — FIXED (2026-09-25)
 
