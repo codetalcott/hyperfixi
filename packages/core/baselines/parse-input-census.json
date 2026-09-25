@@ -3,10 +3,10 @@
   "generated": "2026-09-25",
   "totals": {
     "bodies": 50,
-    "lines": 2055,
-    "branches": 329,
+    "lines": 2052,
+    "branches": 333,
     "syntaxSites": 64,
-    "valueSites": 192
+    "valueSites": 196
   },
   "commands": {
     "js": {
@@ -46,10 +46,10 @@
     },
     "transition": {
       "file": "src/commands/animation/transition.ts",
-      "lines": 73,
-      "branches": 14,
+      "lines": 70,
+      "branches": 18,
       "syntaxSites": 3,
-      "valueSites": 14
+      "valueSites": 18
     },
     "fetch": {
       "file": "src/commands/async/fetch.ts",
