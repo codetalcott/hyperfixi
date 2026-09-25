@@ -65,7 +65,10 @@ describe('parse', () => {
   it("leaves fetch's own named arguments as they were: primaries, so `as` stays fetch's", () => {
     const [fetchCmd] = commandsOf('on click fetch /x with method: "POST" as json');
     expect(fetchCmd!.modifiers?.as).toBeDefined();
-    const withNode = fetchCmd!.modifiers?.with as { properties: Array<{ value: Node }> };
+    const withNode = fetchCmd!.modifiers?.with as {
+      type: string;
+      properties: Array<{ value: Node }>;
+    };
     expect(withNode.properties[0]!.value.type).toBe('literal');
   });
 });
