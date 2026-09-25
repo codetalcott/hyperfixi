@@ -83,15 +83,31 @@ Results are written to `data/engine-verification.json` (committed;
 `init-db.ts` seeds the column from it, so `npm run populate` needs no core
 build) and, with `--update-db`, stamped into `data/patterns.db` directly
 (this also refreshes `patterns.db.stamp`, since the JSON is a stamped DB
-input). Re-run after parser/plugin changes:
+input). The harness reads its rows from `SEED_EXAMPLES` (the source), not
+from the DB. Re-run after parser/plugin changes, and after adding or editing
+a pattern:
 
 ```bash
-npm run verify:engines --prefix packages/patterns-reference   # needs core + reactivity dist fresh
+npm run verify:engines --prefix packages/patterns-reference        # regenerate + stamp the DB
+npm run verify:engines:check --prefix packages/patterns-reference  # compare only (what CI runs)
 ```
 
-Do NOT hand-author engine values in `init-db.ts` seeds — the JSON overrides
-them. (The old heuristic `verify-engine-compat.ts`, which guessed 'both' from
-semantic canParse + extension-syntax scans, was removed in favor of this.)
+- **Gated.** CI's `browser-tests` job runs `verify:engines:check`: it fails
+  when any committed verdict no longer reproduces, a pattern has no verdict,
+  a verdict names a deleted pattern, or the `engines` map contradicts its own
+  `details` (a hand edit). It compares verdicts only — error text and
+  versions are informational — so a parser-message tweak or a release bump
+  never reddens an unrelated PR. The gate exists because the JSON once sat a
+  month stale (generated before #1026, when core still discarded input
+  silently) and over-claimed 10 rows.
+- **Refuses stale builds** (exit 2) when core/reactivity/realtime have `src/`
+  newer than `dist/`: a stale dist verifies code that differs from the
+  checkout. `npm run check:fresh` rebuilds them.
+- **The JSON is the only source of the engine column.** Seeds carry no
+  `engine` field; a pattern missing from the JSON is stored as NULL
+  ("Unverified") and `init-db` warns. (The old heuristic
+  `verify-engine-compat.ts`, which guessed 'both' from semantic canParse +
+  extension-syntax scans, was removed in favor of this harness.)
 
 ## Database Contents
 

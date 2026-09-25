@@ -40,7 +40,8 @@
     "verify": "tsx scripts/verify-translations.ts",
     "verify:verbose": "tsx scripts/verify-translations.ts --verbose",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
-    "verify:engines": "tsx scripts/verify-engines.ts --update-db"
+    "verify:engines": "tsx scripts/verify-engines.ts --update-db",
+    "verify:engines:check": "tsx scripts/verify-engines.ts --check"
   },
   "keywords": [
     "hyperscript",

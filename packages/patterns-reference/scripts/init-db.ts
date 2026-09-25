@@ -211,13 +211,19 @@ CREATE INDEX IF NOT EXISTS idx_expression_operators_expr ON expression_operators
 // Seed Data - Essential Hyperscript Patterns
 // =============================================================================
 
-interface SeedExample {
+/**
+ * One corpus pattern. There is deliberately no `engine` field: the engine
+ * column comes ONLY from data/engine-verification.json, which
+ * scripts/verify-engines.ts computes by running both engines and CI checks
+ * (`verify:engines:check`). A hand-authored value here would be a claim
+ * nothing verifies.
+ */
+export interface SeedExample {
   id: string;
   title: string;
   raw_code: string;
   description: string;
   feature: string;
-  engine?: string | null;
   /**
    * Set to `false` for HTML-embedded patterns whose body shouldn't be
    * grammar-transformed (e.g. `<div hx-live="put $count into me">`).
@@ -265,7 +271,7 @@ function behaviorSeedEntries(): SeedExample[] {
   }));
 }
 
-const SEED_EXAMPLES: SeedExample[] = [
+export const SEED_EXAMPLES: SeedExample[] = [
   // ==========================================================================
   // Class Manipulation
   // ==========================================================================
@@ -1225,7 +1231,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.textContent to "Done!"',
     description: 'Set text content using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'set-inner-html-possessive-dot',
@@ -1233,7 +1238,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.innerHTML to "<strong>Updated!</strong>"',
     description: 'Set innerHTML using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'get-value-possessive-dot',
@@ -1241,7 +1245,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on input put my.value into #preview',
     description: 'Mirror input value using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'method-call-possessive-dot',
@@ -1249,7 +1252,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on input put my.value.toUpperCase() into #preview',
     description: 'Call method on property using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'chained-access-possessive-dot',
@@ -1257,7 +1259,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.parentElement.style.display to "none"',
     description: 'Chained property access using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'optional-chaining-possessive',
@@ -1265,7 +1266,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click log my?.dataset?.customValue',
     description: 'Safe property access using optional chaining (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'get-attribute-possessive-dot',
@@ -1273,7 +1273,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click put my.getAttribute("data-id") into #output',
     description: 'Call getAttribute using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
   {
     id: 'its-value-possessive-dot',
@@ -1281,7 +1280,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click fetch /api/data then put its.name into #result',
     description: 'Access result property using its.property syntax (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
-    engine: 'lokascript',
   },
 
   // ==========================================================================
@@ -1363,7 +1361,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       'eventsource ChatStream from /events\n  on message\n    put it into #messages\n  end\nend',
     description: 'Subscribe to a server-sent events endpoint and append messages to the DOM',
     feature: 'realtime',
-    engine: 'both',
   },
   {
     id: 'socket-basic',
@@ -1373,7 +1370,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'socket ChatSocket ws://localhost:8080\n  on message\n    put it into #chat\n  end',
     description: 'Open a WebSocket and route incoming messages into the DOM',
     feature: 'realtime',
-    engine: 'both',
   },
   {
     id: 'socket-send',
@@ -1391,7 +1387,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'worker Calculator\n  def add(a, b)\n    return a + b\n  end\nend',
     description: 'Define a Web Worker in hyperscript and call its methods like a normal object',
     feature: 'realtime',
-    engine: 'both',
   },
 
   // ==========================================================================
@@ -1499,7 +1494,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   // ==========================================================================
   // Reactivity — live, when X changes, bind, ^name, reactive arrays
   // Runs in HyperFixi when @hyperfixi/reactivity plugin is installed.
-  // Upstream _hyperscript 0.9.90 also supports these (engine: 'both').
+  // Upstream _hyperscript 0.9.90+ has its own live/when/bind; each row's
+  // verdict on both engines is in data/engine-verification.json.
   // ==========================================================================
   {
     id: 'live-derived-value',
@@ -1507,7 +1503,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'live put `Count: ${$count}` into me end',
     description: 'Reactively update content whenever a tracked dependency changes',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'live-multiple-deps',
@@ -1515,7 +1510,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'live put `${$price * $quantity}` into #total end',
     description: 'Body re-runs only when one of its tracked reads ($price or $quantity) changes',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'when-value-changes',
@@ -1523,12 +1517,11 @@ const SEED_EXAMPLES: SeedExample[] = [
     // `"$" + it`, not `` `$${it}` ``: a `$` immediately before `${…}` inside a
     // template literal is rejected by the upstream _hyperscript 0.9.93 lexer
     // ("Unexpected value: $") — verified on the engine; `"$" + it` and
-    // `` `USD ${it}` `` are both VALID. The row claims `engine: 'both'`, so its
+    // `` `USD ${it}` `` are both VALID. The row verifies as `both`, so its
     // code must be portable.
     raw_code: 'when (#price\'s value * #qty\'s value) changes put "$" + it into me end',
     description: 'React to changes in a computed expression; `it` is the new value',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'when-multiple-changes',
@@ -1537,7 +1530,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
     description: 'Watch multiple expressions; body fires when any one of them changes',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'bind-auto-detect',
@@ -1546,7 +1538,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Two-way bind a global variable to an input; property auto-detected (value/checked/etc.)',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'bind-two-way',
@@ -1557,7 +1548,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Share a global between two inputs by binding both to it; edits in either propagate to the other',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'bind-explicit-property',
@@ -1566,7 +1556,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Use possessive syntax to bind to a named property explicitly (preferred — reads in any language)',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'bind-non-form-display',
@@ -1575,7 +1564,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'For non-form properties, only var→DOM fires; user mutations of the property are not observed',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'caret-var-write',
@@ -1583,7 +1571,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on load set ^count to 0',
     description: 'Declare a ^name variable on this element; descendants can read and write it',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'caret-var-increment',
@@ -1592,7 +1579,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Walks up the parent chain to find ^count and writes the nearest defining ancestor',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'caret-var-on-target',
@@ -1601,7 +1587,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Read a ^name variable scoped to a specific element instead of walking up from `me`',
     feature: 'reactivity',
-    engine: 'both',
   },
   {
     id: 'reactive-array-push',
@@ -1609,7 +1594,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click call $items.push(`item ${$items.length + 1}`)',
     description: 'Mutate a reactive array; live blocks reading it re-render automatically',
     feature: 'reactivity',
-    engine: 'both',
   },
 
   // ==========================================================================
@@ -1623,7 +1607,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
     feature: 'reactivity',
-    engine: 'lokascript',
     translatable: false,
     non_translatable_reason:
       'HTML markup — hx-live attribute names are language-agnostic and resolved by vocab modules at runtime',
@@ -1636,7 +1619,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
     feature: 'reactivity',
-    engine: 'lokascript',
     translatable: false,
     non_translatable_reason:
       'HTML markup with embedded hyperscript — vocab modules handle per-language attribute resolution',
@@ -1648,7 +1630,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<div sse-connect="/events" sse-swap="tick" hx-target="#feed" hx-swap="afterbegin"></div>',
     description: 'Open an EventSource and route named events through hx-target/hx-swap',
     feature: 'realtime',
-    engine: 'lokascript',
     translatable: false,
     non_translatable_reason:
       'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
@@ -1660,7 +1641,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<div sse-connect="/feed" sse-swap="post, like, comment" hx-target="#timeline" hx-swap="afterbegin"></div>',
     description: 'One SSE connection routing several named server events into the same target',
     feature: 'realtime',
-    engine: 'lokascript',
     translatable: false,
     non_translatable_reason:
       'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
@@ -1673,7 +1653,6 @@ const SEED_EXAMPLES: SeedExample[] = [
     description:
       'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
     feature: 'realtime',
-    engine: 'lokascript',
     translatable: false,
     non_translatable_reason:
       'HTML markup — ws-/hx- attribute names are language-agnostic and resolved by vocab modules',
@@ -1691,7 +1670,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<script type="text/hyperscript-template" component="hello-world">\n  <span>Hello World</span>\n</script>',
     description: 'Define a custom element via a hyperscript-template script tag',
     feature: 'components',
-    engine: 'both',
     translatable: false,
     non_translatable_reason:
       'HTML markup with NO hyperscript — a component template whose body is static markup; there is nothing to translate in any language',
@@ -1703,7 +1681,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<script type="text/hyperscript-template" component="click-counter" _="set ^count to 0">\n  <button _="on click increment ^count">+</button>\n  <span>Clicks: ${^count}</span>\n</script>',
     description: 'Component with isolated DOM-scoped state (^count) that re-renders on change',
     feature: 'components',
-    engine: 'both',
   },
   {
     id: 'component-with-conditional',
@@ -1712,7 +1689,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<script type="text/hyperscript-template" component="user-card" _="set ^user to {name: \'Demo\', admin: true}">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
     description: 'Component using ^var state and the #if directive for conditional rendering',
     feature: 'components',
-    engine: 'both',
   },
   {
     id: 'component-with-attrs',
@@ -1721,7 +1697,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<script type="text/hyperscript-template" component="user-card" _="set ^user to attrs.data as JSON">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
     description: 'Component reading attrs.data (JSON-encoded) into ^user via init script',
     feature: 'components',
-    engine: 'both',
   },
   {
     id: 'component-with-slots',
@@ -1730,7 +1705,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       '<script type="text/hyperscript-template" component="my-layout">\n  <header><slot name="title"/></header>\n  <main><slot/></main>\n  <footer><slot name="footer"/></footer>\n</script>',
     description: 'Component with default and named slots for content projection',
     feature: 'components',
-    engine: 'both',
     translatable: false,
     non_translatable_reason:
       'HTML markup with NO hyperscript — slot layout only; there is nothing to translate in any language',
@@ -1751,7 +1725,6 @@ const SEED_EXAMPLES: SeedExample[] = [
       'intercept /\n  precache /, /style.css, /app.js as "v1"\n  on /api/* use network-first\n  on *.css, *.js use cache-first\n  on * use stale-while-revalidate\n  offline fallback /offline.html\nend',
     description: 'Service worker DSL with precaching, per-route strategies, and offline fallback',
     feature: 'service-workers',
-    engine: 'both',
   },
 
   // ==========================================================================
@@ -1954,24 +1927,23 @@ function initDatabase() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    // Engine values come from the committed verification results when
-    // available (scripts/verify-engines.ts — mechanical dual-engine
-    // verification), falling back to the seed's hand-authored value for
-    // patterns the harness hasn't covered.
+    // Engine values come ONLY from the committed verification results
+    // (scripts/verify-engines.ts runs both engines; CI's
+    // `verify:engines:check` fails when they drift). A pattern without a
+    // verdict is stored as NULL — "Unverified" — never as a guess.
     const engineVerificationPath = resolve(__dirname, '../data/engine-verification.json');
-    let verifiedEngines: Record<string, string | null> = {};
-    if (existsSync(engineVerificationPath)) {
-      try {
-        const parsed = JSON.parse(readFileSync(engineVerificationPath, 'utf-8')) as {
-          engines?: Record<string, string | null>;
-        };
-        verifiedEngines = parsed.engines ?? {};
-        console.log(
-          `Applying verified engine values for ${Object.keys(verifiedEngines).length} patterns`
-        );
-      } catch (e) {
-        console.warn('Could not read engine-verification.json; using seed engine values:', e);
+    const verifiedEngines = (
+      JSON.parse(readFileSync(engineVerificationPath, 'utf-8')) as {
+        engines: Record<string, string | null>;
       }
+    ).engines;
+    const unverified = SEED_EXAMPLES.filter(ex => !(ex.id in verifiedEngines)).map(ex => ex.id);
+    if (unverified.length > 0) {
+      console.warn(
+        `WARNING: ${unverified.length} pattern(s) have no engine verdict and will read as ` +
+          `Unverified: ${unverified.join(', ')}\n` +
+          '  Run `npm run verify:engines` and commit data/engine-verification.json.'
+      );
     }
 
     for (const ex of SEED_EXAMPLES) {
@@ -1981,7 +1953,7 @@ function initDatabase() {
         ex.raw_code,
         ex.description,
         ex.feature,
-        ex.id in verifiedEngines ? verifiedEngines[ex.id] : (ex.engine ?? null),
+        verifiedEngines[ex.id] ?? null,
         ex.translatable === false ? 0 : 1,
         ex.non_translatable_reason ?? null
       );
@@ -2041,5 +2013,8 @@ function initDatabase() {
   }
 }
 
-// Run
-initDatabase();
+// Run only when executed (`tsx scripts/init-db.ts`), not when imported for
+// SEED_EXAMPLES by scripts/verify-engines.ts.
+if (process.argv[1] && resolve(process.argv[1]) === __filename) {
+  initDatabase();
+}

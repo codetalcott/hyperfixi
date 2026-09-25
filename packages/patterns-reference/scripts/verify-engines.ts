@@ -41,27 +41,41 @@
  * (packages/testing-framework/src/multilingual/validators/execution-validator.ts)
  * for its curated subset.
  *
+ * Rows come from `SEED_EXAMPLES` in scripts/init-db.ts — the source — not
+ * from data/patterns.db, so a stale local DB cannot change what is verified.
+ *
  * Output: data/engine-verification.json (committed). `scripts/init-db.ts`
- * reads it at seed time, so `npm run populate` stamps the verified values
- * into the DB without needing @hyperfixi/core built. Re-run this script
- * (needs core + reactivity dist built) after parser/plugin changes:
+ * reads it at seed time — it is the ONLY source of the engine column — so
+ * `npm run populate` stamps the verified values into the DB without needing
+ * @hyperfixi/core built. Re-run this script after parser/plugin changes:
  *
  *   npm run verify:engines --prefix packages/patterns-reference
  *
+ * The run REFUSES when a package it executes has src/ newer than dist/: a
+ * stale dist verifies code that differs from the checkout, which is how a
+ * 2026-09-23 re-run produced ~20 flips no one could attribute. Rebuild with
+ * `npm run check:fresh` (or the package's `npm run build`).
+ *
  * Flags:
+ *   --check       recompute and compare with the committed JSON; write
+ *                 nothing; exit 1 on any verdict or coverage drift (CI:
+ *                 `browser-tests`). Error text and versions are not compared,
+ *                 so a parser-message tweak or release bump never reddens it.
  *   --update-db   also UPDATE the engine column in data/patterns.db in place
  */
 
 import { JSDOM } from 'jsdom';
 import Database from 'better-sqlite3';
 import { extractHyperscriptFromMarkup, type MarkupSnippets } from '../src/html-snippets';
-import { writeFileSync } from 'node:fs';
+import { SEED_EXAMPLES } from './init-db';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = join(__dirname, '..');
+const PACKAGES_ROOT = join(PKG_ROOT, '..');
 const DB_PATH = join(PKG_ROOT, 'data', 'patterns.db');
 const OUT_PATH = join(PKG_ROOT, 'data', 'engine-verification.json');
 const require_ = createRequire(import.meta.url);
@@ -69,11 +83,8 @@ const require_ = createRequire(import.meta.url);
 /** Settle window for the lokascript install smoke (ms). */
 const INSTALL_SETTLE_MS = 500;
 
-interface PatternRow {
-  id: string;
-  raw_code: string;
-  feature: string;
-}
+/** Workspace packages whose built dist/ this harness executes. */
+const EXECUTED_PACKAGES = ['core', 'reactivity', 'realtime'];
 
 interface VerifyResult {
   lokascript: boolean;
@@ -84,6 +95,87 @@ interface VerifyResult {
 
 function isHtmlMarkupPattern(code: string): boolean {
   return /^\s*</.test(code);
+}
+
+function hasNewerTs(dir: string, builtAt: number): boolean {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (hasNewerTs(p, builtAt)) return true;
+    } else if (entry.name.endsWith('.ts') && statSync(p).mtimeMs > builtAt) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Executed packages whose src/ is newer than their built entry (or that have
+ * no build at all). Same semantics as the multilingual CLI's findStaleDists
+ * and scripts/ensure-fresh.sh; read-only — this refuses rather than rebuilds.
+ */
+function findStaleDists(): string[] {
+  const stale: string[] = [];
+  for (const name of EXECUTED_PACKAGES) {
+    const pkg = join(PACKAGES_ROOT, name);
+    // `.mjs` for core (its CJS twin is `.cjs`), `.js` for most; newest wins.
+    const marker = ['index.js', 'index.mjs', 'index.cjs']
+      .map(f => join(pkg, 'dist', f))
+      .filter(f => existsSync(f))
+      .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
+    if (!marker || hasNewerTs(join(pkg, 'src'), statSync(marker).mtimeMs)) stale.push(name);
+  }
+  return stale;
+}
+
+type EngineVerdict = 'both' | 'lokascript' | 'hyperscript' | null;
+
+function engineOf(r: Pick<VerifyResult, 'lokascript' | 'hyperscript'>): EngineVerdict {
+  if (r.lokascript && r.hyperscript) return 'both';
+  if (r.lokascript) return 'lokascript';
+  if (r.hyperscript) return 'hyperscript';
+  return null;
+}
+
+/**
+ * Every way the committed JSON disagrees with a fresh run: a verdict that
+ * changed, a pattern with no committed verdict, a verdict for a pattern that
+ * no longer exists, and an `engines` entry that contradicts its own
+ * `details` (a hand edit).
+ */
+function compareWithCommitted(results: Record<string, VerifyResult>): string[] {
+  const committed = JSON.parse(readFileSync(OUT_PATH, 'utf-8')) as {
+    engines: Record<string, EngineVerdict>;
+    details: Record<string, VerifyResult>;
+  };
+  const problems: string[] = [];
+  for (const [id, fresh] of Object.entries(results)) {
+    const old = committed.details[id];
+    if (!old) {
+      problems.push(`${id}: no committed verdict (verifies as ${engineOf(fresh) ?? 'NULL'})`);
+    } else if (old.lokascript !== fresh.lokascript || old.hyperscript !== fresh.hyperscript) {
+      const why = [
+        fresh.lokascriptError && `lokascript: ${fresh.lokascriptError}`,
+        fresh.hyperscriptError && `hyperscript: ${fresh.hyperscriptError}`,
+      ]
+        .filter(Boolean)
+        .join('; ');
+      problems.push(
+        `${id}: committed ${engineOf(old) ?? 'NULL'}, verifies as ${engineOf(fresh) ?? 'NULL'}` +
+          (why ? ` (${why})` : '')
+      );
+    }
+  }
+  for (const id of Object.keys(committed.details)) {
+    if (!(id in results)) problems.push(`${id}: committed verdict for a pattern that no longer exists`);
+  }
+  for (const [id, verdict] of Object.entries(committed.engines)) {
+    const d = committed.details[id];
+    if (d && engineOf(d) !== verdict) {
+      problems.push(`${id}: engines says ${verdict ?? 'NULL'} but its details say ${engineOf(d) ?? 'NULL'}`);
+    }
+  }
+  return problems;
 }
 
 /** Set up jsdom globals BEFORE importing either engine. */
@@ -188,6 +280,17 @@ function extractSnippets(dom: JSDOM, markup: string): MarkupSnippets {
 
 async function main(): Promise<void> {
   const updateDb = process.argv.includes('--update-db');
+  const checkOnly = process.argv.includes('--check');
+
+  const stale = findStaleDists();
+  if (stale.length > 0) {
+    console.error(
+      `[verify-engines] REFUSING: stale or missing dist/ in ${stale.join(', ')} — the ` +
+        'verdicts would describe the built output, not your checkout.\n' +
+        '  Rebuild first: npm run check:fresh (or npm run build --prefix packages/<name>).'
+    );
+    process.exit(2);
+  }
 
   const dom = installDomGlobals();
 
@@ -292,8 +395,7 @@ async function main(): Promise<void> {
     }
   };
 
-  const db = new Database(DB_PATH);
-  const rows = db.prepare('SELECT id, raw_code, feature FROM code_examples ORDER BY id').all() as PatternRow[];
+  const rows = [...SEED_EXAMPLES].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   const results: Record<string, VerifyResult> = {};
 
@@ -342,14 +444,34 @@ async function main(): Promise<void> {
     };
   }
 
-  const engineOf = (r: VerifyResult): string | null =>
-    r.lokascript && r.hyperscript
-      ? 'both'
-      : r.lokascript
-        ? 'lokascript'
-        : r.hyperscript
-          ? 'hyperscript'
-          : null;
+  const counts = { both: 0, lokascript: 0, hyperscript: 0, unverified: 0 };
+  for (const r of Object.values(results)) {
+    const e = engineOf(r);
+    if (e === 'both') counts.both++;
+    else if (e === 'lokascript') counts.lokascript++;
+    else if (e === 'hyperscript') counts.hyperscript++;
+    else counts.unverified++;
+  }
+  console.log(
+    `[verify-engines] ${rows.length} patterns → both: ${counts.both}, lokascript: ${counts.lokascript}, hyperscript: ${counts.hyperscript}, unverified: ${counts.unverified}`
+  );
+
+  if (checkOnly) {
+    const problems = compareWithCommitted(results);
+    if (problems.length > 0) {
+      console.error(
+        `[verify-engines] --check FAILED: data/engine-verification.json disagrees with the engines on ${problems.length} point(s):`
+      );
+      for (const p of problems) console.error(`  ✗ ${p}`);
+      console.error(
+        '  Regenerate on fresh builds and commit the JSON:\n' +
+          '    npm run verify:engines --prefix packages/patterns-reference'
+      );
+      process.exit(1);
+    }
+    console.log(`[verify-engines] --check OK: all ${rows.length} committed verdicts reproduce`);
+    process.exit(0);
+  }
 
   const corePkg = require_('@hyperfixi/core/package.json') as { version: string };
   // hyperscript.org's exports map blocks ./package.json — resolve its entry
@@ -367,48 +489,43 @@ async function main(): Promise<void> {
         hyperscript: `upstream _hyperscript parse with zero recovered errors (extensions loaded: ${upstreamExtensions.join(', ') || 'none'}); parse-level only`,
         html: 'HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim',
       },
+      // The versions this file was last regenerated at — informational only;
+      // `--check` compares verdicts, not versions.
       lokascriptVersion: corePkg.version,
       hyperscriptVersion: upstreamPkg.version,
     },
     engines: Object.fromEntries(
       Object.entries(results).map(([id, r]) => [id, engineOf(r)])
-    ) as Record<string, string | null>,
+    ) as Record<string, EngineVerdict>,
     details: results,
   };
 
   writeFileSync(OUT_PATH, JSON.stringify(output, null, 2) + '\n');
-
-  const counts = { both: 0, lokascript: 0, hyperscript: 0, unverified: 0 };
-  for (const r of Object.values(results)) {
-    const e = engineOf(r);
-    if (e === 'both') counts.both++;
-    else if (e === 'lokascript') counts.lokascript++;
-    else if (e === 'hyperscript') counts.hyperscript++;
-    else counts.unverified++;
-  }
-  console.log(
-    `[verify-engines] ${rows.length} patterns → both: ${counts.both}, lokascript: ${counts.lokascript}, hyperscript: ${counts.hyperscript}, unverified: ${counts.unverified}`
-  );
   console.log(`[verify-engines] wrote ${OUT_PATH}`);
 
   if (updateDb) {
-    const update = db.prepare('UPDATE code_examples SET engine = ? WHERE id = ?');
-    const tx = db.transaction(() => {
-      for (const [id, r] of Object.entries(results)) {
-        update.run(engineOf(r), id);
-      }
-    });
-    tx();
-    console.log(`[verify-engines] updated engine column in ${DB_PATH}`);
+    if (!existsSync(DB_PATH)) {
+      console.warn(`[verify-engines] --update-db: no database at ${DB_PATH}; run npm run populate`);
+    } else {
+      const db = new Database(DB_PATH);
+      const update = db.prepare('UPDATE code_examples SET engine = ? WHERE id = ?');
+      const tx = db.transaction(() => {
+        for (const [id, r] of Object.entries(results)) {
+          update.run(engineOf(r), id);
+        }
+      });
+      tx();
+      db.close();
+      console.log(`[verify-engines] updated engine column in ${DB_PATH}`);
 
-    // engine-verification.json is a stamped DB input (see src/sync/db-stamp.ts),
-    // and we just rewrote both it and the DB — refresh the stamp so the
-    // multilingual gate doesn't read this consistent state as stale.
-    const { writeDbStamp } = await import('../src/sync/db-stamp');
-    writeDbStamp(DB_PATH);
-    console.log('[verify-engines] refreshed patterns.db.stamp');
+      // engine-verification.json is a stamped DB input (see src/sync/db-stamp.ts),
+      // and we just rewrote both it and the DB — refresh the stamp so the
+      // multilingual gate doesn't read this consistent state as stale.
+      const { writeDbStamp } = await import('../src/sync/db-stamp');
+      writeDbStamp(DB_PATH);
+      console.log('[verify-engines] refreshed patterns.db.stamp');
+    }
   }
-  db.close();
 
   for (const [id, r] of Object.entries(results)) {
     if (!r.lokascript) {
