@@ -43,6 +43,8 @@ ones, because the gate *is* the tracking mechanism.
 | **`as <type>` is dropped from `set`'s value** (semantic parser) | medium — `set ^user to attrs.data as JSON` parses, and the conversion lands in NO role: the parse keeps `patient: expression "attrs.data"` and `as JSON` appears nowhere. Because both sides of every comparison are equally truncated, the row scores **faithful in all 23 languages** — the same vacuous-reference shape as #970 `unless` and #971 `when … changes`, and the fifth of that family. | ⚠️ NONE directly. The corpus writer now refuses to translate such a body (`reRenderPreservesContent`, `patterns-reference/src/sync/markup-attributes.ts`), so `component-with-attrs` stays English in 23 languages and is visible as 23 rows in the `i18n-kept-rows` baseline — an indirect, shrink-only signal, not a test. | Found 2026-08-27 while burning down the kept-row ratchet. Repro: `render(parseSemantic('set ^user to attrs.data as JSON','en').node,'en')` → `set ^user to attrs.data`. Compare `asExpression` handling on the value side of `set` with the working `put … as …` path. |
 | ~~**`js(...) … end` bodies are not lexed as an OPAQUE span**~~ | **FIXED 2026-08-27** — and NOT in the base tokenizer: the opaque-span mechanism already existed (`consumeJsBlock`), and the filing's prescription would have duplicated it. What was missing was everything around it — the body was re-spaced by a `join(' ')` rebuild, the closing `end` was only emitted when a sibling followed, a pre-posed patient marker (he `את`, zh `把`) was swallowed into the body, the verb-FINAL SOV shape was never recognized, and the body was run through `localizeValueInterior`, i.e. the JavaScript itself was translated. Cleared 19 kept rows (js-inline ×3 + behavior-removable ×16), zero newly kept. | ✅ `js-block-round-trip.test.ts` (79 assertions), plus the two render allowlists and the kept-row ratchet | `MULTILINGUAL_NEXT_STEPS.md` 2026-08-27m. **Residual:** `js(args) … end` still stops at the `(` in twelve languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — pinned as an exclusion list in that test file. |
 | ~~**Four upstream-valid forms compiled clean and failed at run time**~~ | **FIXED 2026-09-25** — a command word before a group read as a method call (`put (1 + 2) into #x` threw), `beep!` aborted its handler, EVERY bare `for` loop threw, and a failing `tell` body command vanished with 0 errors | ✅ `command-misreads.test.ts`, `for-in.test.ts`, `tell-to-and-end.test.ts`, AOT `core-parser-adapter.test.ts` (all mutation-checked) | section below |
+| ~~**`repeat while` / `repeat until` never evaluated their condition**~~ | **FIXED 2026-09-25** — `while` ran to the 10,000-iteration cap, `until` never ran its body, bottom-tested loops ran once; every unit test passed a boolean. Found alongside gaps 1 and 2 (block `end` at end of input, `morph … to`), both also FIXED | ✅ `repeat-conditions.test.ts`, `block-end-at-eof.test.ts`, `morph-to.test.ts` (all mutation-checked) | the "Gaps 1 and 2 closed" section below |
+| **`def` / `behavior` demand their own `end`; `transition … from` rejected** | medium — upstream-valid, rejected loudly | ⚠️ NONE | same section, "Filed, still open" |
 | **Core has no collection `add`/`remove`** | **medium-high, silent** — `add "x" to $arr` / `remove "x" from $arr` do nothing where upstream pushes/removes; a parenthesized operand (`remove (.a)`, upstream: delete the elements) cannot be expressed, and `(.a)` does not even lex | ⚠️ NONE | the 2026-09-25 section below (why a lexing-only fix was reverted) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
@@ -2130,9 +2132,9 @@ errors; upstream `hs.parse(src).errors`):
 
 | source | core | corpus row |
 | ------ | ---- | ---------- |
-| `on click repeat 3 times log "x"` (no `end`; upstream closes the block at end of input) | `Command 'repeat' failed to parse and was discarded` | repeat-times, repeat-for-each |
-| `init repeat 3 times log "x"` | `Expected "end" to close repeat block` | — |
-| `on click morph #list to it` / `morph me to it` / `morph (#list) to it` | `Discarded input … 'to it'`. The parenthesized form only LOOKED like it worked: it compiled as the method call `it.morph(…)` and threw at run time. Since 2026-09-25 it is rejected like the rest. Fixing `to` also needs the runtime to MERGE a same-tag root, as upstream does, rather than nest it | morph-fetch-result, morph-form-update |
+| ~~`on click repeat 3 times log "x"` (no `end`; upstream closes the block at end of input)~~ **FIXED 2026-09-25** | was `Command 'repeat' failed to parse and was discarded` | repeat-times, repeat-for-each (now `both`) |
+| ~~`init repeat 3 times log "x"`~~ **FIXED 2026-09-25** — `init` itself needs no `end` either | was `Expected "end" to close repeat block` | — |
+| ~~`on click morph #list to it` / `morph me to it` / `morph (#list) to it`~~ **FIXED 2026-09-25**, with `closest … to` and the root merge (section below) | was `Discarded input … 'to it'`; the parenthesized form only LOOKED like it worked (a method call that threw at run time) | morph-fetch-result, morph-form-update (now `both`) |
 | `on click render #row with row: $data` (naked named args; the parenthesized form is filed above) | `Discarded input … ': $data'` | render-template-with-data, morph-with-template |
 | `on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position; the command form parses, and since 2026-09-25 also runs) | `Discarded input … '! my value'` | beep-debug-expression |
 | `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
@@ -2140,6 +2142,37 @@ errors; upstream `hs.parse(src).errors`):
 The `transition` row narrows the 2026-07-31 fix above: that fix covers a
 possessive whose owner is a primary (`#a's`, `my`, `its`). It does not cover a
 positional owner, a parenthesized owner, or the `of` form.
+
+### Gaps 1 and 2 closed — and what closing them uncovered (2026-09-25)
+
+The two rows marked FIXED above, and five defects found on the way. Every
+form below was run on 0.9.93, not only parsed.
+
+| defect | core before | fix | pinned by |
+| ------ | ----------- | --- | --------- |
+| an open block's `end` at END OF INPUT (repeat, for, else, bottom-tested tail, `start view transition`; `if` had the rule but a trailing comment defeated it) | required everywhere | optional exactly when only comments remain, upstream's `if (parser.hasMore()) requireToken("end")`; before another handler it is still required | `block-end-at-eof.test.ts` |
+| `init` without `end` | rejected, always | may stop at end of input or at the next feature (upstream's init has no `end`; the program loop takes an optional one) | same |
+| `repeat <commands> …`, upstream's implicit forever, and so the bottom-tested `repeat <body> until <cond> end` | the command word was taken for a `times` count and the body discarded | a command start right after `repeat` means `forever` | same, `repeat-conditions.test.ts` |
+| **`repeat while <expr>` / `repeat until <expr>` never evaluated their condition** | `parseInput` passed the AST NODE, `evaluateCondition` read it as a truthy object: `while` ran to the 10,000-iteration cap, `until` never ran, bottom-tested loops ran once. Every unit test passed a boolean | a thunk over the expression, re-run each iteration | `repeat-conditions.test.ts` (run end to end) |
+| a comment straight after a block header (`repeat 3 times -- note` + newline + a command) | "Not a command… '-- note'" | the body loop skips it | `block-end-at-eof.test.ts` |
+| `closest <sel> to <el>` | not parsed; `morph closest <form/> to it` therefore had nothing to reject it | the start element, parsed and evaluated (upstream's ClosestExpr owns that `to`) | `morph-to.test.ts` |
+| `morph` of a lone root element with the target's tag | children-only morph: `#list` gained a nested duplicate `#list`; a fetched form kept its old attributes | merged (attributes + children), as upstream's runtime.morph, in the full runtime (`morphMerge`) and the small bundle's executor; content element cloned per target (an id'd node is otherwise MOVED out of it) | `morph-to.test.ts`, `capability-emission.test.ts` |
+
+Four corpus rows now verify `both` and were RUN on both engines with fetch
+stubbed. repeat-for-each and the two morph rows produce the same DOM.
+**repeat-times does not run on EITHER engine**:
+`repeat 3 times add "<p>Line</p>" to me` throws in core ("no valid class
+names") and upstream ("Cannot add to object", because an `add` of a value is a
+collection add). It is a corpus defect: it means `append`. That is the
+parse-level `both` blind spot, in one row.
+
+Filed, still open — upstream-valid, core rejects:
+
+| source | core |
+| ------ | ---- |
+| `def f() log 1` (no `end`) | `Expected 'end' after function definition` |
+| `behavior B on click log 1` / `… end` (one `end`) | `Expected "end" to close behavior event handler` / `… behavior definition`. Core needs the handler's AND the behavior's |
+| `transition opacity from 0 to 1` / `transition *opacity from 0 to 1 over 1s` | `Command 'transition' failed to parse and was discarded` |
 
 ### ~~Four upstream-valid forms that compiled clean and failed at run time~~ — FIXED (2026-09-25)
 
