@@ -562,7 +562,8 @@ signal; the rows i18n won were a committed shrink-only baseline, ratcheted by an
 at the flip → 0 of 3657), the transformer was retired on the strength of it, and
 a per-row chooser with one renderer is not a chooser — so the modes, the
 `PATTERNS_RENDERER` env, the `--renderer` flag, the kept-rows gate and its
-baseline/tools all went with it. `test:canonical` is four gates now, not five.
+baseline/tools all went with it. `test:canonical` dropped to four gates; the
+en-reference-preservation gate (2026-09-25, below) made it five again.
 
 Two things survive from that machinery and are worth knowing:
 
@@ -571,7 +572,8 @@ Two things survive from that machinery and are worth knowing:
   `set ^user to attrs.data as JSON`, whose `as JSON` landed in no role and
   therefore scored "faithful" against its own truncation — would otherwise ship
   the truncation into 23 languages. That guard is what FOUND the `as JSON` bug
-  (#991) when eleven ratchet signals could not.
+  (#991) when eleven ratchet signals could not. PLAIN rows have no such guard —
+  they are gated instead (en-reference-preservation, below).
 - **A row the renderer cannot render keeps its ENGLISH**, is counted, and is
   reported loudly at the end of a `populate` run. It is a floor, not a fallback:
   0 rows take it today, and a row that does is a translation the corpus is
@@ -592,7 +594,13 @@ gzipped to keep them (#998); the corpus writer (#1000); and a vocab test, the
 
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
-identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.
+identically (as the top-level-sequence bug did) moves nothing. The
+**en-reference-preservation gate** (`test:canonical`, 2026-09-25) closes that for the
+corpus: it renders every translatable unit's English parse back to English and requires
+the source's content, under a short list of NAMED equivalences each pinned on the real
+engine (`halt the event` ≠ `halt event`, so `the` is not one). Its allowlist holds the
+24 known losses, shrink-only, each with a triage family — #1167 shipped one of them
+(morph-form-update lost its whole `morph` in 23 languages) with all eleven signals green.
 (Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.
 R4 has a related inversion for the RENDERER: a renderer change that corrupts the emitted
 English across languages floods R4 with new invalid pairs at once. A corrupted en

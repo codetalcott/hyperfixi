@@ -4332,6 +4332,25 @@ languages, so it needs its own PR):
 If it lands well, re-evaluate whether Stages 0 / 0.5 can be simplified — they exist only because
 this signal was missing.
 
+> **Update 2026-09-25 — the English side is now GATED (en-reference-preservation).** This
+> diagnostic fires on the parse it measures, and a foreign row is text rendered FROM the English
+> parse, so an English-side drop never reaches it — re-measured today: en **12/158**, every foreign
+> language **0**. It also only sees spans left UNCONSUMED; a span consumed but not represented is
+> silent (`or keypress[…]` alternatives, feature URLs, `"hello"` → `hello`, a moved loop `end`,
+> `go back` → `go url back`). The new gate (`packages/testing-framework/src/multilingual/
+> en-reference-preservation.ts`, in `test:canonical`) measures the English round-trip instead —
+> `render(parse_en(src), 'en')` against the SOURCE, under named equivalences each pinned on the
+> real engine — and allowlists the **24** current losses (`baselines/en-reference-preservation.json`,
+> shrink-only, one entry per corpus unit, each with a triage family; MEANING-tagged entries are the
+> ones that change what the code does, and go first). Most are the Arc C families above, now
+> counted per corpus unit instead of per language row. New since that table: parenthesized role
+> values (morph-form-update — introduced by #1167 with every signal green; the semantic matcher
+> drops ANY role value that starts with `(`), feature URLs (eventsource/socket), string literal →
+> identifier (socket-send), loop-`end` placement (template-literal-list-build, behavior-sortable),
+> `go url back` (upstream navigates to a page named "back"), and worker `a + b` → `+`. The
+> read-only `validate` script, whose heuristics had been flagging most of these as "truncation" and
+> "literal" noise beside 19 real apostrophe false positives, was retired in the same PR.
+
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
 **RESOLVED (2026-07-13, Arc E — `feat/arc-e-fetch-with`,
@@ -5690,4 +5709,15 @@ Residuals, not started:
   the harness refuses stale builds, and component and hx-v4 rows are
   exercised rather than credited. The corrected rows moved no multilingual
   signal (3318/3318, R4 green with the three inside its denominator).
+
+  **Correction (same day):** "moved no signal" was the blind spot, not good
+  news. The semantic matcher drops any role value that STARTS with `(`, so
+  morph-form-update's 23 translations lost the whole `morph`; every signal
+  stayed green because the English parse lost it too. It is allowlisted in the
+  en-reference-preservation gate (§ Input coverage) until the parser learns
+  parenthesized role values. Its `both` verdict is also parse-level only: in a
+  handler core reads `morph (…) to it` as a pseudo-command (`it.morph(…)`) and
+  throws at run time — core treats ANY command word + spaced `(` + preposition
+  as a method call (`put (1 + 2) into #x` crashes the same way); upstream never
+  does (a command keyword always wins, `parseCommand`).
 
