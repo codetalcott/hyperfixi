@@ -797,7 +797,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
  * Natural English support: "for each item in the list"
  */
 export function parseForCommand(ctx: ParserContext, commandToken: Token): CommandNode {
-  const args: ASTNode[] = [];
   let variable: string | null = null;
   let collection: ASTNode | null = null;
 
@@ -850,47 +849,31 @@ export function parseForCommand(ctx: ParserContext, commandToken: Token): Comman
   // Parse command block until 'end'
   const commands: ASTNode[] = ctx.parseCommandListUntilEnd('for');
 
-  // Build args array to match repeat command's 'for' loop type structure:
-  // args[0] = loop type identifier ('for')
-  // args[1] = variable name (string)
-  // args[2] = collection expression
-  // args[3] = index variable (optional)
-  // args[last] = commands block
-
-  args.push({
-    type: 'identifier',
-    name: 'for',
-    start: commandToken.start,
-    end: commandToken.end,
-    line: commandToken.line,
-    column: commandToken.column,
-  } as IdentifierNode);
-
-  const forPos = {
+  // Emit exactly the node `repeat for` builds: RepeatCommand reads SLOTS
+  // (Arc 3 step 3) — `loopType`, `for`, `in`, `index`, the body positional.
+  // This parser kept the pre-slot positional shape (`args[0]` = `for`, then
+  // variable, collection, index, block), which RepeatCommand no longer reads,
+  // so every bare `for … in … end` compiled clean and threw "repeat command
+  // requires a loop type" when it ran. Upstream: one command, keywords
+  // `repeat` and `for`.
+  const pos = {
     start: commandToken.start,
     end: commandToken.end,
     line: commandToken.line,
     column: commandToken.column,
   };
+  const modifiers: Record<string, ExpressionNode> = {
+    loopType: toLegacyExpression(createStringLiteral(KEYWORDS.FOR, pos)),
+    for: toLegacyExpression(createStringLiteral(variable, pos)),
+    in: collection as ExpressionNode,
+  };
+  if (indexVariable)
+    modifiers['index'] = toLegacyExpression(createStringLiteral(indexVariable, pos));
 
-  args.push(createStringLiteral(variable, forPos));
-
-  args.push(collection);
-
-  if (indexVariable) {
-    args.push(createStringLiteral(indexVariable, forPos));
-  }
-
-  // Add commands as a block
-  args.push(createBlock(commands, { ...forPos, end: forPos.end || 0 }));
-
-  // Create command node with 'repeat' as the command name
-  // This allows reuse of the existing RepeatCommand implementation
-  return CommandNodeBuilder.from({
-    ...commandToken,
-    value: 'repeat', // Use 'repeat' so RepeatCommand handles execution
-  })
-    .withArgs(...args)
+  // Named 'repeat' so RepeatCommand handles execution
+  return CommandNodeBuilder.from<'repeat'>({ ...commandToken, value: 'repeat' })
+    .withArgs(createBlock(commands, { ...pos, end: pos.end || 0 }))
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
