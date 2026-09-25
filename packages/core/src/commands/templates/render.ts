@@ -16,13 +16,17 @@
  *
  * Syntax:
  *   render <template>
- *   render <template> with <variables>
- *   render <template> with (key: value, ...)
+ *   render <template> with <name>: <value>, ...
+ *
+ * `with` takes upstream's naked named arguments, each value a full expression.
+ * The parenthesized `with (name: value)` these docs used to show is rejected
+ * by upstream 0.9.93 too. hyperfixi also accepts an object after `with`
+ * (`with {name: "x"}`, `with $vars`), which upstream does not.
  *
  * @example
  *   render myTemplate
- *   render myTemplate with (name: "Alice", items: [1,2,3])
- *   render "<template>Hello ${name}!</template>" with (name: "World")
+ *   render myTemplate with name: "Alice", items: [1,2,3]
+ *   render "<template>Hello ${name}!</template>" with name: "World"
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -71,16 +75,12 @@ export class RenderCommand {
    */
   static readonly metadata = commandMeta({
     description: 'Render templates with @if, @else, and @repeat directives',
-    syntax: [
-      'render <template>',
-      'render <template> with <variables>',
-      'render <template> with (key: value, ...)',
-    ],
+    syntax: ['render <template>', 'render <template> with <name>: <value>, ...'],
     examples: [
       'render myTemplate',
-      'render myTemplate with (name: "Alice")',
-      'render "<template>Hello ${name}!</template>" with (name: "World")',
-      'render template with (items: data)',
+      'render myTemplate with name: "Alice"',
+      'render "<template>Hello ${name}!</template>" with name: "World"',
+      'render template with items: data',
     ],
     category: 'templates',
     compatibility: 'standard',

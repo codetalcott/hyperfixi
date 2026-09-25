@@ -15,7 +15,12 @@ import type { ParserContext } from '../parser-types';
 import type { Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import type { CommandGrammar } from '../command-grammar';
-import { isCommandBoundary, isKeyword } from '../helpers/parsing-helpers';
+import {
+  isCommandBoundary,
+  isKeyword,
+  isNakedNamedArgStart,
+  parseNakedNamedArgs,
+} from '../helpers/parsing-helpers';
 import type { SlotKey, SlotMap, SlottedCommandName } from '../../ast/command-slots';
 
 /**
@@ -82,10 +87,14 @@ export function parseDeclaredCommand(
   }
 
   const commaList = new Set(grammar.commaList ?? []);
+  const namedArgs = new Set(grammar.namedArgs ?? []);
   while (!ctx.isAtEnd() && isKeyword(ctx.peek(), [...grammar.markers])) {
     const keyword = ctx.advance().value;
     const key = ctx.resolveKeyword(keyword).toLowerCase();
-    let value = ctx.parseExpression();
+    let value =
+      namedArgs.has(key) && isNakedNamedArgStart(ctx)
+        ? parseNakedNamedArgs(ctx, () => ctx.parseExpression(), name)
+        : ctx.parseExpression();
     if (value && commaList.has(key) && ctx.check(',')) {
       const elements: ASTNode[] = [value];
       while (ctx.match(',')) {

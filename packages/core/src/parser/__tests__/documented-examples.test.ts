@@ -29,7 +29,7 @@
  * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` → `lossy`.
  *
  * The allowlist did NOT collapse when the gate was strengthened, as this
- * docblock once predicted — it GREW, from 19 rows to 30, and is now at 27.
+ * docblock once predicted — it GREW, from 19 rows to 30, and is now at 19.
  * That is what strengthening a gate blind to an entire band does first: eleven
  * examples that had read as fine for years were losing content in silence.
  * Eight are docs defects (upstream rejects them too) and three were parser gaps
@@ -153,24 +153,9 @@ const ALLOWED: readonly Allowed[] = [
   },
 
   // --- declared in `syntax` but unimplemented -------------------------------
-  {
-    command: 'render',
-    source: 'render myTemplate with (name: "Alice")',
-    status: 'lossy',
-    reason: 'paren named-args unimplemented; `with {name: "Alice"}` works. Tail silently dropped',
-  },
-  {
-    command: 'render',
-    source: 'render "<template>Hello ${name}!</template>" with (name: "World")',
-    status: 'lossy',
-    reason: 'paren named-args unimplemented; tail silently dropped',
-  },
-  {
-    command: 'render',
-    source: 'render template with (items: data)',
-    status: 'lossy',
-    reason: 'paren named-args unimplemented; tail silently dropped',
-  },
+  // (The three `render … with (name: …)` rows that sat here were docs defects,
+  // not parser gaps: upstream 0.9.93 rejects the parenthesized form too. The
+  // examples now use its naked `with name: …`, which parses.)
   {
     command: 'take',
     source: 'take @data-value from <.source/> and put it on <#target/>',

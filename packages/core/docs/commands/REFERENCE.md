@@ -2137,11 +2137,7 @@ render <template>
 ```
 
 ```hyperscript
-render <template> with <variables>
-```
-
-```hyperscript
-render <template> with (key: value, ...)
+render <template> with <name>: <value>, ...
 ```
 
 **Examples:**
@@ -2151,15 +2147,15 @@ render myTemplate
 ```
 
 ```hyperscript
-render myTemplate with (name: "Alice")
+render myTemplate with name: "Alice"
 ```
 
 ```hyperscript
-render "<template>Hello ${name}!</template>" with (name: "World")
+render "<template>Hello ${name}!</template>" with name: "World"
 ```
 
 ```hyperscript
-render template with (items: data)
+render template with items: data
 ```
 
 **Side Effects:** dom-creation, template-execution

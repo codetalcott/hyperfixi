@@ -518,16 +518,12 @@
     },
     "render": {
       "description": "Render templates with @if, @else, and @repeat directives",
-      "syntax": [
-        "render <template>",
-        "render <template> with <variables>",
-        "render <template> with (key: value, ...)"
-      ],
+      "syntax": ["render <template>", "render <template> with <name>: <value>, ..."],
       "examples": [
         "render myTemplate",
-        "render myTemplate with (name: \"Alice\")",
-        "render \"<template>Hello ${name}!</template>\" with (name: \"World\")",
-        "render template with (items: data)"
+        "render myTemplate with name: \"Alice\"",
+        "render \"<template>Hello ${name}!</template>\" with name: \"World\"",
+        "render template with items: data"
       ],
       "category": "templates",
       "compatibility": "standard",

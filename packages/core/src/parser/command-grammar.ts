@@ -36,6 +36,9 @@
  *   into `modifiers[<word>]`; a word in `commaList` collects a comma-separated
  *   list into one `arrayLiteral`, mirroring upstream's explicit
  *   `do { … } while (matchOpToken(","))` — only `make`'s `from` has it.
+ *   A word in `namedArgs` may instead open upstream's naked named-argument
+ *   list, `name: value, …`, collected into one `objectLiteral`. Only
+ *   `render`'s `with` has it.
  * - `syntax`: the human summary. Not read by the parser; it is here so the
  *   grammar and its documentation cannot drift apart in two files.
  *
@@ -67,6 +70,13 @@ export interface CommandGrammar {
   readonly markers: readonly string[];
   /** Markers whose value is a comma-separated list, collected into one `arrayLiteral`. */
   readonly commaList?: readonly string[];
+  /**
+   * Markers whose value may be upstream's naked named-argument list (`name:
+   * value, …`, its `nakedNamedArgumentList`), collected into one
+   * `objectLiteral`. Any other value after the marker parses as one expression,
+   * as it would without this field.
+   */
+  readonly namedArgs?: readonly string[];
   /**
    * Words that CONTINUE the positional list instead of opening a slot: the
    * word itself is pushed into `args` as an identifier and parsing goes on.
@@ -186,7 +196,8 @@ export const COMMAND_GRAMMAR: Readonly<Record<string, CommandGrammar>> = {
   render: {
     positional: 'expression',
     markers: ['with'],
-    syntax: 'render <template> [with <variables>]',
+    namedArgs: ['with'],
+    syntax: 'render <template> [with <name>: <value>, …]',
   },
   reset: ONE_EXPR('reset [<form>]'),
   return: ONE_EXPR('return [<value>]'),
