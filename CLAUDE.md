@@ -599,8 +599,10 @@ identically (as the top-level-sequence bug did) moves nothing. The
 corpus: it renders every translatable unit's English parse back to English and requires
 the source's content, under a short list of NAMED equivalences each pinned on the real
 engine (`halt the event` ≠ `halt event`, so `the` is not one). Its allowlist holds the
-24 known losses, shrink-only, each with a triage family — #1167 shipped one of them
-(morph-form-update lost its whole `morph` in 23 languages) with all eleven signals green.
+known losses (24 when it landed), shrink-only, each with a triage family — #1167 shipped
+one of them (morph-form-update lost its whole `morph` in 23 languages) with all eleven
+signals green; the parenthesized-role-value fix that closed it was the allowlist's first
+prune, and it moved NO multilingual metric — which is exactly why the gate exists.
 (Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.
 R4 has a related inversion for the RENDERER: a renderer change that corrupts the emitted
 English across languages floods R4 with new invalid pairs at once. A corrupted en

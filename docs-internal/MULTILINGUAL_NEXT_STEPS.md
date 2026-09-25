@@ -4350,6 +4350,15 @@ this signal was missing.
 > `go url back` (upstream navigates to a page named "back"), and worker `a + b` → `+`. The
 > read-only `validate` script, whose heuristics had been flagging most of these as "truncation" and
 > "literal" noise beside 19 real apostrophe false positives, was retired in the same PR.
+>
+> **First prune (2026-09-25, same day): parenthesized role values.** The matcher now captures a
+> balanced group that stands alone as a role value (`tryMatchParenGroupExpression`, through
+> `joinExpressionTokens`, admitted wherever a target is), so `morph (closest <form/>) to it`,
+> `hide (closest .modal)` and `put it into (closest <form/>)` keep their whole value — localized
+> inside the parens on render (es `(cercano <form/>)`, ja `(最も近い <form/>)`) and normalized back
+> on parse. morph-form-update left the allowlist (24 → 23). The multilingual `--regression` gate
+> saw **zero** metric deltas: the fix restored content in 23 languages that no signal had noticed
+> was gone. Pins: `packages/semantic/test/parenthesized-role-values.test.ts`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
@@ -5714,8 +5723,9 @@ Residuals, not started:
   news. The semantic matcher drops any role value that STARTS with `(`, so
   morph-form-update's 23 translations lost the whole `morph`; every signal
   stayed green because the English parse lost it too. It is allowlisted in the
-  en-reference-preservation gate (§ Input coverage) until the parser learns
-  parenthesized role values. Its `both` verdict is also parse-level only: in a
+  en-reference-preservation gate (§ Input coverage) — RESOLVED the same day:
+  the matcher now captures a parenthesized group as a role value, and the
+  translations keep the `morph`. Its `both` verdict is also parse-level only: in a
   handler core reads `morph (…) to it` as a pseudo-command (`it.morph(…)`) and
   throws at run time — core treats ANY command word + spaced `(` + preposition
   as a method call (`put (1 + 2) into #x` crashes the same way); upstream never
