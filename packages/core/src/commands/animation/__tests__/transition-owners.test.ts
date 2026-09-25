@@ -49,6 +49,8 @@ describe('parse', () => {
     ["on click transition #a's *opacity to 0", 'selector', '*opacity'],
     ['on click transition my *opacity to 0', 'identifier', '*opacity'],
     ['on click transition #a *opacity to 0', 'selector', '*opacity'],
+    // a context name is an OWNER, never a CSS property called `me`
+    ['on click transition me *opacity to 0', 'identifier', '*opacity'],
     ['on click transition opacity to 0', null, 'opacity'],
   ])('`%s` → owner %s, property %s', (src, ownerType, property) => {
     const { args } = transitionOf(src);
