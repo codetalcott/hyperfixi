@@ -87,10 +87,14 @@ describe('For...in loops run', () => {
   });
 
   it('parses to the node `repeat for` builds', () => {
-    const shape = (src: string) =>
-      JSON.stringify((parse(src).node as { commands: unknown[] }).commands, (k, v) =>
+    const shape = (src: string) => {
+      const node = parse(src).node;
+      const commands = node && 'commands' in node ? node.commands : undefined;
+      expect(commands, src).toBeDefined();
+      return JSON.stringify(commands, (k, v) =>
         ['start', 'end', 'line', 'column'].includes(k) ? undefined : v
       );
+    };
     expect(shape('on click for x in [1, 2] index i log x end')).toBe(
       shape('on click repeat for x in [1, 2] index i log x end')
     );
