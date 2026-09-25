@@ -118,6 +118,20 @@ describe('runs', () => {
     }
   });
 
+  it('an ELEMENT as content is copied for each target, and the source survives', async () => {
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<div id="keep"><ul class="src"><li><b id="kept">s</b></li></ul></div>'
+    );
+    await click('on click morph <ul.m/> to the first <ul.src/>');
+    const merged = [...document.querySelectorAll('ul.src')];
+    expect(merged).toHaveLength(3);
+    for (const ul of merged) expect(ul.textContent).toBe('s');
+    // The source keeps its content — an id'd node is exactly what a morph
+    // engine MOVES out of the new tree rather than copying.
+    expect(document.getElementById('keep')!.textContent).toBe('s');
+  });
+
   it('`closest <sel> to <el>` searches up from <el>', async () => {
     await click('on click put "found" into closest <div/> to #deep');
     expect(document.querySelector('.box')!.textContent).toBe('found');
