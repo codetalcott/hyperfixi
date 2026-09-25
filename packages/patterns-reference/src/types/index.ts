@@ -255,15 +255,21 @@ export interface RoleAlignmentResult {
 // API Types
 // =============================================================================
 
+/** Honoured by searchPatterns and getAllPatterns; the page is taken after every filter. */
 export interface SearchOptions {
+  /**
+   * Patterns usable in this language: a translation there that parses
+   * (`verified_parses`), or no hyperscript at all to translate. searchPatterns
+   * also matches its query against that translation.
+   */
   language?: string;
+  /** The pattern's category (`Pattern.category`). */
   category?: string;
+  /** As inferred from the code (`Pattern.difficulty`). */
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   /**
-   * Honoured by searchPatterns/getAllPatterns: patterns that run on this
-   * engine ('hyperscript' / 'lokascript' include 'both'); `null` = the
-   * patterns no engine runs; omitted = no filter.
-   * (language/category/difficulty are declared but not yet honoured.)
+   * Patterns that run on this engine ('hyperscript' / 'lokascript' include
+   * 'both'); `null` = the patterns no engine runs; omitted = no filter.
    */
   engine?: EngineCompat | null;
   limit?: number;

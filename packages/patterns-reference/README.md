@@ -66,11 +66,19 @@ getPatternsByCategory(category: string): Promise<Pattern[]>
 // Get patterns containing a specific command
 getPatternsByCommand(command: string): Promise<Pattern[]>
 
-// Full-text search across title, code, and description
+// Full-text search across title, code, and description (and, with
+// `language`, that language's translation)
 searchPatterns(query: string, options?: SearchOptions): Promise<Pattern[]>
 
 // Get all patterns (paginated)
 getAllPatterns(options?: SearchOptions): Promise<Pattern[]>
+
+// SearchOptions — every filter applies, then the page (limit/offset):
+//   category    the pattern's category
+//   difficulty  'beginner' | 'intermediate' | 'advanced', inferred from the code
+//   language    patterns usable in that language: a translation that parses
+//               there, or markup with no hyperscript to translate
+//   engine      'hyperscript' | 'lokascript' | 'both', or null for unverified
 
 // Get pattern statistics
 getPatternStats(): Promise<PatternStats>
