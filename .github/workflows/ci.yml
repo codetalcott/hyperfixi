@@ -1249,10 +1249,12 @@ jobs:
       # (packages/patterns-reference/data/engine-verification.json) must match
       # what the two engines do today: @hyperfixi/core + its first-party
       # plugins, and upstream _hyperscript (hyperscript.org) + its official
-      # extensions. ~1s. It lives in this job because this job has everything
+      # extensions. ~12s. It lives in this job because this job has everything
       # it executes — the package dists (build artifacts), hyperscript.org and
-      # jsdom (npm ci). Before this gate the JSON went a month stale and
-      # over-claimed 10 rows. On failure: regenerate with
+      # jsdom (npm ci), and dist/hyperfixi-hx-v4.js (browser bundles), which
+      # the hx-live / sse-* / ws-* corpus rows are driven through. Before this
+      # gate the JSON went a month stale and over-claimed 10 rows. On failure:
+      # regenerate with
       # `npm run verify:engines --prefix packages/patterns-reference` and
       # commit the JSON.
       - name: Engine verification (patterns-reference)

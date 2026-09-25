@@ -67,17 +67,30 @@ The `engine` column ('both' | 'lokascript' | 'hyperscript' | NULL) is filled
 **mechanically** by [scripts/verify-engines.ts](scripts/verify-engines.ts),
 which runs every pattern's en `raw_code` against both engines:
 
+Each engine runs with its official extensions:
+
 - **lokascript** — `compileSync()` via `@hyperfixi/core` (the exact call the
   browser `_=` attribute path makes) with `@hyperfixi/reactivity` and
-  `@hyperfixi/realtime` installed (both ship pre-installed in `hyperfixi.js`),
-  plus a jsdom top-level install smoke (no error within a 500 ms settle
-  window, with synthesized `#id`/`.class` fixtures).
+  `@hyperfixi/realtime` (both pre-installed in `hyperfixi.js`) and
+  `@hyperfixi/components` installed, plus a jsdom top-level install smoke
+  (synthesized `#id`/`.class` fixtures; no rejection within 500 ms and nothing
+  logged in the 50 ms after, when `live`/`when` first runs happen; then torn
+  down so no effect outlives its pattern).
 - **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
-  devDependency) with its official socket/worker/eventsource extensions;
-  parse-level: zero recovered parse errors.
-- HTML-markup patterns: each `_=`/`hx-live`/script-tag snippet is verified
-  individually; `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only and blocks
-  the upstream claim.
+  devDependency) with its official socket/worker/eventsource/component
+  extensions; parse-level for plain sources: zero recovered parse errors.
+- **HTML-markup patterns** — every `_=`/`hx-live`/script-tag source,
+  including those inside component template bodies, is verified on both
+  legs. Template components are RENDERED on both legs and must show what
+  `COMPONENT_FIXTURES` declares (upstream reads `attrs.X` as an expression,
+  `@hyperfixi/components` as a raw string, so `component-with-attrs` parses on
+  both and renders on one). `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only
+  (blocks the upstream claim) and earns lokascript credit only by running in
+  `dist/hyperfixi-hx-v4.js` in an isolated jsdom: each `sse-swap` event must
+  land in its `hx-target`, each `ws-send` form must reach the socket, each
+  `hx-live` element must re-render. A row with no source earns no credit.
+- Every one of those checks has been shown to redden its row under a mutation
+  (2026-09-25); keep it that way when changing the harness.
 
 Results are written to `data/engine-verification.json` (committed;
 `init-db.ts` seeds the column from it, so `npm run populate` needs no core
@@ -100,9 +113,11 @@ npm run verify:engines:check --prefix packages/patterns-reference  # compare onl
   never reddens an unrelated PR. The gate exists because the JSON once sat a
   month stale (generated before #1026, when core still discarded input
   silently) and over-claimed 10 rows.
-- **Refuses stale builds** (exit 2) when core/reactivity/realtime have `src/`
-  newer than `dist/`: a stale dist verifies code that differs from the
-  checkout. `npm run check:fresh` rebuilds them.
+- **Refuses stale builds** (exit 2) when core/reactivity/realtime/components
+  have `src/` newer than `dist/`, or `core/dist/hyperfixi-hx-v4.js` is older
+  than the source it bundles: a stale build verifies code that differs from
+  the checkout. `npm run check:fresh` rebuilds the packages;
+  `npm run build:browser:hybrid-hx-v4 --prefix packages/core` the bundle.
 - **The JSON is the only source of the engine column.** Seeds carry no
   `engine` field; a pattern missing from the JSON is stored as NULL
   ("Unverified") and `init-db` warns. (The old heuristic

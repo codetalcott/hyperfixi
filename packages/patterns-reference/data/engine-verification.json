@@ -1,9 +1,9 @@
 {
   "meta": {
     "bar": {
-      "lokascript": "compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)",
-      "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
-      "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
+      "lokascript": "compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path) with its first-party plugins installed (@hyperfixi/reactivity and @hyperfixi/realtime, both pre-installed in hyperfixi.js, and @hyperfixi/components), plus a jsdom top-level install smoke (no error within a 500ms settle window; registrations cleaned up afterwards)",
+      "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
+      "html": "HTML-markup patterns: every _= / hx-live / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); hx-live/sse-*/ws-* markup is hyperfixi-only (blocks the upstream claim) and earns its lokascript credit only by running in dist/hyperfixi-hx-v4.js (sse events swap into hx-target, ws-send reaches the socket, hx-live re-renders); a row with no source earns no credit"
     },
     "lokascriptVersion": "3.1.1",
     "hyperscriptVersion": "0.9.93"
@@ -35,11 +35,11 @@
     "caret-var-write": "both",
     "chained-access-possessive-dot": "both",
     "closest-ancestor": "both",
-    "component-click-counter": "lokascript",
-    "component-hello-world": "lokascript",
+    "component-click-counter": "both",
+    "component-hello-world": "both",
     "component-with-attrs": "lokascript",
-    "component-with-conditional": "lokascript",
-    "component-with-slots": "lokascript",
+    "component-with-conditional": "both",
+    "component-with-slots": "both",
     "computed-value": "both",
     "copy-to-clipboard": "both",
     "decrement-counter": "both",
@@ -290,28 +290,24 @@
     },
     "component-click-counter": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscript": true
     },
     "component-hello-world": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscript": true
     },
     "component-with-attrs": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uncaught: \"[object Object]\" is not valid JSON"
     },
     "component-with-conditional": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscript": true
     },
     "component-with-slots": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscript": true
     },
     "computed-value": {
       "lokascript": true,
@@ -464,12 +460,12 @@
     "hx-live-attribute": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     },
     "hx-live-with-mutator": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     },
     "if-condition": {
       "lokascript": true,
@@ -747,12 +743,12 @@
     "sse-connect-swap": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     },
     "sse-multi-event": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     },
     "stagger-animation": {
       "lokascript": true,
@@ -882,7 +878,7 @@
     "ws-connect-send": {
       "lokascript": true,
       "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes"
+      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     }
   }
 }

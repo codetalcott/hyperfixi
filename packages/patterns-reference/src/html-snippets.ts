@@ -40,6 +40,8 @@ export interface MinimalElement {
   tagName: string;
   attributes: ArrayLike<MinimalAttr>;
   textContent: string | null;
+  /** Read only on `<template>`, whose content `querySelectorAll` cannot reach. */
+  innerHTML?: string;
   getAttribute(name: string): string | null;
 }
 
@@ -53,7 +55,11 @@ export interface MinimalDocument {
 }
 
 export interface MarkupSnippets {
-  /** Every hyperscript source found, in document order. */
+  /**
+   * Every hyperscript source found, in document order — including the `_`
+   * attributes inside component template bodies, which run once the
+   * component renders.
+   */
   snippets: string[];
   /**
    * The markup uses at least one attribute upstream `_hyperscript` has no
@@ -61,6 +67,12 @@ export interface MarkupSnippets {
    * how its snippets parse.
    */
   hyperfixiOnly: boolean;
+  /**
+   * Custom-element names the markup defines as template components. A
+   * component's behavior is its RENDER, which no parse of its snippets can
+   * check, so a verifier should instantiate each one.
+   */
+  componentTags: string[];
 }
 
 /**
@@ -72,6 +84,13 @@ export interface MarkupSnippets {
  * `sse-swap` event names, `ws-connect` URLs) are not hyperscript and carry no
  * snippet to verify, but they do set `hyperfixiOnly`.
  *
+ * Template components — `<script type="text/hyperscript-template"
+ * component="x">` (upstream's form, which upstream's official `component`
+ * extension implements and @hyperfixi/components also accepts) and
+ * `<template component="x">` — are NOT hyperfixi-only. Their bodies are markup
+ * the DOM walk cannot reach (script text; template content), so each is
+ * extracted recursively and its `_` sources join `snippets`.
+ *
  * `doc` is any DOM `Document` — a jsdom window's, or the ambient one in a
  * browser/jsdom test environment. Markup that fails to parse yields no
  * snippets rather than throwing.
@@ -81,10 +100,11 @@ export function extractHyperscriptFromMarkup(doc: MinimalDocument, markup: strin
   try {
     container.innerHTML = markup;
   } catch {
-    return { snippets: [], hyperfixiOnly: false };
+    return { snippets: [], hyperfixiOnly: false, componentTags: [] };
   }
 
   const snippets: string[] = [];
+  const componentTags: string[] = [];
   let hyperfixiOnly = false;
 
   for (const el of Array.from(container.querySelectorAll('*'))) {
@@ -100,15 +120,24 @@ export function extractHyperscriptFromMarkup(doc: MinimalDocument, markup: strin
       }
     }
 
-    if (el.tagName === 'SCRIPT') {
-      const type = el.getAttribute('type');
-      if (type === 'text/hyperscript-template') {
-        hyperfixiOnly = true;
-      } else if (type === 'text/hyperscript' && el.textContent?.trim()) {
-        snippets.push(el.textContent);
-      }
+    const tag = el.getAttribute('component');
+    const isScriptTemplate =
+      el.tagName === 'SCRIPT' && el.getAttribute('type') === 'text/hyperscript-template';
+    if (tag && (isScriptTemplate || el.tagName === 'TEMPLATE')) {
+      componentTags.push(tag);
+      const body = isScriptTemplate ? (el.textContent ?? '') : (el.innerHTML ?? '');
+      const inner = extractHyperscriptFromMarkup(doc, body);
+      snippets.push(...inner.snippets);
+      componentTags.push(...inner.componentTags);
+      hyperfixiOnly ||= inner.hyperfixiOnly;
+    } else if (
+      el.tagName === 'SCRIPT' &&
+      el.getAttribute('type') === 'text/hyperscript' &&
+      el.textContent?.trim()
+    ) {
+      snippets.push(el.textContent);
     }
   }
 
-  return { snippets, hyperfixiOnly };
+  return { snippets, hyperfixiOnly, componentTags };
 }
