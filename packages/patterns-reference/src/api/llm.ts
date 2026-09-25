@@ -67,12 +67,6 @@ export async function getLLMExamples(
       )
       .all(language, ...runs.params, limit) as LLMExampleRow[];
 
-    // Track usage
-    trackUsage(
-      db,
-      rows.map(r => r.id)
-    );
-
     return rows.map(mapRowToLLMExample);
   }
 
@@ -89,12 +83,6 @@ export async function getLLMExamples(
   `
     )
     .all(language, ...runs.params, ...params, limit) as LLMExampleRow[];
-
-  // Track usage
-  trackUsage(
-    db,
-    rows.map(r => r.id)
-  );
 
   return rows.map(mapRowToLLMExample);
 }
@@ -151,6 +139,12 @@ export async function getHighQualityExamples(
 
 /**
  * Get most used examples (popular).
+ *
+ * @deprecated Only an explicit trackExampleUsage() call counts a use, and nothing
+ * makes one, so `usage_count` is 0 on every shipped example and this ranks by
+ * quality alone: getHighQualityExamples with no floor. Reads used to count
+ * themselves through the read-only handle they open; the write failed and the
+ * error was swallowed.
  */
 export async function getMostUsedExamples(
   language: string = 'en',
@@ -253,6 +247,7 @@ export async function getLLMStats(options?: ConnectionOptions): Promise<{
   total: number;
   byLanguage: Record<string, number>;
   avgQuality: number;
+  /** @deprecated 0 unless something calls trackExampleUsage() (see getMostUsedExamples). */
   totalUsage: number;
 }> {
   const db = getDatabase({ ...options, readonly: true });
@@ -332,25 +327,6 @@ function extractKeywords(prompt: string): string[] {
     .toLowerCase()
     .split(/\W+/)
     .filter(word => word.length > 2 && !stopWords.has(word));
-}
-
-/**
- * Track usage of examples.
- */
-function trackUsage(db: any, ids: number[]): void {
-  if (ids.length === 0) return;
-
-  try {
-    const stmt = db.prepare(`
-      UPDATE llm_examples SET usage_count = usage_count + 1 WHERE id = ?
-    `);
-
-    for (const id of ids) {
-      stmt.run(id);
-    }
-  } catch {
-    // Silently ignore tracking errors
-  }
 }
 
 /**

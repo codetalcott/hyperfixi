@@ -252,7 +252,7 @@ const BEHAVIOR_SCHEMAS: { schema: BehaviorSchema; description: string }[] = [
   {
     schema: sortableSchema,
     description:
-      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(handle: ".drag-handle")',
+      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(dragClass: "dragging")',
   },
   {
     schema: resizableSchema,

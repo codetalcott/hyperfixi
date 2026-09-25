@@ -191,6 +191,7 @@ export interface LLMExample {
   prompt: string;
   completion: string;
   qualityScore: number;
+  /** @deprecated 0 unless something calls trackExampleUsage() (see getMostUsedExamples). */
   usageCount: number;
   createdAt: Date;
   /**

@@ -113,10 +113,6 @@ export function findRelevantExamples(
         )
         .all(language, ...runs.params, limit) as LLMExampleRecord[];
 
-      trackUsageSync(
-        db,
-        rows.map(r => r.id)
-      );
       return rows;
     }
 
@@ -136,10 +132,6 @@ export function findRelevantExamples(
       )
       .all(language, ...runs.params, ...params, limit) as LLMExampleRecord[];
 
-    trackUsageSync(
-      db,
-      rows.map(r => r.id)
-    );
     return rows;
   } catch (error) {
     console.warn(
@@ -215,6 +207,10 @@ export function buildFewShotContextSync(
 
 /**
  * Track example usage (sync interface).
+ *
+ * @deprecated The counts go into the installed package's own database file,
+ * which every install and every `populate` replaces, and only
+ * getMostUsedExamples (deprecated with it) reads them. Nothing calls this.
  */
 export function trackExampleUsage(ids: number[]): void {
   if (!syncDatabaseAvailable || ids.length === 0) return;
@@ -403,6 +399,7 @@ export function createLLMAdapter(options?: ConnectionOptions) {
       limit?: number,
       engine?: EngineCompat
     ) => getHighQualityExamples(language, minQuality, limit, { ...options, engine }),
+    /** @deprecated See getMostUsedExamples. */
     getMostUsedExamples: (language?: string, limit?: number, engine?: EngineCompat) =>
       getMostUsedExamples(language, limit, { ...options, engine }),
     buildFewShotContext: (

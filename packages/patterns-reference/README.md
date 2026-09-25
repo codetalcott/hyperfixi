@@ -187,15 +187,15 @@ Multilingual translations of patterns.
 
 Prompt/completion pairs for few-shot learning.
 
-| Column          | Type    | Description                  |
-| --------------- | ------- | ---------------------------- |
-| id              | INTEGER | Auto-increment ID            |
-| code_example_id | TEXT    | Foreign key to code_examples |
-| language        | TEXT    | Language code                |
-| prompt          | TEXT    | Natural language prompt      |
-| completion      | TEXT    | Hyperscript code             |
-| quality_score   | REAL    | Quality rating (0-1)         |
-| usage_count     | INTEGER | Retrieval count              |
+| Column          | Type    | Description                   |
+| --------------- | ------- | ----------------------------- |
+| id              | INTEGER | Auto-increment ID             |
+| code_example_id | TEXT    | Foreign key to code_examples  |
+| language        | TEXT    | Language code                 |
+| prompt          | TEXT    | Natural language prompt       |
+| completion      | TEXT    | Hyperscript code              |
+| quality_score   | REAL    | Quality rating (0-1)          |
+| usage_count     | INTEGER | Deprecated: reads never count |
 
 ## Supported Languages
 
