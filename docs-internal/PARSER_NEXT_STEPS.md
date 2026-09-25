@@ -42,6 +42,8 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**`take <class> from <source>` rejected**~~ | **FIXED 2026-07-31** — `parseTakeCommand` + runtime rewrite (upstream ownership-transfer semantics), `take` added to `skipSemanticParsing` with its toggle/add/remove siblings | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`; history below |
 | **`as <type>` is dropped from `set`'s value** (semantic parser) | medium — `set ^user to attrs.data as JSON` parses, and the conversion lands in NO role: the parse keeps `patient: expression "attrs.data"` and `as JSON` appears nowhere. Because both sides of every comparison are equally truncated, the row scores **faithful in all 23 languages** — the same vacuous-reference shape as #970 `unless` and #971 `when … changes`, and the fifth of that family. | ⚠️ NONE directly. The corpus writer now refuses to translate such a body (`reRenderPreservesContent`, `patterns-reference/src/sync/markup-attributes.ts`), so `component-with-attrs` stays English in 23 languages and is visible as 23 rows in the `i18n-kept-rows` baseline — an indirect, shrink-only signal, not a test. | Found 2026-08-27 while burning down the kept-row ratchet. Repro: `render(parseSemantic('set ^user to attrs.data as JSON','en').node,'en')` → `set ^user to attrs.data`. Compare `asExpression` handling on the value side of `set` with the working `put … as …` path. |
 | ~~**`js(...) … end` bodies are not lexed as an OPAQUE span**~~ | **FIXED 2026-08-27** — and NOT in the base tokenizer: the opaque-span mechanism already existed (`consumeJsBlock`), and the filing's prescription would have duplicated it. What was missing was everything around it — the body was re-spaced by a `join(' ')` rebuild, the closing `end` was only emitted when a sibling followed, a pre-posed patient marker (he `את`, zh `把`) was swallowed into the body, the verb-FINAL SOV shape was never recognized, and the body was run through `localizeValueInterior`, i.e. the JavaScript itself was translated. Cleared 19 kept rows (js-inline ×3 + behavior-removable ×16), zero newly kept. | ✅ `js-block-round-trip.test.ts` (79 assertions), plus the two render allowlists and the kept-row ratchet | `MULTILINGUAL_NEXT_STEPS.md` 2026-08-27m. **Residual:** `js(args) … end` still stops at the `(` in twelve languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — pinned as an exclusion list in that test file. |
+| ~~**Four upstream-valid forms compiled clean and failed at run time**~~ | **FIXED 2026-09-25** — a command word before a group read as a method call (`put (1 + 2) into #x` threw), `beep!` aborted its handler, EVERY bare `for` loop threw, and a failing `tell` body command vanished with 0 errors | ✅ `command-misreads.test.ts`, `for-in.test.ts`, `tell-to-and-end.test.ts`, AOT `core-parser-adapter.test.ts` (all mutation-checked) | section below |
+| **Core has no collection `add`/`remove`** | **medium-high, silent** — `add "x" to $arr` / `remove "x" from $arr` do nothing where upstream pushes/removes; a parenthesized operand (`remove (.a)`, upstream: delete the elements) cannot be expressed, and `(.a)` does not even lex | ⚠️ NONE | the 2026-09-25 section below (why a lexing-only fix was reverted) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 | **19 documented command examples do not parse** | medium — every one is advertised by the command's own `metadata.examples`, so it reaches the LSP, the generated docs and `commands.json`. **Re-triaged 2026-08-31** (the count was 15 here and the framing was wrong): 4 are harness artifacts that parse fine inside a feature, 4 are brace-block `repeat` docs defects that MISPARSE when wrapped, 3 name a non-command, 5 are declared-but-unimplemented syntax, 2 are a real parser bug, 1 is a bare-only `then` seam. | ✅ `documented-examples.test.ts` (ratchets both ways, pins each failure MODE) | the "19 documented `metadata.examples`" section below |
@@ -2104,9 +2106,13 @@ Found by round-tripping the book's four hyperscript bodies; the engine
 
 **C3, a compatibility note rather than a defect:** `focus` and `blur` are
 COMMANDS in 0.9.93, so upstream rejects `focus() me` (the book's own
-spelling). hyperfixi accepts any command name as a pseudo-command inside a
-handler, with a `PSEUDO_CMD_SHADOW` warning. `focus me` is the portable form.
-Bare (top-level) pseudo-commands are errors on both engines.
+spelling). hyperfixi accepts a command name as a pseudo-command inside a
+handler, with a `PSEUDO_CMD_SHADOW` warning — but since 2026-09-25 only before
+a group that cannot be one operand, `()` or `(a, b)`. Before any other group
+the word is the COMMAND (`put (1 + 2) into #x`), as upstream reads it; see
+"Four upstream-valid forms that compiled clean and failed at run time" below.
+`focus me` is the portable form. Bare (top-level) pseudo-commands are errors
+on both engines.
 
 The AST-equivalence hashes did not move: no engine-corpus source parses
 differently.
@@ -2126,14 +2132,57 @@ errors; upstream `hs.parse(src).errors`):
 | ------ | ---- | ---------- |
 | `on click repeat 3 times log "x"` (no `end`; upstream closes the block at end of input) | `Command 'repeat' failed to parse and was discarded` | repeat-times, repeat-for-each |
 | `init repeat 3 times log "x"` | `Expected "end" to close repeat block` | — |
-| `on click morph #list to it` / `morph me to it` | `Discarded input … 'to it'` — `morph (#list) to it` WORKS | morph-fetch-result |
+| `on click morph #list to it` / `morph me to it` / `morph (#list) to it` | `Discarded input … 'to it'`. The parenthesized form only LOOKED like it worked: it compiled as the method call `it.morph(…)` and threw at run time. Since 2026-09-25 it is rejected like the rest. Fixing `to` also needs the runtime to MERGE a same-tag root, as upstream does, rather than nest it | morph-fetch-result, morph-form-update |
 | `on click render #row with row: $data` (naked named args; the parenthesized form is filed above) | `Discarded input … ': $data'` | render-template-with-data, morph-with-template |
-| `on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position; the command form works) | `Discarded input … '! my value'` | beep-debug-expression |
+| `on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position; the command form parses, and since 2026-09-25 also runs) | `Discarded input … '! my value'` | beep-debug-expression |
 | `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
 
 The `transition` row narrows the 2026-07-31 fix above: that fix covers a
 possessive whose owner is a primary (`#a's`, `my`, `its`). It does not cover a
 positional owner, a parenthesized owner, or the `of` form.
+
+### ~~Four upstream-valid forms that compiled clean and failed at run time~~ — FIXED (2026-09-25)
+
+Found auditing the patterns-reference corpus, where `morph-form-update` held a
+`both` verdict it had not earned: `verify:engines` is PARSE-level, and each of
+these parses clean. Every row was run on both engines in jsdom.
+
+| form | core before | fix |
+| ---- | ----------- | --- |
+| a command word glued to a group, inside a handler: `put (1 + 2) into #x`, `morph`/`append`/`swap`/`send (…)` | read as the method call `#x.put(1 + 2)`; threw "Method 'put' not found" (`append` worked by accident, via DOM `Element.append`) | the body loop diverts to a pseudo-command only when the group cannot be ONE operand, `()` or `(a, b)` (C3 above); otherwise the word is the command, as upstream's `parseCommand` has it. The same command inside `if`/`repeat`/`def` already parsed right |
+| `beep!` | the node was named `beep!`, the registry holds `beep`: "Unknown command: beep!" aborted the handler | the parser consumes the bang and names the node `beep` (as the hybrid parser always did). AOT's codegen and interchange role inference key on `beep` too |
+| bare `for x in xs … end` | EVERY one threw "repeat command requires a loop type": `parseForCommand` still emitted the pre-slot positional shape `RepeatCommand` stopped reading at Arc 3 step 3 (`repeat for` was migrated; its twin was not) | builds exactly the node `repeat for` builds |
+| a `tell` body command that fails to parse | `catch { break; }` dropped it and everything after it, with 0 errors | reported (`'repeat' in a tell body failed to parse: …`) |
+
+Pinned by `command-misreads.test.ts`, `for-in.test.ts` (which had only ever
+asserted that sources PARSE), `tell-to-and-end.test.ts` and
+`aot-compiler/…/core-parser-adapter.test.ts`, every one of them run, not just
+parsed. Each was mutation-checked: restoring the old behaviour reddens it.
+`morph-form-update` now verifies `hyperscript`, which is honest: `morph … to`
+is the gap in the table above.
+
+Found alongside, and **still open**:
+
+- **Core has no collection `add`/`remove`.** `add "x" to $arr` and `remove "x"
+  from $arr` silently do NOTHING. Upstream pushes and removes (AddCommand's
+  `collection` variant: a non-class, non-attribute, non-style operand). A
+  parenthesized operand is how upstream spells that value: `add (.a) to me`
+  means add the ELEMENTS `.a` to a collection (upstream then throws "Cannot add
+  to object"), and `remove (.a)` DELETES the `.a` elements. Core cannot say
+  either. Its tokenizer splits a dot glued to `(` into member access, so
+  `(.a)` is a loud parse error, and its AST drops the parens, so the bare and
+  parenthesized forms parse the same. Fixing only the lexing was tried and
+  reverted: `remove (.a) from #c` then removed a CLASS where upstream removes
+  the element. A silent wrong answer is worse than the loud rejection. The fix
+  is the pair together: the collection variant in AddCommand/RemoveCommand,
+  plus an operand-shape distinction that survives parsing.
+- **AOT handler ids are not identifiers** (`packages/aot-compiler`,
+  `generateHandlerId`). The id is `${event}_${firstCommand}_${hash}`,
+  unsanitized, so `on my-event …`, `on htmx:afterSwap …` and a leading
+  pseudo-command (`on click foo() on me`) compile to
+  `function _handler_my-event_…`. That is invalid JavaScript, reported as
+  `success: true`. A pseudo-command also has no codegen, so its handler body is
+  EMPTY.
 
 ## Notes
 

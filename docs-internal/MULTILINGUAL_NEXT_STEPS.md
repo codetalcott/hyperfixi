@@ -5729,5 +5729,9 @@ Residuals, not started:
   handler core reads `morph (…) to it` as a pseudo-command (`it.morph(…)`) and
   throws at run time — core treats ANY command word + spaced `(` + preposition
   as a method call (`put (1 + 2) into #x` crashes the same way); upstream never
-  does (a command keyword always wins, `parseCommand`).
+  does (a command keyword always wins, `parseCommand`). RESOLVED 2026-09-25 on
+  the core side: a command word before a group is now the command, so the row
+  verifies `hyperscript`, which is honest. Core rejects `morph … to` outright,
+  and that gap (PARSER_NEXT_STEPS, "Five upstream-valid shapes core rejects")
+  flips it back to `both` when it lands.
 
