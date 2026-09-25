@@ -188,17 +188,24 @@ describe('the retarget executes for real', () => {
 
 describe('a body command that fails to parse is reported (defect 3)', () => {
   // tell's body loop caught a failing command's throw and broke out SILENTLY,
-  // dropping it and everything after it: this compiled with 0 errors and no
-  // `repeat`, where upstream runs the repeat inside the tell. (Core rejects a
-  // block without `end` even at end of input — a separate, filed gap; the fix
-  // here is that the failure is no longer hidden.)
+  // dropping it and everything after it with 0 errors. (It was found on
+  // `… then repeat 2 times log "x"`, which core also rejected at the time — a
+  // block without `end` at end of input; that is fixed now, so the failing
+  // command here is one both engines reject: `for` without `in`.)
   it('names the command that failed', () => {
-    const r = parse('on click tell #a log "y" then repeat 2 times log "x"') as any;
+    const r = parse('on click tell #a log "y" then for x log x') as any;
     const messages: string[] = (r.errors ?? []).map((e: { message: string }) => e.message);
     expect(
-      messages.some(m => m.includes("'repeat' in a tell body failed to parse")),
+      messages.some(m => m.includes("'for' in a tell body failed to parse")),
       String(messages)
     ).toBe(true);
+  });
+
+  it('a repeat without `end` at end of input stays inside the tell', () => {
+    // Upstream closes the open block at end of input; the repeat runs per target.
+    const r = shapeOf('on click tell #a log "y" then repeat 2 times log "x"');
+    expect(r.errors).toBe(0);
+    expect(r.shape).toEqual(['tell', 'tell>log', 'tell>repeat', 'tell>repeat>log']);
   });
 
   it('the same body with its `end` parses clean, the repeat inside the tell', () => {

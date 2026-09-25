@@ -339,13 +339,23 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
           if (isOuter) {
             morphlexMorph(target, contentStr);
           } else {
-            // morphlex's morphInner takes an ELEMENT, not a string — the same
-            // wrapping src/lib/morph-adapter.ts does. Passing the string threw
-            // straight into the fallback below, so inner morph never actually
-            // morphed (it silently degraded to innerHTML on every call).
-            const wrapper = document.createElement(target.tagName);
-            wrapper.innerHTML = contentStr;
-            morphlexMorphInner(target, wrapper);
+            // Upstream's morph MERGES a lone root element that has the
+            // target's tag (attributes and children); anything else morphs the
+            // children — the full runtime's 'morphMerge' (lib/swap-executor.ts).
+            const template = document.createElement('template');
+            template.innerHTML = contentStr;
+            const root = template.content.firstElementChild;
+            if (root && !root.nextElementSibling && root.tagName === target.tagName) {
+              morphlexMorph(target, root);
+            } else {
+              // morphlex's morphInner takes an ELEMENT, not a string — the same
+              // wrapping src/lib/morph-adapter.ts does. Passing the string threw
+              // straight into the fallback below, so inner morph never actually
+              // morphed (it silently degraded to innerHTML on every call).
+              const wrapper = document.createElement(target.tagName);
+              wrapper.innerHTML = contentStr;
+              morphlexMorphInner(target, wrapper);
+            }
           }
         } catch (error) {
           // Fallback to innerHTML/outerHTML if morph fails

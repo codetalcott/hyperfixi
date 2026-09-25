@@ -13,6 +13,7 @@ import { isHTMLElement, isDocumentFragment } from '../utils/element-check';
 export type SwapStrategy =
   | 'morph' // Inner morph (default) — intelligent diffing, preserves state
   | 'morphOuter' // Outer morph — replace element with morph
+  | 'morphMerge' // The `morph` command: merge a lone same-tag root, else inner morph
   | 'innerHTML' // Replace inner content
   | 'outerHTML' // Replace entire element
   | 'beforeBegin' // Insert before element
@@ -70,6 +71,24 @@ export function detectStrategy(args: string[]): SwapStrategy {
  * code should prefer the async wrapper so View Transitions stay opt-in via
  * options rather than ad-hoc boilerplate.
  */
+/**
+ * The content's one root element when it has exactly one and it carries
+ * `tagName` (text around it is ignored, as upstream ignores it). Strings are
+ * parsed fresh per call and elements cloned, so no two targets share nodes.
+ */
+function loneRootWithTag(content: string | HTMLElement, tagName: string): HTMLElement | null {
+  let root: Element | null;
+  if (typeof content === 'string') {
+    const template = document.createElement('template');
+    template.innerHTML = content;
+    root = template.content.firstElementChild;
+    if (!root || root.nextElementSibling) return null;
+  } else {
+    root = content.cloneNode(true) as Element;
+  }
+  return root.tagName === tagName && isHTMLElement(root) ? (root as HTMLElement) : null;
+}
+
 export function executeSwap(
   target: HTMLElement,
   content: string | HTMLElement | null,
@@ -80,6 +99,17 @@ export function executeSwap(
   const contentEl = isHTMLElement(content) ? (content as HTMLElement) : null;
 
   switch (strategy) {
+    case 'morphMerge': {
+      // Upstream's `morph` (runtime.morph): content whose ONLY root element
+      // has the target's tag is merged into the target — attributes and
+      // children — and anything else morphs the target's children. An inner
+      // morph alone nested `<ul id="list">` inside `#list` (a duplicate id)
+      // and kept a fetched form's old attributes.
+      const root = content !== null ? loneRootWithTag(content, target.tagName) : null;
+      executeSwap(target, root ?? content, root ? 'morphOuter' : 'morph', morphOptions);
+      break;
+    }
+
     case 'morph':
       if (content !== null) {
         try {

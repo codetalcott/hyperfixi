@@ -184,6 +184,13 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   } else if (ctx.check(KEYWORDS.FOREVER)) {
     ctx.advance(); // consume 'forever'
     loopType = KEYWORDS.FOREVER;
+  } else if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
+    // `repeat <commands> …` with no loop-type word is upstream's implicit
+    // forever (`parseRepeatExpression`: a command boundary right after
+    // `repeat` means `forever`). The branch below took the command word for a
+    // `times` count, swallowed it, and discarded the body — so the
+    // bottom-tested `repeat <body> until <cond> end` never parsed either.
+    loopType = KEYWORDS.FOREVER;
   } else {
     // Parse: repeat <n> times
     times = ctx.parseExpression();
@@ -238,10 +245,11 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
       loopType = result.terminator; // 'until' or 'while'
       ctx.advance(); // consume 'until'/'while'
       condition = ctx.parseExpression();
-      if (!ctx.check('end')) {
+      if (ctx.check('end')) {
+        ctx.advance(); // consume 'end'
+      } else if (!ctx.atEndOfInput()) {
         throw new Error('Expected "end" to close repeat block');
       }
-      ctx.advance(); // consume 'end'
     }
     // else: terminator === 'end', already consumed by parseRepeatBody
   } else {
@@ -743,7 +751,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     // otherwise into every gate that reads `errors`. `end` is still required
     // the moment anything follows, which is what keeps a genuinely
     // unterminated block inside a larger body an error.
-    if (!consumedElseIf && !ctx.isAtEnd()) {
+    if (!consumedElseIf && !ctx.atEndOfInput()) {
       ctx.consume(KEYWORDS.END, "Expected 'end' after if block");
     }
   } else {

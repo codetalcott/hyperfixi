@@ -241,7 +241,7 @@ export function createTimesLoopConfig(
  */
 export function createWhileLoopConfig(
   conditionExpr: unknown,
-  evaluateCondition: (expr: unknown, ctx: TypedExecutionContext) => boolean,
+  evaluateCondition: (expr: unknown, ctx: TypedExecutionContext) => boolean | Promise<boolean>,
   context: TypedExecutionContext,
   indexVariable?: string
 ): { config: LoopConfig; iterCtx: LoopIterationContext } {
@@ -264,7 +264,7 @@ export function createWhileLoopConfig(
  */
 export function createUntilLoopConfig(
   conditionExpr: unknown,
-  evaluateCondition: (expr: unknown, ctx: TypedExecutionContext) => boolean,
+  evaluateCondition: (expr: unknown, ctx: TypedExecutionContext) => boolean | Promise<boolean>,
   context: TypedExecutionContext,
   indexVariable?: string
 ): { config: LoopConfig; iterCtx: LoopIterationContext } {
@@ -276,7 +276,12 @@ export function createUntilLoopConfig(
 
   const config: LoopConfig = {
     type: 'until',
-    shouldContinue: () => !evaluateCondition(conditionExpr, context),
+    // `!` on a Promise is always false, so an async condition is negated
+    // after it settles; a synchronous one stays synchronous.
+    shouldContinue: () => {
+      const met = evaluateCondition(conditionExpr, context);
+      return met instanceof Promise ? met.then(value => !value) : !met;
+    },
   };
 
   return { config, iterCtx };

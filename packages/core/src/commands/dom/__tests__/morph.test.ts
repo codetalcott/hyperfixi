@@ -134,7 +134,7 @@ describe('MorphCommand (Standalone V2)', () => {
       expect(input.targets).toHaveLength(1);
       expect(input.targets![0].id).toBe('target');
       expect(input.content).toBe('<div>New content</div>');
-      expect(input.strategy).toBe('morph');
+      expect(input.strategy).toBe('morphMerge');
     });
 
     it('should parse "morph over #target with content" syntax', async () => {

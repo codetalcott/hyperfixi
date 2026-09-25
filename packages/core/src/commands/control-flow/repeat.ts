@@ -93,6 +93,22 @@ async function slotText(
   return typeof v === 'string' ? v : undefined;
 }
 
+/**
+ * A `while`/`until` condition is an EXPRESSION, re-evaluated before every
+ * iteration: `parseInput` hands over a thunk that evaluates it. It used to hand
+ * over the AST node itself, which `evaluateCondition` read as a truthy object —
+ * `repeat while $n < 3` ran to the 10,000-iteration safety cap and `repeat
+ * until $n is 3` never ran its body. A hand-built input may still carry a
+ * plain value.
+ */
+async function evaluateLoopCondition(
+  condition: unknown,
+  context: TypedExecutionContext
+): Promise<boolean> {
+  if (typeof condition === 'function') return Boolean(await (condition as () => unknown)());
+  return evaluateCondition(condition, context);
+}
+
 @command({ name: 'repeat' })
 export class RepeatCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
@@ -187,7 +203,15 @@ export class RepeatCommand implements DecoratedCommand {
     if (loopType === 'while' || m.while) {
       const condition = m.while;
       if (!condition) throw new Error('while loops require a condition');
-      return { type: 'while', condition, indexVariable, commands, elseCommands, bottomTested };
+      const check = () => evaluator.evaluate(condition, context); // re-run per iteration
+      return {
+        type: 'while',
+        condition: check,
+        indexVariable,
+        commands,
+        elseCommands,
+        bottomTested,
+      };
     }
     if (loopType === 'until-event' || m.event) {
       const eventName = await text(m.event);
@@ -219,7 +243,15 @@ export class RepeatCommand implements DecoratedCommand {
     if (loopType === 'until' || m.until) {
       const condition = m.until;
       if (!condition) throw new Error('until loops require a condition');
-      return { type: 'until', condition, indexVariable, commands, elseCommands, bottomTested };
+      const check = () => evaluator.evaluate(condition, context); // re-run per iteration
+      return {
+        type: 'until',
+        condition: check,
+        indexVariable,
+        commands,
+        elseCommands,
+        bottomTested,
+      };
     }
     if (loopType === 'forever') {
       return { type: 'forever', indexVariable, commands, elseCommands };
@@ -258,7 +290,7 @@ export class RepeatCommand implements DecoratedCommand {
       case 'while':
         ({ config, iterCtx } = createWhileLoopConfig(
           condition,
-          evaluateCondition,
+          evaluateLoopCondition,
           context,
           indexVariable
         ));
@@ -266,7 +298,7 @@ export class RepeatCommand implements DecoratedCommand {
       case 'until':
         ({ config, iterCtx } = createUntilLoopConfig(
           condition,
-          evaluateCondition,
+          evaluateLoopCondition,
           context,
           indexVariable
         ));

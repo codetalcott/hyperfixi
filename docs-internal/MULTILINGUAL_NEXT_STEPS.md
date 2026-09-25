@@ -5731,7 +5731,9 @@ Residuals, not started:
   as a method call (`put (1 + 2) into #x` crashes the same way); upstream never
   does (a command keyword always wins, `parseCommand`). RESOLVED 2026-09-25 on
   the core side: a command word before a group is now the command, so the row
-  verifies `hyperscript`, which is honest. Core rejects `morph … to` outright,
-  and that gap (PARSER_NEXT_STEPS, "Five upstream-valid shapes core rejects")
-  flips it back to `both` when it lands.
+  verified `hyperscript` — honest while core rejected `morph … to`. That gap
+  landed the same day with upstream's root merge, and the row is `both` again,
+  this time RUN on both engines (same DOM). repeat-times turned `both` with it
+  and runs on NEITHER engine (`add "<p>Line</p>" to me` is a collection add
+  upstream) — a corpus defect, filed in PARSER_NEXT_STEPS.
 

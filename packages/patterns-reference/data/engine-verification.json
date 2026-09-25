@@ -105,8 +105,8 @@
     "modal-close-button": "both",
     "modal-close-escape": "both",
     "modal-open": "both",
-    "morph-fetch-result": "hyperscript",
-    "morph-form-update": "hyperscript",
+    "morph-fetch-result": "both",
+    "morph-form-update": "both",
     "morph-with-template": "hyperscript",
     "multiple-events": "both",
     "next-element": "both",
@@ -122,9 +122,9 @@
     "remove-class-from-all": "both",
     "remove-element": "both",
     "render-template-with-data": "hyperscript",
-    "repeat-for-each": "hyperscript",
+    "repeat-for-each": "both",
     "repeat-forever": "both",
-    "repeat-times": "hyperscript",
+    "repeat-times": "both",
     "repeat-until-event": "both",
     "repeat-while": "both",
     "send-event": "both",
@@ -579,14 +579,12 @@
       "hyperscript": true
     },
     "morph-fetch-result": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Discarded input the parser could not place: 'to it'"
+      "lokascript": true,
+      "hyperscript": true
     },
     "morph-form-update": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Discarded input the parser could not place: 'to it'"
+      "lokascript": true,
+      "hyperscript": true
     },
     "morph-with-template": {
       "lokascript": false,
@@ -652,18 +650,16 @@
       "lokascriptError": "Discarded input the parser could not place: ': $data'"
     },
     "repeat-for-each": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Command 'repeat' failed to parse and was discarded"
+      "lokascript": true,
+      "hyperscript": true
     },
     "repeat-forever": {
       "lokascript": true,
       "hyperscript": true
     },
     "repeat-times": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Command 'repeat' failed to parse and was discarded"
+      "lokascript": true,
+      "hyperscript": true
     },
     "repeat-until-event": {
       "lokascript": true,

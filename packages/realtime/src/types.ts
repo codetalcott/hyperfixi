@@ -43,7 +43,9 @@ export interface ExecutionContext {
  * `ParserContext`; we declare just the methods our parsers call.
  *
  * NOTE: `parseCommandListUntilEnd()` CONSUMES the terminating `end` token and
- * throws when it is missing — grammar code below is written around that.
+ * throws when it is missing — grammar code below is written around that. At
+ * END OF INPUT the `end` may be omitted (upstream's rule for an open block), so
+ * a body that runs to the end of the source closes without one.
  */
 export interface FeatureParserCtx {
   peek(): Token;

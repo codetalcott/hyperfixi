@@ -332,9 +332,11 @@ describe('Reference Expressions', () => {
 
       it('should validate selector argument', () => {
         expect(referenceExpressions.closest.validate!(['#test'])).toBeNull();
-        expect(referenceExpressions.closest.validate!([])).toContain('exactly 1 argument');
-        expect(referenceExpressions.closest.validate!(['#test', 'extra'])).toContain(
-          'exactly 1 argument'
+        // A second argument is the element `closest <sel> to <el>` starts from.
+        expect(referenceExpressions.closest.validate!(['#test', document.body])).toBeNull();
+        expect(referenceExpressions.closest.validate!([])).toContain('requires a selector');
+        expect(referenceExpressions.closest.validate!(['#test', 'a', 'b'])).toContain(
+          'requires a selector'
         );
         expect(referenceExpressions.closest.validate!([123])).toContain('must be a string');
       });

@@ -1091,6 +1091,13 @@ export class Parser {
     );
 
     while (!this.isAtEnd() && !isStop()) {
+      // A comment is nothing — upstream's tokenizer drops it. Only a
+      // body-LEADING one reached here (`repeat 3 times -- note` + newline + a
+      // command), and it was taken for a non-command that ended the body.
+      if (this.checkComment()) {
+        this.advance();
+        continue;
+      }
       debug.parse(
         '📍 Loop iteration, current token:',
         this.peek().value,
@@ -1228,7 +1235,7 @@ export class Parser {
     if (this.check('end')) {
       debug.parse('✅ Found "end", consuming it');
       this.advance();
-    } else {
+    } else if (!this.atEndOfInput()) {
       debug.parse(
         '❌ ERROR: Expected "end" but got:',
         this.peek().value,
@@ -1252,7 +1259,7 @@ export class Parser {
     if (!hasElse) {
       if (this.check('end')) {
         this.advance();
-      } else {
+      } else if (!this.atEndOfInput()) {
         throw new Error('Expected "end" to close repeat block');
       }
     }
@@ -1277,7 +1284,10 @@ export class Parser {
     if (terminator === 'end') {
       this.advance(); // consume 'end'
     } else if (terminator === '') {
-      throw new Error('Expected "end", "else", "until", or "while" to close repeat block');
+      if (!this.atEndOfInput()) {
+        throw new Error('Expected "end", "else", "until", or "while" to close repeat block');
+      }
+      return { commands, terminator: 'end' }; // closed by end of input
     }
     return { commands, terminator };
   }
@@ -2198,8 +2208,13 @@ export class Parser {
     const pos = this.getPosition();
     const initCommands = this.parseCommandBlock(['end']);
 
-    // Consume the 'end' keyword
-    this.consume('end', "Expected 'end' after init block");
+    // `end` is optional: upstream's init is `init [immediately] <commandList>`
+    // with no `end` of its own, and the program loop takes an optional `end`
+    // after every feature. So the block may also stop at end of input or at
+    // the next feature. Anything else is still an unterminated block.
+    if (!this.match('end') && !this.atEndOfInput() && !this.checkFeatureStart()) {
+      this.consume('end', "Expected 'end' after init block");
+    }
 
     return {
       type: 'initBlock',
@@ -3645,6 +3660,14 @@ export class Parser {
       args
     );
 
+    // `closest <sel> to <el>` searches up from <el> instead of `me` — upstream's
+    // ClosestExpr takes `to <expression>` itself. That is also why upstream
+    // REJECTS `morph closest <form/> to it`: closest owns the `to`, and morph
+    // is left without one. `morph (closest <form/>) to it` is the valid form.
+    if (funcName === 'closest' && args.length > 0 && this.match('to')) {
+      callNode.closestTo = this.parseExpression();
+    }
+
     // Relative positional modifiers for `next`/`previous`:
     //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
     if (funcName === 'next' || funcName === 'previous') {
@@ -4312,6 +4335,35 @@ export class Parser {
     return this.current >= this.tokens.length;
   }
 
+  /**
+   * Whether only comments remain. Upstream closes an open block at end of
+   * input — `if (parser.hasMore()) parser.requireToken("end")` in repeat, if,
+   * tell and `start view transition` — so its `end` is optional there and
+   * nowhere else: before another feature it is still required. Comments count
+   * as nothing because upstream's tokenizer drops them.
+   */
+  private atEndOfInput(): boolean {
+    for (let i = this.current; i < this.tokens.length; i++) {
+      if (!isComment(this.tokens[i])) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Whether the current token starts a top-level feature — the ones the
+   * program loop dispatches: `init`, `on`, `def`, or a plugin feature.
+   */
+  private checkFeatureStart(): boolean {
+    if (this.isAtEnd()) return false;
+    const value = this.peek().value;
+    return (
+      value === 'init' ||
+      value === 'on' ||
+      value === 'def' ||
+      getRegisteredFeature(value) !== undefined
+    );
+  }
+
   private peek(): Token {
     if (this.isAtEnd()) {
       // Return a dummy EOF token
@@ -4651,6 +4703,7 @@ export class Parser {
       match: this.match.bind(this),
       matchOperator: this.matchOperator.bind(this),
       isAtEnd: this.isAtEnd.bind(this),
+      atEndOfInput: this.atEndOfInput.bind(this),
 
       // AST Node Creation (1 method exposed; others remain private to Parser)
       createIdentifier: this.createIdentifier.bind(this),
