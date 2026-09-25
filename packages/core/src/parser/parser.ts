@@ -2456,6 +2456,25 @@ export class Parser {
   }
 
   /**
+   * Whether the group opening at token `open` can only be a call's argument
+   * list — `()` or one with a top-level comma — and never a parenthesized
+   * operand. A command word before such a group is a method call; before any
+   * other group it is the command itself.
+   */
+  private isArgumentListOnly(open: number): boolean {
+    let depth = 0;
+    for (let i = open; i < this.tokens.length; i++) {
+      const token = this.tokens[i];
+      if (token.kind !== 'operator') continue;
+      if (token.value === '(' || token.value === '[' || token.value === '{') depth++;
+      else if (token.value === ')' || token.value === ']' || token.value === '}') {
+        if (--depth === 0) return i === open + 1;
+      } else if (token.value === ',' && depth === 1) return true;
+    }
+    return false;
+  }
+
+  /**
    * Try to parse a call expression as a pseudo-command.
    * Checks if the next tokens indicate a pseudo-command pattern (preposition/target after call).
    *
@@ -2846,8 +2865,16 @@ export class Parser {
         // tell <target> - not a function call
         const isSpecialBodyCommand = commandName === 'js' || commandName === 'tell';
 
-        if (nextIsOpenParen && !isSpecialBodyCommand) {
-          // This might be a pseudo-command like add(5, 10) on calc
+        // A command word followed by a group is that COMMAND with a
+        // parenthesized operand — `put (1 + 2) into #x`, `morph (#list) to it`
+        // — as upstream reads it (`parseCommand`: a registered keyword always
+        // wins). Taking it for a method call made those throw at run time
+        // ("Method 'put' not found"). Only a group that cannot be ONE operand,
+        // `()` or `(a, b)`, is still a method call: that keeps the leniency for
+        // `focus() me` / `reset() the closest <form/>` (PARSER_NEXT_STEPS C3),
+        // which upstream rejects outright, so no valid program reads otherwise.
+        if (nextIsOpenParen && !isSpecialBodyCommand && this.isArgumentListOnly(this.current + 1)) {
+          // A pseudo-command like add(5, 10) on calc
           // Parse as expression to get the function call
           let expr;
           const savedError = this.error;
@@ -2870,7 +2897,7 @@ export class Parser {
             if (result.isPseudo || result.targetFailed) continue;
           }
         } else {
-          // No parentheses, parse as regular command
+          // Parse as a regular command (a parenthesized operand included)
           const cmdToken = this.peek().value;
           const cmd = this.parseCommandWithErrorRecovery();
           if (cmd) {
@@ -3461,12 +3488,15 @@ export class Parser {
     // and this parser parses the English (`compileAsync`'s `fallbackText`),
     // which is the only place the two ever meet. See ENGINE_MIGRATION_PLAN.md.
     const commandToken = this.previous();
-    let commandName = commandToken.value;
+    const commandName = commandToken.value;
 
-    // Handle special case for beep! command - check if beep is followed by !
+    // `beep!` is upstream's spelling (hyperfixi also takes a bare `beep`). The
+    // bang is consumed and the node named for the command it runs: the runtime
+    // registry, AOT codegen and interchange role inference all key on `beep`,
+    // and a node named `beep!` reached none of them — the runtime aborted the
+    // handler ("Unknown command: beep!") and AOT emitted an empty one.
     if (commandName === 'beep' && this.check('!')) {
       this.advance(); // consume the !
-      commandName = 'beep!';
     }
 
     // Dedicated fetch parser with extended _hyperscript-compatible syntax

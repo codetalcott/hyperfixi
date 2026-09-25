@@ -670,6 +670,7 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
   while (!ctx.isAtEnd()) {
     // Check if current token is a command - if so, parse it
     if (ctx.checkIsCommand()) {
+      const word = ctx.peek().value;
       try {
         // IMPORTANT: parseCommand() uses previous() to get the command token,
         // so we must advance first to consume the command token
@@ -680,7 +681,14 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
         } else {
           break;
         }
-      } catch {
+      } catch (error) {
+        // REPORT a body command that fails to parse. A bare `break` dropped it
+        // and everything after it while the tell looked complete: `on click
+        // tell #a log "y" then repeat 2 times log "x"` compiled with no errors
+        // and no `repeat`, where upstream runs the repeat inside the tell.
+        ctx.addError(
+          `'${word}' in a tell body failed to parse: ${error instanceof Error ? error.message : String(error)}`
+        );
         break;
       }
 

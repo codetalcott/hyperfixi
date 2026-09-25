@@ -96,9 +96,9 @@ describe('positional lists and terminators', () => {
     expect(command('log a b').args).toHaveLength(1);
   });
 
-  it('`beep! me.id, me.className` keeps its two arguments under the folded name', () => {
+  it('`beep! me.id, me.className` keeps its two arguments, named for the command it runs', () => {
     const beep = command('beep! me.id, me.className');
-    expect(beep.name).toBe('beep!');
+    expect(beep.name).toBe('beep');
     expect(beep.args).toHaveLength(2);
   });
 

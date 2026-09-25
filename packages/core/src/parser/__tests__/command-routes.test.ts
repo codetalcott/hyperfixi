@@ -16,7 +16,7 @@ import { COMPOUND_COMMAND_NAMES } from '../command-parsers/utility-commands';
 import { COMMAND_GRAMMAR, DEDICATED_PARSER_COMMANDS, grammarOf } from '../command-grammar';
 
 describe('command parse routes partition the manifest', () => {
-  const grammarKeys = Object.keys(COMMAND_GRAMMAR).filter(k => k !== 'beep!');
+  const grammarKeys = Object.keys(COMMAND_GRAMMAR);
 
   it('every manifest command has exactly one route', () => {
     const twice = COMMAND_NAMES.filter(
@@ -61,7 +61,8 @@ describe('command parse routes partition the manifest', () => {
     );
   });
 
-  it('`beep!` is the same row as `beep` — the dispatcher folds the `!` before it looks the grammar up', () => {
-    expect(grammarOf('beep!')).toBe(grammarOf('beep'));
+  it('`beep!` has no row of its own — the parser consumes the bang and names the node `beep`', () => {
+    expect(grammarOf('beep!')).toBeNull();
+    expect(grammarOf('beep')).not.toBeNull();
   });
 });

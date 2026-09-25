@@ -63,7 +63,6 @@ describe('declared grammar ↔ semantic schema marker parity (English)', () => {
 
     const differences: Record<string, string> = {};
     for (const [command, grammar] of Object.entries(COMMAND_GRAMMAR)) {
-      if (command === 'beep!') continue;
       const schema = getSchema(command);
       if (!schema) {
         if (grammar.markers.length > 0)

@@ -137,12 +137,10 @@ const ONE_EXPR = (syntax: string): CommandGrammar => ({
   markers: [],
   syntax,
 });
-const BEEP = ONE_EXPR('beep! [<expression>, …]');
-
 /**
- * One row per command that reaches the generic parser. Rows are keyed by the
- * name the dispatcher sees AFTER its own rewrites — `beep!` is the name of the
- * command once the parser has folded the `!` in.
+ * One row per command that reaches the generic parser, keyed by the name the
+ * command node carries: `beep!` is keyed `beep`, because the parser consumes
+ * the bang and names the node for the command it runs.
  */
 export const COMMAND_GRAMMAR: Readonly<Record<string, CommandGrammar>> = {
   // --- the four that were MULTI_WORD_PATTERNS, verbatim -------------------
@@ -164,8 +162,7 @@ export const COMMAND_GRAMMAR: Readonly<Record<string, CommandGrammar>> = {
   throw: { positional: 'primary', markers: [], syntax: 'throw <error>' },
 
   // --- the 23 that fell through to the tail loop --------------------------
-  'beep!': BEEP,
-  beep: BEEP,
+  beep: ONE_EXPR('beep! [<expression>, …]'),
   blur: ONE_EXPR('blur [<target>]'),
   break: NONE,
   breakpoint: NONE,
