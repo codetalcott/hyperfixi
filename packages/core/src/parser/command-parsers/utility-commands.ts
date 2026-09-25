@@ -11,7 +11,13 @@
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, Token, ExpressionNode, CommandNode } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
-import { isKeyword, isCommandBoundary, consumeOptionalKeyword } from '../helpers/parsing-helpers';
+import {
+  isKeyword,
+  isCommandBoundary,
+  consumeOptionalKeyword,
+  isNakedNamedArgStart,
+  parseNakedNamedArgs,
+} from '../helpers/parsing-helpers';
 import { KEYWORDS } from '../parser-constants';
 
 // Import command parsers from other modules for compound command routing
@@ -340,8 +346,14 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
 
     if (ctx.check('with') && !modifiers['with']) {
       ctx.advance(); // consume 'with'
-      if (isFetchNakedNamedArgStart(ctx)) {
-        modifiers['with'] = parseFetchNakedNamedArgs(ctx) as ExpressionNode;
+      if (isNakedNamedArgStart(ctx)) {
+        // `parsePrimary` per value, not upstream's full expression: see
+        // parseNakedNamedArgs for why fetch differs from render here.
+        modifiers['with'] = parseNakedNamedArgs(
+          ctx,
+          () => ctx.parsePrimary(),
+          'fetch'
+        ) as ExpressionNode;
       } else {
         modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
       }
@@ -381,62 +393,6 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
   }
 
   return builder.build();
-}
-
-/**
- * Check if the current position starts a naked named argument list.
- * Naked named args look like: method:"POST", headers:{...}
- * (identifier followed by colon, without surrounding braces)
- */
-function isFetchNakedNamedArgStart(ctx: ParserContext): boolean {
-  if (ctx.check('{')) return false; // Object literal, not naked args
-  if (!ctx.checkIdentifierLike()) return false;
-  const next = ctx.peekAt(1);
-  return next !== null && next.value === ':';
-}
-
-/**
- * Parse a naked named argument list into an objectLiteral AST node.
- * e.g., method:"POST", headers:{...}, body:data
- *
- * Produces the same AST shape as parseObjectLiteral() so the fetch
- * command implementation handles it identically.
- */
-function parseFetchNakedNamedArgs(ctx: ParserContext): ASTNode {
-  const properties: Array<{ key: ASTNode; value: ASTNode }> = [];
-  const startPos = ctx.getPosition();
-
-  do {
-    if (!ctx.checkIdentifierLike()) break;
-
-    const keyToken = ctx.advance();
-    const key: ASTNode = {
-      type: 'identifier',
-      name: keyToken.value,
-      start: keyToken.start,
-      end: keyToken.end,
-      line: keyToken.line,
-      column: keyToken.column,
-    };
-
-    ctx.consume(':', "Expected ':' after property name in fetch named arguments");
-
-    // Use parsePrimary to avoid consuming 'as'/'then' as binary operators
-    const value = ctx.parsePrimary();
-    if (value) {
-      properties.push({ key, value });
-    }
-  } while (ctx.match(',') && !ctx.isAtEnd());
-
-  const endPos = ctx.getPosition();
-  return {
-    type: 'objectLiteral',
-    properties,
-    start: startPos.start,
-    end: endPos.end,
-    line: startPos.line,
-    column: startPos.column,
-  } as ASTNode;
 }
 
 /**

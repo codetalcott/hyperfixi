@@ -610,6 +610,10 @@ export class ExpressionCodegen {
         return `+${operand}`;
       case 'no':
         return `!${operand}`;
+      case 'beep!':
+        // Report the value the way BeepCodegen reports the command's, then hand
+        // it on. The default below would emit `beep!<operand>`, which is not JS.
+        return `((v) => (console.log('%c[beep]', 'color: orange; font-weight: bold', v), v))(${operand})`;
       default:
         return `${node.operator}${operand}`;
     }

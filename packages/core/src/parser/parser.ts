@@ -660,7 +660,9 @@ export class Parser {
     const prefixEntry = Parser.PRATT_TABLE.get(firstToken.value);
     let left: ASTNode;
 
-    if (prefixEntry?.prefix) {
+    if (parsingHelpers.isGluedBeepBang(firstToken, this.tokens[this.current + 1])) {
+      left = this.parseBeepExpression();
+    } else if (prefixEntry?.prefix) {
       const token = this.advance();
 
       // Handle missing operand for prefix operators
@@ -774,6 +776,41 @@ export class Parser {
 
     return left;
   }
+
+  /**
+   * `beep! <operand>` in expression position: upstream's BeepExpression.
+   *
+   * A prefix on a UNARY operand, at the same binding power as `not`, so
+   * `beep! 1 + 2` beeps 1, and `set $x to beep! my value` beeps and stores the
+   * value. At run time it reports the value and returns it unchanged (see
+   * `evaluateUnaryExpression`). The tokenizer splits `beep!` into `beep` and
+   * `!`, so this is reached only when the two are glued, as upstream lexes them.
+   * Before it existed, core parsed `beep` as an identifier and discarded
+   * `! my value`.
+   */
+  private parseBeepExpression(): ASTNode {
+    const beepToken = this.advance(); // beep
+    this.advance(); // !
+    if (this.isAtEnd()) {
+      this.addError("Expected expression after 'beep!'");
+      return this.createErrorNode();
+    }
+    const operand = this.parseExpressionPratt(Parser.BEEP_OPERAND_BP);
+    return {
+      type: 'unaryExpression',
+      operator: 'beep!',
+      operand,
+      argument: operand,
+      prefix: true,
+      start: beepToken.start,
+      end: this.previous().end,
+      line: beepToken.line,
+      column: beepToken.column,
+    } as ASTNode;
+  }
+
+  /** The unary tier (`not`, `!`, `some`): `beep!` takes an operand at the same power. */
+  private static readonly BEEP_OPERAND_BP = 80;
 
   /**
    * Try to parse a trailing string-postfix measurement unit on `left`.

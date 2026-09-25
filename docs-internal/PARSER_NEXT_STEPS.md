@@ -44,7 +44,9 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**`js(...) … end` bodies are not lexed as an OPAQUE span**~~ | **FIXED 2026-08-27** — and NOT in the base tokenizer: the opaque-span mechanism already existed (`consumeJsBlock`), and the filing's prescription would have duplicated it. What was missing was everything around it — the body was re-spaced by a `join(' ')` rebuild, the closing `end` was only emitted when a sibling followed, a pre-posed patient marker (he `את`, zh `把`) was swallowed into the body, the verb-FINAL SOV shape was never recognized, and the body was run through `localizeValueInterior`, i.e. the JavaScript itself was translated. Cleared 19 kept rows (js-inline ×3 + behavior-removable ×16), zero newly kept. | ✅ `js-block-round-trip.test.ts` (79 assertions), plus the two render allowlists and the kept-row ratchet | `MULTILINGUAL_NEXT_STEPS.md` 2026-08-27m. **Residual:** `js(args) … end` still stops at the `(` in twelve languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — pinned as an exclusion list in that test file. |
 | ~~**Four upstream-valid forms compiled clean and failed at run time**~~ | **FIXED 2026-09-25** — a command word before a group read as a method call (`put (1 + 2) into #x` threw), `beep!` aborted its handler, EVERY bare `for` loop threw, and a failing `tell` body command vanished with 0 errors | ✅ `command-misreads.test.ts`, `for-in.test.ts`, `tell-to-and-end.test.ts`, AOT `core-parser-adapter.test.ts` (all mutation-checked) | section below |
 | ~~**`repeat while` / `repeat until` never evaluated their condition**~~ | **FIXED 2026-09-25** — `while` ran to the 10,000-iteration cap, `until` never ran its body, bottom-tested loops ran once; every unit test passed a boolean. Found alongside gaps 1 and 2 (block `end` at end of input, `morph … to`), both also FIXED | ✅ `repeat-conditions.test.ts`, `block-end-at-eof.test.ts`, `morph-to.test.ts` (all mutation-checked) | the "Gaps 1 and 2 closed" section below |
-| **`def` / `behavior` demand their own `end`; `transition … from` rejected** | medium — upstream-valid, rejected loudly | ⚠️ NONE | same section, "Filed, still open" |
+| ~~**`beep!` in an expression; `render … with name: value`**~~ | **FIXED 2026-09-25** — gaps 3 and 4. `log beep! 3` was silently an empty `log`; the documented `with (name: value)` was a docs defect (upstream rejects it too). Running the rows found `my value` undefined on a `<button>`, also FIXED | ✅ `render-named-args.test.ts`, `beep-expression.test.ts`, `property-access-utils.test.ts` | the "Gaps 3 and 4 closed" section below |
+| **`def` / `behavior` demand their own `end`; `transition` owners (`next .p's *x`, `*x of #p`, `the *x`), the multi-property form and `… from` rejected** | medium — upstream-valid, rejected loudly, except that a multi-property value misparses SILENTLY at top level (`100px * height`) | ⚠️ NONE | the five-gaps table and "Filed, still open" in the 2026-09-25 sections |
+| **`render`'s result and `fetch`'s named values diverge from upstream** | medium — `render … into`/`here` rejected loudly; a multi-root render's `it` is a wrapper element where upstream's is a string; `fetch /x with m: "POST" as json` parses on both engines and runs differently | ⚠️ NONE | "Filed, still open" in the "Gaps 3 and 4 closed" section |
 | **Core has no collection `add`/`remove`** | **medium-high, silent** — `add "x" to $arr` / `remove "x" from $arr` do nothing where upstream pushes/removes; a parenthesized operand (`remove (.a)`, upstream: delete the elements) cannot be expressed, and `(.a)` does not even lex | ⚠️ NONE | the 2026-09-25 section below (why a lexing-only fix was reverted) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
@@ -201,8 +203,11 @@ defect each:
   with the same shape: `Unexpected token: <preposition>`. The command exists to
   support `method() on target`, so the parser and the metadata disagree about
   the command's entire surface. Start here.
-- **`render … with (…)` (3 rows)** — all three fail at `Expected ')' after
-  arguments`, i.e. the named-argument block is unparsed. One defect.
+- ~~**`render … with (…)` (3 rows)** — all three fail at `Expected ')' after
+  arguments`, i.e. the named-argument block is unparsed. One defect.~~
+  **Not a parser gap (2026-09-25): a docs defect.** Upstream 0.9.93 rejects the
+  parenthesized form too. It takes naked named arguments, `with name: value`,
+  which core now parses, and the examples use them.
 - **`install … on <target>` (2 rows)** — `on` is being taken as an event
   handler (`Expected event name after 'on'`). Upstream `_hyperscript` accepts
   `install Behavior on <expr>`; measure before assuming.
@@ -1259,7 +1264,7 @@ The 19, after triage (bare vs wrapped in `on click …`, both engines):
 | **harness artifact** — only legal inside a feature, both engines agree wrapped | 4 | `pseudo-command` ×4 |
 | **docs defect, brace blocks** — and a silent MISPARSE when wrapped | 4 | `repeat` ×2, `break`, `continue` |
 | **docs defect, names a non-command** | 3 | `unless … showLoginForm` ×2, `tell … submit` |
-| **declared in `syntax`, unimplemented** | 5 | `render … with (…)` ×3, `settle for <t>`, `take … and put it on …` |
+| **declared in `syntax`, unimplemented** | 5 | `render … with (…)` ×3 (docs defects, found 2026-09-25: upstream rejects them too), `settle for <t>`, `take … and put it on …` |
 | **real parser bug** | 2 | `install X on <selector>` ×2 |
 | **bare-only `then` seam** | 1 | `start view transition using "…" then …` |
 
@@ -2135,9 +2140,9 @@ errors; upstream `hs.parse(src).errors`):
 | ~~`on click repeat 3 times log "x"` (no `end`; upstream closes the block at end of input)~~ **FIXED 2026-09-25** | was `Command 'repeat' failed to parse and was discarded` | repeat-times, repeat-for-each (now `both`) |
 | ~~`init repeat 3 times log "x"`~~ **FIXED 2026-09-25** — `init` itself needs no `end` either | was `Expected "end" to close repeat block` | — |
 | ~~`on click morph #list to it` / `morph me to it` / `morph (#list) to it`~~ **FIXED 2026-09-25**, with `closest … to` and the root merge (section below) | was `Discarded input … 'to it'`; the parenthesized form only LOOKED like it worked (a method call that threw at run time) | morph-fetch-result, morph-form-update (now `both`) |
-| `on click render #row with row: $data` (naked named args; the parenthesized form is filed above) | `Discarded input … ': $data'` | render-template-with-data, morph-with-template |
-| `on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position; the command form parses, and since 2026-09-25 also runs) | `Discarded input … '! my value'` | beep-debug-expression |
-| `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
+| ~~`on click render #row with row: $data` (naked named args)~~ **FIXED 2026-09-25** — and the parenthesized form "filed above" was a docs defect: upstream rejects it too (section below) | was `Discarded input … ': $data'` | render-template-with-data, morph-with-template (now `both`) |
+| ~~`on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position)~~ **FIXED 2026-09-25** (section below) | was `Discarded input … '! my value'` | beep-debug-expression (now `both`) |
+| `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` / `transition the *opacity to 0` — and `transition *width to 100px *height to 50px`, whose value silently becomes `100px * height` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
 
 The `transition` row narrows the 2026-07-31 fix above: that fix covers a
 possessive whose owner is a primary (`#a's`, `my`, `its`). It does not cover a
@@ -2173,6 +2178,49 @@ Filed, still open — upstream-valid, core rejects:
 | `def f() log 1` (no `end`) | `Expected 'end' after function definition` |
 | `behavior B on click log 1` / `… end` (one `end`) | `Expected "end" to close behavior event handler` / `… behavior definition`. Core needs the handler's AND the behavior's |
 | `transition opacity from 0 to 1` / `transition *opacity from 0 to 1 over 1s` | `Command 'transition' failed to parse and was discarded` |
+
+### Gaps 3 and 4 closed — and what running them found (2026-09-25)
+
+Every form below was run on 0.9.93, not only parsed.
+
+| defect | core before | fix | pinned by |
+| ------ | ----------- | --- | --------- |
+| `render <tpl> with name: value, …` (upstream's `nakedNamedArgumentList`) | `with` took ONE expression: `: $data` was discarded, and `with a: 1, b: 2` did not parse | a grammar row can declare that a marker takes the naked list (`namedArgs`, beside `commaList`). render's `with` does, each value a full expression. fetch's private copy of the parser moved to parsing-helpers; fetch keeps `parsePrimary` values | `render-named-args.test.ts` |
+| the documented `render … with (name: value)` | three rows in each example gate, filed as a parser gap | a DOCS defect: upstream rejects the form too ("Expected command"). The examples use the naked form now | `documented-examples.test.ts`, `ast-vocabulary.test.ts` |
+| `beep!` in expression position (`set $x to beep! my value`) | `beep` read as a name, `! my value` discarded | a glued `beep!` opening an operand is a `unaryExpression` at the unary tier (`beep! 1 + 2` beeps 1). It reports through `utils/beep.ts` and returns the value | `beep-expression.test.ts` |
+| `log beep! 3` | SILENT: an empty `log`, then a `beep!` command, so the log printed nothing | the declared grammar's argument boundary does not stop at a glued `beep!` | same |
+| `hyperscript:beep` | never fired, by either form | both forms fire it through one helper; it is cancelable, and a cancelled beep prints nothing | same |
+| AOT, a `beep!` expression | emitted `beep!1`, invalid JS reported as success | logs and returns the value | AOT `core-parser-adapter.test.ts` |
+| hybrid parser (`hyperfixi-hx.js`), `log beep! 3` | read `beep` as a name and dropped `! 3` SILENTLY | fails loudly, naming the full parser | `beep-expression.test.ts` |
+| **`my value` on a `<button>`**, option, output, li, meter, progress or data element | `undefined`: the value reader knew only input, select and textarea | any element with a live `value` property; still read ahead of the attribute, which holds an input's INITIAL value | `property-access-utils.test.ts` |
+
+The last row is not a parser defect. Running beep-debug-expression, whose parse
+now matched upstream, found it: `set $x to beep! my value` on a button stored
+`undefined` in core.
+
+Three corpus rows now verify `both`: render-template-with-data,
+morph-with-template and beep-debug-expression. No row is upstream-only any more.
+All three produce the same DOM on both engines, fire the same `hyperscript:beep`
+events and log the same values. Only a beep's console TEXT differs: core prints
+its grouped block.
+
+Filed, still open:
+
+| source or behaviour | core | upstream |
+| ------------------- | ---- | -------- |
+| `render #t with a: 1 into #out`, `render #t here` | rejected, loudly (`into`/`here` discarded) | renders into the target, or into `me` |
+| a multi-root or text-only render (`<li>${a}</li><li>${b}</li>`, `Hello ${name}`) | `it` is an ELEMENT: the one root, or else a wrapper `<div>`, so `put it into #c` nests the wrapper | `it` is the rendered STRING |
+| a `<template>` element as the template | renders its content (a superset) | reads `textContent`, which is empty for a `<template>`, and renders nothing. Upstream's templates are `<script type="text/hyperscript-template">` |
+| the template language | `@if`/`@repeat` directives; `${}` takes literals, names and dotted paths | `#for`/`#if` lines; `${}` takes any expression |
+| `fetch /x with n: 1 + 2` | rejected: fetch's named values are `parsePrimary` | accepted; values are full expressions |
+| `fetch /x with method: "POST" as json` | `as json` is fetch's conversion | parses too, but `as json` joins the VALUE (`"POST" as json`) and the response stays text: same parse verdict, different program |
+| `render #t with {a: 1}`, `render #t with $vars` | accepted, as an object (a superset) | rejected |
+
+Gap 5, `transition` owners and the multi-property form, is still open (the
+table above) and gets its own change. Making the multi-property form work
+touches the command's AST contract, its runtime and AOT's codegen, and the fix
+for `100px *height` (upstream lexes a spaced `*` glued to a name as a style
+reference) reaches every expression.
 
 ### ~~Four upstream-valid forms that compiled clean and failed at run time~~ — FIXED (2026-09-25)
 

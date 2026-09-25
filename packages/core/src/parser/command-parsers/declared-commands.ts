@@ -15,7 +15,13 @@ import type { ParserContext } from '../parser-types';
 import type { Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import type { CommandGrammar } from '../command-grammar';
-import { isCommandBoundary, isKeyword } from '../helpers/parsing-helpers';
+import {
+  isCommandBoundary,
+  isGluedBeepBang,
+  isKeyword,
+  isNakedNamedArgStart,
+  parseNakedNamedArgs,
+} from '../helpers/parsing-helpers';
 import type { SlotKey, SlotMap, SlottedCommandName } from '../../ast/command-slots';
 
 /**
@@ -27,11 +33,16 @@ import type { SlotKey, SlotMap, SlottedCommandName } from '../../ast/command-slo
  * argument. `isCommandBoundary` already covers the terminators and the plain
  * command-word case; the `(` exception is the one addition, and `on` is added
  * to the boundary list because the tail loop never stopped there.
+ *
+ * `beep!` is the other exception: glued, it is upstream's BeepExpression, an
+ * operand. `log beep! 3` logs the beeped 3; it used to parse as an EMPTY `log`
+ * followed by a `beep!` command, which printed nothing where upstream prints 3.
  */
 function atArgumentBoundary(ctx: ParserContext, grammar: CommandGrammar): boolean {
   if (ctx.isAtEnd()) return true;
   const next = ctx.peek();
   if (ctx.checkIsCommand() && ctx.peekAt(1)?.value === '(') return false;
+  if (isGluedBeepBang(next, ctx.peekAt(1))) return false;
   if (isCommandBoundary(ctx, ['catch', 'finally', 'on'])) return true;
   return isKeyword(next, [...grammar.markers]);
 }
@@ -82,10 +93,14 @@ export function parseDeclaredCommand(
   }
 
   const commaList = new Set(grammar.commaList ?? []);
+  const namedArgs = new Set(grammar.namedArgs ?? []);
   while (!ctx.isAtEnd() && isKeyword(ctx.peek(), [...grammar.markers])) {
     const keyword = ctx.advance().value;
     const key = ctx.resolveKeyword(keyword).toLowerCase();
-    let value = ctx.parseExpression();
+    let value =
+      namedArgs.has(key) && isNakedNamedArgStart(ctx)
+        ? parseNakedNamedArgs(ctx, () => ctx.parseExpression(), name)
+        : ctx.parseExpression();
     if (value && commaList.has(key) && ctx.check(',')) {
       const elements: ASTNode[] = [value];
       while (ctx.match(',')) {

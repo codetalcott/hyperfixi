@@ -32,6 +32,8 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       try {
         // Execute render command like official test:
         // _hyperscript("render tmpl with (x: x) then put it into window.res", {locals: {x: ":)", tmpl: tmpl}})
+        // — the pre-0.9.93 spelling. 0.9.93 takes naked named arguments,
+        // `with x: x`, and rejects the parenthesized form.
         const context = hyperfixi.createContext();
         context.locals = new Map<string, unknown>([
           ['x', ':)'],
@@ -39,7 +41,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         ]);
 
         console.log('Executing render command...');
-        const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
+        const renderResult = await hyperfixi.evalHyperScript('render tmpl with x: x', context);
         console.log('Render result:', renderResult);
 
         // Check if result contains expected content
@@ -110,7 +112,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
           ['tmpl', tmpl],
         ]);
 
-        const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
+        const renderResult = await hyperfixi.evalHyperScript('render tmpl with x: x', context);
 
         // Expected: "render &lt;br&gt; <br>"
         let actualContent = '';
@@ -170,7 +172,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
           ['tmpl', tmpl],
         ]);
 
-        const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
+        const renderResult = await hyperfixi.evalHyperScript('render tmpl with x: x', context);
 
         let actualContent = '';
         // render() returns { element, rendered, directivesProcessed }; `rendered`
@@ -234,7 +236,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
           ['tmpl', tmpl],
         ]);
 
-        const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
+        const renderResult = await hyperfixi.evalHyperScript('render tmpl with x: x', context);
 
         let actualContent = '';
         // render() returns { element, rendered, directivesProcessed }; `rendered`

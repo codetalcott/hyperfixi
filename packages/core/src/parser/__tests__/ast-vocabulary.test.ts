@@ -66,10 +66,12 @@ import {
  *   - **Parser gaps** — `install Draggable on #box`, ~~`settle for 3000`~~ (fixed
  *     by Arc 3 step 4's declared grammar),
  *     `tell closest <form/> submit`, `take @x from <.a/> and put it on <#b/>`,
- *     the four `pseudo-command` forms, the three `render … with (…)` forms and
- *     `start view transition … end` are syntax the command's own metadata
- *     advertises and the parser does not accept. Those belong in
- *     `docs-internal/PARSER_NEXT_STEPS.md`.
+ *     the four `pseudo-command` forms and `start view transition … end` are
+ *     syntax the command's own metadata advertises and the parser does not
+ *     accept. Those belong in `docs-internal/PARSER_NEXT_STEPS.md`. (The three
+ *     `render … with (…)` forms that were listed here turned out to be docs
+ *     defects: upstream rejects them too, and the examples now use its naked
+ *     `with name: …`.)
  *
  * Fixing either kind shrinks this list, and the shrink is the point.
  */
@@ -85,9 +87,6 @@ const EXAMPLES_THE_FULL_PARSER_REJECTS = [
   'pseudo-command | getElementById("d1") from the document',
   'pseudo-command | reload() the location of the window',
   'pseudo-command | setAttribute("foo", "bar") on me',
-  'render | render "<template>Hello ${name}!</template>" with (name: "World")',
-  'render | render myTemplate with (name: "Alice")',
-  'render | render template with (items: data)',
   'repeat | repeat 5 times { log "hello" }',
   'repeat | repeat for item in items { log item }',
   'start | start view transition using "slide" then put result into #panel end',

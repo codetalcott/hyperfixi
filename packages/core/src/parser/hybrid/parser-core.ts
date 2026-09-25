@@ -886,6 +886,13 @@ export class HybridParser {
   }
 
   private parseUnary(): ASTNode {
+    // `beep!` in an expression (`set $x to beep! v`) is upstream's
+    // BeepExpression, which this parser does not implement. It used to read
+    // `beep` as a name and drop the rest silently: `log beep! 3` logged
+    // nothing. Reject it like any other construct only the full parser has.
+    if (this.match('beep') && this.peek(1).value === '!') {
+      throw new Error(`'beep!' needs the full parser (use hyperfixi.js)`);
+    }
     if (this.match('not', '!')) {
       this.advance();
       return { type: 'unary', operator: 'not', operand: this.parseUnary() };

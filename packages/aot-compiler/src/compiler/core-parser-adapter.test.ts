@@ -216,9 +216,13 @@ describe.runIf(adapterAvailable)('CoreParserAdapter', () => {
     // command word before a group became a `pseudo-command` node, which has no
     // codegen at all: both compiled to an EMPTY handler under a function name
     // that is not valid JavaScript (`_handler_click_beep!_…`), reported success.
+    //
+    // `beep!` as an EXPRESSION is a `unaryExpression` whose operator no case
+    // named, so the default emitted `beep!1`, again reported as success.
     it.each([
       ['on click beep! 1', '[beep]'],
       ['on click put (1 + 2) into #out', '(1 + 2)'],
+      ['on click put beep! 1 into #out', '[beep]'],
     ])('compiles `%s` to its command, as valid JavaScript', (src, emitted) => {
       const result = compileWithCoreParser(src);
       expect(result.success).toBe(true);

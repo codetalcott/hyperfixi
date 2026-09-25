@@ -18,6 +18,7 @@ import {
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal };
 import { getElementVar, setElementVar } from '../core/context';
+import { beepValues } from '../utils/beep';
 import { convertToNumber } from '../commands/helpers/variable-access';
 import { resolveTargetElements } from '../commands/helpers/target-elements';
 
@@ -1587,6 +1588,11 @@ async function evaluateUnaryExpression(
     case 'not':
     case '!':
       return logicalExpressions.not.evaluate(context, value);
+
+    case 'beep!':
+      // Upstream's BeepExpression: report the value, then hand it on unchanged.
+      beepValues(context.me, [value]);
+      return value;
 
     case 'no':
       return logicalExpressions.no.evaluate(context, value);

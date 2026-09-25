@@ -119,6 +119,40 @@ describe('accessAttribute', () => {
   });
 });
 
+describe('getElementProperty - value', () => {
+  // `my value` read `.value` on input/select/textarea only, so on a <button> —
+  // the element the `beep!` corpus row runs on — it was undefined where
+  // upstream returns the button's value. Every row here is what `me.value`
+  // gives upstream.
+  it.each([
+    ['button', 'b1'],
+    ['option', 'o1'],
+    ['output', ''],
+    ['data', 'd1'],
+  ])('reads the live value of a <%s>', (tag, value) => {
+    const el = document.createElement(tag) as HTMLElement & { value: string };
+    if (value) el.value = value;
+    expect(getElementProperty(el, 'value')).toBe(value);
+  });
+
+  it('reads an <li> value as the number it is', () => {
+    const li = document.createElement('li');
+    li.value = 3;
+    expect(getElementProperty(li, 'value')).toBe(3);
+  });
+
+  it("reads an input's CURRENT value, not its attribute's initial one", () => {
+    const input = document.createElement('input');
+    input.setAttribute('value', 'initial');
+    input.value = 'typed';
+    expect(getElementProperty(input, 'value')).toBe('typed');
+  });
+
+  it('is undefined on an element with no value property', () => {
+    expect(getElementProperty(document.createElement('div'), 'value')).toBeUndefined();
+  });
+});
+
 describe('getElementProperty - values pseudo-property', () => {
   it('should return FormData from an HTMLFormElement', () => {
     const form = document.createElement('form');

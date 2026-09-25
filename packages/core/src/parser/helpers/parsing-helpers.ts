@@ -335,3 +335,79 @@ export function parseMaybeNamedArgument(ctx: ParserContext): {
   const value = ctx.parseExpression();
   return name !== undefined ? { name, value } : { value };
 }
+
+/**
+ * Does the parser stand at upstream's naked named-argument list, `name: value, …`?
+ *
+ * An identifier followed by `:`, with no braces around the list. `{` is an
+ * object literal, not a naked list, and is left to the caller's own parse.
+ */
+export function isNakedNamedArgStart(ctx: ParserContext): boolean {
+  if (ctx.check('{')) return false;
+  if (!ctx.checkIdentifierLike()) return false;
+  const next = ctx.peekAt(1);
+  return next !== null && next.value === ':';
+}
+
+/**
+ * Parse upstream's naked named-argument list (`nakedNamedArgumentList`) into one
+ * `objectLiteral` node, the shape `parseObjectLiteral` builds, so a command reads
+ * `with a: 1, b: 2` and `with {a: 1, b: 2}` identically.
+ *
+ * `parseValue` is the caller's rule for one value, because the two users
+ * differ. Upstream parses every value as a full expression, and `render` does
+ * the same. `fetch` keeps `parsePrimary` so that a trailing `as json` stays
+ * fetch's conversion and is not read as `<value> as json`.
+ */
+export function parseNakedNamedArgs(
+  ctx: ParserContext,
+  parseValue: () => ASTNode | null,
+  command: string
+): ASTNode {
+  const properties: Array<{ key: ASTNode; value: ASTNode }> = [];
+  const startPos = ctx.getPosition();
+
+  do {
+    if (!ctx.checkIdentifierLike()) break;
+
+    const keyToken = ctx.advance();
+    const key: ASTNode = {
+      type: 'identifier',
+      name: keyToken.value,
+      start: keyToken.start,
+      end: keyToken.end,
+      line: keyToken.line,
+      column: keyToken.column,
+    };
+
+    ctx.consume(':', `Expected ':' after property name in ${command} named arguments`);
+
+    const value = parseValue();
+    if (value) {
+      properties.push({ key, value });
+    }
+  } while (ctx.match(',') && !ctx.isAtEnd());
+
+  const endPos = ctx.getPosition();
+  return {
+    type: 'objectLiteral',
+    properties,
+    start: startPos.start,
+    end: endPos.end,
+    line: startPos.line,
+    column: startPos.column,
+  } as ASTNode;
+}
+
+/**
+ * `beep` with a `!` glued to it (no space), which upstream lexes as one token,
+ * `beep!`. In expression position that is upstream's BeepExpression, so the
+ * expression parser and the argument boundary both have to recognise it as
+ * the start of an operand rather than as the `beep!` command.
+ */
+export function isGluedBeepBang(
+  beep: Token | null | undefined,
+  bang: Token | null | undefined
+): boolean {
+  return beep?.value === 'beep' && bang?.value === '!' && bang.start === beep.end;
+}

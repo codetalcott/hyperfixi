@@ -5706,7 +5706,11 @@ Residuals, not started:
   - Six are real core gaps, now upstream-only and filed in
     PARSER_NEXT_STEPS "Five upstream-valid shapes core rejects": repeat-times,
     repeat-for-each, morph-fetch-result, morph-with-template,
-    render-template-with-data, beep-debug-expression.
+    render-template-with-data, beep-debug-expression. **All six FIXED
+    2026-09-25** (gaps 1–4 there); the JSON holds no upstream-only row now.
+    Each was RUN on both engines, not only parsed. Five produce the same DOM.
+    repeat-times fails on BOTH (`add "<p>…"` is a collection add upstream):
+    a corpus defect that wants `append`.
   - Three had en raws that were invalid on BOTH engines. They were corrected
     and now verify `both`: fetch-with-method (comma), morph-form-update
     (`(closest <form/>)`), slide-toggle (class toggle).
