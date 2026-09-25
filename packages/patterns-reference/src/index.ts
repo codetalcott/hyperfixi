@@ -285,6 +285,15 @@ export { extractHyperscriptFromMarkup } from './html-snippets';
 export type { MarkupSnippets } from './html-snippets';
 
 /**
+ * The corpus writer's own locator for the `_="…"` bodies it translates in a
+ * markup row. Exported so the testing-framework's en-reference-preservation
+ * gate checks exactly the bodies the writer renders — not the broader set
+ * `extractHyperscriptFromMarkup` finds for whole files.
+ */
+export { findHyperscriptAttributes, isMarkupRow } from './sync/markup-attributes';
+export type { AttributeSpan } from './sync/markup-attributes';
+
+/**
  * Version of the package.
  */
 export const VERSION = '0.1.0';

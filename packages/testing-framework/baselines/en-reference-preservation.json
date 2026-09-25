@@ -1,0 +1,167 @@
+{
+  "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
+  "checked": 162,
+  "preserved": 138,
+  "allowedLosses": {
+    "async-block": {
+      "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
+      "rendered": "on click fetch \"/api/data\" then put it into me",
+      "lost": ["async"],
+      "added": []
+    },
+    "behavior-draggable": {
+      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; the whole `on pointerdown(…) from dragHandle` header is lost",
+      "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n    halt the event\n    trigger draggable:start\n    measure x\n    set startX to it\n    measure y\n    set startY to it\n    set xoff to clientX - startX\n    set yoff to clientY - startY\n    repeat until event pointerup from document\n    wait for pointermove\n    add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; }\n    trigger draggable:move\n    trigger draggable:end\n  end\nend",
+      "lost": [
+        "on pointerdown ( clientX , clientY ) from dragHandle",
+        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document",
+        "end"
+      ],
+      "added": []
+    },
+    "behavior-removable": {
+      "family": "TRIAGE — `init` reordered after the handler (`from triggerEl` is evaluated at install)",
+      "rendered": "behavior Removable(triggerEl, confirmRemoval, effect)\n  on click from triggerEl if confirmRemoval js (me)\n        if (!window.confirm(\"Are you sure?\")) return \"cancel\"; end then if it is \"cancel\" halt end end then trigger removable:before then if effect is \"fade\" transition opacity to 0 over 300ms end then trigger removable:removed then remove me\n  end\n  init\n    if triggerEl is undefined set triggerEl to me end\n  end\nend",
+      "lost": ["init if triggerEl is undefined set triggerEl to me end end"],
+      "added": ["end init if triggerEl is undefined set triggerEl to me"]
+    },
+    "behavior-resizable": {
+      "family": "handler head — event params, `from`, `or pointerup(…)` dropped",
+      "rendered": "behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)\n  on pointerdown halt the event then trigger resizable:start then measure width then set startWidth to it then measure height then set startHeight to it then set startX to clientX then set startY to clientY then repeat until event pointerup from document wait for pointermove then set newWidth to startWidth + clientX - startX then set newHeight to startHeight + clientY - startY then if newWidth < minWidth set newWidth to minWidth end then if newWidth > maxWidth set newWidth to maxWidth end then if newHeight < minHeight set newHeight to minHeight end then if newHeight > maxHeight set newHeight to maxHeight end then set my *width to newWidth + \"px\" then set my *height to newHeight + \"px\" then trigger resizable:resize then trigger resizable:end end\n  end\nend",
+      "lost": [
+        "( clientX , clientY ) from me",
+        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document",
+        "end"
+      ],
+      "added": []
+    },
+    "behavior-sortable": {
+      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; MEANING — the loop `end` moves, pulling following commands into the loop",
+      "rendered": "behavior Sortable(dragClass)\n  on pointerdown set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove then trigger sortable:move on me then remove .{dragClass} from item then trigger sortable:end on me end\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
+      "lost": [
+        "init if dragClass is undefined set dragClass to \"sorting\" end end",
+        "( clientY ) from me",
+        "the",
+        "( clientY ) or pointerup ( clientY ) from document",
+        "end"
+      ],
+      "added": ["end end init if dragClass is undefined set dragClass to \"sorting\""]
+    },
+    "event-debounce": {
+      "family": "TRIAGE — naked `${…}` URL rendered quoted (does the interpolation survive?)",
+      "rendered": "on input debounced at 300ms fetch \"/api/search?q=${my value}\" as json then put it into #results",
+      "lost": ["/api/search?q=$ { my value }"],
+      "added": ["\"/api/search?q=${my value}\""]
+    },
+    "event-once": {
+      "family": "TRIAGE — source `on click once` is invalid on BOTH engines; render emits `click.once`",
+      "rendered": "on click.once add .initialized to me then call setup()",
+      "lost": ["click once"],
+      "added": ["click.once"]
+    },
+    "eventsource-basic": {
+      "family": "feature URL dropped (`from /events`)",
+      "rendered": "eventsource ChatStream\n  on message put it into #messages\n  end\nend",
+      "lost": ["from /events"],
+      "added": []
+    },
+    "fetch-do-not-throw": {
+      "family": "command-option tail dropped (`do not throw`)",
+      "rendered": "on click fetch \"/api/users\" as JSON then if it set $users to it end",
+      "lost": ["do not throw"],
+      "added": []
+    },
+    "first-in-parent": {
+      "family": "scope qualifier tail dropped (`in closest <form/>`)",
+      "rendered": "on click focus first <input/>",
+      "lost": ["in closest <form/>"],
+      "added": []
+    },
+    "form-disable-on-submit": {
+      "family": "scope qualifier tail dropped (`in me` ×2)",
+      "rendered": "on submit add @disabled to <button/> then put \"Submitting...\" into <button/>",
+      "lost": ["in me", "in me"],
+      "added": []
+    },
+    "go-back": {
+      "family": "MEANING — `go back` rendered `go url back`, which navigates to a page named \"back\"",
+      "rendered": "on click go url back",
+      "lost": [],
+      "added": ["url"]
+    },
+    "hide-with-transition": {
+      "family": "show/hide style capture dropped (`with *opacity`)",
+      "rendered": "on click hide me",
+      "lost": ["with *opacity"],
+      "added": []
+    },
+    "intercept-cache-strategies": {
+      "family": "no semantic schema — the whole feature body is dropped (engine-NULL row)",
+      "rendered": "intercept\nend",
+      "lost": [
+        "/ precache / , /style.css , /app.js as \"v1\" on /api/* use network-first on *.css , *.js use cache-first on * use stale-while-revalidate offline fallback /offline.html"
+      ],
+      "added": []
+    },
+    "morph-form-update": {
+      "family": "parenthesized role value dropped — the whole `morph` (introduced by #1167)",
+      "rendered": "on submit fetch \"/api/save\"",
+      "lost": ["morph ( closest <form/> ) to it"],
+      "added": []
+    },
+    "multiple-events": {
+      "family": "handler head — `or <event>[filter]` alternative dropped",
+      "rendered": "on click toggle .active",
+      "lost": ["or keypress [ key== \"Enter\" ]"],
+      "added": []
+    },
+    "repeat-while": {
+      "family": "MEANING — loop condition truncated (`< 10`): the loop no longer terminates",
+      "rendered": "on click repeat while #counter.innerText increment #counter then wait 200ms end",
+      "lost": ["< 10"],
+      "added": []
+    },
+    "show-with-transition": {
+      "family": "show/hide style capture dropped (`with *opacity`)",
+      "rendered": "on click show #modal",
+      "lost": ["with *opacity"],
+      "added": []
+    },
+    "socket-basic": {
+      "family": "feature URL dropped (`ws://…`)",
+      "rendered": "socket ChatSocket\n  on message put it into #chat\n  end\nend",
+      "lost": ["ws : //localhost : 8080"],
+      "added": []
+    },
+    "socket-send": {
+      "family": "MEANING — string literal `\"hello\"` rendered as the identifier `hello`",
+      "rendered": "on click send hello to ChatSocket",
+      "lost": ["\"hello\""],
+      "added": ["hello"]
+    },
+    "stagger-animation": {
+      "family": "hyperfixi-only loop syntax dropped (`with index`)",
+      "rendered": "on load repeat for item in .item add .visible to item then wait 100ms end",
+      "lost": ["with index"],
+      "added": []
+    },
+    "tell-command": {
+      "family": "hyperfixi-only tell to-infinitive dropped (`to show`)",
+      "rendered": "on click tell #modal",
+      "lost": ["to show"],
+      "added": []
+    },
+    "template-literal-list-build": {
+      "family": "MEANING — the loop `end` moves: `set #list.innerHTML` is pulled into the loop",
+      "rendered": "on click set $html to \"\" then for item in $items set $html to $html + `<li>${item.name}</li>` then set #list.innerHTML to $html end",
+      "lost": ["end"],
+      "added": []
+    },
+    "worker-basic": {
+      "family": "MEANING — def body expression mangled (`return a + b` → `return +`)",
+      "rendered": "worker Calculator\n  def add(a, b)\n  return +\nend\nend",
+      "lost": ["a", "b"],
+      "added": []
+    }
+  }
+}
