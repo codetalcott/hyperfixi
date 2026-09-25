@@ -424,7 +424,7 @@ describe('MorphCommand', () => {
         context
       );
 
-      expect(input.strategy).toBe('morph');
+      expect(input.strategy).toBe('morphMerge');
       expect(input.targets).toHaveLength(1);
       expect(input.content).toBe('<div>New Content</div>');
     });
@@ -487,7 +487,7 @@ describe('MorphCommand', () => {
         context
       );
 
-      expect(input.strategy).toBe('morph');
+      expect(input.strategy).toBe('morphMerge');
     });
   });
 
@@ -592,7 +592,7 @@ describe('MorphCommand', () => {
         context
       );
 
-      expect(input.strategy).toBe('morph');
+      expect(input.strategy).toBe('morphMerge');
       expect(input.targets).toHaveLength(1);
       expect(input.content).toBe('<p>Content</p>');
     });

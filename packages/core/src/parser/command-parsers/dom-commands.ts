@@ -604,9 +604,23 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
   const targetExpr = isDelete ? ctx.parseExpression() : parseOneArgument(ctx, [KEYWORDS.WITH]);
   if (targetExpr) args.push(targetExpr);
 
-  if (!isDelete && consumeOptionalKeyword(ctx, KEYWORDS.WITH)) {
+  // `morph <target> to <content>` is upstream's spelling (MorphCommand:
+  // `requireToken("to")`); `with` is hyperfixi's, kept. Both fill the one
+  // content slot, so the two spellings are the same node.
+  const isMorph = identifierNode.name === 'morph';
+  if (
+    !isDelete &&
+    (consumeOptionalKeyword(ctx, KEYWORDS.WITH) ||
+      (isMorph && consumeOptionalKeyword(ctx, KEYWORDS.TO)))
+  ) {
     const contentExpr = parseOneArgument(ctx, ['using']);
     if (contentExpr) modifiers['with'] = contentExpr as ExpressionNode;
+  }
+  // A morph has nothing to morph INTO without content, and could only throw
+  // when run. Upstream rejects it at parse time — `morph closest <form/> to it`
+  // included, since `closest` takes that `to` for itself.
+  if (isMorph && modifiers['with'] === undefined) {
+    ctx.addError("Expected 'to' and the content to morph into");
   }
 
   return CommandNodeBuilder.fromIdentifier<'swap' | 'morph'>(identifierNode)

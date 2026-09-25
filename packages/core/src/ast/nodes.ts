@@ -192,6 +192,8 @@ export interface CallExpressionNode extends BaseNode {
   readonly callee: Expr;
   readonly arguments: Expr[];
   readonly isConstructor?: boolean;
+  /** `closest <sel> to <el>`: the element the search starts from (default `me`). */
+  readonly closestTo?: Expr;
 }
 
 /**

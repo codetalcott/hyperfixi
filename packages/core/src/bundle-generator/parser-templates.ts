@@ -1060,7 +1060,7 @@ class HybridParser {
     }
     return { type: "command", name, args: [url], modifiers };
   }
-  /** \`morph [over] <target> with|to|into <content>\` — all four connectives the full parser takes. */
+  /** \`morph [over] <target> to|with|into <content>\` — upstream spells it \`to\`; the full parser also takes \`with\`; \`into\` is this parser's own. */
   parseMorph() {
     this.expect("morph");
     let modifier;

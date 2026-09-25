@@ -311,6 +311,19 @@ const CAPABILITIES: Capability[] = [
       (fetchCalls[0].init as { headers?: Record<string, string> }).headers?.['X-Cap'] === '1' &&
       t(o.doc).innerHTML === 'FETCHED',
   },
+  // `morph` MERGES a lone root element with the target's tag — upstream's
+  // runtime.morph, and the full runtime's 'morphMerge'. Asserted on the
+  // ATTRIBUTE and the nesting: an inner morph also puts `new` into #t, one
+  // level deeper, inside a second #t.
+  {
+    id: 'morph_merge_root',
+    command: 'morph',
+    code: `morph #t to "<div id='t' class='merged'>new</div>"`,
+    check: o =>
+      t(o.doc).className === 'merged' &&
+      t(o.doc).textContent === 'new' &&
+      o.doc.querySelectorAll('#t').length === 1,
+  },
 ];
 
 const win = (): Record<string, unknown> => globalThis as unknown as Record<string, unknown>;

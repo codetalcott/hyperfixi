@@ -204,17 +204,20 @@ export const closestExpression: ExpressionImplementation = {
       throw new Error('closest requires a string selector');
     }
 
-    if (!context.me) {
+    // `closest <sel> to <el>` passes the element to start from; else `me`.
+    const start = args.length > 1 ? args[1] : context.me;
+    if (!(start instanceof Element)) {
       return null;
     }
 
-    return context.me.closest(selector);
+    return start.closest(selector);
   },
 
   validate(args: unknown[]): string | null {
-    // Allow both strings and identifier nodes
-    if (args.length !== 1) {
-      return 'closest requires exactly 1 argument (selector)';
+    // Allow both strings and identifier nodes; a second argument is the
+    // element `closest <sel> to <el>` starts from.
+    if (args.length !== 1 && args.length !== 2) {
+      return 'closest requires a selector and, optionally, the element to start from';
     }
     const arg = args[0];
     if (typeof arg === 'string') return null;

@@ -3653,6 +3653,14 @@ export class Parser {
       args
     );
 
+    // `closest <sel> to <el>` searches up from <el> instead of `me` — upstream's
+    // ClosestExpr takes `to <expression>` itself. That is also why upstream
+    // REJECTS `morph closest <form/> to it`: closest owns the `to`, and morph
+    // is left without one. `morph (closest <form/>) to it` is the valid form.
+    if (funcName === 'closest' && args.length > 0 && this.match('to')) {
+      callNode.closestTo = this.parseExpression();
+    }
+
     // Relative positional modifiers for `next`/`previous`:
     //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
     if (funcName === 'next' || funcName === 'previous') {

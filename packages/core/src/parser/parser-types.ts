@@ -69,6 +69,8 @@ export interface CallExpressionNode extends ASTNode {
   type: 'callExpression';
   callee: ASTNode;
   arguments: ASTNode[];
+  /** `closest <sel> to <el>`: the element the search starts from (default `me`). */
+  closestTo?: ASTNode;
 }
 
 /**

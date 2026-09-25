@@ -1791,6 +1791,11 @@ async function evaluateCallExpression(
 
     switch (funcName) {
       case 'closest':
+        // `closest <sel> to <el>` starts the search at <el>.
+        if (node.closestTo) {
+          const start = unwrapElement(await evaluateAST(node.closestTo, context)) ?? null;
+          return referencesExpressions.closest.evaluate(context, args[0], start);
+        }
         return referencesExpressions.closest.evaluate(context, ...args);
       case 'previous':
       case 'next': {

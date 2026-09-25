@@ -304,7 +304,7 @@ export class MorphCommand implements DecoratedCommand {
     // emits `args: [source]` with the target under `modifiers.on`; both are
     // read here.
     const strategy: SwapStrategy =
-      literalText(modifiers.strategy)?.toLowerCase() === 'over' ? 'morphOuter' : 'morph';
+      literalText(modifiers.strategy)?.toLowerCase() === 'over' ? 'morphOuter' : 'morphMerge';
     const useViewTransition = modifiers.viewTransition !== undefined;
 
     const targetNode: ASTNode | undefined =
