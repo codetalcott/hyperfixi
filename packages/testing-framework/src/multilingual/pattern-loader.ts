@@ -63,8 +63,13 @@ async function loadTranslationsForLanguage(
     translations = await getTranslationsByLanguage(language, 1000);
   }
 
-  // Convert to PatternTranslation format
-  return translations.map(t => mapToPatternTranslation(t));
+  // A non-translatable row is stored as written in every language: a copy, not
+  // a translation. Grading it would score the English source under another
+  // language's parser. (Markup rows are dropped by shape in loadPatterns; this
+  // also covers plain rows, such as intercept-cache-strategies.)
+  return translations
+    .filter(t => t.translationMethod !== 'non-translatable-identity')
+    .map(t => mapToPatternTranslation(t));
 }
 
 /**

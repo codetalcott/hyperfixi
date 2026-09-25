@@ -73,7 +73,8 @@ export type WordOrder = 'SVO' | 'SOV' | 'VSO' | 'V2';
  * - `grammar-transform-no-reference`: `best` only — the i18n row because semantic
  *   cannot parse the ENGLISH source (a parser-coverage gap, not a render loss).
  * - `keyword-substitute`: word-for-word fallback for a language with no grammar profile.
- * - `original`: the English row; `non-translatable-identity`: markup rows copied verbatim.
+ * - `original`: the English row; `non-translatable-identity`: a non-translatable row copied
+ *   verbatim (the markup rows, and intercept-cache-strategies).
  */
 export type TranslationMethod =
   | 'semantic-render'

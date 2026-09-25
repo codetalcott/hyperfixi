@@ -159,12 +159,20 @@ in the next `npm run sync:translations`.
 
 ### Non-Translatable Patterns
 
-5 patterns (`hx-live-attribute`, `hx-live-with-mutator`,
-`sse-connect-swap`, `sse-multi-event`, `ws-connect-send`) are flagged
-`translatable=0` because their `raw_code` is HTML markup — the
-attribute names (`hx-live`, `sse-connect`, etc.) are language-agnostic
-and resolved at runtime by vocab modules. `sync-translations.ts` emits
-identity rows (raw English text) for these across all 24 languages.
+8 patterns are flagged `translatable=0`. `sync-translations.ts` stores
+each as written in all 24 languages (method `non-translatable-identity`),
+and the multilingual sweep skips those rows: they are copies, not
+translations.
+
+- 7 are HTML markup. `hx-live-attribute`, `hx-live-with-mutator`,
+  `sse-connect-swap`, `sse-multi-event` and `ws-connect-send` use
+  attribute names (`hx-live`, `sse-connect`, etc.) that are
+  language-agnostic and resolved at runtime by vocab modules.
+  `component-hello-world` and `component-with-slots` carry no
+  hyperscript at all.
+- `intercept-cache-strategies` has no semantic schema, so every
+  rendering dropped the whole body (the verb and `end`). It is stored as
+  written until a schema exists.
 
 ## Integration Points
 
