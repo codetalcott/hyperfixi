@@ -20,7 +20,7 @@
     "behavior Toggleable(cls) on click toggle .{cls} on me end end": "ok:4e33ea09e710",
     "on click if true then add .a else add .b end": "ok:717364617185",
     "on click repeat 3 times log \"x\" end": "ok:1eb37127b3d2",
-    "on click for item in [1, 2, 3] log item end": "ok:5f66f2362c30",
+    "on click for item in [1, 2, 3] log item end": "ok:d30869833131",
     "on click repeat while false log \"never\" end": "ok:a0d613e7042f",
     "on click tell #panel show end": "ok:11207ff871b3",
     "on click js return 1 end": "ok:144afe895e8b",
