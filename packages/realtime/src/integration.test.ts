@@ -201,8 +201,19 @@ describe('@hyperfixi/realtime — integration', () => {
     });
 
     it('reports a parse error (not a throw) when end is missing', () => {
-      const r = parse('socket Bad ws://x on message log it');
+      // eventsource closes with its own `end`, which upstream requires
+      // unconditionally ("Expected 'end' but found '<<<EOF>>>'").
+      const r = parse('eventsource Bad from /x on message log it');
       expect(r.success).toBe(false);
+    });
+
+    it("closes a socket's handler at end of input, as upstream does", () => {
+      // The handler body's `end` is the socket's, and an open block may omit
+      // its `end` at end of input — upstream 0.9.93 accepts this source. It was
+      // pinned here as an error until core learned that rule.
+      const r = parse('socket Open ws://x on message log it');
+      expect(r.success).toBe(true);
+      expect((r.node as unknown as SocketFeatureNode).handler?.event).toBe('message');
     });
   });
 

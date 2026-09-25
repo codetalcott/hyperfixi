@@ -22,7 +22,8 @@
  *      parser dispatch a keyword at script top-level (parallel to
  *      `init` / `on` / `def`) to a plugin-provided parse function. The
  *      parse fn receives a `ParserContext` and can consume a body via
- *      `ctx.parseCommandListUntilEnd()`.
+ *      `ctx.parseCommandListUntilEnd()` (which consumes the closing `end`,
+ *      or accepts end of input in its place — upstream's open-block rule).
  *
  *   5. Custom AST node evaluators — `registerNodeEvaluator(type, fn)` lets
  *      a plugin register an evaluator for a custom AST node type. The
