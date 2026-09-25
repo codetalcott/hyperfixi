@@ -6,6 +6,7 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
+import type { Pattern } from '@hyperfixi/patterns-reference';
 
 // =============================================================================
 // Tool Definitions
@@ -40,7 +41,7 @@ export const patternTools: Tool[] = [
   {
     name: 'search_patterns',
     description:
-      'Search the pattern database by keyword or category filter (class-manipulation, visibility, async, validation, etc.). Unlike get_examples which takes task descriptions, this searches pattern names and content.',
+      'Search the pattern database by keyword, optionally within one category (events, dom-manipulation, class-manipulation, visibility, forms, async, etc.). Unlike get_examples which takes task descriptions, this searches pattern names and content.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -161,14 +162,12 @@ export async function handlePatternTool(
 
       try {
         const ref = patternsRef.createPatternsReference({ readonly: true });
-        let patterns;
+        let patterns: Pattern[];
 
         try {
-          if (category) {
-            patterns = await ref.getPatternsByCategory(category);
-          } else {
-            patterns = await ref.searchPatterns(query, { limit });
-          }
+          // One call: a category narrows the search, it does not replace it (the
+          // query and the limit used to be dropped whenever a category was given).
+          patterns = await ref.searchPatterns(query, { category, limit });
         } finally {
           ref.close();
         }
@@ -179,11 +178,11 @@ export async function handlePatternTool(
               type: 'text',
               text: JSON.stringify(
                 {
-                  patterns: patterns.map((p: any) => ({
+                  patterns: patterns.map(p => ({
                     id: p.id,
                     title: p.title,
                     code: p.rawCode,
-                    category: p.feature,
+                    category: p.category,
                   })),
                   count: patterns.length,
                   query,
@@ -516,7 +515,7 @@ function handleWithBuiltinExamples(
                 builtinExamples: BUILTIN_EXAMPLES.length,
                 categories: [...new Set(BUILTIN_EXAMPLES.map(ex => ex.category))],
                 supportedLanguages: ['en'],
-                note: 'Install @hyperfixi/patterns-reference for 106 patterns, 1378 translations, 414 LLM examples',
+                note: 'Install @hyperfixi/patterns-reference for the full pattern database: patterns, their translations in 24 languages, and LLM examples',
               },
               null,
               2
