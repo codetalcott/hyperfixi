@@ -693,6 +693,16 @@ export class Parser {
         }
       }
 
+      // A `*` with a space before it and a name glued after it is a style
+      // reference, not multiplication. Upstream lexes `*` + a letter as one
+      // STYLE_REF token everywhere, so `100px *height` is two things there:
+      // the value `100px`, then the next property of a multi-property
+      // `transition`. Read as multiplication, it silently became `100px *
+      // height`. The unspaced `a*b` stays multiplication; upstream rejects it.
+      if (nextToken.value === '*' && this.isSpacedStyleRef(this.current)) {
+        break;
+      }
+
       // Check infix table FIRST — operators like 'in' are both stop tokens
       // and comparison operators; the Pratt table takes priority.
       const infixEntry = Parser.PRATT_TABLE.get(nextToken.value);
@@ -811,6 +821,19 @@ export class Parser {
 
   /** The unary tier (`not`, `!`, `some`): `beep!` takes an operand at the same power. */
   private static readonly BEEP_OPERAND_BP = 80;
+
+  /** Is the `*` at `i` glued to a following name, i.e. the start of a style reference? */
+  private isStyleRefStar(i: number): boolean {
+    const star = this.tokens[i];
+    const name = this.tokens[i + 1];
+    return star?.value === '*' && !!name && name.start === star.end && isIdentifierLike(name);
+  }
+
+  /** A style reference whose `*` has a space before it: `100px *height`. */
+  private isSpacedStyleRef(i: number): boolean {
+    const prev = this.tokens[i - 1];
+    return this.isStyleRefStar(i) && !!prev && prev.end < this.tokens[i]!.start;
+  }
 
   /**
    * Try to parse a trailing string-postfix measurement unit on `left`.
@@ -3774,6 +3797,12 @@ export class Parser {
     // Positional keywords that should be parsed as navigation functions
     // These are used in patterns like "the first <...>", "the last item"
     const positionalKeywords = ['first', 'last', 'next', 'previous', 'random', 'closest'];
+
+    // `the *opacity`: the article before a style reference. `the` used to come
+    // back as a NAME here, and `*opacity` multiplied it.
+    if (this.isStyleRefStar(this.current)) {
+      return this.parsePrimary();
+    }
 
     // Next should be the property name (e.g., "value", "innerHTML", etc.)
     if (!this.checkIdentifier()) {

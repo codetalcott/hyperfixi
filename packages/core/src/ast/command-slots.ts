@@ -102,7 +102,7 @@ export const COMMAND_SLOTS = {
   throw: [],
   toggle: ['as', 'between', 'for', 'from', 'on', 'until'],
   unless: [],
-  transition: ['on', 'over', 'to', 'with'],
+  transition: ['from', 'on', 'over', 'pairs', 'to', 'using', 'with'],
   trigger: ['on', 'to', 'with'],
   wait: [],
 } as const satisfies Record<string, readonly string[]>;

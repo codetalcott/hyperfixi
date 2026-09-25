@@ -1,10 +1,14 @@
 /**
  * `transition [<target>] <property> to <value>` — parse AND execute.
  *
- * Every form here is `VALID` on the real `hyperscript.org` engine
- * (`hs.parse(src).errors` → `[]`), and the possessive is what the docs and the
+ * The possessive forms are `VALID` on the real `hyperscript.org` engine
+ * (`hs.parse(src).errors` → `[]`), and they are what the docs and the
  * multilingual corpus render — yet only the BARE form worked before this fix
- * (docs-internal/PARSER_NEXT_STEPS.md, found by #847's reachability probe):
+ * (docs-internal/PARSER_NEXT_STEPS.md, found by #847's reachability probe).
+ * The space-separated `#a *opacity` is NOT upstream's: 0.9.93 rejects it
+ * ("Expected 'to' but found '*opacity'"). It is a hyperfixi extension, kept
+ * because it is `measure`'s shape (re-measured 2026-09-25, when the other owner
+ * forms landed: `transition-owners.test.ts`).
  *
  *   transition my *opacity to 0 over 200ms  → 'Expected "to" keyword after
  *                                             property in transition command'

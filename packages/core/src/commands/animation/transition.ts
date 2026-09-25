@@ -5,9 +5,11 @@
  * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
- *   transition <property> to <value>
- *   transition <property> to <value> over <duration>
- *   transition <property> to <value> over <duration> with <timing-function>
+ *   transition <property> [from <value>] to <value> [<property> … to <value>]…
+ *              [over <duration>] [using <css transition> | with <timing-function>]
+ *
+ * Each <property> names a style and, optionally, its owner: `*opacity`,
+ * `#a's *opacity`, `next .panel's *max-height`, `*max-height of #panel`.
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -89,14 +91,84 @@ function namedPropertyOf(node: unknown): { property: string; objectNode?: unknow
 }
 
 /**
- * Typed input for TransitionCommand
+ * One property of a transition: its owner, the style, an optional start value
+ * and the value it moves to.
  */
-export interface TransitionCommandInput {
-  target?: string | HTMLElement;
+export interface TransitionPairInput {
+  /**
+   * The element(s) whose style moves; `me` when absent. A collection moves
+   * every element in it, as upstream's implicit loop does.
+   */
+  target?: string | HTMLElement | HTMLElement[];
   property: string;
   value: string | number;
+  /** `from <value>`: applied before the transition starts. */
+  from?: string | number;
+}
+
+/**
+ * Typed input for TransitionCommand. The first pair's fields sit at the top
+ * level, so a single-property transition reads as it always has.
+ */
+export interface TransitionCommandInput extends TransitionPairInput {
   duration?: number | string;
   timingFunction?: string;
+  /** `using <css>`, upstream's form: the element's whole `transition` value while it runs. */
+  using?: string;
+  /** Every pair after the first: `transition *width to 100px *height to 50px`. */
+  pairs?: TransitionPairInput[];
+}
+
+/** One element's share of one pair, as `execute` runs it. */
+interface TransitionJob {
+  element: HTMLElement;
+  property: string;
+  pair: TransitionPairInput;
+  fromValue: string;
+  toValue: string;
+  removeInlineAfter: boolean;
+}
+
+/** Values that restore the stylesheet's value rather than naming one. */
+const RESTORE_KEYWORDS = new Set(['initial', 'inherit', 'unset', 'revert']);
+
+/** The HTML elements a value holds: one element, or a collection's. */
+function elementsOf(value: unknown): HTMLElement[] {
+  if (Array.isArray(value) || isNodeList(value)) {
+    return Array.from(value as ArrayLike<unknown>).filter(isHTMLElement) as HTMLElement[];
+  }
+  return isHTMLElement(value) ? [value as HTMLElement] : [];
+}
+
+/**
+ * A value node's value. A CSS keyword (`initial`, `inherit`, …) is an unbound
+ * name that evaluates to undefined, so it stands for its own name.
+ */
+async function valueOf(
+  node: ASTNode,
+  evaluator: ExpressionEvaluator,
+  context: ExecutionContext
+): Promise<string | number> {
+  const value = await evaluator.evaluate(node, context);
+  const name = (node as { name?: unknown }).name;
+  if (value === undefined && node.type === 'identifier' && typeof name === 'string') return name;
+  return value as string | number;
+}
+
+/**
+ * The longest duration plus delay in a CSS `transition` value, in ms: how long
+ * a `using <css>` transition can take, and so how long to wait for it before
+ * giving up on `transitionend`. Undefined when the value names no time.
+ */
+function longestTransitionMs(css: string): number | undefined {
+  let longest: number | undefined;
+  for (const item of css.split(',')) {
+    const times = [...item.matchAll(/(\d*\.?\d+)(ms|s)\b/g)].map(
+      m => parseFloat(m[1]!) * (m[2] === 's' ? 1000 : 1)
+    );
+    if (times.length > 0) longest = Math.max(longest ?? 0, times[0]! + (times[1] ?? 0));
+  }
+  return longest;
 }
 
 /**
@@ -121,13 +193,17 @@ export interface TransitionCommandOutput {
 export class TransitionCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Animate CSS properties using CSS transitions',
-    syntax: 'transition [<target>] <property> to <value> [over <duration>] [with <timing>]',
+    syntax:
+      'transition <property> [from <value>] to <value> [<property> … to <value>]… [over <duration>] [using <css> | with <timing>]',
     examples: [
       'transition opacity to 0.5',
       'transition my *opacity to 0 over 200ms',
       "transition #box's *opacity to 0 over 200ms",
       'transition left to 100px over 500ms',
       'transition background-color to red over 1s with ease-in-out',
+      'transition *width to 100px *height to 50px over 300ms',
+      'transition *opacity of #panel from 0 to 1 over 200ms',
+      'transition my *opacity to 0 using "opacity 1s ease-in"',
     ],
     sideEffects: ['style-change', 'timing'],
     category: 'animation',
@@ -148,22 +224,18 @@ export class TransitionCommand implements DecoratedCommand {
     if (!raw.args?.length) throw new Error('transition requires property and value');
 
     let property: string;
-    let target: string | HTMLElement | undefined;
+    let target: string | HTMLElement | HTMLElement[] | undefined;
 
     const firstArg = await evaluator.evaluate(raw.args[0], context);
-
-    // A selector arg can evaluate to an element collection; take the first,
-    // as resolveElement would for a selector string.
-    const asElement = (value: unknown): unknown =>
-      Array.isArray(value) || isNodeList(value) ? (value as ArrayLike<unknown>)[0] : value;
-
-    const firstAsElement = asElement(firstArg);
+    // A selector or query owner evaluates to a collection, and every element
+    // in it moves (upstream's implicit loop). This took the first one only.
+    const owners = elementsOf(firstArg);
 
     if (
-      isHTMLElement(firstAsElement) ||
+      owners.length > 0 ||
       (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))
     ) {
-      target = firstAsElement as string | HTMLElement;
+      target = owners.length === 1 ? owners[0] : owners.length > 1 ? owners : (firstArg as string);
       property = String(await evaluator.evaluate(raw.args[1] as ASTNode, context));
     } else if (raw.args.length >= 2) {
       // The parser emits `[target, property]` (parseTransitionCommand), so a
@@ -181,8 +253,8 @@ export class TransitionCommand implements DecoratedCommand {
       if (!named) throw new Error('transition requires a CSS property');
       property = named.property;
       if (named.objectNode !== undefined) {
-        const owner = asElement(await evaluator.evaluate(named.objectNode as ASTNode, context));
-        if (isHTMLElement(owner)) target = owner as HTMLElement;
+        const owner = elementsOf(await evaluator.evaluate(named.objectNode as ASTNode, context));
+        if (owner.length > 0) target = owner.length === 1 ? owner[0] : owner;
       }
     } else {
       property = String(firstArg);
@@ -197,83 +269,162 @@ export class TransitionCommand implements DecoratedCommand {
     }
     if (!raw.modifiers?.to) throw new Error('transition requires "to <value>"');
 
-    let value = await evaluator.evaluate(raw.modifiers.to, context);
-
-    // Handle CSS keywords like 'initial', 'inherit', 'unset' that evaluate to undefined
-    // because they're not defined as variables - use the raw identifier name instead
-    if (value === undefined && (raw.modifiers.to as any).type === 'identifier') {
-      value = (raw.modifiers.to as any).name;
-    }
-
-    const result: TransitionCommandInput = { property, value: value as string | number };
+    const result: TransitionCommandInput = {
+      property,
+      value: await valueOf(raw.modifiers.to, evaluator, context),
+    };
     if (target !== undefined) result.target = target;
+    if (raw.modifiers?.from) result.from = await valueOf(raw.modifiers.from, evaluator, context);
+    if (raw.modifiers?.pairs) {
+      result.pairs = await this.laterPairs(raw.modifiers.pairs, evaluator, context);
+    }
     if (raw.modifiers?.over)
       result.duration = await evaluator.evaluate(raw.modifiers.over, context);
     if (raw.modifiers?.with)
       result.timingFunction = String(await evaluator.evaluate(raw.modifiers.with, context));
+    if (raw.modifiers?.using)
+      result.using = String(await evaluator.evaluate(raw.modifiers.using, context));
     return result;
+  }
+
+  /**
+   * The pairs after the first, from the parser's `pairs` slot: an array of
+   * objects with `property` and `to`, and `owner` / `from` when given.
+   */
+  private async laterPairs(
+    node: ASTNode,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<TransitionPairInput[]> {
+    const pairs: TransitionPairInput[] = [];
+    for (const pairNode of (node as { elements?: ASTNode[] }).elements ?? []) {
+      const fields = new Map<string, ASTNode>();
+      const properties =
+        (pairNode as { properties?: Array<{ key: { name?: unknown }; value: ASTNode }> })
+          .properties ?? [];
+      for (const { key, value } of properties) {
+        if (typeof key.name === 'string') fields.set(key.name, value);
+      }
+      const propertyNode = fields.get('property');
+      const toNode = fields.get('to');
+      if (!propertyNode || !toNode) throw new Error('transition requires property and value');
+
+      const pair: TransitionPairInput = {
+        property: String(await evaluator.evaluate(propertyNode, context)),
+        value: await valueOf(toNode, evaluator, context),
+      };
+      const ownerNode = fields.get('owner');
+      if (ownerNode) {
+        const owners = elementsOf(await evaluator.evaluate(ownerNode, context));
+        if (owners.length === 0) throw new Error('transition: target element not found');
+        pair.target = owners.length === 1 ? owners[0] : owners;
+      }
+      const fromNode = fields.get('from');
+      if (fromNode) pair.from = await valueOf(fromNode, evaluator, context);
+      pairs.push(pair);
+    }
+    return pairs;
   }
 
   async execute(
     input: TransitionCommandInput,
     context: TypedExecutionContext
   ): Promise<TransitionCommandOutput> {
-    let { property } = input;
-    const { target, value, duration: durationInput, timingFunction } = input;
+    const duration = parseDuration(
+      input.duration,
+      (input.using !== undefined && longestTransitionMs(input.using)) || 300
+    );
+    const timing = input.timingFunction || 'ease';
 
-    if (property.startsWith('*')) property = property.substring(1);
-    property = camelToKebab(property);
-
-    const targetElement = resolveElement(target, context, 'transition');
-    const duration = parseDuration(durationInput, 300);
-    const fromValue = getComputedStyle(targetElement).getPropertyValue(property);
-
-    const originalTransition = targetElement.style.transition;
-    const transitionProp = `${property} ${duration}ms ${timingFunction || 'ease'}`;
-    targetElement.style.transition = originalTransition
-      ? `${originalTransition}, ${transitionProp}`
-      : transitionProp;
-
-    let toValue = String(value);
-    let removeInlineAfter = false;
-
-    // Handle CSS keywords that should restore to stylesheet value, not CSS spec initial
-    // 'initial' in hyperscript means "restore to original" not CSS's transparent/default
-    if (
-      toValue === 'initial' ||
-      toValue === 'inherit' ||
-      toValue === 'unset' ||
-      toValue === 'revert'
-    ) {
-      // Get the stylesheet value by temporarily removing inline style
-      const currentInline = targetElement.style.getPropertyValue(property);
-      targetElement.style.removeProperty(property);
-      toValue = getComputedStyle(targetElement).getPropertyValue(property);
-      // Restore inline style so transition can animate FROM current value
-      if (currentInline) {
-        targetElement.style.setProperty(property, currentInline);
+    // Every element of every pair. Each pair moves its own owner, as
+    // upstream's: `*width of #a to 10px *height to 5px` moves #a's width and
+    // `me`'s height.
+    const jobs: TransitionJob[] = [];
+    for (const pair of [input, ...(input.pairs ?? [])]) {
+      let property = pair.property;
+      if (property.startsWith('*')) property = property.substring(1);
+      property = camelToKebab(property);
+      const elements = Array.isArray(pair.target)
+        ? pair.target.filter(isHTMLElement)
+        : [resolveElement(pair.target, context, 'transition')];
+      for (const element of elements) {
+        jobs.push({
+          element,
+          property,
+          pair,
+          fromValue: getComputedStyle(element).getPropertyValue(property),
+          toValue: '',
+          removeInlineAfter: false,
+        });
       }
-      removeInlineAfter = true;
+    }
+    if (jobs.length === 0) throw new Error('transition: target element not found');
+
+    // 1. `from` values, before the transition style exists so they apply at
+    //    once, then a reflow so the browser starts from them.
+    for (const job of jobs) {
+      if (job.pair.from !== undefined) {
+        job.element.style.setProperty(job.property, String(job.pair.from));
+      }
+    }
+    for (const job of jobs) if (job.pair.from !== undefined) void job.element.offsetWidth;
+
+    // 2. The transition, once per element, for all of that element's
+    //    properties. `using` replaces the whole value, as upstream's does.
+    const originals = new Map<HTMLElement, string>();
+    for (const job of jobs) {
+      if (!originals.has(job.element)) originals.set(job.element, job.element.style.transition);
+    }
+    for (const [element, original] of originals) {
+      const own = jobs
+        .filter(job => job.element === element)
+        .map(job => `${job.property} ${duration}ms ${timing}`);
+      element.style.transition = input.using ?? [original, ...own].filter(Boolean).join(', ');
     }
 
-    targetElement.style.setProperty(property, toValue);
+    // 3. The values each property moves to.
+    for (const job of jobs) {
+      const { element, property } = job;
+      let toValue = String(job.pair.value);
 
-    const result = await waitForTransitionEnd(targetElement, property, duration);
-    targetElement.style.transition = originalTransition;
+      // Handle CSS keywords that should restore to stylesheet value, not CSS spec initial
+      // 'initial' in hyperscript means "restore to original" not CSS's transparent/default
+      if (RESTORE_KEYWORDS.has(toValue)) {
+        // Get the stylesheet value by temporarily removing inline style
+        const currentInline = element.style.getPropertyValue(property);
+        element.style.removeProperty(property);
+        toValue = getComputedStyle(element).getPropertyValue(property);
+        // Restore inline style so transition can animate FROM current value
+        if (currentInline) {
+          element.style.setProperty(property, currentInline);
+        }
+        job.removeInlineAfter = true;
+      }
+
+      job.toValue = toValue;
+      element.style.setProperty(property, toValue);
+    }
+
+    // 4. Wait for every one, then put each element's transition back.
+    const results = await Promise.all(
+      jobs.map(job => waitForTransitionEnd(job.element, job.property, duration))
+    );
+    for (const [element, original] of originals) element.style.transition = original;
 
     // If we transitioned to "initial", remove inline style to let stylesheet take over
-    if (removeInlineAfter) {
-      targetElement.style.removeProperty(property);
+    for (const job of jobs) {
+      if (job.removeInlineAfter) job.element.style.removeProperty(job.property);
     }
 
     // No `it` assignment — upstream parity; same reasoning as settle.ts.
+    const first = jobs[0]!;
     return {
-      element: targetElement,
-      property,
-      fromValue,
-      toValue,
+      element: first.element,
+      property: first.property,
+      fromValue: first.fromValue,
+      toValue: first.toValue,
       duration,
-      completed: result.completed,
+      completed: results.every(result => result.completed),
     };
   }
 }

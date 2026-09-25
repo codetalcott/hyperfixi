@@ -263,6 +263,9 @@ describe('Animation Command Parsers', () => {
       expect(result.modifiers!.to).toBeDefined();
     });
 
+    // The property is parsed as an EXPRESSION and taken apart (2026-09-25), so
+    // these mocks answer `parseExpression` the way the real parser does: a
+    // `*name` style reference is a selector node, a bare name an identifier.
     it('should parse transition with * prefix CSS property', () => {
       const tokens = createTokenStream(
         ['*', 'background-color', 'to', 'red'],
@@ -272,10 +275,20 @@ describe('Animation Command Parsers', () => {
       const ctx = createMockParserContext(tokens, {
         peek: vi.fn(() => tokens[pos]),
         check: vi.fn((val: string) => tokens[pos]?.value === val),
-        checkIdentifierLike: vi.fn(() => pos === 1),
         advance: vi.fn(() => tokens[pos++]),
         isAtEnd: vi.fn(() => pos >= tokens.length),
-        parsePrimary: vi.fn(() => {
+        parseExpression: vi.fn(() => {
+          if (tokens[pos]?.value === '*') {
+            pos += 2;
+            return {
+              type: 'selector',
+              value: '*background-color',
+              start: 0,
+              end: 0,
+              line: 1,
+              column: 0,
+            };
+          }
           const token = tokens[pos++];
           return { type: 'identifier', name: token.value, start: 0, end: 0, line: 1, column: 0 };
         }),
@@ -289,18 +302,18 @@ describe('Animation Command Parsers', () => {
     });
 
     it('should parse transition with hyphenated property', () => {
+      // The tokenizer keeps `background-color` one identifier.
       const tokens = createTokenStream(
-        ['background', '-', 'color', 'to', 'red'],
-        ['identifier', 'operator', 'identifier', 'keyword', 'identifier']
+        ['background-color', 'to', 'red'],
+        ['identifier', 'keyword', 'identifier']
       );
       let pos = 0;
       const ctx = createMockParserContext(tokens, {
         peek: vi.fn(() => tokens[pos]),
         check: vi.fn((val: string) => tokens[pos]?.value === val),
-        checkIdentifierLike: vi.fn(() => [0, 2].includes(pos)),
         advance: vi.fn(() => tokens[pos++]),
         isAtEnd: vi.fn(() => pos >= tokens.length),
-        parsePrimary: vi.fn(() => {
+        parseExpression: vi.fn(() => {
           const token = tokens[pos++];
           return { type: 'identifier', name: token.value, start: 0, end: 0, line: 1, column: 0 };
         }),
