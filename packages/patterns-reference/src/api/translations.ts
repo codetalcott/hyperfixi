@@ -148,8 +148,10 @@ export async function getHighConfidenceTranslations(
 }
 
 /**
- * Verify a translation parses correctly.
- * Note: This requires @lokascript/semantic to be available.
+ * Re-measure whether a translation parses, record the result, and return it.
+ * Uses the same definition sync-translations writes `verified_parses` with
+ * (src/sync/verify-parses.ts): every hyperscript body of the row parses in its
+ * language. Note: This requires @lokascript/semantic to be available.
  */
 export async function verifyTranslation(
   translation: Translation,
@@ -159,38 +161,43 @@ export async function verifyTranslation(
   let errorMessage: string | null = null;
   let confidence = translation.confidence;
 
-  try {
-    // Dynamic import to avoid bundling issues
-    const { canParse, parse } = await import('@lokascript/semantic');
+  const db = getDatabase(options);
+  const example = db
+    .prepare('SELECT translatable FROM code_examples WHERE id = ?')
+    .get(translation.codeExampleId) as { translatable: number } | undefined;
 
-    if (canParse(translation.hyperscript, translation.language)) {
-      parse(translation.hyperscript, translation.language);
-      parseSuccess = true;
-    } else {
-      errorMessage = 'canParse returned false';
-    }
+  try {
+    // Dynamic import: the parser is only loaded by callers that verify.
+    const { verifyParses } = await import('../sync/verify-parses');
+    parseSuccess = verifyParses(
+      translation.hyperscript,
+      translation.language,
+      example?.translatable !== 0
+    );
+    if (!parseSuccess) errorMessage = 'the semantic parser rejected it (or it has no hyperscript)';
   } catch (e) {
     errorMessage = (e as Error).message;
   }
 
-  // Update database
-  const db = getDatabase(options);
-  db.prepare(
+  // The flag and its test record land together. (The INSERT used to name
+  // columns pattern_tests does not have, so it threw AFTER the UPDATE had
+  // already flipped the flag.)
+  db.transaction(() => {
+    db.prepare(
+      `
+      UPDATE pattern_translations
+      SET verified_parses = ?, updated_at = datetime('now')
+      WHERE id = ?
     `
-    UPDATE pattern_translations
-    SET verified_parses = ?, updated_at = datetime('now')
-    WHERE id = ?
-  `
-  ).run(parseSuccess ? 1 : 0, translation.id);
-
-  // Record test result
-  db.prepare(
+    ).run(parseSuccess ? 1 : 0, translation.id);
+    db.prepare(
+      `
+      INSERT INTO pattern_tests
+        (code_example_id, language, test_type, success, error_message, test_date)
+      VALUES (?, ?, 'parse', ?, ?, datetime('now'))
     `
-    INSERT INTO pattern_tests
-      (code_example_id, language, test_date, parse_success, error_message)
-    VALUES (?, ?, datetime('now'), ?, ?)
-  `
-  ).run(translation.codeExampleId, translation.language, parseSuccess ? 1 : 0, errorMessage);
+    ).run(translation.codeExampleId, translation.language, parseSuccess ? 1 : 0, errorMessage);
+  })();
 
   return {
     translation,

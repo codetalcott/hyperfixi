@@ -36,6 +36,9 @@ let currentDbPath: string | null = null;
 let openFileId: string | null = null;
 let lastIdentityCheckAt = 0;
 
+/** Whether the cached handle was opened read-only (it then cannot serve a write). */
+let openReadonly = false;
+
 /** Re-stat at most this often, so a bulk query loop pays one syscall, not thousands. */
 const IDENTITY_TTL_MS = 1000;
 
@@ -63,12 +66,20 @@ export function getDefaultDbPath(): string {
  */
 export function getDatabase(options: ConnectionOptions = {}): InstanceType<typeof Database> {
   const dbPath = options.dbPath ?? DEFAULT_DB_PATH;
+  const readonly = options.readonly ?? false;
+
+  // A read-only handle cannot serve a write. The read APIs open with
+  // `readonly: true`, so without this a caller that read first and then called
+  // `verifyTranslation()` got the cached read-only handle and "attempt to write
+  // a readonly database". A writable handle serves reads fine, so only this
+  // direction reopens.
+  const canServe = !openReadonly || readonly;
 
   // Reuse the open handle only if it is reading the same PATH *and* the same FILE. The
   // second half matters because `populate` swaps the file underneath us: without it a
   // long-lived consumer serves pre-populate rows indefinitely, which looks like a parser
   // bug and is not one. Behind a TTL so a query loop doesn't stat per row.
-  if (dbInstance !== null && currentDbPath === dbPath) {
+  if (dbInstance !== null && currentDbPath === dbPath && canServe) {
     const now = Date.now();
     if (now - lastIdentityCheckAt < IDENTITY_TTL_MS) {
       return dbInstance;
@@ -88,9 +99,8 @@ export function getDatabase(options: ConnectionOptions = {}): InstanceType<typeo
     dbInstance.close();
   }
 
-  dbInstance = new Database(dbPath, {
-    readonly: options.readonly ?? false,
-  });
+  dbInstance = new Database(dbPath, { readonly });
+  openReadonly = readonly;
 
   // Enable foreign keys
   dbInstance.pragma('foreign_keys = ON');
@@ -111,6 +121,7 @@ export function closeDatabase(): void {
     currentDbPath = null;
     openFileId = null;
     lastIdentityCheckAt = 0;
+    openReadonly = false;
   }
 }
 
@@ -122,6 +133,7 @@ export function resetConnection(): void {
   currentDbPath = null;
   openFileId = null;
   lastIdentityCheckAt = 0;
+  openReadonly = false;
 }
 
 /**

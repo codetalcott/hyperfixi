@@ -9,7 +9,8 @@
  */
 
 import { getDatabase, closeDatabase } from '../database/connection';
-import type { LLMExample, ConnectionOptions } from '../types';
+import type { LLMExample, ConnectionOptions, EngineCompat } from '../types';
+import { exampleCondition } from '../api/engine-filter';
 import {
   getLLMExamples,
   getExamplesByCommand,
@@ -32,7 +33,16 @@ export interface LLMExampleRecord {
   completion: string;
   language: string;
   qualityScore: number;
+  /** The engine(s) verified to run the example's pattern (never null here). */
+  engine: EngineCompat | null;
 }
+
+/** Every sync example query reads through this join; see api/engine-filter.ts. */
+const RECORDS_FROM = `
+  SELECT le.id, le.prompt, le.completion, le.language, le.quality_score as qualityScore,
+         ce.engine AS engine
+  FROM llm_examples le
+  JOIN code_examples ce ON ce.id = le.code_example_id`;
 
 /**
  * Database row type for internal use
@@ -73,16 +83,20 @@ export function isDatabaseAvailable(): boolean {
  * @param prompt - The user's request/prompt
  * @param language - Target language code (default: 'en')
  * @param limit - Maximum number of examples to return (default: 5)
+ * @param engine - Only examples whose pattern runs on this engine. Examples no
+ *   engine runs are never returned, with or without it.
  */
 export function findRelevantExamples(
   prompt: string,
   language: string = 'en',
-  limit: number = 5
+  limit: number = 5,
+  engine?: EngineCompat
 ): LLMExampleRecord[] {
   if (!syncDatabaseAvailable) return [];
 
   try {
     const db = getDatabase({ readonly: true });
+    const runs = exampleCondition('ce.engine', engine);
 
     // Extract keywords from prompt
     const keywords = extractKeywords(prompt);
@@ -91,15 +105,13 @@ export function findRelevantExamples(
       // Return top-quality examples as fallback
       const rows = db
         .prepare(
-          `
-        SELECT id, prompt, completion, language, quality_score as qualityScore
-        FROM llm_examples
-        WHERE language = ?
-        ORDER BY quality_score DESC, usage_count DESC
+          `${RECORDS_FROM}
+        WHERE le.language = ? AND ${runs.sql}
+        ORDER BY le.quality_score DESC, le.usage_count DESC
         LIMIT ?
       `
         )
-        .all(language, limit) as LLMExampleRecord[];
+        .all(language, ...runs.params, limit) as LLMExampleRecord[];
 
       trackUsageSync(
         db,
@@ -109,20 +121,20 @@ export function findRelevantExamples(
     }
 
     // Build LIKE clauses for keyword matching
-    const likeClauses = keywords.map(() => '(prompt LIKE ? OR completion LIKE ?)').join(' OR ');
+    const likeClauses = keywords
+      .map(() => '(le.prompt LIKE ? OR le.completion LIKE ?)')
+      .join(' OR ');
     const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
 
     const rows = db
       .prepare(
-        `
-      SELECT id, prompt, completion, language, quality_score as qualityScore
-      FROM llm_examples
-      WHERE language = ? AND (${likeClauses})
-      ORDER BY quality_score DESC
+        `${RECORDS_FROM}
+      WHERE le.language = ? AND ${runs.sql} AND (${likeClauses})
+      ORDER BY le.quality_score DESC
       LIMIT ?
     `
       )
-      .all(language, ...params, limit) as LLMExampleRecord[];
+      .all(language, ...runs.params, ...params, limit) as LLMExampleRecord[];
 
     trackUsageSync(
       db,
@@ -145,24 +157,24 @@ export function findRelevantExamples(
 export function findExamplesByCommand(
   command: string,
   language: string = 'en',
-  limit: number = 5
+  limit: number = 5,
+  engine?: EngineCompat
 ): LLMExampleRecord[] {
   if (!syncDatabaseAvailable) return [];
 
   try {
     const db = getDatabase({ readonly: true });
+    const runs = exampleCondition('ce.engine', engine);
 
     const rows = db
       .prepare(
-        `
-      SELECT id, prompt, completion, language, quality_score as qualityScore
-      FROM llm_examples
-      WHERE language = ? AND completion LIKE ?
-      ORDER BY quality_score DESC
+        `${RECORDS_FROM}
+      WHERE le.language = ? AND ${runs.sql} AND le.completion LIKE ?
+      ORDER BY le.quality_score DESC
       LIMIT ?
     `
       )
-      .all(language, `%${command}%`, limit) as LLMExampleRecord[];
+      .all(language, ...runs.params, `%${command}%`, limit) as LLMExampleRecord[];
 
     return rows;
   } catch (error) {
@@ -180,9 +192,10 @@ export function findExamplesByCommand(
 export function buildFewShotContextSync(
   prompt: string,
   language: string = 'en',
-  numExamples: number = 3
+  numExamples: number = 3,
+  engine?: EngineCompat
 ): string {
-  const examples = findRelevantExamples(prompt, language, numExamples);
+  const examples = findRelevantExamples(prompt, language, numExamples, engine);
 
   if (examples.length === 0) {
     return '';
@@ -376,16 +389,28 @@ export function createLLMAdapter(options?: ConnectionOptions) {
     isDatabaseAvailable,
 
     // Async methods (preferred for new code)
-    getLLMExamples: (prompt: string, language?: string, limit?: number) =>
-      getLLMExamples(prompt, language, limit, options),
-    getExamplesByCommand: (command: string, language?: string, limit?: number) =>
-      getExamplesByCommand(command, language, limit, options),
-    getHighQualityExamples: (language?: string, minQuality?: number, limit?: number) =>
-      getHighQualityExamples(language, minQuality, limit, options),
-    getMostUsedExamples: (language?: string, limit?: number) =>
-      getMostUsedExamples(language, limit, options),
-    buildFewShotContext: (prompt: string, language?: string, numExamples?: number) =>
-      buildFewShotContext(prompt, language, numExamples, options),
+    getLLMExamples: (prompt: string, language?: string, limit?: number, engine?: EngineCompat) =>
+      getLLMExamples(prompt, language, limit, { ...options, engine }),
+    getExamplesByCommand: (
+      command: string,
+      language?: string,
+      limit?: number,
+      engine?: EngineCompat
+    ) => getExamplesByCommand(command, language, limit, { ...options, engine }),
+    getHighQualityExamples: (
+      language?: string,
+      minQuality?: number,
+      limit?: number,
+      engine?: EngineCompat
+    ) => getHighQualityExamples(language, minQuality, limit, { ...options, engine }),
+    getMostUsedExamples: (language?: string, limit?: number, engine?: EngineCompat) =>
+      getMostUsedExamples(language, limit, { ...options, engine }),
+    buildFewShotContext: (
+      prompt: string,
+      language?: string,
+      numExamples?: number,
+      engine?: EngineCompat
+    ) => buildFewShotContext(prompt, language, numExamples, { ...options, engine }),
     getLLMStats: () => getLLMStats(options),
 
     // Cleanup

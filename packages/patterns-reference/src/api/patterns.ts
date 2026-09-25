@@ -5,6 +5,7 @@
  */
 
 import { getDatabase } from '../database/connection';
+import { runsOn } from './engine-filter';
 import type {
   Pattern,
   SearchOptions,
@@ -102,6 +103,17 @@ export async function getPatternsByCommand(
 }
 
 /**
+ * The `engine` search option as SQL: omitted → no filter (a catalog lists
+ * every pattern, with its verdict); otherwise the patterns that run on it.
+ * (It used to be declared on SearchOptions and silently ignored.)
+ */
+function engineFilter(searchOptions: SearchOptions): { sql: string; params: string[] } {
+  return searchOptions.engine === undefined
+    ? { sql: '1 = 1', params: [] }
+    : runsOn('engine', searchOptions.engine);
+}
+
+/**
  * Search patterns by text query.
  */
 export async function searchPatterns(
@@ -111,18 +123,26 @@ export async function searchPatterns(
 ): Promise<Pattern[]> {
   const db = getDatabase({ ...connOptions, readonly: true });
   const { limit = 50, offset = 0 } = searchOptions;
+  const runs = engineFilter(searchOptions);
 
   const rows = db
     .prepare(
       `
     SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
-    WHERE title LIKE ? OR raw_code LIKE ? OR description LIKE ?
+    WHERE (title LIKE ? OR raw_code LIKE ? OR description LIKE ?) AND ${runs.sql}
     ORDER BY title
     LIMIT ? OFFSET ?
   `
     )
-    .all(`%${query}%`, `%${query}%`, `%${query}%`, limit, offset) as CodeExampleRow[];
+    .all(
+      `%${query}%`,
+      `%${query}%`,
+      `%${query}%`,
+      ...runs.params,
+      limit,
+      offset
+    ) as CodeExampleRow[];
 
   return rows.map(mapRowToPattern);
 }
@@ -136,17 +156,19 @@ export async function getAllPatterns(
 ): Promise<Pattern[]> {
   const db = getDatabase({ ...connOptions, readonly: true });
   const { limit = 1000, offset = 0 } = searchOptions;
+  const runs = engineFilter(searchOptions);
 
   const rows = db
     .prepare(
       `
     SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
+    WHERE ${runs.sql}
     ORDER BY title
     LIMIT ? OFFSET ?
   `
     )
-    .all(limit, offset) as CodeExampleRow[];
+    .all(...runs.params, limit, offset) as CodeExampleRow[];
 
   return rows.map(mapRowToPattern);
 }

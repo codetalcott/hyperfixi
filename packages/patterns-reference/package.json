@@ -25,6 +25,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../semantic",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -36,7 +37,6 @@
     "db:fix-translations": "tsx scripts/run-sql.ts scripts/fix-translations.sql",
     "populate:dry-run": "npm run db:init:force && tsx scripts/sync-translations.ts --dry-run && tsx scripts/seed-llm-examples.ts --dry-run",
     "validate": "tsx scripts/validate-all.ts",
-    "validate:fix": "tsx scripts/validate-all.ts --fix",
     "verify": "tsx scripts/verify-translations.ts",
     "verify:verbose": "tsx scripts/verify-translations.ts --verbose",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",

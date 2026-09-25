@@ -122,7 +122,9 @@ export class DatabasePatternsProvider implements PatternsSource {
         command: p.primaryCommand,
         language: language || 'en',
         confidence: 1.0,
-        verified: true,
+        // The English source pattern: "verified" = some engine runs it
+        // (code_examples.engine, mechanically checked) — not a constant.
+        verified: p.engine !== null,
         title: p.title,
         category: p.category || undefined,
       }));

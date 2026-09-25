@@ -1,8 +1,10 @@
 /**
  * Verify Translations Script
  *
- * Runs semantic verification on all translations and updates verified_parses flag.
- * This populates verifiedCount for non-English languages.
+ * Re-measures `verified_parses` for every stored row — English included — with
+ * the same function sync-translations writes it with (src/sync/verify-parses.ts),
+ * and writes the result. Useful after rebuilding @lokascript/semantic without
+ * re-syncing; a full `npm run populate` already leaves the flag measured.
  *
  * Usage: npx tsx scripts/verify-translations.ts [--verbose]
  */
@@ -10,7 +12,7 @@
 import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
-import { canParse } from '@lokascript/semantic';
+import { verifyParses } from '../src/sync/verify-parses';
 
 // =============================================================================
 // Configuration
@@ -28,6 +30,7 @@ interface Translation {
   id: number;
   language: string;
   hyperscript: string;
+  translatable: number;
 }
 
 // =============================================================================
@@ -46,11 +49,11 @@ async function verifyTranslations() {
   const db = new Database(DEFAULT_DB_PATH);
 
   try {
-    // Get all unverified translations (excluding English which is always verified)
+    // Every row, English included: English is measured too, not assumed.
     const translations = db.prepare(`
-      SELECT id, language, hyperscript
-      FROM pattern_translations
-      WHERE language != 'en'
+      SELECT pt.id, pt.language, pt.hyperscript, ce.translatable
+      FROM pattern_translations pt
+      JOIN code_examples ce ON ce.id = pt.code_example_id
     `).all() as Translation[];
 
     console.log(`Found ${translations.length} translations to verify\n`);
@@ -72,7 +75,7 @@ async function verifyTranslations() {
       }
 
       try {
-        const success = canParse(t.hyperscript, t.language);
+        const success = verifyParses(t.hyperscript, t.language, t.translatable !== 0);
         updateStmt.run(success ? 1 : 0, t.id);
 
         if (success) {

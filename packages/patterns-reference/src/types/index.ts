@@ -187,6 +187,22 @@ export interface LLMExample {
   qualityScore: number;
   usageCount: number;
   createdAt: Date;
+  /**
+   * The engine(s) verified to run this example's pattern
+   * (`code_examples.engine`). Never null in results: an example no engine
+   * runs is not served.
+   */
+  engine: EngineCompat | null;
+}
+
+/**
+ * Options for the LLM-example getters. `engine` narrows to examples whose
+ * pattern runs on that engine — 'hyperscript' = both + upstream-only,
+ * 'lokascript' = both + hyperfixi-only, 'both' = both. With or without it,
+ * an example whose pattern NO engine runs is never returned.
+ */
+export interface ExampleOptions extends ConnectionOptions {
+  engine?: EngineCompat;
 }
 
 // =============================================================================
@@ -237,6 +253,12 @@ export interface SearchOptions {
   language?: string;
   category?: string;
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  /**
+   * Honoured by searchPatterns/getAllPatterns: patterns that run on this
+   * engine ('hyperscript' / 'lokascript' include 'both'); `null` = the
+   * patterns no engine runs; omitted = no filter.
+   * (language/category/difficulty are declared but not yet honoured.)
+   */
   engine?: EngineCompat | null;
   limit?: number;
   offset?: number;
@@ -443,7 +465,13 @@ export interface PatternsReference {
   verifyTranslation(translation: Translation): Promise<VerificationResult>;
 
   // LLM support
-  getLLMExamples(prompt: string, language?: string, limit?: number): Promise<LLMExample[]>;
+  /** Never returns an example no engine runs; `engine` narrows further (see ExampleOptions). */
+  getLLMExamples(
+    prompt: string,
+    language?: string,
+    limit?: number,
+    engine?: EngineCompat
+  ): Promise<LLMExample[]>;
 
   // Statistics
   getStats(): Promise<PatternStats>;

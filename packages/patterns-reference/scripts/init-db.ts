@@ -37,7 +37,7 @@ const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1]
 // Schema
 // =============================================================================
 
-const SCHEMA = `
+export const SCHEMA = `
 -- Code examples from hyperscript.org cookbook
 CREATE TABLE IF NOT EXISTS code_examples (
   id TEXT PRIMARY KEY,
@@ -1973,7 +1973,9 @@ function initDatabase() {
         tr.hyperscript,
         WORD_ORDERS[tr.language] || 'SVO',
         0.95,
-        1 // English verified
+        // Unmeasured until sync-translations parses it (src/sync/verify-parses.ts).
+        // A seed-time `1` was a claim nothing checked.
+        0
       );
     }
 

@@ -52,7 +52,7 @@ npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 # reached zero. A row the renderer cannot render keeps its ENGLISH and is reported
 # as an "English fallback" at the end of the run — that count must stay 0.
 npm run seed:llm           # Generate 212 LLM examples
-npm run validate:fix       # Validate and update verified_parses
+npm run validate           # Structural checks (read-only; verified_parses is measured by sync)
 npm run verify:engines     # Re-verify the engine column (see below)
 
 # Development
@@ -190,9 +190,12 @@ Key files:
 
 ## Adding New Patterns
 
-1. Edit `scripts/init-db.ts` - add to `SEED_EXAMPLES` array
+1. Edit `scripts/init-db.ts` - add to `SEED_EXAMPLES` array (no `engine`
+   field — verdicts come only from the harness)
 2. Run `npm run populate` to regenerate database
-3. Run `npm run validate:fix` to verify patterns
+3. Run `npm run verify:engines` and commit `data/engine-verification.json` —
+   CI's `verify:engines:check` fails on a pattern with no committed verdict
+4. Run `npm run validate` for the structural checks
 
 Pattern structure:
 
@@ -216,7 +219,7 @@ To add support here:
 2. Rebuild semantic: `npm run build --prefix packages/semantic`
 3. Re-sync translations: `npm run sync:translations` (orphan-language
    rows from removed profiles are also deleted automatically).
-4. Validate: `npm run validate:fix`
+4. Validate: `npm run validate`
 
 ## CI/CD
 
