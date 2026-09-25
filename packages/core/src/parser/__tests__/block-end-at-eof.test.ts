@@ -38,6 +38,8 @@ describe('an open block closes at end of input', () => {
     // Comments are nothing: upstream's tokenizer drops them.
     'on click repeat 3 times log "x" -- done',
     'on click if true log 1 -- done',
+    // After a bottom-tested condition no body loop runs first to skip it.
+    'on click repeat log "x" until true -- done',
     // Nested: end of input closes every open block at once.
     'on click repeat 2 times if true log "x"',
     'repeat 3 times add .item',
