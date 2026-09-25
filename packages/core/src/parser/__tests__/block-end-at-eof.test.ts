@@ -40,6 +40,9 @@ describe('an open block closes at end of input', () => {
     'on click if true log 1 -- done',
     // After a bottom-tested condition no body loop runs first to skip it.
     'on click repeat log "x" until true -- done',
+    // A comment straight after the header, before the first body command.
+    'on click repeat 3 times -- note\n  log "x"\nend',
+    'on click for x in [1, 2] -- note\n  log x\nend',
     // Nested: end of input closes every open block at once.
     'on click repeat 2 times if true log "x"',
     'repeat 3 times add .item',

@@ -1091,6 +1091,13 @@ export class Parser {
     );
 
     while (!this.isAtEnd() && !isStop()) {
+      // A comment is nothing — upstream's tokenizer drops it. Only a
+      // body-LEADING one reached here (`repeat 3 times -- note` + newline + a
+      // command), and it was taken for a non-command that ended the body.
+      if (this.checkComment()) {
+        this.advance();
+        continue;
+      }
       debug.parse(
         '📍 Loop iteration, current token:',
         this.peek().value,
