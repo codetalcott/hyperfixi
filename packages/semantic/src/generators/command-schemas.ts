@@ -2451,7 +2451,9 @@ export const transitionSchema: CommandSchema = {
       role: 'goal',
       description: 'The target value to transition to',
       // Required, deliberately: goal-less transition (`transition *max-height
-      // over 300ms`, slide-toggle) IS valid hyperscript, but making goal
+      // over 300ms`) is NOT valid in either engine (both require `to <value>`;
+      // measured 2026-09-25, when the slide-toggle corpus row that used it was
+      // corrected), but it is accepted leniently here, and making goal
       // optional wraps its marker group as skippable and the bare value then
       // re-binds by particle metadata (`a 0` → destination:literal=0),
       // clobbering goal+duration capture in every marker language — verified

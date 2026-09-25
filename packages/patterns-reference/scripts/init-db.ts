@@ -531,7 +531,11 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-with-method',
     title: 'Fetch With Method',
-    raw_code: 'on submit fetch /api/form with method:"POST" body:form',
+    // Comma-separated: both engines reject space-separated `with` pairs
+    // (`method:"POST" body:form` — upstream "Unexpected Token : body", core
+    // discards `body:form`). The semantic front-end still accepts that form;
+    // fetch-with-options-multilingual.test.ts pins it independently.
+    raw_code: 'on submit fetch /api/form with method:"POST", body:form',
     description: 'Submit form data via POST',
     feature: 'async',
   },
@@ -718,8 +722,13 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'async-block',
     title: 'Async Block',
+    // NOTE: semantic-surface-only (engine NULL), like event-once. Neither
+    // engine has `async`: core deleted its command in 3.0.0 (#1102) and
+    // upstream 0.9.93 has no such keyword. Kept because it is the only corpus
+    // row exercising the multilingual front-end's `async` keyword stripper.
     raw_code: 'on click async fetch /api/data then put it into me',
-    description: 'Execute commands asynchronously',
+    description:
+      'The `async` prefix — no engine runs it (the multilingual front-end strips it)',
     feature: 'advanced',
   },
   {
@@ -1138,8 +1147,15 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'slide-toggle',
     title: 'Slide Toggle',
-    raw_code: 'on click toggle .collapsed on next .panel transition *max-height over 300ms',
-    description: 'Slide panel open/closed',
+    // A class toggle; CSS animates it (the repo's own slide-toggle idiom —
+    // examples/animation/fade-effects.html). The old tail, a goal-less
+    // `transition *max-height over 300ms`, is rejected by both engines
+    // (`to <value>` is required), and no fix keeps it: a fixed-goal transition
+    // after a toggle animates the wrong way on every other click, and core
+    // rejects every form that targets the panel (`*max-height of next .panel`,
+    // `next .panel's *max-height`).
+    raw_code: 'on click toggle .collapsed on next .panel',
+    description: 'Slide a panel open/closed — pair .collapsed with a CSS max-height transition',
     feature: 'animation',
   },
   {
@@ -1321,7 +1337,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'morph-form-update',
     title: 'Morph Form Without Losing Focus',
-    raw_code: 'on submit fetch /api/save then morph closest <form/> to it',
+    // Parenthesized: bare `closest <form/> to it` reads as upstream's
+    // `closest <sel> to <elt>` expression, which swallows morph's `to`.
+    raw_code: 'on submit fetch /api/save then morph (closest <form/>) to it',
     description:
       'Morph a form after submit so users keep focus, scroll position, and unsaved values',
     feature: 'morphing',

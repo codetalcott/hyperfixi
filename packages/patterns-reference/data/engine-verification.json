@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
       "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
     },
-    "lokascriptVersion": "2.11.1",
+    "lokascriptVersion": "3.1.1",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -15,8 +15,8 @@
     "add-class-to-other": "both",
     "announce-screen-reader": "lokascript",
     "append-content": "both",
-    "async-block": "lokascript",
-    "beep-debug-expression": "both",
+    "async-block": null,
+    "beep-debug-expression": "hyperscript",
     "behavior-draggable": "both",
     "behavior-removable": "both",
     "behavior-resizable": "lokascript",
@@ -26,7 +26,7 @@
     "bind-non-form-display": "both",
     "bind-two-way": "both",
     "blur-element": "both",
-    "book-archive-download-click": "hyperscript",
+    "book-archive-download-click": "both",
     "book-counter-increment": "both",
     "breakpoint-command": "both",
     "call-function": "both",
@@ -61,7 +61,7 @@
     "fetch-json": "both",
     "fetch-loading-state": "both",
     "fetch-with-headers": "both",
-    "fetch-with-method": "lokascript",
+    "fetch-with-method": "both",
     "fetch-with-method-body": "both",
     "first-in-parent": "both",
     "focus-element": "both",
@@ -105,9 +105,9 @@
     "modal-close-button": "both",
     "modal-close-escape": "both",
     "modal-open": "both",
-    "morph-fetch-result": "both",
-    "morph-form-update": "lokascript",
-    "morph-with-template": "both",
+    "morph-fetch-result": "hyperscript",
+    "morph-form-update": "both",
+    "morph-with-template": "hyperscript",
     "multiple-events": "both",
     "next-element": "both",
     "on-custom-event-receive": "both",
@@ -121,10 +121,10 @@
     "remove-class-basic": "both",
     "remove-class-from-all": "both",
     "remove-element": "both",
-    "render-template-with-data": "both",
-    "repeat-for-each": "both",
+    "render-template-with-data": "hyperscript",
+    "repeat-for-each": "hyperscript",
     "repeat-forever": "both",
-    "repeat-times": "both",
+    "repeat-times": "hyperscript",
     "repeat-until-event": "both",
     "repeat-while": "both",
     "send-event": "both",
@@ -141,7 +141,7 @@
     "settle-animations": "both",
     "show-element": "both",
     "show-with-transition": "both",
-    "slide-toggle": "lokascript",
+    "slide-toggle": "both",
     "socket-basic": "both",
     "socket-send": "both",
     "sse-connect-swap": "lokascript",
@@ -205,13 +205,15 @@
       "hyperscript": true
     },
     "async-block": {
-      "lokascript": true,
+      "lokascript": false,
       "hyperscript": false,
+      "lokascriptError": "Unexpected token: fetch",
       "hyperscriptError": "Unexpected Token : async"
     },
     "beep-debug-expression": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Discarded input the parser could not place: '! my value'"
     },
     "behavior-draggable": {
       "lokascript": true,
@@ -251,9 +253,8 @@
       "hyperscript": true
     },
     "book-archive-download-click": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Unexpected token: click"
+      "lokascript": true,
+      "hyperscript": true
     },
     "book-counter-increment": {
       "lokascript": true,
@@ -402,8 +403,7 @@
     },
     "fetch-with-method": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected Token : body"
+      "hyperscript": true
     },
     "fetch-with-method-body": {
       "lokascript": true,
@@ -583,17 +583,18 @@
       "hyperscript": true
     },
     "morph-fetch-result": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Discarded input the parser could not place: 'to it'"
     },
     "morph-form-update": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected 'to' but found '<<<EOF>>>'"
+      "hyperscript": true
     },
     "morph-with-template": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Discarded input the parser could not place: ': $data'"
     },
     "multiple-events": {
       "lokascript": true,
@@ -649,20 +650,23 @@
       "hyperscript": true
     },
     "render-template-with-data": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Discarded input the parser could not place: ': $data'"
     },
     "repeat-for-each": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Command 'repeat' failed to parse and was discarded"
     },
     "repeat-forever": {
       "lokascript": true,
       "hyperscript": true
     },
     "repeat-times": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Command 'repeat' failed to parse and was discarded"
     },
     "repeat-until-event": {
       "lokascript": true,
@@ -730,8 +734,7 @@
     },
     "slide-toggle": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected 'to' but found 'over'"
+      "hyperscript": true
     },
     "socket-basic": {
       "lokascript": true,
