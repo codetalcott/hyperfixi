@@ -113,12 +113,38 @@ function getStringValue(value: SemanticValue): string | undefined {
 }
 
 /**
+ * Whether an expression is ONE parenthesized group (`(closest <form/>)`), as
+ * opposed to an expression that merely starts and ends with parens
+ * (`(a) * (b)`): the paren opened first must close at the last character.
+ */
+function isWholeParenGroup(raw: string): boolean {
+  if (!raw.startsWith('(') || !raw.endsWith(')')) return false;
+  let depth = 0;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '(') depth++;
+    else if (raw[i] === ')' && --depth === 0) return i === raw.length - 1;
+  }
+  return false;
+}
+
+/**
  * Check if a semantic value matches expected types.
  */
 function valueMatchesType(value: SemanticValue, expectedTypes: Array<ExpectedType>): boolean {
   // Handle null/undefined
   if (value === null || value === undefined) {
     return false;
+  }
+
+  // A parenthesized group is how hyperscript writes a COMPUTED target
+  // (`hide (closest .modal)`), so it satisfies a selector or reference slot —
+  // the matcher admits it there on the same terms (tryMatchParenGroupExpression).
+  if (
+    value.type === 'expression' &&
+    isWholeParenGroup(value.raw) &&
+    expectedTypes.some(t => t === 'selector' || t === 'reference')
+  ) {
+    return true;
   }
 
   // Type-specific checks

@@ -1310,6 +1310,28 @@ export class PatternMatcher {
       return true;
     }
 
+    // A parenthesized group standing alone as the value (`hide (closest .modal)`).
+    // Placed after every expression matcher above, so the operator run, the
+    // paren receiver call and the possessive forms keep their shapes; this only
+    // replaces the single-token capture below, which took the lone `(`. Admitted
+    // wherever a TARGET is — a group is how a computed target is written — so a
+    // `selector|reference` slot takes it, not only an `expression` one.
+    if (
+      token.value === '(' &&
+      patternToken.role !== 'event' &&
+      patternToken.role !== 'action' &&
+      (!patternToken.expectedTypes?.length ||
+        patternToken.expectedTypes.some(
+          t => t === 'expression' || t === 'selector' || t === 'reference'
+        ))
+    ) {
+      const group = this.tryMatchParenGroupExpression(tokens);
+      if (group) {
+        captured.set(patternToken.role, group);
+        return true;
+      }
+    }
+
     // Brace-run STYLE-OBJECT literal fold: `{ left: ${clientX - xoff}px; … }`
     // shatters into ~12+ identifier tokens (behavior-draggable's add patient —
     // en and the generated-path languages captured only the lone `{` or died
@@ -2894,6 +2916,52 @@ export class PatternMatcher {
     }
     const receiver = joinExpressionTokens(inner, this.currentProfile);
     return { type: 'expression', raw: `(${receiver})${method.value}${args}` } as SemanticValue;
+  }
+
+  /**
+   * A parenthesized group that STANDS ALONE as a role value: the
+   * `(closest <form/>)` of `morph (closest <form/>) to it`, `hide (closest .modal)`,
+   * `put it into (closest <form/>)`. Parentheses are how hyperscript passes a
+   * computed target — upstream reads the unparenthesized `morph closest <form/> to
+   * it` as `morph (closest <form/> to it)`, since `closest` owns a `to` clause — yet
+   * no step captured a bare group: the single-token capture took the lone `(`
+   * and stranded the rest, or a `selector|reference` slot rejected it and the
+   * whole command dropped. The English reference lost it, so every translation
+   * did too, with every multilingual signal green (morph-form-update, #1167).
+   *
+   * The interior joins through `joinExpressionTokens`, so it is normalized to
+   * English here and localized again by the renderer — the operator run's seam.
+   * Declines, consuming nothing, when the group does not stand alone: followed
+   * by a possessive `'s`, a binary operator, or an abutting `.member` / `(call)`
+   * — the possessive matchers, the operator run and the paren receiver call own
+   * those shapes. An unbalanced or empty group declines too.
+   */
+  private tryMatchParenGroupExpression(tokens: TokenStream): SemanticValue | null {
+    if (tokens.peek()?.value !== '(') return null;
+    const mark = tokens.mark();
+    tokens.advance();
+    const inner: LanguageToken[] = [];
+    let depth = 1;
+    while (!tokens.isAtEnd()) {
+      const t = tokens.peek()!;
+      tokens.advance();
+      if (t.value === '(') depth++;
+      else if (t.value === ')' && --depth === 0) break;
+      inner.push(t);
+    }
+    const closer = tokens.tokens[tokens.position() - 1];
+    const next = tokens.peek();
+    const continues =
+      !!next &&
+      (next.value === "'" ||
+        PatternMatcher.RUN_OPERATORS.has(next.value) ||
+        (PatternMatcher.abuts(closer, next) && (next.value.startsWith('.') || next.value === '(')));
+    if (depth !== 0 || inner.length === 0 || continues) {
+      tokens.reset(mark);
+      return null;
+    }
+    const raw = `(${joinExpressionTokens(inner, this.currentProfile)})`;
+    return { type: 'expression', raw, value: raw } as SemanticValue;
   }
 
   /** Whether `b` directly follows `a` in the source, with no whitespace between. */
