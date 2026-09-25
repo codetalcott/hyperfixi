@@ -240,6 +240,20 @@
                           add .show to #end-message
                         end
                       end
+                    end
+
+                    on resetDemo
+                      -- Keep the first page of items; the counters live here
+                      for item in <.content-item/> in #content-list index i
+                        if i >= 10 remove item end
+                      end
+                      set :currentPage to 1
+                      set :itemCount to 10
+                      set :loading to false
+                      put '10' into #items-loaded
+                      put '1' into #total-loads
+                      remove .show from #end-message
+                      set my scrollTop to 0
                     end">
 
                 <ul id="content-list" class="content-list">
@@ -365,17 +379,7 @@
                 </div>
             </div>
 
-            <button _="on click
-                      call #content-list.querySelectorAll('.content-item').forEach(
-                        function(item, i) { if (i >= 10) item.remove(); }
-                      )
-                      get #scroll-container
-                      set result's :currentPage to 1
-                      set result's :itemCount to 10
-                      put '10' into #items-loaded
-                      put '1' into #total-loads
-                      remove .show from #end-message
-                      set #scroll-container.scrollTop to 0">
+            <button _="on click send resetDemo to .scroll-container">
                 Reset Demo
             </button>
         </div>
