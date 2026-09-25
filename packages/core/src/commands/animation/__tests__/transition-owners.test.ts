@@ -21,6 +21,8 @@ import { hyperscript } from '../../../api/hyperscript-api';
 
 type Node = { type: string; value?: unknown; name?: unknown; [key: string]: unknown };
 type Cmd = { name: string; args: Node[]; modifiers?: Record<string, Node> };
+type Field = { key: { name: string }; value: Node };
+type PairsNode = Node & { elements: Array<{ properties: Field[] }> };
 
 function commandsOf(src: string): Cmd[] {
   const r = parse(src);
@@ -65,9 +67,9 @@ describe('parse', () => {
     );
     expect(args[0]!.value).toBe('*width');
     expect(modifiers?.over).toBeDefined();
-    const pairs = modifiers?.pairs as { elements: Array<{ properties: unknown[] }> };
+    const pairs = modifiers?.pairs as PairsNode;
     expect(pairs.elements).toHaveLength(1);
-    const fields = pairs.elements[0]!.properties as Array<{ key: { name: string }; value: Node }>;
+    const fields = pairs.elements[0]!.properties;
     expect(
       Object.fromEntries(fields.map(f => [f.key.name, f.value.value ?? f.value.type]))
     ).toEqual({ property: '*height', to: 'stringPostfix' });
@@ -77,9 +79,7 @@ describe('parse', () => {
     const { modifiers } = transitionOf(
       "on click transition #a's *width to 1px #b's *height to 2px"
     );
-    const pairs = modifiers?.pairs as {
-      elements: Array<{ properties: Array<{ key: { name: string }; value: Node }> }>;
-    };
+    const pairs = modifiers?.pairs as PairsNode;
     const owner = pairs.elements[0]!.properties.find(f => f.key.name === 'owner');
     expect(owner?.value.value).toBe('#b');
   });
