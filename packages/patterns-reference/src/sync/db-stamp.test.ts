@@ -26,7 +26,11 @@ function makeFakeRepo(): { root: string; dbPath: string } {
     join(root, 'packages/patterns-reference/scripts/sync-translations.ts'),
     '// sync\n'
   );
-  writeFileSync(join(root, 'packages/patterns-reference/src/sync/span-mask.ts'), '// mask\n');
+  writeFileSync(
+    join(root, 'packages/patterns-reference/src/sync/markup-attributes.ts'),
+    '// bodies\n'
+  );
+  writeFileSync(join(root, 'packages/patterns-reference/src/sync/verify-parses.ts'), '// parses\n');
   const dbPath = join(root, 'packages/patterns-reference/data/patterns.db');
   writeFileSync(dbPath, '');
   return { root, dbPath };
@@ -61,6 +65,19 @@ describe('db-stamp provenance guard', () => {
     const res = checkDbStamp(dbPath);
     expect(res.status).toBe('stale');
     if (res.status === 'stale') expect(res.actual).not.toBe(res.expected);
+  });
+
+  it('reports `stale` when a sync helper the writer calls changes', () => {
+    // verify-parses.ts writes every row's verified_parses; markup-attributes.ts
+    // decides which markup bodies are translated. Both shape the DB, so both
+    // must invalidate its stamp.
+    for (const helper of ['verify-parses.ts', 'markup-attributes.ts']) {
+      const { root, dbPath } = makeFakeRepo();
+      roots.push(root);
+      writeDbStamp(dbPath);
+      writeFileSync(join(root, 'packages/patterns-reference/src/sync', helper), '// changed\n');
+      expect(checkDbStamp(dbPath).status, helper).toBe('stale');
+    }
   });
 
   it('hash is stable for identical source and changes when a new source file appears', () => {

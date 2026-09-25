@@ -28,6 +28,12 @@ export interface Pattern {
   tags: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   engine: EngineCompat | null;
+  /**
+   * Whether the corpus writer translates this row. `false` rows are copied
+   * verbatim into every language (markup whose attribute names are resolved by
+   * vocab modules, or markup with no hyperscript at all).
+   */
+  translatable: boolean;
   createdAt: Date;
 }
 

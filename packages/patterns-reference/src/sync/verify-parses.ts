@@ -6,14 +6,15 @@
  * `language === 'en' ? 1 : 0` — never measured — so every consumer asking for
  * "successfully parsed" translations (`getVerifiedTranslations`, the semantic
  * `PatternsProvider`, `getSupportedLanguages()`, testing-framework's
- * `--verified-only`) silently got English only. Its other writer,
- * `validate-all --fix`, set it from bracket/quote balance without parsing.
- * This is now the only definition; sync-translations, `npm run verify` and
- * `verifyTranslation()` all call it.
+ * `--verified-only`) silently got English only. Its other writer, the since
+ * retired `validate-all --fix`, set it from bracket/quote balance without
+ * parsing. This is now the only definition; sync-translations, `npm run verify`
+ * and `verifyTranslation()` all call it.
  *
  * "Parses" is not "faithful": a parse can be non-null while dropping commands.
- * Fidelity is the multilingual gate's job (its R0–R5 ratchets), and engine
- * validity is `code_examples.engine`'s.
+ * Fidelity is the multilingual gate's job (its R0–R5 ratchets, against the
+ * English parse) and the en-reference-preservation gate's (the English parse
+ * against the source); engine validity is `code_examples.engine`'s.
  */
 
 import { canParse } from '@lokascript/semantic';

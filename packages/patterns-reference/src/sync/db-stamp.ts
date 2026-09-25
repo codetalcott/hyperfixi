@@ -43,9 +43,9 @@ function walkTsFiles(dir: string, acc: string[]): void {
 }
 
 /**
- * The source files whose content determines `patterns.db`: the i18n transformer +
- * dictionaries + grammar profiles (translation text), the semantic parser + profiles
- * (stored confidence + the language set), and the seed / sync scripts.
+ * The source files whose content determines `patterns.db`: the semantic parser +
+ * renderer + profiles (translation text, stored confidence, the language set), the
+ * i18n sources, the seed / sync scripts, and the sync helpers the writer calls.
  */
 function dbInputFiles(dbPath: string): string[] {
   const root = repoRootFromDbPath(dbPath);
@@ -56,7 +56,10 @@ function dbInputFiles(dbPath: string): string[] {
   for (const f of [
     join(pr, 'scripts', 'init-db.ts'),
     join(pr, 'scripts', 'sync-translations.ts'),
-    join(pr, 'src', 'sync', 'span-mask.ts'),
+    // Decides which markup `_` bodies are translated (and which stay English).
+    join(pr, 'src', 'sync', 'markup-attributes.ts'),
+    // Writes every row's `verified_parses`.
+    join(pr, 'src', 'sync', 'verify-parses.ts'),
     // Committed engine-verification results are seeded into the engine
     // column by init-db.ts, so they are DB input too.
     join(pr, 'data', 'engine-verification.json'),

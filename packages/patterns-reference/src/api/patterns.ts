@@ -25,6 +25,7 @@ interface CodeExampleRow {
   description: string | null;
   feature: string | null;
   engine: string | null;
+  translatable: number;
   source_url: string | null;
   created_at: string;
 }
@@ -44,7 +45,7 @@ export async function getPatternById(
   const row = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, engine, created_at
+    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
     WHERE id = ?
   `
@@ -65,7 +66,7 @@ export async function getPatternsByCategory(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, engine, created_at
+    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
     WHERE feature = ?
     ORDER BY title
@@ -88,7 +89,7 @@ export async function getPatternsByCommand(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, engine, created_at
+    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
     WHERE raw_code LIKE ?
     ORDER BY title
@@ -128,7 +129,7 @@ export async function searchPatterns(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, engine, created_at
+    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
     WHERE (title LIKE ? OR raw_code LIKE ? OR description LIKE ?) AND ${runs.sql}
     ORDER BY title
@@ -161,7 +162,7 @@ export async function getAllPatterns(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, engine, created_at
+    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
     WHERE ${runs.sql}
     ORDER BY title
@@ -275,6 +276,7 @@ function mapRowToPattern(row: CodeExampleRow): Pattern {
     tags: extractTags(row.raw_code),
     difficulty: inferDifficulty(row.raw_code),
     engine: (row.engine as EngineCompat) || null,
+    translatable: row.translatable !== 0,
     createdAt: new Date(row.created_at),
   };
 }

@@ -35,6 +35,7 @@ interface CodeExampleRow {
   description: string | null;
   feature: string | null;
   engine: string | null;
+  translatable: number;
   created_at: string;
 }
 
@@ -75,7 +76,7 @@ export async function getPatternsByRole(
   const rows = db
     .prepare(
       `
-    SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.created_at
+    SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.translatable, ce.created_at
     FROM code_examples ce
     INNER JOIN pattern_roles pr ON ce.id = pr.code_example_id
     WHERE pr.role = ?
@@ -105,7 +106,7 @@ export async function getPatternsByRoles(
     const rows = db
       .prepare(
         `
-      SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.created_at
+      SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.translatable, ce.created_at
       FROM code_examples ce
       INNER JOIN pattern_roles pr ON ce.id = pr.code_example_id
       WHERE pr.role IN (${placeholders})
@@ -121,7 +122,7 @@ export async function getPatternsByRoles(
     const rows = db
       .prepare(
         `
-      SELECT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.created_at
+      SELECT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.translatable, ce.created_at
       FROM code_examples ce
       WHERE (
         SELECT COUNT(DISTINCT pr.role)
@@ -149,7 +150,7 @@ export async function getPatternsByRoleValue(
   const rows = db
     .prepare(
       `
-    SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.created_at
+    SELECT DISTINCT ce.id, ce.title, ce.raw_code, ce.description, ce.feature, ce.engine, ce.translatable, ce.created_at
     FROM code_examples ce
     INNER JOIN pattern_roles pr ON ce.id = pr.code_example_id
     WHERE pr.role = ? AND pr.role_value LIKE ?
@@ -374,6 +375,7 @@ function mapRowToPattern(row: CodeExampleRow): Pattern {
     tags: extractTags(row.raw_code),
     difficulty: inferDifficulty(row.raw_code),
     engine: (row.engine as EngineCompat) || null,
+    translatable: row.translatable !== 0,
     createdAt: new Date(row.created_at),
   };
 }
