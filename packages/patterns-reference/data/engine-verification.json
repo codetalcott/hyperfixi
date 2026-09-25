@@ -16,7 +16,7 @@
     "announce-screen-reader": "lokascript",
     "append-content": "both",
     "async-block": null,
-    "beep-debug-expression": "hyperscript",
+    "beep-debug-expression": "both",
     "behavior-draggable": "both",
     "behavior-removable": "both",
     "behavior-resizable": "lokascript",
@@ -107,7 +107,7 @@
     "modal-open": "both",
     "morph-fetch-result": "both",
     "morph-form-update": "both",
-    "morph-with-template": "hyperscript",
+    "morph-with-template": "both",
     "multiple-events": "both",
     "next-element": "both",
     "on-custom-event-receive": "both",
@@ -121,7 +121,7 @@
     "remove-class-basic": "both",
     "remove-class-from-all": "both",
     "remove-element": "both",
-    "render-template-with-data": "hyperscript",
+    "render-template-with-data": "both",
     "repeat-for-each": "both",
     "repeat-forever": "both",
     "repeat-times": "both",
@@ -211,9 +211,8 @@
       "hyperscriptError": "Unexpected Token : async"
     },
     "beep-debug-expression": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Discarded input the parser could not place: '! my value'"
+      "lokascript": true,
+      "hyperscript": true
     },
     "behavior-draggable": {
       "lokascript": true,
@@ -587,9 +586,8 @@
       "hyperscript": true
     },
     "morph-with-template": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Discarded input the parser could not place: ': $data'"
+      "lokascript": true,
+      "hyperscript": true
     },
     "multiple-events": {
       "lokascript": true,
@@ -645,9 +643,8 @@
       "hyperscript": true
     },
     "render-template-with-data": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Discarded input the parser could not place: ': $data'"
+      "lokascript": true,
+      "hyperscript": true
     },
     "repeat-for-each": {
       "lokascript": true,

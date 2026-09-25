@@ -4,8 +4,8 @@
   "sourceCount": 242,
   "uniqueSourceCount": 226,
   "outcomes": {
-    "ok": 207,
-    "fail": 19
+    "ok": 210,
+    "fail": 16
   },
   "fingerprints": {
     "on click toggle .active": "ok:b7f7ad3aa000",
@@ -168,9 +168,9 @@
     "remove me": "ok:a8d37789e6b8",
     "remove closest .item": "ok:ca641e79dfd3",
     "render myTemplate": "ok:7a52d98ee5f2",
-    "render myTemplate with (name: \"Alice\")": "fail:1",
-    "render \"<template>Hello ${name}!</template>\" with (name: \"World\")": "fail:1",
-    "render template with (items: data)": "fail:1",
+    "render myTemplate with name: \"Alice\"": "ok:ff2d0e77b97b",
+    "render \"<template>Hello ${name}!</template>\" with name: \"World\"": "ok:7f177e3fbe4f",
+    "render template with items: data": "ok:5bb558fc2443",
     "repeat for item in items { log item }": "fail:2",
     "repeat 5 times { log \"hello\" }": "fail:2",
     "repeat for item in items index i log i end": "ok:d199a12f401d",
