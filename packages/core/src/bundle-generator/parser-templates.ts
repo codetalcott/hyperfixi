@@ -1258,6 +1258,9 @@ class HybridParser {
     return left;
   }
   parseUnary() {
+    if (this.match("beep") && this.peek(1).value === "!") {
+      throw new Error(\`'beep!' needs the full parser (use hyperfixi.js)\`);
+    }
     if (this.match("not", "!")) {
       this.advance();
       return { type: "unary", operator: "not", operand: this.parseUnary() };

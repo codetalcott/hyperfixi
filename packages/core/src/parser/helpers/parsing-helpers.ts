@@ -398,3 +398,16 @@ export function parseNakedNamedArgs(
     column: startPos.column,
   } as ASTNode;
 }
+
+/**
+ * `beep` with a `!` glued to it (no space), which upstream lexes as one token,
+ * `beep!`. In expression position that is upstream's BeepExpression, so the
+ * expression parser and the argument boundary both have to recognise it as
+ * the start of an operand rather than as the `beep!` command.
+ */
+export function isGluedBeepBang(
+  beep: Token | null | undefined,
+  bang: Token | null | undefined
+): boolean {
+  return beep?.value === 'beep' && bang?.value === '!' && bang.start === beep.end;
+}

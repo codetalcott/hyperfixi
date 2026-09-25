@@ -17,7 +17,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { isHTMLElement } from '../../utils/element-check';
+import { beepValues } from '../../utils/beep';
 import {
   commandMeta,
   command,
@@ -87,19 +87,9 @@ export class BeepCommand implements DecoratedCommand {
       return { expressionCount: 0, debugged: true, outputs: [] };
     }
 
-    const outputs: Array<{ value: unknown; type: string; representation: string }> = [];
-    console.group('🔔 beep! Debug Output');
-
-    for (const expression of expressions) {
-      const output = this.debugExpression(expression);
-      outputs.push(output);
-      console.log(`Value:`, expression);
-      console.log(`Type:`, output.type);
-      console.log(`Representation:`, output.representation);
-      console.log('---');
-    }
-
-    console.groupEnd();
+    // Shared with the `beep!` EXPRESSION (parser/runtime.ts), which reports a
+    // value the same way and returns it.
+    const outputs = beepValues(context.me, expressions);
     return { expressionCount: expressions.length, debugged: true, outputs };
   }
 
@@ -112,61 +102,6 @@ export class BeepCommand implements DecoratedCommand {
     console.log('globals:', context.globals);
     console.log('variables:', context.variables);
     console.groupEnd();
-  }
-
-  private debugExpression(expression: unknown): {
-    value: unknown;
-    type: string;
-    representation: string;
-  } {
-    return {
-      value: expression,
-      type: this.getType(expression),
-      representation: this.getRepresentation(expression),
-    };
-  }
-
-  private getType(value: unknown): string {
-    if (value === null) return 'null';
-    if (value === undefined) return 'undefined';
-    if (Array.isArray(value)) return 'array';
-    if (isHTMLElement(value)) return 'HTMLElement';
-    if (value instanceof Element) return 'Element';
-    if (value instanceof Node) return 'Node';
-    if (value instanceof Error) return 'Error';
-    if (value instanceof Date) return 'Date';
-    if (value instanceof RegExp) return 'RegExp';
-    return typeof value;
-  }
-
-  private getRepresentation(value: unknown): string {
-    if (value === null) return 'null';
-    if (value === undefined) return 'undefined';
-    if (Array.isArray(value)) {
-      return `Array(${value.length}) [${value
-        .slice(0, 3)
-        .map(v => this.getRepresentation(v))
-        .join(', ')}${value.length > 3 ? '...' : ''}]`;
-    }
-    if (isHTMLElement(value)) {
-      const el = value as HTMLElement;
-      const tag = el.tagName.toLowerCase();
-      const id = el.id ? `#${el.id}` : '';
-      const classes = el.className ? `.${el.className.split(' ').join('.')}` : '';
-      return `<${tag}${id}${classes}/>`;
-    }
-    if (value instanceof Error) return `Error: ${value.message}`;
-    if (typeof value === 'string')
-      return value.length > 50 ? `"${value.substring(0, 47)}..."` : `"${value}"`;
-    if (typeof value === 'object') {
-      try {
-        const keys = Object.keys(value);
-        return `Object {${keys.slice(0, 3).join(', ')}${keys.length > 3 ? '...' : ''}}`;
-      } catch {
-        return '[Object]';
-      }
-    }
-    return String(value);
   }
 }
 
