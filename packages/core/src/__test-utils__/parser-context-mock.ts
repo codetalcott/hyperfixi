@@ -58,6 +58,9 @@ export function createMockParserContext(
       return token;
     }),
     isAtEnd: vi.fn(() => currentPosition >= tokens.length),
+    // Comments are not modelled here, so end of input is end of tokens —
+    // delegating at call time, so an overridden `isAtEnd` is honoured too.
+    atEndOfInput: vi.fn(() => (baseContext.isAtEnd as () => boolean)()),
 
     // Identity for English input — the real one maps a localized keyword back
     // to its canonical English spelling. Parsers that branch on a canonical

@@ -558,9 +558,16 @@ describe('Parser Integration Tests', () => {
       expect(result.node!.name).toBe('if');
     });
 
-    it('should fail on missing end for repeat block', () => {
-      const error = parseFail('repeat 3 times add .item');
-      expect(error.message).toMatch(/end|expected|missing|incomplete/i);
+    it('closes an open repeat at end of input, as upstream does', () => {
+      // `if (parser.hasMore()) requireToken("end")` — upstream's rule for
+      // repeat/if/tell. This used to be pinned as a failure.
+      const node = parseOk('repeat 3 times add .item');
+      expect(node.name).toBe('repeat');
+    });
+
+    it('still fails on a missing end before another handler', () => {
+      const result = parse('on click repeat 3 times add .item on keyup log 1');
+      expect(result.errors?.length ?? 0).toBeGreaterThan(0);
     });
 
     it('should fail on unknown command gracefully', () => {

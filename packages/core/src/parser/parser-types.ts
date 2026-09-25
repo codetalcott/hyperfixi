@@ -202,6 +202,13 @@ export interface TokenStream {
   /** Check if at end of token stream */
   isAtEnd(): boolean;
 
+  /**
+   * Whether only comments remain — upstream's `!parser.hasMore()` (its
+   * tokenizer drops comments; this one keeps them). An open block may omit
+   * its `end` here and nowhere else.
+   */
+  atEndOfInput(): boolean;
+
   /** Peek at token relative to current position (0 = current, 1 = next) */
   peekAt(offset: number): Token | null;
 }
