@@ -44,6 +44,7 @@ export type {
 
   // LLM types
   LLMExample,
+  ExampleOptions,
 
   // Language documentation types
   Command,
@@ -264,8 +265,8 @@ export function createPatternsReference(options?: ConnectionOptions): PatternsRe
     verifyTranslation: translation => translations.verifyTranslation(translation, options),
 
     // LLM
-    getLLMExamples: (prompt, language, limit) =>
-      llm.getLLMExamples(prompt, language, limit, options),
+    getLLMExamples: (prompt, language, limit, engine) =>
+      llm.getLLMExamples(prompt, language, limit, { ...options, engine }),
 
     // Stats
     getStats: () => patterns.getPatternStats(options),

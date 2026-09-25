@@ -10,11 +10,16 @@ npm install @hyperfixi/patterns-reference
 
 ## Quick Start
 
-The package ships with a **pre-populated SQLite database** containing:
+The package ships with a **pre-populated SQLite database** — built at publish
+time from the released source, the same database CI's gates judge — containing
+(counts as of 2026-09-25):
 
-- 164 code examples covering hyperscript commands and real-world UI patterns
-- 3,936 translations (164 patterns × 24 languages)
-- 648 LLM few-shot examples for code generation
+- 168 code examples covering hyperscript commands and real-world UI patterns,
+  each with the engine(s) mechanically verified to run it (`engine`: `both`,
+  `lokascript` = hyperfixi, `hyperscript` = upstream _hyperscript)
+- 4,032 translations (168 patterns × 24 languages)
+- ~660 LLM few-shot examples for code generation (an example no engine runs is
+  never served)
 
 No setup required - just install and use:
 
@@ -134,8 +139,9 @@ These scripts are for contributors regenerating the database. **End users don't 
 | `npm run db:init:force`     | Reinitialize database (overwrites existing)              |
 | `npm run sync:translations` | Generate translations for all 24 languages               |
 | `npm run seed:llm`          | Generate LLM few-shot examples                           |
-| `npm run validate`          | Validate all patterns parse correctly                    |
-| `npm run validate:fix`      | Validate and update verified_parses flag                 |
+| `npm run validate`          | Structural checks (brackets, literals, HTML parity)      |
+| `npm run verify`            | Re-measure `verified_parses` (populate already does)     |
+| `npm run verify:engines`    | Re-verify `engine` on both engines; commit the JSON      |
 | `npm run build`             | Build the package                                        |
 | `npm test`                  | Run tests in watch mode                                  |
 | `npm run test:run`          | Run tests once                                           |
@@ -146,28 +152,29 @@ These scripts are for contributors regenerating the database. **End users don't 
 
 Pattern source code from the hyperscript cookbook.
 
-| Column      | Type | Description                           |
-| ----------- | ---- | ------------------------------------- |
-| id          | TEXT | Unique identifier                     |
-| title       | TEXT | Human-readable title                  |
-| raw_code    | TEXT | Hyperscript code                      |
-| description | TEXT | Pattern description                   |
-| feature     | TEXT | Category (e.g., 'class-manipulation') |
-| created_at  | TEXT | Creation timestamp                    |
+| Column      | Type | Description                                                                                                                        |
+| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| id          | TEXT | Unique identifier                                                                                                                  |
+| title       | TEXT | Human-readable title                                                                                                               |
+| raw_code    | TEXT | Hyperscript code                                                                                                                   |
+| description | TEXT | Pattern description                                                                                                                |
+| feature     | TEXT | Category (e.g., 'class-manipulation')                                                                                              |
+| engine      | TEXT | Engines verified to run it: `both`, `lokascript` (hyperfixi), `hyperscript` (upstream), or NULL (neither) — mechanical, CI-checked |
+| created_at  | TEXT | Creation timestamp                                                                                                                 |
 
 ### pattern_translations
 
 Multilingual translations of patterns.
 
-| Column          | Type    | Description                      |
-| --------------- | ------- | -------------------------------- |
-| id              | INTEGER | Auto-increment ID                |
-| code_example_id | TEXT    | Foreign key to code_examples     |
-| language        | TEXT    | Language code (en, ja, es, etc.) |
-| hyperscript     | TEXT    | Translated code                  |
-| word_order      | TEXT    | SVO, SOV, VSO, or V2             |
-| confidence      | REAL    | Translation confidence (0-1)     |
-| verified_parses | INTEGER | Whether translation parses (0/1) |
+| Column          | Type    | Description                                                                                                                          |
+| --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| id              | INTEGER | Auto-increment ID                                                                                                                    |
+| code_example_id | TEXT    | Foreign key to code_examples                                                                                                         |
+| language        | TEXT    | Language code (en, ja, es, etc.)                                                                                                     |
+| hyperscript     | TEXT    | Translated code                                                                                                                      |
+| word_order      | TEXT    | SVO, SOV, VSO, or V2                                                                                                                 |
+| confidence      | REAL    | Translation confidence (0-1)                                                                                                         |
+| verified_parses | INTEGER | 1 when the semantic parser accepts every hyperscript body of the row in its language (measured at sync; says nothing about fidelity) |
 
 ### llm_examples
 

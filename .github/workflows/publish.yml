@@ -190,6 +190,17 @@ jobs:
           # and realtime/dist (browser-bundle.ts inlines both plugins)
           npm run build:browser --prefix packages/core
 
+      # npm ships packages/patterns-reference/data/ (the package's `files`),
+      # but the committed data/patterns.db is regenerated only by hand (binary
+      # churn) — and no gate ever reads that file: every gate `populate`s
+      # first. So releases shipped whatever was last committed (2026-07-25:
+      # 164 patterns, 3,657 rows from the retired i18n transformer, engine
+      # verdicts from before #1026). Populate from the released source so the
+      # tarball carries the database the gates judged. (The release commit
+      # below adds explicit paths only, so this never enters the repo.)
+      - name: Populate patterns-reference database
+        run: npm run populate --prefix packages/patterns-reference
+
       - name: Run tests
         run: |
           npm test --prefix packages/core

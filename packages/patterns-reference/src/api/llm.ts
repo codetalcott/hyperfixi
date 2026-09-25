@@ -5,7 +5,8 @@
  */
 
 import { getDatabase } from '../database/connection';
-import type { LLMExample, ConnectionOptions } from '../types';
+import type { LLMExample, ConnectionOptions, EngineCompat, ExampleOptions } from '../types';
+import { exampleCondition } from './engine-filter';
 
 // =============================================================================
 // Database Row Types
@@ -20,7 +21,19 @@ interface LLMExampleRow {
   quality_score: number;
   usage_count: number;
   created_at: string;
+  /** The verified engine of the example's pattern (joined from code_examples). */
+  engine: string | null;
 }
+
+/**
+ * Every example getter reads through this join: an example carries its
+ * pattern's verified engine, and one whose pattern no engine runs is never
+ * served (see engine-filter.ts). `le.` qualifies every column the queries use.
+ */
+const EXAMPLES_FROM = `
+  SELECT le.*, ce.engine AS engine
+  FROM llm_examples le
+  JOIN code_examples ce ON ce.id = le.code_example_id`;
 
 // =============================================================================
 // Query Functions
@@ -34,9 +47,10 @@ export async function getLLMExamples(
   prompt: string,
   language: string = 'en',
   limit: number = 5,
-  options?: ConnectionOptions
+  options?: ExampleOptions
 ): Promise<LLMExample[]> {
   const db = getDatabase({ ...options, readonly: true });
+  const runs = exampleCondition('ce.engine', options?.engine);
 
   // Extract keywords from prompt
   const keywords = extractKeywords(prompt);
@@ -45,14 +59,13 @@ export async function getLLMExamples(
     // Return top-quality examples as fallback
     const rows = db
       .prepare(
-        `
-      SELECT * FROM llm_examples
-      WHERE language = ?
-      ORDER BY quality_score DESC, usage_count DESC
+        `${EXAMPLES_FROM}
+      WHERE le.language = ? AND ${runs.sql}
+      ORDER BY le.quality_score DESC, le.usage_count DESC
       LIMIT ?
     `
       )
-      .all(language, limit) as LLMExampleRow[];
+      .all(language, ...runs.params, limit) as LLMExampleRow[];
 
     // Track usage
     trackUsage(
@@ -64,19 +77,18 @@ export async function getLLMExamples(
   }
 
   // Build LIKE clauses for keyword matching
-  const likeClauses = keywords.map(() => '(prompt LIKE ? OR completion LIKE ?)').join(' OR ');
+  const likeClauses = keywords.map(() => '(le.prompt LIKE ? OR le.completion LIKE ?)').join(' OR ');
   const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
 
   const rows = db
     .prepare(
-      `
-    SELECT * FROM llm_examples
-    WHERE language = ? AND (${likeClauses})
-    ORDER BY quality_score DESC
+      `${EXAMPLES_FROM}
+    WHERE le.language = ? AND ${runs.sql} AND (${likeClauses})
+    ORDER BY le.quality_score DESC
     LIMIT ?
   `
     )
-    .all(language, ...params, limit) as LLMExampleRow[];
+    .all(language, ...runs.params, ...params, limit) as LLMExampleRow[];
 
   // Track usage
   trackUsage(
@@ -94,20 +106,20 @@ export async function getExamplesByCommand(
   command: string,
   language: string = 'en',
   limit: number = 5,
-  options?: ConnectionOptions
+  options?: ExampleOptions
 ): Promise<LLMExample[]> {
   const db = getDatabase({ ...options, readonly: true });
+  const runs = exampleCondition('ce.engine', options?.engine);
 
   const rows = db
     .prepare(
-      `
-    SELECT * FROM llm_examples
-    WHERE language = ? AND completion LIKE ?
-    ORDER BY quality_score DESC
+      `${EXAMPLES_FROM}
+    WHERE le.language = ? AND ${runs.sql} AND le.completion LIKE ?
+    ORDER BY le.quality_score DESC
     LIMIT ?
   `
     )
-    .all(language, `%${command}%`, limit) as LLMExampleRow[];
+    .all(language, ...runs.params, `%${command}%`, limit) as LLMExampleRow[];
 
   return rows.map(mapRowToLLMExample);
 }
@@ -119,20 +131,20 @@ export async function getHighQualityExamples(
   language: string = 'en',
   minQuality: number = 0.8,
   limit: number = 10,
-  options?: ConnectionOptions
+  options?: ExampleOptions
 ): Promise<LLMExample[]> {
   const db = getDatabase({ ...options, readonly: true });
+  const runs = exampleCondition('ce.engine', options?.engine);
 
   const rows = db
     .prepare(
-      `
-    SELECT * FROM llm_examples
-    WHERE language = ? AND quality_score >= ?
-    ORDER BY quality_score DESC, usage_count DESC
+      `${EXAMPLES_FROM}
+    WHERE le.language = ? AND ${runs.sql} AND le.quality_score >= ?
+    ORDER BY le.quality_score DESC, le.usage_count DESC
     LIMIT ?
   `
     )
-    .all(language, minQuality, limit) as LLMExampleRow[];
+    .all(language, ...runs.params, minQuality, limit) as LLMExampleRow[];
 
   return rows.map(mapRowToLLMExample);
 }
@@ -143,20 +155,20 @@ export async function getHighQualityExamples(
 export async function getMostUsedExamples(
   language: string = 'en',
   limit: number = 10,
-  options?: ConnectionOptions
+  options?: ExampleOptions
 ): Promise<LLMExample[]> {
   const db = getDatabase({ ...options, readonly: true });
+  const runs = exampleCondition('ce.engine', options?.engine);
 
   const rows = db
     .prepare(
-      `
-    SELECT * FROM llm_examples
-    WHERE language = ?
-    ORDER BY usage_count DESC, quality_score DESC
+      `${EXAMPLES_FROM}
+    WHERE le.language = ? AND ${runs.sql}
+    ORDER BY le.usage_count DESC, le.quality_score DESC
     LIMIT ?
   `
     )
-    .all(language, limit) as LLMExampleRow[];
+    .all(language, ...runs.params, limit) as LLMExampleRow[];
 
   return rows.map(mapRowToLLMExample);
 }
@@ -168,7 +180,7 @@ export async function buildFewShotContext(
   prompt: string,
   language: string = 'en',
   numExamples: number = 3,
-  options?: ConnectionOptions
+  options?: ExampleOptions
 ): Promise<string> {
   const examples = await getLLMExamples(prompt, language, numExamples, options);
 
@@ -192,7 +204,8 @@ export async function buildFewShotContext(
  * Add a new LLM example.
  */
 export async function addLLMExample(
-  example: Omit<LLMExample, 'id' | 'usageCount' | 'createdAt'>,
+  // `engine` belongs to the pattern (code_examples.engine), not the example.
+  example: Omit<LLMExample, 'id' | 'usageCount' | 'createdAt' | 'engine'>,
   options?: ConnectionOptions
 ): Promise<number> {
   const db = getDatabase(options);
@@ -353,5 +366,6 @@ function mapRowToLLMExample(row: LLMExampleRow): LLMExample {
     qualityScore: row.quality_score,
     usageCount: row.usage_count,
     createdAt: new Date(row.created_at),
+    engine: (row.engine as EngineCompat | null) ?? null,
   };
 }

@@ -10,6 +10,7 @@ declare module 'better-sqlite3' {
       prepare<T = unknown>(sql: string): Statement<T>;
       exec(sql: string): this;
       pragma(pragma: string, options?: { simple?: boolean }): unknown;
+      transaction<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R;
       close(): void;
     }
 
@@ -37,6 +38,7 @@ declare module 'better-sqlite3' {
     prepare<T = unknown>(sql: string): BetterSqlite3.Statement<T>;
     exec(sql: string): this;
     pragma(pragma: string, options?: { simple?: boolean }): unknown;
+    transaction<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R;
     close(): void;
   }
 

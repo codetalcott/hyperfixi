@@ -1,14 +1,17 @@
 /**
- * Validate All Translations Script
+ * Validate All Translations Script — a structural linter, READ-ONLY.
  *
- * Validates all patterns in the database by checking if they parse correctly.
- * Reports any parsing errors and updates the verified_parses flag.
+ * Checks every stored translation for balanced brackets/quotes and, against
+ * its English source, preserved literals, HTML-tag parity and truncation
+ * (src/sync/translation-checks.ts). It does NOT parse anything, so it does not
+ * write `verified_parses`: that flag is a real parse result, written by
+ * sync-translations (src/sync/verify-parses.ts). Its old `--fix` mode set the
+ * flag from these heuristics, disagreeing with the parser on hundreds of rows.
  *
- * Usage: npx tsx scripts/validate-all.ts [--db-path <path>] [--fix] [--verbose]
+ * Usage: npx tsx scripts/validate-all.ts [--db-path <path>] [--verbose]
  *
  * Options:
  *   --db-path <path>  Path to database file (default: ./data/patterns.db)
- *   --fix             Update verified_parses flag in database
  *   --verbose         Show detailed output for each pattern
  */
 
@@ -25,7 +28,6 @@ const DEFAULT_DB_PATH = resolve(__dirname, '../data/patterns.db');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-const fix = args.includes('--fix');
 const verbose = args.includes('--verbose');
 const dbPathIndex = args.indexOf('--db-path');
 const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1] : DEFAULT_DB_PATH;
@@ -140,11 +142,7 @@ function validatePattern(code: string): { valid: boolean; error?: string } {
 async function validateAll() {
   console.log('Validating all translations...');
   console.log(`Database path: ${dbPath}`);
-  if (fix) {
-    console.log('FIX mode - will update database\n');
-  } else {
-    console.log('Read-only mode - use --fix to update database\n');
-  }
+  console.log('Read-only structural checks (verified_parses is written by sync-translations)\n');
 
   // Check database exists
   if (!existsSync(dbPath)) {
@@ -175,10 +173,6 @@ async function validateAll() {
     let invalidCount = 0;
     const failuresByKind = new Map<FailureKind, number>();
 
-    const updateVerified = db.prepare(
-      'UPDATE pattern_translations SET verified_parses = ? WHERE id = ?'
-    );
-
     for (const translation of translations) {
       // Structural check first (parens, quotes, brackets balanced).
       const structural = validatePattern(translation.hyperscript);
@@ -196,9 +190,6 @@ async function validateAll() {
 
       if (failures.length === 0) {
         validCount++;
-        if (fix && translation.verified_parses !== 1) {
-          updateVerified.run(1, translation.id);
-        }
       } else {
         invalidCount++;
         // Record the FIRST failure kind for the summary; surface all in verbose.
@@ -211,10 +202,6 @@ async function validateAll() {
           error: failures.map(f => `[${f.kind}] ${f.error}`).join('; '),
           kind: failures[0].kind,
         });
-
-        if (fix && translation.verified_parses !== 0) {
-          updateVerified.run(0, translation.id);
-        }
 
         if (verbose) {
           console.log(`[INVALID] ${translation.language}:${translation.code_example_id}`);
@@ -266,7 +253,7 @@ async function validateAll() {
       )
       .all() as { language: string; total: number; verified: number }[];
 
-    console.log('\nValidation by language:');
+    console.log('\nParsed by the semantic parser (verified_parses, from sync-translations):');
     for (const row of byLanguage) {
       const pct = ((row.verified / row.total) * 100).toFixed(0);
       console.log(`  ${row.language}: ${row.verified}/${row.total} (${pct}%)`);

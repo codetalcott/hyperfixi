@@ -193,5 +193,20 @@ describe('Database Connection', () => {
       expect(b).toBe(a);
       expect(isConnected()).toBe(true);
     });
+
+    it('serves a write after a read-only open with a WRITABLE handle', () => {
+      seed(dbPath, 'x');
+      // What a read API does first (getTranslation opens readonly)…
+      expect(readId(getDatabase({ dbPath, readonly: true }))).toBe('x');
+      // …must not leave verifyTranslation() a handle that refuses its UPDATE.
+      const db = getDatabase({ dbPath });
+      expect(() => db.prepare('INSERT INTO t (id) VALUES (?)').run('y')).not.toThrow();
+    });
+
+    it('keeps serving reads from a writable handle (no needless reopen)', () => {
+      seed(dbPath, 'x');
+      const writable = getDatabase({ dbPath });
+      expect(getDatabase({ dbPath, readonly: true })).toBe(writable);
+    });
   });
 });

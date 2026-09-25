@@ -15,7 +15,7 @@ export const patternTools: Tool[] = [
   {
     name: 'get_examples',
     description:
-      'Get hyperscript code examples matching a natural language task description (e.g., "toggle a class on click"). Returns working code with quality scores. Best for generating new code by example.',
+      'Get hyperscript code examples matching a natural language task description (e.g., "toggle a class on click"). Returns code verified to run on at least one engine, each tagged with `engine` (both = upstream _hyperscript and hyperfixi, hyperscript = upstream only, lokascript = hyperfixi only), plus quality scores. Best for generating new code by example.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -134,6 +134,10 @@ export async function handlePatternTool(
                     task: ex.prompt,
                     code: ex.completion,
                     quality: ex.qualityScore,
+                    // Which engine(s) are verified to run it (both | lokascript |
+                    // hyperscript) — patterns-reference never serves one that
+                    // runs on neither.
+                    engine: ex.engine,
                   })),
                   count: examples.length,
                   language,

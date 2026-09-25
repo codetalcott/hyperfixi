@@ -31,6 +31,7 @@ import {
   spliceHyperscriptAttributes,
 } from '../src/sync/markup-attributes';
 import { writeDbStamp } from '../src/sync/db-stamp';
+import { verifyParses } from '../src/sync/verify-parses';
 
 // =============================================================================
 // Configuration
@@ -364,7 +365,7 @@ async function syncTranslations() {
     `);
     const updateTranslation = db.prepare(`
       UPDATE pattern_translations
-      SET hyperscript = ?, word_order = ?, confidence = ?, translation_method = ?, updated_at = CURRENT_TIMESTAMP
+      SET hyperscript = ?, word_order = ?, confidence = ?, verified_parses = ?, translation_method = ?, updated_at = CURRENT_TIMESTAMP
       WHERE code_example_id = ? AND language = ?
     `);
 
@@ -409,7 +410,10 @@ async function syncTranslations() {
           : langCode === 'en'
             ? 1.0
             : 0.5;
-        const verifiedParses = langCode === 'en' ? 1 : 0;
+        // Measured for every row, English included — see src/sync/verify-parses.ts.
+        // (It was `langCode === 'en' ? 1 : 0`, and the UPDATE path never wrote
+        // it, so a re-sync kept whatever an earlier run had claimed.)
+        const verifiedParses = verifyParses(translated, langCode, isTranslatable) ? 1 : 0;
 
         if (langCode !== 'en' && isTranslatable) grammarUsed++;
 
@@ -435,6 +439,7 @@ async function syncTranslations() {
               translated,
               langInfo.wordOrder,
               confidence,
+              verifiedParses,
               translationMethod,
               example.id,
               langCode

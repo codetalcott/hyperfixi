@@ -10,26 +10,29 @@ The `@hyperfixi/patterns-reference` package provides a queryable SQLite database
 
 1. **For LokaScript Users**: Searchable pattern library with examples for all commands
 2. **For Developers**: Clean API for querying patterns and translations
-3. **For LLM Code Agents**: 212+ few-shot examples for hyperscript code generation
+3. **For LLM Code Agents**: ~660 few-shot examples for hyperscript code generation, each tagged with the engine(s) verified to run it
 
 ## Package Structure
 
-```
+```text
 packages/patterns-reference/
 ├── src/
-│   ├── api/              # Pattern, translation, LLM query APIs
+│   ├── api/              # Pattern, translation, LLM query APIs (+ engine-filter)
 │   ├── adapters/         # LLM adapter for @lokascript/core integration
 │   ├── database/         # SQLite connection management
 │   ├── registry/         # Patterns provider for @lokascript/semantic
-│   ├── sync/             # Sync stubs (actual logic in scripts/)
-│   ├── types.ts          # Type definitions
+│   ├── sync/             # Helpers shared with scripts/ (verify-parses, markup-attributes, db-stamp, …)
+│   ├── types/            # Type definitions
+│   ├── html-snippets.ts  # Hyperscript sources out of HTML markup (shared with testing-framework)
 │   ├── index.ts          # Main exports
 │   └── semantic-bridge.ts # Bridge to @lokascript/semantic registry
 ├── scripts/
-│   ├── init-db.ts        # Database initialization with 53 seed patterns
-│   ├── sync-translations.ts # Generate translations for 24 languages
+│   ├── init-db.ts        # Schema + SEED_EXAMPLES (the corpus source)
+│   ├── sync-translations.ts # Render every row into 24 languages; measure verified_parses
 │   ├── seed-llm-examples.ts # Generate LLM few-shot examples
-│   └── validate-all.ts   # Validate all patterns parse correctly
+│   ├── verify-engines.ts # Verify every pattern on both engines → data/engine-verification.json
+│   ├── verify-translations.ts # Re-measure verified_parses without re-syncing
+│   └── validate-all.ts   # Structural checks (read-only)
 ├── data/
 │   └── patterns.db       # SQLite database (created by populate script)
 └── package.json
@@ -51,8 +54,8 @@ npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 # on 2026-08-28, after the `i18n-kept-rows` baseline they existed to burn down
 # reached zero. A row the renderer cannot render keeps its ENGLISH and is reported
 # as an "English fallback" at the end of the run — that count must stay 0.
-npm run seed:llm           # Generate 212 LLM examples
-npm run validate:fix       # Validate and update verified_parses
+npm run seed:llm           # Generate LLM few-shot examples
+npm run validate           # Structural checks (read-only; verified_parses is measured by sync)
 npm run verify:engines     # Re-verify the engine column (see below)
 
 # Development
@@ -67,41 +70,80 @@ The `engine` column ('both' | 'lokascript' | 'hyperscript' | NULL) is filled
 **mechanically** by [scripts/verify-engines.ts](scripts/verify-engines.ts),
 which runs every pattern's en `raw_code` against both engines:
 
+Each engine runs with its official extensions:
+
 - **lokascript** — `compileSync()` via `@hyperfixi/core` (the exact call the
   browser `_=` attribute path makes) with `@hyperfixi/reactivity` and
-  `@hyperfixi/realtime` installed (both ship pre-installed in `hyperfixi.js`),
-  plus a jsdom top-level install smoke (no error within a 500 ms settle
-  window, with synthesized `#id`/`.class` fixtures).
+  `@hyperfixi/realtime` (both pre-installed in `hyperfixi.js`) and
+  `@hyperfixi/components` installed, plus a jsdom top-level install smoke
+  (synthesized `#id`/`.class` fixtures; no rejection within 500 ms and nothing
+  logged in the 50 ms after, when `live`/`when` first runs happen; then torn
+  down so no effect outlives its pattern).
 - **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
-  devDependency) with its official socket/worker/eventsource extensions;
-  parse-level: zero recovered parse errors.
-- HTML-markup patterns: each `_=`/`hx-live`/script-tag snippet is verified
-  individually; `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only and blocks
-  the upstream claim.
+  devDependency) with its official socket/worker/eventsource/component
+  extensions; parse-level for plain sources: zero recovered parse errors.
+- **HTML-markup patterns** — every `_=`/`hx-live`/script-tag source,
+  including those inside component template bodies, is verified on both
+  legs. Template components are RENDERED on both legs and must show what
+  `COMPONENT_FIXTURES` declares (upstream reads `attrs.X` as an expression,
+  `@hyperfixi/components` as a raw string, so `component-with-attrs` parses on
+  both and renders on one). `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only
+  (blocks the upstream claim) and earns lokascript credit only by running in
+  `dist/hyperfixi-hx-v4.js` in an isolated jsdom: each `sse-swap` event must
+  land in its `hx-target`, each `ws-send` form must reach the socket, each
+  `hx-live` element must re-render. A row with no source earns no credit.
+- Every one of those checks has been shown to redden its row under a mutation
+  (2026-09-25); keep it that way when changing the harness.
 
 Results are written to `data/engine-verification.json` (committed;
 `init-db.ts` seeds the column from it, so `npm run populate` needs no core
 build) and, with `--update-db`, stamped into `data/patterns.db` directly
 (this also refreshes `patterns.db.stamp`, since the JSON is a stamped DB
-input). Re-run after parser/plugin changes:
+input). The harness reads its rows from `SEED_EXAMPLES` (the source), not
+from the DB. Re-run after parser/plugin changes, and after adding or editing
+a pattern:
 
 ```bash
-npm run verify:engines --prefix packages/patterns-reference   # needs core + reactivity dist fresh
+npm run verify:engines --prefix packages/patterns-reference        # regenerate + stamp the DB
+npm run verify:engines:check --prefix packages/patterns-reference  # compare only (what CI runs)
 ```
 
-Do NOT hand-author engine values in `init-db.ts` seeds — the JSON overrides
-them. (The old heuristic `verify-engine-compat.ts`, which guessed 'both' from
-semantic canParse + extension-syntax scans, was removed in favor of this.)
+- **Gated.** CI's `browser-tests` job runs `verify:engines:check`: it fails
+  when any committed verdict no longer reproduces, a pattern has no verdict,
+  a verdict names a deleted pattern, or the `engines` map contradicts its own
+  `details` (a hand edit). It compares verdicts only — error text and
+  versions are informational — so a parser-message tweak or a release bump
+  never reddens an unrelated PR. The gate exists because the JSON once sat a
+  month stale (generated before #1026, when core still discarded input
+  silently) and over-claimed 10 rows.
+- **Refuses stale builds** (exit 2) when core/reactivity/realtime/components
+  have `src/` newer than `dist/`, or `core/dist/hyperfixi-hx-v4.js` is older
+  than the source it bundles: a stale build verifies code that differs from
+  the checkout. `npm run check:fresh` rebuilds the packages;
+  `npm run build:browser:hybrid-hx-v4 --prefix packages/core` the bundle.
+- **The JSON is the only source of the engine column.** Seeds carry no
+  `engine` field; a pattern missing from the JSON is stored as NULL
+  ("Unverified") and `init-db` warns. (The old heuristic
+  `verify-engine-compat.ts`, which guessed 'both' from semantic canParse +
+  extension-syntax scans, was removed in favor of this harness.)
 
 ## Database Contents
 
-After running `npm run populate`:
+After running `npm run populate` (counts as of 2026-09-25; `populate` prints
+the current ones):
 
 | Table                | Rows  | Description                                    |
 | -------------------- | ----- | ---------------------------------------------- |
-| code_examples        | 166   | Patterns covering all hyperscript commands     |
-| pattern_translations | 3,984 | 166 patterns × 24 languages                    |
-| llm_examples         | ~600  | Few-shot examples with quality scores (varies) |
+| code_examples        | 168   | Patterns covering all hyperscript commands     |
+| pattern_translations | 4,032 | 168 patterns × 24 languages                    |
+| llm_examples         | ~660  | Few-shot examples with quality scores (varies) |
+
+`pattern_translations.verified_parses` is MEASURED at sync
+(src/sync/verify-parses.ts): 1 when the semantic parser accepts every
+hyperscript body of the row in its language (163/168 in every language; the 5
+misses carry no hyperscript at all). It says nothing about fidelity — that is
+the multilingual gate's job — and `verified_executes` is not written by
+anything.
 
 ### Supported Languages (24)
 
@@ -159,9 +201,12 @@ Key files:
 
 ## Adding New Patterns
 
-1. Edit `scripts/init-db.ts` - add to `SEED_EXAMPLES` array
+1. Edit `scripts/init-db.ts` - add to `SEED_EXAMPLES` array (no `engine`
+   field — verdicts come only from the harness)
 2. Run `npm run populate` to regenerate database
-3. Run `npm run validate:fix` to verify patterns
+3. Run `npm run verify:engines` and commit `data/engine-verification.json` —
+   CI's `verify:engines:check` fails on a pattern with no committed verdict
+4. Run `npm run validate` for the structural checks
 
 Pattern structure:
 
@@ -185,15 +230,23 @@ To add support here:
 2. Rebuild semantic: `npm run build --prefix packages/semantic`
 3. Re-sync translations: `npm run sync:translations` (orphan-language
    rows from removed profiles are also deleted automatically).
-4. Validate: `npm run validate:fix`
+4. Validate: `npm run validate`
 
 ## CI/CD
 
-GitHub Actions workflow at `.github/workflows/patterns-reference.yml`:
+There is no dedicated workflow: the old `patterns-reference.yml` was folded
+into `ci.yml`, and its `validate --fix` step did not survive, which was fine
+because that step never parsed anything. What runs:
 
-- Runs on changes to `packages/patterns-reference/**`
-- Tests: typecheck, vitest, populate, validate
-- Build: Creates dist artifacts
+- `lint-typecheck`: `npm run typecheck`.
+- `unit-tests-packages`: `db:init:force`, then this package's vitest suite.
+- `browser-tests`: `verify:engines:check`, which checks the committed engine
+  verdicts against both engines.
+- `multilingual-validation`: `npm run populate`, then the multilingual
+  regression gate and the canonical / render-fidelity gates over the populated
+  translations.
+- `publish.yml`: `npm run populate` before publishing, so npm ships the gated
+  corpus rather than the committed `data/patterns.db`.
 
 ## Key Files Reference
 
@@ -213,10 +266,11 @@ GitHub Actions workflow at `.github/workflows/patterns-reference.yml`:
 # Run all tests
 npm run test:run
 
-# Test files
-src/api/patterns.test.ts      # 22 tests
-src/api/llm.test.ts           # 16 tests
-src/database/connection.test.ts # 11 tests
+# Test files: src/**/*.test.ts (11 files). The ones that pin a claim:
+src/api/engine-filter.test.ts        # examples no engine runs are never served; engine narrowing
+src/api/verify-translation.test.ts   # verifyTranslation() against the REAL schema
+src/sync/verify-parses.test.ts       # what verified_parses measures
+src/database/connection.test.ts      # handle reuse (file replacement; read-only vs write)
 ```
 
 ## DB freshness guard (provenance stamp)

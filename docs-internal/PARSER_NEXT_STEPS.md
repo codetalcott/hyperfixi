@@ -2111,6 +2111,30 @@ Bare (top-level) pseudo-commands are errors on both engines.
 The AST-equivalence hashes did not move: no engine-corpus source parses
 differently.
 
+### Five upstream-valid shapes core rejects — surfaced by the engine gate (2026-09-25)
+
+Found when `packages/patterns-reference/data/engine-verification.json` was
+regenerated on a fresh core. It predated #1026, so these patterns had been
+stamped `both` while core silently truncated them. They now read
+`hyperscript` (upstream-only), and CI's `verify:engines:check` holds that
+verdict, so fixing any of them flips its corpus row and FAILS that check until
+the JSON is regenerated. That is the intended signal: regenerate, and the row
+turns `both`. Every row below was measured on both engines (core `compileSync`
+errors; upstream `hs.parse(src).errors`):
+
+| source | core | corpus row |
+| ------ | ---- | ---------- |
+| `on click repeat 3 times log "x"` (no `end`; upstream closes the block at end of input) | `Command 'repeat' failed to parse and was discarded` | repeat-times, repeat-for-each |
+| `init repeat 3 times log "x"` | `Expected "end" to close repeat block` | — |
+| `on click morph #list to it` / `morph me to it` | `Discarded input … 'to it'` — `morph (#list) to it` WORKS | morph-fetch-result |
+| `on click render #row with row: $data` (naked named args; the parenthesized form is filed above) | `Discarded input … ': $data'` | render-template-with-data, morph-with-template |
+| `on click set $x to beep! my value` / `put beep! my value into #t` (`beep!` in EXPRESSION position; the command form works) | `Discarded input … '! my value'` | beep-debug-expression |
+| `transition next .panel's *max-height to 0px` / `transition *max-height of #panel to 0px` / `transition (next .panel)'s *max-height to 0px` | discarded — `#panel's *max-height` WORKS since 2026-07-31 | (slide-toggle was rewritten around it) |
+
+The `transition` row narrows the 2026-07-31 fix above: that fix covers a
+possessive whose owner is a primary (`#a's`, `my`, `its`). It does not cover a
+positional owner, a parenthesized owner, or the `of` form.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
@@ -2198,8 +2222,13 @@ regression episode that motivates it:
 
 ### `async <command>` has no fire-and-forget execution anywhere (2026-09-03)
 
-Upstream `_hyperscript` runs `async <command>` without awaiting it. Neither
-parser honours that: the core parser used to produce a bare `async` node
+Pre-0.9.9x upstream `_hyperscript` ran `async <command>` without awaiting it.
+**Correction (2026-09-25):** the pinned engine, 0.9.93, has no `async` keyword
+at all: `on click async fetch …` is a parse error there
+(`Unexpected Token : async`, measured), so parity would now mean
+re-introducing a feature upstream dropped. The corpus row `async-block` is kept
+as semantic-surface-only (engine NULL) for the keyword stripper below. Neither
+parser honours the old semantics: the core parser used to produce a bare `async` node
 followed by a sibling command (the `async` command that consumed it was
 deleted in 3.0.0, #1102 — it was unreachable from parsed code); the semantic
 front-end's `stripAsyncModifier` removes the keyword in every language and
