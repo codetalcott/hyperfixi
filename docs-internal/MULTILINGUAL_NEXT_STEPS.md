@@ -5671,10 +5671,23 @@ Residuals, not started:
   fused `set-event-*-vso-2role` pattern now matches the whole row instead of
   failing over to the head-only handler pattern. Same roles, same render; not a
   ratchet signal, and above the 0.5 default threshold.
-- **`data/engine-verification.json` is stale** (stamped at lokascript 2.11.1).
-  A full `verify:engines` re-run on 2026-09-23 flipped ~20 unrelated rows
-  (repeat-times, event-once, slide-toggle, morph-*, fetch-with-method, …) to
-  `hyperscript`/null. Not committed — the run used a tree whose core `dist/`
-  was built by `build:multilingual-dist`, so harness drift and real core
-  regressions are not yet separated. Re-run after a full core build and triage.
+- ~~**`data/engine-verification.json` is stale**~~ — **RESOLVED 2026-09-25,
+  and none of it was a core regression.** On a fresh full core build exactly 11
+  rows move. Ten are the committed file OVER-claiming: it was generated before
+  #1026, when core still discarded input silently.
+  - Six are real core gaps, now upstream-only and filed in
+    PARSER_NEXT_STEPS "Five upstream-valid shapes core rejects": repeat-times,
+    repeat-for-each, morph-fetch-result, morph-with-template,
+    render-template-with-data, beep-debug-expression.
+  - Three had en raws that were invalid on BOTH engines. They were corrected
+    and now verify `both`: fetch-with-method (comma), morph-form-update
+    (`(closest <form/>)`), slide-toggle (class toggle).
+  - One, async-block, is NULL. Neither engine has `async`, and it is kept as
+    semantic-surface-only.
+  - The eleventh, book-archive-download-click, was a stale UNDER-claim (#1165).
+
+  The JSON is now gated (`verify:engines:check` in CI's browser-tests job),
+  the harness refuses stale builds, and component and hx-v4 rows are
+  exercised rather than credited. The corrected rows moved no multilingual
+  signal (3318/3318, R4 green with the three inside its denominator).
 

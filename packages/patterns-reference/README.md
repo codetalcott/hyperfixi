@@ -10,11 +10,16 @@ npm install @hyperfixi/patterns-reference
 
 ## Quick Start
 
-The package ships with a **pre-populated SQLite database** containing:
+The package ships with a **pre-populated SQLite database** — built at publish
+time from the released source, the same database CI's gates judge — containing
+(counts as of 2026-09-25):
 
-- 164 code examples covering hyperscript commands and real-world UI patterns
-- 3,936 translations (164 patterns × 24 languages)
-- 648 LLM few-shot examples for code generation
+- 168 code examples covering hyperscript commands and real-world UI patterns,
+  each with the engine(s) mechanically verified to run it (`engine`: `both`,
+  `lokascript` = hyperfixi, `hyperscript` = upstream _hyperscript)
+- 4,032 translations (168 patterns × 24 languages)
+- ~660 LLM few-shot examples for code generation (an example no engine runs is
+  never served)
 
 No setup required - just install and use:
 
