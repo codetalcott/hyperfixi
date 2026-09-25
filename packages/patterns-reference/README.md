@@ -139,7 +139,6 @@ These scripts are for contributors regenerating the database. **End users don't 
 | `npm run db:init:force`     | Reinitialize database (overwrites existing)              |
 | `npm run sync:translations` | Generate translations for all 24 languages               |
 | `npm run seed:llm`          | Generate LLM few-shot examples                           |
-| `npm run validate`          | Structural checks (brackets, literals, HTML parity)      |
 | `npm run verify`            | Re-measure `verified_parses` (populate already does)     |
 | `npm run verify:engines`    | Re-verify `engine` on both engines; commit the JSON      |
 | `npm run build`             | Build the package                                        |
@@ -255,9 +254,6 @@ npm run populate
 
 # Run tests
 npm test
-
-# Validate translations
-npm run validate
 
 # Build
 npm run build

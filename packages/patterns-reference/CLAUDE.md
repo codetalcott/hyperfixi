@@ -31,8 +31,7 @@ packages/patterns-reference/
 │   ├── sync-translations.ts # Render every row into 24 languages; measure verified_parses
 │   ├── seed-llm-examples.ts # Generate LLM few-shot examples
 │   ├── verify-engines.ts # Verify every pattern on both engines → data/engine-verification.json
-│   ├── verify-translations.ts # Re-measure verified_parses without re-syncing
-│   └── validate-all.ts   # Structural checks (read-only)
+│   └── verify-translations.ts # Re-measure verified_parses without re-syncing
 ├── data/
 │   └── patterns.db       # SQLite database (created by populate script)
 └── package.json
@@ -55,7 +54,6 @@ npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 # reached zero. A row the renderer cannot render keeps its ENGLISH and is reported
 # as an "English fallback" at the end of the run — that count must stay 0.
 npm run seed:llm           # Generate LLM few-shot examples
-npm run validate           # Structural checks (read-only; verified_parses is measured by sync)
 npm run verify:engines     # Re-verify the engine column (see below)
 
 # Development
@@ -206,7 +204,11 @@ Key files:
 2. Run `npm run populate` to regenerate database
 3. Run `npm run verify:engines` and commit `data/engine-verification.json` —
    CI's `verify:engines:check` fails on a pattern with no committed verdict
-4. Run `npm run validate` for the structural checks
+4. Check that the row's ENGLISH parse carries all of it:
+   `npm run test:canonical --prefix packages/testing-framework` (the
+   en-reference-preservation gate). Every translation is rendered from that
+   parse, so a construct it drops is dropped in all 23 languages — and no other
+   gate can see it (#1167 shipped one with CI green).
 
 Pattern structure:
 
@@ -230,21 +232,27 @@ To add support here:
 2. Rebuild semantic: `npm run build --prefix packages/semantic`
 3. Re-sync translations: `npm run sync:translations` (orphan-language
    rows from removed profiles are also deleted automatically).
-4. Validate: `npm run validate`
+4. Re-measure `verified_parses` (`npm run verify`), then run the multilingual
+   `--regression` gate (root CLAUDE.md).
 
 ## CI/CD
 
 There is no dedicated workflow: the old `patterns-reference.yml` was folded
-into `ci.yml`, and its `validate --fix` step did not survive, which was fine
-because that step never parsed anything. What runs:
+into `ci.yml`. Its `validate --fix` step did not survive, and the read-only
+`validate` script it left behind was retired too (2026-09-25): its heuristics
+(bracket/quote balance, literal preservation, token-count truncation) flagged
+363 rows, 19 of them Quechua/Ukrainian apostrophes — but most of the rest were
+REAL losses in the English parse, which the en-reference-preservation gate now
+measures exactly. What runs:
 
 - `lint-typecheck`: `npm run typecheck`.
 - `unit-tests-packages`: `db:init:force`, then this package's vitest suite.
 - `browser-tests`: `verify:engines:check`, which checks the committed engine
   verdicts against both engines.
 - `multilingual-validation`: `npm run populate`, then the multilingual
-  regression gate and the canonical / render-fidelity gates over the populated
-  translations.
+  regression gate and `test:canonical` — the canonical / render-fidelity gates
+  over the populated translations, and the en-reference-preservation gate over
+  the corpus's own English parse.
 - `publish.yml`: `npm run populate` before publishing, so npm ships the gated
   corpus rather than the committed `data/patterns.db`.
 
@@ -297,9 +305,15 @@ Util: `src/sync/db-stamp.ts` (`writeDbStamp` / `checkDbStamp`).
 
 Run `npm run populate` to create the database.
 
-### Validation failures
+### En-reference preservation failures
 
-Check for unbalanced quotes/brackets in translations. Run `npm run validate --verbose` for details.
+The English parse of a corpus unit dropped or changed content, so every
+translation of it would too. Fix the semantic parser/renderer, or — if the loss
+is known and deferred — regenerate the allowlist
+(`npx tsx tools/regen-en-reference-baseline.ts` in packages/testing-framework)
+and give the new entry a family. A render that re-spells a construct
+legitimately needs a NAMED equivalence with an engine pin
+(`src/multilingual/en-reference-equivalences.test.ts`), not an allowlist entry.
 
 ### TypeScript errors with @lokascript/semantic
 
