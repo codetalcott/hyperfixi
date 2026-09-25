@@ -12,12 +12,7 @@
  */
 
 import { isFunction, isObject } from './type-helpers';
-import {
-  isFormElement,
-  isInputElement,
-  isOptionElement,
-  isHTMLElement as isHTMLEl,
-} from '../types/type-guards';
+import { isInputElement, isOptionElement, isHTMLElement as isHTMLEl } from '../types/type-guards';
 
 // ============================================================================
 // Type Guards
@@ -159,7 +154,12 @@ const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => unknown> = {
   innertext: el => el.textContent?.trim(),
   innerHTML: el => el.innerHTML,
   outerhtml: el => el.outerHTML,
-  value: el => (isFormElement(el) ? el.value : undefined),
+  // Any element with a live `value` property, as upstream reads it: input,
+  // select and textarea, but also button, option, output, li, meter, progress
+  // and data. Only the first three used to count, so `my value` on a <button>
+  // was undefined. Read before the attribute fallback below, because an
+  // input's attribute holds its INITIAL value.
+  value: el => ('value' in el ? (el as { value: unknown }).value : undefined),
   checked: el => (isInputElement(el) ? el.checked : undefined),
   disabled: el => ('disabled' in el ? (el as HTMLButtonElement).disabled : undefined),
   selected: el => (isOptionElement(el) ? el.selected : undefined),
