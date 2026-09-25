@@ -2336,9 +2336,9 @@ export const goSchema: CommandSchema = {
       // zh and vi because their `go` keyword already encodes the direction, so
       // any destination marker is a second one: zh `前往` is "proceed-to"
       // (`前往 到 url` = "proceed-to to url") and vi `đi đến` is literally
-      // "go to" (`đi đến vào url` = "go-to into url"). Both are corrected in
-      // the i18n corpus in the same change
-      // (`patterns-reference/scripts/fix-translations.sql`).
+      // "go to" (`đi đến vào url` = "go-to into url"). Both were corrected in
+      // the i18n corpus in the same change (through fix-translations.sql,
+      // since deleted: the semantic renderer writes every row now).
       //
       // th because Thai motion verbs take a BARE destination — `ไปบ้าน`
       // ("go home"), `ไปโรงเรียน` ("go school") — so `ไป url` is the idiomatic
