@@ -185,3 +185,25 @@ describe('the retarget executes for real', () => {
     expect(host().classList.contains('escaped'), 'must stay inside the false branch').toBe(false);
   });
 });
+
+describe('a body command that fails to parse is reported (defect 3)', () => {
+  // tell's body loop caught a failing command's throw and broke out SILENTLY,
+  // dropping it and everything after it: this compiled with 0 errors and no
+  // `repeat`, where upstream runs the repeat inside the tell. (Core rejects a
+  // block without `end` even at end of input — a separate, filed gap; the fix
+  // here is that the failure is no longer hidden.)
+  it('names the command that failed', () => {
+    const r = parse('on click tell #a log "y" then repeat 2 times log "x"') as any;
+    const messages: string[] = (r.errors ?? []).map((e: { message: string }) => e.message);
+    expect(
+      messages.some(m => m.includes("'repeat' in a tell body failed to parse")),
+      String(messages)
+    ).toBe(true);
+  });
+
+  it('the same body with its `end` parses clean, the repeat inside the tell', () => {
+    const r = shapeOf('on click tell #a log "y" then repeat 2 times log "x" end');
+    expect(r.errors).toBe(0);
+    expect(r.shape).toEqual(['tell', 'tell>log', 'tell>repeat', 'tell>repeat>log']);
+  });
+});

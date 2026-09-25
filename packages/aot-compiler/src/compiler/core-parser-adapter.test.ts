@@ -212,6 +212,20 @@ describe.runIf(adapterAvailable)('CoreParserAdapter', () => {
       expect(result.metadata.commandsUsed).toContain('toggle');
     });
 
+    // The core parser named this node `beep!`, which no codegen keys on, and a
+    // command word before a group became a `pseudo-command` node, which has no
+    // codegen at all: both compiled to an EMPTY handler under a function name
+    // that is not valid JavaScript (`_handler_click_beep!_…`), reported success.
+    it.each([
+      ['on click beep! 1', '[beep]'],
+      ['on click put (1 + 2) into #out', '(1 + 2)'],
+    ])('compiles `%s` to its command, as valid JavaScript', (src, emitted) => {
+      const result = compileWithCoreParser(src);
+      expect(result.success).toBe(true);
+      expect(result.code).toContain(emitted);
+      expect(() => new Function(result.code!)).not.toThrow();
+    });
+
     it('compiles batch of scripts', () => {
       const compiler = new AOTCompiler();
       compiler.setParser(adapter);

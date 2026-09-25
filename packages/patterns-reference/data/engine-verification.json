@@ -106,7 +106,7 @@
     "modal-close-escape": "both",
     "modal-open": "both",
     "morph-fetch-result": "hyperscript",
-    "morph-form-update": "both",
+    "morph-form-update": "hyperscript",
     "morph-with-template": "hyperscript",
     "multiple-events": "both",
     "next-element": "both",
@@ -584,8 +584,9 @@
       "lokascriptError": "Discarded input the parser could not place: 'to it'"
     },
     "morph-form-update": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Discarded input the parser could not place: 'to it'"
     },
     "morph-with-template": {
       "lokascript": false,

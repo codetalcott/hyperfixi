@@ -928,19 +928,19 @@ describe('Control Flow Command Parsers', () => {
       const commandToken = createToken('for');
       const result = parseForCommand(ctx, commandToken);
 
-      // parseForCommand returns a 'repeat' command for reuse of RepeatCommand
+      // parseForCommand returns the node `repeat for` builds, so RepeatCommand
+      // runs it: the operands are SLOTS, only the body is positional. (It used
+      // to put them in args[0..3], which RepeatCommand stopped reading at Arc 3
+      // step 3 — every bare `for` threw at run time.)
       expect(result.name).toBe('repeat');
-      // args[0] = loop type ('for')
-      expect((result.args[0] as any).name).toBe('for');
-      // args[1] = variable name
-      expect((result.args[1] as any).type).toBe('string');
-      expect((result.args[1] as any).value).toBe('item');
-      // args[2] = collection
-      expect((result.args[2] as any).name).toBe('items');
-      // Last arg = block
-      const lastArg = result.args[result.args.length - 1] as any;
-      expect(lastArg.type).toBe('block');
-      expect(lastArg.commands).toEqual([]);
+      const modifiers = result.modifiers as Record<string, any>;
+      expect(modifiers.loopType.value).toBe('for');
+      expect(modifiers.for.type).toBe('string');
+      expect(modifiers.for.value).toBe('item');
+      expect(modifiers.in.name).toBe('items');
+      expect(result.args).toHaveLength(1);
+      expect((result.args[0] as any).type).toBe('block');
+      expect((result.args[0] as any).commands).toEqual([]);
     });
 
     it('should parse for each syntax', () => {
@@ -980,9 +980,10 @@ describe('Control Flow Command Parsers', () => {
       const result = parseForCommand(ctx, commandToken);
 
       expect(result.name).toBe('repeat');
-      expect((result.args[0] as any).name).toBe('for');
-      expect((result.args[1] as any).value).toBe('item');
-      expect((result.args[2] as any).name).toBe('list');
+      const modifiers = result.modifiers as Record<string, any>;
+      expect(modifiers.loopType.value).toBe('for');
+      expect(modifiers.for.value).toBe('item');
+      expect(modifiers.in.name).toBe('list');
     });
 
     it('should throw if variable name is missing', () => {
