@@ -1,10 +1,10 @@
 {
   "$comment": "Parse fingerprints for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. One entry per corpus source (see src/parser/__tests__/engine-corpus.ts); the value is a hash of the canonicalized parse, or fail:<errorCount> for a source the parser rejects. ast-equivalence.test.ts fails when any entry moves. Regenerate ONLY in a change that deliberately alters a parse — Arcs 1 and 2 are refactors and must leave this file alone.",
   "generated": "2026-09-25",
-  "sourceCount": 242,
-  "uniqueSourceCount": 226,
+  "sourceCount": 245,
+  "uniqueSourceCount": 229,
   "outcomes": {
-    "ok": 210,
+    "ok": 213,
     "fail": 16
   },
   "fingerprints": {
@@ -222,9 +222,12 @@
     "toggle .loading until click from #done": "ok:9e6179e27659",
     "transition opacity to 0.5": "ok:18bacb39efc6",
     "transition my *opacity to 0 over 200ms": "ok:6d7c370620d9",
-    "transition #box's *opacity to 0 over 200ms": "ok:a1e4e218f41e",
+    "transition #box's *opacity to 0 over 200ms": "ok:cd43aacd5c07",
     "transition left to 100px over 500ms": "ok:bfa1cf095567",
     "transition background-color to red over 1s with ease-in-out": "ok:f1a1b1aaece2",
+    "transition *width to 100px *height to 50px over 300ms": "ok:9c069eadcc32",
+    "transition *opacity of #panel from 0 to 1 over 200ms": "ok:07123e1670ce",
+    "transition my *opacity to 0 using \"opacity 1s ease-in\"": "ok:440997c06357",
     "trigger click on #button": "ok:c146a6f8b768",
     "trigger customEvent on me": "ok:375efc017b2c",
     "send dataEvent to #target": "ok:6a6da152b7c7",

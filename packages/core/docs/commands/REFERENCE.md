@@ -223,7 +223,7 @@ Animate CSS properties using CSS transitions
 **Syntax:**
 
 ```hyperscript
-transition [<target>] <property> to <value> [over <duration>] [with <timing>]
+transition <property> [from <value>] to <value> [<property> … to <value>]… [over <duration>] [using <css> | with <timing>]
 ```
 
 **Examples:**
@@ -246,6 +246,18 @@ transition left to 100px over 500ms
 
 ```hyperscript
 transition background-color to red over 1s with ease-in-out
+```
+
+```hyperscript
+transition *width to 100px *height to 50px over 300ms
+```
+
+```hyperscript
+transition *opacity of #panel from 0 to 1 over 200ms
+```
+
+```hyperscript
+transition my *opacity to 0 using "opacity 1s ease-in"
 ```
 
 **Side Effects:** style-change, timing

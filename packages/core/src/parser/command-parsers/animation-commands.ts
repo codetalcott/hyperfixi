@@ -12,8 +12,8 @@ import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { parseHyphenatedName } from '../helpers/parsing-helpers';
-import { isIdentifierLike } from '../token-predicates';
+import { isCommandBoundary, isKeyword, parseHyphenatedName } from '../helpers/parsing-helpers';
+import { isComment } from '../token-predicates';
 import { toLegacyExpression } from '../../ast/legacy';
 import type { SlotMap } from '../../ast/command-slots';
 
@@ -116,181 +116,88 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
 }
 
 /**
- * Context possessives and the context variable each aliases. `parsePrimary`
- * turns `my *opacity` into `memberExpression(me, *opacity)` via
- * `parseContextPropertyAccess`, so these only need detecting, not decoding.
+ * A name that is the OWNER of a property, never a property itself: `transition
+ * me *opacity to 0` is the space-separated owner form, not a CSS property
+ * called `me`.
  */
-const CONTEXT_POSSESSIVES = new Set(['my', 'its', 'your']);
+const CONTEXT_REFS = new Set(['me', 'it', 'you', 'result']);
+
+/** One `<property> [from <value>] to <value>` of a transition. */
+interface TransitionPair {
+  owner: ASTNode | null;
+  property: ASTNode;
+  from: ASTNode | null;
+  to: ASTNode;
+}
 
 /**
  * Parse transition command
  *
- * Syntax: transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]
+ * Upstream's syntax (TransitionCommand in _hyperscript 0.9.93):
  *
- * This command transitions a CSS property to a target value with optional
- * duration and timing function. Supports hyphenated CSS properties.
+ *   transition <property> [from <value>] to <value> [<property> … to <value>]…
+ *              [over <duration> | using <css transition>]
  *
- * The target may be given four upstream-valid ways, all of which this parser
- * REJECTED before 2026-07-31 (docs-internal/PARSER_NEXT_STEPS.md — the bare
- * form was the only one that worked, and it is the narrower case; the
- * possessive is what the docs and the multilingual corpus render):
+ * Each <property> is an EXPRESSION naming a style on an owner:
  *
- *   transition my *opacity to 0      → context possessive
- *   transition its *opacity to 0     → same
- *   transition #a's *opacity to 0    → selector possessive
- *   transition #a *opacity to 0      → space-separated (the `measure` shape)
+ *   *opacity, opacity                   → on `me`
+ *   the *opacity                        → `the` is an article
+ *   my *opacity, #a's *opacity,         → a possessive, whose owner may be any
+ *   next .panel's *max-height,            expression: positional, queried or
+ *   (next .panel)'s *max-height           parenthesized
+ *   *max-height of #panel               → the `of` form
  *
- * Two adjacent gaps, not one: `my`/`its` parsed as the PROPERTY (leaving `to`
- * unmatched → 'Expected "to" keyword after property'), while a leading
- * selector matched neither branch and left property null → 'Transition command
- * requires a CSS property'. Both messages named the thing that was in fact
- * supplied.
+ * Each pair's owner is its own, as upstream's: `*width of #a to 10px *height
+ * to 5px` moves #a's width and `me`'s height.
  *
- * Emits `args: [target, property]` — the two-arg shape
- * `TransitionCommand.parseInput` has always accepted (its target branch was
- * simply unreachable) — or `args: [property]` for the bare form.
+ * Two hyperfixi extensions upstream rejects stay: a space-separated owner
+ * (`#a *opacity`, the `measure` shape) and `with <timing-function>`.
  *
- * Examples:
- *   - transition opacity to 0.5
- *   - transition *background-color to 'red' over 2s
- *   - transition my *opacity to 0 over 200ms
- *   - transition #a's *opacity to 0 over 1s with ease-in-out
+ * Emits the first pair in the shape every consumer reads: `args: [owner,
+ * property]` or `[property]`, with `to` (and `from`) as modifiers. Each later
+ * pair is an `objectLiteral` (`property`, `to`, and `owner` / `from` when
+ * given) in the `pairs` slot.
+ *
+ * History: before 2026-07-31 only the bare form parsed. Before 2026-09-25 a
+ * positional or parenthesized owner, `the`, `of`, `from`, `using` and a
+ * second property were all rejected, and the second property's `*` read as
+ * MULTIPLICATION: `*width to 100px *height to 50px` became `to: 100px *
+ * height`, silently at top level. (docs-internal/PARSER_NEXT_STEPS.md)
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'transition' command token
  * @returns CommandNode representing the transition command
  */
 export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) {
-  const args: ASTNode[] = [];
-  const modifiers: SlotMap<'transition'> = {};
+  const pairs: TransitionPair[] = [];
+  do {
+    pairs.push(parseTransitionPair(ctx));
+  } while (startsAnotherPair(ctx));
 
-  let property: ASTNode | null = null;
-  let target: ASTNode | null = null;
+  const [first, ...rest] = pairs as [TransitionPair, ...TransitionPair[]];
+  const args: ASTNode[] = first.owner ? [first.owner, first.property] : [first.property];
+  const modifiers: SlotMap<'transition'> = { to: first.to as ExpressionNode };
+  if (first.from) modifiers['from'] = first.from as ExpressionNode;
+  if (rest.length > 0) modifiers['pairs'] = pairsNode(rest) as ExpressionNode;
 
-  // Optional leading target. Mirrors `parseMeasureCommand`'s target detection
-  // (same `<target> *property` shape) and adds the possessive forms.
-  const leadToken = ctx.peek();
-  const startsTarget =
-    ctx.checkAnySelector() ||
-    ctx.checkContextVar() ||
-    ctx.check('<') ||
-    (isIdentifierLike(leadToken) && CONTEXT_POSSESSIVES.has(leadToken.value));
-
-  if (startsTarget) {
-    // `parsePrimary` folds both possessive shapes into one node — `#a's
-    // *opacity` to a possessiveExpression, `my *opacity` to a
-    // memberExpression — so decompose rather than re-parsing the property.
-    const parsed = ctx.parsePrimary() as ASTNode & {
-      type?: string;
-      object?: ASTNode;
-      property?: { name?: string };
-      computed?: boolean;
-    };
-
-    if (
-      (parsed.type === 'possessiveExpression' ||
-        (parsed.type === 'memberExpression' && !parsed.computed)) &&
-      parsed.object &&
-      parsed.property?.name
-    ) {
-      target = parsed.object;
-      property = {
-        type: 'string',
-        value: parsed.property.name,
-        start: leadToken.start || 0,
-        end: ctx.getPosition().end,
-        line: leadToken.line,
-        column: leadToken.column,
-      };
-    } else {
-      // Space-separated form: the target stands alone and the property
-      // follows. A stray possessive marker (`#a's` with the property parsed
-      // separately) is consumed here so it cannot reach the property parse.
-      target = parsed;
-      if (ctx.check("'s")) ctx.advance();
-    }
-  }
-
-  // Parse property (required unless a possessive already supplied it)
-  // Property can be:
-  // - identifier (opacity, width, etc.)
-  // - identifier with * prefix (*background-color)
-  const firstToken = ctx.peek();
-
-  if (!property && (isIdentifierLike(firstToken) || firstToken.value === '*')) {
-    let propertyValue = '';
-
-    // Handle wildcard prefix
-    if (ctx.check('*')) {
-      propertyValue = '*';
+  // `over <duration>` and upstream's `using <css transition>`, plus hyperfixi's
+  // `with <timing-function>`, in any order.
+  //
+  // `parseExpression` for the duration, not `parsePrimary`: `500ms` arrives as
+  // one token, but `2 * delay` or `(base + 100) ms` do not.
+  for (let i = 0; i < 3 && !ctx.isAtEnd(); i++) {
+    if (ctx.check('over') && !modifiers['over']) {
       ctx.advance();
+      modifiers['over'] = ctx.parseExpression() as ExpressionNode;
+    } else if (ctx.check('using') && !modifiers['using']) {
+      ctx.advance();
+      modifiers['using'] = ctx.parseExpression() as ExpressionNode;
+    } else if (ctx.check(KEYWORDS.WITH) && !modifiers['with']) {
+      ctx.advance();
+      modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
+    } else {
+      break;
     }
-
-    // Get property name (supports hyphenated names like background-color)
-    const hyphenatedName = parseHyphenatedName(ctx);
-    if (hyphenatedName) {
-      propertyValue += hyphenatedName;
-
-      property = {
-        type: 'string',
-        value: propertyValue,
-        start: firstToken.start || 0,
-        end: ctx.getPosition().end,
-        line: firstToken.line,
-        column: firstToken.column,
-      };
-    }
-  }
-
-  if (!property) {
-    throw new Error('Transition command requires a CSS property');
-  }
-
-  // `[target, property]` is the two-arg shape TransitionCommand.parseInput
-  // already discriminates on; bare stays one-arg.
-  if (target) args.push(target);
-  args.push(property);
-
-  // Parse 'to' keyword and value (required) - store in modifiers for V2 command
-  if (!ctx.check(KEYWORDS.TO)) {
-    throw new Error('Expected "to" keyword after property in transition command');
-  }
-  ctx.advance(); // consume 'to'
-
-  // Parse target value (can be template string, number, color, etc.).
-  //
-  // `parseExpression`, not `parsePrimary`: a CSS value is routinely a NUMBER
-  // PLUS A UNIT, and `100px` is two tokens — the engine already models that as
-  // a `stringPostfix` node (`Parser.tryParseStringPostfix`, mirroring upstream's
-  // StringPostfixExpression over the 15 CSS length units and `%`), but only the
-  // pratt path builds it. `parsePrimary` stops at the literal, so
-  // `transition left to 100px` silently became `to: 100` — an animation to a
-  // UNITLESS length, i.e. to nothing — with `px` discarded. Same for
-  // `transition *width to 50%`.
-  //
-  // It was invisible for two reasons at once: bare, the parser had nothing to
-  // report the drop through, and the source is TransitionCommand's own
-  // documented example, which no gate parsed until #1025. Upstream parses both
-  // this value and the duration below with `requireElement("expression")`.
-  const value = ctx.parseExpression();
-  modifiers['to'] = value as ExpressionNode;
-
-  // Parse optional 'over <duration>' - store in modifiers.
-  //
-  // `parseExpression` for the same reason, and it is not redundant with the
-  // tokenizer's TIME handling: `500ms` arrives as one token, but `2 * delay`
-  // or `(base + 100) ms` do not.
-  if (ctx.check('over')) {
-    ctx.advance(); // consume 'over'
-    const duration = ctx.parseExpression();
-    modifiers['over'] = duration as ExpressionNode;
-  }
-
-  // Parse optional 'with <timing-function>' - store in modifiers
-  if (ctx.check(KEYWORDS.WITH)) {
-    ctx.advance(); // consume 'with'
-    const timingFunction = ctx.parsePrimary();
-    modifiers['with'] = timingFunction as ExpressionNode;
   }
 
   return CommandNodeBuilder.from<'transition'>(commandToken)
@@ -298,6 +205,167 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
     .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
+}
+
+function parseTransitionPair(ctx: ParserContext): TransitionPair {
+  const { owner, property } = parseTransitionProperty(ctx);
+
+  let from: ASTNode | null = null;
+  if (ctx.check('from')) {
+    ctx.advance();
+    from = ctx.parseExpression();
+  }
+
+  if (!ctx.check(KEYWORDS.TO)) {
+    throw new Error('Expected "to" keyword after property in transition command');
+  }
+  ctx.advance(); // consume 'to'
+
+  // `parseExpression`, not `parsePrimary`: a CSS value is routinely a NUMBER
+  // PLUS A UNIT, and `100px` is two tokens — the engine already models that as
+  // a `stringPostfix` node (`Parser.tryParseStringPostfix`, mirroring upstream's
+  // StringPostfixExpression over the 15 CSS length units and `%`), but only the
+  // pratt path builds it. `parsePrimary` stops at the literal, so
+  // `transition left to 100px` silently became `to: 100` — an animation to a
+  // UNITLESS length, i.e. to nothing — with `px` discarded. Same for
+  // `transition *width to 50%`. Upstream parses this value with
+  // `requireElement("expression")`. The expression ends before the next
+  // property's `*`: see `Parser.isSpacedStyleRef`.
+  const to = ctx.parseExpression();
+  return { owner, property, from, to };
+}
+
+/**
+ * The property of one pair and, when one is named, its owner.
+ *
+ * Parsed as an expression and taken apart, as upstream parses it, so every
+ * owner an expression can spell is accepted. Anything that names no property
+ * is the space-separated owner form (`#a *opacity`), and the property follows.
+ */
+function parseTransitionProperty(ctx: ParserContext): { owner: ASTNode | null; property: ASTNode } {
+  const lead = ctx.peek();
+  // `transition to 1`: no property at all, rather than a property named `to`.
+  if (!lead || isKeyword(lead, [KEYWORDS.TO, 'from'])) {
+    throw new Error('Transition command requires a CSS property');
+  }
+  const expr = ctx.parseExpression();
+  const split = splitStyleExpression(expr);
+  if (split) return { owner: split.owner, property: propertyNode(split.name, lead, ctx) };
+
+  let name = '';
+  if (ctx.check('*')) {
+    name = '*';
+    ctx.advance();
+  }
+  const hyphenated = parseHyphenatedName(ctx);
+  if (!hyphenated) throw new Error('Transition command requires a CSS property');
+  return { owner: expr, property: propertyNode(name + hyphenated, lead, ctx) };
+}
+
+/**
+ * The style an expression names, and its owner: `*opacity` and `opacity` (no
+ * owner), a possessive or member access (`#a's *opacity`, `my *opacity`), the
+ * `of` form (`*opacity of #a`) and `the opacity of #a`. Null when the
+ * expression names no style.
+ */
+function splitStyleExpression(node: ASTNode): { owner: ASTNode | null; name: string } | null {
+  const n = node as ASTNode & {
+    value?: unknown;
+    name?: unknown;
+    object?: ASTNode;
+    property?: { name?: unknown };
+    computed?: boolean;
+    operator?: string;
+    left?: ASTNode;
+    right?: ASTNode;
+    target?: ASTNode;
+  };
+  switch (n.type) {
+    case 'selector':
+      return typeof n.value === 'string' && n.value.startsWith('*')
+        ? { owner: null, name: n.value }
+        : null;
+    case 'identifier':
+      return typeof n.name === 'string' && !CONTEXT_REFS.has(n.name)
+        ? { owner: null, name: n.name }
+        : null;
+    case 'possessiveExpression':
+    case 'memberExpression':
+      return !n.computed && n.object && typeof n.property?.name === 'string'
+        ? { owner: n.object, name: n.property.name }
+        : null;
+    case 'binaryExpression': {
+      if (n.operator !== 'of' || !n.left || !n.right) return null;
+      const inner = splitStyleExpression(n.left);
+      return inner && !inner.owner ? { owner: n.right, name: inner.name } : null;
+    }
+    case 'propertyOfExpression':
+      return n.target && typeof n.property?.name === 'string'
+        ? { owner: n.target, name: n.property.name }
+        : null;
+    default:
+      return null;
+  }
+}
+
+function propertyNode(name: string, lead: Token, ctx: ParserContext): ASTNode {
+  return {
+    type: 'string',
+    value: name,
+    start: lead.start || 0,
+    end: ctx.getPosition().end,
+    line: lead.line,
+    column: lead.column,
+  };
+}
+
+/**
+ * Another pair follows unless the command ends here: at a boundary, at the
+ * `over` / `using` / `with` tail, or at a comment. Upstream's loop is the same
+ * (`while (!commandBoundary && not over && not using)`).
+ */
+function startsAnotherPair(ctx: ParserContext): boolean {
+  if (ctx.isAtEnd() || isComment(ctx.peek())) return false;
+  if (isKeyword(ctx.peek(), ['over', 'using', KEYWORDS.WITH])) return false;
+  return !isCommandBoundary(ctx, ['catch', 'finally', 'on']);
+}
+
+/** The pairs after the first, as an `arrayLiteral` of `objectLiteral`s. */
+function pairsNode(pairs: TransitionPair[]): ASTNode {
+  const field = (name: string, value: ASTNode) => ({
+    key: {
+      type: 'identifier',
+      name,
+      start: value.start,
+      end: value.end,
+      line: value.line,
+      column: value.column,
+    } as ASTNode,
+    value,
+  });
+  const elements = pairs.map(pair => {
+    const properties = [field('property', pair.property), field('to', pair.to)];
+    if (pair.owner) properties.push(field('owner', pair.owner));
+    if (pair.from) properties.push(field('from', pair.from));
+    return {
+      type: 'objectLiteral',
+      properties,
+      start: (pair.owner ?? pair.property).start,
+      end: pair.to.end,
+      line: (pair.owner ?? pair.property).line,
+      column: (pair.owner ?? pair.property).column,
+    } as ASTNode;
+  });
+  const firstEl = elements[0]!;
+  const lastEl = elements[elements.length - 1]!;
+  return {
+    type: 'arrayLiteral',
+    elements,
+    start: firstEl.start,
+    end: lastEl.end,
+    line: firstEl.line,
+    column: firstEl.column,
+  } as ASTNode;
 }
 
 /**
