@@ -594,7 +594,10 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'repeat-times',
     title: 'Repeat Times',
-    raw_code: 'on click repeat 3 times add "<p>Line</p>" to me',
+    // `append`, not `add`: `add` takes classes and attributes, so adding a string
+    // threw on both engines (core: no valid class names; upstream: "Cannot add
+    // to object") and the row ran nowhere, although both engines parse it.
+    raw_code: 'on click repeat 3 times append "<p>Line</p>" to me',
     description: 'Repeat an action multiple times',
     feature: 'loops',
   },
