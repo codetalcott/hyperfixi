@@ -74,33 +74,43 @@ export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
  * languages spell it the same as `from` (es `de`). `of` is emitted structurally
  * by the of-possessive anchor in {@link joinExpressionTokens} instead.
  *
+ * The logical words a condition joins (`or`, `not`, `and`) are carried the same
+ * way. The renderer writes them in the language, and where the tokenizer reads
+ * the word back as a bare identifier the condition kept it: de `p oder q`
+ * compared p with a variable named `oder`, and `nicht p` tested one named
+ * `nicht`. Entries for words the tokenizer already normalizes (es `o`, pl `i`)
+ * change nothing.
+ *
  * Known gap: hi `के_रूप_में` never matches, because the tokenizer splits
  * underscore-joined surfaces. Harmless (the entry is simply dead), and shared
  * with several dictionary surfaces of the same shape — see the burndown scope doc.
+ * ja `ではない` and ar `ليس` are dead the same way: their tokenizers split them.
  */
 // prettier-ignore
 export const CONNECTIVE_LEXICON: Record<string, Record<string, string>> = {
-  ar: { "كـ": "as" },
-  bn: { "হিসাবে": "as" },
-  de: { "als": "as" },
-  es: { "como": "as" },
-  fr: { "comme": "as" },
-  hi: { "के_रूप_में": "as" },
-  id: { "sebagai": "as" },
-  it: { "come": "as" },
-  ja: { "として": "as" },
-  ko: { "로": "as" },
-  ms: { "sebagai": "as" },
-  pl: { "jako": "as" },
-  pt: { "como": "as" },
-  qu: { "hina": "as" },
-  ru: { "как": "as" },
-  sw: { "kuwa": "as" },
-  tl: { "bilang": "as" },
-  tr: { "olarak": "as" },
-  uk: { "як": "as" },
-  vi: { "như": "as" },
-  zh: { "作为": "as" },
+  ar: { "أو": "or", "كـ": "as", "ليس": "not", "و": "and" },
+  bn: { "অথবা": "or", "এবং": "and", "না": "not", "হিসাবে": "as" },
+  de: { "als": "as", "nicht": "not", "oder": "or", "und": "and" },
+  es: { "como": "as", "no": "not", "o": "or", "y": "and" },
+  fr: { "comme": "as", "et": "and", "non": "not", "ou": "or" },
+  he: { "וגם": "and" },
+  hi: { "और": "and", "के_रूप_में": "as", "या": "or" },
+  id: { "atau": "or", "bukan": "not", "dan": "and", "sebagai": "as" },
+  it: { "come": "as", "e": "and", "non": "not", "o": "or" },
+  ja: { "そして": "and", "ではない": "not", "として": "as", "または": "or" },
+  ko: { "그리고": "and", "또는": "or", "로": "as", "아니": "not" },
+  ms: { "atau": "or", "bukan": "not", "dan": "and", "sebagai": "as" },
+  pl: { "i": "and", "jako": "as", "lub": "or", "nie": "not" },
+  pt: { "como": "as", "e": "and", "não": "not", "ou": "or" },
+  qu: { "chaymanta": "and", "hina": "as", "utaq": "or" },
+  ru: { "и": "and", "или": "or", "как": "as", "не": "not" },
+  sw: { "au": "or", "kuwa": "as", "si": "not" },
+  th: { "ไม่": "not", "และ": "and", "หรือ": "or" },
+  tl: { "at": "and", "bilang": "as", "hindi": "not", "o": "or" },
+  tr: { "değil": "not", "olarak": "as", "ve": "and", "veya": "or" },
+  uk: { "або": "or", "і": "and", "не": "not", "як": "as" },
+  vi: { "hoặc": "or", "không": "not", "như": "as", "và": "and" },
+  zh: { "作为": "as", "和": "and", "或": "or", "非": "not" },
 };
 
 /**

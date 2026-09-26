@@ -12,7 +12,7 @@
  *
  * Emits three literals:
  *   - PROPERTY_NAME_LEXICON — possessive property names (`valor` → `value`).
- *   - CONNECTIVE_LEXICON    — expression connectives (`como` → `as`).
+ *   - CONNECTIVE_LEXICON    — expression connectives (`como` → `as`, `oder` → `or`).
  *   - LOCATIVE_SURFACES     — locative markers inside a positional expression.
  */
 import { dictionaries } from '../src/dictionaries';
@@ -81,7 +81,17 @@ console.log(lines.join('\n'));
 //     ALL buckets, not just `modifiers`.
 // `of` is not extracted at all: it collides in most languages, and the
 // of-possessive anchor in the semantic lexicon emits it structurally instead.
-const CONNECTIVE_CONCEPTS = ['as'];
+//
+// `or`/`not`/`and` are the logical words a condition joins. The renderer writes
+// them in the language, and where the tokenizer reads the word back as a bare
+// identifier the condition kept it: de `p oder q` compared p with a variable
+// named `oder`, and `nicht p` tested a variable named `nicht`.
+const CONNECTIVE_CONCEPTS: ReadonlyArray<readonly [bucket: string, concept: string]> = [
+  ['modifiers', 'as'],
+  ['logical', 'or'],
+  ['logical', 'not'],
+  ['logical', 'and'],
+];
 const connectives: Record<string, Record<string, string>> = {};
 
 /** Every (concept → surface) pair in a dictionary, across all buckets. */
@@ -101,8 +111,8 @@ for (const lang of langs) {
   if (!dict?.modifiers) continue;
   const senses = allSenses(dict);
   const map: Record<string, string> = {};
-  for (const concept of CONNECTIVE_CONCEPTS) {
-    const surface = dict.modifiers[concept];
+  for (const [bucket, concept] of CONNECTIVE_CONCEPTS) {
+    const surface = dict[bucket]?.[concept];
     if (typeof surface !== 'string' || !surface.length) continue;
     if (surface.toLowerCase() === concept.toLowerCase()) continue; // identity
     const collides = senses.some(
