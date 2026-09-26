@@ -8,7 +8,13 @@
 import type { CommandSemanticNode, ActionType, SemanticValue, SemanticRole } from '../types';
 import { convertValue, isImplicitValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
-import type { ExpressionNode, LiteralNode } from './expression-parser';
+import type {
+  ArrayLiteralNode,
+  ExpressionNode,
+  LiteralNode,
+  ObjectLiteralNode,
+  ObjectPropertyNode,
+} from './expression-parser';
 import { getSchema, type AstShape } from '../generators/command-schemas';
 
 // =============================================================================
@@ -127,23 +133,65 @@ function createCommandNode(
 // =============================================================================
 
 /**
+ * One `{ name, args }` event spec of core's wait, from an event's text: `keyup`,
+ * or `pointermove(clientX, clientY)` with its destructured parameters.
+ */
+function waitEventSpec(text: string): ObjectLiteralNode {
+  const call = /^([\w:.-]+)\s*\(([^)]*)\)$/.exec(text.trim());
+  const name = call ? call[1] : text.trim();
+  const params = call
+    ? call[2]
+        .split(',')
+        .map(p => p.trim())
+        .filter(Boolean)
+    : [];
+  const property = (key: string, value: ExpressionNode): ObjectPropertyNode => ({
+    type: 'objectProperty',
+    key: { type: 'identifier', name: key } as ExpressionNode,
+    value,
+  });
+  const literal = (value: string): LiteralNode => ({ type: 'literal', value });
+  return {
+    type: 'objectLiteral',
+    properties: [
+      property('name', literal(name)),
+      property('args', { type: 'arrayLiteral', elements: params.map(literal) } as ArrayLiteralNode),
+    ],
+  };
+}
+
+/**
  * Wait command mapper.
  */
 const waitMapper: CommandMapper = {
   action: 'wait',
   toAST(node, _builder) {
-    // Event wait (`wait for transitionend [from document]`) — the runtime's
-    // WaitCommand reads the event from `modifiers.for` and the listen target
-    // from `modifiers.from`. The event role is set by the en
+    // Event wait (`wait for transitionend [from document]`), in the shape core's
+    // parser builds and the only one WaitCommand reads: `args[0]` is an array of
+    // `{ name, args }` event specs, `args[1]` the listen target. This emitted
+    // `modifiers.for` / `modifiers.from`, which WaitCommand stopped reading at
+    // Arc 3 step 2 (#1073, as keys "neither parser emits": this mapper did), so
+    // every non-English `wait for <event>` threw "wait command requires an
+    // argument" and its handler stopped there. The event role is set by the en
     // `wait-en-for-event` head, the known-event duration→event relabel
     // (normalizeCommandRoles), or the trailing event-name reclaim
     // (buildEventHandler).
-    const event = convertRoleValue(node, 'event');
-    if (event) {
-      const modifiers: Record<string, ExpressionNode> = { for: event };
+    const event = getRole(node, 'event');
+    const eventText =
+      event?.type === 'literal'
+        ? String(event.value)
+        : event?.type === 'expression'
+          ? event.raw
+          : event?.type === 'reference'
+            ? event.value
+            : undefined;
+    if (eventText) {
+      const args: ExpressionNode[] = [
+        { type: 'arrayLiteral', elements: [waitEventSpec(eventText)] } as ArrayLiteralNode,
+      ];
       const source = convertRoleValue(node, 'source');
-      if (source) modifiers.from = source;
-      return createCommandNode('wait', [], modifiers, { isBlocking: true });
+      if (source) args.push(source);
+      return createCommandNode('wait', args, undefined, { isBlocking: true });
     }
 
     const duration = convertRoleValue(node, 'duration');

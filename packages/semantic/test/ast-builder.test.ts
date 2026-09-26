@@ -281,44 +281,63 @@ describe('Command Mappers', () => {
       expect(result.isBlocking).toBe(true);
     });
 
-    it('should map an event wait to the runtime `for` modifier', () => {
-      // `wait for transitionend` — the runtime's WaitCommand reads the event
-      // from modifiers.for (and the listen target from modifiers.from).
-      const node: CommandSemanticNode = {
-        kind: 'command',
-        action: 'wait',
-        roles: new Map([
-          ['event', { type: 'literal', value: 'transitionend', dataType: 'string' }],
-        ]),
-      };
+    // Core's parser shape, the only one WaitCommand reads: `args[0]` an array of
+    // `{ name, args }` specs, `args[1]` the listen target. These tests pinned
+    // `modifiers.for` / `modifiers.from`, which WaitCommand stopped reading at
+    // Arc 3 step 2 (#1073): every translated event wait threw at run time.
+    // core's multilingual/wait-direct-path.test.ts runs the result.
+    const spec = (name: string, params: string[] = []) => ({
+      type: 'objectLiteral',
+      properties: [
+        { type: 'objectProperty', key: { type: 'identifier', name: 'name' }, value: { type: 'literal', value: name } },
+        {
+          type: 'objectProperty',
+          key: { type: 'identifier', name: 'args' },
+          value: { type: 'arrayLiteral', elements: params.map(p => ({ type: 'literal', value: p })) },
+        },
+      ],
+    });
+    const waitNode = (roles: [string, unknown][]): CommandSemanticNode => ({
+      kind: 'command',
+      action: 'wait',
+      roles: new Map(roles) as CommandSemanticNode['roles'],
+    });
 
-      const mapper = resolveCommandMapper('wait');
-      const builder = new ASTBuilder();
-      const result = mapper!.toAST(node, builder);
+    it('should map an event wait to core’s event-spec array', () => {
+      const result = resolveCommandMapper('wait')!.toAST(
+        waitNode([['event', { type: 'literal', value: 'transitionend', dataType: 'string' }]]),
+        new ASTBuilder()
+      );
 
       expect(result.name).toBe('wait');
-      expect(result.args).toHaveLength(0);
-      expect(result.modifiers!['for']).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(result.args).toEqual([{ type: 'arrayLiteral', elements: [spec('transitionend')] }]);
+      expect(result.modifiers).toBeUndefined();
       expect(result.isBlocking).toBe(true);
     });
 
-    it('should map an event wait with a source to for + from modifiers', () => {
-      const node: CommandSemanticNode = {
-        kind: 'command',
-        action: 'wait',
-        roles: new Map([
+    it('should pass a source as the listen target, args[1]', () => {
+      const result = resolveCommandMapper('wait')!.toAST(
+        waitNode([
           ['event', { type: 'literal', value: 'pointermove', dataType: 'string' }],
           ['source', { type: 'expression', raw: 'document' }],
         ]),
-      };
+        new ASTBuilder()
+      );
 
-      const mapper = resolveCommandMapper('wait');
-      const builder = new ASTBuilder();
-      const result = mapper!.toAST(node, builder);
+      expect(result.args).toHaveLength(2);
+      expect(result.args[0]).toEqual({ type: 'arrayLiteral', elements: [spec('pointermove')] });
+      expect(result.args[1]).toMatchObject({ type: 'identifier', name: 'document' });
+    });
 
-      expect(result.name).toBe('wait');
-      expect(result.modifiers!['for']).toMatchObject({ type: 'literal', value: 'pointermove' });
-      expect(result.modifiers!['from']).toBeDefined();
+    it('should destructure an event’s parameters into its spec', () => {
+      const result = resolveCommandMapper('wait')!.toAST(
+        waitNode([['event', { type: 'expression', raw: 'pointermove(clientX, clientY)' }]]),
+        new ASTBuilder()
+      );
+
+      expect(result.args).toEqual([
+        { type: 'arrayLiteral', elements: [spec('pointermove', ['clientX', 'clientY'])] },
+      ]);
     });
   });
 
