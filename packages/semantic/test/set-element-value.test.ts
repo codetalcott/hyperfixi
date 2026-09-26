@@ -33,6 +33,11 @@ const CASES: string[] = [
   // The values it always took.
   'on click set x to 1 then log x',
   'on click set x to it then log x',
+  // An array anywhere. qu writes the value right after the event, and read a
+  // spaced `[1, 2]` there as the event's filter.
+  'on click put [1, 2] into x then log x',
+  'on click log [1, 2]',
+  'on click repeat for x in [1, 2] log x end',
 ];
 
 describe.each(CASES)('%s, through every language', src => {
