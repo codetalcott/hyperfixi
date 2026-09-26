@@ -4797,6 +4797,20 @@ this signal was missing.
 >
 > Filed, not fixed: a fetch's `as text` is localized one way in ms/ru/th/tl/uk/vi (`teks`,
 > `текст`, …) and dropped in bn/hi, whatever the URL.
+>
+> **A put into a variable (PR 19, 2026-09-26; filed by PR 17).** put's destination took a
+> selector or reference only, so a variable (`into item`, a loop's element) matched no generated
+> pattern and the put dropped in ar/de/fr/id/zh. English's handcrafted pattern never checked the
+> type, and id's and zh's handcrafted patterns had copied the narrow list. The destination takes
+> an expression too now (`into my.textContent` arrives as one), and the handcrafted patterns read
+> the schema's list. On the direct path, a translated `repeat for item in … put "x" into item end`
+> had filled nothing in 10 languages, and `put "hi" into my.textContent` had set nothing in 7;
+> both now run in all 23. The corpus moved nothing, because no corpus row puts into a variable,
+> which is why every gate was blind to it.
+>
+> Filed, not fixed: in es/pt/he the put's `into` marker is also the handler's `on` marker, so a
+> mid-chain `… poner 2 en item …` splits off a new handler `on item`; the multi-handler splitter
+> takes any identifier after `on` for an event. Also, `put … at end of …` is lost in it/th.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

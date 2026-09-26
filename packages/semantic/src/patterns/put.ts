@@ -7,7 +7,18 @@
  * Phase 3.2: Consolidated from 17 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+import { putSchema } from '../generators/command-schemas';
+
+/**
+ * A handcrafted put's destination takes what the schema's does: a selector, a
+ * reference, or a variable (`into item`). These patterns once copied the
+ * narrower list, so a variable destination matched nothing in id and zh and
+ * the put was dropped.
+ */
+const PUT_DESTINATION_TYPES: ExpectedType[] = [
+  ...(putSchema.roles.find(role => role.role === 'destination')?.expectedTypes ?? []),
+];
 
 function getPutPatternsBn(): LanguagePattern[] {
   return [
@@ -445,7 +456,7 @@ function getPutPatternsId(): LanguagePattern[] {
           },
           { type: 'literal', value: 'ke' },
           { type: 'literal', value: 'dalam', alternatives: ['di'] },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
         ],
       },
       extraction: {
@@ -469,7 +480,7 @@ function getPutPatternsId(): LanguagePattern[] {
             expectedTypes: ['literal', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'ke', alternatives: ['di', 'pada'] },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
         ],
       },
       extraction: {
@@ -493,7 +504,7 @@ function getPutPatternsId(): LanguagePattern[] {
             expectedTypes: ['literal', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'di' },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
         ],
       },
       extraction: {
@@ -1039,7 +1050,7 @@ function getPutPatternsZh(): LanguagePattern[] {
             expectedTypes: ['literal', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '到', alternatives: ['在', '于', '入'] },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
         ],
       },
       extraction: {
@@ -1072,7 +1083,7 @@ function getPutPatternsZh(): LanguagePattern[] {
             optional: true,
             tokens: [{ type: 'literal', value: '到', alternatives: ['在', '于', '入'] }],
           },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
         ],
       },
       extraction: {

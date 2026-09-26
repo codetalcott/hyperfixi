@@ -763,7 +763,10 @@ export const putSchema: CommandSchema = {
       role: 'destination',
       description: 'Where to put the content',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      // A variable too (`into item`, a loop's element; `into my.textContent`
+      // arrives as an expression): without it a generated pattern matched
+      // nothing and the put dropped in ar/de/fr/id/zh.
+      expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 2, // SOV: destination comes second (に/에/a marker)
       // "put 'hello' into #output" — directional, so the same locative-default
