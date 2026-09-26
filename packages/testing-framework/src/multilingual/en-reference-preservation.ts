@@ -87,6 +87,11 @@ export const EQUIVALENCES: readonly Equivalence[] = [
     example: ['on click show the next <div/>', 'on click show next <div/>'],
   },
   {
+    id: 'the-before-target',
+    description: '`the` directly before `target` is an article',
+    example: ['on click log the target', 'on click log target'],
+  },
+  {
     id: 'dotted-possessive',
     description: '`my.x` is `my x`; `it.x` and `its.x` are `its x`',
     example: ['on click put it.name into #o', 'on click put its name into #o'],
@@ -260,6 +265,8 @@ export function canonicalTokens(src: string): Token[] {
     }
     // the-before-positional
     if (wordIs(tok, 'the') && (wordIs(next, 'next') || wordIs(next, 'previous'))) continue;
+    // the-before-target (`the target.closest("li")` is `target.closest("li")`)
+    if (wordIs(tok, 'the') && isWord(next) && /^target(?:\.|$)/.test(next.text)) continue;
     // go-to-url
     if (wordIs(tok, 'to') && wordIs(out[out.length - 1], 'go') && wordIs(next, 'url')) continue;
     // dotted-possessive
