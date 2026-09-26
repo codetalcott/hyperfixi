@@ -98,6 +98,11 @@ describe.each([
   // The same rule counts the wait's earlier same-event waits: counting the
   // head too sent the alternatives past the only wait, and they were dropped.
   ['a wait sharing the head’s event keeps its alternatives', 'on keyup wait for keyup or 1s then log 1'],
+  // An SOV loop head renders its own source right before the body wait's
+  // event (ja `… 繰り返し document から pointermove(clientY) …`): the wait reads
+  // a source after its run only, so it keeps its legs and the loop its source.
+  ['a wait after a loop head’s source keeps its legs',
+    'on pointerdown repeat until event pointerup from document wait for pointermove(clientY) or pointerup(clientY) then log clientY end then log 1'],
   // The pre-pass counts the same event's earlier waits to find which node is its.
   ['two waits on the same event keep their own extras',
     'on click wait for keyup then log 1 then wait for keyup or 1s then log 2'],
