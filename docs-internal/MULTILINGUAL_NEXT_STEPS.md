@@ -4495,6 +4495,26 @@ this signal was missing.
 >   Predates PR 8a (the or-excision never fires on it: `b` is not an event).
 > - A verb-final (SOV) body can still lend the head an `or` leg: in `クリック で keydown または
 >   click を 待つ` the verb follows its arguments, so the command-word stop comes too late.
+>
+> **Handler heads, part 2 (2026-09-26): event parameters (PR 8b).** No entry pruned (16), but
+> the three behavior rows now keep their heads, and what remains of each is the `wait for A(…)
+> or B(…) from document` alternative (PR 8c) and, for draggable and sortable, the `init`
+> reorder (the behavior-removable family).
+> - Event parameters were lost in every language. The SVO/VSO event patterns expect a `from` or
+>   the body right after the event, so `on pointerdown(clientX, clientY) from dragHandle` broke
+>   the source pattern and the params and the `from` fell into the body. A pre-pass now excises
+>   a head's param phrase, re-parses the plain head and puts the names back; every candidate is
+>   confirmed by the re-parse (its event must be the word before the phrase), which admits custom
+>   events and rejects a body `click()`, a behavior header, a verb-final `js(me)`. The renderer
+>   glues the names to the event token, and buildAST already handed them to core as `args`, so a
+>   translation's `on click(clientX) put clientX into me` binds `clientX` (all 23, run).
+> - A behavior's `init` now ends at the next handler, as upstream's does (its `end` is
+>   optional): the one-line `if` in `init if no dragHandle set dragHandle to me end` owns that
+>   `end`, and the end split had folded draggable's whole handler into init. The split keys on
+>   the words that open a handler, from the pure trigger patterns: de `auf` and the fused
+>   patterns' command verbs (ar `اضبط`) are not handler triggers.
+> - `from me` on a handler head is a pinned equivalence in the en-reference gate
+>   (`handler-from-me`): the parser drops it by design, and upstream listens on `me` either way.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
