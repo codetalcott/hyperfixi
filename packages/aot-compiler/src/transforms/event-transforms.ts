@@ -18,6 +18,7 @@ import type {
   RepeatNode,
   ForEachNode,
   WhileNode,
+  SequenceNode,
 } from '../types/aot-types.js';
 import { sanitizeSelector } from './expression-transforms.js';
 import {
@@ -122,6 +123,11 @@ export class EventHandlerCodegen {
 
       case 'while':
         return generateWhile(node as WhileNode, this.ctx, nodes => this.generateBody(nodes));
+
+      case 'sequence':
+        // A counted loop LoopUnrollingPass unrolled: its passes, in order. With
+        // no case here the whole loop compiled to nothing.
+        return this.generateBody((node as SequenceNode).commands);
 
       case 'event': {
         // Nested event node (from CommandSequence conversion) — inline its body

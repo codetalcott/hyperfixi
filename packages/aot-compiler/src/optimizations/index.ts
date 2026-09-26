@@ -416,6 +416,11 @@ export class LoopUnrollingPass implements OptimizationPass {
       return null;
     }
 
+    // Nor a loop that names its index, or whose `else` runs when count is 0
+    if (repeatNode.indexName !== undefined || repeatNode.elseBody !== undefined) {
+      return null;
+    }
+
     // Unroll: create sequence of body copies
     const unrolled: ASTNode[] = [];
     for (let i = 0; i < count; i++) {

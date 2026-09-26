@@ -264,7 +264,13 @@ export interface RepeatNode extends BaseASTNode {
   count?: number | ASTNode;
   whileCondition?: ASTNode;
   untilEvent?: string;
+  /** Where `until event` listens (`from …`); the handler's element when absent. */
+  untilEventTarget?: ASTNode;
+  /** `index i`: the local that holds the iteration number. */
+  indexName?: string;
   body: ASTNode[];
+  /** `else`: runs when the loop body never ran. */
+  elseBody?: ASTNode[];
 }
 
 export interface ForEachNode extends BaseASTNode {
@@ -273,12 +279,20 @@ export interface ForEachNode extends BaseASTNode {
   indexName?: string;
   collection: ASTNode;
   body: ASTNode[];
+  /** `else`: runs when the loop body never ran. */
+  elseBody?: ASTNode[];
 }
 
 export interface WhileNode extends BaseASTNode {
   type: 'while';
   condition: ASTNode;
+  /** `repeat … while/until <cond> end`: the body runs once before the first test. */
+  bottomTested?: boolean;
+  /** `index i`: the local that holds the iteration number. */
+  indexName?: string;
   body: ASTNode[];
+  /** `else`: runs when the loop body never ran. */
+  elseBody?: ASTNode[];
 }
 
 // =============================================================================

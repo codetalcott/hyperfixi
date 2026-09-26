@@ -209,6 +209,11 @@ export class ExpressionCodegen {
           this.ctx.requireHelper('globals');
           return `_rt.globals.get('${varName}')`;
         }
+        // A loop's item or index (`for x in …`, `index i`): the loop writes it
+        // to `_ctx.locals` each pass, so a bare JS `x` would throw.
+        if (this.ctx.analysis?.variables?.locals?.get(name)?.scope === 'local') {
+          return `_ctx.locals.get('${sanitizeIdentifier(name)}')`;
+        }
         // Plain identifier - assume it's defined elsewhere
         return sanitizeIdentifier(name);
     }
