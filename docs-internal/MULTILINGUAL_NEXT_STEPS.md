@@ -4581,6 +4581,23 @@ this signal was missing.
 >   transliterations (`마우스무브`) and three zh names are not events there (ar and vi resize are
 >   read as `change`). With `or 1s`, es and pt also lend the head an `or 1s` leg (`on click or 1s
 >   wait dobleclic`).
+>
+> **Native event names in a head's params and a wait (PR 8e, 2026-09-26).** Both findings above,
+> fixed: `normalizeEventName` reads each language's native event names, and only the handler head
+> consulted it. No allowlist change (neither shape is in the corpus).
+> - The params pre-pass now accepts any native spelling of the handler's event right before the
+>   `(`, not just the one token there. Its re-parse is nested, where the outermost parse's join of
+>   a split event (ar `تغيير حجم` is resize, not its first word's `change`) does not run, so it
+>   joins it itself, taking the joined node, which also retires the words' unconsumed-input record.
+>   36 of 644 → 0 (the zh throws included).
+> - The wait's duration→event relabel and the wait pre-pass read the language's native names too.
+>   39 of 644 → 2, and es/pt no longer lend the head the wait's `or 1s`.
+> - Still open (pinned in `event-dictionary-names.test.ts`): ar and vi `wait for resize` read the
+>   first word, `change`, because only a handler head joins a split event.
+>
+> `handler-head-direct-path.test.ts` and `wait-direct-path.test.ts` (core) run `on
+> mousemove(clientX)`, `on keydown(key)` and `wait for mousemove` in all 23 languages; before the
+> fix 13 failed, exactly the languages the probes named.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
