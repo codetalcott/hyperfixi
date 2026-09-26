@@ -4460,6 +4460,26 @@ this signal was missing.
 >   `repeat until event to`, losing the body and the condition, in English and so everywhere.
 > - A bare `if … end` (no handler) parses as an event handler: `if true add .yes to me end`
 >   renders `on true add .yes to me`. Inside a handler it round-trips.
+>
+> **Fourth prune (2026-09-26): a handler head's `or` events (PR 8a).** The allowlist is 17 → 16:
+> multiple-events is preserved. Three parts of a handler head never reached a translation's
+> runtime, none of them visible to the multilingual gate:
+> - The parser captured an `or <event>` alternative (`additionalEvents`) and nothing read it.
+>   The renderer wrote the first event only, so every translation of `on click or keydown …`
+>   read `on click …`, and `buildAST` ignored the field as well: the handler listened for
+>   `click` alone. The renderer now writes each leg right after the event, in the language's own
+>   or-word (the placement parses back in all 23, measured; it keeps the leg inside a frame such
+>   as zh `一 点击 或 … 就`), and `buildAST` lists the legs in `events`, as core's parser does.
+> - The or-excision took a leg's `[filter]` out with it and kept only the name. The filter now
+>   stays glued to its leg, as the main event's does.
+> - `buildAST` passed a filtered event on as the event NAME (`keydown[key=="Escape"]`), so no
+>   event ever matched and every filtered non-English handler was dead on the direct path. It
+>   now splits the filter into the handler's condition, as core's parser does.
+>
+> `handler-head-direct-path.test.ts` (core) fires the events: `on click or keydown` fires on
+> either in all 23 languages, and `on keydown[key=="Escape"]` on its key only. The rest of the
+> handler-head family (event params, `from` after params, `wait for A or B from X`, draggable's
+> lost header) is PR 8b/8c.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
