@@ -11,7 +11,7 @@
  * languages (measured), so the renderer writes it there.
  */
 import { describe, it, expect } from 'vitest';
-import { parse, render, buildAST } from '../src/index';
+import { parse, render, buildAST, localizeEventName } from '../src/index';
 import { OR_WORDS_BY_LANG } from '../src/parser/utils/or-words';
 
 const FOREIGN = [
@@ -48,6 +48,17 @@ describe.each(Object.entries(SHAPES))('%s, through every language', (_, src) => 
     // In the language's own word, not the English one.
     const or = [...OR_WORDS_BY_LANG[language]][0];
     expect(foreign.split(' '), foreign).toContain(or);
+  });
+});
+
+// The leg belongs with its event, inside the head's frame: zh `一 点击 或 …
+// 就`, not `一 点击 就 或 …`. Both parse back, so only the surface can tell.
+describe('an or-leg directly follows its event word', () => {
+  it.each(FOREIGN)('%s', language => {
+    const words = render(parse(SHAPES.plain, 'en')!, language).split(' ');
+    const at = words.indexOf(localizeEventName('click', language));
+    expect(at, words.join(' ')).toBeGreaterThanOrEqual(0);
+    expect(words[at + 1], words.join(' ')).toBe([...OR_WORDS_BY_LANG[language]][0]);
   });
 });
 

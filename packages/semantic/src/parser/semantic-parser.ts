@@ -7502,16 +7502,9 @@ export class SemanticParserImpl implements ISemanticParser {
       // Normalize event name using shared translations
       const eventLower = (eventToken.normalized || eventToken.value).toLowerCase();
 
-      // Accept it as an event (could be native or English event name), with a
-      // trailing `[filter]` glued on, as the main event carries its own.
+      // Accept it as an event (could be native or English event name)
       tokens.advance();
-      const filterToken = tokens.peek();
-      if (filterToken?.kind === 'selector' && filterToken.value.startsWith('[')) {
-        tokens.advance();
-        additionalEvents.push({ type: 'literal', value: eventLower + filterToken.value });
-      } else {
-        additionalEvents.push({ type: 'literal', value: eventLower });
-      }
+      additionalEvents.push({ type: 'literal', value: eventLower });
     }
 
     return additionalEvents;
