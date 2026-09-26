@@ -47,14 +47,6 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
     reason:
       '`the` is the article haltSchema SKIPS (argSkipTokens), not a patient marker; it is the slot the core parser emits for `halt the event` (Arc 3 step 3), so the descriptor names it to keep both paths on one shape',
   },
-  'show.with': {
-    kind: 'undeclared',
-    reason: '`duration` is not declared on showSchema; the parser relabels into it',
-  },
-  'hide.with': {
-    kind: 'undeclared',
-    reason: '`duration` is not declared on hideSchema (which has patient + style); same as show',
-  },
   'morph.on': {
     kind: 'contract',
     reason:
