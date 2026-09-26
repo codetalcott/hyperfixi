@@ -8362,12 +8362,14 @@ export class SemanticParserImpl implements ISemanticParser {
         break;
       }
 
-      // Normalize event name using shared translations
-      const eventLower = (eventToken.normalized || eventToken.value).toLowerCase();
+      // A native event name normalizes to the English one (`clic` → `click`);
+      // a custom one keeps its case, which the DOM matches exactly: lowercased,
+      // a translated `on click or myEvent` listened for `myevent`.
+      const eventName = eventToken.normalized || eventToken.value;
 
       // Accept it as an event (could be native or English event name)
       tokens.advance();
-      additionalEvents.push({ type: 'literal', value: eventLower });
+      additionalEvents.push({ type: 'literal', value: eventName });
     }
 
     return additionalEvents;
