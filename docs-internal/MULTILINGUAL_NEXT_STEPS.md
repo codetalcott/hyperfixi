@@ -5149,15 +5149,15 @@ this signal was missing.
 > .item in #list` threw `Invalid add target`, and a loop over it never ran. Semantic took a scope
 > only after a `<…/>` query, so `set x to .item in #list` rendered `set x to .item`, in English and
 > so in every translation. Core's `in` now reads a class ref as a scoped query (`is in` stays
-> membership), and semantic gives a class ref a locative scope as it does a `<…/>` query. 167 of
-> the 191 new round trips and 71 of the 72 new core cases failed before; no corpus row moves.
+> membership), and semantic gives a class ref a locative scope as it does a `<…/>` query. 168 of
+> the 192 new round trips and 72 of the 73 new core cases failed before; no corpus row moves.
 >
-> Filed, not fixed:
+> A class NAME (the patient of add/remove/toggle/take) takes no scope: it's `a` ("to") is also a
+> locative, and `aggiungere .a a <li/> in #list` otherwise read `.a` as a query scoped to the
+> `<li/>` (PR 11's and PR 33's tests caught it).
 >
-> - it reads `aggiungere .z a .item in #list` as `add .z in .item to #list`, as it reads an element
->   query (`<li/> in #list`, since PR 11).
-> - Core refuses `put (.item in #list).length into #out` (`put requires arguments`); the `<li/>`
->   form works.
+> Filed, not fixed: core refuses `put (.item in #list).length into #out` (`put requires
+> arguments`); the `<li/>` form works.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

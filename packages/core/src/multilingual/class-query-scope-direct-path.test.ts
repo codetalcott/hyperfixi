@@ -62,21 +62,19 @@ async function click(source: string, language: string): Promise<string> {
   return `${document.getElementById('out')!.textContent} | ${items.join(' ')}`;
 }
 
-// Each handler with the page upstream leaves (#out, then each `.item`), and
-// the languages it is not yet right in: it reads `aggiungere .z a .item in
-// #list` as `add .z in .item to #list`, as it reads an element query.
-const CASES: Array<[string, string, readonly string[]]> = [
-  ['on click set x to .item in #list then put x.length into #out', '2 | a:item b:item c:item', []],
-  ['on click add .z to .item in #list', 'o | a:item z b:item z c:item', ['it']],
-  ['on click for el in .item in #list put "y" into el end', 'o | y:item y:item c:item', []],
+// Each handler with the page upstream leaves (#out, then each `.item`).
+const CASES: Array<[string, string]> = [
+  ['on click set x to .item in #list then put x.length into #out', '2 | a:item b:item c:item'],
+  ['on click add .z to .item in #list', 'o | a:item z b:item z c:item'],
+  ['on click for el in .item in #list put "y" into el end', 'o | y:item y:item c:item'],
 ];
 
-describe.each(CASES)('%s', (source, expected, notYet) => {
+describe.each(CASES)('%s', (source, expected) => {
   it('English, through core’s parser', async () => {
     expect(await click(source, 'en')).toBe(expected);
   });
 
-  it.each(FOREIGN.filter(language => !notYet.includes(language)))('%s', async language => {
+  it.each(FOREIGN)('%s', async language => {
     expect(await click(source, language)).toBe(expected);
   });
 });
