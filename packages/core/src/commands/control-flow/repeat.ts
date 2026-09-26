@@ -94,6 +94,16 @@ async function slotText(
 }
 
 /**
+ * Duck-typed, as upstream (it calls `addEventListener` on the value).
+ * `instanceof EventTarget` is false for an element from another realm, an
+ * iframe's or a test DOM's, and `repeat until event … from` then listened on
+ * `me` instead, without a word.
+ */
+function isEventTarget(value: unknown): value is EventTarget {
+  return typeof (value as EventTarget | null)?.addEventListener === 'function';
+}
+
+/**
  * A `while`/`until` condition is an EXPRESSION, re-evaluated before every
  * iteration: `parseInput` hands over a thunk that evaluates it. It used to hand
  * over the AST node itself, which `evaluateCondition` read as a truthy object —
@@ -226,7 +236,7 @@ export class RepeatCommand implements DecoratedCommand {
           eventTarget = window;
         } else {
           const target = await evaluator.evaluate(m.from, context);
-          if (target instanceof EventTarget) eventTarget = target;
+          if (isEventTarget(target)) eventTarget = target;
           else if (target === 'document') eventTarget = document;
           else if (typeof window !== 'undefined' && target === window) eventTarget = window;
         }

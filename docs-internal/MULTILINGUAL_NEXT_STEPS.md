@@ -4456,6 +4456,10 @@ this signal was missing.
 >   the no-head filing above. On the direct path core's `repeat` then throws; the AOT compiles
 >   the missing condition to a loop that never runs.
 > - An array literal in a for-in (`for x in [1, 2]`) parses as an ATTRIBUTE selector `[1, 2]`.
+> - A bottom-tested loop does not parse: `repeat append "x" to me until true end` renders
+>   `repeat until event to`, losing the body and the condition, in English and so everywhere.
+> - A bare `if … end` (no handler) parses as an event handler: `if true add .yes to me end`
+>   renders `on true add .yes to me`. Inside a handler it round-trips.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -47,7 +47,9 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**`beep!` in an expression; `render … with name: value`**~~ | **FIXED 2026-09-25** — gaps 3 and 4. `log beep! 3` was silently an empty `log`; the documented `with (name: value)` was a docs defect (upstream rejects it too). Running the rows found `my value` undefined on a `<button>`, also FIXED | ✅ `render-named-args.test.ts`, `beep-expression.test.ts`, `property-access-utils.test.ts` | the "Gaps 3 and 4 closed" section below |
 | ~~**`transition` owners, several properties, `from`, `using`**~~ | **FIXED 2026-09-25** — gap 5; the multi-property value had misparsed SILENTLY at top level (`100px * height`), and a collection owner moved only its first element | ✅ `transition-owners.test.ts` (mutation-checked) | the "Gap 5 closed" section below |
 | ~~**Every AOT-compiled loop was `while (true)`**~~ | **FIXED 2026-09-26** — both interchange converters read the pre-slot positional `repeat`, so every parsed loop compiled to `while (true)`, a hung page reported as success; once they read the slots, `until event`, `index`, bottom-tested loops, `else`, for-in collections and unrolled loops each turned out to have no codegen | ✅ `loop-execution.test.ts` (RUN, vs upstream), `loop-slots.e2e.test.ts`, `interchange-from-semantic.test.ts` (22/22 mutants red) | the "Every AOT-compiled loop" section below |
-| **Loops through `toCoreAST` / `evalLSE` throw; core's bare `for … else`** | medium — two writers into core's loop shape still emit one it cannot run ("repeat command requires a loop type"); a bare `for`'s `else` lands in the loop body | ⚠️ NONE | "Found running the loops" in the "Every AOT-compiled loop" section |
+| ~~**Loops and `if`s through `toCoreAST` / `evalLSE` threw**~~ | **FIXED 2026-09-26** — both writers into core's AST wrote control flow in shapes core never reads, so every loop and every `if` through `toCoreAST`, `evalLSE`, `evalLSENode` or `compileLSE` threw; `repeat until event … from` also listened on `me` when the target came from another realm | ✅ `to-core.e2e.test.ts`, `control-flow-lse.test.ts` (both RUN), `to-runtime-ast.test.ts` (19/19 mutants red) | "Found running the loops" in the "Every AOT-compiled loop" section |
+| **`evalLSE` drops a command's `destination`; the AOT's explicit input drops control flow** | **medium-high, silent** — `[add patient:.highlight destination:#output]`, the API's own documented example, adds to `me`; `append` appends nothing; a reference value never reaches core. The AOT compiles `[if …]` and `[repeat …]` to nothing, reported as success | ⚠️ NONE | the same section |
+| **A bare `for … else` takes the `else` into the loop body** | medium, silent — the else commands run once per item, never on an empty collection | ⚠️ NONE | the same section |
 | **AOT expression codegen: six more gaps found running loops** | **medium-high, silent** — array literals throw; `my prop` / `#x.prop` read `obj[name]`; `append … to #x` appends to `me`; class batching retargets onto `me`; `set x` emits nothing; no qu handler compiles by default | ⚠️ NONE | the same section |
 | **`def` / `behavior` demand their own `end`** | medium — upstream-valid, rejected loudly | ⚠️ NONE | "Filed, still open" in the "Gaps 1 and 2 closed" section |
 | **AOT `transition` is a no-op for almost every form; AOT throws on any CSS length** | medium — `*opacity` keeps its sigil, an owner is read as the property, `over 200ms` becomes `200msms`; `100px` has no interchange case, so AOT throws | ⚠️ NONE | the "Gap 5 closed" section below |
@@ -2360,11 +2362,36 @@ loop's `index`, got a test).
 
 Found running the loops, and **still open**:
 
-- **Two writers into core's loop shape emit one core cannot run.** `toCoreAST`
-  (public, no in-repo caller) writes `loopVariant`/`count` at the top level;
-  framework's `semanticNodeToRuntimeAST` writes `args: [count]` and a top-level
-  `body`. Every loop through `toCoreAST`, or `hyperscript.evalLSE`/`compileLSE`,
-  throws "repeat command requires a loop type". Loud, unlike the AOT's hang.
+- ~~**Two writers into core's loop shape emit one core cannot run.**~~ **FIXED
+  2026-09-26 (PR 7c).** `toCoreAST` and framework's `semanticNodeToRuntimeAST`
+  (behind `evalLSE`, `evalLSENode`, `compileLSE`) now write loops in core's slot
+  shape, and each `if` as `args: [condition, then, else?]`: the `if`s had the
+  same drift, and every one threw. `fromInterchangeNode` read an until-event
+  loop as `until` with the event name as its condition; it keeps the event and
+  its target now. And core's `repeat until event … from` accepted the target
+  only via `instanceof EventTarget`, which an element from another realm (an
+  iframe's, a test DOM's) fails, so the loop listened on `me` instead; it is
+  duck-typed now, as upstream. Pinned by `to-core.e2e.test.ts` and
+  `lse/control-flow-lse.test.ts`, which RUN the output.
+
+  Found fixing them, **still open**:
+  - **`evalLSE` drops a command's `destination` and every reference value.**
+    `semanticNodeToRuntimeAST` hands a command's roles to core as positional
+    args, and writes a reference as `{type: 'identifier', value}` where core
+    reads `name`. So `[add patient:.highlight destination:#output]`, the
+    example in the API's own docs, adds the class to `me`; `append` appends
+    nothing; `put patient:i` writes the text `i`; `[set destination:#x's
+    innerHTML …]` throws "Invalid selector". `put … destination:#x` and
+    `increment` work. Before `control-flow-lse.test.ts`, nothing ran `evalLSE`.
+  - **The AOT's explicit and JSON input drops every control-flow node.** It
+    compiles framework's runtime AST directly, which writes `if` and `repeat`
+    as commands, and the AOT has no command codegen for either: `[if …]` and
+    `[repeat …]` compile to an empty handler, with a warning, reported as
+    success.
+  - **Explicit syntax cannot write an expression condition.**
+    `condition:#n.textContent<3` parses as a selector (and throws "Invalid
+    selector" at run time); `condition:1<0` as the string `"1<0"`. The sibling
+    of the spaced-expression filing in `MULTILINGUAL_NEXT_STEPS.md`.
 - **A bare `for … else … end` takes its `else` commands into the loop body.**
   `parseForCommand` (#1170) got the slot shape but not `repeat for`'s else
   handling; upstream parses both through one routine. So the else commands run
