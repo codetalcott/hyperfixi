@@ -128,15 +128,30 @@ function convertCommand(node: SemanticNode): RuntimeCommandNode {
   };
 }
 
+/** A body as core's parser holds one: a block of commands. */
+function block(nodes: readonly SemanticNode[] | undefined): RuntimeASTNode {
+  return { type: 'block', commands: (nodes ?? []).map(semanticNodeToRuntimeAST) };
+}
+
+/**
+ * An `if` as core's parser builds it: `args: [condition, then-block,
+ * else-block?]`. This wrote the branches beside `args: [condition]`, so every
+ * `if` through `evalLSE` threw "if command requires "then" branch with
+ * commands".
+ */
 function convertConditional(node: ConditionalSemanticNode): RuntimeASTNode {
+  const name = node.action === 'unless' ? 'unless' : 'if';
   const conditionValue = node.roles.get('condition');
+  // No condition is malformed: empty args make core say so.
+  if (!conditionValue) return { type: 'command', name, args: [] };
   return {
     type: 'command',
-    name: 'if',
-    args: conditionValue ? [semanticValueToAST(conditionValue)] : [],
-    condition: conditionValue ? semanticValueToAST(conditionValue) : undefined,
-    thenBranch: (node.thenBranch ?? []).map(semanticNodeToRuntimeAST),
-    elseBranch: (node.elseBranch ?? []).map(semanticNodeToRuntimeAST),
+    name,
+    args: [
+      semanticValueToAST(conditionValue),
+      block(node.thenBranch),
+      ...(node.elseBranch && node.elseBranch.length > 0 ? [block(node.elseBranch)] : []),
+    ],
   };
 }
 
@@ -203,12 +218,7 @@ function convertLoop(node: LoopSemanticNode): RuntimeASTNode {
   }
   if (node.indexVariable) slot('index', text(node.indexVariable));
 
-  return {
-    type: 'command',
-    name: 'repeat',
-    args: [{ type: 'block', commands: (node.body ?? []).map(semanticNodeToRuntimeAST) }],
-    modifiers,
-  };
+  return { type: 'command', name: 'repeat', args: [block(node.body)], modifiers };
 }
 
 /**

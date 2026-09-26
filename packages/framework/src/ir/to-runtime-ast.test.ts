@@ -84,3 +84,30 @@ describe('a loop becomes core’s slot-shaped repeat', () => {
     });
   });
 });
+
+describe('an if becomes core’s args-shaped if', () => {
+  it('with its then- and else-blocks', () => {
+    const ast = semanticNodeToRuntimeAST(
+      parseExplicit('[if condition:true then:[toggle patient:.a] else:[toggle patient:.b]]')
+    ) as unknown as Record<string, unknown>;
+    expect(ast).toEqual({
+      type: 'command',
+      name: 'if',
+      args: [
+        { type: 'literal', value: true },
+        { type: 'block', commands: [expect.objectContaining({ name: 'toggle' })] },
+        { type: 'block', commands: [expect.objectContaining({ name: 'toggle' })] },
+      ],
+    });
+  });
+
+  it('without an else-block when there is none', () => {
+    const ast = semanticNodeToRuntimeAST(parseExplicit(`[if condition:true then:${TOGGLE}]`));
+    expect((ast as unknown as { args: unknown[] }).args).toHaveLength(2);
+  });
+
+  it('with empty args when it has no condition, so core refuses it', () => {
+    const ast = semanticNodeToRuntimeAST(parseExplicit(`[if then:${TOGGLE}]`));
+    expect((ast as unknown as { args: unknown[] }).args).toEqual([]);
+  });
+});

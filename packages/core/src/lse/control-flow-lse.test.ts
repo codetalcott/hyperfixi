@@ -1,12 +1,13 @@
 /**
- * A loop in explicit syntax RUNS, through `evalLSE`, `evalLSENode` and
- * `compileLSE`.
+ * A loop or an `if` in explicit syntax RUNS, through `evalLSE`, `evalLSENode`
+ * and `compileLSE`.
  *
  * All three convert with framework's `semanticNodeToRuntimeAST`, which wrote a
- * loop as `args: [count]` with `loopVariant` and `body` beside it: a shape core's
- * `repeat` has not read since the slot migration (Arc 3 step 3). Every loop
- * threw "repeat command requires a loop type". It now writes the shape core's
- * parser builds.
+ * loop as `args: [count]` with `loopVariant` and `body` beside it, and an `if`'s
+ * branches beside `args: [condition]`: shapes core does not read. Every loop
+ * threw "repeat command requires a loop type" and every `if` "if command
+ * requires "then" branch with commands". It now writes what core's parser
+ * builds.
  *
  * The bodies increment a counter on purpose. Explicit syntax hands a command's
  * roles to core as positional args, so a `destination` or a reference value
@@ -81,4 +82,28 @@ it('compileLSE compiles a loop that runs', async () => {
   expect(compiled.ok).toBe(true);
   await hyperscript.execute(compiled.ast!, hyperscript.createContext(host()));
   expect(count()).toBe('3');
+});
+
+describe('evalLSE runs an if', () => {
+  beforeEach(() => {
+    document.body.innerHTML += '<div id="m">0</div>';
+  });
+
+  it.each([
+    ['its then-branch', '[if condition:true then:[increment patient:#n]]', '1/0'],
+    [
+      'its else-branch',
+      '[if condition:false then:[increment patient:#n] else:[increment patient:#m]]',
+      '0/1',
+    ],
+  ])('%s', async (_, lse, expected) => {
+    await hyperscript.evalLSE(lse, host());
+    expect(`${count()}/${document.getElementById('m')!.textContent}`).toBe(expected);
+  });
+
+  it('still refuses an if with no condition', async () => {
+    await expect(hyperscript.evalLSE('[if then:[increment patient:#n]]', host())).rejects.toThrow(
+      'requires a condition'
+    );
+  });
 });
