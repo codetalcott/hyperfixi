@@ -7,7 +7,17 @@
  * Phase 3.2: Consolidated from 16 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+import { showSchema } from '../generators/command-schemas';
+
+/**
+ * A handcrafted show's target takes what the schema's does, a variable
+ * included (`show el`). de's and fr's patterns once copied the narrower list,
+ * and a variable target was dropped.
+ */
+const SHOW_PATIENT_TYPES: ExpectedType[] = [
+  ...(showSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
+];
 
 function getShowPatternsBn(): LanguagePattern[] {
   return [
@@ -60,7 +70,7 @@ function getShowPatternsDe(): LanguagePattern[] {
         format: 'zeige {patient}',
         tokens: [
           { type: 'literal', value: 'zeige', alternatives: ['zeigen', 'anzeigen', 'show'] },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SHOW_PATIENT_TYPES },
           // `mit <strategy>` (`… mit *opacity`): without it this pattern
           // outranked the generated one and dropped the strategy.
           {
@@ -92,7 +102,7 @@ function getShowPatternsFr(): LanguagePattern[] {
         format: 'afficher {patient}',
         tokens: [
           { type: 'literal', value: 'afficher', alternatives: ['montrer', 'présenter', 'show'] },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SHOW_PATIENT_TYPES },
           // `avec <strategy>` (`… avec *opacity`): without it this pattern
           // outranked the generated one and dropped the strategy.
           {
