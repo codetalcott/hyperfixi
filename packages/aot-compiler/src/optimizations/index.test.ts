@@ -571,6 +571,28 @@ describe('LoopUnrollingPass', () => {
       expect(result.type).toBe('repeat');
     });
 
+    it('refuses to unroll a loop that names its index', () => {
+      const ast: ASTNode = {
+        type: 'repeat',
+        count: 3,
+        indexName: 'i',
+        body: [command('add')],
+      };
+
+      expect(pass.transform(ast, createAnalysis()).type).toBe('repeat');
+    });
+
+    it('refuses to unroll a loop with an else, which runs when count is 0', () => {
+      const ast: ASTNode = {
+        type: 'repeat',
+        count: 0,
+        body: [command('add')],
+        elseBody: [command('remove')],
+      };
+
+      expect(pass.transform(ast, createAnalysis()).type).toBe('repeat');
+    });
+
     it('refuses to unroll when count is non-numeric (AST node)', () => {
       const ast: ASTNode = {
         type: 'repeat',

@@ -46,6 +46,9 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**`repeat while` / `repeat until` never evaluated their condition**~~ | **FIXED 2026-09-25** — `while` ran to the 10,000-iteration cap, `until` never ran its body, bottom-tested loops ran once; every unit test passed a boolean. Found alongside gaps 1 and 2 (block `end` at end of input, `morph … to`), both also FIXED | ✅ `repeat-conditions.test.ts`, `block-end-at-eof.test.ts`, `morph-to.test.ts` (all mutation-checked) | the "Gaps 1 and 2 closed" section below |
 | ~~**`beep!` in an expression; `render … with name: value`**~~ | **FIXED 2026-09-25** — gaps 3 and 4. `log beep! 3` was silently an empty `log`; the documented `with (name: value)` was a docs defect (upstream rejects it too). Running the rows found `my value` undefined on a `<button>`, also FIXED | ✅ `render-named-args.test.ts`, `beep-expression.test.ts`, `property-access-utils.test.ts` | the "Gaps 3 and 4 closed" section below |
 | ~~**`transition` owners, several properties, `from`, `using`**~~ | **FIXED 2026-09-25** — gap 5; the multi-property value had misparsed SILENTLY at top level (`100px * height`), and a collection owner moved only its first element | ✅ `transition-owners.test.ts` (mutation-checked) | the "Gap 5 closed" section below |
+| ~~**Every AOT-compiled loop was `while (true)`**~~ | **FIXED 2026-09-26** — both interchange converters read the pre-slot positional `repeat`, so every parsed loop compiled to `while (true)`, a hung page reported as success; once they read the slots, `until event`, `index`, bottom-tested loops, `else`, for-in collections and unrolled loops each turned out to have no codegen | ✅ `loop-execution.test.ts` (RUN, vs upstream), `loop-slots.e2e.test.ts`, `interchange-from-semantic.test.ts` (22/22 mutants red) | the "Every AOT-compiled loop" section below |
+| **Loops through `toCoreAST` / `evalLSE` throw; core's bare `for … else`** | medium — two writers into core's loop shape still emit one it cannot run ("repeat command requires a loop type"); a bare `for`'s `else` lands in the loop body | ⚠️ NONE | "Found running the loops" in the "Every AOT-compiled loop" section |
+| **AOT expression codegen: six more gaps found running loops** | **medium-high, silent** — array literals throw; `my prop` / `#x.prop` read `obj[name]`; `append … to #x` appends to `me`; class batching retargets onto `me`; `set x` emits nothing; no qu handler compiles by default | ⚠️ NONE | the same section |
 | **`def` / `behavior` demand their own `end`** | medium — upstream-valid, rejected loudly | ⚠️ NONE | "Filed, still open" in the "Gaps 1 and 2 closed" section |
 | **AOT `transition` is a no-op for almost every form; AOT throws on any CSS length** | medium — `*opacity` keeps its sigil, an owner is read as the property, `over 200ms` becomes `200msms`; `100px` has no interchange case, so AOT throws | ⚠️ NONE | the "Gap 5 closed" section below |
 | **`render`'s result and `fetch`'s named values diverge from upstream** | medium — `render … into`/`here` rejected loudly; a multi-root render's `it` is a wrapper element where upstream's is a string; `fetch /x with m: "POST" as json` parses on both engines and runs differently | ⚠️ NONE | "Filed, still open" in the "Gaps 3 and 4 closed" section |
@@ -2319,18 +2322,75 @@ Found alongside, and **still open**:
   `function _handler_my-event_…`. That is invalid JavaScript, reported as
   `success: true`. A pseudo-command also has no codegen, so its handler body is
   EMPTY.
-- **Every AOT-compiled loop is `while (true)` (found 2026-09-25, PR 7).** Both
-  interchange converters (`ast-utils/interchange/from-core.ts` and semantic's
-  `interchange/from-semantic.ts`) still read the pre-slot POSITIONAL `repeat`
-  (`args[0]` = the loop type), the same shape `parseForCommand` kept. Core's
-  parser has emitted slots since Arc 3 step 3, so `args[0]` is the body block,
-  the loop type falls back to `forever`, and `on click repeat 3 times add .x to
-  me end` compiles to `while (true) { … }` — a hung page, reported as
-  `success: true`, in English and (now that `buildLoop` emits the same slots)
-  in every language. Before PR 7 a non-English loop compiled to `while (true)
-  {}` with its body AFTER it. The fix is the twin of the `for` row above: both
-  converters read `modifiers.loopType` and its slots (keep the positional read
-  only for hand-built ASTs), and a test compiles and RUNS a counted loop.
+- ~~**Every AOT-compiled loop is `while (true)`**~~ (found 2026-09-25, PR 7).
+  **FIXED 2026-09-26**, see the next section.
+
+### ~~Every AOT-compiled loop was `while (true)`~~ — FIXED (2026-09-26)
+
+Both interchange converters (`ast-utils/interchange/from-core.ts`, semantic's
+`interchange/from-semantic.ts`) read the pre-slot POSITIONAL `repeat`, where
+`args[0]` named the form. On a parsed loop `args[0]` is the body block, so the
+form fell through to `forever`. Both now read `modifiers.loopType` and its
+slots, and keep the positional read for hand-built ASTs only.
+
+That let each loop part reach AOT codegen for the first time, and each had
+its own gap:
+- `until event` had no case: a `while (true)` with no yield, so the event could
+  never arrive. It now listens once on `from` (the element by default) and
+  yields a tick after every pass, like upstream's `WaitATick`.
+- `index i` was ignored, a bottom-tested loop ran top-tested, and `else` was
+  dropped.
+- A for-in over `.item` iterated `querySelector`'s FIRST match, which
+  `Array.from` turns into zero passes. A bare `x` in the body compiled to an
+  undefined JS `x`, although the loop writes `_ctx.locals`.
+- `LoopUnrollingPass` emits a `sequence` node that codegen had no case for, so
+  an unrolled loop compiled to NOTHING. A parsed count is a node, not a number,
+  so only `compileAST` reaches the pass.
+
+All forms now share one skeleton (`emitLoop` in `command-transforms.ts`), so
+`index`, `else` and `continue` behave the same in each. The interchange loop
+nodes gained `indexName`, `untilEventTarget`, `bottomTested` and `elseBody`.
+
+Every expectation in `aot-compiler/…/loop-execution.test.ts` was measured on
+upstream 0.9.93 in jsdom; each handler RUNS under a `vm` timeout, so a hang
+fails the test instead of freezing it. It also runs a counted loop and a for-in
+loop in all 23 languages. `core/…/loop-slots.e2e.test.ts` converts real parser
+output. Mutation pass: 22/22 red (the one first-pass survivor, a `while`
+loop's `index`, got a test).
+
+Found running the loops, and **still open**:
+
+- **Two writers into core's loop shape emit one core cannot run.** `toCoreAST`
+  (public, no in-repo caller) writes `loopVariant`/`count` at the top level;
+  framework's `semanticNodeToRuntimeAST` writes `args: [count]` and a top-level
+  `body`. Every loop through `toCoreAST`, or `hyperscript.evalLSE`/`compileLSE`,
+  throws "repeat command requires a loop type". Loud, unlike the AOT's hang.
+- **A bare `for … else … end` takes its `else` commands into the loop body.**
+  `parseForCommand` (#1170) got the slot shape but not `repeat for`'s else
+  handling; upstream parses both through one routine. So the else commands run
+  once per item, and never on an empty collection.
+- **Core's interpreter throws on a for-in over an undefined collection** ("for
+  loops require variable and collection", uncaught); upstream runs no pass.
+- **Core's `put … into p`, where `p` is a local named like a tag, writes into
+  every `<p>`**: the target resolves as the CSS type selector first.
+- **AOT expression codegen**, each compiling to wrong JS reported as success:
+  - `from-core` has no `arrayLiteral` case, so `[1, 2]` becomes an `error` node
+    and `compileScript` throws, uncaught (the `stringPostfix` family above);
+  - a non-computed member whose property is an identifier node (`my
+    childElementCount`, `#out.innerHTML`) compiles to `obj[name]`, a
+    ReferenceError;
+  - `append … to #out` ignores its destination and appends to `me`;
+  - class batching merges `add .a to X` and `add .b to Y` onto `me`: it compares
+    `cmd.target`, and core puts the destination in `modifiers.to`;
+  - `set x to 1` and `set :x to 1` emit NOTHING, at every optimization level,
+    and `:x` reads as a bare JS `x`;
+  - qu handlers parse at confidence 0.556 in every program, loop or not, under
+    the AOT's 0.7 floor, so no qu handler compiles by default.
+- **A non-English bodyless loop head still hangs the AOT.** The semantic parser
+  keeps a loop with no body and no `end` (es `al clic repetir 3 times`) a flat
+  command, not a loop node. It reaches `fromSemanticAST` with no `loopType`
+  slot, converts positionally, and compiles to `for (let _i = 0; true; _i++)
+  {}`. English is fine: core's parser builds an empty counted loop.
 
 ## Notes
 

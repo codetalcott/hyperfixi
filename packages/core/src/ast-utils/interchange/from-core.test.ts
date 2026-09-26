@@ -698,7 +698,10 @@ describe('fromCoreAST', () => {
     });
   });
 
-  describe('repeat command nodes', () => {
+  // The pre-slot POSITIONAL shape (`args[0]` names the form), read only when a
+  // node has no `modifiers.loopType`: core's parser has not emitted it since
+  // Arc 3 step 3. Parsed loops are pinned in loop-slots.e2e.test.ts.
+  describe('repeat command nodes: the hand-built positional shape', () => {
     it('converts empty repeat to repeat with empty body', () => {
       const result = fromCoreAST(
         coreNode('command', {

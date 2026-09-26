@@ -297,7 +297,82 @@ function convertIfCommand(node: CoreNode, infer: RoleInferrer | null): IfNode {
   } as IfNode;
 }
 
+/**
+ * Core's parser carries a loop's form and every operand as SLOTS (Arc 3 step 3;
+ * bare `for` since #1170): `modifiers.loopType` names the form; `for`/`in`,
+ * `times`, `while`/`until`, `event`/`from` and `index` hold the operands; and
+ * `bottomTested` marks `repeat … until <cond> end`. Only the body block and an
+ * `else` block stay positional.
+ *
+ * This converter used to read only the pre-slot shape, where `args[0]` named
+ * the form. On a parsed loop `args[0]` is the body block, so every loop fell
+ * through to `forever` and the AOT compiled `repeat 3 times … end` to
+ * `while (true)`. A node with no `loopType` is a hand-built, pre-slot AST.
+ */
 function convertRepeatCommand(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
+  const slots = (node.modifiers ?? {}) as Record<string, CoreNode | undefined>;
+  const form = slotText(slots.loopType);
+  if (form === undefined) return convertPositionalRepeat(node, infer);
+
+  const [bodyBlock, elseBlock] = (node.args ?? []) as CoreNode[];
+  const body = extractBlockCommands(bodyBlock, infer);
+  const indexName = slotText(slots.index);
+  const shared = {
+    ...(indexName ? { indexName } : {}),
+    ...(elseBlock ? { elseBody: extractBlockCommands(elseBlock, infer) } : {}),
+    ...pos(node),
+  };
+  const operand = (slot: CoreNode | undefined) => (slot ? convertNode(slot, infer) : undefined);
+
+  switch (form) {
+    case 'for':
+      return {
+        type: 'foreach',
+        itemName: slotText(slots.for) ?? 'it',
+        collection: operand(slots.in) ?? { type: 'literal', value: null },
+        body,
+        ...shared,
+      } as ForEachNode;
+    case 'times':
+      return { type: 'repeat', count: operand(slots.times), body, ...shared } as RepeatNode;
+    case 'while':
+    case 'until': {
+      // A missing condition never loops: `while` false, `until` true.
+      const test = operand(slots[form]) ?? { type: 'literal', value: form === 'until' };
+      return {
+        type: 'while',
+        condition: form === 'until' ? { type: 'unary', operator: 'not', operand: test } : test,
+        ...(slots.bottomTested?.value === true ? { bottomTested: true } : {}),
+        body,
+        ...shared,
+      } as WhileNode;
+    }
+    case 'until-event': {
+      const event = slotText(slots.event);
+      if (!event) {
+        return { type: 'error', message: "'repeat until event' has no event name", ...pos(node) };
+      }
+      const target = operand(slots.from);
+      return {
+        type: 'repeat',
+        untilEvent: event,
+        ...(target ? { untilEventTarget: target } : {}),
+        body,
+        ...shared,
+      } as RepeatNode;
+    }
+    default:
+      return { type: 'repeat', body, ...shared } as RepeatNode;
+  }
+}
+
+/** A text slot (`loopType`, `for`, `event`, `index`): a string or literal node. */
+function slotText(slot: CoreNode | undefined): string | undefined {
+  const text = slot?.value ?? slot?.name;
+  return typeof text === 'string' ? text : undefined;
+}
+
+function convertPositionalRepeat(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const args = (node.args ?? []) as CoreNode[];
   if (args.length === 0) {
     return { type: 'repeat', body: [], ...pos(node) } as RepeatNode;

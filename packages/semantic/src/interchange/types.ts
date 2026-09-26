@@ -164,7 +164,13 @@ export interface RepeatNode extends BaseNode {
   readonly count?: number | InterchangeNode;
   readonly whileCondition?: InterchangeNode;
   readonly untilEvent?: string;
+  /** Where `until event` listens (`from …`); the handler's element when absent. */
+  readonly untilEventTarget?: InterchangeNode;
+  /** `index i`: the local that holds the iteration number. */
+  readonly indexName?: string;
   readonly body: InterchangeNode[];
+  /** `else`: runs when the loop body never ran. */
+  readonly elseBody?: InterchangeNode[];
 }
 
 export interface ForEachNode extends BaseNode {
@@ -173,12 +179,20 @@ export interface ForEachNode extends BaseNode {
   readonly indexName?: string;
   readonly collection: InterchangeNode;
   readonly body: InterchangeNode[];
+  /** `else`: runs when the loop body never ran. */
+  readonly elseBody?: InterchangeNode[];
 }
 
 export interface WhileNode extends BaseNode {
   readonly type: 'while';
   readonly condition: InterchangeNode;
+  /** `repeat … while/until <cond> end`: the body runs once before the first test. */
+  readonly bottomTested?: boolean;
+  /** `index i`: the local that holds the iteration number. */
+  readonly indexName?: string;
   readonly body: InterchangeNode[];
+  /** `else`: runs when the loop body never ran. */
+  readonly elseBody?: InterchangeNode[];
 }
 
 // =============================================================================

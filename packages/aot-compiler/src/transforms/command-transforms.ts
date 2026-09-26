@@ -888,7 +888,44 @@ export function generateIf(
 }
 
 /**
- * Generate code for repeat loops.
+ * The parts of one compiled loop. Every form shares one skeleton, so `index`,
+ * `else` and `continue` behave the same in each, as they do in upstream's
+ * single `RepeatLoopCommand`.
+ */
+interface LoopParts {
+  /** Tested before each pass, or after it when `bottomTested`. */
+  readonly test: string;
+  /** `repeat … while/until <cond> end`: the first pass runs untested. */
+  readonly bottomTested?: boolean;
+  /** Runs after every pass, a `continue` included: `until event` yields a tick here. */
+  readonly step?: string;
+  /** Opens each pass, before the index: a for-in's item local. */
+  readonly enter?: string;
+  /** `index i`: the local set to the pass number, counting from 0. */
+  readonly indexName?: string;
+  readonly body: string;
+  /** `else`: runs when no pass ran. */
+  readonly elseBody?: string;
+}
+
+function emitLoop(parts: LoopParts): string {
+  const pass = [
+    ...(parts.elseBody !== undefined ? ['_ran = true;'] : []),
+    ...(parts.enter ? [parts.enter] : []),
+    ...(parts.indexName ? [`_ctx.locals.set('${sanitizeIdentifier(parts.indexName)}', _i);`] : []),
+    parts.body,
+  ].join('\n');
+  const step = parts.step ? `_i++, ${parts.step}` : '_i++';
+  const loop = parts.bottomTested
+    ? // A `continue` jumps straight to the test, so the counter moves there.
+      `let _i = 0;\ndo {\n${pass}\n} while ((${step}, ${parts.test}));`
+    : `for (let _i = 0; ${parts.test}; ${step}) {\n${pass}\n}`;
+  if (parts.elseBody === undefined) return parts.bottomTested ? `{\n${loop}\n}` : loop;
+  return `{\nlet _ran = false;\n${loop}\nif (!_ran) {\n${parts.elseBody}\n}\n}`;
+}
+
+/**
+ * Generate code for repeat loops: counted, `until event`, and forever.
  */
 export function generateRepeat(
   node: RepeatNode,
@@ -896,27 +933,40 @@ export function generateRepeat(
   generateBody: (nodes: ASTNode[]) => string
 ): string {
   const exprCodegen = new ExpressionCodegen(ctx);
-  const body = generateBody(node.body);
+  const shared = {
+    indexName: node.indexName,
+    body: generateBody(node.body),
+    elseBody: node.elseBody ? generateBody(node.elseBody) : undefined,
+  };
 
-  // Fixed count: repeat 5 times
+  // Fixed count: repeat 5 times. `index` is readable in every pass unless the
+  // loop names its own.
   if (node.count !== undefined) {
     const count =
       typeof node.count === 'number' ? String(node.count) : exprCodegen.generate(node.count);
-
-    return `for (let _i = 0; _i < ${count}; _i++) {
-  _ctx.locals.set('index', _i);
-${body}
-}`;
+    return emitLoop({ ...shared, test: `_i < ${count}`, indexName: node.indexName ?? 'index' });
   }
 
   // While condition: repeat while condition
   if (node.whileCondition) {
-    const condition = exprCodegen.generate(node.whileCondition);
-    return `while (${condition}) {\n${body}\n}`;
+    return emitLoop({ ...shared, test: exprCodegen.generate(node.whileCondition) });
   }
 
-  // Infinite loop (should have break inside)
-  return `while (true) {\n${body}\n}`;
+  // `repeat until event e from t`: upstream listens once on `t` (the element
+  // when absent) and yields a tick after every pass, so the event can arrive.
+  // Without the tick the loop spins forever and the page hangs.
+  if (node.untilEvent !== undefined) {
+    ctx.requireHelper('wait');
+    const target = node.untilEventTarget ? exprCodegen.generate(node.untilEventTarget) : '_ctx.me';
+    return `{
+let _fired = false;
+${target}.addEventListener(${JSON.stringify(node.untilEvent)}, () => { _fired = true; }, { once: true });
+${emitLoop({ ...shared, test: '!_fired', step: 'await _rt.wait(0)' })}
+}`;
+  }
+
+  // Forever: only a `break`, `exit` or `halt` in the body ends it.
+  return emitLoop({ ...shared, test: 'true' });
 }
 
 /**
@@ -928,24 +978,30 @@ export function generateForEach(
   generateBody: (nodes: ASTNode[]) => string
 ): string {
   const exprCodegen = new ExpressionCodegen(ctx);
-  const collection = exprCodegen.generate(node.collection);
+  // A selector expression compiles to its FIRST match; a loop runs over them all.
+  const source = node.collection;
+  const collection =
+    source.type === 'selector' && !String(source.value).startsWith('#')
+      ? `document.querySelectorAll('${sanitizeSelector(String(source.value))}')`
+      : exprCodegen.generate(source);
   const itemName = sanitizeIdentifier(node.itemName);
-  const indexName = node.indexName ? sanitizeIdentifier(node.indexName) : 'index';
-  const body = generateBody(node.body);
 
   return `{
   const _collection = ${collection};
-  const _arr = Array.isArray(_collection) ? _collection : Array.from(_collection);
-  for (let _i = 0; _i < _arr.length; _i++) {
-    _ctx.locals.set('${itemName}', _arr[_i]);
-    _ctx.locals.set('${indexName}', _i);
-${body}
-  }
+  const _arr = _collection == null ? [] : Array.isArray(_collection) ? _collection : Array.from(_collection);
+${emitLoop({
+  test: '_i < _arr.length',
+  enter: `_ctx.locals.set('${itemName}', _arr[_i]);`,
+  indexName: node.indexName ?? 'index',
+  body: generateBody(node.body),
+  elseBody: node.elseBody ? generateBody(node.elseBody) : undefined,
+})}
 }`;
 }
 
 /**
- * Generate code for while loops.
+ * Generate code for while loops: `repeat while`, `repeat until` (a negated
+ * test), and their bottom-tested forms.
  */
 export function generateWhile(
   node: WhileNode,
@@ -953,10 +1009,13 @@ export function generateWhile(
   generateBody: (nodes: ASTNode[]) => string
 ): string {
   const exprCodegen = new ExpressionCodegen(ctx);
-  const condition = exprCodegen.generate(node.condition);
-  const body = generateBody(node.body);
-
-  return `while (${condition}) {\n${body}\n}`;
+  return emitLoop({
+    test: exprCodegen.generate(node.condition),
+    bottomTested: node.bottomTested,
+    indexName: node.indexName,
+    body: generateBody(node.body),
+    elseBody: node.elseBody ? generateBody(node.elseBody) : undefined,
+  });
 }
 
 // =============================================================================

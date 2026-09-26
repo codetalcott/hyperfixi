@@ -4444,6 +4444,18 @@ this signal was missing.
 > - Explicit syntax cannot round-trip a SPACED expression value: the renderer writes
 >   `condition:x < 10` undelimited and the parser splits it at the spaces, for `if` as for
 >   `repeat while`. It predates loop nodes.
+>
+> **Found running AOT loops (PR 7b, 2026-09-26), filed (none in the corpus):**
+> - A class name that begins with an event-modifier word does not parse: `.stop*`, `.prevent*`,
+>   `.once*`, `.debounce*`, `.throttle*` (`.passive`, `.capture` and `.self` parse). Inside a
+>   handler the command is silently dropped: `on click toggle .stopped` renders `on click`, in
+>   English and so in every translation.
+> - The semantic parser drops `index i` from every loop form (`repeat 3 times index i`, `repeat
+>   for x in xs index i`): `buildLoop` gets no `indexVariable`.
+> - `repeat until <cond>` keeps `loopType: until` but drops the condition in English as well,
+>   the no-head filing above. On the direct path core's `repeat` then throws; the AOT compiles
+>   the missing condition to a loop that never runs.
+> - An array literal in a for-in (`for x in [1, 2]`) parses as an ATTRIBUTE selector `[1, 2]`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

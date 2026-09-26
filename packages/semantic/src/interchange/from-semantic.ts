@@ -219,7 +219,78 @@ function convertIfCommand(node: SemanticASTNode): IfNode {
   } as IfNode;
 }
 
+/**
+ * `ASTBuilder.buildLoop` emits core's slot-shaped `repeat` (#1176): the form in
+ * `modifiers.loopType`, the operands in `for`/`in`, `times`, `while`/`until`,
+ * `event`/`from` and `index`, the body as the one positional block. Core's own
+ * parser adds `bottomTested` and an `else` block, read here too so the two
+ * converters stay one reader. A node with no `loopType` is a hand-built,
+ * pre-slot AST, where `args[0]` named the form.
+ */
 function convertRepeatCommand(node: SemanticASTNode): InterchangeNode {
+  const slots = (node.modifiers ?? {}) as Record<string, SemanticASTNode | undefined>;
+  const form = slotText(slots.loopType);
+  if (form === undefined) return convertPositionalRepeat(node);
+
+  const [bodyBlock, elseBlock] = (node.args ?? []) as SemanticASTNode[];
+  const body = extractBlockCommands(bodyBlock);
+  const indexName = slotText(slots.index);
+  const shared = {
+    ...(indexName ? { indexName } : {}),
+    ...(elseBlock ? { elseBody: extractBlockCommands(elseBlock) } : {}),
+    ...pos(node),
+  };
+  const operand = (slot: SemanticASTNode | undefined) => (slot ? fromSemanticAST(slot) : undefined);
+
+  switch (form) {
+    case 'for':
+      return {
+        type: 'foreach',
+        itemName: slotText(slots.for) ?? 'it',
+        collection: operand(slots.in) ?? { type: 'literal', value: null },
+        body,
+        ...shared,
+      } as ForEachNode;
+    case 'times':
+      return { type: 'repeat', count: operand(slots.times), body, ...shared } as RepeatNode;
+    case 'while':
+    case 'until': {
+      // A missing condition never loops: `while` false, `until` true.
+      const test = operand(slots[form]) ?? { type: 'literal', value: form === 'until' };
+      return {
+        type: 'while',
+        condition: form === 'until' ? { type: 'unary', operator: 'not', operand: test } : test,
+        ...(slots.bottomTested?.value === true ? { bottomTested: true } : {}),
+        body,
+        ...shared,
+      } as WhileNode;
+    }
+    case 'until-event': {
+      const event = slotText(slots.event);
+      if (!event) {
+        return { type: 'error', message: "'repeat until event' has no event name", ...pos(node) };
+      }
+      const target = operand(slots.from);
+      return {
+        type: 'repeat',
+        untilEvent: event,
+        ...(target ? { untilEventTarget: target } : {}),
+        body,
+        ...shared,
+      } as RepeatNode;
+    }
+    default:
+      return { type: 'repeat', body, ...shared } as RepeatNode;
+  }
+}
+
+/** A text slot (`loopType`, `for`, `event`, `index`): a string or literal node. */
+function slotText(slot: SemanticASTNode | undefined): string | undefined {
+  const text = slot?.value ?? slot?.name;
+  return typeof text === 'string' ? text : undefined;
+}
+
+function convertPositionalRepeat(node: SemanticASTNode): InterchangeNode {
   const args = (node.args ?? []) as SemanticASTNode[];
   if (args.length === 0) {
     return { type: 'repeat', body: [], ...pos(node) } as RepeatNode;

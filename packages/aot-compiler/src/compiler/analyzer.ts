@@ -271,10 +271,13 @@ class AnalysisVisitor {
     if (node.whileCondition) {
       this.visit(node.whileCondition);
     }
-
-    for (const child of node.body) {
-      this.visit(child);
+    // `until event` yields a tick after every pass, so the handler awaits.
+    if (node.untilEvent !== undefined) {
+      this.hasAsync = true;
+      this.runtimeHelpers.add('wait');
+      if (node.untilEventTarget) this.visit(node.untilEventTarget);
     }
+    this.visitLoopBody(node);
 
     this.exitNesting();
   }
@@ -285,15 +288,9 @@ class AnalysisVisitor {
 
     // Register loop variable as local
     this.registerVariable(node.itemName, 'local', 'write');
-    if (node.indexName) {
-      this.registerVariable(node.indexName, 'local', 'write');
-    }
 
     this.visit(node.collection);
-
-    for (const child of node.body) {
-      this.visit(child);
-    }
+    this.visitLoopBody(node);
 
     this.exitNesting();
   }
@@ -303,12 +300,19 @@ class AnalysisVisitor {
     this.enterNesting();
 
     this.visit(node.condition);
-
-    for (const child of node.body) {
-      this.visit(child);
-    }
+    this.visitLoopBody(node);
 
     this.exitNesting();
+  }
+
+  /** The parts every loop form shares: its `index` local, body, and `else`. */
+  private visitLoopBody(node: RepeatNode | ForEachNode | WhileNode): void {
+    if (node.indexName) {
+      this.registerVariable(node.indexName, 'local', 'write');
+    }
+    for (const child of [...node.body, ...(node.elseBody ?? [])]) {
+      this.visit(child);
+    }
   }
 
   private visitVariable(node: VariableNode, access: 'read' | 'write'): void {
