@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { fromSemanticAST } from '../src/interchange/from-semantic';
 import { parseExpression } from '../src/ast-builder/expression-parser';
+import { parse, buildAST } from '../src/index';
 
 // Helper: create a minimal semantic AST node
 function semNode(
@@ -513,7 +514,9 @@ describe('fromSemanticAST', () => {
     });
   });
 
-  describe('repeat command nodes', () => {
+  // The pre-slot POSITIONAL shape (`args[0]` names the form), read only when a
+  // node has no `modifiers.loopType`. buildLoop emits slots; see below.
+  describe('repeat command nodes: the hand-built positional shape', () => {
     it('converts empty repeat', () => {
       const result = fromSemanticAST(
         semNode('command', {
@@ -584,6 +587,88 @@ describe('fromSemanticAST', () => {
       expect(result.type).toBe('while');
       expect((result as any).condition.type).toBe('unary');
       expect((result as any).condition.operator).toBe('not');
+    });
+  });
+
+  // buildLoop (#1176) emits core's SLOT-shaped `repeat`: the form in
+  // `modifiers.loopType`, the operands in `for`/`in`, `times`, `while`/`until`
+  // and `event`/`from`, the body the one block. Read positionally, every one of
+  // them fell through to `forever`, and the AOT compiled it to `while (true)`.
+  describe('repeat command nodes: parsed loops (slots)', () => {
+    function convertLoop(src: string): Record<string, unknown> {
+      const node = parse(src, 'en');
+      expect(node, src).toBeTruthy();
+      const { ast } = buildAST(node!);
+      const loop = (ast as { commands?: unknown[] }).commands?.[0] ?? ast;
+      return fromSemanticAST(loop as { type: string }) as unknown as Record<string, unknown>;
+    }
+    const LOG_1 = { type: 'command', name: 'log' };
+
+    it('a counted loop has its count', () => {
+      expect(convertLoop('on click repeat 3 times log 1 end')).toMatchObject({
+        type: 'repeat',
+        count: { type: 'literal', value: 3 },
+        body: [LOG_1],
+      });
+    });
+
+    it('a for-in loop iterates its collection as its variable', () => {
+      expect(convertLoop('on click for x in .i log x end')).toMatchObject({
+        type: 'foreach',
+        itemName: 'x',
+        collection: { type: 'selector', value: '.i' },
+        body: [LOG_1],
+      });
+    });
+
+    it('a while loop tests its condition', () => {
+      expect(convertLoop('on click repeat while x < 3 log 1 end')).toMatchObject({
+        type: 'while',
+        condition: { type: 'binary', operator: '<' },
+        body: [LOG_1],
+      });
+    });
+
+    it('`until event` keeps the event and where it listens', () => {
+      expect(convertLoop('on click repeat until event stop from #b log 1 end')).toMatchObject({
+        type: 'repeat',
+        untilEvent: 'stop',
+        untilEventTarget: { type: 'selector', value: '#b' },
+        body: [LOG_1],
+      });
+    });
+
+    it('forever is a repeat with nothing to stop it', () => {
+      const loop = convertLoop('on click repeat forever log 1 end');
+      expect(loop).toMatchObject({ type: 'repeat', body: [LOG_1] });
+      expect(loop).not.toHaveProperty('count');
+      expect(loop).not.toHaveProperty('untilEvent');
+    });
+
+    // Core's parser adds these slots; buildLoop does not emit them, but the
+    // two converters read the same shape.
+    it('reads `index`, `bottomTested` and an `else` block', () => {
+      const block = semNode('block', { commands: [semNode('command', { name: 'log', args: [] })] });
+      const loop = fromSemanticAST(
+        semNode('command', {
+          name: 'repeat',
+          args: [block, block],
+          modifiers: {
+            loopType: semNode('literal', { value: 'until' }),
+            until: semNode('identifier', { name: 'done' }),
+            bottomTested: semNode('literal', { value: true }),
+            index: semNode('literal', { value: 'i' }),
+          },
+        })
+      );
+      expect(loop).toMatchObject({
+        type: 'while',
+        condition: { type: 'unary', operator: 'not', operand: { type: 'identifier' } },
+        bottomTested: true,
+        indexName: 'i',
+        body: [LOG_1],
+        elseBody: [LOG_1],
+      });
     });
   });
 
