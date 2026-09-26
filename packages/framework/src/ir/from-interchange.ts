@@ -216,13 +216,26 @@ function convertRepeat(node: INode): SemanticNode {
     variant = 'while';
     roles.condition = convertValue(node.whileCondition as INode);
   } else if (typeof node.untilEvent === 'string') {
+    // `repeat until event e from t`: the event and where it listens, as the
+    // semantic parser holds them, plus the exact form `loopVariant` folds into
+    // `until`. The event name was the CONDITION, an `until "e"` loop that a
+    // truthy string ends at once.
     variant = 'until';
-    roles.condition = createLiteral(node.untilEvent);
+    roles.loopType = createLiteral('until-event');
+    roles.event = createLiteral(node.untilEvent);
+    if (node.untilEventTarget && typeof node.untilEventTarget === 'object') {
+      roles.source = convertValue(node.untilEventTarget as INode);
+    }
   } else {
     variant = 'forever';
   }
 
-  return createLoopNode('repeat', roles, variant, body);
+  return createLoopNode('repeat', roles, variant, body, undefined, indexNameOf(node));
+}
+
+/** `index i`, which every loop form can name. */
+function indexNameOf(node: INode): string | undefined {
+  return typeof node.indexName === 'string' ? node.indexName : undefined;
 }
 
 function convertForEach(node: INode): SemanticNode {
@@ -235,9 +248,8 @@ function convertForEach(node: INode): SemanticNode {
   }
 
   const itemName = typeof node.itemName === 'string' ? node.itemName : undefined;
-  const indexName = typeof node.indexName === 'string' ? node.indexName : undefined;
 
-  return createLoopNode('repeat', roles, 'for', body, itemName, indexName);
+  return createLoopNode('repeat', roles, 'for', body, itemName, indexNameOf(node));
 }
 
 function convertWhile(node: INode): SemanticNode {
@@ -249,7 +261,7 @@ function convertWhile(node: INode): SemanticNode {
     roles.condition = convertValue(node.condition as INode);
   }
 
-  return createLoopNode('repeat', roles, 'while', body);
+  return createLoopNode('repeat', roles, 'while', body, undefined, indexNameOf(node));
 }
 
 // =============================================================================

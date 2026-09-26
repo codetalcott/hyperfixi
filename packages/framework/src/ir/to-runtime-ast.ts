@@ -140,16 +140,74 @@ function convertConditional(node: ConditionalSemanticNode): RuntimeASTNode {
   };
 }
 
+/** The loop forms core's `repeat` runs: its parser's `loopType`. */
+const LOOP_FORMS = new Set(['for', 'times', 'while', 'until', 'until-event', 'forever']);
+
+/** The text of a name-like value: a loop form, an event name. */
+function valueText(value: SemanticValue | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.type === 'literal') return String(value.value);
+  if (value.type === 'expression') return value.raw;
+  if (value.type === 'reference' || value.type === 'selector') return value.value;
+  return undefined;
+}
+
+/**
+ * A loop as core's parser builds it (Arc 3 step 3): the form in
+ * `modifiers.loopType`, the operands in `for`/`in`, `times`, `while`/`until`,
+ * `event`/`from` and `index`, the body the one positional block.
+ *
+ * This emitted `args: [count]` with the variant and body beside it, a shape
+ * `repeat` has not read since the slot migration, so every loop through
+ * `evalLSE` / `compileLSE` threw "repeat command requires a loop type". The
+ * form comes from a `loopType` role when it names one, since it keeps the
+ * exact form (`until-event`) that `loopVariant` folds into `until`.
+ */
 function convertLoop(node: LoopSemanticNode): RuntimeASTNode {
-  const countValue = node.roles.get('patient') || node.roles.get('count');
+  const text = (value: string): RuntimeASTNode => ({ type: 'string', value });
+  const operand = (role: string): RuntimeASTNode | undefined => {
+    const value = node.roles.get(role);
+    return value ? semanticValueToAST(value) : undefined;
+  };
+  const declared = valueText(node.roles.get('loopType'));
+  const form =
+    node.action === 'for'
+      ? 'for'
+      : declared && LOOP_FORMS.has(declared)
+        ? declared
+        : (node.loopVariant ?? 'forever');
+
+  const modifiers: Record<string, RuntimeASTNode> = { loopType: text(form) };
+  const slot = (name: string, value: RuntimeASTNode | undefined) => {
+    if (value) modifiers[name] = value;
+  };
+  switch (form) {
+    case 'for':
+      if (node.loopVariable) slot('for', text(node.loopVariable));
+      slot('in', operand('source'));
+      break;
+    case 'times':
+      // `patient` and `count` are what this read before the slot shape.
+      slot('times', operand('quantity') ?? operand('patient') ?? operand('count'));
+      break;
+    case 'while':
+    case 'until':
+      slot(form, operand('condition'));
+      break;
+    case 'until-event': {
+      const event = valueText(node.roles.get('event'));
+      if (event) slot('event', text(event));
+      slot('from', operand('source'));
+      break;
+    }
+  }
+  if (node.indexVariable) slot('index', text(node.indexVariable));
+
   return {
     type: 'command',
     name: 'repeat',
-    args: countValue ? [semanticValueToAST(countValue)] : [],
-    loopVariant: node.loopVariant ?? 'forever',
-    body: (node.body ?? []).map(semanticNodeToRuntimeAST),
-    loopVariable: node.loopVariable,
-    indexVariable: node.indexVariable,
+    args: [{ type: 'block', commands: (node.body ?? []).map(semanticNodeToRuntimeAST) }],
+    modifiers,
   };
 }
 

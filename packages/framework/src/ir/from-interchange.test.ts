@@ -627,17 +627,31 @@ describe('fromInterchangeNode: control flow', () => {
     expect(node.roles.get('condition')).toEqual({ type: 'literal', value: 'running' });
   });
 
-  it('converts RepeatNode (until)', () => {
+  // The event is the EVENT, not an until condition: `until "done"` would test a
+  // truthy string and end at once.
+  it('converts RepeatNode (until event), keeping the event and where it listens', () => {
     const node = fromInterchangeNode({
       type: 'repeat',
       untilEvent: 'done',
+      untilEventTarget: { type: 'selector', value: '#b' },
       body: [],
     });
 
     expect(node.kind).toBe('loop');
     const loop = node as { loopVariant: string };
     expect(loop.loopVariant).toBe('until');
-    expect(node.roles.get('condition')).toEqual({ type: 'literal', value: 'done' });
+    expect(node.roles.get('loopType')).toEqual({ type: 'literal', value: 'until-event' });
+    expect(node.roles.get('event')).toEqual({ type: 'literal', value: 'done' });
+    expect(node.roles.get('source')).toMatchObject({ type: 'selector', value: '#b' });
+    expect(node.roles.has('condition')).toBe(false);
+  });
+
+  it.each([
+    { type: 'repeat', count: 3, indexName: 'i', body: [] },
+    { type: 'while', condition: { type: 'identifier', value: 'x' }, indexName: 'i', body: [] },
+  ])('keeps `index i` on a $type loop', interchange => {
+    const loop = fromInterchangeNode(interchange) as { indexVariable?: string };
+    expect(loop.indexVariable).toBe('i');
   });
 
   it('converts ForEachNode', () => {
