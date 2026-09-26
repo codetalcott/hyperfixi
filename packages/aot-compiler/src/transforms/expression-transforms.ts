@@ -325,6 +325,16 @@ export class ExpressionCodegen {
       case 'ends with':
         return `${left}.endsWith(${right})`;
 
+      // A scoped query, `<li/> in #list`: the matches inside the scope, as
+      // both engines read it. JavaScript's `in` (the default below) tests a
+      // property KEY, so `(document.querySelector('li') in …)` matched nothing.
+      case 'in':
+        if (node.left.type === 'selector') {
+          const query = sanitizeSelector((node.left as SelectorNode).value);
+          return `${right}.querySelectorAll('${query}')`;
+        }
+        return `(${left} ${op} ${right})`;
+
       // Class check
       case 'has':
         // "element has .class" pattern

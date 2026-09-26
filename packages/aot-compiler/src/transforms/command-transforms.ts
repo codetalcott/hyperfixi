@@ -6,6 +6,7 @@
  */
 
 import type {
+  BinaryExpressionNode,
   ASTNode,
   CommandNode,
   CodegenContext,
@@ -66,14 +67,22 @@ function commandTarget(node: CommandNode, ...slots: string[]): ASTNode | undefin
 // COMMAND GENERATOR IMPLEMENTATIONS
 // =============================================================================
 
+/** A scoped query, `<li/> in #list`: a query on the left of `in`. */
+function isScopedQuery(node: ASTNode | undefined): boolean {
+  const binary = node as BinaryExpressionNode | undefined;
+  return binary?.type === 'binary' && binary.operator === 'in' && binary.left.type === 'selector';
+}
+
 /**
- * A target selector that names every match, as `querySelectorAll`: a class,
- * tag or attribute query. Both engines act on each match (`add .a to .items`
- * adds to every one); `document.querySelector` reached the first. Null for an
- * id, which names one element on both engines even when it is duplicated, and
- * for any other target.
+ * A target that names every match, as `querySelectorAll`: a class, tag or
+ * attribute query, or a scoped query (`<li/> in #list`, its matches inside the
+ * scope). Both engines act on each match (`add .a to .items` adds to every
+ * one); `document.querySelector` reached the first. Null for an id, which
+ * names one element on both engines even when it is duplicated, and for any
+ * other target.
  */
-function allMatches(node: ASTNode | undefined): string | null {
+function allMatches(node: ASTNode | undefined, ctx: CodegenContext): string | null {
+  if (isScopedQuery(node)) return ctx.generateExpression(node!);
   if (node?.type !== 'selector') return null;
   const selector = (node as SelectorNode).value;
   return /^#[\w-]+$/.test(selector)
@@ -87,7 +96,7 @@ function forEachTarget(
   ctx: CodegenContext,
   op: (el: string) => string
 ): string {
-  const all = allMatches(node);
+  const all = allMatches(node, ctx);
   if (all) return `${all}.forEach(el => ${op('el')})`;
   return op(node ? ctx.generateExpression(node) : '_ctx.me');
 }
@@ -255,7 +264,8 @@ class RemoveCodegen implements CommandCodegen {
         ? !/^[.@]/.test((arg as SelectorNode).value)
         : (arg.type === 'identifier' &&
             !String((arg as IdentifierNode).value ?? '').startsWith('@')) ||
-          arg.type === 'variable';
+          arg.type === 'variable' ||
+          isScopedQuery(arg);
     if (!targetSlot && isElement) {
       return {
         code: forEachTarget(arg, ctx, el => `${el}.remove()`),
@@ -920,7 +930,7 @@ class TakeCodegen implements CommandCodegen {
     const source = commandTarget(node, 'from');
     if (source) {
       // A class query is every match; any other source may hold several too.
-      let from = allMatches(source);
+      let from = allMatches(source, ctx);
       if (!from) {
         ctx.requireHelper('toArray');
         from = `_rt.toArray(${ctx.generateExpression(source)})`;
