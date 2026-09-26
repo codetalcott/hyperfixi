@@ -20,8 +20,11 @@
 import type { Diagnostic } from '../types.js';
 
 /** Quantifier words that read as "the matched set" in English but parse as a
- * bare identifier, making `all.todo` an undefined property access at runtime. */
+ * bare identifier, making `all.todo` an undefined property access at runtime.
+ * Spaced (`all .todo`), the target is the identifier `all` alone and the
+ * selector is left unread (both engines read a spaced `.todo` as a class). */
 const QUANTIFIER = /^(all|every|each)\.(\S+)$/;
+const BARE_QUANTIFIER = /^(all|every|each)$/;
 
 /** Predicate words that, mis-tokenized as class selectors inside a condition
  * (`#box .has class .danger`), silently make the condition falsy. The pattern
@@ -76,6 +79,19 @@ function walk(node: unknown, out: Diagnostic[]): void {
           code: 'INERT_QUANTIFIER_TARGET',
           message: `${role} parsed as property access "${s}" — "${q[1]}" is an undefined identifier at runtime, so this ${role} will not resolve.`,
           suggestion: `Selectors already address every match: write the bare selector (e.g. ".${q[2]}") without "${q[1]}".`,
+        });
+        continue;
+      }
+      if (
+        v.type === 'expression' &&
+        BARE_QUANTIFIER.test(s) &&
+        (role === 'destination' || role === 'source')
+      ) {
+        out.push({
+          severity: 'warning',
+          code: 'INERT_QUANTIFIER_TARGET',
+          message: `${role} parsed as the identifier "${s}", which is undefined at runtime, so this ${role} will not resolve; the selector after it is not read.`,
+          suggestion: `Selectors already address every match: write the selector alone, without "${s}".`,
         });
         continue;
       }
