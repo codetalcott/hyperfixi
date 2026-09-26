@@ -133,6 +133,18 @@ describe('multi-handler program — parse (no-end feature chain, Phase B)', () =
     }
   });
 
+  it('splits after a toggle where the `on` is not toggle\'s marker (es al, de bei)', () => {
+    const cases: Record<string, string> = {
+      es: 'al click alternar .active al keyup agregar .x',
+      de: 'bei click umschalten .active bei keyup hinzufügen .x',
+    };
+    for (const [lang, src] of Object.entries(cases)) {
+      const node = parse(src, lang) as SNode;
+      expect(node.kind, lang).toBe('compound');
+      expect(node.statements!.map(eventOf), lang).toEqual(['click', 'keyup']);
+    }
+  });
+
   it('does NOT split SOV chains without a distinct trigger signature (hi)', () => {
     // hi's event-marker and on-marker are the SAME surface form (`पर`), so there is
     // no two-token signature to anchor a split — and a single handler whose body
