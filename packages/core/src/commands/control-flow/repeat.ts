@@ -226,7 +226,12 @@ export class RepeatCommand implements DecoratedCommand {
           eventTarget = window;
         } else {
           const target = await evaluator.evaluate(m.from, context);
-          if (target instanceof EventTarget) eventTarget = target;
+          // Duck-typed, as upstream (it calls `addEventListener` on the value).
+          // `instanceof EventTarget` is false for an element from another realm,
+          // an iframe's or a test DOM's, and the loop then listened on `me`
+          // instead, without a word.
+          if (typeof (target as EventTarget | null)?.addEventListener === 'function')
+            eventTarget = target as EventTarget;
           else if (target === 'document') eventTarget = document;
           else if (typeof window !== 'undefined' && target === window) eventTarget = window;
         }
