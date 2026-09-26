@@ -22,11 +22,30 @@ import type {
   DefSemanticNode,
   FeatureSemanticNode,
   SemanticRole,
+  SemanticValue,
 } from '../types';
 
 import { convertValue, isImplicitValue } from './value-converters';
 import { resolveCommandMapper, type CommandMapperResult } from './command-mappers';
-import type { ExpressionNode } from './expression-parser';
+import type { ExpressionNode, LiteralNode } from './expression-parser';
+
+/** The loop forms RepeatCommand runs (core `parseRepeatCommand`'s `loopType`). */
+const LOOP_FORMS = new Set(['for', 'times', 'while', 'until', 'until-event', 'forever']);
+
+/** The text of a name-like value: an event name, a loop variable. */
+function valueText(value: SemanticValue): string | undefined {
+  switch (value.type) {
+    case 'literal':
+      return String(value.value);
+    case 'expression':
+      return value.raw;
+    case 'reference':
+    case 'selector':
+      return value.value;
+    default:
+      return undefined;
+  }
+}
 
 // =============================================================================
 // AST Types (compatible with @hyperfixi/core)
@@ -570,78 +589,63 @@ export class ASTBuilder {
   }
 
   /**
-   * Build a CommandNode from a LoopSemanticNode.
+   * Build the `repeat` command core's parser builds (`parseRepeatCommand`, which
+   * `for … in …` shares): the loop form and every operand in a SLOT, and the
+   * body as the one positional block. `modifiers.loopType` names the form;
+   * `for`/`in`, `times`, `while`/`until`, `event`/`from` and `index` carry its
+   * operands. RepeatCommand reads only the slots. The positional shape this
+   * used to emit (`args: [<variant>, …operands, <block>]`) predates them, so a
+   * loop built here would have thrown "repeat command requires a loop type".
    *
-   * Produces a 'repeat' command with:
-   * - args[0]: loop type identifier (forever, times, for, while, until)
-   * - args[1]: count/condition/variable depending on loop type
-   * - args[2]: collection (for 'for' loops)
-   * - args[last]: body block
-   *
-   * This format matches what the repeat command parser produces.
+   * The form comes from the head's `loopType` role when it names one: it keeps
+   * the exact form (`until-event`), which `loopVariant` folds into `until`.
    */
   private buildLoop(node: LoopSemanticNode): CommandNode {
-    // Build body commands recursively
-    const bodyCommands = node.body.map(child => this.build(child));
+    const text = (value: string): LiteralNode => ({ type: 'literal', value });
+    const loopType = node.roles.get('loopType');
+    const declared = loopType?.type === 'literal' ? String(loopType.value) : undefined;
+    const form =
+      node.action === 'for'
+        ? 'for'
+        : declared && LOOP_FORMS.has(declared)
+          ? declared
+          : node.loopVariant;
 
-    const args: ExpressionNode[] = [
-      // args[0]: loop type identifier
-      {
-        type: 'identifier',
-        name: node.loopVariant,
-      } as unknown as ExpressionNode,
-    ];
-
-    // Add loop-specific arguments based on variant
-    switch (node.loopVariant) {
-      case 'times': {
-        // args[1]: count expression
-        const quantity = node.roles.get('quantity');
-        if (quantity) {
-          args.push(convertValue(quantity));
-        }
+    const modifiers: Record<string, ExpressionNode> = { loopType: text(form) };
+    switch (form) {
+      case 'for': {
+        if (node.loopVariable) modifiers.for = text(node.loopVariable);
+        const source = node.roles.get('source');
+        if (source) modifiers.in = convertValue(source);
         break;
       }
-      case 'for': {
-        // args[1]: loop variable name
-        if (node.loopVariable) {
-          args.push({
-            type: 'string',
-            value: node.loopVariable,
-          } as unknown as ExpressionNode);
-        }
-        // args[2]: collection/source
-        const source = node.roles.get('source');
-        if (source) {
-          args.push(convertValue(source));
-        }
+      case 'times': {
+        const quantity = node.roles.get('quantity');
+        if (quantity) modifiers.times = convertValue(quantity);
         break;
       }
       case 'while':
       case 'until': {
-        // args[1]: condition expression
         const condition = node.roles.get('condition');
-        if (condition) {
-          args.push(convertValue(condition));
-        }
+        if (condition) modifiers[form] = convertValue(condition);
         break;
       }
-      case 'forever':
-        // No additional args needed for forever loops
+      case 'until-event': {
+        const event = node.roles.get('event');
+        const name = event ? valueText(event) : undefined;
+        if (name) modifiers.event = text(name);
+        const source = node.roles.get('source');
+        if (source) modifiers.from = convertValue(source);
         break;
+      }
     }
+    if (node.indexVariable) modifiers.index = text(node.indexVariable);
 
-    // args[last]: body block
-    args.push({
+    const body = {
       type: 'block',
-      commands: bodyCommands,
-    } as unknown as ExpressionNode);
-
-    return {
-      type: 'command',
-      name: 'repeat',
-      args,
-    };
+      commands: node.body.map(child => this.build(child)),
+    } as unknown as ExpressionNode;
+    return { type: 'command', name: 'repeat', args: [body], modifiers };
   }
 
   /**

@@ -13,6 +13,7 @@ import type {
   CompoundSemanticNode,
   CommandSemanticNode,
   ConditionalSemanticNode,
+  LoopSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
   FeatureSemanticNode,
@@ -24,7 +25,7 @@ import type {
   PropertyPathValue,
   ExtractionRule,
 } from '../types';
-import { createSelector } from '../types';
+import { createCommandNode, createSelector } from '../types';
 
 /**
  * Loop/tell block-header commands: their body follows the header directly, with no
@@ -132,6 +133,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // the body + `end` — the canonical parser then rejects the dangling condition.
     if (node.kind === 'conditional') {
       return this.renderConditional(node as ConditionalSemanticNode, language);
+    }
+    // A loop carries its body in `body`, never in roles: the head renders
+    // through the pattern path and the loop closes with `end` where its body
+    // stops, so a command after the loop stays after it.
+    if (node.kind === 'loop') {
+      return this.renderLoop(node as LoopSemanticNode, language);
     }
 
     // `js` renders VERB-INITIAL in the SOV six, against their own word order.
@@ -250,6 +257,21 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.elseBranch && node.elseBranch.length > 0) {
       parts.push(this.keyword(language, 'else'), this.joinStatements(node.elseBranch, language));
     }
+    parts.push(this.keyword(language, 'end'));
+    return parts.join(' ');
+  }
+
+  /**
+   * Render a loop: `<head> <body> end`. The head is the flat command the parser
+   * matched (`repeat 3 times`, `for item in $items`), rendered by its own
+   * pattern; the body follows it directly, as canonical hyperscript requires
+   * (`repeat 3 times add …`, never `… times then add …`).
+   */
+  private renderLoop(node: LoopSemanticNode, language: string): string {
+    const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
+    const parts = [this.render(head, language)];
+    const body = this.joinStatements(node.body, language);
+    if (body) parts.push(body);
     parts.push(this.keyword(language, 'end'));
     return parts.join(' ');
   }

@@ -24,7 +24,12 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parse, parseSemantic, buildAST } from '../src';
-import type { CommandSemanticNode, CompoundSemanticNode, SemanticNode } from '../src/types';
+import type {
+  CommandSemanticNode,
+  CompoundSemanticNode,
+  LoopSemanticNode,
+  SemanticNode,
+} from '../src/types';
 
 /** Flatten every command action in a parsed tree (mirrors fidelity.ts CHILD_FIELDS). */
 function actionsOf(node: unknown, depth = 0): string[] {
@@ -161,16 +166,17 @@ describe('top-level command sequence: the guard is additive', () => {
     expect(hasUnconsumedInput(node)).toBe(true);
   });
 
-  it('does not flatten a block body into a sibling clause', () => {
+  it('nests a loop body into the loop, never a sibling clause', () => {
     // `repeat 3 times toggle .x end` leaves `toggle .x end` unconsumed. The clause
-    // parser would read it as a SIBLING (`compound[repeat, toggle]` — a loop with
-    // no body). BLOCK_BODY_ACTIONS is excluded from the guard, so the pre-existing
-    // body-drop stays visible via `unconsumed-input` rather than being flattened.
-    const node = parse('repeat 3 times toggle .x end', 'en');
+    // parser used to read it as a SIBLING (`compound[repeat, toggle]` — a loop
+    // with no body), so BLOCK_BODY_ACTIONS stays excluded from the sequence
+    // guard. A loop now routes to tryTopLevelLoop, whose walker nests the body.
+    const node = parse('repeat 3 times toggle .x end', 'en') as LoopSemanticNode;
 
-    expect(node.kind).toBe('command');
-    expect((node as CommandSemanticNode).action).toBe('repeat');
-    expect(hasUnconsumedInput(node)).toBe(true);
+    expect(node.kind).toBe('loop');
+    expect(node.action).toBe('repeat');
+    expect(node.body.map(c => c.action)).toEqual(['toggle']);
+    expect(hasUnconsumedInput(node)).toBe(false);
   });
 
   it('does not change a sequence nested inside an event handler', () => {
