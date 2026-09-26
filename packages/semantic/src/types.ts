@@ -310,6 +310,14 @@ export interface CommandSemanticNode extends SemanticNode {
    * the body (upstream rejects it). Kept so the form renders as written.
    */
   readonly tellTo?: boolean;
+  /**
+   * The position of a `go`/`scroll` destination, as written before its `of`:
+   * `top` in `go to top of #d1`, `the bottom`, `top left`. Its first position
+   * word is core's `modifiers.position`, and the destination `modifiers.of`.
+   */
+  readonly scrollPosition?: string;
+  /** `smoothly` / `instantly` after a `go` or `scroll` (core's `modifiers.behavior`). */
+  readonly scrollBehavior?: 'smoothly' | 'instantly';
 }
 
 /** One alternative a `wait for` races: an event, or a timeout. */

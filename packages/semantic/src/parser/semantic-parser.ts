@@ -180,6 +180,34 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
 /** Reference words: never an event parameter's name. */
 const REFERENCE_WORDS = new Set(['me', 'my', 'i', 'it', 'its', 'you', 'your', 'result']);
 
+/**
+ * The position words of `go`/`scroll` (`go to the top of #d1`), as core's
+ * parser reads them. `nearest` is core's own; upstream has no such word.
+ */
+const SCROLL_POSITIONS = new Set(['top', 'middle', 'bottom', 'left', 'center', 'right', 'nearest']);
+
+/** The adverbs a `go`/`scroll` takes, and core's `modifiers.behavior` for each. */
+const SCROLL_ADVERBS = new Set(['smoothly', 'instantly']);
+
+/**
+ * Does `value` read as `tok`? A selector compares its text, a reference its
+ * normalized word (es `yo` is `me`), an expression its first word.
+ */
+function sameSurface(value: SemanticValue, tok: LanguageToken | undefined): boolean {
+  if (!tok) return false;
+  const text = tok.value.toLowerCase();
+  switch (value.type) {
+    case 'selector':
+      return value.value.toLowerCase() === text;
+    case 'reference':
+      return value.value === (tok.normalized ?? tok.value).toLowerCase() || value.value === text;
+    case 'expression':
+      return value.raw.toLowerCase().split(/\s+/)[0] === text;
+    default:
+      return String('value' in value ? value.value : '').toLowerCase() === text;
+  }
+}
+
 /** The node fields a tree walk descends into. */
 const NODE_CHILD_FIELDS = [
   'body',
@@ -1240,6 +1268,22 @@ export class SemanticParserImpl implements ISemanticParser {
           modifiers && told.kind === 'event-handler'
             ? this.applyModifiers(told as EventHandlerSemanticNode, modifiers)
             : told;
+        return withDiagnostics(result, diagnostics);
+      }
+    }
+
+    // A `go`/`scroll` position or adverb: see tryScrollModifiers.
+    {
+      const placed = this.tryScrollModifiers(
+        tokens.tokens as LanguageToken[],
+        parseInput,
+        language
+      );
+      if (placed) {
+        const result =
+          modifiers && placed.kind === 'event-handler'
+            ? this.applyModifiers(placed as EventHandlerSemanticNode, modifiers)
+            : placed;
         return withDiagnostics(result, diagnostics);
       }
     }
@@ -5861,6 +5905,85 @@ export class SemanticParserImpl implements ISemanticParser {
    * argument: the wait verb just before it (verb-first) or just after it
    * (verb-final). A run with nothing past its first event is left alone.
    */
+  /**
+   * A `go`/`scroll` position (`go to the top of #d1`, `scroll to bottom of me`)
+   * and a trailing `smoothly`/`instantly`. No go or scroll pattern reads
+   * either: the position word took the destination's slot and the element was
+   * dropped (`go top`, and `scroll to top`, which throws), and the adverb was
+   * dropped, in English and so in every translation. So the phrase is excised
+   * BEFORE any pattern sees it and the rest re-parsed, as tryDoNotThrow does.
+   * A position attaches to the go/scroll whose destination starts last at or
+   * before where the phrase stood (the text before it keeps its offsets, or
+   * moves left when the re-parse strips a modifier), and only when that
+   * destination is the word that followed `of`: `go to #a then put the top of
+   * #d1 into x` keeps its `put`. An adverb attaches to the go/scroll whose
+   * destination starts last before it. Both are English in every language, as
+   * the renderer writes them. One phrase per call: the re-parse takes the next.
+   */
+  private tryScrollModifiers(
+    arr: readonly LanguageToken[],
+    input: string,
+    language: string
+  ): SemanticNode | null {
+    const word = (t: LanguageToken | undefined): string => t?.value.toLowerCase() ?? '';
+    let first = -1;
+    let last = -1;
+    for (let k = 0; k < arr.length && first < 0; k++) {
+      let j = word(arr[k]) === 'the' ? k + 1 : k;
+      if (!SCROLL_POSITIONS.has(word(arr[j]))) continue;
+      if (SCROLL_POSITIONS.has(word(arr[j + 1]))) j++;
+      if (word(arr[j + 1]) !== 'of' || !arr[j + 2]) continue;
+      first = k;
+      last = j + 1;
+    }
+    const adverb = first < 0 ? arr.findIndex(t => SCROLL_ADVERBS.has(word(t))) : -1;
+    if (first < 0 && adverb < 0) return null;
+    const start = first >= 0 ? first : adverb;
+    const end = first >= 0 ? last : adverb;
+    const head = input.slice(0, arr[start].position.start).trimEnd();
+    const tail = input.slice(arr[end].position.end).trimStart();
+    const at = head ? head.length + 1 : 0;
+    try {
+      const reparsed = this.parse(head ? `${head} ${tail}` : tail, language);
+      const commands: SemanticNode[] = [];
+      const collect = (n: SemanticNode | undefined): void => {
+        if (!n) return;
+        if (n.kind === 'command' && (n.action === 'go' || n.action === 'scroll')) commands.push(n);
+        const children = n as NodeChildren;
+        for (const field of NODE_CHILD_FIELDS) {
+          const child = children[field];
+          if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
+        }
+      };
+      collect(reparsed ?? undefined);
+      const destinationStart = (n: SemanticNode): number =>
+        n.roles.get('destination' as SemanticRole)?.position?.start ?? -1;
+      const lastBefore = (limit: number): SemanticNode | undefined =>
+        commands
+          .filter(n => destinationStart(n) >= 0 && destinationStart(n) <= limit)
+          .reduce<SemanticNode | undefined>(
+            (best, n) => (!best || destinationStart(n) > destinationStart(best) ? n : best),
+            undefined
+          );
+      if (!reparsed) return null;
+      if (first >= 0) {
+        const target = lastBefore(at);
+        const destination = target?.roles.get('destination' as SemanticRole);
+        const after = arr[last + 1];
+        if (!target || !destination || !sameSurface(destination, after)) return null;
+        const phrase = arr.slice(first, last).map(t => t.value.toLowerCase());
+        (target as { scrollPosition?: string }).scrollPosition = phrase.join(' ');
+      } else {
+        const target = lastBefore(arr[adverb].position.start - 1);
+        if (!target) return null;
+        (target as { scrollBehavior?: string }).scrollBehavior = word(arr[adverb]);
+      }
+      return reparsed;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * `fetch … do not throw`. No fetch pattern reads the phrase, so it dropped,
    * in English and so in every translation: a translated fetch then threw on a

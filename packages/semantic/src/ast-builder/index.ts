@@ -323,6 +323,25 @@ export class ASTBuilder {
       cmd = { ...cmd, modifiers: { ...cmd.modifiers, doNotThrow } };
     }
 
+    // A `go`/`scroll` position and adverb, as core's slots: the position word
+    // (the first, as core reads `top left`) and the behavior. The element stays
+    // the positional arg; both commands read it where core's parser writes `of`.
+    if (
+      (node.action === 'go' || node.action === 'scroll') &&
+      (node.scrollPosition || node.scrollBehavior)
+    ) {
+      const modifiers: Record<string, ExpressionNode> = { ...cmd.modifiers };
+      const position = node.scrollPosition?.split(' ').find(word => word !== 'the');
+      if (position) {
+        modifiers.position = { type: 'string', value: position } as ExpressionNode;
+      }
+      if (node.scrollBehavior) {
+        const behavior = node.scrollBehavior === 'smoothly' ? 'smooth' : 'instant';
+        modifiers.behavior = { type: 'string', value: behavior } as ExpressionNode;
+      }
+      cmd = { ...cmd, modifiers };
+    }
+
     // Attach semantic roles for downstream consumers (interchange format, AOT
     // compiler). This reads the FULL role map deliberately — including the
     // materialized defaults `getRole` withholds from `args`/`modifiers`. The
