@@ -4767,6 +4767,22 @@ this signal was missing.
 > loops got in PR 7. Also filed: core's tell rebinds `me` (a documented divergence; upstream binds
 > only `you`). Out of scope: bare `remove` fails at runtime on both engines, and bare `toggle` is
 > upstream-invalid.
+>
+> **stagger-animation keeps `with index` (PR 17, 2026-09-26).** The allowlist is 4 → 3. No parser
+> path set a loop's `indexVariable`, and the renderer never wrote it. So upstream's `index i` (both
+> engines, after `for … in …` or `N times`) and core's `with index` (which binds `index`) dropped
+> in every language, and a translated body's index was unbound. A pre-pass (`tryLoopIndex`, the
+> `tryTellTo` shape) excises the phrase and sets the variable on the loop it follows, when only
+> that loop's own words sit between its head's last value and the phrase. Those words are the
+> literals its patterns write, with their alternatives, matched by surface: a localized `times` is
+> a plain identifier (ms `kali`), and qu's `3 times ta repeat` particle normalizes to a role.
+> `LoopSemanticNode.indexWith` keeps core's spelling; renders write the phrase after the loop head
+> in every language; buildLoop already handed core `modifiers.index`.
+>
+> Filed, not fixed (each pre-existing and language-wide): `put X into <identifier>` drops in
+> ar/de/fr/id/zh, and inside a loop the whole body drops in 10 languages; a bare lexicon word used
+> as a value (`index`, `length`) is localized one way in bn/ms/th/tl; and an identifier that is a
+> keyword elsewhere (es `y`, pl `i`/`z`, tr `i`) is read as that keyword.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -384,8 +384,13 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly body: SemanticNode[];
   /** Loop variable name for 'for' loops (e.g., 'item' in 'for item in list') */
   readonly loopVariable?: string;
-  /** Index variable name if specified (e.g., 'i' in 'for item with index i') */
+  /** Index variable name if specified (e.g., 'i' in 'for item in list index i') */
   readonly indexVariable?: string;
+  /**
+   * The index was written core's way, `with index` (it binds `index`), not
+   * upstream's `index <name>`. Kept so the form renders as written.
+   */
+  readonly indexWith?: boolean;
 }
 
 /**

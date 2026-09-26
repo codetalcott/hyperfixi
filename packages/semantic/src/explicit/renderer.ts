@@ -292,6 +292,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private renderLoop(node: LoopSemanticNode, language: string): string {
     const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
+    // `index i`, or core's `with index`, in English in every language: the
+    // parser reads it right after the loop head.
+    if (node.indexVariable) {
+      parts.push(node.indexWith ? 'with index' : `index ${node.indexVariable}`);
+    }
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);
     parts.push(this.keyword(language, 'end'));
