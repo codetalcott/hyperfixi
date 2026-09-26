@@ -6631,6 +6631,30 @@ export class SemanticParserImpl implements ISemanticParser {
     return !(next && next.kind === 'selector');
   }
 
+  /**
+   * A token opening a block whose own `end` the conditional fold must skip: a
+   * nested `if`/`unless`, or a loop head (`repeat`, `for`). Counting only the
+   * conditionals let a loop's `end` close the `if` around it, and the `if`'s
+   * own `end` then ended the enclosing body: `if x repeat 3 times … end end
+   * then remove .b from me` lost the `remove`. A `for` right after `repeat`
+   * names the loop's form (`repeat for …`) and opens nothing. The English
+   * `repeat` counts in every language, as `end` does in isEndKeyword: the SOV
+   * counted-loop head keeps it untranslated (ja/ko/tr `3 times を repeat`),
+   * where it tokenizes as an identifier.
+   */
+  private opensNestedBlock(
+    t: LanguageToken,
+    prev: LanguageToken | undefined,
+    language: string
+  ): boolean {
+    const tv = (t.normalized ?? t.value).toLowerCase();
+    if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) return true;
+    if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
+    if (tv !== 'for' || t.kind !== 'keyword') return false;
+    const pv = prev?.kind === 'keyword' ? (prev.normalized ?? prev.value).toLowerCase() : '';
+    return pv !== 'repeat';
+  }
+
   private tryParseConditionalBlock(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
@@ -6663,16 +6687,15 @@ export class SemanticParserImpl implements ISemanticParser {
     tokens.advance(); // consume if/unless
 
     // Collect the whole block from the stream: every token up to the matching
-    // depth-0 `end` (or the stream end). Nested `if`/`unless` raise the depth; a
-    // nested `end` lowers it — so an inner conditional's `end` never terminates
-    // the outer block.
+    // depth-0 `end` (or the stream end). A nested block opener (see
+    // opensNestedBlock) raises the depth; a nested `end` lowers it — so an inner
+    // conditional's or loop's `end` never terminates the outer block.
     const blockTokens: LanguageToken[] = [];
     let depth = 0;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      const tv = (t.normalized ?? t.value).toLowerCase();
-      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) {
+      if (this.opensNestedBlock(t, blockTokens[blockTokens.length - 1], language)) {
         depth++;
         blockTokens.push(t);
         tokens.advance();
@@ -6712,6 +6735,8 @@ export class SemanticParserImpl implements ISemanticParser {
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
       const tv = (t.normalized ?? t.value).toLowerCase();
+      // Conditionals only: a loop head here STARTS the then-branch, so it must
+      // stay visible to the command-start test below.
       if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) bodyDepth++;
       else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
       if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
@@ -6800,8 +6825,7 @@ export class SemanticParserImpl implements ISemanticParser {
     let branchDepth = 0;
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
-      const tv = (t.normalized ?? t.value).toLowerCase();
-      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) branchDepth++;
+      if (this.opensNestedBlock(t, blockTokens[i - 1], language)) branchDepth++;
       else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) branchDepth--;
       if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
         inElse = true;

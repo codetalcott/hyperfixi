@@ -104,8 +104,13 @@ describe('a loop inside a conditional branch closes before the branch does', () 
   const reference = parseEn(SOURCE);
   const referenceEn = reference ? render(reference, 'en') : null;
 
-  it('emits both ends — the loop closes, then the branch', () => {
-    expect(referenceEn).toBe('on click if x repeat 3 times add .a to me end end');
+  it('emits both ends — the loop closes, then the branch — and keeps what follows', () => {
+    // The reference used to END at the `if`: the conditional fold counted only
+    // `if`/`unless` as openers, so the loop's `end` closed the `if` and the
+    // `if`'s own `end` ended the handler body, dropping `then remove .b from me`.
+    expect(referenceEn).toBe(
+      'on click if x repeat 3 times add .a to me end end then remove .b from me'
+    );
   });
 
   it.each(LANGUAGES)('%s round-trips the nested close', language => {
