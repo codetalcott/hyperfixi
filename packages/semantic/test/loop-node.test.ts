@@ -51,6 +51,21 @@ function loops(node: unknown): LoopSemanticNode[] {
   return out;
 }
 
+/** Every action in a tree. */
+function actionsOf(node: unknown): string[] {
+  const out: string[] = [];
+  const walk = (n: unknown): void => {
+    if (!n || typeof n !== 'object') return;
+    const rec = n as Record<string, unknown>;
+    if (typeof rec.action === 'string') out.push(rec.action);
+    for (const field of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      for (const child of (rec[field] as unknown[]) ?? []) walk(child);
+    }
+  };
+  walk(node);
+  return out;
+}
+
 /** The actions directly in a loop's body. */
 const bodyActions = (loop: LoopSemanticNode) => loop.body.map(n => n.action);
 
@@ -68,6 +83,9 @@ const SHAPES = {
   // A body that spans clauses: the loop stays open across each `then`.
   whileSpansClauses: 'on click repeat while x < 10 increment x then log x end then log "done"',
   forSpansClauses: 'on click for item in $items set $b to item then log $b end then log "done"',
+  // The if fold splits then/else at a depth-0 `else`: the loop's `end` must
+  // not bring the depth back early.
+  ifElseWithLoop: 'on click if x repeat 3 times add .a to me end else log "no" end then log "done"',
   // behavior-sortable: the remove after the loop ran on every pointer move.
   untilEvent:
     'on pointerdown repeat until event pointerup from document wait for pointermove then trigger moved on me end then remove .x from me',
@@ -145,6 +163,28 @@ describe('every translation keeps the extent', () => {
       );
     }
   );
+});
+
+describe('a command after a displaced `end` is kept', () => {
+  // The verb-final reorder can put a loop's `end` between its last command's
+  // argument and verb (`… 200ms 終わり を 待つ`, transformer-era renders). The
+  // walker reunites the two (multilingual-roadmap-fixes) but cannot tell where
+  // the loop closed, so the loop stays open. It used to forget the loop at the
+  // next `then`, and the displaced `end` then ended the whole body, dropping
+  // every command after it.
+  it.each([
+    [
+      'ja',
+      'の間 #counter.innerText < 10 を クリック で 繰り返し それから #counter を 増加 それから 200ms 終わり を 待つ それから "done" を 記録',
+    ],
+    [
+      'ko',
+      '동안 #counter.innerText < 10 를 클릭 반복 그러면 #counter 를 증가 그러면 200ms 끝 를 대기 그러면 "done" 를 로그',
+    ],
+  ])('%s keeps the log', (language, src) => {
+    const actions = actionsOf(parseSemantic(src, language).node);
+    expect(actions).toEqual(expect.arrayContaining(['repeat', 'increment', 'wait', 'log']));
+  });
 });
 
 describe('buildAST emits the repeat core parses', () => {

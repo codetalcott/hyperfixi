@@ -86,18 +86,13 @@ function isLoopClose(entry: WalkEntry): entry is LoopCloseMarker {
   return entry === LOOP_CLOSE;
 }
 
-/**
- * A loop head the walker emitted flat: a `repeat`/`for` command with no body.
- * A `for` with no roles is not one: it is the phantom a bare for-homonym parses
- * to (bn `জন্য`), which the walker drops.
- */
+/** A loop head the walker emitted flat: a `repeat`/`for` command with no body. */
 function isOpenLoopHead(entry: WalkEntry): entry is CommandSemanticNode {
   if (isLoopClose(entry) || entry.kind !== 'command' || !LOOP_HEAD_ACTIONS.has(entry.action)) {
     return false;
   }
   const body = (entry as { body?: unknown }).body;
-  if (Array.isArray(body) && body.length > 0) return false;
-  return !(entry.action === 'for' && entry.roles.size === 0);
+  return !(Array.isArray(body) && body.length > 0);
 }
 
 /** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
@@ -131,24 +126,6 @@ function wordBefore(list: readonly LanguageToken[], end: number): LanguageToken 
 function isRepeatToken(token: LanguageToken): boolean {
   if (token.kind !== 'keyword' && token.kind !== 'identifier') return false;
   return (token.normalized ?? token.value).toLowerCase() === 'repeat';
-}
-
-/**
- * Flat `while` heads that owe an `end` of their own: every one except a
- * fronted while-phrase directly before its `repeat`, which is that loop's head
- * (foldFrontedWhileIntoRepeat merges the two).
- */
-function standaloneWhileHeads(nodes: readonly SemanticNode[]): number {
-  let count = 0;
-  nodes.forEach((node, i) => {
-    if (node.kind !== 'command' || node.action !== 'while') return;
-    const body = (node as { body?: unknown }).body;
-    if (Array.isArray(body) && body.length > 0) return;
-    const next = nodes[i + 1];
-    if (next?.kind === 'command' && next.action === 'repeat') return;
-    count++;
-  });
-  return count;
 }
 
 /** Loop heads in the walker's list still waiting for their `end`. */
@@ -3161,9 +3138,14 @@ export class SemanticParserImpl implements ISemanticParser {
           //
           // The debt is every loop head still open, not just this clause's: a
           // loop whose body spans several clauses owes its `end` until it
-          // arrives. A `while` head owes one too unless the `repeat` after it
-          // claims it (the SOV fronted while-phrase: one loop, one `end`).
-          resetDebt(standaloneWhileHeads(clauseNodes));
+          // arrives. A flat `while` head (the SOV fronted while-phrase) still
+          // owes one too, as before; it opens no loop of its own.
+          resetDebt(
+            clauseNodes.filter(n => {
+              const rec = n as { action?: string; body?: unknown[] };
+              return rec.action === 'while' && (!Array.isArray(rec.body) || rec.body.length === 0);
+            }).length
+          );
         }
         tokens.advance(); // Consume conjunction token
         continue;
