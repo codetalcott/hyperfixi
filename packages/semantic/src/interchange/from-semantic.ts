@@ -109,6 +109,15 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
       return convertPropertyAccess(node);
     case 'possessiveExpression':
       return convertPossessive(node);
+    // `the X of Y` (and `X of Y`), as core's converter reads it: the same
+    // access as `Y's X`.
+    case 'propertyOfExpression':
+      return {
+        type: 'possessive',
+        object: fromSemanticAST(node.target as SemanticASTNode),
+        property: ((node.property as SemanticASTNode | undefined)?.name ?? '') as string,
+        ...pos(node),
+      };
     case 'memberExpression':
       return convertMember(node);
     case 'binaryExpression':

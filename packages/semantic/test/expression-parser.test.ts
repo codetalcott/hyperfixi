@@ -132,12 +132,14 @@ describe('ExpressionParser', () => {
     });
 
     it('parses possessive notation', () => {
+      // The property is an identifier node, as core's parser builds it: core's
+      // runtime reads `property.name`, and a bare string read as no property.
       const result = parseExpression("me's value");
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
         type: 'possessiveExpression',
         object: { type: 'identifier', name: 'me' },
-        property: 'value',
+        property: { type: 'identifier', name: 'value' },
       });
     });
 
@@ -335,7 +337,7 @@ describe('ExpressionParser', () => {
       expect(result.node).toMatchObject({
         type: 'possessiveExpression',
         object: { type: 'identifier', name: 'me' },
-        property: 'innerHTML',
+        property: { type: 'identifier', name: 'innerHTML' },
       });
     });
 
@@ -510,6 +512,81 @@ describe('ExpressionParser', () => {
         type: 'attributeAccess',
         attributeName: 'aria-selected',
       });
+    });
+  });
+
+  // Core's comparison phrases, in the shapes core's parser builds. buildAST
+  // parses every translated condition here, and this read only `is`, `is
+  // empty` and `is not empty`: `p is not q` became `p is (not q)`.
+  describe("core's comparison phrases", () => {
+    const binary = (operator: string, left: object, right: object) => ({
+      type: 'binaryExpression',
+      operator,
+      left,
+      right,
+    });
+    const p = { type: 'identifier', name: 'p' };
+    const q = { type: 'identifier', name: 'q' };
+
+    it.each([
+      ['p is not q', binary('is not', p, q)],
+      ['p is less than q', binary('is less than', p, q)],
+      [
+        'p is greater than or equal to 1',
+        binary('is greater than or equal to', p, { type: 'literal', value: 1 }),
+      ],
+      ['p is really equal to q', binary('is really equal to', p, q)],
+      ['p is not in [3, 4]', binary('is not in', p, { type: 'arrayLiteral' })],
+      [
+        '#d1 does not match .x',
+        binary('does not match', { type: 'selector', value: '#d1' }, { type: 'selector', value: '.x' }),
+      ],
+      [
+        '#d1 has .x',
+        binary('has', { type: 'selector', value: '#d1' }, { type: 'selector', value: '.x' }),
+      ],
+      ['p am q', binary('am', p, q)],
+    ])('%s', (source, node) => {
+      const result = parseExpression(source);
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject(node);
+    });
+
+    it('reads `does not exist` as a postfix predicate', () => {
+      expect(parseExpression('#zz does not exist').node).toMatchObject({
+        type: 'unaryExpression',
+        operator: 'does not exist',
+        operand: { type: 'selector', value: '#zz' },
+        prefix: false,
+      });
+    });
+
+    it('reads `is a` / `is not an …!` as a type check on a type NAME', () => {
+      expect(parseExpression('p is a Number').node).toMatchObject({
+        type: 'typeCheckExpression',
+        value: p,
+        typeName: 'Number',
+        nullOk: true,
+        negated: false,
+      });
+      expect(parseExpression('p is not an Array!').node).toMatchObject({
+        type: 'typeCheckExpression',
+        typeName: 'Array',
+        nullOk: false,
+        negated: true,
+      });
+    });
+
+    it('reads `the X of Y` and `X of Y` as property access, tighter than `is`', () => {
+      const textOfD1 = {
+        type: 'propertyOfExpression',
+        property: { type: 'identifier', name: 'textContent' },
+        target: { type: 'selector', value: '#d1' },
+      };
+      expect(parseExpression('the textContent of #d1').node).toMatchObject(textOfD1);
+      expect(parseExpression('textContent of #d1 is "d"').node).toMatchObject(
+        binary('is', textOfD1, { type: 'literal', value: 'd' })
+      );
     });
   });
 });
