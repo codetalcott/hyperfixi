@@ -4841,6 +4841,35 @@ this signal was missing.
 >
 > Filed, not fixed: bn's শেষ (`end`, also `last`) moves a loop's `end` past the command after it;
 > zh reads no `if` inside `repeat forever`, whatever the condition.
+>
+> **A variable as the element a command acts on (PR 22, 2026-09-26).** A bare variable arrives as
+> an `expression`, and the roles that name the element a command acts on took a selector or a
+> reference only. So `repeat for el in .x hide el end` rendered `hide` and hid `me`, and `remove
+> el` lost its command. English dropped the variable for 20 commands (remove, show, hide, trigger,
+> take, tell, settle, focus, blur, empty, open, close, select, reset, clone, morph, install,
+> measure, transition, and set's `on` scope), and so every translation did too. toggle's `on el`
+> and swap's destination, which English's handcrafted patterns leave untyped, dropped in 14 and
+> 21 languages. Those roles take a variable now. The handcrafted copies that decided (de
+> hide/show, set's trailing scope group, the SOV handlers' scope slot) read the schema's list;
+> fr's show copy never decides, so it keeps its own. fetch's destination and repeat's source stay
+> narrow: the response-type recovery and the fused-role junk check read an expression there as a
+> mis-capture.
+>
+> At the top level, the no-`end` trigger split read the `on el` of `toggle .a on el then log 1`
+> as a second handler, and the commands after it moved there. es/pt/he did the same with put's
+> `en item`, the finding PR 19 filed. Both engines read that `on` as toggle's target. An on-marker
+> that the nearest command before it, in the same clause, writes in its own patterns is now that
+> command's, unless the command has used it already; a real second handler still splits.
+>
+> On the direct path, a translated loop that hides, shows, removes, toggles, triggers, takes from
+> or tells its element now reaches it in every language, where 178 of 207 cases failed before. The
+> corpus moved nothing: no corpus row targets a variable.
+>
+> Filed, not fixed: `set x to #d1` drops the whole `set`, in English and so everywhere, when its
+> value is a selector, a query, an array or a `*style` (set's value takes no selector).
+> `go` loses its target in English: `go to #d1` drops, `go to top of #d1` renders `go top`. The
+> split reads the NEAREST command before an `on`, so an argument spelled like a command (`send
+> toggle to #x on keyup …`) can still mislead it.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
