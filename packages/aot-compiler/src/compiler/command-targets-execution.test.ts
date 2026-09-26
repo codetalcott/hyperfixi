@@ -148,8 +148,11 @@ describe.each(LANGUAGES)('%s', language => {
   });
 
   it('take .a from #d1', async () => {
+    // Only #d1 gives it up, on both engines: #sib keeps its `.a`.
+    byId('host')!.insertAdjacentHTML('afterend', '<div id="sib" class="a"></div>');
     await click('on click take .a from #d1', language);
     expect(byId('d1')!.classList.contains('a')).toBe(false);
+    expect(byId('sib')!.classList.contains('a')).toBe(true);
     expect(byId('host')!.classList.contains('a')).toBe(true);
   });
 
