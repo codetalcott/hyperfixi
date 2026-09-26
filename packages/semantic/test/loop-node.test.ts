@@ -65,6 +65,9 @@ const SHAPES = {
   // renders front it: ja `の間 x < 10 繰り返し`).
   whileHead: 'on click repeat while x < 10 increment x end then log "done"',
   repeatForIn: 'on click repeat for item in .i add .y to item end then log "done"',
+  // A body that spans clauses: the loop stays open across each `then`.
+  whileSpansClauses: 'on click repeat while x < 10 increment x then log x end then log "done"',
+  forSpansClauses: 'on click for item in $items set $b to item then log $b end then log "done"',
   // behavior-sortable: the remove after the loop ran on every pointer move.
   untilEvent:
     'on pointerdown repeat until event pointerup from document wait for pointermove then trigger moved on me end then remove .x from me',
