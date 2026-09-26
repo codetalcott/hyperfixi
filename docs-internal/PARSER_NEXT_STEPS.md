@@ -654,7 +654,15 @@ worth its own arc — fold them into whichever change touches this area:
   (delete a case) has to FAIL the gate, and `swap` proves a label-derived check
   would have passed while the command was broken.
 
-### The semantic parser never builds a loop node (2026-08-28)
+### ~~The semantic parser never builds a loop node (2026-08-28)~~ — FIXED (2026-09-25)
+
+**Fixed.** Both body walkers (`parseBodyWithClauses` and the fused path's
+`parseBodyWithGrammarPatterns`) now mark where they consume a loop's `end`, and
+`foldLoopBlocks` nests each head's body into a `LoopSemanticNode`; the renderer
+closes a loop where its body stops, and `buildLoop` emits the slot-shaped
+`repeat` core's parser builds. That last part was a runtime bug of its own:
+every non-English loop threw on the multilingual direct path. A top-level loop
+keeps its body. The brief below is the history.
 
 `LoopSemanticNode` is declared in `packages/semantic/src/types.ts`, `createLoopNode`
 exports it, `ast-builder/index.ts` has a `case 'loop'`, the package CLAUDE.md
@@ -681,12 +689,14 @@ true extent means building a real loop node with a body, mirroring
 `tryParseConditionalBlock` → `createConditionalNode`. That is the fix; this entry
 is the brief.
 
-**Now gated (2026-09-25).** The en-reference-preservation allowlist holds two
-corpus rows for it, both MEANING: template-literal-list-build (the `end` moves
-after `set #list.innerHTML`, pulling it into the loop) and behavior-sortable (the
-same move, beside its handler-head losses). They are the next PR. The top-level
-drop is visible on the bare surface too: the bare `repeat while … < 10 increment
-#counter wait 200ms end` renders as the head alone.
+**Gated (2026-09-25), then cleared.** The en-reference-preservation allowlist
+held two corpus rows for it, both MEANING: template-literal-list-build (the `end`
+moved after `set #list.innerHTML`, pulling it into the loop) and
+behavior-sortable (the same move, beside its handler-head losses). Both cleared
+with the fix, as did behavior-draggable's and -resizable's `end` losses, which
+the gate had filed under their handler-head family. The top-level drop was
+visible on the bare surface too: the bare `repeat while … < 10 increment
+#counter wait 200ms end` rendered as the head alone.
 
 ### ~~Role markers bind as roles in the traditional→interchange path~~ — FIXED (2026-08-30)
 
@@ -2309,6 +2319,18 @@ Found alongside, and **still open**:
   `function _handler_my-event_…`. That is invalid JavaScript, reported as
   `success: true`. A pseudo-command also has no codegen, so its handler body is
   EMPTY.
+- **Every AOT-compiled loop is `while (true)` (found 2026-09-25, PR 7).** Both
+  interchange converters (`ast-utils/interchange/from-core.ts` and semantic's
+  `interchange/from-semantic.ts`) still read the pre-slot POSITIONAL `repeat`
+  (`args[0]` = the loop type), the same shape `parseForCommand` kept. Core's
+  parser has emitted slots since Arc 3 step 3, so `args[0]` is the body block,
+  the loop type falls back to `forever`, and `on click repeat 3 times add .x to
+  me end` compiles to `while (true) { … }` — a hung page, reported as
+  `success: true`, in English and (now that `buildLoop` emits the same slots)
+  in every language. Before PR 7 a non-English loop compiled to `while (true)
+  {}` with its body AFTER it. The fix is the twin of the `for` row above: both
+  converters read `modifiers.loopType` and its slots (keep the positional read
+  only for hand-built ASTs), and a test compiles and RUNS a counted loop.
 
 ## Notes
 

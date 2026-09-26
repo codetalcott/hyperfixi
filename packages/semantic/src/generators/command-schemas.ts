@@ -2110,7 +2110,7 @@ export const repeatSchema: CommandSchema = {
   description: 'Repeat a block of commands',
   category: 'control-flow',
   primaryRole: 'loopType',
-  // Bare-command form only — the real loop path is ASTBuilder.buildLoop.
+  // A flat loop head with no body; a loop with one builds via ASTBuilder.buildLoop.
   ast: { args: [['quantity', 'patient']] },
   hasBody: true,
   roles: [
@@ -2217,7 +2217,7 @@ export const whileSchema: CommandSchema = {
   description: 'Loop while condition is true',
   category: 'control-flow',
   primaryRole: 'condition',
-  // Bare-command form only — the real loop path is ASTBuilder.buildLoop.
+  // A flat loop head with no body; a loop with one builds via ASTBuilder.buildLoop.
   ast: { args: ['condition'] },
   hasBody: true,
   roles: [

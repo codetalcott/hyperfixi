@@ -11,6 +11,7 @@ import type {
   CompoundSemanticNode,
   ConditionalSemanticNode,
   EventHandlerSemanticNode,
+  LoopVariant,
   SemanticParser as ISemanticParser,
   SemanticValue,
   SemanticRole,
@@ -26,6 +27,7 @@ import {
   createEventHandler,
   createCompoundNode,
   createConditionalNode,
+  createLoopNode,
   createSelector,
   createLiteral,
   createReference,
@@ -60,6 +62,81 @@ import { parseExplicit as parseExplicitFn } from '../explicit/parser';
  * (see `buildEventHandler`).
  */
 const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
+
+/**
+ * Loop heads whose body the clause walker nests into a {@link LoopSemanticNode}.
+ * `while` is not one: a standalone `while` node is the SOV fronted while-phrase
+ * that {@link SemanticParserImpl.foldFrontedWhileIntoRepeat} merges into its
+ * `repeat`, never a loop of its own.
+ */
+const LOOP_HEAD_ACTIONS = new Set(['repeat', 'for']);
+
+/**
+ * Where the clause walker consumed a loop's closing `end`. It lives only in the
+ * walker's own list: {@link foldLoopBlocks} turns each head … marker span into a
+ * loop node before anything else sees the list.
+ */
+interface LoopCloseMarker {
+  readonly kind: 'loop-close';
+}
+const LOOP_CLOSE: LoopCloseMarker = { kind: 'loop-close' };
+type WalkEntry = SemanticNode | LoopCloseMarker;
+
+function isLoopClose(entry: WalkEntry): entry is LoopCloseMarker {
+  return entry === LOOP_CLOSE;
+}
+
+/** A loop head the walker emitted flat: a `repeat`/`for` command with no body. */
+function isOpenLoopHead(entry: WalkEntry): entry is CommandSemanticNode {
+  if (isLoopClose(entry) || entry.kind !== 'command' || !LOOP_HEAD_ACTIONS.has(entry.action)) {
+    return false;
+  }
+  const body = (entry as { body?: unknown }).body;
+  return !(Array.isArray(body) && body.length > 0);
+}
+
+/** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
+function loopVariableName(value: SemanticValue): string | undefined {
+  switch (value.type) {
+    case 'expression':
+      return value.raw;
+    case 'literal':
+      return String(value.value);
+    case 'reference':
+      return value.value;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The last token before `end` in `list` that is not a particle: the word a
+ * role marker follows (he `repeat את כל עוד …`, zh `重复 把 …`).
+ */
+function wordBefore(list: readonly LanguageToken[], end: number): LanguageToken | undefined {
+  for (let k = end - 1; k >= 0; k--) if (list[k].kind !== 'particle') return list[k];
+  return undefined;
+}
+
+/**
+ * A `repeat` word: the keyword, or the English `repeat` a render left
+ * untranslated (es `repeat mientras …`, ja `3 times を repeat`), which
+ * tokenizes as an identifier.
+ */
+function isRepeatToken(token: LanguageToken): boolean {
+  if (token.kind !== 'keyword' && token.kind !== 'identifier') return false;
+  return (token.normalized ?? token.value).toLowerCase() === 'repeat';
+}
+
+/** Loop heads in the walker's list still waiting for their `end`. */
+function openLoopCount(entries: readonly WalkEntry[]): number {
+  let open = 0;
+  for (const entry of entries) {
+    if (isOpenLoopHead(entry)) open++;
+    else if (isLoopClose(entry) && open > 0) open--;
+  }
+  return open;
+}
 
 /**
  * Control-flow / structural keywords that tokenize as identifiers in some
@@ -1510,6 +1587,21 @@ export class SemanticParserImpl implements ISemanticParser {
       // defect of the same family as the feature blocks fixed in #628/#629; it
       // still reports `unconsumed-input` below, so it stays visible rather than
       // being papered over by a flatten.
+      //
+      // A LOOP now nests: the clause walker folds its body into a loop node,
+      // so a top-level `repeat …`/`for …` routes to tryTopLevelLoop instead.
+      if (
+        commandMatch.consumedTokens < tokens.tokens.length &&
+        LOOP_HEAD_ACTIONS.has(commandMatch.pattern.command)
+      ) {
+        const loop = this.tryTopLevelLoop(tokens, commandPatterns, language);
+        if (loop) {
+          diagnostics.push(
+            parseDiagnostic(`top-level loop: ${loop.kind}`, 'info', 'stage-top-level-loop')
+          );
+          return withDiagnostics(loop, diagnostics);
+        }
+      }
       if (
         commandMatch.consumedTokens < tokens.tokens.length &&
         !BLOCK_BODY_ACTIONS.has(commandMatch.pattern.command)
@@ -2155,6 +2247,13 @@ export class SemanticParserImpl implements ISemanticParser {
           t.kind === 'conjunction' ||
           (t.kind === 'keyword' &&
             (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        // A loop head's clause also stops at the loop's own `end` where
+        // isEndKeyword cannot list it (bn শেষ, also `last`): read past, the
+        // `end` was swallowed as a stray terminator and the loop lost its extent.
+        const loopHeadAction = actionName === 'repeat' || actionName === 'while';
+        const endsClause = (k: number): boolean =>
+          isClauseBoundary(all[k]) ||
+          (loopHeadAction && this.isBlockEndToken(all[k], all[k + 1], language));
         // The scan-back below identifies the verb by its NORMALIZED form. That
         // misses whenever the language's verb normalizes to something other
         // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -2185,7 +2284,7 @@ export class SemanticParserImpl implements ISemanticParser {
           // tail (the verb..pos span is already consumed by the fused match; the
           // tail pos..clauseEnd holds the dropped secondary clause).
           let clauseEnd = pos;
-          while (clauseEnd < all.length && !isClauseBoundary(all[clauseEnd])) clauseEnd++;
+          while (clauseEnd < all.length && !endsClause(clauseEnd)) clauseEnd++;
           const clauseTokens = all.slice(verbIdx, clauseEnd);
           // For verb-first fused patterns the event head sits inside the clause;
           // excise it (event token + a preceding `on`-marker keyword) so the
@@ -2695,7 +2794,29 @@ export class SemanticParserImpl implements ISemanticParser {
       // block-body cases above; both are kept named for documentation.
       const hasTrailingBody = !!nextToken && !this.isEndKeyword(nextToken.value, language);
 
-      if (hasContinuesMarker || hasTrailingThenChain || hasBlockBody || hasTrailingBody) {
+      // The captured command can be a LOOP head (`repeat-event-es-vso` fuses
+      // `al clic repetir 3 times`), whose body the re-parse above recovered.
+      // Its `end` closes the loop, not the handler: when more body follows it,
+      // consume the `end` as the loop's and walk on. The body walker never sees
+      // the head, so it is handed the leading nodes to count open loops from.
+      const leading: WalkEntry[] = [commandNode, ...reparsedTail];
+      const closesLeadingLoop =
+        !!nextToken &&
+        this.isEndKeyword(nextToken.value, language) &&
+        openLoopCount(leading) > 0 &&
+        tokens.peek(1) !== null;
+      if (closesLeadingLoop) {
+        tokens.advance();
+        leading.push(LOOP_CLOSE);
+      }
+
+      if (
+        hasContinuesMarker ||
+        hasTrailingThenChain ||
+        hasBlockBody ||
+        hasTrailingBody ||
+        closesLeadingLoop
+      ) {
         // Parse remaining tokens as additional commands
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')
@@ -2711,17 +2832,14 @@ export class SemanticParserImpl implements ISemanticParser {
           tokens,
           commandPatterns,
           grammarContinuationPatterns,
-          language
+          language,
+          leading
         );
 
-        if (remainingCommands.length > 0) {
-          // Combine first command with remaining commands
-          body = [commandNode, ...reparsedTail, ...remainingCommands];
-        } else {
-          body = [commandNode, ...reparsedTail];
-        }
+        // Combine the first command with the remaining commands, nesting loops.
+        body = this.foldLoopBlocks([...leading, ...remainingCommands]);
       } else {
-        body = [commandNode, ...reparsedTail];
+        body = this.foldLoopBlocks(leading);
         // No trailing-body walk ran (next token is an `end` or the stream is
         // exhausted) — anything left past here is dropped. The residue filter
         // silences the bare block terminator(s), so only real content fires.
@@ -2819,7 +2937,9 @@ export class SemanticParserImpl implements ISemanticParser {
     commandPatterns: LanguagePattern[],
     language: string
   ): SemanticNode[] {
-    const clauses: SemanticNode[] = [];
+    // Parsed clauses in order, plus a LOOP_CLOSE wherever a loop's `end` was
+    // consumed; foldLoopBlocks nests each loop's body before this returns.
+    const clauses: WalkEntry[] = [];
     const currentClauseTokens: LanguageToken[] = [];
     // Nesting depth of block openers (`if`/`unless`/`while`/`for`/`repeat`)
     // accumulated into the pending clause — see the depth-aware `end` note below.
@@ -2827,8 +2947,20 @@ export class SemanticParserImpl implements ISemanticParser {
     // Kind of each open block, parallel to pendingBlockDepth (LIFO — an `end`
     // closes the innermost opener). While an `if` block is open, a conjunction
     // is BLOCK CONTENT, not a clause boundary — see the then-boundary note in
-    // the conjunction branch below.
-    const pendingOpenerKinds: Array<'if' | 'other'> = [];
+    // the conjunction branch below. `loop` is a `repeat`/`for` opener, whose
+    // `end` the walker resolves itself (see closeLoopAtEnd); `while` is a while
+    // word no `repeat` has claimed yet; `other` is an `unless`.
+    const pendingOpenerKinds: Array<'if' | 'loop' | 'while' | 'other'> = [];
+    // Re-derive the owed `end`s after the pending clause is flushed: every loop
+    // head still waiting for its `end`, plus `whileHeads` (see the conjunction
+    // branch).
+    const resetDebt = (whileHeads = 0): void => {
+      const open = openLoopCount(clauses);
+      pendingBlockDepth = open + whileHeads;
+      pendingOpenerKinds.length = 0;
+      for (let k = 0; k < open; k++) pendingOpenerKinds.push('loop');
+      for (let k = 0; k < whileHeads; k++) pendingOpenerKinds.push('while');
+    };
 
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
@@ -2914,6 +3046,33 @@ export class SemanticParserImpl implements ISemanticParser {
       // the conditional — the SOV/VSO analogue of the #452/#453 fused-body fixes).
       // While inside a nested block (depth > 0), treat `end` as block content and
       // keep accumulating so the whole body reaches the per-clause parser.
+      //
+      // A LOOP's `end` is the exception: it closes the loop, so flush the pending
+      // clause and mark the close (foldLoopBlocks nests the body). As block
+      // content the `end` vanished into the clause, and the loop's extent with
+      // it — the renderer then closed the loop at the END of the list, pulling
+      // whatever followed into it (template-literal-list-build's `set
+      // #list.innerHTML`, behavior-sortable's `remove`). An opener the walker
+      // cannot see (es/pt `para` and sw `kwa` are particles, the SOV heads are
+      // verb-final) was worse: its `end` terminated the whole body. Only when
+      // every opener in the pending clause is a loop — an open `if` or `unless`
+      // keeps the block-content reading, which its own fold reassembles.
+      //
+      // bn's শেষ is `end` AND the positional `last`, so isEndKeyword cannot list
+      // it and it never terminates a body; it can still close an open loop, by
+      // the conditional fold's test (a keyword normalized `end`, not before a
+      // selector). closeLoopAtEnd declines unless a loop is open.
+      const closesBlock =
+        isEnd ||
+        (!isPositionalEndNoun &&
+          this.isBlockEndToken(current, followingToken ?? undefined, language));
+      if (closesBlock && pendingOpenerKinds.every(kind => kind === 'loop')) {
+        if (this.closeLoopAtEnd(tokens, currentClauseTokens, clauses, commandPatterns, language)) {
+          currentClauseTokens.length = 0;
+          resetDebt();
+          continue;
+        }
+      }
       if (isEnd && pendingBlockDepth > 0) {
         pendingBlockDepth--;
         pendingOpenerKinds.pop();
@@ -2976,18 +3135,17 @@ export class SemanticParserImpl implements ISemanticParser {
           // spurious homonym token (bn `জন্য`, both `for` and a benefactive
           // postposition) that parsed to no loop head contributes nothing —
           // exactly the old reset.
-          pendingBlockDepth = clauseNodes.filter(n => {
-            const rec = n as { action?: string; body?: unknown[] };
-            return (
-              (rec.action === 'for' || rec.action === 'repeat' || rec.action === 'while') &&
-              (!Array.isArray(rec.body) || rec.body.length === 0)
-            );
-          }).length;
-          // Re-derive the opener kinds too: only blockless LOOP heads survive a
-          // clause boundary (an open `if` suppresses the boundary above, so no
-          // `if` debt can be pending here).
-          pendingOpenerKinds.length = 0;
-          for (let k = 0; k < pendingBlockDepth; k++) pendingOpenerKinds.push('other');
+          //
+          // The debt is every loop head still open, not just this clause's: a
+          // loop whose body spans several clauses owes its `end` until it
+          // arrives. A flat `while` head (the SOV fronted while-phrase) still
+          // owes one too, as before; it opens no loop of its own.
+          resetDebt(
+            clauseNodes.filter(n => {
+              const rec = n as { action?: string; body?: unknown[] };
+              return rec.action === 'while' && (!Array.isArray(rec.body) || rec.body.length === 0);
+            }).length
+          );
         }
         tokens.advance(); // Consume conjunction token
         continue;
@@ -3061,21 +3219,38 @@ export class SemanticParserImpl implements ISemanticParser {
       // that tokenizes as a PARTICLE — es/pt `para`, sw `kwa` — is invisible
       // here, but the conjunction boundary re-derives the owed-`end` debt from
       // the clause's PARSE, which covers it.)
-      if (current.kind === 'keyword') {
-        const cv = (current.normalized ?? current.value).toLowerCase();
-        if (
-          this.isIfKeyword(cv, language) ||
+      //
+      // One loop head can carry two loop words, and owes ONE `end`:
+      // `repeat for …` / `repeat while …` (the second word names the form), and
+      // the SOV fronted while-phrase (`… の間 x < 10 繰り返し`), whose while word
+      // comes first and is claimed by the repeat verb after it. The English
+      // `repeat` counts as a keyword does: several renders keep it
+      // untranslated (es `repeat mientras …`, ja `3 times を repeat`), and there
+      // it tokenizes as an identifier.
+      const cv = (current.normalized ?? current.value).toLowerCase();
+      const isRepeatWord = isRepeatToken(current);
+      if (current.kind === 'keyword' || isRepeatWord) {
+        const isIf = this.isIfKeyword(cv, language);
+        const prev = wordBefore(currentClauseTokens, currentClauseTokens.length);
+        if ((cv === 'for' || cv === 'while') && prev && isRepeatToken(prev)) {
+          // the form word of `repeat for …` / `repeat while …`
+        } else if (isRepeatWord && pendingOpenerKinds[pendingOpenerKinds.length - 1] === 'while') {
+          pendingOpenerKinds[pendingOpenerKinds.length - 1] = 'loop';
+        } else if (
+          isIf ||
           this.isUnlessKeyword(cv, language) ||
           cv === 'while' ||
           cv === 'for' ||
-          cv === 'repeat'
+          isRepeatWord
         ) {
           pendingBlockDepth++;
           // `unless` counts as 'other': the mid-clause fold only folds `if`
           // (folding unless would relabel its action — see
           // tryParseConditionalBlock), so suppressing then-boundaries for an
           // open `unless` would glue clauses with no fold to reassemble them.
-          pendingOpenerKinds.push(this.isIfKeyword(cv, language) ? 'if' : 'other');
+          pendingOpenerKinds.push(
+            isIf ? 'if' : isRepeatWord || cv === 'for' ? 'loop' : cv === 'while' ? 'while' : 'other'
+          );
         }
       }
       currentClauseTokens.push(current);
@@ -3124,12 +3299,152 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    const statements = this.foldLoopBlocks(clauses);
+
     // If we have multiple clauses, wrap in CompoundSemanticNode
-    if (clauses.length > 1) {
-      return [createCompoundNode(clauses, 'then', { sourceLanguage: language })];
+    if (statements.length > 1) {
+      return [createCompoundNode(statements, 'then', { sourceLanguage: language })];
     }
 
-    return clauses;
+    return statements;
+  }
+
+  /**
+   * Resolve a clause-walker `end` that may close a LOOP. The pending clause is
+   * parsed here, where the `end` bounds it; if a loop head is open — one the
+   * walker already emitted, or one inside this clause — the `end` is that
+   * loop's: push the clause and a LOOP_CLOSE, consume the `end`, and return
+   * true. Otherwise nothing is kept and the caller's own `end` handling runs.
+   *
+   * Asking the PARSE, not the token, is what makes this language-independent:
+   * es/pt `para` and sw `kwa` are particles, and the SOV loop words are
+   * verb-final, so no token-level opener count can see them.
+   */
+  private closeLoopAtEnd(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    pending: readonly LanguageToken[],
+    clauses: WalkEntry[],
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): boolean {
+    const openBefore = openLoopCount(clauses);
+    if (pending.length === 0) {
+      if (openBefore === 0) return false;
+      clauses.push(LOOP_CLOSE);
+      tokens.advance();
+      return true;
+    }
+    const mark = this.coverageMark();
+    const nodes = this.parseClause([...pending], commandPatterns, language);
+    // Nothing parsed: a stranded fragment whose verb follows the `end` (the SOV
+    // `… 200ms 終わり を 待つ` shape). The caller's handling reunites the two.
+    if (nodes.length === 0 || openBefore + nodes.filter(isOpenLoopHead).length === 0) {
+      this.coverageRollback(mark);
+      return false;
+    }
+    clauses.push(...nodes, LOOP_CLOSE);
+    tokens.advance();
+    return true;
+  }
+
+  /**
+   * Nest each loop's body under it. The walker emits a loop head FLAT, followed
+   * by its body and — where it consumed the loop's `end` — a LOOP_CLOSE; this
+   * turns every head … close span into a {@link LoopSemanticNode}. A loop still
+   * open at the end of the list closes there, which is what the flat list
+   * meant (the renderer used to close every loop at the tail). A head with no
+   * body stays the flat head it was.
+   */
+  private foldLoopBlocks(entries: readonly WalkEntry[]): SemanticNode[] {
+    const out: SemanticNode[] = [];
+    const open: Array<{ head: CommandSemanticNode; body: SemanticNode[] }> = [];
+    const append = (node: SemanticNode): void => {
+      (open.length > 0 ? open[open.length - 1].body : out).push(node);
+    };
+    const close = (): void => {
+      const frame = open.pop();
+      if (frame) append(this.buildLoopNode(frame.head, frame.body));
+    };
+    for (const entry of entries) {
+      if (isLoopClose(entry)) close();
+      else if (isOpenLoopHead(entry)) open.push({ head: entry, body: [] });
+      else append(entry);
+    }
+    while (open.length > 0) close();
+    return out;
+  }
+
+  /**
+   * A loop node from a flat head and its body. The head's roles carry over
+   * unchanged, so every role and value walker scores the loop exactly as it
+   * scored the flat head.
+   */
+  private buildLoopNode(head: CommandSemanticNode, body: SemanticNode[]): SemanticNode {
+    if (body.length === 0) return head;
+    const loopType = head.roles.get('loopType');
+    const form = loopType?.type === 'literal' ? String(loopType.value) : undefined;
+    // `until event X` is an `until` loop; its `loopType` role keeps the exact form.
+    const variant: LoopVariant =
+      head.action === 'for' || form === 'for'
+        ? 'for'
+        : form === 'times' || form === 'while' || form === 'forever'
+          ? form
+          : form === 'until' || form === 'until-event'
+            ? 'until'
+            : head.roles.has('quantity')
+              ? 'times'
+              : 'forever';
+    const binding = variant === 'for' ? head.roles.get('patient') : undefined;
+    const loopVariable = binding ? loopVariableName(binding) : undefined;
+    return createLoopNode(
+      head.action === 'for' ? 'for' : 'repeat',
+      variant,
+      Object.fromEntries(head.roles),
+      body,
+      {
+        ...(loopVariable ? { loopVariable } : {}),
+        ...(head.metadata ? { metadata: head.metadata } : {}),
+      }
+    );
+  }
+
+  /**
+   * Re-parse a Stage-2 loop head whose body trails it, through the clause
+   * walker that nests loop bodies. Stage 2's pattern stops at the head, so a
+   * top-level `repeat until event pointerup from document … end` kept the head
+   * and dropped the body and everything after the loop. Returns the loop, or
+   * a sequence that starts with one (`repeat … end remove .x from me`); null
+   * leaves Stage 2's head-only parse, and its `unconsumed-input`, as before.
+   */
+  private tryTopLevelLoop(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): SemanticNode | null {
+    const bodyCoverageMark = this.coverageMark();
+    let body: SemanticNode[];
+    try {
+      const freshStream = new TokenStreamImpl(tokens.tokens as LanguageToken[], language);
+      body = this.parseBodyWithClauses(freshStream, commandPatterns, language);
+    } catch {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
+    const [first] = body;
+    if (body.length === 1 && first.kind === 'loop') return first;
+    if (body.length === 1 && first.kind === 'compound') {
+      const compound = first as CompoundSemanticNode;
+      if (compound.statements[0]?.kind === 'loop') {
+        // Mean statement confidence, as tryTopLevelCommandSequence does.
+        const confidences = compound.statements.map(s => s.metadata?.confidence ?? 0.75);
+        return createCompoundNode(compound.statements, compound.chainType, {
+          sourceLanguage: language,
+          confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+        });
+      }
+    }
+    this.coverageRollback(bodyCoverageMark);
+    return null;
   }
 
   /**
@@ -3213,7 +3528,7 @@ export class SemanticParserImpl implements ISemanticParser {
    * the loop head, so `loopType` is `"while"` by construction. Loop nodes with
    * bodies (`kind: 'loop'`) and conditionals never enter the fold.
    */
-  private foldFrontedWhileIntoRepeat(clauses: SemanticNode[], language: string): void {
+  private foldFrontedWhileIntoRepeat(clauses: WalkEntry[], language: string): void {
     for (let i = 0; i + 1 < clauses.length; i++) {
       const whileNode = clauses[i] as CommandSemanticNode & { body?: unknown };
       const repeatNode = clauses[i + 1] as CommandSemanticNode & { body?: unknown };
@@ -4726,14 +5041,22 @@ export class SemanticParserImpl implements ISemanticParser {
   /**
    * Parse body commands with support for grammar-transformed patterns.
    * Used after a grammar-transformed pattern with continuation marker.
+   *
+   * Returns the walk UNFOLDED: matched commands in order, plus a LOOP_CLOSE
+   * wherever a loop's `end` was consumed; the caller folds them together with
+   * `leading`, what it parsed ahead of this stream (a fused handler's first
+   * command). `leading` is read only to count the loops still open, so an
+   * `end` closing a loop the caller holds is kept as its close.
    */
   private parseBodyWithGrammarPatterns(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
     grammarPatterns: LanguagePattern[],
-    language: string
-  ): SemanticNode[] {
-    const commands: SemanticNode[] = [];
+    language: string,
+    leading: readonly WalkEntry[] = []
+  ): WalkEntry[] {
+    const commands: WalkEntry[] = [];
+    const openLoops = (): number => openLoopCount([...leading, ...commands]);
 
     // SOV verb-anchoring recovery, per clause. The SOV grammar transforms put
     // the verb BETWEEN roles (`#name.innerText 를 설정 그것의.name 에`), an order
@@ -4763,28 +5086,22 @@ export class SemanticParserImpl implements ISemanticParser {
     };
 
     // Loop-head "end debt": an `end` owed to an earlier flat loop HEAD
-    // (for/repeat/while pushed without a body) is block content, not the body
-    // terminator. The i18n transformer inserts a conjunction between a loop
-    // head and its body (`para item en $items ENTONCES establecer … fin` — en
-    // renders no conjunction there), so the head's `end` arrives clauses
-    // later; breaking on it silently dropped every command after the loop
+    // (for/repeat pushed without a body) closes that loop, not the body. The
+    // i18n transformer inserts a conjunction between a loop head and its body
+    // (`para item en $items ENTONCES establecer … fin` — en renders no
+    // conjunction there), so the head's `end` arrives clauses later; breaking
+    // on it silently dropped every command after the loop
     // (template-literal-list-build ×22 — all translations losing the final
-    // `set #list.innerHTML`). parseBodyWithClauses carries the same debt
-    // across its conjunction boundary (pendingBlockDepth).
-    let endsConsumedAsContent = 0;
-    const outstandingLoopEndDebt = (): number => {
-      let heads = 0;
-      for (const n of commands) {
+    // `set #list.innerHTML`). The `end` is marked where it closes, so the loop
+    // keeps its extent: parseBodyWithClauses does the same (closeLoopAtEnd).
+    // A standalone `while` head (the SOV fronted while-phrase) still owes one
+    // too, and consumes it as content, as before.
+    let whileEndsConsumed = 0;
+    const openWhileHeads = (): number =>
+      commands.filter(n => {
         const rec = n as { action?: string; body?: unknown[] };
-        if (
-          (rec.action === 'for' || rec.action === 'repeat' || rec.action === 'while') &&
-          (!Array.isArray(rec.body) || rec.body.length === 0)
-        ) {
-          heads++;
-        }
-      }
-      return heads - endsConsumedAsContent;
-    };
+        return rec.action === 'while' && (!Array.isArray(rec.body) || rec.body.length === 0);
+      }).length - whileEndsConsumed;
 
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
@@ -4801,6 +5118,22 @@ export class SemanticParserImpl implements ISemanticParser {
       // churay`, where `tukuy` = end) is not a block terminator — the same guard
       // parseBodyWithClauses applies, now mirrored on this fused-body path so a
       // make-event's trailing at-end put (make-toast) isn't chopped.
+      //
+      // bn's শেষ (`end` AND the positional `last`) is no isEndKeyword; it closes
+      // an open loop all the same, by the conditional fold's test — see the
+      // matching note in parseBodyWithClauses.
+      if (
+        current &&
+        openLoops() > 0 &&
+        !this.isEndKeyword(current.value, language) &&
+        this.isBlockEndToken(current, tokens.peek(1) ?? undefined, language) &&
+        !isAtEndPositionNoun(language, current.value, tokens.peek(-1)?.value, tokens.peek(1)?.value)
+      ) {
+        flushClause();
+        commands.push(LOOP_CLOSE);
+        tokens.advance();
+        continue;
+      }
       if (current && this.isEndKeyword(current.value, language)) {
         const prevTok = tokens.peek(-1);
         const nextTok = tokens.peek(1);
@@ -4812,10 +5145,14 @@ export class SemanticParserImpl implements ISemanticParser {
         );
         if (!isPositionalEnd) {
           flushClause();
-          if (outstandingLoopEndDebt() > 0) {
-            // This `end` closes an earlier conjunction-split loop head — consume
-            // it as block content and keep walking the body.
-            endsConsumedAsContent++;
+          if (openLoops() > 0) {
+            // This `end` closes an earlier loop head — mark it and keep walking.
+            commands.push(LOOP_CLOSE);
+            tokens.advance();
+            continue;
+          }
+          if (openWhileHeads() > 0) {
+            whileEndsConsumed++;
             tokens.advance();
             continue;
           }
@@ -6319,6 +6656,29 @@ export class SemanticParserImpl implements ISemanticParser {
     return !(next && next.kind === 'selector');
   }
 
+  /**
+   * A token opening a block whose own `end` the conditional fold must skip: a
+   * nested `if`/`unless`, or a loop head (`repeat`, `for`). Counting only the
+   * conditionals let a loop's `end` close the `if` around it, and the `if`'s
+   * own `end` then ended the enclosing body: `if x repeat 3 times … end end
+   * then remove .b from me` lost the `remove`. A `for` right after `repeat`
+   * names the loop's form (`repeat for …`) and opens nothing. The English
+   * `repeat` counts in every language, as `end` does in isEndKeyword: the SOV
+   * counted-loop head keeps it untranslated (ja/ko/tr `3 times を repeat`),
+   * where it tokenizes as an identifier.
+   */
+  private opensNestedBlock(
+    t: LanguageToken,
+    prev: LanguageToken | undefined,
+    language: string
+  ): boolean {
+    const tv = (t.normalized ?? t.value).toLowerCase();
+    if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) return true;
+    if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
+    if (tv !== 'for' || t.kind !== 'keyword') return false;
+    return !(prev && isRepeatToken(prev));
+  }
+
   private tryParseConditionalBlock(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
@@ -6351,16 +6711,15 @@ export class SemanticParserImpl implements ISemanticParser {
     tokens.advance(); // consume if/unless
 
     // Collect the whole block from the stream: every token up to the matching
-    // depth-0 `end` (or the stream end). Nested `if`/`unless` raise the depth; a
-    // nested `end` lowers it — so an inner conditional's `end` never terminates
-    // the outer block.
+    // depth-0 `end` (or the stream end). A nested block opener (see
+    // opensNestedBlock) raises the depth; a nested `end` lowers it — so an inner
+    // conditional's or loop's `end` never terminates the outer block.
     const blockTokens: LanguageToken[] = [];
     let depth = 0;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      const tv = (t.normalized ?? t.value).toLowerCase();
-      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) {
+      if (this.opensNestedBlock(t, wordBefore(blockTokens, blockTokens.length), language)) {
         depth++;
         blockTokens.push(t);
         tokens.advance();
@@ -6400,6 +6759,8 @@ export class SemanticParserImpl implements ISemanticParser {
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
       const tv = (t.normalized ?? t.value).toLowerCase();
+      // Conditionals only: a loop head here STARTS the then-branch, so it must
+      // stay visible to the command-start test below.
       if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) bodyDepth++;
       else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
       if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
@@ -6488,8 +6849,7 @@ export class SemanticParserImpl implements ISemanticParser {
     let branchDepth = 0;
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
-      const tv = (t.normalized ?? t.value).toLowerCase();
-      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) branchDepth++;
+      if (this.opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
       else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) branchDepth--;
       if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
         inElse = true;

@@ -4396,6 +4396,54 @@ this signal was missing.
 > - `make a Set` renders `make a`.
 > - Correction: `realtime-blocks.test.ts` had locked the worker's unconsumed `"b"` as a dropped
 >   def PARAMETER. The signature always kept both; the drop was the body's `a + b`.
+>
+> **Third prune (2026-09-25): the loop node.** The semantic parser now builds a
+> `LoopSemanticNode` with its body (the "never builds a loop node" brief in
+> `PARSER_NEXT_STEPS.md`). The allowlist is 18 → 17: template-literal-list-build is preserved,
+> and behavior-draggable, -resizable and -sortable each drop the loop `end` from their losses.
+> Sortable's family no longer names the loop move; its handler head and `init` reorder remain.
+>
+> - Both body walkers close a loop at its `end` and mark the close; `foldLoopBlocks` nests the
+>   body. Whether a loop is open is asked of the PARSE, so it holds where no token says so: es/pt
+>   `para` and sw `kwa` are particles, the SOV loop words are verb-final, bn's শেষ is also
+>   `last`, and a fused handler pattern captures the head before the body walk starts. Twelve
+>   loop shapes round-trip through all 23 languages (`loop-node.test.ts`).
+> - The `if` fold counted only conditionals as openers, so a loop's `end` closed the `if` around
+>   it and the `if`'s own `end` ended the body: `if x repeat 3 times … end end then remove .b
+>   from me` lost the `remove`, in English and every translation.
+> - **Runtime:** every non-English loop threw on the multilingual direct path. `buildAST` got
+>   the loop flat, so core's `repeat` had no body and none of its slots ("repeat command requires
+>   a loop type"): nothing in or after the loop ran. English was unaffected (it uses core's own
+>   parser). `buildLoop` now emits the slot shape core's parser builds, and
+>   `loop-direct-path.test.ts` runs a counted loop through `hyperscript.compile` in all 23.
+> - Two consumers had never met a loop node. The slim adapter's renderer had no `loop` case,
+>   so it dropped the body, and its es `repeat` row (engine-INVALID by design, so host-validate
+>   keeps the author's text) became `on click repeat`, a valid forever loop; it now renders a
+>   loop flat, exactly as before. intent's explicit parser rejected the `loop-variant:` and
+>   `index-variable:` its own renderer writes (schema validation ran before its `repeat` case),
+>   and had no `for` case, so `lse_from_hyperscript` → `lse_to_hyperscript` threw on any loop.
+>
+> The multilingual gate saw no change in any language: the fidelity walkers already flattened
+> every tree. The bare-render gate gained two honest failures, (repeat-for-each, bn) and
+> (stagger-animation, bn). The English parse used to DROP a top-level loop's body, so bn only
+> ever rendered the head; with the body kept, bn reads the loop's `in` phrase (`item এ .items`)
+> as an event, since `এ` is also bn's event marker (the (go-back, bn/hi) ambiguity).
+>
+> **Found, filed (none in the corpus):**
+> - A bare `for x in .i … end` (no handler) in bn/hi/sw reads the loop's `in` phrase as an
+>   event handler (`on x`). The same loop inside a handler round-trips.
+> - On the direct path, `put … at end of` replaces instead of appending: `buildAST` gives
+>   `modifiers.into` and drops the `at end of` manner.
+> - es: in a fused `repeat` handler, the `fin` of `en fin de #o` ("at end of") ends the
+>   first clause's re-parse, which checks `isEndKeyword` without the positional-noun guard the
+>   body walkers have, so the rest of the handler body is dropped.
+> - The SOV renders keep the English loop verb (ja/ko/tr `3 times を repeat`): the counted-loop
+>   heads take their literals verbatim from the corpus. `times` is deliberate; the verb is not.
+> - The transformer-era fronted-while shape (ja `の間 #counter.innerText < 10 を クリック で
+>   繰り返し …`) drops `< 10` from the condition. Input-only: current renders never produce it.
+> - Explicit syntax cannot round-trip a SPACED expression value: the renderer writes
+>   `condition:x < 10` undelimited and the parser splits it at the spaces, for `if` as for
+>   `repeat while`. It predates loop nodes.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

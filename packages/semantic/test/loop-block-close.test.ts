@@ -1,13 +1,15 @@
 /**
- * A flattened loop/tell header is closed by an explicit `end`.
+ * A loop/tell block is closed by an explicit `end`.
  *
- * `repeat … end` reaches the renderer FLATTENED: the parser emits
- * `[repeat-header, stmt, stmt, …]` and attaches no body (`LoopSemanticNode`
- * exists in the type model and nothing constructs one). Rendering that without
- * a closing `end` produced a surface the structural layer cannot segment —
- * `block-parser.ts` counts `repeat`/`for`/`while` as depth OPENERS, so the
- * enclosing handler's own `end` was spent closing the loop and whatever came
- * next was swallowed into the handler body.
+ * `repeat … end` used to reach the renderer FLATTENED: `[repeat-header, stmt,
+ * stmt, …]`, with no body attached. Rendering that without a closing `end`
+ * produced a surface the structural layer cannot segment — `block-parser.ts`
+ * counts `repeat`/`for`/`while` as depth OPENERS, so the enclosing handler's
+ * own `end` was spent closing the loop and whatever came next was swallowed
+ * into the handler body. The first fix closed every flat header at the TAIL of
+ * its list. The parser now builds a loop node with its body, so the `end` lands
+ * where the loop's body stops (see en-reference-meaning.test.ts); a `tell`
+ * header, still flat, keeps the tail close.
  *
  * That is what merged the `init` block into the `on pointerdown` handler of
  * `behavior-sortable` in 13 languages. Every fidelity score was 1.0 — the same
@@ -54,8 +56,8 @@ describe('a loop header inside a handler closes before the handler does', () => 
   const reference = parseEn(BEHAVIOR);
   const referenceEn = reference ? render(reference, 'en') : null;
 
-  it('the English reference itself emits the closing `end`', () => {
-    expect(referenceEn).toContain('remove .{cls} from me end');
+  it('the English reference closes the loop where its body stops', () => {
+    expect(referenceEn).toContain('add .b to me end then remove .{cls} from me');
   });
 
   it('the reference keeps `init` as its own block, not handler body', () => {
@@ -102,8 +104,13 @@ describe('a loop inside a conditional branch closes before the branch does', () 
   const reference = parseEn(SOURCE);
   const referenceEn = reference ? render(reference, 'en') : null;
 
-  it('emits both ends — the loop closes, then the branch', () => {
-    expect(referenceEn).toBe('on click if x repeat 3 times add .a to me end end');
+  it('emits both ends — the loop closes, then the branch — and keeps what follows', () => {
+    // The reference used to END at the `if`: the conditional fold counted only
+    // `if`/`unless` as openers, so the loop's `end` closed the `if` and the
+    // `if`'s own `end` ended the handler body, dropping `then remove .b from me`.
+    expect(referenceEn).toBe(
+      'on click if x repeat 3 times add .a to me end end then remove .b from me'
+    );
   });
 
   it.each(LANGUAGES)('%s round-trips the nested close', language => {

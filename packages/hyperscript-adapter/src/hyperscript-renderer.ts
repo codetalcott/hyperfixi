@@ -15,6 +15,7 @@ import type {
   SemanticRole,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  LoopSemanticNode,
 } from '@lokascript/semantic/core';
 
 // ---------------------------------------------------------------------------
@@ -62,9 +63,29 @@ export function renderToHyperscript(node: SemanticNode): string {
       return renderEventHandler(node as EventHandlerSemanticNode);
     case 'compound':
       return renderCompound(node as CompoundSemanticNode);
+    case 'loop':
+      return renderLoopFlat(node as LoopSemanticNode);
     default:
       return renderCommand(node);
   }
+}
+
+/**
+ * A loop renders FLAT on the slim path: its head, then its body as siblings,
+ * with no `end` — exactly the output from before the parser nested loop bodies.
+ * Closing it is not a free fix here: the slim syntax table drops `3 times`, so
+ * a closed `repeat … end` would be a VALID forever loop, where the flat form is
+ * invalid and host-validate keeps the author's text instead.
+ */
+function renderLoopFlat(node: LoopSemanticNode): string {
+  const head: SemanticNode = { kind: 'command', action: node.action, roles: node.roles };
+  return renderCompound({
+    kind: 'compound',
+    action: 'compound',
+    roles: new Map(),
+    statements: [head, ...node.body],
+    chainType: 'then',
+  });
 }
 
 // ---------------------------------------------------------------------------
