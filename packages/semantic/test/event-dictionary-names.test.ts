@@ -36,6 +36,16 @@ describe.each(EVENTS)('`on %s(x)` keeps its params', event => {
   });
 });
 
+// The params re-parse is nested, where the outermost parse's join of a split
+// event (ar `تغيير حجم`: resize, not its first word's `change`) does not run.
+// It joins the words itself, and retires their unconsumed-input record, which
+// otherwise reported them dropped.
+it.each(['ar', 'vi'])('%s: a split event keeps its params and reports no dropped words', language => {
+  const node = parse(render(parse('on resize(x) log x', 'en')!, language), language)!;
+  expect(render(node, 'en')).toBe('on resize(x) log x');
+  expect((node.diagnostics ?? []).filter(d => d.code === 'unconsumed-input')).toEqual([]);
+});
+
 // ar `تغيير حجم` and vi `đổi kích thước` (resize) open with a word that reads
 // `change`, and only a handler head joins the words (filed).
 const WAIT_GAPS = new Set(['ar/resize', 'vi/resize']);
