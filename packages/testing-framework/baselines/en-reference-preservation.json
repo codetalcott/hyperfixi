@@ -10,7 +10,7 @@
       "added": []
     },
     "behavior-draggable": {
-      "family": "TRIAGE — `init`'s optional `end` written out (the source's one `end` closes the one-line `if`, and `init` ends at the next feature): the same program, an equivalence candidate",
+      "family": "BENIGN — `init`'s optional `end` written out (the source's one `end` closes the one-line `if`, and `init` ends at the next feature). Upstream requires a block's `end` before a new feature but not a feature's own, so an equivalence needs block depth",
       "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n  end\n  on pointerdown(clientX, clientY) from dragHandle halt the event then trigger draggable:start then measure x then set startX to it then measure y then set startY to it then set xoff to clientX - startX then set yoff to clientY - startY then repeat until event pointerup from document wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end then trigger draggable:end\n  end\nend",
       "lost": [],
       "added": ["end"]

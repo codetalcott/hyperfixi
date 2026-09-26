@@ -4650,7 +4650,10 @@ this signal was missing.
 > so in every translation. The two other behavior entries change family:
 > - behavior-draggable: `init`'s optional `end` written out. The source's one `end` closes the
 >   one-line `if`, and `init` ends at the next feature; the render closes both. The same program,
->   so the next step is a named equivalence, pinned on the engine.
+>   but not a simple equivalence: upstream requires a block's `end` before a new feature (`Expected
+>   'end' but found 'on'` for an unclosed `if` or `repeat`) and not a feature's own, so the rule
+>   has to know which `end` closes the feature. That needs block depth in the gate's tokenizer;
+>   left as a benign entry.
 > - behavior-sortable: the `the` before `target` dropped.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
