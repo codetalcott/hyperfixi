@@ -48,7 +48,12 @@ import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
-import { eventNameTranslations, localizeEventName } from '../patterns/event-handler';
+import {
+  eventNameTranslations,
+  localizeEventName,
+  nativeEventNames,
+  normalizeEventName,
+} from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { rewritePseudoCommand } from './pseudo-command';
@@ -478,7 +483,11 @@ const NORMALIZE_CHILD_FIELDS = [
   'initBlock',
 ] as const;
 
-function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string>): SemanticNode {
+function normalizeCommandRoles(
+  node: SemanticNode,
+  boundIdentifiers?: Set<string>,
+  language?: string
+): SemanticNode {
   if (!node || typeof node !== 'object') return node;
 
   if (node.action && node.roles instanceof Map) {
@@ -630,9 +639,12 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
     // marker-less translations (`esperar transitionend`), whose generated
     // `wait {duration}` pattern binds the event name as
     // duration:expression. Relabel duration→event:literal so both shapes
-    // align and the waitMapper emits the runtime's `modifiers.for` event
-    // wait. Gated on WAITABLE_EVENT_WORDS so a time-variable wait
-    // (`wait delay`, `wait 2s`) is never touched.
+    // align and the waitMapper emits the runtime's event wait. Gated on
+    // WAITABLE_EVENT_WORDS so a time-variable wait (`wait delay`, `wait 2s`)
+    // is never touched. A native name the handler head reads (es
+    // `ratónmover`, ko `마우스무브`) is one too, under its English name: its
+    // tokenizer does not know it, so it reached here as a duration, and the
+    // wait rendered `wait ratónmover`.
     if (node.action === 'wait') {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       if (!roles.has('event')) {
@@ -640,9 +652,14 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
           { type: string; raw?: unknown; value?: unknown } | undefined;
         const word =
           dur?.type === 'expression' ? dur.raw : dur?.type === 'literal' ? dur.value : undefined;
+        const native =
+          typeof word === 'string' && language ? normalizeEventName(word, language) : '';
         if (typeof word === 'string' && WAITABLE_EVENT_WORDS.has(word.toLowerCase())) {
           roles.delete('duration');
           roles.set('event', { type: 'literal', value: word, dataType: 'string' });
+        } else if (WAITABLE_EVENT_WORDS.has(native)) {
+          roles.delete('duration');
+          roles.set('event', { type: 'literal', value: native, dataType: 'string' });
         }
       }
     }
@@ -697,7 +714,7 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
   for (const field of NORMALIZE_CHILD_FIELDS) {
     const child = rec[field];
     if (Array.isArray(child)) {
-      for (const c of child) normalizeCommandRoles(c as SemanticNode, boundIdentifiers);
+      for (const c of child) normalizeCommandRoles(c as SemanticNode, boundIdentifiers, language);
     }
   }
   return node;
@@ -762,7 +779,11 @@ export class SemanticParserImpl implements ISemanticParser {
     this.parseDepth++;
     this.coverageFrames.push([]);
     try {
-      let node = normalizeCommandRoles(this.parseInternal(input, language), this.boundIdentifiers);
+      let node = normalizeCommandRoles(
+        this.parseInternal(input, language),
+        this.boundIdentifiers,
+        language
+      );
       // Per-segment input-coverage drops recorded during THIS parse attach to
       // its returned node — so they ride a committed node and die with a
       // discarded one. The outermost parse then hoists descendants' firings to
@@ -1253,7 +1274,18 @@ export class SemanticParserImpl implements ISemanticParser {
           parseInput.slice(close.position.end).trimStart()
         ).trim();
         try {
-          const reparsed = this.parse(reduced, language);
+          let reparsed = this.parse(reduced, language);
+          // The outermost parse joins an event the tokenizer split into words
+          // (ar `تغيير حجم` is resize, not its first word's `change`). This
+          // re-parse is nested, so join it here.
+          if (reparsed?.kind === 'event-handler') {
+            const joined = this.reclaimEventCompoundTail(
+              hoistUnconsumedDiagnostics(reparsed) as EventHandlerSemanticNode,
+              reduced,
+              language
+            );
+            if (joined) reparsed = joined.node;
+          }
           const event = reparsed?.roles.get('event' as SemanticRole);
           const eventName =
             event?.type === 'expression'
@@ -1262,10 +1294,22 @@ export class SemanticParserImpl implements ISemanticParser {
                 ? String(event.value)
                 : undefined;
           const named = eventName?.toLowerCase();
-          if (
-            reparsed?.kind === 'event-handler' &&
-            (named === t.value.toLowerCase() || named === norm)
-          ) {
+          // The event's own spelling right before the phrase: its keyword or
+          // English name, or any native form the head reads as it — a coinage
+          // (de `mausbewegen`), several words (ar `ضغط المفتاح`), an unspaced
+          // name (zh `鼠标移动`). Comparing one token missed all three.
+          const before = parseInput
+            .slice(0, arr[i + 1].position.start)
+            .trimEnd()
+            .toLowerCase();
+          const spelled =
+            named === t.value.toLowerCase() ||
+            named === norm ||
+            (named !== undefined &&
+              nativeEventNames(named, language).some(native =>
+                before.endsWith(native.toLowerCase())
+              ));
+          if (reparsed?.kind === 'event-handler' && spelled) {
             (reparsed as { parameterNames?: string[] }).parameterNames = phrase.names;
             const result = modifiers
               ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
@@ -5727,8 +5771,16 @@ export class SemanticParserImpl implements ISemanticParser {
       !!t && (t.normalized ?? t.value).toLowerCase() === 'wait';
     if (!arr.some(t => isWait(t))) return null;
     const norm = (t: LanguageToken): string => (t.normalized ?? t.value).toLowerCase();
-    const isEvent = (t: LanguageToken | undefined): boolean =>
-      !!t && (SemanticParserImpl.KNOWN_EVENTS.has(norm(t)) || WAITABLE_EVENT_WORDS.has(norm(t)));
+    /** The English event a token names: its keyword, or a native the head reads (es `ratónmover`). */
+    const eventOf = (t: LanguageToken | undefined): string | undefined => {
+      if (!t) return undefined;
+      const known = (e: string) =>
+        SemanticParserImpl.KNOWN_EVENTS.has(e) || WAITABLE_EVENT_WORDS.has(e);
+      if (known(norm(t))) return norm(t);
+      const native = normalizeEventName(t.value, language);
+      return known(native) ? native : undefined;
+    };
+    const isEvent = (t: LanguageToken | undefined): boolean => eventOf(t) !== undefined;
     const isDuration = (t: LanguageToken | undefined): boolean =>
       !!t && /^\d+(?:\.\d+)?(?:ms|s)$/.test(t.value);
     const marker = tryGetProfile(language)?.roleMarkers?.source;
@@ -5757,7 +5809,7 @@ export class SemanticParserImpl implements ISemanticParser {
      * `رفع المفتاح`, keyup) whose tail the tokenizer keeps as its own token.
      */
     const eventSpan = (at: number): number => {
-      const words = localizeEventName(norm(arr[at]), language).split(/\s+/);
+      const words = localizeEventName(eventOf(arr[at])!, language).split(/\s+/);
       if (words.length < 2 || arr[at].value !== words[0]) return 1;
       return words.every((w, n) => n === 0 || arr[at + n]?.value === w) ? words.length : 1;
     };
@@ -5769,8 +5821,8 @@ export class SemanticParserImpl implements ISemanticParser {
       const first = this.matchEventParamPhrase(arr, eventEnd);
       alternatives.push(
         first.names.length > 0
-          ? { event: norm(arr[i]), params: first.names }
-          : { event: norm(arr[i]) }
+          ? { event: eventOf(arr[i])!, params: first.names }
+          : { event: eventOf(arr[i])! }
       );
       let k = eventEnd + first.len;
       while (isOrWordToken(arr[k] ?? { value: '' }, language)) {
@@ -5780,8 +5832,8 @@ export class SemanticParserImpl implements ISemanticParser {
           const phrase = this.matchEventParamPhrase(arr, legEnd);
           alternatives.push(
             phrase.names.length > 0
-              ? { event: norm(next!), params: phrase.names }
-              : { event: norm(next!) }
+              ? { event: eventOf(next)!, params: phrase.names }
+              : { event: eventOf(next)! }
           );
           k = legEnd + phrase.len;
         } else if (isDuration(next)) {
@@ -5827,7 +5879,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const event = alternatives[0] as { event: string };
       let before = 0;
       for (let j = 0; j < i; j++) {
-        if (isEvent(arr[j]) && norm(arr[j]) === event.event && nearWait(j, j + 1)) before++;
+        if (eventOf(arr[j]) === event.event && nearWait(j, j + 1)) before++;
       }
       try {
         const reparsed = this.parse(reduced, language);
