@@ -4821,6 +4821,26 @@ this signal was missing.
 > fetches are all `as json`.
 >
 > Filed, not fixed: `as Object` is lost in bn/hi/ko, with or without this change.
+>
+> **A loop that holds an `if` (PR 21, 2026-09-26; filed in PR 8g).** Two losses:
+>
+> - **The command after the loop was dropped in 13 languages** (`repeat 3 times if … end end then
+>   log 2` lost `log 2` in bn es id it ms pl pt ru sw th tl uk vi). A fused handler's loop head
+>   re-parses its own clause, and that clause ended at the first `end`, which was the if's. The
+>   re-parse folded the if without its `end`, the loop took that `end` for its own, and the loop's
+>   own `end` then closed the handler. The clause now takes in the conditionals its body opens. A
+>   nested loop's `end` still ends it: loops close through the open-loop count, not a fold, and
+>   counting them there broke nested repeats in 12 languages.
+> - **An `if` whose condition opens with a literal** (`if 1 < 2`, `if "a" is …`, `if true`) matched
+>   no `if` pattern inside a loop. So the head was skipped as junk and the branch ran
+>   unconditionally, in English and so in every translation. Where nothing matched at an `if`
+>   keyword, parseClause now folds at the keyword itself.
+>
+> On the direct path, a false `if` in a loop now runs no branch, and the command after the loop
+> runs, in every language but bn. The corpus moved nothing.
+>
+> Filed, not fixed: bn's শেষ (`end`, also `last`) moves a loop's `end` past the command after it;
+> zh reads no `if` inside `repeat forever`, whatever the condition.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
