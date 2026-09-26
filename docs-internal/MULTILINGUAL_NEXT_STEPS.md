@@ -4476,10 +4476,25 @@ this signal was missing.
 >   event ever matched and every filtered non-English handler was dead on the direct path. It
 >   now splits the filter into the handler's condition, as core's parser does.
 >
+> - The or-excision took the first `or <known event>` ANYWHERE in the input, so a body's `wait
+>   for keydown or click` lent the handler a second trigger. That was silent while nothing read
+>   `additionalEvents`; writing the legs back made it `on click or click wait for keydown …`, bound
+>   on the direct path. The scan now stops at the first command word (a command that is also an
+>   event name, `on focus or blur`, is the head's). No corpus row has the shape, so every gate
+>   stayed green: probing outside the corpus found it before merge.
+>
 > `handler-head-direct-path.test.ts` (core) fires the events: `on click or keydown` fires on
 > either in all 23 languages, and `on keydown[key=="Escape"]` on its key only. The rest of the
 > handler-head family (event params, `from` after params, `wait for A or B from X`, draggable's
 > lost header) is PR 8b/8c.
+>
+> **Found, filed:**
+> - **A bare `or` / `and` in a command's value is truncated, in English and so everywhere.**
+>   `set x to a or b` and `set x to a and b` render `set x to a`; `log a or b` renders `log a`;
+>   `put a or b into #x` loses the whole command (`on click`). `(a or b)` and `if a or b` survive.
+>   Predates PR 8a (the or-excision never fires on it: `b` is not an event).
+> - A verb-final (SOV) body can still lend the head an `or` leg: in `クリック で keydown または
+>   click を 待つ` the verb follows its arguments, so the command-word stop comes too late.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
