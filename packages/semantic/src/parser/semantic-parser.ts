@@ -509,16 +509,15 @@ function normalizeCommandRoles(
       }
     }
 
-    // tell: the generated marker extraction binds tell's element to the
-    // generic `patient` (tell has NO patient role) and the trailing verb of
-    // the dropped `to <command>` body to `destination` as a literal —
-    // schema-invalid, a tell destination is selector/reference (`decir #modal
-    // a mostrar` → patient:selector="#modal", destination:literal="show").
-    // Relabel patient→destination and drop the junk literal so translations
-    // align with the en reference (`tell #modal to show` →
-    // destination:selector="#modal"; the body verb is dropped in the en
-    // reference too — equal lossiness, no phantom). Cluster-B precedent: the
-    // schema-invalid-destination relabel (ko `json 로`).
+    // tell: the generated marker extraction bound tell's element to the
+    // generic `patient` (tell has NO patient role) and the trailing verb of a
+    // `to <command>` body to `destination` as a literal — schema-invalid, a
+    // tell destination is selector/reference (`decir #modal a mostrar` →
+    // patient:selector="#modal", destination:literal="show"). Relabel
+    // patient→destination and drop the junk literal. Since a bare show/hide
+    // parses and tryTellTo reads the `to`, neither the corpus nor that example
+    // reaches this (measured); it stays for input that does. Cluster-B
+    // precedent: the schema-invalid-destination relabel (ko `json 로`).
     if (node.action === 'tell') {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       const pat = roles.get('patient');
@@ -1229,6 +1228,18 @@ export class SemanticParserImpl implements ISemanticParser {
           modifiers && flagged.kind === 'event-handler'
             ? this.applyModifiers(flagged as EventHandlerSemanticNode, modifiers)
             : flagged;
+        return withDiagnostics(result, diagnostics);
+      }
+    }
+
+    // `tell <target> to …`: see tryTellTo.
+    {
+      const told = this.tryTellTo(tokens.tokens as LanguageToken[], parseInput, language);
+      if (told) {
+        const result =
+          modifiers && told.kind === 'event-handler'
+            ? this.applyModifiers(told as EventHandlerSemanticNode, modifiers)
+            : told;
         return withDiagnostics(result, diagnostics);
       }
     }
@@ -5832,6 +5843,82 @@ export class SemanticParserImpl implements ISemanticParser {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * `tell <target> to <command>`, core's form (upstream rejects the `to`). No
+   * tell pattern reads the `to`, so it dropped in silence, in English and so in
+   * every translation. And pl reads `to` as its own word ("it"). So, as with
+   * tryDoNotThrow, the word is excised BEFORE any pattern sees it, the rest
+   * re-parsed, and the flag set on the tell it follows: the one whose target
+   * starts last before it, when only that tell's own words sit in between. It
+   * is English in every language, as the renderer writes it, after the whole
+   * tell command. One `to` per call: the re-parse takes the next.
+   */
+  private tryTellTo(
+    arr: readonly LanguageToken[],
+    input: string,
+    language: string
+  ): SemanticNode | null {
+    // English keywords carry no normalized form; the surface is the word.
+    const isTell = (t: LanguageToken): boolean =>
+      (t.normalized ?? t.value).toLowerCase() === 'tell';
+    const firstTell = arr.findIndex(isTell);
+    if (firstTell < 0) return null;
+    // The marker between the target and a clause-final verb (ja `に`, tr `e`).
+    const marker = tryGetProfile(language)?.roleMarkers?.destination;
+    const markerForms = new Set(
+      [marker?.primary, ...(marker?.alternatives ?? [])].filter((w): w is string => !!w)
+    );
+    for (let at = firstTell + 1; at < arr.length; at++) {
+      if (arr[at].value.toLowerCase() !== 'to') continue;
+      const wordStart = arr[at].position.start;
+      const reduced = (
+        input.slice(0, wordStart).trimEnd() +
+        ' ' +
+        input.slice(arr[at].position.end).trimStart()
+      ).trim();
+      try {
+        const reparsed = this.parse(reduced, language);
+        if (!reparsed) continue;
+        const commands: SemanticNode[] = [];
+        const collect = (n: SemanticNode | undefined): void => {
+          if (!n) return;
+          if (n.kind === 'command') commands.push(n);
+          const children = n as NodeChildren;
+          for (const field of NODE_CHILD_FIELDS) {
+            const child = children[field];
+            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
+          }
+        };
+        collect(reparsed);
+        const targetStart = (n: SemanticNode) =>
+          n.roles.get('destination' as SemanticRole)?.position?.start ?? -1;
+        const told = commands
+          .filter(n => n.action === 'tell' && targetStart(n) >= 0 && targetStart(n) < wordStart)
+          .reduce<SemanticNode | undefined>(
+            (best, n) => (!best || targetStart(n) > targetStart(best) ? n : best),
+            undefined
+          );
+        if (!told) continue;
+        // Only the tell's own words between its target and the `to`: its verb
+        // and marker where the verb ends the clause (`#modal に 伝える to`),
+        // nothing where it leads (`tell #modal to`). A `to` further on is some
+        // other command's, and excising it can drop that command from the
+        // re-parse (`tell #modal set my.x to 1`), so the words are read from
+        // the input, not from the re-parse. The text before the `to` keeps its
+        // offsets there.
+        const targetEnd = told.roles.get('destination' as SemanticRole)?.position?.end ?? -1;
+        if (targetEnd < 0) continue;
+        const gap = arr.filter(t => t.position.start >= targetEnd && t.position.start < wordStart);
+        if (!gap.every(t => isTell(t) || markerForms.has(t.value))) continue;
+        (told as { tellTo?: boolean }).tellTo = true;
+        return reparsed;
+      } catch {
+        continue;
+      }
+    }
+    return null;
   }
 
   private tryWaitAlternatives(

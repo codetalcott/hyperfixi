@@ -298,6 +298,11 @@ export interface CommandSemanticNode extends SemanticNode {
    * (core's `modifiers.doNotThrow`).
    */
   readonly doNotThrow?: boolean;
+  /**
+   * `tell <target> to <command>`: core's optional `to` between the target and
+   * the body (upstream rejects it). Kept so the form renders as written.
+   */
+  readonly tellTo?: boolean;
 }
 
 /** One alternative a `wait for` races: an event, or a timeout. */

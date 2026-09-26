@@ -845,6 +845,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       parts.push('do not throw');
     }
 
+    // `tell <target> to …`: the same, after the whole tell command (after its
+    // target where the verb leads, after its verb where the verb ends it).
+    if (node.action === 'tell' && (node as CommandSemanticNode).tellTo) {
+      parts.push('to');
+    }
+
     if (node.kind === 'event-handler') {
       // Event parameters glue to the event token, `pointerdown(clientX,
       // clientY)`: the form every language's parser reads (the SOV heads expect
