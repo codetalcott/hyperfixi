@@ -7444,7 +7444,12 @@ export class SemanticParserImpl implements ISemanticParser {
     input: string,
     _language: string
   ): {
-    modifiers: { once?: boolean; debounce?: number; throttle?: number } | null;
+    modifiers: {
+      once?: boolean;
+      onceAsFirst?: boolean;
+      debounce?: number;
+      throttle?: number;
+    } | null;
     remainingInput: string | null;
   } {
     const tokens = tokenizeInternal(input, _language);
@@ -7454,11 +7459,38 @@ export class SemanticParserImpl implements ISemanticParser {
 
     const firstToken = allTokens[0];
     const firstLower = firstToken.value.toLowerCase();
+
+    // `once` written as `first`: en `on first click …`, and every other
+    // language's leading `first` (as its leading `once`). Semantic had no
+    // reading for either: en dropped the whole head (`on first click add …`
+    // rendered `add …`). Never before a selector, which is a positional query
+    // (`first <li/>`), not a head.
+    const word = (i: number) => allTokens[i]?.value.toLowerCase();
+    const notQuery = (i: number) => !!allTokens[i] && allTokens[i].kind !== 'selector';
+    if (firstLower === 'on' && word(1) === 'first' && notQuery(2)) {
+      return {
+        modifiers: { once: true, onceAsFirst: true },
+        remainingInput:
+          input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
+      };
+    }
+    if (firstLower === 'first' && notQuery(1)) {
+      return {
+        modifiers: { once: true, onceAsFirst: true },
+        remainingInput: input.slice(allTokens[1].position.start),
+      };
+    }
+
     const modType = SemanticParserImpl.STANDALONE_MODIFIERS[firstLower];
 
     if (!modType) return { modifiers: null, remainingInput: null };
 
-    const modifiers: { once?: boolean; debounce?: number; throttle?: number } = {};
+    const modifiers: {
+      once?: boolean;
+      onceAsFirst?: boolean;
+      debounce?: number;
+      throttle?: number;
+    } = {};
     let tokensToSkip = 1; // At least the modifier keyword
 
     if (modType === 'once') {
@@ -7898,7 +7930,7 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private applyModifiers(
     node: EventHandlerSemanticNode,
-    modifiers: { once?: boolean; debounce?: number; throttle?: number }
+    modifiers: { once?: boolean; onceAsFirst?: boolean; debounce?: number; throttle?: number }
   ): EventHandlerSemanticNode {
     return {
       ...node,

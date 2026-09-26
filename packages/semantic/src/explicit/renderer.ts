@@ -742,7 +742,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const em = node.eventModifiers;
     if (!em) return;
     if (eventPart >= 0 && em.queue) parts[eventPart] += `.queue(${em.queue})`;
-    if (em.once) {
+    if (em.once && em.onceAsFirst) {
+      // `on first click`, the form both engines run once; every other
+      // language a leading `first`, as its leading `once` below.
+      if (language === 'en' && eventPart >= 0) parts[eventPart] = `first ${parts[eventPart]}`;
+      else parts.unshift('first');
+    } else if (em.once) {
       // en: `click.once`, the form core (the English executor) reads — it
       // rejects `on click once`. Every other language: a leading `once`, the
       // one position the parser's standalone-modifier pre-pass reads in all 23
