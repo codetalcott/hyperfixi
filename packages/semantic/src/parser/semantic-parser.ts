@@ -1184,9 +1184,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // the `(` broke the source pattern, and the params and the `from` phrase
     // after them fell into the body, where they were discarded. Excise the
     // phrase, re-parse the plain head, and put the names back as
-    // `parameterNames` (which buildAST hands core as `args`). Head-only: the
-    // scan stops at the first command word, so a `wait for pointermove(clientY)`
-    // in the body keeps its own.
+    // `parameterNames` (which buildAST hands core as `args`). The scan stops at
+    // the first command word: a call in the body (`wait for pointermove(clientY)`,
+    // `log f(x)`) is never a head, and the confirmation below would reject one
+    // anyway, so the stop is what keeps a long body from costing a re-parse per
+    // call.
     //
     // Every candidate is confirmed by the re-parse: the handler's event must be
     // the word before the phrase. So a custom event qualifies (`on myEvent(detail)`,
