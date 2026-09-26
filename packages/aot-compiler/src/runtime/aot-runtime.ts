@@ -26,6 +26,19 @@ export const EXIT = Symbol('exit');
 /** Global variable store (for ::varName syntax) */
 export const globals = new Map<string, unknown>();
 
+const ELEMENT_VARS = new WeakMap<Element, Map<string, unknown>>();
+
+/**
+ * An element's own variables (`:count`). Both engines keep one per element, so
+ * a value persists across the handler's runs there: `increment :count` counts
+ * 1, 2, 3 across clicks, where a bare `x` starts over each run.
+ */
+export function elementVars(element: Element): Map<string, unknown> {
+  let vars = ELEMENT_VARS.get(element);
+  if (!vars) ELEMENT_VARS.set(element, (vars = new Map()));
+  return vars;
+}
+
 // =============================================================================
 // EXECUTION CONTEXT
 // =============================================================================
@@ -671,6 +684,7 @@ export default {
   createContext,
   resolve,
   globals,
+  elementVars,
 
   // DOM manipulation
   toggle,

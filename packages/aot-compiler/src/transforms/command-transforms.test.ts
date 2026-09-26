@@ -88,8 +88,9 @@ describe('SetCodegen', () => {
       );
 
       expect(result).not.toBeNull();
-      // Note: codegen only strips ':' prefix, '$' is kept (valid in JS identifiers)
-      expect(result!.code).toBe("_rt.globals.set('$total', 100)");
+      // The key drops the `$`, as every read's does (`_rt.globals.get('total')`):
+      // a write keyed `$total` was never read back.
+      expect(result!.code).toBe("_rt.globals.set('total', 100)");
       expect(ctx.requiredHelpers.has('globals')).toBe(true);
     });
 
@@ -362,7 +363,7 @@ describe('IncrementCodegen', () => {
       );
 
       expect(result).not.toBeNull();
-      expect(result!.code).toContain("_rt.globals.set('$total'");
+      expect(result!.code).toContain("_rt.globals.set('total'");
       expect(ctx.requiredHelpers.has('globals')).toBe(true);
     });
 
@@ -473,7 +474,7 @@ describe('DecrementCodegen', () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result!.code).toContain("_rt.globals.set('$balance'");
+    expect(result!.code).toContain("_rt.globals.set('balance'");
     expect(result!.code).toContain('- 1');
   });
 });

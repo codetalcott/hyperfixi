@@ -87,6 +87,18 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
         ...pos(node),
       };
     case 'identifier':
+      // `:x` is element-scoped, and the parser marks it `scope: 'element'`
+      // (with its name, `x`). Carried as a `variable`, which to-core maps back
+      // to exactly this; as a plain identifier a consumer cannot tell it from a
+      // bare `x`, a different variable on both engines.
+      if (node.scope === 'element' || node.scope === 'local' || node.scope === 'global') {
+        return {
+          type: 'variable',
+          name: (node.name ?? '') as string,
+          scope: node.scope,
+          ...pos(node),
+        };
+      }
       return {
         type: 'identifier',
         value: (node.name ?? node.value ?? '') as string,

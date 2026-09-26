@@ -66,6 +66,26 @@ describe('fromSemanticAST', () => {
       });
     });
 
+    // buildAST emits `:x` as core's parser does: an identifier named `x` with
+    // `scope: 'element'`. As a plain identifier it read as a bare `x`, and a
+    // translated `increment :count` counted a different variable.
+    it('carries a scoped identifier (`:x`) as a variable', () => {
+      expect(fromSemanticAST(semNode('identifier', { name: 'x', scope: 'element' }))).toEqual({
+        type: 'variable',
+        name: 'x',
+        scope: 'element',
+      });
+    });
+
+    it('carries `:count` from a real parse as a variable', () => {
+      const { ast } = buildAST(parse('increment :count', 'en')!);
+      const target = (ast as { args?: unknown[] }).args?.[0];
+      expect(fromSemanticAST(target as { type: string })).toMatchObject({
+        type: 'variable',
+        scope: 'element',
+      });
+    });
+
     it('converts contextReference to identifier', () => {
       expect(fromSemanticAST(semNode('contextReference', { name: 'me' }))).toEqual({
         type: 'identifier',

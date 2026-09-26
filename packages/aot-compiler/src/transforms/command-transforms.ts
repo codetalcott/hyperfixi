@@ -262,6 +262,43 @@ class RemoveCodegen implements CommandCodegen {
 }
 
 /**
+ * Where a variable lives, as both engines keep it: `$x` globally, `:x` in its
+ * element's store (it persists across the handler's runs), a bare `x` for one
+ * run. The converters carry `:x` as a `variable` (scope `element`); `$x` and a
+ * bare `x` arrive as identifiers. The key drops the sigil, as every read's
+ * does. Null for anything that is not a variable (an element, a property).
+ */
+function variableStore(
+  node: ASTNode,
+  ctx: CodegenContext
+): { read: string; write: (value: string) => string } | null {
+  let name: string;
+  let scope: VariableNode['scope'];
+  if (node.type === 'variable') {
+    name = (node as VariableNode).name;
+    scope = (node as VariableNode).scope;
+  } else if (node.type === 'identifier') {
+    name = (node as IdentifierNode).value ?? (node as IdentifierNode).name ?? '';
+    if (/^(\$|::)/.test(name)) scope = 'global';
+    else if (/^[A-Za-z_]\w*$/.test(name)) scope = 'local';
+    else return null;
+  } else {
+    return null;
+  }
+  const key = sanitizeIdentifier(name.replace(/^(\$|::|:)/, ''));
+  if (scope === 'global') {
+    ctx.requireHelper('globals');
+    return { read: `_rt.globals.get('${key}')`, write: v => `_rt.globals.set('${key}', ${v})` };
+  }
+  if (scope === 'element') {
+    ctx.requireHelper('elementVars');
+    const store = `_rt.elementVars(_ctx.me)`;
+    return { read: `${store}.get('${key}')`, write: v => `${store}.set('${key}', ${v})` };
+  }
+  return { read: `_ctx.locals.get('${key}')`, write: v => `_ctx.locals.set('${key}', ${v})` };
+}
+
+/**
  * Set command: set :var to value or set element's property to value
  */
 class SetCodegen implements CommandCodegen {
@@ -280,29 +317,10 @@ class SetCodegen implements CommandCodegen {
 
     const value = ctx.generateExpression(valueNode);
 
-    // Local variable: :varName
-    if (targetNode.type === 'variable') {
-      const varNode = targetNode as VariableNode;
-      const name = varNode.name.startsWith(':') ? varNode.name.slice(1) : varNode.name;
-      const safeName = sanitizeIdentifier(name);
-
-      if (varNode.scope === 'local') {
-        return {
-          code: `_ctx.locals.set('${safeName}', ${value})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
-
-      if (varNode.scope === 'global') {
-        ctx.requireHelper('globals');
-        return {
-          code: `_rt.globals.set('${safeName}', ${value})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
-    }
+    // A variable. An identifier target (`set $x`, `set x`) returned null
+    // here, so every set of a variable was dropped from the handler.
+    const store = variableStore(targetNode, ctx);
+    if (store) return { code: store.write(value), async: false, sideEffects: true };
 
     // Property assignment: element's property
     if (targetNode.type === 'possessive') {
@@ -682,27 +700,12 @@ class IncrementCodegen implements CommandCodegen {
     const amountNode = roles?.quantity ?? (modifiers?.by as ASTNode) ?? args[1];
     const amount = amountNode ? ctx.generateExpression(amountNode as ASTNode) : '1';
 
-    if (target.type === 'variable') {
-      const varNode = target as VariableNode;
-      const name = varNode.name.startsWith(':') ? varNode.name.slice(1) : varNode.name;
-      const safeName = sanitizeIdentifier(name);
-
-      if (varNode.scope === 'local') {
-        return {
-          code: `_ctx.locals.set('${safeName}', (_ctx.locals.get('${safeName}') || 0) + ${amount})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
-
-      if (varNode.scope === 'global') {
-        ctx.requireHelper('globals');
-        return {
-          code: `_rt.globals.set('${safeName}', (_rt.globals.get('${safeName}') || 0) + ${amount})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
+    // A variable, read as a number (`"5"` counts to 6 on both engines, not
+    // `"51"`); anything else is an element whose text is counted.
+    const store = variableStore(target, ctx);
+    if (store) {
+      const code = store.write(`(Number(${store.read}) || 0) + ${amount}`);
+      return { code, async: false, sideEffects: true };
     }
 
     // Element textContent
@@ -733,27 +736,12 @@ class DecrementCodegen implements CommandCodegen {
     const amountNode = roles?.quantity ?? (modifiers?.by as ASTNode) ?? args[1];
     const amount = amountNode ? ctx.generateExpression(amountNode as ASTNode) : '1';
 
-    if (target.type === 'variable') {
-      const varNode = target as VariableNode;
-      const name = varNode.name.startsWith(':') ? varNode.name.slice(1) : varNode.name;
-      const safeName = sanitizeIdentifier(name);
-
-      if (varNode.scope === 'local') {
-        return {
-          code: `_ctx.locals.set('${safeName}', (_ctx.locals.get('${safeName}') || 0) - ${amount})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
-
-      if (varNode.scope === 'global') {
-        ctx.requireHelper('globals');
-        return {
-          code: `_rt.globals.set('${safeName}', (_rt.globals.get('${safeName}') || 0) - ${amount})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
+    // A variable, read as a number (`"5"` counts to 6 on both engines, not
+    // `"51"`); anything else is an element whose text is counted.
+    const store = variableStore(target, ctx);
+    if (store) {
+      const code = store.write(`(Number(${store.read}) || 0) - ${amount}`);
+      return { code, async: false, sideEffects: true };
     }
 
     // Element textContent
@@ -1149,27 +1137,10 @@ class DefaultCodegen implements CommandCodegen {
 
     const value = ctx.generateExpression(valueNode);
 
-    if (targetNode.type === 'variable') {
-      const varNode = targetNode as VariableNode;
-      const name = varNode.name.startsWith(':') ? varNode.name.slice(1) : varNode.name;
-      const safeName = sanitizeIdentifier(name);
-
-      if (varNode.scope === 'local') {
-        return {
-          code: `if (_ctx.locals.get('${safeName}') == null) _ctx.locals.set('${safeName}', ${value})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
-
-      if (varNode.scope === 'global') {
-        ctx.requireHelper('globals');
-        return {
-          code: `if (_rt.globals.get('${safeName}') == null) _rt.globals.set('${safeName}', ${value})`,
-          async: false,
-          sideEffects: true,
-        };
-      }
+    const store = variableStore(targetNode, ctx);
+    if (store) {
+      const code = `if (${store.read} == null) ${store.write(value)}`;
+      return { code, async: false, sideEffects: true };
     }
 
     return null;

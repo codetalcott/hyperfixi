@@ -259,7 +259,10 @@ export class ExpressionCodegen {
         this.ctx.requireHelper('globals');
         return `_rt.globals.get('${varName}')`;
       case 'element':
-        return `_ctx.me.${varName}`;
+        // `:x` lives in the element's own store, not on the element: `:title`
+        // as a property would read the element's title.
+        this.ctx.requireHelper('elementVars');
+        return `_rt.elementVars(_ctx.me).get('${varName}')`;
       default:
         return `_ctx.locals.get('${varName}')`;
     }
