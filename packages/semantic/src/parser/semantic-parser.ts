@@ -2210,8 +2210,19 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     // Extract "or" conjunction events (e.g., "click or keydown")
-    // Combines into event value string for AST builder compatibility
-    const additionalEvents = this.extractOrConjunctionEvents(tokens, language);
+    // Combines into event value string for AST builder compatibility.
+    // Only directly after the event: a fused pattern can stop inside what
+    // follows it (ms `apabila click jika r atau q`, whose `if-event-ms-vso`
+    // takes one token of the condition), and the condition's `atau q` became
+    // a second event, `click or q`. The span is the capture's: a translated
+    // event name (pt `clique`) was re-created above without one.
+    const eventSpan = match.captured.get('event')?.position;
+    const lastConsumed = tokens.tokens[tokens.position() - 1];
+    const pastEvent =
+      eventSpan !== undefined &&
+      lastConsumed !== undefined &&
+      lastConsumed.position.end > eventSpan.end;
+    const additionalEvents = pastEvent ? [] : this.extractOrConjunctionEvents(tokens, language);
     let resolvedEventValue = eventValue;
     if (additionalEvents.length > 0 && eventValue.type === 'literal') {
       const allEvents = [

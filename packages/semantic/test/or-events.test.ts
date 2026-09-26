@@ -62,6 +62,22 @@ describe('an or-leg directly follows its event word', () => {
   });
 });
 
+// A custom event is no KNOWN event, so the head's excision passes it by and the
+// extractor that runs after the head pattern reads it. That extractor now runs
+// only directly after the event: a fused `if` pattern left it inside the
+// condition, and ms `apabila click jika r atau q` gained an event `q`
+// (condition-words.test.ts). bn/ja/tr/zh throw on a custom leg and it/ko/th
+// drop it, on main as well (filed).
+const CUSTOM_LEG_BROKEN = new Set(['bn', 'it', 'ja', 'ko', 'th', 'tr', 'zh']);
+
+describe('a custom event after `or`', () => {
+  const src = 'on click or myevent add .x to me';
+  it.each(FOREIGN.filter(l => !CUSTOM_LEG_BROKEN.has(l)))('%s', language => {
+    const foreign = render(parse(src, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
+  });
+});
+
 // Only the HEAD's `or` is an alternative event. The excision took the first
 // `or <event>` anywhere, so a body's `wait for keydown or click` lent the
 // handler a second trigger: `on click or click wait for keydown …`, bound by
