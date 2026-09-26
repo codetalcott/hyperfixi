@@ -2490,8 +2490,32 @@ export class SemanticParserImpl implements ISemanticParser {
           // Clause runs from the verb to the next boundary at/after the unconsumed
           // tail (the verb..pos span is already consumed by the fused match; the
           // tail pos..clauseEnd holds the dropped secondary clause).
+          //
+          // A loop head's clause takes in the conditionals its body opens: in
+          // `repetir 3 times si x > 1 … fin fin`, the first `end` is the if's,
+          // and the re-parse folds the if with it. Taken for the loop's, the
+          // loop's own `end` then closed the handler and every command after
+          // the loop was dropped (13 languages). A nested LOOP's `end` still
+          // ends the clause: loops close through the open-loop count, not a
+          // fold, and counting them here broke nested repeats in 12.
           let clauseEnd = pos;
-          while (clauseEnd < all.length && !endsClause(clauseEnd)) clauseEnd++;
+          let nested = 0;
+          while (clauseEnd < all.length) {
+            const t = all[clauseEnd];
+            const before = wordBefore(all, clauseEnd);
+            if (
+              loopHeadAction &&
+              this.isIfKeyword((t.normalized ?? t.value).toLowerCase(), language) &&
+              !(before && this.isElseKeyword(before.value, language))
+            ) {
+              nested++;
+            } else if (nested > 0) {
+              if (this.isBlockEndToken(t, all[clauseEnd + 1], language)) nested--;
+            } else if (endsClause(clauseEnd)) {
+              break;
+            }
+            clauseEnd++;
+          }
           const clauseTokens = all.slice(verbIdx, clauseEnd);
           // For verb-first fused patterns the event head sits inside the clause;
           // excise it (event token + a preceding `on`-marker keyword) so the
