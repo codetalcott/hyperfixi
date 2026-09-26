@@ -23,7 +23,7 @@ import { HTMLScanner, VueScanner, SvelteScanner, JSXScanner } from '../scanner/h
 import { Analyzer } from './analyzer.js';
 import { OptimizationPipeline } from '../optimizations/index.js';
 import { preRenderInitBlock } from '../optimizations/init-prerender.js';
-import { ExpressionCodegen, sanitizeIdentifier } from '../transforms/expression-transforms.js';
+import { ExpressionCodegen } from '../transforms/expression-transforms.js';
 import { EventHandlerCodegen } from '../transforms/event-transforms.js';
 import {
   isExplicitSyntax,
@@ -943,18 +943,8 @@ export class AOTCompiler {
     analysis: AnalysisResult,
     options: CompileOptions
   ): CodegenContext {
-    const selectorCache = new Map<string, string>();
     const requiredHelpers = new Set<string>();
     let idCounter = 0;
-
-    // Pre-populate selector cache
-    for (const info of analysis.expressions.selectors) {
-      if (info.canCache && info.usages.length > 1) {
-        const cacheKey =
-          '_sel_' + sanitizeIdentifier(info.selector).slice(0, 20) + '_' + idCounter++;
-        selectorCache.set(info.selector, cacheKey);
-      }
-    }
 
     const exprCodegenRef: { current: ExpressionCodegen | null } = { current: null };
 
@@ -969,9 +959,12 @@ export class AOTCompiler {
       },
       implicitTarget: '_ctx.me',
       localVarDeclarations: '',
-      canCacheSelector: (selector: string) => selectorCache.has(selector),
-      getCachedSelector: (selector: string) =>
-        selectorCache.get(selector) ?? `document.querySelector('${selector}')`,
+      // A selector is queried each time it is evaluated, as on both engines. The
+      // cache named a variable nothing declared (`_sel__d1_0`: a handler naming
+      // #d1 twice threw), and a declared one goes stale when the handler
+      // replaces the element.
+      canCacheSelector: () => false,
+      getCachedSelector: (selector: string) => `document.querySelector('${selector}')`,
       requireHelper: (name: string) => {
         requiredHelpers.add(name);
       },
