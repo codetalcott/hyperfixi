@@ -3963,6 +3963,26 @@ export class SemanticParserImpl implements ISemanticParser {
         continue;
       }
 
+      // An `if` whose condition opens with a literal (`if 1 < 2`, `if "a" is
+      // …`, `if true`) matches no `if {condition}` pattern at all, so the fold
+      // below — keyed on matchBest yielding a flat `if` — never ran: the head
+      // was skipped as junk and its branch ran unconditionally, inside a loop
+      // in English and so in every translation. Where nothing matched at an
+      // `if` keyword, fold at the keyword itself.
+      if (
+        !commandMatch &&
+        startTok &&
+        this.isIfKeyword((startTok.normalized ?? startTok.value).toLowerCase(), language)
+      ) {
+        const conditional = this.tryParseConditionalBlock(clauseStream, commandPatterns, language);
+        if (conditional) {
+          flushSkipped();
+          commands.push(conditional);
+          directHits++;
+          continue;
+        }
+      }
+
       // Mid-clause `if` fold — the parseClause mirror of the fused-body walker's
       // hook (see the matchBest-yields-flat-`if` fold in parseBody). A juxtaposed
       // `<cmd> … if <condition> <cmd> …` clause (no `then` before the `if`, so the
