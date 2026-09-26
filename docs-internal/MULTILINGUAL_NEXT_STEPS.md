@@ -5205,6 +5205,38 @@ this signal was missing.
 > replaces the element, which one case pins. 240 of the 264 new cases failed before (the 24 that
 > passed are `remove .x from #d1 then add .x to #d1`, which main's batch put on me, leaving the
 > page as expected).
+>
+> **A translated condition reads core's comparison phrases (PR 38, 2026-09-26).** buildAST parses
+> every translated condition with semantic's expression parser, which read `is`, `is empty` and
+> `is not empty` and none of core's other comparison phrases. On the direct path `p is not q`
+> became `p is (not q)` (wrong in 20 of 23 languages), `p is less than q` compared p with a
+> variable named `less`, `#zz does not exist` and `the X of Y` kept only their first word, and
+> `#d1's X` built a possessive whose property core reads as nothing. The parser now matches core's
+> whole phrase table, in the shapes core's runtime evaluates (binary operators, postfix `does not
+> exist`, `is a`/`is not an …!` as a type check); a possessive's property is an identifier node;
+> `the X of Y` and `X of Y` build core's propertyOfExpression, bound as tight as a possessive (as
+> upstream reads it); the tokenizer takes a selector after the phrase words that take one; and the
+> interchange converter reads propertyOfExpression as core's does (the AOT path for a translation).
+> Measured by a differential oracle: English through buildAST against both engines, 89 condition
+> rows both ways. 43 of those, and 60 of the 141 es/he/it runs, failed before; no corpus row moves
+> (the expression parser runs only on the direct path). Five negative rows now fail in languages
+> whose positive twin already failed (bn/ru/uk `is not …`, ar/ru/th/uk possessive `is not`, ko/sw
+> `… and …`): the old misparse happened to read `no`, and the form never worked there.
+>
+> Filed, not fixed:
+>
+> - **Operator words don't read back (the next step).** Across 46 conditions × 23 languages, 193
+>   runs still take the wrong branch (407 before), in bn/de/fr/id/ms/pt/qu/ru/tl/uk (13–16 each),
+>   ar/hi/th (9–11), ja (7) and vi/pl/tr (2): the renderer writes `not`/`or`/`and`/`is`/`empty`
+>   and the genitive in the language (de `nicht`, `oder`; ja `の`) and the parser reads the native
+>   word back as an identifier (de/fr/ru/…), splits it (ja `ではない`, ar `ليس`), normalizes it to
+>   something else (hi `नहीं` → `no`, qu `mana` → `false`), or cuts the condition at it (ja/ko/qu
+>   `and`). es and it also read `includes`/`equals` back wrong.
+> - **Core binds `of` as loosely as `is`:** `if textContent of #d1 is "d"` compares #d1 with "d"
+>   (false); upstream reads the property (true). The `the X of Y` form is right on both.
+> - **AOT:** a comparison phrase other than `is`/`is not` compiles to invalid JS (`p is less than
+>   q`, `is in`, `does not match`, `does not exist`), and `is a` throws at compile time, in English
+>   too. A translation now fails the same way instead of compiling a wrong comparison.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
