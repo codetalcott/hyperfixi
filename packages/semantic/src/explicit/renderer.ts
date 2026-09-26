@@ -260,7 +260,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.elseBranch && node.elseBranch.length > 0) {
       parts.push(this.keyword(language, 'else'), this.joinStatements(node.elseBranch, language));
     }
-    parts.push(this.keyword(language, 'end'));
+    // An else branch that is one conditional is an `else if` chain, and its
+    // last `if` writes the chain's one `end`: upstream reads `else if` as a
+    // chain, so an `end` per `if` closed the handler, or a behavior, early.
+    const chained = node.elseBranch?.length === 1 && node.elseBranch[0].kind === 'conditional';
+    if (!chained) parts.push(this.keyword(language, 'end'));
     return parts.join(' ');
   }
 
