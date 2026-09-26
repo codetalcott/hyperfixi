@@ -51,3 +51,20 @@ describe.each(Object.entries(SHAPES))('%s, through every language', (_, src) => 
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
   });
 });
+
+// A chain inside a loop. The body walker met the chain's `if`s mid-clause and
+// wanted an `end` per `if`, so the loop's `end` closed nothing and the command
+// after the loop was lost, in English and so in every translation.
+describe('a chain inside a for loop keeps the command after the loop', () => {
+  const src = 'on click for $i in .a if $x log 1 else if $y log 2 end end then log 9';
+
+  it('en', () => {
+    expect(render(parse(src, 'en')!, 'en')).toBe(src);
+  });
+
+  // bn drops the command after a loop that holds any `if`, chain or not (filed).
+  it.each(FOREIGN.filter(language => language !== 'bn'))('%s', language => {
+    const foreign = render(parse(src, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
+  });
+});
