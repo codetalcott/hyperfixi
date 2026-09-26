@@ -26,6 +26,10 @@ import { pickPatternsEn } from './languages/en/pick';
 // builders agree" — a hand-sync that a third pattern would have silently
 // broken, since this list is the one the registered `en` module builds.
 import { swapPatternsEn } from './languages/en/swap';
+// The possessive set, with its `on <scope>` group. Same leaf-not-barrel
+// rationale: this module kept its own copy, so a change to the leaf (its value
+// types) had no effect on the registered `en` module.
+import { setPossessiveEnglish } from './languages/en/set';
 
 // Import from consolidated pattern files (Phase 3.2)
 import { getTogglePatternsForLanguage } from './toggle';
@@ -134,47 +138,6 @@ const repeatForeverEnglish: LanguagePattern = {
   },
   extraction: {
     loopType: { default: { type: 'literal', value: 'forever' } },
-  },
-};
-
-/**
- * English: "set {target} to {value}" with possessive syntax support
- */
-const setPossessiveEnglish: LanguagePattern = {
-  id: 'set-en-possessive',
-  language: 'en',
-  command: 'set',
-  priority: 100,
-  template: {
-    // Optional trailing `on <scope>` (S1 tabs-aria): `set @aria-selected to
-    // "false" on .tab` writes the attribute to every scope-matched element.
-    // This hand-crafted pattern ties the generated `set-en-generated` on
-    // priority and wins on stable-sort order, so the scope group must live
-    // here too or `on .tab` is silently dropped.
-    format: 'set {destination} to {patient} [on {scope}]',
-    tokens: [
-      { type: 'literal', value: 'set' },
-      {
-        type: 'role',
-        role: 'destination',
-        expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
-      },
-      { type: 'literal', value: 'to' },
-      { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
-      {
-        type: 'group',
-        optional: true,
-        tokens: [
-          { type: 'literal', value: 'on' },
-          { type: 'role', role: 'scope', optional: true, expectedTypes: ['selector', 'reference'] },
-        ],
-      },
-    ],
-  },
-  extraction: {
-    destination: { position: 1 },
-    patient: { marker: 'to' },
-    scope: { marker: 'on' },
   },
 };
 

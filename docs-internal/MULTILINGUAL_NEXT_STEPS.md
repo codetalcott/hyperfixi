@@ -5008,6 +5008,41 @@ this signal was missing.
 >   reads neither the direction nor the amount.
 > - Core's `go` reads a lone horizontal position with a `nearest` block (`go to right of #d1`);
 >   upstream keeps `start`, as core's `scroll` does.
+>
+> **A possessive as a value (PR 27, 2026-09-26; filed by PR 26).** Most languages render a
+> property path in the `of` form (es `valor de #d1`, de `wert von #d1`, he `value מ #d1`), and the
+> matcher reads that form only in a role whose schema accepts a property path. The value roles of
+> put, set, log, append, prepend, copy, default, throw and return did not, nor did put's
+> destination, so `put #d1's value into #b` was lost in 16 languages (the put dropped whole), and
+> so were set's, log's, append's and default's. In English the `of` form was lost too: `put the value of #d1 into #b`
+> dropped whole, and `set x to the value of #d1` rendered `set x to value`. The corpus holds a
+> possessive only inside a `when` expression and as bind's source, so no gate saw it. Those roles
+> accept a property path now. None of the commands has a source role, so the `of` form cannot be
+> read as one: he, id, ms, pl, ru and uk write it with their word for "from". Hand-written patterns
+> that decided the parse with a narrower copy of the list read the schema's (id's three puts, he
+> and sw's sets, English's set). English's set pattern had two definitions, one per builder; it has
+> one now, in the leaf, as fetch, pick and swap do. The `of` matcher took any selector as the
+> property head, and tr's genitive `in` is one of its `of` markers, so once set's value read
+> possessives, tr's `set x to <li/> in #list` (a scoped query) read as `#list's <li/>`; PR 23's
+> tests caught it. A selector head is a style or an attribute now: a query is never a property.
+> Run on both engines (`the value of #d1` is
+> `#d1's value` on each; `prepend` is core's own). 142 of the 184 direct-path cases failed before,
+> and 288 of 408 round trips.
+>
+> Filed, not fixed:
+>
+> - A possessive element target is lost in every language (`remove #d1's children`, `hide …`):
+>   for a command with a source role the `of` render reads as the source (es `eliminar hijos de
+>   #d1` is "remove children from #d1"), so it needs a different render, not a wider role.
+> - The AOT compiler drops every `set` of a variable, in English too: its codegen handles
+>   `variable` nodes, and the converter hands it `identifier` nodes (`$x`, `:x`, `x`), so it
+>   returns null. `on click set $x to 5` compiles to an empty handler.
+> - The AOT compiler throws from `compileScript` on English `set x to the value of #d1`: `Unknown
+>   expression type: error`.
+> - `scroll [<el>] up|down|left|right by <n>` (PR 26's filing) is still lost whole.
+> - A class or id query's scope is lost in English: `set x to .item in #list` renders `set x to
+>   .item` (an element query, `<li/> in #list`, keeps it). `default x to <li/> in #list` is lost
+>   whole (default's value takes no selector).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

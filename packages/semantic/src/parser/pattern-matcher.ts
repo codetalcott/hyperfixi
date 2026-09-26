@@ -2280,7 +2280,14 @@ export class PatternMatcher {
     // otherwise captured the property word alone as an expression and dropped
     // the owner. Selector-first languages (en `#picker's value`, ja `#pickerの
     // 値`) never reach here: their owner check below rejects the property word.
-    if (property.kind !== 'selector' && !this.isBareWordPropertyHead(property)) return null;
+    // A selector head is a style or an attribute: a query (`<li/>`, `#id`,
+    // `.class`) is never a property, and tr's genitive `in` read `<li/> in
+    // #list`, a scoped query, as `#list's <li/>`.
+    const head =
+      property.kind === 'selector'
+        ? /^[*@]/.test(property.value)
+        : this.isBareWordPropertyHead(property);
+    if (!head) return null;
 
     const mark = tokens.mark();
     tokens.advance();

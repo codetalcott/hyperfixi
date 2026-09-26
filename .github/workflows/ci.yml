@@ -901,6 +901,13 @@ jobs:
         # hang (no summary) or any failing test is a real FAIL. Trust its exit
         # code — do NOT blanket-treat 124 as success (that previously masked a
         # hung suite and hid every failure behind a false green).
+        #
+        # VITEST_TIMEOUT: the 5 minutes the note above describes. The script's
+        # default is 120s, and the suite outgrew it: 116.4s on 2026-09-26, then
+        # killed mid-run at 120s once more direct-path tests landed (the same
+        # budget the nightly coverage run of this suite already has).
+        env:
+          VITEST_TIMEOUT: '300'
         run: npm test --prefix packages/core
 
       - name: Test semantic
