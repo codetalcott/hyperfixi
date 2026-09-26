@@ -236,7 +236,7 @@ export class ASTBuilder {
     if (node.initBlock && node.initBlock.length > 0) {
       behaviorNode.initBlock = {
         type: 'initBlock',
-        commands: node.initBlock.map(c => this.build(c)),
+        commands: this.buildStatements(node.initBlock),
       };
     }
     return behaviorNode;
@@ -252,7 +252,7 @@ export class ASTBuilder {
       type: 'def',
       name: node.name,
       params: [...node.parameters],
-      body: node.body.map(c => this.build(c)),
+      body: this.buildStatements(node.body),
     };
   }
 
@@ -283,7 +283,7 @@ export class ASTBuilder {
     }
     args.push({
       type: 'block',
-      commands: node.body.map(c => this.build(c)),
+      commands: this.buildStatements(node.body),
     } as unknown as ExpressionNode);
 
     return { type: 'command', name: node.action, args };
@@ -448,7 +448,7 @@ export class ASTBuilder {
     const filter = split.find(part => part.filter !== undefined)?.filter;
 
     // Build body commands recursively
-    const commands = node.body.map(child => this.build(child));
+    const commands = this.buildStatements(node.body);
 
     // Get selector/target from 'source' role if present
     const fromValue = node.roles.get('source');
@@ -553,8 +553,8 @@ export class ASTBuilder {
     }
 
     const condition = convertValue(conditionValue);
-    const thenBranch = node.thenBranch.map(child => this.build(child));
-    const elseBranch = node.elseBranch?.map(child => this.build(child));
+    const thenBranch = this.buildStatements(node.thenBranch);
+    const elseBranch = node.elseBranch && this.buildStatements(node.elseBranch);
 
     // Build args array matching IfCommand expected format
     const args: ExpressionNode[] = [
@@ -589,7 +589,7 @@ export class ASTBuilder {
    */
   private buildCompound(node: CompoundSemanticNode): ASTNode {
     // Build all statements recursively
-    const statements = node.statements.map(child => this.build(child));
+    const statements = this.buildStatements(node.statements);
 
     // Single statement: unwrap and return directly
     if (statements.length === 1) {
@@ -680,9 +680,33 @@ export class ASTBuilder {
 
     const body = {
       type: 'block',
-      commands: node.body.map(child => this.build(child)),
+      commands: this.buildStatements(node.body),
     } as unknown as ExpressionNode;
     return { type: 'command', name: 'repeat', args: [body], modifiers };
+  }
+
+  /**
+   * Build a statement list, giving each `tell` its body. Semantic keeps a tell
+   * FLAT: the header, then its body as every statement after it in the list
+   * (the renderer's closeBlockHeaders closes it at the list's end). Core's tell
+   * takes its body as its own args, `[target, ...commands]`, and throws without
+   * one, so every translated tell threw on the direct path and its commands
+   * never ran.
+   */
+  private buildStatements(nodes: readonly SemanticNode[]): ASTNode[] {
+    const out: ASTNode[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const built = this.build(node);
+      if (node.kind === 'command' && node.action === 'tell' && i + 1 < nodes.length) {
+        const body = this.buildStatements(nodes.slice(i + 1));
+        const tell = built as CommandNode;
+        out.push({ ...tell, args: [...tell.args, ...body] });
+        break;
+      }
+      out.push(built);
+    }
+    return out;
   }
 
   /**
@@ -690,7 +714,7 @@ export class ASTBuilder {
    * Useful for grouping commands in if/else branches.
    */
   buildBlock(nodes: SemanticNode[]): BlockNode {
-    const commands = nodes.map(child => this.build(child));
+    const commands = this.buildStatements(nodes);
     return {
       type: 'block',
       commands,
