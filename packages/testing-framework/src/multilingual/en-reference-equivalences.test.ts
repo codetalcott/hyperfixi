@@ -108,6 +108,12 @@ const PINS: Record<string, Pin> = {
     kind: 'effect',
     pair: ['on poke click() me', 'on poke call me.click()'],
   },
+  // Both install on the button and hear the click dispatched on it: `from me` is
+  // where a handler listens by default.
+  'handler-from-me': {
+    kind: 'effect',
+    pair: ['on click from me put "x" into #o', 'on click put "x" into #o'],
+  },
   // The button sends and triggers to itself and records what arrived: upstream
   // reads a STRING or a dotted/colon path as the same eventName (both commands).
   'quoted-event-name': {
@@ -279,6 +285,13 @@ describe('en-reference equivalences', () => {
 
     it('`go back` and `go url back` are different programs', () => {
       expect(preservesContent('on click go back', 'on click go url back')).toBe(false);
+    });
+
+    // handler-from-me is a HEAD rule: a command's `from me` is its source.
+    it('a command’s `from me` is not a handler head’s', () => {
+      expect(preservesContent('on click take .a from me', 'on click take .a')).toBe(false);
+      expect(preservesContent('on click remove .a from me', 'on click remove .a')).toBe(false);
+      expect(preservesContent('on click from #b log 1', 'on click log 1')).toBe(false);
     });
   });
 

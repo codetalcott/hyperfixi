@@ -132,6 +132,14 @@ export const EQUIVALENCES: readonly Equivalence[] = [
       'that is not one cannot be written bare)',
     example: ['on click send "hello" to ChatSocket', 'on click send hello to ChatSocket'],
   },
+  {
+    id: 'handler-from-me',
+    description:
+      "a handler head's `from me` is its default source: the handler listens on `me` " +
+      'either way (only in a head — `on <event>[(params)][filter] from me` — never a ' +
+      "command's `from me`, where `take`/`remove` give it meaning)",
+    example: ['on pointerdown(y) from me log y', 'on pointerdown(y) log y'],
+  },
 ];
 
 // =============================================================================
@@ -280,6 +288,18 @@ export function canonicalTokens(src: string): Token[] {
     out.push(tok);
   }
   t = out;
+
+  // handler-from-me: `on <event> [( … )] [[ … ]] from me` → the same head without
+  // it. Only at a feature position: the start, or after an `end` or a header's `)`.
+  for (let i = 0; i + 1 < t.length; i++) {
+    const previous = t[i - 1];
+    const atFeature = !previous || wordIs(previous, 'end') || wordIs(previous, ')');
+    if (!atFeature || !wordIs(t[i], 'on') || !isWord(t[i + 1])) continue;
+    let k = i + 2;
+    if (wordIs(t[k], '(')) k = matchingIndex(t, k, '(', ')') + 1;
+    if (k > 0 && wordIs(t[k], '[')) k = matchingIndex(t, k, '[', ']') + 1;
+    if (k > 0 && wordIs(t[k], 'from') && wordIs(t[k + 1], 'me')) t.splice(k, 2);
+  }
 
   // with-object-braces: `with { … }` → `with …`
   for (let i = 0; i + 1 < t.length; i++) {

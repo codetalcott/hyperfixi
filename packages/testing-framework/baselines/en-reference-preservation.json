@@ -10,13 +10,13 @@
       "added": []
     },
     "behavior-draggable": {
-      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; the whole `on pointerdown(…) from dragHandle` header is lost",
-      "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n    halt the event\n    trigger draggable:start\n    measure x\n    set startX to it\n    measure y\n    set startY to it\n    set xoff to clientX - startX\n    set yoff to clientY - startY\n    repeat until event pointerup from document wait for pointermove then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end\n    trigger draggable:end\n  end\nend",
+      "family": "wait-or — `wait for A(…) or B(…) from document`: the alternative, its params and `from` dropped (PR 8c); `init` reordered after the handler (as behavior-removable)",
+      "rendered": "behavior Draggable(dragHandle)\n  on pointerdown(clientX, clientY) from dragHandle halt the event then trigger draggable:start then measure x then set startX to it then measure y then set startY to it then set xoff to clientX - startX then set yoff to clientY - startY then repeat until event pointerup from document wait for pointermove then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end then trigger draggable:end\n  end\n  init\n    if no dragHandle set dragHandle to me end\n  end\nend",
       "lost": [
-        "on pointerdown ( clientX , clientY ) from dragHandle",
+        "init if no dragHandle set dragHandle to me end",
         "( clientX , clientY ) or pointerup ( clientX , clientY ) from document"
       ],
-      "added": []
+      "added": ["end end init if no dragHandle set dragHandle to me"]
     },
     "behavior-removable": {
       "family": "TRIAGE — `init` reordered after the handler (`from triggerEl` is evaluated at install)",
@@ -25,20 +25,16 @@
       "added": ["end init if triggerEl is undefined set triggerEl to me"]
     },
     "behavior-resizable": {
-      "family": "handler head — event params, `from`, `or pointerup(…)` dropped",
-      "rendered": "behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)\n  on pointerdown halt the event then trigger resizable:start then measure width then set startWidth to it then measure height then set startHeight to it then set startX to clientX then set startY to clientY then repeat until event pointerup from document wait for pointermove then set newWidth to startWidth + clientX - startX then set newHeight to startHeight + clientY - startY then if newWidth < minWidth set newWidth to minWidth end then if newWidth > maxWidth set newWidth to maxWidth end then if newHeight < minHeight set newHeight to minHeight end then if newHeight > maxHeight set newHeight to maxHeight end then set my *width to newWidth + \"px\" then set my *height to newHeight + \"px\" then trigger resizable:resize end then trigger resizable:end\n  end\nend",
-      "lost": [
-        "( clientX , clientY ) from me",
-        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document"
-      ],
+      "family": "wait-or — `wait for A(…) or B(…) from document`: the alternative, its params and `from` dropped (PR 8c)",
+      "rendered": "behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)\n  on pointerdown(clientX, clientY) halt the event then trigger resizable:start then measure width then set startWidth to it then measure height then set startHeight to it then set startX to clientX then set startY to clientY then repeat until event pointerup from document wait for pointermove then set newWidth to startWidth + clientX - startX then set newHeight to startHeight + clientY - startY then if newWidth < minWidth set newWidth to minWidth end then if newWidth > maxWidth set newWidth to maxWidth end then if newHeight < minHeight set newHeight to minHeight end then if newHeight > maxHeight set newHeight to maxHeight end then set my *width to newWidth + \"px\" then set my *height to newHeight + \"px\" then trigger resizable:resize end then trigger resizable:end\n  end\nend",
+      "lost": ["( clientX , clientY ) or pointerup ( clientX , clientY ) from document"],
       "added": []
     },
     "behavior-sortable": {
-      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; `init` reordered after the handler (as behavior-removable)",
-      "rendered": "behavior Sortable(dragClass)\n  on pointerdown set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove then trigger sortable:move on me end then remove .{dragClass} from item then trigger sortable:end on me\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
+      "family": "wait-or — `wait for A(…) or B(…) from document`: the alternative, its params and `from` dropped (PR 8c); `init` reordered after the handler (as behavior-removable); `the` before `target` dropped",
+      "rendered": "behavior Sortable(dragClass)\n  on pointerdown(clientY) set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove then trigger sortable:move on me end then remove .{dragClass} from item then trigger sortable:end on me\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
       "lost": [
         "init if dragClass is undefined set dragClass to \"sorting\" end end",
-        "( clientY ) from me",
         "the",
         "( clientY ) or pointerup ( clientY ) from document"
       ],
