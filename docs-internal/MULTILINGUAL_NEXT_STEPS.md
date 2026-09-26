@@ -4918,6 +4918,27 @@ this signal was missing.
 > - `put it.value into #d1` renders `its.value` in English.
 > - pl/ru/uk render `set x to my value` as `ustaw do x mój wartość` and read it back as `set my x
 >   to wartość`.
+>
+> **The AOT compiler acts on the target a command names (PR 24, 2026-09-26; filed by PR 22).**
+> Core's parser, and semantic's buildAST, put a command's target in a slot: the first arg (`hide
+> #d1`) or the modifier named for its preposition (`toggle .t on #d1`, `take .a from #d1`). Ten
+> AOT codegens read only `node.target`, which few producers set, so every explicit target compiled
+> to `me`, in English too: `hide #d1` hid the clicked element, through the compilation service
+> and so MCP's `compile_hyperscript`. That held for toggle, show, hide, focus, blur, settle,
+> scroll, send/trigger, append and take. Beyond that, `remove #d1` removed a class `#d1` from
+> `me`, and toggle's branch for a target other than `me` toggled the class NAME read as a tag
+> selector. A `commandTarget()` helper reads the slot now (send's target arrives in `on` from
+> core's parser and in `to` from semantic, so both are read). Run on both engines, then compiled
+> and run: all 288 new cases (12 commands, 24 languages) failed before.
+>
+> Filed, not fixed (AOT):
+>
+> - Every non-id selector compiles to `document.querySelector`, so a class or query target reaches
+>   its first match only (`add .a to .items`).
+> - `add .a to <li/> in #list` compiles to JavaScript's `in` operator.
+> - The interchange converter drops `attributeAccess`: `remove @disabled` compiles against `null`.
+> - `empty` has no codegen: the handler compiles empty, with a warning that it looks empty.
+> - `measure width of #d1` loses its source before the codegen sees it.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
