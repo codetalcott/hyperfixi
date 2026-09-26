@@ -62,6 +62,7 @@ export type {
   ExpressionValue,
   SemanticNode,
   CommandSemanticNode,
+  WaitAlternative,
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
   CompoundSemanticNode,

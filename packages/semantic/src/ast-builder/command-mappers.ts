@@ -132,31 +132,48 @@ function createCommandNode(
 // Command Mappers
 // =============================================================================
 
-/**
- * One `{ name, args }` event spec of core's wait, from an event's text: `keyup`,
- * or `pointermove(clientX, clientY)` with its destructured parameters.
- */
-function waitEventSpec(text: string): ObjectLiteralNode {
-  const call = /^([\w:.-]+)\s*\(([^)]*)\)$/.exec(text.trim());
-  const name = call ? call[1] : text.trim();
-  const params = call
-    ? call[2]
-        .split(',')
-        .map(p => p.trim())
-        .filter(Boolean)
-    : [];
-  const property = (key: string, value: ExpressionNode): ObjectPropertyNode => ({
+/** A spec property of core's wait, keyed by an identifier node as core's parser keys it. */
+function specProperty(key: string, value: ExpressionNode): ObjectPropertyNode {
+  return {
     type: 'objectProperty',
     key: { type: 'identifier', name: key } as ExpressionNode,
     value,
-  });
+  };
+}
+
+/** One `{ name, args }` event spec of core's wait: the event, and the names it destructures. */
+function waitEventSpec(name: string, params: readonly string[] = []): ObjectLiteralNode {
   const literal = (value: string): LiteralNode => ({ type: 'literal', value });
   return {
     type: 'objectLiteral',
     properties: [
-      property('name', literal(name)),
-      property('args', { type: 'arrayLiteral', elements: params.map(literal) } as ArrayLiteralNode),
+      specProperty('name', literal(name)),
+      specProperty('args', {
+        type: 'arrayLiteral',
+        elements: params.map(literal),
+      } as ArrayLiteralNode),
     ],
+  };
+}
+
+/** An event's text as a spec: `keyup`, or `pointermove(clientX, clientY)`. */
+function waitEventSpecFromText(text: string): ObjectLiteralNode {
+  const call = /^([\w:.-]+)\s*\(([^)]*)\)$/.exec(text.trim());
+  if (!call) return waitEventSpec(text.trim());
+  return waitEventSpec(
+    call[1],
+    call[2]
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean)
+  );
+}
+
+/** A `{ duration }` spec of core's wait: a timeout alternative (`wait for click or 1s`). */
+function waitDurationSpec(duration: string): ObjectLiteralNode {
+  return {
+    type: 'objectLiteral',
+    properties: [specProperty('duration', { type: 'literal', value: duration } as LiteralNode)],
   };
 }
 
@@ -186,10 +203,19 @@ const waitMapper: CommandMapper = {
             ? event.value
             : undefined;
     if (eventText) {
+      // Every alternative the wait races, when the parse kept them
+      // (`waitAlternatives`: params, `or` events, `or` timeouts); else the event.
+      const specs = node.waitAlternatives?.length
+        ? node.waitAlternatives.map(alt =>
+            'event' in alt ? waitEventSpec(alt.event, alt.params) : waitDurationSpec(alt.duration)
+          )
+        : [waitEventSpecFromText(eventText)];
       const args: ExpressionNode[] = [
-        { type: 'arrayLiteral', elements: [waitEventSpec(eventText)] } as ArrayLiteralNode,
+        { type: 'arrayLiteral', elements: specs } as ArrayLiteralNode,
       ];
-      const source = convertRoleValue(node, 'source');
+      const source = node.waitSource
+        ? convertValue(node.waitSource)
+        : convertRoleValue(node, 'source');
       if (source) args.push(source);
       return createCommandNode('wait', args, undefined, { isBlocking: true });
     }

@@ -21,6 +21,7 @@ import type {
   TokenStream,
   PatternMatchResult,
   Diagnostic,
+  WaitAlternative,
 } from '../types';
 import {
   createCommandNode,
@@ -47,7 +48,7 @@ import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
-import { eventNameTranslations } from '../patterns/event-handler';
+import { eventNameTranslations, localizeEventName } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { rewritePseudoCommand } from './pseudo-command';
@@ -173,6 +174,27 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
 
 /** Reference words: never an event parameter's name. */
 const REFERENCE_WORDS = new Set(['me', 'my', 'i', 'it', 'its', 'you', 'your', 'result']);
+
+/** The node fields a tree walk descends into. */
+const NODE_CHILD_FIELDS = [
+  'body',
+  'statements',
+  'thenBranch',
+  'elseBranch',
+  'eventHandlers',
+  'initBlock',
+] as const;
+type NodeChildren = Partial<Record<(typeof NODE_CHILD_FIELDS)[number], unknown>>;
+
+/** A `wait for`'s `from` value: a reference word, a selector, or an expression. */
+function waitSourceValue(tok: LanguageToken): SemanticValue {
+  const norm = (tok.normalized ?? tok.value).toLowerCase();
+  if (norm === 'document' || norm === 'window' || norm === 'me' || norm === 'body') {
+    return createReference(norm);
+  }
+  if (tok.kind === 'selector') return createSelector(tok.value);
+  return { type: 'expression', raw: tok.value };
+}
 
 const COMMAND_WORDS = new Map<string, ReadonlySet<string>>();
 
@@ -1175,6 +1197,23 @@ export class SemanticParserImpl implements ISemanticParser {
           }
           break; // only the first source-before-event clause
         }
+      }
+    }
+
+    // A `wait for` run with more than its first event (params, `or`
+    // alternatives, a `from` source): see tryWaitAlternatives.
+    {
+      const waited = this.tryWaitAlternatives(
+        tokens.tokens as LanguageToken[],
+        parseInput,
+        language
+      );
+      if (waited) {
+        const result =
+          modifiers && waited.kind === 'event-handler'
+            ? this.applyModifiers(waited as EventHandlerSemanticNode, modifiers)
+            : waited;
+        return withDiagnostics(result, diagnostics);
       }
     }
 
@@ -5674,6 +5713,160 @@ export class SemanticParserImpl implements ISemanticParser {
    * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
    * phrase is malformed (no close-paren, or a non-identifier between).
    */
+  /**
+   * A `wait for` run with more than its first event: `wait for pointermove(
+   * clientX, clientY) or pointerup(clientX, clientY) from document`, `wait for
+   * keyup or 1s`. No wait pattern captures past the first event, so the params,
+   * the alternatives and the `from` source were dropped in every language: a
+   * translated drag behavior waited on the element instead of the document,
+   * with its coordinates unbound. Excise the run's extras, re-parse, and hang
+   * them on the wait node the re-parse built (`waitAlternatives`, `waitSource`).
+   * One run per call: the re-parse is a `parse`, so it takes the next.
+   *
+   * The run: an event word, its param phrase, then `<or> <event|duration>`
+   * legs, and a source phrase after them (`from X`, or `X から` where the marker
+   * follows its noun). It must be a wait's
+   * argument: the wait verb just before it (verb-first) or just after it
+   * (verb-final). A run with nothing past its first event is left alone.
+   */
+  private tryWaitAlternatives(
+    arr: readonly LanguageToken[],
+    input: string,
+    language: string
+  ): SemanticNode | null {
+    // English keywords carry no normalized form; the surface is the word.
+    const isWait = (t: LanguageToken | undefined): boolean =>
+      !!t && (t.normalized ?? t.value).toLowerCase() === 'wait';
+    if (!arr.some(t => isWait(t))) return null;
+    const norm = (t: LanguageToken): string => (t.normalized ?? t.value).toLowerCase();
+    const isEvent = (t: LanguageToken | undefined): boolean =>
+      !!t && (SemanticParserImpl.KNOWN_EVENTS.has(norm(t)) || WAITABLE_EVENT_WORDS.has(norm(t)));
+    const isDuration = (t: LanguageToken | undefined): boolean =>
+      !!t && /^\d+(?:\.\d+)?(?:ms|s)$/.test(t.value);
+    const marker = tryGetProfile(language)?.roleMarkers?.source;
+    const markerForms = new Set(
+      [marker?.primary, ...(marker?.alternatives ?? [])].filter(Boolean).map(w => w!.toLowerCase())
+    );
+    const isSourceMarker = (t: LanguageToken | undefined): boolean =>
+      !!t && ((t.normalized ?? '') === 'source' || markerForms.has(t.value.toLowerCase()));
+    const prepositional = marker?.position !== 'after';
+    /** The wait verb within two tokens before `start` or after `end` (exclusive). */
+    const nearWait = (start: number, end: number): boolean =>
+      [start - 1, start - 2, end, end + 1].some(j => isWait(arr[j]));
+
+    /**
+     * Tokens an event word spans: a localized name can be two words (ar
+     * `رفع المفتاح`, keyup) whose tail the tokenizer keeps as its own token.
+     */
+    const eventSpan = (at: number): number => {
+      const words = localizeEventName(norm(arr[at]), language).split(/\s+/);
+      if (words.length < 2 || arr[at].value !== words[0]) return 1;
+      return words.every((w, n) => n === 0 || arr[at + n]?.value === w) ? words.length : 1;
+    };
+
+    for (let i = 0; i < arr.length; i++) {
+      if (!isEvent(arr[i])) continue;
+      const alternatives: WaitAlternative[] = [];
+      const eventEnd = i + eventSpan(i); // exclusive
+      const first = this.matchEventParamPhrase(arr, eventEnd);
+      alternatives.push(
+        first.names.length > 0
+          ? { event: norm(arr[i]), params: first.names }
+          : { event: norm(arr[i]) }
+      );
+      let k = eventEnd + first.len;
+      while (isOrWordToken(arr[k] ?? { value: '' }, language)) {
+        const next = arr[k + 1];
+        if (isEvent(next)) {
+          const legEnd = k + 1 + eventSpan(k + 1);
+          const phrase = this.matchEventParamPhrase(arr, legEnd);
+          alternatives.push(
+            phrase.names.length > 0
+              ? { event: norm(next!), params: phrase.names }
+              : { event: norm(next!) }
+          );
+          k = legEnd + phrase.len;
+        } else if (isDuration(next)) {
+          alternatives.push({ duration: next!.value });
+          k += 2;
+        } else break;
+      }
+      const runEnd = k; // exclusive: the legs end here
+      // The source phrase follows the run in every language: `from X` where the
+      // marker is a preposition, `X から` where it follows its noun. Never
+      // before the event: an SOV loop head renders ITS source there (ja
+      // `… 繰り返し document から pointermove 待つ`), and the wait must not take it.
+      let sourceSpan: [number, number] | undefined;
+      let sourceToken: LanguageToken | undefined;
+      if (prepositional && isSourceMarker(arr[k]) && arr[k + 1]) {
+        sourceSpan = [k, k + 1];
+        sourceToken = arr[k + 1];
+      } else if (!prepositional && arr[k] && isSourceMarker(arr[k + 1])) {
+        sourceSpan = [k, k + 1];
+        sourceToken = arr[k];
+      }
+      const hasExtras = alternatives.length > 1 || first.names.length > 0 || !!sourceSpan;
+      if (!hasExtras) continue;
+      const argEnd = sourceSpan ? sourceSpan[1] + 1 : runEnd;
+      if (!nearWait(i, argEnd)) continue;
+
+      // Keep the first event's name; cut its params, the legs, and the source.
+      const cuts: Array<[number, number]> = [];
+      if (runEnd > eventEnd)
+        cuts.push([arr[eventEnd - 1].position.end, arr[runEnd - 1].position.end]);
+      if (sourceSpan)
+        cuts.push([arr[sourceSpan[0]].position.start, arr[sourceSpan[1]].position.end]);
+      cuts.sort((a, b) => a[0] - b[0]);
+      let reduced = '';
+      let at = 0;
+      for (const [from, to] of cuts) {
+        reduced += input.slice(at, from) + ' ';
+        at = to;
+      }
+      reduced = (reduced + input.slice(at)).replace(/\s+/g, ' ').trim();
+
+      // Which wait with this event is ours: count the ones before it.
+      const event = alternatives[0] as { event: string };
+      let before = 0;
+      for (let j = 0; j < i; j++) {
+        if (isEvent(arr[j]) && norm(arr[j]) === event.event && nearWait(j, j + 1)) before++;
+      }
+      try {
+        const reparsed = this.parse(reduced, language);
+        const waits: SemanticNode[] = [];
+        const collect = (n: SemanticNode | undefined): void => {
+          if (!n) return;
+          const eventValue = n.roles?.get('event' as SemanticRole);
+          const name =
+            eventValue?.type === 'expression'
+              ? eventValue.raw
+              : eventValue && 'value' in eventValue
+                ? String(eventValue.value)
+                : undefined;
+          if (n.kind === 'command' && n.action === 'wait' && name?.toLowerCase() === event.event) {
+            waits.push(n);
+          }
+          const children = n as NodeChildren;
+          for (const field of NODE_CHILD_FIELDS) {
+            const child = children[field];
+            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
+          }
+        };
+        collect(reparsed ?? undefined);
+        const target = waits[before];
+        if (!reparsed || !target) continue;
+        (target as { waitAlternatives?: WaitAlternative[] }).waitAlternatives = alternatives;
+        if (sourceToken) {
+          (target as { waitSource?: SemanticValue }).waitSource = waitSourceValue(sourceToken);
+        }
+        return reparsed;
+      } catch {
+        // not this run: keep looking
+      }
+    }
+    return null;
+  }
+
   /**
    * A command word that begins a handler's BODY, ending the head: a keyword whose
    * normalized form is a command this language parses. A command that is also an

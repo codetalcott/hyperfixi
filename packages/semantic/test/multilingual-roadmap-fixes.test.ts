@@ -14325,7 +14325,10 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
       parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
       'en'
     );
-    expect(out).toBe('wait for pointermove');
+    // PR 8d keeps a wait's params and alternatives (it rendered `wait for
+    // pointermove`). The source sits past `জন্য` in this transformer-era shape,
+    // which the renderer no longer emits, so it is not recovered.
+    expect(out).toBe('wait for pointermove(clientY) or pointerup(clientY)');
   });
 
   it('bn draggable-shaped run (জন্য after or-word, 2-arg, multiline) renders the en wait head', () => {
@@ -14336,7 +14339,9 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
       ),
       'en'
     );
-    expect(out).toBe('wait for pointermove');
+    // PR 8d keeps the first event's params; the leg after `অথবা জন্য` in this
+    // transformer-era shape is not a run the renderer emits, so it stays out.
+    expect(out).toBe('wait for pointermove(clientX, clientY)');
   });
 
   it('bn or-in-event-list path stays byte-identical (multiple-events row)', () => {
