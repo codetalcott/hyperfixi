@@ -801,6 +801,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       this.spliceWaitAlternatives(node as CommandSemanticNode, parts, eventPart, language);
     }
 
+    // `fetch … do not throw`, in English in every language (the parser reads
+    // it after the whole command).
+    if (node.action === 'fetch' && (node as CommandSemanticNode).doNotThrow) {
+      parts.push('do not throw');
+    }
+
     if (node.kind === 'event-handler') {
       // Event parameters glue to the event token, `pointerdown(clientX,
       // clientY)`: the form every language's parser reads (the SOV heads expect

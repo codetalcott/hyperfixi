@@ -1221,6 +1221,18 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // `fetch … do not throw`: see tryDoNotThrow.
+    {
+      const flagged = this.tryDoNotThrow(tokens.tokens as LanguageToken[], parseInput, language);
+      if (flagged) {
+        const result =
+          modifiers && flagged.kind === 'event-handler'
+            ? this.applyModifiers(flagged as EventHandlerSemanticNode, modifiers)
+            : flagged;
+        return withDiagnostics(result, diagnostics);
+      }
+    }
+
     // A `wait for` run with more than its first event (params, `or`
     // alternatives, a `from` source): see tryWaitAlternatives.
     {
@@ -5763,6 +5775,65 @@ export class SemanticParserImpl implements ISemanticParser {
    * argument: the wait verb just before it (verb-first) or just after it
    * (verb-final). A run with nothing past its first event is left alone.
    */
+  /**
+   * `fetch … do not throw`. No fetch pattern reads the phrase, so it dropped,
+   * in English and so in every translation: a translated fetch then threw on a
+   * 404 its author told it to tolerate. Worse, other languages' patterns read
+   * its words: pl's `do` is its own "to" (a destination `not`), and ja took
+   * `do` for a response type. So the phrase is excised BEFORE any pattern sees
+   * it, the rest re-parsed, and the flag set on the fetch it followed: the one
+   * whose source starts last before the phrase (the text before the phrase keeps
+   * its offsets in the re-parse). By position, not by counting fetch verbs: he
+   * `הבא` and id `muat` do not normalize to `fetch`, though their patterns read
+   * them as it. It is fixed English in every language, as the renderer writes
+   * it, after the whole command. One phrase per call: the re-parse takes the
+   * next.
+   */
+  private tryDoNotThrow(
+    arr: readonly LanguageToken[],
+    input: string,
+    language: string
+  ): SemanticNode | null {
+    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
+    const at = arr.findIndex(
+      (t, k) => word(t) === 'do' && word(arr[k + 1]) === 'not' && word(arr[k + 2]) === 'throw'
+    );
+    if (at < 0) return null;
+    const phraseStart = arr[at].position.start;
+    const reduced = (
+      input.slice(0, arr[at].position.start).trimEnd() +
+      ' ' +
+      input.slice(arr[at + 2].position.end).trimStart()
+    ).trim();
+    try {
+      const reparsed = this.parse(reduced, language);
+      const fetches: SemanticNode[] = [];
+      const collect = (n: SemanticNode | undefined): void => {
+        if (!n) return;
+        if (n.kind === 'command' && n.action === 'fetch') fetches.push(n);
+        const children = n as NodeChildren;
+        for (const field of NODE_CHILD_FIELDS) {
+          const child = children[field];
+          if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
+        }
+      };
+      collect(reparsed ?? undefined);
+      const sourceStart = (n: SemanticNode) =>
+        n.roles.get('source' as SemanticRole)?.position?.start ?? -1;
+      const target = fetches
+        .filter(n => sourceStart(n) >= 0 && sourceStart(n) < phraseStart)
+        .reduce<SemanticNode | undefined>(
+          (best, n) => (!best || sourceStart(n) > sourceStart(best) ? n : best),
+          undefined
+        );
+      if (!reparsed || !target) return null;
+      (target as { doNotThrow?: boolean }).doNotThrow = true;
+      return reparsed;
+    } catch {
+      return null;
+    }
+  }
+
   private tryWaitAlternatives(
     arr: readonly LanguageToken[],
     input: string,

@@ -317,6 +317,12 @@ export class ASTBuilder {
       cmd = this.buildGenericCommand(node);
     }
 
+    // `fetch … do not throw`, as core's parser writes it.
+    if (node.action === 'fetch' && node.doNotThrow) {
+      const doNotThrow: LiteralNode = { type: 'literal', value: true };
+      cmd = { ...cmd, modifiers: { ...cmd.modifiers, doNotThrow } };
+    }
+
     // Attach semantic roles for downstream consumers (interchange format, AOT
     // compiler). This reads the FULL role map deliberately — including the
     // materialized defaults `getRole` withholds from `args`/`modifiers`. The
