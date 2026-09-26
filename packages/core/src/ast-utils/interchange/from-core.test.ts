@@ -100,6 +100,45 @@ describe('fromCoreAST', () => {
       });
     });
 
+    // Three shapes the parser emits that fell to the error default (the AOT
+    // threw `Unknown expression type: error` on each).
+    it('converts an array literal', () => {
+      const node = coreNode('arrayLiteral', {
+        elements: [coreNode('literal', { value: 'a' }), coreNode('literal', { value: 'b' })],
+      });
+      expect(fromCoreAST(node)).toEqual({
+        type: 'array',
+        elements: [
+          { type: 'literal', value: 'a' },
+          { type: 'literal', value: 'b' },
+        ],
+      });
+      expect(toCoreAST(fromCoreAST(node))).toMatchObject({
+        type: 'arrayLiteral',
+        elements: [{ value: 'a' }, { value: 'b' }],
+      });
+    });
+
+    it("converts `@title` to the handler element's attribute", () => {
+      expect(fromCoreAST(coreNode('attributeAccess', { attributeName: 'title' }))).toEqual({
+        type: 'possessive',
+        object: { type: 'identifier', value: 'me' },
+        property: '@title',
+      });
+    });
+
+    it('converts `the value of #d1` to a possessive', () => {
+      const node = coreNode('propertyOfExpression', {
+        property: coreNode('identifier', { name: 'value' }),
+        target: coreNode('selector', { value: '#d1' }),
+      });
+      expect(fromCoreAST(node)).toEqual({
+        type: 'possessive',
+        object: { type: 'selector', value: '#d1' },
+        property: 'value',
+      });
+    });
+
     it('round-trips `:x` through toCoreAST', () => {
       const node = coreNode('identifier', { name: 'x', scope: 'element' });
       expect(toCoreAST(fromCoreAST(node))).toMatchObject({

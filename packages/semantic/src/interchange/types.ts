@@ -26,6 +26,7 @@ export type InterchangeNode =
   | UnaryNode
   | MemberNode
   | PossessiveNode
+  | ArrayNode
   | CallNode
   | IfNode
   | RepeatNode
@@ -100,6 +101,12 @@ export interface PossessiveNode extends BaseNode {
   readonly type: 'possessive';
   readonly object: InterchangeNode;
   readonly property: string;
+}
+
+/** An array literal (`["a", "b"]`, `[1, 2]`). */
+export interface ArrayNode extends BaseNode {
+  readonly type: 'array';
+  readonly elements: readonly InterchangeNode[];
 }
 
 export interface CallNode extends BaseNode {

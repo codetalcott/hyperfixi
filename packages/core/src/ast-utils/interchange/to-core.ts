@@ -101,6 +101,12 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         computed: node.computed ?? false,
         ...nodePos(node),
       };
+    case 'array':
+      return {
+        type: 'arrayLiteral',
+        elements: node.elements.map(element => toCoreAST(element)),
+        ...nodePos(node),
+      };
     case 'possessive':
       return {
         type: 'possessiveExpression',

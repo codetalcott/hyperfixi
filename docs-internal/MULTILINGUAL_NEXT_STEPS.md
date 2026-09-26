@@ -5086,6 +5086,18 @@ this signal was missing.
 >
 > Filed, not fixed (still open from PR 28): the converters' `error` nodes for
 > `propertyOfExpression`, `attributeAccess` and array literals.
+>
+> **An array, `@attr` and `the X of Y` reach the AOT compiler (PR 30, 2026-09-26; filed by PR
+> 28).** Core's parser and semantic's buildAST emit `arrayLiteral`, `attributeAccess` (`@title`)
+> and, from core, `propertyOfExpression` (`the value of #d1`), and neither interchange converter
+> knew them. Core's made an `error` node, and `compileScript` threw `Unknown expression type:
+> error` on `set x to ["a", "b"]` and `put the value of #d1 into #out` in English. Semantic's made
+> a `null` literal: a translated `set x to ["a", "b"]` set `x` to null, a translated loop over an
+> array ran no times, and `set @title to "t"` was dropped. The interchange format gains an
+> `array` node (in core's and semantic's type unions; to-core maps it back), `@title` is a
+> possessive on `me`, and `the value of #d1` the possessive `#d1's value`. Run on both engines;
+> 74 of the 120 new cases failed before (the other 46 are the translations of `the value of`,
+> which PR 27 already read).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

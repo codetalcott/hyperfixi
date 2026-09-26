@@ -77,6 +77,30 @@ describe('fromSemanticAST', () => {
       });
     });
 
+    // buildAST emits core's array and attribute nodes; both fell to the
+    // literal default as `null`.
+    it('converts an array literal from a real parse', () => {
+      const { ast } = buildAST(parse('set x to ["a", "b"]', 'en')!);
+      const value = (ast as { modifiers?: { to?: unknown } }).modifiers?.to;
+      expect(fromSemanticAST(value as { type: string })).toMatchObject({
+        type: 'array',
+        elements: [
+          { type: 'literal', value: 'a' },
+          { type: 'literal', value: 'b' },
+        ],
+      });
+    });
+
+    it('converts `@title` from a real parse to the handler element\'s attribute', () => {
+      const { ast } = buildAST(parse('set @title to "t"', 'en')!);
+      const target = (ast as { args?: unknown[] }).args?.[0];
+      expect(fromSemanticAST(target as { type: string })).toMatchObject({
+        type: 'possessive',
+        object: { type: 'identifier', value: 'me' },
+        property: '@title',
+      });
+    });
+
     it('carries `:count` from a real parse as a variable', () => {
       const { ast } = buildAST(parse('increment :count', 'en')!);
       const target = (ast as { args?: unknown[] }).args?.[0];
