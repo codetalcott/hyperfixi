@@ -1,7 +1,7 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
   "checked": 161,
-  "preserved": 143,
+  "preserved": 144,
   "allowedLosses": {
     "async-block": {
       "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
@@ -11,11 +11,10 @@
     },
     "behavior-draggable": {
       "family": "handler head — event params, `from`, `or pointerup(…)` dropped; the whole `on pointerdown(…) from dragHandle` header is lost",
-      "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n    halt the event\n    trigger draggable:start\n    measure x\n    set startX to it\n    measure y\n    set startY to it\n    set xoff to clientX - startX\n    set yoff to clientY - startY\n    repeat until event pointerup from document\n    wait for pointermove\n    add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; }\n    trigger draggable:move\n    trigger draggable:end\n  end\nend",
+      "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n    halt the event\n    trigger draggable:start\n    measure x\n    set startX to it\n    measure y\n    set startY to it\n    set xoff to clientX - startX\n    set yoff to clientY - startY\n    repeat until event pointerup from document wait for pointermove then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end\n    trigger draggable:end\n  end\nend",
       "lost": [
         "on pointerdown ( clientX , clientY ) from dragHandle",
-        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document",
-        "end"
+        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document"
       ],
       "added": []
     },
@@ -27,25 +26,23 @@
     },
     "behavior-resizable": {
       "family": "handler head — event params, `from`, `or pointerup(…)` dropped",
-      "rendered": "behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)\n  on pointerdown halt the event then trigger resizable:start then measure width then set startWidth to it then measure height then set startHeight to it then set startX to clientX then set startY to clientY then repeat until event pointerup from document wait for pointermove then set newWidth to startWidth + clientX - startX then set newHeight to startHeight + clientY - startY then if newWidth < minWidth set newWidth to minWidth end then if newWidth > maxWidth set newWidth to maxWidth end then if newHeight < minHeight set newHeight to minHeight end then if newHeight > maxHeight set newHeight to maxHeight end then set my *width to newWidth + \"px\" then set my *height to newHeight + \"px\" then trigger resizable:resize then trigger resizable:end end\n  end\nend",
+      "rendered": "behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)\n  on pointerdown halt the event then trigger resizable:start then measure width then set startWidth to it then measure height then set startHeight to it then set startX to clientX then set startY to clientY then repeat until event pointerup from document wait for pointermove then set newWidth to startWidth + clientX - startX then set newHeight to startHeight + clientY - startY then if newWidth < minWidth set newWidth to minWidth end then if newWidth > maxWidth set newWidth to maxWidth end then if newHeight < minHeight set newHeight to minHeight end then if newHeight > maxHeight set newHeight to maxHeight end then set my *width to newWidth + \"px\" then set my *height to newHeight + \"px\" then trigger resizable:resize end then trigger resizable:end\n  end\nend",
       "lost": [
         "( clientX , clientY ) from me",
-        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document",
-        "end"
+        "( clientX , clientY ) or pointerup ( clientX , clientY ) from document"
       ],
       "added": []
     },
     "behavior-sortable": {
-      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; MEANING — the loop `end` moves, pulling following commands into the loop",
-      "rendered": "behavior Sortable(dragClass)\n  on pointerdown set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove then trigger sortable:move on me then remove .{dragClass} from item then trigger sortable:end on me end\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
+      "family": "handler head — event params, `from`, `or pointerup(…)` dropped; `init` reordered after the handler (as behavior-removable)",
+      "rendered": "behavior Sortable(dragClass)\n  on pointerdown set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove then trigger sortable:move on me end then remove .{dragClass} from item then trigger sortable:end on me\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
       "lost": [
         "init if dragClass is undefined set dragClass to \"sorting\" end end",
         "( clientY ) from me",
         "the",
-        "( clientY ) or pointerup ( clientY ) from document",
-        "end"
+        "( clientY ) or pointerup ( clientY ) from document"
       ],
-      "added": ["end end init if dragClass is undefined set dragClass to \"sorting\""]
+      "added": ["end init if dragClass is undefined set dragClass to \"sorting\""]
     },
     "event-debounce": {
       "family": "TRIAGE — naked `${…}` URL rendered quoted (does the interpolation survive?)",
@@ -117,12 +114,6 @@
       "family": "hyperfixi-only tell to-infinitive dropped (`to show`)",
       "rendered": "on click tell #modal",
       "lost": ["to show"],
-      "added": []
-    },
-    "template-literal-list-build": {
-      "family": "MEANING — the loop `end` moves: `set #list.innerHTML` is pulled into the loop",
-      "rendered": "on click set $html to \"\" then for item in $items set $html to $html + `<li>${item.name}</li>` then set #list.innerHTML to $html end",
-      "lost": ["end"],
       "added": []
     }
   }
