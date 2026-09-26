@@ -43,6 +43,25 @@ export interface CommandCodegen {
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null;
 }
 
+const isNode = (value: unknown): value is ASTNode =>
+  typeof value === 'object' && value !== null && 'type' in value;
+
+/**
+ * The node a command acts on. Core's parser, and semantic's buildAST, which
+ * emits core's shape, put it in a slot: the first arg (`hide #d1`) or the
+ * modifier named for its preposition (`toggle .a on #d1`). `node.target` is an
+ * older spelling few producers set, so a codegen that read only it compiled an
+ * explicit target to `me` (add's and remove's moved in Arc 3 step 3).
+ */
+function commandTarget(node: CommandNode, ...slots: string[]): ASTNode | undefined {
+  if (node.target) return node.target;
+  for (const slot of slots) {
+    const found = slot === 'arg' ? node.args?.[0] : node.modifiers?.[slot];
+    if (isNode(found)) return found;
+  }
+  return undefined;
+}
+
 // =============================================================================
 // COMMAND GENERATOR IMPLEMENTATIONS
 // =============================================================================
@@ -57,7 +76,8 @@ class ToggleCodegen implements CommandCodegen {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'on');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     const arg = args[0];
 
@@ -68,17 +88,10 @@ class ToggleCodegen implements CommandCodegen {
         const className = sanitizeClassName(selector.slice(1));
         if (!className) return null;
 
-        if (target === '_ctx.me') {
-          return {
-            code: `_ctx.me.classList.toggle('${className}')`,
-            async: false,
-            sideEffects: true,
-          };
-        }
-
-        // Multiple elements
+        // On the target. (This branch toggled the class name read as a TAG
+        // selector, `querySelectorAll('active')`, whatever the target was.)
         return {
-          code: `Array.from(document.querySelectorAll('${sanitizeSelector(selector.slice(1))}')).forEach(el => el.classList.toggle('${className}'))`,
+          code: `${target}.classList.toggle('${className}')`,
           async: false,
           sideEffects: true,
         };
@@ -207,6 +220,22 @@ class RemoveCodegen implements CommandCodegen {
     const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
+
+    // `remove #d1`, `remove el`: the operand is the element to remove. Only a
+    // class (`.x`) or an attribute (`@x`) is removed FROM something (`me`).
+    const isElement =
+      arg.type === 'selector'
+        ? !/^[.@]/.test((arg as SelectorNode).value)
+        : (arg.type === 'identifier' &&
+            !String((arg as IdentifierNode).value ?? '').startsWith('@')) ||
+          arg.type === 'variable';
+    if (!targetSlot && isElement) {
+      return {
+        code: `${ctx.generateExpression(arg)}.remove()`,
+        async: false,
+        sideEffects: true,
+      };
+    }
 
     // Class remove: .active
     if (arg.type === 'selector') {
@@ -416,7 +445,8 @@ class ShowCodegen implements CommandCodegen {
   readonly command = 'show';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
       code: `${target}.style.display = ''`,
@@ -433,7 +463,8 @@ class HideCodegen implements CommandCodegen {
   readonly command = 'hide';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
       code: `${target}.style.display = 'none'`,
@@ -450,7 +481,8 @@ class FocusCodegen implements CommandCodegen {
   readonly command = 'focus';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
       code: `${target}.focus()`,
@@ -467,7 +499,8 @@ class BlurCodegen implements CommandCodegen {
   readonly command = 'blur';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
       code: `${target}.blur()`,
@@ -617,7 +650,8 @@ class SendCodegen implements CommandCodegen {
     if (args.length === 0) return null;
 
     const eventName = ctx.generateExpression(args[0]);
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'on', 'to');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     const detail = args.length > 1 ? ctx.generateExpression(args[1]) : 'undefined';
 
@@ -808,7 +842,8 @@ class ScrollCodegen implements CommandCodegen {
   readonly command = 'scroll';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     const mods = node.modifiers as { smooth?: boolean; behavior?: { value?: unknown } } | undefined;
     // `smooth` is the semantic path's flag; `behavior` is the core parser's slot (Arc 3 step 3).
@@ -829,7 +864,7 @@ class ScrollCodegen implements CommandCodegen {
 class TakeCodegen implements CommandCodegen {
   readonly command = 'take';
 
-  generate(node: CommandNode, _ctx: CodegenContext): GeneratedExpression | null {
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
@@ -841,6 +876,17 @@ class TakeCodegen implements CommandCodegen {
 
     const className = sanitizeClassName(selector.slice(1));
     if (!className) return null;
+
+    // `take .a from #tabs`: from those elements, then to me.
+    const source = commandTarget(node, 'from');
+    if (source) {
+      ctx.requireHelper('toArray');
+      return {
+        code: `(() => { _rt.toArray(${ctx.generateExpression(source)}).forEach(el => el.classList.remove('${className}')); _ctx.me.classList.add('${className}'); })()`,
+        async: false,
+        sideEffects: true,
+      };
+    }
 
     // Remove from siblings, add to me
     return {
@@ -1159,7 +1205,8 @@ class AppendCodegen implements CommandCodegen {
     if (!contentNode) return null;
 
     const content = ctx.generateExpression(contentNode);
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'to');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
       code: `${target}.insertAdjacentHTML('beforeend', ${content})`,
@@ -1666,7 +1713,8 @@ class SettleCodegen implements CommandCodegen {
   readonly command = 'settle';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const targetNode = commandTarget(node, 'arg');
+    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
     const mods = node.modifiers as Record<string, ASTNode | unknown> | undefined;
 
     const timeoutNode = mods?.for as ASTNode | undefined;
