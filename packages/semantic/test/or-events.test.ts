@@ -12,6 +12,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST } from '../src/index';
+import { OR_WORDS_BY_LANG } from '../src/parser/utils/or-words';
 
 const FOREIGN = [
   'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
@@ -21,6 +22,9 @@ const FOREIGN = [
 const SHAPES = {
   plain: 'on click or keydown add .x to me',
   filtered: 'on click or keypress[key=="Enter"] toggle .active',
+  // The parser reads a source as the first event's, so it renders before the
+  // alternatives, which is where it came from.
+  sourced: 'on click from #b or keydown add .x to me',
 };
 
 function events(node: ReturnType<typeof parse>): string[] {
@@ -41,6 +45,9 @@ describe.each(Object.entries(SHAPES))('%s, through every language', (_, src) => 
     expect(back, foreign).toBeTruthy();
     expect(events(back), foreign).toEqual(events(parse(src, 'en')));
     expect(render(back!, 'en'), foreign).toBe(src);
+    // In the language's own word, not the English one.
+    const or = [...OR_WORDS_BY_LANG[language]][0];
+    expect(foreign.split(' '), foreign).toContain(or);
   });
 });
 
