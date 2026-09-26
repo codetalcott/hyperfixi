@@ -26,6 +26,7 @@ const CASES: string[] = [
   inLoop('show el'),
   inLoop('hide el'),
   inLoop('hide el with *opacity'),
+  inLoop('show el with *opacity'),
   inLoop('toggle .a on el'),
   inLoop('trigger foo on el'),
   inLoop('take .a from el'),
@@ -39,11 +40,15 @@ const CASES: string[] = [
   inLoop('select el'),
   inLoop('reset el'),
   inLoop('clone #t into el'),
+  inLoop('clone el into #t'),
   inLoop('morph el to "<p/>"'),
   inLoop('install Foo on el'),
+  inLoop('measure width of el'),
   inLoop('swap el with #t'),
   inLoop('set @x to 1 on el'),
   inLoop('transition *opacity to 0 on el'),
+  // The whole body: the SOV languages' handler patterns take it in.
+  'on click set @x to 1 on el',
   // At the top level, a command's own `on` is not a new handler.
   'on click get #d1 then set el to it then toggle .a on el then add .b to #d2',
   'on click get #d1 then set el to it then trigger foo on el then add .b to #d2',
