@@ -12,8 +12,9 @@ import { showSchema } from '../generators/command-schemas';
 
 /**
  * A handcrafted show's target takes what the schema's does, a variable
- * included (`show el`). de's and fr's patterns once copied the narrower list,
- * and a variable target was dropped.
+ * included (`show el`). de's pattern once copied the narrower list, and a
+ * variable target was dropped. (fr's keeps its copy: where it rejects a
+ * variable, fr's generated pattern reads it, so the copy never decides.)
  */
 const SHOW_PATIENT_TYPES: ExpectedType[] = [
   ...(showSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
@@ -102,7 +103,7 @@ function getShowPatternsFr(): LanguagePattern[] {
         format: 'afficher {patient}',
         tokens: [
           { type: 'literal', value: 'afficher', alternatives: ['montrer', 'présenter', 'show'] },
-          { type: 'role', role: 'patient', expectedTypes: SHOW_PATIENT_TYPES },
+          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
           // `avec <strategy>` (`… avec *opacity`): without it this pattern
           // outranked the generated one and dropped the strategy.
           {
