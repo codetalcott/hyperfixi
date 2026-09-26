@@ -1233,7 +1233,48 @@ function parseFeatureBlock(
 
   const base = sawClosingEnd ? 1 : 0.8;
   const confidence = confidences.length > 0 ? base * meanConfidence(confidences) : base;
-  return createFeatureNode(action, children, name, meta(confidence));
+  const source = featureSource(action, input, tokens, keywordIdx, bodyStart, language);
+  return createFeatureNode(
+    action,
+    children,
+    name,
+    meta(confidence),
+    source ? new Map([['source', source]]) : undefined
+  );
+}
+
+/**
+ * The URL a feature header names: `eventsource Name from /events`, `socket Name
+ * ws://localhost:8080`. featureBodyStart skips to the first handler, and nothing
+ * kept what it skipped, so the URL was lost in every language. It is the text
+ * between the name and the body, less eventsource's source marker (before the
+ * URL, or after it where the language's marker follows its noun), sliced from
+ * the input: the tokenizers split `ws://…` at its colons. Head-first headers
+ * only, the order every render writes.
+ */
+function featureSource(
+  action: FeatureAction,
+  input: string,
+  tokens: readonly LanguageToken[],
+  keywordIdx: number,
+  bodyStart: number,
+  language: string
+): SemanticValue | undefined {
+  if ((action !== 'eventsource' && action !== 'socket') || keywordIdx !== 0) return undefined;
+  const nameIdx = resolveNameTokenIndex(tokens, keywordIdx, language);
+  if (nameIdx < 0) return undefined;
+  let first = nameIdx + 1;
+  let last = Math.min(bodyStart, tokens.length) - 1;
+  if (action === 'eventsource') {
+    const forms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.source);
+    const isMarker = (t: LanguageToken | undefined) =>
+      !!t && (tokenMatches(t, forms) || (t.normalized ?? '').toLowerCase() === 'source');
+    if (isMarker(tokens[first])) first++;
+    else if (isMarker(tokens[last])) last--;
+  }
+  if (first > last) return undefined;
+  const raw = input.slice(tokens[first].position.start, tokens[last].position.end).trim();
+  return raw ? ({ type: 'expression', raw } as SemanticValue) : undefined;
 }
 
 // =============================================================================
