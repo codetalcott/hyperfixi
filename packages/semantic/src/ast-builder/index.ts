@@ -32,6 +32,24 @@ import type { ExpressionNode, LiteralNode } from './expression-parser';
 /** The loop forms RepeatCommand runs (core `parseRepeatCommand`'s `loopType`). */
 const LOOP_FORMS = new Set(['for', 'times', 'while', 'until', 'until-event', 'forever']);
 
+/** An event value's name, as written: a keyword, a custom name, a reference. */
+function eventText(value: SemanticValue): string | undefined {
+  if (value.type === 'literal') return String(value.value);
+  if (value.type === 'expression') return value.raw;
+  if (value.type === 'reference') return value.value;
+  return undefined;
+}
+
+/**
+ * An event with its `[filter]` glued on (`keydown[key=="Escape"]`), split as
+ * core's parser splits it: the name to listen for, and the filter.
+ */
+function splitEventFilter(raw: string): { name: string; filter?: string } {
+  const at = raw.indexOf('[');
+  if (at <= 0 || !raw.endsWith(']')) return { name: raw };
+  return { name: raw.slice(0, at), filter: raw.slice(at + 1, -1) };
+}
+
 /** The text of a name-like value: an event name, a loop variable. */
 function valueText(value: SemanticValue): string | undefined {
   switch (value.type) {
@@ -396,14 +414,7 @@ export class ASTBuilder {
     // Both feed the same name parsing (including the `click or keydown`
     // multi-event split). Without the expression branch, every custom-event
     // handler silently bound to `click` instead.
-    const eventStr =
-      eventValue?.type === 'literal'
-        ? String(eventValue.value)
-        : eventValue?.type === 'expression'
-          ? eventValue.raw
-          : eventValue?.type === 'reference'
-            ? eventValue.value
-            : undefined;
+    const eventStr = eventValue ? eventText(eventValue) : undefined;
 
     if (eventStr !== undefined) {
       if (eventStr.includes('|') || eventStr.includes(' or ')) {
@@ -413,6 +424,22 @@ export class ASTBuilder {
         event = eventStr;
       }
     }
+
+    // The `or` alternatives the parser holds apart from the event: they were
+    // dropped, so a non-English `on click or keydown` bound `click` alone.
+    const legs = (node.additionalEvents ?? [])
+      .map(eventText)
+      .filter((leg): leg is string => leg !== undefined);
+    if (legs.length > 0) events = [...(events ?? [event]), ...legs];
+
+    // A glued `[filter]` is the handler's condition, as core's parser has it,
+    // not part of the name: `keydown[key=="Escape"]` was passed on as the event
+    // to listen for, so no event ever matched and every filtered non-English
+    // handler was dead.
+    const split = (events ?? [event]).map(splitEventFilter);
+    event = split[0].name;
+    if (events) events = split.map(part => part.name);
+    const filter = split.find(part => part.filter !== undefined)?.filter;
 
     // Build body commands recursively
     const commands = node.body.map(child => this.build(child));
@@ -431,9 +458,13 @@ export class ASTBuilder {
       target = String(fromValue.value);
     }
 
-    // Get condition from 'condition' role if present
+    // Get condition from 'condition' role if present, else the event's filter
     const conditionValue = node.roles.get('condition');
-    const condition = conditionValue ? convertValue(conditionValue) : undefined;
+    const condition = conditionValue
+      ? convertValue(conditionValue)
+      : filter !== undefined
+        ? convertValue({ type: 'expression', raw: filter })
+        : undefined;
 
     // Get destination (watchTarget) if present
     const destinationValue = node.roles.get('destination');

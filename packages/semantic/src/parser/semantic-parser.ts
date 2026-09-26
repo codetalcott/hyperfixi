@@ -1204,8 +1204,10 @@ export class SemanticParserImpl implements ISemanticParser {
           try {
             const reparsed = this.parse(reduced, language);
             if (reparsed && reparsed.kind === 'event-handler') {
+              // The filter stays glued to its leg, as the main event's does
+              // (`keydown[key=="Escape"]`): it was excised with the leg and lost.
               (reparsed as { additionalEvents?: SemanticValue[] }).additionalEvents = [
-                { type: 'literal', value: evNorm },
+                { type: 'literal', value: lastIdx > i + 1 ? evNorm + filterTok.value : evNorm },
               ];
               const result = modifiers
                 ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
@@ -7500,9 +7502,16 @@ export class SemanticParserImpl implements ISemanticParser {
       // Normalize event name using shared translations
       const eventLower = (eventToken.normalized || eventToken.value).toLowerCase();
 
-      // Accept it as an event (could be native or English event name)
+      // Accept it as an event (could be native or English event name), with a
+      // trailing `[filter]` glued on, as the main event carries its own.
       tokens.advance();
-      additionalEvents.push({ type: 'literal', value: eventLower });
+      const filterToken = tokens.peek();
+      if (filterToken?.kind === 'selector' && filterToken.value.startsWith('[')) {
+        tokens.advance();
+        additionalEvents.push({ type: 'literal', value: eventLower + filterToken.value });
+      } else {
+        additionalEvents.push({ type: 'literal', value: eventLower });
+      }
     }
 
     return additionalEvents;

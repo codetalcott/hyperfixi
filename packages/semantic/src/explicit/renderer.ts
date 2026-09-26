@@ -61,6 +61,7 @@ import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
 import { getOfPossessiveMarker, PROPERTY_NAME_LEXICON } from '../parser/utils/expression-lexicon';
+import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
@@ -635,6 +636,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * Emit a handler's `or <event>` alternatives right after its event. The
+   * parser captures them (`additionalEvents`), and nothing rendered them, so
+   * every translation of `on click or keydown …` listened for `click` alone.
+   * The language's own or-word there parses back in all 23 languages
+   * (measured); a leg's `[filter]` travels glued to it, as the event's does.
+   */
+  private spliceOrEvents(
+    node: EventHandlerSemanticNode,
+    parts: string[],
+    eventPart: number,
+    language: string
+  ): void {
+    const legs = node.additionalEvents ?? [];
+    if (legs.length === 0) return;
+    const or = [...(OR_WORDS_BY_LANG[language] ?? [])][0] ?? 'or';
+    const rendered = legs.map(leg => `${or} ${this.renderEventName(leg, language)}`);
+    parts.splice(eventPart >= 0 ? eventPart + 1 : parts.length, 0, ...rendered);
+  }
+
+  /**
    * Emit an event handler's modifiers into the rendered head. They live in
    * `eventModifiers`, not in roles, so no pattern slot ever rendered them: every
    * `on X from <source>` lost its source in all 23 languages, silently (the
@@ -713,6 +734,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
 
     if (node.kind === 'event-handler') {
+      // The or-legs first, while `eventPart` still indexes the event: the
+      // modifiers may unshift. A `from` then lands between the event and its
+      // alternatives, which is how the parser reads a source (the first leg's).
+      this.spliceOrEvents(node as EventHandlerSemanticNode, parts, eventPart, language);
       this.spliceEventModifiers(node as EventHandlerSemanticNode, parts, eventPart, language);
     }
 
