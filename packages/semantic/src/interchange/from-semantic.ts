@@ -137,6 +137,24 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
         scope: (node.scope ?? 'local') as 'local' | 'global' | 'element',
         ...pos(node),
       };
+    // buildAST emits core's array and attribute nodes, and both fell to the
+    // literal default as `null`: a translated `set x to ["a", "b"]` compiled
+    // `x` to null, and `set @title to "t"` was dropped.
+    case 'arrayLiteral':
+      return {
+        type: 'array',
+        elements: ((node.elements ?? []) as SemanticASTNode[]).map(element =>
+          fromSemanticAST(element)
+        ),
+        ...pos(node),
+      };
+    case 'attributeAccess':
+      return {
+        type: 'possessive',
+        object: { type: 'identifier', value: 'me' },
+        property: `@${node.attributeName as string}`,
+        ...pos(node),
+      };
     case 'htmlSelector':
       return {
         type: 'selector',

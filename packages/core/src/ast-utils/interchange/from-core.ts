@@ -186,6 +186,32 @@ function convertNode(node: CoreNode, infer: RoleInferrer | null): InterchangeNod
         scope: (node.scope ?? 'local') as 'local' | 'global' | 'element',
         ...pos(node),
       };
+    // An array, an attribute of the handler's element, and `the X of Y` fell to
+    // the error default: the AOT threw `Unknown expression type: error` on
+    // `set x to ["a", "b"]` and `put the value of #d1 into #out`, and dropped
+    // `set @title to "t"`.
+    case 'arrayLiteral':
+      return {
+        type: 'array',
+        elements: ((node.elements ?? []) as CoreNode[]).map(element => convertNode(element, infer)),
+        ...pos(node),
+      };
+    case 'attributeAccess':
+      return {
+        type: 'possessive',
+        object: { type: 'identifier', value: 'me' },
+        property: `@${node.attributeName as string}`,
+        ...pos(node),
+      };
+    case 'propertyOfExpression': {
+      const property = node.property as CoreNode | undefined;
+      return {
+        type: 'possessive',
+        object: convertNode(node.target as CoreNode, infer),
+        property: (property?.name ?? property?.value ?? '') as string,
+        ...pos(node),
+      };
+    }
     case 'htmlSelector':
       return {
         type: 'selector',
