@@ -1518,10 +1518,14 @@ export class PatternMatcher {
     // Mirrors the bracket-filter skip already in the SOV/mid-stream extractors.
     if (patternToken.role === 'event') {
       const filterTok = tokens.peek();
+      // A filter touches its event (`keydown[key=="Escape"]`, split by the
+      // tokenizer). A spaced `[…]` is the next value: qu writes `put [1, 2]
+      // into x` as `click [1, 2] ta x man churay`, the array after the event.
       if (
         filterTok &&
         filterTok.kind === 'selector' &&
         filterTok.value.startsWith('[') &&
+        filterTok.position.start === token.position.end &&
         'value' in value
       ) {
         // Fold the filter back onto the event value (the tokenizer split it off).
@@ -3125,11 +3129,15 @@ export class PatternMatcher {
     // a property access — command verbs are never reference bases.
     const baseLower = token.value.toLowerCase();
     const fusedFirst = tokens.peek();
+    // Only a `.prop` that TOUCHES its base is a property: `:x .item`, spaced,
+    // is a variable and a class (`set :x to .item`, which it/pl/ru/uk render
+    // with the value unmarked after the variable).
     if (
       (token.kind === 'identifier' || PatternMatcher.PROPERTY_ACCESS_BASES.has(baseLower)) &&
       fusedFirst &&
       fusedFirst.kind === 'selector' &&
-      /^\.[a-zA-Z_]/.test(fusedFirst.value)
+      /^\.[a-zA-Z_]/.test(fusedFirst.value) &&
+      fusedFirst.position.start === token.position.end
     ) {
       let fusedChain = token.value;
       const fusedProps: string[] = [];

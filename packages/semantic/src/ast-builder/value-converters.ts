@@ -72,6 +72,14 @@ function convertValueShape(value: SemanticValue, warnings?: string[]): Expressio
     case 'selector':
       // `<button/> in me`: core's `in` binary expression.
       if (value.scope) return convertScopedQuery(value, warnings);
+      // `[1, 2]` is an array, which the tokenizers read as one attribute-
+      // selector token. A bare `[…]` is never a selector in hyperscript (an
+      // attribute is `@name` or `[@name=…]`), and querySelectorAll('[1,2]')
+      // throws: every translated `repeat for x in [1, 2]`, `log [1, 2]` and
+      // `put [1, 2] into x` threw on the direct path.
+      if (/^\[(?!@)/.test(value.value)) {
+        return convertExpression({ type: 'expression', raw: value.value });
+      }
       return convertSelector(value, warnings);
     case 'reference':
       return convertReference(value);

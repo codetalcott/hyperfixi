@@ -946,7 +946,11 @@ export const setSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to set',
       required: true,
-      expectedTypes: ['literal', 'expression', 'reference'],
+      // A variable takes any value, an element (`set el to #panel`, `to <li/>`)
+      // and an array (`to [1, 2]`, which tokenizes as one selector) included.
+      // Without `selector`, those matched no pattern and the whole `set` was
+      // lost, in English and so in every translation.
+      expectedTypes: ['literal', 'selector', 'expression', 'reference'],
       svoPosition: 2,
       sovPosition: 2,
       // Override patient marker for SVO languages with their native prepositions
