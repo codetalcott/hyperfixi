@@ -233,7 +233,11 @@ describe('SOV render while-heads (en→foreign render residual, repeat-while row
   // the condition dropped, in all six languages (the repeat-while rows of the
   // render-fidelity and bare-render allowlists). `repeatWhileHeadSOV`
   // (patterns/repeat.ts) closes the round trip; each case fails without it.
+  // The condition is the WHOLE comparison: the head used to keep only
+  // `#counter.innerText`, dropping `< 10` in every language (the en reference
+  // included), so the loop never ended.
   const langs = ['ja', 'ko', 'tr', 'hi', 'bn', 'qu'];
+  const condition = { type: 'expression', raw: '#counter.innerText < 10' };
   const bareEn = 'repeat while #counter.innerText < 10 increment #counter wait 200ms end';
 
   for (const lang of langs) {
@@ -243,7 +247,7 @@ describe('SOV render while-heads (en→foreign render residual, repeat-while row
       const back = parse(out, lang) as AnyNode;
       const repeat = findRepeat(back);
       expect(repeat).toBeTruthy();
-      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      expect(role(repeat!, 'condition')).toMatchObject(condition);
       expect(role(repeat!, 'loopType')).toMatchObject({ type: 'literal', value: 'while' });
     });
   }
@@ -256,7 +260,7 @@ describe('SOV render while-heads (en→foreign render residual, repeat-while row
       expect(back?.kind).toBe('event-handler');
       const repeat = findRepeat(back);
       expect(repeat).toBeTruthy();
-      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      expect(role(repeat!, 'condition')).toMatchObject(condition);
       // The fused `while-event-*-sov-simple` capture must not survive as a
       // standalone junk `while` node (the bn/hi failure mode before the
       // fused-while→repeat-while-head re-parse swap).

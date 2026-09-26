@@ -159,15 +159,13 @@ describe('realtime / service-worker blocks', () => {
     }
   });
 
-  it('worker: the per-segment coverage check surfaces the dropped def param', () => {
-    // Arc C finding (family: def parameter lists). `def add(a, b)` parses with
-    // the second parameter dropped from the signature — previously silent, now
-    // visible. Named in NEXT_STEPS § "Input coverage"; flip this to
-    // toHaveLength(0) when the def-param capture lands.
+  it('worker: every token of `return a + b` is consumed', () => {
+    // Arc C locked one unconsumed `"b"` here as a def-PARAMETER drop. The
+    // signature always kept both parameters: the drop was the body. `a` was read
+    // as the English article, so `return a + b` captured `+` alone and `b` was
+    // left over (and the en reference, and every translation, was `return +`).
     const diagnostics = parse(WORKER, 'en').diagnostics ?? [];
-    const unconsumed = diagnostics.filter(d => d.code === 'unconsumed-input');
-    expect(unconsumed).toHaveLength(1);
-    expect(unconsumed[0].message).toContain('"b"');
+    expect(diagnostics.filter(d => d.code === 'unconsumed-input')).toHaveLength(0);
   });
 
   it('does not hijack ordinary commands', () => {

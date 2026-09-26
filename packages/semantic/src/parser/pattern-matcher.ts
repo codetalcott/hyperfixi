@@ -691,6 +691,24 @@ export class PatternMatcher {
   ]);
 
   /**
+   * Comparison and logical operators a LOOP condition continues through, by
+   * surface (the en tokenizer classifies `<`/`<=` as selectors, since `<` can open
+   * a query literal, and `!=` as an operator) plus `and`/`or` by normalized form.
+   */
+  private static readonly LOOP_CONDITION_OPERATORS: ReadonlySet<string> = new Set([
+    '<',
+    '>',
+    '<=',
+    '>=',
+    '==',
+    '!=',
+    '===',
+    '!==',
+    'and',
+    'or',
+  ]);
+
+  /**
    * Extend a `{condition}` capture with a trailing `<operator> [operand]`.
    *
    * A fused event pattern ends in a bare `{condition}` slot — tl
@@ -718,33 +736,64 @@ export class PatternMatcher {
     if (patternToken.role !== 'condition') return;
     if (!captured.has('condition')) return;
     if (tokens.position() <= startIdx) return;
-    // Only the TRAILING condition slot of a FUSED EVENT pattern. Elsewhere the
-    // condition is followed by its own branches, and the clause walk's condition
-    // scan — which already knows these operator words — is what delimits it.
-    // Measured: without this gate the fold fires on the bare `if #modal exists
-    // show #modal else … end`, whose en parse then collapses to `if #modal
-    // exists` with both branches gone (bn/tl/tr on the bare-render gate).
-    if (nextPatternToken !== undefined || this.currentPatternCommand !== 'on') return;
+    // The TRAILING condition slot of a FUSED EVENT pattern, or a LOOP head's
+    // condition. Elsewhere the condition is followed by its own branches, and
+    // the clause walk's condition scan — which already knows these operator
+    // words — is what delimits it. Measured: without this gate the fold fires on
+    // the bare `if #modal exists show #modal else … end`, whose en parse then
+    // collapses to `if #modal exists` with both branches gone (bn/tl/tr on the
+    // bare-render gate). A loop head has no branches: its body follows as
+    // sibling commands, which the operand guard below leaves alone.
+    //
+    // A loop condition also continues through comparisons: the `repeat while`
+    // head captured only `#counter.innerText` of `#counter.innerText < 10`, so
+    // the English reference — and every translation of it — lost `< 10`, and
+    // the loop no longer ended.
+    const inLoop = this.currentPatternCommand === 'repeat';
+    if (!inLoop && (nextPatternToken !== undefined || this.currentPatternCommand !== 'on')) return;
 
-    const op = tokens.peek();
-    if (!op) return;
     const words = PatternMatcher.CONDITION_OPERATOR_WORDS;
-    if (!words.has((op.normalized ?? '').toLowerCase()) && !words.has(op.value.toLowerCase())) {
-      return;
-    }
-    if (this.patternTokenWouldMatch(nextPatternToken, op)) return;
+    const isOperator = (t: LanguageToken): boolean => {
+      const normalized = (t.normalized ?? '').toLowerCase();
+      const value = t.value.toLowerCase();
+      if (words.has(normalized) || words.has(value)) return true;
+      const loopOps = PatternMatcher.LOOP_CONDITION_OPERATORS;
+      return inLoop && (loopOps.has(value) || loopOps.has(normalized));
+    };
+    const isOperand = (t: LanguageToken | null): t is LanguageToken =>
+      !!t &&
+      (t.kind === 'selector' || t.kind === 'identifier' || t.kind === 'literal') &&
+      !isOperator(t) &&
+      !COMMAND_ACTION_KEYWORDS.has((t.normalized ?? t.value).toLowerCase()) &&
+      !this.patternTokenWouldMatch(nextPatternToken, t);
 
-    tokens.advance(); // the operator
-    const operand = tokens.peek();
-    if (
-      operand &&
-      (operand.kind === 'selector' ||
-        operand.kind === 'identifier' ||
-        operand.kind === 'literal') &&
-      !COMMAND_ACTION_KEYWORDS.has((operand.normalized ?? operand.value).toLowerCase())
-    ) {
-      tokens.advance();
+    let folded = false;
+    for (;;) {
+      const op = tokens.peek();
+      if (!op || !isOperator(op) || this.patternTokenWouldMatch(nextPatternToken, op)) break;
+      tokens.advance(); // the operator
+      folded = true;
+      let operand = tokens.peek();
+      if (isOperand(operand)) {
+        tokens.advance();
+        // A member glued to the operand (`#max.value`) belongs to it.
+        for (let next = tokens.peek(); ; next = tokens.peek()) {
+          if (
+            !next ||
+            !/^\.[a-zA-Z_]\w*$/.test(next.value) ||
+            next.position.start !== operand.position.end
+          ) {
+            break;
+          }
+          tokens.advance();
+          operand = next;
+        }
+      }
+      // A fused event slot takes one operator; a loop condition may chain
+      // (`x < 10 and y > 2`).
+      if (!inLoop) break;
     }
+    if (!folded) return;
 
     const raw = joinExpressionTokens(
       tokens.tokens.slice(startIdx, tokens.position()),
@@ -1722,6 +1771,13 @@ export class PatternMatcher {
    */
   private static readonly RUN_OPERATORS = new Set(['+', '-', '*', '/']);
 
+  /** The next token is followed by a run operator with space on both sides. */
+  private spacedRunOperatorFollows(tokens: TokenStream): boolean {
+    const [operand, op, next] = [tokens.peek(), tokens.peek(1), tokens.peek(2)];
+    if (!operand || !op || !next || !PatternMatcher.RUN_OPERATORS.has(op.value)) return false;
+    return op.position.start > operand.position.end && next.position.start > op.position.end;
+  }
+
   /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
   private static isBareWordToken(token: { value: string } | null | undefined): boolean {
     return !!token && /^[A-Za-z_][A-Za-z0-9_]*$/.test(token.value);
@@ -1787,7 +1843,7 @@ export class PatternMatcher {
       if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
       tokens.advance();
-      if (!this.tryConsumeRunOperand(tokens)) {
+      if (!this.tryConsumeRunOperand(tokens, true)) {
         tokens.reset(beforeOp);
         break;
       }
@@ -1860,7 +1916,7 @@ export class PatternMatcher {
       if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
       tokens.advance();
-      if (!this.tryConsumeRunOperand(tokens)) {
+      if (!this.tryConsumeRunOperand(tokens, true)) {
         // Dangling operator — leave it (and whatever follows) unconsumed.
         tokens.reset(beforeOp);
         break;
@@ -2050,9 +2106,20 @@ export class PatternMatcher {
    * Consume one operand of an operator run. Returns false (stream untouched)
    * if the upcoming tokens do not form an operand.
    */
-  private tryConsumeRunOperand(tokens: TokenStream): boolean {
+  private tryConsumeRunOperand(tokens: TokenStream, afterOperator = false): boolean {
     const token = tokens.peek();
     if (!token) return false;
+
+    // A particle is an operand where no marker can stand: directly after an
+    // operator, or before a SPACED binary operator (`a + b`). es/it/pt `a`, the
+    // preposition "to", is also a common variable name, so `retornar a + b`
+    // lost its whole value (worker-basic); a marker is followed by its value,
+    // never by an operator. The spacing keeps `añadir 5 a -1` ("add 5 to -1")
+    // a marker: its `-` is glued to the number.
+    if (token.kind === 'particle' && (afterOperator || this.spacedRunOperatorFollows(tokens))) {
+      tokens.advance();
+      return true;
+    }
 
     // Parenthesized group: `(` … matching `)` (parens tokenize as standalone
     // identifier tokens; role markers INSIDE the parens — hi `के_रूप_में`'s में —
@@ -3664,6 +3731,9 @@ export class PatternMatcher {
    */
   private static readonly ENGLISH_NOISE_WORDS = new Set(['the', 'a', 'an']);
 
+  /** The whole token is an arithmetic, comparison or string operator. */
+  private static readonly BINARY_OPERATOR_TEXT = /^(?:[-+*/%]|[<>]=?|===?|!==?)$/;
+
   /**
    * Skip noise words like "the" before selectors and identifiers.
    * This enables more natural English syntax like "toggle the .active"
@@ -3681,6 +3751,20 @@ export class PatternMatcher {
       const mark = tokens.mark();
       tokens.advance();
       const nextToken = tokens.peek();
+
+      // `a`/`an` before an operator is a VARIABLE, not an article. The en
+      // tokenizer classes `+`/`-`/`*` as identifiers, so the branch below took
+      // `return a + b` for "article, noun": it skipped the `a`, captured `+`
+      // alone and dropped `b` (worker-basic, and so every translation of it),
+      // and `put a + b into #o` lost its whole `put`.
+      if (
+        (tokenLower === 'a' || tokenLower === 'an') &&
+        nextToken &&
+        PatternMatcher.BINARY_OPERATOR_TEXT.test(nextToken.value)
+      ) {
+        tokens.reset(mark);
+        return;
+      }
 
       if (nextToken && (nextToken.kind === 'selector' || nextToken.kind === 'identifier')) {
         // Keep the position after "the" - effectively skipping it

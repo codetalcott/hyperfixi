@@ -22,6 +22,7 @@ import type {
   PatternToken,
   ReferenceValue,
   PropertyPathValue,
+  ExtractionRule,
 } from '../types';
 import { createSelector } from '../types';
 
@@ -70,6 +71,20 @@ import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
  * also carries `[{duration}]`) without ever outweighing a top-level difference.
  */
 const NESTED_ROLE_BONUS = 5;
+
+/**
+ * The literal a pattern pins a role to, normalized for comparison: an
+ * extraction default, or a fixed value the pattern records when it matches.
+ * The second is how `go`'s url variant says what it means (`go url /page`
+ * records `method: 'url'`); reading only defaults let that variant render every
+ * `go`, so `go back` came out as `go url back`: a navigation to a page named
+ * "back" in every language.
+ */
+function pinnedLiteral(rule: ExtractionRule | undefined): string | undefined {
+  if (rule?.default?.type === 'literal') return String(rule.default.value).trim().toLowerCase();
+  if (rule?.value !== undefined) return String(rule.value).trim().toLowerCase();
+  return undefined;
+}
 
 /**
  * The English DOM-property words a possessive can name, taken from the same
@@ -467,9 +482,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const pinnedValues = new Map<string, Set<string>>();
     for (const pattern of candidates) {
       for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
-        const pinned = rule?.default;
-        if (!pinned || pinned.type !== 'literal') continue;
-        const key = String(pinned.value).trim().toLowerCase();
+        const key = pinnedLiteral(rule);
+        if (key === undefined) continue;
         const set = pinnedValues.get(role) ?? new Set<string>();
         set.add(key);
         pinnedValues.set(role, set);
@@ -550,9 +564,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // forms unreachable: `put "<p>" before me` rendered with the into-pattern in
       // all 23 languages, losing the distinction the source drew.
       for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
-        const pinned = rule?.default;
-        if (!pinned || pinned.type !== 'literal') continue;
-        const pinnedKey = String(pinned.value).trim().toLowerCase();
+        const pinnedKey = pinnedLiteral(rule);
+        if (pinnedKey === undefined) continue;
         const actual = node.roles.get(role as SemanticRole);
         const actualKey =
           actual?.type === 'literal' ? String(actual.value).trim().toLowerCase() : undefined;
