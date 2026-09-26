@@ -96,13 +96,9 @@ const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
  */
 const COMPARISON_KEYWORDS = new Set([
   'is',
-  'am',
   'matches',
   'match',
   'contains',
-  'contain',
-  'includes',
-  'include',
   'equals',
   'has',
   'have',

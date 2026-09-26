@@ -102,3 +102,58 @@ describe.each(CONDITIONS)('if %s', (condition, expected) => {
     expect(await run(compiled.ast)).toBe(expected);
   });
 });
+
+// The rest of core's phrases, both ways, in English through buildAST (es and it
+// render some of these words as ones they do not read back). Both engines agree
+// on each, except `has`/`have`, which upstream does not have: there the answer
+// is core's, since a translation runs on core.
+const MORE_CONDITIONS: Array<[string, string]> = [
+  ['p am 1', 'yes'],
+  ['p am 2', 'no'],
+  ['p am in [1, 2]', 'yes'],
+  ['p am in [3, 4]', 'no'],
+  ['p am not in [3, 4]', 'yes'],
+  ['p am not in [1, 2]', 'no'],
+  ['p is equal 1', 'yes'],
+  ['p is equal 2', 'no'],
+  ['p is not equal 2', 'yes'],
+  ['p is not equal 1', 'no'],
+  ['p is not really "1"', 'yes'],
+  ['p is not really 1', 'no'],
+  ['p is really equal to 1', 'yes'],
+  ['p is really equal to "1"', 'no'],
+  ['p is not really equal to "1"', 'yes'],
+  ['p is not really equal to 1', 'no'],
+  ['p really equals 1', 'yes'],
+  ['p really equals "1"', 'no'],
+  ['p equals 1', 'yes'],
+  ['p equals 2', 'no'],
+  ['#d1 equals #d1', 'yes'],
+  ['#d1 equals #d2', 'no'],
+  ['[1, 2] includes 1', 'yes'],
+  ['[1, 2] includes 3', 'no'],
+  ['[1, 2] include 1', 'yes'],
+  ['[1, 2] include 3', 'no'],
+  ['[1, 2] does not include 3', 'yes'],
+  ['[1, 2] does not include 1', 'no'],
+  ['[1, 2] contain 1', 'yes'],
+  ['[1, 2] contain 3', 'no'],
+  ['[1, 2] do not contain 3', 'yes'],
+  ['[1, 2] do not contain 1', 'no'],
+  ['[1, 2] does not contains 3', 'yes'],
+  ['[1, 2] does not contains 1', 'no'],
+  ['#d1 do not match .y', 'yes'],
+  ['#d1 do not match .x', 'no'],
+  ['#d1 does not follow #d2', 'yes'],
+  ['#d2 does not follow #d1', 'no'],
+  ['#d1 has .x', 'yes'],
+  ['#d1 has .y', 'no'],
+  ['#d1 have .x', 'yes'],
+  ['#d1 have .y', 'no'],
+];
+
+it.each(MORE_CONDITIONS)('English, through buildAST: if %s', async (condition, expected) => {
+  const node = parseSemantic(handler(condition), 'en').node;
+  expect(node, condition).toBeTruthy();
+  expect(await run(buildAST(node!).ast)).toBe(expected);
+});
