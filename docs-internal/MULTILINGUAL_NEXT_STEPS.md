@@ -4619,7 +4619,8 @@ this signal was missing.
 >   `end` per `if`. Upstream closes the chain with one. So semantic's render of an else-if chain in
 >   a behavior's non-last handler is invalid on upstream (`Unexpected Token : end`: the extra `end`
 >   closes the behavior early), and the upstream form collapses the behavior in the semantic parse.
->   The parser's if-fold, the renderer and this count have to switch together. Next: PR 8g.
+>   The parser's if-fold, the renderer and this count have to switch together. Done in PR 8g,
+>   below.
 > - pt `para` and sw `kwa` read a bare for-loop's word as the destination marker, so the loop's
 >   `end` closes its handler early. Pinned in `behavior-block-openers.test.ts`.
 > - qu and tr split a trailing number off an identifier: `behavior Demo15` defines `Demo`, so
@@ -4628,6 +4629,19 @@ this signal was missing.
 > `behavior-handlers-direct-path.test.ts` (core) defines, installs and fires a translated two-handler
 > behavior in all 23 languages; on main's block parser all 46 cases fail (the collapsed parse
 > compiled the behavior as a command sequence: `Unknown command: behavior`).
+>
+> **An `else if` chain shares one `end` (PR 8g, 2026-09-26).** The `else if` finding above. Upstream
+> reads `else if` as a chain that one `end` closes; semantic counted the second `if` as a nested
+> block in the conditional fold, the body walker and the block parser, and its renderer closed each
+> `if` with its own `end`. So `if a … else if b … end then c` put `c` in the else branch, where on
+> the direct path it ran only when `a` was false (all 23 languages, run); a chain inside a loop lost
+> the command after the loop; and the render's extra `end` closed a behavior's handler early on
+> upstream. An `if` right after `else` now opens nothing in all three counters, and the renderer
+> writes the chain's one `end` after its last `if`. No corpus row has a chain.
+>
+> **Found, filed:** a loop that holds an `if`, followed by a command, drops that command in 13
+> languages (bn es id it ms pl pt ru sw th tl uk vi) for `repeat 3 times`, and in bn for `for … in`,
+> with a plain `else` as much as a chain. It predates PR 8f and 8g (measured on main's sources).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
