@@ -298,6 +298,32 @@ describe('ExpressionCodegen', () => {
     });
   });
 
+  // The two shapes core's parser emits (semantic's buildAST, the first).
+  // Execution: compiler/member-access-execution.test.ts.
+  describe('member expressions', () => {
+    it('reads a named property: `#d1.value`', () => {
+      setup();
+      const result = codegen.generate({
+        type: 'member',
+        object: { type: 'identifier', value: 'me' },
+        property: { type: 'identifier', value: 'value', name: 'value' },
+        computed: false,
+      });
+      expect(result).toBe('_ctx.me.value');
+    });
+
+    it('reads a computed property through its key: `#d1[k]`', () => {
+      setup();
+      const result = codegen.generate({
+        type: 'member',
+        object: { type: 'identifier', value: 'me' },
+        property: { type: 'identifier', value: ':k', name: ':k' },
+        computed: true,
+      });
+      expect(result).toBe("_ctx.me[_ctx.locals.get('k')]");
+    });
+  });
+
   describe('positional expressions', () => {
     it('generates next sibling', () => {
       setup();

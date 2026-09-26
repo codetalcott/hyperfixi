@@ -363,9 +363,20 @@ export class ExpressionCodegen {
   private generateMember(node: MemberExpressionNode): string {
     const object = this.generate(node.object);
 
-    if (typeof node.property === 'string') {
-      const prop = node.property;
-
+    // A non-computed property is a name, whichever way the converter hands it
+    // over: a string, or an identifier node (`#d1.value`, from core's parser
+    // and semantic's buildAST alike). Only a computed one is an expression.
+    // Reading every identifier node as computed compiled `#d1.value` to
+    // `document.getElementById('d1')[value]`, which throws: `value` is not a
+    // variable.
+    const property = node.property as string | IdentifierNode;
+    const prop =
+      typeof property === 'string'
+        ? property
+        : !node.computed && property.type === 'identifier'
+          ? (property.value ?? property.name)
+          : undefined;
+    if (prop !== undefined) {
       // Style property (*opacity, *color, etc.)
       if (prop.startsWith('*')) {
         const styleProp = prop.slice(1);
