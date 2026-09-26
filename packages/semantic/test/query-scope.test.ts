@@ -28,6 +28,9 @@ const SHAPES = [
   // Bare, outside a handler.
   'add @disabled to <button/> in me',
   'remove <li/> in #list',
+  // No scope: es `poner <b/> en #x` and de `setzen <b/> in #x` spell put's own
+  // destination marker as a locative, which the pattern owes.
+  'on click put <b/> into #x',
 ];
 
 describe('English keeps the scope', () => {
@@ -57,7 +60,9 @@ it('buildAST writes core’s `in` expression', () => {
   expect((ast as { modifiers?: { to?: unknown } }).modifiers?.to).toMatchObject({
     type: 'binaryExpression',
     operator: 'in',
-    left: { type: 'selector', value: 'button' },
+    // `fromQuery` is what core's evaluator reads to scope the lookup; without
+    // it `in` is a containment test and returns a boolean.
+    left: { type: 'selector', value: 'button', fromQuery: true },
     right: { type: 'identifier', name: 'me' },
   });
 });
