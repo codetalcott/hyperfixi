@@ -34,7 +34,8 @@ const actions = fixture.actions as unknown as Record<string, FixtureAction>;
  *
  * - `wait` flips the whole node shape between event and duration forms
  * - `put`  derives its preposition from a role's literal value
- * - `go`   injects literal `'back'` / `'url'` args (positional-only contract)
+ * - `go`   turns a bare `back`/`forward` destination into its flag, and a
+ *          `url` method into the slot that holds the destination
  * - `pick` dispatches on variant and splits a range surface into three modifiers
  */
 const ALWAYS_HAND_WRITTEN = ['go', 'pick', 'put', 'wait'];
