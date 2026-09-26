@@ -1,7 +1,7 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
   "checked": 161,
-  "preserved": 158,
+  "preserved": 159,
   "allowedLosses": {
     "async-block": {
       "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
@@ -14,12 +14,6 @@
       "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n  end\n  on pointerdown(clientX, clientY) from dragHandle halt the event then trigger draggable:start then measure x then set startX to it then measure y then set startY to it then set xoff to clientX - startX then set yoff to clientY - startY then repeat until event pointerup from document wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end then trigger draggable:end\n  end\nend",
       "lost": [],
       "added": ["end"]
-    },
-    "event-debounce": {
-      "family": "TRIAGE — naked `${…}` URL rendered quoted (does the interpolation survive?)",
-      "rendered": "on input debounced at 300ms fetch \"/api/search?q=${my value}\" as json then put it into #results",
-      "lost": ["/api/search?q=$ { my value }"],
-      "added": ["\"/api/search?q=${my value}\""]
     }
   }
 }
