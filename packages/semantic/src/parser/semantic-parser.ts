@@ -7463,11 +7463,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // `once` written as `first`: en `on first click …`, and every other
     // language's leading `first` (as its leading `once`). Semantic had no
     // reading for either: en dropped the whole head (`on first click add …`
-    // rendered `add …`). Never before a selector, which is a positional query
-    // (`first <li/>`), not a head.
+    // rendered `add …`). A leading `first` before a selector is a positional
+    // query instead (hand-written ja `first <li/> を 隠す`, hide first <li/>).
     const word = (i: number) => allTokens[i]?.value.toLowerCase();
     const notQuery = (i: number) => !!allTokens[i] && allTokens[i].kind !== 'selector';
-    if (firstLower === 'on' && word(1) === 'first' && notQuery(2)) {
+    if (firstLower === 'on' && word(1) === 'first' && allTokens.length > 2) {
       return {
         modifiers: { once: true, onceAsFirst: true },
         remainingInput:

@@ -50,3 +50,13 @@ describe.each([
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
   });
 });
+
+// A leading positional `first` stays a query: hand-written verb-final input
+// may keep the English word, and the modifier reading would drop it.
+it.each([
+  ['ja', 'first <li/> を 隠す'],
+  ['tr', 'first <li/> i gizle'],
+  ['ko', 'first <li/> 를 숨기기'],
+])('%s: a leading positional `first` is not the modifier', (language, src) => {
+  expect(render(parse(src, language)!, 'en')).toBe('hide first <li/>');
+});
