@@ -10772,19 +10772,46 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "event-v"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "event-v"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
-              "from": {
+              {
                 "type": "selector",
                 "value": "#source-v",
                 "selector": "#source-v",
                 "selectorType": "id"
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -10819,13 +10846,40 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "event-v"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "event-v"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -10840,13 +10894,40 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "event-v"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "event-v"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -10911,19 +10992,46 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "event-v"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "event-v"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
-              "from": {
+              {
                 "type": "selector",
                 "value": "#source-v",
                 "selector": "#source-v",
                 "selectorType": "id"
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -10990,19 +11098,46 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "event-v"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "event-v"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
-              "from": {
+              {
                 "type": "selector",
                 "value": "#source-v",
                 "selector": "#source-v",
                 "selectorType": "id"
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -11037,13 +11172,40 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "transitionend"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "transitionend"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
-            },
+            ],
             "isBlocking": true
           }
         },
@@ -11062,17 +11224,44 @@
           "ast": {
             "type": "command",
             "name": "wait",
-            "args": [],
-            "modifiers": {
-              "for": {
-                "type": "literal",
-                "value": "transitionend"
+            "args": [
+              {
+                "type": "arrayLiteral",
+                "elements": [
+                  {
+                    "type": "objectLiteral",
+                    "properties": [
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "name"
+                        },
+                        "value": {
+                          "type": "literal",
+                          "value": "transitionend"
+                        }
+                      },
+                      {
+                        "type": "objectProperty",
+                        "key": {
+                          "type": "identifier",
+                          "name": "args"
+                        },
+                        "value": {
+                          "type": "arrayLiteral",
+                          "elements": []
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
-              "from": {
+              {
                 "type": "identifier",
                 "name": "document"
               }
-            },
+            ],
             "isBlocking": true
           }
         }

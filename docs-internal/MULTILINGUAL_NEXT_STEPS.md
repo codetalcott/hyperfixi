@@ -4515,6 +4515,25 @@ this signal was missing.
 >   patterns' command verbs (ar `اضبط`) are not handler triggers.
 > - `from me` on a handler head is a pinned equivalence in the en-reference gate
 >   (`handler-from-me`): the parser drops it by design, and upstream listens on `me` either way.
+>
+> **A translated `wait for <event>` threw (PR 8c, 2026-09-26).** buildAST wrote an event wait
+> as `modifiers.for`/`from`, which core's WaitCommand stopped reading at Arc 3 step 2 (#1073),
+> which deleted them as keys "neither parser emits" (this mapper did). With `args` empty, every
+> non-English `wait for <event>` threw "wait command requires an argument" on the direct path and
+> its handler stopped there, in all 23 languages; English was untouched. The mapper now emits
+> core's `[ { name, args } ]` spec array (and the source as `args[1]`);
+> `wait-direct-path.test.ts` (core) checks the command after the wait runs only once the event
+> arrives. The mapper-parity fixture's wait event cases were regenerated for the new shape.
+>
+> **Found, filed:**
+> - The AOT has no event-wait codegen: `WaitCodegen` reads `roles.duration ?? args[0]`, so a
+>   translated `wait for keyup` compiles to `wait(null)` (it compiled to nothing before PR 8c;
+>   either way the next command runs at once). English `wait for keyup` throws in the AOT
+>   (`from-core` has no `arrayLiteral` case, filed in PARSER_NEXT_STEPS).
+> - Still to do (PR 8d): the semantic parse keeps only a wait's first event. Its params, `or`
+>   alternatives (events and timeouts) and `from <source>` are dropped in English, and so in
+>   every translation: `wait for pointermove(clientY) or pointerup(clientY) from document` renders
+>   `wait for pointermove`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
