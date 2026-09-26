@@ -980,6 +980,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // behavior-removable row differed from its own English round-trip while
         // scoring 1.0 on every fidelity metric.
         if (node.action === 'js' && value.type === 'expression') return value.raw;
+        // A fetch's response type (`as text`, `as html`) names a format core
+        // reads, not a word: localized through the value lexicon (ms `teks`,
+        // ru `текст`, th `ข้อความ`), no parser read it back, and on the direct
+        // path the fetch threw before its request. It is English in every
+        // language, as `json` (which no lexicon translates) already was.
+        if (
+          node.action === 'fetch' &&
+          token.role === 'responseType' &&
+          value.type === 'expression'
+        ) {
+          return value.raw;
+        }
         // `pick characters 0 to 5 of #note` captures its range as ONE canonical
         // English expression, and the renderer emitted it verbatim — so the
         // separator stayed English while every other word localized. The parser
