@@ -856,6 +856,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       parts.push('to');
     }
 
+    // `smoothly`/`instantly` after a go or scroll: English in every language,
+    // after the whole command, where tryScrollModifiers reads it back.
+    const scrollBehavior = (node as CommandSemanticNode).scrollBehavior;
+    if (scrollBehavior && (node.action === 'go' || node.action === 'scroll')) {
+      parts.push(scrollBehavior);
+    }
+
     if (node.kind === 'event-handler') {
       // Event parameters glue to the event token, `pointerdown(clientX,
       // clientY)`: the form every language's parser reads (the SOV heads expect
@@ -944,6 +951,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // the canonical parser rejects.
         if (token.role === 'event') {
           return this.renderEventName(value, language);
+        }
+        // A go/scroll position renders just before its element, in English in
+        // every language, where tryScrollModifiers reads it back: `go top of #d1`.
+        const scrollPosition = (node as CommandSemanticNode).scrollPosition;
+        if (
+          scrollPosition &&
+          token.role === 'destination' &&
+          (node.action === 'go' || node.action === 'scroll')
+        ) {
+          return `${scrollPosition} of ${this.valueToNaturalString(value, language)}`;
         }
         // `halt` takes an idiomatic article in canonical hyperscript — `halt the
         // event` (`halt event` is rejected). The parser strips the leaked article

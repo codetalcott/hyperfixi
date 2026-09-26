@@ -4976,6 +4976,38 @@ this signal was missing.
 > - Next (PR 26), the scroll grammar `go` and `scroll` share: a position with `of <element>` loses
 >   its element (`go to top of #d1` → `go top`, `scroll to top of #d1` → `scroll to top`, which
 >   throws), `smoothly`/`instantly` are dropped, and `scroll … by` is lost whole.
+>
+> **go and scroll keep a position and `smoothly`/`instantly` (PR 26, 2026-09-26; filed by PR
+> 25).** No go or scroll pattern read either. The position word took the destination's slot and
+> the element was dropped: `go to top of #d1` rendered `go top`, and `scroll to top of #d1`
+> rendered `scroll to top`, which throws on core. The adverb was dropped. In English, and so in
+> every translation: every translated positional scroll threw on the direct path. A pre-pass,
+> `tryScrollModifiers`, excises `[the] <pos> [<pos>] of` and the adverb before any pattern sees
+> them and re-parses, as `tryDoNotThrow` does:
+>
+> - a position attaches to the go/scroll whose destination starts where the phrase stood, and only
+>   when that destination is the word after `of`, so a later command's `the top of #d1` never
+>   lands on an earlier `go`;
+> - an adverb attaches to the go/scroll whose destination starts last before it.
+>
+> The node carries `scrollPosition` and `scrollBehavior`; the renderer writes both in English in
+> every language; buildAST writes core's `position` and `behavior` slots. Run on both engines;
+> the 207 direct-path cases compare each translation's `scrollIntoView` call with core's English,
+> and all failed before (312 of 337 round trips too). The AOT scroll codegen read the element
+> from the positional arg only, and core's parser writes the element of `scroll to top of #d1` to
+> `of`, so it scrolled the clicked element; neither codegen read the position, and `instantly`
+> compiled to `auto`. 168 of the 216 new AOT cases failed before.
+>
+> Filed, not fixed:
+>
+> - `the X of Y` as a VALUE is lost in English, and so everywhere: `log the value of #d1` renders
+>   `log value`, `set x to the innerHTML of #d1` renders `set x to the`, and `put the textContent
+>   of #d1 into #b` is dropped whole. The corpus uses the form only as a target (`increment the
+>   textContent of the previous <output/>`), where it works.
+> - `scroll [<el>] up|down|left|right by <n>` is lost whole in English, and the AOT scroll codegen
+>   reads neither the direction nor the amount.
+> - Core's `go` reads a lone horizontal position with a `nearest` block (`go to right of #d1`);
+>   upstream keeps `start`, as core's `scroll` does.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
