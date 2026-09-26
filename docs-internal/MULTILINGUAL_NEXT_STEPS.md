@@ -5098,6 +5098,17 @@ this signal was missing.
 > possessive on `me`, and `the value of #d1` the possessive `#d1's value`. Run on both engines;
 > 74 of the 120 new cases failed before (the other 46 are the translations of `the value of`,
 > which PR 27 already read).
+>
+> **A class or query target reaches every match in the AOT compiler (PR 31, 2026-09-26; filed by
+> PR 24).** Every non-id selector compiled to `document.querySelector`, so a command reached the
+> first match: `remove .active from .tab` left every other tab active. Both engines act on each
+> match. `forEachTarget()` runs toggle, add, remove (class and element), show, hide, send, put and
+> take-from-a-query over `querySelectorAll`; an id stays one element, as it does on both engines
+> even when duplicated (`hide #d1` hides the first). All 216 new cases (9 commands, 24 languages)
+> failed before.
+>
+> Filed, not fixed: core's `set .it.textContent to "y"` sets the first match only; upstream sets
+> every one.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
