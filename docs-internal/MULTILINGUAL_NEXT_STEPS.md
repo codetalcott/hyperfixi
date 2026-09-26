@@ -5142,6 +5142,22 @@ this signal was missing.
 > Filed, not fixed: core's `empty #in1` leaves an input's value, where upstream clears it; and
 > `measure` has no oracle yet (the engines disagree on the shape of `it`, and the AOT's node has
 > already lost `of #d1`).
+>
+> **A class query keeps its `in` scope (PR 35, 2026-09-26; filed by PR 27).** Upstream reads `.item
+> in #list` as the matches inside #list. Core read a scoped query only from a `<…/>` query:
+> `.item in #list` was a containment test, so `set x to .item in #list` set a boolean, `add .z to
+> .item in #list` threw `Invalid add target`, and a loop over it never ran. Semantic took a scope
+> only after a `<…/>` query, so `set x to .item in #list` rendered `set x to .item`, in English and
+> so in every translation. Core's `in` now reads a class ref as a scoped query (`is in` stays
+> membership), and semantic gives a class ref a locative scope as it does a `<…/>` query. 167 of
+> the 191 new round trips and 71 of the 72 new core cases failed before; no corpus row moves.
+>
+> Filed, not fixed:
+>
+> - it reads `aggiungere .z a .item in #list` as `add .z in .item to #list`, as it reads an element
+>   query (`<li/> in #list`, since PR 11).
+> - Core refuses `put (.item in #list).length into #out` (`put requires arguments`); the `<li/>`
+>   form works.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
