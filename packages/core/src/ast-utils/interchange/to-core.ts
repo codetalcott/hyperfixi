@@ -180,77 +180,116 @@ function convertCommand(node: InterchangeNode & { type: 'command' }): CoreNode {
   return result;
 }
 
+/** A body as core's parser holds one: a block of commands. */
+function block(nodes: readonly InterchangeNode[]): CoreNode {
+  return { type: 'block', commands: nodes.map(n => toCoreAST(n)), ...POS };
+}
+
+/**
+ * An `if` as core's parser builds it: `args: [condition, then-block,
+ * else-block?]`. This wrote `condition`, `thenBranch` and `elseBranch` beside
+ * empty args, so every `if` it converted threw "if command requires a
+ * condition to evaluate". `else if` branches nest in the else block, as they
+ * do in the parse.
+ */
 function convertIf(node: InterchangeNode & { type: 'if' }): CoreNode {
-  const result: CoreNode = {
+  const [elseIf, ...laterElseIfs] = node.elseIfBranches ?? [];
+  const elseBranch: readonly InterchangeNode[] | undefined = elseIf
+    ? [
+        {
+          type: 'if',
+          condition: elseIf.condition,
+          thenBranch: elseIf.body,
+          elseIfBranches: laterElseIfs,
+          ...(node.elseBranch ? { elseBranch: node.elseBranch } : {}),
+        },
+      ]
+    : node.elseBranch;
+  return {
     type: 'command',
     name: 'if',
     isBlocking: true,
-    condition: toCoreAST(node.condition),
-    thenBranch: node.thenBranch.map(n => toCoreAST(n)),
-    args: [],
+    args: [
+      toCoreAST(node.condition),
+      block(node.thenBranch),
+      ...(elseBranch ? [block(elseBranch)] : []),
+    ],
     ...nodePos(node),
   };
+}
 
-  if (node.elseBranch) {
-    result.elseBranch = node.elseBranch.map(n => toCoreAST(n));
+type LoopNode = InterchangeNode & { type: 'repeat' | 'foreach' | 'while' };
+
+/**
+ * A loop as core's parser builds it (Arc 3 step 3): the form and operands in
+ * `modifiers` (`loopType`, `for`/`in`, `times`, `while`/`until`,
+ * `event`/`from`, `index`, `bottomTested`), and only the body block and an
+ * `else` block positional.
+ *
+ * This wrote `loopVariant`, `count`, `condition` and `body` beside empty args,
+ * which `repeat` has not read since the slot migration: every loop it
+ * converted threw "repeat command requires a loop type".
+ */
+function loopCommand(
+  node: LoopNode,
+  form: string,
+  operands: Record<string, CoreNode | undefined>
+): CoreNode {
+  const modifiers: Record<string, CoreNode> = { loopType: slotString(form) };
+  for (const [slot, value] of Object.entries(operands)) {
+    if (value) modifiers[slot] = value;
   }
+  if (node.indexName) modifiers.index = slotString(node.indexName);
+  return {
+    type: 'command',
+    name: 'repeat',
+    isBlocking: true,
+    args: [block(node.body), ...(node.elseBody ? [block(node.elseBody)] : [])],
+    modifiers,
+    ...nodePos(node),
+  };
+}
 
-  return result;
+/** A text slot (`loopType`, `for`, `event`, `index`), as core's parser writes one. */
+function slotString(value: string): CoreNode {
+  return { type: 'string', value, ...POS };
 }
 
 function convertRepeat(node: InterchangeNode & { type: 'repeat' }): CoreNode {
-  const result: CoreNode = {
-    type: 'command',
-    name: 'repeat',
-    isBlocking: true,
-    body: node.body.map(n => toCoreAST(n)),
-    args: [],
-    ...nodePos(node),
-  };
-
   if (node.count !== undefined) {
-    result.count =
+    const times =
       typeof node.count === 'number'
         ? { type: 'literal', value: node.count, raw: String(node.count), ...POS }
         : toCoreAST(node.count);
-    result.loopVariant = 'times';
-  } else if (node.whileCondition !== undefined) {
-    result.condition = toCoreAST(node.whileCondition);
-    result.loopVariant = 'while';
-  } else if (node.untilEvent !== undefined) {
-    result.untilEvent = node.untilEvent;
-    result.loopVariant = 'until';
+    return loopCommand(node, 'times', { times });
   }
-
-  return result;
+  if (node.whileCondition !== undefined) {
+    return loopCommand(node, 'while', { while: toCoreAST(node.whileCondition) });
+  }
+  if (node.untilEvent !== undefined) {
+    return loopCommand(node, 'until-event', {
+      event: slotString(node.untilEvent),
+      from: node.untilEventTarget ? toCoreAST(node.untilEventTarget) : undefined,
+    });
+  }
+  return loopCommand(node, 'forever', {});
 }
 
 function convertForEach(node: InterchangeNode & { type: 'foreach' }): CoreNode {
-  return {
-    type: 'command',
-    name: 'repeat',
-    isBlocking: true,
-    loopVariant: 'for',
-    itemName: node.itemName,
-    ...(node.indexName ? { indexName: node.indexName } : {}),
-    collection: toCoreAST(node.collection),
-    body: node.body.map(n => toCoreAST(n)),
-    args: [],
-    ...nodePos(node),
-  };
+  return loopCommand(node, 'for', {
+    for: slotString(node.itemName),
+    in: toCoreAST(node.collection),
+  });
 }
 
+/** `until <cond>` arrives as `while not <cond>`, which runs the same. */
 function convertWhile(node: InterchangeNode & { type: 'while' }): CoreNode {
-  return {
-    type: 'command',
-    name: 'repeat',
-    isBlocking: true,
-    loopVariant: 'while',
-    condition: toCoreAST(node.condition),
-    body: node.body.map(n => toCoreAST(n)),
-    args: [],
-    ...nodePos(node),
-  };
+  return loopCommand(node, 'while', {
+    while: toCoreAST(node.condition),
+    bottomTested: node.bottomTested
+      ? { type: 'literal', value: true, raw: 'true', ...POS }
+      : undefined,
+  });
 }
 
 /**

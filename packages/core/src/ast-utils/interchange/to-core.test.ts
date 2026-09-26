@@ -268,68 +268,105 @@ describe('toCoreAST', () => {
     });
   });
 
+  // Control flow comes back in the shape core's parser builds, because that is
+  // the shape core runs: an `if` with `args: [condition, then, else?]`, a loop
+  // with its form and operands in `modifiers`. These tests pinned properties
+  // (`condition`, `thenBranch`, `loopVariant`, `count`) that core never reads;
+  // every `if` and loop converted that way threw. to-core.e2e.test.ts RUNS them.
   describe('if nodes', () => {
-    it('converts to command with name=if', () => {
+    it('converts to an if with the condition and then-block as args', () => {
       const result = toCoreAST({
         type: 'if',
         condition: { type: 'literal', value: true },
         thenBranch: [{ type: 'command', name: 'log', args: [] }],
       });
-      expect(result.type).toBe('command');
-      expect(result.name).toBe('if');
-      expect(result.isBlocking).toBe(true);
-      expect((result.condition as any).type).toBe('literal');
-      expect(result.thenBranch as any[]).toHaveLength(1);
+      expect(result).toMatchObject({
+        type: 'command',
+        name: 'if',
+        isBlocking: true,
+        args: [
+          { type: 'literal', value: true },
+          { type: 'block', commands: [{ name: 'log' }] },
+        ],
+      });
     });
 
-    it('includes elseBranch when present', () => {
+    it('adds the else-block when present', () => {
       const result = toCoreAST({
         type: 'if',
         condition: { type: 'identifier', value: 'ready' },
         thenBranch: [{ type: 'command', name: 'go', args: [] }],
         elseBranch: [{ type: 'command', name: 'wait', args: [] }],
       });
-      expect(result.elseBranch as any[]).toHaveLength(1);
+      expect(result.args as any[]).toHaveLength(3);
+      expect(result.args as any[]).toMatchObject([
+        { type: 'identifier' },
+        { type: 'block', commands: [{ name: 'go' }] },
+        { type: 'block', commands: [{ name: 'wait' }] },
+      ]);
     });
 
-    it('omits elseBranch when absent', () => {
+    it('omits the else-block when absent', () => {
       const result = toCoreAST({
         type: 'if',
         condition: { type: 'literal', value: true },
         thenBranch: [],
       });
-      expect(result.elseBranch).toBeUndefined();
+      expect(result.args as any[]).toHaveLength(2);
+    });
+
+    it('nests `else if` branches in the else-block, as the parse does', () => {
+      const result = toCoreAST({
+        type: 'if',
+        condition: { type: 'identifier', value: 'a' },
+        thenBranch: [{ type: 'command', name: 'log', args: [] }],
+        elseIfBranches: [
+          {
+            condition: { type: 'identifier', value: 'b' },
+            body: [{ type: 'command', name: 'go', args: [] }],
+          },
+        ],
+        elseBranch: [{ type: 'command', name: 'wait', args: [] }],
+      });
+      const elseBlock = (result.args as any[])[2];
+      expect(elseBlock.commands).toHaveLength(1);
+      expect(elseBlock.commands[0]).toMatchObject({
+        name: 'if',
+        args: [
+          { type: 'identifier', name: 'b' },
+          { type: 'block', commands: [{ name: 'go' }] },
+          { type: 'block', commands: [{ name: 'wait' }] },
+        ],
+      });
     });
   });
 
   describe('repeat nodes', () => {
+    const slot = (value: string) => ({ type: 'string', value });
+
     it('converts repeat with count (times variant)', () => {
       const result = toCoreAST({
         type: 'repeat',
         count: { type: 'literal', value: 3 },
         body: [{ type: 'command', name: 'log', args: [] }],
       });
-      expect(result.type).toBe('command');
-      expect(result.name).toBe('repeat');
-      expect(result.isBlocking).toBe(true);
-      expect(result.loopVariant).toBe('times');
-      expect((result.count as any).type).toBe('literal');
+      expect(result).toMatchObject({
+        type: 'command',
+        name: 'repeat',
+        isBlocking: true,
+        args: [{ type: 'block', commands: [{ name: 'log' }] }],
+        modifiers: { loopType: slot('times'), times: { type: 'literal', value: 3 } },
+      });
     });
 
     it('converts repeat with numeric count', () => {
-      const result = toCoreAST({
-        type: 'repeat',
-        count: 5,
-        body: [],
-      });
-      expect((result.count as any).type).toBe('literal');
-      expect((result.count as any).value).toBe(5);
+      const result = toCoreAST({ type: 'repeat', count: 5, body: [] });
+      expect((result.modifiers as any).times).toMatchObject({ type: 'literal', value: 5 });
     });
 
     it('converts repeat without count (forever)', () => {
       const result = toCoreAST({ type: 'repeat', body: [] });
-      expect(result.count).toBeUndefined();
-      expect(result.loopVariant).toBeUndefined();
+      expect(result.modifiers).toEqual({ loopType: expect.objectContaining(slot('forever')) });
     });
 
     it('converts repeat with whileCondition (while variant)', () => {
@@ -338,21 +375,39 @@ describe('toCoreAST', () => {
         whileCondition: { type: 'identifier', value: 'running' },
         body: [],
       });
-      expect(result.name).toBe('repeat');
-      expect(result.loopVariant).toBe('while');
-      expect((result.condition as any).type).toBe('identifier');
-      expect((result.condition as any).name).toBe('running');
+      expect(result.modifiers).toMatchObject({
+        loopType: slot('while'),
+        while: { type: 'identifier', name: 'running' },
+      });
     });
 
-    it('converts repeat with untilEvent (until variant)', () => {
+    it('converts repeat with untilEvent (until-event variant)', () => {
       const result = toCoreAST({
         type: 'repeat',
         untilEvent: 'click',
+        untilEventTarget: { type: 'selector', value: '#b' },
         body: [],
       });
-      expect(result.name).toBe('repeat');
-      expect(result.loopVariant).toBe('until');
-      expect(result.untilEvent).toBe('click');
+      expect(result.modifiers).toMatchObject({
+        loopType: slot('until-event'),
+        event: slot('click'),
+        from: { type: 'selector', value: '#b' },
+      });
+    });
+
+    it('adds the index and the else-block', () => {
+      const result = toCoreAST({
+        type: 'repeat',
+        count: 2,
+        indexName: 'i',
+        body: [],
+        elseBody: [{ type: 'command', name: 'log', args: [] }],
+      });
+      expect((result.modifiers as any).index).toMatchObject(slot('i'));
+      expect(result.args as any[]).toMatchObject([
+        { type: 'block', commands: [] },
+        { type: 'block', commands: [{ name: 'log' }] },
+      ]);
     });
   });
 
@@ -364,11 +419,16 @@ describe('toCoreAST', () => {
         collection: { type: 'identifier', value: 'items' },
         body: [{ type: 'command', name: 'log', args: [] }],
       });
-      expect(result.type).toBe('command');
-      expect(result.name).toBe('repeat');
-      expect(result.loopVariant).toBe('for');
-      expect(result.itemName).toBe('item');
-      expect((result.collection as any).type).toBe('identifier');
+      expect(result).toMatchObject({
+        type: 'command',
+        name: 'repeat',
+        args: [{ type: 'block', commands: [{ name: 'log' }] }],
+        modifiers: {
+          loopType: { type: 'string', value: 'for' },
+          for: { type: 'string', value: 'item' },
+          in: { type: 'identifier', name: 'items' },
+        },
+      });
     });
 
     it('includes indexName when present', () => {
@@ -379,7 +439,7 @@ describe('toCoreAST', () => {
         collection: { type: 'identifier', value: 'list' },
         body: [],
       });
-      expect(result.indexName).toBe('i');
+      expect((result.modifiers as any).index).toMatchObject({ type: 'string', value: 'i' });
     });
   });
 
@@ -390,10 +450,28 @@ describe('toCoreAST', () => {
         condition: { type: 'identifier', value: 'running' },
         body: [],
       });
-      expect(result.type).toBe('command');
-      expect(result.name).toBe('repeat');
-      expect(result.loopVariant).toBe('while');
-      expect((result.condition as any).type).toBe('identifier');
+      expect(result).toMatchObject({
+        type: 'command',
+        name: 'repeat',
+        modifiers: {
+          loopType: { type: 'string', value: 'while' },
+          while: { type: 'identifier', name: 'running' },
+        },
+      });
+      expect(result.modifiers).not.toHaveProperty('bottomTested');
+    });
+
+    it('marks a bottom-tested loop', () => {
+      const result = toCoreAST({
+        type: 'while',
+        condition: { type: 'identifier', value: 'running' },
+        bottomTested: true,
+        body: [],
+      });
+      expect((result.modifiers as any).bottomTested).toMatchObject({
+        type: 'literal',
+        value: true,
+      });
     });
   });
 
