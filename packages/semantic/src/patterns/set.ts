@@ -7,17 +7,7 @@
  * Phase 3.2: Consolidated from 19 files into single file.
  */
 
-import type { ExpectedType, LanguagePattern } from '../types';
-import { setSchema } from '../generators/command-schemas';
-
-/**
- * The trailing `on {scope}` group takes what the schema's scope does, a
- * variable included (`set @x to 1 on el`). It once copied the narrower list,
- * so a variable scope was dropped wherever a handcrafted set pattern won.
- */
-const SET_SCOPE_TYPES: ExpectedType[] = [
-  ...(setSchema.roles.find(role => role.role === 'scope')?.expectedTypes ?? []),
-];
+import type { LanguagePattern } from '../types';
 
 function getSetPatternsBn(): LanguagePattern[] {
   return [
@@ -1164,7 +1154,7 @@ function withTrailingScope(patterns: LanguagePattern[]): LanguagePattern[] {
                 type: 'role',
                 role: 'scope',
                 optional: true,
-                expectedTypes: SET_SCOPE_TYPES,
+                expectedTypes: ['selector', 'reference'],
               },
             ],
           },

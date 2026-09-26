@@ -472,10 +472,12 @@ export type CommandCategory =
  * English dropped the variable and the command acted on `me` (`remove el` lost
  * the command), so every translation did too; toggle's destination, which
  * English's handcrafted pattern leaves untyped, dropped it in 14 languages.
- * Both engines read a variable there.
+ * Both engines read a variable there, each form run on both.
  *
  * Not fetch's destination or repeat's source: the response-type recovery and
- * the fused-role junk check read an expression there as a mis-capture.
+ * the fused-role junk check read an expression there as a mis-capture. Nor the
+ * `on` target of set, transition or install, or clone's: neither engine reads
+ * those forms (core takes `set … on el`'s `on el` for a new handler).
  */
 const ELEMENT_TARGET_TYPES: ExpectedType[] = ['selector', 'reference', 'expression'];
 
@@ -1005,7 +1007,7 @@ export const setSchema: CommandSchema = {
       role: 'scope',
       description: 'The element(s) the attribute/property is set on (defaults to me)',
       required: false,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      expectedTypes: ['selector', 'reference'],
       svoPosition: 3,
       sovPosition: 3,
       markerOverride: {
@@ -2534,7 +2536,7 @@ export const transitionSchema: CommandSchema = {
       role: 'destination',
       description: 'The target element (defaults to me)',
       required: false,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 3,
       sovPosition: 1,
@@ -2574,7 +2576,7 @@ export const cloneSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to clone',
       required: true,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      expectedTypes: ['selector', 'reference'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -2582,7 +2584,7 @@ export const cloneSchema: CommandSchema = {
       role: 'destination',
       description: 'Where to put the clone',
       required: false,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      expectedTypes: ['selector', 'reference'],
       svoPosition: 2,
       sovPosition: 1,
       markerOverride: { en: 'into' }, // "clone #element into #container"
@@ -3095,7 +3097,7 @@ export const installSchema: CommandSchema = {
       role: 'destination',
       description: 'Element to install on (defaults to me)',
       required: false,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,

@@ -84,7 +84,7 @@ export function appendOptionalScope(
     optional: true,
     tokens: [
       { type: 'literal', value: 'on' },
-      { type: 'role', role: 'scope', optional: true, expectedTypes: [...scopeRole.expectedTypes] },
+      { type: 'role', role: 'scope', optional: true, expectedTypes: ['selector', 'reference'] },
     ],
   });
   extraction.scope = { fromRole: 'scope' };
