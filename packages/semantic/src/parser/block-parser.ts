@@ -223,17 +223,23 @@ function patternLiterals(tokens: readonly PatternToken[]): string[] {
 }
 
 /**
- * Is the `on`-marker at `j` the preceding command's own? Both engines read
- * `toggle .a on el log 1` as ONE handler, with `el` toggle's target: toggle
- * takes an `on` target, so it consumes the phrase before a feature can begin.
- * The trigger split read `on el` as a second handler, and the commands after it
- * moved there, in English and so in every translation. Another language's
- * `on` can be another role's marker (es `poner 2 en item`: put's `en` is es's
- * `on`). So an on-marker that the nearest command before it, in the same
- * clause, writes in its own patterns is that command's, unless the command has
- * used it already (`toggle .a on #x on keyup …` splits at the second `on`). The
- * patterns, not the schema's markers: vi's toggle reads `trên` only in its
- * handcrafted pattern. A handler's fused patterns are registered as `on`'s.
+ * The commands that take an `on` target (`toggle .a on el`, `trigger foo on
+ * el`). Both engines consume the phrase after their `on`: in `on click toggle
+ * .a on keyup log 1` the `log` runs on click, and no keyup handler exists.
+ * Every other command leaves a following `on` to open a handler on both
+ * engines, set's core-only `on` scope included.
+ */
+const TAKES_ON_TARGET: ReadonlySet<string> = new Set(['toggle', 'trigger']);
+
+/**
+ * Is the `on`-marker at `j` the preceding command's own? The trigger split read
+ * the `on el` of `toggle .a on el log 1` as a second handler, and the commands
+ * after it moved there, in English and so in every translation. So an
+ * on-marker is the command's when the nearest command before it, in the same
+ * clause, takes an `on` target, writes that marker in its own patterns (vi's
+ * toggle reads `trên` only in its handcrafted one; a handler's fused patterns
+ * are registered as `on`'s), and has not used it already (`toggle .a on #x on
+ * keyup …` splits at the second `on`).
  */
 function isPrecedingCommandMarker(
   tokens: readonly LanguageToken[],
@@ -248,8 +254,11 @@ function isPrecedingCommandMarker(
     if (endsClause(t) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
     if (!isAction(action)) continue;
-    return getPatternsForLanguage(language).some(
-      p => p.command === action && patternLiterals(p.template.tokens).includes(surface)
+    return (
+      TAKES_ON_TARGET.has(action) &&
+      getPatternsForLanguage(language).some(
+        p => p.command === action && patternLiterals(p.template.tokens).includes(surface)
+      )
     );
   }
   return false;
@@ -562,6 +571,10 @@ export function tryParseProgram(
       j > segStart &&
       tokenMatches(tok, onForms) &&
       looksLikeEvent(tokens[j + 1]) &&
+      // A handler's event is never followed by `then` (both engines reject
+      // `on click then …`): es/pt/he `poner 2 en item entonces …`, whose
+      // `en` is put's `into` and also es's `on`, stays one handler.
+      !(tokens[j + 2] && tokenMatches(tokens[j + 2], thenForms)) &&
       !isPrecedingCommandMarker(
         tokens,
         segStart,
