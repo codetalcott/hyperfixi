@@ -1488,10 +1488,16 @@ export class PatternMatcher {
     tokens.advance();
 
     // A query's locative scope: `add @disabled to <button/> in me`, `remove
-    // <li/> in #list`. Only a `<…/>` query takes one, and never as an event.
-    // Without this the `in …` tail went unconsumed, and the query lost its
-    // scope in English and so in every translation.
-    if (value.type === 'selector' && value.value.startsWith('<') && patternToken.role !== 'event') {
+    // <li/> in #list`. A `<…/>` query takes one, and so does a class ref
+    // (`set x to .item in #list`, `add .z to .item in #list`, as upstream
+    // reads it). Never as an event. Without this the `in …` tail went
+    // unconsumed, and the query lost its scope in English and so in every
+    // translation. (A class NAME followed by a marker its pattern still needs,
+    // es `alternar .active en #btn`, keeps it: matchQueryScope leaves that
+    // marker to the pattern.)
+    const takesScope =
+      value.type === 'selector' && (value.value.startsWith('<') || value.value.startsWith('.'));
+    if (takesScope && patternToken.role !== 'event') {
       const scoped = matchQueryScope(tokens.tokens, tokens.position(), this.currentProfile, t =>
         t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
       );
