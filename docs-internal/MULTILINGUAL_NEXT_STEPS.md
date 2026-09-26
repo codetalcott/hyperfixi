@@ -4530,10 +4530,57 @@ this signal was missing.
 >   translated `wait for keyup` compiles to `wait(null)` (it compiled to nothing before PR 8c;
 >   either way the next command runs at once). English `wait for keyup` throws in the AOT
 >   (`from-core` has no `arrayLiteral` case, filed in PARSER_NEXT_STEPS).
-> - Still to do (PR 8d): the semantic parse keeps only a wait's first event. Its params, `or`
->   alternatives (events and timeouts) and `from <source>` are dropped in English, and so in
->   every translation: `wait for pointermove(clientY) or pointerup(clientY) from document` renders
->   `wait for pointermove`.
+> - Still to do (PR 8d, done below): the semantic parse keeps only a wait's first event. Its
+>   params, `or` alternatives (events and timeouts) and `from <source>` are dropped in English,
+>   and so in every translation: `wait for pointermove(clientY) or pointerup(clientY) from
+>   document` renders `wait for pointermove`.
+>
+> **A `wait for`'s params, alternatives and source (PR 8d, 2026-09-26).** The allowlist is 16 →
+> 15: behavior-resizable is preserved. No wait pattern captured past the first event, so a wait's
+> params, its `or` alternatives (events and timeouts) and its `from` source were dropped in
+> English, and so in every translation: a translated drag behavior waited on the element instead
+> of the document, with its coordinates unbound. A pre-pass now excises a wait run's extras,
+> re-parses, and hangs them on the wait node (`waitAlternatives`, `waitSource`); the renderer
+> writes them back after the event in the language's own or-word and source marker; buildAST
+> hands core a `{ name, args }` or `{ duration }` spec per alternative, and the source.
+> `wait-direct-path.test.ts` (core) runs them in all 23 languages: `wait for pointermove(clientX)
+> or pointerup(clientX) from document` binds `clientX` and listens on the document, and `wait for
+> keyup or 20ms` gives up at the timeout.
+> - A run is a wait's only when the wait verb sits next to it, on the side the language puts it:
+>   within two tokens before it, or, verb-final, directly after it or across one particle (tr
+>   `keyup veya 1s i bekle`). Looking on both sides let a HEAD run take its body's verb: `on
+>   pointerdown(clientX) wait for pointerdown` moved the head's params onto the wait (in English,
+>   so in every translation), and the count that picks which same-event wait is the run's counted
+>   the head too, so `on keyup wait for keyup or 1s` dropped its `or 1s`. The mutation pass found
+>   it; no corpus row has either shape. qu needs the particle rule: its body's event sits between
+>   the head's run and the verb.
+> - The source is read after the run only, in every language: an SOV loop head renders ITS
+>   source before the event (ja `… 繰り返し document から pointermove 待つ`).
+> - The transformer-era bn shape that puts the wait verb first (`অপেক্ষা pointermove(clientY)
+>   অথবা …`) keeps its first event only, as before: bn's extras are read after the run, the order
+>   the renderer writes.
+> - draggable and sortable keep one entry each: the `init` reorder (the behavior-removable
+>   family), and sortable's dropped `the` before `target`.
+>
+> **Found, filed.** A behavior collapses when a handler other than its last has a `wait for
+> <event>`: `behavior Demo(h) on click wait for keyup end on keyup log 2 end end` renders
+> `behavior Demo then wait for keyup then log 2`, losing `(h)` and both heads, in English and so
+> in every language. It predates PR 8d (measured with the wait pre-pass switched off); a
+> behavior whose handlers do not wait keeps its heads. Found by a probe outside the corpus: the
+> three drag behaviors have a single handler.
+>
+> The two below are also outside the corpus, and both come from localized event names that only
+> the handler head's event dictionary knows:
+> - A head's params are lost for 36 of 644 (event, language) pairs. PR 8b's pre-pass confirms a
+>   candidate by comparing the word before `(` with the handler's event, which fails for 28
+>   de/es/fr/pt one-word coinages (`mausbewegen(x)`, `doppelklick(x)`) and five multi-word events
+>   (ar keydown/keyup/resize, id keydown, vi resize; ar and vi resize become `change`). zh
+>   mousemove/touchstart/resize throw. Next: PR 8e.
+> - A plain `wait for <event>` renders `wait <word>` for 39 of 644 pairs. The wait patterns know
+>   an event only by the tokenizer's normalized form, so the de/es/fr/pt coinages, six ko
+>   transliterations (`마우스무브`) and three zh names are not events there (ar and vi resize are
+>   read as `change`). With `or 1s`, es and pt also lend the head an `or 1s` leg (`on click or 1s
+>   wait dobleclic`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

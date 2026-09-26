@@ -278,7 +278,21 @@ export interface SourcePosition {
  */
 export interface CommandSemanticNode extends SemanticNode {
   readonly kind: 'command';
+  /**
+   * A `wait for`'s events and timeouts, in order, when there is more to it than
+   * the first event the `event` role holds: each event with the names it
+   * destructures (`pointermove(clientX, clientY)`), or a timeout (`or 1s`).
+   * Outside the roles on purpose: the wait patterns match and render the first
+   * event only.
+   */
+  readonly waitAlternatives?: readonly WaitAlternative[];
+  /** Where a `wait for` listens (`from document`); `me` when absent. */
+  readonly waitSource?: SemanticValue;
 }
+
+/** One alternative a `wait for` races: an event, or a timeout. */
+export type WaitAlternative =
+  { readonly event: string; readonly params?: readonly string[] } | { readonly duration: string };
 
 /**
  * An event handler semantic node - represents "on [event] [commands]".

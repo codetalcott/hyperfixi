@@ -636,6 +636,43 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * Write a `wait for`'s extras back around its event: the first event's params
+   * glued on, each further alternative after it (`<or> pointerup(clientY)`,
+   * `<or> 1s`), then the source (`from X`, or `X から` where the marker follows
+   * its noun) — the shape the parser's tryWaitAlternatives reads. The source
+   * follows the run in every language, never precedes the event: that is
+   * where an SOV loop head puts its own. The patterns render the first event
+   * only.
+   */
+  private spliceWaitAlternatives(
+    node: CommandSemanticNode,
+    parts: string[],
+    eventPart: number,
+    language: string
+  ): void {
+    const alternatives = node.waitAlternatives;
+    if (!alternatives || alternatives.length === 0 || eventPart < 0) return;
+    const withParams = (params?: readonly string[]) =>
+      params && params.length > 0 ? `(${params.join(', ')})` : '';
+    const [first, ...rest] = alternatives;
+    if ('event' in first) parts[eventPart] += withParams(first.params);
+    const or = [...(OR_WORDS_BY_LANG[language] ?? [])][0] ?? 'or';
+    const legs = rest.map(alt =>
+      'event' in alt
+        ? `${or} ${this.renderEventName({ type: 'literal', value: alt.event }, language)}${withParams(alt.params)}`
+        : `${or} ${alt.duration}`
+    );
+    parts.splice(eventPart + 1, 0, ...legs);
+    const source = node.waitSource;
+    if (!source) return;
+    const noun = this.valueToNaturalString(source, language);
+    const marker = tryGetProfile(language)?.roleMarkers?.source;
+    const word = marker?.primary ?? 'from';
+    const phrase = marker?.position === 'after' ? `${noun} ${word}` : `${word} ${noun}`;
+    parts.splice(eventPart + 1 + legs.length, 0, phrase);
+  }
+
+  /**
    * Emit a handler's `or <event>` alternatives right after its event. The
    * parser captures them (`additionalEvents`), and nothing rendered them, so
    * every translation of `on click or keydown …` listened for `click` alone.
@@ -729,8 +766,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const rendered = this.renderPatternToken(token, node, language);
       if (rendered !== null) {
         parts.push(rendered);
-        if (token.type === 'role' && token.role === 'event') eventPart = parts.length - 1;
+        // A marker-less wait renders its event through the duration slot.
+        if (
+          token.type === 'role' &&
+          (token.role === 'event' || (token.role === 'duration' && node.action === 'wait'))
+        ) {
+          eventPart = parts.length - 1;
+        }
       }
+    }
+
+    if (node.action === 'wait' && node.kind === 'command') {
+      this.spliceWaitAlternatives(node as CommandSemanticNode, parts, eventPart, language);
     }
 
     if (node.kind === 'event-handler') {

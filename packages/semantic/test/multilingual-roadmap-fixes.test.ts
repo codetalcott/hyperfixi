@@ -14325,6 +14325,9 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
       parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
       'en'
     );
+    // PR 8d reads a wait's extras where the language puts its verb: after the
+    // run in bn, the order the renderer writes. This transformer-era shape puts
+    // the verb first, so it keeps its first event only, as it did before.
     expect(out).toBe('wait for pointermove');
   });
 
@@ -14336,6 +14339,7 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
       ),
       'en'
     );
+    // Verb-first, as above: PR 8d's extras are not read here.
     expect(out).toBe('wait for pointermove');
   });
 

@@ -87,3 +87,47 @@ describe('`wait 10ms` still waits a time', () => {
     expect(button.classList.contains('x')).toBe(true);
   });
 });
+
+// PR 8d: a wait's params, alternatives and source reach the runtime. The
+// translation kept only the first event, so a drag behavior waited on the
+// element, not the document, with its coordinates unbound.
+describe('`wait for pointermove(clientX) or pointerup(clientX) from document` binds and listens there', () => {
+  const SOURCE =
+    'on click wait for pointermove(clientX) or pointerup(clientX) from document then put clientX into me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const button = await install(translate(SOURCE, language), language);
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await settle();
+    expect(button.textContent, 'ran before the event').toBe('');
+    document.dispatchEvent(new MouseEvent('pointermove', { clientX: 7 }));
+    await settle();
+    expect(button.textContent).toBe('7');
+  });
+});
+
+describe('`wait for keyup or 20ms` gives up at the timeout', () => {
+  const SOURCE = 'on click wait for keyup or 20ms then add .x to me';
+
+  it.each(['es', 'ja', 'ar', 'zh'])('%s', async language => {
+    const button = await install(translate(SOURCE, language), language);
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 60));
+    expect(button.classList.contains('x')).toBe(true);
+  });
+});
+
+// A head naming the wait's event keeps its params. The pre-pass moved the
+// head's `(clientX)` onto the wait, which then bound the SECOND event's.
+describe('`on pointerdown(clientX) wait for pointerdown` keeps the first event’s clientX', () => {
+  const SOURCE = 'on pointerdown(clientX) wait for pointerdown then put clientX into me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const button = await install(translate(SOURCE, language), language);
+    button.dispatchEvent(new MouseEvent('pointerdown', { clientX: 3 }));
+    await settle();
+    button.dispatchEvent(new MouseEvent('pointerdown', { clientX: 5 }));
+    await settle();
+    expect(button.textContent).toBe('3');
+  });
+});
