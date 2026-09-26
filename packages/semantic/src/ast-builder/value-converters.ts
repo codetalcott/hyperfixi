@@ -24,6 +24,7 @@ import {
   type BinaryExpressionNode,
   type IdentifierNode,
   type SelectorKind,
+  type TemplateLiteralNode,
 } from './expression-parser';
 
 // =============================================================================
@@ -62,6 +63,11 @@ function stampSpan(node: ExpressionNode, position: SourcePosition | undefined): 
 function convertValueShape(value: SemanticValue, warnings?: string[]): ExpressionNode {
   switch (value.type) {
     case 'literal':
+      // A naked `${…}` URL: core's parser builds it as a template.
+      if (value.interpolates && typeof value.value === 'string') {
+        const template: TemplateLiteralNode = { type: 'templateLiteral', value: value.value };
+        return template;
+      }
       return convertLiteral(value);
     case 'selector':
       // `<button/> in me`: core's `in` binary expression.

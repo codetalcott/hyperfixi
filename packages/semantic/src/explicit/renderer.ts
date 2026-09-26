@@ -1132,7 +1132,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // A quoted string is author text and is emitted verbatim; a bare literal
         // is vocabulary (`true`, `null`) and localizes like any other value word.
         if (typeof value.value === 'string' && value.dataType === 'string') {
-          return `"${value.value}"`;
+          // A naked `${…}` URL stays naked: quoted, it interpolates on neither
+          // engine (see LiteralValue.interpolates).
+          return value.interpolates ? value.value : `"${value.value}"`;
         }
         return this.localizeValue(String(value.value), language);
 
