@@ -361,21 +361,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
   /**
    * Render a behavior block to target-language source:
-   * `<behavior> Name(params)` + each handler (closed by `end`) + optional `init`
-   * block + closing `end`. Handlers/commands render through the normal paths.
+   * `<behavior> Name(params)` + optional `init` block + each handler (closed by
+   * `end`) + closing `end`. Handlers/commands render through the normal paths.
+   *
+   * `init` comes first because core runs it first, before attaching any
+   * handler; upstream installs features in source order. Written after the
+   * handlers, `on click from triggerEl` evaluated `triggerEl` on upstream
+   * before `init` had set it.
    */
   private renderBehavior(node: BehaviorSemanticNode, language: string): string {
     const endKw = this.keyword(language, 'end');
     const lines = [
       this.renderBlockHeader(this.keyword(language, 'behavior'), node.name, node.parameters),
     ];
-    for (const handler of node.eventHandlers) {
-      lines.push(`  ${this.render(handler, language)}`, `  ${endKw}`);
-    }
     if (node.initBlock && node.initBlock.length > 0) {
       lines.push(`  ${this.keyword(language, 'init')}`);
       for (const cmd of node.initBlock) lines.push(`    ${this.render(cmd, language)}`);
       lines.push(`  ${endKw}`);
+    }
+    for (const handler of node.eventHandlers) {
+      lines.push(`  ${this.render(handler, language)}`, `  ${endKw}`);
     }
     lines.push(endKw);
     return lines.join('\n');

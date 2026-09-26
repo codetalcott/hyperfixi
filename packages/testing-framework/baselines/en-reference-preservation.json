@@ -1,7 +1,7 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
   "checked": 161,
-  "preserved": 146,
+  "preserved": 147,
   "allowedLosses": {
     "async-block": {
       "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
@@ -10,22 +10,16 @@
       "added": []
     },
     "behavior-draggable": {
-      "family": "TRIAGE — `init` reordered after the handler (as behavior-removable: the handler's `from dragHandle` is evaluated at install)",
-      "rendered": "behavior Draggable(dragHandle)\n  on pointerdown(clientX, clientY) from dragHandle halt the event then trigger draggable:start then measure x then set startX to it then measure y then set startY to it then set xoff to clientX - startX then set yoff to clientY - startY then repeat until event pointerup from document wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end then trigger draggable:end\n  end\n  init\n    if no dragHandle set dragHandle to me end\n  end\nend",
-      "lost": ["init if no dragHandle set dragHandle to me end"],
-      "added": ["end end init if no dragHandle set dragHandle to me"]
-    },
-    "behavior-removable": {
-      "family": "TRIAGE — `init` reordered after the handler (`from triggerEl` is evaluated at install)",
-      "rendered": "behavior Removable(triggerEl, confirmRemoval, effect)\n  on click from triggerEl if confirmRemoval js (me)\n        if (!window.confirm(\"Are you sure?\")) return \"cancel\"; end then if it is \"cancel\" halt end end then trigger removable:before then if effect is \"fade\" transition opacity to 0 over 300ms end then trigger removable:removed then remove me\n  end\n  init\n    if triggerEl is undefined set triggerEl to me end\n  end\nend",
-      "lost": ["init if triggerEl is undefined set triggerEl to me end end"],
-      "added": ["end init if triggerEl is undefined set triggerEl to me"]
+      "family": "BENIGN — `init`'s optional `end` written out (the source's one `end` closes the one-line `if`, and `init` ends at the next feature). Upstream requires a block's `end` before a new feature but not a feature's own, so an equivalence needs block depth",
+      "rendered": "behavior Draggable(dragHandle)\n  init\n    if no dragHandle set dragHandle to me end\n  end\n  on pointerdown(clientX, clientY) from dragHandle halt the event then trigger draggable:start then measure x then set startX to it then measure y then set startY to it then set xoff to clientX - startX then set yoff to clientY - startY then repeat until event pointerup from document wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document then add { left : $ { clientX - xoff } px ; top : $ { clientY - yoff } px ; } then trigger draggable:move end then trigger draggable:end\n  end\nend",
+      "lost": [],
+      "added": ["end"]
     },
     "behavior-sortable": {
-      "family": "TRIAGE — `init` reordered after the handler (as behavior-removable); `the` before `target` dropped",
-      "rendered": "behavior Sortable(dragClass)\n  on pointerdown(clientY) set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove(clientY) or pointerup(clientY) from document then trigger sortable:move on me end then remove .{dragClass} from item then trigger sortable:end on me\n  end\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\nend",
-      "lost": ["init if dragClass is undefined set dragClass to \"sorting\" end end", "the"],
-      "added": ["end init if dragClass is undefined set dragClass to \"sorting\""]
+      "family": "TRIAGE — `the` before `target` dropped",
+      "rendered": "behavior Sortable(dragClass)\n  init\n    if dragClass is undefined set dragClass to \"sorting\" end\n  end\n  on pointerdown(clientY) set item to target.closest(\"li\") then if item is null exit end then halt the event then add .{dragClass} to item then trigger sortable:start on me then repeat until event pointerup from document wait for pointermove(clientY) or pointerup(clientY) from document then trigger sortable:move on me end then remove .{dragClass} from item then trigger sortable:end on me\n  end\nend",
+      "lost": ["the"],
+      "added": []
     },
     "event-debounce": {
       "family": "TRIAGE — naked `${…}` URL rendered quoted (does the interpolation survive?)",
