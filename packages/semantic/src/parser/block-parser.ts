@@ -247,7 +247,7 @@ function isPrecedingCommandMarker(
     const t = tokens[k];
     if (endsClause(t) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
-    if (t.kind !== 'keyword' || !isAction(action)) continue;
+    if (!isAction(action)) continue;
     return getPatternsForLanguage(language).some(
       p => p.command === action && patternLiterals(p.template.tokens).includes(surface)
     );
