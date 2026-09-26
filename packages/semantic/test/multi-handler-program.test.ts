@@ -76,12 +76,12 @@ describe('multi-handler program — parse (end-delimited)', () => {
 
 describe('multi-handler program — parse (no-end feature chain, Phase B)', () => {
   it('splits a no-end chain at the trigger boundary (EN)', () => {
-    const node = parse('on click toggle .active on keyup add .x to me', 'en') as SNode;
+    const node = parse('on click add .active on keyup toggle .x', 'en') as SNode;
     expect(node.kind).toBe('compound');
     expect(node.statements).toHaveLength(2);
     expect(node.statements!.map(eventOf)).toEqual(['click', 'keyup']);
-    expect(actionsOf(node.statements![0])).toEqual(['toggle']);
-    expect(actionsOf(node.statements![1])).toEqual(['add']);
+    expect(actionsOf(node.statements![0])).toEqual(['add']);
+    expect(actionsOf(node.statements![1])).toEqual(['toggle']);
   });
 
   it('splits a three-handler no-end chain', () => {
@@ -94,7 +94,7 @@ describe('multi-handler program — parse (no-end feature chain, Phase B)', () =
   });
 
   it('mixes a no-end handler followed by an end-delimited one', () => {
-    const node = parse('on click toggle .a on keyup add .b end', 'en') as SNode;
+    const node = parse('on click add .a on keyup add .b end', 'en') as SNode;
     expect(node.statements).toHaveLength(2);
     expect(node.statements!.map(eventOf)).toEqual(['click', 'keyup']);
   });
@@ -102,6 +102,14 @@ describe('multi-handler program — parse (no-end feature chain, Phase B)', () =
   // The on-trigger / on-target ambiguity — these must NOT split.
   it('does not split a single handler whose body ends in an `on`-target', () => {
     expect((parse('on click toggle .active on me', 'en') as SNode).kind).toBe('event-handler');
+  });
+
+  it('does not split at the `on` of a command that takes an `on` target', () => {
+    // Both engines consume the phrase after toggle's `on`: the `add` runs on
+    // click, and no keyup handler exists (upstream throws `'keyup' is null`).
+    const node = parse('on click toggle .active on keyup add .x to me', 'en') as SNode;
+    expect(node.kind).toBe('event-handler');
+    expect(render(node as never, 'en')).toBe('on click toggle .active on keyup then add .x to me');
   });
 
   it('does not split on `on me` inside a then-chained body', () => {
@@ -113,9 +121,9 @@ describe('multi-handler program — parse (no-end feature chain, Phase B)', () =
 
   it('splits no-end chains in trigger-prepositional languages (es SVO, de V2, ar VSO)', () => {
     const cases: Record<string, string> = {
-      es: 'al click alternar .active al keyup agregar .x',
-      de: 'bei click umschalten .active bei keyup hinzufügen .x',
-      ar: 'على click بدّل .active على keyup أضف .x',
+      es: 'al click agregar .active al keyup agregar .x',
+      de: 'bei click hinzufügen .active bei keyup hinzufügen .x',
+      ar: 'على click أضف .active على keyup أضف .x',
     };
     for (const [lang, src] of Object.entries(cases)) {
       const node = parse(src, lang) as SNode;

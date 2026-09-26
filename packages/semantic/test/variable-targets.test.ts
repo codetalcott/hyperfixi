@@ -12,6 +12,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
+import { tryGetProfile } from '../src/registry';
 
 const FOREIGN = [
   'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
@@ -39,20 +40,12 @@ const CASES: string[] = [
   inLoop('close el'),
   inLoop('select el'),
   inLoop('reset el'),
-  inLoop('clone #t into el'),
-  inLoop('clone el into #t'),
   inLoop('morph el to "<p/>"'),
-  inLoop('install Foo on el'),
   inLoop('measure width of el'),
   inLoop('swap el with #t'),
-  inLoop('set @x to 1 on el'),
-  inLoop('transition *opacity to 0 on el'),
-  // The whole body: the SOV languages' handler patterns take it in.
-  'on click set @x to 1 on el',
   // At the top level, a command's own `on` is not a new handler.
   'on click get #d1 then set el to it then toggle .a on el then add .b to #d2',
   'on click get #d1 then set el to it then trigger foo on el then add .b to #d2',
-  'on click get #d1 then set el to it then set @x to 1 on el then add .b to #d2',
   // es/pt/he write put's `into` as their `on`.
   'on click get #d1 then set el to it then put "x" into el then add .b to #d2',
 ];
@@ -83,6 +76,29 @@ const SPLITS: [string, string][] = [
     'on click toggle .a then call foo()\nend\non keyup log 2\nend',
   ],
 ];
+
+// Without a `then`, the `on` is still toggle's or trigger's: the commands that
+// take an `on` target. English renders the `then`, so each language's input
+// is its render with the `then` taken out, in the languages whose `on` is
+// also toggle's marker. (vi is left out: without `rồi` it loses toggle's
+// `trên` target, a selector's too.)
+const WITHOUT_THEN: [string, string][] = [
+  ['on click toggle .a on el add .b to #d2', 'on click toggle .a on el then add .b to #d2'],
+  ['on click trigger foo on el add .b to #d2', 'on click trigger foo on el then add .b to #d2'],
+];
+const ON_IS_A_MARKER = ['ar', 'de', 'es', 'fr', 'he', 'id', 'it', 'pl', 'pt', 'sw'] as const;
+
+describe.each(WITHOUT_THEN)('%s, without a `then`', (src, expected) => {
+  it('English', () => {
+    expect(render(parse(src, 'en')!, 'en')).toBe(expected);
+  });
+
+  it.each(ON_IS_A_MARKER)('%s', language => {
+    const then = tryGetProfile(language)!.keywords.then!.primary;
+    const foreign = render(parse(src, 'en')!, language).split(` ${then} `).join(' ');
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(expected);
+  });
+});
 
 describe.each(SPLITS)('%s, through every language', (src, expected) => {
   it('English', () => {

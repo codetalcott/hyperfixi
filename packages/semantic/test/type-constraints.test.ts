@@ -10,7 +10,7 @@ import {
   validateRoleValues,
   type RoleValue,
 } from '../src/generators/schema-validator';
-import { toggleSchema } from '../src/generators/command-schemas';
+import { takeSchema, toggleSchema } from '../src/generators/command-schemas';
 import type { CommandSchema } from '../src/generators/command-schemas';
 
 describe('type constraints (v1.2)', () => {
@@ -97,14 +97,16 @@ describe('type constraints (v1.2)', () => {
     });
 
     it('reports multiple diagnostics for multiple bad roles', () => {
+      // take's class and recipient are two roles that take no expression.
+      // (toggle's destination takes one: an element target can be a variable.)
       const values: RoleValue[] = [
         { role: 'patient', type: 'literal' },
-        { role: 'destination', type: 'literal' },
+        { role: 'recipient', type: 'literal' },
       ];
-      const diagnostics = validateRoleValues(toggleSchema, values);
+      const diagnostics = validateRoleValues(takeSchema, values);
       expect(diagnostics).toHaveLength(2);
       expect(diagnostics[0].role).toBe('patient');
-      expect(diagnostics[1].role).toBe('destination');
+      expect(diagnostics[1].role).toBe('recipient');
     });
 
     it('ignores unknown roles (not a type constraint issue)', () => {

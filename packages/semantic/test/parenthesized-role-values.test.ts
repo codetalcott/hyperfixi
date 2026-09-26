@@ -96,22 +96,25 @@ describe('a parenthesized group as a role value', () => {
   });
 
   describe('validation', () => {
-    const hideWith = (raw: string): SemanticParseResult =>
+    // repeat's event source (`repeat until event x from (closest .modal)`) is
+    // still typed selector|reference. hide's target takes any expression now:
+    // a role that names an element takes a variable.
+    const repeatFrom = (raw: string): SemanticParseResult =>
       ({
-        action: 'hide',
+        action: 'repeat',
         confidence: 1,
         language: 'en',
-        arguments: [{ type: 'expression', raw, role: 'patient' }],
+        arguments: [{ type: 'expression', raw, role: 'source' }],
       }) as SemanticParseResult;
     const invalidType = (result: SemanticParseResult) =>
       validateSemanticResult(result).warnings.filter(w => w.code === 'INVALID_TYPE');
 
     it('a whole group satisfies a selector|reference slot', () => {
-      expect(invalidType(hideWith('(closest .modal)'))).toEqual([]);
+      expect(invalidType(repeatFrom('(closest .modal)'))).toEqual([]);
     });
 
     it('an expression that merely starts and ends with parens does not', () => {
-      expect(invalidType(hideWith('(a) * (b)'))).toHaveLength(1);
+      expect(invalidType(repeatFrom('(a) * (b)'))).toHaveLength(1);
     });
   });
 });
