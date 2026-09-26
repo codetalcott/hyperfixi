@@ -1297,7 +1297,11 @@ export const showSchema: CommandSchema = {
     {
       role: 'patient',
       description: 'The element to show',
-      required: true, // Changed from false - patient is primary role
+      // Optional: a bare `show` shows `me` (`you` inside a `tell`) on both
+      // engines. Required, a bare `show` matched no pattern and was DROPPED in
+      // every language — `on click show then log 1` rendered `on click log 1`,
+      // and `tell #modal to show` lost its only body command.
+      required: false,
       expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
@@ -1333,7 +1337,8 @@ export const hideSchema: CommandSchema = {
     {
       role: 'patient',
       description: 'The element to hide',
-      required: true, // Changed from false - patient is primary role
+      // Optional, as `show`'s: a bare `hide` was dropped in every language.
+      required: false,
       expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,

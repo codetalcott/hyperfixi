@@ -74,6 +74,8 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'settle',
   'focus',
   'blur',
+  'show', // A bare show/hide targets `me` (`you` inside a tell)
+  'hide',
   'return',
   'js',
   'measure', // Commands with optional-only roles

@@ -4738,6 +4738,35 @@ this signal was missing.
 > `on first <event>`, other languages a leading `first`, as their leading `once`), and renders back
 > the same way. Core's `click.once` keeps its spelling, per the policy. engine-verification flips
 > event-once from null to both (149 both, 2 unverified).
+>
+> **tell-command keeps `to show` (PR 16, 2026-09-26).** The allowlist is 5 → 4. `on click tell
+> #modal to show` rendered `on click tell #modal`, and on the direct path every translated tell
+> threw. Four causes:
+>
+> - **A bare `show`/`hide` was dropped in every language.** Their target was `required` (since
+>   514f53eaa, a confidence tweak), so a bare one matched no pattern. It is optional now, with the
+>   implicit `me`, and an implicit target renders bare, as the `ImplicitTaggable` contract says:
+>   inside a `tell`, upstream reads a written `show me` as the handler's element, not the told one.
+>   It stays written when another role follows it (`show with *opacity` → `show me with *opacity`),
+>   because the fused handler patterns read a verb followed by its marker as verb + object
+>   (hi/ms/th/tl/vi). settle-animations' bare `settle` now renders as written as well.
+> - **The renderer's pattern choice only rewarded coverage.** Once the target was optional, zh
+>   `显示 {patient}` tied the generated pattern that has the style slot and won on order, dropping
+>   `with *opacity` (bn/hi/zh). A pattern with no slot for a role the node carries now takes a
+>   penalty larger than any priority gap. The whole-corpus probe moved no other row.
+> - **`tell <target> to <command>`, core's form, lost its `to`.** No pattern read it (and pl reads
+>   `to` as "it"). A pre-pass excises it and flags the tell (`tellTo`) when only the tell's own
+>   verb and marker sit between its target and the `to`; renders write English `to` after the tell
+>   command in every language.
+> - **buildAST never gave a tell its body.** Semantic keeps a tell flat (its body is the statements
+>   after it); core's tell takes the body as its args and throws without one. So every translated
+>   tell threw, tell-other-element's included. The statements after a tell are now its args.
+>
+> Filed, not fixed: a tell's `end` is not modeled, so `tell … end then log 2` loses the `log` and
+> `tell … end log 2` pulls it into the body, in every language. That needs a real tell node, as
+> loops got in PR 7. Also filed: core's tell rebinds `me` (a documented divergence; upstream binds
+> only `you`). Out of scope: bare `remove` fails at runtime on both engines, and bare `toggle` is
+> upstream-invalid.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
