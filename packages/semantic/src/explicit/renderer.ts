@@ -443,7 +443,19 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const expr = watched ? this.valueToNaturalString(watched, language) : '';
       return [keyword, expr, this.keyword(language, 'changes')].filter(Boolean).join(' ');
     }
-    return node.name ? `${keyword} ${node.name}` : keyword;
+    const head = node.name ? `${keyword} ${node.name}` : keyword;
+    // The header's URL, verbatim (it is code): `socket Name <url>`, and
+    // `eventsource Name <from> <url>` with the language's source marker on the
+    // side it takes.
+    const source = node.roles.get('source' as SemanticRole);
+    const url = source?.type === 'expression' ? source.raw : undefined;
+    if (url && node.action === 'socket') return `${head} ${url}`;
+    if (url && node.action === 'eventsource') {
+      const marker = tryGetProfile(language)?.roleMarkers?.source;
+      const word = marker?.primary ?? 'from';
+      return marker?.position === 'after' ? `${head} ${url} ${word}` : `${head} ${word} ${url}`;
+    }
+    return head;
   }
 
   /**

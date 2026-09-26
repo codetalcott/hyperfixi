@@ -4699,6 +4699,16 @@ this signal was missing.
 > effect (`put the target.id into #o` and `put target.id into #o` both write the clicked element's
 > id; the trees differ only in a raw token's offsets). Narrow on purpose: `halt the event` is not
 > `halt event`.
+>
+> **An `eventsource`/`socket` header keeps its URL (PR 13, 2026-09-26).** The allowlist is 9 → 7:
+> eventsource-basic and socket-basic are preserved. The feature-block parser skipped from the name
+> to the first handler and kept nothing it skipped, so `eventsource ChatStream from /events`
+> rendered `eventsource ChatStream` and `socket ChatSocket ws://localhost:8080` rendered `socket
+> ChatSocket`, in English and so in every translation. The URL rides in the feature's `source`
+> role, sliced from the input (the tokenizers split `ws://…` at its colons), and renders verbatim,
+> with eventsource's source marker on the side the language puts it (ja `/events から`). buildAST's
+> feature output is not the runtime's feature shape, and nothing executes it, so the direct path is
+> unchanged.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
