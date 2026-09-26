@@ -5702,18 +5702,6 @@ export class SemanticParserImpl implements ISemanticParser {
   };
 
   /**
-   * Length (in tokens) and declared names of an event PARAM PHRASE starting at
-   * startIdx: `( ident [, ident]* )`. The tokenizers split
-   * `pointerdown(clientY)` into 4+ tokens (`pointerdown ( clientY )`), so the
-   * SOV event-marker check — which expects the marker DIRECTLY after the event
-   * keyword — never fired on a parameterized event: the custom-event second
-   * pass then anchored the `)` as the event (event:literal=")") and the leaked
-   * keyword-led head run was discarded by flushSkipped, killing the first body
-   * command (behavior-sortable `set item to …`, the session-5 sharpened
-   * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
-   * phrase is malformed (no close-paren, or a non-identifier between).
-   */
-  /**
    * A `wait for` run with more than its first event: `wait for pointermove(
    * clientX, clientY) or pointerup(clientX, clientY) from document`, `wait for
    * keyup or 1s`. No wait pattern captures past the first event, so the params,
@@ -5750,9 +5738,19 @@ export class SemanticParserImpl implements ISemanticParser {
     const isSourceMarker = (t: LanguageToken | undefined): boolean =>
       !!t && ((t.normalized ?? '') === 'source' || markerForms.has(t.value.toLowerCase()));
     const prepositional = marker?.position !== 'after';
-    /** The wait verb within two tokens before `start` or after `end` (exclusive). */
+    // The wait verb next to the run, on the side the language puts it. Verb
+    // first, within two tokens before it (`wait keyup`, `wait for keyup`): only
+    // the wait's own words sit there. Verb-final, directly after it or across
+    // one particle (`keyup 待つ`, tr `keyup i bekle`): the words after a HEAD
+    // run are the next command's, and qu `maykama llave uray(key) llave uray
+    // suyay` (`on keydown(key) wait for keydown`) has the body's event there.
+    // Looking on both sides let a head's run take the body's verb.
+    const verbFinal = tryGetProfile(language)?.wordOrder === 'SOV';
+    /** The wait verb next to the run `[start, end)`. */
     const nearWait = (start: number, end: number): boolean =>
-      [start - 1, start - 2, end, end + 1].some(j => isWait(arr[j]));
+      verbFinal
+        ? isWait(arr[end]) || (arr[end]?.kind === 'particle' && isWait(arr[end + 1]))
+        : isWait(arr[start - 1]) || isWait(arr[start - 2]);
 
     /**
      * Tokens an event word spans: a localized name can be two words (ar
@@ -5882,6 +5880,18 @@ export class SemanticParserImpl implements ISemanticParser {
     );
   }
 
+  /**
+   * Length (in tokens) and declared names of an event PARAM PHRASE starting at
+   * startIdx: `( ident [, ident]* )`. The tokenizers split
+   * `pointerdown(clientY)` into 4+ tokens (`pointerdown ( clientY )`), so the
+   * SOV event-marker check — which expects the marker DIRECTLY after the event
+   * keyword — never fired on a parameterized event: the custom-event second
+   * pass then anchored the `)` as the event (event:literal=")") and the leaked
+   * keyword-led head run was discarded by flushSkipped, killing the first body
+   * command (behavior-sortable `set item to …`, the session-5 sharpened
+   * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
+   * phrase is malformed (no close-paren, or a non-identifier between).
+   */
   private matchEventParamPhrase(
     allTokens: readonly LanguageToken[],
     startIdx: number

@@ -85,11 +85,41 @@ describe('only a wait’s run', () => {
     expect(render(parse(src, 'en')!, 'en')).toBe(src);
   });
 
-  // Each wait takes its own extras: the pre-pass counts the same event's
-  // earlier waits to find which node is its.
-  it('two waits on the same event keep their own extras', () => {
-    const src = 'on click wait for keyup then log 1 then wait for keyup or 1s then log 2';
+});
+
+// A run is a wait's only when the wait verb sits next to it, on the side the
+// language puts it. The head names the same event as the body's wait and the
+// verb follows the head's run: when both sides counted, the head's
+// `(clientX)` moved onto the wait (en), and so it did in qu, whose body event
+// sits between the head's run and the verb.
+describe.each([
+  ['a head sharing the wait’s event keeps its own params',
+    'on pointerdown(clientX) wait for pointerdown then log clientX'],
+  // The same rule counts the wait's earlier same-event waits: counting the
+  // head too sent the alternatives past the only wait, and they were dropped.
+  ['a wait sharing the head’s event keeps its alternatives', 'on keyup wait for keyup or 1s then log 1'],
+  // The pre-pass counts the same event's earlier waits to find which node is its.
+  ['two waits on the same event keep their own extras',
+    'on click wait for keyup then log 1 then wait for keyup or 1s then log 2'],
+])('%s', (_, src) => {
+  it('en', () => {
     expect(render(parse(src, 'en')!, 'en')).toBe(src);
+  });
+
+  it.each(FOREIGN)('%s', language => {
+    const foreign = render(parse(src, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
+  });
+});
+
+// Hand-written verb-final input may mark the run before the verb; renders
+// never do.
+describe('a particle between a verb-final wait and its run', () => {
+  it.each([
+    ['tr', 'tıklama üzerinde keyup veya 1s i bekle ardından 1 i kaydet'],
+    ['hi', 'click पर keyup या 1s को प्रतीक्षा फिर 1 को लॉग'],
+  ])('%s', (language, src) => {
+    expect(render(parse(src, language)!, 'en')).toBe('on click wait for keyup or 1s then log 1');
   });
 });
 
