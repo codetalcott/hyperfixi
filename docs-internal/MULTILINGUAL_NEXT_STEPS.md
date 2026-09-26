@@ -4598,6 +4598,36 @@ this signal was missing.
 > `handler-head-direct-path.test.ts` and `wait-direct-path.test.ts` (core) run `on
 > mousemove(clientX)`, `on keydown(key)` and `wait for mousemove` in all 23 languages; before the
 > fix 13 failed, exactly the languages the probes named.
+>
+> **A behavior keeps its handlers past a block head of several words (PR 8f, 2026-09-26).** The
+> behavior collapse filed in PR 8d. The block parser splits a behavior into handlers by block
+> depth, and it counted every opener word. A head of two (`repeat while`, `repeat for`) raised the
+> depth twice; a marker that spells an opener (`wait for`, `take … for me`, `toggle … for 2s`, and
+> toggle's duration marker ja `間` / ko `동안`, which normalize to `while`) raised it for nothing.
+> A handler holding one never closed, and every later handler landed inside it with its head lost,
+> in English and so in every language. Now one word per block counts:
+> - a while-word never does: upstream has no bare `while` loop, a while loop is `repeat while`, and
+>   its `repeat` opens the block, before the while-word in SVO or after the condition in ja
+>   (`の間 x < 3 繰り返し`);
+> - `for` right after `repeat` is that repeat's head;
+> - English `for` opens a loop only as `for <x> in`.
+>
+> No corpus row has the shape (the drag behaviors have one handler), so no gate moved.
+>
+> **Found, filed:**
+> - **`else if` still counts twice**, matching the renderer, which closes an else-if chain with an
+>   `end` per `if`. Upstream closes the chain with one. So semantic's render of an else-if chain in
+>   a behavior's non-last handler is invalid on upstream (`Unexpected Token : end`: the extra `end`
+>   closes the behavior early), and the upstream form collapses the behavior in the semantic parse.
+>   The parser's if-fold, the renderer and this count have to switch together. Next: PR 8g.
+> - pt `para` and sw `kwa` read a bare for-loop's word as the destination marker, so the loop's
+>   `end` closes its handler early. Pinned in `behavior-block-openers.test.ts`.
+> - qu and tr split a trailing number off an identifier: `behavior Demo15` defines `Demo`, so
+>   `install Demo15` fails (`behavior-handlers-direct-path.test.ts` uses letter-only names).
+>
+> `behavior-handlers-direct-path.test.ts` (core) defines, installs and fires a translated two-handler
+> behavior in all 23 languages; on main's block parser all 46 cases fail (the collapsed parse
+> compiled the behavior as a command sequence: `Unknown command: behavior`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
