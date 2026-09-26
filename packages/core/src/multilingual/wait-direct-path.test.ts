@@ -131,3 +131,19 @@ describe('`on pointerdown(clientX) wait for pointerdown` keeps the first event�
     expect(button.textContent).toBe('3');
   });
 });
+
+// PR 8e: a wait's event may have a native name its tokenizer does not know (de
+// `mausbewegen`, ko `마우스무브`); the wait took it for a duration.
+describe('`wait for mousemove` waits for the mousemove', () => {
+  const SOURCE = 'on click wait for mousemove then add .x to me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const button = await install(translate(SOURCE, language), language);
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await settle();
+    expect(button.classList.contains('x'), 'ran before the event').toBe(false);
+    button.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+    await settle();
+    expect(button.classList.contains('x'), 'never ran after it').toBe(true);
+  });
+});
