@@ -2319,6 +2319,18 @@ Found alongside, and **still open**:
   `function _handler_my-event_…`. That is invalid JavaScript, reported as
   `success: true`. A pseudo-command also has no codegen, so its handler body is
   EMPTY.
+- **Every AOT-compiled loop is `while (true)` (found 2026-09-25, PR 7).** Both
+  interchange converters (`ast-utils/interchange/from-core.ts` and semantic's
+  `interchange/from-semantic.ts`) still read the pre-slot POSITIONAL `repeat`
+  (`args[0]` = the loop type), the same shape `parseForCommand` kept. Core's
+  parser has emitted slots since Arc 3 step 3, so `args[0]` is the body block,
+  the loop type falls back to `forever`, and `on click repeat 3 times add .x to
+  me end` compiles to `while (true) { … }` — a hung page, reported as
+  `success: true`, in English and (now that `buildLoop` emits the same slots)
+  in every language. Before PR 7 a non-English loop compiled to `while (true)
+  {}` with its body AFTER it. The fix is the twin of the `for` row above: both
+  converters read `modifiers.loopType` and its slots (keep the positional read
+  only for hand-built ASTs), and a test compiles and RUNS a counted loop.
 
 ## Notes
 
