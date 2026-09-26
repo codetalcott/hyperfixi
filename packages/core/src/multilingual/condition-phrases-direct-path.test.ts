@@ -22,7 +22,7 @@ const LANGUAGES = ['es', 'he', 'it'] as const;
 /** Run the handler on #b and read #out. */
 async function run(ast: unknown): Promise<string> {
   document.body.innerHTML =
-    '<div id="out">o</div><p id="d1" class="x">d</p><button id="b">b</button>';
+    '<div id="out">o</div><p id="d1" class="x">d</p><p id="d2">e</p><button id="b">b</button>';
   const button = document.getElementById('b') as HTMLElement;
   await hyperscript.execute(ast as never, hyperscript.createContext(button));
   button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -35,8 +35,8 @@ const handler = (condition: string): string =>
   `if ${condition} put "yes" into #out else put "no" into #out end`;
 
 // Each condition with the branch upstream takes (p = 1, q = 2, r = 0, t = "",
-// #d1 has class x and text "d"). Core agrees on all but `textContent of #d1`,
-// which it binds as `textContent of (#d1 is "d")`.
+// #d1 has class x and text "d", #d2 follows it). Core agrees on all but
+// `textContent of #d1`, which it binds as `textContent of (#d1 is "d")`.
 const CONDITIONS: Array<[string, string]> = [
   ['p is not q', 'yes'],
   ['p is not 1', 'no'],
@@ -60,6 +60,12 @@ const CONDITIONS: Array<[string, string]> = [
   ['#d1 matches .x', 'yes'],
   ['#d1 does not match .x', 'no'],
   ['[1, 2] does not contain 3', 'yes'],
+  ['#d1 precedes #d2', 'yes'],
+  ['#d2 precedes #d1', 'no'],
+  ['#d2 follows #d1', 'yes'],
+  ['#d1 follows #d2', 'no'],
+  ['#d2 does not precede #d1', 'yes'],
+  ['#d1 does not precede #d2', 'no'],
   ['#zz does not exist', 'yes'],
   ['#d1 does not exist', 'no'],
   ['p is a Number', 'yes'],

@@ -105,14 +105,16 @@ const BINARY_PHRASES = [
 const POSTFIX_PHRASES = ['is not empty', 'is empty', 'does not exist'];
 const TYPE_CHECK_PHRASES = ['is not an', 'is not a', 'is an', 'is a'];
 
-/** Every phrase as its words, longest first, so `is not in` is never read as `is not`. */
+/**
+ * Every phrase as its words, in match order: each is listed before any phrase
+ * whose words begin it, so `is not in` is never read as `is not`, nor `is not`
+ * as `is`.
+ */
 const COMPARISON_PHRASES: ReadonlyArray<readonly [string, readonly string[]]> = [
   ...POSTFIX_PHRASES,
   ...TYPE_CHECK_PHRASES,
   ...BINARY_PHRASES,
-]
-  .map(phrase => [phrase, phrase.split(' ')] as const)
-  .sort((a, b) => b[1].length - a[1].length);
+].map(phrase => [phrase, phrase.split(' ')] as const);
 
 export class ExpressionParser {
   private tokens: Token[] = [];
