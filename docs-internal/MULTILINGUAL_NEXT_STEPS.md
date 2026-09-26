@@ -4642,6 +4642,16 @@ this signal was missing.
 > **Found, filed:** a loop that holds an `if`, followed by a command, drops that command in 13
 > languages (bn es id it ms pl pt ru sw th tl uk vi) for `repeat 3 times`, and in bn for `for … in`,
 > with a plain `else` as much as a chain. It predates PR 8f and 8g (measured on main's sources).
+>
+> **A behavior's `init` renders first (PR 9, 2026-09-26).** The allowlist is 15 → 14:
+> behavior-removable is preserved. The renderer wrote a behavior's handlers, then its `init`. Core
+> runs `init` before attaching any handler, but upstream installs features in source order, so a
+> render's `on click from triggerEl` evaluated `triggerEl` before `init` had set it, in English and
+> so in every translation. The two other behavior entries change family:
+> - behavior-draggable: `init`'s optional `end` written out. The source's one `end` closes the
+>   one-line `if`, and `init` ends at the next feature; the render closes both. The same program,
+>   so the next step is a named equivalence, pinned on the engine.
+> - behavior-sortable: the `the` before `target` dropped.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
