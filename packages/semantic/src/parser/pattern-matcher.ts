@@ -1771,11 +1771,10 @@ export class PatternMatcher {
    */
   private static readonly RUN_OPERATORS = new Set(['+', '-', '*', '/']);
 
-  /** The next token is followed by a run operator with space on both sides. */
-  private spacedRunOperatorFollows(tokens: TokenStream): boolean {
-    const [operand, op, next] = [tokens.peek(), tokens.peek(1), tokens.peek(2)];
-    if (!operand || !op || !next || !PatternMatcher.RUN_OPERATORS.has(op.value)) return false;
-    return op.position.start > operand.position.end && next.position.start > op.position.end;
+  /** The token after the next one is a run operator. */
+  private runOperatorFollows(tokens: TokenStream): boolean {
+    const op = tokens.peek(1);
+    return !!op && PatternMatcher.RUN_OPERATORS.has(op.value);
   }
 
   /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
@@ -2111,12 +2110,11 @@ export class PatternMatcher {
     if (!token) return false;
 
     // A particle is an operand where no marker can stand: directly after an
-    // operator, or before a SPACED binary operator (`a + b`). es/it/pt `a`, the
-    // preposition "to", is also a common variable name, so `retornar a + b`
-    // lost its whole value (worker-basic); a marker is followed by its value,
-    // never by an operator. The spacing keeps `añadir 5 a -1` ("add 5 to -1")
-    // a marker: its `-` is glued to the number.
-    if (token.kind === 'particle' && (afterOperator || this.spacedRunOperatorFollows(tokens))) {
+    // operator, or directly before one (`a + b`). es/it/pt `a`, the preposition
+    // "to", is also a common variable name, so `retornar a + b` lost its whole
+    // value (worker-basic); a marker is followed by its value, never by an
+    // operator.
+    if (token.kind === 'particle' && (afterOperator || this.runOperatorFollows(tokens))) {
       tokens.advance();
       return true;
     }

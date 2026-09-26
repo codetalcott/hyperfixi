@@ -110,7 +110,7 @@ describe('`a` before an operator is a variable', () => {
     expect(roundTrip('on click put b + a into #o', language)).toBe('on click put b + a into #o');
   });
 
-  it('a marker glued to a negative number stays a marker (es `añadir 5 a -1`)', () => {
+  it('a marker before its value stays a marker (es `añadir 5 a -1`: the pattern takes it first)', () => {
     const node = parseSemantic('añadir 5 a -1', 'es').node as {
       roles: Map<string, { type: string; value?: unknown }>;
     };
