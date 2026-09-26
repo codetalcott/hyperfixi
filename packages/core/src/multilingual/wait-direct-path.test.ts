@@ -116,3 +116,18 @@ describe('`wait for keyup or 20ms` gives up at the timeout', () => {
     expect(button.classList.contains('x')).toBe(true);
   });
 });
+
+// A head naming the wait's event keeps its params. The pre-pass moved the
+// head's `(clientX)` onto the wait, which then bound the SECOND event's.
+describe('`on pointerdown(clientX) wait for pointerdown` keeps the first event’s clientX', () => {
+  const SOURCE = 'on pointerdown(clientX) wait for pointerdown then put clientX into me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const button = await install(translate(SOURCE, language), language);
+    button.dispatchEvent(new MouseEvent('pointerdown', { clientX: 3 }));
+    await settle();
+    button.dispatchEvent(new MouseEvent('pointerdown', { clientX: 5 }));
+    await settle();
+    expect(button.textContent).toBe('3');
+  });
+});
