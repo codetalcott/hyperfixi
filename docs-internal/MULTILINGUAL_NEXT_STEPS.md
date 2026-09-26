@@ -4441,9 +4441,9 @@ this signal was missing.
 >   heads take their literals verbatim from the corpus. `times` is deliberate; the verb is not.
 > - The transformer-era fronted-while shape (ja `の間 #counter.innerText < 10 を クリック で
 >   繰り返し …`) drops `< 10` from the condition. Input-only: current renders never produce it.
->   (Filed with it:) explicit syntax cannot round-trip a SPACED expression value: the renderer
->   writes `condition:x < 10` undelimited and the parser splits it at the spaces, for `if` as
->   for `repeat while`. It predates loop nodes.
+> - Explicit syntax cannot round-trip a SPACED expression value: the renderer writes
+>   `condition:x < 10` undelimited and the parser splits it at the spaces, for `if` as for
+>   `repeat while`. It predates loop nodes.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
