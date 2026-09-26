@@ -1488,10 +1488,22 @@ export class PatternMatcher {
     tokens.advance();
 
     // A query's locative scope: `add @disabled to <button/> in me`, `remove
-    // <li/> in #list`. Only a `<…/>` query takes one, and never as an event.
-    // Without this the `in …` tail went unconsumed, and the query lost its
-    // scope in English and so in every translation.
-    if (value.type === 'selector' && value.value.startsWith('<') && patternToken.role !== 'event') {
+    // <li/> in #list`. A `<…/>` query takes one, and so does a class ref
+    // (`set x to .item in #list`, `add .z to .item in #list`, as upstream
+    // reads it), except where the class is a class NAME, the patient of
+    // add/remove/toggle/take: it's `a` ("to") is also a locative, so
+    // `aggiungere .a a <li/> in #list` read the name as a query scoped to the
+    // `<li/>`. The role's command, not the pattern's: a fused handler pattern
+    // is `on`. Never as an event. Without this the `in …` tail went
+    // unconsumed, and the query lost its scope in English and so in every
+    // translation.
+    const classNameSlot =
+      patternToken.role === 'patient' &&
+      ['add', 'remove', 'toggle', 'take'].includes(this.currentRoleCommand ?? '');
+    const takesScope =
+      value.type === 'selector' &&
+      (value.value.startsWith('<') || (value.value.startsWith('.') && !classNameSlot));
+    if (takesScope && patternToken.role !== 'event') {
       const scoped = matchQueryScope(tokens.tokens, tokens.position(), this.currentProfile, t =>
         t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
       );

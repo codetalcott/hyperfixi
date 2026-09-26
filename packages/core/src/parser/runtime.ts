@@ -876,11 +876,21 @@ async function evaluateBinaryExpression(
     // matching X — i.e. tell <p/> in me / tell <details/> in #article2.
     // Without this, the bare `in` branch below treats the array of pre-resolved
     // <X> elements as a containment-check against <root>, returning a boolean.
-    if (leftNode?.type === 'selector' && leftNode.fromQuery && typeof leftNode.value === 'string') {
+    // A class ref reads the same (`.item in #list`, upstream's classRef in a
+    // scope): tested for containment instead, `set x to .item in #list` set a
+    // boolean and `add .z to .item in #list` threw. `is in` stays membership.
+    if (
+      leftNode?.type === 'selector' &&
+      typeof leftNode.value === 'string' &&
+      (leftNode.fromQuery || (operator === 'in' && leftNode.value.startsWith('.')))
+    ) {
       const root = await evaluateAST(node.right, context);
       const scope = root && typeof (root as any).querySelectorAll === 'function' ? root : null;
       if (scope) {
-        return Array.from((scope as Element).querySelectorAll(leftNode.value));
+        const query = leftNode.fromQuery
+          ? leftNode.value
+          : escapeSelectorForQuery(leftNode, leftNode.value);
+        return Array.from((scope as Element).querySelectorAll(query));
       }
     }
   }
