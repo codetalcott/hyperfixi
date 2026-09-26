@@ -174,6 +174,11 @@ export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'selector';
   readonly value: string; // The CSS selector: #id, .class, [attr], etc.
   readonly selectorKind: 'id' | 'class' | 'attribute' | 'element' | 'complex';
+  /**
+   * The element a query is scoped to: `<button/> in me`, `<input/> in closest
+   * <form/>`. A reference, a selector, or a `closest …` expression.
+   */
+  readonly scope?: SemanticValue;
 }
 
 export interface ReferenceValue extends ImplicitTaggable, SourceSpanned {

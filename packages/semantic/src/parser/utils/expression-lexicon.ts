@@ -269,6 +269,93 @@ export function toEnglishLocative(
 }
 
 /**
+ * Whether `marker` is a "within" preposition: English `in` or the language's own.
+ * The surface `in` counts whatever it normalizes to: renders write it in every
+ * language, and de/it (`in`) and tr (a suffix of its `e`) read it as their
+ * destination marker. A marker the pattern owes is still the pattern's.
+ */
+function isLocativeMarker(profile: LanguageProfile | undefined, marker: LanguageToken): boolean {
+  if (marker.value.toLowerCase() === 'in') return true;
+  const langSurfaces = profile?.code ? LOCATIVE_SURFACES[profile.code] : undefined;
+  if (langSurfaces?.has(marker.value.toLowerCase())) return true;
+  return ENGLISH_LOCATIVE_SENSES.has((marker.normalized ?? marker.value).toLowerCase());
+}
+
+/** References a query can be scoped to (`<button/> in me`), by normalized form. */
+const SCOPE_REFERENCES: ReadonlySet<string> = new Set([
+  'me',
+  'it',
+  'you',
+  'body',
+  'document',
+  'target',
+  'result',
+]);
+
+/**
+ * The scope a locative marker introduces, at `tokens[i]`: a reference (`me`),
+ * an ancestor query (`closest <form/>`), or an element selector (`#list`; a `*`
+ * style or `@` attribute never names an element). Its parts are English.
+ */
+export interface LocativeScope {
+  readonly kind: 'reference' | 'closest' | 'selector';
+  readonly parts: readonly PositionalRunPart[];
+  readonly consumed: number;
+}
+
+function matchScopeAt(tokens: readonly LanguageToken[], i: number): LocativeScope | null {
+  const t = tokens[i];
+  if (!t) return null;
+  if (t.kind === 'selector') {
+    return /^[*@]/.test(t.value)
+      ? null
+      : { kind: 'selector', parts: [{ text: t.value, token: t }], consumed: 1 };
+  }
+  const norm = (t.normalized ?? t.value).toLowerCase();
+  if (SCOPE_REFERENCES.has(norm)) {
+    return { kind: 'reference', parts: [{ text: norm, token: t }], consumed: 1 };
+  }
+  const sel = tokens[i + 1];
+  if (norm === 'closest' && sel?.kind === 'selector' && !/^[*@]/.test(sel.value)) {
+    return {
+      kind: 'closest',
+      parts: [
+        { text: 'closest', token: t },
+        { text: sel.value, token: sel },
+      ],
+      consumed: 2,
+    };
+  }
+  return null;
+}
+
+/**
+ * A query's locative scope, at `tokens[at]`: `<locative> <scope>`, as in
+ * `add @disabled to <button/> in me`. Read only right after a `<…/>` query,
+ * the one value `in` can scope, and only on a real locative (English `in`, or
+ * the language's own from LOCATIVE_SURFACES): unlike the positional run's
+ * source clause, nothing but the query anchors this slot. A marker the
+ * enclosing pattern is about to require is its, not the query's (`poner <b/> en
+ * #x`, es put … into …), unless something after the scope can satisfy it.
+ */
+export function matchQueryScope(
+  tokens: readonly LanguageToken[],
+  at: number,
+  profile: LanguageProfile | undefined,
+  isMarkerOwedByPattern?: (token: LanguageToken | undefined) => boolean
+): { readonly marker: LanguageToken; readonly scope: LocativeScope } | null {
+  const marker = tokens[at];
+  if (!marker || !isLocativeMarker(profile, marker)) return null;
+  const scope = matchScopeAt(tokens, at + 1);
+  if (!scope) return null;
+  const after = tokens[at + 1 + scope.consumed];
+  if (isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(after) !== true) {
+    return null;
+  }
+  return { marker, scope };
+}
+
+/**
  * Positional query keywords (English + the normalized forms the tokenizers
  * produce for every language, e.g. ar آخر→last, tl huli→last).
  *
@@ -465,6 +552,16 @@ export function matchPositionalRun(
     parts.push({ text: toEnglishLocative(profile, marker), token: marker });
     parts.push({ text: source.value, token: source });
     i += 2;
+  } else {
+    // A reference or ancestor scope (`first <input/> in closest <form/>`, `last
+    // <li/> in me`), which the selector-only clause above never took. Only on a
+    // real locative: a particle before a reference is as often the next role's
+    // marker (ja `を 自分`).
+    const scoped = matchQueryScope(tokens, i, profile, isMarkerOwedByPattern);
+    if (scoped && scoped.scope.kind !== 'selector') {
+      parts.push({ text: 'in', token: scoped.marker }, ...scoped.scope.parts);
+      i += 1 + scoped.scope.consumed;
+    }
   }
 
   return { parts, consumed: i - start };

@@ -33,6 +33,7 @@ import {
   isOfPossessiveMarker,
   joinExpressionTokens,
   matchPositionalRun,
+  matchQueryScope,
   translatePropertyName,
   isKnownPropertySurface,
   CONVERSION_TYPE_NAMES,
@@ -1485,6 +1486,27 @@ export class PatternMatcher {
       captured.set(patternToken.role, value);
     }
     tokens.advance();
+
+    // A query's locative scope: `add @disabled to <button/> in me`, `remove
+    // <li/> in #list`. Only a `<…/>` query takes one, and never as an event.
+    // Without this the `in …` tail went unconsumed, and the query lost its
+    // scope in English and so in every translation.
+    if (value.type === 'selector' && value.value.startsWith('<') && patternToken.role !== 'event') {
+      const scoped = matchQueryScope(tokens.tokens, tokens.position(), this.currentProfile, t =>
+        t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
+      );
+      if (scoped) {
+        const [first, second] = scoped.scope.parts;
+        const scopeValue: SemanticValue =
+          scoped.scope.kind === 'reference'
+            ? createReference(first.text as ReferenceValue['value'])
+            : scoped.scope.kind === 'closest'
+              ? ({ type: 'expression', raw: `closest ${second.text}` } as SemanticValue)
+              : (this.tokenToSemanticValue(first.token) as SemanticValue);
+        for (let n = 0; n < 1 + scoped.scope.consumed; n++) tokens.advance();
+        captured.set(patternToken.role, { ...value, scope: scopeValue });
+      }
+    }
 
     // Event-head tolerance: a bracket key-filter and/or a prepositional source
     // clause can trail the event token (`keydown` + `[key=="Tab"]` — the
