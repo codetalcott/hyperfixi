@@ -998,6 +998,7 @@ describe('TakeCodegen', () => {
 describe('Command Registry', () => {
   it('has all expected commands registered', () => {
     const expected = [
+      'empty',
       'toggle',
       'add',
       'remove',

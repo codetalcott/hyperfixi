@@ -529,6 +529,25 @@ class HideCodegen implements CommandCodegen {
 }
 
 /**
+ * Empty command: empty [target]. Removes the children of each element the
+ * target names (`empty #list`, `empty .box`), as both engines do. It had no
+ * codegen, so the handler compiled to nothing.
+ */
+class EmptyCodegen implements CommandCodegen {
+  readonly command = 'empty';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
+    const targetNode = commandTarget(node, 'arg');
+
+    return {
+      code: forEachTarget(targetNode, ctx, el => `${el}.replaceChildren()`),
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
  * Focus command: focus [target]
  */
 class FocusCodegen implements CommandCodegen {
@@ -1946,6 +1965,7 @@ export const commandCodegens = new Map<string, CommandCodegen>([
   ['put', new PutCodegen()],
   ['show', new ShowCodegen()],
   ['hide', new HideCodegen()],
+  ['empty', new EmptyCodegen()],
   ['focus', new FocusCodegen()],
   ['blur', new BlurCodegen()],
   ['log', new LogCodegen()],
