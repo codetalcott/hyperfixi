@@ -74,6 +74,21 @@ import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
  */
 const NESTED_ROLE_BONUS = 5;
 
+/** Whether the node carries a real (authored, not defaulted) role besides `role`. */
+function hasOtherRealRole(node: SemanticNode, role: SemanticRole): boolean {
+  for (const [name, value] of node.roles) {
+    if (name !== role && !(value as { implicit?: unknown }).implicit) return true;
+  }
+  return false;
+}
+
+/**
+ * Score against a pattern that has no slot for a role the node carries. Larger
+ * than any priority gap between a command's patterns (80–100), so rendering
+ * the role always beats a more idiomatic form that drops it.
+ */
+const UNCOVERED_ROLE_PENALTY = 30;
+
 /**
  * The literal a pattern pins a role to, normalized for comparison: an
  * extraction default, or a fixed value the pattern records when it matches.
@@ -590,6 +605,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       };
       scoreTokens(pattern.template.tokens, false);
 
+      // A pattern with no slot for a role the node really carries drops it in
+      // silence, so it loses to one that renders it. The bonuses above only
+      // reward coverage, which let a slot-less pattern win on a top-level-vs-
+      // nested difference: once show's patient became optional, zh `显示
+      // {patient}` beat the generated `显示 [把 {patient}] [用 {style}]` and
+      // `show #modal with *opacity` rendered without its strategy (bn/hi/zh).
+      const slots = new Set<string>();
+      const collectSlots = (tokens: readonly PatternToken[]): void => {
+        for (const token of tokens) {
+          if (token.type === 'group') collectSlots(token.tokens);
+          else if (token.type === 'role') slots.add(token.role);
+        }
+      };
+      collectSlots(pattern.template.tokens);
+      for (const role of node.roles.keys()) {
+        if (hasRealRole(role) && !slots.has(role)) score -= UNCOVERED_ROLE_PENALTY;
+      }
+
       // Value-pinned variants. A positional pattern (`put X before Y`, `at end
       // of`, `after`) carries its position as a baked-in literal plus an
       // extraction default that records which value it means:
@@ -960,14 +993,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           return null;
         }
 
-        // Skip an optional group whose destination/source role is the implicit
-        // `me` default (the parser injects it when unspecified). This avoids the
-        // redundant `on me` / `to me` / `from me` / `of me` — `add .active`, not
-        // `add .active to me`; `remove me`, not `remove me from me`; `measure my x`,
-        // not `measure my x of me`. The `on` event-source renders via its own path,
-        // so it is untouched here.
+        // Skip an optional group whose destination/source/patient role is the
+        // implicit `me` default (the parser injects it when unspecified). This
+        // avoids the redundant `on me` / `to me` / `from me` / `of me` — `add
+        // .active`, not `add .active to me`; `remove me`, not `remove me from me`;
+        // `measure my x`, not `measure my x of me`. The `on` event-source renders
+        // via its own path, so it is untouched here.
+        //
+        // A bare `show` / `settle` stays bare for the same reason, and one place
+        // it is not redundant: inside a `tell`, a bare `show` shows the told
+        // element, and upstream reads a written `show me` as the handler's own.
         if (token.optional) {
-          for (const roleName of ['destination', 'source'] as const) {
+          for (const roleName of ['destination', 'source', 'patient'] as const) {
             const roleToken = token.tokens.find(
               (t: any) => t.type === 'role' && t.role === roleName
             );
@@ -987,7 +1024,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
               const patient = node.roles.get('patient');
               if (patient?.type === 'literal' && patient.dataType === 'string') continue;
             }
-            return null; // Skip rendering the implicit "me" destination/source
+            // Keep the implicit patient when another role follows it: a verb
+            // followed directly by its marker (`show with *opacity`) is read as
+            // verb + object by the fused handler patterns — ms `tunjuk dengan
+            // *opacity` took `dengan` as the patient, hi `*opacity से दिखाएं`
+            // bound `से` (from) as the handler's source (hi/ms/th/tl/vi).
+            if (roleName === 'patient' && hasOtherRealRole(node, 'patient')) continue;
+            return null; // Skip rendering the implicit "me" destination/source/patient
           }
         }
 
