@@ -1,7 +1,7 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
   "checked": 161,
-  "preserved": 139,
+  "preserved": 143,
   "allowedLosses": {
     "async-block": {
       "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
@@ -83,12 +83,6 @@
       "lost": ["in me", "in me"],
       "added": []
     },
-    "go-back": {
-      "family": "MEANING — `go back` rendered `go url back`, which navigates to a page named \"back\"",
-      "rendered": "on click go url back",
-      "lost": [],
-      "added": ["url"]
-    },
     "hide-with-transition": {
       "family": "show/hide style capture dropped (`with *opacity`)",
       "rendered": "on click hide me",
@@ -99,12 +93,6 @@
       "family": "handler head — `or <event>[filter]` alternative dropped",
       "rendered": "on click toggle .active",
       "lost": ["or keypress [ key== \"Enter\" ]"],
-      "added": []
-    },
-    "repeat-while": {
-      "family": "MEANING — loop condition truncated (`< 10`): the loop no longer terminates",
-      "rendered": "on click repeat while #counter.innerText increment #counter then wait 200ms end",
-      "lost": ["< 10"],
       "added": []
     },
     "show-with-transition": {
@@ -118,12 +106,6 @@
       "rendered": "socket ChatSocket\n  on message put it into #chat\n  end\nend",
       "lost": ["ws : //localhost : 8080"],
       "added": []
-    },
-    "socket-send": {
-      "family": "MEANING — string literal `\"hello\"` rendered as the identifier `hello`",
-      "rendered": "on click send hello to ChatSocket",
-      "lost": ["\"hello\""],
-      "added": ["hello"]
     },
     "stagger-animation": {
       "family": "hyperfixi-only loop syntax dropped (`with index`)",
@@ -141,12 +123,6 @@
       "family": "MEANING — the loop `end` moves: `set #list.innerHTML` is pulled into the loop",
       "rendered": "on click set $html to \"\" then for item in $items set $html to $html + `<li>${item.name}</li>` then set #list.innerHTML to $html end",
       "lost": ["end"],
-      "added": []
-    },
-    "worker-basic": {
-      "family": "MEANING — def body expression mangled (`return a + b` → `return +`)",
-      "rendered": "worker Calculator\n  def add(a, b)\n  return +\nend\nend",
-      "lost": ["a", "b"],
       "added": []
     }
   }
