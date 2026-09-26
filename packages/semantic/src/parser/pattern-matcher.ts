@@ -3664,9 +3664,11 @@ export class PatternMatcher {
         // which gets converted to 'identifier' AST nodes by semantic-integration.ts
         return { type: 'expression', raw: token.value } as const;
 
-      case 'url':
+      case 'url': {
         // URLs are treated as string literals (paths/URLs for navigation/fetch)
-        return createLiteral(token.value, 'string');
+        const url = createLiteral(token.value, 'string');
+        return token.value.includes('${') ? { ...url, interpolates: true } : url;
+      }
 
       default:
         return null;

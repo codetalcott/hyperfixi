@@ -168,6 +168,13 @@ export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
+  /**
+   * A naked URL with a `${…}` span (`fetch /search?q=${my value}`). Core
+   * interpolates it; a quoted string interpolates on neither engine, and
+   * upstream sends even an unspaced naked `${x}` literally. So it renders as
+   * written, naked, and reaches core as the template core's parser builds.
+   */
+  readonly interpolates?: true;
 }
 
 export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
