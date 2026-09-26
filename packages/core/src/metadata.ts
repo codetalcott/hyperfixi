@@ -140,8 +140,8 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-hx.js',
     // Inherits hybrid-complete's runtime wholesale, so it inherits the Arc E
     // step 4 command set and its size move too (+2972 B gz).
-    gzipSize: '21.8 KB',
-    rawSize: '82 KB',
+    gzipSize: '21.9 KB',
+    rawSize: '83 KB',
     commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
@@ -157,8 +157,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-hx-v4',
     name: 'Hybrid HX v4',
     filename: 'hyperfixi-hx-v4.js',
-    gzipSize: '342.4 KB',
-    rawSize: '1587 KB',
+    gzipSize: '348.5 KB',
+    rawSize: '1606 KB',
     // Re-exports `browser-bundle.ts`, so it inherits the full registry.
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
@@ -175,8 +175,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'browser',
     name: 'Full Browser',
     filename: 'hyperfixi.js',
-    gzipSize: '330.7 KB',
-    rawSize: '1550 KB',
+    gzipSize: '337.5 KB',
+    rawSize: '1572 KB',
     // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
     // gaps and no extras vs the manifest).
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
@@ -194,8 +194,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'multilingual',
     name: 'Multilingual',
     filename: 'hyperfixi-multilingual.js',
-    gzipSize: '91.2 KB',
-    rawSize: '369 KB',
+    gzipSize: '93.0 KB',
+    rawSize: '374 KB',
     // NOT a full-runtime bundle, despite the old 59. It hand-picks 51 via
     // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
     // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it
