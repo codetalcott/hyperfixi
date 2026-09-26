@@ -114,6 +114,43 @@ function loopVariableName(value: SemanticValue): string | undefined {
   }
 }
 
+/**
+ * The last token before `end` in `list` that is not a particle: the word a
+ * role marker follows (he `repeat את כל עוד …`, zh `重复 把 …`).
+ */
+function wordBefore(list: readonly LanguageToken[], end: number): LanguageToken | undefined {
+  for (let k = end - 1; k >= 0; k--) if (list[k].kind !== 'particle') return list[k];
+  return undefined;
+}
+
+/**
+ * A `repeat` word: the keyword, or the English `repeat` a render left
+ * untranslated (es `repeat mientras …`, ja `3 times を repeat`), which
+ * tokenizes as an identifier.
+ */
+function isRepeatToken(token: LanguageToken): boolean {
+  if (token.kind !== 'keyword' && token.kind !== 'identifier') return false;
+  return (token.normalized ?? token.value).toLowerCase() === 'repeat';
+}
+
+/**
+ * Flat `while` heads that owe an `end` of their own: every one except a
+ * fronted while-phrase directly before its `repeat`, which is that loop's head
+ * (foldFrontedWhileIntoRepeat merges the two).
+ */
+function standaloneWhileHeads(nodes: readonly SemanticNode[]): number {
+  let count = 0;
+  nodes.forEach((node, i) => {
+    if (node.kind !== 'command' || node.action !== 'while') return;
+    const body = (node as { body?: unknown }).body;
+    if (Array.isArray(body) && body.length > 0) return;
+    const next = nodes[i + 1];
+    if (next?.kind === 'command' && next.action === 'repeat') return;
+    count++;
+  });
+  return count;
+}
+
 /** Loop heads in the walker's list still waiting for their `end`. */
 function openLoopCount(entries: readonly WalkEntry[]): number {
   let open = 0;
@@ -2233,6 +2270,13 @@ export class SemanticParserImpl implements ISemanticParser {
           t.kind === 'conjunction' ||
           (t.kind === 'keyword' &&
             (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        // A loop head's clause also stops at the loop's own `end` where
+        // isEndKeyword cannot list it (bn শেষ, also `last`): read past, the
+        // `end` was swallowed as a stray terminator and the loop lost its extent.
+        const loopHeadAction = actionName === 'repeat' || actionName === 'while';
+        const endsClause = (k: number): boolean =>
+          isClauseBoundary(all[k]) ||
+          (loopHeadAction && this.isBlockEndToken(all[k], all[k + 1], language));
         // The scan-back below identifies the verb by its NORMALIZED form. That
         // misses whenever the language's verb normalizes to something other
         // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -2263,7 +2307,7 @@ export class SemanticParserImpl implements ISemanticParser {
           // tail (the verb..pos span is already consumed by the fused match; the
           // tail pos..clauseEnd holds the dropped secondary clause).
           let clauseEnd = pos;
-          while (clauseEnd < all.length && !isClauseBoundary(all[clauseEnd])) clauseEnd++;
+          while (clauseEnd < all.length && !endsClause(clauseEnd)) clauseEnd++;
           const clauseTokens = all.slice(verbIdx, clauseEnd);
           // For verb-first fused patterns the event head sits inside the clause;
           // excise it (event token + a preceding `on`-marker keyword) so the
@@ -2927,17 +2971,18 @@ export class SemanticParserImpl implements ISemanticParser {
     // closes the innermost opener). While an `if` block is open, a conjunction
     // is BLOCK CONTENT, not a clause boundary — see the then-boundary note in
     // the conjunction branch below. `loop` is a `repeat`/`for` opener, whose
-    // `end` the walker resolves itself (see closeLoopAtEnd); `other` is an
-    // `unless` or a standalone `while`.
-    const pendingOpenerKinds: Array<'if' | 'loop' | 'other'> = [];
+    // `end` the walker resolves itself (see closeLoopAtEnd); `while` is a while
+    // word no `repeat` has claimed yet; `other` is an `unless`.
+    const pendingOpenerKinds: Array<'if' | 'loop' | 'while' | 'other'> = [];
     // Re-derive the owed `end`s after the pending clause is flushed: every loop
-    // head still waiting for its `end`, plus `extra` (see the conjunction branch).
-    const resetDebt = (extra = 0): void => {
+    // head still waiting for its `end`, plus `whileHeads` (see the conjunction
+    // branch).
+    const resetDebt = (whileHeads = 0): void => {
       const open = openLoopCount(clauses);
-      pendingBlockDepth = open + extra;
+      pendingBlockDepth = open + whileHeads;
       pendingOpenerKinds.length = 0;
       for (let k = 0; k < open; k++) pendingOpenerKinds.push('loop');
-      for (let k = 0; k < extra; k++) pendingOpenerKinds.push('other');
+      for (let k = 0; k < whileHeads; k++) pendingOpenerKinds.push('while');
     };
 
     while (!tokens.isAtEnd()) {
@@ -3116,14 +3161,9 @@ export class SemanticParserImpl implements ISemanticParser {
           //
           // The debt is every loop head still open, not just this clause's: a
           // loop whose body spans several clauses owes its `end` until it
-          // arrives. A standalone `while` head (the SOV fronted while-phrase)
-          // still owes one too, as before; it opens no loop of its own.
-          resetDebt(
-            clauseNodes.filter(n => {
-              const rec = n as { action?: string; body?: unknown[] };
-              return rec.action === 'while' && (!Array.isArray(rec.body) || rec.body.length === 0);
-            }).length
-          );
+          // arrives. A `while` head owes one too unless the `repeat` after it
+          // claims it (the SOV fronted while-phrase: one loop, one `end`).
+          resetDebt(standaloneWhileHeads(clauseNodes));
         }
         tokens.advance(); // Consume conjunction token
         continue;
@@ -3197,22 +3237,29 @@ export class SemanticParserImpl implements ISemanticParser {
       // that tokenizes as a PARTICLE — es/pt `para`, sw `kwa` — is invisible
       // here, but the conjunction boundary re-derives the owed-`end` debt from
       // the clause's PARSE, which covers it.)
-      if (current.kind === 'keyword') {
-        const cv = (current.normalized ?? current.value).toLowerCase();
-        const prev = currentClauseTokens[currentClauseTokens.length - 1];
-        // `repeat for …` / `repeat while …` is ONE loop: the second word names
-        // the loop form and owes no `end` of its own.
-        const loopForm =
-          (cv === 'for' || cv === 'while') &&
-          prev?.kind === 'keyword' &&
-          (prev.normalized ?? prev.value).toLowerCase() === 'repeat';
-        if (
-          !loopForm &&
-          (this.isIfKeyword(cv, language) ||
-            this.isUnlessKeyword(cv, language) ||
-            cv === 'while' ||
-            cv === 'for' ||
-            cv === 'repeat')
+      //
+      // One loop head can carry two loop words, and owes ONE `end`:
+      // `repeat for …` / `repeat while …` (the second word names the form), and
+      // the SOV fronted while-phrase (`… の間 x < 10 繰り返し`), whose while word
+      // comes first and is claimed by the repeat verb after it. The English
+      // `repeat` counts as a keyword does: several renders keep it
+      // untranslated (es `repeat mientras …`, ja `3 times を repeat`), and there
+      // it tokenizes as an identifier.
+      const cv = (current.normalized ?? current.value).toLowerCase();
+      const isRepeatWord = isRepeatToken(current);
+      if (current.kind === 'keyword' || isRepeatWord) {
+        const isIf = this.isIfKeyword(cv, language);
+        const prev = wordBefore(currentClauseTokens, currentClauseTokens.length);
+        if ((cv === 'for' || cv === 'while') && prev && isRepeatToken(prev)) {
+          // the form word of `repeat for …` / `repeat while …`
+        } else if (isRepeatWord && pendingOpenerKinds[pendingOpenerKinds.length - 1] === 'while') {
+          pendingOpenerKinds[pendingOpenerKinds.length - 1] = 'loop';
+        } else if (
+          isIf ||
+          this.isUnlessKeyword(cv, language) ||
+          cv === 'while' ||
+          cv === 'for' ||
+          isRepeatWord
         ) {
           pendingBlockDepth++;
           // `unless` counts as 'other': the mid-clause fold only folds `if`
@@ -3220,11 +3267,7 @@ export class SemanticParserImpl implements ISemanticParser {
           // tryParseConditionalBlock), so suppressing then-boundaries for an
           // open `unless` would glue clauses with no fold to reassemble them.
           pendingOpenerKinds.push(
-            this.isIfKeyword(cv, language)
-              ? 'if'
-              : cv === 'repeat' || cv === 'for'
-                ? 'loop'
-                : 'other'
+            isIf ? 'if' : isRepeatWord || cv === 'for' ? 'loop' : cv === 'while' ? 'while' : 'other'
           );
         }
       }
@@ -6651,8 +6694,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) return true;
     if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
     if (tv !== 'for' || t.kind !== 'keyword') return false;
-    const pv = prev?.kind === 'keyword' ? (prev.normalized ?? prev.value).toLowerCase() : '';
-    return pv !== 'repeat';
+    return !(prev && isRepeatToken(prev));
   }
 
   private tryParseConditionalBlock(
@@ -6695,7 +6737,7 @@ export class SemanticParserImpl implements ISemanticParser {
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      if (this.opensNestedBlock(t, blockTokens[blockTokens.length - 1], language)) {
+      if (this.opensNestedBlock(t, wordBefore(blockTokens, blockTokens.length), language)) {
         depth++;
         blockTokens.push(t);
         tokens.advance();
@@ -6825,7 +6867,7 @@ export class SemanticParserImpl implements ISemanticParser {
     let branchDepth = 0;
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
-      if (this.opensNestedBlock(t, blockTokens[i - 1], language)) branchDepth++;
+      if (this.opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
       else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) branchDepth--;
       if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
         inElse = true;
