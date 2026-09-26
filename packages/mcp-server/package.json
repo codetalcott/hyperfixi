@@ -13,7 +13,7 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
-    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../planner",
+    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../planner ../patterns-reference",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "service:setup": "echo 'Copy com.lokascript.mcp-server.plist.example to com.lokascript.mcp-server.plist and update paths, then run service:install'",

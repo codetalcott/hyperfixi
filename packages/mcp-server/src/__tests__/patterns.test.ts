@@ -166,6 +166,49 @@ describe('search_patterns', () => {
   });
 });
 
+// The database path, asserted as such: the tests above accept either path, and
+// with a category the database path used to drop the query and the limit and
+// report no category at all (`p.feature` on a Pattern, hidden by `any`).
+describe('search_patterns against the pattern database', () => {
+  type Found = { title: string; code: string; category: string };
+  const search = async (args: Record<string, unknown>): Promise<Found[]> => {
+    const parsed = JSON.parse((await handlePatternTool('search_patterns', args)).content[0].text);
+    expect(parsed.note, 'the database answered, not the built-in fallback').toBeUndefined();
+    return parsed.patterns;
+  };
+
+  it('narrows a search to a category, keeping the query and the limit', async () => {
+    const found = await search({ query: 'toggle', category: 'class-manipulation', limit: 2 });
+    expect(found).toHaveLength(2);
+    for (const p of found) {
+      expect(p.category).toBe('class-manipulation');
+      expect(`${p.title} ${p.code}`.toLowerCase()).toContain('toggle');
+    }
+  });
+
+  it("reports each pattern's category", async () => {
+    const found = await search({ query: 'toggle', limit: 5 });
+    expect(found.length).toBeGreaterThan(0);
+    for (const p of found) expect(typeof p.category, p.title).toBe('string');
+  });
+
+  it('advertises only categories the database has', async () => {
+    const tool = patternTools.find(t => t.name === 'search_patterns')!;
+    const inDescription = /\(([^)]*)\)/
+      .exec(tool.description ?? '')![1]!
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s !== '' && s !== 'etc.');
+    const categoryHelp = (tool.inputSchema.properties as Record<string, { description: string }>)
+      .category!.description;
+    const inHelp = [...categoryHelp.matchAll(/"([^"]+)"/g)].map(m => m[1]!);
+    const ref = await import('@hyperfixi/patterns-reference');
+    for (const category of [...inDescription, ...inHelp]) {
+      expect((await ref.getPatternsByCategory(category)).length, category).toBeGreaterThan(0);
+    }
+  });
+});
+
 describe('translate_hyperscript', () => {
   it('attempts translation', async () => {
     const result = await handlePatternTool('translate_hyperscript', {

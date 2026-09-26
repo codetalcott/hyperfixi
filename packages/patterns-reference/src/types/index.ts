@@ -73,7 +73,8 @@ export type WordOrder = 'SVO' | 'SOV' | 'VSO' | 'V2';
  * - `grammar-transform-no-reference`: `best` only — the i18n row because semantic
  *   cannot parse the ENGLISH source (a parser-coverage gap, not a render loss).
  * - `keyword-substitute`: word-for-word fallback for a language with no grammar profile.
- * - `original`: the English row; `non-translatable-identity`: markup rows copied verbatim.
+ * - `original`: the English row; `non-translatable-identity`: a non-translatable row copied
+ *   verbatim (the markup rows, and intercept-cache-strategies).
  */
 export type TranslationMethod =
   | 'semantic-render'
@@ -191,6 +192,7 @@ export interface LLMExample {
   prompt: string;
   completion: string;
   qualityScore: number;
+  /** @deprecated 0 unless something calls trackExampleUsage() (see getMostUsedExamples). */
   usageCount: number;
   createdAt: Date;
   /**
@@ -255,15 +257,21 @@ export interface RoleAlignmentResult {
 // API Types
 // =============================================================================
 
+/** Honoured by searchPatterns and getAllPatterns; the page is taken after every filter. */
 export interface SearchOptions {
+  /**
+   * Patterns usable in this language: a translation there that parses
+   * (`verified_parses`), or no hyperscript at all to translate. searchPatterns
+   * also matches its query against that translation.
+   */
   language?: string;
+  /** The pattern's category (`Pattern.category`). */
   category?: string;
+  /** As inferred from the code (`Pattern.difficulty`). */
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   /**
-   * Honoured by searchPatterns/getAllPatterns: patterns that run on this
-   * engine ('hyperscript' / 'lokascript' include 'both'); `null` = the
-   * patterns no engine runs; omitted = no filter.
-   * (language/category/difficulty are declared but not yet honoured.)
+   * Patterns that run on this engine ('hyperscript' / 'lokascript' include
+   * 'both'); `null` = the patterns no engine runs; omitted = no filter.
    */
   engine?: EngineCompat | null;
   limit?: number;

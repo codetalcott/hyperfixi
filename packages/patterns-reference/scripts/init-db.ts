@@ -252,7 +252,7 @@ const BEHAVIOR_SCHEMAS: { schema: BehaviorSchema; description: string }[] = [
   {
     schema: sortableSchema,
     description:
-      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(handle: ".drag-handle")',
+      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(dragClass: "dragging")',
   },
   {
     schema: resizableSchema,
@@ -594,7 +594,10 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'repeat-times',
     title: 'Repeat Times',
-    raw_code: 'on click repeat 3 times add "<p>Line</p>" to me',
+    // `append`, not `add`: `add` takes classes and attributes, so adding a string
+    // threw on both engines (core: no valid class names; upstream: "Cannot add
+    // to object") and the row ran nowhere, although both engines parse it.
+    raw_code: 'on click repeat 3 times append "<p>Line</p>" to me',
     description: 'Repeat an action multiple times',
     feature: 'loops',
   },
@@ -1718,13 +1721,16 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'intercept-cache-strategies',
     title: 'Intercept: Cache Strategies',
-    // One config clause per line. Collapsed onto one line the i18n transformer
-    // shuffles the route rules and strands the terminator mid-stream in every
-    // language (Spanish included); line-per-clause keeps each rule intact.
     raw_code:
       'intercept /\n  precache /, /style.css, /app.js as "v1"\n  on /api/* use network-first\n  on *.css, *.js use cache-first\n  on * use stale-while-revalidate\n  offline fallback /offline.html\nend',
     description: 'Service worker DSL with precaching, per-route strategies, and offline fallback',
     feature: 'service-workers',
+    // Every rendering was the verb and `end` (`interceptar\nfin`), in all 23
+    // languages: `intercept` has no semantic schema, so the English parse
+    // itself drops the body. The rows still "verified" — they parse, empty.
+    translatable: false,
+    non_translatable_reason:
+      'intercept has no semantic schema, so every rendering dropped the whole body; stored as written until one exists',
   },
 
   // ==========================================================================

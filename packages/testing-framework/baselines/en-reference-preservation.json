@@ -1,6 +1,6 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
-  "checked": 162,
+  "checked": 161,
   "preserved": 139,
   "allowedLosses": {
     "async-block": {
@@ -93,14 +93,6 @@
       "family": "show/hide style capture dropped (`with *opacity`)",
       "rendered": "on click hide me",
       "lost": ["with *opacity"],
-      "added": []
-    },
-    "intercept-cache-strategies": {
-      "family": "no semantic schema — the whole feature body is dropped (engine-NULL row)",
-      "rendered": "intercept\nend",
-      "lost": [
-        "/ precache / , /style.css , /app.js as \"v1\" on /api/* use network-first on *.css , *.js use cache-first on * use stale-while-revalidate offline fallback /offline.html"
-      ],
       "added": []
     },
     "multiple-events": {

@@ -88,6 +88,21 @@ export function isMarkupRow(code: string): boolean {
   return /^\s*<[a-zA-Z!]/.test(code);
 }
 
+/** `hx-live="…"` values are hyperscript too (the htmx-compat layer compiles them). */
+const HX_LIVE_ATTRIBUTE = /(^|[\s"'])hx-live\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+
+/**
+ * The hyperscript a stored row carries: the row itself, or — for a markup row —
+ * each `_` value (including those inside component template bodies) and each
+ * `hx-live` value. Markup with neither carries none.
+ */
+export function hyperscriptBodies(code: string): string[] {
+  if (!isMarkupRow(code)) return [code];
+  const bodies = findHyperscriptAttributes(code).map(span => span.body);
+  for (const match of code.matchAll(HX_LIVE_ATTRIBUTE)) bodies.push(match[2] ?? match[3] ?? '');
+  return bodies.filter(body => body.trim().length > 0);
+}
+
 /**
  * Whether a parse carried the whole body: every non-whitespace character of the
  * source reappears in its own English re-render.

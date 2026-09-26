@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { hyperscriptBodies, verifyParses } from './verify-parses';
+import { hyperscriptBodies } from './markup-attributes';
+import { verifyParses } from './verify-parses';
 
 const COMPONENT = `<script type="text/hyperscript-template" component="click-counter" _="set ^count to 0">
   <button _="on click increment ^count">+</button>

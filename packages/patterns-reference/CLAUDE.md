@@ -44,7 +44,7 @@ packages/patterns-reference/
 npm run populate
 
 # Individual steps
-npm run db:init:force      # Initialize with 53 patterns
+npm run db:init:force      # Initialize the schema and the corpus (168 patterns)
 npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 
 # There is ONE renderer: @lokascript/semantic's render(parse_en(en), L). The
@@ -130,11 +130,11 @@ npm run verify:engines:check --prefix packages/patterns-reference  # compare onl
 After running `npm run populate` (counts as of 2026-09-25; `populate` prints
 the current ones):
 
-| Table                | Rows  | Description                                    |
-| -------------------- | ----- | ---------------------------------------------- |
-| code_examples        | 168   | Patterns covering all hyperscript commands     |
-| pattern_translations | 4,032 | 168 patterns × 24 languages                    |
-| llm_examples         | ~660  | Few-shot examples with quality scores (varies) |
+| Table                | Rows  | Description                                                                       |
+| -------------------- | ----- | --------------------------------------------------------------------------------- |
+| code_examples        | 168   | Patterns covering all hyperscript commands                                        |
+| pattern_translations | 4,032 | 168 patterns × 24 languages                                                       |
+| llm_examples         | 355   | Each pattern's description and title as prompts, plus `db:init`'s 19 hand-written |
 
 `pattern_translations.verified_parses` is MEASURED at sync
 (src/sync/verify-parses.ts): 1 when the semantic parser accepts every
@@ -159,12 +159,20 @@ in the next `npm run sync:translations`.
 
 ### Non-Translatable Patterns
 
-5 patterns (`hx-live-attribute`, `hx-live-with-mutator`,
-`sse-connect-swap`, `sse-multi-event`, `ws-connect-send`) are flagged
-`translatable=0` because their `raw_code` is HTML markup — the
-attribute names (`hx-live`, `sse-connect`, etc.) are language-agnostic
-and resolved at runtime by vocab modules. `sync-translations.ts` emits
-identity rows (raw English text) for these across all 24 languages.
+8 patterns are flagged `translatable=0`. `sync-translations.ts` stores
+each as written in all 24 languages (method `non-translatable-identity`),
+and the multilingual sweep skips those rows: they are copies, not
+translations.
+
+- 7 are HTML markup. `hx-live-attribute`, `hx-live-with-mutator`,
+  `sse-connect-swap`, `sse-multi-event` and `ws-connect-send` use
+  attribute names (`hx-live`, `sse-connect`, etc.) that are
+  language-agnostic and resolved at runtime by vocab modules.
+  `component-hello-world` and `component-with-slots` carry no
+  hyperscript at all.
+- `intercept-cache-strategies` has no semantic schema, so every
+  rendering dropped the whole body (the verb and `end`). It is stored as
+  written until a schema exists.
 
 ## Integration Points
 

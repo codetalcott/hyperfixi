@@ -5,6 +5,7 @@
  */
 
 import { getDatabase } from '../database/connection';
+import { hyperscriptBodies } from '../sync/markup-attributes';
 import { runsOn } from './engine-filter';
 import type {
   Pattern,
@@ -114,38 +115,91 @@ function engineFilter(searchOptions: SearchOptions): { sql: string; params: stri
     : runsOn('engine', searchOptions.engine);
 }
 
+type Condition = { sql: string; params: string[] };
+
 /**
- * Search patterns by text query.
+ * The `language` search option as a predicate: the pattern has a translation in
+ * that language that parses (`verified_parses`, measured at sync), or it carries
+ * no hyperscript at all — markup the runtime reads as it is, the same in every
+ * language (sse/ws wiring, a static component template). Such a row can never
+ * "verify", so a parse-only rule would drop it from every language.
  */
-export async function searchPatterns(
-  query: string,
-  searchOptions: SearchOptions = {},
-  connOptions?: ConnectionOptions
-): Promise<Pattern[]> {
+function usableIn(
+  db: ReturnType<typeof getDatabase>,
+  language: string
+): (pattern: Pattern) => boolean {
+  const rows = db
+    .prepare(
+      'SELECT code_example_id AS id FROM pattern_translations WHERE language = ? AND verified_parses = 1'
+    )
+    .all(language) as Array<{ id: string }>;
+  const verified = new Set(rows.map(row => row.id));
+  return pattern => verified.has(pattern.id) || hyperscriptBodies(pattern.rawCode).length === 0;
+}
+
+/**
+ * The patterns matching `match` and every search option, one page of them.
+ *
+ * `category`, `difficulty` and `language` used to be declared on SearchOptions
+ * and silently ignored. `difficulty` is inferred from the code and `language`
+ * reads the markup, so those two filter in JS — and paging runs after them, so a
+ * page is always a page of MATCHING patterns (the table is a few hundred rows).
+ */
+function queryPatterns(
+  searchOptions: SearchOptions,
+  defaultLimit: number,
+  connOptions: ConnectionOptions | undefined,
+  match: Condition = { sql: '1 = 1', params: [] }
+): Pattern[] {
   const db = getDatabase({ ...connOptions, readonly: true });
-  const { limit = 50, offset = 0 } = searchOptions;
+  const { limit = defaultLimit, offset = 0, category, difficulty, language } = searchOptions;
   const runs = engineFilter(searchOptions);
+  const inCategory: Condition =
+    category === undefined
+      ? { sql: '1 = 1', params: [] }
+      : { sql: 'feature = ?', params: [category] };
 
   const rows = db
     .prepare(
       `
     SELECT id, title, raw_code, description, feature, engine, translatable, created_at
     FROM code_examples
-    WHERE (title LIKE ? OR raw_code LIKE ? OR description LIKE ?) AND ${runs.sql}
+    WHERE (${match.sql}) AND ${runs.sql} AND ${inCategory.sql}
     ORDER BY title
-    LIMIT ? OFFSET ?
   `
     )
-    .all(
-      `%${query}%`,
-      `%${query}%`,
-      `%${query}%`,
-      ...runs.params,
-      limit,
-      offset
-    ) as CodeExampleRow[];
+    .all(...match.params, ...runs.params, ...inCategory.params) as CodeExampleRow[];
 
-  return rows.map(mapRowToPattern);
+  const inLanguage = language === undefined ? null : usableIn(db, language);
+  return rows
+    .map(mapRowToPattern)
+    .filter(pattern => difficulty === undefined || pattern.difficulty === difficulty)
+    .filter(pattern => inLanguage === null || inLanguage(pattern))
+    .slice(offset, offset + limit);
+}
+
+/**
+ * Search patterns by text query: title, code or description — and, when a
+ * `language` is named, that language's translation, so a query in the language
+ * finds a pattern by its own code there.
+ */
+export async function searchPatterns(
+  query: string,
+  searchOptions: SearchOptions = {},
+  connOptions?: ConnectionOptions
+): Promise<Pattern[]> {
+  const like = `%${query}%`;
+  const inTranslation: Condition =
+    searchOptions.language === undefined
+      ? { sql: '', params: [] }
+      : {
+          sql: ' OR id IN (SELECT code_example_id FROM pattern_translations WHERE language = ? AND hyperscript LIKE ?)',
+          params: [searchOptions.language, like],
+        };
+  return queryPatterns(searchOptions, 50, connOptions, {
+    sql: `title LIKE ? OR raw_code LIKE ? OR description LIKE ?${inTranslation.sql}`,
+    params: [like, like, like, ...inTranslation.params],
+  });
 }
 
 /**
@@ -155,23 +209,7 @@ export async function getAllPatterns(
   searchOptions: SearchOptions = {},
   connOptions?: ConnectionOptions
 ): Promise<Pattern[]> {
-  const db = getDatabase({ ...connOptions, readonly: true });
-  const { limit = 1000, offset = 0 } = searchOptions;
-  const runs = engineFilter(searchOptions);
-
-  const rows = db
-    .prepare(
-      `
-    SELECT id, title, raw_code, description, feature, engine, translatable, created_at
-    FROM code_examples
-    WHERE ${runs.sql}
-    ORDER BY title
-    LIMIT ? OFFSET ?
-  `
-    )
-    .all(...runs.params, limit, offset) as CodeExampleRow[];
-
-  return rows.map(mapRowToPattern);
+  return queryPatterns(searchOptions, 1000, connOptions);
 }
 
 /**
