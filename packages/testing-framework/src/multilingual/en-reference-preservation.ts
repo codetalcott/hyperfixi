@@ -124,6 +124,14 @@ export const EQUIVALENCES: readonly Equivalence[] = [
     description: 'the pseudo-command `m() me` is `call me.m()`',
     example: ['on load click() me', 'on load call me.click()'],
   },
+  {
+    id: 'quoted-event-name',
+    description:
+      "`send`/`trigger`'s event name may be quoted: a string whose text is a plain name is " +
+      'that name (upstream reads either as its eventName; only a plain name, since text ' +
+      'that is not one cannot be written bare)',
+    example: ['on click send "hello" to ChatSocket', 'on click send hello to ChatSocket'],
+  },
 ];
 
 // =============================================================================
@@ -259,6 +267,16 @@ export function canonicalTokens(src: string): Token[] {
     }
     // settle-me
     if (wordIs(tok, 'me') && wordIs(out[out.length - 1], 'settle')) continue;
+    // quoted-event-name
+    if (
+      tok.kind === 'string' &&
+      tok.quote !== '`' &&
+      (wordIs(out[out.length - 1], 'send') || wordIs(out[out.length - 1], 'trigger')) &&
+      /^[A-Za-z_$][\w$]*$/.test(tok.body)
+    ) {
+      out.push({ kind: 'word', text: tok.body });
+      continue;
+    }
     out.push(tok);
   }
   t = out;
