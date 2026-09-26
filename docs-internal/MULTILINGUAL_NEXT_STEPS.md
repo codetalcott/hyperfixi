@@ -5117,6 +5117,21 @@ this signal was missing.
 > `log`/`set x to #d1.value.length` read `#d1.value`. The chain continues through each further
 > `.prop`, and a method call at its end stays a call. Both engines read the whole chain; 144 of
 > the 168 new round trips and all 69 direct-path cases failed before, and no corpus row moves.
+>
+> **A scoped query compiles to its matches in the AOT compiler (PR 33, 2026-09-26; filed by PR
+> 24).** The binary codegen had no `in` case, so `<li/> in #list` compiled to JavaScript's `in`,
+> which tests a property key: `add .a to <li/> in #list` became `(document.querySelector('li') in
+> document.getElementById('list')).classList.add('a')`, `set x to <li/> in #list` a boolean, and
+> `remove <li/> in #list` removed a class from `me`, in English and every translation. A query on
+> the left of `in` compiles to `scope.querySelectorAll(query)`; as a command target it names every
+> match, and as remove's operand it is the elements to remove. Run on both engines; all 97 new
+> cases failed before.
+>
+> Filed, not fixed:
+>
+> - Semantic: `put (<li/> in #list).length into #out` is lost whole in English (a parenthesized
+>   expression with a property).
+> - AOT: `empty #list` compiles to nothing, and `measure width of #d1` measures `me`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
