@@ -18,7 +18,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { buildAST, parseSemantic, render } from '../src';
+import { buildAST, parseExplicit, parseSemantic, render, renderExplicit } from '../src';
 import { SUPPORTED_LANGUAGES } from '../src/language-loader';
 import type { LoopSemanticNode, SemanticNode } from '../src/types';
 
@@ -184,6 +184,22 @@ describe('a command after a displaced `end` is kept', () => {
   ])('%s keeps the log', (language, src) => {
     const actions = actionsOf(parseSemantic(src, language).node);
     expect(actions).toEqual(expect.arrayContaining(['repeat', 'increment', 'wait', 'log']));
+  });
+});
+
+describe('explicit syntax round-trips a loop', () => {
+  // The explicit renderer writes `loop-variant:` / `index-variable:` beside a
+  // loop head's roles. The explicit parser's schema validation rejected both
+  // (`repeat` has no such role), and it had no `for` case at all, so no loop
+  // could come back once the parser built one.
+  it.each([
+    'repeat 3 times add .x to me end',
+    'for item in .i add .y to item end',
+    'on click repeat until event pointerup from document trigger moved on me end',
+  ])('%s', src => {
+    const back = parseExplicit(renderExplicit(parseEn(src)));
+    expect(loops(back)).toHaveLength(1);
+    expect(render(back, 'en')).toBe(src);
   });
 });
 

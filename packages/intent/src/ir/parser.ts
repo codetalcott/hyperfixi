@@ -53,6 +53,16 @@ export const STRUCTURAL_ROLES = new Set([
   'finally',
 ]);
 
+/**
+ * Loop commands, and the attributes the renderer writes beside a loop head's
+ * roles (`[repeat quantity:3 loop-variant:times loop-body:[…]]`). The
+ * attributes describe the LOOP, not a role of its command's schema, so schema
+ * validation must not reject them: it did, so the renderer's own loop output
+ * could not be parsed back once a schema was supplied.
+ */
+const LOOP_COMMANDS = new Set(['repeat', 'for']);
+const LOOP_ATTRIBUTES = new Set(['loop-variant', 'index-variable']);
+
 // =============================================================================
 // Explicit Syntax Parser
 // =============================================================================
@@ -143,6 +153,7 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
     if (
       validRoleNames &&
       !STRUCTURAL_ROLES.has(roleName) &&
+      !(LOOP_COMMANDS.has(command) && LOOP_ATTRIBUTES.has(roleName)) &&
       !validRoleNames.has(roleName as SemanticRole)
     ) {
       if (collect) {
@@ -239,7 +250,9 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
       );
     }
 
-    case 'repeat': {
+    // `for item in …` is a loop too (the semantic parser builds `for` loops).
+    case 'repeat':
+    case 'for': {
       const loopBody = extractStructuralBody(roles, 'loop-body', options);
       const loopVariantValue = roles.get('loop-variant' as SemanticRole);
       const variableValue = roles.get('variable' as SemanticRole);
