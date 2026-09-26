@@ -1244,6 +1244,18 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // A loop's index variable (`index i`, core's `with index`): see tryLoopIndex.
+    {
+      const indexed = this.tryLoopIndex(tokens.tokens as LanguageToken[], parseInput, language);
+      if (indexed) {
+        const result =
+          modifiers && indexed.kind === 'event-handler'
+            ? this.applyModifiers(indexed as EventHandlerSemanticNode, modifiers)
+            : indexed;
+        return withDiagnostics(result, diagnostics);
+      }
+    }
+
     // A `wait for` run with more than its first event (params, `or`
     // alternatives, a `from` source): see tryWaitAlternatives.
     {
@@ -5913,6 +5925,97 @@ export class SemanticParserImpl implements ISemanticParser {
         const gap = arr.filter(t => t.position.start >= targetEnd && t.position.start < wordStart);
         if (!gap.every(t => isTell(t) || markerForms.has(t.value))) continue;
         (told as { tellTo?: boolean }).tellTo = true;
+        return reparsed;
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * A loop's index variable: upstream's `index i` after the loop head (`repeat
+   * for x in xs index i`, `repeat 3 times index i`; both engines), or core's
+   * `with index`, which binds `index` (upstream rejects it). Nothing read
+   * either, so both dropped, in English and so in every translation, and the
+   * body's `i` was unbound. As with tryTellTo, the phrase is excised before any
+   * pattern sees it, the rest re-parsed, and the variable set on the loop it
+   * follows: the one whose head's last value ends last before it, when only
+   * that loop's own words sit in between (`3 times を repeat index i`). It is
+   * English in every language, as the renderer writes it, after the loop
+   * head. One phrase per call: the re-parse takes the next.
+   */
+  private tryLoopIndex(
+    arr: readonly LanguageToken[],
+    input: string,
+    language: string
+  ): SemanticNode | null {
+    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
+    // The loop's own words: the literals its patterns write, where a
+    // localized `times` lives too (ms `kali`, th `ครั้ง`: plain identifiers,
+    // not keywords), and their alternatives (ja `繰り返す`). The literals in
+    // optional groups are `from` markers no render writes in that gap.
+    const loopWords = new Set<string>();
+    for (const pattern of getPatternsForLanguage(language)) {
+      if (pattern.command !== 'repeat' && pattern.command !== 'for') continue;
+      for (const t of pattern.template.tokens) {
+        if (t.type !== 'literal') continue;
+        for (const w of [t.value, ...(t.alternatives ?? [])]) loopWords.add(w.toLowerCase());
+      }
+    }
+    // By surface: the pattern writes the word, and a particle's normalized
+    // form is a role, not the word (qu `3 times ta repeat`).
+    const isLoopWord = (t: LanguageToken): boolean => loopWords.has(t.value.toLowerCase());
+    for (let at = 0; at + 1 < arr.length; at++) {
+      const withIndex = word(arr[at]) === 'with' && word(arr[at + 1]) === 'index';
+      const named = word(arr[at]) === 'index';
+      if (!withIndex && !named) continue;
+      const phraseStart = arr[at].position.start;
+      const reduced = (
+        input.slice(0, phraseStart).trimEnd() +
+        ' ' +
+        input.slice(arr[at + 1].position.end).trimStart()
+      ).trim();
+      try {
+        const reparsed = this.parse(reduced, language);
+        if (!reparsed) continue;
+        const loops: SemanticNode[] = [];
+        const collect = (n: SemanticNode | undefined): void => {
+          if (!n) return;
+          if (n.kind === 'loop') loops.push(n);
+          const children = n as NodeChildren;
+          for (const field of NODE_CHILD_FIELDS) {
+            const child = children[field];
+            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
+          }
+        };
+        collect(reparsed);
+        // Where a loop's head ends: its last value before the phrase.
+        const headEnd = (n: SemanticNode): number =>
+          Math.max(
+            -1,
+            ...[...n.roles.values()]
+              .map(v => v.position?.end ?? -1)
+              .filter(end => end <= phraseStart)
+          );
+        const loop = loops
+          .filter(n => headEnd(n) >= 0)
+          .reduce<SemanticNode | undefined>(
+            (best, n) => (!best || headEnd(n) > headEnd(best) ? n : best),
+            undefined
+          );
+        if (!loop) continue;
+        // Only the loop's own words between its head's last value and the
+        // phrase, read from the input (the text before the phrase keeps its
+        // offsets in the re-parse): a body's `index i` is a variable.
+        const gap = arr.filter(
+          t => t.position.start >= headEnd(loop) && t.position.start < phraseStart
+        );
+        if (!gap.every(isLoopWord)) continue;
+        (loop as { indexVariable?: string }).indexVariable = withIndex
+          ? 'index'
+          : arr[at + 1].value;
+        if (withIndex) (loop as { indexWith?: boolean }).indexWith = true;
         return reparsed;
       } catch {
         continue;
