@@ -50,3 +50,26 @@ describe.each(CASES)('%s, through every language', src => {
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
   });
 });
+
+// The variable stays a reference where the value follows it unmarked
+// (it/pl/ru/uk): the spaced `.item` is a class, not the property `:x.item`.
+describe('`set :x to .item` keeps its role types in every language', () => {
+  const src = 'on click set :x to .item then log :x';
+  type Node = { kind?: string; action?: string; roles?: Map<string, { type: string }> };
+  const firstSet = (node: unknown): Node | undefined => {
+    const n = node as Node & { body?: unknown[]; statements?: unknown[] };
+    if (n.kind === 'command' && n.action === 'set') return n;
+    for (const child of [...(n.body ?? []), ...(n.statements ?? [])]) {
+      const found = firstSet(child);
+      if (found) return found;
+    }
+    return undefined;
+  };
+  const types = (node: unknown): string[] =>
+    [...(firstSet(node)?.roles ?? new Map()).entries()].map(([role, v]) => `${role}:${v.type}`);
+
+  it.each(FOREIGN)('%s', language => {
+    const foreign = render(parse(src, 'en')!, language);
+    expect(types(parse(foreign, language)), foreign).toEqual(types(parse(src, 'en')));
+  });
+});
