@@ -8889,9 +8889,10 @@ describe('Multi-event `or` conjunction in handler heads (multiple-events, R2)', 
       const actions = bodyActions(node);
       expect(actions.has('toggle')).toBe(true);
       expect(actions.has('or')).toBe(false);
-      // The second event is preserved (moved to additionalEvents), not dropped.
+      // The second event is preserved (moved to additionalEvents), not dropped,
+      // and its `[filter]` travels with it (it was excised with the leg and lost).
       const extra = (node as any).additionalEvents?.map((e: any) => e.value) ?? [];
-      expect(extra).toContain('keypress');
+      expect(extra).toContain('keypress[key=="Enter"]');
     });
   }
 
@@ -14340,9 +14341,10 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
 
   it('bn or-in-event-list path stays byte-identical (multiple-events row)', () => {
     // The event-adjacent or-excision absorbed অথবা BEFORE it was a keyword;
-    // registering it must not change this row.
+    // registering it must not change this row. (It rendered `on click toggle
+    // .active` until the renderer wrote a handler's or-legs back, PR 8a.)
     const out = render(parse('.active কে ক্লিক অথবা keypress[key=="Enter"] এ টগল', 'bn'), 'en');
-    expect(out).toBe('on click toggle .active');
+    expect(out).toBe('on click or keypress[key=="Enter"] toggle .active');
   });
 
   it('bn অথবা renders as `or`, never leaks Bengali script into a wait render', () => {
@@ -14446,8 +14448,10 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
   });
 
   it('hi event-adjacent or path stays byte-identical (multiple-events row)', () => {
+    // It rendered `on click toggle .active` until the renderer wrote a
+    // handler's or-legs back (PR 8a).
     const out = render(parse('.active को क्लिक या keypress[key=="Enter"] पर टॉगल', 'hi'), 'en');
-    expect(out).toBe('on click toggle .active');
+    expect(out).toBe('on click or keypress[key=="Enter"] toggle .active');
   });
 });
 
