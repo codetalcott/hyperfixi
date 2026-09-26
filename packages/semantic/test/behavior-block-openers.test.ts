@@ -9,7 +9,8 @@
  * spells an opener (`wait for`, `take … for me`, `toggle … for 2s`, and ja `間`
  * / ko `동안` in toggle's duration) raised it for nothing. The handler's own
  * `end` then closed nothing, and every later handler landed inside it with its
- * head lost, in English and so in every translation.
+ * head lost, in English and so in every translation. `else if` was the same:
+ * its `if` continues the chain, which one `end` closes.
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
@@ -31,6 +32,8 @@ const FIRST = {
   'repeat while inside an if': 'on click if x repeat while x < 3 increment x end end end',
   'an if inside repeat while': 'on click repeat while x < 3 if x log 1 end increment x end end',
   'for': 'on click for x in .a log x end end',
+  // The chain's one `end`, then the handler's.
+  'else if': 'on click if x log 1 else if x log 2 end end',
 };
 
 // pt `para` and sw `kwa` also mark a destination, and their tokenizers read the
