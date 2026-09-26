@@ -838,20 +838,46 @@ class CallCodegen implements CommandCodegen {
 /**
  * Scroll command: scroll [to target] or scroll target into view
  */
+const SCROLL_BLOCK: Record<string, string> = {
+  top: 'start',
+  middle: 'center',
+  bottom: 'end',
+  nearest: 'nearest',
+};
+const SCROLL_INLINE: Record<string, string> = { left: 'start', center: 'center', right: 'end' };
+
+/**
+ * The scrollIntoView options of a `go`/`scroll`: its position (`top` is block
+ * `start`, `right` inline `end`, as both engines map them) and its behavior.
+ * Core's parser and semantic's buildAST write both slots as string nodes;
+ * `smooth` is an older semantic flag.
+ */
+function scrollOptions(modifiers: Record<string, unknown> | undefined): string {
+  const word = (slot: string): string | undefined => {
+    const value = (modifiers?.[slot] as { value?: unknown } | undefined)?.value;
+    return typeof value === 'string' ? value : undefined;
+  };
+  const position = word('position') ?? '';
+  const options: string[] = [];
+  if (SCROLL_BLOCK[position]) options.push(`block: '${SCROLL_BLOCK[position]}'`);
+  if (SCROLL_INLINE[position]) options.push(`inline: '${SCROLL_INLINE[position]}'`);
+  const behavior = modifiers?.smooth ? 'smooth' : word('behavior');
+  options.push(
+    `behavior: '${behavior === 'smooth' || behavior === 'instant' ? behavior : 'auto'}'`
+  );
+  return `{ ${options.join(', ')} }`;
+}
+
 class ScrollCodegen implements CommandCodegen {
   readonly command = 'scroll';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const targetNode = commandTarget(node, 'arg');
+    // Core's parser writes the element of `scroll to top of #d1` to `of`.
+    const targetNode = commandTarget(node, 'arg', 'of');
     const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
-    const mods = node.modifiers as { smooth?: boolean; behavior?: { value?: unknown } } | undefined;
-    // `smooth` is the semantic path's flag; `behavior` is the core parser's slot (Arc 3 step 3).
-    const smooth = mods?.smooth || mods?.behavior?.value === 'smooth';
-    const behavior = smooth ? "'smooth'" : "'auto'";
-
     return {
-      code: `${target}.scrollIntoView({ behavior: ${behavior} })`,
+      code: `${target}.scrollIntoView(${scrollOptions(node.modifiers)})`,
       async: false,
       sideEffects: true,
     };
@@ -1165,6 +1191,18 @@ class GoCodegen implements CommandCodegen {
     const mods = node.modifiers as Record<string, ASTNode> | undefined;
     if (mods?.back) {
       return { code: 'history.back()', async: false, sideEffects: true };
+    }
+
+    // A position or a behavior makes a go a scroll: `go to the top of #d1`
+    // scrolled the element with no position, and `smoothly` was ignored.
+    if (mods?.position || mods?.behavior) {
+      const element = roles?.destination ?? args[0];
+      if (!element) return null;
+      return {
+        code: `${ctx.generateExpression(element)}.scrollIntoView(${scrollOptions(mods)})`,
+        async: false,
+        sideEffects: true,
+      };
     }
 
     const target = mods?.url ?? roles?.destination ?? args[0];
