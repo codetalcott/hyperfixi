@@ -293,6 +293,11 @@ export interface CommandSemanticNode extends SemanticNode {
   readonly waitAlternatives?: readonly WaitAlternative[];
   /** Where a `wait for` listens (`from document`); `me` when absent. */
   readonly waitSource?: SemanticValue;
+  /**
+   * `fetch … do not throw`: resolve on a non-2xx response instead of throwing
+   * (core's `modifiers.doNotThrow`).
+   */
+  readonly doNotThrow?: boolean;
 }
 
 /** One alternative a `wait for` races: an event, or a timeout. */

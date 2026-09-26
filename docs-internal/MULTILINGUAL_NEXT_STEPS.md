@@ -4709,6 +4709,22 @@ this signal was missing.
 > with eventsource's source marker on the side the language puts it (ja `/events から`). buildAST's
 > feature output is not the runtime's feature shape, and nothing executes it, so the direct path is
 > unchanged.
+>
+> **`fetch` keeps its `do not throw` (PR 14, 2026-09-26).** The allowlist is 7 → 6:
+> fetch-do-not-throw is preserved. No fetch pattern read the phrase, so it dropped, in English and so
+> in every translation; on the direct path a translated fetch then threw on the 404 its author told it
+> to tolerate (run, all 23 languages). Other languages' patterns read its words too: pl's `do` is its
+> own "to" (a destination `not`), and ja took `do` for a response type. A pre-pass excises the phrase
+> before any pattern sees it, re-parses, and flags the fetch it followed, the one whose source starts
+> last before it (by position, since he `הבא` and id `muat` do not normalize to `fetch`). The
+> renderer writes it after the whole command, in English in every language (as PR 11's `in`), and
+> buildAST writes core's `modifiers.doNotThrow`.
+>
+> The six left: async-block (by design), behavior-draggable (benign), event-debounce (the source's
+> naked URL with a spaced `${my value}` is core-only: upstream ends a naked URL at the space, and a
+> quoted string does not interpolate there; a backtick template would work on both, which is a
+> design call), event-once (the source is invalid on both engines), and the core-only `with index`
+> and `tell … to`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
