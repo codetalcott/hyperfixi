@@ -65,10 +65,21 @@ function getHidePatternsDe(): LanguagePattern[] {
             alternatives: ['verstecken', 'verberge', 'verbergen', 'hide'],
           },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          // `mit <strategy>` (`… mit *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'mit' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'mit' },
       },
     },
   ];
@@ -286,10 +297,21 @@ function getHidePatternsTh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'ซ่อน' },
           { type: 'role', role: 'patient' },
+          // `ด้วย <strategy>` (`ซ่อน ฉัน ด้วย *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'ด้วย' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'ด้วย' },
       },
     },
   ];

@@ -61,10 +61,21 @@ function getShowPatternsDe(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'zeige', alternatives: ['zeigen', 'anzeigen', 'show'] },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          // `mit <strategy>` (`… mit *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'mit' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'mit' },
       },
     },
   ];
@@ -82,10 +93,21 @@ function getShowPatternsFr(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'afficher', alternatives: ['montrer', 'présenter', 'show'] },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          // `avec <strategy>` (`… avec *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'avec' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'avec' },
       },
     },
   ];
@@ -296,10 +318,21 @@ function getShowPatternsTh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'แสดง' },
           { type: 'role', role: 'patient' },
+          // `ด้วย <strategy>` (`แสดง #modal ด้วย *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'ด้วย' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'ด้วย' },
       },
     },
   ];

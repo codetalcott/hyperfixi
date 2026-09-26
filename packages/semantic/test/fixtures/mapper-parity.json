@@ -3268,7 +3268,7 @@
       ]
     },
     "hide": {
-      "roles": ["patient", "destination", "duration"],
+      "roles": ["patient", "destination", "duration", "style"],
       "cases": [
         {
           "name": "no-roles",
@@ -3295,6 +3295,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -3311,7 +3315,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -3349,6 +3353,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -3365,7 +3373,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -3403,6 +3411,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -3419,7 +3431,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -3456,6 +3468,10 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -3468,7 +3484,70 @@
                 "selector": "#destination-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "style-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-style",
+          "roles": {
+            "style": {
+              "type": "literal",
+              "value": "style-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "hide",
+            "args": [],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "style-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-style",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "hide",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "duration-v"
+              }
+            }
           }
         },
         {
@@ -3545,7 +3624,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -8460,7 +8539,7 @@
       ]
     },
     "show": {
-      "roles": ["patient", "destination", "duration"],
+      "roles": ["patient", "destination", "duration", "style"],
       "cases": [
         {
           "name": "no-roles",
@@ -8487,6 +8566,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -8503,7 +8586,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -8541,6 +8624,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -8557,7 +8644,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -8595,6 +8682,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -8611,7 +8702,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
@@ -8648,6 +8739,10 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
             }
           },
           "ast": {
@@ -8660,7 +8755,70 @@
                 "selector": "#destination-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "style-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-style",
+          "roles": {
+            "style": {
+              "type": "literal",
+              "value": "style-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "show",
+            "args": [],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "style-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-style",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "show",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ],
+            "modifiers": {
+              "with": {
+                "type": "literal",
+                "value": "duration-v"
+              }
+            }
           }
         },
         {
@@ -8737,7 +8895,7 @@
             "modifiers": {
               "with": {
                 "type": "literal",
-                "value": "duration-v"
+                "value": "style-v"
               }
             }
           }
