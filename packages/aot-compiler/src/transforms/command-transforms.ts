@@ -1151,7 +1151,7 @@ class DefaultCodegen implements CommandCodegen {
 }
 
 /**
- * Go command: go to url, go back, go forward
+ * Go command: go back, go forward, or go to a URL or an element
  */
 class GoCodegen implements CommandCodegen {
   readonly command = 'go';
@@ -1160,8 +1160,8 @@ class GoCodegen implements CommandCodegen {
     const args = node.args ?? [];
     const roles = node.roles;
     // The core parser's slots (Arc 3 step 3): `back` is a flag, `url` the
-    // destination; the semantic path names a destination role or a
-    // positional argument.
+    // destination, `in` marks `in new window`; the semantic path names a
+    // destination role or a positional argument.
     const mods = node.modifiers as Record<string, ASTNode> | undefined;
     if (mods?.back) {
       return { code: 'history.back()', async: false, sideEffects: true };
@@ -1181,10 +1181,13 @@ class GoCodegen implements CommandCodegen {
       }
     }
 
-    // go to url
-    const url = ctx.generateExpression(target);
+    // Any other destination is read at run time, as upstream reads it: an
+    // element scrolls into view (`go to #d1` assigned the element to
+    // `location.href`), and `in new window` opens one (it was ignored).
+    ctx.requireHelper('go');
+    const newWindow = mods?.in !== undefined ? ', true' : '';
     return {
-      code: `window.location.href = ${url}`,
+      code: `_rt.go(${ctx.generateExpression(target)}${newWindow})`,
       async: false,
       sideEffects: true,
     };

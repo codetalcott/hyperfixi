@@ -363,6 +363,26 @@ export function send(
 }
 
 // =============================================================================
+// NAVIGATION
+// =============================================================================
+
+/**
+ * `go` to a destination, read at run time as upstream's GoCommand reads it:
+ * an element scrolls into view, and anything else is a URL, opened in a new
+ * window when asked. (Upstream sets a `#…` URL as the hash; assigning it to
+ * `href` is the same fragment navigation.)
+ */
+export function go(target: unknown, newWindow = false): void {
+  if (target instanceof Element) {
+    target.scrollIntoView({ block: 'start', inline: 'nearest' });
+    return;
+  }
+  const url = String(target);
+  if (newWindow) window.open(url, '_blank');
+  else window.location.href = url;
+}
+
+// =============================================================================
 // FETCH HELPERS
 // =============================================================================
 
@@ -686,6 +706,9 @@ export default {
   // Events
   delegate,
   send,
+
+  // Navigation
+  go,
 
   // Fetch
   fetchJSON,

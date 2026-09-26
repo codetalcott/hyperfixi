@@ -1142,15 +1142,37 @@ describe('DefaultCodegen', () => {
 // =============================================================================
 
 describe('GoCodegen', () => {
+  // A destination is read at run time (_rt.go): a URL navigates, an element
+  // scrolls into view. Execution: compiler/go-execution.test.ts.
   it('navigates to URL', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'go',
+        args: [{ type: 'literal', value: '/home' }],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('_rt.go("/home")');
+    // The handler needs the runtime now: `needsRuntime` reads this set.
+    expect(ctx.requiredHelpers.has('go')).toBe(true);
+  });
+
+  it('opens `in new window`', () => {
     const result = gen({
       type: 'command',
       name: 'go',
-      args: [{ type: 'literal', value: '/home' }],
+      args: [],
+      modifiers: {
+        url: { type: 'literal', value: '/home' },
+        in: { type: 'literal', value: 'new window' },
+      },
     });
 
-    expect(result).not.toBeNull();
-    expect(result!.code).toBe('window.location.href = "/home"');
+    expect(result!.code).toBe('_rt.go("/home", true)');
   });
 
   it('goes back', () => {
