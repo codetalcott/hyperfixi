@@ -4676,6 +4676,22 @@ this signal was missing.
 > **Found, filed:** core's show/hide ignore the strategy. `visibility-base.ts` reads no `with` and
 > always toggles `display`, where upstream documents `opacity`, `visibility` and friends. The
 > multilingual fix keeps the strategy in the text; the direct path still drops its effect.
+>
+> **A query keeps its `in <scope>` (PR 11, 2026-09-26).** The allowlist is 12 → 10: first-in-parent
+> and form-disable-on-submit are preserved. The role capture took a `<…/>` query and stopped, so its
+> `in me` / `in #list` tail dropped, in English and so in every translation; a translated `add .x
+> to <button/> in #box` marked every button on the page (run, all 23 languages). Only a positional
+> query kept one, and only when the scope was a plain selector.
+> - The scope rides on the selector value (`scope`: a reference, a selector, or `closest …`), read
+>   right after a query on a real locative. The surface `in` counts whatever it normalizes to: de/it
+>   `in` and tr's `e` suffix read it as a destination marker. A marker the enclosing pattern still
+>   owes stays the pattern's (`poner <b/> en #x`, es put … into …).
+> - A positional query takes a reference or `closest` scope too (`first <input/> in closest
+>   <form/>`).
+> - Renders keep English `in`, as positional queries already did; every language parses it there.
+>   buildAST writes core's `in` expression with the query in its `fromQuery` shape, which core's
+>   evaluator reads to scope the lookup (without it `in` tests containment and returns a boolean).
+> - Localizing `in` inside expressions and scopes is a translation-quality follow-up.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

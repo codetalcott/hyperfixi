@@ -21,6 +21,7 @@ import {
   type LiteralNode,
   type SelectorNode,
   type AttributeAccessNode,
+  type BinaryExpressionNode,
   type IdentifierNode,
   type SelectorKind,
 } from './expression-parser';
@@ -63,6 +64,8 @@ function convertValueShape(value: SemanticValue, warnings?: string[]): Expressio
     case 'literal':
       return convertLiteral(value);
     case 'selector':
+      // `<button/> in me`: core's `in` binary expression.
+      if (value.scope) return convertScopedQuery(value, warnings);
       return convertSelector(value, warnings);
     case 'reference':
       return convertReference(value);
@@ -325,6 +328,22 @@ export function convertPropertyPath(value: PropertyPathValue, warnings?: string[
  * This is the fallback for complex expressions that couldn't be fully parsed
  * at the semantic level.
  */
+/**
+ * A scoped query (`<button/> in me`) as core's parser writes it: `in`, the
+ * query on the left in its query shape (`fromQuery`, which core's evaluator
+ * reads to scope the lookup; without it `in` is a containment test and returns
+ * a boolean), the scope on the right.
+ */
+function convertScopedQuery(value: SelectorValue, warnings?: string[]): BinaryExpressionNode {
+  const { scope, ...query } = value;
+  return {
+    type: 'binaryExpression',
+    operator: 'in',
+    left: convertSelector(query, warnings),
+    right: convertValue(scope!, warnings),
+  };
+}
+
 export function convertExpression(value: ExpressionValue): ExpressionNode {
   const result = parseExpression(value.raw);
 

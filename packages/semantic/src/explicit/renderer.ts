@@ -1060,7 +1060,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         return this.localizeValue(String(value.value), language);
 
       case 'selector':
-        return value.value;
+        // A scoped query keeps English `in`, as a positional query's does
+        // (`first <li/> in #list`): every language's parser reads it there.
+        return value.scope
+          ? `${value.value} in ${this.valueToNaturalString(value.scope, language)}`
+          : value.value;
 
       case 'reference':
         return this.renderReference(value, language);
