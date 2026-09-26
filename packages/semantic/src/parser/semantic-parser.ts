@@ -3406,6 +3406,8 @@ export class SemanticParserImpl implements ISemanticParser {
         const prev = wordBefore(currentClauseTokens, currentClauseTokens.length);
         if ((cv === 'for' || cv === 'while') && prev && isRepeatToken(prev)) {
           // the form word of `repeat for …` / `repeat while …`
+        } else if (isIf && prev && this.isElseKeyword(prev.value, language)) {
+          // `else if` continues its chain, which one `end` closes (opensNestedBlock)
         } else if (isRepeatWord && pendingOpenerKinds[pendingOpenerKinds.length - 1] === 'while') {
           pendingOpenerKinds[pendingOpenerKinds.length - 1] = 'loop';
         } else if (
@@ -7031,6 +7033,11 @@ export class SemanticParserImpl implements ISemanticParser {
    * `repeat` counts in every language, as `end` does in isEndKeyword: the SOV
    * counted-loop head keeps it untranslated (ja/ko/tr `3 times を repeat`),
    * where it tokenizes as an identifier.
+   *
+   * An `if` right after `else` opens nothing: it continues the chain, which one
+   * `end` closes, as upstream reads it. Counted as a nested `if`, the chain
+   * wanted a second `end`, and `if a … else if b … end then c` put `c` in the
+   * else branch, running only when `a` was false.
    */
   private opensNestedBlock(
     t: LanguageToken,
@@ -7038,7 +7045,10 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): boolean {
     const tv = (t.normalized ?? t.value).toLowerCase();
-    if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) return true;
+    if (this.isIfKeyword(tv, language)) {
+      return !(prev && this.isElseKeyword(prev.value, language));
+    }
+    if (this.isUnlessKeyword(tv, language)) return true;
     if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
     if (tv !== 'for' || t.kind !== 'keyword') return false;
     return !(prev && isRepeatToken(prev));

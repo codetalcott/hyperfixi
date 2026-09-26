@@ -85,15 +85,17 @@ const OPENER_NORMS: ReadonlySet<string> = new Set(OPENER_ACTIONS);
 
 type OpenerAction = (typeof OPENER_ACTIONS)[number];
 
-/** A language's surface forms for the opener words, and its `in` (for `for <x> in`). */
+/** A language's surface forms for the opener words and the words the rules below read. */
 interface OpenerForms {
   readonly byAction: ReadonlyArray<readonly [OpenerAction, Set<string>]>;
+  readonly elseForms: Set<string>;
   readonly inForms: Set<string>;
 }
 
 function openerForms(language: string): OpenerForms {
   return {
     byAction: OPENER_ACTIONS.map(a => [a, keywordForms(language, a)] as const),
+    elseForms: keywordForms(language, 'else'),
     inForms: keywordForms(language, 'in'),
   };
 }
@@ -135,9 +137,8 @@ function openerActionOf(
  * - `for` right after `repeat` is that repeat's head (`repeat for x in`).
  * - English `for` is a marker too (`wait for`, `take … for me`, `toggle … for
  *   2s`): it opens a loop only as `for <x> in`.
- *
- * `else if` still counts twice, matching the renderer, which closes an else-if
- * chain with an `end` per `if`. Upstream closes it with one (filed).
+ * - `if` right after `else` continues its chain, which one `end` closes, as
+ *   upstream reads it.
  */
 function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
   const tok = tokens[j];
@@ -151,6 +152,7 @@ function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerFo
       return !!after && (tokenMatches(after, forms.inForms) || after.normalized === 'in');
     }
   }
+  if (action === 'if' && prev && tokenMatches(prev, forms.elseForms)) return false;
   return true;
 }
 
