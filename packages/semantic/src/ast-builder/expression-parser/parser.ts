@@ -15,8 +15,10 @@ import type {
   AttributeAccessNode,
   MemberExpressionNode,
   PossessiveExpressionNode,
+  PropertyOfExpressionNode,
   BinaryExpressionNode,
   UnaryExpressionNode,
+  TypeCheckExpressionNode,
   CallExpressionNode,
   ArrayLiteralNode,
   ObjectLiteralNode,
@@ -48,6 +50,71 @@ const POSTFIX_STOP_WORDS = new Set(['is', 'matches', 'match', 'contains', 'in', 
  * runtime's call evaluator dispatches to positional expressions.
  */
 const POSITIONAL_CALL_KEYWORDS = new Set(['next', 'previous', 'closest', 'first', 'last']);
+
+/**
+ * Core's keyword comparison operators (its parser's comparison fragment), in
+ * the shapes core's runtime evaluates. A binary phrase is the operator of a
+ * binaryExpression, a postfix one tests its left operand alone, and a type
+ * check reads the next word as a type name. Only `is`, `is empty` and `is not
+ * empty` were read, one word at a time, so `p is not q` became `p is (not q)`
+ * and `p is less than q` compared p with a variable named `less` — in every
+ * translation, since buildAST parses a translated condition here.
+ */
+const BINARY_PHRASES = [
+  'is not really equal to',
+  'is really equal to',
+  'is greater than or equal to',
+  'is less than or equal to',
+  'is not equal to',
+  'is equal to',
+  'is greater than',
+  'is less than',
+  'is not really',
+  'is really',
+  'is not equal',
+  'is equal',
+  'is not in',
+  'is in',
+  'is not',
+  'is',
+  'am not in',
+  'am in',
+  'am',
+  'does not match',
+  'do not match',
+  'does not contain',
+  'does not contains',
+  'do not contain',
+  'does not include',
+  'does not precede',
+  'does not follow',
+  'precedes',
+  'follows',
+  'really equals',
+  'equals',
+  'matches',
+  'match',
+  'contains',
+  'contain',
+  'includes',
+  'include',
+  'has',
+  'have',
+  'in',
+];
+const POSTFIX_PHRASES = ['is not empty', 'is empty', 'does not exist'];
+const TYPE_CHECK_PHRASES = ['is not an', 'is not a', 'is an', 'is a'];
+
+/**
+ * Every phrase as its words, in match order: each is listed before any phrase
+ * whose words begin it, so `is not in` is never read as `is not`, nor `is not`
+ * as `is`.
+ */
+const COMPARISON_PHRASES: ReadonlyArray<readonly [string, readonly string[]]> = [
+  ...POSTFIX_PHRASES,
+  ...TYPE_CHECK_PHRASES,
+  ...BINARY_PHRASES,
+].map(phrase => [phrase, phrase.split(' ')] as const);
 
 export class ExpressionParser {
   private tokens: Token[] = [];
@@ -155,49 +222,61 @@ export class ExpressionParser {
     let left = this.parseComparison();
 
     while (true) {
-      let operator: string;
       if (this.match(TokenType.COMPARISON)) {
         // match() already consumed the symbolic comparison token.
-        operator = this.previous().value;
-      } else if (
-        this.checkValue('is') ||
-        this.checkValue('matches') ||
-        this.checkValue('match') ||
-        this.checkValue('contains') ||
-        this.checkValue('in')
-      ) {
-        // Keyword infix operators are tokenized as IDENTIFIER, so they must be
-        // CONSUMED here (checkValue only peeks — mirrors the advance() in
-        // parseAnd/parseOr). Reading previous() without advancing left the
-        // operator unconsumed and mis-attributed the operand (e.g. `target
-        // matches .x` parsed as a broken `matches.x` member access). `match` is
-        // the corpus's bare alias of `matches`.
-        const raw = this.advance().value;
-        operator = raw.toLowerCase() === 'match' ? 'matches' : raw;
+        const operator = this.previous().value;
+        left = this.createBinaryExpression(operator, left, this.parseComparison());
+        continue;
+      }
+      // Keyword operators are tokenized a word at a time, so a phrase is
+      // matched here and consumed whole (see COMPARISON_PHRASES).
+      const phrase = this.matchComparisonPhrase();
+      if (phrase === undefined) break;
+      if (POSTFIX_PHRASES.includes(phrase)) {
+        left = this.createPostfixUnary(phrase, left);
+      } else if (TYPE_CHECK_PHRASES.includes(phrase)) {
+        left = this.parseTypeCheck(left, phrase.startsWith('is not'));
       } else {
-        break;
+        // `match` is the corpus's bare alias of `matches`.
+        const operator = phrase === 'match' ? 'matches' : phrase;
+        left = this.createBinaryExpression(operator, left, this.parseComparison());
       }
-      // `is empty` / `is not empty` are UNARY predicates on the left operand
-      // (the core runtime evaluates them via its isEmpty/isNotEmpty
-      // expressions), not a binary comparison against an `empty` identifier.
-      if (operator.toLowerCase() === 'is') {
-        if (this.checkValue('empty')) {
-          this.advance();
-          left = this.createPostfixUnary('is empty', left);
-          continue;
-        }
-        if (this.checkValue('not') && this.peekAt(1).value.toLowerCase() === 'empty') {
-          this.advance();
-          this.advance();
-          left = this.createPostfixUnary('is not empty', left);
-          continue;
-        }
-      }
-      const right = this.parseComparison();
-      left = this.createBinaryExpression(operator, left, right);
     }
 
     return left;
+  }
+
+  /** The comparison phrase whose words come next, consumed; undefined (nothing consumed) if none. */
+  private matchComparisonPhrase(): string | undefined {
+    for (const [phrase, words] of COMPARISON_PHRASES) {
+      if (words.every((word, i) => this.peekAt(i).value.toLowerCase() === word)) {
+        for (let i = 0; i < words.length; i++) this.advance();
+        return phrase;
+      }
+    }
+    return undefined;
+  }
+
+  /** `is a Number`, `is not an Array!`: the type name is a word, and `!` makes null fail. */
+  private parseTypeCheck(value: ExpressionNode, negated: boolean): TypeCheckExpressionNode {
+    const typeName = this.advance();
+    if (typeName.type === TokenType.EOF) {
+      throw new Error(`Expected a type name after 'is ${negated ? 'not ' : ''}a'`);
+    }
+    let nullOk = true;
+    if (this.peek().value === '!') {
+      this.advance();
+      nullOk = false;
+    }
+    return {
+      type: 'typeCheckExpression',
+      value,
+      typeName: typeName.value,
+      nullOk,
+      negated,
+      start: value.start,
+      end: this.previous().end,
+    };
   }
 
   private parseComparison(): ExpressionNode {
@@ -268,8 +347,11 @@ export class ExpressionParser {
       else if (this.match(TokenType.POSSESSIVE)) {
         // Accept IDENTIFIER or CONTEXT_VAR as property name
         if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.CONTEXT_VAR)) {
-          const property = this.advance().value;
-          expr = this.createPossessiveExpression(expr, property);
+          const property = this.advance();
+          expr = this.createPossessiveExpression(
+            expr,
+            this.createIdentifier(property.value, property)
+          );
         } else {
           break;
         }
@@ -329,6 +411,18 @@ export class ExpressionParser {
 
   private parsePrimary(): ExpressionNode {
     const token = this.peek();
+
+    // `the textContent of #d1`: core's propertyOfExpression. The article was
+    // read as a variable named `the`, and the rest of the condition was lost.
+    if (
+      this.checkValue('the') &&
+      (this.peekAt(1).type === TokenType.IDENTIFIER ||
+        this.peekAt(1).type === TokenType.CONTEXT_VAR) &&
+      this.peekAt(2).value.toLowerCase() === 'of'
+    ) {
+      this.advance(); // the
+      return this.parsePropertyOf(this.advance(), token);
+    }
 
     // Literals
     if (this.match(TokenType.NUMBER)) {
@@ -456,6 +550,13 @@ export class ExpressionParser {
           end: selToken.end,
         } as CallExpressionNode;
       }
+      // `textContent of #d1`, which is what a translated `#d1's textContent`
+      // joins back to (es `textContent de #d1`). Read as tight as a possessive,
+      // as upstream does; core binds `of` as loosely as `is`, so its English
+      // `if textContent of #d1 is "d"` compares #d1 with "d".
+      if (this.checkValue('of')) {
+        return this.parsePropertyOf(token, token);
+      }
       return this.createIdentifier(token.value, token);
     }
 
@@ -479,6 +580,19 @@ export class ExpressionParser {
     }
 
     throw new Error(`Unexpected token: ${token.value}`);
+  }
+
+  /** `<property> of <target>`, the property token consumed and `of` next. */
+  private parsePropertyOf(property: Token, first: Token): PropertyOfExpressionNode {
+    this.advance(); // of
+    const target = this.parsePostfix();
+    return {
+      type: 'propertyOfExpression',
+      property: this.createIdentifier(property.value, property),
+      target,
+      start: first.start,
+      end: this.previous().end,
+    };
   }
 
   private parseArguments(): ExpressionNode[] {
@@ -651,9 +765,15 @@ export class ExpressionParser {
     };
   }
 
+  /**
+   * `#d1's textContent`, with the property an identifier node as core's parser
+   * builds it: core's runtime reads `property.name`, so the bare string this
+   * emitted read as no property at all (`if #d1's textContent is "d"` was false
+   * in every translation that renders the `'s`).
+   */
   private createPossessiveExpression(
     object: ExpressionNode,
-    property: string
+    property: IdentifierNode
   ): PossessiveExpressionNode {
     return {
       type: 'possessiveExpression',

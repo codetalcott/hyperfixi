@@ -88,12 +88,26 @@ const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
 
 /**
  * Keyword infix comparison operators (tokenized as IDENTIFIER, matched by value
- * in the parser). A selector is valid immediately after one — `target matches
- * .modal-backdrop`, `me matches .active` — so `previousTokenAllowsSelector`
- * treats them like the symbolic comparison operators. `match` is accepted as an
- * alias of `matches` (the multilingual corpus uses the bare form).
+ * in the parser), by the word that ends them. A selector is valid immediately
+ * after one — `target matches .modal-backdrop`, `me matches .active`, `#d1 has
+ * .x` — so `previousTokenAllowsSelector` treats them like the symbolic
+ * comparison operators. `match` is accepted as an alias of `matches` (the
+ * multilingual corpus uses the bare form).
  */
-const COMPARISON_KEYWORDS = new Set(['is', 'matches', 'match', 'contains', 'in']);
+const COMPARISON_KEYWORDS = new Set([
+  'is',
+  'matches',
+  'match',
+  'contains',
+  'equals',
+  'has',
+  'have',
+  'precedes',
+  'precede',
+  'follows',
+  'follow',
+  'in',
+]);
 
 /**
  * Positional builtins whose operand is a selector (`next .dropdown-menu`,
@@ -139,6 +153,10 @@ export function tokenize(input: string): Token[] {
     // A positional builtin is followed by its selector operand:
     // `next .dropdown-menu`, `closest .modal`.
     if (prev.type === TokenType.IDENTIFIER && POSITIONAL_KEYWORDS.has(prev.value.toLowerCase())) {
+      return true;
+    }
+    // `the textContent of #d1`: the owner of an `of` access.
+    if (prev.type === TokenType.IDENTIFIER && prev.value.toLowerCase() === 'of') {
       return true;
     }
     // After these token types, a selector is valid

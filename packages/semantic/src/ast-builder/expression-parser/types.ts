@@ -117,6 +117,13 @@ export interface PossessiveExpressionNode extends ExpressionNode {
   readonly property: ExpressionNode | string;
 }
 
+/** `the textContent of #d1`: core's shape for the `of` form of property access. */
+export interface PropertyOfExpressionNode extends ExpressionNode {
+  readonly type: 'propertyOfExpression';
+  readonly property: IdentifierNode;
+  readonly target: ExpressionNode;
+}
+
 // =============================================================================
 // Binary/Unary Expression Nodes
 // =============================================================================
@@ -133,6 +140,18 @@ export interface UnaryExpressionNode extends ExpressionNode {
   readonly operator: string;
   readonly operand: ExpressionNode;
   readonly prefix?: boolean;
+}
+
+/**
+ * `x is a Number` / `x is not an Array!`: core's type check. The type name is a
+ * word, not an expression, and a trailing `!` makes null fail the check.
+ */
+export interface TypeCheckExpressionNode extends ExpressionNode {
+  readonly type: 'typeCheckExpression';
+  readonly value: ExpressionNode;
+  readonly typeName: string;
+  readonly nullOk: boolean;
+  readonly negated: boolean;
 }
 
 // =============================================================================
@@ -196,8 +215,10 @@ export type AnyExpressionNode =
   | PropertyAccessNode
   | MemberExpressionNode
   | PossessiveExpressionNode
+  | PropertyOfExpressionNode
   | BinaryExpressionNode
   | UnaryExpressionNode
+  | TypeCheckExpressionNode
   | CallExpressionNode
   | ArrayLiteralNode
   | ObjectLiteralNode
