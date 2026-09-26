@@ -34,6 +34,12 @@ const GROUPS: Array<[string, string[], string[]]> = [
   ['not', ['not r', 'not r and p'], ['de', 'fr', 'id', 'ms', 'pt', 'ru', 'th', 'tl', 'uk']],
   ['is not', ['p is not q'], ['de', 'fr', 'id', 'ms', 'pt', 'ru', 'tl', 'uk']],
   ['and', ['p and q'], ['ar']],
+  // ja `ではない` and ar `ليس` were split by their tokenizers (ja `で は ない`,
+  // ar `ل يس`); and `is not empty` ended at the predicate where `not` is a plain
+  // word (de `ist nicht leer`: `leer` is also the `empty` command).
+  ['not, split by the tokenizer', ['not r'], ['ar', 'ja']],
+  ['is not, split by the tokenizer', ['p is not q'], ['ja']],
+  ['is not empty', ['p is not empty'], ['bn', 'de', 'fr', 'ja', 'pt', 'ru', 'tl', 'uk']],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {

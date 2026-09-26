@@ -72,6 +72,7 @@ const PARTICLES = new Set([
  */
 const JAPANESE_EXTRAS: KeywordEntry[] = [
   // Values/Literals
+  { native: 'ではない', normalized: 'not' },
   { native: '真', normalized: 'true' },
   { native: '偽', normalized: 'false' },
   { native: 'ヌル', normalized: 'null' },
