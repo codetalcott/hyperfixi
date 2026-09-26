@@ -833,6 +833,23 @@ export function createLiteral(
 }
 
 /**
+ * The value a constant keyword stands for, by its normalized form: `true` and
+ * `false` are boolean literals, and `null` is the expression the AST builder
+ * reads as a real null (a literal cannot hold one). Undefined for any other
+ * word.
+ *
+ * The keyword used to become an untyped STRING literal, so a translated
+ * `set #b.disabled to false` stored the truthy string "false" on the direct
+ * path and the button stayed disabled.
+ */
+export function createConstant(normalized: string): LiteralValue | ExpressionValue | undefined {
+  if (normalized === 'true') return createLiteral(true, 'boolean');
+  if (normalized === 'false') return createLiteral(false, 'boolean');
+  if (normalized === 'null') return { type: 'expression', raw: 'null' };
+  return undefined;
+}
+
+/**
  * Check if a string is a valid reference keyword.
  */
 import { isValidReference as isValidReferenceBase } from '@lokascript/framework';

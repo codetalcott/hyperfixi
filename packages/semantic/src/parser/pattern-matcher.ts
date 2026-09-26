@@ -18,6 +18,7 @@ import type {
 import {
   createSelector,
   createLiteral,
+  createConstant,
   createReference,
   createPropertyPath,
   isValidReference,
@@ -3674,7 +3675,7 @@ export class PatternMatcher {
         if (isValidReference(lower)) {
           return createReference(lower);
         }
-        return createLiteral(token.normalized || token.value);
+        return createConstant(lower) ?? createLiteral(token.normalized || token.value);
 
       case 'identifier':
         // Canonical `@attr` typing: an attribute reference is a selector no
