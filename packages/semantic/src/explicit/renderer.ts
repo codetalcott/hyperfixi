@@ -734,6 +734,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
 
     if (node.kind === 'event-handler') {
+      // Event parameters glue to the event token, `pointerdown(clientX,
+      // clientY)`: the form every language's parser reads (the SOV heads expect
+      // the phrase between the event and its marker). They were never written,
+      // so every head lost them, and the `from` that followed them in English.
+      const params = (node as EventHandlerSemanticNode).parameterNames;
+      if (params && params.length > 0 && eventPart >= 0) {
+        parts[eventPart] += `(${params.join(', ')})`;
+      }
       // The or-legs first, while `eventPart` still indexes the event: the
       // modifiers may unshift. A `from` then lands between the event and its
       // alternatives, which is how the parser reads a source (the first leg's).

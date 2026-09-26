@@ -171,6 +171,9 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
   'closest',
 ]);
 
+/** Reference words: never an event parameter's name. */
+const REFERENCE_WORDS = new Set(['me', 'my', 'i', 'it', 'its', 'you', 'your', 'result']);
+
 const COMMAND_WORDS = new Map<string, ReadonlySet<string>>();
 
 /** The command actions a language's patterns parse (not `on`), memoized. */
@@ -1175,6 +1178,65 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // Event PARAMETERS on the handler head: `on pointerdown(clientX, clientY)
+    // from dragHandle`. The SOV head extraction consumes a param phrase, but the
+    // SVO/VSO event patterns expect a `from` or the body right after the event:
+    // the `(` broke the source pattern, and the params and the `from` phrase
+    // after them fell into the body, where they were discarded. Excise the
+    // phrase, re-parse the plain head, and put the names back as
+    // `parameterNames` (which buildAST hands core as `args`). Head-only: the
+    // scan stops at the first command word, so a `wait for pointermove(clientY)`
+    // in the body keeps its own.
+    //
+    // Every candidate is confirmed by the re-parse: the handler's event must be
+    // the word before the phrase. So a custom event qualifies (`on myEvent(detail)`,
+    // ja `myEvent(detail) を で`), and a call that is not the event never does:
+    // a body pseudo-command `click()` in `on load click() me`, a behavior header
+    // `Demo(cls)`, `js(me)`.
+    {
+      const arr = tokens.tokens as LanguageToken[];
+      const commands = commandWordsFor(language);
+      for (let i = 0; i + 1 < arr.length; i++) {
+        const t = arr[i];
+        if (this.isBodyCommandWord(t, commands)) break;
+        if (arr[i + 1].value !== '(') continue;
+        const norm = (t.normalized ?? t.value).toLowerCase();
+        const known = SemanticParserImpl.KNOWN_EVENTS.has(norm) || WAITABLE_EVENT_WORDS.has(norm);
+        if (!known && t.kind !== 'identifier') continue;
+        const phrase = this.matchEventParamPhrase(arr, i + 1);
+        if (phrase.len === 0) continue;
+        const close = arr[i + phrase.len];
+        const reduced = (
+          parseInput.slice(0, arr[i + 1].position.start).trimEnd() +
+          ' ' +
+          parseInput.slice(close.position.end).trimStart()
+        ).trim();
+        try {
+          const reparsed = this.parse(reduced, language);
+          const event = reparsed?.roles.get('event' as SemanticRole);
+          const eventName =
+            event?.type === 'expression'
+              ? event.raw
+              : event && 'value' in event
+                ? String(event.value)
+                : undefined;
+          const named = eventName?.toLowerCase();
+          if (
+            reparsed?.kind === 'event-handler' &&
+            (named === t.value.toLowerCase() || named === norm)
+          ) {
+            (reparsed as { parameterNames?: string[] }).parameterNames = phrase.names;
+            const result = modifiers
+              ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+              : reparsed;
+            return withDiagnostics(result, diagnostics);
+          }
+        } catch {
+          // not this phrase: keep looking
+        }
+      }
+    }
+
     // Multi-event `or` conjunction normalization. A handler head can list several
     // events: `on click or keypress[key=="Enter"] toggle .active`. English handles
     // this in buildEventHandler (extractOrConjunctionEvents runs right after the
@@ -1199,18 +1261,9 @@ export class SemanticParserImpl implements ISemanticParser {
         // Only the HEAD's `or`: a command word means the body has begun, and an
         // `or <event>` after it is that command's (`wait for keydown or click`).
         // Lifting it into the head gave the handler an event its author never
-        // bound. A command that is also an event name (`on focus or blur`) is
-        // the head's event, not a body verb. A verb-final (SOV) body still
-        // reaches here: its verb comes after its arguments.
-        const norm = (t.normalized ?? t.value).toLowerCase();
-        if (
-          t.kind === 'keyword' &&
-          commands.has(norm) &&
-          !SemanticParserImpl.KNOWN_EVENTS.has(norm) &&
-          !WAITABLE_EVENT_WORDS.has(norm)
-        ) {
-          break;
-        }
+        // bound. A verb-final (SOV) body still reaches here: its verb comes
+        // after its arguments.
+        if (this.isBodyCommandWord(t, commands)) break;
         // Language-scoped: `o` is the or-word in es/it/tl and the BY-marker in
         // pl, so a language-blind surface match reads `zwiększ #score o 10` as a
         // conjunction.
@@ -5619,6 +5672,21 @@ export class SemanticParserImpl implements ISemanticParser {
    * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
    * phrase is malformed (no close-paren, or a non-identifier between).
    */
+  /**
+   * A command word that begins a handler's BODY, ending the head: a keyword whose
+   * normalized form is a command this language parses. A command that is also an
+   * event name (`on focus or blur`) is the head's event, not a body verb.
+   */
+  private isBodyCommandWord(tok: LanguageToken, commands: ReadonlySet<string>): boolean {
+    const norm = (tok.normalized ?? tok.value).toLowerCase();
+    return (
+      tok.kind === 'keyword' &&
+      commands.has(norm) &&
+      !SemanticParserImpl.KNOWN_EVENTS.has(norm) &&
+      !WAITABLE_EVENT_WORDS.has(norm)
+    );
+  }
+
   private matchEventParamPhrase(
     allTokens: readonly LanguageToken[],
     startIdx: number
@@ -5629,7 +5697,13 @@ export class SemanticParserImpl implements ISemanticParser {
       const v = allTokens[j].value;
       if (v === ')') return { len: j - startIdx + 1, names };
       if (v === ',') continue;
-      if (allTokens[j].kind !== 'identifier') break;
+      // Any identifier-shaped word: a name like `detail` or `target` is also a
+      // keyword, and tokenizes as one. Never a reference (`me`, `it`): that is a
+      // call's argument (a verb-final `js` block's `(me)` right after the event).
+      const kind = allTokens[j].kind;
+      if ((kind !== 'identifier' && kind !== 'keyword') || !/^[A-Za-z_$][\w$]*$/.test(v)) break;
+      const norm = (allTokens[j].normalized ?? v).toLowerCase();
+      if (kind === 'keyword' && REFERENCE_WORDS.has(norm)) break;
       names.push(v);
     }
     return { len: 0, names: [] };

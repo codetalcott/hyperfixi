@@ -24,7 +24,7 @@ import type {
   FeatureAction,
 } from '../types';
 import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNode } from '../types';
-import { tryGetProfile } from '../registry';
+import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
@@ -583,6 +583,25 @@ function parseBehaviorBlock(
   const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
   const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  // Forward `<trigger> <event>` lookahead only holds where the trigger precedes
+  // the event (see tryParseProgram's triggerSplit). The trigger words are the
+  // ones that open a handler, not every form of `on`: de's `auf` is also the
+  // `on`/`to` preposition (`setze cls auf "a"`).
+  const triggerSplit = tryGetProfile(language)?.wordOrder !== 'SOV';
+  const triggers = triggerSplit ? handlerTriggerWords(language) : new Set<string>();
+
+  /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
+  const takeInit = (stop: number): void => {
+    const initText = input.slice(tokens[segStart].position.end, tokens[stop].position.start).trim();
+    if (!initText) return;
+    try {
+      const stmts = flattenStatements(parsers.body(initText, language));
+      initCommands.push(...stmts);
+      confidences.push(meanConfidence(stmts.map(s => s.metadata?.confidence ?? 0.75)));
+    } catch {
+      confidences.push(0);
+    }
+  };
 
   // Split the body into sub-blocks by depth-aware `end` matching. Segmentation is
   // END-delimited, not opener-prefixed: a sub-block runs until the `end` that
@@ -608,16 +627,7 @@ function parseBehaviorBlock(
         break;
       }
       if (tokenMatches(tokens[segStart], initForms)) {
-        const initText = input.slice(tokens[segStart].position.end, tok.position.start).trim();
-        if (initText) {
-          try {
-            const stmts = flattenStatements(parsers.body(initText, language));
-            initCommands.push(...stmts);
-            confidences.push(meanConfidence(stmts.map(s => s.metadata?.confidence ?? 0.75)));
-          } catch {
-            confidences.push(0);
-          }
-        }
+        takeInit(j);
       } else {
         const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
         try {
@@ -639,6 +649,22 @@ function parseBehaviorBlock(
       segStart = j + 1;
     } else if (isOpener(tok)) {
       depth++;
+    } else if (
+      triggerSplit &&
+      depth === 0 &&
+      j > segStart &&
+      tokenMatches(tokens[segStart], initForms) &&
+      triggers.has(tok.value.toLowerCase()) &&
+      (tokens[j + 1]?.kind === 'identifier' || tokens[j + 1]?.kind === 'keyword') &&
+      looksLikeEvent(tokens[j + 1])
+    ) {
+      // `init`'s command list ends at the next feature, as upstream's does: its
+      // own `end` is optional. So in `init if no h set h to me end on pointerdown
+      // … end`, the `end` belongs to the one-line `if`, and the end split read
+      // it as init's: the handler's header and body became init commands
+      // (behavior-draggable lost its whole `on pointerdown(…) from dragHandle`).
+      takeInit(j);
+      segStart = j;
     }
   }
 
@@ -652,6 +678,27 @@ function parseBehaviorBlock(
     initCommands.length > 0 ? initCommands : undefined,
     { sourceLanguage: language, confidence, sourceText: input }
   );
+}
+
+/**
+ * The words that open a handler, ahead of its event (en `on`, de `wenn`, es
+ * `al`): each pure trigger pattern's literals before its `{event}` slot. Not
+ * the fused `<command>-event-*` patterns, whose leading literal is a command
+ * verb (ar `اضبط`, set) — the same exclusion the renderer makes.
+ */
+function handlerTriggerWords(language: string): Set<string> {
+  const words = new Set<string>();
+  for (const pattern of getPatternsForLanguage(language)) {
+    if (pattern.command !== 'on' || /-event-/i.test(pattern.id)) continue;
+    for (const token of pattern.template.tokens) {
+      if (token.type === 'role' && token.role === 'event') break;
+      if (token.type !== 'literal') continue;
+      for (const word of [token.value, ...(token.alternatives ?? [])]) {
+        words.add(word.toLowerCase());
+      }
+    }
+  }
+  return words;
 }
 
 /**
