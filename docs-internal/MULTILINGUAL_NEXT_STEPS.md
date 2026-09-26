@@ -5132,6 +5132,16 @@ this signal was missing.
 > - Semantic: `put (<li/> in #list).length into #out` is lost whole in English (a parenthesized
 >   expression with a property).
 > - AOT: `empty #list` compiles to nothing, and `measure width of #d1` measures `me`.
+>
+> **`empty` compiles in the AOT compiler (PR 34, 2026-09-26; filed by PR 24).** There was no
+> `empty` codegen, so `on click empty #list` compiled to an empty handler, in English and every
+> translation. On both engines `empty #list` and `empty .box` remove the children of each element
+> named, and a bare `empty` those of `me`; the codegen runs `replaceChildren()` over
+> `forEachTarget`. All 72 new cases failed before.
+>
+> Filed, not fixed: core's `empty #in1` leaves an input's value, where upstream clears it; and
+> `measure` has no oracle yet (the engines disagree on the shape of `it`, and the AOT's node has
+> already lost `of #d1`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
