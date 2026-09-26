@@ -171,6 +171,22 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
   'closest',
 ]);
 
+const COMMAND_WORDS = new Map<string, ReadonlySet<string>>();
+
+/** The command actions a language's patterns parse (not `on`), memoized. */
+function commandWordsFor(language: string): ReadonlySet<string> {
+  let words = COMMAND_WORDS.get(language);
+  if (!words) {
+    words = new Set(
+      getPatternsForLanguage(language)
+        .map(pattern => pattern.command)
+        .filter(command => command !== 'on')
+    );
+    COMMAND_WORDS.set(language, words);
+  }
+  return words;
+}
+
 /**
  * Known WAITABLE event names — the gate for treating a `wait` argument as an
  * event wait rather than a time wait. `wait for transitionend` (en head) and
@@ -1177,8 +1193,24 @@ export class SemanticParserImpl implements ISemanticParser {
     // token there is a variable/number, not an event).
     {
       const arr = tokens.tokens as LanguageToken[];
+      const commands = commandWordsFor(language);
       for (let i = 1; i < arr.length - 1; i++) {
         const t = arr[i];
+        // Only the HEAD's `or`: a command word means the body has begun, and an
+        // `or <event>` after it is that command's (`wait for keydown or click`).
+        // Lifting it into the head gave the handler an event its author never
+        // bound. A command that is also an event name (`on focus or blur`) is
+        // the head's event, not a body verb. A verb-final (SOV) body still
+        // reaches here: its verb comes after its arguments.
+        const norm = (t.normalized ?? t.value).toLowerCase();
+        if (
+          t.kind === 'keyword' &&
+          commands.has(norm) &&
+          !SemanticParserImpl.KNOWN_EVENTS.has(norm) &&
+          !WAITABLE_EVENT_WORDS.has(norm)
+        ) {
+          break;
+        }
         // Language-scoped: `o` is the or-word in es/it/tl and the BY-marker in
         // pl, so a language-blind surface match reads `zwiększ #score o 10` as a
         // conjunction.

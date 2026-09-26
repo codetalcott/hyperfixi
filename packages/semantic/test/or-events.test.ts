@@ -62,6 +62,27 @@ describe('an or-leg directly follows its event word', () => {
   });
 });
 
+// Only the HEAD's `or` is an alternative event. The excision took the first
+// `or <event>` anywhere, so a body's `wait for keydown or click` lent the
+// handler a second trigger: `on click or click wait for keydown …`, bound by
+// buildAST on the direct path.
+describe('an `or` in the body stays out of the head', () => {
+  it.each([
+    'on click wait for keydown or click then log 1',
+    'on click log 1 then wait for keyup or keydown',
+  ])('%s', src => {
+    const node = parse(src, 'en')!;
+    expect(events(node)).toEqual(['click']);
+    expect(render(node, 'en')).not.toMatch(/^on click or /);
+    expect(buildAST(node).ast).not.toHaveProperty('events');
+  });
+
+  it('a head event that is also a command word keeps its alternative', () => {
+    const src = 'on focus or blur add .x to me';
+    expect(render(parse(src, 'en')!, 'en')).toBe(src);
+  });
+});
+
 // The direct path builds from buildAST: it must emit what core's parser emits
 // for the same English, so a translation runs as the English does.
 describe('buildAST binds what core binds', () => {
