@@ -140,6 +140,13 @@ describe('each loop form runs as upstream runs it', () => {
     expect(document.querySelectorAll('.i.done')).toHaveLength(2);
   });
 
+  // Upstream runs no pass over an undefined collection; `Array.from(undefined)`
+  // threw.
+  it('a for-in over an undefined collection runs no pass, and moves on', () => {
+    click(`on click for x in #host's nothing add .ran to me end then add .after to me`);
+    expect(host().className).toBe('after');
+  });
+
   it('runs what follows the `end` once, after the loop', () => {
     click('on click repeat 3 times append "x" to me end then append "!" to me');
     expect(host().textContent).toBe('xxx!');
