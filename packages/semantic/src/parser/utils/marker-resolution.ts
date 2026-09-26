@@ -193,4 +193,7 @@ export const ROLE_MARKER_CONCEPTS: ReadonlySet<string> = new Set([
   'eventmarker',
   'manner',
   'instrument',
+  // ms `dengan`, the `with` of `sembunyi saya dengan *opacity` (hide me with
+  // *opacity): read as a property, `saya dengan` was the possessive `my dengan`.
+  'style',
 ]);

@@ -1292,7 +1292,7 @@ export const showSchema: CommandSchema = {
   // the arg is a first-present-of chain. NOTE: `duration` and `destination`
   // are read here but not declared in `roles` below — the parser relabels into
   // them. Pinned in ast-shape-consistency.test.ts.
-  ast: { args: [['destination', 'patient']], modifiers: { with: 'duration' } },
+  ast: { args: [['destination', 'patient']], modifiers: { with: ['style', 'duration'] } },
   roles: [
     {
       role: 'patient',
@@ -1305,9 +1305,13 @@ export const showSchema: CommandSchema = {
     },
     {
       role: 'style',
-      description: 'Animation style (fade, slide, etc.)',
+      // `with <strategy>`: a name (`opacity`, an expression) or a `*`-prefixed
+      // style ref (`*opacity`, which tokenizes as a selector). As a literal
+      // only, neither was ever captured: `hide me with *opacity` rendered
+      // `hide me`.
+      description: 'The hide/show strategy (`with opacity`, `with *opacity`)',
       required: false,
-      expectedTypes: ['literal'],
+      expectedTypes: ['expression', 'selector'],
       svoPosition: 2,
       sovPosition: 2,
     },
@@ -1324,7 +1328,7 @@ export const hideSchema: CommandSchema = {
   primaryRole: 'patient',
   // The target arrives as EITHER role depending on which pattern matched.
   // NOTE: `duration`/`destination` are read here but not declared in `roles`.
-  ast: { args: [['destination', 'patient']], modifiers: { with: 'duration' } },
+  ast: { args: [['destination', 'patient']], modifiers: { with: ['style', 'duration'] } },
   roles: [
     {
       role: 'patient',
@@ -1337,9 +1341,13 @@ export const hideSchema: CommandSchema = {
     },
     {
       role: 'style',
-      description: 'Animation style (fade, slide, etc.)',
+      // `with <strategy>`: a name (`opacity`, an expression) or a `*`-prefixed
+      // style ref (`*opacity`, which tokenizes as a selector). As a literal
+      // only, neither was ever captured: `hide me with *opacity` rendered
+      // `hide me`.
+      description: 'The hide/show strategy (`with opacity`, `with *opacity`)',
       required: false,
-      expectedTypes: ['literal'],
+      expectedTypes: ['expression', 'selector'],
       svoPosition: 2,
       sovPosition: 2,
     },
