@@ -3456,14 +3456,26 @@ export class PatternMatcher {
       return null;
     }
 
-    // Verify the next token is not a selector (to avoid consuming too many)
-    // This helps distinguish "#output.innerText" from "#box .child"
-    const peek2 = tokens.peek(1);
-    if (peek2 && peek2.kind === 'selector') {
-      // Could be a compound selector chain - only take first two
-    }
-
     tokens.advance(); // consume property selector
+
+    // The chain continues through each further `.prop` (`#d1.value.length`).
+    // Only the first was read, and the rest stranded:
+    // `put #d1.value.length into #out` lost the whole put, and `set x to
+    // #d1.value.length` set `#d1.value`.
+    const chain = [propertyToken.value.slice(1)];
+    let last = propertyToken;
+    for (
+      let next = tokens.peek();
+      next &&
+      next.kind === 'selector' &&
+      /^\.[a-zA-Z_]/.test(next.value) &&
+      chain.length < PatternMatcher.MAX_PROPERTY_DEPTH;
+      next = tokens.peek()
+    ) {
+      chain.push(next.value.slice(1));
+      last = next;
+      tokens.advance();
+    }
 
     // A method CALL on the element (`call #dialog.showModal()`, `call
     // #x.foo(1, 2)`) is an expression, not a property path: folding it to
@@ -3472,21 +3484,18 @@ export class PatternMatcher {
     // GLUED `(` is an argument list: a spaced one is the next operand
     // (it/pl/ru/uk render `set` as `impostare in #total.innerText ( … ) * …`).
     const openParen = tokens.peek();
-    if (openParen?.value === '(' && PatternMatcher.abuts(propertyToken, openParen)) {
+    if (openParen?.value === '(' && PatternMatcher.abuts(last, openParen)) {
       const args = this.consumeCallParens(tokens);
       if (args !== null) {
         return {
           type: 'expression',
-          raw: `${token.value}${propertyToken.value}${args}`,
+          raw: `${token.value}.${chain.join('.')}${args}`,
         } as SemanticValue;
       }
     }
 
-    // Create property-path: #output.innerText
-    // Extract property name without the leading dot
-    const propertyName = propertyToken.value.slice(1);
-
-    return createPropertyPath(createSelector(token.value), propertyName, 'dot');
+    // Create property-path: #output.innerText, #d1.value.length
+    return createPropertyPath(createSelector(token.value), chain.join('.'), 'dot');
   }
 
   /**
