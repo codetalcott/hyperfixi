@@ -914,6 +914,13 @@ export class PatternMatcher {
       if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(evNorm)) {
         return patternToken.optional || false;
       }
+      // A hide/show strategy is never an event either. ja marks both with
+      // `で`, so a bare `自分 を opacity で 隠す` (hide me with opacity) is also
+      // the shape of its patient-first handler (`#x を click で 隠す`, on click
+      // hide #x), and read `on opacity hide me`.
+      if (PatternMatcher.VISIBILITY_STRATEGIES.has(evNorm)) {
+        return patternToken.optional || false;
+      }
       if (
         this.currentProfile &&
         (getPossessiveReference(this.currentProfile, token.value) ??
@@ -2704,6 +2711,16 @@ export class PatternMatcher {
    * chars). See the event-anchor guard in matchRoleToken and
    * docs-internal/HANDOFF-sov-event-anchor.md.
    */
+  /** Upstream's hide/show strategies (`hide me with opacity`), never event names. */
+  private static readonly VISIBILITY_STRATEGIES: ReadonlySet<string> = new Set([
+    'display',
+    'visibility',
+    'opacity',
+    'twdisplay',
+    'twvisibility',
+    'twopacity',
+  ]);
+
   private static tokenLooksLikeEvent(token: LanguageToken): boolean {
     // Selectors (.class/#id/<tag/>/[attr]) and URLs are never events.
     if (token.kind === 'selector' || (token.kind as string) === 'url') return false;

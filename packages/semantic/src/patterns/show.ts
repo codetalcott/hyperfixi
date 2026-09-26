@@ -318,10 +318,21 @@ function getShowPatternsTh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'แสดง' },
           { type: 'role', role: 'patient' },
+          // `ด้วย <strategy>` (`แสดง #modal ด้วย *opacity`): without it this pattern
+          // outranked the generated one and dropped the strategy.
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'ด้วย' },
+              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
+        style: { marker: 'ด้วย' },
       },
     },
   ];
