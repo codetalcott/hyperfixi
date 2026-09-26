@@ -127,6 +127,11 @@ describe('each loop form runs as upstream runs it', () => {
       'xxx',
     ],
     ['for-in with `index`', 'on click for p in .i index j append j to me end', '01'],
+    [
+      'while with `index`',
+      `on click repeat while #host's innerHTML is not "012" index i append i to me end`,
+      '012',
+    ],
   ])('%s', (_, code, text) => {
     click(code);
     expect(host().textContent).toBe(text);
