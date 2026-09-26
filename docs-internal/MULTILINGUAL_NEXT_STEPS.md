@@ -5043,6 +5043,31 @@ this signal was missing.
 > - A class or id query's scope is lost in English: `set x to .item in #list` renders `set x to
 >   .item` (an element query, `<li/> in #list`, keeps it). `default x to <li/> in #list` is lost
 >   whole (default's value takes no selector).
+>
+> **The AOT compiler reads a property (PR 28, 2026-09-26; filed by PR 27).** Core's parser and
+> semantic's buildAST both hand a non-computed property over as an identifier node, and the member
+> codegen read every node property as computed: `#d1.value` compiled to
+> `document.getElementById('d1')[value]`, which throws (`value` is not a variable). Every dotted
+> access did (`#d1.value`, `if #d1.checked`, `event.type`, `my.tagName`), in English and every
+> translation, through the compilation service and so MCP's `compile_hyperscript`, which reported
+> `ok=true`. A non-computed identifier property is a name now; a computed one (`#d1[k]`, which
+> core emits with `computed: true`) stays an expression. Run on both engines; all 145 new AOT cases
+> failed before.
+>
+> Filed, not fixed:
+>
+> - AOT: every `set`, `increment` and `default` of a variable is dropped, in English too. The set
+>   codegen handles `variable` nodes, and both converters hand it identifiers, dropping `:x`'s
+>   element scope on the way (core marks it `scope: 'element'`; `to-core` already maps a
+>   `variable` back to that). Reads of `:x` and a bare `x` compile to a bare JS `x`. On both
+>   engines `:x` persists on its element (1, 2, 3 across clicks), a bare `x` lasts one click, and
+>   `$x` is global.
+> - AOT: the converters make an `error` node of core's `propertyOfExpression` (`the value of
+>   #d1`), `attributeAccess` (`set @title`, dropped) and an array literal (`for k in ["value"]`);
+>   `compileScript` throws `Unknown expression type: error` on the first and the last.
+> - Semantic: `put #d1.value.length into #out` is lost whole in English (a chained property on a
+>   selector), and bn/th localize the property `id` (আইডি, ไอดี) but read it back unlocalized.
+> - Core: `put my.tagName into #out` writes `button`; upstream, like the DOM, `BUTTON`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
