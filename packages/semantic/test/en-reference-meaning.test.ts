@@ -105,6 +105,11 @@ describe('`a` before an operator is a variable', () => {
     expect(roundTrip(WORKER, language)).toContain('return a + b');
   });
 
+  // In es/it/pt `a` is the preposition "to", so the second operand is a particle.
+  it.each(['es', 'it', 'pt'])('`b + a` round-trips through %s', language => {
+    expect(roundTrip('on click put b + a into #o', language)).toBe('on click put b + a into #o');
+  });
+
   it('a marker glued to a negative number stays a marker (es `añadir 5 a -1`)', () => {
     const node = parseSemantic('añadir 5 a -1', 'es').node as {
       roles: Map<string, { type: string; value?: unknown }>;
