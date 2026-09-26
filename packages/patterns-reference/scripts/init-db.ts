@@ -1041,10 +1041,13 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'event-once',
     title: 'Event Once',
-    // NOTE: `on click once` is semantic-surface-only (engine NULL). The
-    // dual-legal `on first click` rewrite went lossy in the SOV languages
-    // (bn/hi/ja/qu/tr) and was reverted.
-    raw_code: 'on click once add .initialized to me call setup()',
+    // `on first click`: the one spelling both engines run once (measured by
+    // clicking twice, 2026-09-26). `on click once` was invalid on both, and
+    // `on click.once` is core-only — upstream reads it as an event named
+    // `click.once`, which a click never fires. An earlier `on first click`
+    // rewrite was reverted because semantic had no reading for it (en dropped
+    // the whole head); it now parses as `once` written `first`.
+    raw_code: 'on first click add .initialized to me call setup()',
     description: 'Handle event only once',
     feature: 'events',
   },
