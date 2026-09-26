@@ -470,6 +470,17 @@ export function normalizeEventName(event: string, language: string): string {
   return event.toLowerCase();
 }
 
+/**
+ * Every native spelling {@link normalizeEventName} reads as `englishEvent` in
+ * this language: a one-word coinage (de `mausbewegen`), several words (ar
+ * `ضغط المفتاح`) or an unspaced name (zh `鼠标移动`).
+ */
+export function nativeEventNames(englishEvent: string, language: string): string[] {
+  const translations = eventNameTranslations[language];
+  if (!translations) return [];
+  return Object.keys(translations).filter(native => translations[native] === englishEvent);
+}
+
 // =============================================================================
 // Event Name Localization (English → native, render path) — Phase 1b
 // =============================================================================
@@ -1573,7 +1584,11 @@ function getEventHandlerPatternsQu(): LanguagePattern[] {
             type: 'group',
             optional: true,
             tokens: [
-              { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+              {
+                type: 'role',
+                role: 'source',
+                expectedTypes: ['selector', 'reference', 'expression'],
+              },
               { type: 'literal', value: 'manta', alternatives: ['-manta'] },
             ],
           },

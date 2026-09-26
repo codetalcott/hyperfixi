@@ -108,3 +108,23 @@ describe('a custom event binds its `detail`', () => {
     expect((await fire(translate(SOURCE, language), language, event)).textContent).toBe('D');
   });
 });
+
+// PR 8e: a head's params survive when its event has a native name the head
+// reads but no token spells (de `mausbewegen`, ar `ضغط المفتاح`, zh `鼠标移动`).
+describe('`on mousemove(clientX)` binds its parameter', () => {
+  const SOURCE = 'on mousemove(clientX) put clientX into me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const move = new MouseEvent('mousemove', { clientX: 4, bubbles: true });
+    expect((await fire(translate(SOURCE, language), language, move)).textContent).toBe('4');
+  });
+});
+
+describe('`on keydown(key)` binds its parameter', () => {
+  const SOURCE = 'on keydown(key) put key into me';
+
+  it.each(FOREIGN)('%s', async language => {
+    const press = new KeyboardEvent('keydown', { key: 'q', bubbles: true });
+    expect((await fire(translate(SOURCE, language), language, press)).textContent).toBe('q');
+  });
+});
