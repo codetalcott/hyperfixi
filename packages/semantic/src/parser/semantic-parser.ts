@@ -2990,6 +2990,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // Trailing EXPRESSION-run reclaim (js code / go+scroll destination
         // phrase) — see tryAttachTrailingExpressionRole.
         this.tryAttachTrailingExpressionRole(tokens, commandNode as CommandSemanticNode, language);
+        this.tryAttachNewWindow(tokens, commandNode as CommandSemanticNode);
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -4192,6 +4193,24 @@ export class SemanticParserImpl implements ISemanticParser {
     if (!next || !/^\d+(?:\.\d+)?(?:ms|s|m|h)$/.test(next.value)) return;
     roles.set('duration' as SemanticRole, createLiteral(next.value, 'duration'));
     stream.advance();
+  }
+
+  /**
+   * Reclaim `go … in new window` after a fused handler pattern. The fused
+   * `go-event-*` patterns carry no url variant, so the url rebind in
+   * tryAttachTrailingExpressionRole takes the URL itself and left the tail
+   * after it unread: in 13 languages `go to url "/x" in new window` lost its
+   * window. The phrase is English in every language (IN_NEW_MARKER_ALL_LANGS),
+   * and its last word is `window` or the language's word for it.
+   */
+  private tryAttachNewWindow(stream: TokenStream, command: CommandSemanticNode): void {
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    if (command.action !== 'go' || roles.has('manner' as SemanticRole)) return;
+    const [a, b, c] = [stream.peek(), stream.peek(1), stream.peek(2)];
+    if (a?.value.toLowerCase() !== 'in' || b?.value.toLowerCase() !== 'new') return;
+    if (!c || (c.normalized ?? c.value).toLowerCase() !== 'window') return;
+    roles.set('manner' as SemanticRole, createReference('window'));
+    for (let i = 0; i < 3; i++) stream.advance();
   }
 
   private tryAttachTrailingRole(

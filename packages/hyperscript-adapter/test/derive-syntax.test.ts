@@ -74,7 +74,11 @@ describe('deriveEnglishSyntax', () => {
   });
 
   it('derives go with renderOverride (no preposition)', () => {
-    expect(derived.go).toEqual([['destination', '']]);
+    // `manner` is the `in new window` flag, marked `in new` in every language.
+    expect(derived.go).toEqual([
+      ['destination', ''],
+      ['manner', 'in new'],
+    ]);
   });
 
   it('derives fetch with renderOverride on source (no preposition)', () => {
@@ -177,6 +181,9 @@ describe('deriveSyntax (multi-language)', () => {
     // go has markerOverride.en='to' and renderOverride.en=''
     // For 'en', renderOverride should win
     const result = deriveSyntax(commandSchemas, englishProfile, 'en');
-    expect(result.go).toEqual([['destination', '']]);
+    expect(result.go).toEqual([
+      ['destination', ''],
+      ['manner', 'in new'],
+    ]);
   });
 });

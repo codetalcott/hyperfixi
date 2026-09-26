@@ -453,52 +453,55 @@ describe('Send Command Mapper', () => {
 // =============================================================================
 
 describe('Go Command Mapper', () => {
-  // The runtime's GoCommand reads ONLY positional args: 'back' → history,
-  // 'url' + next arg → URL navigation, bare value → bare-url/scroll branches.
-  // (The old mapper read a `source` role the schema never produces and emitted
-  // `modifiers.to`, which the runtime ignores — go's semantic path was dead.)
-  it('should map the url idiom to args ["url", <destination>]', () => {
-    const node = createCommandNode('go', {
+  // Core's slots (Arc 3 step 3, #1077), which GoCommand reads: `back` and
+  // `forward` are flags, `url` the destination of `go to url`, `in` marks `in
+  // new window`, and any other destination is the one positional arg. The
+  // mapper emitted the older positional list (`['url', '/page']`, `['back']`)
+  // until PR 25, and GoCommand threw on every translated `go back`/`go to url`.
+  const toAST = (roles: Record<string, SemanticValue>) =>
+    resolveCommandMapper('go')!.toAST(createCommandNode('go', roles), new ASTBuilder());
+
+  it('maps the url idiom to modifiers.url', () => {
+    const result = toAST({
       destination: literal('/page', 'string'),
       method: literal('url', 'string'),
     });
-
-    const mapper = resolveCommandMapper('go')!;
-    const builder = new ASTBuilder();
-    const result = mapper.toAST(node, builder);
-
     expect(result.name).toBe('go');
-    expect(result.args[0]).toMatchObject({ type: 'string', value: 'url' });
-    expect(result.args[1]).toMatchObject({ type: 'literal', value: '/page' });
+    expect(result.args).toEqual([]);
+    expect(result.modifiers?.url).toMatchObject({ type: 'literal', value: '/page' });
+  });
+
+  it.each(['back', 'forward'])('maps go %s to its flag', word => {
+    const result = toAST({ destination: { type: 'expression', raw: word } as SemanticValue });
+    expect(result.args).toEqual([]);
+    expect(result.modifiers?.[word]).toMatchObject({ type: 'string', value: word });
+  });
+
+  it('keeps a quoted "back" a URL', () => {
+    const result = toAST({ destination: literal('back', 'string') });
     expect(result.modifiers ?? {}).toEqual({});
+    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'back' });
   });
 
-  it('should map go back to args ["back"]', () => {
-    const node = createCommandNode('go', {
-      destination: literal('back', 'string'),
-    });
+  it('maps a plain destination, a URL or an element, to the one positional arg', () => {
+    const url = toAST({ destination: literal('/path/to/page', 'string') });
+    expect(url.args).toHaveLength(1);
+    expect(url.args[0]).toMatchObject({ type: 'literal', value: '/path/to/page' });
+    expect(url.modifiers ?? {}).toEqual({});
 
-    const mapper = resolveCommandMapper('go')!;
-    const builder = new ASTBuilder();
-    const result = mapper.toAST(node, builder);
-
-    expect(result.name).toBe('go');
-    expect(result.args).toHaveLength(1);
-    expect(result.args[0]).toMatchObject({ type: 'string', value: 'back' });
+    const element = toAST({ destination: selector('#d1', 'id') });
+    expect(element.args).toHaveLength(1);
+    expect(element.args[0]).toMatchObject({ type: 'selector', value: '#d1' });
   });
 
-  it('should map a plain destination to a single positional arg', () => {
-    const node = createCommandNode('go', {
-      destination: literal('/path/to/page', 'string'),
+  it('maps `in new window` to modifiers.in, beside the url', () => {
+    const result = toAST({
+      destination: literal('/page', 'string'),
+      method: literal('url', 'string'),
+      manner: reference('window'),
     });
-
-    const mapper = resolveCommandMapper('go')!;
-    const builder = new ASTBuilder();
-    const result = mapper.toAST(node, builder);
-
-    expect(result.name).toBe('go');
-    expect(result.args).toHaveLength(1);
-    expect(result.args[0]).toMatchObject({ type: 'literal', value: '/path/to/page' });
+    expect(result.modifiers?.url).toMatchObject({ type: 'literal', value: '/page' });
+    expect(result.modifiers?.in).toMatchObject({ type: 'string', value: 'new window' });
   });
 });
 

@@ -4939,6 +4939,43 @@ this signal was missing.
 > - The interchange converter drops `attributeAccess`: `remove @disabled` compiles against `null`.
 > - `empty` has no codegen: the handler compiles empty, with a warning that it looks empty.
 > - `measure width of #d1` loses its source before the codegen sees it.
+>
+> **A translated `go` runs (PR 25, 2026-09-26; filed by PR 24).** GoCommand has read core's slots
+> since #1077 (`modifiers.back`, `.forward`, `.url`, `.in`; any other destination the one
+> positional arg), but semantic's go mapper still emitted the list it read before (`args: ['url',
+> '/x']`, `args: ['back']`). So every translated `go back` and `go to url` threw `Target element not
+> found` on the direct path: 42 of 42 probed, and both are corpus rows. No gate executes
+> navigation. The mapper emits the slots now. Two English losses went with it: `go to #d1` matched
+> no pattern (go's destination took no selector; both engines scroll #d1 into view), and `in new
+> window` read as a phantom `wait new` (the `in <duration>` form of wait), so the page opened in
+> the same window. The flag is modeled as `using view transition` is: marker `in new` in every
+> language, `window` the value, rendered in English (a localized `window` gave es `in new
+> ventana`). The fused `go-event-*` patterns carry no url variant, so a reclaim takes the phrase
+> after their url rebind (13 languages had lost it). Run on both engines; all 138 direct-path
+> cases (6 forms, 23 languages) failed before, and 239 of 311 round trips.
+>
+> The AOT compiler read every go destination but back/forward as a URL and ignored `in new
+> window`: `go to #d1` assigned the element to `location.href` in English and every translation.
+> `_rt.go` reads the destination at run time, as upstream does; 96 of the 168 new AOT cases failed
+> before (the other 72 are guards).
+>
+> Filed, not fixed:
+>
+> - A naked URL renders quoted, and before `in new window` the quoted form is a parse error
+>   upstream (its expression parser reads `"/x" in …` as the `in` operator): `go to /x in new
+>   window` renders `go "/x" in new window`. Core runs it; the fix is general URL quoting (14
+>   corpus rows use naked URLs).
+> - Core's `go` treats any string that doesn't look like a URL as a scroll target: `go to "#frag"`
+>   and `go to "back"` throw `Target element not found`, where upstream sets the hash and
+>   navigates.
+> - Core's `navigate` runs `location.assign?.(url) ?? (location.href = url)`, and `assign` returns
+>   undefined, so a same-window `go` navigates twice.
+> - Core keeps one position word: `go to top left of #d1` scrolls to `top`, and `scroll to top
+>   left of #d1` throws. Core also throws on `scroll to #d1 in #box`, `scroll to #d1 + 10px` and
+>   `scroll to the top of #d1 - 5 px`, which upstream runs.
+> - Next (PR 26), the scroll grammar `go` and `scroll` share: a position with `of <element>` loses
+>   its element (`go to top of #d1` → `go top`, `scroll to top of #d1` → `scroll to top`, which
+>   throws), `smoothly`/`instantly` are dropped, and `scroll … by` is lost whole.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

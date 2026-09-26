@@ -2935,7 +2935,7 @@
       ]
     },
     "go": {
-      "roles": ["destination"],
+      "roles": ["destination", "manner"],
       "cases": [
         {
           "name": "no-roles",
@@ -2948,6 +2948,38 @@
         },
         {
           "name": "all-relevant",
+          "roles": {
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "go",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ],
+            "modifiers": {
+              "in": {
+                "type": "string",
+                "value": "new window"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-destination",
           "roles": {
             "destination": {
               "type": "selector",
@@ -2969,7 +3001,47 @@
           }
         },
         {
-          "name": "only-destination",
+          "name": "without-destination",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "go",
+            "args": [],
+            "modifiers": {
+              "in": {
+                "type": "string",
+                "value": "new window"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-manner",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "go",
+            "args": [],
+            "modifiers": {
+              "in": {
+                "type": "string",
+                "value": "new window"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-manner",
           "roles": {
             "destination": {
               "type": "selector",
@@ -3060,7 +3132,13 @@
                 "selector": "#destination-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "in": {
+                "type": "string",
+                "value": "new window"
+              }
+            }
           }
         },
         {
@@ -3074,12 +3152,13 @@
           "ast": {
             "type": "command",
             "name": "go",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "back": {
                 "type": "string",
                 "value": "back"
               }
-            ]
+            }
           }
         },
         {
@@ -3097,16 +3176,13 @@
           "ast": {
             "type": "command",
             "name": "go",
-            "args": [
-              {
-                "type": "string",
-                "value": "url"
-              },
-              {
+            "args": [],
+            "modifiers": {
+              "url": {
                 "type": "literal",
                 "value": "/page"
               }
-            ]
+            }
           }
         },
         {

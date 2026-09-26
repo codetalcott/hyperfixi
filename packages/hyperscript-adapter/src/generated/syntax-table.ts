@@ -29,7 +29,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   focus: [['patient', '']],
   for: [['patient', ''], ['source', 'in']],
   get: [['source', ''], ['destination', 'on']],
-  go: [['destination', '']],
+  go: [['destination', ''], ['manner', 'in new']],
   halt: [['patient', '']],
   hide: [['patient', ''], ['style', 'with']],
   if: [['condition', '']],

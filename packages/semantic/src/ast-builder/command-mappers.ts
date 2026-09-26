@@ -260,40 +260,42 @@ const putMapper: CommandMapper = {
 /**
  * Go command mapper (navigation).
  *
- * The runtime's GoCommand reads ONLY positional args (never modifiers):
- *   args[0] === 'back'          → history back
- *   args includes 'url'         → next arg is the URL (go [to] url "/page")
- *   arg starts with '/'/scheme  → bare-URL navigation
- *   otherwise                   → scroll (go to top of #header)
+ * Emits core's slots, the shape `parseGoCommand` builds and GoCommand reads
+ * (Arc 3 step 3, #1077): `back` and `forward` are flags, `url` holds the
+ * destination of `go [to] url <x>`, `in` marks `in new window`, and any other
+ * destination (a URL, an element) is the one positional arg.
  *
- * Semantic: go destination:/page [method:url]
- * AST: { name: 'go', args: ['url', '/page'] } | { args: ['back'] } | { args: [<dest>] }
+ * Until PR 25 this emitted the list GoCommand read before #1077
+ * (`args: ['url', '/page']`, `args: ['back']`). GoCommand reads none of it
+ * now, so every translated `go back` and `go to url` threw `Target element
+ * not found`.
+ *
+ * Semantic: go destination:/page [method:url] [manner:window]
+ * AST: { name: 'go', args: [<dest>]?, modifiers: { url?, back?, forward?, in? } }
  */
 const goMapper: CommandMapper = {
   action: 'go',
   toAST(node, _builder) {
     const dest = getRole(node, 'destination');
-    const method = getRole(node, 'method');
-
     const args: ExpressionNode[] = [];
+    const modifiers: Record<string, ExpressionNode> = {};
 
-    const rawDest =
-      dest && 'value' in dest ? dest.value : (dest as { raw?: unknown } | undefined)?.raw;
-    if (dest && String(rawDest) === 'back') {
-      // The runtime keys on the string 'back'; an expression-typed capture
-      // would evaluate as a variable lookup instead. `string`, not `literal`:
-      // that is the node the traditional parser's parseGoCommand emits for
-      // structural keywords (Thread B item 5 — one spelling per meaning).
-      args.push({ type: 'string', value: 'back' } as ExpressionNode);
-    } else if (dest) {
-      if (method && String('value' in method ? method.value : undefined) === 'url') {
-        args.push({ type: 'string', value: 'url' } as ExpressionNode);
-      }
+    // A quoted "back" is a URL; only the bare word is history navigation.
+    const quoted = dest?.type === 'literal' && dest.dataType === 'string';
+    const word = quoted ? undefined : roleText(dest);
+    if (word === 'back' || word === 'forward') {
+      // `string`, the node parseGoCommand emits for a structural keyword.
+      modifiers[word] = { type: 'string', value: word } as ExpressionNode;
+    } else {
       const destExpr = convertRoleValue(node, 'destination');
-      if (destExpr) args.push(destExpr);
+      if (destExpr && roleText(getRole(node, 'method')) === 'url') modifiers.url = destExpr;
+      else if (destExpr) args.push(destExpr);
+    }
+    if (getRole(node, 'manner')) {
+      modifiers.in = { type: 'string', value: 'new window' } as ExpressionNode;
     }
 
-    return createCommandNode('go', args, {});
+    return createCommandNode('go', args, modifiers);
   },
 };
 

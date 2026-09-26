@@ -2320,19 +2320,33 @@ const URL_MARKER_ALL_LANGS: Record<string, string> = {
 };
 
 /**
- * Go command: navigates to a URL.
+ * `in new` is the marker half of `go … in new window`. Like `using view`, it
+ * is a hyperscript phrase with no native translation, so all 24 languages use
+ * the English form, and the trailing `window` is the role's captured value.
+ *
+ * (Defined here, above its first schema reference — `goSchema` — to avoid TDZ.)
+ */
+const IN_NEW_MARKER_ALL_LANGS: Record<string, string> = Object.fromEntries(
+  Object.keys(URL_MARKER_ALL_LANGS).map(language => [language, 'in new'])
+);
+
+/**
+ * Go command: navigates to a URL, or scrolls to an element.
  */
 export const goSchema: CommandSchema = {
   action: 'go',
-  description: 'Navigate to a URL',
+  description: 'Navigate to a URL, or scroll to an element',
   category: 'navigation',
   primaryRole: 'destination',
   roles: [
     {
       role: 'destination',
-      description: 'The URL to navigate to',
+      description: 'The URL to navigate to, or the element to scroll to',
       required: true,
-      expectedTypes: ['literal', 'expression'],
+      // An element too: `go to #d1` scrolls #d1 into view on both engines.
+      // Without `selector` the whole command was lost, in English and so in
+      // every translation.
+      expectedTypes: ['literal', ...ELEMENT_TARGET_TYPES],
       svoPosition: 1,
       sovPosition: 1,
       // "go to /page" (parsing). Directional, so the same locative-default
@@ -2429,6 +2443,22 @@ export const goSchema: CommandSchema = {
         // Listing them here would be dead config — markerLegacy is read ONLY by
         // the override branch.
       },
+    },
+    {
+      // `in new window`: a valueless flag, modeled as the view-transition tail
+      // is (see VIEW_TRANSITION_MANNER_ROLE). Unmodeled, `in new` read as
+      // `wait new` (the `in <duration>` form of wait), so `go to url /x in new
+      // window` became a phantom wait and navigated the SAME window.
+      role: 'manner',
+      description: 'Open the URL in a new window (`in new window`)',
+      required: false,
+      // `window` is a reference in every language, and a literal or an
+      // expression where a tokenizer reads it as a plain word.
+      expectedTypes: ['reference', 'literal', 'expression'],
+      valueShape: 'keyword',
+      svoPosition: 2,
+      sovPosition: 2,
+      markerOverride: IN_NEW_MARKER_ALL_LANGS,
     },
   ],
   // `go to url "/page"` — without this variant the destination captures the
