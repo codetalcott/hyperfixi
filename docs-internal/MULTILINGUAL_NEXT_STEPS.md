@@ -4661,10 +4661,17 @@ this signal was missing.
 > and a strategy is a name (`opacity`) or a `*`-prefixed style ref (`*opacity`, a selector token),
 > so `hide me with *opacity` rendered `hide me`, in English and so in every translation. It now
 > takes an expression or a selector, and buildAST reads it for the `with` modifier core's parser
-> writes. Three languages needed more: the de and fr hand-written patterns outranked the generated
-> one and ignored the phrase (each gains an optional strategy group), and ms read `saya dengan` (me +
-> with) as the possessive `my dengan` (`style` joins the role-marker concepts, which a possessive
-> property never is). The mapper-parity fixture is regenerated: only hide and show changed.
+> writes. Five languages needed more:
+> - the de, fr and th hand-written patterns outranked the generated one and ignored the phrase
+>   (each gains an optional strategy group; th's showed only outside a handler, which the
+>   bare-render gate caught);
+> - ms read `saya dengan` (me + with) as the possessive `my dengan` (`style` joins the role-marker
+>   concepts, which a possessive property never is);
+> - ja marks a strategy and a handler's event with the same `で`, so a bare `自分 を opacity で 隠す`
+>   (hide me with opacity) read as its patient-first handler `on opacity hide me`, a different
+>   program. A hide/show strategy name is never an event name now.
+>
+> The mapper-parity fixture is regenerated: only hide and show changed.
 >
 > **Found, filed:** core's show/hide ignore the strategy. `visibility-base.ts` reads no `with` and
 > always toggles `display`, where upstream documents `opacity`, `visibility` and friends. The
