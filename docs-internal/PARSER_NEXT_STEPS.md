@@ -681,6 +681,13 @@ true extent means building a real loop node with a body, mirroring
 `tryParseConditionalBlock` → `createConditionalNode`. That is the fix; this entry
 is the brief.
 
+**Now gated (2026-09-25).** The en-reference-preservation allowlist holds two
+corpus rows for it, both MEANING: template-literal-list-build (the `end` moves
+after `set #list.innerHTML`, pulling it into the loop) and behavior-sortable (the
+same move, beside its handler-head losses). They are the next PR. The top-level
+drop is visible on the bare surface too: the bare `repeat while … < 10 increment
+#counter wait 200ms end` renders as the head alone.
+
 ### ~~Role markers bind as roles in the traditional→interchange path~~ — FIXED (2026-08-30)
 
 Found while measuring Arc 1 step 4 of `ENGINE_MIGRATION_PLAN.md`; **pre-existing

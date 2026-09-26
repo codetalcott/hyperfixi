@@ -4359,6 +4359,43 @@ this signal was missing.
 > on parse. morph-form-update left the allowlist (24 → 23). The multilingual `--regression` gate
 > saw **zero** metric deltas: the fix restored content in 23 languages that no signal had noticed
 > was gone. Pins: `packages/semantic/test/parenthesized-role-values.test.ts`.
+>
+> **Second prune (2026-09-25): the MEANING family, less the loop `end`.** Four of the six
+> MEANING-tagged entries left the allowlist (22 → 18):
+>
+> - `go back` rendered `go url back` (a navigation to a page named "back"). The renderer's value
+>   pins read extraction defaults only; go's url variant records its keyword as a fixed VALUE,
+>   so it rendered every `go`. A fixed value now pins like a default.
+> - `repeat while #counter.innerText < 10` kept `#counter.innerText`, so the loop never ended.
+>   The trailing-condition fold now also runs for a loop head's condition, through comparisons
+>   and `and`/`or`.
+> - `return a + b` became `return +`: English read `a` as the article, and es/it/pt/tr read it
+>   as their preposition marker. `a`/`an` before an operator is a variable, and a particle
+>   directly before or after a run operator is an operand.
+> - socket-send was not a meaning change: `send "hello"` and `send hello` are the same event on
+>   both engines (upstream's eventName takes a STRING's text). It is now a named equivalence,
+>   `quoted-event-name`, pinned by effect on upstream.
+>
+> The multilingual gate saw no change in any language: each translation had faithfully
+> reproduced its broken reference. The bare-render gate gained one honest failure, (go-back,
+> bn), beside (go-back, hi): in both, go's destination marker is also the event marker.
+>
+> **Split out:** the loop-`end` pair (template-literal-list-build, behavior-sortable) needs the
+> semantic parser to build a real loop node — the "never builds a loop node" brief in
+> `PARSER_NEXT_STEPS.md` — and gets its own PR.
+>
+> **Found, filed (none in the corpus):**
+> - `repeat until <condition>` has no head pattern: the generated repeat binds the first operand
+>   as a COUNT, so `repeat until #n.innerText > 10 … end` renders `repeat #n.innerText times`.
+>   Every language needs the head (the until-event heads carry the until-word surfaces).
+> - `trigger "my event"` parses as the event `myevent` (the space inside the string is lost).
+> - A negative number loses its digits after a marker: `add 5 to -1` renders `add 5 to -` (es
+>   `añadir 5 a -1` the same).
+> - es/pt: a variable named `a` at the end of a clause is still the preposition (`put 5 into a`
+>   re-parses without its destination).
+> - `make a Set` renders `make a`.
+> - Correction: `realtime-blocks.test.ts` had locked the worker's unconsumed `"b"` as a dropped
+>   def PARAMETER. The signature always kept both; the drop was the body's `a + b`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

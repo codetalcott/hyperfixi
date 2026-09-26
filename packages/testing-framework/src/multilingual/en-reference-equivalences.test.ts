@@ -108,6 +108,17 @@ const PINS: Record<string, Pin> = {
     kind: 'effect',
     pair: ['on poke click() me', 'on poke call me.click()'],
   },
+  // The button sends and triggers to itself and records what arrived: upstream
+  // reads a STRING or a dotted/colon path as the same eventName (both commands).
+  'quoted-event-name': {
+    kind: 'effect',
+    pair: [
+      'on click send "hello" to me then trigger "bye" on me end ' +
+        'on hello put "got" into #o end on bye set #t\'s *color to "red"',
+      'on click send hello to me then trigger bye on me end ' +
+        'on hello put "got" into #o end on bye set #t\'s *color to "red"',
+    ],
+  },
 };
 
 let hs: Upstream;
@@ -241,9 +252,14 @@ describe('en-reference equivalences', () => {
     });
 
     it('a string literal is not the identifier with the same text', () => {
-      expect(preservesContent('on click send "hello" to S', 'on click send hello to S')).toBe(
+      // A value, not an event name: `put hello` reads a variable named hello.
+      expect(preservesContent('on click put "hello" into #o', 'on click put hello into #o')).toBe(
         false
       );
+      // An event name that is not a plain name cannot be written bare.
+      expect(
+        preservesContent('on click send "my event" to #t', 'on click send my event to #t')
+      ).toBe(false);
     });
 
     it('a URL carrying `${…}` is not treated as quote-insensitive', () => {
