@@ -5068,6 +5068,24 @@ this signal was missing.
 > - Semantic: `put #d1.value.length into #out` is lost whole in English (a chained property on a
 >   selector), and bn/th localize the property `id` (আইডি, ไอดี) but read it back unlocalized.
 > - Core: `put my.tagName into #out` writes `button`; upstream, like the DOM, `BUTTON`.
+>
+> **The AOT compiler keeps a variable's scope (PR 29, 2026-09-26; filed by PR 28).** The set,
+> increment, decrement and default codegens handled `variable` nodes, and both interchange
+> converters handed them identifiers: every `set x`, `set :x` and `set $x` compiled to nothing,
+> in English and every translation, and a read of `:x` or a bare `x` compiled to a bare JS `x`.
+> Both converters also dropped `:x`'s `scope: 'element'`, so `:x` and `x` were one variable. On
+> both engines `:x` persists on its element across the handler's runs, a bare `x` lasts one run,
+> and `$x` is global. The converters carry a scoped identifier as a `variable` (to-core already
+> mapped one back to that), and core's carries `increment`/`decrement` as written: core's parser
+> rewrites it to `set x to x + 1`, which counted from `undefined`. `variableStore()` puts `$x` in
+> `_rt.globals`, `:x` in a new per-element store (`_rt.elementVars`; a DOM property would make
+> `:title` the element's title) and a bare `x` in `_ctx.locals`, and the analyzer registers a
+> bare target so its reads use the same store. A count reads its variable as a number (`"5"`
+> counts to 6 on both engines, and was `"51"`). All 264 new cases (11 handlers clicked three
+> times, 24 languages) failed before.
+>
+> Filed, not fixed (still open from PR 28): the converters' `error` nodes for
+> `propertyOfExpression`, `attributeAccess` and array literals.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
