@@ -4725,6 +4725,19 @@ this signal was missing.
 > quoted string does not interpolate there; a backtick template would work on both, which is a
 > design call), event-once (the source is invalid on both engines), and the core-only `with index`
 > and `tell … to`.
+>
+> **Policy (user decision, 2026-09-26):** core-only syntax renders AS WRITTEN (not normalized to a
+> both-engine form), and an engine-invalid corpus row is fixed at the source.
+>
+> **event-once is `on first click` (PR 15, 2026-09-26).** The allowlist is 6 → 5. The row's source,
+> `on click once …`, was invalid on both engines. Clicking twice on each measured the candidates:
+> `on first click` runs once on both; `on click 1` is upstream-only; `on click.once` is core-only,
+> and upstream reads it as an event named `click.once`, which a click never fires. An earlier `on
+> first click` rewrite had been reverted because semantic had no reading for it (en dropped the
+> whole head, so no translation carried a handler); it now parses as `once` with `onceAsFirst` (en
+> `on first <event>`, other languages a leading `first`, as their leading `once`), and renders back
+> the same way. Core's `click.once` keeps its spelling, per the policy. engine-verification flips
+> event-once from null to both (149 both, 2 unverified).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

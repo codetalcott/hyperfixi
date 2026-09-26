@@ -50,7 +50,7 @@
     "event-debounce": "lokascript",
     "event-from-elsewhere": "both",
     "event-key-combo": "both",
-    "event-once": null,
+    "event-once": "both",
     "event-throttle": "both",
     "eventsource-basic": "both",
     "fade-out-remove": "both",
@@ -350,10 +350,8 @@
       "hyperscript": true
     },
     "event-once": {
-      "lokascript": false,
-      "hyperscript": false,
-      "lokascriptError": "Unexpected token: add",
-      "hyperscriptError": "Unexpected Token : once"
+      "lokascript": true,
+      "hyperscript": true
     },
     "event-throttle": {
       "lokascript": true,

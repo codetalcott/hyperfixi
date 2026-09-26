@@ -326,6 +326,12 @@ export interface EventHandlerSemanticNode extends SemanticNode {
 
 export interface EventModifiers {
   readonly once?: boolean;
+  /**
+   * `once` written `on first <event>`, the form both engines run once. Absent,
+   * core's `<event>.once` (upstream reads that as an event named so, which a
+   * click never fires).
+   */
+  readonly onceAsFirst?: boolean;
   readonly debounce?: number;
   readonly throttle?: number;
   readonly queue?: 'first' | 'last' | 'all' | 'none';
