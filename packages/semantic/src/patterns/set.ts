@@ -7,7 +7,17 @@
  * Phase 3.2: Consolidated from 19 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+import { setSchema } from '../generators/command-schemas';
+
+/**
+ * A handcrafted set's value takes what the schema's does, an element or an
+ * array included (`set el to #panel`, `set x to [1, 2]`). These patterns
+ * once copied the narrower list, so such a set was lost in de/fr/id/ms/pt.
+ */
+const SET_PATIENT_TYPES: ExpectedType[] = [
+  ...(setSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
+];
 
 function getSetPatternsBn(): LanguagePattern[] {
   return [
@@ -75,7 +85,7 @@ function getSetPatternsDe(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'auf', alternatives: ['zu', 'an'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -99,7 +109,7 @@ function getSetPatternsDe(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -121,7 +131,7 @@ function getSetPatternsDe(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -153,7 +163,7 @@ function getSetPatternsEs(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'a', alternatives: ['en', 'como'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -180,7 +190,7 @@ function getSetPatternsEs(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -202,7 +212,7 @@ function getSetPatternsEs(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -236,7 +246,7 @@ function getSetPatternsFr(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'à', alternatives: ['a', 'sur', 'comme'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -259,7 +269,7 @@ function getSetPatternsFr(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -281,7 +291,7 @@ function getSetPatternsFr(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -358,7 +368,7 @@ function getSetPatternsId(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'ke', alternatives: ['menjadi', 'jadi', 'pada'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -381,7 +391,7 @@ function getSetPatternsId(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -403,7 +413,7 @@ function getSetPatternsId(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -436,7 +446,7 @@ function getSetPatternsMs(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'ke', alternatives: ['kepada', 'menjadi', 'jadi'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -570,7 +580,7 @@ function getSetPatternsPt(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'para', alternatives: ['como', 'a', 'em'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -594,7 +604,7 @@ function getSetPatternsPt(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -616,7 +626,7 @@ function getSetPatternsPt(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -954,7 +964,7 @@ function getSetPatternsZh(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '到', alternatives: ['为', '為', '成'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -991,7 +1001,7 @@ function getSetPatternsZh(): LanguagePattern[] {
             optional: true,
             tokens: [{ type: 'literal', value: '到', alternatives: ['为', '為', '成'] }],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -1031,7 +1041,7 @@ function getSetPatternsZh(): LanguagePattern[] {
             optional: true,
             tokens: [{ type: 'literal', value: '到', alternatives: ['为', '為', '成'] }],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -1053,7 +1063,7 @@ function getSetPatternsZh(): LanguagePattern[] {
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
           { type: 'literal', value: '=' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
       },
       extraction: {
@@ -1112,7 +1122,7 @@ function getSetPatternsQu(): LanguagePattern[] {
             expectedTypes: ['selector', 'reference', 'expression'],
           },
           { type: 'literal', value: 'manta' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
           { type: 'literal', value: 'man' },
           { type: 'literal', value: 'churanay', alternatives: ['kamaykuy'] },
         ],

@@ -3125,18 +3125,31 @@ export class PatternMatcher {
     // a property access — command verbs are never reference bases.
     const baseLower = token.value.toLowerCase();
     const fusedFirst = tokens.peek();
+    // Only a `.prop` that TOUCHES what it follows is a property: `:x .item`,
+    // spaced, is a variable and a class (`set :x to .item`, which it/pl/ru/uk
+    // render with the value unmarked after the variable).
+    const touches = (prev: LanguageToken, next: LanguageToken): boolean =>
+      next.position.start === prev.position.end;
     if (
       (token.kind === 'identifier' || PatternMatcher.PROPERTY_ACCESS_BASES.has(baseLower)) &&
       fusedFirst &&
       fusedFirst.kind === 'selector' &&
-      /^\.[a-zA-Z_]/.test(fusedFirst.value)
+      /^\.[a-zA-Z_]/.test(fusedFirst.value) &&
+      touches(token, fusedFirst)
     ) {
       let fusedChain = token.value;
       const fusedProps: string[] = [];
       let fusedDepth = 0;
+      let last = token;
       while (fusedDepth < PatternMatcher.MAX_PROPERTY_DEPTH) {
         const prop = tokens.peek();
-        if (prop && prop.kind === 'selector' && /^\.[a-zA-Z_]/.test(prop.value)) {
+        if (
+          prop &&
+          prop.kind === 'selector' &&
+          /^\.[a-zA-Z_]/.test(prop.value) &&
+          touches(last, prop)
+        ) {
+          last = prop;
           fusedChain += `.${prop.value.slice(1)}`;
           fusedProps.push(prop.value.slice(1));
           tokens.advance();
