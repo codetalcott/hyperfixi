@@ -214,9 +214,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // A loop/tell HEADER takes its body directly — canonical hyperscript rejects a
     // chain word between the header and its first body command (`repeat 3 times add
     // …`, not `repeat 3 times then add …`; `tell #panel add …`, not `tell #panel
-    // then add …`). The parser flattens the block into this compound (no
-    // LoopSemanticNode with an attached body reaches the renderer), so suppress the
-    // chain word immediately after any block-header command (BLOCK_HEADER_ACTIONS).
+    // then add …`). A loop the parser nested renders its own head and body
+    // (renderLoop); a header still FLAT in this list — a `tell`, or a loop head
+    // with no body — takes its body from the siblings after it, so
+    // suppress the chain word immediately after any block-header command
+    // (BLOCK_HEADER_ACTIONS).
     // A `then` BETWEEN body commands stays valid, so every other join keeps the
     // chain word.
     let out = renderedStatements[0] ?? '';
@@ -303,10 +305,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /**
    * Close every block header in a flattened statement list with an explicit `end`.
    *
-   * A loop/tell block reaches the renderer FLATTENED — the parser emits
-   * `[repeat-header, stmt, stmt, …]` with no body attachment (`LoopSemanticNode`
-   * exists in the type model and nothing constructs one), so the header's extent
-   * is, as far as the model is concerned, "everything after it". Rendering that
+   * A header can still reach the renderer FLATTENED — `[header, stmt, stmt, …]`
+   * with no body attached: every `tell`, and a loop head the parse gave no body
+   * or built outside the clause walkers (every other loop arrives as a
+   * LoopSemanticNode and renders through renderLoop). A flat header's extent is,
+   * as far as the model is concerned, "everything after it". Rendering that
    * without a closing `end` produced a surface the structural layer cannot
    * segment: `block-parser.ts` counts `repeat`/`for`/`while` as depth OPENERS, so
    * the enclosing handler's own `end` was consumed closing the loop and the next
@@ -321,9 +324,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    *
    * One `end` per header, appended at the end: the flat model cannot express a
    * header whose body STOPS before the list does, so closing them all at the tail
-   * is the only rendering faithful to what the parser actually captured. Restoring
-   * the true extent needs the parser to build a real loop node with a body — the
-   * separate arc noted in docs-internal/PARSER_NEXT_STEPS.md.
+   * is the only rendering faithful to what the parser actually captured.
    */
   private closeBlockHeaders(
     rendered: string,

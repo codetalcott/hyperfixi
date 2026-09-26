@@ -348,8 +348,10 @@ The AST builder produces output compatible with the lokascript runtime:
 // Conditionals → CommandNode with block args
 { type: 'command', name: 'if', args: [condition, thenBlock, elseBlock?] }
 
-// Loops → CommandNode with variant and body
-{ type: 'command', name: 'repeat', args: [variant, ...params, bodyBlock] }
+// Loops → the `repeat` core's parser builds: the form and operands in slots,
+// the body the one block arg (RepeatCommand reads only the slots)
+{ type: 'command', name: 'repeat', args: [bodyBlock],
+  modifiers: { loopType, for?, in?, times?, while?, until?, event?, from?, index? } }
 ```
 
 ### Event Handler Parameters
@@ -373,7 +375,14 @@ const ast = buildAST(handler);
 
 ### Loop Semantic Nodes
 
-Loops use `LoopSemanticNode` with explicit body attachment:
+Loops use `LoopSemanticNode` with explicit body attachment. The parser builds
+one for every loop head the two body walkers emit: each marks where it
+consumed a loop's `end`, and `foldLoopBlocks` nests the head's body under it.
+A loop whose `end` the walk cannot place closes at the end of its list, which
+is what the flat list always meant. A head with no body, or one parsed outside
+the walkers, stays a flat `command`, and the renderer closes it at the tail of
+its list. The loop carries the head's roles unchanged, so every fidelity
+walker scores it exactly as it scored the flat head.
 
 ```typescript
 import { createLoopNode } from '@lokascript/semantic';
@@ -382,14 +391,15 @@ import { createLoopNode } from '@lokascript/semantic';
 const loop = createLoopNode(
   'repeat',
   'times',
-  new Map([['quantity', { type: 'literal', value: 5 }]]),
+  { loopType: { type: 'literal', value: 'times' }, quantity: { type: 'literal', value: 5 } },
   bodyCommands,
-  'item', // loopVariable (for 'for' loops)
-  'index' // indexVariable (optional)
+  { loopVariable: 'item' } // for 'for' loops; also indexVariable, metadata
 );
 ```
 
-Loop variants: `'forever'` | `'times'` | `'for'` | `'while'` | `'until'`
+Loop variants: `'forever'` | `'times'` | `'for'` | `'while'` | `'until'`. An
+`until event X` loop is an `until` loop; its `loopType` role keeps the exact
+form (`until-event`), which is what `buildLoop` emits.
 
 ### Command Mappers
 
