@@ -4886,6 +4886,36 @@ this signal was missing.
 >   removing a class `#d1` from `me`. The codegen reads a `target` the converted node does not
 >   carry; its tests only check that `display = 'none'` appears. (`add … to #d1` and `put … into
 >   #d1` keep theirs.)
+>
+> **An element or an array as a value (PR 23, 2026-09-26; filed by PR 22).** The tokenizers read
+> an element (`#panel`, `.item`, `<li/>`), a `*style` and an array (`[1, 2]`) as one selector
+> token, and set's value took no selector, so `set el to #panel` and `set x to [1, 2]` lost the
+> whole `set`, in English and so in every translation. set's value takes a selector now, and the
+> de/fr/id/ms/pt handcrafted copies that decided read the schema's list (es/qu/zh's never decide).
+> Three more fixes came with it:
+>
+> - **An array reached core as an attribute selector** on the direct path, and
+>   `querySelectorAll('[1,2]')` threw: every translated `repeat for x in [1, 2]`, `log [1, 2]` and
+>   `put [1, 2] into x` threw. buildAST hands a bare `[…]` (not `[@…]`) to the expression parser
+>   now. The corpus holds no array literal.
+> - **A spaced `.prop` was read as a property.** it/pl/ru/uk render set's value unmarked after the
+>   variable, and the matcher read `impostare in :x .item` as the property `:x.item`. A fused
+>   property must touch its base now.
+> - **qu read an array after the event as the event's filter** (`maykama click [1, 2] ta x man
+>   churay`). A filter must touch its event now, as every render writes it.
+>
+> On the direct path, all 138 new cases failed before (every language). The corpus moved nothing.
+>
+> Filed, not fixed:
+>
+> - An array of variables (`[a, b]`) still reaches core as an attribute selector: the expression
+>   parser reads `[` + a letter as one.
+> - Core's `put [1, 2] into #out` writes `1,2`; upstream's writes `12`.
+> - A bare `set *opacity to 0.5` writes `1` on the direct path (`set my *opacity to 0.5`, the
+>   corpus's form, works).
+> - `put it.value into #d1` renders `its.value` in English.
+> - pl/ru/uk render `set x to my value` as `ustaw do x mój wartość` and read it back as `set my x
+>   to wartość`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
