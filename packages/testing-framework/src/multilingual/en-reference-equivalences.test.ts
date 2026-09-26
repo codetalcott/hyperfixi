@@ -71,6 +71,12 @@ const PINS: Record<string, Pin> = {
       'on click increment the textContent of previous <output/>',
     ],
   },
+  // behavior-sortable's `set item to the target.closest("li")`. By effect: the
+  // trees differ only in a raw token's offsets, which `the ` shifts.
+  'the-before-target': {
+    kind: 'effect',
+    pair: ['on click put the target.id into #o', 'on click put target.id into #o'],
+  },
   'dotted-possessive': {
     kind: 'effect',
     pair: [
