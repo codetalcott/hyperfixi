@@ -7,7 +7,17 @@
  * Phase 3.2: Consolidated from 15 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+import { hideSchema } from '../generators/command-schemas';
+
+/**
+ * A handcrafted hide's target takes what the schema's does, a variable
+ * included (`hide el`). de's pattern once copied the narrower list, and a
+ * variable target was dropped.
+ */
+const HIDE_PATIENT_TYPES: ExpectedType[] = [
+  ...(hideSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
+];
 
 function getHidePatternsBn(): LanguagePattern[] {
   return [
@@ -64,7 +74,7 @@ function getHidePatternsDe(): LanguagePattern[] {
             value: 'verstecke',
             alternatives: ['verstecken', 'verberge', 'verbergen', 'hide'],
           },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: HIDE_PATIENT_TYPES },
           // `mit <strategy>` (`… mit *opacity`): without it this pattern
           // outranked the generated one and dropped the strategy.
           {

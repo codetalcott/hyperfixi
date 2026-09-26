@@ -465,6 +465,23 @@ export type CommandCategory =
 // =============================================================================
 
 /**
+ * The types of a role that names the ELEMENT a command acts on: a selector
+ * (`hide #panel`), a reference (`hide me`), or a variable holding the element
+ * (`repeat for el in .item hide el end`). A bare variable arrives as an
+ * `expression`, so a role typed selector|reference matched no pattern for it.
+ * English dropped the variable and the command acted on `me` (`remove el` lost
+ * the command), so every translation did too; toggle's destination, which
+ * English's handcrafted pattern leaves untyped, dropped it in 14 languages.
+ * Both engines read a variable there, each form run on both.
+ *
+ * Not fetch's destination or repeat's source: the response-type recovery and
+ * the fused-role junk check read an expression there as a mis-capture. Nor the
+ * `on` target of set, transition or install, or clone's: neither engine reads
+ * those forms (core takes `set … on el`'s `on el` for a new handler).
+ */
+const ELEMENT_TARGET_TYPES: ExpectedType[] = ['selector', 'reference', 'expression'];
+
+/**
  * Toggle command: adds class/attribute if absent, removes if present.
  *
  * Patterns:
@@ -508,7 +525,7 @@ export const toggleSchema: CommandSchema = {
       role: 'destination',
       description: 'The target element (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
@@ -703,7 +720,7 @@ export const removeSchema: CommandSchema = {
       // core behavior pattern) parses instead of throwing.
       description: 'The class/attribute to remove, or the element to remove',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1305,7 +1322,7 @@ export const showSchema: CommandSchema = {
       // every language — `on click show then log 1` rendered `on click log 1`,
       // and `tell #modal to show` lost its only body command.
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -1342,7 +1359,7 @@ export const hideSchema: CommandSchema = {
       description: 'The element to hide',
       // Optional, as `show`'s: a bare `hide` was dropped in every language.
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -1459,7 +1476,7 @@ export const triggerSchema: CommandSchema = {
       role: 'destination',
       description: 'The target element (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
@@ -1856,7 +1873,7 @@ export const takeSchema: CommandSchema = {
       // all-current-holders form.
       description: 'The element to take from (defaults to all current holders)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       svoPosition: 2,
       sovPosition: 1,
     },
@@ -1965,7 +1982,7 @@ export const settleSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to settle (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2591,7 +2608,7 @@ export const focusSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to focus (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2614,7 +2631,7 @@ export const blurSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to blur (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2639,7 +2656,7 @@ export const emptySchema: CommandSchema = {
       role: 'patient',
       description: 'The element to empty (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2670,7 +2687,7 @@ export const openSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to open (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 2,
@@ -2717,7 +2734,7 @@ export const closeSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to close (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2738,7 +2755,7 @@ export const selectSchema: CommandSchema = {
       role: 'patient',
       description: 'The element whose contents to select (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2780,7 +2797,7 @@ export const resetSchema: CommandSchema = {
       role: 'patient',
       description: 'The form element to reset (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
       sovPosition: 1,
@@ -2903,7 +2920,7 @@ export const tellSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to tell',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       svoPosition: 1,
       sovPosition: 1,
       // "tell #element ..." (no preposition in en). Object-marking targets mark
@@ -3116,7 +3133,7 @@ export const measureSchema: CommandSchema = {
       role: 'source',
       description: 'Element to measure (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 2,
@@ -3246,7 +3263,7 @@ export const swapSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to swap content in/for',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       svoPosition: 2,
       sovPosition: 1,
       // The i18n transformer emits the element-swap shape `swap X with Y` with
@@ -3372,7 +3389,7 @@ export const morphSchema: CommandSchema = {
       role: 'patient',
       description: 'The element to morph',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { en: '' }, // "morph #target ..." (no preposition)

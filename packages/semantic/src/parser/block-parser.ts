@@ -16,7 +16,9 @@
  */
 
 import type {
+  ActionType,
   LanguageToken,
+  PatternToken,
   SemanticNode,
   SemanticValue,
   EventHandlerSemanticNode,
@@ -204,6 +206,62 @@ function looksLikeEvent(tok: LanguageToken | undefined): boolean {
   if (TARGET_REFERENCES.has(norm) || TARGET_REFERENCES.has(val)) return false;
   if (ROLE_CONCEPTS.has(norm)) return false;
   return true;
+}
+
+const isAction = (word: string): word is ActionType =>
+  Object.prototype.hasOwnProperty.call(commandSchemas, word);
+
+/** Every literal a pattern writes, its optional groups' included, lowercased. */
+function patternLiterals(tokens: readonly PatternToken[]): string[] {
+  return tokens.flatMap(t =>
+    t.type === 'literal'
+      ? [t.value, ...(t.alternatives ?? [])].map(w => w.toLowerCase())
+      : t.type === 'group'
+        ? patternLiterals(t.tokens)
+        : []
+  );
+}
+
+/**
+ * The commands that take an `on` target (`toggle .a on el`, `trigger foo on
+ * el`). Both engines consume the phrase after their `on`: in `on click toggle
+ * .a on keyup log 1` the `log` runs on click, and no keyup handler exists.
+ * Every other command leaves a following `on` to open a handler on both
+ * engines, set's core-only `on` scope included.
+ */
+const TAKES_ON_TARGET: ReadonlySet<string> = new Set(['toggle', 'trigger']);
+
+/**
+ * Is the `on`-marker at `j` the preceding command's own? The trigger split read
+ * the `on el` of `toggle .a on el log 1` as a second handler, and the commands
+ * after it moved there, in English and so in every translation. So an
+ * on-marker is the command's when the nearest command before it, in the same
+ * clause, takes an `on` target, writes that marker in its own patterns (vi's
+ * toggle reads `trên` only in its handcrafted one; a handler's fused patterns
+ * are registered as `on`'s), and has not used it already (`toggle .a on #x on
+ * keyup …` splits at the second `on`).
+ */
+function isPrecedingCommandMarker(
+  tokens: readonly LanguageToken[],
+  segStart: number,
+  j: number,
+  language: string,
+  endsClause: (tok: LanguageToken) => boolean
+): boolean {
+  const surface = tokens[j].value.toLowerCase();
+  for (let k = j - 1; k > segStart; k--) {
+    const t = tokens[k];
+    if (endsClause(t) || t.value.toLowerCase() === surface) return false;
+    const action = (t.normalized ?? t.value).toLowerCase();
+    if (!isAction(action)) continue;
+    return (
+      TAKES_ON_TARGET.has(action) &&
+      getPatternsForLanguage(language).some(
+        p => p.command === action && patternLiterals(p.template.tokens).includes(surface)
+      )
+    );
+  }
+  return false;
 }
 
 /**
@@ -462,6 +520,7 @@ export function tryParseProgram(
   // counting would miss a real program, so this errs toward proceeding.
   const endForms = keywordForms(language, 'end');
   const onForms = keywordForms(language, 'on');
+  const thenForms = keywordForms(language, 'then');
   const lower = input.toLowerCase();
   const hasEnd = [...endForms].some(f => lower.includes(f));
   const hasMultiTrigger =
@@ -511,7 +570,18 @@ export function tryParseProgram(
       depth === 0 &&
       j > segStart &&
       tokenMatches(tok, onForms) &&
-      looksLikeEvent(tokens[j + 1])
+      looksLikeEvent(tokens[j + 1]) &&
+      // A handler's event is never followed by `then` (both engines reject
+      // `on click then …`): es/pt/he `poner 2 en item entonces …`, whose
+      // `en` is put's `into` and also es's `on`, stays one handler.
+      !(tokens[j + 2] && tokenMatches(tokens[j + 2], thenForms)) &&
+      !isPrecedingCommandMarker(
+        tokens,
+        segStart,
+        j,
+        language,
+        t => isEnd(t) || tokenMatches(t, thenForms)
+      )
     ) {
       // A new handler trigger at top level ends the previous (un-`end`ed) handler.
       const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
