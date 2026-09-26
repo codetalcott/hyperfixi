@@ -12,10 +12,11 @@ import { setSchema } from '../generators/command-schemas';
 
 /**
  * A handcrafted set's value takes what the schema's does, an element or an
- * array included (`set el to #panel`, `set x to [1, 2]`). de/fr/id/ms/pt's
- * patterns once copied the narrower list, and such a set was lost. (es/qu/zh
- * keep their copies: where they reject an element, the generated patterns
- * read it, so the copies never decide.)
+ * array included (`set el to #panel`, `set x to [1, 2]`), and a possessive
+ * (`set x to #d1's value`, which he renders `value מ #d1`). de/fr/id/ms/pt's
+ * patterns, and he/sw's, once copied the narrower list, and such a set was
+ * lost. (es/qu/zh keep their copies: where they reject a value, the generated
+ * patterns read it, so the copies never decide.)
  */
 const SET_PATIENT_TYPES: ExpectedType[] = [
   ...(setSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
@@ -716,7 +717,7 @@ function getSetPatternsSw(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+            expectedTypes: SET_PATIENT_TYPES,
           },
         ],
       },
@@ -848,7 +849,7 @@ function getSetPatternsHe(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+            expectedTypes: SET_PATIENT_TYPES,
           },
         ],
       },

@@ -772,7 +772,7 @@ export const putSchema: CommandSchema = {
       role: 'patient',
       description: 'The content to put',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1, // SOV: patient comes first (を marker)
     },
@@ -783,7 +783,7 @@ export const putSchema: CommandSchema = {
       // A variable too (`into item`, a loop's element; `into my.textContent`
       // arrives as an expression): without it a generated pattern matched
       // nothing and the put dropped in ar/de/fr/id/zh.
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 2,
       sovPosition: 2, // SOV: destination comes second (に/에/a marker)
       // "put 'hello' into #output" — directional, so the same locative-default
@@ -950,7 +950,7 @@ export const setSchema: CommandSchema = {
       // and an array (`to [1, 2]`, which tokenizes as one selector) included.
       // Without `selector`, those matched no pattern and the whole `set` was
       // lost, in English and so in every translation.
-      expectedTypes: ['literal', 'selector', 'expression', 'reference'],
+      expectedTypes: ['literal', 'selector', 'expression', 'reference', 'property-path'],
       svoPosition: 2,
       sovPosition: 2,
       // Override patient marker for SVO languages with their native prepositions
@@ -1710,7 +1710,7 @@ export const appendSchema: CommandSchema = {
       // context references tokenize as `reference`, and the single-token check
       // in pattern-matcher compares expectedTypes with a raw `.includes`, so the
       // type has to be listed explicitly. Same list as put.patient.
-      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1749,7 +1749,7 @@ export const prependSchema: CommandSchema = {
       role: 'patient',
       description: 'The content to prepend',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1784,7 +1784,7 @@ export const logSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to log',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -2009,7 +2009,7 @@ export const throwSchema: CommandSchema = {
       role: 'patient',
       description: 'The error message or object to throw',
       required: true,
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: ['literal', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -2907,7 +2907,7 @@ export const returnSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to return',
       required: false,
-      expectedTypes: ['literal', 'expression', 'reference'],
+      expectedTypes: ['literal', 'expression', 'reference', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -3027,7 +3027,7 @@ export const defaultSchema: CommandSchema = {
       role: 'patient',
       description: 'The default value',
       required: true,
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: ['literal', 'expression', 'property-path'],
       svoPosition: 2,
       sovPosition: 2,
       // Same shape as SET: the value carries the language's "to" marker.
@@ -3503,7 +3503,7 @@ export const copySchema: CommandSchema = {
       role: 'patient',
       description: 'The text or element to copy',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
     },

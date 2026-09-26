@@ -20,6 +20,16 @@ const PUT_DESTINATION_TYPES: ExpectedType[] = [
   ...(putSchema.roles.find(role => role.role === 'destination')?.expectedTypes ?? []),
 ];
 
+/**
+ * A handcrafted put's value takes what the schema's does, a possessive
+ * included (`put #d1's value into #b`, which id renders `taruh nilai dari #d1
+ * ke dalam #b`). id's patterns copied the narrower list and decided the parse,
+ * so that put was lost. (zh keeps its copies: they never decide it.)
+ */
+const PUT_PATIENT_TYPES: ExpectedType[] = [
+  ...(putSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
+];
+
 function getPutPatternsBn(): LanguagePattern[] {
   return [
     // SOV verb-final positional put: `{patient} <posWord> {destination} কে রাখুন`
@@ -452,7 +462,7 @@ function getPutPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+            expectedTypes: PUT_PATIENT_TYPES,
           },
           { type: 'literal', value: 'ke' },
           { type: 'literal', value: 'dalam', alternatives: ['di'] },
@@ -477,7 +487,7 @@ function getPutPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+            expectedTypes: PUT_PATIENT_TYPES,
           },
           { type: 'literal', value: 'ke', alternatives: ['di', 'pada'] },
           { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
@@ -501,7 +511,7 @@ function getPutPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+            expectedTypes: PUT_PATIENT_TYPES,
           },
           { type: 'literal', value: 'di' },
           { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
