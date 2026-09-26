@@ -4416,6 +4416,12 @@ this signal was missing.
 >   a loop type"): nothing in or after the loop ran. English was unaffected (it uses core's own
 >   parser). `buildLoop` now emits the slot shape core's parser builds, and
 >   `loop-direct-path.test.ts` runs a counted loop through `hyperscript.compile` in all 23.
+> - Two consumers had never met a loop node. The slim adapter's renderer had no `loop` case,
+>   so it dropped the body, and its es `repeat` row (engine-INVALID by design, so host-validate
+>   keeps the author's text) became `on click repeat`, a valid forever loop; it now renders a
+>   loop flat, exactly as before. intent's explicit parser rejected the `loop-variant:` and
+>   `index-variable:` its own renderer writes (schema validation ran before its `repeat` case),
+>   and had no `for` case, so `lse_from_hyperscript` → `lse_to_hyperscript` threw on any loop.
 >
 > The multilingual gate saw no change in any language: the fidelity walkers already flattened
 > every tree. The bare-render gate gained two honest failures, (repeat-for-each, bn) and
@@ -4435,6 +4441,9 @@ this signal was missing.
 >   heads take their literals verbatim from the corpus. `times` is deliberate; the verb is not.
 > - The transformer-era fronted-while shape (ja `の間 #counter.innerText < 10 を クリック で
 >   繰り返し …`) drops `< 10` from the condition. Input-only: current renders never produce it.
+>   (Filed with it:) explicit syntax cannot round-trip a SPACED expression value: the renderer
+>   writes `condition:x < 10` undelimited and the parser splits it at the spaces, for `if` as
+>   for `repeat while`. It predates loop nodes.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
