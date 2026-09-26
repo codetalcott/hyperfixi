@@ -83,24 +83,75 @@ function tokenMatches(tok: LanguageToken, forms: Set<string>): boolean {
 /** The block-opener actions whose `end` participates in depth tracking. */
 const OPENER_NORMS: ReadonlySet<string> = new Set(OPENER_ACTIONS);
 
+type OpenerAction = (typeof OPENER_ACTIONS)[number];
+
+/** A language's surface forms for the opener words, and its `in` (for `for <x> in`). */
+interface OpenerForms {
+  readonly byAction: ReadonlyArray<readonly [OpenerAction, Set<string>]>;
+  readonly inForms: Set<string>;
+}
+
+function openerForms(language: string): OpenerForms {
+  return {
+    byAction: OPENER_ACTIONS.map(a => [a, keywordForms(language, a)] as const),
+    inForms: keywordForms(language, 'in'),
+  };
+}
+
 /**
- * Whether a token opens a nested block (if/unless/repeat/for/while) for depth
- * tracking — NOT a plain `tokenMatches` against the opener forms, because some
- * languages reuse a block-keyword's surface form for a role marker: Portuguese
- * `para` is BOTH the `for` loop keyword AND the dative "to" marker, so
- * `set X to Y` → `definir X para Y` had its marker `para` mis-counted as a `for`
- * opener, corrupting the behavior-body depth split (the init segment swallowed the
- * whole handler — pt/sw behavior-removable lost on/remove/trigger). The tokenizer
- * already resolved the ambiguity: it normalizes the marker to its ROLE
- * (`destination`), not to `for`. So when a token carries a normalized form, trust
- * it — count it as an opener only if that normalized form IS an opener action. A
- * token with NO normalized form (e.g. a raw js-body `if`) falls back to the surface
- * match, preserving the existing js-block depth balance.
+ * The opener action a token names (if/unless/repeat/for/while), if any — NOT a
+ * plain `tokenMatches` against the opener forms, because some languages reuse a
+ * block-keyword's surface form for a role marker: Portuguese `para` is BOTH the
+ * `for` loop keyword AND the dative "to" marker, so `set X to Y` → `definir X
+ * para Y` had its marker `para` mis-counted as a `for` opener, corrupting the
+ * behavior-body depth split (the init segment swallowed the whole handler —
+ * pt/sw behavior-removable lost on/remove/trigger). The tokenizer already
+ * resolved the ambiguity: it normalizes the marker to its ROLE (`destination`),
+ * not to `for`. So when a token carries a normalized form, trust it — it names
+ * an opener only if that normalized form IS an opener action. A token with NO
+ * normalized form (e.g. a raw js-body `if`) falls back to the surface match,
+ * preserving the existing js-block depth balance.
  */
-function isBlockOpener(tok: LanguageToken, openerSets: ReadonlyArray<Set<string>>): boolean {
+function openerActionOf(
+  tok: LanguageToken | undefined,
+  forms: OpenerForms
+): OpenerAction | undefined {
+  if (!tok) return undefined;
   const norm = tok.normalized?.toLowerCase();
-  if (norm) return OPENER_NORMS.has(norm);
-  return openerSets.some(s => tokenMatches(tok, s));
+  if (norm) return OPENER_NORMS.has(norm) ? (norm as OpenerAction) : undefined;
+  return forms.byAction.find(([, set]) => tokenMatches(tok, set))?.[0];
+}
+
+/**
+ * Whether `tokens[j]` opens a nested block for depth tracking. One word per
+ * block does, though several opener words can head one: counting each gave a
+ * behavior's handler an extra depth, so its `end` closed nothing and every
+ * later handler landed inside it (their heads lost, in English and so in every
+ * translation).
+ * - A while-word never opens one. Upstream has no bare `while` loop: a while
+ *   loop is `repeat while`, and its `repeat` opens the block, before the
+ *   while-word (SVO `repeat while`) or after the condition (ja `の間 x < 3
+ *   繰り返し`). ja `間` and ko `동안` also mark toggle's duration.
+ * - `for` right after `repeat` is that repeat's head (`repeat for x in`).
+ * - English `for` is a marker too (`wait for`, `take … for me`, `toggle … for
+ *   2s`): it opens a loop only as `for <x> in`.
+ *
+ * `else if` still counts twice, matching the renderer, which closes an else-if
+ * chain with an `end` per `if`. Upstream closes it with one (filed).
+ */
+function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
+  const tok = tokens[j];
+  const action = openerActionOf(tok, forms);
+  if (!action || action === 'while') return false;
+  const prev = tokens[j - 1];
+  if (action === 'for') {
+    if (openerActionOf(prev, forms) === 'repeat') return false;
+    if (tok.value.toLowerCase() === 'for') {
+      const after = tokens[j + 2];
+      return !!after && (tokenMatches(after, forms.inForms) || after.normalized === 'in');
+    }
+  }
+  return true;
 }
 
 /**
@@ -428,8 +479,8 @@ export function tryParseProgram(
   const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
   if (tokens.length < 2) return null;
 
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const forms = openerForms(language);
+  const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // Split into top-level handler segments. At depth 0: a `end` closes the current
@@ -451,7 +502,7 @@ export function tryParseProgram(
       const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
       if (text) segments.push(text);
       segStart = j + 1;
-    } else if (isOpener(tok)) {
+    } else if (isOpener(j)) {
       depth++;
     } else if (
       triggerSplit &&
@@ -580,8 +631,8 @@ function parseBehaviorBlock(
 
   const initForms = keywordForms(language, 'init');
   const endForms = keywordForms(language, 'end');
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const forms = openerForms(language);
+  const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
   // Forward `<trigger> <event>` lookahead only holds where the trigger precedes
   // the event (see tryParseProgram's triggerSplit). The trigger words are the
@@ -647,7 +698,7 @@ function parseBehaviorBlock(
         }
       }
       segStart = j + 1;
-    } else if (isOpener(tok)) {
+    } else if (isOpener(j)) {
       depth++;
     } else if (
       triggerSplit &&
@@ -733,8 +784,8 @@ function parseDefBlock(
   if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
 
   const endForms = keywordForms(language, 'end');
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const forms = openerForms(language);
+  const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // The def body is a flat command sequence (no event handlers). Find the def's
@@ -749,7 +800,7 @@ function parseDefBlock(
         break;
       }
       depth--;
-    } else if (isOpener(tokens[j])) {
+    } else if (isOpener(j)) {
       depth++;
     }
   }
@@ -1084,8 +1135,8 @@ function parseFeatureBlock(
   keywordIdx: number
 ): SemanticNode | null {
   const endForms = keywordForms(language, 'end');
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const forms = openerForms(language);
+  const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   const name = featureName(action, tokens, keywordIdx, language);
@@ -1154,7 +1205,7 @@ function parseFeatureBlock(
           confidences.push(0);
         }
         segStart = j + 1;
-      } else if (isOpener(tok)) {
+      } else if (isOpener(j)) {
         depth++;
       }
     }
@@ -1309,8 +1360,8 @@ function parseReactiveWhenBlock(
   changesIdx: number
 ): SemanticNode | null {
   const endForms = keywordForms(language, 'end');
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const forms = openerForms(language);
+  const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   const bodyStart = changesIdx + 1;
@@ -1351,14 +1402,14 @@ function findBlockEnd(
   tokens: readonly LanguageToken[],
   from: number,
   isEnd: (tok: LanguageToken) => boolean,
-  isOpener: (tok: LanguageToken) => boolean
+  isOpener: (j: number) => boolean
 ): number {
   let depth = 0;
   for (let j = from; j < tokens.length; j++) {
     if (isEnd(tokens[j])) {
       if (depth === 0) return j;
       depth--;
-    } else if (isOpener(tokens[j])) {
+    } else if (isOpener(j)) {
       depth++;
     }
   }
