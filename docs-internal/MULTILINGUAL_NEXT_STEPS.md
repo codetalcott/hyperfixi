@@ -4783,6 +4783,20 @@ this signal was missing.
 > ar/de/fr/id/zh, and inside a loop the whole body drops in 10 languages; a bare lexicon word used
 > as a value (`index`, `length`) is localized one way in bn/ms/th/tl; and an identifier that is a
 > keyword elsewhere (es `y`, pl `i`/`z`, tr `i`) is read as that keyword.
+>
+> **event-debounce keeps its naked `${…}` URL (PR 18, 2026-09-26).** The allowlist is 3 → 2, and
+> what remains is async-block (by design) and behavior-draggable (benign). Every render quoted a
+> naked URL, and for one with a `${…}` span that changes meaning. Core builds `fetch
+> /search?q=${my value}` as a template and interpolates it, while a quoted string interpolates on
+> neither engine. So on the direct path every translated search box requested `q=${my value}`
+> literally, while English, through core's parser, requested `q=abc`. Upstream rejects the spaced
+> span and sends even an unspaced naked `${x}` literally, so only the as-written form keeps both
+> engines' meaning. The URL's literal now carries `interpolates`, renders naked, and buildAST hands
+> core a `templateLiteral`. A naked URL without `${` keeps its quotes; the two forms mean the same
+> on both engines.
+>
+> Filed, not fixed: a fetch's `as text` is localized one way in ms/ru/th/tl/uk/vi (`teks`,
+> `текст`, …) and dropped in bn/hi, whatever the URL.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
