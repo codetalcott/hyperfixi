@@ -1518,10 +1518,14 @@ export class PatternMatcher {
     // Mirrors the bracket-filter skip already in the SOV/mid-stream extractors.
     if (patternToken.role === 'event') {
       const filterTok = tokens.peek();
+      // A filter touches its event (`keydown[key=="Escape"]`, split by the
+      // tokenizer). A spaced `[…]` is the next value: qu writes `put [1, 2]
+      // into x` as `click [1, 2] ta x man churay`, the array after the event.
       if (
         filterTok &&
         filterTok.kind === 'selector' &&
         filterTok.value.startsWith('[') &&
+        filterTok.position.start === token.position.end &&
         'value' in value
       ) {
         // Fold the filter back onto the event value (the tokenizer split it off).

@@ -32,7 +32,7 @@ const CASES: string[] = [
   'on click set :x to .item then log :x',
   // The values it always took.
   'on click set x to 1 then log x',
-  'on click set x to my value then log x',
+  'on click set x to it then log x',
 ];
 
 describe.each(CASES)('%s, through every language', src => {
