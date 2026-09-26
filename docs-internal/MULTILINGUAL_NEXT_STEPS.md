@@ -4881,6 +4881,11 @@ this signal was missing.
 > - ar reads a keyword after toggle's `على` as its duration (`على keyup` → `for keyup`).
 > - The split reads the NEAREST command before an `on`, so an argument spelled like toggle or
 >   trigger (`send toggle to #x on keyup …`) can still mislead it.
+> - The AOT compiler ignores the target of hide, show, focus and `toggle … on`, a selector too,
+>   in English: `hide #d1` compiles to `_ctx.me.style.display = 'none'`, and `remove #d1` to
+>   removing a class `#d1` from `me`. The codegen reads a `target` the converted node does not
+>   carry; its tests only check that `display = 'none'` appears. (`add … to #d1` and `put … into
+>   #d1` keep theirs.)
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
