@@ -67,6 +67,32 @@ function commandTarget(node: CommandNode, ...slots: string[]): ASTNode | undefin
 // =============================================================================
 
 /**
+ * A target selector that names every match, as `querySelectorAll`: a class,
+ * tag or attribute query. Both engines act on each match (`add .a to .items`
+ * adds to every one); `document.querySelector` reached the first. Null for an
+ * id, which names one element on both engines even when it is duplicated, and
+ * for any other target.
+ */
+function allMatches(node: ASTNode | undefined): string | null {
+  if (node?.type !== 'selector') return null;
+  const selector = (node as SelectorNode).value;
+  return /^#[\w-]+$/.test(selector)
+    ? null
+    : `document.querySelectorAll('${sanitizeSelector(selector)}')`;
+}
+
+/** `op` applied to every element the target names, or to `me` when there is none. */
+function forEachTarget(
+  node: ASTNode | undefined,
+  ctx: CodegenContext,
+  op: (el: string) => string
+): string {
+  const all = allMatches(node);
+  if (all) return `${all}.forEach(el => ${op('el')})`;
+  return op(node ? ctx.generateExpression(node) : '_ctx.me');
+}
+
+/**
  * Toggle command: toggle .class [on target]
  */
 class ToggleCodegen implements CommandCodegen {
@@ -77,7 +103,6 @@ class ToggleCodegen implements CommandCodegen {
     if (args.length === 0) return null;
 
     const targetNode = commandTarget(node, 'on');
-    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     const arg = args[0];
 
@@ -91,7 +116,7 @@ class ToggleCodegen implements CommandCodegen {
         // On the target. (This branch toggled the class name read as a TAG
         // selector, `querySelectorAll('active')`, whatever the target was.)
         return {
-          code: `${target}.classList.toggle('${className}')`,
+          code: forEachTarget(targetNode, ctx, el => `${el}.classList.toggle('${className}')`),
           async: false,
           sideEffects: true,
         };
@@ -105,7 +130,11 @@ class ToggleCodegen implements CommandCodegen {
         const attrName = value.slice(1);
         ctx.requireHelper('toggleAttr');
         return {
-          code: `_rt.toggleAttr(${target}, '${sanitizeSelector(attrName)}')`,
+          code: forEachTarget(
+            targetNode,
+            ctx,
+            el => `_rt.toggleAttr(${el}, '${sanitizeSelector(attrName)}')`
+          ),
           async: false,
           sideEffects: true,
         };
@@ -115,7 +144,11 @@ class ToggleCodegen implements CommandCodegen {
     // Generic toggle
     ctx.requireHelper('toggle');
     return {
-      code: `_rt.toggle(${ctx.generateExpression(arg)}, ${target})`,
+      code: forEachTarget(
+        targetNode,
+        ctx,
+        el => `_rt.toggle(${ctx.generateExpression(arg)}, ${el})`
+      ),
       async: false,
       sideEffects: true,
     };
@@ -146,16 +179,8 @@ class AddCodegen implements CommandCodegen {
         const className = sanitizeClassName(selector.slice(1));
         if (!className) return null;
 
-        if (target === '_ctx.me') {
-          return {
-            code: `_ctx.me.classList.add('${className}')`,
-            async: false,
-            sideEffects: true,
-          };
-        }
-
         return {
-          code: `${target}.classList.add('${className}')`,
+          code: forEachTarget(targetSlot, ctx, el => `${el}.classList.add('${className}')`),
           async: false,
           sideEffects: true,
         };
@@ -184,7 +209,11 @@ class AddCodegen implements CommandCodegen {
     // Attribute add
     ctx.requireHelper('addClass');
     return {
-      code: `_rt.addClass(${target}, ${ctx.generateExpression(arg)})`,
+      code: forEachTarget(
+        targetSlot,
+        ctx,
+        el => `_rt.addClass(${el}, ${ctx.generateExpression(arg)})`
+      ),
       async: false,
       sideEffects: true,
     };
@@ -206,9 +235,8 @@ class RemoveCodegen implements CommandCodegen {
       // semantic path's spelling of the same thing.
       const targetSlot =
         node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
-      const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
       return {
-        code: `${target}.remove()`,
+        code: forEachTarget(targetSlot, ctx, el => `${el}.remove()`),
         async: false,
         sideEffects: true,
       };
@@ -217,7 +245,6 @@ class RemoveCodegen implements CommandCodegen {
     // The target is the `from` slot (Arc 3 step 3); `node.target` is the
     // semantic path's spelling of the same thing.
     const targetSlot = node.target ?? (node.modifiers as Record<string, ASTNode> | undefined)?.from;
-    const target = targetSlot ? ctx.generateExpression(targetSlot) : '_ctx.me';
 
     const arg = args[0];
 
@@ -231,7 +258,7 @@ class RemoveCodegen implements CommandCodegen {
           arg.type === 'variable';
     if (!targetSlot && isElement) {
       return {
-        code: `${ctx.generateExpression(arg)}.remove()`,
+        code: forEachTarget(arg, ctx, el => `${el}.remove()`),
         async: false,
         sideEffects: true,
       };
@@ -245,7 +272,7 @@ class RemoveCodegen implements CommandCodegen {
         if (!className) return null;
 
         return {
-          code: `${target}.classList.remove('${className}')`,
+          code: forEachTarget(targetSlot, ctx, el => `${el}.classList.remove('${className}')`),
           async: false,
           sideEffects: true,
         };
@@ -254,7 +281,11 @@ class RemoveCodegen implements CommandCodegen {
 
     ctx.requireHelper('removeClass');
     return {
-      code: `_rt.removeClass(${target}, ${ctx.generateExpression(arg)})`,
+      code: forEachTarget(
+        targetSlot,
+        ctx,
+        el => `_rt.removeClass(${el}, ${ctx.generateExpression(arg)})`
+      ),
       async: false,
       sideEffects: true,
     };
@@ -387,21 +418,18 @@ class PutCodegen implements CommandCodegen {
     const content = ctx.generateExpression(contentNode as ASTNode);
 
     // Resolve target: from roles, or from the modifier value, or from node.target
-    let target = '_ctx.me';
-    if (roles?.destination) {
-      target = ctx.generateExpression(roles.destination);
-    } else if (modifiers) {
+    let targetNode: ASTNode | undefined = roles?.destination;
+    if (!targetNode && modifiers) {
       // Semantic parser uses modifier keys as position: modifiers.into = target, modifiers.before = target
       for (const key of ['into', 'before', 'after']) {
         if (modifiers[key] && typeof modifiers[key] === 'object') {
-          target = ctx.generateExpression(modifiers[key] as ASTNode);
+          targetNode = modifiers[key] as ASTNode;
           break;
         }
       }
     }
-    if (target === '_ctx.me' && node.target) {
-      target = ctx.generateExpression(node.target);
-    }
+    targetNode ??= node.target;
+    const into = (op: (el: string) => string): string => forEachTarget(targetNode, ctx, op);
 
     // Detect position: from roles.method, modifier keys, or modifiers.position
     let modifier = 'into';
@@ -416,39 +444,39 @@ class PutCodegen implements CommandCodegen {
     switch (modifier) {
       case 'into':
         return {
-          code: `${target}.innerHTML = ${content}`,
+          code: into(el => `${el}.innerHTML = ${content}`),
           async: false,
           sideEffects: true,
         };
       case 'before':
         return {
-          code: `${target}.insertAdjacentHTML('beforebegin', ${content})`,
+          code: into(el => `${el}.insertAdjacentHTML('beforebegin', ${content})`),
           async: false,
           sideEffects: true,
         };
       case 'after':
         return {
-          code: `${target}.insertAdjacentHTML('afterend', ${content})`,
+          code: into(el => `${el}.insertAdjacentHTML('afterend', ${content})`),
           async: false,
           sideEffects: true,
         };
       case 'at start of':
       case 'start':
         return {
-          code: `${target}.insertAdjacentHTML('afterbegin', ${content})`,
+          code: into(el => `${el}.insertAdjacentHTML('afterbegin', ${content})`),
           async: false,
           sideEffects: true,
         };
       case 'at end of':
       case 'end':
         return {
-          code: `${target}.insertAdjacentHTML('beforeend', ${content})`,
+          code: into(el => `${el}.insertAdjacentHTML('beforeend', ${content})`),
           async: false,
           sideEffects: true,
         };
       default:
         return {
-          code: `${target}.innerHTML = ${content}`,
+          code: into(el => `${el}.innerHTML = ${content}`),
           async: false,
           sideEffects: true,
         };
@@ -464,10 +492,9 @@ class ShowCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
     const targetNode = commandTarget(node, 'arg');
-    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
-      code: `${target}.style.display = ''`,
+      code: forEachTarget(targetNode, ctx, el => `${el}.style.display = ''`),
       async: false,
       sideEffects: true,
     };
@@ -482,10 +509,9 @@ class HideCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
     const targetNode = commandTarget(node, 'arg');
-    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     return {
-      code: `${target}.style.display = 'none'`,
+      code: forEachTarget(targetNode, ctx, el => `${el}.style.display = 'none'`),
       async: false,
       sideEffects: true,
     };
@@ -669,13 +695,12 @@ class SendCodegen implements CommandCodegen {
 
     const eventName = ctx.generateExpression(args[0]);
     const targetNode = commandTarget(node, 'on', 'to');
-    const target = targetNode ? ctx.generateExpression(targetNode) : '_ctx.me';
 
     const detail = args.length > 1 ? ctx.generateExpression(args[1]) : 'undefined';
 
     ctx.requireHelper('send');
     return {
-      code: `_rt.send(${target}, ${eventName}, ${detail})`,
+      code: forEachTarget(targetNode, ctx, el => `_rt.send(${el}, ${eventName}, ${detail})`),
       async: false,
       sideEffects: true,
     };
@@ -894,9 +919,14 @@ class TakeCodegen implements CommandCodegen {
     // `take .a from #tabs`: from those elements, then to me.
     const source = commandTarget(node, 'from');
     if (source) {
-      ctx.requireHelper('toArray');
+      // A class query is every match; any other source may hold several too.
+      let from = allMatches(source);
+      if (!from) {
+        ctx.requireHelper('toArray');
+        from = `_rt.toArray(${ctx.generateExpression(source)})`;
+      }
       return {
-        code: `(() => { _rt.toArray(${ctx.generateExpression(source)}).forEach(el => el.classList.remove('${className}')); _ctx.me.classList.add('${className}'); })()`,
+        code: `(() => { ${from}.forEach(el => el.classList.remove('${className}')); _ctx.me.classList.add('${className}'); })()`,
         async: false,
         sideEffects: true,
       };
