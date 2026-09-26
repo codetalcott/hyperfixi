@@ -5021,7 +5021,11 @@ this signal was missing.
 > read as one: he, id, ms, pl, ru and uk write it with their word for "from". Hand-written patterns
 > that decided the parse with a narrower copy of the list read the schema's (id's three puts, he
 > and sw's sets, English's set). English's set pattern had two definitions, one per builder; it has
-> one now, in the leaf, as fetch, pick and swap do. Run on both engines (`the value of #d1` is
+> one now, in the leaf, as fetch, pick and swap do. The `of` matcher took any selector as the
+> property head, and tr's genitive `in` is one of its `of` markers, so once set's value read
+> possessives, tr's `set x to <li/> in #list` (a scoped query) read as `#list's <li/>`; PR 23's
+> tests caught it. A selector head is a style or an attribute now: a query is never a property.
+> Run on both engines (`the value of #d1` is
 > `#d1's value` on each; `prepend` is core's own). 142 of the 184 direct-path cases failed before,
 > and 288 of 408 round trips.
 >
@@ -5036,6 +5040,9 @@ this signal was missing.
 > - The AOT compiler throws from `compileScript` on English `set x to the value of #d1`: `Unknown
 >   expression type: error`.
 > - `scroll [<el>] up|down|left|right by <n>` (PR 26's filing) is still lost whole.
+> - A class or id query's scope is lost in English: `set x to .item in #list` renders `set x to
+>   .item` (an element query, `<li/> in #list`, keeps it). `default x to <li/> in #list` is lost
+>   whole (default's value takes no selector).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
