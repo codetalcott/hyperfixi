@@ -5109,6 +5109,14 @@ this signal was missing.
 >
 > Filed, not fixed: core's `set .it.textContent to "y"` sets the first match only; upstream sets
 > every one.
+>
+> **A property chain on an element (PR 32, 2026-09-26; filed by PR 28).** The tokenizer reads
+> `#d1.value.length` as `#d1`, `.value`, `.length`, and the matcher folded only the first `.prop`
+> into the element's property path. The rest stranded: `put #d1.value.length into #out` and `put
+> #l1.children.length into #out` lost the whole put, in English and so in every translation, and
+> `log`/`set x to #d1.value.length` read `#d1.value`. The chain continues through each further
+> `.prop`, and a method call at its end stays a call. Both engines read the whole chain; 144 of
+> the 168 new round trips and all 69 direct-path cases failed before, and no corpus row moves.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
