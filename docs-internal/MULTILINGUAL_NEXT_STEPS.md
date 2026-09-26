@@ -5189,6 +5189,22 @@ this signal was missing.
 >   renders back `set and to my value + 1`.
 > - **AOT selector caching:** a handler naming one selector twice compiles to `_sel__d1_0.x`
 >   with no declaration of `_sel__d1_0`, so `compileScript` output throws, in English too.
+>
+> **Consecutive class commands and a selector named twice, in the AOT (PR 37, 2026-09-26; filed
+> by PR 36).** Two optimizations ran on every compile, English and translations alike (MCP
+> `compile_hyperscript` too). Class batching merged consecutive add/remove/toggle into one
+> `classList` call, but read each target from the `target` field, which neither core's parser nor
+> semantic's buildAST sets (PR 24's bug, in the optimizer): `add .a to #d1 then add .b to #d1`
+> added both to me, and `toggle .a on .item then toggle .b on .item` toggled me. It also applied a
+> batch's adds, then removes, then toggles, whatever the source order (`toggle .a then add .a`
+> ended without `.a`). The codegen's selector cache wrote `_sel__d1_0` for a selector named twice
+> and never declared it, so the handler threw. Batching now reads core's slot, batches only onto
+> me or an id (both engines query a class target again per command: `remove .item from .item then
+> add .b to .item` adds `.b` to nothing), and splits a run where two kinds of op meet one class. A
+> selector is queried each time, as on both engines; a declared cache goes stale when the handler
+> replaces the element, which one case pins. 240 of the 264 new cases failed before (the 24 that
+> passed are `remove .x from #d1 then add .x to #d1`, which main's batch put on me, leaving the
+> page as expected).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

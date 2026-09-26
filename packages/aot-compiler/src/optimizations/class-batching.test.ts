@@ -219,7 +219,9 @@ describe('ClassBatchingPass', () => {
       expect(batch2.adds).toEqual(['c', 'd']);
     });
 
-    it('resolves .class selector target via querySelector', () => {
+    it('does not batch a class target, which each command queries again', () => {
+      // A batch resolved `.panel` once, as `document.querySelector` (the first
+      // match); both engines act on every match, queried per command.
       const target = { type: 'selector', value: '.panel' } as SelectorNode;
       const ast = eventHandler([
         classCmdWithTarget('add', 'a', target),
@@ -227,10 +229,52 @@ describe('ClassBatchingPass', () => {
       ]);
 
       const result = pass.transform(ast, analysis) as EventHandlerNode;
-      expect(result.body).toHaveLength(1);
+      expect(result.body!.map(node => node.type)).toEqual(['command', 'command']);
+    });
 
+    it("reads the target from core's slot (`add … to`, `remove … from`, `toggle … on`)", () => {
+      const d1 = { type: 'selector', value: '#d1' } as SelectorNode;
+      const inSlot = (name: 'add' | 'remove' | 'toggle', cls: string, slot: string) => ({
+        ...classCmd(name, cls),
+        modifiers: { [slot]: d1 },
+      });
+      const ast = eventHandler([
+        inSlot('add', 'a', 'to'),
+        inSlot('remove', 'b', 'from'),
+        inSlot('toggle', 'c', 'on'),
+      ]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(1);
       const batch = result.body![0] as BatchedClassOpsNode;
-      expect(batch.target).toBe("document.querySelector('.panel')");
+      expect(batch.target).toBe("document.getElementById('d1')");
+      expect([batch.adds, batch.removes, batch.toggles]).toEqual([['a'], ['b'], ['c']]);
+    });
+
+    it('batches a written `me` with an implicit one', () => {
+      const me = { type: 'identifier', value: 'me' } as ASTNode;
+      const ast = eventHandler([classCmd('add', 'a'), classCmdWithTarget('add', 'b', me)]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(1);
+      expect((result.body![0] as BatchedClassOpsNode).target).toBe('_ctx.me');
+    });
+
+    it('splits a run where two kinds of op meet one class', () => {
+      // A batch adds, then removes, then toggles: `toggle .a then add .a` leaves
+      // .a on in source order, and took it off batched.
+      const ast = eventHandler([
+        classCmd('add', 'x'),
+        classCmd('toggle', 'a'),
+        classCmd('add', 'a'),
+        classCmd('add', 'y'),
+      ]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(2);
+      const [first, second] = result.body as BatchedClassOpsNode[];
+      expect([first.adds, first.toggles]).toEqual([['x'], ['a']]);
+      expect([second.adds, second.toggles]).toEqual([['a', 'y'], []]);
     });
 
     it('preserves non-class commands', () => {

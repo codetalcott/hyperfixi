@@ -15,6 +15,7 @@ import type {
   ASTNode,
   CommandNode,
   EventHandlerNode,
+  IdentifierNode,
   SelectorNode,
   AnalysisResult,
   OptimizationPass,
@@ -25,20 +26,25 @@ import type {
   WhileNode,
 } from '../types/aot-types.js';
 
-// Commands eligible for batching
-const CLASS_COMMANDS = new Set(['add', 'remove', 'toggle']);
+// Commands eligible for batching, each with the slot core's parser puts its
+// target in (`add … to`, `remove … from`, `toggle … on`).
+const TARGET_SLOTS: ReadonlyMap<string, string> = new Map([
+  ['add', 'to'],
+  ['remove', 'from'],
+  ['toggle', 'on'],
+]);
+
+type ClassOp = { command: 'add' | 'remove' | 'toggle'; className: string };
 
 /**
  * Extract a class name from a command node if it's a simple class operation.
  * Returns null if the command is not a simple class add/remove/toggle.
  */
-function extractClassOp(
-  node: ASTNode
-): { command: 'add' | 'remove' | 'toggle'; className: string; hasExplicitTarget: boolean } | null {
+function extractClassOp(node: ASTNode): ClassOp | null {
   if (node.type !== 'command') return null;
 
   const cmd = node as CommandNode;
-  if (!CLASS_COMMANDS.has(cmd.name)) return null;
+  if (!TARGET_SLOTS.has(cmd.name)) return null;
 
   const args = cmd.args ?? [];
   if (args.length === 0) return null;
@@ -52,76 +58,59 @@ function extractClassOp(
   const className = selector.slice(1);
   if (!className) return null;
 
-  return {
-    command: cmd.name as 'add' | 'remove' | 'toggle',
-    className,
-    hasExplicitTarget: !!cmd.target,
-  };
+  return { command: cmd.name as ClassOp['command'], className };
 }
 
 /**
- * Check if two commands target the same element.
- * Batches when both use implicit `me`, or both have identical explicit targets.
+ * The node a class command acts on: its `target`, or the slot core's parser and
+ * semantic's buildAST put it in. Reading only `target`, which neither sets,
+ * batched `add .a to #d1 then add .b to #d1` onto me.
  */
-function isSameTarget(a: ASTNode, b: ASTNode): boolean {
-  if (a.type !== 'command' || b.type !== 'command') return false;
-  const cmdA = a as CommandNode;
-  const cmdB = b as CommandNode;
-
-  // Both implicit me (no explicit target)
-  if (!cmdA.target && !cmdB.target) return true;
-
-  // Both have explicit targets — check structural equality
-  if (cmdA.target && cmdB.target) {
-    return getTargetKey(cmdA.target) === getTargetKey(cmdB.target);
-  }
-
-  // One has target, one doesn't — different
-  return false;
+function classTarget(cmd: CommandNode): ASTNode | undefined {
+  if (cmd.target) return cmd.target;
+  const slot = cmd.modifiers?.[TARGET_SLOTS.get(cmd.name)!];
+  return slot && typeof slot === 'object' && 'type' in slot ? (slot as ASTNode) : undefined;
 }
 
 /**
- * Get a string key for a target node for equality comparison.
- * Only supports selector and identifier targets (the common cases).
+ * What a run of class commands can share: `me` (implicit or written) or one id.
+ * Null for any other target, which is never batched. A class or query target
+ * names every match, and both engines query it again for each command, so a
+ * class the first command removes changes what the next one reaches (`remove
+ * .item from .item then add .b to .item` adds .b to nothing).
  */
-function getTargetKey(target: ASTNode): string | null {
-  if (target.type === 'selector') {
-    return `selector:${(target as SelectorNode).value}`;
-  }
-  if (target.type === 'identifier') {
-    return `identifier:${(target as { value: string }).value}`;
+function batchTargetKey(cmd: CommandNode): string | null {
+  const target = classTarget(cmd);
+  if (!target) return 'me';
+  if (target.type === 'identifier' && (target as IdentifierNode).value === 'me') return 'me';
+  if (target.type === 'selector' && /^#[\w-]+$/.test((target as SelectorNode).value)) {
+    return (target as SelectorNode).value;
   }
   return null;
 }
 
-/**
- * Resolve the target expression string for codegen.
- * Converts selector/identifier targets to JavaScript expressions.
- */
-function resolveTarget(cmd: CommandNode): string {
-  if (!cmd.target) return '_ctx.me';
-
-  if (cmd.target.type === 'selector') {
-    const sel = (cmd.target as SelectorNode).value;
-    if (sel.startsWith('#') && !sel.includes(' ') && !sel.includes('.')) {
-      return `document.getElementById('${sel.slice(1)}')`;
-    }
-    return `document.querySelector('${sel}')`;
-  }
-
-  if (cmd.target.type === 'identifier') {
-    const val = (cmd.target as { value: string }).value;
-    if (val === 'me') return '_ctx.me';
-    return val;
-  }
-
-  return '_ctx.me';
+/** The JavaScript for a run's target (see batchTargetKey). */
+function resolveTarget(key: string): string {
+  return key === 'me' ? '_ctx.me' : `document.getElementById('${key.slice(1)}')`;
 }
 
 /**
- * Create a BatchedClassOpsNode from a run of class commands.
+ * Whether adding `op` to a run would reorder it. A batch applies its adds, then
+ * its removes, then its toggles, which keeps the source order only while no
+ * class meets two kinds of op: `toggle .a then add .a` leaves .a on, and
+ * add-first took it off.
  */
-function createBatchNode(run: ASTNode[]): BatchedClassOpsNode {
+function reordersClass(run: ASTNode[], op: ClassOp): boolean {
+  return run.some(node => {
+    const other = extractClassOp(node)!;
+    return other.command !== op.command && other.className === op.className;
+  });
+}
+
+/**
+ * Create a BatchedClassOpsNode from a run of class commands on one target.
+ */
+function createBatchNode(run: ASTNode[], targetKey: string): BatchedClassOpsNode {
   const adds: string[] = [];
   const removes: string[] = [];
   const toggles: string[] = [];
@@ -141,12 +130,9 @@ function createBatchNode(run: ASTNode[]): BatchedClassOpsNode {
     }
   }
 
-  // Resolve target from the first command (all commands in a run share the same target)
-  const target = resolveTarget(run[0] as CommandNode);
-
   return {
     type: 'batchedClassOps',
-    target,
+    target: resolveTarget(targetKey),
     adds,
     removes,
     toggles,
@@ -159,10 +145,11 @@ function createBatchNode(run: ASTNode[]): BatchedClassOpsNode {
 function batchBody(nodes: ASTNode[]): ASTNode[] {
   const result: ASTNode[] = [];
   let currentRun: ASTNode[] = [];
+  let runKey = '';
 
   function flushRun() {
     if (currentRun.length >= 2) {
-      result.push(createBatchNode(currentRun));
+      result.push(createBatchNode(currentRun, runKey));
     } else if (currentRun.length === 1) {
       result.push(currentRun[0]);
     }
@@ -171,13 +158,15 @@ function batchBody(nodes: ASTNode[]): ASTNode[] {
 
   for (const node of nodes) {
     const op = extractClassOp(node);
-    if (op) {
-      // This is a class op — check if it matches the current run's target
-      if (currentRun.length > 0 && isSameTarget(currentRun[0], node)) {
+    const key = op && batchTargetKey(node as CommandNode);
+    if (op && key) {
+      // A class op: it joins the run if it shares the target and keeps the order
+      if (currentRun.length > 0 && key === runKey && !reordersClass(currentRun, op)) {
         currentRun.push(node);
       } else {
         flushRun();
         currentRun = [node];
+        runKey = key;
       }
     } else {
       flushRun();
