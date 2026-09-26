@@ -4900,7 +4900,9 @@ this signal was missing.
 >   now. The corpus holds no array literal.
 > - **A spaced `.prop` was read as a property.** it/pl/ru/uk render set's value unmarked after the
 >   variable, and the matcher read `impostare in :x .item` as the property `:x.item`. A fused
->   property must touch its base now.
+>   property must touch its base now, as on both engines. The compilation service's inert-shape
+>   gate had keyed on the old reading of `add .done to all .todo` (`all.todo`); it flags the new
+>   one (the target `all` alone, `.todo` unread) with the same advice.
 > - **qu read an array after the event as the event's filter** (`maykama click [1, 2] ta x man
 >   churay`). A filter must touch its event now, as every render writes it.
 >
