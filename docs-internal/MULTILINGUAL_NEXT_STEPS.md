@@ -4811,6 +4811,16 @@ this signal was missing.
 > Filed, not fixed: in es/pt/he the put's `into` marker is also the handler's `on` marker, so a
 > mid-chain `… poner 2 en item …` splits off a new handler `on item`; the multi-handler splitter
 > takes any identifier after `on` for an event. Also, `put … at end of …` is lost in it/th.
+>
+> **A fetch's response type renders as written (PR 20, 2026-09-26; filed by PR 18).** `as text` /
+> `as html` name a format core reads, not a word. Renders localized them through the value lexicon
+> where one had an entry (ms `teks`, ru `текст`, th `ข้อความ`, bn `পাঠ্য`), and no parser read
+> the word back. In ms/ru/th/tl/uk/vi a translated fetch carried an unknown type and threw before
+> its request on the direct path; bn/hi dropped the type. The type now renders in English in every
+> language, as `json` already did, because no lexicon translates it. The corpus moved nothing: its
+> fetches are all `as json`.
+>
+> Filed, not fixed: `as Object` is lost in bn/hi/ko, with or without this change.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
