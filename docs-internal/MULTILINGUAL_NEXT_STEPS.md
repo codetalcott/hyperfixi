@@ -4692,6 +4692,13 @@ this signal was missing.
 >   buildAST writes core's `in` expression with the query in its `fromQuery` shape, which core's
 >   evaluator reads to scope the lookup (without it `in` tests containment and returns a boolean).
 > - Localizing `in` inside expressions and scopes is a translation-quality follow-up.
+>
+> **`the` before `target` is an article (PR 12, 2026-09-26).** The allowlist is 10 → 9:
+> behavior-sortable is preserved. Its last difference was `set item to the target.closest("li")`
+> rendering without the article. A named equivalence, `the-before-target`, pinned on upstream by
+> effect (`put the target.id into #o` and `put target.id into #o` both write the clicked element's
+> id; the trees differ only in a raw token's offsets). Narrow on purpose: `halt the event` is not
+> `halt event`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
