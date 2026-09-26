@@ -141,6 +141,18 @@ function convertNode(node: CoreNode, infer: RoleInferrer | null): InterchangeNod
         ...pos(node),
       };
     case 'identifier':
+      // `:x` is element-scoped, and the parser marks it `scope: 'element'`
+      // (with its name, `x`). Carried as a `variable`, which to-core maps back
+      // to exactly this; as a plain identifier a consumer cannot tell it from a
+      // bare `x`, a different variable on both engines.
+      if (node.scope === 'element' || node.scope === 'local' || node.scope === 'global') {
+        return {
+          type: 'variable',
+          name: (node.name ?? '') as string,
+          scope: node.scope,
+          ...pos(node),
+        };
+      }
       return {
         type: 'identifier',
         value: (node.name ?? node.value ?? '') as string,
@@ -239,6 +251,32 @@ function convertCommand(node: CoreNode, infer: RoleInferrer | null): Interchange
   }
   if (name === 'repeat') {
     return convertRepeatCommand(node, infer);
+  }
+
+  // `increment x [by n]` parses to `set x to x + n`, marked with its
+  // `originalCommand`, and read as that set it counts from `undefined`: the
+  // AOT compiled `undefined + 1`, NaN, where both engines count from 0. It is
+  // carried as the command the source wrote, the shape semantic's buildAST
+  // gives a translation.
+  const original = node.originalCommand;
+  const sum = (node.modifiers as Record<string, CoreNode> | undefined)?.to;
+  const counted = (node.args as CoreNode[] | undefined)?.[0];
+  if (
+    name === 'set' &&
+    (original === 'increment' || original === 'decrement') &&
+    sum?.type === 'binaryExpression' &&
+    counted
+  ) {
+    return convertCommand(
+      {
+        ...node,
+        name: original,
+        args: [counted],
+        modifiers: { by: sum.right as CoreNode },
+        originalCommand: undefined,
+      },
+      infer
+    );
   }
 
   const args = ((node.args ?? []) as CoreNode[]).map(arg => convertNode(arg, infer));

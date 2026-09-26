@@ -178,6 +178,17 @@ class AnalysisVisitor {
   private visitCommand(node: CommandNode): void {
     this.commandsUsed.add(node.name);
 
+    // A bare variable a command writes (`set x to 5`, `increment x`) is the
+    // handler's local, as a loop's item is: its reads compile to the store its
+    // write does, not to a JS variable of that name, which throws.
+    if (['set', 'increment', 'decrement', 'default'].includes(node.name)) {
+      const target = node.roles?.destination ?? node.roles?.patient ?? node.args?.[0];
+      const name = target?.type === 'identifier' ? (target as IdentifierNode).value : undefined;
+      if (name && /^[A-Za-z_]\w*$/.test(name)) {
+        this.registerVariable(name, 'local', 'write');
+      }
+    }
+
     // Track commands that need runtime helpers
     switch (node.name) {
       case 'fetch':

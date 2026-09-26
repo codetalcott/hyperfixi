@@ -3,6 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { fromCoreAST } from './from-core';
+import { toCoreAST } from './to-core';
 import { schemaRoleInferrer } from '../../multilingual/schema-roles';
 
 /**
@@ -85,6 +86,26 @@ describe('fromCoreAST', () => {
       expect(fromCoreAST(coreNode('contextReference', { contextType: 'it' }))).toEqual({
         type: 'identifier',
         value: 'it',
+      });
+    });
+
+    // `:x` parses to an identifier named `x` with `scope: 'element'`. As a plain
+    // identifier it read as a bare `x`, a different variable on both engines,
+    // and the AOT compiler dropped every set of it.
+    it('carries a scoped identifier (`:x`) as a variable', () => {
+      expect(fromCoreAST(coreNode('identifier', { name: 'x', scope: 'element' }))).toEqual({
+        type: 'variable',
+        name: 'x',
+        scope: 'element',
+      });
+    });
+
+    it('round-trips `:x` through toCoreAST', () => {
+      const node = coreNode('identifier', { name: 'x', scope: 'element' });
+      expect(toCoreAST(fromCoreAST(node))).toMatchObject({
+        type: 'identifier',
+        name: 'x',
+        scope: 'element',
       });
     });
   });
