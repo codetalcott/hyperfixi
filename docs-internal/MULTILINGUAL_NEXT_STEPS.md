@@ -5158,6 +5158,37 @@ this signal was missing.
 >
 > Filed, not fixed: core refuses `put (.item in #list).length into #out` (`put requires
 > arguments`); the `<li/>` form works.
+>
+> **true, false and null keep their meaning in every language (PR 36, 2026-09-26).** Semantic
+> read the keyword as an untyped STRING literal, and buildAST handed core the string. On the
+> direct path a translated `set #d1.disabled to false` set the truthy "false" and left the button
+> disabled (22 of 23 languages), `set x to true then if x is true` took the else branch (all 23),
+> and null was truthy. The AOT compiler, which takes semantic's AST for a translation, compiled the
+> same strings. English was never affected: core's own parser reads it. true/false are boolean
+> literals now and null the expression buildAST reads as a real null; qu's tokenizer also learned
+> `llulla`, the `false` its lexicon renders (it read back as an unset variable, which also made qu
+> `form-submit-prevent` test `result is llulla`). 65 of the 67 new semantic tests, 83 of the 91
+> core cases and 85 of the 91 AOT cases failed before; two corpus rows move (`set-attribute` types
+> its value, qu `form-submit-prevent` reads `result is false`).
+>
+> Filed, not fixed:
+>
+> - **null reads back as `empty` in five languages.** hi `खाली`, qu `chusaq` and tr `boş` are
+>   also the `empty` command, so `set x to null` reads back as `empty x`; sw `tupu` and vi `rỗng`
+>   read back as the word `empty` (the AOT then emits invalid JS, `empty_ctx`). They need a null
+>   word of their own, which is a vocabulary choice.
+> - **Operators in a value.** English drops or cuts a value with a logical or comparison
+>   operator: `set :n to :n or 0` renders `set :n to :n`, `set x to y > 2` and `y mod 2` render
+>   `set x to y`, and `put x == 1 into #out` loses the whole command, so every translation does
+>   too. Only `+ - * /` join a value.
+> - **Operators in a condition.** On the direct path `if p or q` reads wrong in de, ar, fr, pt,
+>   ms, ru, th, tl, uk and qu, `if p and q` in ar, ja, ko, qu and sw, and `if not p` in ar, ru, th
+>   and uk (bn throws). The renderer translates the word (de `oder`) and the parser does not read
+>   it back.
+> - **es `y` ("and")** as a variable name reads as the connective: `establecer y a mi valor + 1`
+>   renders back `set and to my value + 1`.
+> - **AOT selector caching:** a handler naming one selector twice compiles to `_sel__d1_0.x`
+>   with no declaration of `_sel__d1_0`, so `compileScript` output throws, in English too.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

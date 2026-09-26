@@ -6953,7 +6953,7 @@ describe('hi set-family marker alignment (S6 — fronted target before event)', 
     // canonical @attr typing: an attribute reference is a selector in EVERY
     // slot (`.raw` was the old slot-dependent expression reading)
     expect(cmd?.roles?.get('destination')).toMatchObject({ type: 'selector', value: '@disabled' });
-    expect(cmd?.roles?.get('patient')?.value).toBe('true');
+    expect(cmd?.roles?.get('patient')?.value).toBe(true);
   });
 });
 
@@ -7067,7 +7067,7 @@ describe('qu `cheqaq` → true boolean literal (qu arc wave 2 — set-attribute)
       body?: Array<{ action?: string; roles?: Map<string, { value?: unknown }> }>;
     };
     const set = (n.body ?? []).find(c => c.action === 'set');
-    expect(set?.roles?.get('patient')?.value).toBe('true');
+    expect(set?.roles?.get('patient')?.value).toBe(true);
   });
 });
 

@@ -112,12 +112,15 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // `cheqaq` ("true/correct") is the form the i18n dict emits for `true`
   // (set-attribute `@disabled ta cheqaq man …`); without it the value tokenized
   // as a bare identifier and `set @disabled to <undefined>` ran. arí/ari ("yes")
-  // are the colloquial alternates, kept for input tolerance.
+  // are the colloquial alternates, kept for input tolerance. `llulla` ("false")
+  // is the same case for `false`: the lexicon renders it, and it read back as an
+  // unset variable.
   // Pick unit word (arc 3) — mirrors the i18n dict's `characters: 'sanampa'`.
   { native: 'sanampa', normalized: 'characters' },
   { native: 'cheqaq', normalized: 'true' },
   { native: 'arí', normalized: 'true' },
   { native: 'ari', normalized: 'true' },
+  { native: 'llulla', normalized: 'false' },
   { native: 'manan', normalized: 'false' },
   { native: 'mana', normalized: 'false' },
   { native: "ch'usaq", normalized: 'null' },
