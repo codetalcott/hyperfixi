@@ -2507,6 +2507,24 @@ Found on the way, and **filed**: core's English parser rejects `put ^count on
 `null`), and `put ^count into #out` leaves `#out` as it was. The matrix has no
 caret-variable operand, so it counts neither.
 
+### Core does not parseFloat a non-number `increment` amount (filed 2026-09-27, PR 55)
+
+Upstream reads every `increment … by` amount through `parseFloat`, so `by true`,
+`by #a`, `by "q"` and `by {}` are NaN, and `by [1, 2]` is 1. Core differs on
+both of its paths:
+
+- **English**, the `set X to X + amount` rewrite: `by true` adds 1 and `by #a`
+  adds 6 (the element's text), and text that is not a number, an object or
+  an array throws (`Right operand cannot be converted to number`), so the
+  handler stops.
+- **The direct path** (`numeric-target-parser.ts`, the `by` modifier): a
+  number or text is read as upstream reads it, null as NaN, and anything else
+  (a boolean, an element, an object) leaves the default 1.
+
+Found by PR 55: semantic used to drop these amounts, so translations never
+handed them to the direct path. The value matrix does not count it: its
+increment cells take numbers only.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

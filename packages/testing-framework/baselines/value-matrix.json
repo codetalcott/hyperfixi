@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 10020,
+  "failing": 5727,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -33,16 +33,16 @@
       "family": "translation+direct-path"
     },
     "increment|n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|#a's textContent": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|#a's textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|my id": {
       "lanes": "bn bn/up th th/up",
@@ -61,16 +61,16 @@
       "family": "translation"
     },
     "increment|obj's v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr's length": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|arr's length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|#a's textContent's length": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -89,32 +89,32 @@
       "family": "translation"
     },
     "increment|#a's textContent's length": {
-      "lanes": "pl tr",
-      "family": "direct-path"
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "while|textContent of #a": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|textContent of #a": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|the textContent of #a": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|the textContent of #a": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|v of obj": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|v of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|length of arr": {
       "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
@@ -133,8 +133,8 @@
       "family": "translation"
     },
     "increment|length of arr": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|@title of #a": {
       "lanes": "en-rt *direct *up",
@@ -161,16 +161,16 @@
       "family": "translation"
     },
     "increment|v of w of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "while|#a.textContent": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|#a.textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "it it/up pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|me.id": {
       "lanes": "pl pl/up ru ru/up uk uk/up",
@@ -181,40 +181,40 @@
       "family": "translation+direct-path"
     },
     "increment|obj.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr.length": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|arr.length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.w.v": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.w.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|Math.max(n, 1)": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|Math.max(n, 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|String(n)": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|String(n)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|[n, 2]": {
       "lanes": "*direct",
@@ -237,8 +237,8 @@
       "family": "translation+direct-path"
     },
     "increment|(n + 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|(s + \"c\")": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -253,72 +253,72 @@
       "family": "translation+direct-path"
     },
     "increment|2 + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + n": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|#a's textContent + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|#a's textContent + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + #a's textContent": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + #a's textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj's v + 2": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|obj's v + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + obj's v": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|2 + obj's v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr's length + 2": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|arr's length + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + arr's length": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|2 + arr's length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|#a's textContent's length + 2": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -333,8 +333,8 @@
       "family": "translation"
     },
     "increment|#a's textContent's length + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "put|2 + #a's textContent's length": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -349,56 +349,56 @@
       "family": "translation"
     },
     "increment|2 + #a's textContent's length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "while|textContent of #a + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|textContent of #a + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + textContent of #a": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + textContent of #a": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|the textContent of #a + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|the textContent of #a + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + the textContent of #a": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + the textContent of #a": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|v of obj + 2": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|v of obj + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + v of obj": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|2 + v of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|length of arr + 2": {
       "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
@@ -413,8 +413,8 @@
       "family": "translation"
     },
     "increment|length of arr + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|2 + length of arr": {
       "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
@@ -429,8 +429,8 @@
       "family": "translation"
     },
     "increment|2 + length of arr": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|v of w of obj + 2": {
       "lanes": "pl pl/up",
@@ -445,8 +445,8 @@
       "family": "translation"
     },
     "increment|v of w of obj + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "put|2 + v of w of obj": {
       "lanes": "pl pl/up",
@@ -461,104 +461,104 @@
       "family": "translation"
     },
     "increment|2 + v of w of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "while|#a.textContent + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|#a.textContent + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "it it/up pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + #a.textContent": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + #a.textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.v + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.v + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + obj.v": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + obj.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr.length + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|arr.length + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + arr.length": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + arr.length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.w.v + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.w.v + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + obj.w.v": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + obj.w.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|Math.max(n, 1) + 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|Math.max(n, 1) + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + Math.max(n, 1)": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + Math.max(n, 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|String(n) + 2": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|String(n) + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + String(n)": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|2 + String(n)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|(n + 1) + 2": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -569,16 +569,16 @@
       "family": "translation+direct-path"
     },
     "increment|(n + 1) + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 + (n + 1)": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 + (n + 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|my id + \"q\"": {
       "lanes": "bn bn/up th th/up",
@@ -621,96 +621,96 @@
       "family": "translation+direct-path"
     },
     "increment|20 - 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 - 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 - 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n - 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n - 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|20 - n": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|20 - n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 * 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 * 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n * 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n * 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 * n": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 * n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|12 / 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|12 / 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 / 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|2 / 2": {
-      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
-      "family": "semantic-en"
+      "lanes": "pl tr",
+      "family": "direct-path"
     },
     "while|n / 2": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n / 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|12 / n": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|12 / n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|13 mod 4": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|13 mod 4": {
-      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|2 mod 4": {
       "lanes": "pl tr tr/up",
@@ -725,24 +725,24 @@
       "family": "translation+direct-path"
     },
     "increment|13 mod 2": {
-      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n mod 4": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n mod 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|13 mod n": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|13 mod n": {
-      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|#a's textContent's length < 4": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -2021,8 +2021,8 @@
       "family": "translation"
     },
     "increment|-2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-n": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2033,8 +2033,8 @@
       "family": "translation"
     },
     "increment|-n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|-#a's textContent": {
       "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
@@ -2049,8 +2049,8 @@
       "family": "translation"
     },
     "increment|-#a's textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|-obj's v": {
       "lanes": "qu qu/up uk uk/up",
@@ -2065,8 +2065,8 @@
       "family": "translation+adapter"
     },
     "increment|-obj's v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl qu qu/up tr tr/up uk uk/up",
+      "family": "translation+direct-path"
     },
     "put|-arr's length": {
       "lanes": "qu qu/up uk uk/up",
@@ -2081,8 +2081,8 @@
       "family": "translation+adapter"
     },
     "increment|-arr's length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl qu qu/up tr tr/up uk uk/up",
+      "family": "translation+direct-path"
     },
     "put|-#a's textContent's length": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja ja/up ko ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -2097,8 +2097,8 @@
       "family": "translation+direct-path"
     },
     "increment|-#a's textContent's length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "set|-textContent of #a": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2109,8 +2109,8 @@
       "family": "translation"
     },
     "increment|-textContent of #a": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-v of obj": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2121,8 +2121,8 @@
       "family": "translation"
     },
     "increment|-v of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|-length of arr": {
       "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
@@ -2137,8 +2137,8 @@
       "family": "translation+adapter"
     },
     "increment|-length of arr": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|-v of w of obj": {
       "lanes": "pl pl/up",
@@ -2153,8 +2153,8 @@
       "family": "translation"
     },
     "increment|-v of w of obj": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "set|-#a.textContent": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2165,8 +2165,8 @@
       "family": "translation"
     },
     "increment|-#a.textContent": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-obj.v": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2177,8 +2177,8 @@
       "family": "translation"
     },
     "increment|-obj.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-arr.length": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2189,8 +2189,8 @@
       "family": "translation"
     },
     "increment|-arr.length": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-obj.w.v": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2201,8 +2201,8 @@
       "family": "translation"
     },
     "increment|-obj.w.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-Math.max(n, 1)": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2213,8 +2213,8 @@
       "family": "translation"
     },
     "increment|-Math.max(n, 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-String(n)": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2225,8 +2225,8 @@
       "family": "translation"
     },
     "increment|-String(n)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|-(n + 1)": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2237,8 +2237,8 @@
       "family": "translation"
     },
     "increment|-(n + 1)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|no .w": {
       "lanes": "hi hi/up tl tl/up zh zh/up",
@@ -2413,8 +2413,8 @@
       "family": "translation+direct-path"
     },
     "increment|n as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|#a's textContent as Int": {
       "lanes": "ar/up de/up es/up fr/up he/up id/up it/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tr/up uk/up",
@@ -2429,24 +2429,24 @@
       "family": "translation+adapter"
     },
     "increment|#a's textContent as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "ar/up de/up es/up fr/up he/up id/up it/up ms/up pl pl/up pt/up qu/up ru/up sw/up th/up tr tr/up uk/up",
+      "family": "translation+adapter"
     },
     "while|obj's v as Int": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|obj's v as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr's length as Int": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|arr's length as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|#a's textContent's length as Int": {
       "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
@@ -2461,8 +2461,8 @@
       "family": "translation"
     },
     "increment|#a's textContent's length as Int": {
-      "lanes": "pl tr",
-      "family": "direct-path"
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "put|textContent of #a as Int": {
       "lanes": "*direct",
@@ -2477,8 +2477,8 @@
       "family": "translation+direct-path"
     },
     "increment|textContent of #a as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "tr/up *direct",
+      "family": "translation+direct-path"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
@@ -2493,8 +2493,8 @@
       "family": "core+translation"
     },
     "increment|the textContent of #a as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en tr/up *direct",
+      "family": "core+translation"
     },
     "put|v of obj as Int": {
       "lanes": "*direct",
@@ -2509,8 +2509,8 @@
       "family": "translation+direct-path"
     },
     "increment|v of obj as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "tr/up *direct",
+      "family": "translation+direct-path"
     },
     "put|length of arr as Int": {
       "lanes": "ar bn bn/up de es fr he hi id it ja ko pl pt qu ru sw th th/up tr uk vi zh",
@@ -2525,8 +2525,8 @@
       "family": "translation+direct-path+adapter"
     },
     "increment|length of arr as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "ar bn bn/up de es fr he hi id it ja ko pl pt qu ru sw th/up tr tr/up uk vi zh",
+      "family": "translation+direct-path+adapter"
     },
     "put|v of w of obj as Int": {
       "lanes": "pl/up *direct",
@@ -2541,56 +2541,56 @@
       "family": "translation+direct-path"
     },
     "increment|v of w of obj as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "tr/up *direct",
+      "family": "translation+direct-path"
     },
     "while|#a.textContent as Int": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|#a.textContent as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "it it/up pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.v as Int": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.v as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|arr.length as Int": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|arr.length as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.w.v as Int": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.w.v as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|Math.max(n, 1) as Int": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|Math.max(n, 1) as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|String(n) as Int": {
       "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|String(n) as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|(n + 1) as Int": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2601,16 +2601,16 @@
       "family": "translation+direct-path"
     },
     "increment|(n + 1) as Int": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n + (2 * 3)": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n + (2 * 3)": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|(n * 2) + 3": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2621,8 +2621,8 @@
       "family": "translation+direct-path"
     },
     "increment|(n * 2) + 3": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "set|(n + 2) * 3": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2633,16 +2633,16 @@
       "family": "translation+direct-path"
     },
     "increment|(n + 2) * 3": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|n - 2 - 1": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|n - 2 - 1": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|n > 1 and n < 10": {
       "lanes": "sw sw/up",
@@ -2705,16 +2705,16 @@
       "family": "translation"
     },
     "increment|length of arr + n": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|obj.v * obj.w.v": {
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "increment|obj.v * obj.w.v": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|s + \" \" + my id": {
       "lanes": "bn bn/up th th/up",
