@@ -751,6 +751,10 @@ interface AmbiguousSenseRule {
       true and flag). A command whose own role takes `na` stops its value at
       the marker before the join sees it. */
   betweenOperands?: string;
+  /** Emitted when the NEXT token starts an operand: qu `mana` is both
+      `not` and `false`, and `false` never takes an operand (`2 kanqa mana 6`,
+      2 is not 6; `mana flag`, not flag). */
+  beforeOperand?: string;
   /** Emitted when none of the above applies, where the word has no reading
       of its own to fall through to: sw `tupu` is `empty` after a copula and
       `null` anywhere else in a value (its tokenizer reads it as `empty`). */
@@ -816,6 +820,7 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   zh: { 没有: { beforeBareIdentifier: 'no' } },
   tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
   bn: { আছে: { afterSubject: 'exists' } },
+  qu: { mana: { beforeOperand: 'not' } },
   tr: { var: { afterSubject: 'exists' } },
 };
 
@@ -915,6 +920,7 @@ function resolveAmbiguousSense(
   ) {
     return rule.beforeBareIdentifier;
   }
+  if (rule.beforeOperand && startsOperand(next)) return rule.beforeOperand;
   if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
     return rule.afterSubject;
   }
@@ -936,6 +942,19 @@ function resolveAmbiguousSense(
     return rule.afterOperand;
   }
   return rule.otherwise;
+}
+
+/**
+ * The sense a deliberately-ambiguous word takes between `prev` and `next`, if
+ * the table has one for it there (qu `mana` before an operand is `not`).
+ */
+export function ambiguousSenseOf(
+  languageCode: string,
+  token: LanguageToken,
+  prev: LanguageToken | undefined,
+  next: LanguageToken | undefined
+): string | undefined {
+  return resolveAmbiguousSense(languageCode, token, prev, next, undefined);
 }
 
 /** Tokens a conjunction can never follow: an operator, or an opening bracket or comma. */

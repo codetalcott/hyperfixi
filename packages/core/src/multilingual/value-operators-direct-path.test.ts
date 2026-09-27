@@ -81,9 +81,9 @@ const CONNECTIVES: Array<[string, string, string[]]> = [
   ['q or p', 'true', []],
   ['p and q', 'false', ['qu']],
   ['q and p', 'false', ['qu']],
-  ['not p', 'false', ['hi', 'qu']],
-  ['not q', 'true', ['hi', 'qu']],
-  ['p and not q', 'true', ['hi', 'qu']],
+  ['not p', 'false', ['hi']],
+  ['not q', 'true', ['hi']],
+  ['p and not q', 'true', ['hi']],
 ];
 
 describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
@@ -94,17 +94,17 @@ describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
 });
 
 // Core's comparison phrases (n = 3, #d1 has class x, #zz is absent), each with
-// what both engines put. qu is skipped where its `not` is `mana`, also `false`.
+// what both engines put.
 const PHRASES: Array<[string, string, string[]]> = [
   ['n is 3', 'true', []],
-  ['n is not 3', 'false', ['qu']],
+  ['n is not 3', 'false', []],
   ['n is greater than 2', 'true', []],
   ['n is less than 2', 'false', []],
   ['#d1 matches .x', 'true', []],
   ['#d1 does not match .x', 'false', []],
   ['#d1 exists', 'true', []],
   ['#zz exists', 'false', []],
-  ['#zz does not exist', 'true', ['qu']],
+  ['#zz does not exist', 'true', []],
   ['n is a Number', 'true', []],
   ['n is 3 or n is 4', 'true', []],
   ['n is 4 or n is 5', 'false', []],

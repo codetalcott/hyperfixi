@@ -19,7 +19,8 @@
  *   hiển thị #modal     → show #modal
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
+import { splitIfNot } from './if-not-split';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { vietnameseProfile } from '../generators/profiles/vietnamese';
 import { createVietnameseExtractors } from './extractors/vietnamese-keyword';
@@ -134,6 +135,11 @@ export class VietnameseTokenizer extends BaseTokenizer {
     this.registerExtractors(createVietnameseExtractors()); // Vietnamese keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  /** `if not` is written `nếu không`, which is also an `else`: see splitIfNot. */
+  override tokenize(input: string): TokenStream {
+    return splitIfNot(super.tokenize(input), 'nếu không', word => super.tokenize(word).tokens);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

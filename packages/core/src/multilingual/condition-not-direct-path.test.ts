@@ -41,7 +41,7 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
       ['not r', 'yes'],
       ['not p', 'no'],
     ],
-    ['ar', 'ja'],
+    ['ar', 'bn', 'ja', 'qu', 'vi'],
   ],
   [
     'is not',
@@ -49,7 +49,7 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
       ['p is not q', 'yes'],
       ['p is not 1', 'no'],
     ],
-    ['ja'],
+    ['ja', 'qu'],
   ],
   [
     'is not empty',

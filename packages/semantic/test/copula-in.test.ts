@@ -47,8 +47,6 @@ const IS_IN = [
   'on click set x to obj.w.v is in [1, 2, 6] then put x into #out',
 ];
 
-// qu's `not` is `mana`, also its `false` (filed): `2 kanqa mana in arr` reads
-// back `2 is false in arr`.
 const IS_NOT_IN = [
   'on click put 2 is not in arr into #out',
   'on click if n is not in arr put "Y" into #out end',
@@ -67,7 +65,7 @@ describe.each(IS_IN)('%s', source => {
 });
 
 describe.each(IS_NOT_IN)('%s', source => {
-  it.each(LANGUAGES.filter(l => l !== 'qu'))('%s', language => {
+  it.each(LANGUAGES)('%s', language => {
     expect(roundTrip(source, language)).toBe(source);
   });
 });
