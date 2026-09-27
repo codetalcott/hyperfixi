@@ -5757,9 +5757,37 @@ this signal was missing.
 > - **pl and tr misread the variable `i`** (about 1,020 pairs, both engines; filed with PR 55): pl
 >   reads `i` as "and" (`set i to 1` → `set and to 1`), and tr's accusative marker is `i` (`i i 2
 >   artır` drops the amount). A user's variable named `i` is as exposed.
-> - **The renderer localizes only the first link of a chained possessive** (39 cells, about 960
->   pairs outside pl and tr): `#a's textContent's length` in 16 languages.
-> - **bn, ms, th and tl render `length` in their own word** (about 420 pairs).
+> - ~~**The renderer localizes only the first link of a chained possessive** (39 cells, about 960
+>   pairs outside pl and tr): `#a's textContent's length` in 16 languages.~~ Fixed by PR 58.
+> - ~~**bn, ms, th and tl render `length` in their own word** (about 420 pairs).~~ Fixed by PR 58.
+>
+> **A property word before `of` reads back, localized and chained (PR 58, 2026-09-27).** Two
+> families from the list above, both about the value join's `of`:
+>
+> - **A localized property word before English `of`**: bn, ms, th and tl render `length of arr` with
+>   its owner, a variable, in English but its property word in their own (ms `panjang of arr`), and
+>   nothing read the word back. ms and tl kept `panjang`, and bn and th lost the whole value to the
+>   ASCII guard. The join now reads a property word the lexicon names when English `of` follows it,
+>   as it already read one after `'s`.
+> - **A chained possessive**: 16 languages render a possessive property-first (es `textContent de
+>   #a`), and the renderer moved only a chain's first link, so `#a's textContent's length` came out
+>   `textContent de #a's length`, the textContent of `#a's length`. The chain now nests, each link
+>   the next one's owner (`length de textContent de #a`), as upstream reads `length of textContent of
+>   #a`, and parenthesized before `as` (PR 56's rule). The join reads a chain back when it ends in a
+>   selector and its links are property words: tr's genitive `in` is also English `in`, and `2 dir
+>   in textContent of .w` (`2 is in …`) is no chain.
+>
+> **In the value matrix, 3,326 failing pairs fall to 2,089 (−37%).** 1,240 pairs pass now. 3 newly
+> fail, accepted: tr/up `put` comparisons on `#a's textContent's length`, which passed because the
+> old rendering read null and each comparison with null happened to match. Kept whole, the chain
+> meets **tr's SOV value capture, which reads only its last link** (filed; the tr direct lane
+> already failed these cells). No stored corpus row moves. Dropped after measuring: a guard
+> requiring one marker surface across a chain, which moved no matrix lane and no corpus row and
+> could refuse a hand-written chain whose marker follows vowel harmony (tr `nın`/`nin`).
+>
+> What is left, 2,089 pairs: tr (604, both engines) and pl (339) are mostly the variable `i` (718 of
+> their pairs sit in the loop and increment cells that name it); then qu (206) and de (138); every
+> other language is under 90.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
