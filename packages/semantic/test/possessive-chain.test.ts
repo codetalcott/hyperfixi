@@ -80,6 +80,18 @@ describe('a mixed run is not a chain', () => {
     const tr = render(parse('on click put 2 is in textContent of .w into #out', 'en')!, 'tr');
     expect(render(parse(tr, 'tr')!, 'en')).toContain('2 is in textContent of .w');
   });
+
+  // Nor is one link whose head is a keyword the lexicon does not call a
+  // property: tr's copula `dir` before `in [1, 2, 6]` read as `dir of`.
+  it.each([
+    'on click put 2 is in [1, 2, 6] into #out',
+    'on click put n is not in [1, 2, 6] into #out',
+    'on click set x to n is in [1, 2, 6] then put x into #out',
+    "on click put #a's textContent is in [1, 2, 6] into #out",
+  ])('tr %s', source => {
+    const tr = render(parse(source, 'en')!, 'tr');
+    expect(normalize(render(parse(tr, 'tr')!, 'en')), tr).toBe(normalize(source));
+  });
 });
 
 describe('a role capture reads the whole chain', () => {

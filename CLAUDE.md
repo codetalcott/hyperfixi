@@ -624,7 +624,8 @@ parse; 10,020 after PRs 53–54 (semantic's value extent, core's English values)
 (property words before `of`, localized and chained); 1,840 after PR 59 (a variable spelled
 like a conjunction); 1,836 after PR 61 (sw and vi `null`); 1,427 after PR 64 (tr's variable
 `i`, spelled like its accusative marker); 1,329 after PR 65 (a whole possessive chain in a role);
-1,059 after PR 66 (a bare bracket run is an array) — and only shrinks:
+1,059 after PR 66 (a bare bracket run is an array); 931 after PR 67 (tr's `is in`, and `i` before
+an operator) — and only shrinks:
 the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
 ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
