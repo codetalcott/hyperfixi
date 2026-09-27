@@ -5754,9 +5754,10 @@ this signal was missing.
 >
 > What is left, 3,326 pairs:
 >
-> - **pl and tr misread the variable `i`** (about 1,020 pairs, both engines; filed with PR 55): pl
+> - ~~**pl and tr misread the variable `i`** (about 1,020 pairs, both engines; filed with PR 55): pl
 >   reads `i` as "and" (`set i to 1` → `set and to 1`), and tr's accusative marker is `i` (`i i 2
->   artır` drops the amount). A user's variable named `i` is as exposed.
+>   artır` drops the amount). A user's variable named `i` is as exposed.~~ Fixed by PR 59 (pl) and
+>   PR 64 (tr).
 > - ~~**The renderer localizes only the first link of a chained possessive** (39 cells, about 960
 >   pairs outside pl and tr): `#a's textContent's length` in 16 languages.~~ Fixed by PR 58.
 > - ~~**bn, ms, th and tl render `length` in their own word** (about 420 pairs).~~ Fixed by PR 58.
@@ -5902,6 +5903,36 @@ this signal was missing.
 > element counter keeps core's reading, its text. `value-parity.test.ts` pins 24 upstream rows on
 > both paths and through es, ja and ar. The matrix's increment cells take numbers only, so it moves
 > no pair. Details, and the `increment @title` no-op it filed, in `PARSER_NEXT_STEPS.md`.
+>
+> **tr's variable `i`, spelled like its accusative marker (PR 64, 2026-09-27).** tr's accusative
+> marker is the particle `i`, and `i` is the usual loop variable, so `set i to 1 then increment i by
+> 2` rendered `i i 1 e ayarla ardından i i 2 artır`: the value slot of `{patient} i [{quantity}]
+> artır` saw a particle, took nothing, and the clause fell to a fallback that lost the amount
+> (`increment i`); `repeat while i < 3 increment i end` lost its increment and pulled the next
+> command into the loop. A particle is now the value where it cannot be a marker: directly before
+> the pattern's next marker (`i i 2 artır`), or between another marker and the verb (`k i i artır`,
+> increment k by i). Directly after a value and before the verb it stays that value's marker (`1s i
+> bekle`, which `wait-alternatives.test.ts` pins), which also reads tr's `if` seam, where the body
+> follows the condition's last operand (`eğer i dir 1 i i 2 artır`). The same holds for `e` (the
+> dative) and `u`.
+>
+> **In the value matrix, 1,836 failing pairs fall to 1,427 (−22%)**, every one in tr (203 on the
+> direct path, 206 through the adapter: both lanes read the same parse), and none newly fail. No
+> stored corpus row moves. `test/particle-variable.test.ts` round-trips nine sources for each of `i`,
+> `e` and `u`; each of four mutants removing one piece fails it or `wait-alternatives.test.ts`. Two
+> guards the first cut had (the rule skipping `event` and `action` slots) were dropped after
+> measuring: without them no test, matrix pair or corpus row moves.
+>
+> What is left in tr, 195 pairs: `is in [...]` (its genitive `in` reads as `of`: `2 dir in [1, 2,
+> 6]` came back `2 dir of [1, 2, 6]`; de fails these too), a chained possessive (the PR 58 filing), a
+> `while` bound with a unary minus (`i < -2` renders `i < - 2`, which tr reads as `repeat 2`), and
+> two families it shares. **`[n, 2]` fails on every direct lane** (about 280 pairs): each tokenizer
+> reads an array whose first item is a word as an attribute selector, and the direct path queries
+> it; the adapter lanes pass. **`"" is empty` reads as `is null`** (72 pairs): ar, hi, id, qu and tr
+> write `is empty` and `is null` alike and read both as `is null` (sw, alike too, reads both as `is
+> empty`), and ms reads its `kosong` (empty) as `null`. The rest of the largest families: the
+> kept `the X of Y as T` difference and its `v of w of obj as Int` sibling (about 186), and `{}` (46,
+> the object-literal filing).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
