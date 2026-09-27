@@ -12745,13 +12745,21 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
   it('[qu] LEGACY pre-arc render: triggers by VALUE + set floor (tolerance lock)', () => {
     // The pre-arc corpus shape (verb-medial wait, `tukuy man churanay`
     // stranding) remains a valid input: triggers and measures stay faithful,
-    // and at least the 10 non-stranded sets parse.
+    // and the 8 sets outside the clamps parse; each clamp's own set is
+    // stranded after its `tukuy`. This counted 10 until a value run took the
+    // comparisons: two of the ten were garbled sets made of a clamp condition
+    // cut at its `<` (`set <minWidthchayqanewWidth to minWidth`).
     const nodes = collect(parse(QU_RESIZABLE_LEGACY, 'qu'));
     expect(triggerValues(nodes).sort()).toEqual(
       ['resizable:start', 'resizable:resize', 'resizable:end'].sort()
     );
     expect(count(nodes, 'measure')).toBe(2);
-    expect(count(nodes, 'set')).toBeGreaterThanOrEqual(10);
+    const sets = nodes.filter(n => n.action === 'set');
+    expect(sets.length).toBeGreaterThanOrEqual(8);
+    for (const set of sets) {
+      const target = set.roles instanceof Map ? set.roles.get('destination') : undefined;
+      expect(String(target?.value ?? target?.raw ?? '')).not.toContain('<');
+    }
   });
 });
 
