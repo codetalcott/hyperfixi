@@ -9,7 +9,8 @@
  * - CSS selectors are embedded ASCII
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
+import { splitIfNot } from './if-not-split';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { bengaliMorphologicalNormalizer } from './morphology/bengali-normalizer';
 import { bengaliProfile } from '../generators/profiles/bengali';
@@ -119,6 +120,11 @@ export class BengaliTokenizer extends BaseTokenizer {
     this.registerExtractor(new AsciiIdentifierExtractor()); // ASCII identifiers (for mixed content)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  /** `if not` is written `যদি না`, which is also its `unless`: see splitIfNot. */
+  override tokenize(input: string): TokenStream {
+    return splitIfNot(super.tokenize(input), 'যদি না', word => super.tokenize(word).tokens);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

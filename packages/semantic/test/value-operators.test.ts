@@ -59,12 +59,12 @@ describe.each(SOURCES)('%s', source => {
 // word (de `oder`, through the expression lexicon's connectives). Each is
 // tested in the languages whose word for it reads back. Where it doesn't:
 // qu writes `and` as `chaymanta` (also its `then`), and `not` is hi `नहीं`
-// (also `no`) and qu `mana` (also `false`). (sw's `na` is also `with`: see
-// and-word.test.ts.)
+// (also `no`). (sw's `na` is also `with`, and qu's `mana` also `false`: see
+// and-word.test.ts and not-word.test.ts.)
 const CONNECTIVES: Array<[string, string[]]> = [
   ['on click put p or q into #out', []],
   ['on click put p and q into #out', ['qu']],
-  ['on click put not p into #out', ['hi', 'qu']],
+  ['on click put not p into #out', ['hi']],
   ['on click set x to p and not q', ['hi', 'qu']],
 ];
 
@@ -83,17 +83,16 @@ it('`and` before a command verb starts the next command', () => {
 });
 
 // Core's comparison phrases join a run too, read word by word as the expression
-// join reads them (es `n es no 3`, ar `n هو ليس 3`). qu is skipped where its
-// `not` is `mana`, also its `false`.
+// join reads them (es `n es no 3`, ar `n هو ليس 3`).
 const PHRASES: Array<[string, string[]]> = [
   ['on click set x to n is 3', []],
-  ['on click set x to n is not 3', ['qu']],
+  ['on click set x to n is not 3', []],
   ['on click set x to n is greater than 2', []],
   ['on click put n is less than 2 into #out', []],
   ['on click put #d1 matches .x into #out', []],
-  ['on click set x to #d1 does not match .x', ['qu']],
+  ['on click set x to #d1 does not match .x', []],
   ['on click set x to #d1 exists', []],
-  ['on click set x to #zz does not exist', ['qu']],
+  ['on click set x to #zz does not exist', []],
   ['on click set x to n is a Number', []],
 ];
 

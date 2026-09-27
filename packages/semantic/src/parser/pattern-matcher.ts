@@ -42,6 +42,7 @@ import {
   isKnownPropertySurface,
   isConversionTypeName,
   isCopulaIn,
+  ambiguousSenseOf,
   ofChainEnd,
 } from './utils/expression-lexicon';
 import {
@@ -2133,10 +2134,21 @@ export class PatternMatcher {
    * language's own (de `oder`), read through the expression lexicon's
    * connectives, which return an unlisted surface as it is.
    */
-  private logicalConnectiveOf(token: LanguageToken): 'and' | 'or' | 'not' | undefined {
+  private logicalConnectiveOf(tokens: TokenStream): 'and' | 'or' | 'not' | undefined {
+    const token = tokens.peek();
+    if (!token) return undefined;
     const language = this.currentProfile?.code ?? 'en';
+    const isLogical = (w: string): w is 'and' | 'or' | 'not' =>
+      w === 'and' || w === 'or' || w === 'not';
     const word = translateConnective(language, token.value).toLowerCase();
-    return word === 'and' || word === 'or' || word === 'not' ? word : undefined;
+    if (isLogical(word)) return word;
+    // A word the connective table leaves out for its other sense, read in
+    // place (qu `mana`, also `false`, before an operand is `not`) — unless it
+    // is a marker the command owns: sw `na` is `and`, and `hide`'s `with`.
+    if (this.commandMarkers().has(token.value.toLowerCase())) return undefined;
+    const at = tokens.position();
+    const sense = ambiguousSenseOf(language, token, tokens.tokens[at - 1], tokens.tokens[at + 1]);
+    return sense && isLogical(sense) ? sense : undefined;
   }
 
   /**
@@ -2323,7 +2335,7 @@ export class PatternMatcher {
     const startIdx = tokens.position();
 
     const head = tokens.peek();
-    const negated = !!head && this.logicalConnectiveOf(head) === 'not';
+    const negated = !!head && this.logicalConnectiveOf(tokens) === 'not';
     if (!this.tryConsumeRunOperand(tokens)) {
       tokens.reset(mark);
       return null;
@@ -2333,7 +2345,7 @@ export class PatternMatcher {
     for (;;) {
       const op = tokens.peek();
       if (!op) break;
-      const logical = this.logicalConnectiveOf(op);
+      const logical = this.logicalConnectiveOf(tokens);
       // A wait's `or` lists its events (`wait for pointermove or pointerup`).
       const joins = (logical === 'and' || logical === 'or') && this.currentRoleCommand !== 'wait';
       const beforeOp = tokens.mark();
@@ -2547,7 +2559,7 @@ export class PatternMatcher {
     if (!token) return false;
 
     // `not <operand>`: the prefix belongs to its operand (`p and not q`).
-    if (this.logicalConnectiveOf(token) === 'not') {
+    if (this.logicalConnectiveOf(tokens) === 'not') {
       const mark = tokens.mark();
       tokens.advance();
       if (this.tryConsumeRunOperand(tokens, true, afterConnective)) return true;

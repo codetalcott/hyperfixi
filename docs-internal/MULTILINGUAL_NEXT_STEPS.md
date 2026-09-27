@@ -6088,6 +6088,38 @@ this signal was missing.
 > lexicon to the dictionary, which is the incumbent, so the fix is changing `logical.and` in
 > `packages/i18n/src/dictionaries/qu.ts` (and its assertion in `new-languages.test.ts`) along with
 > `lexicons/qu.ts`.
+>
+> **A language's `not` reads back (PR 72, 2026-09-27).** The `not` family from PR 67's list, less
+> hi (its `नहीं` is `not` and `no` alike, both before an operand):
+>
+> - **qu `mana`** is both `not` and `false`, and read as `false` everywhere: `put 2 is not 6`
+>   came back `put 6`, `not flag` lost its `not`, and `not false` renders `mana mana`. `false`
+>   never takes an operand, so before one (a word, literal, selector, bracket, `-`, or a literal
+>   keyword) `mana` is `not`; before a marker, the verb or the end it stays `false`. This was filed
+>   as ambiguous in qu's SOV `if` (`sichus p kanqa mana 1 1 ta #out man churay`), but the
+>   condition's extent decides: `if p is not 1 put 1 …` and `if p is false put 1 …` both round-trip.
+>   An `AMBIGUOUS_SENSES` rule (`beforeOperand`), which the operator run now consults too
+>   (`logicalConnectiveOf` read only the connective table; it skips a marker the command owns, so sw
+>   `na` stays `hide`'s `with`, which the rebase onto PR 71 caught).
+> - **bn and vi `if not`**: the renderer writes `if` and `not` word by word, and each pair is
+>   another keyword the tokenizer takes whole: bn `যদি না` is its `unless`, vi `nếu không` an
+>   `else` ("otherwise"). `if not flag … else … end` read back bn `unless me`, vi a bare `put`.
+>   Position tells them apart: `if not`'s condition follows the pair and no operand precedes it,
+>   where bn writes `unless` after its condition (`flag যদি না`) and vi's `else` follows a branch
+>   and runs into a verb. The two tokenizers now split the pair there (`splitIfNot`).
+>
+> **In the value matrix, 546 failing pairs fall to 424 (−22%)**: qu `not` and `is not` (50 direct,
+> 56 through the adapter), bn `if not` (6, 6) and vi (2, 2); none newly fail. No stored corpus row
+> moves. `test/not-word.test.ts` round-trips eleven qu sources (the "ambiguous" `if p is false put 1
+> …` among them) and five `if` sources in bn and vi, and pins bn `unless` and vi's `else` (after a
+> branch, and between two bare verbs); qu joins the `not` and comparison-phrase rows of
+> `value-operators`, `value-path-operands` and `copula-in`, in semantic and in core's direct-path
+> twins, and bn, qu and vi join core's `condition-not-direct-path.test.ts`. Each of seven mutants
+> reverting one piece fails a test (the two position guards of the split only after their own
+> cases were added: without them no test needed either).
+>
+> What is left in `not`: hi `नहीं` is `not` and `no` alike, and both take an operand, so position
+> cannot tell them apart (the filed collision; hi `if not flag` reads `if no flag`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
