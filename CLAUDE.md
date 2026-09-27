@@ -620,7 +620,7 @@ upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell
 lane) pair — 18,509 of 63,744 when it landed, 85% of them in semantic's English
 parse; 10,020 after PRs 53–54 (semantic's value extent, core's English values);
 5,727 after PR 55 (an increment's amount); 4,340 after PR 56 (semantic's `as` and
-`@attr of`) — and only shrinks:
+`@attr of`); 3,326 after PR 57 (`contains` in ja, ko, qu, zh) — and only shrinks:
 the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
 ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
