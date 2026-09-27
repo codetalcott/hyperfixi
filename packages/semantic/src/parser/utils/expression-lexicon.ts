@@ -39,7 +39,7 @@ import { getEnglishPossessiveAdjective, getPossessiveReference } from './possess
 // prettier-ignore
 export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
   ar: { "قيمة": "value" },
-  bn: { "অক্ষম": "disabled", "চেক করা": "checked", "দৈর্ঘ্য": "length", "মান": "value" },
+  bn: { "অক্ষম": "disabled", "আইডি": "id", "চেক করা": "checked", "দৈর্ঘ্য": "length", "মান": "value" },
   de: { "wert": "value" },
   es: { "valor": "value" },
   fr: { "valeur": "value" },
@@ -54,7 +54,7 @@ export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
   qu: { "chanin": "value" },
   ru: { "значение": "value", "отключено": "disabled", "отмечено": "checked", "скрыто": "hidden" },
   sw: { "thamani": "value" },
-  th: { "ความยาว": "length", "ค่า": "value", "ปิดใช้งาน": "disabled", "เลือกแล้ว": "checked" },
+  th: { "ความยาว": "length", "ค่า": "value", "ปิดใช้งาน": "disabled", "เลือกแล้ว": "checked", "ไอดี": "id" },
   tl: { "haba": "length", "halaga": "value", "hindi_pinagana": "disabled", "naka_tsek": "checked" },
   tr: { "değer": "value" },
   uk: { "вимкнено": "disabled", "значення": "value", "позначено": "checked", "приховано": "hidden" },

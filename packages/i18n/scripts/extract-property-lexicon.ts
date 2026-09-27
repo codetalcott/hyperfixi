@@ -29,6 +29,7 @@ const CONCEPTS = [
   'length',
   'disabled',
   'hidden',
+  'id',
 ];
 
 const langs = Object.keys(dictionaries).filter(l => l !== 'en');

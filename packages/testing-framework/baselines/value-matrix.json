@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 694,
+  "failing": 588,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -19,18 +19,6 @@
     "set|{}": {
       "lanes": "*direct",
       "family": "direct-path"
-    },
-    "put|my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|my id": {
-      "lanes": "bn bn/up pl pl/up ru ru/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|my id": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
     },
     "put|v of w of obj": {
       "lanes": "pl pl/up",
@@ -50,10 +38,6 @@
     },
     "increment|#a.textContent": {
       "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|me.id": {
-      "lanes": "pl pl/up ru ru/up uk uk/up",
       "family": "translation"
     },
     "put|v of w of obj + 2": {
@@ -90,22 +74,6 @@
     },
     "increment|#a.textContent + 2": {
       "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|my id + \"q\"": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|my id + \"q\"": {
-      "lanes": "bn bn/up pl pl/up ru ru/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "put|\"q\" + my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|\"q\" + my id": {
-      "lanes": "bn bn/up th th/up",
       "family": "translation"
     },
     "put|v of w of obj < 4": {
@@ -146,30 +114,6 @@
     },
     "if|6 is String(n)": {
       "lanes": "th/up",
-      "family": "adapter"
-    },
-    "put|my id is \"ab\"": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "set|my id is \"ab\"": {
-      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "if|my id is \"ab\"": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "put|\"ab\" is my id": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "set|\"ab\" is my id": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "if|\"ab\" is my id": {
-      "lanes": "bn/up th/up",
       "family": "adapter"
     },
     "put|6 is not 6": {
@@ -372,30 +316,6 @@
       "lanes": "sw/up",
       "family": "adapter"
     },
-    "put|my id contains \"a\"": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "set|my id contains \"a\"": {
-      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "if|my id contains \"a\"": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" contains my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
     "put|[1, 2, 6] contains v of w of obj": {
       "lanes": "pl pl/up",
       "family": "translation"
@@ -556,18 +476,6 @@
       "lanes": "hi hi/up qu qu/up tr tr/up",
       "family": "translation"
     },
-    "put|my id is empty": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "set|my id is empty": {
-      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "if|my id is empty": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
     "put|\"\" is not empty": {
       "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
       "family": "translation"
@@ -706,14 +614,6 @@
     },
     "if|flag and not (n is 6)": {
       "lanes": "hi hi/up qu qu/up sw sw/up",
-      "family": "translation"
-    },
-    "put|s + \" \" + my id": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|s + \" \" + my id": {
-      "lanes": "bn bn/up th th/up",
       "family": "translation"
     }
   }

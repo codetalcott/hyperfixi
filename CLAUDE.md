@@ -626,7 +626,7 @@ like a conjunction); 1,836 after PR 61 (sw and vi `null`); 1,427 after PR 64 (tr
 `i`, spelled like its accusative marker); 1,329 after PR 65 (a whole possessive chain in a role);
 1,059 after PR 66 (a bare bracket run is an array); 931 after PR 67 (tr's `is in`, and `i` before
 an operator); 843 after PR 68 (core reads the X of a null target as null); 694 after PR 69 (the `in` after a copula,
-in de and it) — and only shrinks:
+in de and it); 588 after PR 70 (`my id` in bn, th, pl, ru and uk) — and only shrinks:
 the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
 ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
