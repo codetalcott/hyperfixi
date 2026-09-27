@@ -339,6 +339,67 @@ const WHILE_HEADS: Array<[string, { pre?: string[]; whileWord: string }]> = [
 ];
 
 /**
+ * Condition-terminated loop HEAD: `{repeat-verb} [pre] {until-word}
+ * {condition}` — the until twin of {@link repeatWhileHead}, in the until-word
+ * of the language's event head. Without it en took the generated repeat, which
+ * put the condition in `quantity`, where the AST builder does not read it for
+ * an `until` loop; and no other language had a pattern pinning `until` with a
+ * condition slot, so each rendered `until` in English and read it back
+ * without its condition: the loop never ended. Below the event heads'
+ * priority, which keeps `until event X`.
+ */
+function repeatUntilConditionHead(
+  language: string,
+  spec: { pre?: string[]; untilWord: string }
+): LanguagePattern {
+  const tokens: LanguagePattern['template']['tokens'] = [{ type: 'literal', value: 'repeat' }];
+  for (const w of spec.pre ?? []) tokens.push({ type: 'literal', value: w });
+  tokens.push({ type: 'literal', value: spec.untilWord });
+  tokens.push({
+    type: 'role',
+    role: 'condition',
+    expectedTypes: ['property-path', 'expression'],
+  });
+  return {
+    id: `repeat-${language}-until-condition-head`,
+    language,
+    command: 'repeat',
+    priority: 105,
+    template: {
+      format: `repeat ${(spec.pre ?? []).join(' ')} ${spec.untilWord} {condition}`,
+      tokens,
+    },
+    extraction: {
+      loopType: { default: { type: 'literal', value: 'until' } },
+    },
+  };
+}
+
+/** SOV order of {@link repeatUntilConditionHead}: `{until-word} {condition} {repeat-verb}`. */
+function repeatUntilConditionHeadSOV(
+  language: string,
+  spec: { untilWord: string; verb: string }
+): LanguagePattern {
+  return {
+    id: `repeat-${language}-until-condition-head`,
+    language,
+    command: 'repeat',
+    priority: 105,
+    template: {
+      format: `${spec.untilWord} {condition} ${spec.verb}`,
+      tokens: [
+        { type: 'literal', value: spec.untilWord },
+        { type: 'role', role: 'condition', expectedTypes: ['property-path', 'expression'] },
+        { type: 'literal', value: spec.verb },
+      ],
+    },
+    extraction: {
+      loopType: { default: { type: 'literal', value: 'until' } },
+    },
+  };
+}
+
+/**
  * Event-terminated loop HEAD, verb-first: `{repeat-verb} [pre] {until-word}
  * [pre-event] {event-word} {event} [{from-word} {source}]` — the translation of
  * en's hand-crafted `repeat until event {event} [from {source}]` (which is
@@ -384,6 +445,17 @@ function repeatUntilHeadVerbFirst(
     },
   };
 }
+
+// Until-word and repeat-verb surfaces of the SOV condition heads: the event
+// heads' until-words, and the while heads' repeat verbs.
+const SOV_UNTIL_CONDITION_HEADS: Array<[string, { untilWord: string; verb: string }]> = [
+  ['ja', { untilWord: 'まで', verb: '繰り返し' }],
+  ['ko', { untilWord: '까지', verb: '반복' }],
+  ['tr', { untilWord: 'kadar', verb: 'tekrarla' }],
+  ['hi', { untilWord: 'तक', verb: 'दोहराएं' }],
+  ['bn', { untilWord: 'পর্যন্ত', verb: 'পুনরাবৃত্তি' }],
+  ['qu', { untilWord: 'kama', verb: 'kutipay' }],
+];
 
 const VERB_FIRST_UNTIL_HEADS: Array<
   [
@@ -659,6 +731,11 @@ for (const [lang, spec] of SOV_WHILE_HEADS) {
 }
 for (const [lang, spec] of VERB_FIRST_UNTIL_HEADS) {
   addPattern(lang, repeatUntilHeadVerbFirst(lang, spec));
+  addPattern(lang, repeatUntilConditionHead(lang, spec));
+}
+addPattern('en', repeatUntilConditionHead('en', { untilWord: 'until' }));
+for (const [lang, spec] of SOV_UNTIL_CONDITION_HEADS) {
+  addPattern(lang, repeatUntilConditionHeadSOV(lang, spec));
 }
 for (const [lang, spec] of SOV_UNTIL_HEADS) {
   addPattern(lang, repeatUntilHeadSOV(lang, spec));
