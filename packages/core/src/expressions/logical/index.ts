@@ -399,7 +399,10 @@ export const isEmptyExpression: ExpressionImplementation = {
     else if (value instanceof NodeList) result = value.length === 0;
     // DOM elements should NEVER be considered empty
     else if (value instanceof Node || value instanceof Element) result = false;
-    else if (isObject(value)) result = Object.keys(value as object).length === 0;
+    // Any other object is empty only when it has a zero `length`, as upstream's
+    // isEmpty reads it: `{} is empty` is false, where counting its keys said
+    // true (and so said a Map or a Set).
+    else if (isObject(value)) result = (value as { length?: unknown }).length === 0;
     else result = false;
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
     return result;

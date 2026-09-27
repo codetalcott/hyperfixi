@@ -101,6 +101,7 @@ import {
   PARSER_TABLE,
   STOP_TOKENS as PRATT_STOP_TOKENS,
   STOP_DELIMITERS as PRATT_STOP_DELIMITERS,
+  parseOfOperand,
   type BindingPowerFragment,
 } from './pratt-parser';
 
@@ -3837,13 +3838,12 @@ export class Parser {
 
     this.advance(); // consume "of"
 
-    // Parse the target through parseCall (not parsePrimary) so a trailing
-    // possessive binds to the TARGET, not the whole `of` expression:
-    // `the display of #foo's style` = `the display of (#foo's style)`, i.e.
-    // propertyOf(display, possessive(#foo, style)) — NOT (the display of #foo)'s
-    // style. `'s` binds tighter than `of`. parseCall is a safe superset of
-    // parsePrimary for targets with no postfix (`the value of me` unchanged).
-    const target = this.parseCall();
+    // The target is `of`'s right operand, as in `X of Y`: a trailing
+    // possessive binds to it (`the display of #foo's style` is the display of
+    // `#foo's style`), and so do `as` and `in`, as upstream reads them — `the
+    // textContent of #a as Int` is the textContent of `#a as Int`. It used to
+    // be parsed as a call alone, which left `as`/`in` to the whole phrase.
+    const target = parseOfOperand(this.makePrattContext());
 
     // Return a propertyOfExpression node
     return {

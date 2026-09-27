@@ -172,6 +172,9 @@ export async function parseNumericTargetInput(
       const evaluated = await evaluator.evaluate(arg, context);
       if (typeof evaluated === 'number') {
         amount = evaluated;
+      } else if (evaluated == null) {
+        // A written amount that is null or unset is NaN, as upstream reads it.
+        amount = NaN;
       }
     }
   }
@@ -190,6 +193,8 @@ export async function parseNumericTargetInput(
       const evaluated = await evaluator.evaluate(byModifier, context);
       if (typeof evaluated === 'number') {
         amount = evaluated;
+      } else if (evaluated == null) {
+        amount = NaN;
       }
     }
   }

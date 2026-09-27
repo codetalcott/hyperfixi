@@ -273,7 +273,7 @@ export class PutCommand implements DecoratedCommand {
     return queryTargetElements(sel);
   }
 
-  private parseValue(v: any): string | HTMLElement | HTMLElement[] {
+  private parseValue(v: any): string | Node | HTMLElement[] {
     if (isHTMLElement(v)) return v as HTMLElement;
     // A non-empty homogeneous element array passes through for ordered
     // insertion. Mixed or empty arrays keep the string fallback (previously
@@ -289,8 +289,14 @@ export class PutCommand implements DecoratedCommand {
     // insertBefore/appendChild splice a fragment's children in place — so
     // pass it straight through. Checked after the Element and array cases,
     // which have their own handling.
-    if (isInsertableNode(v)) return v as unknown as HTMLElement;
-    return v == null ? '' : String(v);
+    if (isInsertableNode(v)) return v;
+    // Upstream writes a value into the page through a fragment: `null` (and an
+    // unset value) as the text `null`, and any other array item by item — a
+    // node as itself, anything else as HTML, a null item as nothing. So
+    // `put [1, 2]` writes `12`, where joining the array wrote `1,2`.
+    if (v == null) return 'null';
+    if (Array.isArray(v)) return arrayFragment(v);
+    return String(v);
   }
 
   private looksLikeCss(s: string): boolean {
@@ -344,6 +350,21 @@ export class PutCommand implements DecoratedCommand {
     }
     cur[parts[parts.length - 1]] = value;
   }
+}
+
+/** An array as upstream's fragment conversion writes it, item by item. */
+function arrayFragment(items: readonly unknown[]): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  for (const item of items) {
+    if (isInsertableNode(item)) {
+      fragment.append(item);
+      continue;
+    }
+    const template = document.createElement('template');
+    template.innerHTML = item === null ? '' : String(item);
+    fragment.append(template.content);
+  }
+  return fragment;
 }
 
 export const createPutCommand = createFactory(PutCommand);
