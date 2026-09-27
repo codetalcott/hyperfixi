@@ -2473,7 +2473,8 @@ The value matrix (`testing-framework/src/multilingual/value-matrix.ts`, PR 52)
 runs every value shape in five positions on both engines. Core's English run
 differed from upstream's in 46 of its 1,328 cells: the filings above, counted.
 PR 54 fixed them, each against a row run on both engines
-(`src/compatibility/value-parity.test.ts`, 38 rows; 21 fail on the old core):
+(`src/compatibility/value-parity.test.ts`, 42 rows; 24 fail on the old core,
+and each of 12 mutants reverting one piece fails at least one):
 
 - **`put` writes a value as upstream does**: through a fragment, null (and an
   unset value) as the text `null`, an array item by item (`put [1, 2]` writes
@@ -2486,7 +2487,8 @@ PR 54 fixed them, each against a row run on both engines
   `X of Y` does: `the textContent of <p.w/> in #w` reads the scoped query.
 - **`is empty` reads a zero length**: `{}` is not empty (it counted keys).
 - **`increment … by` a null amount is NaN**, as upstream's `parseFloat` makes
-  it (it added nothing).
+  it (it added nothing). On the direct path, where `increment` keeps its `by`
+  modifier, a text amount is read too (`by "2"` added 1).
 
 In the value matrix they fixed 325 pairs and broke none (failing pairs 10,366
 → 10,041), and core's English run now differs from upstream's in 4 cells, not
