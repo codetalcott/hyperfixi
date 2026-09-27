@@ -10,6 +10,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 import { isLiteralNode } from '../../ast/guards';
 import { isHTMLElement } from '../../utils/element-check';
+import { convertToNumber } from './variable-access';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -184,19 +185,20 @@ export async function parseNumericTargetInput(
   // above). Read the modifier too so `increment #x by 10` applies 10 — not the
   // default 1 — regardless of which parser produced the node. (Uncaught until
   // the R2 execution sweep: every language uniformly incremented by 1.)
+  //
+  // The amount is read as upstream reads it, and as core's English rewrite
+  // (`set X to X + amount`, coercing text) does: a number as itself, text
+  // through parseFloat (`by "2"` is 2, where it used to be ignored), and null
+  // or an unset value as NaN.
   const byModifier = raw.modifiers?.by;
   if (byModifier) {
-    const byValue = (byModifier as { value?: unknown }).value;
-    if (getNodeType(byModifier) === 'literal' && typeof byValue === 'number') {
-      amount = byValue;
-    } else if (getNodeType(byModifier) !== 'literal') {
-      const evaluated = await evaluator.evaluate(byModifier, context);
-      if (typeof evaluated === 'number') {
-        amount = evaluated;
-      } else if (evaluated == null) {
-        amount = NaN;
-      }
-    }
+    const value =
+      getNodeType(byModifier) === 'literal'
+        ? (byModifier as { value?: unknown }).value
+        : await evaluator.evaluate(byModifier, context);
+    if (typeof value === 'number') amount = value;
+    else if (typeof value === 'string') amount = convertToNumber(value);
+    else if (value == null) amount = NaN;
   }
 
   return {

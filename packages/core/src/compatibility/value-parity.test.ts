@@ -9,6 +9,7 @@
  * an empty array, an increment with no amount.
  */
 import { describe, it, expect } from 'vitest';
+import { buildAST, parseSemantic } from '@lokascript/semantic';
 import { hyperscript } from '../api/hyperscript-api';
 
 const FIXTURE =
@@ -108,5 +109,44 @@ describe('an increment by a null amount is NaN', () => {
     ['increment i', '2'],
   ])('%s', async (command, expected) => {
     expect(await click(`set i to 1 then ${command} then put i into #out`)).toBe(expected);
+  });
+});
+
+describe('the direct path reads an increment amount as upstream does', () => {
+  // Core's English parser rewrites `increment` to a `set`; semantic's AST
+  // builder emits it as a command with a `by` modifier, which IncrementCommand
+  // reads. Semantic keeps only a literal amount today, so each row swaps the
+  // modifier into the node it builds.
+  async function incrementBy(by: object): Promise<string> {
+    const parsed = parseSemantic(
+      'on click set i to 1 then increment i by 5 then put i into #out',
+      'en'
+    );
+    const { ast } = buildAST(parsed.node!);
+    const swap = (node: unknown): void => {
+      if (!node || typeof node !== 'object') return;
+      const record = node as { name?: unknown; modifiers?: { by?: unknown } };
+      if (record.name === 'increment' && record.modifiers?.by) record.modifiers.by = by;
+      for (const value of Object.values(node)) swap(value);
+    };
+    swap(ast);
+    document.body.innerHTML = FIXTURE;
+    const button = document.getElementById('b') as HTMLElement;
+    await hyperscript.execute(
+      ast as Parameters<typeof hyperscript.execute>[0],
+      hyperscript.createContext(button)
+    );
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 30));
+    return document.getElementById('out')!.innerHTML;
+  }
+
+  it.each([
+    ['2', { type: 'literal', value: 2 }, '3'],
+    ['"2"', { type: 'literal', value: '2' }, '3'],
+    ['null', { type: 'literal', value: null }, 'NaN'],
+    ['an unset variable', { type: 'identifier', name: 'unsetAmount' }, 'NaN'],
+  ])('by %s', async (_label, by, expected) => {
+    expect(await incrementBy(by)).toBe(expected);
   });
 });
