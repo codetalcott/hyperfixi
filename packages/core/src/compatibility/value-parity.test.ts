@@ -53,7 +53,7 @@ describe('put writes a value as upstream does', () => {
 describe('X of Y reads an attribute, and maps over a collection', () => {
   it.each([
     ['@title of #a', 't1'],
-    ['#a\'s @title', 't1'],
+    ["#a's @title", 't1'],
     ['@class of .w', 'ww'],
     ['textContent of .w', 'wv'],
     ['textContent of <p.w/>', 'wv'],
