@@ -1705,14 +1705,18 @@ export class PatternMatcher {
     // nothing, and the clause fell to a fallback that lost the amount. A
     // particle directly before the pattern's next marker is that marker's
     // value (`i i 2 artır`); so is one directly after another marker and
-    // before the verb (`k i i artır`, increment k by i). Directly after a
-    // value and before the verb, it is that value's marker (`1s i bekle`).
+    // before the verb (`k i i artır`, increment k by i), and one directly
+    // before an operator (`i < - 2`: the operator run cannot take a unary
+    // minus, and the value's tail reads it from here). Directly after a value
+    // and before the verb, it is that value's marker (`1s i bekle`).
     const nextToken = tokens.peek(1);
     if (
       token.kind === 'particle' &&
       nextToken &&
-      this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
-      (nextToken.kind === 'particle' || tokens.tokens[tokens.position() - 1]?.kind === 'particle')
+      ((this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
+        (nextToken.kind === 'particle' ||
+          tokens.tokens[tokens.position() - 1]?.kind === 'particle')) ||
+        this.runOperatorFollows(tokens))
     ) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();

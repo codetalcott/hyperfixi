@@ -991,10 +991,11 @@ export function expressionWordOf(
 
 /**
  * The index of the selector that ends a `<property> <of-marker>` run starting
- * at `start`, or undefined when none starts there. One link takes any bare
- * word (`value de #price`). A chain (`length de textContent de #a`) takes
- * property words only: tr's genitive `in` is also English `in`, and `2 dir in
- * textContent of .w` (`2 is in …`) is no chain, since `dir` is a verb.
+ * at `start`, or undefined when none starts there. Every link, the first
+ * included, takes a property word: an identifier (`value de #price`), or a
+ * keyword the lexicon calls a property. tr's genitive `in` is also English
+ * `in`, and `2 dir in [1, 2, 6]` (`2 is in …`) is no link, since `dir` is a
+ * verb.
  */
 export function ofChainEnd(
   tokens: readonly LanguageToken[],
@@ -1007,6 +1008,7 @@ export function ofChainEnd(
   if (!first || !marker || !isBareWordHead(first) || !isOfPossessiveMarker(profile, marker)) {
     return undefined;
   }
+  if (!isPropertyHeadCandidate(first, languageCode)) return undefined;
   if (tokens[start + 2]?.kind === 'selector') return start + 2;
   let k = start;
   while (
