@@ -793,3 +793,23 @@ describe('toCoreAST', () => {
     });
   });
 });
+
+// A type check goes back to the typeCheckExpression core's parser built.
+describe('toCoreAST typeCheck', () => {
+  it('round-trips `n is not a String!`', () => {
+    const core = {
+      type: 'typeCheckExpression',
+      value: { type: 'identifier', name: 'n' },
+      typeName: 'String',
+      nullOk: false,
+      negated: true,
+    };
+    expect(toCoreAST(fromCoreAST(core))).toMatchObject({
+      type: 'typeCheckExpression',
+      value: { type: 'identifier', name: 'n' },
+      typeName: 'String',
+      nullOk: false,
+      negated: true,
+    });
+  });
+});

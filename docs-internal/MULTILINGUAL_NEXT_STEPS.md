@@ -5462,6 +5462,29 @@ this signal was missing.
 > - A translated `is in` fails in de and tr.
 > - The AOT cannot compile an object literal from core's parser: `{a: 1}` converts to an error node.
 > - Core reads `{} is empty` as true, where upstream reads it as false.
+>
+> **A type check compiles (PR 49b, 2026-09-27).** PR 49's first filing. The interchange format had no
+> node for a type check, so `n is a Number` converted to an error node and the AOT could not compile
+> it, in English or in any translation. Both converters now write a `typeCheck` node with the value,
+> the type name, the negation, and whether null passes (`Number!` says it does not). `toCoreAST`
+> reads it back, and the LSP helpers walk into it and name it. The AOT compiles it to a runtime
+> helper that follows upstream's: null passes unless the type ends in `!`, and any other value passes
+> when its tag is the type's name or it is an instance of the global the type names. Of 121 runs (8
+> English values and translations of 5 of them), all 121 failed; all now pass.
+>
+> Filed, not fixed:
+>
+> - **Semantic cannot read the `!`, and drops the command that holds it.** `on click put u is a
+>   Number! into #out` parses as a bare `on click`, so every translation of it has no body; `set x to
+>   u is a Number!` keeps the command and loses the `!`. English runs on core's parser, so only
+>   translations are hit.
+> - **A translated `is an Element` checks for the wrong type.** The renderer translates the type
+>   name (ar `عنصر`, ja `要素`, es `elemento`) and keeps the English article, and ar, hi, ja, ko, ru,
+>   uk and zh then read the article `an` as the type. Only bn, de, he, pl, th and vi keep `Element`.
+> - The AOT writes a variable that was never set as a bare JavaScript name, which throws; both
+>   engines read it as null.
+> - The AOT's older binary `is a` case, a `typeof` test against the constructor, is false for every
+>   primitive. Neither parser builds that node now.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

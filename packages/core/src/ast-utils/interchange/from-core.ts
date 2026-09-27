@@ -175,6 +175,15 @@ function convertNode(node: CoreNode, infer: RoleInferrer | null): InterchangeNod
         operand: convertNode((node.argument as CoreNode) ?? (node.operand as CoreNode), infer),
         ...pos(node),
       };
+    case 'typeCheckExpression':
+      return {
+        type: 'typeCheck',
+        value: convertNode(node.value as CoreNode, infer),
+        typeName: String(node.typeName),
+        nullOk: node.nullOk !== false,
+        negated: node.negated === true,
+        ...pos(node),
+      };
     case 'timeExpression':
       return { type: 'literal', value: node.value as number, ...pos(node) };
     case 'templateLiteral':

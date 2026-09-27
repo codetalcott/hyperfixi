@@ -91,7 +91,7 @@ describe('fromSemanticAST', () => {
       });
     });
 
-    it('converts `@title` from a real parse to the handler element\'s attribute', () => {
+    it("converts `@title` from a real parse to the handler element's attribute", () => {
       const { ast } = buildAST(parse('set @title to "t"', 'en')!);
       const target = (ast as { args?: unknown[] }).args?.[0];
       expect(fromSemanticAST(target as { type: string })).toMatchObject({
@@ -755,9 +755,7 @@ describe('fromSemanticAST', () => {
     });
 
     it('converts positionalExpression without argument', () => {
-      const result = fromSemanticAST(
-        semNode('positionalExpression', { operator: 'parent' })
-      );
+      const result = fromSemanticAST(semNode('positionalExpression', { operator: 'parent' }));
       expect(result).toEqual({ type: 'positional', position: 'parent' });
     });
 
@@ -1131,9 +1129,7 @@ describe('fromSemanticAST', () => {
     });
 
     it('preserves positions on command', () => {
-      const result = fromSemanticAST(
-        semNode('command', { name: 'add', args: [], ...POS })
-      );
+      const result = fromSemanticAST(semNode('command', { name: 'add', args: [], ...POS }));
       expect(result.type).toBe('command');
       expect((result as any).start).toBe(10);
       expect((result as any).end).toBe(25);
@@ -1191,9 +1187,7 @@ describe('fromSemanticAST', () => {
     });
 
     it('handles partial positions', () => {
-      const result = fromSemanticAST(
-        semNode('literal', { value: 'x', start: 5, line: 2 })
-      );
+      const result = fromSemanticAST(semNode('literal', { value: 'x', start: 5, line: 2 }));
       expect((result as any).start).toBe(5);
       expect((result as any).line).toBe(2);
       expect('end' in result).toBe(false);
@@ -1224,6 +1218,28 @@ describe('fromSemanticAST', () => {
       expect(result.type).toBe('if');
       expect((result as any).start).toBe(10);
       expect((result as any).line).toBe(3);
+    });
+  });
+});
+
+// `n is not a String!`, as semantic's expression parser builds it for a
+// translated condition or value.
+describe('fromSemanticAST typeCheckExpression', () => {
+  it('carries the value, type name, `!` and negation', () => {
+    expect(
+      fromSemanticAST({
+        type: 'typeCheckExpression',
+        value: { type: 'identifier', name: 'n' },
+        typeName: 'String',
+        nullOk: false,
+        negated: true,
+      })
+    ).toMatchObject({
+      type: 'typeCheck',
+      value: { type: 'identifier', value: 'n' },
+      typeName: 'String',
+      nullOk: false,
+      negated: true,
     });
   });
 });

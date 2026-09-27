@@ -73,6 +73,7 @@ export type ASTNode =
   | VariableNode
   | BinaryExpressionNode
   | UnaryExpressionNode
+  | TypeCheckNode
   | MemberExpressionNode
   | PossessiveNode
   | CallExpressionNode
@@ -149,6 +150,15 @@ export interface UnaryExpressionNode extends BaseASTNode {
   type: 'unary';
   operator: string;
   operand: ASTNode;
+}
+
+/** A type check, `x is a Number` / `x is not an Array!` (`nullOk` false after `!`). */
+export interface TypeCheckNode extends BaseASTNode {
+  type: 'typeCheck';
+  value: ASTNode;
+  typeName: string;
+  nullOk: boolean;
+  negated: boolean;
 }
 
 export interface MemberExpressionNode extends BaseASTNode {

@@ -90,6 +90,15 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         prefix: true,
         ...nodePos(node),
       };
+    case 'typeCheck':
+      return {
+        type: 'typeCheckExpression',
+        value: toCoreAST(node.value),
+        typeName: node.typeName,
+        nullOk: node.nullOk,
+        negated: node.negated,
+        ...nodePos(node),
+      };
     case 'member':
       return {
         type: 'memberExpression',

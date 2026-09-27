@@ -461,3 +461,30 @@ describe('diagnostic ranges', () => {
     expect(diag!.range.start.character).toBe(0);
   });
 });
+
+// A type check, `n is a Number`: hover names it, and reaches its operand.
+describe('typeCheck nodes', () => {
+  const node: InterchangeNode = {
+    type: 'typeCheck',
+    value: { type: 'identifier', value: 'n', line: 1, column: 0, start: 0, end: 1 },
+    typeName: 'Number',
+    nullOk: true,
+    negated: false,
+    line: 1,
+    column: 0,
+    start: 0,
+    end: 13,
+  };
+
+  it('names the type it checks', () => {
+    expect(interchangeToLSPHover([node], { line: 0, character: 8 })?.contents).toContain(
+      '**Type Check (Number)**'
+    );
+  });
+
+  it('reaches its operand', () => {
+    expect(interchangeToLSPHover([node], { line: 0, character: 0 })?.contents).toContain(
+      '**Identifier**'
+    );
+  });
+});

@@ -42,6 +42,7 @@ export type InterchangeNode =
   | VariableNode
   | BinaryNode
   | UnaryNode
+  | TypeCheckNode
   | MemberNode
   | PossessiveNode
   | ArrayNode
@@ -109,6 +110,18 @@ export interface UnaryNode extends BaseNode {
   readonly type: 'unary';
   readonly operator: string;
   readonly operand: InterchangeNode;
+}
+
+/**
+ * A type check, `x is a Number` / `x is not an Array!`: whether the value is of
+ * the named type. `nullOk` is false after `!`, which makes null fail.
+ */
+export interface TypeCheckNode extends BaseNode {
+  readonly type: 'typeCheck';
+  readonly value: InterchangeNode;
+  readonly typeName: string;
+  readonly nullOk: boolean;
+  readonly negated: boolean;
 }
 
 export interface MemberNode extends BaseNode {
