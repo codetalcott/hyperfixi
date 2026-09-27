@@ -5972,6 +5972,36 @@ this signal was missing.
 > Found on the way: `put [@title] into #out` fails on every direct lane too (upstream writes the
 > attribute of `me`, null here): `[@name]` is still an attribute-selector token, and the value
 > converter keeps it a selector.
+>
+> **tr reads `is in`, and a variable `i` before an operator (PR 67, 2026-09-27).** Two more tr
+> readings from PR 64's list:
+>
+> - **`is in`**: tr's genitive `in` is also English `in`, and the value join's one-link `of`
+>   reading (`value de #price`) took any bare word as the property, so the copula in `2 dir in [1,
+>   2, 6]` (`2 is in [1, 2, 6]`) read as `2 dir of [1, 2, 6]`. A keyword heads an `of` link only
+>   where the lexicon calls it a property (`isPropertyHeadCandidate`, which a chain's links already
+>   had to pass).
+> - **A particle before an operator is a value** (the second position the handoff named): `repeat
+>   while i < -2` renders `süresince i < - 2 tekrarla`, and the operator run cannot take a unary
+>   minus, so the run failed and the particle `i` could not start a value for the value's tail to
+>   extend; the loop read as `repeat 2`. PR 64's rule now also takes a particle directly before an
+>   operator.
+>
+> **In the value matrix, 1,059 failing pairs fall to 931 (−12%)**, every one in tr (57 on the
+> direct path, 71 through the adapter), and none newly fail (landing after PR 66 spared one exposed
+> accidental pass, `if 2 is in [n, 2]`). No stored corpus row moves. `possessive-chain.test.ts`
+> pins four `is in` shapes in tr and `particle-variable.test.ts` two operator shapes per variable;
+> reverting either rule fails them.
+>
+> What is left, 931 pairs (a cell counted once, under the first family it matches): `is empty` /
+> `is not empty` 158 (ar, hi, id, qu and tr write `is empty` and `is null` alike and read both as
+> `is null`; ms reads its `kosong` as `null`); `is in` 144 (de, it, pl, tr; de's `into` marker is
+> `in` too); `not` 134 (bn, hi, qu, sw, vi; qu `mana` and hi `नहीं` are the filed collisions); the
+> kept `the X of Y as T` difference 96; `v of w of obj as Int` 90 (every direct lane: semantic
+> builds upstream's binding, `v of (w of (obj as Int))`, and core's run of it writes nothing,
+> where upstream reads the null target as null); `my id` 88 (bn, pl, ru, th, uk); `{}` 46 (the object-literal
+> filing); and 175 more in smaller families. By language: qu 176, de 123, pl 72, hi 70, th 60, bn
+> 57, tr 42, it 40, sw 40.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
