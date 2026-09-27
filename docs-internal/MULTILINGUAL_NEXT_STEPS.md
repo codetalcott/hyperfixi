@@ -5237,6 +5237,33 @@ this signal was missing.
 > - **AOT:** a comparison phrase other than `is`/`is not` compiles to invalid JS (`p is less than
 >   q`, `is in`, `does not match`, `does not exist`), and `is a` throws at compile time, in English
 >   too. A translation now fails the same way instead of compiling a wrong comparison.
+>
+> **A translated condition reads its `or`, `not` and `and` back (PR 39, 2026-09-26).** The renderer
+> writes a condition's logical words in the language, and where the tokenizer reads the word back
+> as a bare identifier the condition kept it: de `p oder q` compared p with a variable named
+> `oder`, and `nicht p` tested one named `nicht`. On the direct path `if r or q` took the wrong
+> branch in 10 languages and `if not r` in 15; this fixes all 10 and 9 of the 15. The expression
+> lexicon's connectives now carry each
+> language's `or`/`not`/`and` from the i18n dictionaries' logical words, under the generator's
+> collision guard (`extract-property-lexicon.ts`; hi `नहीं` is also `no` and qu `mana` also
+> `without`, so both are left out). Across 46 conditions × 23 languages, wrong branches fall from
+> 193 to 67; negatives 81 → 57. Two related fixes in the handler head's `or`-event extractor: it ran
+> wherever the head pattern stopped, and a fused `if` pattern stops inside the condition (ms
+> `apabila click jika r atau q` rendered back as `on click or q if …` in ms/pt/ru/th/tl/uk); and it
+> lowercased a custom leg, so a translated `on click or myEvent` listened for `myevent` in all 16
+> languages that read the leg. No corpus row moves.
+>
+> Filed, not fixed (the 67):
+>
+> - **Split or cut:** ja `ではない` and ar `ليس` are split by their tokenizers; bn and vi lose the
+>   whole conditional on `not`; ja/ko cut a condition at `and`, qu renders `and` as `chaymanta`
+>   (its `then`), and sw as `na` (also `with`/`by`).
+> - **Collisions (a vocabulary choice):** hi `नहीं` is `no` and `not`; qu `mana` is `false`; ar
+>   `هو` is `it`; th `เป็น` is `as`; `empty` shares its word with `null` in ar/hi/id/ms/qu/tr;
+>   `exists` with `has` in bn/tl/tr.
+> - **Other words inside a condition:** `empty` in `is not empty` (de `leer`, fr `vide`, …), and a
+>   role marker inside a phrase (de `in` for `is in`, pl `do` for `equal to`).
+> - **A custom `or` leg** throws in bn/ja/tr/zh and is dropped in it/ko/th.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
