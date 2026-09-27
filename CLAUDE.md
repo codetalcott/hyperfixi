@@ -609,6 +609,22 @@ English across languages floods R4 with new invalid pairs at once. A corrupted e
 _reference_ is different — R4's fair denominator silently EXCLUDES pairs whose en raw
 code the canonical parser rejects, so that class still needs the en-side vitest gate.)
 
+Every gate above reads the **corpus**, and most value shapes are not in it. The
+**value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
+generates them instead: nine operand kinds × the operators × five positions (`put`
+and `set` values, `if` and `repeat while` conditions, `increment … by`), 1,328
+cells. It EXECUTES each one: the English source on upstream `hyperscript.org` is the
+oracle, and 48 lanes must match it — hyperfixi's English, semantic's English round
+trip, and each language on hyperfixi's direct path and through the adapter on
+upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell,
+lane) pair — 18,509 of 63,744 when it landed, 85% of them in semantic's English
+parse — and only shrinks: the gate (`value-matrix.<position>.test.ts`, five parallel
+shards in the package's ordinary suite, ~40s) fails on a new failing pair AND on a
+listed pair that passes. After a fix, prune with `npx tsx
+tools/regen-value-matrix-baseline.ts` (it refuses to add pairs without
+`--allow-new`). It is the queue for value work: the family and lane tables it prints
+say what to fix next.
+
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
 baseline generated against a stale/transitional DB will read as drifted.

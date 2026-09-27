@@ -1,0 +1,3056 @@
+{
+  "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
+  "cells": 1328,
+  "pairs": 63744,
+  "failing": 18509,
+  "entries": {
+    "while|2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "put|null": {
+      "lanes": "en hi/up *direct",
+      "family": "core+translation"
+    },
+    "set|null": {
+      "lanes": "en hi/up *direct",
+      "family": "core+translation"
+    },
+    "put|{}": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|{}": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "while|n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|arr": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "set|arr": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "while|#a's textContent": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|#a's textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|my id": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "set|my id": {
+      "lanes": "bn bn/up pl pl/up ru ru/up th th/up uk uk/up",
+      "family": "translation"
+    },
+    "if|my id": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr's length": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|#a's textContent's length": {
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
+    },
+    "while|#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|#a's textContent's length": {
+      "lanes": "pl tr",
+      "family": "direct-path"
+    },
+    "while|textContent of #a": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|the textContent of #a": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|the textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|length of arr": {
+      "lanes": "bn bn/up ms th th/up tl",
+      "family": "translation+direct-path"
+    },
+    "while|length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|@title of #a": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|@title of #a": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|@title of #a": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "put|v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|textContent of .w": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "set|textContent of .w": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "if|textContent of .w": {
+      "lanes": "en",
+      "family": "core"
+    },
+    "while|#a.textContent": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|#a.textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|me.id": {
+      "lanes": "pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|obj.v": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr.length": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|arr.length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.w.v": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|Math.max(n, 1)": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|Math.max(n, 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|[1, 2]": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "set|[1, 2]": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "put|[n, 2]": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "set|[n, 2]": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "if|[n, 2]": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|(n + 1)": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|(n + 1)": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|(n + 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(s + \"c\")": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "set|(n > 1)": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|2 + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|n + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|#a's textContent + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|#a's textContent + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + #a's textContent": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + #a's textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|obj's v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj's v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|obj's v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|arr's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|arr's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|#a's textContent's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|#a's textContent's length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|textContent of #a + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|textContent of #a + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + textContent of #a": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|the textContent of #a + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|the textContent of #a + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + the textContent of #a": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + the textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|v of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|v of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|v of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|length of arr + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|length of arr + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|length of arr + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|v of w of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of w of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|v of w of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|v of w of obj + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|#a.textContent + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|#a.textContent + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + #a.textContent": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + #a.textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.v + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + obj.v": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + obj.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr.length + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|arr.length + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + arr.length": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + arr.length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.w.v + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.w.v + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + obj.w.v": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|Math.max(n, 1) + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|Math.max(n, 1) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + Math.max(n, 1)": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + Math.max(n, 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|String(n) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|String(n) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|String(n) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|2 + String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|2 + String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|2 + String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(n + 1) + 2": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|(n + 1) + 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|(n + 1) + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 + (n + 1)": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 + (n + 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|my id + \"q\"": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "set|my id + \"q\"": {
+      "lanes": "bn bn/up pl pl/up ru ru/up th th/up uk uk/up",
+      "family": "translation"
+    },
+    "put|\"q\" + my id": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "set|\"q\" + my id": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "put|@title of #a + \"q\"": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|@title of #a + \"q\"": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "put|\"q\" + @title of #a": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|\"q\" + @title of #a": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|(s + \"c\") + \"q\"": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|20 - 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|20 - 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 - 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 - 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|n - 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n - 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|20 - n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|20 - n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 * 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 * 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|n * 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n * 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 * n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 * n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|12 / 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|12 / 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|2 / 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 / 2": {
+      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "semantic-en"
+    },
+    "while|n / 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n / 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|12 / n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|12 / n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|13 mod 4": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|13 mod 4": {
+      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "semantic-en"
+    },
+    "while|2 mod 4": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 mod 4": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "while|13 mod 2": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|13 mod 2": {
+      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "semantic-en"
+    },
+    "while|n mod 4": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n mod 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|13 mod n": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|13 mod n": {
+      "lanes": "en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "semantic-en"
+    },
+    "put|obj's v < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|1 < obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < obj's v": {
+      "lanes": "en-rt *up",
+      "family": "semantic-en"
+    },
+    "put|arr's length < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|1 < arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < arr's length": {
+      "lanes": "en-rt *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent's length < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|#a's textContent's length < 4": {
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
+    },
+    "put|1 < #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|1 < #a's textContent's length": {
+      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
+      "family": "translation+direct-path"
+    },
+    "put|v of obj < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of obj < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|1 < v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|length of arr < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|length of arr < 4": {
+      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
+      "family": "translation"
+    },
+    "put|1 < length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|1 < length of arr": {
+      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
+      "family": "translation"
+    },
+    "put|v of w of obj < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of w of obj < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|1 < v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|String(n) < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) < 4": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|1 < String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|1 < String(n)": {
+      "lanes": "en-rt *up",
+      "family": "semantic-en"
+    },
+    "set|(n + 1) < 4": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "put|obj's v is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|6 is obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|6 is obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|arr's length is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|6 is arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent's length is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|#a's textContent's length is 6": {
+      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
+      "family": "translation+direct-path"
+    },
+    "put|6 is #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|6 is #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|6 is #a's textContent's length": {
+      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
+      "family": "translation+direct-path"
+    },
+    "put|v of obj is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of obj is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|6 is v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|6 is v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|length of arr is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|length of arr is 6": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|6 is length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|6 is length of arr": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "if|6 is length of arr": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|v of w of obj is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of w of obj is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|6 is v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|String(n) is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) is 6": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|6 is String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|6 is String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|6 is String(n)": {
+      "lanes": "th/up",
+      "family": "adapter"
+    },
+    "set|(n + 1) is 6": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "put|my id is \"ab\"": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "set|my id is \"ab\"": {
+      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
+      "family": "translation+adapter"
+    },
+    "if|my id is \"ab\"": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|\"ab\" is my id": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "set|\"ab\" is my id": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "if|\"ab\" is my id": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|@title of #a is \"ab\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|@title of #a is \"ab\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|\"ab\" is @title of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(s + \"c\") is \"ab\"": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "put|6 is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|6 is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|6 is not 6": {
+      "lanes": "qu/up",
+      "family": "adapter"
+    },
+    "put|2 is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|2 is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|2 is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|6 is not 2": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|6 is not 2": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|6 is not 2": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|n is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|n is not 6": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|n is not 6": {
+      "lanes": "qu/up",
+      "family": "adapter"
+    },
+    "put|6 is not n": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|6 is not n": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|6 is not n": {
+      "lanes": "qu/up",
+      "family": "adapter"
+    },
+    "put|\"ab\" is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|\"ab\" is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|\"ab\" is not \"ab\"": {
+      "lanes": "qu/up",
+      "family": "adapter"
+    },
+    "put|\"q\" is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|\"q\" is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|\"q\" is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|\"ab\" is not \"q\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|\"ab\" is not \"q\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|\"ab\" is not \"q\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|s is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|s is not \"ab\"": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|s is not \"ab\"": {
+      "lanes": "qu/up",
+      "family": "adapter"
+    },
+    "put|\"ab\" is not s": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|\"ab\" is not s": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|true and true": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|true and true": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|true and true": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|flag and true": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|flag and true": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|flag and true": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|true and flag": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|true and flag": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|true and flag": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|Array.isArray(arr) and true": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|Array.isArray(arr) and true": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|Array.isArray(arr) and true": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|true and Array.isArray(arr)": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|true and Array.isArray(arr)": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|true and Array.isArray(arr)": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|(n > 1) and true": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|(n > 1) and true": {
+      "lanes": "it it/up pl pl/up qu qu/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "if|(n > 1) and true": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|true and (n > 1)": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|true and (n > 1)": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|true and (n > 1)": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "put|\"xab6\" contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains \"a\"": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"q\" contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"q\" contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"q\" contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains \"q\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains \"q\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains \"q\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|s contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|s contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|s contains \"a\"": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains s": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains s": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains s": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|#a's textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|#a's textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|#a's textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains #a's textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains #a's textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains #a's textContent": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|my id contains \"a\"": {
+      "lanes": "bn/up ja ja/up ko ko/up qu qu/up th/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "set|my id contains \"a\"": {
+      "lanes": "bn/up ja ja/up ko ko/up pl pl/up qu qu/up ru ru/up th/up uk uk/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "if|my id contains \"a\"": {
+      "lanes": "bn/up ja ja/up ko ko/up qu/up th/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains my id": {
+      "lanes": "bn bn/up ja ja/up ko ko/up qu qu/up th th/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains my id": {
+      "lanes": "bn bn/up ja ja/up ko ko/up qu qu/up th th/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains my id": {
+      "lanes": "bn bn/up ja/up ko/up qu qu/up th th/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains textContent of #a": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|the textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|the textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|the textContent of #a contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains the textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains the textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains the textContent of #a": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|@title of #a contains \"a\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|@title of #a contains \"a\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|@title of #a contains \"a\"": {
+      "lanes": "ja/up ko/up qu/up zh/up",
+      "family": "adapter"
+    },
+    "put|\"xab6\" contains @title of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|\"xab6\" contains @title of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains @title of #a": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|#a.textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|#a.textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|#a.textContent contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains #a.textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains #a.textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains #a.textContent": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|me.id contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|me.id contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|me.id contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains me.id": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains me.id": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains me.id": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|String(n) contains \"a\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) contains \"a\"": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|String(n) contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|\"xab6\" contains String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|\"xab6\" contains String(n)": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|s.toUpperCase() contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|s.toUpperCase() contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|s.toUpperCase() contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains s.toUpperCase()": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains s.toUpperCase()": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains s.toUpperCase()": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|(s + \"c\") contains \"a\"": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|(s + \"c\") contains \"a\"": {
+      "lanes": "it it/up ja ja/up ko ko/up pl pl/up qu qu/up ru ru/up uk uk/up zh zh/up",
+      "family": "translation"
+    },
+    "if|(s + \"c\") contains \"a\"": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"xab6\" contains (s + \"c\")": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|\"xab6\" contains (s + \"c\")": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|\"xab6\" contains (s + \"c\")": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains 2": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains n": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains n": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains n": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|arr contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|arr contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|arr contains 2": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains #a's textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains #a's textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains #a's textContent": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains obj's v": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains arr's length": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains #a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains #a's textContent's length": {
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja/up ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains the textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains the textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains the textContent of #a": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains v of obj": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains length of arr": {
+      "lanes": "bn bn/up ja/up ko/up ms ms/up qu qu/up th th/up tl tl/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|[1, 2, 6] contains v of w of obj": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|textContent of .w contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|textContent of .w contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|textContent of .w contains 2": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains #a.textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains #a.textContent": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains #a.textContent": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains obj.v": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains obj.v": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains obj.v": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains arr.length": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains arr.length": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains arr.length": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains obj.w.v": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains obj.w.v": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains obj.w.v": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains Math.max(n, 1)": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains Math.max(n, 1)": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains Math.max(n, 1)": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2, 6] contains String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|[1, 2, 6] contains String(n)": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains String(n)": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[1, 2] contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2] contains 2": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2] contains 2": {
+      "lanes": "ja/up ko/up qu qu/up zh/up",
+      "family": "translation+adapter"
+    },
+    "put|[n, 2] contains 2": {
+      "lanes": "ja/up ko/up qu/up zh/up *direct",
+      "family": "translation+direct-path"
+    },
+    "set|[n, 2] contains 2": {
+      "lanes": "ja/up ko/up qu/up zh/up *direct",
+      "family": "translation+direct-path"
+    },
+    "if|[n, 2] contains 2": {
+      "lanes": "ja/up ko/up qu/up zh/up *direct",
+      "family": "translation+direct-path"
+    },
+    "put|[1, 2, 6] contains (n + 1)": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "set|[1, 2, 6] contains (n + 1)": {
+      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "family": "translation"
+    },
+    "if|[1, 2, 6] contains (n + 1)": {
+      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|2 is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|2 is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|2 is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|n is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|n is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|n is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|2 is in arr": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "set|2 is in arr": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "if|2 is in arr": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "put|#a's textContent is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|#a's textContent is in [1, 2, 6]": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|#a's textContent is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|obj's v is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|obj's v is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|arr's length is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|arr's length is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|#a's textContent's length is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|#a's textContent's length is in [1, 2, 6]": {
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "family": "translation"
+    },
+    "put|textContent of #a is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|textContent of #a is in [1, 2, 6]": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|textContent of #a is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|the textContent of #a is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|the textContent of #a is in [1, 2, 6]": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|the textContent of #a is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|v of obj is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of obj is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|v of obj is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|length of arr is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|length of arr is in [1, 2, 6]": {
+      "lanes": "bn bn/up de de/up ms ms/up th th/up tl tl/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|v of w of obj is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|v of w of obj is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|v of w of obj is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|2 is in textContent of .w": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "if|2 is in textContent of .w": {
+      "lanes": "de/up",
+      "family": "adapter"
+    },
+    "put|#a.textContent is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|#a.textContent is in [1, 2, 6]": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|#a.textContent is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|obj.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|obj.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|obj.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|arr.length is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|arr.length is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|arr.length is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|obj.w.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|obj.w.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|obj.w.v is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|Math.max(n, 1) is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|Math.max(n, 1) is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|Math.max(n, 1) is in [1, 2, 6]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|String(n) is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) is in [1, 2, 6]": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|String(n) is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|2 is in [1, 2]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|2 is in [1, 2]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "if|2 is in [1, 2]": {
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
+    },
+    "put|2 is in [n, 2]": {
+      "lanes": "de/up tr/up *direct",
+      "family": "translation+direct-path"
+    },
+    "set|2 is in [n, 2]": {
+      "lanes": "de/up tr/up *direct",
+      "family": "translation+direct-path"
+    },
+    "if|2 is in [n, 2]": {
+      "lanes": "ar bn de de/up es fr he hi id it ja ko ms pl pt qu ru sw th tl tr/up uk vi zh",
+      "family": "translation+direct-path+adapter"
+    },
+    "put|(n + 1) is in [1, 2, 6]": {
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
+    },
+    "set|(n + 1) is in [1, 2, 6]": {
+      "lanes": "it it/up pl pl/up ru ru/up tr tr/up uk uk/up",
+      "family": "translation"
+    },
+    "if|(n + 1) is in [1, 2, 6]": {
+      "lanes": "de/up tr tr/up",
+      "family": "translation+adapter"
+    },
+    "put|not false": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "set|not false": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "if|not false": {
+      "lanes": "bn bn/up hi hi/up qu qu/up vi vi/up",
+      "family": "translation"
+    },
+    "put|not true": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "set|not true": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "if|not true": {
+      "lanes": "bn bn/up hi hi/up qu/up",
+      "family": "translation+adapter"
+    },
+    "put|not flag": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "set|not flag": {
+      "lanes": "hi qu qu/up",
+      "family": "translation+direct-path"
+    },
+    "if|not flag": {
+      "lanes": "bn bn/up qu/up",
+      "family": "translation+adapter"
+    },
+    "put|not Array.isArray(arr)": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "set|not Array.isArray(arr)": {
+      "lanes": "hi qu",
+      "family": "direct-path"
+    },
+    "if|not Array.isArray(arr)": {
+      "lanes": "bn bn/up",
+      "family": "translation"
+    },
+    "put|not (n > 1)": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "set|not (n > 1)": {
+      "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "if|not (n > 1)": {
+      "lanes": "bn bn/up hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "put|-2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-2": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-n": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-#a's textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-#a's textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-#a's textContent": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-#a's textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-obj's v": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-obj's v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-arr's length": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-arr's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-#a's textContent's length": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-#a's textContent's length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-textContent of #a": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-textContent of #a": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-v of obj": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-v of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-length of arr": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-length of arr": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-v of w of obj": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-v of w of obj": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-#a.textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-#a.textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-#a.textContent": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-#a.textContent": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-obj.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-obj.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-obj.v": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-obj.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-arr.length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-arr.length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-arr.length": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-arr.length": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-obj.w.v": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-Math.max(n, 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-Math.max(n, 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-Math.max(n, 1)": {
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
+    },
+    "increment|-Math.max(n, 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-String(n)": {
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
+    },
+    "increment|-String(n)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|-(n + 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|-(n + 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|-(n + 1)": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|-(n + 1)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|no .w": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|no .w": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "if|no .w": {
+      "lanes": "hi hi/up tl/up zh zh/up",
+      "family": "translation+adapter"
+    },
+    "put|\"\" is empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "set|\"\" is empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "if|\"\" is empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "put|null is empty": {
+      "lanes": "hi hi/up",
+      "family": "translation"
+    },
+    "set|null is empty": {
+      "lanes": "hi hi/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "put|{} is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|{} is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|{} is empty": {
+      "lanes": "en bn de es fr he it ja ko pl pt ru sw th tl uk vi zh",
+      "family": "core"
+    },
+    "put|my id is empty": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "set|my id is empty": {
+      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
+      "family": "translation+adapter"
+    },
+    "if|my id is empty": {
+      "lanes": "bn/up th/up",
+      "family": "adapter"
+    },
+    "put|@title of #a is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|@title of #a is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|@title of #a is empty": {
+      "lanes": "en",
+      "family": "core"
+    },
+    "put|textContent of .w is empty": {
+      "lanes": "en",
+      "family": "core"
+    },
+    "set|textContent of .w is empty": {
+      "lanes": "en",
+      "family": "core"
+    },
+    "if|textContent of .w is empty": {
+      "lanes": "en",
+      "family": "core"
+    },
+    "put|String(n) is empty": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|String(n) is empty": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|[n, 2] is empty": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|[n, 2] is empty": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "if|[n, 2] is empty": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|(s + \"c\") is empty": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "put|\"\" is not empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "set|\"\" is not empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "if|\"\" is not empty": {
+      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "put|\"q\" is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|\"q\" is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|\"q\" is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|null is not empty": {
+      "lanes": "ar ar/up hi hi/up qu qu/up th th/up",
+      "family": "translation"
+    },
+    "set|null is not empty": {
+      "lanes": "ar ar/up hi hi/up qu qu/up th th/up tr tr/up",
+      "family": "translation"
+    },
+    "if|null is not empty": {
+      "lanes": "ar/up hi/up th/up",
+      "family": "adapter"
+    },
+    "put|{} is not empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|{} is not empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|{} is not empty": {
+      "lanes": "en ar/up bn de es fr he hi/up it ja ko pl pt qu qu/up ru sw th/up tl uk vi zh",
+      "family": "core+translation+adapter"
+    },
+    "put|s is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|s is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|s is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|arr is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|arr is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|arr is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|obj is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "set|obj is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|obj is not empty": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "while|\"7\" as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|\"7\" as Int": {
+      "lanes": "tr/up *direct",
+      "family": "translation+direct-path"
+    },
+    "while|2 as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|2 as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "while|n as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent as Int": {
+      "lanes": "ar/up de/up es/up fr/up he/up id/up it/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tr/up uk/up",
+      "family": "adapter"
+    },
+    "set|#a's textContent as Int": {
+      "lanes": "ar/up de/up es/up fr/up he/up id/up it/up ms/up pl/up pt/up qu/up ru/up sw/up th/up tr/up uk/up",
+      "family": "adapter"
+    },
+    "while|#a's textContent as Int": {
+      "lanes": "ar/up de/up es/up fr/up he/up id/up it/up ms/up pl pl/up pt/up qu/up ru/up sw/up th/up tr tr/up uk/up",
+      "family": "translation+adapter"
+    },
+    "increment|#a's textContent as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|obj's v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|obj's v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj's v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|obj's v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|arr's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|arr's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr's length as Int": {
+      "lanes": "en-rt pl tr *up",
+      "family": "semantic-en"
+    },
+    "increment|arr's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|#a's textContent's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|#a's textContent's length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|#a's textContent's length as Int": {
+      "lanes": "pl tr",
+      "family": "direct-path"
+    },
+    "put|textContent of #a as Int": {
+      "lanes": "en zh/up *direct",
+      "family": "core+translation"
+    },
+    "set|textContent of #a as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "while|textContent of #a as Int": {
+      "lanes": "tr/up *direct",
+      "family": "translation+direct-path"
+    },
+    "increment|textContent of #a as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "put|the textContent of #a as Int": {
+      "lanes": "en zh/up *direct",
+      "family": "core+translation"
+    },
+    "set|the textContent of #a as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "while|the textContent of #a as Int": {
+      "lanes": "en tr/up *direct",
+      "family": "core+translation"
+    },
+    "increment|the textContent of #a as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "put|v of obj as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|v of obj as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "while|v of obj as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|v of obj as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "put|length of arr as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|length of arr as Int": {
+      "lanes": "en en-rt ar/up bn/up de/up es/up fr/up he/up hi/up id/up it/up ja/up ko/up pl/up pt/up qu/up ru/up sw/up th/up tr/up uk/up vi/up zh/up *direct",
+      "family": "core+semantic-en"
+    },
+    "while|length of arr as Int": {
+      "lanes": "bn/up pl th/up tr tr/up",
+      "family": "translation+direct-path+adapter"
+    },
+    "increment|length of arr as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "put|v of w of obj as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|v of w of obj as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "while|v of w of obj as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|v of w of obj as Int": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "while|#a.textContent as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|#a.textContent as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.v as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|arr.length as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|arr.length as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.w.v as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.w.v as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|Math.max(n, 1) as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|Math.max(n, 1) as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|String(n) as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|String(n) as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(n + 1) as Int": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|(n + 1) as Int": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|(n + 1) as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|n + (2 * 3)": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n + (2 * 3)": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(n * 2) + 3": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|(n * 2) + 3": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|(n * 2) + 3": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|(n + 2) * 3": {
+      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "while|(n + 2) * 3": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|(n + 2) * 3": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|n - 2 - 1": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|n - 2 - 1": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|n > 1 and n < 10": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|n > 1 and n < 10": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|n > 1 and n < 10": {
+      "lanes": "sw/up",
+      "family": "adapter"
+    },
+    "set|not flag or n is 6": {
+      "lanes": "hi qu qu/up",
+      "family": "translation+direct-path"
+    },
+    "if|not flag or n is 6": {
+      "lanes": "bn bn/up qu qu/up vi vi/up",
+      "family": "translation"
+    },
+    "put|flag and not (n is 6)": {
+      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "family": "translation"
+    },
+    "set|flag and not (n is 6)": {
+      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "family": "translation"
+    },
+    "if|flag and not (n is 6)": {
+      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "family": "translation"
+    },
+    "put|#a's textContent as Int + 1": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|#a's textContent as Int + 1": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|#a's textContent as Int + 1": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|#a's textContent as Int + 1": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|length of arr + n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "set|length of arr + n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|length of arr + n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "increment|length of arr + n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "while|obj.v * obj.w.v": {
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
+    },
+    "increment|obj.v * obj.w.v": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "put|s + \" \" + my id": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    },
+    "set|s + \" \" + my id": {
+      "lanes": "bn bn/up th th/up",
+      "family": "translation"
+    }
+  }
+}
