@@ -740,8 +740,9 @@ interface AmbiguousSenseRule {
 const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
 
 /** A word-shaped identifier (`p`, `value`, `:count`, `$total`), not an operator
-    symbol that a tokenizer lexed as an identifier. */
-const OPERAND_WORD = /^[:$]?[\p{L}_][\p{L}\p{N}_]*$/u;
+    symbol that a tokenizer lexed as an identifier. A word may carry combining
+    marks: hi `मान` (value) spells its vowel with one. */
+const OPERAND_WORD = /^[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*$/u;
 
 const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, AmbiguousSenseRule>>>> = {
   ar: { هو: { beforePredicate: 'is', afterOperand: 'is' } },
@@ -937,6 +938,33 @@ export function joinExpressionTokens(
       }
       continue;
     }
+    // Owner-first genitive, `<owner> <marker> <property>`: how a possessive
+    // inside an expression renders wherever the possessive marker sits between
+    // owner and property (ja `#d1のtextContent`, ko `#d1의 textContent`, vi
+    // `#d1 của textContent`; renderPropertyPath). The owner-first anchor below
+    // reads only a property word the lexicon translates (`#d1 の 値`), since its
+    // marker test also admits a `from` marker, so an untranslated property kept
+    // the marker: `if #d1's textContent is "z"` read back as `#d1 の textContent
+    // is "z"`, which the expression parser took for the truthy `#d1`. The
+    // profile's own between-position marker is always the genitive, so here any
+    // property word qualifies. The `'s` form is the English reference's, and it
+    // composes with a chained `'s` (`#d1のtextContent's length`). Gated on the
+    // shape the renderer writes: a selector owner and a property word.
+    const genitive = profile?.possessive;
+    const genitiveProperty = tokens[i + 2];
+    if (
+      genitive?.markerPosition === 'between' &&
+      genitive.marker &&
+      token.kind === 'selector' &&
+      next?.value === genitive.marker &&
+      genitiveProperty !== undefined &&
+      isPropertyHeadCandidate(genitiveProperty, languageCode)
+    ) {
+      append(`${token.value}'s`, token);
+      append(translatePropertyName(languageCode, genitiveProperty.value), genitiveProperty);
+      i += 2;
+      continue;
+    }
     if (reference !== undefined && next) {
       // A possessor may be separated from its property by a CONNECTOR: id
       // `saya punya nilai` = "I have value" = "my value" (`punya` = "have/own").
@@ -1032,6 +1060,9 @@ export function joinExpressionTokens(
     // parser threw on the particle ("Unknown token: の"). Same marker table,
     // same property lexicon; gated on the property head being one the lexicon
     // knows, so `#modal に 表示` (a dative marker before a verb) is untouched.
+    // Where the marker is the profile's between-position genitive, the anchor
+    // at the top of the loop reads the pair first, for any property word; this
+    // one still reads the rest (qu `#price pa chanin`, tr `#price ın değer`).
     if (
       token.kind === 'selector' &&
       next &&

@@ -1,5 +1,6 @@
 /**
- * A translated condition reads its `or`, `not` and `and` back as English.
+ * A translated condition reads its `or`, `not` and `and` back as English, and
+ * its copula and possessives.
  *
  * The renderer writes these words in the language (de `oder`, `nicht`), and
  * where the tokenizer reads the word back as a bare identifier the condition
@@ -49,6 +50,17 @@ const GROUPS: Array<[string, string[], string[]]> = [
     ['ar', 'hi', 'th'],
   ],
   ['has, the same word as is', ['#d1 has .x'], ['hi']],
+  // Where the possessive marker sits between owner and property (ja
+  // `#d1のtextContent`), the marker stayed in the condition.
+  [
+    'a possessive, owner first',
+    [
+      `#d1's textContent is "z"`,
+      `#d1's textContent is #d2's textContent`,
+      `#i1's value is not "v"`,
+    ],
+    ['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'],
+  ],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
@@ -67,12 +79,11 @@ describe.each(GROUPS)('%s', (_word, conditions, languages) => {
 // (`"$" + هو`, whose `+` the ar tokenizer lexes as an identifier), never an
 // operand. The corpus row `when-value-changes` renders exactly that.
 describe('ar هو as `it`', () => {
-  it.each([
-    'on click put "$" + it into #out',
-    'on click put it into #out',
-    'on click set x to it',
-  ])('%s', source => {
-    const foreign = render(parse(source, 'en')!, 'ar');
-    expect(render(parse(foreign, 'ar')!, 'en'), foreign).toBe(source);
-  });
+  it.each(['on click put "$" + it into #out', 'on click put it into #out', 'on click set x to it'])(
+    '%s',
+    source => {
+      const foreign = render(parse(source, 'en')!, 'ar');
+      expect(render(parse(foreign, 'ar')!, 'en'), foreign).toBe(source);
+    }
+  );
 });
