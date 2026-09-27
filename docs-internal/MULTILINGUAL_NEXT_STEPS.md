@@ -5788,6 +5788,29 @@ this signal was missing.
 > What is left, 2,089 pairs: tr (604, both engines) and pl (339) are mostly the variable `i` (718 of
 > their pairs sit in the loop and increment cells that name it); then qu (206) and de (138); every
 > other language is under 90.
+>
+> **A variable spelled like the language's conjunction is the variable (PR 59, 2026-09-27).** pl
+> `i` ("and") is the usual loop variable, es `y` ("and") a coordinate; it and pt `e`, fr `et` and
+> de `und` are "and" too, and es `o` and pt/fr `ou` are "or". Each tokenizes, or its lexicon reads,
+> as the conjunction, so a role captured `and` for the variable (`set i to 0` came back `set and to
+> 0`) and a value joined it as `and` (`i < 3` as `and < 3`): every pl loop and increment cell failed.
+> A conjunction is never a whole value, and it never stands next to an operator, before a comparison
+> word, or inside brackets or a list; in any of those places the word is now the variable
+> (`isConnectiveOperand`), for the join and for the value extent alike. Between two operands it is
+> still `and`/`or`.
+>
+> **In the value matrix, 2,089 failing pairs fall to 1,840 (−12%)**, every one in pl (212 on the
+> direct path, 37 through the adapter), and none newly fail. Four stored corpus rows move, all
+> fixes: pl `if-condition`, `if-matches` and `unless-condition` keep English `I match …`, which pl
+> read as `and match …` (its `i`, case-folded); es `behavior-draggable`'s `medir y` read as `measure
+> and`. `test/connective-operand.test.ts` round-trips nine variables through six shapes each and
+> pins the conjunctions; each of seven mutants removing one piece fails it. One survived at first,
+> the value-extent check: the matrix and the corpus did not see it, but a possessive head does (pl
+> `put obj's v + i` lost `+ i` and its destination), and the test now carries that shape.
+>
+> tr's `i` is a different problem: its accusative marker, a particle, not a conjunction (`i i 2
+> artır` drops the amount). What is left, 1,840 pairs: tr 604, qu 206, de 138, and every other
+> language under 100.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
