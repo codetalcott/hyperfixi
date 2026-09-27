@@ -146,6 +146,16 @@ export interface UnaryExpressionNode extends ExpressionNode {
  * `x is a Number` / `x is not an Array!`: core's type check. The type name is a
  * word, not an expression, and a trailing `!` makes null fail the check.
  */
+/**
+ * `value as Type`: core's asExpression, the type an identifier node, as the
+ * pratt parser writes it (core's evaluator also reads a bare string).
+ */
+export interface AsExpressionNode extends ExpressionNode {
+  readonly type: 'asExpression';
+  readonly expression: ExpressionNode;
+  readonly targetType: IdentifierNode;
+}
+
 export interface TypeCheckExpressionNode extends ExpressionNode {
   readonly type: 'typeCheckExpression';
   readonly value: ExpressionNode;
@@ -219,6 +229,7 @@ export type AnyExpressionNode =
   | BinaryExpressionNode
   | UnaryExpressionNode
   | TypeCheckExpressionNode
+  | AsExpressionNode
   | CallExpressionNode
   | ArrayLiteralNode
   | ObjectLiteralNode

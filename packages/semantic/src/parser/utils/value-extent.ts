@@ -116,9 +116,8 @@ const TRAILING_CONVERSION = /\s+as\s+([A-Za-z]\w*)!?\s*$/;
 /**
  * Does the expression parser read ALL of `raw` as one expression?
  *
- * - A trailing conversion (`… as Int`) is allowed when it names a known type:
- *   downstream reads it, as it reads the conversion fold's values, and this
- *   parser has no `as`. `fetch … as json` never gets here, since the matcher
+ * - A conversion (`… as Int`) is allowed when it names a known type:
+ *   downstream reads it, as it reads the conversion fold's values. `fetch … as json` never gets here, since the matcher
  *   stops a value at the command's responseType marker.
  * - An unclosed quote is never whole: `'s v "Y"` is a split taken after an
  *   owner, not a string.
@@ -137,5 +136,24 @@ export function readsAsOneExpression(raw: string): boolean {
   const result = parseExpression(body);
   if (!result.success || result.consumed === undefined) return false;
   // The tokenizer ends with an EOF token, which the parser never consumes.
-  return result.consumed === tokenize(body).length - 1;
+  if (result.consumed !== tokenize(body).length - 1) return false;
+  // A conversion inside the value must name a type too (`x as Int + 1`).
+  return conversionTypes(result.node).every(type => CONVERSION_TYPE_NAMES.has(type));
+}
+
+/** The type names of every conversion in a parsed expression. */
+function conversionTypes(node: unknown): string[] {
+  const out: string[] = [];
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      return;
+    }
+    if (!n || typeof n !== 'object') return;
+    const record = n as { type?: unknown; targetType?: { name?: unknown } };
+    if (record.type === 'asExpression') out.push(String(record.targetType?.name ?? ''));
+    Object.values(n).forEach(walk);
+  };
+  walk(node);
+  return out;
 }

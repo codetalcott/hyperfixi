@@ -5626,15 +5626,15 @@ this signal was missing.
 >
 > Filed, not fixed:
 >
-> - **Semantic's expression parser has no `as`** (above). It needs upstream's binding: `of`'s right
->   operand takes `as`.
+> - ~~**Semantic's expression parser has no `as`** (above). It needs upstream's binding: `of`'s right
+>   operand takes `as`.~~ Fixed by PR 56.
 > - **The renderer localizes only the first link of a chained possessive** (ar `textContent لـ #a's
 >   length`), so 16 languages misread `#a's textContent's length`.
 > - **bn, ms, th and tl render `length` in their own word** and read `length of arr` back as another
 >   value (`put panjang of arr`).
 > - **pl loses a chained `of`**: `v of w of obj` comes back `v`.
-> - **`@title of #a` is still dropped whole**, in English too: semantic's expression parser has no
->   attribute root for `of`.
+> - ~~**`@title of #a` is still dropped whole**, in English too: semantic's expression parser has no
+>   attribute root for `of`.~~ Fixed by PR 56.
 > - ~~**`increment … by` a non-literal amount is still dropped** (4,983 pairs, the matrix's biggest
 >   single family): the increment schema's `quantity` accepts only a literal.~~ Fixed by PR 55.
 >
@@ -5694,6 +5694,47 @@ this signal was missing.
 >   matrix, whose increment cells take numbers.
 > - **sw and vi render `null` as their word for empty** (`tupu`, `rỗng`), which reads back as the
 >   `empty` command after a bare amount (`increment i by null`).
+>
+> **Semantic's expression parser reads `as` and `@attr of` (PR 56, 2026-09-27).** It stopped at
+> both. So the matcher could not read a value with either inside it whole (`put @title of #a` kept
+> `@title`, which reads `me`'s; `#a's textContent as Int + 1` lost `+ 1`), and buildAST dropped every
+> conversion on the direct path. `as` now binds as core and upstream bind it, tighter than
+> arithmetic and looser than a prefix operator; bare `X of Y as T` converts the target, and `the X
+> of Y as T` the property, core's known difference (`UPSTREAM-KNOWN-DIFFS.md`). `@title of #a` is a
+> binary `of` on an attribute, core's shape. A conversion anywhere in a value must name a known
+> type for the matcher to read it whole, as a trailing one already had to.
+>
+> Reading `as` exposed a renderer fault, and one more written target:
+>
+> - **A possessive and its `of` form bind a conversion differently**: `#a's textContent as Int`
+>   converts the text, `textContent of #a as Int` converts `#a`. 16 languages render a possessive in
+>   the `of` form, so their `#a's textContent as Int` read `null` on upstream, and on the direct
+>   path once semantic read the `as`. The renderer now keeps the binding before `as`: English
+>   leaves an `of` phrase unfolded, and a property-first rendering is parenthesized (es
+>   `(textContent de #a) as Int`).
+> - **`set`'s destination is a written target too**, never an operator run or a call. it, pl, ru and
+>   uk render `set x to V` with V bare after `x`, so every `set` whose value began with `(` or `-`
+>   read it into the destination (`x(n + 1)`, `x - n`): 32 cells, on both engines.
+>
+> **In the value matrix, 5,727 failing pairs fall to 4,340 (−24%).** 1,390 pairs pass now, and
+> semantic's English parse loses no value in any cell (the family that was 85% of the matrix when it
+> landed). 3 newly fail, accepted: `if @title of #a contains "a"` in ja, ko and zh passed only
+> because the value was dropped; kept, it fails on the `contains` collision below. In the corpus,
+> one row moves, `computed-value`, in every language's English re-render: it keeps `the value of
+> #price as Number`, the reference's own form, where it was folded to `#price's value`, which binds
+> the conversion differently on upstream. Its direct path, where the parser threw at the `as`
+> inside the parentheses and buildAST fell back to an identifier named after the whole value, now
+> builds the conversion. Semantic's `test/value-conversion.test.ts` round-trips 11 sources through
+> all 23 languages and checks the direct path's conversions; each of eight mutants reverting one
+> piece fails it or the parser tests.
+>
+> Filed, not fixed:
+>
+> - **`contains` in ja, ko, qu and zh** (about 1,050 pairs, the largest family left): ja `含む`, ko
+>   `포함` and zh `包含` read back as `inclusive`, and qu `ukupi_kan` splits at the underscore; in a
+>   `put` value the words before it are lost.
+> - **Semantic's expression tokenizer drops `|`**, so a piped conversion (`as JSONString | JSON`)
+>   reads as `as JSONString`. No corpus row pipes.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
