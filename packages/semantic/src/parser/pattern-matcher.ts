@@ -2315,6 +2315,34 @@ export class PatternMatcher {
     // Possessive pair (`my value`, `私の 値`, `mi valor`).
     if (this.tryMatchPossessiveExpression(tokens)) return true;
 
+    // `the` before an operand is an article, as upstream's unaryExpression reads
+    // it. The role capture drops it before a whole value (skipNoiseWords), but
+    // nothing did after an operator: `"x" + the textContent of #d1`.
+    if (token.value.toLowerCase() === 'the') {
+      const mark = tokens.mark();
+      tokens.advance();
+      if (this.tryConsumeRunOperand(tokens, afterOperator, afterConnective)) return true;
+      tokens.reset(mark);
+    }
+
+    // A property path, through the matchers the role capture uses for a whole
+    // value: `#d1's textContent`, `textContent of #d1`, `#d1.textContent`, and
+    // each language's surface for them (`textContent de #d1`,
+    // `#d1のtextContent`). Without them a value that started with a path was
+    // never a run: the path was captured alone and the rest left over, so `put
+    // #d1's textContent + "x" into #out` lost its whole `put`. A call is not an
+    // operand here. The run's raw spaces its parentheses, so where a set's value
+    // follows its destination with no marker between (it `impostare in
+    // #t.innerText ( … ) * 2`), a path's arguments and the value look the same.
+    if (
+      this.tryMatchOfPossessiveExpression(tokens) ||
+      this.tryMatchPossessiveSelectorExpression(tokens) ||
+      this.tryMatchPropertyAccessExpression(tokens, true) ||
+      this.tryMatchSelectorPropertyExpression(tokens)
+    ) {
+      return true;
+    }
+
     // Single value token. Particles/conjunctions/punctuation are never
     // operands (they belong to the surrounding pattern), and neither is a
     // block's own word (sw `mwisho`, `end`, after `inafanana`, matches).

@@ -5492,6 +5492,42 @@ this signal was missing.
 > ("`X of Y` took every operator after it"), with what it found. Semantic drops the same values in
 > English and every translation (PR 43's possessive filing, widened), and the AOT cannot compile a
 > bare `X of Y`.
+>
+> **A value whose operand is a property path keeps its whole expression (PR 51, 2026-09-27).** PR 43's
+> filing about possessive operands, widened by PR 50. Semantic's operator run took one token, a
+> possessive pair (`my value`) or a group as an operand. A value that started with `#d1's textContent`,
+> `textContent of #d1` or `#d1.textContent` was never a run: the path was captured alone and the rest
+> was left over. `put` then failed to match and was dropped whole (`put #d1's textContent + "x" into
+> #out` parsed as a bare `on click`), and `set` kept the path alone. It held in English, so every
+> translation inherited it. A run operand now tries the property-path matchers the role capture uses
+> for a whole value, and skips an article after an operator (`"x" + the textContent of #d1`), as
+> upstream reads it. Of 14 such values in 24 languages, all 336 runs failed. Six still do: qu and sw
+> `and`, and hi and qu `not`, which are the filed collisions. No corpus row moves.
+>
+> The same change finishes a loop the SOV six used to leave running. A fronted while-phrase, the
+> retired transformer's shape (ko `동안 #counter.innerText < 10 를 클릭 할 때 반복 …`), kept only
+> `#counter.innerText` as its condition: the element's text, which is truthy, so the loop never ended.
+> Now the whole comparison is the condition. In ko, ja and tr the generated repeat pattern reads it,
+> into its one operand slot, `quantity`; a while or until loop node now takes that operand as its
+> condition, since `buildLoop` reads nothing else.
+>
+> Filed, not fixed:
+>
+> - **A call in a value is still cut** in every language, English included: `String(n) + "!"`,
+>   `#d1.getAttribute("class") + "!"`. The run's raw spaces a call's parentheses. In it, pl, ru and
+>   uk, a set's value follows its destination with no marker between
+>   (`impostare in #t.innerText ( … ) * 2`), so a path's arguments and the value look the same.
+>   Calls can be operands once the raw keeps a call's `(` against its name.
+> - **The same ambiguity already misreads `set x to (1 + 2) * 3`** in those four languages, as `set
+>   x(1 + 2) to *`: the whole-value call matcher takes `x ( … )` as a call.
+> - **A variable owner never reads as `X of Y`**, even as a whole value. `put length of arr into #out`
+>   and `put the length of arr into #out` drop the whole `put` in every language, English included. The
+>   of-possessive matcher needs a selector owner, which is what keeps the clitic languages' owner-first
+>   genitive from reading inverted. `put b of a of obj into #out` and the chained `put #d1's
+>   textContent's length into #out` drop the command too.
+> - **English renders `set x to -n` as `set x to -`**, so every translation loses the value.
+> - **de misreads a handler with two `set`s in a row** (PR 43's filing): every value above fails in de
+>   behind `set n to 3 then set arr to …`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
