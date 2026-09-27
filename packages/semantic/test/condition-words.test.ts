@@ -53,6 +53,8 @@ const GROUPS: Array<[string, string[], string[]]> = [
   // ja `そして` and ko `그리고`, their word for `and`, were also then-words, so a
   // handler body split the condition at them.
   ['and, also a then-word', ['p is not q and q is 3'], ['ja', 'ko']],
+  // hi `नहीं` after the `does` of `does not match` is `not`, as after the copula.
+  ['does not, in hi', ['#d1 does not match .x', '#zz does not exist'], ['hi']],
   // Where the possessive marker sits between owner and property (ja
   // `#d1のtextContent`), the marker stayed in the condition.
   [
@@ -99,5 +101,20 @@ describe('ja そして / ko 그리고 between two commands', () => {
     ['ko', '클릭 할 때 .a 를 토글 그리고 .b 를 추가'],
   ])('%s', (language, source) => {
     expect(render(parse(source, language)!, 'en')).toBe('on click toggle .a then add .b');
+  });
+});
+
+// A bare conditional keeps the body after its condition. The command stage
+// returned the conditional alone, dropping its body, whenever the pattern took
+// the whole condition (bn `p যদি না তারপর .selected কে টগল করুন` read as
+// `unless p`); each read-back is compared with English's own render.
+describe.each([
+  ['unless p toggle .selected', ['bn', 'hi', 'ja', 'qu', 'tr']],
+  ['unless I match .disabled toggle .selected', ['bn', 'hi', 'ja', 'ko', 'qu']],
+])('bare %s', (source, languages) => {
+  const english = render(parse(source, 'en')!, 'en');
+  it.each(languages)('%s', language => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(english);
   });
 });

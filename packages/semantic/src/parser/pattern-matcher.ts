@@ -37,9 +37,15 @@ import {
   matchQueryScope,
   translatePropertyName,
   translateConnective,
+  expressionWordOf,
   isKnownPropertySurface,
   CONVERSION_TYPE_NAMES,
 } from './utils/expression-lexicon';
+import {
+  BINARY_PHRASES,
+  POSTFIX_PHRASES,
+  TYPE_CHECK_PHRASES,
+} from '../ast-builder/expression-parser/parser';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
@@ -1822,7 +1828,8 @@ export class PatternMatcher {
    * reference truncated the same way, so no fidelity signal saw it). `%` is
    * core's alone (upstream rejects it) and renders as written. The logical
    * words join through {@link logicalConnectiveOf} (`and`, `or`, and a leading
-   * `not`); the `is …` phrases do not join a run.
+   * `not`), and core's comparison phrases (`is`, `is not`, `matches`,
+   * `exists`) through {@link tryConsumeRunPhrase}.
    */
   private static readonly RUN_OPERATORS = new Set([
     '+',
@@ -1850,6 +1857,56 @@ export class PatternMatcher {
     const language = this.currentProfile?.code ?? 'en';
     const word = translateConnective(language, token.value).toLowerCase();
     return word === 'and' || word === 'or' || word === 'not' ? word : undefined;
+  }
+
+  /**
+   * Core's comparison phrases a run takes, as words in the expression parser's
+   * match order, with what follows each: an operand (`is less than`), a type
+   * name (`is a`), or nothing (`is empty`, `exists`). Left out: `in`, which
+   * also marks a query scope and a loop's source; `am`; and `has`/`have`, whose
+   * word some languages share with `exists`.
+   */
+  private static readonly RUN_PHRASES: ReadonlyArray<
+    readonly [readonly string[], 'operand' | 'type' | 'none']
+  > = [
+    ...POSTFIX_PHRASES.map(p => [p.split(' '), 'none'] as const),
+    ...TYPE_CHECK_PHRASES.map(p => [p.split(' '), 'type'] as const),
+    ...BINARY_PHRASES.filter(p => !/^(in|am|has|have)$|^am /.test(p)).map(
+      p => [p.split(' '), 'operand'] as const
+    ),
+    [['exists'], 'none'],
+  ];
+
+  /**
+   * Consume the comparison phrase at the stream's head, read word by word as
+   * the expression join reads it (ar `هو` after an operand is `is`, es `no` is
+   * `not`), and say what follows it; undefined, with nothing consumed, if none.
+   */
+  private tryConsumeRunPhrase(tokens: TokenStream): 'operand' | 'type' | 'none' | undefined {
+    const language = this.currentProfile?.code ?? 'en';
+    const all = tokens.tokens;
+    const start = tokens.position();
+    const words: string[] = [];
+    let prevText: string | undefined;
+    for (let k = 0; k < 6 && start + k < all.length; k++) {
+      const token = all[start + k];
+      const word = expressionWordOf(
+        language,
+        token,
+        all[start + k - 1],
+        all[start + k + 1],
+        prevText
+      ).toLowerCase();
+      words.push(word);
+      prevText = word;
+    }
+    for (const [phrase, follows] of PatternMatcher.RUN_PHRASES) {
+      if (phrase.every((word, i) => words[i] === word)) {
+        for (let i = 0; i < phrase.length; i++) tokens.advance();
+        return follows;
+      }
+    }
+    return undefined;
   }
 
   /** The token after the next one is a run operator. */
@@ -1999,9 +2056,18 @@ export class PatternMatcher {
       const logical = this.logicalConnectiveOf(op);
       // A wait's `or` lists its events (`wait for pointermove or pointerup`).
       const joins = (logical === 'and' || logical === 'or') && this.currentRoleCommand !== 'wait';
-      if (!joins && !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
-      tokens.advance();
+      if (joins || PatternMatcher.RUN_OPERATORS.has(op.value)) {
+        tokens.advance();
+      } else {
+        // A comparison phrase: `is`, `is not greater than`, `matches`, `exists`.
+        const follows = this.tryConsumeRunPhrase(tokens);
+        if (follows === undefined) break;
+        if (follows === 'none') {
+          operands++;
+          continue;
+        }
+      }
       if (!this.tryConsumeRunOperand(tokens, true, joins)) {
         // Dangling operator — leave it (and whatever follows) unconsumed.
         tokens.reset(beforeOp);
@@ -2250,13 +2316,15 @@ export class PatternMatcher {
     if (this.tryMatchPossessiveExpression(tokens)) return true;
 
     // Single value token. Particles/conjunctions/punctuation are never
-    // operands (they belong to the surrounding pattern).
+    // operands (they belong to the surrounding pattern), and neither is a
+    // block's own word (sw `mwisho`, `end`, after `inafanana`, matches).
     if (
       (token.kind === 'literal' ||
         token.kind === 'identifier' ||
         token.kind === 'selector' ||
         token.kind === 'keyword') &&
       !PatternMatcher.RUN_OPERATORS.has(token.value) &&
+      !['end', 'then', 'else'].includes((token.normalized ?? '').toLowerCase()) &&
       token.value !== ')'
     ) {
       tokens.advance();

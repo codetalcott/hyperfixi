@@ -19,7 +19,8 @@ async function click(source: string, language: string): Promise<string> {
   const compiled = await hyperscript.compile(code, { language });
   expect(compiled.ok, `${language}: ${code}`).toBe(true);
   expect(compiled.meta.directPath, `${language}: ${code}`).toBe(true);
-  document.body.innerHTML = '<div id="out">o</div><button id="b">b</button>';
+  document.body.innerHTML =
+    '<div id="out">o</div><p id="d1" class="x">d</p><button id="b">b</button>';
   const button = document.getElementById('b') as HTMLElement;
   await hyperscript.execute(compiled.ast!, hyperscript.createContext(button));
   button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -79,6 +80,18 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
       ['p is 2 and q is 2', 'no'],
     ],
     ['ja', 'ko'],
+  ],
+  // hi `नहीं` after the `does` of `does not match` read as `no`; it is `not`
+  // there, as after the copula (#d1 has class x, #zz is absent).
+  [
+    'does not, in hi',
+    [
+      ['#d1 does not match .y', 'yes'],
+      ['#d1 does not match .x', 'no'],
+      ['#zz does not exist', 'yes'],
+      ['#d1 does not exist', 'no'],
+    ],
+    ['hi'],
   ],
 ];
 

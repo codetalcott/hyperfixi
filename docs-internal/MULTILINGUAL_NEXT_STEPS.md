@@ -5389,6 +5389,47 @@ this signal was missing.
 > Filed, not fixed: a verb-first loop head (`while`, `until event`, and now `until`) renders its verb
 > as the English `repeat` through `render()` and `translate()` (`al clic repeat hasta n > 3`), while
 > the corpus rows carry the native verb (es `repetir mientras`). Both surfaces read back.
+>
+> **A value keeps its comparison phrase in every language (PR 47, 2026-09-26).** PR 43 and PR 44 let
+> a value run take symbols and logical words, but not core's comparison phrases. `set x to n is 3`,
+> `n is greater than 2`, `#d1 matches .x`, `#d1 exists` and `n is a Number` were cut to their first
+> operand in every language, English included. The run now takes a phrase from the expression
+> parser's own table and reads each word as the expression join reads it: a new exported
+> `expressionWordOf`, which is the join's own fallback, so the two cannot disagree (ar `هو` after an
+> operand is `is`, es `no` is `not`). An operand, a type name or nothing follows the phrase. `in`,
+> `am` and `has`/`have` stay out: `in` also marks a query scope and a loop's source, and some
+> languages share their `has` word with `exists`. And hi `नहीं` after the `does` of `does not match`
+> read as `no`; it is `not` there, as after the copula, which also fixes hi's `does not …`
+> conditions. Runs of 12 phrase values × 24 languages fall from 288 wrong to 2 (qu's `mana`), and it
+> also fixes PR 46's leftover `repeat until n is 3` and `until #d1 matches .x`. hi's `does not` rows
+> now pass on both condition batteries (wrong branches 35 → 33 on the positive one, 5 → 4 on the
+> negative).
+> Three corpus rows move, `unless-condition` in bn, hi and ko. Their fused `unless` pattern now reads
+> the condition itself, which gains a `value` beside its unchanged raw; the render is the same.
+>
+> The gates caught three regressions in the first cut, fixed here:
+>
+> - **A bare conditional kept only its condition** once the pattern could take the whole of it. bn
+>   `unless I match .disabled toggle .selected` lost its toggle, because the command stage returned
+>   the conditional alone. The compound stage now reads a top-level `if`/`unless` with a trailing
+>   body, as it did whenever the condition was too long to match. That also fixes bn, hi, ja, qu and
+>   tr `unless p toggle .selected`, which lost their body before.
+> - **th `เป็น` is both `is` and `as`**, and after a fetch URL the run read `as text` as `is text`.
+>   Fetch's response types now read as type names.
+> - **sw `mwisho` (`end`) became a phrase's operand.** A block's own word is never an operand.
+>
+> Filed, not fixed:
+>
+> - The renderer localizes `contains` (es `contiene`, de `enthält`, ar `يحتوي`, ja `含む`), but no
+>   tokenizer reads it back except where it stays English (th, he, bn). `if [1, 2] contains 3` takes
+>   the then-branch in 19 languages; `contains 1` only looked right because the truncated `[1, 2]`
+>   is truthy.
+> - The AOT compiles only `is` and `is not` of these phrases: `is greater than`, `is less than`,
+>   `matches`, `exists`, `does not match`, `does not exist` and `is a` fail in English too.
+> - A bare `if p then toggle .a end`, with no handler around it, reads as `on p toggle .a` in every
+>   language, English included.
+> - Two bare `unless` rows were wrong before this change and still are: ko reads `p` as an event
+>   (`on p unless then toggle .selected`), and pl reads the pronoun `I` as its `and` (`i`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

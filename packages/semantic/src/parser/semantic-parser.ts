@@ -1869,6 +1869,23 @@ export class SemanticParserImpl implements ISemanticParser {
           return withDiagnostics(sequence, diagnostics);
         }
       }
+      // A top-level conditional whose body trails it: the pattern stops after
+      // the condition, so returning the match drops the body (bn `p যদি না তারপর
+      // .selected কে টগল করুন` read as `unless p`). The compound stage reads
+      // the conditional and its then-chain, as it did whenever the condition
+      // was too long for the pattern to match at all.
+      if (
+        commandMatch.consumedTokens < tokens.tokens.length &&
+        (commandMatch.pattern.command === 'if' || commandMatch.pattern.command === 'unless')
+      ) {
+        const compound = this.tryCompoundCommandParsing(tokens, commandPatterns, language);
+        if (compound) {
+          diagnostics.push(
+            parseDiagnostic('conditional with a trailing body', 'info', 'stage-compound')
+          );
+          return withDiagnostics(compound, diagnostics);
+        }
+      }
       diagnostics.push(
         parseDiagnostic(
           `command pattern matched: ${commandMatch.pattern.id} (confidence: ${commandMatch.confidence.toFixed(2)})`,

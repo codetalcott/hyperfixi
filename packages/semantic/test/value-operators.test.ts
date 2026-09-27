@@ -1,6 +1,7 @@
 /**
- * A value with a comparison, `mod`, `and`, `or` or `not` keeps its whole
- * expression, in English and in every translation.
+ * A value with a comparison, `mod`, `and`, `or`, `not` or one of core's
+ * comparison phrases keeps its whole expression, in English and in every
+ * translation.
  *
  * The operator-run capture joined only `+ - * /`, so `set x to n > 2` captured
  * `n` alone and dropped the rest: the English parse rendered `set x to n`, and
@@ -78,4 +79,26 @@ describe.each(CONNECTIVES)('%s', (source, broken) => {
 it('`and` before a command verb starts the next command', () => {
   const source = 'on click set x to true and put 2 into #c';
   expect(render(parse(source, 'en')!, 'en')).toBe('on click set x to true then put 2 into #c');
+});
+
+// Core's comparison phrases join a run too, read word by word as the expression
+// join reads them (es `n es no 3`, ar `n هو ليس 3`). qu is skipped where its
+// `not` is `mana`, also its `false`.
+const PHRASES: Array<[string, string[]]> = [
+  ['on click set x to n is 3', []],
+  ['on click set x to n is not 3', ['qu']],
+  ['on click set x to n is greater than 2', []],
+  ['on click put n is less than 2 into #out', []],
+  ['on click put #d1 matches .x into #out', []],
+  ['on click set x to #d1 does not match .x', ['qu']],
+  ['on click set x to #d1 exists', []],
+  ['on click set x to #zz does not exist', ['qu']],
+  ['on click set x to n is a Number', []],
+];
+
+describe.each(PHRASES)('%s', (source, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+  });
 });

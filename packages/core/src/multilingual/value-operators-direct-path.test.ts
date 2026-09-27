@@ -1,6 +1,6 @@
 /**
- * A translated value with a comparison, `mod`, `and`, `or` or `not` runs whole
- * on the multilingual direct path.
+ * A translated value with a comparison, `mod`, `and`, `or`, `not` or one of
+ * core's comparison phrases runs whole on the multilingual direct path.
  *
  * The operator-run capture joined only `+ - * /`, so `put n > 2 into #out`
  * captured `n` alone and every translation lost the comparison. And semantic's
@@ -17,7 +17,8 @@ async function click(source: string, language: string): Promise<string> {
   const compiled = await hyperscript.compile(code, { language });
   expect(compiled.ok, `${language}: ${code}`).toBe(true);
   expect(compiled.meta.directPath, `${language}: ${code}`).toBe(true);
-  document.body.innerHTML = '<div id="out">o</div><button id="b">b</button>';
+  document.body.innerHTML =
+    '<div id="out">o</div><p id="d1" class="x">d</p><button id="b">b</button>';
   const button = document.getElementById('b') as HTMLElement;
   await hyperscript.execute(compiled.ast!, hyperscript.createContext(button));
   button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -89,5 +90,28 @@ describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
   it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', async language => {
     const source = `on click set p to true then set q to false then put ${value} into #out`;
     expect(await click(source, language)).toBe(expected);
+  });
+});
+
+// Core's comparison phrases (n = 3, #d1 has class x, #zz is absent), each with
+// what both engines put. qu is skipped where its `not` is `mana`, also `false`.
+const PHRASES: Array<[string, string, string[]]> = [
+  ['n is 3', 'true', []],
+  ['n is not 3', 'false', ['qu']],
+  ['n is greater than 2', 'true', []],
+  ['n is less than 2', 'false', []],
+  ['#d1 matches .x', 'true', []],
+  ['#d1 does not match .x', 'false', []],
+  ['#d1 exists', 'true', []],
+  ['#zz exists', 'false', []],
+  ['#zz does not exist', 'true', ['qu']],
+  ['n is a Number', 'true', []],
+  ['n is 3 or n is 4', 'true', []],
+  ['n is 4 or n is 5', 'false', []],
+];
+
+describe.each(PHRASES)('put %s', (value, expected, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', async language => {
+    expect(await click(`on click set n to 3 then put ${value} into #out`, language)).toBe(expected);
   });
 });
