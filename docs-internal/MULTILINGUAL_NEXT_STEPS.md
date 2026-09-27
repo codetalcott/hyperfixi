@@ -5850,6 +5850,29 @@ this signal was missing.
 > - **Core's `as Boolean` reads the strings `"false"` and `"0"` as false**; upstream's is `!!val`,
 >   so both are true. Deliberate in core (`boolean-conversion-fix.test.ts` pins it) but not in
 >   `UPSTREAM-KNOWN-DIFFS.md`: a decision for the owner.
+>
+> **sw and vi read their word for `null` as `null` (PR 61, 2026-09-27).** sw spells `null` and the
+> `is empty` predicate alike, `tupu`, and its tokenizer reads the word as `empty`; vi spells `null`
+> `rỗng`, which its tokenizer read as `empty` too, though vi's `empty` is `trống` (and the command's
+> `làm-rỗng`). So `put null into #out` wrote the text "empty" in both on the direct path, and vi `x
+> is null` read back `x is empty`.
+>
+> - **vi**: the tokenizer reads `rỗng` as `null`, its lexicon's and the i18n dictionary's sense.
+> - **A whole-value `empty` is `null`**: `empty` is a predicate or a command, never a whole value,
+>   so a role that captures the word alone captured sw `tupu`, or a variable named `empty`, which
+>   upstream writes as null (`put empty into #out` wrote the word "empty" on the direct path in 15
+  languages; now only hi fails it, on its own `null` gap).
+> - **sw, in a value**: `tupu` is `null` except after a copula, where `ni tupu` stays `is empty`
+>   (#325: sw writes `x is null` the same way, so that one stays ambiguous). A sense rule gains
+>   `otherwise`, for a word with no reading of its own to fall through to.
+>
+> **In the value matrix, 1,840 failing pairs fall to 1,836**: `put null` and `set null` in sw and
+> vi. One stored corpus row moves, a fix: vi `behavior-sortable` reads `là rỗng` as English's `is
+> null`, where it read `is empty`. `test/null-empty-word.test.ts` round-trips seven sources through
+> both languages and pins the sw copula reading; each of five mutants removing one piece fails it.
+> Not fixed: sw `increment i by null` still reads `increment i then empty`, because `tupu` is also
+> an alternative of the `empty` command's verb and a counter's bare amount never captures a command
+> word; upstream reads that program as NaN anyway.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
