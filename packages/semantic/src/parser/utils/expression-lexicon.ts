@@ -778,14 +778,17 @@ const RESPONSE_TYPE_NAMES = new Set(['text', 'json', 'html', 'response', 'blob',
 const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
 
 /** Canonical `as` conversion targets: core's built-in converters
-    (`defaultConversions`, which core's `conversion-type-names` test holds this
-    list to), plus both `json` casings (`fetch … as json` and `… as JSON`) and
-    `FormData`. `Fixed` and `Fixed:<digits>` are resolved dynamically, as
-    upstream resolves them: see `isConversionTypeName`. A non-English tokenizer
-    splits a `:` name (`Fixed:2`, `Values:Form`) at its colon, and the matcher
-    and the join put it back together. A type missing here
-    loses more than its conversion: the matcher cannot read the value whole, so
-    `put x as Boolean into #out` dropped the whole `put`. */
+    (`defaultConversions`, which core's `conversions-direct-path` test holds
+    this list to), plus both `json` casings (`fetch … as json` and `… as
+    JSON`) and `FormData`. `Fixed` and `Fixed:<digits>` are resolved
+    dynamically, as upstream resolves them: see `isConversionTypeName`. A
+    non-English tokenizer splits a `:` name (`Fixed:2`, `Values:Form`) at its
+    colon, and the matcher and the join put it back together. A type missing
+    here loses more than its conversion: the matcher cannot read the value
+    whole, so `put x as Boolean into #out` dropped the whole `put`.
+
+    Not core's `Math`, which upstream does not have: th reads `เป็น` before a
+    type name as `as`, so `6 เป็น Math.max(n, 1)` became `6 as Math`. */
 export const CONVERSION_TYPE_NAMES = new Set([
   'Number',
   'Int',
@@ -805,7 +808,6 @@ export const CONVERSION_TYPE_NAMES = new Set([
   'Values',
   'Values:Form',
   'Values:JSON',
-  'Math',
   'Set',
   'Map',
   'Keys',

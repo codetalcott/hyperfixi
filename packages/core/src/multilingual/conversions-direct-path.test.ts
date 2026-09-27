@@ -5,8 +5,9 @@
  * Semantic reads a value with a conversion whole only when it knows the type,
  * and a type it did not know cost more than the conversion: `put x as Boolean
  * into #out` lost the whole `put` in English, so in every translation. Its list
- * lacked `Boolean`, `JSONString`, `FormEncoded`, `Fixed:2` and the collection
- * conversions; the first half of this file holds it to core's converters.
+ * lacked `Boolean`, `JSONString`, `FormEncoded`, `Fixed:2`, `Values:Form` and
+ * the collection conversions; the first half of this file holds it to core's
+ * converters.
  *
  * And its expression tokenizer skipped `|`, so `x as JSONString | JSON` kept
  * only the first conversion. Each row's result differs without its pipe (or
@@ -43,8 +44,16 @@ const LANGUAGES = [
   'zh',
 ] as const;
 
+// But `Math`, which upstream does not have: th reads `เป็น` before a type name
+// as `as`, and `6 is Math.max(n, 1)` renders `6 เป็น Math.max(n, 1)`.
+const TYPES = [
+  ...Object.keys(defaultConversions).filter(type => type !== 'Math'),
+  'Fixed',
+  'Fixed:2',
+];
+
 describe("semantic reads each of core's conversions", () => {
-  it.each([...Object.keys(defaultConversions), 'Fixed', 'Fixed:2'])('as %s', type => {
+  it.each(TYPES)('as %s', type => {
     const source = `on click put x as ${type} into #out`;
     const node = parseSemantic(source, 'en').node;
     expect(node && render(node, 'en')).toBe(source);
