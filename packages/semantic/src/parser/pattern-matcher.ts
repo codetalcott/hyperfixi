@@ -38,6 +38,7 @@ import {
   translatePropertyName,
   translateConnective,
   expressionWordOf,
+  isConnectiveOperand,
   isKnownPropertySurface,
   CONVERSION_TYPE_NAMES,
 } from './utils/expression-lexicon';
@@ -824,6 +825,7 @@ export class PatternMatcher {
     if (PatternMatcher.RUN_OPERATORS.has(token.value)) return true;
     if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
     if (this.isOfPossessiveMarker(token)) return true;
+    if (isConnectiveOperand(lang, token, prev, all[i + 1])) return true;
     const word = expressionWordOf(lang, token, prev, all[i + 1], undefined).toLowerCase();
     if (word === 'as' && this.currentSchema()?.roles.some(r => r.role === 'responseType')) {
       return false;
@@ -4062,6 +4064,12 @@ export class PatternMatcher {
         return this.parseLiteralValue(token.value);
 
       case 'keyword':
+        // A conjunction is never a whole value: a role that captures one alone
+        // captured a variable the language spells like it (pl `ustaw do i 0`,
+        // `set i to 0`, read as `set and to 0`).
+        if (token.normalized === 'and' || token.normalized === 'or') {
+          return { type: 'expression', raw: token.value } as const;
+        }
         // Keywords might be references or values
         const lower = (token.normalized || token.value).toLowerCase();
         if (isValidReference(lower)) {
