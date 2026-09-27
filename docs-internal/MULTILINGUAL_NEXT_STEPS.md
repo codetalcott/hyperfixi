@@ -6002,6 +6002,20 @@ this signal was missing.
 > where upstream reads the null target as null); `my id` 88 (bn, pl, ru, th, uk); `{}` 46 (the object-literal
 > filing); and 175 more in smaller families. By language: qu 176, de 123, pl 72, hi 70, th 60, bn
 > 57, tr 42, it 40, sw 40.
+>
+> **The X of a null target reads null (PR 68, 2026-09-27).** A core fix, the `v of w of obj as Int`
+> family from PR 67's list. Semantic builds every `X of Y` as a `propertyOfExpression` and binds
+> `v of w of obj as Int` as upstream does, `v of (w of (obj as Int))`; the inner read is `w` of
+> `NaN`, undefined, and core's evaluator for that node threw on a null target (`Cannot access
+> property "v" of undefined`), which stopped the handler: every direct lane wrote nothing. Upstream's
+> `of`, and core's own `X of Y` (a `binaryExpression`) and `Y's X`, read null. So did core's English
+> `the name of #missing`, which threw the same way (outside the matrix). The evaluator now reads a
+> null target as null; the unit test that pinned the throw pins upstream's result.
+>
+> **In the value matrix, 931 failing pairs fall to 843 (−9%)**: the four `v of w of obj as Int`
+> cells on 22 direct lanes; none newly fail. The two left there are pl (`put`, and `pl/up`'s parse
+> error: pl's `v of w of obj` family). `value-parity.test.ts` pins six null-target rows on both
+> engines and `v of w of obj as Int` through es, ja and ar; reverting the fix fails 12 tests.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -1416,10 +1416,12 @@ async function evaluatePropertyOfExpressionNode(
   }
   const propertyName: string = propertyNode.name;
 
+  // A null target reads null, as upstream's `of` does and core's `X of Y`
+  // (binaryExpression) and `Y's X` already did: `the name of #missing` and
+  // `v of w of obj as Int` (semantic builds `v of (w of (obj as Int))`, and
+  // `w of NaN` is undefined) threw here and stopped the handler.
   const target = await evaluateAST(node.target, context);
-  if (target == null) {
-    throw new Error(`Cannot access property "${propertyName}" of ${target}`);
-  }
+  if (target == null) return undefined;
 
   // `the X of Y` and `Y's X` are the same access — delegate to the possessive
   // expression so a collection target maps the read over every member
