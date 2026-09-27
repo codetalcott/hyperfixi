@@ -139,6 +139,21 @@ describe('the direct path converts what the English converts', () => {
   });
 });
 
+describe('a bracket run is an array on the direct path', () => {
+  // Each tokenizer reads `[n, 2]` as one attribute-selector token, and the
+  // expression parser read a `[` before a letter as an attribute selector too,
+  // so every translation queried `[n, 2]` and threw. Only `[@name…]` is one.
+  const astOf = (source: string, language: string): unknown => {
+    const code = language === 'en' ? source : render(parse(source, 'en')!, language);
+    return buildAST(parse(code, language)!).ast;
+  };
+  it.each(['en', ...LANGUAGES])('%s', language => {
+    expect(JSON.stringify(astOf('on click put [n, 2] into #out', language))).toContain(
+      '"type":"arrayLiteral"'
+    );
+  });
+});
+
 describe('an `of` phrase before a conversion keeps its binding', () => {
   it('English leaves `textContent of #a as Int` as it is', () => {
     expect(render(parse('on click put textContent of #a as Int into #out', 'en')!, 'en')).toBe(

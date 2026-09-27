@@ -63,12 +63,19 @@ describe('ExpressionParser', () => {
     });
 
     it('parses attribute selectors', () => {
-      const result = parseExpression('[data-id="123"]');
+      const result = parseExpression('[@data-id="123"]');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
         type: 'selector',
         selectorType: 'attribute',
       });
+    });
+
+    // A bare `[…]` is an array in hyperscript (upstream rejects `[data-id="123"]`
+    // outright): `[n, 2]` read as the attribute selector `[n, 2]`, which every
+    // translation's direct path queried and threw on.
+    it.each(['[n, 2]', '[title]'])('reads %s as an array', source => {
+      expect(parseExpression(source).node).toMatchObject({ type: 'arrayLiteral' });
     });
 
     it('parses query selectors', () => {

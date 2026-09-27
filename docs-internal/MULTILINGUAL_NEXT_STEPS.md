@@ -5952,6 +5952,26 @@ this signal was missing.
 > each of two mutants removing one piece fails it. A fallback for an operator run's operand (the
 > pattern's next token when the caller does not pass it) was dropped after measuring: no test,
 > matrix pair or corpus row moved without it.
+>
+> **A bare bracket run is an array (PR 66, 2026-09-27).** The largest family PR 64 listed, outside
+> the handoff: `[n, 2]` failed on every direct lane. Each language tokenizer reads a `[…]` run as
+> one attribute-selector token, and the value converter already turned a bracket selector back into
+> an expression for the expression parser (so `[1, 2]` worked) — but the expression tokenizer read
+> a `[` before a letter as an attribute selector too, so `[n, 2]` stayed a selector and the direct
+> path queried it and threw. In hyperscript a bare `[…]` is always an array; an attribute in
+> brackets is `[@name…]`, and upstream rejects `[data-id="123"]` outright. The expression tokenizer
+> now reads only `[@` as an attribute selector (its unit test pinned the rejected `[data-id="123"]`,
+> now `[@data-id="123"]`).
+>
+> **In the value matrix, 1,329 failing pairs fall to 1,059 (−20%)**: 12 cells on each direct lane
+> (`[n, 2]` in `put`, `set` and `if`, and in `contains`, `is in` and `is empty`), 9 in de and tr;
+> none newly fail. No stored corpus row moves. `expression-parser.test.ts` pins `[n, 2]` and
+> `[title]` as arrays, and `value-conversion.test.ts` builds `put [n, 2]` as an array in all 24
+> languages; reverting the tokenizer fails 26 tests.
+>
+> Found on the way: `put [@title] into #out` fails on every direct lane too (upstream writes the
+> attribute of `me`, null here): `[@name]` is still an attribute-selector token, and the value
+> converter keeps it a selector.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

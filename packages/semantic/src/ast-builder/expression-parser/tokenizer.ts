@@ -323,11 +323,13 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    // Attribute selectors [attr] or [attr="value"] (only at start or after operators)
+    // Attribute selectors [@attr] or [@attr="value"] (only at start or after
+    // operators). A bare `[…]` is an array in hyperscript, never a selector:
+    // `[n, 2]` read as the attribute selector `[n, 2]`, which the direct path
+    // queried and threw on, in every language.
     if (char === '[' && previousTokenAllowsSelector()) {
-      // Check if this looks like an attribute selector (starts with @ or identifier)
       const nextChar = peek(1);
-      if (nextChar === '@' || /[a-zA-Z]/.test(nextChar)) {
+      if (nextChar === '@') {
         let value = '';
         value += advance(); // [
         while (pos < input.length && input[pos] !== ']') {
