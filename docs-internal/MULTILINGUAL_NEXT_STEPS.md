@@ -5279,6 +5279,19 @@ this signal was missing.
 > Filed, not fixed: bn renders `if not p` as `যদি না p`, which its tokenizer reads as one word,
 > `unless` (the same meaning, but that parse gives no output on the direct path), and vi as `nếu
 > không p`, which it reads as `else`: the conditional is dropped and its body runs unconditionally.
+>
+> **A translated copula reads as `is` between two operands (PR 41, 2026-09-26).** ar `هو` is also
+> `it`, hi `है` also `has`, and th `เป็น` also `as`, so none is a keyword: the expression lexicon's
+> ambiguous-sense table reads each by its neighbors, and it read the copula only before a predicate
+> (`p هو فارغ`). So `p هو q` compared p with a variable named `it`, and every comparison phrase
+> (`هو greater than`, rendered with only the copula localized) failed in all three. New rules:
+> between two operands the word is the copula (an operand must be word-shaped: the census found
+> ar `"$" + هو`, whose `+` ar lexes as an identifier); hi `है` before a class is `has` (`#d1 है .x`);
+> hi `नहीं` after the copula is `not` (elsewhere `no`), judged by how the join read the previous
+> word; and the condition scan keeps hi's predicate after `नहीं` (`है नहीं खाली`). Across the 46
+> conditions, wrong branches fall from 45 to 34 (negatives 54 → 21: before, the misparse made each
+> of these conditions true). No corpus row moves. Still open in these three: hi `not p` (`नहीं p`
+> reads `no p`, a real collision) and `empty` = `null` in ar/hi.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
