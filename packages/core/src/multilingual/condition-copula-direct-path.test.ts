@@ -69,6 +69,16 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
     ],
     ['hi'],
   ],
+  // hi renders null as खाली, also its `empty` command: after `है नहीं` the
+  // condition scan now keeps it as the predicate.
+  [
+    'is not null',
+    [
+      ['p is not null', 'yes'],
+      ['s is not null', 'no'],
+    ],
+    ['hi'],
+  ],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
