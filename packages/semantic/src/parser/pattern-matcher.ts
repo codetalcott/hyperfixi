@@ -41,6 +41,7 @@ import {
   isConnectiveOperand,
   isKnownPropertySurface,
   isConversionTypeName,
+  isCopulaIn,
   ofChainEnd,
 } from './utils/expression-lexicon';
 import {
@@ -714,14 +715,17 @@ export class PatternMatcher {
 
     const owed = this.restLiterals();
     const markers = this.commandMarkers();
-    const stopsAt = (t: LanguageToken): boolean =>
-      this.isValueBoundary(t, owed) || markers.has(t.value.toLowerCase());
-    const next = tokens.peek();
-    if (!next || stopsAt(next)) return;
+    const lang = this.currentProfile?.code ?? 'en';
+    const stopsAt = (i: number): boolean => {
+      const t = tokens.tokens[i]!;
+      if (isCopulaIn(lang, tokens.tokens, i)) return false;
+      return this.isValueBoundary(t, owed) || markers.has(t.value.toLowerCase());
+    };
+    if (!tokens.peek() || stopsAt(tokens.position())) return;
 
     let end = tokens.position();
     while (end < tokens.tokens.length) {
-      if (stopsAt(tokens.tokens[end]!) || !this.continuesValue(tokens.tokens, end)) break;
+      if (stopsAt(end) || !this.continuesValue(tokens.tokens, end)) break;
       end++;
     }
     for (let k = end; k > tokens.position(); k--) {
@@ -827,6 +831,7 @@ export class PatternMatcher {
     if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
     if (this.isOfPossessiveMarker(token)) return true;
     if (isConnectiveOperand(lang, token, prev, all[i + 1])) return true;
+    if (isCopulaIn(lang, all, i)) return true;
     const word = expressionWordOf(lang, token, prev, all[i + 1], undefined).toLowerCase();
     if (word === 'as' && this.currentSchema()?.roles.some(r => r.role === 'responseType')) {
       return false;

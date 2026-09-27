@@ -963,6 +963,30 @@ export function isConnectiveOperand(
   return COMPARISON_AFTER_OPERAND.has(nextWord);
 }
 
+/** Is `word` (a word as the join read it) the copula of a comparison? */
+function isCopulaWord(word: string | undefined): boolean {
+  const lowered = word?.toLowerCase();
+  return lowered === 'is' || lowered === 'not';
+}
+
+/**
+ * Is the token at `i` the `in` of `is in` / `is not in`? The operator stays
+ * English in every rendering, and in de and it `in` is also the `into` marker
+ * (`setzen 2 ist in [1, 2, 6] in #out`), which the join read as `destination`
+ * and a value's extent stopped at. Directly after the copula it is the
+ * operator: no marker follows `is`.
+ */
+export function isCopulaIn(
+  languageCode: string,
+  tokens: readonly LanguageToken[],
+  i: number
+): boolean {
+  const token = tokens[i];
+  const prev = tokens[i - 1];
+  if (!token || !prev || token.value.toLowerCase() !== 'in') return false;
+  return isCopulaWord(expressionWordOf(languageCode, prev, tokens[i - 2], token, undefined));
+}
+
 /**
  * The English word the expression join writes for a token no anchor claims:
  * its sense when the word has two (ar `هو` between operands is `is`), else
@@ -981,6 +1005,7 @@ export function expressionWordOf(
   // to`), and its `to` is a word some languages have their own sense for: pl
   // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
   if (prevText?.toLowerCase() === 'equal' && token.value.toLowerCase() === 'to') return 'to';
+  if (isCopulaWord(prevText) && token.value.toLowerCase() === 'in') return 'in';
   const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText);
   if (sense !== undefined) return sense;
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
