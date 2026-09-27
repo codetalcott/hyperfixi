@@ -80,6 +80,10 @@ const SOURCES = [
   'on click put #f as Values:Form into #out',
   'on click put n as Fixed:2 + "%" into #out',
   'on click put x as Boolean into #out',
+  // An article before the type: es, it and pt read `a` as their `to` marker,
+  // and tr lost `x`, so the conversion fold takes it.
+  'on click put x as a Date into #out',
+  'on click put x as an Int | String into #out',
 ];
 
 describe.each(SOURCES)('%s', source => {

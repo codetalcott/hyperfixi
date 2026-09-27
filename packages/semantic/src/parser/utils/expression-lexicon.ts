@@ -836,7 +836,7 @@ function resolveAmbiguousSense(
   if (
     rule.beforeTypeName &&
     next?.kind === 'identifier' &&
-    (isConversionTypeName(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
+    (CONVERSION_TYPE_NAMES.has(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
   ) {
     return rule.beforeTypeName;
   }
