@@ -5344,6 +5344,24 @@ this signal was missing.
 > - Every translated `repeat until <condition>` loses its condition. The renderer leaves `until` in
 >   English, and es reads `repetir until n > 5 …` back as `repeat until increment n end`.
 > - `increment x by n * 2` loses `by n * 2`.
+>
+> **A value keeps its `and`, `or` and `not` in every language (PR 44, 2026-09-26).** PR 43's
+> operator run joined the symbols and `mod` but no logical word, so `put p or q into #out` still lost
+> its whole `put`, and `set x to not p` rendered `set x to not`. `and` and `or` now join a run, in
+> English or the language's own word (de `oder`, through the expression lexicon's connectives), and a
+> leading `not` makes a run of one operand. After `and` or `or` a command verb is refused, so `set x
+> to true and put 2 into #c` still reads as two commands, as semantic read it before (both engines
+> run neither). Runs of 10 logical values × 24 languages, each binary one in both operand orders,
+> fall from 240 wrong to 16. The 16 are words that are also other words: ja `そして` (`and`) is also
+> a then-word, so a handler body splits there; qu writes `and` as `chaymanta` (its `then`) and sw as
+> `na` (its `with`); and `not` is hi `नहीं` (also `no`) and qu `mana` (also `false`). No corpus row
+> and no condition moves. A first sweep with p true and q false passed ja's `p and q`, which ja read
+> as `put q`: the same `false`. Swapping the operands (`q and p`) exposed it.
+>
+> Filed, not fixed: ja `そして` and ko `그리고`, which the renderer writes for `and`, are also in
+> semantic's curated then-words (`isThenKeyword`), so a handler body splits at them. That cuts ja's
+> `and` in a value and the ja/ko `and` in a condition. The same list dropped zh `之后`, tr `sonra` and
+> bn `পরে` for the same kind of collision.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
