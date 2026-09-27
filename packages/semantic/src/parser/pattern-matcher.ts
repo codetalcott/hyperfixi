@@ -700,6 +700,10 @@ export class PatternMatcher {
     startIdx: number
   ): void {
     if (patternToken.role === 'event' || patternToken.role === 'action') return;
+    // A class NAME is not an expression: `toggle .open in #panel` must keep
+    // `.open`, not read `.open in #panel` as a scoped query, which toggles
+    // nothing and says nothing.
+    if (this.isClassNameSlot(patternToken)) return;
     if (!captured.has(patternToken.role)) return;
     if (tokens.position() <= startIdx) return;
     const types = patternToken.expectedTypes;
@@ -725,6 +729,17 @@ export class PatternMatcher {
       captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
       return;
     }
+  }
+
+  /**
+   * Is this slot a class NAME: the patient of add/remove/toggle/take? The
+   * role's command, not the pattern's: a fused handler pattern is `on`.
+   */
+  private isClassNameSlot(patternToken: PatternToken & { type: 'role' }): boolean {
+    return (
+      patternToken.role === 'patient' &&
+      ['add', 'remove', 'toggle', 'take'].includes(this.currentRoleCommand ?? '')
+    );
   }
 
   /** Is the slot followed by a marker (or nothing), which can bound its value? */
@@ -1704,9 +1719,7 @@ export class PatternMatcher {
     // is `on`. Never as an event. Without this the `in …` tail went
     // unconsumed, and the query lost its scope in English and so in every
     // translation.
-    const classNameSlot =
-      patternToken.role === 'patient' &&
-      ['add', 'remove', 'toggle', 'take'].includes(this.currentRoleCommand ?? '');
+    const classNameSlot = this.isClassNameSlot(patternToken);
     const takesScope =
       value.type === 'selector' &&
       (value.value.startsWith('<') || (value.value.startsWith('.') && !classNameSlot));

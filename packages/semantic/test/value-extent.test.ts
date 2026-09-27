@@ -85,6 +85,22 @@ describe.each(SOURCES)('%s', (source, broken) => {
   });
 });
 
+describe('a class name is not an expression', () => {
+  // The patient of add/remove/toggle/take is a class NAME. Read as a value,
+  // `.open in #panel` is a scoped query, and the toggle does nothing and says
+  // nothing; kept a name, the unread `in #panel` is reported.
+  it.each([
+    ['on click toggle .open in #panel', 'toggle'],
+    ['on click add .open in #panel', 'add'],
+    ['on click remove .open in #panel', 'remove'],
+  ])('%s', (source, action) => {
+    const node = parse(source, 'en')!;
+    const found = JSON.stringify(signature(node));
+    expect(found).toContain(`${action}(`);
+    expect(found).toContain('patient:selector');
+  });
+});
+
 /**
  * Each command, conditional, loop and handler in document order, with its
  * roles' names and value types: `fetch(responseType:expression,source:literal)`.
