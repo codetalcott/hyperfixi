@@ -134,3 +134,33 @@ describe.each(TRANSLATED)('put %s, translated', (value, expected, broken) => {
     expect(document.getElementById('out')!.textContent).toBe(expected);
   });
 });
+
+// `is a`, as both engines test it (n = 3, t = ""). qu is skipped where its
+// `not` is `mana`, also its `false`.
+const TYPE_CHECKS: Array<[string, string, string[]]> = [
+  ['n is a Number', 'true', LANGUAGES.slice()],
+  ['n is not a Number', 'false', LANGUAGES.filter(l => l !== 'qu')],
+  ['n is a String', 'false', LANGUAGES.slice()],
+  ['n is not a String', 'true', LANGUAGES.filter(l => l !== 'qu')],
+  ['t is a String', 'true', LANGUAGES.slice()],
+];
+
+describe.each(TYPE_CHECKS)('put %s', (value, expected, languages) => {
+  it.each(languages)('%s', language => {
+    click(`on click set n to 3 then set t to "" then put ${value} into #out`, language);
+    expect(document.getElementById('out')!.textContent).toBe(expected);
+  });
+});
+
+// Null passes unless `!` follows the type name, and an element is an Element:
+// English only, since a translation loses the `!`, renders `null` as a word
+// some languages share with `empty`, and translates `Element` (es `elemento`),
+// all filed.
+it.each([
+  ['u is a Number', 'true'],
+  ['u is a Number!', 'false'],
+  ['#d1 is an Element', 'true'],
+])('put %s (en)', (value, expected) => {
+  click(`on click set u to null then put ${value} into #out`, 'en');
+  expect(document.getElementById('out')!.textContent).toBe(expected);
+});

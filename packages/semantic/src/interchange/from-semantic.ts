@@ -131,6 +131,15 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
         operand: fromSemanticAST(node.operand as SemanticASTNode),
         ...pos(node),
       };
+    case 'typeCheckExpression':
+      return {
+        type: 'typeCheck',
+        value: fromSemanticAST(node.value as SemanticASTNode),
+        typeName: String(node.typeName),
+        nullOk: node.nullOk !== false,
+        negated: node.negated === true,
+        ...pos(node),
+      };
     case 'timeExpression':
       return { type: 'literal', value: node.value as number, ...pos(node) };
     case 'templateLiteral':

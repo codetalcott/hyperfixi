@@ -21,6 +21,7 @@ import type {
   WhileNode,
   BinaryNode,
   UnaryNode,
+  TypeCheckNode,
   MemberNode,
   PossessiveNode,
   CallNode,
@@ -558,6 +559,9 @@ function getChildren(node: InterchangeNode): InterchangeNode[] {
     case 'unary':
       children.push((node as UnaryNode).operand);
       break;
+    case 'typeCheck':
+      children.push((node as TypeCheckNode).value);
+      break;
     case 'member': {
       const m = node as MemberNode;
       children.push(m.object);
@@ -715,6 +719,8 @@ function friendlyTypeName(node: InterchangeNode): string {
       return `Binary Expression (${(node as BinaryNode).operator})`;
     case 'unary':
       return `Unary Expression (${(node as UnaryNode).operator})`;
+    case 'typeCheck':
+      return `Type Check (${(node as TypeCheckNode).typeName})`;
     case 'literal':
       return 'Literal';
     case 'identifier':

@@ -258,6 +258,20 @@ export function isEmpty(value: unknown): boolean {
 }
 
 /**
+ * `x is a Number`, as both engines test it (upstream's `runtime.typeCheck`):
+ * null passes unless `!` made `nullOk` false; otherwise the value's
+ * `Object.prototype.toString` tag must name the type, or the value must be an
+ * instance of the global constructor of that name.
+ */
+export function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
+  if (value == null && nullOk) return true;
+  const tag = Object.prototype.toString.call(value).slice(8, -1);
+  if (tag === typeName) return true;
+  const ctor = (globalThis as Record<string, unknown>)[typeName];
+  return typeof ctor === 'function' && value instanceof ctor;
+}
+
+/**
  * Check if an element matches a selector.
  */
 export function matches(element: Element, selector: string): boolean {

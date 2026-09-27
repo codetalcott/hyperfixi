@@ -1746,3 +1746,24 @@ describe('fromCoreAST', () => {
     });
   });
 });
+
+// `n is not a String!`, as core's parser builds it.
+describe('fromCoreAST typeCheckExpression', () => {
+  it('carries the value, type name, `!` and negation', () => {
+    expect(
+      fromCoreAST({
+        type: 'typeCheckExpression',
+        value: { type: 'identifier', name: 'n' },
+        typeName: 'String',
+        nullOk: false,
+        negated: true,
+      })
+    ).toMatchObject({
+      type: 'typeCheck',
+      value: { type: 'identifier', value: 'n' },
+      typeName: 'String',
+      nullOk: false,
+      negated: true,
+    });
+  });
+});

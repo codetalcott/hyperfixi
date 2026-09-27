@@ -13,6 +13,7 @@ import type {
   VariableNode,
   BinaryExpressionNode,
   UnaryExpressionNode,
+  TypeCheckNode,
   MemberExpressionNode,
   PossessiveNode,
   CallExpressionNode,
@@ -121,6 +122,9 @@ export class ExpressionCodegen {
 
       case 'unary':
         return this.generateUnary(node);
+
+      case 'typeCheck':
+        return this.generateTypeCheck(node);
 
       case 'conditional':
         return this.generateConditional(node);
@@ -682,6 +686,13 @@ export class ExpressionCodegen {
   // ===========================================================================
   // UNARY EXPRESSIONS
   // ===========================================================================
+
+  /** `x is a Number`, as both engines test it: see the runtime's `typeCheck`. */
+  private generateTypeCheck(node: TypeCheckNode): string {
+    this.ctx.requireHelper('typeCheck');
+    const test = `_rt.typeCheck(${this.generate(node.value)}, ${JSON.stringify(node.typeName)}, ${node.nullOk})`;
+    return node.negated ? `!${test}` : test;
+  }
 
   private generateUnary(node: UnaryExpressionNode): string {
     const operand = this.generate(node.operand);
