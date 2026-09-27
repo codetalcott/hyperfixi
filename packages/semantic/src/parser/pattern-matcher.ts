@@ -1698,6 +1698,26 @@ export class PatternMatcher {
       }
     }
 
+    // A particle is the value where it cannot be a marker. tr's accusative
+    // marker is `i`, the usual loop variable, so `i i 2 artır` (increment i
+    // by 2) put the marker's spelling in the value slot, the slot took
+    // nothing, and the clause fell to a fallback that lost the amount. A
+    // particle directly before the pattern's next marker is that marker's
+    // value (`i i 2 artır`); so is one directly after another marker and
+    // before the verb (`k i i artır`, increment k by i). Directly after a
+    // value and before the verb, it is that value's marker (`1s i bekle`).
+    const nextToken = tokens.peek(1);
+    if (
+      token.kind === 'particle' &&
+      nextToken &&
+      this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
+      (nextToken.kind === 'particle' || tokens.tokens[tokens.position() - 1]?.kind === 'particle')
+    ) {
+      captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
+      tokens.advance();
+      return true;
+    }
+
     // Try to extract a semantic value from the token
     const value = this.tokenToSemanticValue(token);
     if (!value) {

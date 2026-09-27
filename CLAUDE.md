@@ -622,7 +622,8 @@ parse; 10,020 after PRs 53–54 (semantic's value extent, core's English values)
 5,727 after PR 55 (an increment's amount); 4,340 after PR 56 (semantic's `as` and
 `@attr of`); 3,326 after PR 57 (`contains` in ja, ko, qu, zh); 2,089 after PR 58
 (property words before `of`, localized and chained); 1,840 after PR 59 (a variable spelled
-like a conjunction); 1,836 after PR 61 (sw and vi `null`) — and only shrinks:
+like a conjunction); 1,836 after PR 61 (sw and vi `null`); 1,427 after PR 64 (tr's variable
+`i`, spelled like its accusative marker) — and only shrinks:
 the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
 ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
