@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 1329,
+  "failing": 1059,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -55,18 +55,6 @@
     "set|me.id": {
       "lanes": "pl pl/up ru ru/up uk uk/up",
       "family": "translation"
-    },
-    "put|[n, 2]": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "set|[n, 2]": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "if|[n, 2]": {
-      "lanes": "*direct",
-      "family": "direct-path"
     },
     "put|v of w of obj + 2": {
       "lanes": "pl pl/up",
@@ -416,18 +404,6 @@
       "lanes": "pl pl/up",
       "family": "translation"
     },
-    "put|[n, 2] contains 2": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "set|[n, 2] contains 2": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "if|[n, 2] contains 2": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
     "put|2 is in [1, 2, 6]": {
       "lanes": "de de/up tr tr/up",
       "family": "translation"
@@ -665,16 +641,16 @@
       "family": "translation+adapter"
     },
     "put|2 is in [n, 2]": {
-      "lanes": "de/up tr/up *direct",
-      "family": "translation+direct-path"
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
     },
     "set|2 is in [n, 2]": {
-      "lanes": "de/up tr/up *direct",
-      "family": "translation+direct-path"
+      "lanes": "de de/up tr tr/up",
+      "family": "translation"
     },
     "if|2 is in [n, 2]": {
-      "lanes": "ar bn de de/up es fr he hi id it ja ko ms pl pt qu ru sw th tl tr/up uk vi zh",
-      "family": "translation+direct-path+adapter"
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
     },
     "put|(n + 1) is in [1, 2, 6]": {
       "lanes": "de de/up tr tr/up",
@@ -903,18 +879,6 @@
     "if|my id is empty": {
       "lanes": "bn/up th/up",
       "family": "adapter"
-    },
-    "put|[n, 2] is empty": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "set|[n, 2] is empty": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "if|[n, 2] is empty": {
-      "lanes": "*direct",
-      "family": "direct-path"
     },
     "put|\"\" is not empty": {
       "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
