@@ -2545,6 +2545,19 @@ Found on the way, and **filed**: on the direct path `increment @title` changes
 nothing (upstream and core's English count `me`'s attribute from 0): the
 counter reads as an evaluated null, and nothing writes it back.
 
+### ~~`the X of Y` throws on a null target~~ — FIXED (2026-09-27, PR 68)
+
+`evaluatePropertyOfExpressionNode` (`parser/runtime.ts`) threw `Cannot access
+property "v" of undefined` when `Y` read null, which stopped the handler.
+Upstream's `of` reads null there, and so did core's own `X of Y` (a
+`binaryExpression`) and `Y's X`. Core's English `the name of #missing` threw;
+and since semantic builds every `X of Y` as a `propertyOfExpression`, with
+`v of w of obj as Int` bound as upstream binds it (`v of (w of (obj as Int))`,
+whose inner read is `w` of `NaN`), every translation of that wrote nothing. A
+null target now reads null. `runtime-ast-coverage.test.ts` pinned the throw; it
+pins upstream's result now, and `value-parity.test.ts` pins six null-target rows
+on both engines. The value matrix moved 88 pairs.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
