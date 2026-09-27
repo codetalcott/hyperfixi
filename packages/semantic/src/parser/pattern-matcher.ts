@@ -46,6 +46,7 @@ import {
   POSTFIX_PHRASES,
   TYPE_CHECK_PHRASES,
 } from '../ast-builder/expression-parser/parser';
+import { EXPRESSION_WORDS, OPERATOR_WORDS, readsAsOneExpression } from './utils/value-extent';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
@@ -100,6 +101,11 @@ export class PatternMatcher {
    * `extraction.action.value` — their `patient` slot is `<cmd>`'s patient.
    */
   private currentRoleCommand: string | undefined;
+  /**
+   * The pattern tokens still to match after the one being matched, through
+   * every enclosing group: a value stops at any marker the pattern still owes.
+   */
+  private patternRest: PatternToken[] = [];
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
   /**
@@ -147,6 +153,7 @@ export class PatternMatcher {
     this.roleStarts = new Map();
     this.eventSource = undefined;
 
+    this.patternRest = [];
     const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
 
     if (!success) {
@@ -328,12 +335,15 @@ export class PatternMatcher {
         tokens.reset(skipMark);
       }
 
+      const outerRest = this.patternRest;
+      this.patternRest = [...patternTokens.slice(i + 1), ...outerRest];
       const matched = this.matchPatternToken(
         tokens,
         patternToken,
         captured,
         patternTokens[i + 1] ?? nextAfterSequence
       );
+      this.patternRest = outerRest;
 
       sourceWindow =
         patternToken.type === 'role' && patternToken.role === 'event'
@@ -628,8 +638,212 @@ export class PatternMatcher {
     if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
     this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
     this.absorbTrailingConditionOperand(tokens, patternToken, captured, nextPatternToken, startIdx);
+    this.absorbExpressionTail(tokens, patternToken, captured, nextPatternToken, startIdx);
     this.stampCaptureSpan(tokens, patternToken.role, captured, startIdx, before);
     return true;
+  }
+
+  /**
+   * Let the expression parser say where a value ends.
+   *
+   * The captures above each take one known SHAPE of value: a token, a
+   * possessive pair, a property path, an operator run over known operands.
+   * When a value is longer than the shape they recognized (`obj's v`, `length
+   * of arr`, `#a's textContent's length`, `String(n) + 2`, `-n`), the capture
+   * stops short. The leftover tokens then fail the pattern's next marker and
+   * the command drops (`put obj's v into #out` parsed as a bare `on click`),
+   * or the pattern completes and the tail is lost (`set x to v of obj` kept
+   * `v`). Every translation is rendered from the English parse, so it
+   * inherited the loss in all 24 languages.
+   *
+   * So after a capture, while tokens remain before the value's boundary, take
+   * the longest run from the capture's start that the expression parser reads
+   * WHOLE, joined to English as every expression value is. The boundary is:
+   *
+   * - a marker the pattern still owes, or the clause's end;
+   * - a marker of ANY role of the command, in this language, whether or not
+   *   the matching variant has a slot for it. Otherwise a variant without
+   *   that role wins by swallowing its marker (uk `з` is both swap's `with`
+   *   and `of`), and fetch's responseType, whose marker a language may leave
+   *   in English (es `como json` joins as `as json`);
+   * - a `.class` across a space after an operand (`.active .active`, `null
+   *   .error`): another value, which the English parser would read as a
+   *   member;
+   * - any keyword that is not expression vocabulary: a command verb (`set x
+   *   to true and put 2 …`), an event name (tl `wait from document
+   *   pointermove o pointerup`), a marker (`continuesValue`).
+   *
+   * And the run must read as ONE expression (`readsAsOneExpression`): no
+   * unclosed quote (`'s v "Y"`, a split taken after an owner) and no word the
+   * English parser cannot read.
+   *
+   * Each of these exists because the whole-corpus probe or the value matrix
+   * caught its absence turning a failing variant or SOV clause split into a
+   * winning one, or semantic's own suite caught it losing a command. A first
+   * cut also refused identifiers outside ASCII, stopped at any word naming a
+   * command, and refused a value that began at an operator word or a
+   * possessive marker: dropped, since the value matrix measured them costing
+   * 437 fixed pairs and nothing measured them protecting anything.
+   *
+   * It applies only where a marker or the clause end bounds the value. A slot
+   * followed directly by another role (it/pl/ru/uk `set`'s destination, then
+   * its value) has no marker to stop at. Measured redundant today: the parser
+   * takes both, and the pattern then fails on the missing value and falls
+   * back to the right reading. Kept so an optional role there cannot be
+   * swallowed by a pattern that still succeeds.
+   */
+  private absorbExpressionTail(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken: PatternToken | undefined,
+    startIdx: number
+  ): void {
+    if (patternToken.role === 'event' || patternToken.role === 'action') return;
+    // A class NAME is not an expression: `toggle .open in #panel` must keep
+    // `.open`, not read `.open in #panel` as a scoped query, which toggles
+    // nothing and says nothing.
+    if (this.isClassNameSlot(patternToken)) return;
+    if (!captured.has(patternToken.role)) return;
+    if (tokens.position() <= startIdx) return;
+    const types = patternToken.expectedTypes;
+    if (types && types.length > 0 && !types.includes('expression')) return;
+    if (!PatternMatcher.boundedByMarker(nextPatternToken)) return;
+
+    const owed = this.restLiterals();
+    const markers = this.commandMarkers();
+    const stopsAt = (t: LanguageToken): boolean =>
+      this.isValueBoundary(t, owed) || markers.has(t.value.toLowerCase());
+    const next = tokens.peek();
+    if (!next || stopsAt(next)) return;
+
+    let end = tokens.position();
+    while (end < tokens.tokens.length) {
+      if (stopsAt(tokens.tokens[end]!) || !this.continuesValue(tokens.tokens, end)) break;
+      end++;
+    }
+    for (let k = end; k > tokens.position(); k--) {
+      const raw = joinExpressionTokens(tokens.tokens.slice(startIdx, k), this.currentProfile);
+      if (!readsAsOneExpression(raw)) continue;
+      while (tokens.position() < k) tokens.advance();
+      captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
+      return;
+    }
+  }
+
+  /**
+   * Is this slot a class NAME: the patient of add/remove/toggle/take? The
+   * role's command, not the pattern's: a fused handler pattern is `on`.
+   */
+  private isClassNameSlot(patternToken: PatternToken & { type: 'role' }): boolean {
+    return (
+      patternToken.role === 'patient' &&
+      ['add', 'remove', 'toggle', 'take'].includes(this.currentRoleCommand ?? '')
+    );
+  }
+
+  /** Is the slot followed by a marker (or nothing), which can bound its value? */
+  private static boundedByMarker(next: PatternToken | undefined): boolean {
+    if (!next) return true;
+    if (next.type === 'literal') return true;
+    if (next.type === 'group') return next.tokens[0]?.type === 'literal';
+    return false;
+  }
+
+  /** The literal (marker) tokens of the rest of the pattern, groups included. */
+  private restLiterals(): PatternToken[] {
+    const out: PatternToken[] = [];
+    const walk = (pts: readonly PatternToken[]): void => {
+      for (const pt of pts) {
+        if (pt.type === 'literal') out.push(pt);
+        else if (pt.type === 'group') walk(pt.tokens);
+      }
+    };
+    walk(this.patternRest);
+    return out;
+  }
+
+  /** The schema of the command the pattern builds, when it has one. */
+  private currentSchema(): CommandSchema | undefined {
+    const command = this.currentRoleCommand;
+    if (!command || !(command in commandSchemas)) return undefined;
+    return commandSchemas[command as keyof typeof commandSchemas];
+  }
+
+  /**
+   * The markers of every role of the command being built, in this language,
+   * whichever pattern variant is matching.
+   */
+  private commandMarkers(): ReadonlySet<string> {
+    const schema = this.currentSchema();
+    const profile = this.currentProfile;
+    const out = new Set<string>();
+    if (!schema || !profile) return out;
+    for (const role of schema.roles) {
+      const override = role.markerOverride?.[profile.code];
+      if (override) {
+        out.add(override.toLowerCase());
+        continue;
+      }
+      const marker = profile.roleMarkers[role.role];
+      if (!marker) continue;
+      out.add(marker.primary.toLowerCase());
+      for (const alt of marker.alternatives ?? []) out.add(alt.toLowerCase());
+    }
+    out.delete('');
+    return out;
+  }
+
+  /**
+   * May a value run on through the token at `i`? Operands (literals,
+   * selectors, identifiers in any script), operators and punctuation,
+   * possessive markers, and keywords whose English sense is expression
+   * vocabulary. Not another keyword: a command verb (`true and put 2 …`), an
+   * event name (tl `pointermove o pointerup`), a marker. Not a `.class`
+   * across a space after an operand, and not the command's responseType
+   * marker in its English sense (`fetch … as json`, es `como json`).
+   */
+  private continuesValue(all: readonly LanguageToken[], i: number): boolean {
+    const token = all[i]!;
+    const prev = all[i - 1];
+    const lang = this.currentProfile?.code ?? 'en';
+    if (token.kind === 'literal') return true;
+    // en splits a possessive `obj's` into `obj` `'` `s`.
+    if (token.value === "'" && all[i + 1]?.value === 's') return true;
+    if (token.value === 's' && prev?.value === "'") return true;
+    if (token.kind === 'selector') {
+      // After an operator or an operator word (`no .w`, `+ .x`) a `.class`
+      // across a space is the next operand; after an operand, another value.
+      if (!token.value.startsWith('.') || !prev || PatternMatcher.tokensAdjacent(prev, token)) {
+        return true;
+      }
+      if (PatternMatcher.RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
+      const prevWord = expressionWordOf(lang, prev, all[i - 2], token, undefined).toLowerCase();
+      return OPERATOR_WORDS.has(prevWord);
+    }
+    if (PatternMatcher.RUN_OPERATORS.has(token.value)) return true;
+    if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
+    if (this.isOfPossessiveMarker(token)) return true;
+    const word = expressionWordOf(lang, token, prev, all[i + 1], undefined).toLowerCase();
+    if (word === 'as' && this.currentSchema()?.roles.some(r => r.role === 'responseType')) {
+      return false;
+    }
+    if (EXPRESSION_WORDS.has(word)) return true;
+    // An identifier in any script: the join translates a localized property
+    // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what
+    // it leaves untranslated.
+    return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value);
+  }
+
+  /** The clause's end, or a marker the pattern still owes. */
+  private isValueBoundary(token: LanguageToken, owed: readonly PatternToken[]): boolean {
+    if (token.kind === 'conjunction') return true;
+    if (token.kind === 'keyword') {
+      const norm = (token.normalized ?? token.value).toLowerCase();
+      if (norm === 'then' || norm === 'end' || norm === 'else') return true;
+      if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) return true;
+    }
+    return owed.some(pt => this.patternTokenWouldMatch(pt, token));
   }
 
   /**
@@ -1505,9 +1719,7 @@ export class PatternMatcher {
     // is `on`. Never as an event. Without this the `in …` tail went
     // unconsumed, and the query lost its scope in English and so in every
     // translation.
-    const classNameSlot =
-      patternToken.role === 'patient' &&
-      ['add', 'remove', 'toggle', 'take'].includes(this.currentRoleCommand ?? '');
+    const classNameSlot = this.isClassNameSlot(patternToken);
     const takesScope =
       value.type === 'selector' &&
       (value.value.startsWith('<') || (value.value.startsWith('.') && !classNameSlot));
