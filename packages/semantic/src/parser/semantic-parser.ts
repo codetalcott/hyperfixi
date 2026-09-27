@@ -6191,8 +6191,14 @@ export class SemanticParserImpl implements ISemanticParser {
     // By surface: the pattern writes the word, and a particle's normalized
     // form is a role, not the word (qu `3 times ta repeat`).
     const isLoopWord = (t: LanguageToken): boolean => loopWords.has(t.value.toLowerCase());
+    // `with` in English or in the language's own word (its `with` marker, sw
+    // `na`, es `con`): a hand-written translation writes it, and sw's `na` is
+    // also its `and`, which read `na index` into the loop's source.
+    const withWord = tryGetProfile(language)?.roleMarkers?.style?.primary?.toLowerCase();
+    const isWith = (t: LanguageToken | undefined): boolean =>
+      word(t) === 'with' || (!!withWord && word(t) === withWord);
     for (let at = 0; at + 1 < arr.length; at++) {
-      const withIndex = word(arr[at]) === 'with' && word(arr[at + 1]) === 'index';
+      const withIndex = isWith(arr[at]) && word(arr[at + 1]) === 'index';
       const named = word(arr[at]) === 'index';
       if (!withIndex && !named) continue;
       const phraseStart = arr[at].position.start;

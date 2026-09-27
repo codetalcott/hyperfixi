@@ -37,7 +37,10 @@ const MALAY_EXTRAS: KeywordEntry[] = [
   // Values/Literals
   { native: 'benar', normalized: 'true' },
   { native: 'salah', normalized: 'false' },
-  { native: 'kosong', normalized: 'null' },
+  // ms's word for `empty`, in its lexicon and the i18n dictionary (its `null`
+  // is `null`). It read as `null`, so `"" is empty` (`"" adalah kosong`) read
+  // back `"" is null`, which is false.
+  { native: 'kosong', normalized: 'empty' },
   { native: 'tak_tentu', normalized: 'undefined' },
 
   // Positional
