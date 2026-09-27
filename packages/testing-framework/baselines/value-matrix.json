@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 588,
+  "failing": 546,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -232,89 +232,33 @@
       "lanes": "qu qu/up",
       "family": "translation"
     },
-    "put|true and true": {
-      "lanes": "sw sw/up",
-      "family": "translation"
-    },
     "set|true and true": {
       "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "if|true and true": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|flag and true": {
-      "lanes": "sw sw/up",
       "family": "translation"
     },
     "set|flag and true": {
       "lanes": "qu qu/up",
       "family": "translation"
     },
-    "if|flag and true": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|true and flag": {
-      "lanes": "sw sw/up",
-      "family": "translation"
-    },
     "set|true and flag": {
       "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "if|true and flag": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|Array.isArray(arr) and true": {
-      "lanes": "sw sw/up",
       "family": "translation"
     },
     "set|Array.isArray(arr) and true": {
       "lanes": "qu qu/up",
       "family": "translation"
     },
-    "if|Array.isArray(arr) and true": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|true and Array.isArray(arr)": {
-      "lanes": "sw sw/up",
-      "family": "translation"
-    },
     "set|true and Array.isArray(arr)": {
       "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "if|true and Array.isArray(arr)": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|(n > 1) and true": {
-      "lanes": "sw sw/up",
       "family": "translation"
     },
     "set|(n > 1) and true": {
       "lanes": "qu qu/up",
       "family": "translation"
     },
-    "if|(n > 1) and true": {
-      "lanes": "sw/up",
-      "family": "adapter"
-    },
-    "put|true and (n > 1)": {
-      "lanes": "sw sw/up",
-      "family": "translation"
-    },
     "set|true and (n > 1)": {
       "lanes": "qu qu/up",
       "family": "translation"
-    },
-    "if|true and (n > 1)": {
-      "lanes": "sw/up",
-      "family": "adapter"
     },
     "put|[1, 2, 6] contains v of w of obj": {
       "lanes": "pl pl/up",
@@ -457,15 +401,15 @@
       "family": "translation+adapter"
     },
     "put|\"\" is empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "set|\"\" is empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "if|\"\" is empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|null is empty": {
@@ -477,15 +421,15 @@
       "family": "translation"
     },
     "put|\"\" is not empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "set|\"\" is not empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "if|\"\" is not empty": {
-      "lanes": "ar ar/up hi hi/up id id/up ms ms/up qu qu/up tr tr/up",
+      "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|\"q\" is not empty": {
@@ -584,17 +528,9 @@
       "lanes": "it it/up",
       "family": "translation"
     },
-    "put|n > 1 and n < 10": {
-      "lanes": "sw sw/up",
-      "family": "translation"
-    },
     "set|n > 1 and n < 10": {
       "lanes": "qu qu/up",
       "family": "translation"
-    },
-    "if|n > 1 and n < 10": {
-      "lanes": "sw/up",
-      "family": "adapter"
     },
     "set|not flag or n is 6": {
       "lanes": "qu qu/up",
@@ -605,15 +541,15 @@
       "family": "translation"
     },
     "put|flag and not (n is 6)": {
-      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "lanes": "hi hi/up qu qu/up",
       "family": "translation"
     },
     "set|flag and not (n is 6)": {
-      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "lanes": "hi hi/up qu qu/up",
       "family": "translation"
     },
     "if|flag and not (n is 6)": {
-      "lanes": "hi hi/up qu qu/up sw sw/up",
+      "lanes": "hi hi/up qu qu/up",
       "family": "translation"
     }
   }
