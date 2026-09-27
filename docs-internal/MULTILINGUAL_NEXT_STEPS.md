@@ -5730,11 +5730,36 @@ this signal was missing.
 >
 > Filed, not fixed:
 >
-> - **`contains` in ja, ko, qu and zh** (about 1,050 pairs, the largest family left): ja `含む`, ko
+> - ~~**`contains` in ja, ko, qu and zh** (about 1,050 pairs, the largest family left): ja `含む`, ko
 >   `포함` and zh `包含` read back as `inclusive`, and qu `ukupi_kan` splits at the underscore; in a
->   `put` value the words before it are lost.
+>   `put` value the words before it are lost.~~ Fixed by PR 57.
 > - **Semantic's expression tokenizer drops `|`**, so a piped conversion (`as JSONString | JSON`)
 >   reads as `as JSONString`. No corpus row pipes.
+>
+> **`contains` reads back in ja, ko, qu and zh (PR 57, 2026-09-27).** ja `含む`, ko `포함` and zh
+> `包含` spell both `contains` and pick's range mode `inclusive`, and each tokenizer normalizes the
+> word to `inclusive`. So a value read `"xab" 含む s` as `"xab"`, `inclusive` and `s`: `put` kept `s`
+> alone, and a condition tested nothing, on both engines. Inside a value the word can only be
+> `contains`, and CONNECTIVE_LEXICON, which the value join reads before a keyword's normalized form,
+> now says so; pick's range mode still reads the tokenizer's `inclusive` (the renderer writes it in
+> English, and a hand-written native one parses as before). qu `ukupi_kan` split at its underscore
+> into `ukupi` (`in`), `_` and `kan`; a whole-token entry claims it, as `mana_kanchu` and hi's
+> `के_रूप_में` are.
+>
+> **In the value matrix, 4,340 failing pairs fall to 3,326 (−23%)**, every one fixed in those four
+> languages, and none newly fail. No stored corpus row moves: the corpus has no `contains`, and no
+> `inclusive` either. `test/contains-connective.test.ts` round-trips four sources through the four
+> languages and pins pick's native range mode; each of four mutants removing one language's entry
+> fails it.
+>
+> What is left, 3,326 pairs:
+>
+> - **pl and tr misread the variable `i`** (about 1,020 pairs, both engines; filed with PR 55): pl
+>   reads `i` as "and" (`set i to 1` → `set and to 1`), and tr's accusative marker is `i` (`i i 2
+>   artır` drops the amount). A user's variable named `i` is as exposed.
+> - **The renderer localizes only the first link of a chained possessive** (39 cells, about 960
+>   pairs outside pl and tr): `#a's textContent's length` in 16 languages.
+> - **bn, ms, th and tl render `length` in their own word** (about 420 pairs).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 4340,
+  "failing": 3326,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -1056,569 +1056,73 @@
       "lanes": "sw/up",
       "family": "adapter"
     },
-    "put|\"xab6\" contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains \"a\"": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"q\" contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"q\" contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"q\" contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains \"q\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains \"q\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains \"q\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|s contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|s contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|s contains \"a\"": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains s": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains s": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains s": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|#a's textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|#a's textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|#a's textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains #a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains #a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains #a's textContent": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
     "put|my id contains \"a\"": {
-      "lanes": "bn/up ja ja/up ko ko/up qu qu/up th/up zh zh/up",
-      "family": "translation+adapter"
+      "lanes": "bn/up th/up",
+      "family": "adapter"
     },
     "set|my id contains \"a\"": {
-      "lanes": "bn/up ja ja/up ko ko/up pl pl/up qu qu/up ru ru/up th/up uk uk/up zh zh/up",
+      "lanes": "bn/up pl pl/up ru ru/up th/up uk uk/up",
       "family": "translation+adapter"
     },
     "if|my id contains \"a\"": {
-      "lanes": "bn/up ja ja/up ko ko/up qu/up th/up zh zh/up",
-      "family": "translation+adapter"
+      "lanes": "bn/up th/up",
+      "family": "adapter"
     },
     "put|\"xab6\" contains my id": {
-      "lanes": "bn bn/up ja ja/up ko ko/up qu qu/up th th/up zh zh/up",
+      "lanes": "bn bn/up th th/up",
       "family": "translation"
     },
     "set|\"xab6\" contains my id": {
-      "lanes": "bn bn/up ja ja/up ko ko/up qu qu/up th th/up zh zh/up",
+      "lanes": "bn bn/up th th/up",
       "family": "translation"
     },
     "if|\"xab6\" contains my id": {
-      "lanes": "bn bn/up ja/up ko/up qu qu/up th th/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "lanes": "bn bn/up th th/up",
       "family": "translation"
-    },
-    "set|textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains textContent of #a": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|the textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|the textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|the textContent of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains the textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains the textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains the textContent of #a": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|@title of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|@title of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|@title of #a contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains @title of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains @title of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains @title of #a": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|#a.textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|#a.textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|#a.textContent contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains #a.textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains #a.textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains #a.textContent": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|me.id contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|me.id contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|me.id contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains me.id": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains me.id": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains me.id": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|String(n) contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|String(n) contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|String(n) contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains String(n)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains String(n)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains String(n)": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|s.toUpperCase() contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|s.toUpperCase() contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|s.toUpperCase() contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains s.toUpperCase()": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains s.toUpperCase()": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains s.toUpperCase()": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|(s + \"c\") contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|(s + \"c\") contains \"a\"": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|(s + \"c\") contains \"a\"": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains (s + \"c\")": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains (s + \"c\")": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains (s + \"c\")": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains 2": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains n": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains n": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains n": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|arr contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|arr contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|arr contains 2": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains #a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains #a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains #a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains obj's v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains obj's v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains obj's v": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains arr's length": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains arr's length": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains arr's length": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
     },
     "put|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja ja/up ko ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up zh zh/up",
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
       "family": "translation"
     },
     "set|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja ja/up ko ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up zh zh/up",
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
       "family": "translation"
     },
     "if|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja/up ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
+      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
       "family": "translation"
-    },
-    "set|[1, 2, 6] contains textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains the textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains the textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains the textContent of #a": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains v of obj": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains v of obj": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains v of obj": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
     },
     "put|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ja ja/up ko ko/up ms ms/up qu qu/up th th/up tl tl/up zh zh/up",
+      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
       "family": "translation"
     },
     "set|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ja ja/up ko ko/up ms ms/up qu qu/up th th/up tl tl/up zh zh/up",
+      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
       "family": "translation"
     },
     "if|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ja/up ko/up ms ms/up qu qu/up th th/up tl tl/up zh/up",
-      "family": "translation+adapter"
+      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
+      "family": "translation"
     },
     "put|[1, 2, 6] contains v of w of obj": {
-      "lanes": "ja ja/up ko ko/up pl pl/up qu qu/up zh zh/up",
+      "lanes": "pl pl/up",
       "family": "translation"
     },
     "set|[1, 2, 6] contains v of w of obj": {
-      "lanes": "ja ja/up ko ko/up pl pl/up qu qu/up zh zh/up",
+      "lanes": "pl pl/up",
       "family": "translation"
-    },
-    "if|[1, 2, 6] contains v of w of obj": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|textContent of .w contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|textContent of .w contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|textContent of .w contains 2": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains #a.textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains #a.textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains #a.textContent": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains obj.v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains obj.v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains obj.v": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains arr.length": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains arr.length": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains arr.length": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains obj.w.v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains obj.w.v": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains obj.w.v": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains Math.max(n, 1)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains Math.max(n, 1)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains Math.max(n, 1)": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2, 6] contains String(n)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains String(n)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains String(n)": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
-    },
-    "put|[1, 2] contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2] contains 2": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2] contains 2": {
-      "lanes": "ja/up ko/up qu qu/up zh/up",
-      "family": "translation+adapter"
     },
     "put|[n, 2] contains 2": {
-      "lanes": "ja/up ko/up qu/up zh/up *direct",
-      "family": "translation+direct-path"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "set|[n, 2] contains 2": {
-      "lanes": "ja/up ko/up qu/up zh/up *direct",
-      "family": "translation+direct-path"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "if|[n, 2] contains 2": {
-      "lanes": "ja/up ko/up qu/up zh/up *direct",
-      "family": "translation+direct-path"
-    },
-    "put|[1, 2, 6] contains (n + 1)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains (n + 1)": {
-      "lanes": "ja ja/up ko ko/up qu qu/up zh zh/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains (n + 1)": {
-      "lanes": "ja ja/up ko ko/up qu/up zh zh/up",
-      "family": "translation+adapter"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "put|2 is in [1, 2, 6]": {
       "lanes": "de de/up tr tr/up",
