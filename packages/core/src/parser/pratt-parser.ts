@@ -19,7 +19,7 @@
  *   Tier  7 (bp 70): as (type conversion)
  *   Tier  8 (bp 80): not, !, -, +, no (unary prefix)
  *   Tier  9 (bp 85): first, last (positional prefix)
- *   Tier 10 (bp 90): 's, ., ?., [], () (property access / calls)
+ *   Tier 10 (bp 90): 's, ., ?., [], (), of (property access / calls)
  */
 
 import type { Token } from '../types/core';
@@ -711,6 +711,47 @@ function makeTypeCheckHandler(negated: boolean): InfixHandler {
 }
 
 /**
+ * The binding power `of` parses its right operand at. Upstream reads that
+ * operand as a unaryExpression: a primary with its own chain, which takes `as`
+ * (bp 70) and a further `of`, so `c of b of a` is `c of (b of a)`, but no
+ * arithmetic, comparison or logic.
+ */
+const OF_OPERAND_BP = 70;
+
+/**
+ * The infix handler for `of`. Upstream's chain also takes `in`, which core
+ * parses at the comparison tier, so a trailing `in` is folded into the operand
+ * here: `length of <p/> in #wrap` counts the query scoped to #wrap.
+ */
+function ofHandler(left: ASTNode, token: Token, ctx: PrattContext): ASTNode {
+  let right = ctx.parseExpr(OF_OPERAND_BP);
+  if (ctx.peek()?.value === 'in') {
+    const inToken = ctx.advance();
+    const scope = ctx.parseExpr(OF_OPERAND_BP);
+    right = {
+      type: 'binaryExpression',
+      operator: 'in',
+      left: right,
+      right: scope,
+      start: right.start,
+      end: scope.end ?? inToken.end,
+      line: right.line ?? inToken.line,
+      column: right.column ?? inToken.column,
+    };
+  }
+  return {
+    type: 'binaryExpression',
+    operator: token.value,
+    left,
+    right,
+    start: left.start,
+    end: right.end ?? token.end,
+    line: left.line ?? token.line,
+    column: left.column ?? token.column,
+  };
+}
+
+/**
  * Parser-specific comparison fragment — extends CORE_FRAGMENT with all comparison
  * operators from the existing parser (multi-word operators, postfix operators, etc.).
  * These are tokenized as single tokens by the tokenizer's compound operator handling.
@@ -777,10 +818,12 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
 
   // Equality-level keywords from parseEquality
   ['in', leftAssoc(30) as BindingPowerEntry],
-  // `of` is right-associative so `c of b of a` parses as `c of (b of a)` —
-  // property `c` of (property `b` of `a`). See evaluateBinaryExpression's `of`
-  // path-access handler in runtime.ts.
-  ['of', rightAssoc(30) as BindingPowerEntry],
+  // `of` is property access (upstream's ofExpression), in the same chain as `.`
+  // and `'s`, so it binds tighter than any operator: `textContent of #d1 is "d"`
+  // compares the property, and `not X of Y` negates it. See ofHandler for its
+  // right operand, and evaluateBinaryExpression's `of` path-access handler in
+  // runtime.ts.
+  ['of', { infix: { bp: [90, OF_OPERAND_BP], handler: ofHandler } }],
   ['really', leftAssoc(30) as BindingPowerEntry],
 
   // Postfix unary operators — consume operator, no right-hand side
