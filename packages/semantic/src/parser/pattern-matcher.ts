@@ -1813,9 +1813,31 @@ export class PatternMatcher {
    * Binary operators that can join operands in an operator-run expression.
    * `*` tokenizes as a SELECTOR (the style-prefix char) but is only read as an
    * operator here when it sits BETWEEN two operands, so a bare `*opacity`
-   * style selector (one fused token) is never affected.
+   * style selector (one fused token) is never affected. A bare `<` is a
+   * selector token too; a query is one fused token (`<p/>`).
+   *
+   * The comparisons and `mod` join a run as well: without them `set x to n > 2`
+   * captured only `n`, and every translation lost the comparison (the English
+   * reference truncated the same way, so no fidelity signal saw it). `%` is
+   * core's alone (upstream rejects it) and renders as written. The word
+   * operators (`and`, `or`, `is`, …) do not join a run.
    */
-  private static readonly RUN_OPERATORS = new Set(['+', '-', '*', '/']);
+  private static readonly RUN_OPERATORS = new Set([
+    '+',
+    '-',
+    '*',
+    '/',
+    '%',
+    'mod',
+    '>',
+    '<',
+    '>=',
+    '<=',
+    '==',
+    '!=',
+    '===',
+    '!==',
+  ]);
 
   /** The token after the next one is a run operator. */
   private runOperatorFollows(tokens: TokenStream): boolean {

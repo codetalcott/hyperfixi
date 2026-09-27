@@ -306,8 +306,13 @@ export class ExpressionParser {
   private parseMultiplication(): ExpressionNode {
     let left = this.parseUnary();
 
-    while (this.peek().value === '*' || this.peek().value === '/' || this.peek().value === '%') {
-      const operator = this.advance().value;
+    while (
+      this.peek().value === '*' ||
+      this.peek().value === '/' ||
+      this.peek().value === '%' ||
+      this.checkValue('mod')
+    ) {
+      const operator = this.advance().value.toLowerCase();
       const right = this.parseUnary();
       left = this.createBinaryExpression(operator, left, right);
     }

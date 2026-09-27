@@ -5318,6 +5318,32 @@ this signal was missing.
 > - In the 16 languages that write the property first, a chained possessive renders only its
 >   first link in the language: `#d1's textContent's length` becomes es `textContent de #d1's
 >   length`, which reads as the textContent of `#d1's length`, in the translation and in English.
+>
+> **A value keeps its comparison or `mod` in every language (PR 43, 2026-09-26).** Semantic's
+> operator-run capture, which reads a value made of several tokens, joined only `+ - * /`. So `set
+> x to n > 2` captured `n` and dropped the rest: the English parse rendered `set x to n`, every
+> translation with it, and `put n > 2 into #out` lost its whole `put`. No gate saw it, because the
+> English reference truncated the same way and no corpus row has such a value. The comparisons
+> (`>`, `<`, `>=`, `<=`, `==`, `!=`, `===`, `!==`), `mod` and `%` now join a run. `%` is core's
+> alone (upstream rejects it), so it renders as written. Semantic's expression parser, which builds
+> every translated value's AST, lexed `===` as `==` and a stray `=` and read `mod` as a variable.
+> And the AOT wrote `mod` as is, which is not JavaScript, in English too. Round trips of 16 such
+> values × 24 languages fall from 384 wrong to 0, and runs of 14 on the direct path from 336 to 0.
+> No corpus row and no condition moves.
+>
+> Filed, not fixed (each fails on the base too):
+>
+> - The word operators in a value (`or`, `and`, `not`, `is …`, `exists`, `matches`) are still cut
+>   in every language: `set x to p or q` renders `set x to p`.
+> - A value run whose first operand is a possessive: `#d1's value + 2` fails in every language, and
+>   `my value + 2` in pl, ru and uk.
+> - de reads `setze m auf 3 dann setze x auf n + 2 dann …` back with a phantom `on n` handler: two
+>   sets in a row, the second's value a run that starts with a variable, then another command.
+> - English skips a variable named `a` as an article: `set a to true` is dropped, and `set x to
+>   a.b` renders `set x to .b`.
+> - Every translated `repeat until <condition>` loses its condition. The renderer leaves `until` in
+>   English, and es reads `repetir until n > 5 …` back as `repeat until increment n end`.
+> - `increment x by n * 2` loses `by n * 2`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

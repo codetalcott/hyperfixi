@@ -301,6 +301,9 @@ export class ExpressionCodegen {
       case '/':
       case '%':
         return `(${left} ${op} ${right})`;
+      // Hyperscript's word for `%`; left as is, `(n mod 2)` is not JavaScript.
+      case 'mod':
+        return `(${left} % ${right})`;
 
       // Logical
       case 'and':

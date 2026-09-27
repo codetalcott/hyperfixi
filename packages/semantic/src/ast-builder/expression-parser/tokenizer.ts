@@ -421,6 +421,10 @@ export function tokenize(input: string): Token[] {
       if (peek() === '=') {
         op += advance();
       }
+      // Strict equality: `===` and `!==` are one operator.
+      if ((op === '==' || op === '!=') && peek() === '=') {
+        op += advance();
+      }
       tokens.push(makeToken(TokenType.COMPARISON, op, start));
       continue;
     }

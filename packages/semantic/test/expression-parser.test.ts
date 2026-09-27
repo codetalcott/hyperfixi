@@ -589,4 +589,29 @@ describe('ExpressionParser', () => {
       );
     });
   });
+
+  // Core's strict equality and `mod`, in the shapes core's parser builds.
+  // `===` lexed as `==` and a stray `=`, and `mod` read as a bare identifier.
+  describe("core's strict equality and mod", () => {
+    const n = { type: 'identifier', name: 'n' };
+
+    it.each([
+      ['n === 3', '===', { type: 'literal', value: 3 }],
+      ['n !== 3', '!==', { type: 'literal', value: 3 }],
+      ['n mod 2', 'mod', { type: 'literal', value: 2 }],
+    ])('%s', (source, operator, right) => {
+      const result = parseExpression(source);
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({ type: 'binaryExpression', operator, left: n, right });
+    });
+
+    it('reads `mod` after a parenthesized sum', () => {
+      expect(parseExpression('(n + 1) mod 3').node).toMatchObject({
+        type: 'binaryExpression',
+        operator: 'mod',
+        left: { type: 'binaryExpression', operator: '+', left: n },
+        right: { type: 'literal', value: 3 },
+      });
+    });
+  });
 });
