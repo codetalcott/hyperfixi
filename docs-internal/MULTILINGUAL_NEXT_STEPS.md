@@ -5635,14 +5635,65 @@ this signal was missing.
 > - **pl loses a chained `of`**: `v of w of obj` comes back `v`.
 > - **`@title of #a` is still dropped whole**, in English too: semantic's expression parser has no
 >   attribute root for `of`.
-> - **`increment … by` a non-literal amount is still dropped** (4,983 pairs, the matrix's biggest
->   single family): the increment schema's `quantity` accepts only a literal.
+> - ~~**`increment … by` a non-literal amount is still dropped** (4,983 pairs, the matrix's biggest
+>   single family): the increment schema's `quantity` accepts only a literal.~~ Fixed by PR 55.
 >
 > **Core's English values follow upstream's (PR 54, 2026-09-27).** The matrix's 46 core-English
 > cells: `put` of null and arrays, an attribute or a collection under `of`, `the X of Y … in`, `{}
 > is empty`, and `increment … by` a null amount. The entry is in `PARSER_NEXT_STEPS.md`. It fixed
 > 346 pairs, the direct path's included, and broke none; 10,020 pairs fail now. Four cells stay, `the
 > X of Y as T`, a known difference pending the owner's decision.
+>
+> **An increment's amount is any value (PR 55, 2026-09-27).** The matrix's biggest family. The
+> increment and decrement schemas' `quantity` took a literal only, so `increment i by n`, `by -2`
+> and `by obj.v` matched nothing and the whole `by …` clause fell away: the command incremented by
+> 1, in English and so in every translation. It now takes what `set`'s value takes. Two more
+> things lost an amount once it was kept:
+>
+> - **Eight languages render the amount with no marker** (ar he id ms sw th tl zh), right after the
+>   target, and read an amount that starts with `-` or `(` into it: ms `tambah_satu i - 2` as the
+>   target `i - 2`, `tambah_satu i (n + 1)` as the call `i(n + 1)`, which upstream rejects as
+>   unwritable. A counter's target is now never an operator run or a call, since neither can be
+>   written (`isCounterTarget` in the pattern matcher). No new vocabulary, and the bare form a user
+>   writes by hand reads right too.
+> - **The renderer dropped any amount that coerced to 1** as the default, so `by true` vanished
+>   (`Number(true)` is 1). It now skips the default itself.
+>
+> The kept amount exposed two leaks between the matrix's runs:
+>
+> - **hyperfixi keeps global variables in one Map that every context shares**, and writes a window
+>   global there (`increment n`). The reset rebuilt window's globals but not that Map, so tr's
+>   misreading of `increment i by n` (it increments `n`) made every later run read `n` as 7 or
+>   more, core's own English included: 3,525 pairs newly failed at once.
+> - **A lane can remove the body**: tr reads `increment i by 2 * 2` as `increment *`, which writes
+>   the text of every element, `<html>` included. The next reset threw.
+>
+> The reset now restores both. `value-matrix.isolation.test.ts` pins them, and reverting either fix
+> fails it.
+>
+> **In the value matrix, 10,020 failing pairs fall to 5,727 (−43%).** 4,356 pairs pass now, and the
+> increment position fell from 4,995 to 702. 63 newly fail, accepted with the reason: six cells
+> whose amount is 1, the default (`#a's textContent's length` is `"6".length`; `13 mod 4`), passed
+> only because the amount was dropped. Kept, they fail on two filed defects: the chained possessive
+> in 16 languages (60 pairs) and tr's `i` (3). No stored corpus row moves: the probe re-parsed all
+> 3,936 rows and every English row's render into each language, and the corpus's one amount is the
+> literal `by 10`. Semantic's `test/increment-amount.test.ts` round-trips 17 amounts and targets
+> through all 23 languages; each of five mutants reverting one piece fails it.
+>
+> Filed, not fixed:
+>
+> - **pl and tr misread the variable `i`**, which is why every increment and loop cell fails there
+>   (the loop filing above): pl `i` is "and" (`put i` writes `and`), and tr `i` is its accusative
+>   marker (`i i 2 artır` does not parse, and `i i 2 * 2 artır` reads as `increment * by 2`). A
+>   user's own variable named `i` is as exposed.
+> - **Core does not parseFloat a non-number amount**, as upstream does. Upstream reads `by true`,
+>   `by #a` and `by "q"` as NaN. Core's English path adds 1 for `true` and 6 for `#a`, and throws on
+>   text that is not a number, an object or an array (`Right operand cannot be converted to
+>   number`); its direct path
+>   adds 1 for a boolean, an element or an object. Filed in `PARSER_NEXT_STEPS.md`; outside the
+>   matrix, whose increment cells take numbers.
+> - **sw and vi render `null` as their word for empty** (`tupu`, `rỗng`), which reads back as the
+>   `empty` command after a bare amount (`increment i by null`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

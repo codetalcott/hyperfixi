@@ -270,6 +270,11 @@ conditions, `increment … by`). Each cell's English runs on the real
 `value-matrix.<position>.test.ts`, and fails on a failing pair the baseline does not
 list and on a listed pair that passes, so the list only shrinks.
 
+Every run starts from a fresh fixture and fresh globals, hyperfixi's own global
+variables included, and a body a lane removed is rebuilt. Otherwise one lane that
+writes a global (`increment n`) or removes the body would fail every run after it;
+`value-matrix.isolation.test.ts` pins both.
+
 ```bash
 # After a fix: prune the pairs that pass now (refuses to add new ones)
 npx tsx tools/regen-value-matrix-baseline.ts
