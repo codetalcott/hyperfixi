@@ -17,8 +17,9 @@ import { CONVERSION_TYPE_NAMES } from './expression-lexicon';
 
 /**
  * The English words an expression may contain, as `expressionWordOf` reads a
- * token. A value runs through these and through operands; any other word (a
- * marker, a verb, an event name) ends it.
+ * keyword or particle. A value runs through these and through operands; any
+ * other keyword (a marker, a command verb, an event name like `pointerup`)
+ * ends it.
  */
 export const EXPRESSION_WORDS: ReadonlySet<string> = new Set([
   "'s",
@@ -74,9 +75,8 @@ export const EXPRESSION_WORDS: ReadonlySet<string> = new Set([
 
 /**
  * The expression words that join or qualify operands, as opposed to naming
- * one. A value never STARTS at one of these, and a `.class` across a space
- * continues a value only after one (`no .w`), never after an operand (`null
- * .error` is two values).
+ * one: a `.class` across a space continues a value only after one (`no .w`),
+ * never after an operand (`null .error` is two values).
  */
 export const OPERATOR_WORDS: ReadonlySet<string> = new Set([
   'am',

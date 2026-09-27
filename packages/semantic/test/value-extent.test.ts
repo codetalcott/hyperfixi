@@ -61,14 +61,14 @@ const SOURCES: Array<[string, string[]]> = [
   [`on click put 2 + obj's v into #out`, []],
   [`on click put length of arr into #out`, LOCAL_LENGTH],
   [`on click put v of w of obj into #out`, ['pl']],
-  [`on click put 1 < arr's length into #out`, ['bn', 'th']],
+  [`on click put 1 < arr's length into #out`, []],
   [`on click put String(n) + 2 into #out`, []],
   [`on click put -n into #out`, []],
   [`on click set x to obj's v + 2 then put x into #out`, []],
   [`on click set x to length of arr then put x into #out`, LOCAL_LENGTH],
   [
     `on click put #a's textContent's length into #out`,
-    LANGUAGES.filter(l => !['hi', 'ja', 'ko', 'tl', 'vi', 'zh'].includes(l)),
+    LANGUAGES.filter(l => !['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'].includes(l)),
   ],
 ];
 

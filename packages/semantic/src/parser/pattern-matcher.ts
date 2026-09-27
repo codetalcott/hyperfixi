@@ -660,19 +660,37 @@ export class PatternMatcher {
    * the longest run from the capture's start that the expression parser reads
    * WHOLE, joined to English as every expression value is. The boundary is:
    *
-   * - a marker the pattern still owes, the clause's end, or a command verb;
+   * - a marker the pattern still owes, or the clause's end;
    * - a marker of ANY role of the command, in this language, whether or not
    *   the matching variant has a slot for it. Otherwise a variant without
    *   that role wins by swallowing its marker (uk `з` is both swap's `with`
-   *   and `of`; es fetch `como json` renders as `as json`);
-   * - any word that is not expression vocabulary (see `isExpressionToken`).
+   *   and `of`), and fetch's responseType, whose marker a language may leave
+   *   in English (es `como json` joins as `as json`);
+   * - a `.class` across a space after an operand (`.active .active`, `null
+   *   .error`): another value, which the English parser would read as a
+   *   member;
+   * - any keyword that is not expression vocabulary: a command verb (`set x
+   *   to true and put 2 …`), an event name (tl `wait from document
+   *   pointermove o pointerup`), a marker (`continuesValue`).
+   *
+   * And the run must read as ONE expression (`readsAsOneExpression`): no
+   * unclosed quote (`'s v "Y"`, a split taken after an owner) and no word the
+   * English parser cannot read.
+   *
+   * Each of these exists because the whole-corpus probe or the value matrix
+   * caught its absence turning a failing variant or SOV clause split into a
+   * winning one, or semantic's own suite caught it losing a command. A first
+   * cut also refused identifiers outside ASCII, stopped at any word naming a
+   * command, and refused a value that began at an operator word or a
+   * possessive marker: dropped, since the value matrix measured them costing
+   * 437 fixed pairs and nothing measured them protecting anything.
    *
    * It applies only where a marker or the clause end bounds the value. A slot
    * followed directly by another role (it/pl/ru/uk `set`'s destination, then
-   * its value) has no marker to stop at, and the parser would take both.
-   *
-   * Each guard below exists because the whole-corpus probe caught its absence
-   * turning a failing variant or SOV clause split into a winning one.
+   * its value) has no marker to stop at. Measured redundant today: the parser
+   * takes both, and the pattern then fails on the missing value and falls
+   * back to the right reading. Kept so an optional role there cannot be
+   * swallowed by a pattern that still succeeds.
    */
   private absorbExpressionTail(
     tokens: TokenStream,
@@ -695,24 +713,9 @@ export class PatternMatcher {
     const next = tokens.peek();
     if (!next || stopsAt(next)) return;
 
-    // A value never begins at a possessive marker or an operator word: that is
-    // a split taken past the value's head (an SOV clause walk trying `obj` |
-    // `'s v …`, or bn `#modal` | `আছে #modal`), which a longer capture here
-    // would only make succeed.
-    const first = tokens.tokens[startIdx];
-    if (!first || first.value === "'s" || first.normalized === "'s") return;
-    const head = expressionWordOf(
-      this.currentProfile?.code ?? 'en',
-      first,
-      tokens.tokens[startIdx - 1],
-      tokens.tokens[startIdx + 1],
-      undefined
-    ).toLowerCase();
-    if (OPERATOR_WORDS.has(head)) return;
-
     let end = tokens.position();
     while (end < tokens.tokens.length) {
-      if (stopsAt(tokens.tokens[end]!) || !this.isExpressionToken(tokens.tokens, end)) break;
+      if (stopsAt(tokens.tokens[end]!) || !this.continuesValue(tokens.tokens, end)) break;
       end++;
     }
     for (let k = end; k > tokens.position(); k--) {
@@ -777,13 +780,15 @@ export class PatternMatcher {
   }
 
   /**
-   * May a value run through the token at `i`? Operands (literals, selectors,
-   * ASCII identifiers), operators and punctuation, possessive markers, and
-   * words whose English sense is expression vocabulary. Not a word the
-   * English expression parser cannot read, and not the command's
-   * responseType marker (`fetch … as json`, es `como json`).
+   * May a value run on through the token at `i`? Operands (literals,
+   * selectors, identifiers in any script), operators and punctuation,
+   * possessive markers, and keywords whose English sense is expression
+   * vocabulary. Not another keyword: a command verb (`true and put 2 …`), an
+   * event name (tl `pointermove o pointerup`), a marker. Not a `.class`
+   * across a space after an operand, and not the command's responseType
+   * marker in its English sense (`fetch … as json`, es `como json`).
    */
-  private isExpressionToken(all: readonly LanguageToken[], i: number): boolean {
+  private continuesValue(all: readonly LanguageToken[], i: number): boolean {
     const token = all[i]!;
     const prev = all[i - 1];
     const lang = this.currentProfile?.code ?? 'en';
@@ -792,9 +797,8 @@ export class PatternMatcher {
     if (token.value === "'" && all[i + 1]?.value === 's') return true;
     if (token.value === 's' && prev?.value === "'") return true;
     if (token.kind === 'selector') {
-      // A `.class` across a space after an operand is another value, not a
-      // member (`.active .active`, `null .error`); after an operator or an
-      // operator word (`no .w`, `+ .x`) it is the next operand.
+      // After an operator or an operator word (`no .w`, `+ .x`) a `.class`
+      // across a space is the next operand; after an operand, another value.
       if (!token.value.startsWith('.') || !prev || PatternMatcher.tokensAdjacent(prev, token)) {
         return true;
       }
@@ -810,17 +814,19 @@ export class PatternMatcher {
       return false;
     }
     if (EXPRESSION_WORDS.has(word)) return true;
-    return token.kind === 'identifier' && /^[A-Za-z_$][\w$]*$/.test(token.value);
+    // An identifier in any script: the join translates a localized property
+    // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what
+    // it leaves untranslated.
+    return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value);
   }
 
-  /** A clause boundary, a command verb, or a marker the pattern still owes. */
+  /** The clause's end, or a marker the pattern still owes. */
   private isValueBoundary(token: LanguageToken, owed: readonly PatternToken[]): boolean {
     if (token.kind === 'conjunction') return true;
     if (token.kind === 'keyword') {
       const norm = (token.normalized ?? token.value).toLowerCase();
       if (norm === 'then' || norm === 'end' || norm === 'else') return true;
       if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) return true;
-      if (norm in commandSchemas) return true;
     }
     return owed.some(pt => this.patternTokenWouldMatch(pt, token));
   }
