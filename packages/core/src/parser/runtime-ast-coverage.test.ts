@@ -103,8 +103,8 @@ describe('AST evaluator coverage', () => {
       const result = await evalArg('return the value of result', { result: el });
       expect(result).toBe('typed');
     });
-    it('throws on null target', async () => {
-      await expect(evalArg('return the name of result', { result: null })).rejects.toThrow();
+    it('reads null on a null target, as upstream does', async () => {
+      expect(await evalArg('return the name of result', { result: null })).toBeUndefined();
     });
   });
 

@@ -29,6 +29,22 @@ async function click(body: string): Promise<string> {
   return document.getElementById('out')!.innerHTML;
 }
 
+/** Compile through semantic and buildAST, the path every translation takes. */
+async function direct(body: string, language = 'en'): Promise<string> {
+  const english = `on click ${SETUP} ${body}`;
+  const code = language === 'en' ? english : render(parseSemantic(english, 'en').node!, language);
+  const { ast } = buildAST(parseSemantic(code, language).node!);
+  document.body.innerHTML = FIXTURE;
+  const button = document.getElementById('b') as HTMLElement;
+  await hyperscript.execute(
+    ast as Parameters<typeof hyperscript.execute>[0],
+    hyperscript.createContext(button)
+  );
+  button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await new Promise(resolve => setTimeout(resolve, 30));
+  return document.getElementById('out')!.innerHTML;
+}
+
 describe('put writes a value as upstream does', () => {
   it.each([
     ['null', 'null'],
@@ -82,6 +98,37 @@ describe('the X of Y takes `in` on its target, as X of Y does', () => {
   it('`as` after `the X of Y` converts the property, not the target', async () => {
     expect(await click('put the textContent of #a as Int into #out')).toBe('6');
     expect(await click('put the textContent of #a as Int + 1 into #out')).toBe('7');
+  });
+});
+
+// `the X of Y` threw on a null target, where upstream (and core's `X of Y` and
+// `Y's X`) read null. Semantic builds every `X of Y` as the-X-of-Y, and
+// `v of w of obj as Int` as `v of (w of (obj as Int))`, whose inner read is
+// undefined: every translation of it wrote nothing.
+const NULL_TARGETS: Array<[string, string]> = [
+  ['the name of nothing', 'null'],
+  ['the name of #missing', 'null'],
+  ['the length of the name of obj', 'null'],
+  ['v of w of obj', 'null'],
+  ['v of w of obj as Int', 'null'],
+  ['the length of arr', '2'],
+];
+
+describe('the X of a null target reads null, as upstream does', () => {
+  it.each(NULL_TARGETS)('English: put %s', async (value, expected) => {
+    expect(await click(`put ${value} into #out`)).toBe(expected);
+  });
+
+  it.each(NULL_TARGETS)('direct path: put %s', async (value, expected) => {
+    expect(await direct(`put ${value} into #out`)).toBe(expected);
+  });
+
+  it.each(['es', 'ja', 'ar'])('%s', async language => {
+    expect(await direct('put v of w of obj as Int into #out', language)).toBe('null');
+  });
+
+  it('a set reads it too', async () => {
+    expect(await direct('set x to v of w of obj as Int then put x into #out')).toBe('null');
   });
 });
 
@@ -193,22 +240,6 @@ const OBJECT_COUNTERS: Array<[string, string]> = [
 ];
 
 describe("a counter's amount and value read as upstream reads them", () => {
-  /** Compile through semantic and buildAST, the path every translation takes. */
-  async function direct(body: string, language = 'en'): Promise<string> {
-    const english = `on click ${SETUP} ${body}`;
-    const code = language === 'en' ? english : render(parseSemantic(english, 'en').node!, language);
-    const { ast } = buildAST(parseSemantic(code, language).node!);
-    document.body.innerHTML = FIXTURE;
-    const button = document.getElementById('b') as HTMLElement;
-    await hyperscript.execute(
-      ast as Parameters<typeof hyperscript.execute>[0],
-      hyperscript.createContext(button)
-    );
-    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise(resolve => setTimeout(resolve, 30));
-    return document.getElementById('out')!.innerHTML;
-  }
-
   it.each([...COUNTERS, ...OBJECT_COUNTERS])('English: %s', async (body, expected) => {
     expect(await click(`${body} then put i into #out`)).toBe(expected);
   });
