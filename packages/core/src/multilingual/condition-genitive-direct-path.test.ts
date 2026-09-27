@@ -8,8 +8,9 @@
  * as `#d1 の textContent is "z"`, which the expression parser took for the
  * truthy `#d1`: every such condition was true. A translated property reads
  * back in English (ja `#i1の値` is `#i1's value`), and hi `मान` counts as an
- * operand before the copula, though its vowel sign is a combining mark. Each
- * condition is tested both ways.
+ * operand before the copula, though its vowel sign is a combining mark. The
+ * languages that write the property first (es `valor de #i1`) keep reading it
+ * that way. Each condition is tested both ways.
  */
 import { describe, it, expect } from 'vitest';
 import { parseSemantic, render } from '@lokascript/semantic';
@@ -34,25 +35,41 @@ async function click(source: string, language: string): Promise<string> {
 const handler = (condition: string): string =>
   `on click if ${condition} put "yes" into #out else put "no" into #out end`;
 
-// Each condition with the branch both engines take (#d1 reads "d", #d2 "e",
-// #i1's value is "v").
-const CONDITIONS: Array<[string, string]> = [
-  [`#d1's textContent is "d"`, 'yes'],
-  [`#d1's textContent is "z"`, 'no'],
-  [`#d1's textContent is not "z"`, 'yes'],
-  [`#d1's textContent is not "d"`, 'no'],
-  [`#d1's textContent is #d2's textContent`, 'no'],
-  [`#d1's textContent is not #d2's textContent`, 'yes'],
-  [`#i1's value is "v"`, 'yes'],
-  [`#i1's value is "z"`, 'no'],
-  [`#i1's value is not "z"`, 'yes'],
-  [`#i1's value is not "v"`, 'no'],
+// Each group: the conditions with the branch both engines take (#d1 reads "d",
+// #d2 "e", #i1's value is "v"), and the languages.
+const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
+  [
+    'owner first',
+    [
+      [`#d1's textContent is "d"`, 'yes'],
+      [`#d1's textContent is "z"`, 'no'],
+      [`#d1's textContent is not "z"`, 'yes'],
+      [`#d1's textContent is not "d"`, 'no'],
+      [`#d1's textContent is #d2's textContent`, 'no'],
+      [`#d1's textContent is not #d2's textContent`, 'yes'],
+      [`#i1's value is "v"`, 'yes'],
+      [`#i1's value is "z"`, 'no'],
+      [`#i1's value is not "z"`, 'yes'],
+      [`#i1's value is not "v"`, 'no'],
+    ],
+    ['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'],
+  ],
+  // The owner-first reading stays off the languages that write the property
+  // first (es `valor de #i1`, th `ค่า ของ #i1`), which would read `valor's #i1`.
+  [
+    'property first',
+    [
+      [`#i1's value is "v"`, 'yes'],
+      [`#i1's value is "z"`, 'no'],
+    ],
+    ['es', 'fr', 'it', 'pt', 'th'],
+  ],
 ];
 
-const LANGUAGES = ['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'];
-
-describe.each(CONDITIONS)('if %s', (condition, expected) => {
-  it.each(LANGUAGES)('%s', async language => {
-    expect(await click(handler(condition), language)).toBe(expected);
+describe.each(GROUPS)('%s', (_order, conditions, languages) => {
+  describe.each(conditions)('if %s', (condition, expected) => {
+    it.each(languages)('%s', async language => {
+      expect(await click(handler(condition), language)).toBe(expected);
+    });
   });
 });
