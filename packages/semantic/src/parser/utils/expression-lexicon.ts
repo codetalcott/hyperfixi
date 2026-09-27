@@ -996,7 +996,7 @@ export function expressionWordOf(
  * property words only: tr's genitive `in` is also English `in`, and `2 dir in
  * textContent of .w` (`2 is in …`) is no chain, since `dir` is a verb.
  */
-function ofChainEnd(
+export function ofChainEnd(
   tokens: readonly LanguageToken[],
   start: number,
   profile: LanguageProfile | undefined,

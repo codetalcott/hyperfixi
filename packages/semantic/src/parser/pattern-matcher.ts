@@ -41,6 +41,7 @@ import {
   isConnectiveOperand,
   isKnownPropertySurface,
   isConversionTypeName,
+  ofChainEnd,
 } from './utils/expression-lexicon';
 import {
   BINARY_PHRASES,
@@ -2731,6 +2732,7 @@ export class PatternMatcher {
         : this.isBareWordPropertyHead(property);
     if (!head) return null;
 
+    const start = tokens.position();
     const mark = tokens.mark();
     tokens.advance();
 
@@ -2767,7 +2769,22 @@ export class PatternMatcher {
     const owner = tokens.peek();
     if (!owner || owner.kind !== 'selector' || isSigilProperty(owner.value)) {
       tokens.reset(mark);
-      return null;
+      // A chain, each link the next one's owner: tr renders `#a's
+      // textContent's length` as `length nin textContent nin #a`. This read
+      // one link, so the value kept only `#a's textContent`. Read it whole, as
+      // the value join does — unless its first marker is one the pattern wants
+      // next: it says an increment's `by` with `di`, its `of` too, and
+      // `incrementare i di textContent di #a` is `increment i by #a's
+      // textContent`.
+      if (this.patternTokenWouldMatch(nextPatternToken, marker)) {
+        return null;
+      }
+      const language = this.currentProfile?.code ?? 'en';
+      const end = ofChainEnd(tokens.tokens, start, this.currentProfile, language);
+      if (end === undefined) return null;
+      while (tokens.position() <= end) tokens.advance();
+      const raw = joinExpressionTokens(tokens.tokens.slice(start, end + 1), this.currentProfile);
+      return { type: 'expression', raw, value: raw } as SemanticValue;
     }
     tokens.advance();
 

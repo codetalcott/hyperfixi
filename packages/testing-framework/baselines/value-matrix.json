@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 1427,
+  "failing": 1329,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -31,14 +31,6 @@
     "if|my id": {
       "lanes": "bn/up th/up",
       "family": "adapter"
-    },
-    "put|#a's textContent's length": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "while|#a's textContent's length": {
-      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up uk uk/up",
-      "family": "translation"
     },
     "put|v of w of obj": {
       "lanes": "pl pl/up",
@@ -75,22 +67,6 @@
     "if|[n, 2]": {
       "lanes": "*direct",
       "family": "direct-path"
-    },
-    "put|#a's textContent's length + 2": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "while|#a's textContent's length + 2": {
-      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up uk uk/up",
-      "family": "translation"
-    },
-    "put|2 + #a's textContent's length": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "while|2 + #a's textContent's length": {
-      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up uk uk/up",
-      "family": "translation"
     },
     "put|v of w of obj + 2": {
       "lanes": "pl pl/up",
@@ -144,14 +120,6 @@
       "lanes": "bn bn/up th th/up",
       "family": "translation"
     },
-    "put|#a's textContent's length < 4": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "put|1 < #a's textContent's length": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
     "put|v of w of obj < 4": {
       "lanes": "pl pl/up",
       "family": "translation"
@@ -166,14 +134,6 @@
     },
     "set|1 < v of w of obj": {
       "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|#a's textContent's length is 6": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "put|6 is #a's textContent's length": {
-      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|v of w of obj is 6": {
@@ -448,10 +408,6 @@
       "lanes": "bn bn/up th th/up",
       "family": "translation"
     },
-    "put|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "qu qu/up tr tr/up",
-      "family": "translation"
-    },
     "put|[1, 2, 6] contains v of w of obj": {
       "lanes": "pl pl/up",
       "family": "translation"
@@ -545,11 +501,11 @@
       "family": "translation+adapter"
     },
     "put|#a's textContent's length is in [1, 2, 6]": {
-      "lanes": "de de/up it it/up qu qu/up tr tr/up",
+      "lanes": "de de/up tr tr/up",
       "family": "translation"
     },
     "set|#a's textContent's length is in [1, 2, 6]": {
-      "lanes": "de de/up it it/up tr tr/up",
+      "lanes": "de de/up tr tr/up",
       "family": "translation"
     },
     "if|#a's textContent's length is in [1, 2, 6]": {
