@@ -5372,6 +5372,23 @@ this signal was missing.
 > or `그리고` between two commands still starts the next one. Wrong branches fall from 7 to 5 on the
 > negative condition battery, from 6 to 4 on the possessive one, and from 16 to 15 in the logical
 > values; nothing else moves, and no corpus row does.
+>
+> **A translated `repeat until` loop stops (PR 46, 2026-09-26).** Every translated `repeat until
+> <condition>` ran forever: with a `wait` in its body it counted on without end (de, ja, ar and zh
+> counted 67 to 205 in 400 ms where English stopped at 4), and without one it hangs the page. The
+> English parse took the generated repeat pattern, which put the condition in `quantity`, where the
+> AST builder does not read it for an `until` loop; English itself compiles through core's parser, so
+> it never showed. No other language had a head pattern for the form, so each rendered `until` in
+> English and read it back without its condition. A head pattern per language now reads and renders
+> `repeat until {condition}` in the until-word of its `until event` head (es `repeat hasta
+> {condition}`, ja `まで {condition} 繰り返し`), below that head's priority, so `until event X` keeps
+> its own. Every language now stops at 4, and loop round trips fall from 140 wrong to 48. The 48 are
+> `until n is 3` and `until #d1 matches .x`, whose `is` and `matches` no value run takes yet. No corpus
+> row and no condition moves.
+>
+> Filed, not fixed: a verb-first loop head (`while`, `until event`, and now `until`) renders its verb
+> as the English `repeat` through `render()` and `translate()` (`al clic repeat hasta n > 3`), while
+> the corpus rows carry the native verb (es `repetir mientras`). Both surfaces read back.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
