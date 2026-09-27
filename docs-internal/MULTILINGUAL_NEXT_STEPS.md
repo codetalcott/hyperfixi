@@ -5407,6 +5407,17 @@ this signal was missing.
 > Three corpus rows move, `unless-condition` in bn, hi and ko. Their fused `unless` pattern now reads
 > the condition itself, which gains a `value` beside its unchanged raw; the render is the same.
 >
+> The gates caught three regressions in the first cut, fixed here:
+>
+> - **A bare conditional kept only its condition** once the pattern could take the whole of it. bn
+>   `unless I match .disabled toggle .selected` lost its toggle, because the command stage returned
+>   the conditional alone. The compound stage now reads a top-level `if`/`unless` with a trailing
+>   body, as it did whenever the condition was too long to match. That also fixes bn, hi, ja, qu and
+>   tr `unless p toggle .selected`, which lost their body before.
+> - **th `เป็น` is both `is` and `as`**, and after a fetch URL the run read `as text` as `is text`.
+>   Fetch's response types now read as type names.
+> - **sw `mwisho` (`end`) became a phrase's operand.** A block's own word is never an operand.
+>
 > Filed, not fixed:
 >
 > - The renderer localizes `contains` (es `contiene`, de `enthält`, ar `يحتوي`, ja `含む`), but no
@@ -5415,6 +5426,10 @@ this signal was missing.
 >   is truthy.
 > - The AOT compiles only `is` and `is not` of these phrases: `is greater than`, `is less than`,
 >   `matches`, `exists`, `does not match`, `does not exist` and `is a` fail in English too.
+> - A bare `if p then toggle .a end`, with no handler around it, reads as `on p toggle .a` in every
+>   language, English included.
+> - Two bare `unless` rows were wrong before this change and still are: ko reads `p` as an event
+>   (`on p unless then toggle .selected`), and pl reads the pronoun `I` as its `and` (`i`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
