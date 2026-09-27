@@ -59,15 +59,30 @@ describe('a conjunction between two conditions stays one', () => {
 
 describe('a conjunction inside `or equal to` stays one', () => {
   // es `mayor que o igual a`, it `maggiore o uguale a`: the conjunction sits
-  // right before `equal`, which is why `equal` does not mark an operand. (pl
-  // keeps `equal to` in English, and reads `to` as its own word for `it`: a
-  // separate filing.)
-  it.each(['es', 'it', 'pt', 'fr', 'de'])('%s', language => {
+  // right before `equal`, which is why `equal` does not mark an operand. pl
+  // keeps `equal to` in English (`lub equal to`).
+  it.each(['es', 'it', 'pt', 'fr', 'de', 'pl'])('%s', language => {
     for (const phrase of ['greater than or equal to', 'less than or equal to']) {
       const source = `on click if p is ${phrase} 1 then put "Y" into #out end`;
       const english = render(parse(source, 'en')!, 'en');
       const foreign = render(parse(source, 'en')!, language);
       expect(render(parse(foreign, language)!, 'en'), foreign).toBe(english);
     }
+  });
+});
+
+describe('English `equal to` keeps its `to`', () => {
+  // Every language renders `equal to` in English, and pl reads `to` as its own
+  // word for `it`: `p is equal to 1` came back `p is equal it 1`, which reads
+  // `p is equal it` and drops the `1`.
+  it.each([
+    'on click if p is equal to 1 then put "Y" into #out end',
+    'on click if p is not equal to 1 then put "Y" into #out end',
+    'on click if p is really equal to 1 then put "Y" into #out end',
+    'on click set x to p is equal to 1 then put x into #out',
+  ])('pl: %s', source => {
+    const english = render(parse(source, 'en')!, 'en');
+    const foreign = render(parse(source, 'en')!, 'pl');
+    expect(render(parse(foreign, 'pl')!, 'en'), foreign).toBe(english);
   });
 });

@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { parseSemantic, render, buildAST } from '@lokascript/semantic';
 import { hyperscript } from '../api/hyperscript-api';
 
-const LANGUAGES = ['es', 'he', 'it'] as const;
+const LANGUAGES = ['es', 'he', 'it', 'pl'] as const;
 
 /** Run the handler on #b and read #out. */
 async function run(ast: unknown): Promise<string> {
