@@ -40,7 +40,7 @@ import {
   expressionWordOf,
   isConnectiveOperand,
   isKnownPropertySurface,
-  CONVERSION_TYPE_NAMES,
+  isConversionTypeName,
 } from './utils/expression-lexicon';
 import {
   BINARY_PHRASES,
@@ -1035,19 +1035,52 @@ export class PatternMatcher {
   }
 
   /**
-   * Is the stream sitting on `as <ConversionType>`? Matched by VALUE as well as
-   * normalized form: the renderer emits the conversion verbatim inside the
-   * value's raw (no profile has an `as` lexicon entry), so a foreign surface
-   * carries the English word — which is what has to re-parse.
+   * How many tokens of conversion is the stream sitting on: `as`, a type, and
+   * each further `| type` (`as JSONString | JSON`, which converts left to
+   * right)? 0 when it is not on one. Matched by VALUE as well as normalized
+   * form: the renderer emits the conversion verbatim inside the value's raw
+   * (no profile has an `as` lexicon entry), so a foreign surface carries the
+   * English word — which is what has to re-parse.
    */
   private conversionRunLength(tokens: TokenStream): number {
     const asToken = tokens.peek();
     if (!asToken) return 0;
     const asWord = (asToken.normalized ?? asToken.value).toLowerCase();
     if (asWord !== 'as' && asToken.value.toLowerCase() !== 'as') return 0;
-    const typeToken = tokens.peek(1);
-    if (!typeToken || !CONVERSION_TYPE_NAMES.has(typeToken.value)) return 0;
-    return 2;
+    let length = this.conversionTypeLength(tokens, 1);
+    if (length === 0) return 0;
+    length += 1;
+    for (;;) {
+      if (tokens.peek(length)?.value !== '|') return length;
+      const next = this.conversionTypeLength(tokens, length + 1);
+      if (next === 0) return length;
+      length += 1 + next;
+    }
+  }
+
+  /**
+   * How many tokens of conversion type start `offset` tokens ahead: an optional
+   * article (`as an Int`), then a type name downstream reads. A non-English
+   * tokenizer splits `Fixed:2` (and `Values:Form`) at its colon, into three
+   * adjacent tokens.
+   */
+  private conversionTypeLength(tokens: TokenStream, offset: number): number {
+    const article = tokens.peek(offset)?.value.toLowerCase();
+    const at = article === 'a' || article === 'an' ? offset + 1 : offset;
+    const type = tokens.peek(at);
+    if (!type) return 0;
+    const colon = tokens.peek(at + 1);
+    const suffix = tokens.peek(at + 2);
+    if (
+      colon?.value === ':' &&
+      suffix &&
+      PatternMatcher.tokensAdjacent(type, colon) &&
+      PatternMatcher.tokensAdjacent(colon, suffix) &&
+      isConversionTypeName(`${type.value}:${suffix.value}`)
+    ) {
+      return at - offset + 3;
+    }
+    return isConversionTypeName(type.value) ? at - offset + 1 : 0;
   }
 
   /** Extend `patternToken.role`'s captured value with a trailing `as <Type>`. */
@@ -1063,12 +1096,12 @@ export class PatternMatcher {
     if (patternToken.role === 'event' || patternToken.role === 'action') return;
     if (!captured.has(patternToken.role)) return;
     if (tokens.position() <= startIdx) return;
-    if (this.conversionRunLength(tokens) !== 2) return;
+    const length = this.conversionRunLength(tokens);
+    if (length === 0) return;
     // The pattern itself wants this token (fetch's `as {responseType}`) — leave it.
     if (this.patternTokenWouldMatch(nextPatternToken, tokens.peek()!)) return;
 
-    tokens.advance(); // `as`
-    tokens.advance(); // the type name
+    for (let i = 0; i < length; i++) tokens.advance(); // `as` and the types
     const raw = joinExpressionTokens(
       tokens.tokens.slice(startIdx, tokens.position()),
       this.currentProfile

@@ -71,6 +71,15 @@ const SOURCES = [
   'on click set x to -n then put x into #out',
   'on click set x to (n + 1) then put x into #out',
   'on click set x to (s + "c") is "ab" then put x into #out',
+  // A pipe chains conversions (`as JSONString | JSON`), and `Fixed:2`, which a
+  // non-English tokenizer splits at its colon, is one type. Each dropped the
+  // whole `put` in English, or the pipe's tail after `set`.
+  'on click put x as JSONString | JSON into #out',
+  'on click set x to n as Int | String then put x into #out',
+  'on click put n as Fixed:2 into #out',
+  'on click put #f as Values:Form into #out',
+  'on click put n as Fixed:2 + "%" into #out',
+  'on click put x as Boolean into #out',
 ];
 
 describe.each(SOURCES)('%s', source => {
@@ -109,6 +118,15 @@ describe('the direct path converts what the English converts', () => {
     expect(conversion?.expression).toMatchObject({ type: 'identifier', name: 'obj' });
   });
 
+  it.each(['en', ...LANGUAGES])('%s: a pipe converts the conversion before it', language => {
+    expect(
+      firstConversion(astOf('on click put x as JSONString | JSON into #out', language))
+    ).toMatchObject({
+      targetType: { name: 'JSON' },
+      expression: { type: 'asExpression', targetType: { name: 'JSONString' } },
+    });
+  });
+
   it.each(['en', ...LANGUAGES])("%s: `#a's textContent as Int + 1` converts the text", language => {
     const conversion = firstConversion(
       astOf("on click put #a's textContent as Int + 1 into #out", language)
@@ -140,6 +158,14 @@ describe('a conversion inside a value names a known type', () => {
     ["#a's textContent as Int + 1", true],
     ['n as Wat', false],
     ['n as Wat + 1', false],
+    ['n as Int | String', true],
+    ['n as Int | Wat', false],
+    ['n as Wat | Int', false],
+    ['n as Fixed:2', true],
+    ['n as Values:Form', true],
+    ['n as Values:Wat', false],
+    ['n as Fixed', true],
+    ['n as JSONString', true],
   ])('%s', (raw, whole) => {
     expect(readsAsOneExpression(raw)).toBe(whole);
   });

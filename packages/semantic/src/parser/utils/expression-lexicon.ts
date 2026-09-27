@@ -777,24 +777,49 @@ const RESPONSE_TYPE_NAMES = new Set(['text', 'json', 'html', 'response', 'blob',
     CONDITION_PREDICATES plus the boolean literals). */
 const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
 
-/** Canonical `as` conversion targets (both `json` casings occur: `fetch … as
-    json` and `… as JSON`). Exported for the pattern matcher's trailing-`as`
-    fold, which must agree with this list about what a conversion type is. */
+/** Canonical `as` conversion targets: core's built-in converters
+    (`defaultConversions`, which core's `conversion-type-names` test holds this
+    list to), plus both `json` casings (`fetch … as json` and `… as JSON`) and
+    `FormData`. `Fixed` and `Fixed:<digits>` are resolved dynamically, as
+    upstream resolves them: see `isConversionTypeName`. A non-English tokenizer
+    splits a `:` name (`Fixed:2`, `Values:Form`) at its colon, and the matcher
+    and the join put it back together. A type missing here
+    loses more than its conversion: the matcher cannot read the value whole, so
+    `put x as Boolean into #out` dropped the whole `put`. */
 export const CONVERSION_TYPE_NAMES = new Set([
   'Number',
   'Int',
   'Float',
   'String',
+  'Boolean',
   'Date',
   'Array',
   'Object',
   'JSON',
   'json',
+  'JSONString',
   'FormData',
+  'FormEncoded',
   'HTML',
   'Fragment',
   'Values',
+  'Values:Form',
+  'Values:JSON',
+  'Math',
+  'Set',
+  'Map',
+  'Keys',
+  'Entries',
+  'Reversed',
+  'Unique',
+  'Flat',
 ]);
+
+/** Does `name` name a conversion downstream reads? The pattern matcher's
+    conversion fold and `readsAsOneExpression` must agree on this. */
+export function isConversionTypeName(name: string): boolean {
+  return CONVERSION_TYPE_NAMES.has(name) || /^Fixed(?::\d+)?$/.test(name);
+}
 
 function resolveAmbiguousSense(
   languageCode: string,
@@ -811,7 +836,7 @@ function resolveAmbiguousSense(
   if (
     rule.beforeTypeName &&
     next?.kind === 'identifier' &&
-    (CONVERSION_TYPE_NAMES.has(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
+    (isConversionTypeName(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
   ) {
     return rule.beforeTypeName;
   }
@@ -1054,6 +1079,25 @@ export function joinExpressionTokens(
     const reference = profile ? possessiveReferenceOf(profile, token) : undefined;
 
     const next = tokens[i + 1];
+
+    // A conversion's `Fixed:2` or `Values:Form`, which a non-English tokenizer
+    // splits at its colon: glued back as English writes it. The spaced `Fixed
+    // : 2` reads on core but is not what the source said.
+    if (
+      token.value === ':' &&
+      previous !== undefined &&
+      previousText !== undefined &&
+      next !== undefined &&
+      previous.position?.end === token.position?.start &&
+      token.position?.end === next.position?.start &&
+      isConversionTypeName(`${previousText}:${next.value}`)
+    ) {
+      out += `:${next.value}`;
+      previousText = `${previousText}:${next.value}`;
+      previous = next;
+      i += 1;
+      continue;
+    }
 
     // English `'s` possessive, tokenized as `'` + `s` glued to its owner
     // (`#price` `'` `s` `wartość`) — the shape every language that renders the

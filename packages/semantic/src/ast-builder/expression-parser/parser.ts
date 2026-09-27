@@ -328,12 +328,21 @@ export class ExpressionParser {
    * optional article (`as an Object`). Without this the parser stopped at
    * `as`, so a value with a conversion inside it (`#a's textContent as Int +
    * 1`) was not read whole, and buildAST dropped the conversion.
+   *
+   * A pipe chains conversions left to right, each converting the last one's
+   * result (`value as JSONString | JSON`), as core and upstream read it. The
+   * tokenizer used to skip `|`, so this read `as JSONString JSON` and stopped
+   * after the first type.
    */
   private parseConversion(): ExpressionNode {
     let expr = this.parseUnary();
     while (this.checkValue('as') && this.conversionTypeAt(1) !== undefined) {
       this.advance(); // as
       expr = this.createAsExpression(expr, this.parseConversionType());
+      while (this.check(TokenType.PIPE) && this.conversionTypeAt(1) !== undefined) {
+        this.advance(); // |
+        expr = this.createAsExpression(expr, this.parseConversionType());
+      }
     }
     return expr;
   }
@@ -345,10 +354,24 @@ export class ExpressionParser {
     return this.peekAt(at).type === TokenType.IDENTIFIER ? at : undefined;
   }
 
+  /**
+   * The type, past its article. A `:` suffix is part of it (`as Fixed:2`,
+   * `as Values:Form`), as core reads it.
+   */
   private parseConversionType(): Token {
     const at = this.conversionTypeAt(0) ?? 0;
     for (let i = 0; i < at; i++) this.advance(); // the article
-    return this.advance();
+    const type = this.advance();
+    const suffixType = this.peekAt(1).type;
+    if (
+      !this.check(TokenType.COLON) ||
+      (suffixType !== TokenType.NUMBER && suffixType !== TokenType.IDENTIFIER)
+    ) {
+      return type;
+    }
+    this.advance(); // :
+    const suffix = this.advance();
+    return { ...type, value: `${type.value}:${suffix.value}`, end: suffix.end };
   }
 
   private parseUnary(): ExpressionNode {

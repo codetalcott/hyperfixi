@@ -13,7 +13,7 @@
 
 import { parseExpression } from '../../ast-builder/expression-parser/parser';
 import { tokenize } from '../../ast-builder/expression-parser/tokenizer';
-import { CONVERSION_TYPE_NAMES } from './expression-lexicon';
+import { isConversionTypeName } from './expression-lexicon';
 
 /**
  * The English words an expression may contain, as `expressionWordOf` reads a
@@ -127,7 +127,7 @@ const TRAILING_CONVERSION = /\s+as\s+([A-Za-z]\w*)!?\s*$/;
 export function readsAsOneExpression(raw: string): boolean {
   let body = raw;
   for (let m = TRAILING_CONVERSION.exec(body); m; m = TRAILING_CONVERSION.exec(body)) {
-    if (!CONVERSION_TYPE_NAMES.has(m[1] ?? '')) return false;
+    if (!isConversionTypeName(m[1] ?? '')) return false;
     body = body.slice(0, m.index);
   }
   const code = body.replace(/"[^"]*"|'[^']*'/g, '');
@@ -138,7 +138,7 @@ export function readsAsOneExpression(raw: string): boolean {
   // The tokenizer ends with an EOF token, which the parser never consumes.
   if (result.consumed !== tokenize(body).length - 1) return false;
   // A conversion inside the value must name a type too (`x as Int + 1`).
-  return conversionTypes(result.node).every(type => CONVERSION_TYPE_NAMES.has(type));
+  return conversionTypes(result.node).every(isConversionTypeName);
 }
 
 /** The type names of every conversion in a parsed expression. */

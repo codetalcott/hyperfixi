@@ -34,7 +34,10 @@ describe('ExpressionParser', () => {
 
     it('parses null and undefined', () => {
       expect(parseExpression('null').node).toMatchObject({ type: 'literal', value: null });
-      expect(parseExpression('undefined').node).toMatchObject({ type: 'literal', value: undefined });
+      expect(parseExpression('undefined').node).toMatchObject({
+        type: 'literal',
+        value: undefined,
+      });
     });
   });
 
@@ -539,7 +542,11 @@ describe('ExpressionParser', () => {
       ['p is not in [3, 4]', binary('is not in', p, { type: 'arrayLiteral' })],
       [
         '#d1 does not match .x',
-        binary('does not match', { type: 'selector', value: '#d1' }, { type: 'selector', value: '.x' }),
+        binary(
+          'does not match',
+          { type: 'selector', value: '#d1' },
+          { type: 'selector', value: '.x' }
+        ),
       ],
       [
         '#d1 has .x',
@@ -646,7 +653,7 @@ describe('ExpressionParser', () => {
       });
     });
 
-    it("converts a possessive before the arithmetic after it", () => {
+    it('converts a possessive before the arithmetic after it', () => {
       expect(parseExpression("#a's textContent as Int + 1").node).toMatchObject({
         type: 'binaryExpression',
         operator: '+',
@@ -659,7 +666,7 @@ describe('ExpressionParser', () => {
       });
     });
 
-    it("`v of obj as Int` converts the target, as upstream and core read it", () => {
+    it('`v of obj as Int` converts the target, as upstream and core read it', () => {
       expect(parseExpression('v of obj as Int').node).toMatchObject({
         type: 'propertyOfExpression',
         property: { name: 'v' },
@@ -687,6 +694,49 @@ describe('ExpressionParser', () => {
     it('leaves an `as` with no type unread', () => {
       const result = parseExpression('n as');
       expect(result.consumed).toBe(1);
+    });
+
+    // `|` chains conversions left to right, each converting the last one's
+    // result, as core's pratt parser and upstream's AsExpression read it. The
+    // tokenizer skipped `|`, so `n as JSONString | JSON` read as `n as
+    // JSONString JSON` and stopped after the first type.
+    it('a pipe converts the conversion before it', () => {
+      const result = parseExpression('n as JSONString | JSON');
+      expect(result.consumed).toBe(5);
+      expect(result.node).toMatchObject({
+        type: 'asExpression',
+        expression: {
+          type: 'asExpression',
+          expression: n,
+          targetType: { name: 'JSONString' },
+        },
+        targetType: { name: 'JSON' },
+      });
+    });
+
+    it('a pipe chain binds as one conversion: `n as Int | String + 1`', () => {
+      expect(parseExpression('n as Int | String + 1').node).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+        left: {
+          type: 'asExpression',
+          expression: { type: 'asExpression', expression: n, targetType: Int },
+          targetType: { name: 'String' },
+        },
+        right: { type: 'literal', value: 1 },
+      });
+    });
+
+    it('leaves a pipe with no type unread', () => {
+      expect(parseExpression('n as Int |').consumed).toBe(3);
+    });
+
+    it.each(['Fixed:2', 'Values:Form'])('reads `%s` as one type, as core names it', type => {
+      expect(parseExpression(`n as ${type}`).node).toMatchObject({
+        type: 'asExpression',
+        expression: n,
+        targetType: { type: 'identifier', name: type },
+      });
     });
 
     it("`@title of #a` reads the target's attribute", () => {
