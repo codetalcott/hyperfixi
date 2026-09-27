@@ -63,6 +63,27 @@ describe('sw: after a copula the word is still `empty`', () => {
   });
 });
 
+describe('ms: `kosong` is `empty`', () => {
+  // ms's lexicon and the i18n dictionary write `empty` as `kosong` (and `null`
+  // as `null`), and its tokenizer read `kosong` as `null`: `"" is empty` read
+  // back `"" is null`, which is false.
+  it.each([
+    'on click put "" is empty into #out',
+    'on click put "" is not empty into #out',
+    'on click if s is empty put "Y" into #out end',
+    'on click put x is null into #out',
+    'on click put null into #out',
+    'on click empty #out',
+  ])('%s', source => {
+    const [back, foreign] = roundTrip(source, 'ms');
+    expect(back, foreign).toBe(render(parse(source, 'en')!, 'en'));
+  });
+
+  it('a whole-value `kosong` is still null', () => {
+    expect(render(parse('letak kosong ke #out', 'ms')!, 'en')).toBe('put null into #out');
+  });
+});
+
 describe('a whole-value `empty` is null in English too', () => {
   // An unset variable named `empty`, which upstream writes as null. The word
   // was a string, "empty".

@@ -6055,6 +6055,39 @@ this signal was missing.
 > `test/possessor-first.test.ts` round-trips six sources through all 23 languages and pins the
 > hand-written post-nominal forms and the bn and th words; reverting the matcher guard fails 9
 > tests, and dropping either lexicon entry 5.
+>
+> **sw's `and` and ms's `empty` read back (PR 71, 2026-09-27).** Two words the renderer writes that
+> its own reader took for another:
+>
+> - **ms `kosong`** is ms's word for `empty` in its lexicon and the i18n dictionary (its `null` is
+>   `null`), and its tokenizer read it as `null`: `"" is empty` read back `"" is null`, which is
+>   false. The tokenizer reads it as `empty` now (a whole-value `kosong` is still null, PR 61).
+> - **sw `na`** is both `and` and the `with` marker, so the dictionary's collision guard kept it out
+>   of the connective table and a value stopped at it: `put kweli na flag kwa #out` (put true and
+>   flag) lost the `put`. Between two operands it is `and` now (an `AMBIGUOUS_SENSES` rule,
+>   `betweenOperands`); a command whose own role takes `na` still stops its value at the marker
+>   (`fetch "/api" na {…}`). A loop's `na index` then read into the loop's source (`.item and
+>   index`), so a loop's `with index` now also takes the language's own `with` (hand-written es
+>   `con index` read nothing before either).
+>
+> **In the value matrix, 588 failing pairs fall to 546 (−7%)**: sw `and` (11 direct, 19 through
+> the adapter) and ms `is empty` (6, 6); none newly fail. In the stored corpus, ms `if-empty` and
+> `input-validation` now read `is empty` (as the English does, where they read `is null`), and
+> `stagger-animation` reads its `with index` in 14 languages whose stored row writes the
+> language's own `with` (the renderer writes English `with index`, so a re-populated corpus does
+> not move). `test/and-word.test.ts` round-trips five `and` sources in sw and pins `na` as fetch's
+> marker and a loop's `with`; ms joins `null-empty-word.test.ts`; and sw joins the `and` rows of
+> `value-operators` and `value-path-operands`, in semantic and in core's direct-path twins. Each
+> of five mutants reverting one piece fails a test.
+>
+> **Filed, for the owner (a vocabulary decision):** qu writes `and` as `chaymanta`, its i18n
+> dictionary's word, and its profile and tokenizer read `chaymanta` as `then` (the profile's `and`
+> is `hinallataq`), so `set x to true and flag` splits into two commands (16 pairs: qu `and` in a
+> `set`; its `put` passes by accident, keeping the last operand). Measured: rendering `hinallataq`
+> fixes all 16 and moves no stored corpus row, but `lexicon-parity.test.ts` holds the render
+> lexicon to the dictionary, which is the incumbent, so the fix is changing `logical.and` in
+> `packages/i18n/src/dictionaries/qu.ts` (and its assertion in `new-languages.test.ts`) along with
+> `lexicons/qu.ts`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

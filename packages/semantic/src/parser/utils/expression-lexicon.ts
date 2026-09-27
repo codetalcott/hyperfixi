@@ -745,10 +745,55 @@ interface AmbiguousSenseRule {
       `afterOperand`: hi `है` is both `is` and `has`, and only `has` takes a
       class (`#d1 है .x` → `#d1 has .x`). */
   beforeClassRef?: string;
+  /** Emitted when the word stands between two operands, each a word, a
+      literal (a keyword `true`, `null` … too), a selector, a reference or a
+      bracket: sw `na` is both `and` and the `with` marker (`kweli na flag`,
+      true and flag). A command whose own role takes `na` stops its value at
+      the marker before the join sees it. */
+  betweenOperands?: string;
   /** Emitted when none of the above applies, where the word has no reading
       of its own to fall through to: sw `tupu` is `empty` after a copula and
       `null` anywhere else in a value (its tokenizer reads it as `empty`). */
   otherwise?: string;
+}
+
+/** Keywords that are whole operands: literals and references. */
+const OPERAND_KEYWORDS = new Set([
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'me',
+  'my',
+  'it',
+  'its',
+  'you',
+  'your',
+  'result',
+  'event',
+  'target',
+  'body',
+]);
+
+function isOperandToken(token: LanguageToken): boolean {
+  if (token.kind === 'literal' || token.kind === 'selector') return true;
+  if ((token.kind as string) === 'reference') return true;
+  if (token.kind === 'identifier') return OPERAND_WORD.test(token.value);
+  return token.kind === 'keyword' && OPERAND_KEYWORDS.has((token.normalized ?? '').toLowerCase());
+}
+
+/** Does `token` end an operand: an operand, or a closing bracket? */
+function endsOperand(token: LanguageToken | undefined): boolean {
+  return !!token && (token.value === ')' || token.value === ']' || isOperandToken(token));
+}
+
+/** Does `token` start one: an operand, an opening bracket, or a unary `-`,
+    `not` or `no`? */
+function startsOperand(token: LanguageToken | undefined): boolean {
+  if (!token) return false;
+  if (/^[([-]$/.test(token.value) || isOperandToken(token)) return true;
+  const normalized = (token.normalized ?? '').toLowerCase();
+  return token.kind === 'keyword' && (normalized === 'not' || normalized === 'no');
 }
 
 /** A class reference (`.x`): what `has` takes, and a comparison does not. */
@@ -767,7 +812,7 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   },
   th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' } },
   ja: { 空: { afterCopula: 'empty' } },
-  sw: { tupu: { afterCopula: 'empty', otherwise: 'null' } },
+  sw: { tupu: { afterCopula: 'empty', otherwise: 'null' }, na: { betweenOperands: 'and' } },
   zh: { 没有: { beforeBareIdentifier: 'no' } },
   tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
   bn: { আছে: { afterSubject: 'exists' } },
@@ -875,6 +920,9 @@ function resolveAmbiguousSense(
   }
   if (rule.beforeClassRef && next && CLASS_REF.test(next.value)) {
     return rule.beforeClassRef;
+  }
+  if (rule.betweenOperands && endsOperand(prev) && startsOperand(next)) {
+    return rule.betweenOperands;
   }
   if (
     rule.afterOperand &&
