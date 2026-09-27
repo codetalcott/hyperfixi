@@ -49,6 +49,10 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'đúng', normalized: 'true' },
   { native: 'sai', normalized: 'false' },
   { native: 'null', normalized: 'null' },
+  // vi's word for null, in its lexicon and the i18n dictionary. It read as
+  // `empty`, whose words are `trống` and the command's `làm-rỗng`, so `put
+  // null into #out` wrote "empty" and `x is null` read back `x is empty`.
+  { native: 'rỗng', normalized: 'null' },
   { native: 'không xác định', normalized: 'undefined' },
 
   // Positional
@@ -100,7 +104,6 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'không', normalized: 'not' },
   { native: 'là', normalized: 'is' },
   { native: 'tồn tại', normalized: 'exists' },
-  { native: 'rỗng', normalized: 'empty' },
 
   // English synonyms
   { native: 'javascript', normalized: 'js' },
