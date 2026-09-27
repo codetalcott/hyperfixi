@@ -2,15 +2,15 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 2089,
+  "failing": 1840,
   "entries": {
     "while|2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|null": {
       "lanes": "hi hi/up sw vi",
@@ -29,20 +29,20 @@
       "family": "direct-path"
     },
     "while|n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|#a's textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a's textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|my id": {
       "lanes": "bn bn/up th th/up",
@@ -57,20 +57,20 @@
       "family": "adapter"
     },
     "while|obj's v": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|obj's v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr's length": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|arr's length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|#a's textContent's length": {
       "lanes": "qu qu/up tr tr/up",
@@ -81,40 +81,40 @@
       "family": "translation"
     },
     "increment|#a's textContent's length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|the textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|the textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|v of obj": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|v of obj": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|length of arr": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|length of arr": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|v of w of obj": {
       "lanes": "pl pl/up",
@@ -133,56 +133,56 @@
       "family": "translation"
     },
     "while|#a.textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a.textContent": {
-      "lanes": "it it/up pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "it it/up tr tr/up",
+      "family": "translation"
     },
     "set|me.id": {
       "lanes": "pl pl/up ru ru/up uk uk/up",
       "family": "translation"
     },
     "while|obj.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr.length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|arr.length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|Math.max(n, 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|Math.max(n, 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|String(n)": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|String(n)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|[n, 2]": {
       "lanes": "*direct",
@@ -197,84 +197,84 @@
       "family": "direct-path"
     },
     "while|(n + 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|(n + 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|#a's textContent + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a's textContent + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + #a's textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + #a's textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj's v + 2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|obj's v + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + obj's v": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|2 + obj's v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr's length + 2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|arr's length + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + arr's length": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|2 + arr's length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|#a's textContent's length + 2": {
       "lanes": "qu qu/up tr tr/up",
@@ -285,8 +285,8 @@
       "family": "translation"
     },
     "increment|#a's textContent's length + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|2 + #a's textContent's length": {
       "lanes": "qu qu/up tr tr/up",
@@ -297,72 +297,72 @@
       "family": "translation"
     },
     "increment|2 + #a's textContent's length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|textContent of #a + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|textContent of #a + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|the textContent of #a + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|the textContent of #a + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + the textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + the textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|v of obj + 2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|v of obj + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + v of obj": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|2 + v of obj": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|length of arr + 2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|length of arr + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + length of arr": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|2 + length of arr": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|v of w of obj + 2": {
       "lanes": "pl pl/up",
@@ -397,116 +397,116 @@
       "family": "translation"
     },
     "while|#a.textContent + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a.textContent + 2": {
-      "lanes": "it it/up pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "it it/up tr tr/up",
+      "family": "translation"
     },
     "while|2 + #a.textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + #a.textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj.v + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.v + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + obj.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + obj.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr.length + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|arr.length + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + arr.length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + arr.length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj.w.v + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.w.v + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|Math.max(n, 1) + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|Math.max(n, 1) + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + Math.max(n, 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + Math.max(n, 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|String(n) + 2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|String(n) + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + String(n)": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|2 + String(n)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|(n + 1) + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|(n + 1) + 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 + (n + 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 + (n + 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|my id + \"q\"": {
       "lanes": "bn bn/up th th/up",
@@ -525,132 +525,132 @@
       "family": "translation"
     },
     "while|20 - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|20 - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n - 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|20 - n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|20 - n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 * 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 * 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n * 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n * 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 * n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 * n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|12 / 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|12 / 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 / 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 / 2": {
-      "lanes": "pl tr",
+      "lanes": "tr",
       "family": "direct-path"
     },
     "while|n / 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n / 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|12 / n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|12 / n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|13 mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|13 mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|13 mod 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|13 mod 2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n mod 4": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|13 mod n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|13 mod n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|#a's textContent's length < 4": {
       "lanes": "qu qu/up tr tr/up",
@@ -1301,32 +1301,32 @@
       "family": "translation"
     },
     "while|-2": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-2": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-n": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|-#a's textContent": {
       "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|-#a's textContent": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-#a's textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|-obj's v": {
       "lanes": "qu qu/up uk uk/up",
@@ -1337,12 +1337,12 @@
       "family": "translation+direct-path"
     },
     "while|-obj's v": {
-      "lanes": "pl pl/up tr tr/up uk/up",
+      "lanes": "tr tr/up uk/up",
       "family": "translation+adapter"
     },
     "increment|-obj's v": {
-      "lanes": "pl qu qu/up tr tr/up uk uk/up",
-      "family": "translation+direct-path"
+      "lanes": "qu qu/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "put|-arr's length": {
       "lanes": "qu qu/up uk uk/up",
@@ -1353,48 +1353,48 @@
       "family": "translation+direct-path"
     },
     "while|-arr's length": {
-      "lanes": "pl pl/up tr tr/up uk/up",
+      "lanes": "tr tr/up uk/up",
       "family": "translation+adapter"
     },
     "increment|-arr's length": {
-      "lanes": "pl qu qu/up tr tr/up uk uk/up",
-      "family": "translation+direct-path"
+      "lanes": "qu qu/up tr tr/up uk uk/up",
+      "family": "translation"
     },
     "put|-#a's textContent's length": {
       "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|-#a's textContent's length": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-#a's textContent's length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-textContent of #a": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-textContent of #a": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-v of obj": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-v of obj": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-length of arr": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-length of arr": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|-v of w of obj": {
       "lanes": "pl pl/up",
@@ -1405,7 +1405,7 @@
       "family": "translation"
     },
     "while|-v of w of obj": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-v of w of obj": {
@@ -1413,60 +1413,60 @@
       "family": "translation"
     },
     "while|-#a.textContent": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-#a.textContent": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-obj.v": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-obj.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-arr.length": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-arr.length": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-obj.w.v": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-Math.max(n, 1)": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-Math.max(n, 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-String(n)": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-String(n)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|-(n + 1)": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|-(n + 1)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|no .w": {
       "lanes": "hi hi/up tl tl/up zh zh/up",
@@ -1609,68 +1609,68 @@
       "family": "translation"
     },
     "while|\"7\" as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|\"7\" as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|2 as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|2 as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|#a's textContent as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a's textContent as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj's v as Int": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|obj's v as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr's length as Int": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|arr's length as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|#a's textContent's length as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a's textContent's length as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|textContent of #a as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|textContent of #a as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
@@ -1689,20 +1689,20 @@
       "family": "core+translation"
     },
     "while|v of obj as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|v of obj as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|length of arr as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|length of arr as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|v of w of obj as Int": {
       "lanes": "pl/up *direct",
@@ -1713,100 +1713,100 @@
       "family": "direct-path"
     },
     "while|v of w of obj as Int": {
-      "lanes": "tr/up *direct",
+      "lanes": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr tr/up uk vi zh",
       "family": "translation+direct-path"
     },
     "increment|v of w of obj as Int": {
-      "lanes": "tr/up *direct",
+      "lanes": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr tr/up uk vi zh",
       "family": "translation+direct-path"
     },
     "while|#a.textContent as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|#a.textContent as Int": {
-      "lanes": "it it/up pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "it it/up tr tr/up",
+      "family": "translation"
     },
     "while|obj.v as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.v as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|arr.length as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|arr.length as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj.w.v as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.w.v as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|Math.max(n, 1) as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|Math.max(n, 1) as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|String(n) as Int": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|String(n) as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|(n + 1) as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|(n + 1) as Int": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n + (2 * 3)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n + (2 * 3)": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|(n * 2) + 3": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|(n * 2) + 3": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|(n + 2) * 3": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|(n + 2) * 3": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|n - 2 - 1": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|n - 2 - 1": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|n > 1 and n < 10": {
       "lanes": "sw sw/up",
@@ -1841,28 +1841,28 @@
       "family": "translation"
     },
     "while|#a's textContent as Int + 1": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|#a's textContent as Int + 1": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|length of arr + n": {
-      "lanes": "pl pl/up tr tr/up",
+      "lanes": "tr tr/up",
       "family": "translation"
     },
     "increment|length of arr + n": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "while|obj.v * obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "increment|obj.v * obj.w.v": {
-      "lanes": "pl tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "tr tr/up",
+      "family": "translation"
     },
     "put|s + \" \" + my id": {
       "lanes": "bn bn/up th th/up",
