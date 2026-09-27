@@ -178,6 +178,11 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // (space) entry above never fires — the corpus authors the underscore form.
   // Same whole-token shape as mana_kanchu; longest-first makes it beat `mana`.
   { native: 'mana_riqsisqa', normalized: 'undefined' },
+  // `contains`: the lexicon emits underscore-joined `ukupi_kan`, which the `_`
+  // split shattered into ukupi(→in) + _ + kan, so `s ukupi_kan "a"` read as
+  // `s in _ kan "a"`. Same whole-token shape; longest-first makes it beat
+  // `ukupi`. CONNECTIVE_LEXICON.qu already maps it back to `contains`.
+  { native: 'ukupi_kan', normalized: 'contains' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
