@@ -1,6 +1,6 @@
 /**
- * A translated value with a comparison or `mod` runs whole on the multilingual
- * direct path.
+ * A translated value with a comparison, `mod`, `and`, `or` or `not` runs whole
+ * on the multilingual direct path.
  *
  * The operator-run capture joined only `+ - * /`, so `put n > 2 into #out`
  * captured `n` alone and every translation lost the comparison. And semantic's
@@ -68,6 +68,26 @@ const LANGUAGES = [
 describe.each(VALUES)('put %s', (value, expected) => {
   it.each(LANGUAGES)('%s', async language => {
     const source = `on click set n to 3 then put ${value} into #out`;
+    expect(await click(source, language)).toBe(expected);
+  });
+});
+
+// `and`, `or` and `not`, with each binary one in both operand orders (p = true,
+// q = false), so a value cut to either operand fails. Each skips the languages
+// whose word for it is also another word (see semantic's value-operators test).
+const CONNECTIVES: Array<[string, string, string[]]> = [
+  ['p or q', 'true', []],
+  ['q or p', 'true', []],
+  ['p and q', 'false', ['ja', 'qu', 'sw']],
+  ['q and p', 'false', ['ja', 'qu', 'sw']],
+  ['not p', 'false', ['hi', 'qu']],
+  ['not q', 'true', ['hi', 'qu']],
+  ['p and not q', 'true', ['hi', 'ja', 'qu', 'sw']],
+];
+
+describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', async language => {
+    const source = `on click set p to true then set q to false then put ${value} into #out`;
     expect(await click(source, language)).toBe(expected);
   });
 });
