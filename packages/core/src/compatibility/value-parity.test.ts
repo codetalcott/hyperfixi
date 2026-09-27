@@ -65,14 +65,22 @@ describe('X of Y reads an attribute, and maps over a collection', () => {
   });
 });
 
-describe('the X of Y takes `as` and `in` on its target, as X of Y does', () => {
+describe('the X of Y takes `in` on its target, as X of Y does', () => {
   it.each([
-    ['the textContent of #a as Int', 'null'],
+    ['the textContent of <p.w/> in #w', 'wv'],
+    ['textContent of <p.w/> in #w', 'wv'],
     ['textContent of #a as Int', 'null'],
     ['the textContent of #a', '6'],
-    ['the textContent of <p.w/> in #w', 'wv'],
   ])('put %s', async (value, expected) => {
     expect(await click(`put ${value} into #out`)).toBe(expected);
+  });
+
+  // A known difference (docs/UPSTREAM-KNOWN-DIFFS.md): upstream reads `the
+  // value of #inp as Int` as the value of `#inp as Int`, which is null. Core
+  // converts the property, which is what the idiom means.
+  it('`as` after `the X of Y` converts the property, not the target', async () => {
+    expect(await click('put the textContent of #a as Int into #out')).toBe('6');
+    expect(await click('put the textContent of #a as Int + 1 into #out')).toBe('7');
   });
 });
 

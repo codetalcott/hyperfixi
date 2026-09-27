@@ -245,9 +245,11 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.isEmpty.evaluate(context, [1, 2, 3])).toBe(false);
       });
 
-      it('should detect empty objects', async () => {
-        expect(await logicalExpressions.isEmpty.evaluate(context, {})).toBe(true);
+      it('reads an object as upstream does: empty only with a zero length', async () => {
+        expect(await logicalExpressions.isEmpty.evaluate(context, {})).toBe(false);
         expect(await logicalExpressions.isEmpty.evaluate(context, { key: 'value' })).toBe(false);
+        expect(await logicalExpressions.isEmpty.evaluate(context, { length: 0 })).toBe(true);
+        expect(await logicalExpressions.isEmpty.evaluate(context, new Map())).toBe(false);
       });
 
       it('should detect null/undefined', async () => {

@@ -102,6 +102,7 @@ import {
   STOP_TOKENS as PRATT_STOP_TOKENS,
   STOP_DELIMITERS as PRATT_STOP_DELIMITERS,
   parseOfOperand,
+  THE_OF_TARGET_BP,
   type BindingPowerFragment,
 } from './pratt-parser';
 
@@ -3840,10 +3841,12 @@ export class Parser {
 
     // The target is `of`'s right operand, as in `X of Y`: a trailing
     // possessive binds to it (`the display of #foo's style` is the display of
-    // `#foo's style`), and so do `as` and `in`, as upstream reads them — `the
-    // textContent of #a as Int` is the textContent of `#a as Int`. It used to
-    // be parsed as a call alone, which left `as`/`in` to the whole phrase.
-    const target = parseOfOperand(this.makePrattContext());
+    // `#foo's style`), and so do a further `of` and a trailing `in`, as
+    // upstream reads them: `the textContent of <p.w/> in #w` reads the scoped
+    // query. It used to be parsed as a call alone. `as` still converts the
+    // whole phrase (`the value of #inp as Int`), a known difference from
+    // upstream (see THE_OF_TARGET_BP).
+    const target = parseOfOperand(this.makePrattContext(), THE_OF_TARGET_BP);
 
     // Return a propertyOfExpression node
     return {

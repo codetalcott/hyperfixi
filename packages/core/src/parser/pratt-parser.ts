@@ -724,11 +724,11 @@ const OF_OPERAND_BP = 70;
  * trailing `in` is folded into the operand here: `length of <p/> in #wrap`
  * counts the query scoped to #wrap.
  */
-export function parseOfOperand(ctx: PrattContext): ASTNode {
-  let right = ctx.parseExpr(OF_OPERAND_BP);
+export function parseOfOperand(ctx: PrattContext, minBp: number = OF_OPERAND_BP): ASTNode {
+  let right = ctx.parseExpr(minBp);
   if (ctx.peek()?.value === 'in') {
     const inToken = ctx.advance();
-    const scope = ctx.parseExpr(OF_OPERAND_BP);
+    const scope = ctx.parseExpr(minBp);
     right = {
       type: 'binaryExpression',
       operator: 'in',
@@ -742,6 +742,14 @@ export function parseOfOperand(ctx: PrattContext): ASTNode {
   }
   return right;
 }
+
+/**
+ * The target of `the X of Y`: `of`'s right operand, but above `as`. Upstream
+ * reads `the value of #inp as Int` as the value of `#inp as Int`, which is
+ * null; core converts the property, as it always has, and records the
+ * difference in docs/UPSTREAM-KNOWN-DIFFS.md.
+ */
+export const THE_OF_TARGET_BP = OF_OPERAND_BP + 1;
 
 /** The infix handler for `of`. */
 function ofHandler(left: ASTNode, token: Token, ctx: PrattContext): ASTNode {
