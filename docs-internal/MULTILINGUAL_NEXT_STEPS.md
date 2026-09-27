@@ -5292,6 +5292,32 @@ this signal was missing.
 > conditions, wrong branches fall from 45 to 34 (negatives 54 → 21: before, the misparse made each
 > of these conditions true). No corpus row moves. Still open in these three: hi `not p` (`नहीं p`
 > reads `no p`, a real collision) and `empty` = `null` in ar/hi.
+>
+> **A translated condition reads an owner-first possessive back (PR 42, 2026-09-26).** Where the
+> possessive marker sits between owner and property (bn `র`, hi `का`, ja `の`, ko `의`, tl `ng`, vi
+> `của`, zh `的`), the renderer writes `#d1's textContent` owner first (ja `#d1のtextContent`). The
+> expression join's owner-first anchor read the pair only when the lexicon translates the property
+> word (`#d1の値` → `value of #d1`), because its marker test also admits a `from` marker. Any
+> other property kept the marker: `if #d1's textContent is "z"` read back as `#d1 の textContent
+> is "z"`, which the expression parser took for the truthy `#d1`, so every such condition was
+> true. The join now reads the profile's own genitive marker between a selector and any property
+> word as `#d1's textContent`, the English reference's form, which also composes with a chained
+> `'s` (`#d1のtextContent's length`). And hi `मान` (value) spells its vowel with a combining mark,
+> which PR 41's operand rule did not count as part of a word, so `#i1's value is not "v"` kept
+> `है नहीं` untranslated. On 14 possessive conditions, wrong branches fall from 47 to 8 (the rest
+> are filed: qu `mana`, sw `na`, the ja/ko `and` cut, and bn/th `id`, below); on the 46-condition
+> batteries the negatives fall from 21 to 7 and nothing else moves. One corpus row moves:
+> `when-value-changes` reads `( #price's value * #qty's value )` in the seven languages, where it
+> read `( value of #price * value of #qty )`; its English render is unchanged.
+>
+> Filed, not fixed:
+>
+> - bn `আইডি` and th `ไอดี` (`id`) never read back: the property lexicon's generator lists eight
+>   property names, and not `id`, which the renderer translates. th and tl render `the length of
+>   t` as `the ความยาว of t`, which reads back untranslated when the owner is a variable.
+> - In the 16 languages that write the property first, a chained possessive renders only its
+>   first link in the language: `#d1's textContent's length` becomes es `textContent de #d1's
+>   length`, which reads as the textContent of `#d1's length`, in the translation and in English.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
