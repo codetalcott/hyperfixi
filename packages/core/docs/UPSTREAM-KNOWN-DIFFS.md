@@ -44,8 +44,10 @@ what it has always done. The target of `the X of Y` does take a further `of`
 and a trailing `in` as upstream's does (`the textContent of <p.w/> in #w`); only
 `as` stays outside it (`THE_OF_TARGET_BP` in `src/parser/pratt-parser.ts`).
 The bare `X of Y as T` follows upstream. Pinned in
-`src/compatibility/value-parity.test.ts`; the value matrix lists these cells as
-failing in its `en` lane.
+`src/compatibility/value-parity.test.ts`. Semantic's expression parser, which
+builds the values of every translation's direct path, reads both forms as core
+does, so a translation computes on hyperfixi what the English does; the value
+matrix lists these cells as failing in its `en` lane and every direct lane.
 
 **Decision (2026-09-27): keep the conversion on the property, pending the
 owner's confirmation.**
