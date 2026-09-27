@@ -1091,13 +1091,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // `tăng :count thêm 1` re-parses as increment + a phantom `add`. Omitting
         // the default-1 quantity is recall-neutral (the action set is unchanged)
         // and renders increment/decrement naturally everywhere.
+        // The default itself, not whatever coerces to 1: `by true` is NaN
+        // upstream, and `Number(true)` made it read as the default and vanish.
         if (token.optional) {
           const qtyToken = token.tokens.find(
             (t: any) => t.type === 'role' && t.role === 'quantity'
           );
           if (qtyToken) {
             const qtyValue = node.roles.get('quantity');
-            if (qtyValue?.type === 'literal' && Number(qtyValue.value) === 1) {
+            if (qtyValue?.type === 'literal' && (qtyValue.value === 1 || qtyValue.value === '1')) {
               return null; // Skip rendering default quantity of 1
             }
           }

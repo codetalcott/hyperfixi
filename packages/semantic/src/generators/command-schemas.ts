@@ -1633,7 +1633,11 @@ export const incrementSchema: CommandSchema = {
       role: 'quantity',
       description: 'Amount to increment by (defaults to 1)',
       required: false,
-      expectedTypes: ['literal'],
+      // Any value, as `set`'s: upstream reads `by` as an expression and
+      // parseFloats it. Literal-only, `by n`, `by -2` and `by obj.v` matched
+      // nothing, and the whole `by …` clause fell away: the command
+      // incremented by 1, in English and so in every translation.
+      expectedTypes: ['literal', 'selector', 'expression', 'reference', 'property-path'],
       default: { type: 'literal', value: 1, dataType: 'number' },
       svoPosition: 2,
       sovPosition: 2,
@@ -1673,7 +1677,8 @@ export const decrementSchema: CommandSchema = {
       role: 'quantity',
       description: 'Amount to decrement by (defaults to 1)',
       required: false,
-      expectedTypes: ['literal'],
+      // Any value, as increment's.
+      expectedTypes: ['literal', 'selector', 'expression', 'reference', 'property-path'],
       default: { type: 'literal', value: 1, dataType: 'number' },
       svoPosition: 2,
       sovPosition: 2,

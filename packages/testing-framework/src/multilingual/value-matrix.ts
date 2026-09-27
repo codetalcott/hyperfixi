@@ -501,13 +501,28 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   const document = window.document;
   type Ast = Parameters<typeof hyperscript.execute>[0];
 
+  // hyperfixi keeps its global variables in one Map that every context shares,
+  // and writes a window global there (`increment n`). It outlives the run, and
+  // it shadows window's copy, so every later lane would read the write.
+  const coreGlobals = hyperscript.createContext().globals;
+  const coreGlobalsAtStart = new Map(coreGlobals);
+  const headAtStart = document.head.innerHTML;
+
   /**
    * A fresh body and fresh globals; returns the button. A global goes on both
    * the jsdom window and node's globalThis — one object in a browser, two
    * here, and the engines' lookups reach one or the other.
    */
   const reset = (): HTMLElement => {
+    // A lane can take the body with it: tr read `increment i by 2 * 2` as
+    // `increment *`, which writes the text of every element, <html> included.
+    if (!document.body) {
+      const html = document.documentElement ?? document.appendChild(document.createElement('html'));
+      html.innerHTML = `<head>${headAtStart}</head><body></body>`;
+    }
     document.body.innerHTML = FIXTURE;
+    coreGlobals.clear();
+    for (const [name, value] of coreGlobalsAtStart) coreGlobals.set(name, value);
     for (const [name, make] of Object.entries(GLOBALS)) {
       const value = make();
       Reflect.set(window, name, value);
