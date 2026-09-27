@@ -2507,23 +2507,43 @@ Found on the way, and **filed**: core's English parser rejects `put ^count on
 `null`), and `put ^count into #out` leaves `#out` as it was. The matrix has no
 caret-variable operand, so it counts neither.
 
-### Core does not parseFloat a non-number `increment` amount (filed 2026-09-27, PR 55)
+### ~~Core does not parseFloat a non-number `increment` amount~~ — FIXED (2026-09-27, PR 63; filed by PR 55)
 
-Upstream reads every `increment … by` amount through `parseFloat`, so `by true`,
-`by #a`, `by "q"` and `by {}` are NaN, and `by [1, 2]` is 1. Core differs on
-both of its paths:
+Upstream's `increment` reads its amount through `parseFloat`, and its counter
+the same way unless the counter is falsy (`targetValue ? parseFloat(targetValue)
+: 0`). Core differed on both paths, on amounts and counters alike:
 
-- **English**, the `set X to X + amount` rewrite: `by true` adds 1 and `by #a`
-  adds 6 (the element's text), and text that is not a number, an object or
-  an array throws (`Right operand cannot be converted to number`), so the
-  handler stops.
-- **The direct path** (`numeric-target-parser.ts`, the `by` modifier): a
-  number or text is read as upstream reads it, null as NaN, and anything else
-  (a boolean, an element, an object) leaves the default 1.
+- **English**, the `set X to X + amount` rewrite: `by true` added 1 and `by #a`
+  added 6 (the element's text); text that is not a number, an array and an
+  object threw (`Right operand cannot be converted to number`), which stopped
+  the handler; and a counter holding `""` threw, `true` counted from 1 and an
+  array concatenated (`set i to [1, 2] then increment i` wrote `121`).
+- **The direct path**: an amount that was not a number, text or null (a
+  boolean, an element, an array) left the default 1, and a counter holding
+  `""` read NaN, `true` 1 and an array its length.
 
-Found by PR 55: semantic used to drop these amounts, so translations never
-handed them to the direct path. The value matrix does not count it: its
-increment cells take numbers only.
+Both now read the operands with two helpers in `variable-access.ts`:
+`counterAmount` (`parseFloat`, so `by [1, 2]` is 1 and `by "2abc"` 2) and
+`counterValue` (a falsy counter counts from 0). One core behavior is kept: an
+**element counter counts its text** (`value`, else `textContent`), where
+upstream reads NaN and writes it over the element. The shipped examples count
+that way (`on click increment #count`), and a variable holding the element
+reads the same.
+
+`src/compatibility/value-parity.test.ts` pins 24 rows (increment and decrement,
+amounts and counters) on core's English path and the direct path, in English
+and through es, ja and ar, plus three object rows on the English path alone
+(semantic reads an object literal as text, filed). Each row is upstream
+0.9.93's result. Each of six mutants reverting one piece fails a test (the
+element-counter one only in the broader suite: `control-flow-lse.test.ts`
+counts `#n`).
+
+The value matrix's increment cells take numbers only (`positionsFor`), so it
+does not count this; widening them is a separate decision.
+
+Found on the way, and **filed**: on the direct path `increment @title` changes
+nothing (upstream and core's English count `me`'s attribute from 0): the
+counter reads as an evaluated null, and nothing writes it back.
 
 ## Notes
 

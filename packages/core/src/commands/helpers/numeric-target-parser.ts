@@ -10,7 +10,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 import { isLiteralNode } from '../../ast/guards';
 import { isHTMLElement } from '../../utils/element-check';
-import { convertToNumber } from './variable-access';
+import { counterAmount } from './variable-access';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -187,18 +187,17 @@ export async function parseNumericTargetInput(
   // the R2 execution sweep: every language uniformly incremented by 1.)
   //
   // The amount is read as upstream reads it, and as core's English rewrite
-  // (`set X to X + amount`, coercing text) does: a number as itself, text
-  // through parseFloat (`by "2"` is 2, where it used to be ignored), and null
-  // or an unset value as NaN.
+  // (`set X to X + amount`) does: through parseFloat (counterAmount), so
+  // `by "2"` is 2, `by [1, 2]` is 1, and `by true`, `by #a`, `by {}` and a
+  // null or unset value are NaN. Anything but a number used to leave the
+  // default 1.
   const byModifier = raw.modifiers?.by;
   if (byModifier) {
     const value =
       getNodeType(byModifier) === 'literal'
         ? (byModifier as { value?: unknown }).value
         : await evaluator.evaluate(byModifier, context);
-    if (typeof value === 'number') amount = value;
-    else if (typeof value === 'string') amount = convertToNumber(value);
-    else if (value == null) amount = NaN;
+    amount = counterAmount(value);
   }
 
   return {

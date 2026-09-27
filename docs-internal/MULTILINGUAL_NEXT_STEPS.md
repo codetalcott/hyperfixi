@@ -5893,6 +5893,15 @@ this signal was missing.
 >   marker). Core's condition-phrase test runs its `equals` rows in English only.
 > - qu `mana` (`not`, also `false`) still reads `p is not equal to 1` as `p is false equal to 1`:
 >   the filed `mana` collision.
+>
+> **Core reads an increment's amount and counter as upstream does (PR 63, 2026-09-27).** The core
+> half of PR 55's filing: upstream parseFloats the amount, and the counter too unless it is falsy.
+> Core's English rewrite added 1 for `by true` and 6 for `by #a`, threw on text, arrays and objects,
+> and read a `""` counter as a throw; the direct path left the default 1 for anything but a number,
+> text or null. Both now read through `counterAmount`/`counterValue` (`variable-access.ts`), and an
+> element counter keeps core's reading, its text. `value-parity.test.ts` pins 24 upstream rows on
+> both paths and through es, ja and ar. The matrix's increment cells take numbers only, so it moves
+> no pair. Details, and the `increment @title` no-op it filed, in `PARSER_NEXT_STEPS.md`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
