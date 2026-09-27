@@ -5504,6 +5504,13 @@ this signal was missing.
 > upstream reads it. Of 14 such values in 24 languages, all 336 runs failed. Six still do: qu and sw
 > `and`, and hi and qu `not`, which are the filed collisions. No corpus row moves.
 >
+> The same change finishes a loop the SOV six used to leave running. A fronted while-phrase, the
+> retired transformer's shape (ko `동안 #counter.innerText < 10 를 클릭 할 때 반복 …`), kept only
+> `#counter.innerText` as its condition: the element's text, which is truthy, so the loop never ended.
+> Now the whole comparison is the condition. In ko, ja and tr the generated repeat pattern reads it,
+> into its one operand slot, `quantity`; a while or until loop node now takes that operand as its
+> condition, since `buildLoop` reads nothing else.
+>
 > Filed, not fixed:
 >
 > - **A call in a value is still cut** in every language, English included: `String(n) + "!"`,
