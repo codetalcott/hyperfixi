@@ -191,6 +191,11 @@ describe('SOV fronted repeat-while fold (R1 post-cluster residue item 2)', () =>
   // iken→süresince; iken is the tr WHEN primary) before the while node could
   // form at all. Corpus-shaped inputs (repeat-while, en:
   // `on click repeat while #counter.innerText < 10 increment #counter wait 200ms end`).
+  // The condition is the WHOLE comparison. It used to be `#counter.innerText`
+  // alone, the element's text, which is truthy, so the loop never ended; a
+  // value run can start with a property path now, so `< 10` stays with it (in
+  // ko/ja/tr through the generated repeat pattern, whose operand slot the loop
+  // node reads as the condition).
   const cases: Array<[string, string]> = [
     ['hi', 'जब तक #counter.innerText < 10 को क्लिक पर दोहराएं फिर #counter को बढ़ाएं फिर प्रतीक्षा 200ms समाप्त'],
     ['ko', '동안 #counter.innerText < 10 를 클릭 할 때 반복 그러면 #counter 를 증가 그러면 대기 200ms 끝'],
@@ -206,7 +211,11 @@ describe('SOV fronted repeat-while fold (R1 post-cluster residue item 2)', () =>
       const repeat = findRepeat(node);
       expect(repeat).toBeTruthy();
       expect(role(repeat!, 'loopType')).toMatchObject({ type: 'literal', value: 'while' });
-      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      expect(role(repeat!, 'condition')).toMatchObject({
+        type: 'expression',
+        raw: '#counter.innerText < 10',
+      });
+      expect(role(repeat!, 'quantity')).toBeUndefined();
       // The spurious standalone `while` sibling is gone; the body survives.
       const actions = collectActions(node);
       expect(actions.has('while')).toBe(false);

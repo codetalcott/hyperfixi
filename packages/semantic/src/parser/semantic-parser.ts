@@ -3702,10 +3702,21 @@ export class SemanticParserImpl implements ISemanticParser {
               : 'forever';
     const binding = variant === 'for' ? head.roles.get('patient') : undefined;
     const loopVariable = binding ? loopVariableName(binding) : undefined;
+    // A while or until loop's one operand is its condition. The generated SOV
+    // repeat pattern names its operand slot `quantity`, and a fronted
+    // while-phrase (ko `동안 #counter.innerText < 10 를 … 반복`) fills it whole
+    // now that a value run can start with a property path. buildLoop reads the
+    // condition alone, so a loop left with a `quantity` would have none.
+    const roles = new Map(head.roles);
+    const operand = roles.get('quantity');
+    if ((variant === 'while' || variant === 'until') && operand && !roles.has('condition')) {
+      roles.set('condition', operand);
+      roles.delete('quantity');
+    }
     return createLoopNode(
       head.action === 'for' ? 'for' : 'repeat',
       variant,
-      Object.fromEntries(head.roles),
+      Object.fromEntries(roles),
       body,
       {
         ...(loopVariable ? { loopVariable } : {}),
