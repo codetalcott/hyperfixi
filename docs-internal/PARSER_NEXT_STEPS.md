@@ -2473,7 +2473,7 @@ The value matrix (`testing-framework/src/multilingual/value-matrix.ts`, PR 52)
 runs every value shape in five positions on both engines. Core's English run
 differed from upstream's in 46 of its 1,328 cells: the filings above, counted.
 PR 54 fixed them, each against a row run on both engines
-(`src/compatibility/value-parity.test.ts`, 39 rows; 21 fail on the old core):
+(`src/compatibility/value-parity.test.ts`, 38 rows; 21 fail on the old core):
 
 - **`put` writes a value as upstream does**: through a fragment, null (and an
   unset value) as the text `null`, an array item by item (`put [1, 2]` writes
