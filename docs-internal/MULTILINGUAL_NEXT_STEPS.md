@@ -5363,6 +5363,15 @@ this signal was missing.
 > semantic's curated then-words (`isThenKeyword`), so a handler body splits at them. That cuts ja's
 > `and` in a value and the ja/ko `and` in a condition. The same list dropped zh `之后`, tr `sonra` and
 > bn `পরে` for the same kind of collision.
+>
+> **ja and ko read their `and` back inside a handler body (PR 45, 2026-09-26).** PR 44's filing. ja
+> `そして` and ko `그리고` are what the renderers write for `and`, and both were also in the parser's
+> curated then-words (`isThenKeyword`), so a handler body split at them: the translated condition
+> `p is not q and q is 3` read back as `p is not q`, and ja's value `p そして q` kept only `q`.
+> Neither is a then-word now. Then-chains render as `それから` / `그다음`, and a hand-written `そして`
+> or `그리고` between two commands still starts the next one. Wrong branches fall from 7 to 5 on the
+> negative condition battery, from 6 to 4 on the possessive one, and from 16 to 15 in the logical
+> values; nothing else moves, and no corpus row does.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

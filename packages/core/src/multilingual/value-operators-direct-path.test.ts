@@ -78,11 +78,11 @@ describe.each(VALUES)('put %s', (value, expected) => {
 const CONNECTIVES: Array<[string, string, string[]]> = [
   ['p or q', 'true', []],
   ['q or p', 'true', []],
-  ['p and q', 'false', ['ja', 'qu', 'sw']],
-  ['q and p', 'false', ['ja', 'qu', 'sw']],
+  ['p and q', 'false', ['qu', 'sw']],
+  ['q and p', 'false', ['qu', 'sw']],
   ['not p', 'false', ['hi', 'qu']],
   ['not q', 'true', ['hi', 'qu']],
-  ['p and not q', 'true', ['hi', 'ja', 'qu', 'sw']],
+  ['p and not q', 'true', ['hi', 'qu', 'sw']],
 ];
 
 describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {

@@ -95,7 +95,7 @@ describe.each(LANGUAGES)('%s', language => {
 // word for each is also another word (see semantic's value-operators test).
 const CONNECTIVES: Array<[string, string, string[]]> = [
   ['p or q', 'true', []],
-  ['q and p', 'false', ['ja', 'qu', 'sw']],
+  ['q and p', 'false', ['qu', 'sw']],
   ['not p', 'false', ['hi', 'qu']],
 ];
 

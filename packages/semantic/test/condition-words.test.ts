@@ -50,6 +50,9 @@ const GROUPS: Array<[string, string[], string[]]> = [
     ['ar', 'hi', 'th'],
   ],
   ['has, the same word as is', ['#d1 has .x'], ['hi']],
+  // ja `そして` and ko `그리고`, their word for `and`, were also then-words, so a
+  // handler body split the condition at them.
+  ['and, also a then-word', ['p is not q and q is 3'], ['ja', 'ko']],
   // Where the possessive marker sits between owner and property (ja
   // `#d1のtextContent`), the marker stayed in the condition.
   [
@@ -86,4 +89,15 @@ describe('ar هو as `it`', () => {
       expect(render(parse(foreign, 'ar')!, 'en'), foreign).toBe(source);
     }
   );
+});
+
+// Between two commands, a hand-written ja `そして` or ko `그리고` still starts the
+// next command, now that neither is a then-word.
+describe('ja そして / ko 그리고 between two commands', () => {
+  it.each([
+    ['ja', 'クリック で .a を 切り替え そして .b を 追加'],
+    ['ko', '클릭 할 때 .a 를 토글 그리고 .b 를 추가'],
+  ])('%s', (language, source) => {
+    expect(render(parse(source, language)!, 'en')).toBe('on click toggle .a then add .b');
+  });
 });
