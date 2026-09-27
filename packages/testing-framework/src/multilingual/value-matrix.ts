@@ -130,6 +130,7 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'literal', type: 'str', text: '"q"' },
   { kind: 'literal', type: 'bool', text: 'true' },
   { kind: 'literal', type: 'null', text: 'null' },
+  { kind: 'literal', type: 'obj', text: '{}' },
   { kind: 'variable', type: 'num', text: 'n' },
   { kind: 'variable', type: 'str', text: 's' },
   { kind: 'variable', type: 'bool', text: 'flag' },

@@ -14,6 +14,7 @@
  *   --allow-new           write even when pairs newly fail
  *   --report              print the burn-down only; write nothing
  *   --dry-run             print what would change; write nothing
+ *   --results <file>      also write every lane's raw result there, for triage
  *
  * A full run takes about two minutes. Needs fresh dists of core, semantic and
  * hyperscript-adapter (`npm run check:fresh`).
@@ -106,6 +107,9 @@ async function main(): Promise<void> {
     for (const r of invalid) console.error(`no oracle: ${r.id}: ${r.invalid}`);
     throw new Error(`${invalid.length} cell(s) have no oracle — fix the generator`);
   }
+
+  const resultsFile = argValue('--results');
+  if (resultsFile) writeFileSync(resultsFile, JSON.stringify(results));
 
   report(results, cells);
   if (process.argv.includes('--report')) return;

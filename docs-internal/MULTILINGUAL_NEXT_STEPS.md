@@ -5528,6 +5528,59 @@ this signal was missing.
 > - **English renders `set x to -n` as `set x to -`**, so every translation loses the value.
 > - **de misreads a handler with two `set`s in a row** (PR 43's filing): every value above fails in de
 >   behind `set n to 3 then set arr to …`.
+>
+> **The AOT is parked (owner decision, 2026-09-27).** No AOT work until it is picked up again. Its
+> filed gaps above stay as they are, and the value matrix below has no AOT lane.
+>
+> **A generated value matrix counts what is still broken (PR 52, 2026-09-27).** Each fix above was
+> found by a battery written by hand and locked in by its own test table, so nothing counted what was
+> left. `testing-framework/src/multilingual/value-matrix.ts` generates the space instead: 38 operand
+> instances of nine kinds (literal, variable, selector, possessive, `of`, dotted, call, array,
+> parens), 20 binary operators and 8 prefix or postfix forms, crossed as a covering design and put in
+> five positions (a `put` value, a `set` value, an `if` condition, a `repeat while` bound, an
+> `increment … by` amount): 1,328 cells. Each cell's English runs on upstream 0.9.93, which is the
+> oracle, then in 48 lanes: hyperfixi's English, semantic's English round trip (on upstream), and
+> each of 23 languages on hyperfixi's direct path and through the adapter on upstream.
+>
+> **18,509 of the 63,744 (cell, lane) pairs fail (29%), in 762 cells.** The baseline
+> (`baselines/value-matrix.json`) lists every one and only shrinks; `value-matrix.<position>.test.ts`
+> fails on a new failing pair and on a listed pair that passes. Reverting PR 51's semantic change
+> raises the `put` shard's failing pairs by 4,349 and `while`'s by 1,288, and the gate fails. Where
+> the losses sit:
+>
+> | Where                                                          | Cells | Failing pairs |
+> | -------------------------------------------------------------- | ----: | ------------: |
+> | Semantic's English parse (every translation inherits the loss) |   342 | 15,663 (85%)  |
+> | Core's English run differs from upstream, semantic aside       |    25 |           482 |
+> | Some languages only                                            |   395 |         2,364 |
+>
+> The semantic-English share, by the shape that loses it:
+>
+> - **`increment … by` a non-literal amount**: 106 cells, 4,983 pairs. Semantic's English parse
+>   drops the amount, so `increment i by n` increments by 1 in every translation; `by 2` works.
+> - **A variable owner**, as possessive or `of` (`obj's v`, `arr's length`, `v of obj`, `length of
+>   arr`, `v of w of obj`): 130 cells, 5,919 pairs. `put` is dropped whole; `set` and a loop bound
+>   lose the value.
+> - **A chained possessive** (`#a's textContent's length`): 27 cells, 1,248 pairs.
+> - **A call** (`String(n)`, and `Math.max(n, 1)` in two positions): 29 cells, 1,340 pairs.
+> - **Unary minus** on any operand (`-n`, `-2`, `-obj.v`): about 1,100 pairs.
+> - **`@title of #a`**: 14 cells, 666 pairs.
+>
+> In 317 of the 342 cells semantic's English parse loses, every foreign lane fails. Beyond them, qu
+> fails about 200 more cells on each engine, tr about 140, pl 132 on the direct path, and ja, ko and
+> zh 105 to 125; every other lane fewer than 60. Found on the way, and counted there:
+>
+> - **pl's `repeat while` writes `and`** in all 112 loop cells on the direct path, and **tr's loop
+>   never reaches its `put`** on either engine.
+> - **`{}` becomes the string `{ }`** in every translation on the direct path.
+> - **The adapter's English keeps native words upstream cannot read**, in 84 cells: bn and th in
+>   `my id` and `length of arr` (`Unknown token: আ`), ja and ko in `contains`, hi in `not` and `no`.
+>
+> The core-English cells are the `X of Y` entry's filings in `PARSER_NEXT_STEPS.md`, now counted
+> (see the entry after it). Regenerate after a change with `npx tsx
+> tools/regen-value-matrix-baseline.ts` (shrink-only; `--allow-new` to accept a new failure, with a
+> reason in the PR). A full run takes about two minutes, and the gate about 40 seconds in five
+> parallel shards.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

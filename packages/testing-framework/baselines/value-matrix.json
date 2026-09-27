@@ -1,8 +1,8 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 1319,
-  "pairs": 63312,
-  "failing": 18231,
+  "cells": 1328,
+  "pairs": 63744,
+  "failing": 18509,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -19,6 +19,14 @@
     "set|null": {
       "lanes": "en hi/up *direct",
       "family": "core+translation"
+    },
+    "put|{}": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|{}": {
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "while|n": {
       "lanes": "pl tr tr/up",
@@ -2540,6 +2548,18 @@
       "lanes": "hi hi/up qu qu/up tr tr/up",
       "family": "translation"
     },
+    "put|{} is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|{} is empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|{} is empty": {
+      "lanes": "en bn de es fr he it ja ko pl pt ru sw th tl uk vi zh",
+      "family": "core"
+    },
     "put|my id is empty": {
       "lanes": "bn/up th/up",
       "family": "adapter"
@@ -2635,6 +2655,18 @@
     "if|null is not empty": {
       "lanes": "ar/up hi/up th/up",
       "family": "adapter"
+    },
+    "put|{} is not empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "set|{} is not empty": {
+      "lanes": "en en-rt *direct *up",
+      "family": "core+semantic-en"
+    },
+    "if|{} is not empty": {
+      "lanes": "en ar/up bn de es fr he hi/up it ja ko pl pt qu qu/up ru sw th/up tl uk vi zh",
+      "family": "core+translation+adapter"
     },
     "put|s is not empty": {
       "lanes": "qu qu/up",

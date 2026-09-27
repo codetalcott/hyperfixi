@@ -250,6 +250,40 @@ Add to `.github/workflows/test.yml`:
     npm run test:multilingual -- --full --regression
 ```
 
+## Value matrix
+
+`value-matrix.ts` generates every value shape and runs it: nine operand kinds
+(literal, variable, selector, possessive, `of`, dotted, call, array, parens), the
+operators, and five positions (`put` and `set` values, `if` and `repeat while`
+conditions, `increment … by`). Each cell's English runs on the real
+`hyperscript.org` engine, which is the oracle, and then in 48 lanes:
+
+| Lane     | What runs                                                                    |
+| -------- | ---------------------------------------------------------------------------- |
+| `en`     | hyperfixi's English path (core's parser and runtime)                         |
+| `en-rt`  | semantic's English parse, rendered back to English, on upstream              |
+| `<L>`    | each of 23 languages on hyperfixi's direct path                              |
+| `<L>/up` | the same translation, through `@lokascript/hyperscript-adapter`, on upstream |
+
+`baselines/value-matrix.json` lists every failing (cell, lane) pair; `*direct` and
+`*up` stand for all 23 lanes of each. The gate runs in five shards,
+`value-matrix.<position>.test.ts`, and fails on a failing pair the baseline does not
+list and on a listed pair that passes, so the list only shrinks.
+
+```bash
+# After a fix: prune the pairs that pass now (refuses to add new ones)
+npx tsx tools/regen-value-matrix-baseline.ts
+
+# The burn-down: failing pairs by family, position, operand kind, operator, lane
+npx tsx tools/regen-value-matrix-baseline.ts --report
+
+# Raw results of every lane, for triage
+npx tsx tools/regen-value-matrix-baseline.ts --dry-run --results /tmp/matrix.json
+```
+
+A lane that fails in `en-rt` fails in nearly every translation: semantic's English
+parse lost the value, and every translation is rendered from it. Fix that first.
+
 ## Troubleshooting
 
 ### Bundle not found

@@ -2467,6 +2467,27 @@ Found alongside, and **filed**:
   `wv`.
 - **`put` of null writes nothing in core, and `null` upstream.**
 
+### Core's English run differs from upstream in 46 value-matrix cells (2026-09-27)
+
+The value matrix (`testing-framework/src/multilingual/value-matrix.ts`, PR 52)
+runs every value shape in five positions on both engines. Core's English run
+differs from upstream's in 46 of its 1,328 cells, and they are the filings
+above, counted:
+
+- **Null**: `put null` writes nothing (upstream `null`); `increment i by
+  <null>` gives `1` (upstream `NaN`). Every `X of Y as Int` cell reaches core's
+  null too, since both engines read it as `X of (Y as Int)`.
+- **An array**: `put [1, 2]` and `put arr` write `1,2` (upstream `12`).
+- **An attribute as an `of` root**: `@title of #a` reads nothing, alone or
+  under `+`, `is empty` or an `if`.
+- **An `of` over a query**: `textContent of .w` reads nothing (upstream maps
+  it, `wv`).
+- **`the X of Y as T`**: core applies `as` to the path (`6`), upstream to `Y`
+  (`null`).
+- **`{} is empty`** is true in core and false upstream, as filed with PR 49.
+
+The baseline lists each as failing in the `en` lane; a fix prunes it.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
