@@ -115,3 +115,21 @@ describe.each(PHRASES)('put %s', (value, expected, broken) => {
     expect(await click(`on click set n to 3 then put ${value} into #out`, language)).toBe(expected);
   });
 });
+
+// `contains`, `includes` and `equals`, both ways (n = 3). Each is skipped where
+// its word is another concept's too, or its tokenizer splits it (see semantic's
+// value-operators test).
+const WORDS: Array<[string, string, string[]]> = [
+  ['[1, 2] contains 1', 'true', ['ja', 'ko', 'qu', 'zh']],
+  ['[1, 2] contains 3', 'false', ['ja', 'ko', 'qu', 'zh']],
+  ['[1, 2] includes 1', 'true', ['hi', 'tl', 'tr']],
+  ['[1, 2] includes 3', 'false', ['hi', 'tl', 'tr']],
+  ['n equals 3', 'true', ['pl', 'zh']],
+  ['n equals 4', 'false', ['pl', 'zh']],
+];
+
+describe.each(WORDS)('put %s', (value, expected, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', async language => {
+    expect(await click(`on click set n to 3 then put ${value} into #out`, language)).toBe(expected);
+  });
+});

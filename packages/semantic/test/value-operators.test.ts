@@ -102,3 +102,20 @@ describe.each(PHRASES)('%s', (source, broken) => {
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
   });
 });
+
+// `contains`, `includes` and `equals` read back through the expression
+// lexicon's connectives. Each is skipped where the dictionary uses its word for
+// another concept (ja/ko/zh `contains`, tl/tr `includes`) or the tokenizer
+// splits it (qu `ukupi_kan`, hi `में_है`, zh `等于`, pl `równa się`).
+const WORDS: Array<[string, string[]]> = [
+  ['on click put [1, 2] contains 1 into #out', ['ja', 'ko', 'qu', 'zh']],
+  ['on click put [1, 2] includes 1 into #out', ['hi', 'tl', 'tr']],
+  ['on click put n equals 3 into #out', ['pl', 'zh']],
+];
+
+describe.each(WORDS)('%s', (source, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+  });
+});

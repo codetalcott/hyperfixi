@@ -93,6 +93,33 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
     ],
     ['hi'],
   ],
+  // The renderer writes `contains` in the language (es `contiene`), which no
+  // tokenizer read back, so the condition was the truthy `[1, 2]`.
+  [
+    'contains',
+    [
+      ['[1, 2] contains 1', 'yes'],
+      ['[1, 2] contains 3', 'no'],
+    ],
+    [
+      'ar',
+      'de',
+      'es',
+      'fr',
+      'hi',
+      'id',
+      'it',
+      'ms',
+      'pl',
+      'pt',
+      'ru',
+      'sw',
+      'tl',
+      'tr',
+      'uk',
+      'vi',
+    ],
+  ],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
