@@ -2488,11 +2488,15 @@ PR 54 fixed them, each against a row run on both engines
 - **`increment … by` a null amount is NaN**, as upstream's `parseFloat` makes
   it (it added nothing).
 
-One stays: **`the X of Y as T` converts the property**, where upstream converts
-the target (`the value of #inp as Int` is null upstream, 5 in core). Upstream
-parity would break the idiom, so it is recorded in
-`packages/core/docs/UPSTREAM-KNOWN-DIFFS.md`, pending the owner's decision, and
-its cells stay in the matrix's baseline.
+In the value matrix they fixed 325 pairs and broke none (failing pairs 10,366
+→ 10,041), and core's English run now differs from upstream's in 4 cells, not
+46.
+
+Those 4 are the one that stays: **`the X of Y as T` converts the property**,
+where upstream converts the target (`the value of #inp as Int` is null
+upstream, 5 in core). Upstream parity would break the idiom, so it is recorded
+in `packages/core/docs/UPSTREAM-KNOWN-DIFFS.md`, pending the owner's decision,
+and its cells stay in the matrix's baseline.
 
 ## Notes
 
