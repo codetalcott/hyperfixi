@@ -279,20 +279,41 @@ export class ExpressionCodegen {
 
     // Map hyperscript operators to JavaScript
     switch (op) {
-      // Equality
+      // Equality, with core's phrase forms of each (`n is equal to 3`).
       case 'is':
       case '==':
+      case 'am':
+      case 'equals':
+      case 'is equal':
+      case 'is equal to':
         return `(${left} === ${right})`;
       case 'is not':
       case '!=':
+      case 'is not equal':
+      case 'is not equal to':
+        return `(${left} !== ${right})`;
+      case 'really equals':
+      case 'is really':
+      case 'is really equal to':
+        return `(${left} === ${right})`;
+      case 'is not really':
+      case 'is not really equal to':
         return `(${left} !== ${right})`;
 
-      // Comparison
+      // Comparison. Left as is, `(n is greater than 2)` is not JavaScript.
       case '<':
       case '>':
       case '<=':
       case '>=':
         return `(${left} ${op} ${right})`;
+      case 'is less than':
+        return `(${left} < ${right})`;
+      case 'is greater than':
+        return `(${left} > ${right})`;
+      case 'is less than or equal to':
+        return `(${left} <= ${right})`;
+      case 'is greater than or equal to':
+        return `(${left} >= ${right})`;
 
       // Arithmetic
       case '+':
@@ -315,12 +336,38 @@ export class ExpressionCodegen {
 
       // String/collection operators
       case 'contains':
+      case 'contain':
+      case 'includes':
+      case 'include':
         this.ctx.requireHelper('contains');
         return `_rt.contains(${left}, ${right})`;
+      case 'does not contain':
+      case 'do not contain':
+      case 'does not contains':
+      case 'does not include':
+        this.ctx.requireHelper('contains');
+        return `!_rt.contains(${left}, ${right})`;
 
+      // `matches` tests a selector, so a selector operand stays a string: the
+      // element it would query is not a selector (`_rt.matches(el, el)`).
       case 'matches':
+      case 'match':
         this.ctx.requireHelper('matches');
-        return `_rt.matches(${left}, ${right})`;
+        return `_rt.matches(${left}, ${this.selectorText(node.right, right)})`;
+      case 'does not match':
+      case 'do not match':
+        this.ctx.requireHelper('matches');
+        return `!_rt.matches(${left}, ${this.selectorText(node.right, right)})`;
+
+      // Membership, `n is in [1, 3]`: the right side contains the left.
+      case 'is in':
+      case 'am in':
+        this.ctx.requireHelper('contains');
+        return `_rt.contains(${right}, ${left})`;
+      case 'is not in':
+      case 'am not in':
+        this.ctx.requireHelper('contains');
+        return `!_rt.contains(${right}, ${left})`;
 
       case 'starts with':
         return `${left}.startsWith(${right})`;
@@ -370,6 +417,13 @@ export class ExpressionCodegen {
         // Unknown operator - use as-is
         return `(${left} ${op} ${right})`;
     }
+  }
+
+  /** A selector operand as its quoted text; any other operand as generated. */
+  private selectorText(node: ASTNode, generated: string): string {
+    return node.type === 'selector'
+      ? `'${sanitizeSelector((node as SelectorNode).value)}'`
+      : generated;
   }
 
   // ===========================================================================
@@ -642,6 +696,20 @@ export class ExpressionCodegen {
         return `+${operand}`;
       case 'no':
         return `!${operand}`;
+      // Core's postfix tests. Left as is, `exists#d1` is not JavaScript.
+      case 'exists':
+      case 'some':
+        this.ctx.requireHelper('exists');
+        return `_rt.exists(${operand})`;
+      case 'does not exist':
+        this.ctx.requireHelper('exists');
+        return `!_rt.exists(${operand})`;
+      case 'is empty':
+        this.ctx.requireHelper('isEmpty');
+        return `_rt.isEmpty(${operand})`;
+      case 'is not empty':
+        this.ctx.requireHelper('isEmpty');
+        return `!_rt.isEmpty(${operand})`;
       case 'beep!':
         // Report the value the way BeepCodegen reports the command's, then hand
         // it on. The default below would emit `beep!<operand>`, which is not JS.
