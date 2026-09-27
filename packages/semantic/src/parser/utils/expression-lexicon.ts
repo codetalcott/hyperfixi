@@ -977,6 +977,10 @@ export function expressionWordOf(
   next: LanguageToken | undefined,
   prevText: string | undefined
 ): string {
+  // `equal to` stays English in every rendering (`is greater than or equal
+  // to`), and its `to` is a word some languages have their own sense for: pl
+  // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
+  if (prevText?.toLowerCase() === 'equal' && token.value.toLowerCase() === 'to') return 'to';
   const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText);
   if (sense !== undefined) return sense;
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
