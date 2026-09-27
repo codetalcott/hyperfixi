@@ -858,6 +858,77 @@ function resolveAmbiguousSense(
   return undefined;
 }
 
+/** Tokens a conjunction can never follow: an operator, or an opening bracket or comma. */
+const BEFORE_OPERAND = /^(?:[<>=!+\-*/%]+|[([,])$/;
+
+/** Tokens a conjunction can never precede. A `-` is not one: it may be unary. */
+const AFTER_OPERAND = new Set([
+  '<',
+  '>',
+  '<=',
+  '>=',
+  '==',
+  '!=',
+  '===',
+  '!==',
+  '+',
+  '*',
+  '/',
+  '%',
+  ')',
+  ']',
+  ',',
+]);
+
+/** Comparison words that take an operand on their left, as a conjunction cannot. */
+const COMPARISON_AFTER_OPERAND = new Set([
+  'is',
+  'am',
+  'contains',
+  'contain',
+  'matches',
+  'match',
+  'has',
+  'have',
+  'includes',
+  'include',
+  'equals',
+  'equal',
+  'exists',
+  'exist',
+  'mod',
+]);
+
+/**
+ * A keyword that joins conditions (`and`, `or`) is an OPERAND where a
+ * conjunction cannot stand: after an operator (`x - i`), before one (`i < 3`,
+ * `i is 2`), or inside brackets and lists (`(i + 1)`, `[i, 2]`). It is then a
+ * variable the language spells like its conjunction: pl `i` ("and") is the
+ * usual loop variable, es `y` ("and") a coordinate.
+ */
+export function isConnectiveOperand(
+  languageCode: string,
+  token: LanguageToken,
+  prev: LanguageToken | undefined,
+  next: LanguageToken | undefined
+): boolean {
+  // A connective by the tokenizer (pl `i`, a keyword) or by the lexicon
+  // (pt/fr `ou`, an identifier the join reads as `or`).
+  const sense =
+    token.kind === 'keyword'
+      ? (token.normalized ?? '').toLowerCase()
+      : translateConnective(languageCode, token.value).toLowerCase();
+  if (sense !== 'and' && sense !== 'or') return false;
+  if (prev !== undefined && BEFORE_OPERAND.test(prev.value)) return true;
+  if (next === undefined) return false;
+  if (AFTER_OPERAND.has(next.value)) return true;
+  const nextWord =
+    next.kind === 'keyword'
+      ? (next.normalized ?? next.value).toLowerCase()
+      : translateConnective(languageCode, next.value).toLowerCase();
+  return COMPARISON_AFTER_OPERAND.has(nextWord);
+}
+
 /**
  * The English word the expression join writes for a token no anchor claims:
  * its sense when the word has two (ar `هو` between operands is `is`), else
@@ -874,6 +945,7 @@ export function expressionWordOf(
 ): string {
   const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText);
   if (sense !== undefined) return sense;
+  if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
   const connective = translateConnective(languageCode, token.value);
   if (connective !== token.value) return connective;
   return token.kind === 'keyword' ? (token.normalized ?? token.value) : token.value;
