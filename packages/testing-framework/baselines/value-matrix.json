@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 3326,
+  "failing": 2089,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -73,24 +73,16 @@
       "family": "translation+direct-path"
     },
     "put|#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "if|#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up tr tr/up uk uk/up",
       "family": "translation"
     },
     "increment|#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|textContent of #a": {
       "lanes": "pl tr tr/up",
@@ -116,24 +108,12 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "if|length of arr": {
-      "lanes": "bn bn/up ms th th/up tl",
-      "family": "translation+direct-path"
-    },
     "while|length of arr": {
-      "lanes": "bn bn/up ms ms/up pl pl/up th th/up tl tl/up tr tr/up",
+      "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|length of arr": {
-      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "put|v of w of obj": {
@@ -297,36 +277,28 @@
       "family": "translation+direct-path"
     },
     "put|#a's textContent's length + 2": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|#a's textContent's length + 2": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|#a's textContent's length + 2": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up tr tr/up uk uk/up",
       "family": "translation"
     },
     "increment|#a's textContent's length + 2": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|2 + #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|2 + #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|2 + #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up tr tr/up uk uk/up",
       "family": "translation"
     },
     "increment|2 + #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|textContent of #a + 2": {
       "lanes": "pl tr tr/up",
@@ -376,36 +348,20 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|length of arr + 2": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|length of arr + 2": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
     "while|length of arr + 2": {
-      "lanes": "bn bn/up ms ms/up pl pl/up th th/up tl tl/up tr tr/up",
+      "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|length of arr + 2": {
-      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|2 + length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|2 + length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
     "while|2 + length of arr": {
-      "lanes": "bn bn/up ms ms/up pl pl/up th th/up tl tl/up tr tr/up",
+      "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|2 + length of arr": {
-      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "put|v of w of obj + 2": {
@@ -697,51 +653,11 @@
       "family": "translation+direct-path"
     },
     "put|#a's textContent's length < 4": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|#a's textContent's length < 4": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "if|#a's textContent's length < 4": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|1 < #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "set|1 < #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "if|1 < #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "put|length of arr < 4": {
-      "lanes": "bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation+adapter"
-    },
-    "set|length of arr < 4": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "if|length of arr < 4": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "put|1 < length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|1 < length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "if|1 < length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|v of w of obj < 4": {
@@ -761,52 +677,12 @@
       "family": "translation"
     },
     "put|#a's textContent's length is 6": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "set|#a's textContent's length is 6": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "if|#a's textContent's length is 6": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
+      "lanes": "qu qu/up tr tr/up",
+      "family": "translation"
     },
     "put|6 is #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "set|6 is #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "if|6 is #a's textContent's length": {
-      "lanes": "ar de es fr he id it ms pl pt qu qu/up ru sw th tr uk",
-      "family": "translation+direct-path"
-    },
-    "put|length of arr is 6": {
-      "lanes": "th th/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
-    },
-    "set|length of arr is 6": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "if|length of arr is 6": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
-    },
-    "put|6 is length of arr": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|6 is length of arr": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "if|6 is length of arr": {
-      "lanes": "bn/up th/up",
-      "family": "adapter"
     },
     "put|v of w of obj is 6": {
       "lanes": "pl pl/up",
@@ -1081,27 +957,7 @@
       "family": "translation"
     },
     "put|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains #a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "put|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
+      "lanes": "qu qu/up tr tr/up",
       "family": "translation"
     },
     "put|[1, 2, 6] contains v of w of obj": {
@@ -1197,16 +1053,16 @@
       "family": "translation+adapter"
     },
     "put|#a's textContent's length is in [1, 2, 6]": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "de de/up it it/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "set|#a's textContent's length is in [1, 2, 6]": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "de de/up it it/up tr tr/up",
       "family": "translation"
     },
     "if|#a's textContent's length is in [1, 2, 6]": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "de de/up tr/up",
+      "family": "translation+adapter"
     },
     "put|textContent of #a is in [1, 2, 6]": {
       "lanes": "de de/up tr tr/up",
@@ -1245,15 +1101,15 @@
       "family": "translation+adapter"
     },
     "put|length of arr is in [1, 2, 6]": {
-      "lanes": "bn bn/up de de/up it it/up ms ms/up th th/up tl tl/up tr tr/up",
+      "lanes": "de de/up it it/up tr tr/up",
       "family": "translation"
     },
     "set|length of arr is in [1, 2, 6]": {
-      "lanes": "bn bn/up de de/up it it/up ms ms/up th th/up tl tl/up tr tr/up",
+      "lanes": "de de/up it it/up tr tr/up",
       "family": "translation"
     },
     "if|length of arr is in [1, 2, 6]": {
-      "lanes": "bn bn/up de de/up ms ms/up th th/up tl tl/up tr/up",
+      "lanes": "de de/up tr/up",
       "family": "translation+adapter"
     },
     "put|v of w of obj is in [1, 2, 6]": {
@@ -1505,20 +1361,16 @@
       "family": "translation+direct-path"
     },
     "put|-#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ja ja/up ko ko/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|-#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
+      "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
       "family": "translation"
     },
     "while|-#a's textContent's length": {
-      "lanes": "ar ms pl pl/up qu qu/up sw th tr tr/up",
-      "family": "translation+direct-path"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "increment|-#a's textContent's length": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|-textContent of #a": {
       "lanes": "pl pl/up tr tr/up",
@@ -1536,20 +1388,12 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|-length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|-length of arr": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
     "while|-length of arr": {
-      "lanes": "bn bn/up pl pl/up th/up tr tr/up",
-      "family": "translation+adapter"
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
     },
     "increment|-length of arr": {
-      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "put|-v of w of obj": {
@@ -1812,21 +1656,13 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|#a's textContent's length as Int": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
-    "set|#a's textContent's length as Int": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
-    },
     "while|#a's textContent's length as Int": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "increment|#a's textContent's length as Int": {
-      "lanes": "ar ar/up de de/up es es/up fr fr/up he he/up id id/up it it/up ms ms/up pl pl/up pt pt/up qu qu/up ru ru/up sw sw/up th th/up tr tr/up uk uk/up",
-      "family": "translation"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "while|textContent of #a as Int": {
       "lanes": "pl tr tr/up",
@@ -1860,21 +1696,13 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|length of arr as Int": {
-      "lanes": "bn bn/up th th/up",
-      "family": "translation"
-    },
-    "set|length of arr as Int": {
-      "lanes": "bn bn/up th/up",
-      "family": "translation+adapter"
-    },
     "while|length of arr as Int": {
-      "lanes": "bn bn/up pl th/up tr tr/up",
-      "family": "translation+direct-path+adapter"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "increment|length of arr as Int": {
-      "lanes": "bn bn/up pl th/up tr tr/up",
-      "family": "translation+direct-path+adapter"
+      "lanes": "pl tr tr/up",
+      "family": "translation+direct-path"
     },
     "put|v of w of obj as Int": {
       "lanes": "pl/up *direct",
@@ -2020,20 +1848,12 @@
       "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
-    "put|length of arr + n": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
-    "set|length of arr + n": {
-      "lanes": "bn bn/up ms ms/up th th/up tl tl/up",
-      "family": "translation"
-    },
     "while|length of arr + n": {
-      "lanes": "bn bn/up ms ms/up pl pl/up th th/up tl tl/up tr tr/up",
+      "lanes": "pl pl/up tr tr/up",
       "family": "translation"
     },
     "increment|length of arr + n": {
-      "lanes": "bn bn/up ms ms/up pl th th/up tl tl/up tr tr/up",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "while|obj.v * obj.w.v": {
