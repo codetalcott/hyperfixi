@@ -31,13 +31,14 @@ const ALLOWED_WARNINGS: Record<string, string[]> = {
   bind: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   // increment/decrement: the counter can be an `of`-possessive property path
   // (`increment the textContent of the previous <output/>`), as set's
-  // destination can.
-  decrement: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  // destination can, and the amount is any value, as set's value is: upstream
+  // reads `by #a` as NaN, where a dropped amount would add 1.
+  decrement: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   default: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   // go: a destination is a URL (a literal) or an element to scroll to
   // (`go to #d1`), as it is on both engines.
   go: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
-  increment: ['SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  increment: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   morph: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
   // set: a variable takes any value, a literal or an element (`set el to
   // #panel`) or an array (`to [1, 2]`, one selector token).
