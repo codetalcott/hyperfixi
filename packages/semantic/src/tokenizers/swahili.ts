@@ -79,7 +79,10 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   // 'tupu' also means the null literal, but it is claimed by 'empty' below
   // (the `ni tupu` is-empty predicate, #325). Keyword-map insertion is
   // last-wins, so a second entry here would be dead code — see
-  // tokenizer-keyword-injectivity.test.ts.
+  // tokenizer-keyword-injectivity.test.ts. The null reading comes back where
+  // `empty` cannot stand: a whole value (the pattern matcher's
+  // tokenToSemanticValue) and a value outside a copula (the join's
+  // AMBIGUOUS_SENSES).
   { native: 'haijafafanuliwa', normalized: 'undefined' },
 
   // Positional. The tokenizer matches single words only, so the multi-word

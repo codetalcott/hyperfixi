@@ -745,6 +745,10 @@ interface AmbiguousSenseRule {
       `afterOperand`: hi `है` is both `is` and `has`, and only `has` takes a
       class (`#d1 है .x` → `#d1 has .x`). */
   beforeClassRef?: string;
+  /** Emitted when none of the above applies, where the word has no reading
+      of its own to fall through to: sw `tupu` is `empty` after a copula and
+      `null` anywhere else in a value (its tokenizer reads it as `empty`). */
+  otherwise?: string;
 }
 
 /** A class reference (`.x`): what `has` takes, and a comparison does not. */
@@ -763,6 +767,7 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   },
   th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' } },
   ja: { 空: { afterCopula: 'empty' } },
+  sw: { tupu: { afterCopula: 'empty', otherwise: 'null' } },
   zh: { 没有: { beforeBareIdentifier: 'no' } },
   tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
   bn: { আছে: { afterSubject: 'exists' } },
@@ -882,7 +887,7 @@ function resolveAmbiguousSense(
   ) {
     return rule.afterOperand;
   }
-  return undefined;
+  return rule.otherwise;
 }
 
 /** Tokens a conjunction can never follow: an operator, or an opening bracket or comma. */

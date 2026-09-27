@@ -4105,6 +4105,10 @@ export class PatternMatcher {
         }
         // Keywords might be references or values
         const lower = (token.normalized || token.value).toLowerCase();
+        // Nor is `empty`, a predicate (`is empty`) or a command: captured
+        // alone it is a word the language also spells `null` with (sw
+        // `tupu`), or a variable named `empty`, which upstream reads as null.
+        if (lower === 'empty') return createConstant('null')!;
         if (isValidReference(lower)) {
           return createReference(lower);
         }
