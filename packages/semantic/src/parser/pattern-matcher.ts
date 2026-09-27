@@ -3136,6 +3136,16 @@ export class PatternMatcher {
       tokens.reset(mark);
       return null;
     }
+    // The renderer writes the possessor first in every language, so where
+    // the slot runs straight into the next role (pl/ru/uk `set`: `ustaw do x
+    // mój id`, set x to my id) a possessor that owns the word after it is
+    // that word's: read post-nominally, `x mój` took the `my` and left `id`.
+    const afterPossessor = tokens.mark();
+    if (this.tryMatchPossessiveExpression(tokens)) {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.reset(afterPossessor);
     tokens.advance();
 
     return createPropertyPath(
