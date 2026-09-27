@@ -1997,7 +1997,8 @@ export class PatternMatcher {
       const op = tokens.peek();
       if (!op) break;
       const logical = this.logicalConnectiveOf(op);
-      const joins = logical === 'and' || logical === 'or';
+      // A wait's `or` lists its events (`wait for pointermove or pointerup`).
+      const joins = (logical === 'and' || logical === 'or') && this.currentRoleCommand !== 'wait';
       if (!joins && !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
       tokens.advance();
