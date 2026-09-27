@@ -42,7 +42,7 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { joinExpressionTokens } from './utils/expression-lexicon';
+import { joinExpressionTokens, translateConnective } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
@@ -7609,6 +7609,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // PREDICATE continuation — several double as other senses (هو = `it`).
         const prevIsCopula =
           SemanticParserImpl.CONDITION_COPULAS.has(prev) ||
+          SemanticParserImpl.CONDITION_COPULAS.has(translateConnective(language, prevValue)) ||
           (SemanticParserImpl.CONDITION_COPULAS_SURFACE.has(prevValue) &&
             SemanticParserImpl.CONDITION_PREDICATES.has(cur));
         // A condition operator (`match`/`contains`/`exists`/…) is part of the

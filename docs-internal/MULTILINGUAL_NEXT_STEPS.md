@@ -5264,6 +5264,21 @@ this signal was missing.
 > - **Other words inside a condition:** `empty` in `is not empty` (de `leer`, fr `vide`, …), and a
 >   role marker inside a phrase (de `in` for `is in`, pl `do` for `equal to`).
 > - **A custom `or` leg** throws in bn/ja/tr/zh and is dropped in it/ko/th.
+>
+> **A translated `not` reads back where it was split or cut (PR 40, 2026-09-26).** Two of PR 39's
+> filings. ja renders `not` as `ではない` and ar as `ليس`, and their tokenizers split the word (ja
+> `で は ない`, ar `ل يس`); each tokenizer now knows it. And `p is not empty` ended the condition at
+> the predicate wherever `not` is a plain word: the scan keeps a predicate after `is` or `not`, but
+> compared only normalized forms, so de `leer` (also the `empty` command) opened the then-branch
+> after `nicht` and the condition was `p is not` (bn/de/fr/pt/ru/tl/uk). The scan now reads the
+> word through the expression lexicon too, and ja `空` after `ではない` reads as `empty`, as it did
+> after the copula. Across the 46 conditions, wrong branches fall from 67 to 45 (negatives 57 →
+> 54); no corpus row moves. One negative row flips: ja `p is not q and q is 3`, whose positive twin
+> PR 40 fixes and whose `and` ja still cuts (filed above).
+>
+> Filed, not fixed: bn renders `if not p` as `যদি না p`, which its tokenizer reads as one word,
+> `unless` (the same meaning, but that parse gives no output on the direct path), and vi as `nếu
+> không p`, which it reads as `else`: the conditional is dropped and its body runs unconditionally.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

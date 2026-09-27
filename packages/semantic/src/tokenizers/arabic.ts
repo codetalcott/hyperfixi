@@ -109,6 +109,7 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   { native: 'نتيجة', normalized: 'result' }, // Alternative to النتيجة (the dict's word)
 
   // Values/Literals
+  { native: 'ليس', normalized: 'not' },
   { native: 'صحيح', normalized: 'true' },
   { native: 'خطأ', normalized: 'false' },
   { native: 'null', normalized: 'null' },

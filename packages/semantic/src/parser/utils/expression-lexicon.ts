@@ -720,7 +720,8 @@ interface AmbiguousSenseRule {
       (`#modal আছে` → `#modal exists`). */
   afterSubject?: string;
   /** Emitted when the PREVIOUS token is a keyword normalizing to `is`
-      (ja `である 空` → `is empty`). */
+      (ja `である 空` → `is empty`), or to `not` after one (ja `である ではない
+      空` → `is not empty`). */
   afterCopula?: string;
 }
 
@@ -794,7 +795,7 @@ function resolveAmbiguousSense(
   if (
     rule.afterCopula &&
     prev?.kind === 'keyword' &&
-    (prev.normalized ?? '').toLowerCase() === 'is'
+    ['is', 'not'].includes((prev.normalized ?? '').toLowerCase())
   ) {
     return rule.afterCopula;
   }
