@@ -759,6 +759,10 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   tr: { var: { afterSubject: 'exists' } },
 };
 
+/** Fetch's response types (core's `FetchResponseType`), which follow its `as`
+    as a type name follows a conversion's: th `"/x" เป็น text` is `as text`. */
+const RESPONSE_TYPE_NAMES = new Set(['text', 'json', 'html', 'response', 'blob', 'arraybuffer']);
+
 /** Predicate values a copula can precede (mirrors the parser's
     CONDITION_PREDICATES plus the boolean literals). */
 const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
@@ -794,7 +798,11 @@ function resolveAmbiguousSense(
   if (!rule) return undefined;
   // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
   // though `Number` could look identifier-bare; the sets are disjoint anyway.
-  if (rule.beforeTypeName && next?.kind === 'identifier' && CONVERSION_TYPE_NAMES.has(next.value)) {
+  if (
+    rule.beforeTypeName &&
+    next?.kind === 'identifier' &&
+    (CONVERSION_TYPE_NAMES.has(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
+  ) {
     return rule.beforeTypeName;
   }
   if (

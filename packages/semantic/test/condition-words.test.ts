@@ -103,3 +103,18 @@ describe('ja そして / ko 그리고 between two commands', () => {
     expect(render(parse(source, language)!, 'en')).toBe('on click toggle .a then add .b');
   });
 });
+
+// A bare conditional keeps the body after its condition. The command stage
+// returned the conditional alone, dropping its body, whenever the pattern took
+// the whole condition (bn `p যদি না তারপর .selected কে টগল করুন` read as
+// `unless p`); each read-back is compared with English's own render.
+describe.each([
+  ['unless p toggle .selected', ['bn', 'hi', 'ja', 'qu', 'tr']],
+  ['unless I match .disabled toggle .selected', ['bn', 'hi', 'ja', 'ko', 'qu']],
+])('bare %s', (source, languages) => {
+  const english = render(parse(source, 'en')!, 'en');
+  it.each(languages)('%s', language => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(english);
+  });
+});

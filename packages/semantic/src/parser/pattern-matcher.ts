@@ -2316,13 +2316,15 @@ export class PatternMatcher {
     if (this.tryMatchPossessiveExpression(tokens)) return true;
 
     // Single value token. Particles/conjunctions/punctuation are never
-    // operands (they belong to the surrounding pattern).
+    // operands (they belong to the surrounding pattern), and neither is a
+    // block's own word (sw `mwisho`, `end`, after `inafanana`, matches).
     if (
       (token.kind === 'literal' ||
         token.kind === 'identifier' ||
         token.kind === 'selector' ||
         token.kind === 'keyword') &&
       !PatternMatcher.RUN_OPERATORS.has(token.value) &&
+      !['end', 'then', 'else'].includes((token.normalized ?? '').toLowerCase()) &&
       token.value !== ')'
     ) {
       tokens.advance();
