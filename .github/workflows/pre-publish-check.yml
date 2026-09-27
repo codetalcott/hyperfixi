@@ -358,8 +358,14 @@ jobs:
           # without rendering — it tree-shakes, so only these two pay.
           # New numbers keep ~5% headroom, matching the intent of the Arc E
           # ceiling bump. Mirrored in ci.yml and pre-publish-check.yml.
-          MAX_BROWSER=355000      # 355 KB (hyperfixi.js actual ~330 KB gz with lexicons)
-          MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
+          # Raised again 355000 -> 373000 / 368000 -> 385000 on 2026-09-27
+          # (PR 56). A month of semantic growth had used the headroom up: CI
+          # measured hyperfixi.js at 354,932 B gz, 68 B under, and semantic's
+          # expression parser (`as`, `@attr of`) added 330 B (hx-v4 +310).
+          # Checked against duplication as above: the bundle's sourcemap
+          # carries semantic as ONE dist file. ~5% headroom again.
+          MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
+          MAX_HXV4=385000         # 385 KB (hyperfixi-hx-v4.js actual ~358 KB gz)
 
           failed=0
 
