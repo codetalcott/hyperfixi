@@ -6033,6 +6033,28 @@ this signal was missing.
 > and two `is not in` sources through all 23 languages (qu's `is not` is the filed `mana`
 > collision) and keeps `in` as the de and it `into` marker elsewhere; reverting the join's rule
 > fails 9 tests, the extent's boundary 6, and its continuation 2.
+>
+> **`my id` reads back as the renderer writes it (PR 70, 2026-09-27).** The `my id` family from
+> PR 67's list, two readings:
+>
+> - **bn and th** render `id` in their own word (bn `আইডি`, th `ไอดี`, from the lexicon's
+>   `attributes`), and the property table the value join reads back through
+>   (`PROPERTY_NAME_LEXICON`, generated from the i18n dictionaries by
+>   `packages/i18n/scripts/extract-property-lexicon.ts`) did not carry `id`: `put my id` read back
+>   `put my আইডি`. The generator extracts `id` now; bn and th are the only languages it adds. (The
+>   renderer's English fold of `<property> of <selector>` reads the same table, so `id of #b` now
+>   renders `#b's id`, the same program.)
+> - **pl, ru and uk** `set` runs its destination straight into its value (`ustaw do x mój id`, set x
+>   to my id), and those profiles also read a possessor AFTER the property (`textContent mój`). The
+>   post-nominal matcher took `x mój` as `my x` and left `id` the value. The renderer writes the
+>   possessor first in every language, so a possessor that owns the word after it is that word's;
+>   a hand-written `ustaw do textContent mój "x"` still reads `set my textContent to "x"`.
+>
+> **In the value matrix, 694 failing pairs fall to 588 (−15%)**: every `my id` and `me.id` cell in
+> bn and th (35 each) and pl, ru and uk (12 each); none newly fail. No stored corpus row moves.
+> `test/possessor-first.test.ts` round-trips six sources through all 23 languages and pins the
+> hand-written post-nominal forms and the bn and th words; reverting the matcher guard fails 9
+> tests, and dropping either lexicon entry 5.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
