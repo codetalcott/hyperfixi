@@ -5485,6 +5485,13 @@ this signal was missing.
 >   engines read it as null.
 > - The AOT's older binary `is a` case, a `typeof` test against the constructor, is false for every
 >   primitive. Neither parser builds that node now.
+>
+> **Core reads `X of Y` as property access (PR 50, 2026-09-27).** PR 38's filing that core binds `of`
+> as loosely as `is` was wider than filed: core's `of` took every operator after it in any value,
+> not just in a condition. It is fixed in core's parser. The entry is in `PARSER_NEXT_STEPS.md`
+> ("`X of Y` took every operator after it"), with what it found. Semantic drops the same values in
+> English and every translation (PR 43's possessive filing, widened), and the AOT cannot compile a
+> bare `X of Y`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
