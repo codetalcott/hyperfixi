@@ -614,4 +614,97 @@ describe('ExpressionParser', () => {
       });
     });
   });
+
+  // Conversions and an attribute's `of`, in the shapes and bindings core's
+  // parser builds. The parser stopped at `as` and at `@attr of`, so a value
+  // with either inside it was cut short: buildAST dropped the conversion, and
+  // the matcher could not read the value whole.
+  describe("conversions and an attribute's `of`", () => {
+    const n = { type: 'identifier', name: 'n' };
+    const Int = { type: 'identifier', name: 'Int' };
+
+    it('`n as Int`', () => {
+      const result = parseExpression('n as Int');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({ type: 'asExpression', expression: n, targetType: Int });
+    });
+
+    it('binds tighter than arithmetic: `n + 1 as Int` converts the `1`', () => {
+      expect(parseExpression('n + 1 as Int').node).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+        left: n,
+        right: { type: 'asExpression', expression: { type: 'literal', value: 1 }, targetType: Int },
+      });
+    });
+
+    it('binds looser than a prefix operator: `-n as Int` converts `-n`', () => {
+      expect(parseExpression('-n as Int').node).toMatchObject({
+        type: 'asExpression',
+        expression: { type: 'unaryExpression', operator: '-', operand: n },
+        targetType: Int,
+      });
+    });
+
+    it("converts a possessive before the arithmetic after it", () => {
+      expect(parseExpression("#a's textContent as Int + 1").node).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+        left: {
+          type: 'asExpression',
+          expression: { type: 'possessiveExpression' },
+          targetType: Int,
+        },
+        right: { type: 'literal', value: 1 },
+      });
+    });
+
+    it("`v of obj as Int` converts the target, as upstream and core read it", () => {
+      expect(parseExpression('v of obj as Int').node).toMatchObject({
+        type: 'propertyOfExpression',
+        property: { name: 'v' },
+        target: { type: 'asExpression', expression: { name: 'obj' }, targetType: Int },
+      });
+    });
+
+    it('`the v of obj as Int` converts the property, as core reads it', () => {
+      // A known difference: upstream converts the target here too
+      // (core/docs/UPSTREAM-KNOWN-DIFFS.md, THE_OF_TARGET_BP).
+      expect(parseExpression('the v of obj as Int').node).toMatchObject({
+        type: 'asExpression',
+        expression: { type: 'propertyOfExpression', target: { name: 'obj' } },
+        targetType: Int,
+      });
+    });
+
+    it('skips an article', () => {
+      expect(parseExpression('x as an Object').node).toMatchObject({
+        type: 'asExpression',
+        targetType: { name: 'Object' },
+      });
+    });
+
+    it('leaves an `as` with no type unread', () => {
+      const result = parseExpression('n as');
+      expect(result.consumed).toBe(1);
+    });
+
+    it("`@title of #a` reads the target's attribute", () => {
+      expect(parseExpression('@title of #a').node).toMatchObject({
+        type: 'binaryExpression',
+        operator: 'of',
+        left: { type: 'attributeAccess', attributeName: 'title' },
+        right: { type: 'selector', value: '#a' },
+      });
+    });
+
+    it('`@title of #a + "q"` reads the attribute before the arithmetic', () => {
+      expect(parseExpression('@title of #a + "q"').node).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+        left: { type: 'binaryExpression', operator: 'of' },
+        right: { type: 'literal', value: 'q' },
+      });
+    });
+  });
 });

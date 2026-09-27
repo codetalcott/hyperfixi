@@ -1285,18 +1285,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // rendering that back to English has to fold it into the clitic form the
     // reference is written in. Gated to a curated DOM-property word, so an
     // ordinary `of` phrase (`the first of .items`) is untouched.
+    // A conversion after the phrase binds differently to the two forms:
+    // `#a's textContent as Int` converts the text, `textContent of #a as Int`
+    // converts `#a` (upstream's reading, and core's). So a phrase before `as`
+    // keeps its binding: English leaves the `of` form as it is, and another
+    // language parenthesizes a property-first rendering.
+    const convertedAt = (text: string, end: number): boolean => /^\s+as\b/.test(text.slice(end));
     if (language === 'en') {
       return raw.replace(
         /\b(?:the\s+)?([A-Za-z][\w-]*)\s+of\s+([#.][\w-]+)/g,
-        (whole, property: string, owner: string) =>
-          EN_PROPERTY_WORDS.has(property.toLowerCase()) ? `${owner}'s ${property}` : whole
+        (whole, property: string, owner: string, offset: number, text: string) =>
+          EN_PROPERTY_WORDS.has(property.toLowerCase()) && !convertedAt(text, offset + whole.length)
+            ? `${owner}'s ${property}`
+            : whole
       );
     }
     if (!raw.includes("'s")) return raw;
     return raw.replace(
       /([#.][\w-]+)'s\s+([A-Za-z][\w-]*)/g,
-      (whole, owner: string, property: string) =>
-        this.renderPropertyPath(
+      (whole, owner: string, property: string, offset: number, text: string) => {
+        const rendered = this.renderPropertyPath(
           {
             type: 'property-path',
             object: createSelector(owner),
@@ -1304,7 +1312,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             access: 'possessive',
           } as PropertyPathValue,
           language
-        ) || whole
+        );
+        if (!rendered) return whole;
+        return convertedAt(text, offset + whole.length) && !rendered.startsWith(owner)
+          ? `(${rendered})`
+          : rendered;
+      }
     );
   }
 

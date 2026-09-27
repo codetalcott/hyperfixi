@@ -19,6 +19,7 @@ import type {
   BinaryExpressionNode,
   UnaryExpressionNode,
   TypeCheckExpressionNode,
+  AsExpressionNode,
   CallExpressionNode,
   ArrayLiteralNode,
   ObjectLiteralNode,
@@ -304,7 +305,7 @@ export class ExpressionParser {
   }
 
   private parseMultiplication(): ExpressionNode {
-    let left = this.parseUnary();
+    let left = this.parseConversion();
 
     while (
       this.peek().value === '*' ||
@@ -313,11 +314,41 @@ export class ExpressionParser {
       this.checkValue('mod')
     ) {
       const operator = this.advance().value.toLowerCase();
-      const right = this.parseUnary();
+      const right = this.parseConversion();
       left = this.createBinaryExpression(operator, left, right);
     }
 
     return left;
+  }
+
+  /**
+   * `value as Type`, bound as core and upstream bind it: tighter than
+   * arithmetic, looser than a prefix operator. `n + 1 as Int` converts the
+   * `1`, and `-n as Int` converts `-n`. The type is one word, after an
+   * optional article (`as an Object`). Without this the parser stopped at
+   * `as`, so a value with a conversion inside it (`#a's textContent as Int +
+   * 1`) was not read whole, and buildAST dropped the conversion.
+   */
+  private parseConversion(): ExpressionNode {
+    let expr = this.parseUnary();
+    while (this.checkValue('as') && this.conversionTypeAt(1) !== undefined) {
+      this.advance(); // as
+      expr = this.createAsExpression(expr, this.parseConversionType());
+    }
+    return expr;
+  }
+
+  /** The offset of the type word from `offset`, past an article; undefined if none. */
+  private conversionTypeAt(offset: number): number | undefined {
+    const article = this.peekAt(offset).value.toLowerCase();
+    const at = article === 'a' || article === 'an' ? offset + 1 : offset;
+    return this.peekAt(at).type === TokenType.IDENTIFIER ? at : undefined;
+  }
+
+  private parseConversionType(): Token {
+    const at = this.conversionTypeAt(0) ?? 0;
+    for (let i = 0; i < at; i++) this.advance(); // the article
+    return this.advance();
   }
 
   private parseUnary(): ExpressionNode {
@@ -426,7 +457,9 @@ export class ExpressionParser {
       this.peekAt(2).value.toLowerCase() === 'of'
     ) {
       this.advance(); // the
-      return this.parsePropertyOf(this.advance(), token);
+      // Above `as`: core converts the property (`the value of #inp as Int`),
+      // a known difference from upstream (core's THE_OF_TARGET_BP).
+      return this.parsePropertyOf(this.advance(), token, false);
     }
 
     // Literals
@@ -502,12 +535,20 @@ export class ExpressionParser {
     // core-parser shape; the runtime reads it via getAttribute, and set/toggle
     // route it to setAttribute).
     if (this.match(TokenType.ATTRIBUTE_REF)) {
-      return {
+      const attribute = {
         type: 'attributeAccess',
         attributeName: token.value.slice(1),
         start: token.start,
         end: token.end,
       } as AttributeAccessNode;
+      // `@title of #a`: the attribute of the target, in core's shape (a
+      // binary `of`). The parser stopped at `of`, so the value was cut to
+      // `@title`, which reads `me`'s.
+      if (this.checkValue('of')) {
+        this.advance(); // of
+        return this.createBinaryExpression('of', attribute, this.parseConversion());
+      }
+      return attribute;
     }
 
     if (this.match(TokenType.QUERY_SELECTOR)) {
@@ -587,10 +628,19 @@ export class ExpressionParser {
     throw new Error(`Unexpected token: ${token.value}`);
   }
 
-  /** `<property> of <target>`, the property token consumed and `of` next. */
-  private parsePropertyOf(property: Token, first: Token): PropertyOfExpressionNode {
+  /**
+   * `<property> of <target>`, the property token consumed and `of` next. The
+   * target is a unary operand with its chain and, unless `the` began the
+   * phrase, a conversion: upstream reads `v of obj as Int` as `v of (obj as
+   * Int)`, and so does core.
+   */
+  private parsePropertyOf(
+    property: Token,
+    first: Token,
+    targetTakesAs = true
+  ): PropertyOfExpressionNode {
     this.advance(); // of
-    const target = this.parsePostfix();
+    const target = targetTakesAs ? this.parseConversion() : this.parseUnary();
     return {
       type: 'propertyOfExpression',
       property: this.createIdentifier(property.value, property),
@@ -801,6 +851,16 @@ export class ExpressionParser {
       right,
       start: left.start,
       end: right.end,
+    };
+  }
+
+  private createAsExpression(expression: ExpressionNode, type: Token): AsExpressionNode {
+    return {
+      type: 'asExpression',
+      expression,
+      targetType: this.createIdentifier(type.value, type),
+      start: expression.start,
+      end: type.end,
     };
   }
 

@@ -167,10 +167,11 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    // Folded to the canonical clitic form: `the value of #price` → `#price's
-    // value`. Same change as watched-expression-join; the article goes with it,
-    // since `the #price's value` is not English.
-    expect(es).toContain("#price's value as Number");
+    // Not folded to the clitic form (`#price's value`), as an `of` phrase
+    // elsewhere is: before a conversion the two bind differently (upstream
+    // reads `the value of #price as Number` as the value of `#price as
+    // Number`), so the English keeps the reference's own form.
+    expect(es).toContain('the value of #price as Number');
     expect(es).toContain('my value as Number');
   });
 
@@ -188,7 +189,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    expect(zh).toContain("#price's value as Number");
+    expect(zh).toContain('the value of #price as Number');
     expect(zh).toContain('my value as Number');
     expect(zh).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });
@@ -201,7 +202,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    expect(hi).toContain("#price's value as Number");
+    expect(hi).toContain('the value of #price as Number');
     expect(hi).toContain('my value as Number');
     expect(hi).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });

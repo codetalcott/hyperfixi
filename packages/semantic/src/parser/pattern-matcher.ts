@@ -1396,7 +1396,7 @@ export class PatternMatcher {
         captured.set(patternToken.role, hyphenValue);
         return true;
       }
-      const runValue = this.isCounterTarget(patternToken)
+      const runValue = this.isWrittenTarget(patternToken)
         ? null
         : this.tryMatchOperatorRunExpression(tokens);
       if (runValue) {
@@ -1527,7 +1527,7 @@ export class PatternMatcher {
     const skipBareCall =
       (patternToken.role === 'event' && this.currentPatternCommand === 'on') ||
       PatternMatcher.DECLARATION_COMMANDS.has(this.currentPatternCommand ?? '') ||
-      this.isCounterTarget(patternToken);
+      this.isWrittenTarget(patternToken);
     const bareCallValue = skipBareCall ? null : this.tryMatchBareCallExpression(tokens);
     if (bareCallValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
@@ -4032,20 +4032,22 @@ export class PatternMatcher {
    */
   private static readonly DECLARATION_COMMANDS = new Set(['behavior', 'def', 'install']);
 
-  /** Commands that write a number back to their patient. */
-  private static readonly COUNTER_COMMANDS = new Set(['increment', 'decrement']);
+  /** The role each command writes: a counter's patient, `set`'s destination. */
+  private static readonly WRITTEN_ROLE: Readonly<Record<string, string>> = {
+    increment: 'patient',
+    decrement: 'patient',
+    set: 'destination',
+  };
 
   /**
-   * The value an increment or decrement writes. It is never an operator run
-   * or a call: neither can be written. Where the amount follows it with no
-   * marker (`tambah_satu i - 2`, `增加 把 i (n + 1)`), reading one took the
-   * amount into the target, which upstream then rejects as unwritable.
+   * The value a command writes. It is never an operator run or a call:
+   * neither can be written. Where a value follows it with no marker
+   * (`tambah_satu i - 2`, `增加 把 i (n + 1)`, pl `ustaw do x (n + 1)`),
+   * reading one took the value into the target, which upstream then rejects
+   * as unwritable.
    */
-  private isCounterTarget(patternToken: PatternToken & { type: 'role' }): boolean {
-    return (
-      patternToken.role === 'patient' &&
-      PatternMatcher.COUNTER_COMMANDS.has(this.currentRoleCommand ?? '')
-    );
+  private isWrittenTarget(patternToken: PatternToken & { type: 'role' }): boolean {
+    return PatternMatcher.WRITTEN_ROLE[this.currentRoleCommand ?? ''] === patternToken.role;
   }
 
   /**
