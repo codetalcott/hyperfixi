@@ -721,7 +721,8 @@ interface AmbiguousSenseRule {
   afterSubject?: string;
   /** Emitted when the previous word, as this join read it, is `is` or `not`
       (ja `である 空` → `is empty`, `ではない 空` → `not empty`; hi `है नहीं`
-      → `is not`, where `है` read as `is` by its own rule). Checked before
+      → `is not`, where `है` read as `is` by its own rule), or the `does`/`do`
+      of `does not match` (hi `does नहीं match`). Checked before
       `beforeBareIdentifier`, which gives hi `नहीं` its other sense, `no`. */
   afterCopula?: string;
   /** Emitted when the PREVIOUS token is an operand (a word, selector, literal
@@ -808,7 +809,7 @@ function resolveAmbiguousSense(
   if (
     rule.afterCopula &&
     prevText !== undefined &&
-    ['is', 'not'].includes(prevText.toLowerCase())
+    ['is', 'not', 'does', 'do'].includes(prevText.toLowerCase())
   ) {
     return rule.afterCopula;
   }
@@ -837,6 +838,27 @@ function resolveAmbiguousSense(
     return rule.afterOperand;
   }
   return undefined;
+}
+
+/**
+ * The English word the expression join writes for a token no anchor claims:
+ * its sense when the word has two (ar `هو` between operands is `is`), else
+ * the connective it spells (de `nicht`), else a keyword's normalized form or
+ * the surface. Exported so a capture that must find where an expression ends
+ * (the pattern matcher's operator run) reads each word as the join will.
+ */
+export function expressionWordOf(
+  languageCode: string,
+  token: LanguageToken,
+  prev: LanguageToken | undefined,
+  next: LanguageToken | undefined,
+  prevText: string | undefined
+): string {
+  const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText);
+  if (sense !== undefined) return sense;
+  const connective = translateConnective(languageCode, token.value);
+  if (connective !== token.value) return connective;
+  return token.kind === 'keyword' ? (token.normalized ?? token.value) : token.value;
 }
 
 /**
@@ -903,9 +925,6 @@ export function joinExpressionTokens(
     out += (glue ? '' : ' ') + text;
     previous = token;
   };
-
-  const surfaceOf = (token: LanguageToken): string =>
-    token.kind === 'keyword' ? (token.normalized ?? token.value) : token.value;
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -1106,19 +1125,7 @@ export function joinExpressionTokens(
     // (these surfaces are deliberately NOT connectives; the sense table is
     // authoritative for them). See AMBIGUOUS_SENSES above for why this seam is
     // the one safe place to translate these words.
-    const sense = resolveAmbiguousSense(languageCode, token, tokens[i - 1], next, previousText);
-    if (sense !== undefined) {
-      append(sense, token);
-      continue;
-    }
-
-    const connective = translateConnective(languageCode, token.value);
-    if (connective !== token.value) {
-      append(connective, token);
-      continue;
-    }
-
-    append(surfaceOf(token), token);
+    append(expressionWordOf(languageCode, token, tokens[i - 1], next, previousText), token);
   }
 
   return out.trim();

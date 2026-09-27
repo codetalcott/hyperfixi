@@ -105,3 +105,19 @@ describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
     expect(document.getElementById('out')!.textContent).toBe(expected);
   });
 });
+
+// Core's comparison phrases reach the AOT too. Only `is` and `is not` are here:
+// the AOT's own code for the rest (`is greater than`, `matches`, `exists`, …)
+// fails in English too (filed). qu is skipped where its `not` is `mana`, also
+// its `false`.
+const PHRASES: Array<[string, string, string[]]> = [
+  ['n is 3', 'true', []],
+  ['n is not 3', 'false', ['qu']],
+];
+
+describe.each(PHRASES)('put %s', (value, expected, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
+    click(`on click set n to 3 then put ${value} into #out`, language);
+    expect(document.getElementById('out')!.textContent).toBe(expected);
+  });
+});

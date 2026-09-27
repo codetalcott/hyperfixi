@@ -60,7 +60,7 @@ const POSITIONAL_CALL_KEYWORDS = new Set(['next', 'previous', 'closest', 'first'
  * and `p is less than q` compared p with a variable named `less` — in every
  * translation, since buildAST parses a translated condition here.
  */
-const BINARY_PHRASES = [
+export const BINARY_PHRASES = [
   'is not really equal to',
   'is really equal to',
   'is greater than or equal to',
@@ -102,8 +102,8 @@ const BINARY_PHRASES = [
   'have',
   'in',
 ];
-const POSTFIX_PHRASES = ['is not empty', 'is empty', 'does not exist'];
-const TYPE_CHECK_PHRASES = ['is not an', 'is not a', 'is an', 'is a'];
+export const POSTFIX_PHRASES = ['is not empty', 'is empty', 'does not exist'];
+export const TYPE_CHECK_PHRASES = ['is not an', 'is not a', 'is an', 'is a'];
 
 /**
  * Every phrase as its words, in match order: each is listed before any phrase

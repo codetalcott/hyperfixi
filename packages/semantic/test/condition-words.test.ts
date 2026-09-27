@@ -53,6 +53,8 @@ const GROUPS: Array<[string, string[], string[]]> = [
   // ja `そして` and ko `그리고`, their word for `and`, were also then-words, so a
   // handler body split the condition at them.
   ['and, also a then-word', ['p is not q and q is 3'], ['ja', 'ko']],
+  // hi `नहीं` after the `does` of `does not match` is `not`, as after the copula.
+  ['does not, in hi', ['#d1 does not match .x', '#zz does not exist'], ['hi']],
   // Where the possessive marker sits between owner and property (ja
   // `#d1のtextContent`), the marker stayed in the condition.
   [
