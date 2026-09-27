@@ -36,6 +36,7 @@ import {
   matchPositionalRun,
   matchQueryScope,
   translatePropertyName,
+  translateConnective,
   isKnownPropertySurface,
   CONVERSION_TYPE_NAMES,
 } from './utils/expression-lexicon';
@@ -1819,8 +1820,9 @@ export class PatternMatcher {
    * The comparisons and `mod` join a run as well: without them `set x to n > 2`
    * captured only `n`, and every translation lost the comparison (the English
    * reference truncated the same way, so no fidelity signal saw it). `%` is
-   * core's alone (upstream rejects it) and renders as written. The word
-   * operators (`and`, `or`, `is`, …) do not join a run.
+   * core's alone (upstream rejects it) and renders as written. The logical
+   * words join through {@link logicalConnectiveOf} (`and`, `or`, and a leading
+   * `not`); the `is …` phrases do not join a run.
    */
   private static readonly RUN_OPERATORS = new Set([
     '+',
@@ -1838,6 +1840,17 @@ export class PatternMatcher {
     '===',
     '!==',
   ]);
+
+  /**
+   * The logical connective a token spells, if any: the English word, or the
+   * language's own (de `oder`), read through the expression lexicon's
+   * connectives, which return an unlisted surface as it is.
+   */
+  private logicalConnectiveOf(token: LanguageToken): 'and' | 'or' | 'not' | undefined {
+    const language = this.currentProfile?.code ?? 'en';
+    const word = translateConnective(language, token.value).toLowerCase();
+    return word === 'and' || word === 'or' || word === 'not' ? word : undefined;
+  }
 
   /** The token after the next one is a run operator. */
   private runOperatorFollows(tokens: TokenStream): boolean {
@@ -1972,6 +1985,8 @@ export class PatternMatcher {
     const mark = tokens.mark();
     const startIdx = tokens.position();
 
+    const head = tokens.peek();
+    const negated = !!head && this.logicalConnectiveOf(head) === 'not';
     if (!this.tryConsumeRunOperand(tokens)) {
       tokens.reset(mark);
       return null;
@@ -1980,10 +1995,13 @@ export class PatternMatcher {
     let operands = 1;
     for (;;) {
       const op = tokens.peek();
-      if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
+      if (!op) break;
+      const logical = this.logicalConnectiveOf(op);
+      const joins = logical === 'and' || logical === 'or';
+      if (!joins && !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
       tokens.advance();
-      if (!this.tryConsumeRunOperand(tokens, true)) {
+      if (!this.tryConsumeRunOperand(tokens, true, joins)) {
         // Dangling operator — leave it (and whatever follows) unconsumed.
         tokens.reset(beforeOp);
         break;
@@ -1991,7 +2009,7 @@ export class PatternMatcher {
       operands++;
     }
 
-    if (operands < 2) {
+    if (operands < 2 && !negated) {
       tokens.reset(mark);
       return null;
     }
@@ -2173,9 +2191,31 @@ export class PatternMatcher {
    * Consume one operand of an operator run. Returns false (stream untouched)
    * if the upcoming tokens do not form an operand.
    */
-  private tryConsumeRunOperand(tokens: TokenStream, afterOperator = false): boolean {
+  private tryConsumeRunOperand(
+    tokens: TokenStream,
+    afterOperator = false,
+    afterConnective = false
+  ): boolean {
     const token = tokens.peek();
     if (!token) return false;
+
+    // `not <operand>`: the prefix belongs to its operand (`p and not q`).
+    if (this.logicalConnectiveOf(token) === 'not') {
+      const mark = tokens.mark();
+      tokens.advance();
+      if (this.tryConsumeRunOperand(tokens, true, afterConnective)) return true;
+      tokens.reset(mark);
+      return false;
+    }
+
+    // After `and`/`or`, a command verb starts the next command (semantic reads
+    // `put 1 into #a and put 2 into #c` as two commands), never an operand.
+    if (
+      afterConnective &&
+      COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
+    ) {
+      return false;
+    }
 
     // A particle is an operand where no marker can stand: directly after an
     // operator, or directly before one (`a + b`). es/it/pt `a`, the preposition

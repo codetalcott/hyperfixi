@@ -1,6 +1,6 @@
 /**
- * A value with a comparison or `mod` compiles whole, in English and in every
- * translation.
+ * A value with a comparison, `mod`, `and`, `or` or `not` compiles whole, in
+ * English and in every translation.
  *
  * A translation reaches the AOT through semantic's AST, whose operator-run
  * capture joined only `+ - * /` (`put n > 2 into #out` kept `n`), and whose
@@ -87,6 +87,21 @@ const CASES: Array<[string, string]> = [
 describe.each(LANGUAGES)('%s', language => {
   it.each(CASES)('put %s', (value, expected) => {
     click(`on click set n to 3 then put ${value} into #out`, language);
+    expect(document.getElementById('out')!.textContent).toBe(expected);
+  });
+});
+
+// `and`, `or` and `not` (p = true, q = false), skipping the languages whose
+// word for each is also another word (see semantic's value-operators test).
+const CONNECTIVES: Array<[string, string, string[]]> = [
+  ['p or q', 'true', []],
+  ['q and p', 'false', ['ja', 'qu', 'sw']],
+  ['not p', 'false', ['hi', 'qu']],
+];
+
+describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
+  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
+    click(`on click set p to true then set q to false then put ${value} into #out`, language);
     expect(document.getElementById('out')!.textContent).toBe(expected);
   });
 });
