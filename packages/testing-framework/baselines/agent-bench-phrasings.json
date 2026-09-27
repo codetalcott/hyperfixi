@@ -3,8 +3,8 @@
   "totals": {
     "phrasings": 37,
     "parse": 36,
-    "behaveCorrectly": 19,
-    "warnedWrong": 15,
+    "behaveCorrectly": 20,
+    "warnedWrong": 14,
     "silentBand": 2,
     "silentNoop": 1
   },
@@ -132,7 +132,7 @@
     {
       "taskId": "set-attribute",
       "code": "on click set @aria-expanded of #panel to \"true\"",
-      "band": "warned-wrong"
+      "band": "correct"
     },
     {
       "taskId": "set-attribute",
