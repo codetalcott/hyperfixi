@@ -5351,7 +5351,8 @@ this signal was missing.
 > English or the language's own word (de `oder`, through the expression lexicon's connectives), and a
 > leading `not` makes a run of one operand. After `and` or `or` a command verb is refused, so `set x
 > to true and put 2 into #c` still reads as two commands, as semantic read it before (both engines
-> run neither). Runs of 10 logical values × 24 languages, each binary one in both operand orders,
+> run neither). In a wait they do not join at all: a wait's `or` lists its events (`wait for
+> pointermove or pointerup`). Runs of 10 logical values × 24 languages, each binary one in both operand orders,
 > fall from 240 wrong to 16. The 16 are words that are also other words: ja `そして` (`and`) is also
 > a then-word, so a handler body splits there; qu writes `and` as `chaymanta` (its `then`) and sw as
 > `na` (its `with`); and `not` is hi `नहीं` (also `no`) and qu `mana` (also `false`). No corpus row
