@@ -72,6 +72,30 @@ export function convertToNumber(value: unknown): number {
 }
 
 /**
+ * An `increment`/`decrement` amount, read as upstream reads it: through
+ * `parseFloat`. Text reads its leading number (`"2abc"` is 2, `" 3 "` is 3),
+ * an array its first item's (`[1, 2]` is 1), and a boolean, an element, an
+ * object and null read nothing (NaN).
+ */
+export function counterAmount(value: unknown): number {
+  return typeof value === 'number' ? value : parseFloat(String(value));
+}
+
+/**
+ * A counter's current value, read as upstream reads it: a falsy one (`""`,
+ * `0`, null, unset) counts from 0, and any other is read as an amount is.
+ * Except an element, which counts its text (`value`, else `textContent`)
+ * where upstream reads NaN: core's `increment #count`.
+ */
+export function counterValue(value: unknown): number {
+  if (isHTMLElement(value)) {
+    const element = value as HTMLElement & { value?: unknown };
+    return counterValue(element.value || element.textContent);
+  }
+  return value ? counterAmount(value) : 0;
+}
+
+/**
  * Get variable value from execution context
  *
  * Search order (unless preferredScope specified):
@@ -326,16 +350,13 @@ export function getCurrentNumericValue(
         property.startsWith('data-') ||
         ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
       ) {
-        const value = element.getAttribute(property);
-        return convertToNumber(value);
+        return counterValue(element.getAttribute(property));
       } else {
-        const value = (element as any)[property];
-        return convertToNumber(value);
+        return counterValue((element as any)[property]);
       }
     } else {
       // Use element's text content or value
-      const value = (element as any).value || element.textContent;
-      return convertToNumber(value);
+      return counterValue(element);
     }
   }
 
@@ -343,11 +364,10 @@ export function getCurrentNumericValue(
   if (typeof target === 'string') {
     // Handle scoped variables
     if (scope === 'element') {
-      return convertToNumber(getVariableValue(target, context, 'element'));
+      return counterValue(getVariableValue(target, context, 'element'));
     }
     if (scope === 'global') {
-      const value = getVariableValue(target, context, 'global');
-      return convertToNumber(value);
+      return counterValue(getVariableValue(target, context, 'global'));
     }
 
     // Handle element property references (e.g., "me.value", "element.scrollTop")
@@ -365,11 +385,10 @@ export function getCurrentNumericValue(
     }
 
     // Get variable value
-    const value = getVariableValue(target, context);
-    return convertToNumber(value);
+    return counterValue(getVariableValue(target, context));
   }
 
-  return convertToNumber(target);
+  return counterValue(target);
 }
 
 /**

@@ -19,7 +19,7 @@ import {
 export { setGlobal };
 import { getElementVar, setElementVar } from '../core/context';
 import { beepValues } from '../utils/beep';
-import { convertToNumber } from '../commands/helpers/variable-access';
+import { counterAmount, counterValue } from '../commands/helpers/variable-access';
 import { resolveTargetElements } from '../commands/helpers/target-elements';
 
 // Static imports limited to plain utilities + lazy-evaluating collection helpers,
@@ -977,43 +977,37 @@ async function evaluateBinaryExpression(
   // Dispatch the operator to the appropriate registry.
   switch (operator) {
     case '+': {
-      // Numeric-coerced `+` (flagged on binaries synthesized by the
-      // increment/decrement → `set X to (X ± n)` rewrite). Attribute reads
-      // (`@data-n`) return strings, so a plain `+` would concatenate
-      // ("1" + 1 → "11"). Coerce only STRING operands so `increment @data-n`
-      // counts numerically — non-strings are left to the `addition` evaluator
-      // below, which already handles them (element → numeric textContent for
-      // `increment #count`, undefined → 0 for an unset `:count`).
-      let addLeft = left;
-      let addRight = right;
+      // Numeric-coerced `+`, flagged on binaries synthesized by the
+      // increment/decrement → `set X to (X ± n)` rewrite, reads its operands
+      // as upstream's increment does (counterValue, counterAmount): the
+      // amount through parseFloat (`by true`, `by #a` and `by null` are NaN,
+      // `by [1, 2]` is 1), the current value too unless it is falsy, which
+      // counts from 0 (`increment @data-n` counts an attribute's text, and an
+      // element counts its own). Only a missing amount is 1, and the rewrite
+      // writes that one.
       if ((node as { coerceNumeric?: boolean }).coerceNumeric) {
-        // An amount that is null or unset is NaN, as upstream's parseFloat
-        // reads it (`increment i by null`); only a missing amount is 1.
-        if (addRight == null) return NaN;
-        if (typeof addLeft === 'string') addLeft = convertToNumber(addLeft);
-        if (typeof addRight === 'string') addRight = convertToNumber(addRight);
+        return counterValue(left) + counterAmount(right);
       }
       // JS-native: `+` concatenates if either operand is a string.
-      if (typeof addLeft === 'string' || typeof addRight === 'string') {
-        return String(addLeft ?? '') + String(addRight ?? '');
+      if (typeof left === 'string' || typeof right === 'string') {
+        return String(left ?? '') + String(right ?? '');
       }
       // Upstream `_hyperscript` array semantics: when the left operand is an
       // array, `+` concatenates rather than coerces. `[1,2] + [3,4]` →
       // [1,2,3,4]; `[1,2] + 3` → [1,2,3]. Always returns a fresh array so the
       // original is never mutated.
-      if (Array.isArray(addLeft)) {
-        return Array.isArray(addRight) ? [...addLeft, ...addRight] : [...addLeft, addRight];
+      if (Array.isArray(left)) {
+        return Array.isArray(right) ? [...left, ...right] : [...left, right];
       }
       return unwrapTypedResult(
-        await getExpr(context, 'addition').evaluate(context as any, {
-          left: addLeft,
-          right: addRight,
-        })
+        await getExpr(context, 'addition').evaluate(context as any, { left, right })
       );
     }
     case '-':
-      // The decrement rewrite's amount, as for `+` above.
-      if ((node as { coerceNumeric?: boolean }).coerceNumeric && right == null) return NaN;
+      // The decrement rewrite's operands, as for `+` above.
+      if ((node as { coerceNumeric?: boolean }).coerceNumeric) {
+        return counterValue(left) - counterAmount(right);
+      }
       return unwrapTypedResult(
         await getExpr(context, 'subtraction').evaluate(context as any, { left, right })
       );

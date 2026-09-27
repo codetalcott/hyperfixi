@@ -9,7 +9,7 @@
  * an empty array, an increment with no amount.
  */
 import { describe, it, expect } from 'vitest';
-import { buildAST, parseSemantic } from '@lokascript/semantic';
+import { buildAST, parseSemantic, render } from '@lokascript/semantic';
 import { hyperscript } from '../api/hyperscript-api';
 
 const FIXTURE =
@@ -148,5 +148,78 @@ describe('the direct path reads an increment amount as upstream does', () => {
     ['an unset variable', { type: 'identifier', name: 'unsetAmount' }, 'NaN'],
   ])('by %s', async (_label, by, expected) => {
     expect(await incrementBy(by)).toBe(expected);
+  });
+});
+
+// Upstream's increment reads its amount through parseFloat, and its counter
+// the same way unless the counter is falsy, which counts from 0. Core's
+// English rewrite (`set i to i + amount`) added 1 for `true` and 6 for `#a`
+// (its text), threw on text, arrays and objects, and read `""` as NaN; the
+// direct path left the default 1 for anything but a number or text. Each row
+// is upstream's result, on both paths.
+const COUNTERS: Array<[string, string]> = [
+  ['set i to 1 then increment i by true', 'NaN'],
+  ['set i to 1 then increment i by false', 'NaN'],
+  ['set i to 1 then increment i by #a', 'NaN'],
+  ['set i to 1 then increment i by "q"', 'NaN'],
+  ['set i to 1 then increment i by ""', 'NaN'],
+  ['set i to 1 then increment i by [1, 2]', '2'],
+  ['set i to 1 then increment i by arr', '2'],
+  ['set i to 1 then increment i by "2abc"', '3'],
+  ['set i to 1 then increment i by " 3 "', '4'],
+  ['set i to 10 then decrement i by true', 'NaN'],
+  ['set i to 10 then decrement i by #a', 'NaN'],
+  ['set i to 10 then decrement i by ""', 'NaN'],
+  ['set i to 10 then decrement i by [1, 2]', '9'],
+  ['set i to "" then increment i', '1'],
+  ['set i to "" then decrement i', '-1'],
+  ['set i to false then increment i', '1'],
+  ['set i to nothing then increment i', '1'],
+  ['set i to "abc" then increment i', 'NaN'],
+  ['set i to true then increment i', 'NaN'],
+  ['set i to true then decrement i', 'NaN'],
+  ['set i to [1, 2] then increment i', '2'],
+  ['set i to [1, 2] then decrement i', '0'],
+  ['set i to [] then increment i', 'NaN'],
+  ['set i to "5px" then increment i', '6'],
+];
+
+// Semantic reads an object literal as text on the direct path (filed), so the
+// object rows run on core's English path alone.
+const OBJECT_COUNTERS: Array<[string, string]> = [
+  ['set i to 1 then increment i by {}', 'NaN'],
+  ['set i to 1 then increment i by obj', 'NaN'],
+  ['set i to {} then increment i', 'NaN'],
+];
+
+describe("a counter's amount and value read as upstream reads them", () => {
+  /** Compile through semantic and buildAST, the path every translation takes. */
+  async function direct(body: string, language = 'en'): Promise<string> {
+    const english = `on click ${SETUP} ${body}`;
+    const code = language === 'en' ? english : render(parseSemantic(english, 'en').node!, language);
+    const { ast } = buildAST(parseSemantic(code, language).node!);
+    document.body.innerHTML = FIXTURE;
+    const button = document.getElementById('b') as HTMLElement;
+    await hyperscript.execute(
+      ast as Parameters<typeof hyperscript.execute>[0],
+      hyperscript.createContext(button)
+    );
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 30));
+    return document.getElementById('out')!.innerHTML;
+  }
+
+  it.each([...COUNTERS, ...OBJECT_COUNTERS])('English: %s', async (body, expected) => {
+    expect(await click(`${body} then put i into #out`)).toBe(expected);
+  });
+
+  it.each(COUNTERS)('direct path: %s', async (body, expected) => {
+    expect(await direct(`${body} then put i into #out`)).toBe(expected);
+  });
+
+  it.each(['es', 'ja', 'ar'])('%s', async language => {
+    for (const [body, expected] of COUNTERS) {
+      expect(await direct(`${body} then put i into #out`, language), body).toBe(expected);
+    }
   });
 });
