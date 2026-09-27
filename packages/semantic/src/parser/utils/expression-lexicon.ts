@@ -880,6 +880,37 @@ export function expressionWordOf(
 }
 
 /**
+ * The index of the selector that ends a `<property> <of-marker>` run starting
+ * at `start`, or undefined when none starts there. One link takes any bare
+ * word (`value de #price`). A chain (`length de textContent de #a`) takes
+ * property words only: tr's genitive `in` is also English `in`, and `2 dir in
+ * textContent of .w` (`2 is in …`) is no chain, since `dir` is a verb.
+ */
+function ofChainEnd(
+  tokens: readonly LanguageToken[],
+  start: number,
+  profile: LanguageProfile | undefined,
+  languageCode: string
+): number | undefined {
+  const first = tokens[start];
+  const marker = tokens[start + 1];
+  if (!first || !marker || !isBareWordHead(first) || !isOfPossessiveMarker(profile, marker)) {
+    return undefined;
+  }
+  if (tokens[start + 2]?.kind === 'selector') return start + 2;
+  let k = start;
+  while (
+    tokens[k] !== undefined &&
+    tokens[k + 1] !== undefined &&
+    isOfPossessiveMarker(profile, tokens[k + 1]!) &&
+    isPropertyHeadCandidate(tokens[k]!, languageCode)
+  ) {
+    k += 2;
+  }
+  return k > start + 2 && tokens[k]?.kind === 'selector' ? k : undefined;
+}
+
+/**
  * Join a token slice into the English expression text stored on an `expression`
  * value — the shared seam for every raw-expression capture.
  *
@@ -1002,6 +1033,19 @@ export function joinExpressionTokens(
       i += 2;
       continue;
     }
+    // `<property> of <owner>` with an owner the renderer leaves in English
+    // (`length of arr`, a variable owner, not a selector): the property word
+    // localizes (ms `panjang of arr`) and nothing read it back, so the value
+    // kept `panjang`, or in bn and th lost the whole value to the ASCII guard.
+    // Anchored on English `of`, and read only when the lexicon names the word.
+    if (
+      next?.value.toLowerCase() === 'of' &&
+      translatePropertyName(languageCode, token.value) !== token.value &&
+      isPropertyHeadCandidate(token, languageCode)
+    ) {
+      append(translatePropertyName(languageCode, token.value), token);
+      continue;
+    }
     if (reference !== undefined && next) {
       // A possessor may be separated from its property by a CONNECTOR: id
       // `saya punya nilai` = "I have value" = "my value" (`punya` = "have/own").
@@ -1073,19 +1117,19 @@ export function joinExpressionTokens(
 
     // `<property> <of-marker> <selector>` → `value of #price`. Requires the
     // selector to follow, so a real `from`/source clause (which shares the `de`
-    // surface in es) is never rewritten.
+    // surface in es) is never rewritten. A chain reads the same way, each link
+    // the next one's owner, as long as it ends in the selector: es `length de
+    // textContent de #a` → `length of textContent of #a` (the renderer's form
+    // of `#a's textContent's length`), where only the last link used to move.
     const owner = tokens[i + 2];
-    if (
-      next &&
-      owner &&
-      owner.kind === 'selector' &&
-      isOfPossessiveMarker(profile, next) &&
-      isBareWordHead(token)
-    ) {
-      append(translatePropertyName(languageCode, token.value), token);
-      append('of', next);
-      append(owner.value, owner);
-      i += 2;
+    const chainEnd = ofChainEnd(tokens, i, profile, languageCode);
+    if (chainEnd !== undefined) {
+      for (let k = i; k < chainEnd; k += 2) {
+        append(translatePropertyName(languageCode, tokens[k]!.value), tokens[k]!);
+        append('of', tokens[k + 1]!);
+      }
+      append(tokens[chainEnd]!.value, tokens[chainEnd]!);
+      i = chainEnd;
       continue;
     }
 
