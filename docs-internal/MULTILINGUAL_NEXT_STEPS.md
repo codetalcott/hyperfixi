@@ -5579,8 +5579,64 @@ this signal was missing.
 > The core-English cells are the `X of Y` entry's filings in `PARSER_NEXT_STEPS.md`, now counted
 > (see the entry after it). Regenerate after a change with `npx tsx
 > tools/regen-value-matrix-baseline.ts` (shrink-only; `--allow-new` to accept a new failure, with a
-> reason in the PR). A full run takes about two minutes, and the gate about 40 seconds in five
-> parallel shards.
+> reason in the PR). A full run takes about two minutes. The gate's five shards take about 40
+> seconds locally and about two and a half minutes on CI's four-core runner.
+>
+> **The expression parser says where a value ends (PR 53, 2026-09-27).** The design spike PR 52's
+> queue asked for. A role capture takes one known shape of value (a token, a possessive pair, a
+> property path, an operator run over known operands), so a value longer than the shape it
+> recognized stopped short: `put obj's v into #out` parsed as a bare `on click`, `set x to length of
+> arr` kept `length`, and every translation inherited the loss. After a capture, while tokens remain
+> before the value's boundary, the pattern matcher now takes the longest run semantic's expression
+> parser reads whole (`absorbExpressionTail`; its pure half is `parser/utils/value-extent.ts`).
+>
+> The boundary took the work. A first cut fixed as much but moved 16 corpus rows, every one a
+> regression: a pattern variant or SOV clause split that used to fail, so the right one won, now
+> succeeded by swallowing a word. A value now stops at a marker the pattern still owes, at a marker
+> of any role of the command whichever variant is matching (uk `з` is both swap's `with` and `of`),
+> at fetch's responseType in its English sense (es `como json`), at a `.class` across a space after
+> an operand (`.active .active`), and at any keyword that is not expression vocabulary (an event
+> name, a command verb); and the run must read as one expression, with no unclosed quote (`'s v
+> "Y"`, a split taken after an owner) and no word the English parser cannot read (bn `আছে`).
+> With them no corpus row moves and semantic's 17,569 existing tests pass.
+>
+> Each guard was then dropped and re-measured on the corpus probe, the value matrix and semantic's
+> suite. Six are caught by semantic's tests, new or old; three only by the matrix (the command's
+> markers, whose loss regresses 9 passing pairs; the unclosed quote, 157; a language's `of` marker
+> as part of a value, 66 fixes lost); and three are redundant today and kept as defense (a slot
+> must be bounded by a marker, a trailing `as` must name a type, the clause's end). Four were dropped: refusing identifiers outside ASCII (the join translates bn
+> `দৈর্ঘ্য` to `length`), stopping at every word that names a command, and refusing a value that
+> begins at an operator word or a possessive marker. Together they cost 437 fixed pairs and
+> protected nothing; the keyword test that stayed is what two suite tests needed (`set x to true
+> and put 2 …`, tl `wait from document pointermove o pointerup`).
+>
+> **In the value matrix, 18,509 failing pairs fall to 10,366 (−44%).** 8,209 pairs pass now, and 66
+> newly fail, accepted with the reason:
+>
+> - 60 are `repeat while i < v of obj as Int` and its two siblings, on the direct path. Before, the
+>   value was dropped and read null, which matched upstream's null (`v of (obj as Int)`) by accident.
+>   Now the value reaches the AST builder, and **semantic's expression parser has no `as`**:
+>   `convertExpression` takes its partial parse (`v of obj`) as the whole value, so the direct path
+>   drops every conversion. The matrix mostly cannot see it, since most of its conversions are
+>   identities (`n as Int`).
+> - 6 are a loop bound of unary minus on a chained possessive (`-#a's textContent's length`, ar, ms,
+>   qu, sw, th) or on bn's `length of arr`. Before, the value was dropped and the loop never ran,
+>   which matched upstream's `0` by accident; now the chained possessive's rendering (below) breaks
+>   the handler.
+>
+> Filed, not fixed:
+>
+> - **Semantic's expression parser has no `as`** (above). It needs upstream's binding: `of`'s right
+>   operand takes `as`.
+> - **The renderer localizes only the first link of a chained possessive** (ar `textContent لـ #a's
+>   length`), so 16 languages misread `#a's textContent's length`.
+> - **bn, ms, th and tl render `length` in their own word** and read `length of arr` back as another
+>   value (`put panjang of arr`).
+> - **pl loses a chained `of`**: `v of w of obj` comes back `v`.
+> - **`@title of #a` is still dropped whole**, in English too: semantic's expression parser has no
+>   attribute root for `of`.
+> - **`increment … by` a non-literal amount is still dropped** (4,983 pairs, the matrix's biggest
+>   single family): the increment schema's `quantity` accepts only a literal.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -618,8 +618,9 @@ oracle, and 48 lanes must match it — hyperfixi's English, semantic's English r
 trip, and each language on hyperfixi's direct path and through the adapter on
 upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell,
 lane) pair — 18,509 of 63,744 when it landed, 85% of them in semantic's English
-parse — and only shrinks: the gate (`value-matrix.<position>.test.ts`, five parallel
-shards in the package's ordinary suite, ~40s) fails on a new failing pair AND on a
+parse; 10,366 after PR 53 let the expression parser bound a value — and only shrinks:
+the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
+ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
 tools/regen-value-matrix-baseline.ts` (it refuses to add pairs without
 `--allow-new`). It is the queue for value work: the family and lane tables it prints
