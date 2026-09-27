@@ -145,8 +145,8 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // stale. No fixture/setup/trigger change needed; each en reference produces a clean
   // non-empty signature against the existing fixture (next/closest positionals fall
   // back to `me` consistently across every language; set *opacity/*transform write
-  // inline style; caret-var-on-target clears #btn text — the undefined `^count` resolves
-  // the same way in every language).
+  // inline style; caret-var-on-target writes `null` into #btn, as upstream's put writes
+  // a null value — the undefined `^count` resolves the same way in every language).
   'next-element',
   'toggle-aria-expanded',
   'set-opacity',

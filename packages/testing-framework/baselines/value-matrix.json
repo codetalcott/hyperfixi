@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 10041,
+  "failing": 10020,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -2397,7 +2397,7 @@
       "family": "translation+direct-path"
     },
     "increment|\"7\" as Int": {
-      "lanes": "tr/up *direct",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "while|2 as Int": {

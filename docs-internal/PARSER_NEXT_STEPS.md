@@ -2490,15 +2490,22 @@ and each of 12 mutants reverting one piece fails at least one):
   it (it added nothing). On the direct path, where `increment` keeps its `by`
   modifier, a text amount is read too (`by "2"` added 1).
 
-In the value matrix they fixed 325 pairs and broke none (failing pairs 10,366
-→ 10,041), and core's English run now differs from upstream's in 4 cells, not
-46.
+In the value matrix they fixed 346 pairs and broke none (failing pairs 10,366
+→ 10,020), and core's English run now differs from upstream's in 4 cells, not
+46. The R2 lock's `caret-var-on-target` (`put ^count on #host into me`, an
+unset `^count`) now writes `null`, as upstream does; it used to clear the
+text.
 
 Those 4 are the one that stays: **`the X of Y as T` converts the property**,
 where upstream converts the target (`the value of #inp as Int` is null
 upstream, 5 in core). Upstream parity would break the idiom, so it is recorded
 in `packages/core/docs/UPSTREAM-KNOWN-DIFFS.md`, pending the owner's decision,
 and its cells stay in the matrix's baseline.
+
+Found on the way, and **filed**: core's English parser rejects `put ^count on
+#host into #out` (upstream reads the element-scoped variable and writes
+`null`), and `put ^count into #out` leaves `#out` as it was. The matrix has no
+caret-variable operand, so it counts neither.
 
 ## Notes
 
