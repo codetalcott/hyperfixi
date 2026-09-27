@@ -719,16 +719,37 @@ interface AmbiguousSenseRule {
   /** Emitted when the PREVIOUS token is a selector or reference
       (`#modal আছে` → `#modal exists`). */
   afterSubject?: string;
-  /** Emitted when the PREVIOUS token is a keyword normalizing to `is`
-      (ja `である 空` → `is empty`), or to `not` after one (ja `である ではない
-      空` → `is not empty`). */
+  /** Emitted when the previous word, as this join read it, is `is` or `not`
+      (ja `である 空` → `is empty`, `ではない 空` → `not empty`; hi `है नहीं`
+      → `is not`, where `है` read as `is` by its own rule). Checked before
+      `beforeBareIdentifier`, which gives hi `नहीं` its other sense, `no`. */
   afterCopula?: string;
+  /** Emitted when the PREVIOUS token is an operand (a word, selector, literal
+      or reference, or a closing paren): the copula between the two sides of a
+      comparison (ar `p هو q`, `p هو greater than q`). The pronoun sense opens a
+      clause (`إذا هو اضبط …`, if it set …) or follows an operator (`"$" + هو`,
+      whose `+` some tokenizers lex as an identifier, hence the word shape). */
+  afterOperand?: string;
+  /** Emitted when the NEXT token is a class reference (`.x`), ahead of
+      `afterOperand`: hi `है` is both `is` and `has`, and only `has` takes a
+      class (`#d1 है .x` → `#d1 has .x`). */
+  beforeClassRef?: string;
 }
 
+/** A class reference (`.x`): what `has` takes, and a comparison does not. */
+const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
+
+/** A word-shaped identifier (`p`, `value`, `:count`, `$total`), not an operator
+    symbol that a tokenizer lexed as an identifier. */
+const OPERAND_WORD = /^[:$]?[\p{L}_][\p{L}\p{N}_]*$/u;
+
 const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, AmbiguousSenseRule>>>> = {
-  ar: { هو: { beforePredicate: 'is' } },
-  hi: { है: { beforePredicate: 'is' }, नहीं: { beforeBareIdentifier: 'no' } },
-  th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is' } },
+  ar: { هو: { beforePredicate: 'is', afterOperand: 'is' } },
+  hi: {
+    है: { beforePredicate: 'is', beforeClassRef: 'has', afterOperand: 'is' },
+    नहीं: { afterCopula: 'not', beforeBareIdentifier: 'no' },
+  },
+  th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' } },
   ja: { 空: { afterCopula: 'empty' } },
   zh: { 没有: { beforeBareIdentifier: 'no' } },
   tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
@@ -763,7 +784,8 @@ function resolveAmbiguousSense(
   languageCode: string,
   token: LanguageToken,
   prev: LanguageToken | undefined,
-  next: LanguageToken | undefined
+  next: LanguageToken | undefined,
+  prevText: string | undefined
 ): string | undefined {
   const table = AMBIGUOUS_SENSES[languageCode];
   const rule = table?.[token.value] ?? table?.[token.value.toLowerCase()];
@@ -783,6 +805,13 @@ function resolveAmbiguousSense(
     return rule.beforePredicate;
   }
   if (
+    rule.afterCopula &&
+    prevText !== undefined &&
+    ['is', 'not'].includes(prevText.toLowerCase())
+  ) {
+    return rule.afterCopula;
+  }
+  if (
     rule.beforeBareIdentifier &&
     next?.kind === 'identifier' &&
     /^[A-Za-z_]\w*$/.test(next.value)
@@ -792,12 +821,19 @@ function resolveAmbiguousSense(
   if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
     return rule.afterSubject;
   }
+  if (rule.beforeClassRef && next && CLASS_REF.test(next.value)) {
+    return rule.beforeClassRef;
+  }
   if (
-    rule.afterCopula &&
-    prev?.kind === 'keyword' &&
-    ['is', 'not'].includes((prev.normalized ?? '').toLowerCase())
+    rule.afterOperand &&
+    prev &&
+    ((prev.kind === 'identifier' && OPERAND_WORD.test(prev.value)) ||
+      prev.kind === 'selector' ||
+      prev.kind === 'literal' ||
+      (prev.kind as string) === 'reference' ||
+      prev.value === ')')
   ) {
-    return rule.afterCopula;
+    return rule.afterOperand;
   }
   return undefined;
 }
@@ -839,8 +875,11 @@ export function joinExpressionTokens(
   const languageCode = profile?.code ?? 'en';
   let out = '';
   let previous: LanguageToken | undefined;
+  /** The text appended for `previous`: how this join read the last word. */
+  let previousText: string | undefined;
 
   const append = (text: string, token: LanguageToken): void => {
+    previousText = text;
     if (previous === undefined) {
       out = text;
       previous = token;
@@ -1036,7 +1075,7 @@ export function joinExpressionTokens(
     // (these surfaces are deliberately NOT connectives; the sense table is
     // authoritative for them). See AMBIGUOUS_SENSES above for why this seam is
     // the one safe place to translate these words.
-    const sense = resolveAmbiguousSense(languageCode, token, tokens[i - 1], next);
+    const sense = resolveAmbiguousSense(languageCode, token, tokens[i - 1], next, previousText);
     if (sense !== undefined) {
       append(sense, token);
       continue;

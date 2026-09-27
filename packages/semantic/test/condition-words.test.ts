@@ -40,6 +40,15 @@ const GROUPS: Array<[string, string[], string[]]> = [
   ['not, split by the tokenizer', ['not r'], ['ar', 'ja']],
   ['is not, split by the tokenizer', ['p is not q'], ['ja']],
   ['is not empty', ['p is not empty'], ['bn', 'de', 'fr', 'ja', 'pt', 'ru', 'tl', 'uk']],
+  // ar هو (also `it`), hi है (also `has`) and th เป็น (also `as`) read as the
+  // copula between two operands; hi है before a class is `has`, and hi नहीं
+  // after the copula is `not` (elsewhere `no`).
+  [
+    'is, a word with another sense',
+    ['p is q', 'q is greater than p', 'p is not q'],
+    ['ar', 'hi', 'th'],
+  ],
+  ['has, the same word as is', ['#d1 has .x'], ['hi']],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
@@ -51,5 +60,19 @@ describe.each(GROUPS)('%s', (_word, conditions, languages) => {
       expect(condition(parse(foreign, language) as Node), foreign).toBe(english);
       expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
     });
+  });
+});
+
+// The pronoun sense of ar هو stays: it opens a clause or follows an operator
+// (`"$" + هو`, whose `+` the ar tokenizer lexes as an identifier), never an
+// operand. The corpus row `when-value-changes` renders exactly that.
+describe('ar هو as `it`', () => {
+  it.each([
+    'on click put "$" + it into #out',
+    'on click put it into #out',
+    'on click set x to it',
+  ])('%s', source => {
+    const foreign = render(parse(source, 'en')!, 'ar');
+    expect(render(parse(foreign, 'ar')!, 'en'), foreign).toBe(source);
   });
 });

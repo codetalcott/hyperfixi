@@ -7348,6 +7348,9 @@ export class SemanticParserImpl implements ISemanticParser {
     'هو', // ar (keyword norm=`it` — matched by surface VALUE)
     'เป็น', // th
     'है', // hi
+    // hi नहीं is `not` after the copula (`है नहीं खाली`, is not empty) and also
+    // `no`, so it has no connective entry the normalized check could read.
+    'नहीं',
   ]);
 
   /** Predicate adjectives (normalized) that follow a copula inside a condition. */
