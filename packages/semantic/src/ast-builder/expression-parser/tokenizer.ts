@@ -44,6 +44,8 @@ export enum TokenType {
   COMMA = 'COMMA',
   DOT = 'DOT',
   COLON = 'COLON',
+  /** `|` between conversions: `value as JSONString | JSON`. */
+  PIPE = 'PIPE',
 
   // Special
   TIME_EXPRESSION = 'TIME_EXPRESSION',
@@ -405,6 +407,11 @@ export function tokenize(input: string): Token[] {
     if (char === '.') {
       advance();
       tokens.push(makeToken(TokenType.DOT, '.', start));
+      continue;
+    }
+    if (char === '|') {
+      advance();
+      tokens.push(makeToken(TokenType.PIPE, '|', start));
       continue;
     }
 

@@ -5733,8 +5733,8 @@ this signal was missing.
 > - ~~**`contains` in ja, ko, qu and zh** (about 1,050 pairs, the largest family left): ja `含む`, ko
 >   `포함` and zh `包含` read back as `inclusive`, and qu `ukupi_kan` splits at the underscore; in a
 >   `put` value the words before it are lost.~~ Fixed by PR 57.
-> - **Semantic's expression tokenizer drops `|`**, so a piped conversion (`as JSONString | JSON`)
->   reads as `as JSONString`. No corpus row pipes.
+> - ~~**Semantic's expression tokenizer drops `|`**, so a piped conversion (`as JSONString | JSON`)
+>   reads as `as JSONString`. No corpus row pipes.~~ Fixed by PR 60.
 >
 > **`contains` reads back in ja, ko, qu and zh (PR 57, 2026-09-27).** ja `含む`, ko `포함` and zh
 > `包含` spell both `contains` and pick's range mode `inclusive`, and each tokenizer normalizes the
@@ -5817,6 +5817,39 @@ this signal was missing.
 > tr's `i` is a different problem: its accusative marker, a particle, not a conjunction (`i i 2
 > artır` drops the amount). What is left, 1,840 pairs: tr 604, qu 206, de 138, and every other
 > language under 100.
+>
+> **Piped conversions, `Fixed:2`, and every type core converts to (PR 60, 2026-09-27).** The
+> expression tokenizer skipped `|`, so `x as JSONString | JSON` read as `x as JSONString JSON` and
+> buildAST kept the first conversion; `|` is a token now, and a pipe converts the conversion before
+> it, left to right, as core and upstream read it. Measuring it found a larger loss in the same
+> place: the matcher reads a value with a conversion whole only when it knows the type, and a type
+> it did not know lost the whole command, in English and so in every translation (`put x as Boolean
+> into #out` parsed as a bare `on click`). CONVERSION_TYPE_NAMES lacked `Boolean`, `JSONString`,
+> `FormEncoded`, `Values:Form`/`Values:JSON` and the collection conversions (`Set`, `Map`, `Keys`,
+> `Entries`, `Reversed`, `Unique`, `Flat`), and `Fixed`/`Fixed:2`, which upstream resolves
+> dynamically. A non-English tokenizer splits `Fixed:2` at its colon, so the matcher's conversion
+> fold and the join put the three tokens back together. The fold also takes an article: `put x as a
+> Date into #out` was lost on main in es, it and pt, which read `a` as their `to` marker, and in tr.
+> Core's `conversions-direct-path.test.ts` holds the list to core's `defaultConversions` and runs
+> five piped rows in all 23 languages; semantic's `value-conversion.test.ts` round-trips them. Each
+> of ten mutants removing one piece fails a test.
+>
+> Not `Math`, core's own conversion (upstream has none): the value matrix caught th reading `6 เป็น
+> Math.max(n, 1)` as `6 as Math`, since th reads `เป็น` before a type name as `as`. **The value
+> matrix moves no pair**, and no stored corpus row moves: neither has a pipe or one of the new
+> types. Still outside the list: a type registered at runtime (`hyperfixi.config.conversions`), so
+> `put x as MyType into #out` still loses its `put`.
+>
+> Filed on the way, outside the matrix (its `obj` operand is a window global, not a literal):
+>
+> - **An object literal is a string on the direct path.** Semantic captures `{a: 1}` as a literal
+>   whose value is the text `{ a : 1 }`, so `put {a: 1} into #out` writes that text in all 23
+>   languages (upstream writes `[object Object]`), and `put {a: 1} as JSONString` writes `"{ a : 1
+>   }"`. The adapter lanes pass. `set o to {a: 1, b: 2}` then `put o as FormEncoded` fails in most
+>   languages on both paths.
+> - **Core's `as Boolean` reads the strings `"false"` and `"0"` as false**; upstream's is `!!val`,
+>   so both are true. Deliberate in core (`boolean-conversion-fix.test.ts` pins it) but not in
+>   `UPSTREAM-KNOWN-DIFFS.md`: a decision for the owner.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
