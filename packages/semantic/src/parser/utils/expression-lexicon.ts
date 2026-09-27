@@ -880,7 +880,11 @@ const AFTER_OPERAND = new Set([
   ',',
 ]);
 
-/** Comparison words that take an operand on their left, as a conjunction cannot. */
+/**
+ * Comparison words that take an operand on their left, as a conjunction
+ * cannot. Not `equal`: `is greater than or equal to` puts a conjunction right
+ * before it (es `mayor que o igual a`, it `maggiore o uguale a`).
+ */
 const COMPARISON_AFTER_OPERAND = new Set([
   'is',
   'am',
@@ -892,8 +896,6 @@ const COMPARISON_AFTER_OPERAND = new Set([
   'have',
   'includes',
   'include',
-  'equals',
-  'equal',
   'exists',
   'exist',
   'mod',

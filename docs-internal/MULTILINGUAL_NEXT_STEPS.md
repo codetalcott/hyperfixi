@@ -5808,6 +5808,12 @@ this signal was missing.
 > the value-extent check: the matrix and the corpus did not see it, but a possessive head does (pl
 > `put obj's v + i` lost `+ i` and its destination), and the test now carries that shape.
 >
+> `equal` does not mark an operand: `is greater than or equal to` puts a conjunction right before
+> it (es `mayor que o igual a`, it `maggiore o uguale a`), which core's condition-phrase test caught
+> when the first cut had it. Filed on the way: **pl keeps `equal to` in English and reads `to` as its
+> own word for `it`**, so `p is greater than or equal to 1` reads back `… or equal it 1`, on main
+> too.
+>
 > tr's `i` is a different problem: its accusative marker, a particle, not a conjunction (`i i 2
 > artır` drops the amount). What is left, 1,840 pairs: tr 604, qu 206, de 138, and every other
 > language under 100.

@@ -56,3 +56,18 @@ describe('a conjunction between two conditions stays one', () => {
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(english);
   });
 });
+
+describe('a conjunction inside `or equal to` stays one', () => {
+  // es `mayor que o igual a`, it `maggiore o uguale a`: the conjunction sits
+  // right before `equal`, which is why `equal` does not mark an operand. (pl
+  // keeps `equal to` in English, and reads `to` as its own word for `it`: a
+  // separate filing.)
+  it.each(['es', 'it', 'pt', 'fr', 'de'])('%s', language => {
+    for (const phrase of ['greater than or equal to', 'less than or equal to']) {
+      const source = `on click if p is ${phrase} 1 then put "Y" into #out end`;
+      const english = render(parse(source, 'en')!, 'en');
+      const foreign = render(parse(source, 'en')!, language);
+      expect(render(parse(foreign, language)!, 'en'), foreign).toBe(english);
+    }
+  });
+});
