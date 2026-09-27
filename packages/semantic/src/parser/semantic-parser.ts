@@ -6957,10 +6957,13 @@ export class SemanticParserImpl implements ISemanticParser {
     const v = value.toLowerCase();
     const thenKeywords: Record<string, Set<string>> = {
       en: new Set(['then']),
-      ja: new Set(['それから', '次に', 'そして']),
+      // 'そして' and ko '그리고' are deliberately ABSENT: they are what the ja/ko
+      // renderers write for `and` (`p そして q`), so keeping them here split a
+      // condition or value at its `and`. then-chains use それから / 그다음.
+      ja: new Set(['それから', '次に']),
       ar: new Set(['ثم', 'بعدها', 'ثمّ']),
       es: new Set(['entonces', 'luego', 'después']),
-      ko: new Set(['그다음', '그리고', '그런후', '그러면']),
+      ko: new Set(['그다음', '그런후', '그러면']),
       // 之后 is deliberately ABSENT: the zh transformer emits it as positional
       // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
       // it here split the put clause at 之后 and dropped the put.

@@ -68,6 +68,18 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
     ],
     ['ar'],
   ],
+  // ja `そして` and ko `그리고`, their word for `and`, were also then-words, so a
+  // handler body split the condition at them. Either half alone takes the other
+  // branch in one of the two negative rows.
+  [
+    'and, also a then-word',
+    [
+      ['p is 1 and q is 2', 'yes'],
+      ['p is not q and q is 3', 'no'],
+      ['p is 2 and q is 2', 'no'],
+    ],
+    ['ja', 'ko'],
+  ],
 ];
 
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
