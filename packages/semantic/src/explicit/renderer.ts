@@ -1301,20 +1301,30 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       );
     }
     if (!raw.includes("'s")) return raw;
+    const link = (object: SemanticValue, property: string): string =>
+      this.renderPropertyPath(
+        { type: 'property-path', object, property, access: 'possessive' } as PropertyPathValue,
+        language
+      );
     return raw.replace(
-      /([#.][\w-]+)'s\s+([A-Za-z][\w-]*)/g,
-      (whole, owner: string, property: string, offset: number, text: string) => {
-        const rendered = this.renderPropertyPath(
-          {
-            type: 'property-path',
-            object: createSelector(owner),
-            property,
-            access: 'possessive',
-          } as PropertyPathValue,
-          language
-        );
+      /([#.][\w-]+)((?:'s\s+[A-Za-z][\w-]*)+)/g,
+      (whole, owner: string, chain: string, offset: number, text: string) => {
+        const [first, ...rest] = [...chain.matchAll(/'s\s+([A-Za-z][\w-]*)/g)].map(m => m[1]!);
+        let rendered = link(createSelector(owner), first!);
         if (!rendered) return whole;
-        return convertedAt(text, offset + whole.length) && !rendered.startsWith(owner)
+        const propertyFirst = !rendered.startsWith(owner);
+        // A chain nests in the `of` form, each link the next one's owner:
+        // `#a's textContent's length` is es `length de textContent de #a`, read
+        // right to left as upstream reads `length of textContent of #a`. Only
+        // the first link used to move, and `textContent de #a's length` read
+        // as the textContent of `#a's length`. An owner-first rendering (ja
+        // `#aのtextContent`) keeps its tail, which its parser reads.
+        if (propertyFirst) {
+          for (const property of rest) rendered = link(createSelector(rendered), property);
+        } else {
+          rendered += rest.map(property => `'s ${property}`).join('');
+        }
+        return convertedAt(text, offset + whole.length) && propertyFirst
           ? `(${rendered})`
           : rendered;
       }
