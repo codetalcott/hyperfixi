@@ -5430,6 +5430,21 @@ this signal was missing.
 >   language, English included.
 > - Two bare `unless` rows were wrong before this change and still are: ko reads `p` as an event
 >   (`on p unless then toggle .selected`), and pl reads the pronoun `I` as its `and` (`i`).
+>
+> **A translated `contains`, `includes` or `equals` reads back (PR 48, 2026-09-26).** PR 47's filing.
+> The renderer writes these words in the language from semantic's lexicons (es `contiene`, `incluye`,
+> `iguala`), but the tokenizers read them back as plain identifiers; only `matches` has a profile
+> keyword. So `if [1, 2] contains 3` read as the truthy `[1, 2]` and took the then-branch in 19
+> languages, and a value lost everything after its first operand. The expression lexicon's
+> connectives now carry them too, generated from the i18n dictionaries by the same script and the
+> same collision guard, which leaves out a word the dictionary also uses for another concept. The
+> join and the value run both read them. Wrong round trips of the three values fall from 59 to 9,
+> and `[1, 2] contains 3` from 19 languages to 3.
+>
+> Filed, not fixed: of the 9, the guard left out ja, ko and zh `contains` and tl and tr `includes`
+> (tl `kasama` is also its `inclusive`). The rest are split by their tokenizers: qu `ukupi_kan` and
+> hi `में_है` at the underscore, zh `等于` into `等` and a destination marker, and pl `równa się` into
+> two words.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -91,6 +91,9 @@ const CONNECTIVE_CONCEPTS: ReadonlyArray<readonly [bucket: string, concept: stri
   ['logical', 'or'],
   ['logical', 'not'],
   ['logical', 'and'],
+  ['logical', 'contains'],
+  ['logical', 'includes'],
+  ['logical', 'equals'],
 ];
 const connectives: Record<string, Record<string, string>> = {};
 

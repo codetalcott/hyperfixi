@@ -55,6 +55,30 @@ const GROUPS: Array<[string, string[], string[]]> = [
   ['and, also a then-word', ['p is not q and q is 3'], ['ja', 'ko']],
   // hi `नहीं` after the `does` of `does not match` is `not`, as after the copula.
   ['does not, in hi', ['#d1 does not match .x', '#zz does not exist'], ['hi']],
+  // The renderer writes `contains` in the language (es `contiene`), which no
+  // tokenizer read back.
+  [
+    'contains',
+    ['[1, 2] contains 3'],
+    [
+      'ar',
+      'de',
+      'es',
+      'fr',
+      'hi',
+      'id',
+      'it',
+      'ms',
+      'pl',
+      'pt',
+      'ru',
+      'sw',
+      'tl',
+      'tr',
+      'uk',
+      'vi',
+    ],
+  ],
   // Where the possessive marker sits between owner and property (ja
   // `#d1のtextContent`), the marker stayed in the condition.
   [

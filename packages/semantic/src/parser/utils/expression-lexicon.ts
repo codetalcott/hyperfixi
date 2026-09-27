@@ -81,36 +81,42 @@ export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
  * `nicht`. Entries for words the tokenizer already normalizes (es `o`, pl `i`)
  * change nothing.
  *
+ * So are the comparison words a value or a condition joins (`contains`,
+ * `includes`, `equals`). The renderer writes them from semantic's lexicons (es
+ * `contiene`), and no profile keyword read them back: `if [1, 2] contains 3`
+ * was the truthy `[1, 2]`. (`matches` has a profile keyword, or stays English.)
+ *
  * Known gap: hi `के_रूप_में` never matches, because the tokenizer splits
  * underscore-joined surfaces. Harmless (the entry is simply dead), and shared
- * with several dictionary surfaces of the same shape — see the burndown scope doc.
- * ja `ではない` and ar `ليس` are dead the same way: their tokenizers split them.
+ * with several dictionary surfaces of the same shape — see the burndown scope doc:
+ * hi `में_है` and qu `ukupi_kan` too, and zh `等于` and pl `równa się`, which
+ * their tokenizers split in two.
  */
 // prettier-ignore
 export const CONNECTIVE_LEXICON: Record<string, Record<string, string>> = {
-  ar: { "أو": "or", "كـ": "as", "ليس": "not", "و": "and" },
+  ar: { "أو": "or", "كـ": "as", "ليس": "not", "و": "and", "يحتوي": "contains", "يساوي": "equals", "يشمل": "includes" },
   bn: { "অথবা": "or", "এবং": "and", "না": "not", "হিসাবে": "as" },
-  de: { "als": "as", "nicht": "not", "oder": "or", "und": "and" },
-  es: { "como": "as", "no": "not", "o": "or", "y": "and" },
-  fr: { "comme": "as", "et": "and", "non": "not", "ou": "or" },
+  de: { "als": "as", "beinhaltet": "includes", "enthält": "contains", "gleicht": "equals", "nicht": "not", "oder": "or", "und": "and" },
+  es: { "como": "as", "contiene": "contains", "iguala": "equals", "incluye": "includes", "no": "not", "o": "or", "y": "and" },
+  fr: { "comme": "as", "contient": "contains", "égale": "equals", "et": "and", "inclut": "includes", "non": "not", "ou": "or" },
   he: { "וגם": "and" },
-  hi: { "और": "and", "के_रूप_में": "as", "या": "or" },
-  id: { "atau": "or", "bukan": "not", "dan": "and", "sebagai": "as" },
-  it: { "come": "as", "e": "and", "non": "not", "o": "or" },
-  ja: { "そして": "and", "ではない": "not", "として": "as", "または": "or" },
-  ko: { "그리고": "and", "또는": "or", "로": "as", "아니": "not" },
-  ms: { "atau": "or", "bukan": "not", "dan": "and", "sebagai": "as" },
-  pl: { "i": "and", "jako": "as", "lub": "or", "nie": "not" },
-  pt: { "como": "as", "e": "and", "não": "not", "ou": "or" },
-  qu: { "chaymanta": "and", "hina": "as", "utaq": "or" },
-  ru: { "и": "and", "или": "or", "как": "as", "не": "not" },
-  sw: { "au": "or", "kuwa": "as", "si": "not" },
+  hi: { "और": "and", "के_रूप_में": "as", "बराबर": "equals", "में_है": "includes", "या": "or", "शामिल": "contains" },
+  id: { "atau": "or", "berisi": "contains", "bukan": "not", "dan": "and", "sama": "equals", "sebagai": "as", "termasuk": "includes" },
+  it: { "come": "as", "contiene": "contains", "e": "and", "include": "includes", "non": "not", "o": "or", "uguale": "equals" },
+  ja: { "そして": "and", "ではない": "not", "として": "as", "または": "or", "含める": "includes", "等しい": "equals" },
+  ko: { "같다": "equals", "그리고": "and", "또는": "or", "로": "as", "아니": "not", "포함하다": "includes" },
+  ms: { "atau": "or", "bukan": "not", "dan": "and", "mengandungi": "contains", "sama": "equals", "sebagai": "as", "termasuk": "includes" },
+  pl: { "i": "and", "jako": "as", "lub": "or", "nie": "not", "obejmuje": "includes", "równa się": "equals", "zawiera": "contains" },
+  pt: { "como": "as", "contém": "contains", "e": "and", "igual": "equals", "inclui": "includes", "não": "not", "ou": "or" },
+  qu: { "chaymanta": "and", "churasqa": "includes", "hina": "as", "kikin": "equals", "ukupi_kan": "contains", "utaq": "or" },
+  ru: { "включает": "includes", "и": "and", "или": "or", "как": "as", "не": "not", "равно": "equals", "содержит": "contains" },
+  sw: { "au": "or", "ina": "contains", "kuwa": "as", "pamoja": "includes", "sawa": "equals", "si": "not" },
   th: { "ไม่": "not", "และ": "and", "หรือ": "or" },
-  tl: { "at": "and", "bilang": "as", "hindi": "not", "o": "or" },
-  tr: { "değil": "not", "olarak": "as", "ve": "and", "veya": "or" },
-  uk: { "або": "or", "і": "and", "не": "not", "як": "as" },
-  vi: { "hoặc": "or", "không": "not", "như": "as", "và": "and" },
-  zh: { "作为": "as", "和": "and", "或": "or", "非": "not" },
+  tl: { "at": "and", "bilang": "as", "hindi": "not", "katumbas": "equals", "naglalaman": "contains", "o": "or" },
+  tr: { "değil": "not", "eşittir": "equals", "içerir": "contains", "olarak": "as", "ve": "and", "veya": "or" },
+  uk: { "або": "or", "включає": "includes", "дорівнює": "equals", "і": "and", "містить": "contains", "не": "not", "як": "as" },
+  vi: { "bằng": "equals", "chứa": "contains", "hoặc": "or", "không": "not", "như": "as", "và": "and" },
+  zh: { "作为": "as", "包括": "includes", "和": "and", "或": "or", "等于": "equals", "非": "not" },
 };
 
 /**
