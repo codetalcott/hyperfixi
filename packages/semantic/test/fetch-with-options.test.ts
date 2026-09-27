@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser';
 import { buildAST } from '../src/ast-builder';
 
-type ObjectLiteral = { type: string; properties: Array<{ key: string }> };
+type ObjectLiteral = { type: string; properties: Array<{ key: { name: string } }> };
 
 function fetchModifiers(source: string) {
   const node = parse(source, 'en');
@@ -23,7 +23,7 @@ function fetchModifiers(source: string) {
 function objectKeys(value: unknown): string[] {
   const obj = value as ObjectLiteral;
   expect(obj?.type).toBe('objectLiteral');
-  return obj.properties.map(p => p.key);
+  return obj.properties.map(p => p.key.name);
 }
 
 describe('fetch `with { ... }` request options', () => {

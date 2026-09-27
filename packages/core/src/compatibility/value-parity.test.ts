@@ -111,6 +111,7 @@ const NULL_TARGETS: Array<[string, string]> = [
   ['the length of the name of obj', 'null'],
   ['v of w of obj', 'null'],
   ['v of w of obj as Int', 'null'],
+  ['the v of obj', '6'],
   ['the length of arr', '2'],
 ];
 
@@ -129,6 +130,32 @@ describe('the X of a null target reads null, as upstream does', () => {
 
   it('a set reads it too', async () => {
     expect(await direct('set x to v of w of obj as Int then put x into #out')).toBe('null');
+  });
+});
+
+// An object literal on the direct path: semantic read a `put` or `set` value's
+// `{…}` as text (a CSS style block's fold), and its expression parser keyed a
+// property with a bare string, which the runtime threw on (PR 73).
+const OBJECTS: Array<[string, string]> = [
+  ['put {} into #out', '[object Object]'],
+  ['set x to {a: 1, b: "q"} then put x.b into #out', 'q'],
+  ['set x to {a: 1} then put x.a + 1 into #out', '2'],
+  ['put obj.v into #out', '6'],
+];
+
+describe('an object literal is an object on the direct path', () => {
+  it.each(OBJECTS)('English: %s', async (body, expected) => {
+    expect(await click(body)).toBe(expected);
+  });
+
+  it.each(OBJECTS)('direct path: %s', async (body, expected) => {
+    expect(await direct(body)).toBe(expected);
+  });
+
+  it.each(['es', 'ja', 'ar'])('%s', async language => {
+    for (const [body, expected] of OBJECTS) {
+      expect(await direct(body, language), body).toBe(expected);
+    }
   });
 });
 
@@ -229,18 +256,14 @@ const COUNTERS: Array<[string, string]> = [
   ['set i to [1, 2] then decrement i', '0'],
   ['set i to [] then increment i', 'NaN'],
   ['set i to "5px" then increment i', '6'],
-];
-
-// Semantic reads an object literal as text on the direct path (filed), so the
-// object rows run on core's English path alone.
-const OBJECT_COUNTERS: Array<[string, string]> = [
+  // An object, which semantic read as text on the direct path until PR 73.
   ['set i to 1 then increment i by {}', 'NaN'],
   ['set i to 1 then increment i by obj', 'NaN'],
   ['set i to {} then increment i', 'NaN'],
 ];
 
 describe("a counter's amount and value read as upstream reads them", () => {
-  it.each([...COUNTERS, ...OBJECT_COUNTERS])('English: %s', async (body, expected) => {
+  it.each(COUNTERS)('English: %s', async (body, expected) => {
     expect(await click(`${body} then put i into #out`)).toBe(expected);
   });
 

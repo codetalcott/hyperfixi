@@ -77,7 +77,8 @@ describe('the object literal round-trips through render → parse → English', 
 
     // The boolean must come home as `true`, not as this language's word for it.
     expect(render(back!, 'en')).toBe(referenceEn);
-    // The renderer re-spaces a literal's punctuation; the WORD is the assertion.
-    expect(foreign.replace(/\s+/g, ' ')).toContain('admin : true');
+    // A `set` value is an object now, kept as written (PR 73), where the literal
+    // fold re-spaced it (`admin : true`); the WORD is the assertion.
+    expect(foreign.replace(/\s+/g, ' ')).toContain('admin: true');
   });
 });

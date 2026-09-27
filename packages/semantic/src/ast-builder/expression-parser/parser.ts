@@ -742,11 +742,15 @@ export class ExpressionParser {
       throw new Error('Expected } after object properties');
     }
 
+    // A key is an identifier node, as core's parser keys it (and as the
+    // command mappers build wait's specs): core's runtime evaluated a bare
+    // string key as a node and threw, so every non-empty object on the direct
+    // path failed (`set x to {a: 1}`, `fetch … with {method: 'POST'}`).
     return {
       type: 'objectLiteral',
       properties: properties.map(p => ({
         type: 'objectProperty' as const,
-        key: p.key,
+        key: { type: 'identifier', name: p.key } as IdentifierNode,
         value: p.value,
       })),
       start,

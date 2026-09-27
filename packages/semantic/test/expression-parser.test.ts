@@ -299,7 +299,7 @@ describe('ExpressionParser', () => {
         expect(result.success).toBe(true);
         expect(result.node).toMatchObject({
           type: 'objectLiteral',
-          properties: [{ key }],
+          properties: [{ key: { type: 'identifier', name: key } }],
         });
       }
     );
