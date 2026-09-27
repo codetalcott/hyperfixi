@@ -621,10 +621,11 @@ describe('PutCommand', () => {
       expect(document.getElementById('li-b')).toBeNull();
     });
 
-    it('a mixed array still stringifies (only homogeneous element arrays move)', async () => {
+    it('a mixed array is written item by item, as upstream writes it', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
       const el = document.createElement('span');
+      el.textContent = 'el';
 
       const input: PutCommandInput = {
         value: [el, 'not-an-element'],
@@ -633,10 +634,10 @@ describe('PutCommand', () => {
       };
       await command.execute(input, context);
 
-      // Stringified (environment-dependent flavor), NOT the ordered-move path:
-      // whatever landed in the target, it is not the original element moved in.
-      expect(el.parentElement).toBeNull();
-      expect(target.textContent).toContain('not-an-element');
+      // The element is moved in as itself, the string follows as text: no
+      // comma-joined stringification (`[object HTMLSpanElement],not-an-element`).
+      expect(el.parentElement).toBe(target);
+      expect(target.textContent).toBe('elnot-an-element');
     });
   });
 
@@ -777,7 +778,7 @@ describe('PutCommand', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle null value as empty string', async () => {
+    it('writes a null value as the text null, as upstream does', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
 
@@ -789,10 +790,10 @@ describe('PutCommand', () => {
 
       await command.execute(input, context);
 
-      expect(target.textContent).toBe('');
+      expect(target.textContent).toBe('null');
     });
 
-    it('should handle undefined value as empty string', async () => {
+    it('writes an unset value as the text null, as upstream does', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
 
@@ -804,7 +805,7 @@ describe('PutCommand', () => {
 
       await command.execute(input, context);
 
-      expect(target.textContent).toBe('');
+      expect(target.textContent).toBe('null');
     });
 
     it('should convert numbers to strings', async () => {

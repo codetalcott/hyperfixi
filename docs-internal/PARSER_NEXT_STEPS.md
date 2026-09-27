@@ -2467,26 +2467,45 @@ Found alongside, and **filed**:
   `wv`.
 - **`put` of null writes nothing in core, and `null` upstream.**
 
-### Core's English run differs from upstream in 46 value-matrix cells (2026-09-27)
+### ~~Core's English run differs from upstream in 46 value-matrix cells~~ — FIXED, one kept as a known difference (2026-09-27)
 
 The value matrix (`testing-framework/src/multilingual/value-matrix.ts`, PR 52)
 runs every value shape in five positions on both engines. Core's English run
-differs from upstream's in 46 of its 1,328 cells, and they are the filings
-above, counted:
+differed from upstream's in 46 of its 1,328 cells: the filings above, counted.
+PR 54 fixed them, each against a row run on both engines
+(`src/compatibility/value-parity.test.ts`, 42 rows; 24 fail on the old core,
+and each of 12 mutants reverting one piece fails at least one):
 
-- **Null**: `put null` writes nothing (upstream `null`); `increment i by
-  <null>` gives `1` (upstream `NaN`). Every `X of Y as Int` cell reaches core's
-  null too, since both engines read it as `X of (Y as Int)`.
-- **An array**: `put [1, 2]` and `put arr` write `1,2` (upstream `12`).
-- **An attribute as an `of` root**: `@title of #a` reads nothing, alone or
-  under `+`, `is empty` or an `if`.
-- **An `of` over a query**: `textContent of .w` reads nothing (upstream maps
-  it, `wv`).
-- **`the X of Y as T`**: core applies `as` to the path (`6`), upstream to `Y`
-  (`null`).
-- **`{} is empty`** is true in core and false upstream, as filed with PR 49.
+- **`put` writes a value as upstream does**: through a fragment, null (and an
+  unset value) as the text `null`, an array item by item (`put [1, 2]` writes
+  `12`, not `1,2`; a node as itself, a null item as nothing).
+- **`X of Y` reads an attribute and maps over a collection**: `@title of #a`
+  reads the attribute (it read `me`'s), and `textContent of .w` maps the
+  property over the matches, as core's `'s` and `.` already did; `length of
+  .w` is still the count.
+- **`the X of Y` takes a further `of` and a trailing `in` on its target**, as
+  `X of Y` does: `the textContent of <p.w/> in #w` reads the scoped query.
+- **`is empty` reads a zero length**: `{}` is not empty (it counted keys).
+- **`increment … by` a null amount is NaN**, as upstream's `parseFloat` makes
+  it (it added nothing). On the direct path, where `increment` keeps its `by`
+  modifier, a text amount is read too (`by "2"` added 1).
 
-The baseline lists each as failing in the `en` lane; a fix prunes it.
+In the value matrix they fixed 346 pairs and broke none (failing pairs 10,366
+→ 10,020), and core's English run now differs from upstream's in 4 cells, not
+46. The R2 lock's `caret-var-on-target` (`put ^count on #host into me`, an
+unset `^count`) now writes `null`, as upstream does; it used to clear the
+text.
+
+Those 4 are the one that stays: **`the X of Y as T` converts the property**,
+where upstream converts the target (`the value of #inp as Int` is null
+upstream, 5 in core). Upstream parity would break the idiom, so it is recorded
+in `packages/core/docs/UPSTREAM-KNOWN-DIFFS.md`, pending the owner's decision,
+and its cells stay in the matrix's baseline.
+
+Found on the way, and **filed**: core's English parser rejects `put ^count on
+#host into #out` (upstream reads the element-scoped variable and writes
+`null`), and `put ^count into #out` leaves `#out` as it was. The matrix has no
+caret-variable operand, so it counts neither.
 
 ## Notes
 

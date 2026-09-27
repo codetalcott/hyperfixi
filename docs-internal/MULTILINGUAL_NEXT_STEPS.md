@@ -5637,6 +5637,12 @@ this signal was missing.
 >   attribute root for `of`.
 > - **`increment … by` a non-literal amount is still dropped** (4,983 pairs, the matrix's biggest
 >   single family): the increment schema's `quantity` accepts only a literal.
+>
+> **Core's English values follow upstream's (PR 54, 2026-09-27).** The matrix's 46 core-English
+> cells: `put` of null and arrays, an attribute or a collection under `of`, `the X of Y … in`, `{}
+> is empty`, and `increment … by` a null amount. The entry is in `PARSER_NEXT_STEPS.md`. It fixed
+> 346 pairs, the direct path's included, and broke none; 10,020 pairs fail now. Four cells stay, `the
+> X of Y as T`, a known difference pending the owner's decision.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -919,12 +919,27 @@ async function evaluateBinaryExpression(
   // `c of (b of a)`. When the left side isn't a static path (e.g. a computed
   // member or literal index) we fall through to the generic `case 'of'` below.
   if (operator === 'of') {
+    // `@title of #a`: an attribute of the right operand, read as `#a's @title`
+    // is. It used to fall to the generic branch below, which read the
+    // attribute off `me` and then indexed the target with it.
+    if (leftNode?.type === 'attributeAccess') {
+      const target = await evaluateAST(node.right, context);
+      if (target == null) return undefined;
+      return getExpr(context, 'possessive').evaluate(context, target, `@${leftNode.attributeName}`);
+    }
     const path = propertyPathOf(node.left);
     if (path) {
       const target = await evaluateAST(node.right, context);
       let cur: unknown = target;
       for (const seg of path) {
         if (cur == null) return undefined;
+        // A collection the property is not its own (`textContent of .w`) maps
+        // it over its members, as upstream's `of` does and core's `'s` and
+        // `.` already did; `length of .w` is still the count.
+        if (isMappableCollection(cur) && !(seg in (cur as object))) {
+          cur = await getExpr(context, 'possessive').evaluate(context, cur, seg);
+          continue;
+        }
         cur = isElement(cur) ? getElementProperty(cur, seg) : (cur as any)[seg];
       }
       return typeof cur === 'function' ? (cur as any).bind(target) : cur;
@@ -972,6 +987,9 @@ async function evaluateBinaryExpression(
       let addLeft = left;
       let addRight = right;
       if ((node as { coerceNumeric?: boolean }).coerceNumeric) {
+        // An amount that is null or unset is NaN, as upstream's parseFloat
+        // reads it (`increment i by null`); only a missing amount is 1.
+        if (addRight == null) return NaN;
         if (typeof addLeft === 'string') addLeft = convertToNumber(addLeft);
         if (typeof addRight === 'string') addRight = convertToNumber(addRight);
       }
@@ -994,6 +1012,8 @@ async function evaluateBinaryExpression(
       );
     }
     case '-':
+      // The decrement rewrite's amount, as for `+` above.
+      if ((node as { coerceNumeric?: boolean }).coerceNumeric && right == null) return NaN;
       return unwrapTypedResult(
         await getExpr(context, 'subtraction').evaluate(context as any, { left, right })
       );

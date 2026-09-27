@@ -97,7 +97,7 @@ export class NumericModifyCommand implements DecoratedCommand {
     // plugin). Compute the new value from the captured currentValue and route
     // the write through the registered NodeWriter.
     if (customWrite) {
-      const delta = isFinite(amount) ? amount : 1;
+      const delta = amount;
       const newValue =
         operation === 'increment'
           ? customWrite.currentValue + delta
@@ -115,8 +115,8 @@ export class NumericModifyCommand implements DecoratedCommand {
     if (isNaN(currentValue)) {
       newValue = NaN;
     } else {
-      const delta = isFinite(amount) ? amount : 1;
-      newValue = operation === 'increment' ? currentValue + delta : currentValue - delta;
+      // A written amount that is null reads NaN (see parseNumericTargetInput).
+      newValue = operation === 'increment' ? currentValue + amount : currentValue - amount;
     }
 
     // Set the new value using shared helper

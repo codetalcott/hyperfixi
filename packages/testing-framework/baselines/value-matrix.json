@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 10366,
+  "failing": 10020,
   "entries": {
     "while|2": {
       "lanes": "pl tr tr/up",
@@ -13,12 +13,12 @@
       "family": "translation+direct-path"
     },
     "put|null": {
-      "lanes": "en hi/up *direct",
-      "family": "core+translation"
+      "lanes": "hi hi/up sw vi",
+      "family": "translation+direct-path"
     },
     "set|null": {
-      "lanes": "en hi/up *direct",
-      "family": "core+translation"
+      "lanes": "hi hi/up sw vi",
+      "family": "translation+direct-path"
     },
     "put|{}": {
       "lanes": "*direct",
@@ -35,14 +35,6 @@
     "increment|n": {
       "lanes": "en-rt *direct *up",
       "family": "semantic-en"
-    },
-    "put|arr": {
-      "lanes": "en *direct",
-      "family": "core"
-    },
-    "set|arr": {
-      "lanes": "en *direct",
-      "family": "core"
     },
     "while|#a's textContent": {
       "lanes": "pl tr tr/up",
@@ -145,16 +137,16 @@
       "family": "semantic-en"
     },
     "put|@title of #a": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "set|@title of #a": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "if|@title of #a": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "put|v of w of obj": {
       "lanes": "pl pl/up",
@@ -171,18 +163,6 @@
     "increment|v of w of obj": {
       "lanes": "en-rt *direct *up",
       "family": "semantic-en"
-    },
-    "put|textContent of .w": {
-      "lanes": "en *direct",
-      "family": "core"
-    },
-    "set|textContent of .w": {
-      "lanes": "en *direct",
-      "family": "core"
-    },
-    "if|textContent of .w": {
-      "lanes": "en",
-      "family": "core"
     },
     "while|#a.textContent": {
       "lanes": "pl tr tr/up",
@@ -236,21 +216,13 @@
       "lanes": "en-rt *direct *up",
       "family": "semantic-en"
     },
-    "put|[1, 2]": {
-      "lanes": "en *direct",
-      "family": "core"
-    },
-    "set|[1, 2]": {
-      "lanes": "en *direct",
-      "family": "core"
-    },
     "put|[n, 2]": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "set|[n, 2]": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "if|[n, 2]": {
       "lanes": "*direct",
@@ -625,20 +597,20 @@
       "family": "translation"
     },
     "put|@title of #a + \"q\"": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "set|@title of #a + \"q\"": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|\"q\" + @title of #a": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "set|\"q\" + @title of #a": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "set|(s + \"c\") + \"q\"": {
       "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
@@ -2300,18 +2272,6 @@
       "lanes": "hi hi/up qu qu/up tr tr/up",
       "family": "translation"
     },
-    "put|{} is empty": {
-      "lanes": "en bn de es fr he it ja ko pl pt ru sw th tl uk vi zh",
-      "family": "core"
-    },
-    "set|{} is empty": {
-      "lanes": "en bn de es fr he it ja ko pl pt ru sw th tl uk vi zh",
-      "family": "core"
-    },
-    "if|{} is empty": {
-      "lanes": "en bn de es fr he it ja ko pl pt ru sw th tl uk vi zh",
-      "family": "core"
-    },
     "put|my id is empty": {
       "lanes": "bn/up th/up",
       "family": "adapter"
@@ -2325,28 +2285,12 @@
       "family": "adapter"
     },
     "put|@title of #a is empty": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "set|@title of #a is empty": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
-    },
-    "if|@title of #a is empty": {
-      "lanes": "en",
-      "family": "core"
-    },
-    "put|textContent of .w is empty": {
-      "lanes": "en",
-      "family": "core"
-    },
-    "set|textContent of .w is empty": {
-      "lanes": "en",
-      "family": "core"
-    },
-    "if|textContent of .w is empty": {
-      "lanes": "en",
-      "family": "core"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|[n, 2] is empty": {
       "lanes": "*direct",
@@ -2401,16 +2345,16 @@
       "family": "adapter"
     },
     "put|{} is not empty": {
-      "lanes": "en ar ar/up bn de es fr he hi hi/up it ja ko pl pt qu qu/up ru sw th th/up tl uk vi zh",
-      "family": "core+translation"
+      "lanes": "ar ar/up hi hi/up qu qu/up th th/up",
+      "family": "translation"
     },
     "set|{} is not empty": {
-      "lanes": "en ar ar/up bn de es fr he hi hi/up it ja ko pl pt qu qu/up ru sw th th/up tl uk vi zh",
-      "family": "core+translation"
+      "lanes": "ar ar/up hi hi/up qu qu/up th th/up",
+      "family": "translation"
     },
     "if|{} is not empty": {
-      "lanes": "en ar/up bn de es fr he hi/up it ja ko pl pt qu qu/up ru sw th/up tl uk vi zh",
-      "family": "core+translation+adapter"
+      "lanes": "ar/up hi/up qu qu/up th/up",
+      "family": "translation+adapter"
     },
     "put|s is not empty": {
       "lanes": "qu qu/up",
@@ -2453,7 +2397,7 @@
       "family": "translation+direct-path"
     },
     "increment|\"7\" as Int": {
-      "lanes": "tr/up *direct",
+      "lanes": "pl tr tr/up",
       "family": "translation+direct-path"
     },
     "while|2 as Int": {
@@ -2521,20 +2465,20 @@
       "family": "direct-path"
     },
     "put|textContent of #a as Int": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "set|textContent of #a as Int": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "while|textContent of #a as Int": {
       "lanes": "tr/up *direct",
       "family": "translation+direct-path"
     },
     "increment|textContent of #a as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
@@ -2553,52 +2497,52 @@
       "family": "core+semantic-en"
     },
     "put|v of obj as Int": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "set|v of obj as Int": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "*direct",
+      "family": "direct-path"
     },
     "while|v of obj as Int": {
       "lanes": "tr/up *direct",
       "family": "translation+direct-path"
     },
     "increment|v of obj as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|length of arr as Int": {
-      "lanes": "en bn/up th/up *direct",
-      "family": "core+translation"
+      "lanes": "ar bn bn/up de es fr he hi id it ja ko pl pt qu ru sw th th/up tr uk vi zh",
+      "family": "translation+direct-path"
     },
     "set|length of arr as Int": {
-      "lanes": "en bn/up th/up *direct",
-      "family": "core+translation"
+      "lanes": "ar bn bn/up de es fr he hi id it ja ko pl pt qu ru sw th/up tr uk vi zh",
+      "family": "translation+direct-path+adapter"
     },
     "while|length of arr as Int": {
       "lanes": "ar bn bn/up de es fr he hi id it ja ko pl pt qu ru sw th/up tr tr/up uk vi zh",
       "family": "translation+direct-path+adapter"
     },
     "increment|length of arr as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|v of w of obj as Int": {
-      "lanes": "en pl/up *direct",
-      "family": "core+translation"
+      "lanes": "pl/up *direct",
+      "family": "translation+direct-path"
     },
     "set|v of w of obj as Int": {
-      "lanes": "en *direct",
-      "family": "core"
+      "lanes": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh",
+      "family": "direct-path"
     },
     "while|v of w of obj as Int": {
       "lanes": "tr/up *direct",
       "family": "translation+direct-path"
     },
     "increment|v of w of obj as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "while|#a.textContent as Int": {
       "lanes": "pl tr tr/up",

@@ -34,6 +34,22 @@ the `in.js` "query return values" / "null value in array" cases.
 
 **Decision: keep boolean `in` / `is in`.**
 
+### `the X of Y as T` converts the property (not the target)
+
+Upstream's `of` takes a unaryExpression on its right, which includes `as`, so
+it reads `the value of #inp as Int` as the value of `#inp as Int`: an element
+converted to an integer is `NaN`, and its `value` is null. HyperFixi converts
+the property, `(the value of #inp) as Int`, which is what the idiom means and
+what it has always done. The target of `the X of Y` does take a further `of`
+and a trailing `in` as upstream's does (`the textContent of <p.w/> in #w`); only
+`as` stays outside it (`THE_OF_TARGET_BP` in `src/parser/pratt-parser.ts`).
+The bare `X of Y as T` follows upstream. Pinned in
+`src/compatibility/value-parity.test.ts`; the value matrix lists these cells as
+failing in its `en` lane.
+
+**Decision (2026-09-27): keep the conversion on the property, pending the
+owner's confirmation.**
+
 ### Error-message text is not matched verbatim
 
 A few upstream tests assert exact error strings, e.g. `typecheck` "Typecheck

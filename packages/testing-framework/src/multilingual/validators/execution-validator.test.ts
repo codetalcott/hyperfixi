@@ -263,7 +263,9 @@ describe('R2 execution validator (lock)', () => {
     // deterministic signature against the existing fixture (the foundation every
     // language is scored against). next/closest positionals fall back to `me`
     // when no match exists in the fixture; set *opacity/*transform write inline
-    // style; caret-var-on-target clears #btn text (undefined `^count`).
+    // style; caret-var-on-target writes `null` into #btn (the undefined
+    // `^count`), as upstream's put writes a null value (PR 54; it used to
+    // clear the text).
     const cases: ReadonlyArray<[string, string, string[]]> = [
       [
         'next-element',
@@ -293,7 +295,7 @@ describe('R2 execution validator (lock)', () => {
       [
         'caret-var-on-target',
         'on click put ^count on #host into me',
-        ['Δ#btn cls[] attr[id=btn] style[] text[]'],
+        ['Δ#btn cls[] attr[id=btn] style[] text[null]'],
       ],
     ];
     for (const [id, code, expected] of cases) {
