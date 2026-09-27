@@ -2419,6 +2419,54 @@ Found running the loops, and **still open**:
   slot, converts positionally, and compiles to `for (let _i = 0; true; _i++)
   {}`. English is fine: core's parser builds an empty counted loop.
 
+### ~~`X of Y` took every operator after it~~ — FIXED (2026-09-27)
+
+Filed during the multilingual condition work (PR 38). Core gave `of` the
+comparisons' binding power, right-associative, so its right operand took
+every operator after it: `textContent of #d1 is "d"` read as `textContent of
+(#d1 is "d")`, the property of a boolean. Of 48 values run on both engines,
+33 differed from upstream, 28 of them from this; those 28 agree now, and the
+other five are filed below. Each put nothing, or, with arithmetic after the
+`of` (`length of arr * 2`, `b of a of obj + 1`), threw. `not X of Y` read
+as `(not X) of Y`. The `the X of Y` form parses on its own path and was right.
+
+Upstream's `of` is an indirect expression, in the same chain as `.` and `'s`,
+and its right operand is a unaryExpression. `of` now binds at 90, the
+member-access tier, so `not X of Y` and `a + X of Y` take it whole. Its right
+operand is parsed at 70, so it takes `as` and a further `of` (`c of b of a`
+stays `c of (b of a)`) and stops at arithmetic, comparison and logic. A
+trailing `in` is folded into it, as it is in upstream's chain, so `length of
+<p/> in #wrap` still counts the scoped query. Two operand forms read the
+same on both engines before the fix and still do: `length of arr as String`
+is the length of `"1,2"`, and a query takes its `in` scope.
+
+Pinned by `parser/__tests__/of-precedence.test.ts`, 50 rows; every row but
+one was run on upstream 0.9.93 as well. The exception is `length of arr ^ 2`,
+since upstream has no `^`. 44 of the rows fail on the old table, and 8
+mutants were all killed.
+
+Found alongside, and **filed**:
+
+- **Semantic drops these values, in English and every translation.** `put
+  textContent of #d1 is "d" into #out` parses as a bare `on click`, and so do
+  `put the textContent of #d1 …` and `put #d1's textContent is "d" …`. `set x
+  to textContent of #d1 is "d"` keeps `#d1's textContent` alone. A condition
+  (`if textContent of #d1 is "d"`) is right. This widens PR 43's filing about
+  a value whose first operand is a possessive.
+- **AOT compiles a bare `X of Y` verbatim**, to `(textContent of
+  document.getElementById('d1'))`, which is not JavaScript. `the X of Y`
+  compiles. The interchange converter passes the `of` binary through.
+- **Core's runtime does not read an attribute as an `of` root:** `@class of
+  #d1` puts nothing, where upstream puts `x` (`#d1's @data-n` works).
+- **A bare `X of <query>` does not map over the matches.** Core puts nothing;
+  upstream reads the property of each match (`textContent of <p.w/>` →
+  `wv`). Core's `'s` and `the X of` forms do map, but `put` writes the
+  array as `w,v`.
+- **`the X of Y` takes no `in` or `as`:** its target is parsed as a primary,
+  so `the textContent of <p.w/> in #wrap` puts `false`, where upstream puts
+  `wv`.
+- **`put` of null writes nothing in core, and `null` upstream.**
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
