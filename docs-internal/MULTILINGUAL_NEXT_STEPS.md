@@ -5781,8 +5781,8 @@ this signal was missing.
 > **In the value matrix, 3,326 failing pairs fall to 2,089 (−37%).** 1,240 pairs pass now. 3 newly
 > fail, accepted: tr/up `put` comparisons on `#a's textContent's length`, which passed because the
 > old rendering read null and each comparison with null happened to match. Kept whole, the chain
-> meets **tr's SOV value capture, which reads only its last link** (filed; the tr direct lane
-> already failed these cells). No stored corpus row moves. Dropped after measuring: a guard
+> meets ~~**tr's SOV value capture, which reads only its last link** (filed; the tr direct lane
+> already failed these cells)~~ (fixed by PR 65). No stored corpus row moves. Dropped after measuring: a guard
 > requiring one marker surface across a chain, which moved no matrix lane and no corpus row and
 > could refuse a hand-written chain whose marker follows vowel harmony (tr `nın`/`nin`).
 >
@@ -5933,6 +5933,25 @@ this signal was missing.
 > empty`), and ms reads its `kosong` (empty) as `null`. The rest of the largest families: the
 > kept `the X of Y as T` difference and its `v of w of obj as Int` sibling (about 186), and `{}` (46,
 > the object-literal filing).
+>
+> **A role reads a whole possessive chain (PR 65, 2026-09-27).** The other half of issue 1, filed
+> by PR 58: tr renders `#a's textContent's length` as `length nin textContent nin #a`, and qu the
+> same way; the value join reads the chain back (PR 58), but a role capture went through the
+> of-possessive matcher, which reads one `<property> <of-marker> <selector>` link, so tr and qu
+> `put` kept `#a's textContent`. An operator run's operand did the same, so in ten property-first
+> languages `repeat while i < length de textContent de #a` compared `i` with the text. The matcher
+> now reads the whole chain (`ofChainEnd`, the join's own reader), unless its first marker is one
+> the pattern wants next: it says an increment's `by` with `di`, its `of` too, so `incrementare i
+> di textContent di #a` is `increment i by #a's textContent`, not a chain (the value matrix caught
+> that as 18 new it pairs on the first cut).
+>
+> **In the value matrix, 1,427 failing pairs fall to 1,329 (−7%)**: tr and qu `put` cells holding
+> a chain (and a comparison, `+`, `<` or `contains` around it), and `while` bounds holding one in
+> de, es, fr, he, id, it, pl, pt, ru and uk; none newly fail. No stored corpus row moves.
+> `test/possessive-chain.test.ts` round-trips the chain in tr, qu, es and de and the it amount;
+> each of two mutants removing one piece fails it. A fallback for an operator run's operand (the
+> pattern's next token when the caller does not pass it) was dropped after measuring: no test,
+> matrix pair or corpus row moved without it.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
