@@ -5445,6 +5445,23 @@ this signal was missing.
 > (tl `kasama` is also its `inclusive`). The rest are split by their tokenizers: qu `ukupi_kan` and
 > hi `में_है` at the underscore, zh `等于` into `等` and a destination marker, and pl `równa się` into
 > two words.
+>
+> **The AOT compiles core's comparison phrases (PR 49, 2026-09-26).** PR 47's filing, which held in
+> English too. The AOT wrote a phrase operator as it is, so `n is greater than 2` compiled to `(n is
+> greater than 2)`, which is not JavaScript. It wrote postfix `exists` and `is empty` in front of
+> their operand (`exists#d1`), and passed `matches` the element its selector queries rather than the
+> selector. Each phrase now maps to the operator or helper core reads it as: the comparison and
+> equality phrases to their symbols, `includes` and `does not contain` to `contains`, `is in` to a
+> reversed `contains`, and `exists`/`is empty` to two runtime helpers. The helpers follow both
+> engines, so a plain object is not empty, as upstream reads it. Of 143 runs (26 English values and
+> their translations), 142 failed; all now pass.
+>
+> Filed, not fixed:
+>
+> - `is a` has no interchange node, so `n is a Number` does not compile.
+> - A translated `is in` fails in de and tr.
+> - The AOT cannot compile an object literal from core's parser: `{a: 1}` converts to an error node.
+> - Core reads `{} is empty` as true, where upstream reads it as false.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

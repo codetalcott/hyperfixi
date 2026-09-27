@@ -233,6 +233,31 @@ export function contains(container: unknown, item: unknown): boolean {
 }
 
 /**
+ * `exists` / `does not exist`, as core reads them: null does not exist, and
+ * neither does an empty collection (what a selector matching nothing yields);
+ * anything else, an empty string included, does.
+ */
+export function exists(value: unknown): boolean {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof NodeList !== 'undefined' && value instanceof NodeList) return value.length > 0;
+  return true;
+}
+
+/**
+ * `is empty` / `is not empty`: null and an empty string, array or NodeList are
+ * empty, and nothing else is: an element, a number, a plain object. (Upstream
+ * reads `{}` as not empty; core reads it as empty, which is filed.)
+ */
+export function isEmpty(value: unknown): boolean {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.length === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof NodeList !== 'undefined' && value instanceof NodeList) return value.length === 0;
+  return false;
+}
+
+/**
  * Check if an element matches a selector.
  */
 export function matches(element: Element, selector: string): boolean {
