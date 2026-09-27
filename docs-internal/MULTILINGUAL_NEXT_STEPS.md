@@ -6016,6 +6016,23 @@ this signal was missing.
 > cells on 22 direct lanes; none newly fail. The two left there are pl (`put`, and `pl/up`'s parse
 > error: pl's `v of w of obj` family). `value-parity.test.ts` pins six null-target rows on both
 > engines and `v of w of obj as Int` through es, ja and ar; reverting the fix fails 12 tests.
+>
+> **The `in` after a copula is the operator, in de and it too (PR 69, 2026-09-27).** The `is in`
+> family from PR 67's list. The operator stays English in every rendering, and in de and it `in` is
+> also the `into` marker: `put 2 is in [1, 2, 6] into #out` renders de `setzen 2 ist in [1, 2, 6] in
+> #out`. The value join read that `in` as `destination` (`if 2 is destination arr`), and a value's
+> extent stopped at it as the marker the pattern owes, so the de `put` lost everything and it `put
+> obj's v è in [1, 2, 6] in #out` kept `obj's v into`. Directly after the copula (`is`, `is not`,
+> as the join reads the word before it) `in` is now the operator in every language: the join keeps
+> it (`isCopulaIn`, expression-lexicon.ts), and the value extent runs through it.
+>
+> **In the value matrix, 843 failing pairs fall to 694 (−18%)**: every `is in` cell in de (53
+> direct, 60 through the adapter) and it (12, 12), and six in tr (`obj's v is in`, `String(n) is
+> in` …: tr's `in` is its genitive too); none newly fail. No stored corpus row moves. The only `is
+> in` cells left are pl's `v of w of obj` family. `test/copula-in.test.ts` round-trips six `is in`
+> and two `is not in` sources through all 23 languages (qu's `is not` is the filed `mana`
+> collision) and keeps `in` as the de and it `into` marker elsewhere; reverting the join's rule
+> fails 9 tests, the extent's boundary 6, and its continuation 2.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
