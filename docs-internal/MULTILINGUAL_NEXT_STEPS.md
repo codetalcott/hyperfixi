@@ -5810,9 +5810,9 @@ this signal was missing.
 >
 > `equal` does not mark an operand: `is greater than or equal to` puts a conjunction right before
 > it (es `mayor que o igual a`, it `maggiore o uguale a`), which core's condition-phrase test caught
-> when the first cut had it. Filed on the way: **pl keeps `equal to` in English and reads `to` as its
-> own word for `it`**, so `p is greater than or equal to 1` reads back `… or equal it 1`, on main
-> too.
+> when the first cut had it. Filed on the way: ~~**pl keeps `equal to` in English and reads `to` as
+> its own word for `it`**, so `p is greater than or equal to 1` reads back `… or equal it 1`, on main
+> too.~~ Fixed by PR 62.
 >
 > tr's `i` is a different problem: its accusative marker, a particle, not a conjunction (`i i 2
 > artır` drops the amount). What is left, 1,840 pairs: tr 604, qu 206, de 138, and every other
@@ -5873,6 +5873,26 @@ this signal was missing.
 > Not fixed: sw `increment i by null` still reads `increment i then empty`, because `tupu` is also
 > an alternative of the `empty` command's verb and a counter's bare amount never captures a command
 > word; upstream reads that program as NaN anyway.
+>
+> **pl reads English `equal to` (PR 62, 2026-09-27).** Every language renders `is greater than or
+> equal to`, `is less than or equal to` and `is equal to` with `equal to` in English, and pl's
+> profile has `to` as its word for `it`, so `p is greater than or equal to 1` read back `… or equal
+> it 1` and `p is equal to 1` compared `p` with `it` (on main before PR 59 too). The value join now
+> keeps an English `to` right after `equal` as the phrase's own, in every language; only pl
+> collided. The value matrix has no operator phrases, so it moves no pair, and no stored corpus row
+> moves. pl joins es, he and it in core's `condition-phrases-direct-path.test.ts` (every condition
+> row passes on the direct path) and semantic's `or equal to` case, and
+> `test/connective-operand.test.ts` round-trips four `equal to` phrases in pl; reverting the rule
+> fails both.
+>
+> Filed on the way, the same shape as `contains` before PR 57 — a lexicon entry the tokenizer splits
+> into two tokens, so the join never sees the word:
+>
+> - **pl `równa się` and zh `等于` (`equals`)**: `p equals 2` reads back `p równa się 2` in pl
+>   (kept verbatim; in a `put` value the value is lost) and `p 等 destination 2` in zh (`于` is a
+>   marker). Core's condition-phrase test runs its `equals` rows in English only.
+> - qu `mana` (`not`, also `false`) still reads `p is not equal to 1` as `p is false equal to 1`:
+>   the filed `mana` collision.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
