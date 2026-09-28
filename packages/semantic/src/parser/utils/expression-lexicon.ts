@@ -32,6 +32,7 @@
  */
 
 import type { LanguageToken } from '../../types';
+import { BINARY_OPERATORS, OPERATOR_CHARACTERS } from './operators';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
@@ -990,27 +991,23 @@ export function ambiguousSenseOf(
   return resolveAmbiguousSense(languageCode, token, prev, next, undefined, undefined);
 }
 
-/** Tokens a conjunction can never follow: an operator, or an opening bracket or comma. */
-const BEFORE_OPERAND = /^(?:[<>=!+\-*/%]+|[([,])$/;
+/** A token a conjunction can never follow: an operator, or an opening bracket or comma. */
+function precedesOperand(value: string): boolean {
+  return OPERATOR_CHARACTERS.test(value) || value === '(' || value === '[' || value === ',';
+}
 
-/** Tokens a conjunction can never precede. A `-` is not one: it may be unary. */
-const AFTER_OPERAND = new Set([
-  '<',
-  '>',
-  '<=',
-  '>=',
-  '==',
-  '!=',
-  '===',
-  '!==',
-  '+',
-  '*',
-  '/',
-  '%',
-  ')',
-  ']',
-  ',',
-]);
+/**
+ * A token a conjunction can never precede: a binary operator, or a closing
+ * bracket or comma. Not `-`, which may be unary.
+ */
+function followsOperand(value: string): boolean {
+  return (
+    (BINARY_OPERATORS.has(value) && value !== '-') ||
+    value === ')' ||
+    value === ']' ||
+    value === ','
+  );
+}
 
 /**
  * Comparison words that take an operand on their left, as a conjunction
@@ -1055,9 +1052,9 @@ export function isConnectiveOperand(
   if (sense !== 'and' && sense !== 'or') return false;
   // Alone, it joins nothing: an `if` condition that is only the word (es `si y`).
   if (prev === undefined && next === undefined) return true;
-  if (prev !== undefined && BEFORE_OPERAND.test(prev.value)) return true;
+  if (prev !== undefined && precedesOperand(prev.value)) return true;
   if (next === undefined) return false;
-  if (AFTER_OPERAND.has(next.value)) return true;
+  if (followsOperand(next.value)) return true;
   const nextWord =
     next.kind === 'keyword'
       ? (next.normalized ?? next.value).toLowerCase()

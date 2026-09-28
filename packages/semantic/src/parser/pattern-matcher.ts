@@ -51,8 +51,8 @@ import {
   TYPE_CHECK_PHRASES,
 } from '../ast-builder/expression-parser/parser';
 import { EXPRESSION_WORDS, OPERATOR_WORDS, readsAsOneExpression } from './utils/value-extent';
+import { COMPARISON_OPERATORS, RUN_OPERATORS } from './utils/operators';
 import {
-  RUN_OPERATORS,
   SlotContext,
   articleIsVariable,
   isParticleAfterOf,
@@ -1005,14 +1005,7 @@ export class PatternMatcher {
    * a query literal, and `!=` as an operator) plus `and`/`or` by normalized form.
    */
   private static readonly LOOP_CONDITION_OPERATORS: ReadonlySet<string> = new Set([
-    '<',
-    '>',
-    '<=',
-    '>=',
-    '==',
-    '!=',
-    '===',
-    '!==',
+    ...COMPARISON_OPERATORS,
     'and',
     'or',
   ]);
