@@ -34,6 +34,8 @@
 import type { LanguageToken } from '../../types';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
+import { isValidReference } from '../../types';
+import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 
 // prettier-ignore
@@ -1154,6 +1156,51 @@ export function ofChainEnd(
   return k > start + 2 && tokens[k]?.kind === 'selector' ? k : undefined;
 }
 
+/** Control words and the copula, which are structure and never a value (see isStructureKeyword). */
+const STRUCTURE_WORDS: ReadonlySet<string> = new Set([
+  'if',
+  'unless',
+  'while',
+  'until',
+  'for',
+  'when',
+  'where',
+  'is',
+  'not',
+  'no',
+  'and',
+  'or',
+  'as',
+]);
+
+/**
+ * A keyword that is structure: a role marker (normalized to its role, as tr
+ * `na` is `destination`), a control word or the copula. Never a reference
+ * (`me`, `event`), which is a value. Not a command verb, which is structure only
+ * where no dropped command can have left it (`PatternMatcher.isVariableShapedVerb`,
+ * `isLoneStructureWord`).
+ */
+export function isStructureKeyword(token: LanguageToken): boolean {
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (norm === 'event' || isValidReference(norm)) return false;
+  return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
+}
+
+/**
+ * A word alone that can only be a variable the language spells like it: a
+ * structure keyword (above), a command verb, or a particle (which normalizes to
+ * its role's name). A translation writes a variable verbatim, so `if si` (es
+ * `si` is `if`) and tr `eğer al` (`al` is `get`) name the variable, and joined
+ * as English they read `if if`, `if get`. Unlike a role capture, a whole
+ * joined value is never what a dropped command leaves, so a verb counts here.
+ */
+export function isLoneStructureWord(token: LanguageToken): boolean {
+  if (token.kind === 'particle') return true;
+  if (token.kind !== 'keyword') return false;
+  if (isStructureKeyword(token)) return true;
+  return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase());
+}
+
 /**
  * Join a token slice into the English expression text stored on an `expression`
  * value — the shared seam for every raw-expression capture.
@@ -1189,6 +1236,8 @@ export function joinExpressionTokens(
   profile: LanguageProfile | undefined
 ): string {
   const languageCode = profile?.code ?? 'en';
+  const [only] = tokens;
+  if (tokens.length === 1 && only && isLoneStructureWord(only)) return only.value;
   let out = '';
   let previous: LanguageToken | undefined;
   /** The text appended for `previous`: how this join read the last word. */

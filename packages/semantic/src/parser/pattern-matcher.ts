@@ -44,6 +44,7 @@ import {
   isCopulaIn,
   ambiguousSenseOf,
   isParticleAfterOf,
+  isStructureKeyword,
   ofChainEnd,
 } from './utils/expression-lexicon';
 import {
@@ -89,37 +90,6 @@ function isSigilProperty(value: string): boolean {
   return value.startsWith('*') || value.startsWith('@');
 }
 
-/** Control words and the copula, which are structure and never a value (see isStructureKeyword). */
-const STRUCTURE_WORDS: ReadonlySet<string> = new Set([
-  'if',
-  'unless',
-  'while',
-  'until',
-  'for',
-  'when',
-  'where',
-  'is',
-  'not',
-  'no',
-  'and',
-  'or',
-  'as',
-]);
-
-/**
- * A keyword that is structure: a role marker (normalized to its role, as tr
- * `na` is `destination`), a control word or the copula. Never a reference
- * (`me`, `event`), which is a value. Nor a command verb: alone in a slot it is
- * also what a dropped command leaves (`tell #modal to show`, whose `show` the
- * role normalization discards as junk), so a variable spelled like a verb (es
- * `ir`, tr `al`) stays open.
- */
-function isStructureKeyword(token: LanguageToken): boolean {
-  const norm = (token.normalized ?? token.value).toLowerCase();
-  if (norm === 'event' || isValidReference(norm)) return false;
-  return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
-}
-
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
@@ -142,6 +112,11 @@ export class PatternMatcher {
    * every enclosing group: a value stops at any marker the pattern still owes.
    */
   private patternRest: PatternToken[] = [];
+  /**
+   * Whether the role slot being matched directly follows its own marker,
+   * already matched (`[por {quantity}]`; see followsOwnMarker).
+   */
+  private slotAfterOwnMarker = false;
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
   /**
@@ -373,6 +348,7 @@ export class PatternMatcher {
 
       const outerRest = this.patternRest;
       this.patternRest = [...patternTokens.slice(i + 1), ...outerRest];
+      this.slotAfterOwnMarker = this.followsOwnMarker(tokens, patternToken, patternTokens[i - 1]);
       const matched = this.matchPatternToken(
         tokens,
         patternToken,
@@ -1218,7 +1194,7 @@ export class PatternMatcher {
     nextPatternToken?: PatternToken
   ): boolean {
     // Skip noise words like "the" before selectors (English idiom support)
-    this.skipNoiseWords(tokens);
+    this.skipNoiseWords(tokens, nextPatternToken);
 
     const token = tokens.peek();
     if (!token) {
@@ -1360,7 +1336,22 @@ export class PatternMatcher {
         (patternToken.role === 'event' && this.currentPatternCommand === 'repeat')
       ) {
         const qNorm = (token.normalized ?? token.value).toLowerCase();
-        if (qNorm in commandSchemas) {
+        // After the slot's own marker the verb is the value, a variable the
+        // language spells like it: es `incrementar i por ir` (by ir), it
+        // `di se` (by se). So is one right before the pattern's own next
+        // literal: tr `i i al artır` (increment i by al), where the increment
+        // verb follows the amount. A marker-less slot before another command
+        // keeps the guard (`wiederholen forever umschalten .pulse`).
+        const beforeNext =
+          !!nextPatternToken &&
+          !!tokens.peek(1) &&
+          this.patternTokenWouldMatch(nextPatternToken, tokens.peek(1)!) &&
+          !this.currentSchema()?.hasBody;
+        if (
+          qNorm in commandSchemas &&
+          !this.verbIsMarkedValue(tokens, nextPatternToken) &&
+          !beforeNext
+        ) {
           return patternToken.optional || false;
         }
       }
@@ -1423,7 +1414,8 @@ export class PatternMatcher {
       const verbNorm = (token.normalized ?? token.value).toLowerCase();
       if (
         verbNorm in commandSchemas &&
-        (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token))
+        (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token)) &&
+        !this.verbIsMarkedValue(tokens, nextPatternToken)
       ) {
         return true; // skip the optional slot; the verb is not its value
       }
@@ -1817,6 +1809,11 @@ export class PatternMatcher {
           (nextToken.kind === 'particle' ||
             tokens.tokens[tokens.position() - 1]?.kind === 'particle')) ||
           this.runOperatorFollows(tokens))) ||
+        // …and one right after its own slot's marker, before an unmarked role,
+        // whose value the next token is: pl `ustaw do o 5` (set o to 5), it
+        // `impostare in ai 5`. (Before a value of its own it is part of the
+        // marker: id `ke dalam #out`.)
+        (this.slotAfterOwnMarker && nextPatternToken?.type === 'role') ||
         // …and one that ends the clause: es `incrementar a entonces`
         // (increment a), `establecer x a a` (set x to a).
         this.endsClauseAfter(tokens))
@@ -1841,7 +1838,7 @@ export class PatternMatcher {
       patternToken.valueShape !== 'keyword' &&
       (!patternToken.expectedTypes?.length ||
         patternToken.expectedTypes.some(t => t === 'expression' || t === 'reference')) &&
-      isStructureKeyword(token)
+      (isStructureKeyword(token) || this.isVariableShapedVerb(tokens, nextPatternToken))
     ) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();
@@ -2320,6 +2317,73 @@ export class PatternMatcher {
     return undefined;
   }
 
+  /**
+   * Does a role slot sit right after its own marker? In a language whose
+   * markers precede their values, the literal before a slot is its marker,
+   * unless what it matched is the command's verb (`poner {patient}`). In a
+   * postpositional one the literal before a slot is the previous role's.
+   */
+  private followsOwnMarker(
+    tokens: TokenStream,
+    patternToken: PatternToken,
+    previous: PatternToken | undefined
+  ): boolean {
+    if (patternToken.type !== 'role' || previous?.type !== 'literal') return false;
+    if (this.currentProfile?.markingStrategy !== 'preposition') return false;
+    const matched = tokens.tokens[tokens.position() - 1];
+    if (!matched) return false;
+    // A particle is a marker, whatever it also normalizes to (pt `por` is also
+    // `pôr`, put; it `di` also `dire`, tell).
+    if (matched.kind === 'particle') return true;
+    return !COMMAND_ACTION_KEYWORDS.has((matched.normalized ?? matched.value).toLowerCase());
+  }
+
+  /**
+   * Is a verb in this slot its value? When the slot sits right after its own
+   * marker and the verb stands alone, nothing can begin a command there: es
+   * `incrementar i por ir` (by ir), it `di se` (by se). A verb with more after
+   * it is still the next command (a zh row's stray `停止 把 调用 saveDocument()`,
+   * halt then call). Not in a command that takes a body, where a verb is the
+   * body's (see isVariableShapedVerb).
+   */
+  private verbIsMarkedValue(tokens: TokenStream, nextPatternToken?: PatternToken): boolean {
+    return (
+      this.slotAfterOwnMarker &&
+      !this.currentSchema()?.hasBody &&
+      this.standsAlone(tokens, nextPatternToken)
+    );
+  }
+
+  /**
+   * A command verb alone in a slot, which names a variable the language spells
+   * like it (es `ir` "go", fr `va`, tr `al` "get"): captured whole it was the
+   * English verb, `put go`. Alone means before the pattern's next marker or at
+   * the clause's end; a verb followed by anything else begins the next command
+   * (zh `停止 调用 saveDocument()`, halt then call). Not in a command that takes
+   * a body (`tell #modal to show`, ja and qu), where a verb in a slot is the
+   * body command the pattern dropped, which the role normalization discards;
+   * nor in one that names an event, whose name may be a verb's (`trigger init`).
+   * Nor `empty`, which alone is `null`.
+   */
+  private isVariableShapedVerb(tokens: TokenStream, nextPatternToken?: PatternToken): boolean {
+    const token = tokens.peek();
+    const norm = (token?.normalized ?? token?.value ?? '').toLowerCase();
+    // `empty` alone is `null` (sw `tupu`, ms `kosong`), read below.
+    if (!COMMAND_ACTION_KEYWORDS.has(norm) || norm === 'empty') return false;
+    const schema = this.currentSchema();
+    if (schema?.hasBody || schema?.roles.some(r => r.role === 'event')) return false;
+    return this.standsAlone(tokens, nextPatternToken);
+  }
+
+  /** Is the token next in the stream followed by the pattern's next marker, or the clause's end? */
+  private standsAlone(tokens: TokenStream, nextPatternToken?: PatternToken): boolean {
+    const next = tokens.peek(1);
+    return (
+      this.endsClauseAfter(tokens) ||
+      (!!next && this.patternTokenWouldMatch(nextPatternToken, next))
+    );
+  }
+
   /** Is the token after the next one a clause boundary (`then`, `end`, `else`) or nothing? */
   private endsClauseAfter(tokens: TokenStream): boolean {
     const next = tokens.peek(1);
@@ -2690,6 +2754,19 @@ export class PatternMatcher {
     if (this.logicalConnectiveOf(tokens) === 'not') {
       const mark = tokens.mark();
       tokens.advance();
+      // Unless what follows is a marker and its value: then the word is a
+      // variable spelled like `not` (sw `weka si kwa #out`, put si into
+      // #out), and the particle is the next role's.
+      const after = tokens.peek(1);
+      if (
+        tokens.peek()?.kind === 'particle' &&
+        after &&
+        ['selector', 'literal', 'identifier'].includes(after.kind) &&
+        !this.runOperatorFollows(tokens)
+      ) {
+        tokens.reset(mark);
+        return false;
+      }
       if (this.tryConsumeRunOperand(tokens, true, afterConnective)) return true;
       tokens.reset(mark);
       return false;
@@ -4463,7 +4540,7 @@ export class PatternMatcher {
    * This enables more natural English syntax like "toggle the .active"
    * and "set the color to red".
    */
-  private skipNoiseWords(tokens: TokenStream): void {
+  private skipNoiseWords(tokens: TokenStream, nextPatternToken?: PatternToken): void {
     const token = tokens.peek();
     if (!token) return;
 
@@ -4485,6 +4562,16 @@ export class PatternMatcher {
         (tokenLower === 'a' || tokenLower === 'an') &&
         nextToken &&
         PatternMatcher.BINARY_OPERATOR_TEXT.test(nextToken.value)
+      ) {
+        tokens.reset(mark);
+        return;
+      }
+      // So is one before the pattern's next marker: de `erhöhe a um 1`
+      // (increment a by 1), whose `um` the tokenizer leaves an identifier.
+      if (
+        (tokenLower === 'a' || tokenLower === 'an') &&
+        nextToken &&
+        this.patternTokenWouldMatch(nextPatternToken, nextToken)
       ) {
         tokens.reset(mark);
         return;
