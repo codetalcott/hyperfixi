@@ -6548,8 +6548,8 @@ word by word:
 | #   | Reads                                                                                                                                                                                         | Where            | PR                           | Pinned by                                                                                          |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
 | S1  | a condition's first `if` word opens no nested block (es `si si …`)                                                                                                                            | block collection | 84                           | `colliding-names.test.ts`                                                                          |
-| S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | copula guard     | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, core `condition-copula-direct-path.test.ts` |
-| S3  | a copula that is the condition's first word is a variable (es `si es poner …`); a leading negation keeps its operand unless a command verb follows (sw `kama si weka …`)                     | copula guard     | 84                           | `colliding-names.test.ts`                                                                          |
+| S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | `copulaHoldsCondition` (`value-reading.ts`) | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, core `condition-copula-direct-path.test.ts` |
+| S3  | a copula that is the condition's first word is a variable (es `si es poner …`); a leading negation keeps its operand unless a command verb follows (sw `kama si weka …`)                     | `copulaHoldsCondition` (`value-reading.ts`) | 84                           | `colliding-names.test.ts`                                                                          |
 
 **What they share.** Four sub-predicates recur. Since PR 87 each has one definition, on the
 `SlotContext` a capture builds once, at the token its value starts at (`value-reading.ts`):
@@ -6656,6 +6656,23 @@ of it keeps the difference explicit and is filed instead.
   `no .w`, `obj.v mod 3`, `obj.v and w`): the operator run reads those first, and `continuesValue`
   refuses `then`/`end`/`else` as the boundary does.
 
+- **PR 92, the condition scan** (S2, S3): the copula guard of `tryParseConditionalBlock` — S2's
+  "after a copula the next word is its predicate" and S3's "unless the copula is the condition's
+  first word" — is one named predicate, `copulaHoldsCondition`, in `value-reading.ts`, with the
+  three word sets it reads (`CONDITION_COPULAS`, `CONDITION_COPULAS_SURFACE`,
+  `CONDITION_PREDICATES`). It reproduces the old expression case by case: not a copula; a copula
+  that is not first; a first copula, which holds only as a negation before a word that is not a
+  command verb. S1 (the first `if` word opens no block) stays a one-line test in the block
+  collection. Oracle identical. Lines: `semantic-parser.ts` 8,653 → 8,572, `value-reading.ts` 365 →
+  439 (the sets' comments moved with them). Of 9 mutants, 5 fail the rules' tests; four survive the
+  full suite. Dropped together they move 26 extended-names entries and 12 full-names entries, and
+  no corpus row; bisected: S2's "a rendered surface only before a predicate" protects ar `إذا ليس
+  هو ضع …` (`if not it put …`, the pronoun after a leading negation), pinned now
+  (`value-reading.test.ts`); S3's leading negation and its connective reading move only names
+  English cannot have either (`no`, `not`, `add`, `get`, `put`, `set`) and tr `yok` (filed
+  below); the predicate exception moves nothing. None moves anything on the shapes the comments
+  name (ar `if it set …`, es `si es poner …`, sw `kama si weka …`, `if my value is empty …`).
+
 **Found by the consolidation, not fixed in it** (a refactor PR moves no oracle item):
 
 - **C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.** A particle before a run
@@ -6682,6 +6699,12 @@ of it keeps the difference explicit and is filed instead.
   likewise: a marker-shaped name inside an expression joins as its role name. On main. So does
   one after `of` (found by PR 91's mutants): de `length of aus`, `length of von` and fr `length
   of de` read `length of source`.
+- **tr `if yok put …` (a variable spelled like tr `no`) reads `if no "Y" …`** in the SOV `if`
+  (found by PR 92's mutants): S3 takes `yok` for a leading negation, which holds its next word, and
+  the next word is the branch's patient (`eğer yok "Y" i #out e koy` keeps `"Y"` in the
+  condition). Without the negation half of S3 it reads right, and nothing else measured moves but
+  names English cannot have; the same holding reads bn/hi/ja/ko/qu `if not` and `if no` with no
+  operand that way.
 - **Names inside expressions** (part 3's question, measured): the extended names oracle's
   reference, on main, has 4,433 of 113,321 entries (3.9%) whose read-back differs from the English
   re-render. Without the English keywords a variable cannot be named in English either (`at`,

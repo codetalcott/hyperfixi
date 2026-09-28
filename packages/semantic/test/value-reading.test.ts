@@ -53,3 +53,17 @@ describe('value readings the particle cluster pins', () => {
     expect(render(parse(source, language)!, 'en')).toBe(english);
   });
 });
+
+describe('the condition scan pins (PR 92)', () => {
+  // A rendered copula that is also another word (ar هو is `it`) holds the
+  // condition only before a predicate adjective. After a leading negation
+  // هو is the pronoun, and the command after it opens the branch: `if not it
+  // put …`, which only the extended names oracle read before. `if it set …`
+  // is the shape the rule's comment names; another reading holds it today.
+  it.each([
+    ['ar', 'on click if not it then put "Y" into #out end'],
+    ['ar', 'on click if it set x to 1 end then put x into #out'],
+  ])('%s: %s', (language, source) => {
+    expect(readBack(source, language)).toBe(render(parse(source, 'en')!, 'en'));
+  });
+});
