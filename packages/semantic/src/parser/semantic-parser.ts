@@ -42,14 +42,11 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import {
-  COMMAND_ACTION_KEYWORDS,
-  joinExpressionTokens,
-  translateConnective,
-} from './utils/expression-lexicon';
+import { joinExpressionTokens } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
+import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
@@ -7350,65 +7347,6 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Copula / negation words that, when they immediately precede a token, keep that
-   * token inside the condition even if it doubles as a command verb. `empty` is
-   * both the `empty` command and the predicate adjective in `is empty`; without
-   * this guard `if my value is empty add …` would truncate the condition at
-   * `empty` and treat it as the then-branch's first command.
-   */
-  private static readonly CONDITION_COPULAS = new Set([
-    'is',
-    'am',
-    'are',
-    'be',
-    'was',
-    'were',
-    'not',
-    'no',
-  ]);
-
-  /**
-   * Rendered copulas that {@link CONDITION_COPULAS} can't catch, because they do
-   * not normalize to `is`. Without these, the i18n-rendered `if my value <copula>
-   * <empty-word> add …` split the condition at the predicate — the empty-word
-   * doubles as the language's `empty`/`null` COMMAND keyword — and a phantom
-   * `empty me` command opened the then-branch (if-empty / input-validation, the
-   * spurious-`empty` ×22 R0-precision family).
-   *
-   * Unlike the normalized copulas above, these suppress the split ONLY when the
-   * next token is a predicate ADJECTIVE (normalizes to empty/null/undefined),
-   * because each is ambiguous with another sense — which is exactly why the
-   * copula slice could not register them as `is` profile keywords:
-   *   - ar هو is also the pronoun `it` (and `profile.references.it` is registered
-   *     AFTER `keywords`, so an `is` entry would be silently overwritten anyway);
-   *     `إذا هو اضبط …` = `if it set …` needs the split at the command verb.
-   *   - hi है is also `has`/`have`.
-   *   - th เป็น is also `as` (the same ambiguity that keeps it out of
-   *     CONNECTIVE_LEXICON).
-   *
-   * The other nine surfaces this set used to carry (fr est, ru есть, uk є, pt é,
-   * tl ay, ms adalah, bn হয়, tr dir, qu kanqa) are now registered as `is` profile
-   * keywords, so they normalize to `is` and are caught by CONDITION_COPULAS on the
-   * line above — the surface entries were dead. Note the normalized path is
-   * strictly BROADER (it suppresses regardless of what follows, not only before a
-   * predicate), which is why dropping them is safe.
-   */
-  private static readonly CONDITION_COPULAS_SURFACE = new Set([
-    'هو', // ar (keyword norm=`it` — matched by surface VALUE)
-    'เป็น', // th
-    'है', // hi
-    // hi नहीं is `not` after the copula (`है नहीं खाली`, is not empty). It was
-    // also `no`, so it had no connective entry the normalized check could read.
-    'नहीं',
-    // qu mana is `not` there too (`kanqa mana chusaq`), and `false`; its
-    // predicate chusaq is also the `empty` command, which opened the then-branch.
-    'mana',
-  ]);
-
-  /** Predicate adjectives (normalized) that follow a copula inside a condition. */
-  private static readonly CONDITION_PREDICATES = new Set(['empty', 'null', 'undefined']);
-
-  /**
    * Condition operators that join two operands inside an `if` condition
    * expression (`I match .x`, `me contains .y`, `#m exists`). An operator can
    * never begin a then-branch command, so the condition extraction must not
@@ -7663,33 +7601,14 @@ export class SemanticParserImpl implements ISemanticParser {
         break;
       }
       if (bodyDepth === 0 && condTokens.length > 0) {
-        const prev = (blockTokens[i - 1].normalized ?? blockTokens[i - 1].value).toLowerCase();
-        const prevValue = blockTokens[i - 1].value.toLowerCase();
         const cur = (t.normalized ?? t.value).toLowerCase();
-        // Surface-value copulas (fr est, ru есть, ar هو, …) only guard a
-        // PREDICATE continuation — several double as other senses (هو = `it`).
-        const copula =
-          SemanticParserImpl.CONDITION_COPULAS.has(prev) ||
-          SemanticParserImpl.CONDITION_COPULAS.has(translateConnective(language, prevValue)) ||
-          (SemanticParserImpl.CONDITION_COPULAS_SURFACE.has(prevValue) &&
-            SemanticParserImpl.CONDITION_PREDICATES.has(cur));
-        // A copula that is the condition's first word has no operand before it,
-        // so it is a variable the language spells like `is` (es `si es poner
-        // …`, sw `kama ni weka …`), and the command after it is the branch. A
-        // leading negation takes its operand after it, so only a command verb
-        // (never an operand) ends it there: sw `kama si weka …`, if si.
-        const leading = condTokens.length === 1;
-        const negation =
-          prev === 'not' || prev === 'no' || translateConnective(language, prevValue) === 'not';
-        const prevIsCopula =
-          copula &&
-          !(
-            leading &&
-            (!negation ||
-              (t.kind === 'keyword' &&
-                COMMAND_ACTION_KEYWORDS.has(cur) &&
-                !SemanticParserImpl.CONDITION_PREDICATES.has(cur)))
-          );
+        // Does a copula before this word keep it in the condition (S2, S3)?
+        const prevIsCopula = copulaHoldsCondition(
+          blockTokens[i - 1],
+          t,
+          condTokens.length === 1,
+          language
+        );
         // A condition operator (`match`/`contains`/`exists`/…) is part of the
         // expression, never a then-branch command head — don't truncate at it
         // even if a verb-last SOV command pattern spuriously matches the span.
@@ -7721,7 +7640,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const curIsSovCommandVerb =
           sovVerbLookup !== null &&
           sovVerbLookup.has(t.value.toLowerCase()) &&
-          !SemanticParserImpl.CONDITION_PREDICATES.has(cur);
+          !CONDITION_PREDICATES.has(cur);
         // A `.member` selector glued to the previous token (no source gap) is a
         // member-access continuation of the condition (bn `এর.error`), never a
         // command head — the SOV verb-final checker would otherwise fire here
