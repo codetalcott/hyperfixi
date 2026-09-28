@@ -314,6 +314,10 @@ describe('a structure word that is structure', () => {
       '当 keydown[key=="s"] 从 窗口 如果 event.ctrlKey 停止 把 调用 saveDocument() 结束',
       'on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument() end',
     ],
+    // An event name may be a verb's: the stored rows of `on load trigger init`.
+    ['bn', 'শুরু কে লোড এ ট্রিগার', 'on load trigger init'],
+    ['ms', 'apabila load cetuskan mula', 'on load trigger init'],
+    ['ru', 'при загрузка запустить инициализировать', 'on load trigger init'],
     // A two-word marker's second word is not the value (id `ke dalam`).
     ['id', 'ketika klik taruh obj.v ke dalam #out', 'on click put obj.v into #out'],
     ['id', 'ketika klik taruh 2 + 2 ke dalam #out', 'on click put 2 + 2 into #out'],
