@@ -90,10 +90,28 @@ function toSetInput(target: WriteTarget, value: unknown): SetCommandInput {
         property: target.target.property,
         value,
       };
+    case 'member':
+      return {
+        type: 'member-assignment',
+        container: target.container,
+        property: target.property,
+        value,
+      };
     default:
       throw new Error(`set: unrequested write-target rung '${target.kind}'`);
   }
 }
+
+/**
+ * The write-target rungs set requests (`helpers/write-target.ts`, which
+ * documents why the rung order is semantics): the plugin writers — `set ^count
+ * to 0` routes through the reactivity plugin's caretVar writer, and it must see
+ * the raw node because the target value hasn't been written yet — the `*prop`
+ * style split, and the `of` operator's and an object's property (`set
+ * textContent of #a to 5`, `set o's v to 5`). Not selector-source or
+ * bare-reference capture; those shapes are set's evaluated tail.
+ */
+const SET_RUNGS = { nodeWriters: true, styleSplit: true, ofAndObjectProperty: true } as const;
 
 @command({ name: 'set' })
 export class SetCommand implements DecoratedCommand {
@@ -132,17 +150,10 @@ export class SetCommand implements DecoratedCommand {
     // to element scope / globals instead of execution-locals.
     const argScope = firstArg?.scope as 'element' | 'global' | 'local' | undefined;
 
-    // The raw-AST write-target ladder, shared with append/prepend
-    // (`helpers/write-target.ts`, which documents why the rung order is
-    // semantics). set requests the plugin-writer rung — `set ^count to 0` routes
-    // through the reactivity plugin's caretVar writer, and it must see the raw
-    // node because the target value hasn't been written yet — and the `*prop`
-    // style split. It does NOT request selector-source or bare-reference
-    // capture; those shapes are set's evaluated tail below.
+    // The raw-AST write-target ladder, shared with append/prepend (SET_RUNGS).
     const writeTarget = await resolveWriteTarget(firstArg, evaluator, context, {
       scopeElements: () => this.resolveTargets(raw.modifiers.on, evaluator, context),
-      nodeWriters: true,
-      styleSplit: true,
+      ...SET_RUNGS,
     });
     if (writeTarget) {
       return toSetInput(writeTarget, await this.extractValue(raw, evaluator, context));

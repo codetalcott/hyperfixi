@@ -2558,7 +2558,13 @@ null target now reads null. `runtime-ast-coverage.test.ts` pinned the throw; it
 pins upstream's result now, and `value-parity.test.ts` pins six null-target rows
 on both engines. The value matrix moved 88 pairs.
 
-### Core cannot write a property of a variable through `'s` or `of` (2026-09-28, filed by PR 76)
+### ~~Core cannot write a property of a variable through `'s` or `of`~~ — FIXED (2026-09-28, PR 82; filed by PR 76)
+
+**Fixed:** a new opt-in rung in the shared write-target ladder (`helpers/write-target.ts`, 4b,
+requested by `set` only) reads the `of` operator's element property and an object's property
+through `'s` or `of`; the direct path's counter reads and writes an object's property and an
+attribute. It also fixed `set textContent of #a to 5` (core's bare `of`), which wrote nothing.
+`value-parity.test.ts` pins the rows. The filing:
 
 `set o's v to 5` throws `set command target must be a string or object
 literal`, which stops the handler, and so do `set v of o to 5`, `increment o's

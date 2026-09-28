@@ -187,6 +187,48 @@ describe('a bracketed attribute and an article-named variable, on both paths', (
   });
 });
 
+// A property of an object written through `'s` or `of`, and an attribute
+// counted (PR 82): English threw on `set obj's v` and `set v of obj` ("set
+// command target must be a string or object literal") and wrote nothing for
+// `set textContent of #a`, core's bare `of`; the direct path's counter wrote an
+// object's property and an attribute nowhere. `set obj.v` and an element's
+// property already agreed. Each row is upstream's result.
+const WRITES: Array<[string, string]> = [
+  ["set obj's v to 5 then put obj.v into #out", '5'],
+  ['set v of obj to 5 then put obj.v into #out', '5'],
+  ['set the v of obj to 5 then put obj.v into #out', '5'],
+  ['set textContent of #a to 5 then put #a.textContent into #out', '5'],
+  ["increment obj's v then put obj.v into #out", '7'],
+  ['increment v of obj then put obj.v into #out', '7'],
+  ['increment obj.v then put obj.v into #out', '7'],
+  ['decrement obj.v then put obj.v into #out', '5'],
+  ['increment @title then put my @title into #out', '1'],
+  ['increment @title by 2 then put my @title into #out', '2'],
+  ['set @title to 5 then increment @title then put my @title into #out', '6'],
+  ['set obj.v to 5 then put obj.v into #out', '5'],
+  ["increment #a's textContent then put #a.textContent into #out", '7'],
+];
+
+describe("an object's property and an attribute are written, on both paths", () => {
+  it.each(WRITES)('English: %s', async (body, expected) => {
+    expect(await click(body)).toBe(expected);
+  });
+
+  it.each(WRITES)('direct path: %s', async (body, expected) => {
+    expect(await direct(body)).toBe(expected);
+  });
+
+  // ar and zh read the word after an increment's target as its amount
+  // (`increment obj by '`, `increment v by of`): semantic's, filed.
+  const MARKERLESS_AMOUNT = ["increment obj's v", 'increment v of obj'];
+  it.each(['ja', 'ar', 'zh'])('%s', async language => {
+    for (const [body, expected] of WRITES) {
+      if (language !== 'ja' && MARKERLESS_AMOUNT.some(row => body.startsWith(row))) continue;
+      expect(await direct(body, language), body).toBe(expected);
+    }
+  });
+});
+
 describe('is empty reads a length, as upstream does', () => {
   it.each([
     ['{} is empty', 'false'],
