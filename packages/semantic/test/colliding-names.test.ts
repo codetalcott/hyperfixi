@@ -325,6 +325,20 @@ describe('a structure word that is structure', () => {
     expect(render(parse(source, language)!, 'en')).toBe(english);
   });
 
+  // A name spelled like `if` opens no block of its own: the commands after
+  // the `end` stay the handler's.
+  it.each([
+    ['es', 'on click if si then put "Y" into #out end then put 2 into #out'],
+    ['fr', 'on click if si then put 1 into #out else put 2 into #out end then log 3'],
+    ['it', 'on click if se then put "Y" into #out end then put 2 into #out'],
+    ['pt', 'on click if se then put "Y" into #out end then put 2 into #out'],
+  ])('%s: %s', (language, source) => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(
+      render(parse(source, 'en')!, 'en')
+    );
+  });
+
   // An event name may be a verb's (`init`), and a leading `not`/`no` keeps
   // its operand.
   it.each([

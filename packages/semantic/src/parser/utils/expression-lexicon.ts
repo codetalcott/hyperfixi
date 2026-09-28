@@ -1188,14 +1188,13 @@ export function isStructureKeyword(token: LanguageToken): boolean {
 
 /**
  * A word alone that can only be a variable the language spells like it: a
- * structure keyword (above), a command verb, or a particle (which normalizes to
- * its role's name). A translation writes a variable verbatim, so `if si` (es
- * `si` is `if`) and tr `eğer al` (`al` is `get`) name the variable, and joined
- * as English they read `if if`, `if get`. Unlike a role capture, a whole
- * joined value is never what a dropped command leaves, so a verb counts here.
+ * structure keyword (above) or a command verb. A translation writes a variable
+ * verbatim, so `if si` (es `si` is `if`) and tr `eğer al` (`al` is `get`) name
+ * the variable, and joined as English they read `if if`, `if get`. Unlike a
+ * role capture, a whole joined value is never what a dropped command leaves,
+ * so a verb counts here.
  */
 export function isLoneStructureWord(token: LanguageToken): boolean {
-  if (token.kind === 'particle') return true;
   if (token.kind !== 'keyword') return false;
   if (isStructureKeyword(token)) return true;
   return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase());
