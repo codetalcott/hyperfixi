@@ -86,6 +86,10 @@ const POLISH_EXTRAS: KeywordEntry[] = [
   { native: 'nieokreślony', normalized: 'undefined' },
   { native: 'nieokreslony', normalized: 'undefined' },
 
+  // `equals`, which the lexicon writes `równa się`: as two words it was a
+  // variable `równa` and a stray `się`.
+  { native: 'równa się', normalized: 'equals' },
+
   // Positional
   { native: 'pierwszy', normalized: 'first' },
   { native: 'pierwsza', normalized: 'first' },

@@ -104,12 +104,13 @@ describe.each(PHRASES)('%s', (source, broken) => {
 
 // `contains`, `includes` and `equals` read back through the expression
 // lexicon's connectives. Each is skipped where the dictionary uses its word for
-// another concept (ja/ko/zh `contains`, tl/tr `includes`) or the tokenizer
-// splits it (qu `ukupi_kan`, hi `में_है`, zh `等于`, pl `równa się`).
+// another concept (tl `kasama` is also `with`, tr `dahil` also `inclusive`).
+// The words a tokenizer split (qu `ukupi_kan`, hi `में_है`, zh `等于`, pl
+// `równa się`) are whole-token entries now.
 const WORDS: Array<[string, string[]]> = [
-  ['on click put [1, 2] contains 1 into #out', ['ja', 'ko', 'qu', 'zh']],
-  ['on click put [1, 2] includes 1 into #out', ['hi', 'tl', 'tr']],
-  ['on click put n equals 3 into #out', ['pl', 'zh']],
+  ['on click put [1, 2] contains 1 into #out', []],
+  ['on click put [1, 2] includes 1 into #out', ['tl', 'tr']],
+  ['on click put n equals 3 into #out', []],
 ];
 
 describe.each(WORDS)('%s', (source, broken) => {

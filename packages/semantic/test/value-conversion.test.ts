@@ -84,6 +84,11 @@ const SOURCES = [
   // and tr lost `x`, so the conversion fold takes it.
   'on click put x as a Date into #out',
   'on click put x as an Int | String into #out',
+  // A type registered at runtime (`hyperfixi.config.conversions.MyType`),
+  // which semantic cannot see: capitalized, as every built-in one is.
+  'on click put x as MyType into #out',
+  'on click set x to n as Short then put x into #out',
+  'on click put x as MyType | String into #out',
 ];
 
 describe.each(SOURCES)('%s', source => {
@@ -168,23 +173,27 @@ describe('an `of` phrase before a conversion keeps its binding', () => {
   });
 });
 
-describe('a conversion inside a value names a known type', () => {
+describe('a conversion inside a value names a type', () => {
   // The matcher reads a value whole only when every conversion in it names a
-  // type downstream reads, trailing or not.
+  // type downstream reads, trailing or not: a built-in one, or a capitalized
+  // name, as one registered at runtime is.
   it.each([
     ['n as Int', true],
     ['n as Int + 1', true],
     ["#a's textContent as Int + 1", true],
-    ['n as Wat', false],
-    ['n as Wat + 1', false],
+    ['n as Wat', true],
+    ['n as Wat + 1', true],
+    ['n as wat', false],
+    ['n as wat + 1', false],
     ['n as Int | String', true],
-    ['n as Int | Wat', false],
-    ['n as Wat | Int', false],
+    ['n as Int | wat', false],
+    ['n as wat | Int', false],
     ['n as Fixed:2', true],
     ['n as Values:Form', true],
-    ['n as Values:Wat', false],
+    ['n as Values:Wat', true],
     ['n as Fixed', true],
     ['n as JSONString', true],
+    ['n as json', true],
   ])('%s', (raw, whole) => {
     expect(readsAsOneExpression(raw)).toBe(whole);
   });

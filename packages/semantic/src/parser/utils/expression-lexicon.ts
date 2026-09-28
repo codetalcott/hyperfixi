@@ -88,9 +88,9 @@ export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
  * `contiene`), and no profile keyword read them back: `if [1, 2] contains 3`
  * was the truthy `[1, 2]`. (`matches` has a profile keyword, or stays English.)
  *
- * Known gap: the tokenizers split hi `में_है` at its underscore, and zh `等于`
- * and pl `równa się` in two, so their entries are dead. (hi `के_रूप_में` and qu
- * `ukupi_kan` were too, until whole-token EXTRAS entries claimed them.)
+ * A word the tokenizer would split needs a whole-token EXTRAS entry for its
+ * entry here to be read: hi `के_रूप_में` and `में_है` (at the underscore), qu
+ * `ukupi_kan`, zh `等于` (`于` alone is `destination`) and pl `równa się`.
  *
  * ja 含む, ko 포함 and zh 包含 spell both `contains` and pick's range mode
  * `inclusive`, and each tokenizer normalizes the word to `inclusive`, which is
@@ -898,9 +898,18 @@ export const CONVERSION_TYPE_NAMES = new Set([
 ]);
 
 /** Does `name` name a conversion downstream reads? The pattern matcher's
-    conversion fold and `readsAsOneExpression` must agree on this. */
+    conversion fold and `readsAsOneExpression` must agree on this. A
+    capitalized name does too: a type registered at runtime
+    (`hyperfixi.config.conversions.MyType`, upstream's `_hyperscript.config.
+    conversions`) is written that way, as every built-in one is, and semantic
+    cannot see the registry. Unknown, `put x as MyType into #out` lost its
+    whole `put`. (th's `เป็น` still reads `as` only before a listed name.) */
 export function isConversionTypeName(name: string): boolean {
-  return CONVERSION_TYPE_NAMES.has(name) || /^Fixed(?::\d+)?$/.test(name);
+  return (
+    CONVERSION_TYPE_NAMES.has(name) ||
+    /^Fixed(?::\d+)?$/.test(name) ||
+    /^[A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?$/.test(name)
+  );
 }
 
 function resolveAmbiguousSense(
