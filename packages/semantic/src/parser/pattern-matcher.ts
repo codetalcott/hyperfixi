@@ -721,12 +721,15 @@ export class PatternMatcher {
    * possessive marker: dropped, since the value matrix measured them costing
    * 437 fixed pairs and nothing measured them protecting anything.
    *
-   * It applies only where a marker or the clause end bounds the value. A slot
+   * Where a marker or the clause end bounds the value, that is all. A slot
    * followed directly by another role (it/pl/ru/uk `set`'s destination, then
-   * its value) has no marker to stop at. Measured redundant today: the parser
-   * takes both, and the pattern then fails on the missing value and falls
-   * back to the right reading. Kept so an optional role there cannot be
-   * swallowed by a pattern that still succeeds.
+   * its value; an increment's bare amount in the languages that write it
+   * without `by`) has no marker to stop at: the parser would take both. There
+   * the value runs on only through a possessive (`possessiveTailEnd`): `obj's
+   * v` and `v of obj` are one written target, and nothing else continues it,
+   * so `impostare in obj's v 5` keeps its `5`. Without it the target stopped
+   * at `obj` and the next role took the rest: `increment obj by '`, `set v
+   * to of`.
    */
   private absorbExpressionTail(
     tokens: TokenStream,
@@ -744,7 +747,10 @@ export class PatternMatcher {
     if (tokens.position() <= startIdx) return;
     const types = patternToken.expectedTypes;
     if (types && types.length > 0 && !types.includes('expression')) return;
-    if (!PatternMatcher.boundedByMarker(nextPatternToken)) return;
+    if (!PatternMatcher.boundedByMarker(nextPatternToken)) {
+      this.absorbPossessiveTail(tokens, patternToken, captured, startIdx);
+      return;
+    }
 
     const owed = this.restLiterals();
     const markers = this.commandMarkers();
@@ -768,6 +774,50 @@ export class PatternMatcher {
       captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
       return;
     }
+  }
+
+  /**
+   * Extend a capture that no marker bounds through a possessive tail, the
+   * longest one that reads as one expression (see absorbExpressionTail).
+   */
+  private absorbPossessiveTail(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    startIdx: number
+  ): void {
+    const ends = this.possessiveLinkEnds(tokens.tokens, tokens.position());
+    for (const k of ends.reverse()) {
+      const raw = joinExpressionTokens(tokens.tokens.slice(startIdx, k), this.currentProfile);
+      if (!readsAsOneExpression(raw)) continue;
+      while (tokens.position() < k) tokens.advance();
+      captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
+      return;
+    }
+  }
+
+  /**
+   * Where each possessive link after a value ends: `'s v` (en splits it into
+   * `'` `s`; uk keeps `obj's` one word, so the property follows it), or an
+   * of-marker and its owner. A link's word is a name, never a number: it
+   * `di` is also `by`, and `incrementare i di 5` is an amount.
+   */
+  private possessiveLinkEnds(all: readonly LanguageToken[], from: number): number[] {
+    const isName = (t: LanguageToken | undefined): boolean =>
+      !!t &&
+      ((t.kind === 'identifier' && /^[\p{L}_$]/u.test(t.value)) ||
+        (t.kind === 'selector' && /^[#*@]/.test(t.value)));
+    const ends: number[] = [];
+    let k = from;
+    for (;;) {
+      const t = all[k];
+      if (t?.value === "'" && all[k + 1]?.value === 's' && isName(all[k + 2])) k += 3;
+      else if (/.'s$/.test(all[k - 1]?.value ?? '') && isName(t)) k += 1;
+      else if (t && this.isOfPossessiveMarker(t) && isName(all[k + 1])) k += 2;
+      else break;
+      ends.push(k);
+    }
+    return ends;
   }
 
   /**
@@ -880,8 +930,9 @@ export class PatternMatcher {
     if (EXPRESSION_WORDS.has(word)) return true;
     // An identifier in any script: the join translates a localized property
     // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what
-    // it leaves untranslated.
-    return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value);
+    // it leaves untranslated. qu and uk keep an apostrophe in a word, so
+    // `foo's` in `obj's foo's bar` is one token.
+    return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?$/u.test(token.value);
   }
 
   /** The clause's end, or a marker the pattern still owes. */
