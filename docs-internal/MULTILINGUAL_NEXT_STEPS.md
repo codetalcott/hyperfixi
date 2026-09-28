@@ -6540,7 +6540,7 @@ word by word:
 | J2  | `equal to`'s `to` stays `to` (pl reads `to` as `it`)                                                                                                                                                      | `expressionWordOf`                           | 62                    | `connective-operand.test.ts`                                                                      |
 | J3  | the `in` after a copula stays `in`                                                                                                                                                                         | `expressionWordOf`                           | 69                    | `copula-in.test.ts`                                                                               |
 | J4  | a word with two senses takes one by where it stands: ar `هو`, hi `है`, th `เป็น`, sw `na`/`tupu`, qu `mana`, zh `没有`, tl `walang`/`may`, bn `আছে`, tr `var`, and each `empty` word after a copula     | `AMBIGUOUS_SENSES`, `resolveAmbiguousSense`  | #731; 71, 72, 78      | `expression-lexicon.test.ts`, `and-word.test.ts`, `not-word.test.ts`, `null-empty-word.test.ts`   |
-| J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or alone (pl `i`, es `si y`)                                                            | `isConnectiveOperand`                        | 59; alone 81          | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
+| J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or alone (pl `i`, es `si y`)                                                            | `isConnectiveOperand` → `precedesOperand`, `followsOperand` (over `utils/operators.ts`) | 59; alone 81 | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
 | J6  | a `<property> <of-marker>` chain reads to its selector owner                                                                                                                                               | `ofChainEnd`                                 | 58, 65                | `property-before-of.test.ts`, `possessive-chain.test.ts`                                          |
 
 **The condition scan** (`SemanticParserImpl.tryParseConditionalBlock`, `semantic-parser.ts`):
@@ -6559,8 +6559,8 @@ word by word:
   before `skipNoiseWords` skips it);
 - `clauseEndsAfter`, _the clause ends after this token_: C4, C5 (`verbIsSlotValue`), C7(d);
 - `operatorFollows`, _a run operator follows_: C7(b); C10 and C12, which read an operator run's
-  stream, not a slot, call the same `isRunOperator`. C1 tests a different operator set
-  (`BINARY_OPERATOR_TEXT`, which has no `mod`), a difference to keep explicit, not unify;
+  stream, not a slot, call the same `isRunOperator`. C1 tests the binary operators, which have no
+  `mod` (a difference kept explicit, not unified; PR 89 names both sets in `utils/operators.ts`);
 - `afterLiteral`, _the slot follows a literal the pattern matched_: C4, C5, C7(c).
 
 Out of scope: the event-role guards (they read an event NAME, not a value), and the shapes the
@@ -6599,6 +6599,28 @@ of it keeps the difference explicit and is filed instead.
   commit. Lines: `pattern-matcher.ts` 4,681 → 4,629, `expression-lexicon.ts` 1,502 → 1,507,
   `value-reading.ts` 180 → 251 (net +24).
 
+- **PR 89, one operator vocabulary** (the conjunction and sense cluster, J4 and J5, and every rule
+  that asks "is this an operator"): seven separate definitions become one leaf module,
+  `parser/utils/operators.ts` — the binary operators, the comparisons, the run operators (binary
+  and `mod`) and the operator-character class — and the rules read named sets: the operator run
+  and C7/C10 read `RUN_OPERATORS`, C1 `BINARY_OPERATORS` (no `mod`), J5's `precedesOperand` and
+  `followsOperand` the operator characters and the binary operators without `-` (it may be unary),
+  the loop condition the comparisons with `and`/`or`. Each rewritten definition equals the one it
+  replaces over every one- to three-character string of 22 operator, bracket and letter characters
+  (11,162 strings), and the oracle is identical. The sense table (J4) was already one table of
+  named positions; its operand predicates (`endsOperand`, `startsOperand`) and J5's answer
+  different questions — whether a word sits between operands, and whether a conjunction cannot —
+  and stay apart. Lines: `pattern-matcher.ts` 4,629 → 4,622, `expression-lexicon.ts` 1,507 →
+  1,504, `value-reading.ts` 251 → 217, `operators.ts` 60 (net +7). Of 12 mutants, four fail
+  the rules' tests; eight single-member mutants survive semantic's whole suite — members of the
+  old sets no test pins, which the refactor did not create: `mod` and `%` among the run operators,
+  `<` among the loop comparisons, `=` among the operator characters, `(` and `,` before an operand,
+  `)` after one, and `-` left out after one. Through the oracles: `<` protects only a
+  keyword-named loop bound (`repeat while i < end`, garbage in English too), `mod`'s one entry
+  is C7(b)'s zh `增加 把 mod` (below; dropping `mod` happens to fix it), and the other six
+  move no oracle item. The `-` left out is the one a probe found an effect for, and it is a
+  misreading (below).
+
 **Found by the consolidation, not fixed in it** (a refactor PR moves no oracle item):
 
 - **C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.** A particle before a run
@@ -6610,6 +6632,12 @@ of it keeps the difference explicit and is filed instead.
   (`semantic-parser.ts`): none of C9's readings (a lone conjunction, `empty`, an article), and a
   bare identifier is a literal there, where the matcher's reads a variable. A second value
   classifier, for the SOV verb-anchoring paths.
+- **pl `set x to i - 1` reads `set x to and - 1`** (found by PR 89's mutants). A conjunction
+  may not precede an operator (J5's `followsOperand`), except `-`, which "may be unary" — so pl's
+  variable `i`, also its `and`, before a binary `- 1` reads as `and`. Counting `-` fixes it; what
+  the exclusion was for is unmeasured.
+- **qu `put (o) into #out` reads `on click(o) put into ta #out`**: `click (o)` is taken for the
+  event's parameters. On main.
 - **tr `değil na < 3` (not na < 3) reads `not destination < 3`**, and `set x to not na * 2`
   likewise: a marker-shaped name inside an expression joins as its role name. On main.
 - **Names inside expressions** (part 3's question, measured): the extended names oracle's

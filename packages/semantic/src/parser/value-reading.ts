@@ -36,38 +36,7 @@ import type { LanguageToken, PatternToken, SemanticValue, TokenStream } from '..
 import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
 import { loneKeywordKind } from './utils/expression-lexicon';
-
-/**
- * Binary operators that can join operands in an operator-run expression.
- * `*` tokenizes as a SELECTOR (the style-prefix char) but is only read as an
- * operator here when it sits BETWEEN two operands, so a bare `*opacity` style
- * selector (one fused token) is never affected. A bare `<` is a selector token
- * too; a query is one fused token (`<p/>`).
- *
- * The comparisons and `mod` join a run as well: without them `set x to n > 2`
- * captured only `n`, and every translation lost the comparison (the English
- * reference truncated the same way, so no fidelity signal saw it). `%` is
- * core's alone (upstream rejects it) and renders as written. The logical
- * words join through the matcher's `logicalConnectiveOf` (`and`, `or`, and a
- * leading `not`), and core's comparison phrases (`is`, `is not`, `matches`,
- * `exists`) through its `tryConsumeRunPhrase`.
- */
-export const RUN_OPERATORS: ReadonlySet<string> = new Set([
-  '+',
-  '-',
-  '*',
-  '/',
-  '%',
-  'mod',
-  '>',
-  '<',
-  '>=',
-  '<=',
-  '==',
-  '!=',
-  '===',
-  '!==',
-]);
+import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
 /** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
 export function clauseEndsAt(next: LanguageToken | undefined): boolean {
@@ -131,22 +100,19 @@ export class SlotContext {
   }
 }
 
-/** Arithmetic, comparison and equality operators, whole: C1's own set (no `mod`). */
-const BINARY_OPERATOR_TEXT = /^(?:[-+*/%]|[<>]=?|===?|!==?)$/;
-
 /**
  * C1, C2: `a`/`an` is a variable, not an article, before an operator (`put a
  * + b`: the en tokenizer classes `+`/`-`/`*` as identifiers, so the article
  * rule took `return a + b` for "article, noun" and kept `return +` — #1175)
  * and before the pattern's next marker (de `erhöhe a um 1`, increment a by 1,
- * whose `um` the tokenizer leaves an identifier — PR 84). Its operator set is
- * its own: `mod` is no operator here, where it is one for C7 and C10.
+ * whose `um` the tokenizer leaves an identifier — PR 84). Its operators are
+ * the binary ones: `mod` is none here, where it is one for C7 and C10.
  */
 export function articleIsVariable(slot: SlotContext): boolean {
   const word = slot.token.value.toLowerCase();
   if (word !== 'a' && word !== 'an') return false;
   const next = slot.next;
-  return next !== undefined && (BINARY_OPERATOR_TEXT.test(next.value) || slot.nextIsMarker);
+  return next !== undefined && (BINARY_OPERATORS.has(next.value) || slot.nextIsMarker);
 }
 
 /**
