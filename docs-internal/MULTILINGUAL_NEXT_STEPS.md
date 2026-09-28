@@ -6314,6 +6314,32 @@ this signal was missing.
 > hi joins `not-word.test.ts` and leaves the `not` exclusions of `value-operators` and
 > `value-path-operands`, in semantic and in core's direct-path twins; each of four mutants
 > reverting one piece fails a test.
+>
+> **The accepted failures are marked (PR 80, 2026-09-28).** Two families are decisions, not work:
+> the kept `the X of Y as T` difference (96 pairs, confirmed in `UPSTREAM-KNOWN-DIFFS.md`) and it's
+> `di`, which is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i
+> of #a.textContent` (6, an ambiguity: Italian says `aumentare di 5` and `il valore di X` alike).
+> `ACCEPTED` in `value-matrix.ts` names their cells and lanes with the reason; the pairs stay in the
+> baseline, so the gate still fails when one starts passing, and an entry carries the reason only
+> when every failing lane is accepted, so a new failure there still reads as open work. The
+> baseline counts them and the regen tool reports **719 open, 102 accepted** of 821.
+>
+> **What is open after PRs 76–80, 719 pairs**, by what they need:
+>
+> - **The colliding names, 543** (PR 76's axis), in three mechanisms, prototyped: (A) a particle
+>   that ends its clause (`incrementar a entonces`, `establecer x a a`): PR 64's rule, extended
+>   past the pattern's last token, clears most of pl/es/it/pt/sw/id; (B) a keyword-shaped name (es
+>   `si`/`ir`/`es`, tr `al`/`na`, de `wo`, sw `ni`, fr `de`, ms `ke`) captured as its English
+>   meaning (`put if`): a structure keyword alone where the value must stand, before the pattern's
+>   next token or the clause end, is the variable; its `if` needs the same rule in the join, `by`
+>   meets the quantity slot's verb guard, and es/fr `si si` (if if) the nested-if scan; (C) a lone
+>   conjunction as a whole condition (es `si y`): one line in `isConnectiveOperand`. Harder: pl
+>   `ustaw do w 5` and it `impostare in a 5` (a marker-shaped name after the real marker loses to
+>   a pattern that reads the real marker as the value), and de `erhöhe a um 1` (`skipNoiseWords`
+>   drops English articles in every language).
+> - **The written targets, 176**: core's `set o's v` / `v of o` on a plain object (filed in
+>   `PARSER_NEXT_STEPS.md`; `resolveAnyPropertyTarget` accepts only an element owner), and the
+>   direct path's `increment obj.v` and `increment @title`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

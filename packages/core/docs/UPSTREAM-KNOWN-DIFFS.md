@@ -47,10 +47,12 @@ The bare `X of Y as T` follows upstream. Pinned in
 `src/compatibility/value-parity.test.ts`. Semantic's expression parser, which
 builds the values of every translation's direct path, reads both forms as core
 does, so a translation computes on hyperfixi what the English does; the value
-matrix lists these cells as failing in its `en` lane and every direct lane.
+matrix lists these cells as failing in its `en` lane and every direct lane, and
+marks them accepted (`ACCEPTED` in `testing-framework/src/multilingual/value-matrix.ts`).
 
-**Decision (2026-09-27): keep the conversion on the property, pending the
-owner's confirmation.**
+**Decision (2026-09-28, confirmed by the owner): keep the conversion on the
+property.** Upstream's reading computes a property of `NaN`, which no working
+program relies on; the adapter's lanes, which run on upstream, keep its result.
 
 ### Error-message text is not matched verbatim
 

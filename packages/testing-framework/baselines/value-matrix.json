@@ -3,34 +3,42 @@
   "cells": 1738,
   "pairs": 83352,
   "failing": 821,
+  "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
       "lanes": "it it/up",
-      "family": "translation"
+      "family": "translation",
+      "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
     "increment|#a.textContent + 2": {
       "lanes": "it it/up",
-      "family": "translation"
+      "family": "translation",
+      "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
-      "family": "core"
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "set|the textContent of #a as Int": {
       "lanes": "en *direct",
-      "family": "core"
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "while|the textContent of #a as Int": {
       "lanes": "en *direct",
-      "family": "core"
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "increment|the textContent of #a as Int": {
       "lanes": "en *direct",
-      "family": "core"
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "increment|#a.textContent as Int": {
       "lanes": "it it/up",
-      "family": "translation"
+      "family": "translation",
+      "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
     "count|obj.v": {
       "lanes": "*direct",
