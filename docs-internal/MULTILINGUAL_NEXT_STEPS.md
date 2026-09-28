@@ -6165,6 +6165,43 @@ this signal was missing.
 > including the tr `while i < -2` of PR 67); each of six mutants reverting one piece fails it. The
 > token-after-next was first passed at two matcher call sites too; without them no test, matrix
 > pair or corpus row moved, so only the join passes it.
+>
+> **Two filed direct-path readings (PR 75, 2026-09-27).** Both outside the matrix:
+>
+> - **An attribute in brackets** (filed by PR 66): every tokenizer reads `[@title]` and
+>   `[@title="x"]` as one attribute-selector token, and the value converter kept it a selector, so
+>   the direct path queried it. `put [@title] into #out` moved an element that has a title (both
+>   engines write `me`'s title), and `add [@title="x"] to me`, `toggle [@title="x"] on me` and
+>   `remove [@title] from #a` changed nothing, in all 23 languages. Core's parser builds `[@title]`
+>   as the attribute reference `@title` is, and `[@title="x"]` as its text, which `add`, `remove`
+>   and `toggle` read; the converter builds the same now.
+> - **A variable named like an English article** (filed by PR 64): the English tokenizer reads
+>   `a` and `an` as keywords (`is a Number`), and a role that captured one alone made it the text
+>   "a", which a `set` cannot write: `set a to 5` did not parse, and in a handler the whole `set`
+>   dropped, in English and so in every translation (23 direct lanes). Captured alone, an article
+>   is a variable, as a conjunction is (PR 59).
+>
+> Found on the way, and **filed**: with the English parse fixed, a variable named `a` is
+> particle-shaped in es, pt and it (their `to` marker) and `um` in de: es/pt `incrementar a` loses
+> the increment, it `impostare in a 5` reads `set in to 5`, de `erhöhe a um 1` reads `increment
+> um` (the tr `i` shape, PR 64). They were lost whole before.
+>
+> The matrix has no bracketed attribute and no article-named variable, so it moves no pair. No
+> stored corpus row moves. `test/attribute-brackets.test.ts` builds the three bracket shapes in all
+> 24 languages and `test/article-variable.test.ts` round-trips three sources in eight; core's
+> `value-parity.test.ts` pins six rows on both engines and through ja, ar and zh. Reverting either
+> converter rule fails 24 or 48 semantic tests and 5 core ones; reverting the article rule 24 and 5.
+>
+> **What is left after PRs 68–75, 268 pairs (0.4%)**, all owner decisions or filed ambiguities:
+>
+> - **`empty` and `null` in one word, 116**: ar `فارغ`, hi `खाली`, id `kosong`, qu `chusaq` and
+>   tr `boş` write both (and read both as `null`); th writes `null` as `ว่าง`, one of its `empty`
+>   words. A distinct `null` rendering, or a reading per language, is a vocabulary decision.
+> - **The kept `the X of Y as T` difference, 96** (`core/docs/UPSTREAM-KNOWN-DIFFS.md`).
+> - **hi `नहीं`, 34**: `not` and `no` alike, both before an operand.
+> - **qu `and`, 16**: `chaymanta`, the dictionary's word, is also qu's `then` (PR 71's filing).
+> - **it `di`, 6**: both `by` and `of`, so `increment i by #a.textContent` renders like `increment
+>   #a's i`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
