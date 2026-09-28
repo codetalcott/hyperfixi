@@ -1171,27 +1171,31 @@ const STRUCTURE_WORDS: ReadonlySet<string> = new Set([
  * A keyword that is structure: a role marker (normalized to its role, as tr
  * `na` is `destination`), a control word or the copula. Never a reference
  * (`me`, `event`), which is a value. Not a command verb, which is structure only
- * where no dropped command can have left it (`PatternMatcher.isVariableShapedVerb`,
- * `isLoneStructureWord`).
+ * where no dropped command can have left it (see loneKeywordKind).
  */
-export function isStructureKeyword(token: LanguageToken): boolean {
+function isStructureKeyword(token: LanguageToken): boolean {
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm === 'event' || isValidReference(norm)) return false;
   return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
 }
 
 /**
- * A word alone that can only be a variable the language spells like it: a
- * structure keyword (above) or a command verb. A translation writes a variable
- * verbatim, so `if si` (es `si` is `if`) and tr `eğer al` (`al` is `get`) name
- * the variable, and joined as English they read `if if`, `if get`. Unlike a
- * role capture, a whole joined value is never what a dropped command leaves,
- * so a verb counts here.
+ * What a keyword spells when it stands alone where a value must: `structure`
+ * (above) or `verb` (a command verb); undefined for any other keyword (a
+ * reference, a constant, an event name). A translation writes a variable
+ * verbatim, so a keyword alone there names a variable the language spells like
+ * it: es `si` is `if`, tr `al` is `get`, and joined as English they read `if
+ * if`, `if get`. The one classifier the join (J1, below) and the role capture
+ * (C8, `keywordIsVariable` in value-reading.ts) share: a whole joined value is
+ * never what a dropped command leaves, so the join counts a verb; the role
+ * capture only where no dropped command can have left it.
  */
-export function isLoneStructureWord(token: LanguageToken): boolean {
-  if (token.kind !== 'keyword') return false;
-  if (isStructureKeyword(token)) return true;
-  return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase());
+export function loneKeywordKind(token: LanguageToken): 'structure' | 'verb' | undefined {
+  if (token.kind !== 'keyword') return undefined;
+  if (isStructureKeyword(token)) return 'structure';
+  return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
+    ? 'verb'
+    : undefined;
 }
 
 /**
@@ -1230,7 +1234,8 @@ export function joinExpressionTokens(
 ): string {
   const languageCode = profile?.code ?? 'en';
   const [only] = tokens;
-  if (tokens.length === 1 && only && isLoneStructureWord(only)) return only.value;
+  // J1: a keyword alone is the variable it spells (loneKeywordKind).
+  if (tokens.length === 1 && only && loneKeywordKind(only)) return only.value;
   let out = '';
   let previous: LanguageToken | undefined;
   /** The text appended for `previous`: how this join read the last word. */

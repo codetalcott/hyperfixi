@@ -43,7 +43,6 @@ import {
   isConversionTypeName,
   isCopulaIn,
   ambiguousSenseOf,
-  isStructureKeyword,
   ofChainEnd,
 } from './utils/expression-lexicon';
 import {
@@ -55,8 +54,11 @@ import { EXPRESSION_WORDS, OPERATOR_WORDS, readsAsOneExpression } from './utils/
 import {
   RUN_OPERATORS,
   SlotContext,
+  articleIsVariable,
   isParticleAfterOf,
   isRunOperator,
+  keywordIsVariable,
+  loneKeywordValue,
   particleIsOperand,
   particleIsValue,
 } from './value-reading';
@@ -1205,13 +1207,13 @@ export class PatternMatcher {
     nextPatternToken?: PatternToken
   ): boolean {
     // Skip noise words like "the" before selectors (English idiom support)
-    this.skipNoiseWords(tokens, nextPatternToken);
+    this.skipNoiseWords(tokens, patternToken, nextPatternToken);
 
     const token = tokens.peek();
     if (!token) {
       return patternToken.optional || false;
     }
-    const slot = new SlotContext(tokens, this.slotAfterLiteral, nextPatternToken, this.wouldMatch);
+    const slot = this.slotAt(tokens, patternToken, nextPatternToken);
 
     // Action-role hyphen-compound fold (same family as the matchLiteralToken
     // fold): a fused event pattern's {action} slot captures ONE token, but a
@@ -1794,30 +1796,10 @@ export class PatternMatcher {
       }
     }
 
-    // A particle where no marker can stand is the value (C7: particleIsValue).
-    if (particleIsValue(slot)) {
-      captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
-      tokens.advance();
-      return true;
-    }
-
-    // A structure keyword alone in a value slot is a variable the language
-    // spells like it: a role marker (tr `na`, ms `ke`, de `zu`), a control word
-    // (es `si` "if", pl `az` "until", de `wo` "where") or the copula (es `es`,
-    // sw `ni`). A translation writes a variable verbatim, and structure is
-    // never a value (PR 59's conjunction, PR 75's article); captured whole it
-    // was the English word, `put if`. The matchers above have taken the
-    // keyword-led values (`not flag`, `no .w`); a slot that holds a keyword
-    // (`using view transition`, a loop's type) and the event keep theirs.
-    if (
-      token.kind === 'keyword' &&
-      patternToken.role !== 'event' &&
-      patternToken.role !== 'action' &&
-      patternToken.valueShape !== 'keyword' &&
-      (!patternToken.expectedTypes?.length ||
-        patternToken.expectedTypes.some(t => t === 'expression' || t === 'reference')) &&
-      (isStructureKeyword(token) || this.isVariableShapedVerb(token))
-    ) {
+    // A word spelled like structure, alone where a value stands, is the variable
+    // it spells: a particle where no marker can stand (C7), a structure keyword
+    // or command verb (C8). See value-reading.ts.
+    if (particleIsValue(slot) || keywordIsVariable(slot, this.currentSchema())) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();
       return true;
@@ -2263,6 +2245,21 @@ export class PatternMatcher {
     return undefined;
   }
 
+  /** Where the slot at the stream's position stands (see SlotContext). */
+  private slotAt(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    nextPatternToken: PatternToken | undefined
+  ): SlotContext {
+    return new SlotContext(
+      tokens,
+      patternToken,
+      this.slotAfterLiteral,
+      nextPatternToken,
+      this.wouldMatch
+    );
+  }
+
   /**
    * Is a verb in this slot its value? Right after a literal the pattern
    * matched (the slot's marker: `[por {quantity}]`), a verb that stands alone
@@ -2272,23 +2269,6 @@ export class PatternMatcher {
    */
   private verbIsSlotValue(slot: SlotContext): boolean {
     return slot.afterLiteral && (slot.clauseEndsAfter || slot.nextIsMarker);
-  }
-
-  /**
-   * A command verb alone in a slot, which names a variable the language spells
-   * like it (es `ir` "go", fr `va`, tr `al` "get"): captured whole it was the
-   * English verb, `put go`. Not in a command that takes a body (`tell #modal
-   * to show`, ja and qu), where a verb in a slot is the body command the
-   * pattern dropped, which the role normalization discards; nor in one that
-   * names an event, whose name may be a verb's (`trigger init`). Nor `empty`,
-   * which alone is `null`.
-   */
-  private isVariableShapedVerb(token: LanguageToken): boolean {
-    const norm = (token.normalized ?? token.value).toLowerCase();
-    // `empty` alone is `null` (sw `tupu`, ms `kosong`), read below.
-    if (!COMMAND_ACTION_KEYWORDS.has(norm) || norm === 'empty') return false;
-    const schema = this.currentSchema();
-    return !schema?.hasBody && !schema?.roles.some(r => r.role === 'event');
   }
 
   /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
@@ -4267,28 +4247,17 @@ export class PatternMatcher {
       case 'literal':
         return this.parseLiteralValue(token.value);
 
-      case 'keyword':
-        // A conjunction is never a whole value: a role that captures one alone
-        // captured a variable the language spells like it (pl `ustaw do i 0`,
-        // `set i to 0`, read as `set and to 0`).
-        if (token.normalized === 'and' || token.normalized === 'or') {
-          return { type: 'expression', raw: token.value } as const;
-        }
+      case 'keyword': {
+        // `empty` or an article alone (C9: loneKeywordValue).
+        const alone = loneKeywordValue(token);
+        if (alone) return alone;
         // Keywords might be references or values
         const lower = (token.normalized || token.value).toLowerCase();
-        // Nor is `empty`, a predicate (`is empty`) or a command: captured
-        // alone it is a word the language also spells `null` with (sw
-        // `tupu`), or a variable named `empty`, which upstream reads as null.
-        if (lower === 'empty') return createConstant('null')!;
-        // Nor is an article: alone it is a variable spelled like one. `set a
-        // to 0` read `a` as the text "a", which a `set` cannot write, and the
-        // whole `set` dropped.
-        if (lower === 'a' || lower === 'an')
-          return { type: 'expression', raw: token.value } as const;
         if (isValidReference(lower)) {
           return createReference(lower);
         }
         return createConstant(lower) ?? createLiteral(token.normalized || token.value);
+      }
 
       case 'identifier':
         // Canonical `@attr` typing: an attribute reference is a selector no
@@ -4420,15 +4389,16 @@ export class PatternMatcher {
    */
   private static readonly ENGLISH_NOISE_WORDS = new Set(['the', 'a', 'an']);
 
-  /** The whole token is an arithmetic, comparison or string operator. */
-  private static readonly BINARY_OPERATOR_TEXT = /^(?:[-+*/%]|[<>]=?|===?|!==?)$/;
-
   /**
    * Skip noise words like "the" before selectors and identifiers.
    * This enables more natural English syntax like "toggle the .active"
    * and "set the color to red".
    */
-  private skipNoiseWords(tokens: TokenStream, nextPatternToken?: PatternToken): void {
+  private skipNoiseWords(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    nextPatternToken?: PatternToken
+  ): void {
     const token = tokens.peek();
     if (!token) return;
 
@@ -4436,34 +4406,12 @@ export class PatternMatcher {
 
     // Check if current token is a noise word (like "the")
     if (PatternMatcher.ENGLISH_NOISE_WORDS.has(tokenLower)) {
+      // `a`/`an` before an operator or the next marker is a variable (C1, C2).
+      if (articleIsVariable(this.slotAt(tokens, patternToken, nextPatternToken))) return;
       // Look ahead to see if the next token is a selector or identifier
       const mark = tokens.mark();
       tokens.advance();
       const nextToken = tokens.peek();
-
-      // `a`/`an` before an operator is a VARIABLE, not an article. The en
-      // tokenizer classes `+`/`-`/`*` as identifiers, so the branch below took
-      // `return a + b` for "article, noun": it skipped the `a`, captured `+`
-      // alone and dropped `b` (worker-basic, and so every translation of it),
-      // and `put a + b into #o` lost its whole `put`.
-      if (
-        (tokenLower === 'a' || tokenLower === 'an') &&
-        nextToken &&
-        PatternMatcher.BINARY_OPERATOR_TEXT.test(nextToken.value)
-      ) {
-        tokens.reset(mark);
-        return;
-      }
-      // So is one before the pattern's next marker: de `erhöhe a um 1`
-      // (increment a by 1), whose `um` the tokenizer leaves an identifier.
-      if (
-        (tokenLower === 'a' || tokenLower === 'an') &&
-        nextToken &&
-        this.patternTokenWouldMatch(nextPatternToken, nextToken)
-      ) {
-        tokens.reset(mark);
-        return;
-      }
 
       if (nextToken && (nextToken.kind === 'selector' || nextToken.kind === 'identifier')) {
         // Keep the position after "the" - effectively skipping it
