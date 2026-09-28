@@ -6451,6 +6451,30 @@ this signal was missing.
 > `window-keydown`). `colliding-names.test.ts` round-trips every pair this fixed (with and without
 > `then` for `if`) and pins the readings it must leave alone; each of twenty mutants reverting one
 > piece fails it or, for the `hasBody` exclusion, `tell-to.test.ts`.
+>
+> **The filings left from the after-75 handoff (PR 85, 2026-09-28).** None has a matrix cell:
+>
+> - **zh `等于`, pl `równa się` and hi `में_है` read back** (`equals`, `equals`, `includes`). Each
+>   has a CONNECTIVE_LEXICON entry that was dead: the zh tokenizer split `等于` into `等` and `于`
+>   (`destination`), pl's took `równa` and `się` as two identifiers, and hi's split `में_है` at the
+>   underscore. Whole-token EXTRAS entries claim them, as PR 57's `ukupi_kan` and `के_रूप_में` did,
+>   so `if x equals 5` and `put x equals 5 into #out` read back (pl `put` lost its destination, zh
+>   the whole command). `value-operators.test.ts` drops those exclusions and the stale `contains`
+>   ones (ja, ko, qu, zh, fixed by PR 57); tl `kasama` and tr `dahil`, which the dictionary also
+>   uses for another concept, stay excluded.
+> - **A type registered at runtime keeps its command.** The matcher reads a value with a
+>   conversion whole only when it knows the type (PR 60), and semantic cannot see
+>   `hyperfixi.config.conversions`, so `put x as MyType into #out` lost its whole `put`, in English
+>   and every translation. A capitalized name is a type now, as every built-in and conventionally
+>   registered one is; a lowercase unknown name still is not. th's `เป็น` still reads `as` only
+>   before a listed name (`6 เป็น Math.max(n, 1)` stays `is`).
+> - **Two keep-or-match calls, decided and recorded** in `core/docs/UPSTREAM-KNOWN-DIFFS.md`: core's
+>   `as Boolean` keeps reading the text `"false"`/`"0"` as false (upstream `!!value`), and
+>   `[@name="value"]` used as a value keeps being its text (upstream reads the attribute).
+>
+> **Measured:** the value matrix moves no pair (102 failing, all accepted) and no stored corpus row
+> moves; neither has these words or a registered type. Each of four mutants reverting one entry or
+> the capitalized-name rule fails `value-operators.test.ts` or `value-conversion.test.ts`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
