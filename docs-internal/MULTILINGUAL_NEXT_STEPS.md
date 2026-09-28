@@ -6202,6 +6202,54 @@ this signal was missing.
 > - **qu `and`, 16**: `chaymanta`, the dictionary's word, is also qu's `then` (PR 71's filing).
 > - **it `di`, 6**: both `by` and `of`, so `increment i by #a.textContent` renders like `increment
 >   #a's i`.
+>
+> **The matrix widened: colliding names, written targets, `is null` (PR 76, 2026-09-28).** With
+> 268 pairs left and all of them decisions, the bugs were being found outside the matrix (PR 73's
+> populated object, PR 75's two filings). Three axes it lacked:
+>
+> - **Colliding names.** A translation writes a variable verbatim, so a variable spelled like a
+>   language's structure word has to be told from the word by where it stands: the class PRs 59,
+>   64, 74 and 75 fixed one name at a time. `collidingNames()` derives the names: every one- or
+>   two-letter name some tokenizer reads as other than a plain identifier, and every schema role
+>   marker of that shape (de `um`, which de's tokenizer leaves an identifier), less English
+>   keywords (hyperfixi's own English cannot take `on` or `is` as a variable either; the
+>   articles stay, PR 75), upstream's `no`, the templates' `i` and `x`, and a name that only ever
+>   collides with a pronoun (pt `eu` is `me`, and `colocar eu em #out` really does say "put me
+>   into #out"). 55 names, six positions each; `while` failed in no lane another position did not,
+>   probing every name in all seven. A name that is a pronoun in one language and structure in
+>   another (`o`: es and it `or`, tr `it`) skips the pronoun's two lanes.
+> - **Written targets.** Two positions for what a command writes, `assign` (`set T to 5 then put T
+>   into #out`) and `count` (`increment T then put T into #out`): the names, and seven targets (a
+>   variable, a property three ways, an element's property two ways, the button's attribute).
+> - **`is null` and `is not null`**, with literal and variable operands. With no `x is null` cell,
+>   sw, whose one word for `null` and `empty` reads back as `empty`, passed every cell while `if x
+>   is null` read `if x is empty`; and a reading-only fix for the five languages that read their
+>   one word as `null` would have cleared most of their 116 pairs while breaking `is null`, unseen.
+>
+> **1,328 cells become 1,738, and 268 failing pairs 1,070.** All 802 new pairs are in new cells (no
+> existing cell's lanes moved, so the name globals are inert):
+>
+> - **Names, 543 in 203 cells**: pl 105, tr 96, es 72, it 63, pt 62, fr 38, sw 32, de 28, tl 24,
+>   id 12, ms 11. PR 75's es/pt `incrementar a` is one of them.
+> - **Targets, 176 in 6 cells.** Core's English cannot write a property of a VARIABLE through `'s`
+>   or `of`: `set o's v to 5` throws "set command target must be a string or object literal", and
+>   `set v of o`, `increment o's v` and `increment v of o` fail too (4 cells, every lane but the
+>   adapter's; filed in `PARSER_NEXT_STEPS.md`). The direct path leaves `increment obj.v`
+>   unchanged (23) and reads `increment @title` as null (23: PR 63's filing, now counted). `set
+>   obj.v`, `set @title` and both element-property targets pass.
+> - **`is null`, 83 in 24 cells**: sw reads `"" is null` as true (the mirror), and ar, hi, qu, th
+>   and tr lose `is (not) null` around their one word.
+>
+> `value-matrix.names.test.ts` pins what each rule of the derivation puts in or leaves out; each of
+> seven mutants reverting a rule fails it, and reverting the lane skip fails the `put` shard. Two
+> shards more: ~65 s locally, from ~40.
+>
+> **Next, in order** (the owner's decisions of 2026-09-28): the colliding names (the PR 64 rule
+> generalized: a structure word standing where a value must is the value); qu `and` rendered
+> `hinallataq`; `null` rendered as the loanword `null` in ar, hi, id, qu, sw, th and tr (each
+> language's one word means "empty", and de, ja, ms and pl already write `null`); hi `no` as
+> `कोई नहीं`, keeping `नहीं` for `not`; then the kept `the X of Y as T` and it `di` tagged as
+> accepted. The two target families follow.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

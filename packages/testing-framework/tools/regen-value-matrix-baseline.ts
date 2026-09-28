@@ -89,6 +89,10 @@ function report(results: readonly CellResult[], cells: readonly MatrixCell[]): v
   table('by position:', results, r => byId.get(r.id)?.position);
   table('by operand kind (cells that test one):', results, r => byId.get(r.id)?.operand);
   table('by operator (cells that test one):', results, r => byId.get(r.id)?.operator);
+  table('by colliding name (see collidingNames):', results, r => {
+    const cell = byId.get(r.id);
+    return cell?.group === 'name' ? cell.expression : undefined;
+  });
   table('by lane:', results, (_r, lane) => lane);
 }
 
@@ -159,11 +163,11 @@ async function main(): Promise<void> {
   }
   if (process.argv.includes('--dry-run')) return;
 
-  // Every cell runs every lane.
+  // Every cell runs every lane but the two of each language it skips.
   const doc: ValueMatrixBaseline = {
     description: DESCRIPTION,
     cells: allCells.length,
-    pairs: allCells.length * LANES.length,
+    pairs: allCells.reduce((n, c) => n + LANES.length - 2 * (c.skip?.length ?? 0), 0),
     failing,
     entries,
   };

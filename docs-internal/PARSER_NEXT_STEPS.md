@@ -2558,6 +2558,19 @@ null target now reads null. `runtime-ast-coverage.test.ts` pinned the throw; it
 pins upstream's result now, and `value-parity.test.ts` pins six null-target rows
 on both engines. The value matrix moved 88 pairs.
 
+### Core cannot write a property of a variable through `'s` or `of` (2026-09-28, filed by PR 76)
+
+`set o's v to 5` throws `set command target must be a string or object
+literal`, which stops the handler, and so do `set v of o to 5`, `increment o's
+v` and `increment v of o`, where `o` is a variable holding an object. Upstream
+writes the property. The same property through a dot (`set o.v to 5`), and an
+element's property through either form (`set #a's textContent to 5`, `set the
+textContent of #a to 5`), work. Found by the value matrix's new `assign` and
+`count` positions: 4 cells, failing in core's English and every direct lane
+(semantic builds the same target, and core runs it), and passing through the
+adapter. Measured with a local (`set o to {v: 6} then set o's v to 5`) as well
+as the matrix's global `obj`, so it is not the variable's scope.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

@@ -1,8 +1,8 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 1328,
-  "pairs": 63744,
-  "failing": 268,
+  "cells": 1738,
+  "pairs": 83352,
+  "failing": 1070,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -168,6 +168,102 @@
       "lanes": "qu qu/up",
       "family": "translation"
     },
+    "put|\"\" is null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|\"\" is null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "if|\"\" is null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "put|null is null": {
+      "lanes": "hi hi/up",
+      "family": "translation"
+    },
+    "set|null is null": {
+      "lanes": "hi hi/up qu qu/up tr tr/up",
+      "family": "translation"
+    },
+    "put|\"\" is not null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "set|\"\" is not null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "if|\"\" is not null": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "if|2 is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|\"q\" is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "put|true is not null": {
+      "lanes": "ar ar/up hi hi/up th th/up",
+      "family": "translation"
+    },
+    "set|true is not null": {
+      "lanes": "hi hi/up",
+      "family": "translation"
+    },
+    "if|true is not null": {
+      "lanes": "ar/up hi/up qu qu/up th/up",
+      "family": "translation+adapter"
+    },
+    "put|null is not null": {
+      "lanes": "ar ar/up hi hi/up th th/up",
+      "family": "translation"
+    },
+    "set|null is not null": {
+      "lanes": "ar ar/up hi hi/up qu qu/up th th/up tr tr/up",
+      "family": "translation"
+    },
+    "if|null is not null": {
+      "lanes": "ar/up hi/up th/up",
+      "family": "adapter"
+    },
+    "put|{} is not null": {
+      "lanes": "ar ar/up hi hi/up th th/up",
+      "family": "translation"
+    },
+    "set|{} is not null": {
+      "lanes": "ar ar/up hi hi/up th th/up",
+      "family": "translation"
+    },
+    "if|{} is not null": {
+      "lanes": "ar/up hi/up qu qu/up th/up",
+      "family": "translation+adapter"
+    },
+    "if|n is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|s is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|flag is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|arr is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
+    "if|obj is not null": {
+      "lanes": "qu qu/up",
+      "family": "translation"
+    },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
       "family": "core"
@@ -202,6 +298,842 @@
     },
     "if|flag and not (n is 6)": {
       "lanes": "hi hi/up qu qu/up",
+      "family": "translation"
+    },
+    "count|obj.v": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "assign|obj's v": {
+      "lanes": "en it/up pl/up ru/up uk/up *direct",
+      "family": "core+translation"
+    },
+    "count|obj's v": {
+      "lanes": "en ar/up he/up id/up it/up ms/up pl/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "core+translation"
+    },
+    "assign|v of obj": {
+      "lanes": "en it/up pl/up ru/up uk/up *direct",
+      "family": "core+translation"
+    },
+    "count|v of obj": {
+      "lanes": "en ar/up he/up id/up it/up ms/up pl/up ru/up sw/up th/up tl/up uk/up vi/up zh/up *direct",
+      "family": "core+translation"
+    },
+    "count|@title": {
+      "lanes": "*direct",
+      "family": "direct-path"
+    },
+    "set|a": {
+      "lanes": "es es/up it it/up pt pt/up",
+      "family": "translation"
+    },
+    "increment|a": {
+      "lanes": "es es/up it it/up pt pt/up",
+      "family": "translation"
+    },
+    "assign|a": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "count|a": {
+      "lanes": "de de/up es es/up it it/up pt pt/up",
+      "family": "translation"
+    },
+    "if|e": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "set|o": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "if|o": {
+      "lanes": "es es/up it it/up tl tl/up",
+      "family": "translation"
+    },
+    "increment|o": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|o": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|o": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|u": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|u": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|u": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|u": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|w": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|w": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|w": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|w": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "if|y": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "set|z": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|z": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|z": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|z": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "put|ac": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|ac": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|ac": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "assign|ac": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "count|ac": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|ai": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "increment|ai": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "assign|ai": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "count|ai": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "put|al": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|al": {
+      "lanes": "es es/up it it/up tr tr/up",
+      "family": "translation"
+    },
+    "if|al": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|al": {
+      "lanes": "es es/up it it/up tr tr/up",
+      "family": "translation"
+    },
+    "assign|al": {
+      "lanes": "it it/up tr tr/up",
+      "family": "translation"
+    },
+    "count|al": {
+      "lanes": "es es/up it it/up tr tr/up",
+      "family": "translation"
+    },
+    "count|an": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "set|ao": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "increment|ao": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "count|ao": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "if|au": {
+      "lanes": "sw sw/up",
+      "family": "translation"
+    },
+    "put|ay": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "set|ay": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "if|ay": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "increment|ay": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "assign|ay": {
+      "lanes": "tl",
+      "family": "direct-path"
+    },
+    "count|ay": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "put|az": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|az": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "if|az": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|az": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|az": {
+      "lanes": "pl",
+      "family": "direct-path"
+    },
+    "count|az": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|da": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "increment|da": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "assign|da": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "count|da": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "put|de": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "set|de": {
+      "lanes": "es es/up fr fr/up pt pt/up",
+      "family": "translation"
+    },
+    "if|de": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "increment|de": {
+      "lanes": "es es/up fr fr/up pt pt/up",
+      "family": "translation"
+    },
+    "assign|de": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "count|de": {
+      "lanes": "es es/up fr fr/up pt pt/up",
+      "family": "translation"
+    },
+    "set|di": {
+      "lanes": "id id/up it it/up",
+      "family": "translation"
+    },
+    "increment|di": {
+      "lanes": "id id/up it it/up",
+      "family": "translation"
+    },
+    "assign|di": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "count|di": {
+      "lanes": "id id/up it it/up",
+      "family": "translation"
+    },
+    "set|do": {
+      "lanes": "pl pl/up pt pt/up",
+      "family": "translation"
+    },
+    "increment|do": {
+      "lanes": "pl pl/up pt pt/up",
+      "family": "translation"
+    },
+    "count|do": {
+      "lanes": "pl pl/up pt pt/up",
+      "family": "translation"
+    },
+    "set|em": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "increment|em": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "count|em": {
+      "lanes": "pt pt/up",
+      "family": "translation"
+    },
+    "set|en": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "increment|en": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "count|en": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "put|es": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "set|es": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "if|es": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "increment|es": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "assign|es": {
+      "lanes": "es",
+      "family": "direct-path"
+    },
+    "count|es": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "if|et": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "put|ir": {
+      "lanes": "es es/up pt pt/up",
+      "family": "translation"
+    },
+    "set|ir": {
+      "lanes": "es es/up pt pt/up",
+      "family": "translation"
+    },
+    "if|ir": {
+      "lanes": "es es/up pt pt/up",
+      "family": "translation"
+    },
+    "increment|ir": {
+      "lanes": "es es/up pt pt/up",
+      "family": "translation"
+    },
+    "assign|ir": {
+      "lanes": "es pt pt/up",
+      "family": "translation+direct-path"
+    },
+    "count|ir": {
+      "lanes": "es es/up pt pt/up",
+      "family": "translation"
+    },
+    "put|ke": {
+      "lanes": "ms ms/up",
+      "family": "translation"
+    },
+    "set|ke": {
+      "lanes": "id id/up ms ms/up",
+      "family": "translation"
+    },
+    "if|ke": {
+      "lanes": "ms ms/up",
+      "family": "translation"
+    },
+    "increment|ke": {
+      "lanes": "id id/up ms ms/up",
+      "family": "translation"
+    },
+    "assign|ke": {
+      "lanes": "ms",
+      "family": "direct-path"
+    },
+    "count|ke": {
+      "lanes": "id id/up ms ms/up",
+      "family": "translation"
+    },
+    "set|ku": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|ku": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|ku": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|ku": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "put|na": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|na": {
+      "lanes": "pl pl/up pt pt/up sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "if|na": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|na": {
+      "lanes": "pl pl/up pt pt/up sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "assign|na": {
+      "lanes": "pl pl/up tr tr/up",
+      "family": "translation"
+    },
+    "count|na": {
+      "lanes": "pl pl/up pt pt/up sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "put|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "assign|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "count|ne": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "put|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "set|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "if|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "increment|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "assign|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "count|ni": {
+      "lanes": "sw sw/up tr tr/up",
+      "family": "translation"
+    },
+    "put|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "assign|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "count|nu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|od": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|od": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|od": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|od": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|po": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|po": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|po": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|po": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "put|sa": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "set|sa": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "if|sa": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "increment|sa": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "assign|sa": {
+      "lanes": "tl",
+      "family": "direct-path"
+    },
+    "count|sa": {
+      "lanes": "tl tl/up",
+      "family": "translation"
+    },
+    "put|se": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "set|se": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "if|se": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "increment|se": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "assign|se": {
+      "lanes": "it pt pt/up",
+      "family": "translation+direct-path"
+    },
+    "count|se": {
+      "lanes": "it it/up pt pt/up",
+      "family": "translation"
+    },
+    "put|si": {
+      "lanes": "es es/up fr fr/up sw sw/up",
+      "family": "translation"
+    },
+    "set|si": {
+      "lanes": "es es/up fr fr/up sw sw/up",
+      "family": "translation"
+    },
+    "if|si": {
+      "lanes": "es es/up fr fr/up sw sw/up",
+      "family": "translation"
+    },
+    "increment|si": {
+      "lanes": "es es/up fr fr/up sw sw/up",
+      "family": "translation"
+    },
+    "assign|si": {
+      "lanes": "es fr fr/up sw sw/up",
+      "family": "translation+direct-path"
+    },
+    "count|si": {
+      "lanes": "es es/up fr fr/up sw sw/up",
+      "family": "translation"
+    },
+    "set|su": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "increment|su": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "assign|su": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "count|su": {
+      "lanes": "it it/up",
+      "family": "translation"
+    },
+    "put|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "set|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "if|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "increment|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "assign|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "count|va": {
+      "lanes": "fr fr/up",
+      "family": "translation"
+    },
+    "put|ve": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "set|ve": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "if|ve": {
+      "lanes": "es es/up tr tr/up",
+      "family": "translation"
+    },
+    "increment|ve": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "assign|ve": {
+      "lanes": "es",
+      "family": "direct-path"
+    },
+    "count|ve": {
+      "lanes": "es es/up",
+      "family": "translation"
+    },
+    "set|we": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|we": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|we": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|we": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "put|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "set|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "if|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "increment|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "assign|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "count|wo": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "put|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "assign|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "count|yi": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "put|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "if|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "increment|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "assign|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "count|yu": {
+      "lanes": "tr tr/up",
+      "family": "translation"
+    },
+    "set|za": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|za": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|za": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|za": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "set|ze": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "increment|ze": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "assign|ze": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "count|ze": {
+      "lanes": "pl pl/up",
+      "family": "translation"
+    },
+    "put|zu": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "set|zu": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "if|zu": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "increment|zu": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "assign|zu": {
+      "lanes": "de de/up",
+      "family": "translation"
+    },
+    "count|zu": {
+      "lanes": "de de/up",
       "family": "translation"
     }
   }

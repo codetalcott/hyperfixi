@@ -611,9 +611,12 @@ code the canonical parser rejects, so that class still needs the en-side vitest 
 
 Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
-generates them instead: nine operand kinds × the operators × five positions (`put`
-and `set` values, `if` and `repeat while` conditions, `increment … by`), 1,328
-cells. It EXECUTES each one: the English source on upstream `hyperscript.org` is the
+generates them instead: nine operand kinds × the operators × five value positions
+(`put` and `set` values, `if` and `repeat while` conditions, `increment … by`), plus
+two WRITTEN-target positions (what a `set` writes, what an `increment` counts) and a
+derived axis of **colliding names** — variables spelled like some language's marker,
+particle or connective (es `a`, pl `w`, de `um`), which a translation writes
+verbatim — 1,738 cells. It EXECUTES each one: the English source on upstream `hyperscript.org` is the
 oracle, and 48 lanes must match it — hyperfixi's English, semantic's English round
 trip, and each language on hyperfixi's direct path and through the adapter on
 upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell,
@@ -629,9 +632,11 @@ an operator); 843 after PR 68 (core reads the X of a null target as null); 694 a
 in de and it); 588 after PR 70 (`my id` in bn, th, pl, ru and uk); 546 after PR 71 (sw `and`, ms
 `empty`); 424 after PR 72 (qu `mana`, bn and vi `if not`); 378 after PR 73 (an object literal in a
 `put` or `set`); 268 after PR 74 (a unary minus, pl `w` after `of`, zh/tl `no`,
-th `String(n)`) — and only shrinks:
-the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
-ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
+th `String(n)`); then PR 76 widened it (the names, the targets, `is null`) to 1,070 of
+83,352 — and it only shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
+skips that language's two lanes: no reader can tell them apart. The gate
+(`value-matrix.<position>.test.ts`, seven parallel shards in the package's
+ordinary suite, ~65s locally, ~3 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx
 tools/regen-value-matrix-baseline.ts` (it refuses to add pairs without
 `--allow-new`). It is the queue for value work: the family and lane tables it prints

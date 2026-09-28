@@ -13,14 +13,25 @@
  *     dotted, call, array, parens), each with instances of the value types it
  *     produces;
  *   - OPERATORS: arithmetic, comparison, equality, logic, membership, and the
- *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `exists`, `as`);
+ *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
+ *     `exists`, `as`);
  *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
- *     while` condition, and an `increment … by` amount.
+ *     while` condition, an `increment … by` amount, and two written targets:
+ *     what a `set` writes (`assign`) and what an `increment` counts (`count`).
  *
  * The generator crosses them as a covering design, not a full product: every
  * operand alone; every operator with literal and variable operands on each
  * side; every other operand kind with a representative operator of each class
  * it fits, on each side; and a few multi-operator expressions.
+ *
+ * Two smaller axes test what a value is written to, and what it is called:
+ *
+ *   - TARGETS: a plain variable, a property and an attribute as `assign` and
+ *     `count` targets;
+ *   - NAMES: variables spelled like another language's structure word (es
+ *     `a`, pl `w`, tr `de`, de `um`), in six positions. A translation writes a
+ *     variable verbatim, so its reader has to tell the variable from the word
+ *     by where it stands (see collidingNames).
  *
  * ## Lanes
  * Each cell runs its English source on the real `hyperscript.org` engine: that
@@ -62,6 +73,7 @@
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { commandSchemas, tokenize } from '@lokascript/semantic';
 import { installGlobals } from './shipped-examples-execution';
 
 // ---------------------------------------------------------------------------
@@ -82,9 +94,17 @@ export type OperandKind =
   | 'array'
   | 'parens';
 
-export type Position = 'put' | 'set' | 'if' | 'while' | 'increment';
+export type Position = 'put' | 'set' | 'if' | 'while' | 'increment' | 'assign' | 'count';
 
-export const POSITIONS: readonly Position[] = ['put', 'set', 'if', 'while', 'increment'];
+export const POSITIONS: readonly Position[] = [
+  'put',
+  'set',
+  'if',
+  'while',
+  'increment',
+  'assign',
+  'count',
+];
 
 export interface Operand {
   kind: OperandKind;
@@ -99,11 +119,17 @@ export interface MatrixCell {
   expression: string;
   /** The English handler. */
   source: string;
-  group: 'operand' | 'operator' | 'operand-operator' | 'compound';
+  group: 'operand' | 'operator' | 'operand-operator' | 'compound' | 'target' | 'name';
   /** The operand kind under test, when the cell tests one. */
   operand?: OperandKind;
   /** The operator under test, when any. */
   operator?: string;
+  /**
+   * Languages whose two lanes do not run: the cell's variable is spelled like
+   * that language's pronoun, so no reader can tell them apart (see
+   * collidingNames).
+   */
+  skip?: readonly string[];
 }
 
 /**
@@ -167,7 +193,8 @@ export const OPERANDS: readonly Operand[] = [
 ];
 
 /** An operator slot, and the value types that fill it. */
-type Slot = 'num' | 'str' | 'text' | 'bool' | 'arr' | 'empty' | 'el' | 'one' | 'els' | 'none';
+type Slot =
+  'num' | 'str' | 'text' | 'bool' | 'arr' | 'empty' | 'any' | 'el' | 'one' | 'els' | 'none';
 
 const FITS: Record<Slot, readonly ValueType[]> = {
   num: ['num', 'nstr'],
@@ -176,6 +203,7 @@ const FITS: Record<Slot, readonly ValueType[]> = {
   bool: ['bool'],
   arr: ['arr'],
   empty: ['str', 'nstr', 'arr', 'obj', 'null'],
+  any: ['num', 'nstr', 'str', 'bool', 'arr', 'obj', 'null', 'el', 'els'],
   el: ['el', 'els'],
   one: ['el'],
   els: ['els'],
@@ -273,6 +301,10 @@ export const UNARY_OPERATORS: readonly UnaryOperator[] = [
     representative: true,
   },
   { op: 'is not empty', fix: 'postfix', slot: 'empty', anchor: '""', result: 'bool' },
+  // Its own pair: languages that spell `null` and `empty` alike read one of
+  // them back as the other, and only `"" is null` tells them apart.
+  { op: 'is null', fix: 'postfix', slot: 'any', anchor: '""', result: 'bool' },
+  { op: 'is not null', fix: 'postfix', slot: 'any', anchor: '""', result: 'bool' },
   { op: 'exists', fix: 'postfix', slot: 'el', anchor: '#a', result: 'bool', representative: true },
   { op: 'as Int', fix: 'postfix', slot: 'num', anchor: '"7"', result: 'num', representative: true },
   { op: 'as String', fix: 'postfix', slot: 'num', anchor: '7', result: 'str' },
@@ -298,12 +330,112 @@ export const COMPOUND_EXPRESSIONS: ReadonlyArray<{ text: string; result: ValueTy
   { text: 's + " " + my id', result: 'str' },
 ];
 
+/**
+ * The `assign` and `count` targets besides the colliding names: a variable, a
+ * property three ways and in an element, and an attribute of the button,
+ * which has none (an increment reads it as 0).
+ */
+export const TARGETS: readonly string[] = [
+  'n',
+  'obj.v',
+  "obj's v",
+  'v of obj',
+  "#a's textContent",
+  'the textContent of #a',
+  '@title',
+];
+
+/** The value every colliding name holds (see collidingNames). */
+export const NAME_VALUE = 7;
+
+/**
+ * A colliding name's positions. Not `while`: probing every name in all seven,
+ * it failed in no lane that another position did not.
+ */
+const NAME_POSITIONS: readonly Position[] = ['put', 'set', 'if', 'increment', 'assign', 'count'];
+
+/** The words a pronoun keyword stands for: a variable spelled like one is that pronoun. */
+const REFERENCE_WORDS = new Set(['me', 'my', 'you', 'your', 'it', 'its', 'result', 'event']);
+
+export interface CollidingName {
+  name: string;
+  /** Languages whose tokenizer reads the name as a pronoun: their lanes do not run. */
+  pronounIn: readonly string[];
+}
+
+let collidingNamesMemo: readonly CollidingName[] | undefined;
+
+/**
+ * Variables spelled like a structure word of a language the matrix translates
+ * into: a one- or two-letter name its tokenizer does not read as a plain
+ * identifier (a particle, a connective, a copula, a verb), or that a command
+ * schema uses as a role marker (de `um`, which the tokenizer leaves an
+ * identifier; every profile role marker the tokenizers already read as a
+ * particle). A translation writes the variable verbatim, so the
+ * reader has to tell it from the word by where it stands, as PR 59 did for a
+ * conjunction, PR 64 for tr's particle `i` and PR 75 for an article. Derived,
+ * so a vocabulary change that makes a new word collide adds its cells.
+ *
+ * Left out: English keywords, which hyperfixi's own English cannot take as a
+ * variable either (except the articles, which it can, PR 75); `no`, which
+ * upstream reads as its operator; the templates' `i` and `x` and the other
+ * globals; and a name that only ever collides with a pronoun: pt `eu` is `me`,
+ * and `colocar eu em #out` really does say "put me into #out". A name that is
+ * a pronoun in one language and a structure word in another keeps its cells,
+ * without the pronoun's lanes (MatrixCell.skip).
+ */
+export function collidingNames(): readonly CollidingName[] {
+  if (collidingNamesMemo) return collidingNamesMemo;
+  const letters = [...'abcdefghijklmnopqrstuvwxyz'];
+  const candidates = [...letters, ...letters.flatMap(a => letters.map(b => a + b))];
+  const shaped = (word: string | undefined): word is string =>
+    word !== undefined && /^[a-z]{1,2}$/.test(word);
+  const structural = new Set<string>();
+  const pronoun = new Map<string, string[]>();
+  for (const language of FOREIGN_LANGUAGES) {
+    for (const word of candidates) {
+      const tokens = tokenize(word, language).tokens;
+      const token = tokens[0];
+      const normalized = token?.normalized !== word ? token?.normalized : undefined;
+      if (tokens.length === 1 && token?.kind === 'identifier' && !normalized) continue;
+      if (
+        tokens.length === 1 &&
+        token?.kind === 'keyword' &&
+        REFERENCE_WORDS.has(normalized ?? '')
+      ) {
+        pronoun.set(word, [...(pronoun.get(word) ?? []), language]);
+      } else {
+        structural.add(word);
+      }
+    }
+    const schemaMarkers = Object.values(commandSchemas).flatMap(schema =>
+      schema.roles.flatMap(role => [
+        role.markerOverride?.[language],
+        ...(role.markerVariants?.[language] ?? []),
+      ])
+    );
+    for (const word of schemaMarkers) if (shaped(word)) structural.add(word);
+  }
+  const reserved = new Set(['i', 'x', 'no', ...Object.keys(GLOBALS)]);
+  const englishKeyword = (word: string): boolean => {
+    if (word === 'a' || word === 'an') return false;
+    const tokens = tokenize(word, 'en').tokens;
+    return tokens.length === 1 && tokens[0]?.kind !== 'identifier';
+  };
+  collidingNamesMemo = candidates
+    .filter(word => structural.has(word) && !reserved.has(word) && !englishKeyword(word))
+    .map(name => ({ name, pronounIn: pronoun.get(name) ?? [] }));
+  return collidingNamesMemo;
+}
+
 const TEMPLATES: Record<Position, (expression: string) => string> = {
   put: e => `on click put ${e} into #out`,
   set: e => `on click set x to ${e} then put x into #out`,
   if: e => `on click if ${e} then put "Y" into #out else put "N" into #out end`,
   while: e => `on click set i to 0 then repeat while i < ${e} increment i end then put i into #out`,
   increment: e => `on click set i to 1 then increment i by ${e} then put i into #out`,
+  assign: e => `on click set ${e} to 5 then put ${e} into #out`,
+  count: e => `on click increment ${e} then put ${e} into #out`,
 };
 
 /**
@@ -373,6 +505,26 @@ export function generateCells(): MatrixCell[] {
   }
 
   for (const c of COMPOUND_EXPRESSIONS) add(c.text, c.result, { group: 'compound' });
+
+  const place = (
+    position: Position,
+    expression: string,
+    meta: Omit<MatrixCell, 'id' | 'position' | 'expression' | 'source'>
+  ): void => {
+    const id = `${position}|${expression}`;
+    if (!cells.has(id)) {
+      cells.set(id, { id, position, expression, source: TEMPLATES[position](expression), ...meta });
+    }
+  };
+  for (const target of TARGETS) {
+    place('assign', target, { group: 'target' });
+    place('count', target, { group: 'target' });
+  }
+  for (const { name, pronounIn } of collidingNames()) {
+    for (const position of NAME_POSITIONS) {
+      place(position, name, { group: 'name', ...(pronounIn.length ? { skip: pronounIn } : {}) });
+    }
+  }
 
   return [...cells.values()];
 }
@@ -507,6 +659,7 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   const coreGlobals = hyperscript.createContext().globals;
   const coreGlobalsAtStart = new Map(coreGlobals);
   const headAtStart = document.head.innerHTML;
+  const names = collidingNames();
 
   /**
    * A fresh body and fresh globals; returns the button. A global goes on both
@@ -527,6 +680,10 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
       const value = make();
       Reflect.set(window, name, value);
       Reflect.set(globalThis, name, value);
+    }
+    for (const { name } of names) {
+      Reflect.set(window, name, NAME_VALUE);
+      Reflect.set(globalThis, name, NAME_VALUE);
     }
     return document.getElementById('b') as HTMLElement;
   };
@@ -589,6 +746,7 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
       );
 
       for (const language of FOREIGN_LANGUAGES) {
+        if (cell.skip?.includes(language)) continue;
         let code: string | null = null;
         try {
           code = english ? render(english, language) : null;
