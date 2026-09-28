@@ -163,6 +163,11 @@ export const hindiProfile: LanguageProfile = {
     // over the while prefix; tryMultiWordKeyword emits it as a single `unless`
     // token (the underscore form `जब_तक_नहीं` shattered: `जब`=when + `_` splits).
     unless: { primary: 'जब तक नहीं', normalized: 'unless' },
+    // `no` (`no .w`: nothing matches) is कोई नहीं, "none"; नहीं alone is `not`.
+    // They were one word, and both take an operand, so position could not tell
+    // them apart. Spaced, so the multi-word walk takes it whole: alone, कोई
+    // normalizes to the को particle.
+    no: { primary: 'कोई नहीं', normalized: 'no' },
     continue: { primary: 'जारी', alternatives: [], normalized: 'continue' },
     halt: { primary: 'रोकें', alternatives: ['रोक'], normalized: 'halt' },
     throw: { primary: 'फेंकें', alternatives: ['फेंक'], normalized: 'throw' },

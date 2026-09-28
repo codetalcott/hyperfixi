@@ -14,6 +14,11 @@
  * bn `unless me`, vi a bare `put`. Where an operand follows the pair and none
  * precedes it, it is `if` and `not`: bn writes `unless` after its condition
  * (`flag যদি না`), and vi's `else` follows a branch and runs into a verb.
+ *
+ * hi `नहीं` was `not` and `no` alike, and both take an operand, so position
+ * could not tell them apart: `not flag` read back `no flag`, `no .w` lost its
+ * `no`. hi writes `no` as `कोई नहीं` ("none") now, which its tokenizer takes
+ * whole, and `नहीं` alone is `not`.
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
@@ -23,6 +28,25 @@ const roundTrip = (source: string, language: string): string => {
   const back = parse(foreign, language);
   return back ? render(back, 'en') : `(no parse: ${foreign})`;
 };
+
+describe('hi `नहीं` is `not`, and `कोई नहीं` is `no`', () => {
+  it.each([
+    'on click put not flag into #out',
+    'on click put not false into #out',
+    'on click put no flag into #out',
+    'on click put no .w into #out',
+    'on click if not flag put "Y" into #out end',
+    'on click if no .w put "Y" into #out end',
+    'on click put x is not empty into #out',
+    'on click if #a does not match .x put "Y" into #out end',
+  ])('%s', source => {
+    expect(roundTrip(source, 'hi')).toBe(source);
+  });
+
+  it('writes `no` as `कोई नहीं`', () => {
+    expect(render(parse('on click put no .w into #out', 'en')!, 'hi')).toContain('कोई नहीं .w');
+  });
+});
 
 describe.each(['bn', 'vi'])('%s', language => {
   it.each([

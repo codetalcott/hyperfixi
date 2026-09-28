@@ -53,7 +53,7 @@ const LANGUAGES = [
 ];
 
 // Each value with what both engines put (n = 3; the button is `b`), and the
-// languages whose `not` is also another word (hi `नहीं`; see
+// languages whose `and` or `not` does not read back (none now; see
 // value-operators-direct-path.test.ts).
 const VALUES: Array<[string, string, string[]]> = [
   [`#d1's textContent is "d"`, 'true', []],
@@ -72,7 +72,7 @@ const VALUES: Array<[string, string, string[]]> = [
   [`textContent of first <p/> + "x"`, 'dx', []],
   [`#d1's textContent is "d" and n is 3`, 'true', []],
   [`n is 3 and #d1's textContent is "e"`, 'false', []],
-  [`not #d1's textContent`, 'false', ['hi']],
+  [`not #d1's textContent`, 'false', []],
 ];
 
 describe.each(VALUES)('put %s', (value, expected, broken) => {

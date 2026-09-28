@@ -104,7 +104,7 @@ export const CONNECTIVE_LEXICON: Record<string, Record<string, string>> = {
   es: { "como": "as", "contiene": "contains", "iguala": "equals", "incluye": "includes", "no": "not", "o": "or", "y": "and" },
   fr: { "comme": "as", "contient": "contains", "égale": "equals", "et": "and", "inclut": "includes", "non": "not", "ou": "or" },
   he: { "וגם": "and" },
-  hi: { "और": "and", "के_रूप_में": "as", "बराबर": "equals", "में_है": "includes", "या": "or", "शामिल": "contains" },
+  hi: { "और": "and", "के_रूप_में": "as", "नहीं": "not", "बराबर": "equals", "में_है": "includes", "या": "or", "शामिल": "contains" },
   id: { "atau": "or", "berisi": "contains", "bukan": "not", "dan": "and", "sama": "equals", "sebagai": "as", "termasuk": "includes" },
   it: { "come": "as", "contiene": "contains", "e": "and", "include": "includes", "non": "not", "o": "or", "uguale": "equals" },
   ja: { "そして": "and", "ではない": "not", "として": "as", "または": "or", "含む": "contains", "含める": "includes", "等しい": "equals" },
@@ -733,10 +733,9 @@ interface AmbiguousSenseRule {
       (`#modal আছে` → `#modal exists`). */
   afterSubject?: string;
   /** Emitted when the previous word, as this join read it, is `is` or `not`
-      (ja `である 空` → `is empty`, `ではない 空` → `not empty`; hi `है नहीं`
-      → `is not`, where `है` read as `is` by its own rule), or the `does`/`do`
-      of `does not match` (hi `does नहीं match`). Checked before
-      `beforeBareIdentifier`, which gives hi `नहीं` its other sense, `no`. */
+      (ja `である 空` → `is empty`, `ではない 空` → `not empty`; ar `هو فارغ`
+      → `is empty`, where `هو` read as `is` by its own rule), or the `does`/`do`
+      of `does not match`. Checked before `beforeBareIdentifier`. */
   afterCopula?: string;
   /** Emitted when the PREVIOUS token is an operand (a word, selector, literal
       or reference, or a closing paren): the copula between the two sides of a
@@ -823,7 +822,6 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   },
   hi: {
     है: { beforePredicate: 'is', beforeClassRef: 'has', afterOperand: 'is' },
-    नहीं: { afterCopula: 'not', beforeBareIdentifier: 'no' },
     खाली: { afterCopula: 'empty' },
   },
   id: { kosong: { afterCopula: 'empty' } },

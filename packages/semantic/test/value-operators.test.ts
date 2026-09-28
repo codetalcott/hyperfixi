@@ -57,14 +57,14 @@ describe.each(SOURCES)('%s', source => {
 
 // `and`, `or` and `not` join a run too, in English or in the language's own
 // word (de `oder`, through the expression lexicon's connectives). Each is
-// tested in the languages whose word for it reads back. Where it doesn't:
-// `not` is hi `नहीं` (also `no`). (sw's `na` is also `with`, and qu's `mana`
-// also `false`: see and-word.test.ts and not-word.test.ts.)
+// tested in the languages whose word for it reads back: all of them now. (sw's
+// `na` is also `with`, qu's `mana` also `false`, and hi's `नहीं` was also `no`:
+// see and-word.test.ts and not-word.test.ts.)
 const CONNECTIVES: Array<[string, string[]]> = [
   ['on click put p or q into #out', []],
   ['on click put p and q into #out', []],
-  ['on click put not p into #out', ['hi']],
-  ['on click set x to p and not q', ['hi']],
+  ['on click put not p into #out', []],
+  ['on click set x to p and not q', []],
 ];
 
 describe.each(CONNECTIVES)('%s', (source, broken) => {

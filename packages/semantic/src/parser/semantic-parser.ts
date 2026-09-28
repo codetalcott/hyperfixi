@@ -7385,8 +7385,8 @@ export class SemanticParserImpl implements ISemanticParser {
     'هو', // ar (keyword norm=`it` — matched by surface VALUE)
     'เป็น', // th
     'है', // hi
-    // hi नहीं is `not` after the copula (`है नहीं खाली`, is not empty) and also
-    // `no`, so it has no connective entry the normalized check could read.
+    // hi नहीं is `not` after the copula (`है नहीं खाली`, is not empty). It was
+    // also `no`, so it had no connective entry the normalized check could read.
     'नहीं',
     // qu mana is `not` there too (`kanqa mana chusaq`), and `false`; its
     // predicate chusaq is also the `empty` command, which opened the then-branch.

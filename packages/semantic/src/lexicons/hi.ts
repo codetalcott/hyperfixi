@@ -138,7 +138,7 @@ export const hindiLexicon: LanguageLexicon = {
     last: { primary: 'अंतिम' },
     'mapped to': { primary: 'में_परिवर्तित' },
     next: { primary: 'अगला' },
-    no: { primary: 'नहीं' },
+    no: { primary: 'कोई नहीं' },
     parent: { primary: 'मूल' },
     prev: { primary: 'पिछ' },
     previous: { primary: 'पिछला' },

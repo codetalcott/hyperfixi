@@ -74,16 +74,17 @@ describe.each(VALUES)('put %s', (value, expected) => {
 });
 
 // `and`, `or` and `not`, with each binary one in both operand orders (p = true,
-// q = false), so a value cut to either operand fails. Each skips the languages
-// whose word for it is also another word (see semantic's value-operators test).
+// q = false), so a value cut to either operand fails. Each lists the languages
+// whose word for it does not read back: none now (see semantic's
+// value-operators test).
 const CONNECTIVES: Array<[string, string, string[]]> = [
   ['p or q', 'true', []],
   ['q or p', 'true', []],
   ['p and q', 'false', []],
   ['q and p', 'false', []],
-  ['not p', 'false', ['hi']],
-  ['not q', 'true', ['hi']],
-  ['p and not q', 'true', ['hi']],
+  ['not p', 'false', []],
+  ['not q', 'true', []],
+  ['p and not q', 'true', []],
 ];
 
 describe.each(CONNECTIVES)('put %s', (value, expected, broken) => {
