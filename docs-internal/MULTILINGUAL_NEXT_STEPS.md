@@ -6250,6 +6250,21 @@ this signal was missing.
 > language's one word means "empty", and de, ja, ms and pl already write `null`); hi `no` as
 > `कोई नहीं`, keeping `नहीं` for `not`; then the kept `the X of Y as T` and it `di` tagged as
 > accepted. The two target families follow.
+>
+> **qu writes `and` as `hinallataq` (PR 77, 2026-09-28).** qu's dictionary wrote `and` as
+> `chaymanta`, "after that", which is also, and first, qu's `then`: its profile and tokenizer read
+> it as `then`, so `set x to true and flag` split into two commands (`set to flag`). The profile's
+> own `and` is `hinallataq`, which already read back as `and`; the dictionary, the render lexicon
+> and the generated connective table write it now, and a hand-written `chaymanta` is still `then`.
+> (The connective table's line moves no test: the profile keyword already read `hinallataq`. It is
+> generated from the dictionary, so it follows it.)
+>
+> **In the value matrix, 1,070 failing pairs fall to 1,050**: the eight `and` cells in qu's `set`
+> (16), and `flag and not (n is 6)` in qu's `set` and `if` (4, which the last handoff counted under
+> hi's `नहीं`: they broke at `chaymanta` too). None newly fail; no stored corpus row moves. qu
+> joins `and-word.test.ts` and leaves the `and` exclusions of `value-operators` and
+> `value-path-operands`, in semantic and in core's direct-path twins; reverting the lexicon word
+> fails 8 of them.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
