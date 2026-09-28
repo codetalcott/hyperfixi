@@ -1,19 +1,73 @@
 /**
- * Where a value ends: the pure half of the pattern matcher's value-extent
- * repair (`PatternMatcher.absorbExpressionTail`).
+ * Where a value ends
+ * ==================
+ * The value-extent rule (C13–C16 in docs-internal/MULTILINGUAL_NEXT_STEPS.md,
+ * "Value reading"). The role capture (`PatternMatcher.absorbExpressionTail`)
+ * supplies an ExtentContext and applies the result; everything else is here.
  *
- * A role capture takes one known SHAPE of value. When the value is longer
- * than the shape it recognized (`obj's v`, `length of arr`, `String(n) + 2`,
- * `-n`), the capture stops short and the command drops or keeps a truncated
- * value. The repair lets the expression parser, which reads the English form
- * every expression value is stored in, say how far the value goes. These are
- * the parts of that decision that need no matcher state: which words an
- * expression may contain, and whether a joined run reads as ONE expression.
+ * A role capture takes one known SHAPE of value: a token, a possessive pair, a
+ * property path, an operator run over known operands. When a value is longer
+ * than the shape it recognized (`obj's v`, `length of arr`, `#a's
+ * textContent's length`, `String(n) + 2`, `-n`), the capture stops short. The
+ * leftover tokens then fail the pattern's next marker and the command drops
+ * (`put obj's v into #out` parsed as a bare `on click`), or the pattern
+ * completes and the tail is lost (`set x to v of obj` kept `v`). Every
+ * translation is rendered from the English parse, so it inherited the loss in
+ * all 24 languages (PR 53).
+ *
+ * So after a capture, while tokens remain before the value's boundary, take
+ * the longest run from the capture's start that the expression parser reads
+ * WHOLE, joined to English as every expression value is. The boundary is:
+ *
+ * - a marker the pattern still owes, or the clause's end;
+ * - a marker of ANY role of the command, in this language, whether or not
+ *   the matching variant has a slot for it. Otherwise a variant without that
+ *   role wins by swallowing its marker (uk `з` is both swap's `with` and
+ *   `of`), and fetch's responseType, whose marker a language may leave in
+ *   English (es `como json` joins as `as json`);
+ * - a `.class` across a space after an operand (`.active .active`, `null
+ *   .error`): another value, which the English parser would read as a member;
+ * - any keyword that is not expression vocabulary: a command verb (`set x to
+ *   true and put 2 …`), an event name (tl `wait from document pointermove o
+ *   pointerup`), a marker (continuesValue).
+ *
+ * And the run must read as ONE expression (readsAsOneExpression): no unclosed
+ * quote (`'s v "Y"`, a split taken after an owner) and no word the English
+ * parser cannot read.
+ *
+ * Each of these exists because the whole-corpus probe or the value matrix
+ * caught its absence turning a failing variant or SOV clause split into a
+ * winning one, or semantic's own suite caught it losing a command. A first cut
+ * also refused identifiers outside ASCII, stopped at any word naming a
+ * command, and refused a value that began at an operator word or a possessive
+ * marker: dropped, since the value matrix measured them costing 437 fixed
+ * pairs and nothing measured them protecting anything.
+ *
+ * Where a marker or the clause end bounds the value, that is all. A slot
+ * followed directly by another role (it/pl/ru/uk `set`'s destination, then its
+ * value; an increment's bare amount in the languages that write it without
+ * `by`) has no marker to stop at: the parser would take both. There the value
+ * runs on only through a possessive (possessiveLinkEnds, PR 83): `obj's v` and
+ * `v of obj` are one written target, and nothing else continues it, so
+ * `impostare in obj's v 5` keeps its `5`. Without it the target stopped at
+ * `obj` and the next role took the rest: `increment obj by '`, `set v to of`.
  */
 
 import { parseExpression } from '../../ast-builder/expression-parser/parser';
 import { tokenize } from '../../ast-builder/expression-parser/tokenizer';
-import { isConversionTypeName } from './expression-lexicon';
+import type { LanguageProfile } from '../../generators/profiles/types';
+import type { LanguageToken } from '../../types';
+import { isCuratedEndKeyword } from '../end-keywords';
+import { isParticleAfterOf } from '../value-reading';
+import {
+  expressionWordOf,
+  isConnectiveOperand,
+  isConversionTypeName,
+  isCopulaIn,
+  isOfPossessiveMarker,
+  joinExpressionTokens,
+} from './expression-lexicon';
+import { RUN_OPERATORS } from './operators';
 
 /**
  * The English words an expression may contain, as `expressionWordOf` reads a
@@ -156,4 +210,156 @@ function conversionTypes(node: unknown): string[] {
   };
   walk(node);
   return out;
+}
+
+/** What the extent scan needs from the pattern it runs in. */
+export interface ExtentContext {
+  /** The language's profile: its of-markers, and the join's reading of each word. */
+  readonly profile: LanguageProfile | undefined;
+  /** Does a marker the pattern still owes want this token? */
+  owes(token: LanguageToken): boolean;
+  /** The markers of every role of the command being built, in this language, lowercased. */
+  readonly commandMarkers: ReadonlySet<string>;
+  /** The command has a `responseType` role, whose marker is `as` (fetch). */
+  readonly hasResponseType: boolean;
+}
+
+/** Do these two tokens touch in the SOURCE (no whitespace between them)? */
+export function tokensAdjacent(
+  left: { position?: { start?: number; end?: number } } | null | undefined,
+  right: { position?: { start?: number; end?: number } } | null | undefined
+): boolean {
+  return (
+    left?.position?.end !== undefined &&
+    right?.position?.start !== undefined &&
+    left.position.end === right.position.start
+  );
+}
+
+/** C13: the clause's end, or a marker the pattern still owes. */
+export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
+  if (token.kind === 'conjunction') return true;
+  if (token.kind === 'keyword') {
+    const norm = (token.normalized ?? token.value).toLowerCase();
+    if (norm === 'then' || norm === 'end' || norm === 'else') return true;
+    if (isCuratedEndKeyword(token.value, ctx.profile?.code ?? '')) return true;
+  }
+  return ctx.owes(token);
+}
+
+/**
+ * Does the value stop at the token at `i`: a boundary, or a marker of the
+ * command? Not at the `in` after a copula, the operator (C15, PR 69), nor at a
+ * particle after `of`, its owner (C15, PR 74).
+ */
+function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): boolean {
+  const language = ctx.profile?.code ?? 'en';
+  if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return false;
+  const token = all[i]!;
+  return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
+}
+
+/**
+ * C13, C14, C15: may a value run on through the token at `i`? Operands
+ * (literals, selectors, identifiers in any script), operators and punctuation,
+ * possessive markers, and keywords whose English sense is expression
+ * vocabulary. Not another keyword: a command verb (`true and put 2 …`), an
+ * event name (tl `pointermove o pointerup`), a marker. Not a `.class` across a
+ * space after an operand, and not the command's responseType marker in its
+ * English sense (`fetch … as json`, es `como json`).
+ */
+export function continuesValue(
+  all: readonly LanguageToken[],
+  i: number,
+  ctx: ExtentContext
+): boolean {
+  const token = all[i]!;
+  const prev = all[i - 1];
+  const language = ctx.profile?.code ?? 'en';
+  if (token.kind === 'literal') return true;
+  // en splits a possessive `obj's` into `obj` `'` `s`.
+  if (token.value === "'" && all[i + 1]?.value === 's') return true;
+  if (token.value === 's' && prev?.value === "'") return true;
+  if (token.kind === 'selector') {
+    // After an operator or an operator word (`no .w`, `+ .x`) a `.class`
+    // across a space is the next operand; after an operand, another value.
+    if (!token.value.startsWith('.') || !prev || tokensAdjacent(prev, token)) return true;
+    if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
+    const prevWord = expressionWordOf(language, prev, all[i - 2], token, undefined).toLowerCase();
+    return OPERATOR_WORDS.has(prevWord);
+  }
+  if (RUN_OPERATORS.has(token.value)) return true;
+  if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
+  if (isOfPossessiveMarker(ctx.profile, token)) return true;
+  // C14: a conjunction where none can stand (PR 59).
+  if (isConnectiveOperand(language, token, prev, all[i + 1])) return true;
+  if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return true;
+  const word = expressionWordOf(language, token, prev, all[i + 1], undefined).toLowerCase();
+  if (word === 'as' && ctx.hasResponseType) return false;
+  if (EXPRESSION_WORDS.has(word)) return true;
+  // An identifier in any script: the join translates a localized property
+  // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what it
+  // leaves untranslated. qu and uk keep an apostrophe in a word, so `foo's` in
+  // `obj's foo's bar` is one token.
+  return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?$/u.test(token.value);
+}
+
+/**
+ * C13: where a value that a marker or the clause's end bounds may end, from
+ * the stream position `from`, longest first: every index up to the first
+ * token it cannot run through.
+ */
+export function valueTailEnds(
+  all: readonly LanguageToken[],
+  from: number,
+  ctx: ExtentContext
+): number[] {
+  if (!all[from] || stopsAt(all, from, ctx)) return [];
+  let end = from;
+  while (end < all.length && !stopsAt(all, end, ctx) && continuesValue(all, end, ctx)) end++;
+  const ends: number[] = [];
+  for (let k = end; k > from; k--) ends.push(k);
+  return ends;
+}
+
+/**
+ * C16: where each possessive link after a value ends, longest first — `'s v`
+ * (en splits it into `'` `s`; uk keeps `obj's` one word, so the property
+ * follows it), or an of-marker and its owner. What a value no marker bounds
+ * may run on through (PR 83).
+ */
+export function possessiveLinkEnds(
+  all: readonly LanguageToken[],
+  from: number,
+  profile: LanguageProfile | undefined
+): number[] {
+  const ends: number[] = [];
+  let k = from;
+  for (;;) {
+    const t = all[k];
+    if (!t) break;
+    if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
+    else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
+    else if (isOfPossessiveMarker(profile, t) && all[k + 1]) k += 2;
+    else break;
+    ends.push(k);
+  }
+  return ends.reverse();
+}
+
+/**
+ * The longest run from `start` to one of `ends` (longest first) that the
+ * expression parser reads whole, and its English raw; undefined if none does.
+ */
+export function longestWholeRun(
+  all: readonly LanguageToken[],
+  start: number,
+  ends: readonly number[],
+  profile: LanguageProfile | undefined
+): { end: number; raw: string } | undefined {
+  for (const end of ends) {
+    const raw = joinExpressionTokens(all.slice(start, end), profile);
+    if (readsAsOneExpression(raw)) return { end, raw };
+  }
+  return undefined;
 }
