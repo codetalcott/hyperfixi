@@ -6385,6 +6385,27 @@ this signal was missing.
 > (228 open, 102 accepted)**, none newly failing; what stays of the targets is translation-side: the
 > object increments in ar, he, id, it, ms, pl, ru, sw, th, tl, uk, vi and zh read the word after the
 > target as the amount (`increment v by of`), and the object `set` fails in it, pl, ru and uk.
+>
+> **A possessive target before a role with no marker reads whole (PR 83, 2026-09-28).** The
+> translation-side half of the targets. The languages that write an increment's amount bare (ar,
+> he, id, it, ms, pl, ru, sw, th, tl, uk, vi, zh) and it/pl/ru/uk's `set`, whose value follows the
+> target with no marker (`impostare in obj's v 5`), left the target's capture nothing to stop at:
+> the value-extent rule (PR 53) applies only where a marker or the clause end bounds a value, so
+> the target stopped at `obj` and the next role took the rest (`increment obj by '`, `set v to
+> of`). An unbounded slot now runs on through a possessive link, and only through one (`'s v`, an
+> of-marker and its owner), keeping the longest run that reads as one expression; the amount or
+> the value after it is still its own role. qu and uk keep an apostrophe inside a word, so `obj's
+> foo's bar` is three words there, and the value's run refused `foo's`: qu dropped `obj's` and uk
+> `foo's bar`, in any slot (outside the matrix; the matrix has one-link chains only). Dropped after
+> measuring: a guard that a link's word be a name, not a number (it `di` is also `by`), which moved
+> no matrix pair, corpus row or test (the `di`-marked pattern wins `incrementare i di 5` first).
+>
+> **In the value matrix, 330 failing pairs fall to 262 (160 open, 102 accepted)**: all 68 target
+> pairs; none newly fail. No stored corpus row moves. `possessive-tail-before-role.test.ts`
+> round-trips twelve target shapes through all 23 languages (one- and two-link chains, `'s` and
+> `of`, with and without an amount) and five hand-written next-role readings; each of the three
+> link kinds, the unbounded call, the longest-first order and qu/uk's `'s` word, reverted alone,
+> fails it.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

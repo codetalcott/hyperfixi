@@ -638,8 +638,8 @@ languages that spelled it `empty`); 821 after PR 79 (hi `no` written `कोई 
 marks 102 ACCEPTED (the kept `the X of Y as T` difference and it's `di` ambiguity: listed, gated,
 reported apart); 438 after PR 81 (a variable spelled like a structure word: a particle that ends
 its clause, a lone marker/control/copula keyword, a lone conjunction); 330 after PR 82 (core writes
-an object's property through `'s`/`of`, the `of` operator's, and a counted attribute) — and it only
-shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
+an object's property through `'s`/`of`, the `of` operator's, and a counted attribute); 262 after PR 83
+(a possessive target before a role with no marker) — and it only shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
 skips that language's two lanes: no reader can tell them apart. The gate
 (`value-matrix.<position>.test.ts`, seven parallel shards in the package's
 ordinary suite, ~65s locally, ~3 min in CI) fails on a new failing pair AND on a
