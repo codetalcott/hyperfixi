@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~310 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **21.5 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~349 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **22.0 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes from CI's bundle-size job on 2026-09-28 (PR 85). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–85) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -620,31 +620,16 @@ verbatim — 1,738 cells. It EXECUTES each one: the English source on upstream `
 oracle, and 48 lanes must match it — hyperfixi's English, semantic's English round
 trip, and each language on hyperfixi's direct path and through the adapter on
 upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell,
-lane) pair — 18,509 of 63,744 when it landed, 85% of them in semantic's English
-parse; 10,020 after PRs 53–54 (semantic's value extent, core's English values);
-5,727 after PR 55 (an increment's amount); 4,340 after PR 56 (semantic's `as` and
-`@attr of`); 3,326 after PR 57 (`contains` in ja, ko, qu, zh); 2,089 after PR 58
-(property words before `of`, localized and chained); 1,840 after PR 59 (a variable spelled
-like a conjunction); 1,836 after PR 61 (sw and vi `null`); 1,427 after PR 64 (tr's variable
-`i`, spelled like its accusative marker); 1,329 after PR 65 (a whole possessive chain in a role);
-1,059 after PR 66 (a bare bracket run is an array); 931 after PR 67 (tr's `is in`, and `i` before
-an operator); 843 after PR 68 (core reads the X of a null target as null); 694 after PR 69 (the `in` after a copula,
-in de and it); 588 after PR 70 (`my id` in bn, th, pl, ru and uk); 546 after PR 71 (sw `and`, ms
-`empty`); 424 after PR 72 (qu `mana`, bn and vi `if not`); 378 after PR 73 (an object literal in a
-`put` or `set`); 268 after PR 74 (a unary minus, pl `w` after `of`, zh/tl `no`,
-th `String(n)`); then PR 76 widened it (the names, the targets, `is null`) to 1,070 of
-83,352; 1,050 after PR 77 (qu `and`); 851 after PR 78 (`null` written `null` in the seven
-languages that spelled it `empty`); 821 after PR 79 (hi `no` written `कोई नहीं`), of which PR 80
-marks 102 ACCEPTED (the kept `the X of Y as T` difference and it's `di` ambiguity: listed, gated,
-reported apart); 438 after PR 81 (a variable spelled like a structure word: a particle that ends
-its clause, a lone marker/control/copula keyword, a lone conjunction); 330 after PR 82 (core writes
-an object's property through `'s`/`of`, the `of` operator's, and a counted attribute); 262 after PR 83
-(a possessive target before a role with no marker); 102 after PR 84 (the colliding names left), every
-one of them ACCEPTED — and it only shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
-skips that language's two lanes: no reader can tell them apart. The gate
-(`value-matrix.<position>.test.ts`, seven parallel shards in the package's
-ordinary suite, ~65s locally, ~3 min in CI) fails on a new failing pair AND on a
-listed pair that passes. After a fix, prune with `npx tsx
+lane) pair, and it only shrinks: 18,509 of 63,744 when it landed (PR 52), 102 of
+83,352 since PR 84 (2026-09-28), every one of them ACCEPTED (the kept `the X of Y as
+T` difference and it's `di` ambiguity: listed, gated, reported apart). The per-PR
+burn-down, and an inventory of the rules that tell a variable spelled like a
+structure word from the word (each with its PR and the test that pins it), are in
+`docs-internal/MULTILINGUAL_NEXT_STEPS.md` ("Value reading"). A name that is a
+PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
+can tell them apart. The gate (`value-matrix.<position>.test.ts`, seven parallel
+shards in the package's ordinary suite, ~65s locally, ~3 min in CI) fails on a new
+failing pair AND on a listed pair that passes. After a fix, prune with `npx tsx
 tools/regen-value-matrix-baseline.ts` (it refuses to add pairs without
 `--allow-new`). It is the queue for value work: the family and lane tables it prints
 say what to fix next.
@@ -860,7 +845,7 @@ The bundle compatibility test suite automatically tests every built bundle again
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: hybrid-complete (11.1 KB, plugin-internal), hybrid-hx (21.5 KB), hybrid-hx-v4 (~342 KB), browser (~310 KB)
+- Bundles: hybrid-complete (11.4 KB, plugin-internal), hybrid-hx (22.0 KB), hybrid-hx-v4 (~360 KB), browser (~349 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -1083,10 +1068,10 @@ Quick selection (sizes gzipped):
 | Bundle                       | Size      | Use case                                                                                                |
 | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
 | via `@hyperfixi/vite-plugin` | minimal   | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
-| `hyperfixi-hx.js`            | ~21.5 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
-| `hyperfixi.js`               | ~310 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
-| `hyperfixi-hx-v4.js`         | ~342 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
-| `hyperfixi-multilingual.js`  | ~91 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
+| `hyperfixi-hx.js`            | ~22.0 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
+| `hyperfixi.js`               | ~349 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
+| `hyperfixi-hx-v4.js`         | ~360 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
+| `hyperfixi-multilingual.js`  | ~93 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
 | semantic bundles             | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
