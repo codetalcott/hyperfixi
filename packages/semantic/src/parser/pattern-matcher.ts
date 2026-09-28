@@ -89,6 +89,37 @@ function isSigilProperty(value: string): boolean {
   return value.startsWith('*') || value.startsWith('@');
 }
 
+/** Control words and the copula, which are structure and never a value (see isStructureKeyword). */
+const STRUCTURE_WORDS: ReadonlySet<string> = new Set([
+  'if',
+  'unless',
+  'while',
+  'until',
+  'for',
+  'when',
+  'where',
+  'is',
+  'not',
+  'no',
+  'and',
+  'or',
+  'as',
+]);
+
+/**
+ * A keyword that is structure: a role marker (normalized to its role, as tr
+ * `na` is `destination`), a control word or the copula. Never a reference
+ * (`me`, `event`), which is a value. Nor a command verb: alone in a slot it is
+ * also what a dropped command leaves (`tell #modal to show`, whose `show` the
+ * role normalization discards as junk), so a variable spelled like a verb (es
+ * `ir`, tr `al`) stays open.
+ */
+function isStructureKeyword(token: LanguageToken): boolean {
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (norm === 'event' || isValidReference(norm)) return false;
+  return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
+}
+
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
@@ -1733,11 +1764,36 @@ export class PatternMatcher {
     const nextToken = tokens.peek(1);
     if (
       token.kind === 'particle' &&
-      nextToken &&
-      ((this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
-        (nextToken.kind === 'particle' ||
-          tokens.tokens[tokens.position() - 1]?.kind === 'particle')) ||
-        this.runOperatorFollows(tokens))
+      ((nextToken &&
+        ((this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
+          (nextToken.kind === 'particle' ||
+            tokens.tokens[tokens.position() - 1]?.kind === 'particle')) ||
+          this.runOperatorFollows(tokens))) ||
+        // …and one that ends the clause: es `incrementar a entonces`
+        // (increment a), `establecer x a a` (set x to a).
+        this.endsClauseAfter(tokens))
+    ) {
+      captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
+      tokens.advance();
+      return true;
+    }
+
+    // A structure keyword alone in a value slot is a variable the language
+    // spells like it: a role marker (tr `na`, ms `ke`, de `zu`), a control word
+    // (es `si` "if", pl `az` "until", de `wo` "where") or the copula (es `es`,
+    // sw `ni`). A translation writes a variable verbatim, and structure is
+    // never a value (PR 59's conjunction, PR 75's article); captured whole it
+    // was the English word, `put if`. The matchers above have taken the
+    // keyword-led values (`not flag`, `no .w`); a slot that holds a keyword
+    // (`using view transition`, a loop's type) and the event keep theirs.
+    if (
+      token.kind === 'keyword' &&
+      patternToken.role !== 'event' &&
+      patternToken.role !== 'action' &&
+      patternToken.valueShape !== 'keyword' &&
+      (!patternToken.expectedTypes?.length ||
+        patternToken.expectedTypes.some(t => t === 'expression' || t === 'reference')) &&
+      isStructureKeyword(token)
     ) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();
@@ -2214,6 +2270,15 @@ export class PatternMatcher {
       }
     }
     return undefined;
+  }
+
+  /** Is the token after the next one a clause boundary (`then`, `end`, `else`) or nothing? */
+  private endsClauseAfter(tokens: TokenStream): boolean {
+    const next = tokens.peek(1);
+    if (!next) return true;
+    if (next.kind !== 'keyword') return false;
+    const norm = (next.normalized ?? next.value).toLowerCase();
+    return norm === 'then' || norm === 'end' || norm === 'else';
   }
 
   /** The token after the next one is a run operator. */

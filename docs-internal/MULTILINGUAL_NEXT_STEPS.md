@@ -6340,6 +6340,40 @@ this signal was missing.
 > - **The written targets, 176**: core's `set o's v` / `v of o` on a plain object (filed in
 >   `PARSER_NEXT_STEPS.md`; `resolveAnyPropertyTarget` accepts only an element owner), and the
 >   direct path's `increment obj.v` and `increment @title`.
+>
+> **A variable spelled like a structure word reads back (PR 81, 2026-09-28).** Mechanisms (A), (B)
+> and (C) above, the PR 59/64/75 shape carried further:
+>
+> - **A particle that ends its clause is the value.** PR 64's rule read a particle before the
+>   pattern's next token; at the clause's end there is none, so es `incrementar a entonces`
+>   (increment a) lost the increment and `establecer x a a` (set x to a) the whole `set`.
+> - **A structure keyword alone in a value slot is a variable**: a role marker (tr `na`, ms `ke`,
+>   de `zu`), a control word (es `si` "if", pl `az` "until", de `wo` "where") or the copula (es
+>   `es`, sw `ni`). Captured whole, the keyword was its English word, `put if into #out`. Not in a
+>   slot that holds a keyword (`using view transition`, a loop's type), nor the event's. **Not a
+>   command verb** (es `ir`, tr `al`): alone in a slot that is also what a dropped command leaves
+>   (`tell #modal to show`), which the role normalization discards as junk; semantic's suite
+>   caught it (ja and qu `tell`).
+> - **A conjunction that is a whole condition joins nothing** (es `si y`, if y).
+>
+> Dropped after measuring: the keyword rule first required the value to end before the pattern's
+> next token or the clause's end, then only in a required slot; neither guard protected a test, a
+> corpus row or a matrix pair, and they cost 3 and 26 pairs (the three `assign` cells, pl `az`, ms
+> `ke`, it `se`, whose generated patterns do not end the value where the rule looked).
+>
+> **In the value matrix, 821 failing pairs fall to 438 (336 open, 102 accepted)**: 383 name pairs
+> (pl 81, tr 62, it 47, pt 46, es 44, sw 22, fr 20, tl 20, de 20, id 12, ms 9); none newly fail.
+> No stored corpus row moves. `colliding-names.test.ts` round-trips every (name, position,
+> language) pair the matrix now passes on the direct path (195); each of four mutants reverting
+> one piece fails it.
+>
+> **The names left, 160 pairs:** `if NAME` with a keyword-shaped name (the join reads a lone
+> structure keyword as its English word; es/fr/it/pt `si`/`se` also meet the nested-if scan),
+> `increment i by NAME` with a verb- or `if`-shaped name (the quantity slot's verb guard; the
+> slot's marker has already matched, so its premise does not hold), `assign` in pl and it (a
+> marker-shaped name after the real marker loses to a pattern that reads the real marker as the
+> value), the command-verb names (es/pt `ir`, es `ve`, fr `va`, tr `ac`/`al`), de `a`/`an`
+> (`skipNoiseWords`), and sw `si` (`not`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
