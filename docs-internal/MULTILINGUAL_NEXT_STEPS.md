@@ -6298,6 +6298,22 @@ this signal was missing.
 > exclusions (hi, qu, sw, tr, and vi, fixed by PR 61); five pins that read the stored
 > `is empty` rows as `is null` now read `is empty`. Each of seven mutants reverting one piece
 > fails a test.
+>
+> **hi writes `no` as `कोई नहीं` (PR 79, 2026-09-28).** hi wrote `not` and `no` alike, `नहीं`, and
+> both take an operand, so position could not tell them apart: the sense rule read `नहीं` before
+> a bare word as `no`, so `not flag` read back `no flag`, and `no .w` lost its `no`. hi writes `no`
+> as `कोई नहीं` ("none") now, keeping `नहीं` for `not`, the far more common of the two (the
+> owner's decision). A profile keyword lets the multi-word walk take `कोई नहीं` whole (alone, कोई
+> normalizes to the को particle), and the regenerated connective table reads `नहीं` as `not`, so
+> its sense rule goes.
+>
+> **In the value matrix, 851 failing pairs fall to 821**: every hi `not`/`no` cell (15 direct, 15
+> through the adapter); none newly fail. In the stored corpus, `behavior-draggable`'s hi row,
+> written with the one word, reads `if not dragHandle` where the English has `if no dragHandle`
+> (the same result for an unset or element parameter; a re-`populate`d corpus writes `कोई नहीं`).
+> hi joins `not-word.test.ts` and leaves the `not` exclusions of `value-operators` and
+> `value-path-operands`, in semantic and in core's direct-path twins; each of four mutants
+> reverting one piece fails a test.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
