@@ -2703,6 +2703,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   कॉपी: ['hi'],
   कॉल: ['hi'],
   को: ['hi'],
+  'कोई नहीं': ['hi'],
   क्लिक: ['hi'],
   क्लोन: ['hi'],
   खाली: ['hi'],
@@ -3531,7 +3532,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3328
+ * Total keywords: 3329
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 197
  */

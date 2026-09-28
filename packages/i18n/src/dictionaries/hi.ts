@@ -230,7 +230,7 @@ export const hindiDictionary: Dictionary = {
     parent: 'मूल',
     children: 'बच्चे',
     within: 'के_अंदर',
-    no: 'नहीं',
+    no: 'कोई नहीं',
     empty: 'खाली',
     some: 'कुछ',
     'starts with': 'से_शुरू',
