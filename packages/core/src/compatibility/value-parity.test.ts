@@ -159,6 +159,34 @@ describe('an object literal is an object on the direct path', () => {
   });
 });
 
+// Two filed direct-path readings (PR 75): a bracketed attribute, which the
+// direct path queried as a selector, and a variable named like an English
+// article, whose whole `set` dropped. Each row is upstream's result.
+const FILED: Array<[string, string]> = [
+  ['put [@title] into #out', 'null'],
+  ['add [@title="x"] to me then put my @title into #out', 'x'],
+  ['toggle [@title="x"] on me then put my @title into #out', 'x'],
+  ['remove [@title] from #a then put #a.title into #out', ''],
+  ['set a to 5 then put a into #out', '5'],
+  ['set an to 5 then put an + 1 into #out', '6'],
+];
+
+describe('a bracketed attribute and an article-named variable, on both paths', () => {
+  it.each(FILED)('English: %s', async (body, expected) => {
+    expect(await click(body)).toBe(expected);
+  });
+
+  it.each(FILED)('direct path: %s', async (body, expected) => {
+    expect(await direct(body)).toBe(expected);
+  });
+
+  it.each(['ja', 'ar', 'zh'])('%s', async language => {
+    for (const [body, expected] of FILED) {
+      expect(await direct(body, language), body).toBe(expected);
+    }
+  });
+});
+
 describe('is empty reads a length, as upstream does', () => {
   it.each([
     ['{} is empty', 'false'],
