@@ -7388,6 +7388,9 @@ export class SemanticParserImpl implements ISemanticParser {
     // hi नहीं is `not` after the copula (`है नहीं खाली`, is not empty) and also
     // `no`, so it has no connective entry the normalized check could read.
     'नहीं',
+    // qu mana is `not` there too (`kanqa mana chusaq`), and `false`; its
+    // predicate chusaq is also the `empty` command, which opened the then-branch.
+    'mana',
   ]);
 
   /** Predicate adjectives (normalized) that follow a copula inside a condition. */

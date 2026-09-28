@@ -37,10 +37,6 @@ const FOREIGN = [
   'zh',
 ] as const;
 
-// hi/qu/tr render null with their word for "empty", which reads back as the
-// `empty` command, and sw/vi read theirs back as the word `empty`. Filed.
-const NULL_IS_EMPTY = new Set(['hi', 'qu', 'sw', 'tr', 'vi']);
-
 function translate(source: string, language: string): string {
   const node = parseSemantic(source, 'en').node;
   if (!node) throw new Error(`no English parse: ${source}`);
@@ -90,7 +86,9 @@ describe(NULL_CASE, () => {
     expect(await click(NULL_CASE, 'en')).toBe('yes');
   });
 
-  it.each(FOREIGN.filter(l => !NULL_IS_EMPTY.has(l)))('%s', async language => {
+  // hi, qu, sw and tr wrote null with their word for `empty` (PR 78 writes
+  // `null`), and vi read `rỗng` as `empty` (PR 61).
+  it.each(FOREIGN)('%s', async language => {
     expect(await click(NULL_CASE, language)).toBe('yes');
   });
 });

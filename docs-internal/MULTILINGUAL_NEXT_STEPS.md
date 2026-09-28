@@ -6265,6 +6265,39 @@ this signal was missing.
 > joins `and-word.test.ts` and leaves the `and` exclusions of `value-operators` and
 > `value-path-operands`, in semantic and in core's direct-path twins; reverting the lexicon word
 > fails 8 of them.
+>
+> **`null` is `null` where it shared `empty`'s word (PR 78, 2026-09-28).** ar, hi, id, qu, sw, th
+> and tr wrote `null` with their word for `empty` (`فارغ`, `खाली`, `kosong`, `chusaq`, `tupu`,
+> `ว่าง`, `boş`), so `is null` and `is empty` read back as one of them: `"" is empty` as `"" is
+> null`, or in sw `x is null` as `x is empty` (#325). Each word means "empty", so `null` moves:
+> they write it `null`, as de, ja, ms and pl already do (the owner's decision). After a copula the
+> word is `empty` (ja's `空` rule); alone it is still `null`, so the old rendering of `put null`
+> reads as it did. The tokenizers are unchanged: mapping each word to `empty` instead (sw's shape)
+> moved the corpus identically and broke qu's `is not empty`, where `mana` is `not` only before an
+> operand.
+>
+> Two readings the English `null` needed, both older failures too:
+>
+> - **A keyword operand before an ambiguous copula** (ar `هو`, hi `है`, th `เป็น`). The copula
+>   read `is` after a word or a literal, or before a predicate keyword, and the English `null` is
+>   none of those there (ar and id read it as a keyword with no normalized form, hi and th as a
+>   word): `true is null` and `{} is not empty` lost the whole command. A keyword operand and a
+>   `}` end an operand now, and a keyword's operand test falls back to its value.
+> - **qu `if p is not empty`** read `if p is false`, then an `empty` command: the condition scan
+>   split at `chusaq`, which is also the `empty` command, after `mana`, which (as hi's `नहीं`) is
+>   `not` after the copula. `mana` joins the surface copulas that keep a predicate in the
+>   condition.
+>
+> **In the value matrix, 1,050 failing pairs fall to 851**: every `null`/`empty` pair left,
+> including PR 76's `is null` cells and the keyword-operand cells in ar, hi and th; none newly
+> fail. In the stored corpus, `if-empty` and `input-validation` now read `is empty` in ar, hi, id,
+> qu, th and tr, as their English does; `behavior-sortable`'s stored rows, written with the one
+> word, read `if item is empty` where the English has `is null` (a re-`populate`d corpus writes
+> `null`, which reads back). `null-empty-word.test.ts` round-trips ten sources in the seven
+> languages and six keyword-operand sources in all 23; core's constants test drops its `null`
+> exclusions (hi, qu, sw, tr, and vi, fixed by PR 61); five pins that read the stored
+> `is empty` rows as `is null` now read `is empty`. Each of seven mutants reverting one piece
+> fails a test.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

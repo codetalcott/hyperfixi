@@ -84,7 +84,7 @@ export const swahiliLexicon: LanguageLexicon = {
     me: { primary: 'mimi' },
     my: { primary: 'yangu' },
     myself: { primary: 'mimi mwenyewe' },
-    null: { primary: 'tupu' },
+    null: { primary: 'null' },
     result: { primary: 'matokeo' },
     target: { primary: 'lengo' },
     true: { primary: 'kweli' },

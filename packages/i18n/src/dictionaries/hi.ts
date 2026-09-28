@@ -171,7 +171,7 @@ export const hindiDictionary: Dictionary = {
   values: {
     true: 'सच',
     false: 'झूठ',
-    null: 'खाली',
+    null: 'null',
     undefined: 'अपरिभाषित',
     it: 'यह',
     its: 'इसका',

@@ -159,7 +159,7 @@ export const ar: Dictionary = {
   values: {
     true: 'صحيح',
     false: 'خطأ',
-    null: 'فارغ',
+    null: 'null',
     undefined: 'غير معرف',
     it: 'هو',
     its: 'له',

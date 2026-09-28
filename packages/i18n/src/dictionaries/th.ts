@@ -121,7 +121,7 @@ export const thaiDictionary: Dictionary = {
     empty: 'ว่าง',
     true: 'จริง',
     false: 'เท็จ',
-    null: 'ว่าง',
+    null: 'null',
     undefined: 'ไม่กำหนด',
     end: 'จบ',
     then: 'แล้ว',

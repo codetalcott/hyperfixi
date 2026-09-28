@@ -94,7 +94,7 @@ export const hindiLexicon: LanguageLexicon = {
     my: { primary: 'मेरा' },
     myself: { primary: 'मैं_स्वयं' },
     next: { primary: 'अगला' },
-    null: { primary: 'खाली' },
+    null: { primary: 'null' },
     parent: { primary: 'मूल' },
     previous: { primary: 'पिछला' },
     result: { primary: 'परिणाम' },

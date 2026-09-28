@@ -633,7 +633,8 @@ in de and it); 588 after PR 70 (`my id` in bn, th, pl, ru and uk); 546 after PR 
 `empty`); 424 after PR 72 (qu `mana`, bn and vi `if not`); 378 after PR 73 (an object literal in a
 `put` or `set`); 268 after PR 74 (a unary minus, pl `w` after `of`, zh/tl `no`,
 th `String(n)`); then PR 76 widened it (the names, the targets, `is null`) to 1,070 of
-83,352; 1,050 after PR 77 (qu `and`) — and it only shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
+83,352; 1,050 after PR 77 (qu `and`); 851 after PR 78 (`null` written `null` in the seven
+languages that spelled it `empty`) — and it only shrinks. A name that is a PRONOUN in some language (tr `o` is `it`)
 skips that language's two lanes: no reader can tell them apart. The gate
 (`value-matrix.<position>.test.ts`, seven parallel shards in the package's
 ordinary suite, ~65s locally, ~3 min in CI) fails on a new failing pair AND on a
