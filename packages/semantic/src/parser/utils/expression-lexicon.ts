@@ -112,7 +112,7 @@ export const CONNECTIVE_LEXICON: Record<string, Record<string, string>> = {
   ms: { "atau": "or", "bukan": "not", "dan": "and", "mengandungi": "contains", "sama": "equals", "sebagai": "as", "termasuk": "includes" },
   pl: { "i": "and", "jako": "as", "lub": "or", "nie": "not", "obejmuje": "includes", "równa się": "equals", "zawiera": "contains" },
   pt: { "como": "as", "contém": "contains", "e": "and", "igual": "equals", "inclui": "includes", "não": "not", "ou": "or" },
-  qu: { "chaymanta": "and", "churasqa": "includes", "hina": "as", "kikin": "equals", "ukupi_kan": "contains", "utaq": "or" },
+  qu: { "churasqa": "includes", "hina": "as", "hinallataq": "and", "kikin": "equals", "ukupi_kan": "contains", "utaq": "or" },
   ru: { "включает": "includes", "и": "and", "или": "or", "как": "as", "не": "not", "равно": "equals", "содержит": "contains" },
   sw: { "au": "or", "ina": "contains", "kuwa": "as", "pamoja": "includes", "sawa": "equals", "si": "not" },
   th: { "ไม่": "not", "และ": "and", "หรือ": "or" },

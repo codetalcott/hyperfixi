@@ -53,8 +53,8 @@ const LANGUAGES = [
 ];
 
 // Each value with what both engines put (n = 3; the button is `b`), and the
-// languages whose `and` or `not` is also another word (qu `chaymanta`, hi
-// `नहीं`; see value-operators-direct-path.test.ts).
+// languages whose `not` is also another word (hi `नहीं`; see
+// value-operators-direct-path.test.ts).
 const VALUES: Array<[string, string, string[]]> = [
   [`#d1's textContent is "d"`, 'true', []],
   [`#d1's textContent is "e"`, 'false', []],
@@ -70,8 +70,8 @@ const VALUES: Array<[string, string, string[]]> = [
   [`n + #d1's textContent`, '3d', []],
   [`#d1's className + "!"`, 'x!', []],
   [`textContent of first <p/> + "x"`, 'dx', []],
-  [`#d1's textContent is "d" and n is 3`, 'true', ['qu']],
-  [`n is 3 and #d1's textContent is "e"`, 'false', ['qu']],
+  [`#d1's textContent is "d" and n is 3`, 'true', []],
+  [`n is 3 and #d1's textContent is "e"`, 'false', []],
   [`not #d1's textContent`, 'false', ['hi']],
 ];
 

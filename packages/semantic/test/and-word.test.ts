@@ -8,8 +8,10 @@
  *   na {…}`) still stops its value at the marker, and a loop's `na index` is
  *   its `with index`.
  *
- * (qu writes `and` as `chaymanta`, its i18n dictionary's word, which its
- * profile and tokenizer read as `then`: filed, a vocabulary decision.)
+ * - qu wrote `and` as `chaymanta`, its i18n dictionary's word, which is also
+ *   (and first) its `then`: "after that". `set x to true and flag` split into
+ *   two commands. It writes `hinallataq` now, the profile's own `and`; a
+ *   hand-written `chaymanta` is still `then`.
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
@@ -20,7 +22,7 @@ const roundTrip = (source: string, language: string): string => {
   return back ? render(back, 'en') : `(no parse: ${foreign})`;
 };
 
-describe.each(['sw'])('%s', language => {
+describe.each(['sw', 'qu'])('%s', language => {
   it.each([
     'on click put true and flag into #out',
     'on click set x to true and flag then put x into #out',

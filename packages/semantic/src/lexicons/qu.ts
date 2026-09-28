@@ -38,7 +38,7 @@ export const quechuaLexicon: LanguageLexicon = {
     unload: { primary: 'unload' },
   },
   logical: {
-    and: { primary: 'chaymanta' },
+    and: { primary: 'hinallataq' },
     changes: { primary: 'tukurikun' },
     contains: { primary: 'ukupi_kan' },
     else: { primary: 'manachus' },

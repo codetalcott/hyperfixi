@@ -127,7 +127,7 @@ describe('New Language Support', () => {
       expect(dictionaries.qu.commands.on).toBe('kaqpi');
       expect(dictionaries.qu.commands.add).toBe('yapay');
       expect(dictionaries.qu.commands.if).toBe('sichus');
-      expect(dictionaries.qu.logical.and).toBe('chaymanta');
+      expect(dictionaries.qu.logical.and).toBe('hinallataq');
       expect(dictionaries.qu.events.click).toBe('ñitiy');
     });
 
