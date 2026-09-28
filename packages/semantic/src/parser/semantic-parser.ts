@@ -42,7 +42,11 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { joinExpressionTokens, translateConnective } from './utils/expression-lexicon';
+import {
+  COMMAND_ACTION_KEYWORDS,
+  joinExpressionTokens,
+  translateConnective,
+} from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
@@ -2276,6 +2280,14 @@ export class SemanticParserImpl implements ISemanticParser {
           ifIdx = k;
           break;
         }
+      }
+      // Of two `if` words in a row the first is the head, and the second the
+      // variable its condition names (es `si si …`, if si), which the fused
+      // pattern may have consumed too.
+      while (ifIdx > 0) {
+        const before = all[ifIdx - 1]!;
+        if (!this.isIfKeyword((before.normalized ?? before.value).toLowerCase(), language)) break;
+        ifIdx--;
       }
       if (ifIdx >= 0) {
         const commandPatterns = getPatternsForLanguage(language)
@@ -7595,7 +7607,12 @@ export class SemanticParserImpl implements ISemanticParser {
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      if (this.opensNestedBlock(t, wordBefore(blockTokens, blockTokens.length), language)) {
+      // The condition's first word opens nothing: `if if` is never a nested
+      // block, so es `si si …` (if si) names a variable spelled like `if`.
+      if (
+        blockTokens.length > 0 &&
+        this.opensNestedBlock(t, wordBefore(blockTokens, blockTokens.length), language)
+      ) {
         depth++;
         blockTokens.push(t);
         tokens.advance();
@@ -7637,8 +7654,9 @@ export class SemanticParserImpl implements ISemanticParser {
       const tv = (t.normalized ?? t.value).toLowerCase();
       // Conditionals only: a loop head here STARTS the then-branch, so it must
       // stay visible to the command-start test below.
-      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) bodyDepth++;
-      else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
+      if (i > 0 && (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language))) {
+        bodyDepth++;
+      } else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
       if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
         sawThen = true;
         i++; // skip the `then`
@@ -7650,11 +7668,28 @@ export class SemanticParserImpl implements ISemanticParser {
         const cur = (t.normalized ?? t.value).toLowerCase();
         // Surface-value copulas (fr est, ru есть, ar هو, …) only guard a
         // PREDICATE continuation — several double as other senses (هو = `it`).
-        const prevIsCopula =
+        const copula =
           SemanticParserImpl.CONDITION_COPULAS.has(prev) ||
           SemanticParserImpl.CONDITION_COPULAS.has(translateConnective(language, prevValue)) ||
           (SemanticParserImpl.CONDITION_COPULAS_SURFACE.has(prevValue) &&
             SemanticParserImpl.CONDITION_PREDICATES.has(cur));
+        // A copula that is the condition's first word has no operand before it,
+        // so it is a variable the language spells like `is` (es `si es poner
+        // …`, sw `kama ni weka …`), and the command after it is the branch. A
+        // leading negation takes its operand after it, so only a command verb
+        // (never an operand) ends it there: sw `kama si weka …`, if si.
+        const leading = condTokens.length === 1;
+        const negation =
+          prev === 'not' || prev === 'no' || translateConnective(language, prevValue) === 'not';
+        const prevIsCopula =
+          copula &&
+          !(
+            leading &&
+            (!negation ||
+              (t.kind === 'keyword' &&
+                COMMAND_ACTION_KEYWORDS.has(cur) &&
+                !SemanticParserImpl.CONDITION_PREDICATES.has(cur)))
+          );
         // A condition operator (`match`/`contains`/`exists`/…) is part of the
         // expression, never a then-branch command head — don't truncate at it
         // even if a verb-last SOV command pattern spuriously matches the span.

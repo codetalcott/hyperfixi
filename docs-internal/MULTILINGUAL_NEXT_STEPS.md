@@ -6406,6 +6406,51 @@ this signal was missing.
 > `of`, with and without an amount) and five hand-written next-role readings; each of the three
 > link kinds, the unbounded call, the longest-first order and qu/uk's `'s` word, reverted alone,
 > fails it.
+>
+> **The colliding names left read back (PR 84, 2026-09-28).** PR 81's names, the rest of them, each
+> read by where it stands:
+>
+> - **`if NAME`**: a lone structure word or command verb joined as a whole value is its surface
+>   (`joinExpressionTokens`), so tr `eğer al …` no longer reads `if get`. A copula that is a
+>   condition's first word has no operand before it, so es `si es poner …` is `if es put …` rather
+>   than a condition that swallows its branch (sw `ni`, tl `ay`); a leading negation keeps its
+>   operand unless a command verb follows (sw `kama si weka …`). An `if` word first in the
+>   condition opens no nested block (without that, es/fr/it/pt `if si … end then put 2 …` lost the
+>   command after the `end`), and the fused-pattern rewind takes the first of two (es `si si …`,
+>   it/pt `se se …`).
+> - **A command verb alone in a slot** is a variable (es `poner ir en #out`). PR 81 left verbs out
+>   because a dropped command leaves one in a slot (`tell #modal to show`, ja/qu), so not in a
+>   command that takes a body; nor one that names an event (`trigger init`, whose stored bn/ms/ru
+>   rows spell `init` with a verb); nor `empty`, which alone is `null`.
+> - **The verb guards**: right after a literal the pattern matched (the slot's marker), a verb that
+>   stands alone (before the pattern's next marker or the clause's end) is the amount, not the next
+>   command (es `incrementar i por ir`, it `di se`); so is one right before the pattern's own verb
+>   (tr `i i al artır`). Both guards see it: the quantity guard, and the trailing-optional-slot
+>   one, whose own comment said its premise fails behind a matched marker. A verb with more after
+>   it is still the next command: a stored zh row writes `停止 把 调用 saveDocument()` (halt, then
+>   call). A schema-marker check missed it's handcrafted `[di|per {quantity}]`, so the test is
+>   structural (the pattern's previous token is a literal).
+> - **pl/it `assign`**: a particle right after a literal, before an unmarked role, is the value (pl
+>   `ustaw do o 5`, set o to 5), which also settles the pattern competition the last handoff
+>   described (pl `ustaw do na 5`, it `impostare in a 5`). Before a value of its own the particle
+>   is part of the marker: id's `ke dalam #out` (a first cut without that condition broke every id
+>   `put`).
+> - **de `a`/`an`** before the pattern's next marker is a variable, not an article (`erhöhe a um
+>   1`, whose `um` the tokenizer leaves an identifier), as PR 75 made one before an operator.
+> - **sw `si`** (`not`) before a marker and its value is a variable (`weka si kwa #out`): the
+>   operator run read `not kwa`.
+>
+> Dropped after measuring (all six together moved no matrix pair, corpus row or semantic test): a
+> lone particle's surface in the join, a stands-alone test on the verb rule, two `hasBody`
+> exclusions in the verb guards, and two tests that the literal before a slot is its own marker
+> (a prepositional language; not the command's verb).
+>
+> **In the value matrix, 262 failing pairs fall to 102, all of them accepted**: every open pair
+> (tr 34, es 28, pl 24, fr 18, it 16, pt 16, sw 10, de 8, tl 4, ms 2); none newly fail. No stored
+> corpus row moves (two did on the way, both fixed: `trigger-event` in eight languages and zh
+> `window-keydown`). `colliding-names.test.ts` round-trips every pair this fixed (with and without
+> `then` for `if`) and pins the readings it must leave alone; each of twenty mutants reverting one
+> piece fails it or, for the `hasBody` exclusion, `tell-to.test.ts`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

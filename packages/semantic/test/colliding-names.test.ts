@@ -13,9 +13,31 @@
  *   `wo` "where") or the copula (es `es`, sw `ni`, tl `ay`). Not a command
  *   verb (es `ir`), which is also what a dropped command leaves;
  * - a conjunction that is a whole condition joins nothing: es `si y`.
+ *
+ * And the names PR 76's matrix still counted after that (PR 84):
+ *
+ * - a lone structure word or command verb joined as a whole value is its
+ *   surface: `if al` (tr `al` is `get`), `if na`;
+ * - a copula that is a condition's first word has no operand before it: es
+ *   `si es poner …` (if es put …); an `if` word that is its first word opens
+ *   no nested block: es `si si poner …`;
+ * - a command verb alone in a slot is a variable (es `poner ir en #out`),
+ *   except in a command that takes a body or names an event; right after the
+ *   slot's marker (`por ir`) or right before the pattern's own verb (tr `i i
+ *   al artır`) a verb that stands alone is an amount, not the next command;
+ * - a particle right after the slot's marker, before an unmarked role, is the
+ *   value: pl `ustaw do o 5` (set o to 5);
+ * - de `a`/`an` before the pattern's next marker is a variable, not an article
+ *   (`erhöhe a um 1`), and sw `si` (`not`) before a marker and its value is a
+ *   variable too (`weka si kwa #out`).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
+
+const FOREIGN = [
+  'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
+  'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
+] as const;
 
 type Position = 'put' | 'set' | 'if' | 'increment' | 'assign' | 'count';
 
@@ -189,6 +211,148 @@ const FIXED: Record<Position, Record<string, readonly string[]>> = {
     zu: ['de'],
   },
 };
+
+// The pairs PR 84 fixed, on the direct path (the matrix's `if` has a `then`,
+// which the template above leaves out; both are read here).
+const FIXED_84: Record<Position | 'if-then', Record<string, readonly string[]>> = {
+  put: { ac: ['tr'], al: ['tr'], ir: ['es', 'pt'], si: ['sw'], va: ['fr'], ve: ['es'] },
+  set: { ac: ['tr'], al: ['tr'], ir: ['es', 'pt'], va: ['fr'], ve: ['es'] },
+  if: {},
+  'if-then': {
+    al: ['tr'],
+    ay: ['tl'],
+    az: ['pl'],
+    de: ['fr'],
+    es: ['es'],
+    ir: ['es', 'pt'],
+    ke: ['ms'],
+    na: ['tr'],
+    ne: ['tr'],
+    ni: ['sw', 'tr'],
+    nu: ['tr'],
+    sa: ['tl'],
+    se: ['it', 'pt'],
+    si: ['es', 'fr', 'sw'],
+    va: ['fr'],
+    ve: ['es'],
+    wo: ['de'],
+    yi: ['tr'],
+    yu: ['tr'],
+    zu: ['de'],
+  },
+  increment: {
+    ac: ['tr'],
+    al: ['tr'],
+    ir: ['es', 'pt'],
+    se: ['it', 'pt'],
+    si: ['es', 'fr'],
+    va: ['fr'],
+    ve: ['es'],
+  },
+  assign: {
+    a: ['it'],
+    ac: ['tr'],
+    ai: ['it'],
+    al: ['it', 'tr'],
+    da: ['it'],
+    ir: ['es', 'pt'],
+    ku: ['pl'],
+    na: ['pl'],
+    o: ['pl'],
+    od: ['pl'],
+    po: ['pl'],
+    si: ['sw'],
+    su: ['it'],
+    u: ['pl'],
+    va: ['fr'],
+    ve: ['es'],
+    w: ['pl'],
+    we: ['pl'],
+    z: ['pl'],
+    za: ['pl'],
+    ze: ['pl'],
+  },
+  count: {
+    a: ['de'],
+    ac: ['tr'],
+    al: ['tr'],
+    an: ['de'],
+    ir: ['es', 'pt'],
+    si: ['sw'],
+    va: ['fr'],
+    ve: ['es'],
+  },
+};
+FIXED_84.if = FIXED_84['if-then'];
+
+const TEMPLATES_84: Record<Position | 'if-then', (name: string) => string> = {
+  ...TEMPLATES,
+  'if-then': n => `on click if ${n} then put "Y" into #out else put "N" into #out end`,
+};
+
+describe.each(Object.keys(TEMPLATES_84) as (Position | 'if-then')[])('%s (PR 84)', position => {
+  const rows = Object.entries(FIXED_84[position]).flatMap(([name, languages]) =>
+    languages.map(language => [name, language] as [string, string])
+  );
+  it.each(rows)('%s (%s)', (name, language) => {
+    const source = TEMPLATES_84[position](name);
+    const foreign = render(parse(source, 'en')!, language);
+    const back = parse(foreign, language);
+    expect(back ? render(back, 'en') : `(no parse: ${foreign})`, foreign).toBe(
+      render(parse(source, 'en')!, 'en')
+    );
+  });
+});
+
+// What the readings above must leave alone.
+describe('a structure word that is structure', () => {
+  it.each([
+    // A verb with more after it begins the next command (a stored zh row).
+    [
+      'zh',
+      '当 keydown[key=="s"] 从 窗口 如果 event.ctrlKey 停止 把 调用 saveDocument() 结束',
+      'on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument() end',
+    ],
+    // An event name may be a verb's: the stored rows of `on load trigger init`.
+    ['bn', 'শুরু কে লোড এ ট্রিগার', 'on load trigger init'],
+    ['ms', 'apabila load cetuskan mula', 'on load trigger init'],
+    ['ru', 'при загрузка запустить инициализировать', 'on load trigger init'],
+    // A two-word marker's second word is not the value (id `ke dalam`).
+    ['id', 'ketika klik taruh obj.v ke dalam #out', 'on click put obj.v into #out'],
+    ['id', 'ketika klik taruh 2 + 2 ke dalam #out', 'on click put 2 + 2 into #out'],
+  ])('%s: %s', (language, source, english) => {
+    expect(render(parse(source, language)!, 'en')).toBe(english);
+  });
+
+  // A name spelled like `if` opens no block of its own: the commands after
+  // the `end` stay the handler's.
+  it.each([
+    ['es', 'on click if si then put "Y" into #out end then put 2 into #out'],
+    ['fr', 'on click if si then put 1 into #out else put 2 into #out end then log 3'],
+    ['it', 'on click if se then put "Y" into #out end then put 2 into #out'],
+    ['pt', 'on click if se then put "Y" into #out end then put 2 into #out'],
+  ])('%s: %s', (language, source) => {
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(
+      render(parse(source, 'en')!, 'en')
+    );
+  });
+
+  // An event name may be a verb's (`init`), and a leading `not`/`no` keeps
+  // its operand.
+  it.each([
+    'on load trigger init',
+    'on click if not flag then put 1 into #out end',
+    'on click if no .w then put 1 into #out end',
+    'on click put empty into #out',
+  ])('%s, through every language', source => {
+    const english = render(parse(source, 'en')!, 'en');
+    for (const language of FOREIGN) {
+      const foreign = render(parse(source, 'en')!, language);
+      expect(render(parse(foreign, language)!, 'en'), `${language}: ${foreign}`).toBe(english);
+    }
+  });
+});
 
 describe.each(Object.keys(TEMPLATES) as Position[])('%s', position => {
   const rows = Object.entries(FIXED[position]).flatMap(([name, languages]) =>
