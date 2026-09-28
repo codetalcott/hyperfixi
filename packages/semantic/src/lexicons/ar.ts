@@ -85,7 +85,7 @@ export const arabicLexicon: LanguageLexicon = {
     me: { primary: 'أنا' },
     my: { primary: 'لي' },
     myself: { primary: 'نفسي' },
-    null: { primary: 'فارغ' },
+    null: { primary: 'null' },
     result: { primary: 'نتيجة' },
     target: { primary: 'هدف' },
     true: { primary: 'صحيح' },

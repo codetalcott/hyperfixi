@@ -165,7 +165,7 @@ export const tr: Dictionary = {
   values: {
     true: 'doğru',
     false: 'yanlış',
-    null: 'boş',
+    null: 'null',
     undefined: 'tanımsız',
     it: 'o',
     its: 'onun',

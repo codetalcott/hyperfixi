@@ -574,7 +574,7 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
       ),
       'en'
     );
-    expect(out).toContain('if my value is null');
+    expect(out).toContain('if my value is empty');
     expect(out).not.toContain(' it null');
   });
 
@@ -602,7 +602,7 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
       ),
       'en'
     );
-    expect(out).toContain('if my value is null');
+    expect(out).toContain('if my value is empty');
     expect(/[ऀ-ॿ]/.test(out)).toBe(false);
   });
 
@@ -626,7 +626,7 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
       ),
       'en'
     );
-    expect(out).toContain('if my value is null');
+    expect(out).toContain('if my value is empty');
   });
 
   it('th: เป็น before a type name renders `as`', () => {

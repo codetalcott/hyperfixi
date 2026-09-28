@@ -171,7 +171,7 @@ export const id: Dictionary = {
   values: {
     true: 'benar',
     false: 'salah',
-    null: 'kosong',
+    null: 'null',
     undefined: 'tidak_terdefinisi',
     it: 'itu',
     its: 'miliknya',

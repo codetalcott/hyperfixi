@@ -84,7 +84,7 @@ export const indonesianLexicon: LanguageLexicon = {
     me: { primary: 'saya' },
     my: { primary: 'saya punya' },
     myself: { primary: 'saya sendiri' },
-    null: { primary: 'kosong' },
+    null: { primary: 'null' },
     result: { primary: 'hasil' },
     target: { primary: 'target' },
     true: { primary: 'benar' },

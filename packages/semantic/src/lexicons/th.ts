@@ -40,7 +40,7 @@ export const thaiLexicon: LanguageLexicon = {
     is: { primary: 'เป็น' },
     live: { primary: 'สด' },
     not: { primary: 'ไม่' },
-    null: { primary: 'ว่าง' },
+    null: { primary: 'null' },
     or: { primary: 'หรือ' },
     then: { primary: 'แล้ว' },
     true: { primary: 'จริง' },

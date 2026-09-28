@@ -465,7 +465,7 @@ const PINNED: Array<[string, string, string, string, string]> = [
     'if-empty',
     'qu',
     'maykama paqariy sichus noqaq chanin kanqa chusaq .error ta noqa man yapay chaymantataq "Required" ta qhipantin .error-message man churay tukukuy',
-    'on blur if my value is null add .error to me then put "Required" into next .error-message end',
+    'on blur if my value is empty add .error to me then put "Required" into next .error-message end',
     'on(event:literal) if(condition:expression) add(destination:reference,patient:selector) put(destination:expression,patient:literal)',
   ],
   [
@@ -493,7 +493,7 @@ const PINNED: Array<[string, string, string, string, string]> = [
     'input-validation',
     'qu',
     'maykama paqariy sichus noqaq chanin kanqa chusaq .error ta noqa man yapay manachus .error ta noqa manta qichuy tukukuy',
-    'on blur if my value is null add .error to me else remove .error from me end',
+    'on blur if my value is empty add .error to me else remove .error from me end',
     'on(event:literal) if(condition:expression) add(destination:reference,patient:selector) remove(patient:selector,source:reference)',
   ],
   [

@@ -182,7 +182,7 @@ export const qu: Dictionary = {
   values: {
     true: 'cheqaq',
     false: 'llulla',
-    null: 'chusaq',
+    null: 'null',
     undefined: 'mana_riqsisqa',
     it: 'chay',
     its: 'chaypaq',

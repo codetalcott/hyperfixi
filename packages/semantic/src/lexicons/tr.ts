@@ -84,7 +84,7 @@ export const turkishLexicon: LanguageLexicon = {
     me: { primary: 'ben' },
     my: { primary: 'benim' },
     myself: { primary: 'kendim' },
-    null: { primary: 'boş' },
+    null: { primary: 'null' },
     result: { primary: 'sonuç' },
     target: { primary: 'hedef' },
     true: { primary: 'doğru' },

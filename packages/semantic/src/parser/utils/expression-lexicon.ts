@@ -786,7 +786,12 @@ function isOperandToken(token: LanguageToken): boolean {
   if (token.kind === 'literal' || token.kind === 'selector') return true;
   if ((token.kind as string) === 'reference') return true;
   if (token.kind === 'identifier') return OPERAND_WORD.test(token.value);
-  return token.kind === 'keyword' && OPERAND_KEYWORDS.has((token.normalized ?? '').toLowerCase());
+  // An English keyword in a translation (ar and id read `null` so) may carry no
+  // normalized form: its value is the word.
+  return (
+    token.kind === 'keyword' &&
+    OPERAND_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
+  );
 }
 
 /** Does `token` end an operand: an operand, or a closing bracket? */
@@ -812,12 +817,20 @@ const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
 const OPERAND_WORD = /^[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*$/u;
 
 const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, AmbiguousSenseRule>>>> = {
-  ar: { هو: { beforePredicate: 'is', afterOperand: 'is' } },
+  ar: {
+    هو: { beforePredicate: 'is', afterOperand: 'is' },
+    فارغ: { afterCopula: 'empty' },
+  },
   hi: {
     है: { beforePredicate: 'is', beforeClassRef: 'has', afterOperand: 'is' },
     नहीं: { afterCopula: 'not', beforeBareIdentifier: 'no' },
+    खाली: { afterCopula: 'empty' },
   },
-  th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' } },
+  id: { kosong: { afterCopula: 'empty' } },
+  th: {
+    เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' },
+    ว่าง: { afterCopula: 'empty' },
+  },
   ja: { 空: { afterCopula: 'empty' } },
   sw: { tupu: { afterCopula: 'empty', otherwise: 'null' }, na: { betweenOperands: 'and' } },
   zh: { 没有: { beforeBareIdentifier: 'no', beforeSelector: 'no' } },
@@ -826,8 +839,14 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
     may: { afterSubject: 'exists' },
   },
   bn: { আছে: { afterSubject: 'exists' } },
-  qu: { mana: { beforeOperand: 'not' } },
-  tr: { var: { afterSubject: 'exists' } },
+  qu: {
+    mana: { beforeOperand: 'not' },
+    chusaq: { afterCopula: 'empty' },
+  },
+  tr: {
+    var: { afterSubject: 'exists' },
+    boş: { afterCopula: 'empty' },
+  },
 };
 
 /** Fetch's response types (core's `FetchResponseType`), which follow its `as`
@@ -941,15 +960,9 @@ function resolveAmbiguousSense(
   if (rule.betweenOperands && endsOperand(prev) && startsOperand(next)) {
     return rule.betweenOperands;
   }
-  if (
-    rule.afterOperand &&
-    prev &&
-    ((prev.kind === 'identifier' && OPERAND_WORD.test(prev.value)) ||
-      prev.kind === 'selector' ||
-      prev.kind === 'literal' ||
-      (prev.kind as string) === 'reference' ||
-      prev.value === ')')
-  ) {
+  // A keyword operand (`true`, `null`, `me`) and a closing bracket end an
+  // operand too: ar `صحيح هو null` (true is null) is no pronoun.
+  if (rule.afterOperand && (endsOperand(prev) || prev?.value === '}')) {
     return rule.afterOperand;
   }
   return rule.otherwise;

@@ -84,7 +84,7 @@ export const quechuaLexicon: LanguageLexicon = {
     me: { primary: 'noqa' },
     my: { primary: 'noqaq' },
     myself: { primary: 'noqa killa' },
-    null: { primary: 'chusaq' },
+    null: { primary: 'null' },
     result: { primary: 'lluqsiy' },
     target: { primary: 'punta' },
     true: { primary: 'cheqaq' },

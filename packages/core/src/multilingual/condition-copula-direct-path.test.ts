@@ -69,8 +69,8 @@ const GROUPS: Array<[string, Array<[string, string]>, string[]]> = [
     ],
     ['hi'],
   ],
-  // hi renders null as खाली, also its `empty` command: after `है नहीं` the
-  // condition scan now keeps it as the predicate.
+  // hi wrote null as खाली, also its `empty` command, until it wrote `null` (PR
+  // 78); after `है नहीं` the condition scan keeps either as the predicate.
   [
     'is not null',
     [

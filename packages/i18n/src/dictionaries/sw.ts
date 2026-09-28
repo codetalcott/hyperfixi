@@ -181,7 +181,7 @@ export const sw: Dictionary = {
   values: {
     true: 'kweli',
     false: 'uongo',
-    null: 'tupu',
+    null: 'null',
     undefined: 'haijafafanuliwa',
     it: 'hiyo',
     its: 'yake',
