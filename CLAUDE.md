@@ -628,7 +628,8 @@ like a conjunction); 1,836 after PR 61 (sw and vi `null`); 1,427 after PR 64 (tr
 an operator); 843 after PR 68 (core reads the X of a null target as null); 694 after PR 69 (the `in` after a copula,
 in de and it); 588 after PR 70 (`my id` in bn, th, pl, ru and uk); 546 after PR 71 (sw `and`, ms
 `empty`); 424 after PR 72 (qu `mana`, bn and vi `if not`); 378 after PR 73 (an object literal in a
-`put` or `set`) — and only shrinks:
+`put` or `set`); 268 after PR 74 (a unary minus, pl `w` after `of`, zh/tl `no`,
+th `String(n)`) — and only shrinks:
 the gate (`value-matrix.<position>.test.ts`, five parallel shards in the package's
 ordinary suite, ~40s locally, ~2.5 min in CI) fails on a new failing pair AND on a
 listed pair that passes. After a fix, prune with `npx tsx

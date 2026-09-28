@@ -43,6 +43,7 @@ import {
   isConversionTypeName,
   isCopulaIn,
   ambiguousSenseOf,
+  isParticleAfterOf,
   ofChainEnd,
 } from './utils/expression-lexicon';
 import {
@@ -719,7 +720,7 @@ export class PatternMatcher {
     const lang = this.currentProfile?.code ?? 'en';
     const stopsAt = (i: number): boolean => {
       const t = tokens.tokens[i]!;
-      if (isCopulaIn(lang, tokens.tokens, i)) return false;
+      if (isCopulaIn(lang, tokens.tokens, i) || isParticleAfterOf(tokens.tokens, i)) return false;
       return this.isValueBoundary(t, owed) || markers.has(t.value.toLowerCase());
     };
     if (!tokens.peek() || stopsAt(tokens.position())) return;
@@ -840,7 +841,7 @@ export class PatternMatcher {
     if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
     if (this.isOfPossessiveMarker(token)) return true;
     if (isConnectiveOperand(lang, token, prev, all[i + 1])) return true;
-    if (isCopulaIn(lang, all, i)) return true;
+    if (isCopulaIn(lang, all, i) || isParticleAfterOf(all, i)) return true;
     const word = expressionWordOf(lang, token, prev, all[i + 1], undefined).toLowerCase();
     if (word === 'as' && this.currentSchema()?.roles.some(r => r.role === 'responseType')) {
       return false;
@@ -2349,7 +2350,7 @@ export class PatternMatcher {
     const startIdx = tokens.position();
 
     const head = tokens.peek();
-    const negated = !!head && this.logicalConnectiveOf(tokens) === 'not';
+    const negated = !!head && (this.logicalConnectiveOf(tokens) === 'not' || head.value === '-');
     if (!this.tryConsumeRunOperand(tokens)) {
       tokens.reset(mark);
       return null;
@@ -2574,6 +2575,16 @@ export class PatternMatcher {
 
     // `not <operand>`: the prefix belongs to its operand (`p and not q`).
     if (this.logicalConnectiveOf(tokens) === 'not') {
+      const mark = tokens.mark();
+      tokens.advance();
+      if (this.tryConsumeRunOperand(tokens, true, afterConnective)) return true;
+      tokens.reset(mark);
+      return false;
+    }
+
+    // A unary minus belongs to its operand too (`-#a's textContent`): where
+    // an operand may start, a `-` is never the binary one.
+    if (token.value === '-') {
       const mark = tokens.mark();
       tokens.advance();
       if (this.tryConsumeRunOperand(tokens, true, afterConnective)) return true;
