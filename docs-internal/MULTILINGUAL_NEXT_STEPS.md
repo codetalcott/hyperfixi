@@ -6374,6 +6374,17 @@ this signal was missing.
 > marker-shaped name after the real marker loses to a pattern that reads the real marker as the
 > value), the command-verb names (es/pt `ir`, es `ve`, fr `va`, tr `ac`/`al`), de `a`/`an`
 > (`skipNoiseWords`), and sw `si` (`not`).
+>
+> **Core writes an object's property, the `of` operator's, and a counted attribute (PR 82,
+> 2026-09-28).** The written-target family: `set o's v to 5` and `set v of o to 5` threw where `o`
+> holds an object (and `increment`, which English desugars to `set`), `set textContent of #a to 5`
+> (core's bare `of`) wrote nothing, and the direct path's counter wrote `increment obj.v` and
+> `increment @title` nowhere. A new opt-in rung in the shared write-target ladder (4b, `set` only)
+> reads the `of` operator's element property and an object's property through `'s` or `of`; the
+> counter reads and writes an object's property and an attribute. **438 failing pairs fall to 330
+> (228 open, 102 accepted)**, none newly failing; what stays of the targets is translation-side: the
+> object increments in ar, he, id, it, ms, pl, ru, sw, th, tl, uk, vi and zh read the word after the
+> target as the amount (`increment v by of`), and the object `set` fails in it, pl, ru and uk.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
