@@ -80,6 +80,12 @@ function convertValueShape(value: SemanticValue, warnings?: string[]): Expressio
       if (/^\[(?!@)/.test(value.value)) {
         return convertExpression({ type: 'expression', raw: value.value });
       }
+      // `[@title="x"]`, what `add`, `remove` and `toggle` set: core's parser
+      // builds the text, which those commands read. As a selector the direct
+      // path queried it and changed nothing, in every language.
+      if (/^\[@[a-zA-Z_][\w-]*\s*=/.test(value.value)) {
+        return { type: 'literal', value: value.value } as LiteralNode;
+      }
       return convertSelector(value, warnings);
     case 'reference':
       return convertReference(value);
@@ -166,6 +172,14 @@ export function convertSelector(
       type: 'attributeAccess',
       attributeName: value.value.slice(1),
     };
+  }
+  // `[@title]` is the same reference in brackets, and core's parser reads it
+  // so: `put [@title] into #out` writes `me`'s title on both engines, where
+  // the direct path queried `[title]` and moved the element it found. With a
+  // value (`[@title="x"]`, what `add` sets) it stays a selector.
+  const bracketed = /^\[@([a-zA-Z_][\w-]*)\]$/.exec(value.value);
+  if (bracketed) {
+    return { type: 'attributeAccess', attributeName: bracketed[1]! };
   }
 
   // Warn if selector looks like a CSS property (starts with * followed by a letter/hyphen)

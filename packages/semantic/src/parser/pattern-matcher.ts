@@ -4202,6 +4202,11 @@ export class PatternMatcher {
         // alone it is a word the language also spells `null` with (sw
         // `tupu`), or a variable named `empty`, which upstream reads as null.
         if (lower === 'empty') return createConstant('null')!;
+        // Nor is an article: alone it is a variable spelled like one. `set a
+        // to 0` read `a` as the text "a", which a `set` cannot write, and the
+        // whole `set` dropped.
+        if (lower === 'a' || lower === 'an')
+          return { type: 'expression', raw: token.value } as const;
         if (isValidReference(lower)) {
           return createReference(lower);
         }
