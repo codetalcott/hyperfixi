@@ -6520,15 +6520,15 @@ in the order it applies:
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | quantity guard; `verbIsSlotValue`, `beforeNext`                   | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | trailing-slot guard; `verbIsSlotValue`                            | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `shouldTrySkippingVerbSlot` (from `matchTokenSequence`)           | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
-| C7  | a particle is the value: (a) before the pattern's next marker, with a particle on either side (tr `i i 2 artır`); (b) before a run operator (tr `i < -2`); (c) right after the slot's marker, before an unmarked role (pl `ustaw do o 5`); (d) at its clause's end (es `incrementar a entonces`). After a value and before the verb it is that value's marker (`1s i bekle`). | particle rule                                                     | (a) 64, (b) 67, (c) 84, (d) 81         | `particle-variable.test.ts`, `colliding-names.test.ts`, `wait-alternatives.test.ts`         |
+| C7  | a particle is the value: (a) before the pattern's next marker, with a particle on either side (tr `i i 2 artır`); (b) before a run operator (tr `i < -2`); (c) right after the slot's marker, before an unmarked role (pl `ustaw do o 5`); (d) at its clause's end (es `incrementar a entonces`). After a value and before the verb it is that value's marker (`1s i bekle`). | `particleIsValue` (`value-reading.ts`)                            | (a) 64, (b) 67, (c) 84, (d) 81         | `particle-variable.test.ts`, `colliding-names.test.ts`, `wait-alternatives.test.ts`         |
 | C8  | a structure keyword alone in a value slot is a variable: a role marker (tr `na`), a control word (es `si`), the copula (es `es`), a conjunction; so is a command verb (es `ir`), except in a command that takes a body (`tell #modal to show`), one that names an event (`trigger init`), and `empty`                                                    | keyword rule; `isStructureKeyword`, `isVariableShapedVerb`        | 81; verbs 84                           | `colliding-names.test.ts`, `tell-to.test.ts`                                                |
 | C9  | a lone value token: a conjunction is the variable, `empty` is `null`, an article is the variable                                                                                                                                                                                                                                                            | `tokenToSemanticValue`                                            | 59, 61, 75                             | `connective-operand.test.ts`, `null-empty-word.test.ts`, `article-variable.test.ts`         |
-| C10 | in an operator run, a particle right after or before an operator is an operand (es `retornar a + b`)                                                                                                                                                                                                                                                       | `tryConsumeRunOperand`                                            | #1175                                  | `en-reference-meaning.test.ts`                                                              |
+| C10 | in an operator run, a particle right after or before an operator is an operand (es `retornar a + b`)                                                                                                                                                                                                                                                       | `particleIsOperand` (`value-reading.ts`), from `tryConsumeRunOperand` | #1175                               | `en-reference-meaning.test.ts`                                                              |
 | C11 | in an operator run, a command verb after `and`/`or` begins the next command (`set x to true and put 2 …`)                                                                                                                                                                                                                                                  | `tryConsumeRunOperand`                                            | 44                                     | `value-operators.test.ts`                                                                   |
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `tryConsumeRunOperand`                                            | 84                                     | `colliding-names.test.ts`                                                                   |
 | C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `absorbExpressionTail`, `continuesValue`, `isValueBoundary`       | 53                                     | `value-extent.test.ts`                                                                      |
 | C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand`                          | 59                                     | `connective-operand.test.ts`                                                                |
-| C15 | the `in` after a copula continues a value (de/it `into` marker), and so does a particle after `of` (pl `w`)                                                                                                                                                                                                                                                | `absorbExpressionTail`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf` | 69, 74                      | `copula-in.test.ts`, `operand-readings.test.ts`                                             |
+| C15 | the `in` after a copula continues a value (de/it `into` marker), and so does a particle after `of` (pl `w`)                                                                                                                                                                                                                                                | `absorbExpressionTail`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf` (`value-reading.ts`) | 69, 74  | `copula-in.test.ts`, `operand-readings.test.ts`                                             |
 | C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `absorbPossessiveTail`                                            | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
 
 **The join** (`joinExpressionTokens` → `expressionWordOf`, `parser/utils/expression-lexicon.ts`),
@@ -6551,18 +6551,58 @@ word by word:
 | S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | copula guard     | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, core `condition-copula-direct-path.test.ts` |
 | S3  | a copula that is the condition's first word is a variable (es `si es poner …`); a leading negation keeps its operand unless a command verb follows (sw `kama si weka …`)                     | copula guard     | 84                           | `colliding-names.test.ts`                                                                          |
 
-**What they share.** Four sub-predicates recur, each written two to four times and slightly
-differently:
+**What they share.** Four sub-predicates recur. Since PR 87 each has one definition, on the
+`SlotContext` a capture builds once, at the token its value starts at (`value-reading.ts`):
 
-- _the token after this one is the pattern's next marker_: C2, C4 (`beforeNext`, and inside
-  `verbIsSlotValue`), C5 (`verbIsSlotValue`), C7(a);
-- _the clause ends after this token_: C4, C5 (`verbIsSlotValue`), C7(d) (`endsClauseAfter`);
-- _a run operator follows_: C7(b), C10, C12 (`runOperatorFollows`); C1 tests a different operator
-  set (`BINARY_OPERATOR_TEXT`, which has no `mod`), a difference to keep explicit, not unify;
-- _the slot follows a literal the pattern matched_: C4, C5, C7(c) (`slotAfterLiteral`).
+- `nextIsMarker`, _the token after this one is the pattern's next marker_: C4 (`beforeNext`, and
+  inside `verbIsSlotValue`), C5 (`verbIsSlotValue`), C7(a). C2 still reads its own, in
+  `skipNoiseWords`, before the capture builds a slot;
+- `clauseEndsAfter`, _the clause ends after this token_: C4, C5 (`verbIsSlotValue`), C7(d);
+- `operatorFollows`, _a run operator follows_: C7(b); C10 and C12, which read an operator run's
+  stream, not a slot, call the same `isRunOperator`. C1 tests a different operator set
+  (`BINARY_OPERATOR_TEXT`, which has no `mod`), a difference to keep explicit, not unify;
+- `afterLiteral`, _the slot follows a literal the pattern matched_: C4, C5, C7(c).
 
 Out of scope: the event-role guards (they read an event NAME, not a value), and the shapes the
 expression matchers assemble.
+
+**Consolidation, one cluster per PR** (the after-85 handoff, part 1c). Each PR reproduces the
+parity oracle built on `580f010c6` byte for byte: every lane's result in the value matrix; each
+matrix cell's renders, read-back nodes and adapter output in 23 languages; the whole-corpus probe;
+every one- to three-letter name in the six name positions, rendered into 23 languages and read
+back, and the 379 names some language reads as structure in thirteen operator, bracket, condition
+and possessive positions; semantic's and core's suites. A unified predicate that would change any
+of it keeps the difference explicit and is filed instead.
+
+- **PR 87, the particle cluster** (C7, C10, C15): `parser/value-reading.ts` holds the three
+  particle rules and the facts every slot rule reads, on one `SlotContext`. Oracle identical.
+  Lines: `pattern-matcher.ts` 4,759 → 4,681, `expression-lexicon.ts` 1,517 → 1,502,
+  `value-reading.ts` 180 (net +87: the module's rule table and the context class). Of 18 mutants,
+  12 failed the rules' own tests; of the six that survived, four protect a shape no test had,
+  found by probing the shape each one's comment names, and `value-reading.test.ts` pins them:
+  the clause ends at `else` and at a loop's `end` (es/it/pt `set x to a else …`, `for n in arr set
+  x to a end`), `not` before a particle-shaped operand and an operator (`set x to not a < 3`), and
+  a non-ASCII particle-shaped operand before an operator, which only the operator run reads (ru `в
+  + 1`, ja `で + 1`, zh `在 + 1`). Two survive, both understood: C7(b) (below), and the next-marker
+  half of `verbIsSlotValue`, which C4 reads again on its own and which in C5 matters only for a
+  variable spelled like the pattern's own verb (tr `i i artır artır`).
+
+**Found by the consolidation, not fixed in it** (a refactor PR moves no oracle item):
+
+- **C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.** A particle before a run
+  operator is the value — and `mod` is a run operator, so zh's `把` marker before a variable named
+  `mod` became the value. Every other shape C7(b) reads, C10 reads first (the operator run takes a
+  unary minus since PR 74, which was C7(b)'s reason). Dropping C7(b) fixes this entry and moves no
+  other item of the oracle, all 18,278 names included: a one-line fix PR.
+- **tr `değil na < 3` (not na < 3) reads `not destination < 3`**, and `set x to not na * 2`
+  likewise: a marker-shaped name inside an expression joins as its role name. On main.
+- **Names inside expressions** (part 3's question, measured): the extended names oracle's
+  reference, on main, has 4,433 of 113,321 entries (3.9%) whose read-back differs from the English
+  re-render. Without the English keywords a variable cannot be named in English either (`at`,
+  `its`, `and`, `or`, `my`, `is`, `not`, `no`, `end`), what remains is the colliding names inside
+  an operator run, bracket or condition: es `si`, fr `fin`, id `aku`/`dia`/`nya`, tr `son`, pt
+  `sua`/`tu`, qu (1,275 entries alone). The renderer also translates a variable spelled like an
+  English lexicon word inside an expression: `set x to at < 3` renders ru `в < 3`, tr `de < 3`.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
