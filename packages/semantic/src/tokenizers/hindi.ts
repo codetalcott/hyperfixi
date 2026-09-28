@@ -91,6 +91,8 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // block adopt the whole run. The reverse render (CONNECTIVE_LEXICON.hi) already
   // maps के_रूप_में→as; it was a documented dead entry awaiting exactly this.
   { native: 'के_रूप_में', normalized: 'as' },
+  // `includes`, the same whole-token shape.
+  { native: 'में_है', normalized: 'includes' },
 
   // `या` (or) — dict hi.ts `or`; already matched by surface in the parser's
   // OR_KEYWORDS (event-adjacent `or` was absorbed), but every raw-expression

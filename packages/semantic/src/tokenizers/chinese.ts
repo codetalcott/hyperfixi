@@ -78,6 +78,9 @@ const CHINESE_EXTRAS: KeywordEntry[] = [
   { native: '空', normalized: 'null' },
   { native: '未定义', normalized: 'undefined' },
 
+  // `equals`, which the lexicon writes 等于: split, 于 read as `destination`.
+  { native: '等于', normalized: 'equals' },
+
   // Positional
   { native: '第一个', normalized: 'first' },
   { native: '首个', normalized: 'first' },

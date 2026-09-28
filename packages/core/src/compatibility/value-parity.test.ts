@@ -185,6 +185,15 @@ describe('a bracketed attribute and an article-named variable, on both paths', (
       expect(await direct(body, language), body).toBe(expected);
     }
   });
+
+  // A known difference (docs/UPSTREAM-KNOWN-DIFFS.md): upstream reads
+  // `[@title="x"]` as a value as `me`'s title (null here). Core writes its
+  // text, the form `add`, `remove` and `toggle` read, on both paths.
+  it('`[@name="value"]` as a value is its text', async () => {
+    const body = 'put [@title="x"] into #out';
+    expect(await click(body)).toBe('[@title="x"]');
+    expect(await direct(body)).toBe('[@title="x"]');
+  });
 });
 
 // A property of an object written through `'s` or `of`, and an attribute
