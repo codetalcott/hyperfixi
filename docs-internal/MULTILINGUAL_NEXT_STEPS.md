@@ -6120,6 +6120,28 @@ this signal was missing.
 >
 > What is left in `not`: hi `नहीं` is `not` and `no` alike, and both take an operand, so position
 > cannot tell them apart (the filed collision; hi `if not flag` reads `if no flag`).
+>
+> **An object literal is an object in a `put` or `set` (PR 73, 2026-09-27).** The `{}` family (the
+> object-literal filing, PR 60). The matcher folds a `{…}` run by its slot's expected types: an
+> expression-only slot (fetch's `with {…}`) keeps the source for the expression parser, and a slot
+> that also accepts a literal makes it the TEXT `{ a : 1 }`, which a CSS style block needs (`add {
+> left: 10px } to me`). A `put` or `set` value accepts a literal, so `set x to {a: 1}` stored a
+> string, and the direct path wrote `{ a : 1 }` where upstream writes `[object Object]`. The
+> command's role decides now, not the content (a one-property style block and a one-key object
+> look alike): the value of `put` and `set` takes the expression fold.
+>
+> The matrix's `{}` is empty, and that hid the second half: semantic's expression parser keyed an
+> object's property with a bare string, where core's parser (and semantic's own command mappers)
+> key it with an identifier node, and core's runtime evaluated the string as a node and threw. So
+> every non-empty object on the direct path failed, `fetch … with {method: 'POST'}` included
+> (`fetch-with-options.test.ts` checked the keys, never a run). The key is an identifier node now.
+>
+> **In the value matrix, 424 failing pairs fall to 378 (−11%)**: `put {}` and `set {}` on every
+> direct lane; none newly fail. No stored corpus row moves. `test/object-value.test.ts` builds three
+> objects as `objectLiteral` in all 24 languages and keeps `add { left: 10px } to me` a literal;
+> core's `value-parity.test.ts` runs its object counters on the direct path too (they were
+> English-only, filed) and pins four object rows on both engines and through es, ja and ar.
+> Reverting the slot rule fails 72 tests; reverting the key shape 7 in semantic and 48 in core.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

@@ -749,6 +749,14 @@ export class PatternMatcher {
     );
   }
 
+  /** Is this slot a `put` or `set` value, where `{…}` is an object? */
+  private isObjectValueSlot(patternToken: PatternToken & { type: 'role' }): boolean {
+    return (
+      patternToken.role === 'patient' &&
+      (this.currentRoleCommand === 'put' || this.currentRoleCommand === 'set')
+    );
+  }
+
   /** Is the slot followed by a marker (or nothing), which can bound its value? */
   private static boundedByMarker(next: PatternToken | undefined): boolean {
     if (!next) return true;
@@ -1671,9 +1679,15 @@ export class PatternMatcher {
     // can build a real objectLiteral node. Slots that also accept a literal keep
     // the literal fold — switching them would retype every generated-path
     // `['literal','expression']` style-object capture.
+    //
+    // A `put` or `set` value is an object too (`set x to {a: 1}`), though its
+    // slot accepts a literal: the literal fold made it the TEXT `{ a : 1 }`,
+    // which the direct path wrote as a string. The command's role decides, not
+    // the content: a one-property style block and a one-key object look alike.
     if (token.kind === 'identifier' && token.value === '{') {
       const types = patternToken.expectedTypes;
-      const expressionOnly = types?.length === 1 && types[0] === 'expression';
+      const expressionOnly =
+        (types?.length === 1 && types[0] === 'expression') || this.isObjectValueSlot(patternToken);
       const braceRun = expressionOnly
         ? this.tryMatchBraceRunExpression(tokens)
         : !types?.length || types.includes('literal')
