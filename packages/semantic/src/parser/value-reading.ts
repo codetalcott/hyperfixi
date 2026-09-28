@@ -24,7 +24,7 @@
  * | C1, C2 | `a`/`an` before an operator or a marker is a variable   | the role capture, before it reads the slot   |
  * | C7     | a particle is the value where no marker can stand       | the role capture, after its expressions      |
  * | C8     | a structure keyword or verb alone is a variable         | the role capture, after C7                   |
- * | C9     | a lone conjunction or article is a variable, `empty` null | the role capture's last reading of a token |
+ * | C9     | a lone article is a variable, `empty` is `null`         | the role capture's last reading of a token   |
  * | C10    | a particle beside an operator is its operand            | an operator run, for each operand            |
  * | C15    | a particle after `of` is the owner                      | a value's extent, for each token             |
  *
@@ -206,17 +206,14 @@ export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | und
 
 /**
  * C9: what a keyword captured alone stands for, where that is not what it
- * spells. A conjunction is the variable (pl `ustaw do i 0`, set i to 0, read
- * `set and to 0` — PR 59); `empty` is `null`: the word some languages also
- * spell `null` with (sw `tupu`), or a variable named `empty`, which upstream
- * reads as null — PR 61; an article is the variable (`set a to 0` read `a` as
- * the text "a", which a `set` cannot write, and the whole `set` dropped — PR
- * 75). Undefined for any other keyword.
+ * spells. `empty` is `null`: the word some languages also spell `null` with
+ * (sw `tupu`), or a variable named `empty`, which upstream reads as null — PR
+ * 61; an article is the variable (`set a to 0` read `a` as the text "a",
+ * which a `set` cannot write, and the whole `set` dropped — PR 75). Undefined
+ * for any other keyword. (A conjunction alone, PR 59's `ustaw do i 0`, is
+ * C8's: `and` and `or` are structure words.)
  */
 export function loneKeywordValue(token: LanguageToken): SemanticValue | undefined {
-  if (token.normalized === 'and' || token.normalized === 'or') {
-    return { type: 'expression', raw: token.value } as const;
-  }
   const lower = (token.normalized || token.value).toLowerCase();
   if (lower === 'empty') return createConstant('null')!;
   if (lower === 'a' || lower === 'an') return { type: 'expression', raw: token.value } as const;

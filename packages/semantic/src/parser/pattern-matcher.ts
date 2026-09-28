@@ -4248,7 +4248,7 @@ export class PatternMatcher {
         return this.parseLiteralValue(token.value);
 
       case 'keyword': {
-        // A conjunction, `empty` or an article alone (C9: loneKeywordValue).
+        // `empty` or an article alone (C9: loneKeywordValue).
         const alone = loneKeywordValue(token);
         if (alone) return alone;
         // Keywords might be references or values
