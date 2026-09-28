@@ -5,7 +5,14 @@
  * open work.
  */
 import { describe, it, expect } from 'vitest';
-import { ACCEPTED, acceptedReason, expandLanes, generateCells } from './value-matrix';
+import {
+  ACCEPTED,
+  acceptedReason,
+  baselineFrom,
+  expandLanes,
+  generateCells,
+  type CellResult,
+} from './value-matrix';
 import { loadBaseline } from './value-matrix-gate';
 
 describe('value matrix: accepted pairs', () => {
@@ -21,6 +28,20 @@ describe('value matrix: accepted pairs', () => {
   it('leaves it open when one failing lane is not', () => {
     expect(acceptedReason('increment|#a.textContent', ['it', 'es'])).toBeUndefined();
     expect(acceptedReason('put|the textContent of #a as Int', ['en', 'es/up'])).toBeUndefined();
+  });
+
+  it('a regenerated baseline carries the reason, and counts the pairs', () => {
+    const result = (lanes: Record<string, string>): CellResult => ({
+      id: 'increment|#a.textContent',
+      want: '7',
+      lanes: { en: '7', es: '7', ...lanes },
+    });
+    const kept = baselineFrom([result({ it: '1', 'it/up': '1' })], '');
+    expect(kept.entries['increment|#a.textContent']?.accepted).toBe(ambiguity!.reason);
+    expect(kept.accepted).toBe(2);
+    const open = baselineFrom([result({ it: '1', es: '1' })], '');
+    expect(open.entries['increment|#a.textContent']?.accepted).toBeUndefined();
+    expect(open.accepted).toBe(0);
   });
 
   it('accepts only the cells it names', () => {
