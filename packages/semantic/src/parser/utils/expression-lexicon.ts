@@ -1065,21 +1065,6 @@ export function isConnectiveOperand(
   return COMPARISON_AFTER_OPERAND.has(nextWord);
 }
 
-/**
- * Is the token at `i` a particle-shaped variable after English `of`? `of`
- * (which stays English where the renderer keeps a chain's links) is followed
- * by its owner, never by a marker, and pl's `w` (its `in`) is also a common
- * variable name: `v of w of obj` stopped at `w`.
- */
-export function isParticleAfterOf(tokens: readonly LanguageToken[], i: number): boolean {
-  const token = tokens[i];
-  return (
-    token?.kind === 'particle' &&
-    tokens[i - 1]?.value.toLowerCase() === 'of' &&
-    /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value)
-  );
-}
-
 /** Is `word` (a word as the join read it) the copula of a comparison? */
 function isCopulaWord(word: string | undefined): boolean {
   const lowered = word?.toLowerCase();

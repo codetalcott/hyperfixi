@@ -43,7 +43,6 @@ import {
   isConversionTypeName,
   isCopulaIn,
   ambiguousSenseOf,
-  isParticleAfterOf,
   isStructureKeyword,
   ofChainEnd,
 } from './utils/expression-lexicon';
@@ -53,6 +52,14 @@ import {
   TYPE_CHECK_PHRASES,
 } from '../ast-builder/expression-parser/parser';
 import { EXPRESSION_WORDS, OPERATOR_WORDS, readsAsOneExpression } from './utils/value-extent';
+import {
+  RUN_OPERATORS,
+  SlotContext,
+  isParticleAfterOf,
+  isRunOperator,
+  particleIsOperand,
+  particleIsValue,
+} from './value-reading';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
@@ -117,6 +124,9 @@ export class PatternMatcher {
    * matched: its marker (`[por {quantity}]`), or the command's verb.
    */
   private slotAfterLiteral = false;
+  /** `patternTokenWouldMatch`, bound once for the SlotContexts the captures build. */
+  private readonly wouldMatch = (pt: PatternToken | undefined, token: LanguageToken): boolean =>
+    this.patternTokenWouldMatch(pt, token);
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
   /**
@@ -888,11 +898,11 @@ export class PatternMatcher {
       if (!token.value.startsWith('.') || !prev || PatternMatcher.tokensAdjacent(prev, token)) {
         return true;
       }
-      if (PatternMatcher.RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
+      if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
       const prevWord = expressionWordOf(lang, prev, all[i - 2], token, undefined).toLowerCase();
       return OPERATOR_WORDS.has(prevWord);
     }
-    if (PatternMatcher.RUN_OPERATORS.has(token.value)) return true;
+    if (RUN_OPERATORS.has(token.value)) return true;
     if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
     if (this.isOfPossessiveMarker(token)) return true;
     if (isConnectiveOperand(lang, token, prev, all[i + 1])) return true;
@@ -1201,6 +1211,7 @@ export class PatternMatcher {
     if (!token) {
       return patternToken.optional || false;
     }
+    const slot = new SlotContext(tokens, this.slotAfterLiteral, nextPatternToken, this.wouldMatch);
 
     // Action-role hyphen-compound fold (same family as the matchLiteralToken
     // fold): a fused event pattern's {action} slot captures ONE token, but a
@@ -1343,15 +1354,7 @@ export class PatternMatcher {
         // literal: tr `i i al artır` (increment i by al), where the increment
         // verb follows the amount. A marker-less slot before another command
         // keeps the guard (`wiederholen forever umschalten .pulse`).
-        const beforeNext =
-          !!nextPatternToken &&
-          !!tokens.peek(1) &&
-          this.patternTokenWouldMatch(nextPatternToken, tokens.peek(1)!);
-        if (
-          qNorm in commandSchemas &&
-          !this.verbIsSlotValue(tokens, nextPatternToken) &&
-          !beforeNext
-        ) {
+        if (qNorm in commandSchemas && !this.verbIsSlotValue(slot) && !slot.nextIsMarker) {
           return patternToken.optional || false;
         }
       }
@@ -1415,7 +1418,7 @@ export class PatternMatcher {
       if (
         verbNorm in commandSchemas &&
         (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token)) &&
-        !this.verbIsSlotValue(tokens, nextPatternToken)
+        !this.verbIsSlotValue(slot)
       ) {
         return true; // skip the optional slot; the verb is not its value
       }
@@ -1791,33 +1794,8 @@ export class PatternMatcher {
       }
     }
 
-    // A particle is the value where it cannot be a marker. tr's accusative
-    // marker is `i`, the usual loop variable, so `i i 2 artır` (increment i
-    // by 2) put the marker's spelling in the value slot, the slot took
-    // nothing, and the clause fell to a fallback that lost the amount. A
-    // particle directly before the pattern's next marker is that marker's
-    // value (`i i 2 artır`); so is one directly after another marker and
-    // before the verb (`k i i artır`, increment k by i), and one directly
-    // before an operator (`i < - 2`: the operator run cannot take a unary
-    // minus, and the value's tail reads it from here). Directly after a value
-    // and before the verb, it is that value's marker (`1s i bekle`).
-    const nextToken = tokens.peek(1);
-    if (
-      token.kind === 'particle' &&
-      ((nextToken &&
-        ((this.patternTokenWouldMatch(nextPatternToken, nextToken) &&
-          (nextToken.kind === 'particle' ||
-            tokens.tokens[tokens.position() - 1]?.kind === 'particle')) ||
-          this.runOperatorFollows(tokens))) ||
-        // …and one right after its own slot's marker, before an unmarked role,
-        // whose value the next token is: pl `ustaw do o 5` (set o to 5), it
-        // `impostare in ai 5`. (Before a value of its own it is part of the
-        // marker: id `ke dalam #out`.)
-        (this.slotAfterLiteral && nextPatternToken?.type === 'role') ||
-        // …and one that ends the clause: es `incrementar a entonces`
-        // (increment a), `establecer x a a` (set x to a).
-        this.endsClauseAfter(tokens))
-    ) {
+    // A particle where no marker can stand is the value (C7: particleIsValue).
+    if (particleIsValue(slot)) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();
       return true;
@@ -2214,38 +2192,6 @@ export class PatternMatcher {
   }
 
   /**
-   * Binary operators that can join operands in an operator-run expression.
-   * `*` tokenizes as a SELECTOR (the style-prefix char) but is only read as an
-   * operator here when it sits BETWEEN two operands, so a bare `*opacity`
-   * style selector (one fused token) is never affected. A bare `<` is a
-   * selector token too; a query is one fused token (`<p/>`).
-   *
-   * The comparisons and `mod` join a run as well: without them `set x to n > 2`
-   * captured only `n`, and every translation lost the comparison (the English
-   * reference truncated the same way, so no fidelity signal saw it). `%` is
-   * core's alone (upstream rejects it) and renders as written. The logical
-   * words join through {@link logicalConnectiveOf} (`and`, `or`, and a leading
-   * `not`), and core's comparison phrases (`is`, `is not`, `matches`,
-   * `exists`) through {@link tryConsumeRunPhrase}.
-   */
-  private static readonly RUN_OPERATORS = new Set([
-    '+',
-    '-',
-    '*',
-    '/',
-    '%',
-    'mod',
-    '>',
-    '<',
-    '>=',
-    '<=',
-    '==',
-    '!=',
-    '===',
-    '!==',
-  ]);
-
-  /**
    * The logical connective a token spells, if any: the English word, or the
    * language's own (de `oder`), read through the expression lexicon's
    * connectives, which return an unlisted surface as it is.
@@ -2324,13 +2270,8 @@ export class PatternMatcher {
    * se). A verb with more after it is still the next command (a stored zh row's
    * `停止 把 调用 saveDocument()`, halt then call).
    */
-  private verbIsSlotValue(tokens: TokenStream, nextPatternToken?: PatternToken): boolean {
-    if (!this.slotAfterLiteral) return false;
-    const next = tokens.peek(1);
-    return (
-      this.endsClauseAfter(tokens) ||
-      (!!next && this.patternTokenWouldMatch(nextPatternToken, next))
-    );
+  private verbIsSlotValue(slot: SlotContext): boolean {
+    return slot.afterLiteral && (slot.clauseEndsAfter || slot.nextIsMarker);
   }
 
   /**
@@ -2348,21 +2289,6 @@ export class PatternMatcher {
     if (!COMMAND_ACTION_KEYWORDS.has(norm) || norm === 'empty') return false;
     const schema = this.currentSchema();
     return !schema?.hasBody && !schema?.roles.some(r => r.role === 'event');
-  }
-
-  /** Is the token after the next one a clause boundary (`then`, `end`, `else`) or nothing? */
-  private endsClauseAfter(tokens: TokenStream): boolean {
-    const next = tokens.peek(1);
-    if (!next) return true;
-    if (next.kind !== 'keyword') return false;
-    const norm = (next.normalized ?? next.value).toLowerCase();
-    return norm === 'then' || norm === 'end' || norm === 'else';
-  }
-
-  /** The token after the next one is a run operator. */
-  private runOperatorFollows(tokens: TokenStream): boolean {
-    const op = tokens.peek(1);
-    return !!op && PatternMatcher.RUN_OPERATORS.has(op.value);
   }
 
   /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
@@ -2427,7 +2353,7 @@ export class PatternMatcher {
     }
     for (;;) {
       const op = tokens.peek();
-      if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
+      if (!op || !RUN_OPERATORS.has(op.value)) break;
       const beforeOp = tokens.mark();
       tokens.advance();
       if (!this.tryConsumeRunOperand(tokens, true)) {
@@ -2507,7 +2433,7 @@ export class PatternMatcher {
       // A wait's `or` lists its events (`wait for pointermove or pointerup`).
       const joins = (logical === 'and' || logical === 'or') && this.currentRoleCommand !== 'wait';
       const beforeOp = tokens.mark();
-      if (joins || PatternMatcher.RUN_OPERATORS.has(op.value)) {
+      if (joins || RUN_OPERATORS.has(op.value)) {
         tokens.advance();
       } else {
         // A comparison phrase: `is`, `is not greater than`, `matches`, `exists`.
@@ -2728,7 +2654,7 @@ export class PatternMatcher {
         tokens.peek()?.kind === 'particle' &&
         after &&
         ['selector', 'literal', 'identifier'].includes(after.kind) &&
-        !this.runOperatorFollows(tokens)
+        !isRunOperator(tokens.peek(1) ?? undefined)
       ) {
         tokens.reset(mark);
         return false;
@@ -2757,12 +2683,8 @@ export class PatternMatcher {
       return false;
     }
 
-    // A particle is an operand where no marker can stand: directly after an
-    // operator, or directly before one (`a + b`). es/it/pt `a`, the preposition
-    // "to", is also a common variable name, so `retornar a + b` lost its whole
-    // value (worker-basic); a marker is followed by its value, never by an
-    // operator.
-    if (token.kind === 'particle' && (afterOperator || this.runOperatorFollows(tokens))) {
+    // A particle beside an operator is an operand (C10: particleIsOperand).
+    if (particleIsOperand(token, afterOperator, tokens.peek(1) ?? undefined)) {
       tokens.advance();
       return true;
     }
@@ -2824,7 +2746,7 @@ export class PatternMatcher {
         token.kind === 'identifier' ||
         token.kind === 'selector' ||
         token.kind === 'keyword') &&
-      !PatternMatcher.RUN_OPERATORS.has(token.value) &&
+      !RUN_OPERATORS.has(token.value) &&
       !['end', 'then', 'else'].includes((token.normalized ?? '').toLowerCase()) &&
       token.value !== ')'
     ) {
@@ -3740,7 +3662,7 @@ export class PatternMatcher {
     const continues =
       !!next &&
       (next.value === "'" ||
-        PatternMatcher.RUN_OPERATORS.has(next.value) ||
+        RUN_OPERATORS.has(next.value) ||
         (PatternMatcher.abuts(closer, next) && (next.value.startsWith('.') || next.value === '(')));
     if (depth !== 0 || inner.length === 0 || continues) {
       tokens.reset(mark);
