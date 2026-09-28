@@ -69,7 +69,7 @@
     "@types/fs-extra": "^11.0.0",
     "@types/node": "^26.6.2",
     "@types/semver": "^7.8.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.1"

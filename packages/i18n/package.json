@@ -75,7 +75,7 @@
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/node": "^26.6.2",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.2",
     "rollup": "^4.63.4",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
