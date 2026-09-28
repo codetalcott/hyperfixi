@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1328,
   "pairs": 63744,
-  "failing": 378,
+  "failing": 268,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -12,101 +12,13 @@
       "lanes": "hi hi/up",
       "family": "translation"
     },
-    "put|v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "while|v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "increment|v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
     "increment|#a.textContent": {
       "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|v of w of obj + 2": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|v of w of obj + 2": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "while|v of w of obj + 2": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "increment|v of w of obj + 2": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|2 + v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|2 + v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "while|2 + v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "increment|2 + v of w of obj": {
-      "lanes": "pl pl/up",
       "family": "translation"
     },
     "increment|#a.textContent + 2": {
       "lanes": "it it/up",
       "family": "translation"
-    },
-    "put|v of w of obj < 4": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|v of w of obj < 4": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|1 < v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|1 < v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|v of w of obj is 6": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|v of w of obj is 6": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|6 is v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|6 is String(n)": {
-      "lanes": "th th/up",
-      "family": "translation"
-    },
-    "set|6 is String(n)": {
-      "lanes": "th th/up",
-      "family": "translation"
-    },
-    "if|6 is String(n)": {
-      "lanes": "th/up",
-      "family": "adapter"
     },
     "set|true and true": {
       "lanes": "qu qu/up",
@@ -134,22 +46,6 @@
     },
     "set|true and (n > 1)": {
       "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "put|[1, 2, 6] contains v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "put|v of w of obj is in [1, 2, 6]": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|v of w of obj is in [1, 2, 6]": {
-      "lanes": "pl pl/up",
       "family": "translation"
     },
     "put|not false": {
@@ -188,69 +84,17 @@
       "lanes": "hi hi/up",
       "family": "translation"
     },
-    "put|-#a's textContent": {
-      "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "put|-obj's v": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|-obj's v": {
-      "lanes": "qu uk uk/up",
-      "family": "translation+direct-path"
-    },
-    "while|-obj's v": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "increment|-obj's v": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|-arr's length": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|-arr's length": {
-      "lanes": "qu uk uk/up",
-      "family": "translation+direct-path"
-    },
-    "while|-arr's length": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "increment|-arr's length": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|-#a's textContent's length": {
-      "lanes": "ja ja/up ko ko/up qu qu/up tr tr/up",
-      "family": "translation"
-    },
-    "put|-v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "set|-v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
-    "increment|-v of w of obj": {
-      "lanes": "pl pl/up",
-      "family": "translation"
-    },
     "put|no .w": {
-      "lanes": "hi hi/up tl tl/up zh zh/up",
+      "lanes": "hi hi/up",
       "family": "translation"
     },
     "set|no .w": {
-      "lanes": "hi hi/up tl tl/up zh zh/up",
+      "lanes": "hi hi/up",
       "family": "translation"
     },
     "if|no .w": {
-      "lanes": "hi hi/up tl/up zh zh/up",
-      "family": "translation+adapter"
+      "lanes": "hi hi/up",
+      "family": "translation"
     },
     "put|\"\" is empty": {
       "lanes": "ar ar/up hi hi/up id id/up qu qu/up tr tr/up",
@@ -339,10 +183,6 @@
     "increment|the textContent of #a as Int": {
       "lanes": "en *direct",
       "family": "core"
-    },
-    "put|v of w of obj as Int": {
-      "lanes": "pl pl/up",
-      "family": "translation"
     },
     "increment|#a.textContent as Int": {
       "lanes": "it it/up",
