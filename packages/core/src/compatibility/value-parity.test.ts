@@ -204,6 +204,7 @@ const WRITES: Array<[string, string]> = [
   ['decrement obj.v then put obj.v into #out', '5'],
   ['increment @title then put my @title into #out', '1'],
   ['increment @title by 2 then put my @title into #out', '2'],
+  ['set @title to 5 then increment @title then put my @title into #out', '6'],
   ['set obj.v to 5 then put obj.v into #out', '5'],
   ["increment #a's textContent then put #a.textContent into #out", '7'],
 ];
