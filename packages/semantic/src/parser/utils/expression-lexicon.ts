@@ -1042,6 +1042,8 @@ export function isConnectiveOperand(
       ? (token.normalized ?? '').toLowerCase()
       : translateConnective(languageCode, token.value).toLowerCase();
   if (sense !== 'and' && sense !== 'or') return false;
+  // Alone, it joins nothing: an `if` condition that is only the word (es `si y`).
+  if (prev === undefined && next === undefined) return true;
   if (prev !== undefined && BEFORE_OPERAND.test(prev.value)) return true;
   if (next === undefined) return false;
   if (AFTER_OPERAND.has(next.value)) return true;
