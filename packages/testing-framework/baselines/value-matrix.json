@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1738,
   "pairs": 83352,
-  "failing": 1070,
+  "failing": 1050,
   "entries": {
     "put|null": {
       "lanes": "hi hi/up",
@@ -18,34 +18,6 @@
     },
     "increment|#a.textContent + 2": {
       "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|true and true": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|flag and true": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|true and flag": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|Array.isArray(arr) and true": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|true and Array.isArray(arr)": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|(n > 1) and true": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
-    "set|true and (n > 1)": {
-      "lanes": "qu qu/up",
       "family": "translation"
     },
     "put|not false": {
@@ -284,20 +256,16 @@
       "lanes": "it it/up",
       "family": "translation"
     },
-    "set|n > 1 and n < 10": {
-      "lanes": "qu qu/up",
-      "family": "translation"
-    },
     "put|flag and not (n is 6)": {
       "lanes": "hi hi/up",
       "family": "translation"
     },
     "set|flag and not (n is 6)": {
-      "lanes": "hi hi/up qu qu/up",
+      "lanes": "hi hi/up",
       "family": "translation"
     },
     "if|flag and not (n is 6)": {
-      "lanes": "hi hi/up qu qu/up",
+      "lanes": "hi hi/up",
       "family": "translation"
     },
     "count|obj.v": {

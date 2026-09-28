@@ -79,8 +79,8 @@ describe.each(VALUES)('put %s', (value, expected) => {
 const CONNECTIVES: Array<[string, string, string[]]> = [
   ['p or q', 'true', []],
   ['q or p', 'true', []],
-  ['p and q', 'false', ['qu']],
-  ['q and p', 'false', ['qu']],
+  ['p and q', 'false', []],
+  ['q and p', 'false', []],
   ['not p', 'false', ['hi']],
   ['not q', 'true', ['hi']],
   ['p and not q', 'true', ['hi']],

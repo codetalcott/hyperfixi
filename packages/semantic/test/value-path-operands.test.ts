@@ -46,8 +46,8 @@ const LANGUAGES = [
 const normalize = (code: string): string =>
   code.replace(/(#\w+)'s (\w+)/g, '$2 of $1').replace(/\bthe /g, '');
 
-// Each source, with the languages whose `and` or `not` is also another word
-// (qu `chaymanta`, hi `नहीं`; see value-operators.test.ts).
+// Each source, with the languages whose `not` is also another word (hi
+// `नहीं`; see value-operators.test.ts).
 const SOURCES: Array<[string, string[]]> = [
   [`on click put #d1's textContent + "x" into #out`, []],
   [`on click put "x" + #d1's textContent into #out`, []],
@@ -59,7 +59,7 @@ const SOURCES: Array<[string, string[]]> = [
   [`on click put #d1.textContent + "x" into #out`, []],
   [`on click put n + #d1's textContent into #out`, []],
   [`on click set x to #d1's textContent + "x"`, []],
-  [`on click put #d1's textContent is "d" and n is 3 into #out`, ['qu']],
+  [`on click put #d1's textContent is "d" and n is 3 into #out`, []],
   [`on click put not #d1's textContent into #out`, ['hi']],
 ];
 

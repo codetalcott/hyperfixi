@@ -141,7 +141,7 @@ export const qu: Dictionary = {
   logical: {
     when: 'maykama',
     where: 'maypi',
-    and: 'chaymanta',
+    and: 'hinallataq',
     or: 'utaq',
     not: 'mana',
     is: 'kanqa',
