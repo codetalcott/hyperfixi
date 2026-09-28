@@ -19,14 +19,23 @@
  * every rule, here or in the join and the condition scan, with the PR that
  * added it and the test that pins it:
  *
- * | ID  | Reads                                             | Applied by                               |
- * | --- | ------------------------------------------------- | ---------------------------------------- |
- * | C7  | a particle is the value where no marker can stand | the role capture, after its expressions  |
- * | C10 | a particle beside an operator is its operand      | an operator run, for each operand        |
- * | C15 | a particle after `of` is the owner                | a value's extent, for each token         |
+ * | ID     | Reads                                                   | Applied by                                   |
+ * | ------ | ------------------------------------------------------- | -------------------------------------------- |
+ * | C1, C2 | `a`/`an` before an operator or a marker is a variable   | the role capture, before it reads the slot   |
+ * | C7     | a particle is the value where no marker can stand       | the role capture, after its expressions      |
+ * | C8     | a structure keyword or verb alone is a variable         | the role capture, after C7                   |
+ * | C9     | a lone conjunction or article is a variable, `empty` null | the role capture's last reading of a token |
+ * | C10    | a particle beside an operator is its operand            | an operator run, for each operand            |
+ * | C15    | a particle after `of` is the owner                      | a value's extent, for each token             |
+ *
+ * The join reads a keyword alone through the same classifier as C8
+ * (`loneKeywordKind`, in the expression lexicon: J1).
  */
 
-import type { LanguageToken, PatternToken, TokenStream } from '../types';
+import type { LanguageToken, PatternToken, SemanticValue, TokenStream } from '../types';
+import { createConstant } from '../types';
+import type { CommandSchema } from '../generators/command-schemas';
+import { loneKeywordKind } from './utils/expression-lexicon';
 
 /**
  * Binary operators that can join operands in an operator-run expression.
@@ -86,6 +95,8 @@ export class SlotContext {
 
   constructor(
     tokens: TokenStream,
+    /** The slot's pattern token: its role, value shape and expected types. */
+    readonly patternToken: PatternToken & { type: 'role' },
     /** The slot directly follows a literal the pattern matched: its marker, or the verb. */
     readonly afterLiteral: boolean,
     private readonly nextPatternToken: PatternToken | undefined,
@@ -120,6 +131,24 @@ export class SlotContext {
   }
 }
 
+/** Arithmetic, comparison and equality operators, whole: C1's own set (no `mod`). */
+const BINARY_OPERATOR_TEXT = /^(?:[-+*/%]|[<>]=?|===?|!==?)$/;
+
+/**
+ * C1, C2: `a`/`an` is a variable, not an article, before an operator (`put a
+ * + b`: the en tokenizer classes `+`/`-`/`*` as identifiers, so the article
+ * rule took `return a + b` for "article, noun" and kept `return +` — #1175)
+ * and before the pattern's next marker (de `erhöhe a um 1`, increment a by 1,
+ * whose `um` the tokenizer leaves an identifier — PR 84). Its operator set is
+ * its own: `mod` is no operator here, where it is one for C7 and C10.
+ */
+export function articleIsVariable(slot: SlotContext): boolean {
+  const word = slot.token.value.toLowerCase();
+  if (word !== 'a' && word !== 'an') return false;
+  const next = slot.next;
+  return next !== undefined && (BINARY_OPERATOR_TEXT.test(next.value) || slot.nextIsMarker);
+}
+
 /**
  * C7: a particle is the value where it cannot be a marker. tr's accusative
  * marker is `i`, the usual loop variable, so `i i 2 artır` (increment i by 2)
@@ -147,6 +176,51 @@ export function particleIsValue(slot: SlotContext): boolean {
     (slot.afterLiteral && slot.beforeRole) ||
     slot.clauseEndsAfter
   );
+}
+
+/**
+ * C8: a structure keyword alone in a value slot is a variable the language
+ * spells like it: a role marker (tr `na`, ms `ke`, de `zu`), a control word
+ * (es `si` "if", pl `az` "until", de `wo` "where") or the copula (es `es`, sw
+ * `ni`); captured whole it was the English word, `put if` — PR 81. So is a
+ * command verb (es `ir` "go", fr `va`, tr `al` "get") — PR 84 — except in a
+ * command that takes a body (`tell #modal to show`, ja and qu), where a verb in
+ * a slot is the body command the pattern dropped, which the role normalization
+ * discards; in one that names an event, whose name may be a verb's (`trigger
+ * init`); and `empty`, which alone is `null` (C9). Never the event's or the
+ * action's slot, one that holds a keyword (`using view transition`, a loop's
+ * type), or one that takes no expression. The matchers before it have taken
+ * the keyword-led values (`not flag`, `no .w`).
+ */
+export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | undefined): boolean {
+  const pt = slot.patternToken;
+  if (pt.role === 'event' || pt.role === 'action' || pt.valueShape === 'keyword') return false;
+  const types = pt.expectedTypes;
+  if (types?.length && !types.some(t => t === 'expression' || t === 'reference')) return false;
+  const kind = loneKeywordKind(slot.token);
+  if (kind === 'structure') return true;
+  if (kind !== 'verb') return false;
+  if ((slot.token.normalized ?? slot.token.value).toLowerCase() === 'empty') return false;
+  return !schema?.hasBody && !schema?.roles.some(r => r.role === 'event');
+}
+
+/**
+ * C9: what a keyword captured alone stands for, where that is not what it
+ * spells. A conjunction is the variable (pl `ustaw do i 0`, set i to 0, read
+ * `set and to 0` — PR 59); `empty` is `null`: the word some languages also
+ * spell `null` with (sw `tupu`), or a variable named `empty`, which upstream
+ * reads as null — PR 61; an article is the variable (`set a to 0` read `a` as
+ * the text "a", which a `set` cannot write, and the whole `set` dropped — PR
+ * 75). Undefined for any other keyword.
+ */
+export function loneKeywordValue(token: LanguageToken): SemanticValue | undefined {
+  if (token.normalized === 'and' || token.normalized === 'or') {
+    return { type: 'expression', raw: token.value } as const;
+  }
+  const lower = (token.normalized || token.value).toLowerCase();
+  if (lower === 'empty') return createConstant('null')!;
+  if (lower === 'a' || lower === 'an') return { type: 'expression', raw: token.value } as const;
+  return undefined;
 }
 
 /**
