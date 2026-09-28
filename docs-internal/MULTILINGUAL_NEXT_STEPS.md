@@ -6142,6 +6142,29 @@ this signal was missing.
 > core's `value-parity.test.ts` runs its object counters on the direct path too (they were
 > English-only, filed) and pins four object rows on both engines and through es, ja and ar.
 > Reverting the slot rule fails 72 tests; reverting the key shape 7 in semantic and 48 in core.
+>
+> **Four operand readings (PR 74, 2026-09-27).** Smaller families from PR 67's list:
+>
+> - **A unary minus before a possessive**: the operator run read `-` as a whole operand, so no run
+>   could start with one. `- n` survived through the value's tail, but `- #aのtextContent` (ja,
+>   ko, tr, qu) lost its minus and uk `- obj's v` its whole `put`. Where an operand may start, a
+>   `-` now prefixes it (as `not` already did).
+> - **A particle after `of`**: pl's `w` (its `in`) is a common variable name, and `v of w of obj`
+>   stopped at it, losing the `put`. `of` is followed by its owner, never by a marker
+>   (`isParticleAfterOf`), the PR 64 shape for tr's `i`.
+> - **`no` before a selector**: zh `没有 .w` and tl `walang .w` read `no` only before a bare word
+>   (`no flag`); before a selector too now. (hi `नहीं .w` is the filed `not`/`no` collision.)
+> - **A called type name**: th `เป็น` before a conversion type name is `as`, so `6 เป็น String (
+>   n )` read `6 as String` and a stray `( n )`, losing the `put`. A type name followed by `(` is a
+>   call.
+>
+> **In the value matrix, 378 failing pairs fall to 268 (−29%)**: pl `v of w of obj` (27 direct,
+> 27 through the adapter), the unary minus before a possessive in uk (14), qu (14) and ja, ko and
+> tr (12), zh and tl `no .w` (11) and th `is String(n)` (5); none newly fail. No stored corpus row
+> moves. `test/operand-readings.test.ts` round-trips each shape (the minus in seven languages,
+> including the tr `while i < -2` of PR 67); each of six mutants reverting one piece fails it. The
+> token-after-next was first passed at two matcher call sites too; without them no test, matrix
+> pair or corpus row moved, so only the join passes it.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
