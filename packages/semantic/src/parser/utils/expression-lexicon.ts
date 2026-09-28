@@ -726,6 +726,9 @@ interface AmbiguousSenseRule {
       the word shape is required because some tokenizers lex `(`/`)` as
       identifier-kind too. */
   beforeBareIdentifier?: string;
+  /** Emitted when the NEXT token is a selector (`.w`, `#a`, `<p/>`): zh
+      `没有 .w` and tl `walang .w` are `no .w`, as `没有 flag` is `no flag`. */
+  beforeSelector?: string;
   /** Emitted when the PREVIOUS token is a selector or reference
       (`#modal আছে` → `#modal exists`). */
   afterSubject?: string;
@@ -817,8 +820,11 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' } },
   ja: { 空: { afterCopula: 'empty' } },
   sw: { tupu: { afterCopula: 'empty', otherwise: 'null' }, na: { betweenOperands: 'and' } },
-  zh: { 没有: { beforeBareIdentifier: 'no' } },
-  tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
+  zh: { 没有: { beforeBareIdentifier: 'no', beforeSelector: 'no' } },
+  tl: {
+    walang: { beforeBareIdentifier: 'no', beforeSelector: 'no' },
+    may: { afterSubject: 'exists' },
+  },
   bn: { আছে: { afterSubject: 'exists' } },
   qu: { mana: { beforeOperand: 'not' } },
   tr: { var: { afterSubject: 'exists' } },
@@ -883,16 +889,20 @@ function resolveAmbiguousSense(
   token: LanguageToken,
   prev: LanguageToken | undefined,
   next: LanguageToken | undefined,
-  prevText: string | undefined
+  prevText: string | undefined,
+  afterNext: LanguageToken | undefined
 ): string | undefined {
   const table = AMBIGUOUS_SENSES[languageCode];
   const rule = table?.[token.value] ?? table?.[token.value.toLowerCase()];
   if (!rule) return undefined;
   // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
   // though `Number` could look identifier-bare; the sets are disjoint anyway.
+  // A type name that is called is a function: `6 เป็น String(n)` is `6 is
+  // String(n)`, not `6 as String` and a stray `(n)`.
   if (
     rule.beforeTypeName &&
     next?.kind === 'identifier' &&
+    afterNext?.value !== '(' &&
     (CONVERSION_TYPE_NAMES.has(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
   ) {
     return rule.beforeTypeName;
@@ -921,6 +931,7 @@ function resolveAmbiguousSense(
     return rule.beforeBareIdentifier;
   }
   if (rule.beforeOperand && startsOperand(next)) return rule.beforeOperand;
+  if (rule.beforeSelector && next?.kind === 'selector') return rule.beforeSelector;
   if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
     return rule.afterSubject;
   }
@@ -954,7 +965,7 @@ export function ambiguousSenseOf(
   prev: LanguageToken | undefined,
   next: LanguageToken | undefined
 ): string | undefined {
-  return resolveAmbiguousSense(languageCode, token, prev, next, undefined);
+  return resolveAmbiguousSense(languageCode, token, prev, next, undefined, undefined);
 }
 
 /** Tokens a conjunction can never follow: an operator, or an opening bracket or comma. */
@@ -1030,6 +1041,21 @@ export function isConnectiveOperand(
   return COMPARISON_AFTER_OPERAND.has(nextWord);
 }
 
+/**
+ * Is the token at `i` a particle-shaped variable after English `of`? `of`
+ * (which stays English where the renderer keeps a chain's links) is followed
+ * by its owner, never by a marker, and pl's `w` (its `in`) is also a common
+ * variable name: `v of w of obj` stopped at `w`.
+ */
+export function isParticleAfterOf(tokens: readonly LanguageToken[], i: number): boolean {
+  const token = tokens[i];
+  return (
+    token?.kind === 'particle' &&
+    tokens[i - 1]?.value.toLowerCase() === 'of' &&
+    /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value)
+  );
+}
+
 /** Is `word` (a word as the join read it) the copula of a comparison? */
 function isCopulaWord(word: string | undefined): boolean {
   const lowered = word?.toLowerCase();
@@ -1066,14 +1092,15 @@ export function expressionWordOf(
   token: LanguageToken,
   prev: LanguageToken | undefined,
   next: LanguageToken | undefined,
-  prevText: string | undefined
+  prevText: string | undefined,
+  afterNext?: LanguageToken
 ): string {
   // `equal to` stays English in every rendering (`is greater than or equal
   // to`), and its `to` is a word some languages have their own sense for: pl
   // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
   if (prevText?.toLowerCase() === 'equal' && token.value.toLowerCase() === 'to') return 'to';
   if (isCopulaWord(prevText) && token.value.toLowerCase() === 'in') return 'in';
-  const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText);
+  const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText, afterNext);
   if (sense !== undefined) return sense;
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
   const connective = translateConnective(languageCode, token.value);
@@ -1410,7 +1437,10 @@ export function joinExpressionTokens(
     // (these surfaces are deliberately NOT connectives; the sense table is
     // authoritative for them). See AMBIGUOUS_SENSES above for why this seam is
     // the one safe place to translate these words.
-    append(expressionWordOf(languageCode, token, tokens[i - 1], next, previousText), token);
+    append(
+      expressionWordOf(languageCode, token, tokens[i - 1], next, previousText, tokens[i + 2]),
+      token
+    );
   }
 
   return out.trim();
