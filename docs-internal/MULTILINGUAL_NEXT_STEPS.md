@@ -6526,10 +6526,10 @@ in the order it applies:
 | C10 | in an operator run, a particle right after or before an operator is an operand (es `retornar a + b`)                                                                                                                                                                                                                                                       | `particleIsOperand` (`value-reading.ts`), from `tryConsumeRunOperand` | #1175                               | `en-reference-meaning.test.ts`                                                              |
 | C11 | in an operator run, a command verb after `and`/`or` begins the next command (`set x to true and put 2 …`)                                                                                                                                                                                                                                                  | `namesCommand` (`value-reading.ts`), from `tryConsumeRunOperand`  | 44                                     | `value-operators.test.ts`                                                                   |
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `notWordIsVariable` (`value-reading.ts`), from `tryConsumeRunOperand` | 84                                     | `colliding-names.test.ts`                                                                   |
-| C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `absorbExpressionTail`, `continuesValue`, `isValueBoundary`       | 53                                     | `value-extent.test.ts`                                                                      |
-| C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand`                          | 59                                     | `connective-operand.test.ts`                                                                |
-| C15 | the `in` after a copula continues a value (de/it `into` marker), and so does a particle after `of` (pl `w`)                                                                                                                                                                                                                                                | `absorbExpressionTail`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf` (`value-reading.ts`) | 69, 74  | `copula-in.test.ts`, `operand-readings.test.ts`                                             |
-| C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `absorbPossessiveTail`                                            | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
+| C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53                                     | `value-extent.test.ts`                                                                      |
+| C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand` (`utils/value-extent.ts`) | 59                                     | `connective-operand.test.ts`                                                                |
+| C15 | the `in` after a copula continues a value (de/it `into` marker), and so does a particle after `of` (pl `w`)                                                                                                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf` (`utils/value-extent.ts`)         | 69, 74  | `copula-in.test.ts`, `operand-readings.test.ts`                                             |
+| C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `possessiveLinkEnds`, `longestWholeRun` (`utils/value-extent.ts`) | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
 
 **The join** (`joinExpressionTokens` → `expressionWordOf`, `parser/utils/expression-lexicon.ts`),
 word by word:
@@ -6638,6 +6638,24 @@ of it keeps the difference explicit and is filed instead.
   `verbStandsAlone` (see PR 87), C5's keyword-shape and event/action exclusions, C6's non-verb
   half, C12's value-kind check, and C3's curated end word.
 
+- **PR 91, the value extent** (C13–C16): `utils/value-extent.ts`, which held the extent rule's
+  "pure half" (the expression words and `readsAsOneExpression`), now holds all of it over an
+  explicit `ExtentContext` (the profile, whether the pattern still owes a token, the command's
+  markers, whether it has a response type): `isValueBoundary`, `continuesValue`,
+  `valueTailEnds`, `possessiveLinkEnds`, and one `longestWholeRun` for the marker-bounded and the
+  possessive-only cases, which were two copies of the same loop. The matcher keeps a wrapper that
+  builds the context and applies the run, and `tokensAdjacent` has one definition. Oracle identical.
+  Lines: `pattern-matcher.ts` 4,453 → 4,295, `value-extent.ts` 159 → 365 (the rule's comment
+  moved with it). Of 22 mutants, 16 fail the rules' tests and one more (the command's markers)
+  the full suite; five survive it. Dropped together they move three extended-names entries and
+  nothing else, all 18,278 names included; bisected, all three are the continuation through an
+  of-marker: a variable spelled like the language's of-marker after `of` (de `length of aus`,
+  `length of von`, fr `length of de`) loses its whole `put` without it. It is pinned now
+  (`value-extent.test.ts`), by the command, since the name itself reads back as `source` (filed
+  below). The other four move nothing, nor do they on the shapes their comments name (`n + .x`,
+  `no .w`, `obj.v mod 3`, `obj.v and w`): the operator run reads those first, and `continuesValue`
+  refuses `then`/`end`/`else` as the boundary does.
+
 **Found by the consolidation, not fixed in it** (a refactor PR moves no oracle item):
 
 - **C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.** A particle before a run
@@ -6661,7 +6679,9 @@ of it keeps the difference explicit and is filed instead.
 - **qu `put (o) into #out` reads `on click(o) put into ta #out`**: `click (o)` is taken for the
   event's parameters. On main.
 - **tr `değil na < 3` (not na < 3) reads `not destination < 3`**, and `set x to not na * 2`
-  likewise: a marker-shaped name inside an expression joins as its role name. On main.
+  likewise: a marker-shaped name inside an expression joins as its role name. On main. So does
+  one after `of` (found by PR 91's mutants): de `length of aus`, `length of von` and fr `length
+  of de` read `length of source`.
 - **Names inside expressions** (part 3's question, measured): the extended names oracle's
   reference, on main, has 4,433 of 113,321 entries (3.9%) whose read-back differs from the English
   re-render. Without the English keywords a variable cannot be named in English either (`at`,

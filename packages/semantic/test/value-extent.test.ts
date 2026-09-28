@@ -101,6 +101,25 @@ describe('a class name is not an expression', () => {
   });
 });
 
+describe('a variable spelled like the of-marker, after `of`', () => {
+  // A value runs on through an of-marker. After an English `of` the join does
+  // not read one as `of`, so without that a variable spelled like the
+  // language's of-marker (de `aus`, `von`; fr `de`) ended the value at `of`:
+  // `length of` alone is no expression, and the `put` parsed as a bare `on
+  // click`. The name still reads back as its role (`length of source`, filed
+  // with PR 91), so the command is what this pins.
+  it.each([
+    ['de', 'aus'],
+    ['de', 'von'],
+    ['fr', 'de'],
+  ])('%s %s', (language, name) => {
+    const foreign = render(parse(`on click put length of ${name} into #out`, 'en')!, language);
+    expect(signature(parse(foreign, language)), foreign).toBe(
+      'on(event:literal) put(destination:selector,patient:expression)'
+    );
+  });
+});
+
 /**
  * Each command, conditional, loop and handler in document order, with its
  * roles' names and value types: `fetch(responseType:expression,source:literal)`.
