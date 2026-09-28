@@ -103,10 +103,10 @@ Upstream reads a bracketed attribute with a value, used as a value, as the
 attribute's current value: `put [@title="x"] into #out` writes `me`'s title, and
 `null` where it has none. HyperFixi's parser builds `[@title="x"]` as its text,
 which is what `add`, `remove` and `toggle` read (`add [@title="x"] to me` sets the
-attribute on both engines; pinned in `src/compatibility/value-parity.test.ts`),
-so the same `put` writes `[@title="x"]`. A bare `[@title]` reads the attribute on
-both. Semantic's direct path builds what core does (PR 75), so every translation
-matches the English.
+attribute on both engines), so the same `put` writes `[@title="x"]`. A bare
+`[@title]` reads the attribute on both. Semantic's direct path builds what core
+does (PR 75), so every translation matches the English. Both forms are pinned in
+`src/compatibility/value-parity.test.ts`.
 
 **Decision (2026-09-28): keep the text.** No program uses the `=value` form as a
 value: it names an assignment, and reading it would give one syntax two
