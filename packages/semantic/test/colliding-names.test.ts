@@ -16,18 +16,17 @@
  *
  * And the names PR 76's matrix still counted after that (PR 84):
  *
- * - a lone structure word, command verb or particle joined as a whole value is
- *   its surface: `if al` (tr `al` is `get`), `if na`;
+ * - a lone structure word or command verb joined as a whole value is its
+ *   surface: `if al` (tr `al` is `get`), `if na`;
  * - a copula that is a condition's first word has no operand before it: es
  *   `si es poner …` (if es put …); an `if` word that is its first word opens
  *   no nested block: es `si si poner …`;
- * - a command verb alone in a slot, before the pattern's next marker or the
- *   clause's end, is a variable (es `poner ir en #out`), except in a command
- *   that takes a body or names an event; after its own marker (`por ir`) or
- *   right before the pattern's own verb (tr `i i al artır`) a verb is an
- *   amount, not the next command;
- * - a particle right after its own slot's marker, before an unmarked role, is
- *   the value: pl `ustaw do o 5` (set o to 5);
+ * - a command verb alone in a slot is a variable (es `poner ir en #out`),
+ *   except in a command that takes a body or names an event; right after the
+ *   slot's marker (`por ir`) or right before the pattern's own verb (tr `i i
+ *   al artır`) a verb that stands alone is an amount, not the next command;
+ * - a particle right after the slot's marker, before an unmarked role, is the
+ *   value: pl `ustaw do o 5` (set o to 5);
  * - de `a`/`an` before the pattern's next marker is a variable, not an article
  *   (`erhöhe a um 1`), and sw `si` (`not`) before a marker and its value is a
  *   variable too (`weka si kwa #out`).
