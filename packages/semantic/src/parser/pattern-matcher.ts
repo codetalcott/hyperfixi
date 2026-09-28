@@ -799,21 +799,18 @@ export class PatternMatcher {
   /**
    * Where each possessive link after a value ends: `'s v` (en splits it into
    * `'` `s`; uk keeps `obj's` one word, so the property follows it), or an
-   * of-marker and its owner. A link's word is a name, never a number: it
-   * `di` is also `by`, and `incrementare i di 5` is an amount.
+   * of-marker and its owner. The caller keeps the longest that reads as one
+   * expression.
    */
   private possessiveLinkEnds(all: readonly LanguageToken[], from: number): number[] {
-    const isName = (t: LanguageToken | undefined): boolean =>
-      !!t &&
-      ((t.kind === 'identifier' && /^[\p{L}_$]/u.test(t.value)) ||
-        (t.kind === 'selector' && /^[#*@]/.test(t.value)));
     const ends: number[] = [];
     let k = from;
     for (;;) {
       const t = all[k];
-      if (t?.value === "'" && all[k + 1]?.value === 's' && isName(all[k + 2])) k += 3;
-      else if (/.'s$/.test(all[k - 1]?.value ?? '') && isName(t)) k += 1;
-      else if (t && this.isOfPossessiveMarker(t) && isName(all[k + 1])) k += 2;
+      if (!t) break;
+      if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
+      else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
+      else if (this.isOfPossessiveMarker(t) && all[k + 1]) k += 2;
       else break;
       ends.push(k);
     }
