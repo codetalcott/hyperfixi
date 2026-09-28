@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 1738,
   "pairs": 83352,
-  "failing": 330,
+  "failing": 262,
   "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
@@ -39,22 +39,6 @@
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
-    },
-    "assign|obj's v": {
-      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
-      "family": "translation"
-    },
-    "count|obj's v": {
-      "lanes": "ar ar/up he he/up id id/up it it/up ms ms/up pl pl/up ru ru/up sw sw/up th th/up tl tl/up uk uk/up vi vi/up zh zh/up",
-      "family": "translation"
-    },
-    "assign|v of obj": {
-      "lanes": "it it/up pl pl/up ru ru/up uk uk/up",
-      "family": "translation"
-    },
-    "count|v of obj": {
-      "lanes": "ar ar/up he he/up id id/up it it/up ms ms/up pl pl/up ru ru/up sw sw/up th th/up tl tl/up uk uk/up vi vi/up zh zh/up",
-      "family": "translation"
     },
     "assign|a": {
       "lanes": "it it/up",
