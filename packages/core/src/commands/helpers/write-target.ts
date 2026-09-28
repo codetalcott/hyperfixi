@@ -27,6 +27,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveAnyPropertyTarget, type PropertyTarget } from './property-target';
 import { resolveAttributeWriteTarget } from './attribute-target';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
+import { isHTMLElement } from '../../utils/element-check';
+import { isObjectOwner } from './variable-access';
 
 /**
  * A recognized writable slot.
@@ -41,6 +43,7 @@ export type WriteTarget =
   | { kind: 'attribute'; elements: HTMLElement[]; name: string }
   | { kind: 'style'; element: HTMLElement; property: string }
   | { kind: 'property'; target: PropertyTarget }
+  | { kind: 'member'; container: Record<string, unknown>; property: string }
   | { kind: 'variable'; name: string; scope?: 'element' | 'global' };
 
 export interface WriteTargetOptions {
@@ -56,6 +59,8 @@ export interface WriteTargetOptions {
   selectorSource?: boolean;
   /** Rung 4 — split a `*prop` property target into a distinct style write. */
   styleSplit?: boolean;
+  /** Rung 4b — the `of` operator's property, and an object's property through `'s` or `of`. */
+  ofAndObjectProperty?: boolean;
   /** Rung 5 — keep a bare reference's NAME so execute can read-modify-write the binding. */
   bareReference?: boolean;
 }
@@ -119,6 +124,26 @@ export async function resolveWriteTarget(
     return { kind: 'property', target: property };
   }
 
+  // (4b) What rung 4 does not read: core's `of` operator (`set textContent of #a
+  //      to 5`, the bare `X of Y`), and an OBJECT's property through `'s` or
+  //      `of` (`set o's v to 5`, `set v of o to 5`). Evaluated, each is its
+  //      current value, which no write can target: the element's wrote nothing,
+  //      and the object's threw. A dotted `o.v` stays with the caller, whose
+  //      member path knows an element's inline style.
+  if (options.ofAndObjectProperty) {
+    const access = ofOrPossessiveAccess(n);
+    if (access) {
+      const owner = await evaluator.evaluate(access.owner as ASTNode, context);
+      const element = Array.isArray(owner) ? owner[0] : owner;
+      if (access.isOf && isHTMLElement(element)) {
+        return { kind: 'property', target: { element, property: access.name } };
+      }
+      if (isObjectOwner(owner)) {
+        return { kind: 'member', container: owner, property: access.name };
+      }
+    }
+  }
+
   // (5) Bare references keep their NAME so execute can read+write the binding;
   //     evaluating would yield the current value and lose the slot. The parser's
   //     scope tag routes `:name` to element scope and `$name`/`global` to globals.
@@ -133,4 +158,25 @@ export async function resolveWriteTarget(
   }
 
   return null;
+}
+
+/**
+ * The owner and property name of a property written with `'s` or `of`: `o's
+ * v`, `the v of o`, and core's `of` operator (`v of o`, marked `isOf`), when the
+ * property is a plain name.
+ */
+function ofOrPossessiveAccess(
+  n: Record<string, unknown>
+): { owner: unknown; name: string; isOf: boolean } | null {
+  const [owner, property, isOf] =
+    n.type === 'possessiveExpression'
+      ? [n.object, n.property, false]
+      : n.type === 'propertyOfExpression'
+        ? [n.target, n.property, false]
+        : n.type === 'binaryExpression' && n.operator === 'of'
+          ? [n.right, n.left, true]
+          : [undefined, undefined, false];
+  const name = (property as { type?: string; name?: unknown } | undefined)?.name;
+  if (!owner || typeof name !== 'string' || !/^[A-Za-z_$][\w$]*$/.test(name)) return null;
+  return { owner, name, isOf };
 }

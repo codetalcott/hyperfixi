@@ -315,6 +315,17 @@ export function setElementPropertyValue(
 }
 
 /**
+ * An object whose property a write can target, other than an element (whose
+ * properties and attributes go through the element branches): `o` in `set o's
+ * v to 5` or `increment o.v`.
+ */
+export function isObjectOwner(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' && value !== null && !Array.isArray(value) && !isHTMLElement(value)
+  );
+}
+
+/**
  * Get current numeric value from a target
  *
  * Handles multiple target types:
@@ -331,7 +342,7 @@ export function setElementPropertyValue(
  * @returns Current numeric value
  */
 export function getCurrentNumericValue(
-  target: string | HTMLElement | number,
+  target: string | HTMLElement | number | Record<string, unknown>,
   property: string | undefined,
   scope: string | undefined,
   context: ExecutionContext
@@ -344,6 +355,7 @@ export function getCurrentNumericValue(
   // Handle HTMLElement
   if (isHTMLElement(target)) {
     const element = target as HTMLElement;
+    if (property?.startsWith('@')) return counterValue(element.getAttribute(property.slice(1)));
     if (property) {
       // Get element property or attribute
       if (
@@ -358,6 +370,11 @@ export function getCurrentNumericValue(
       // Use element's text content or value
       return counterValue(element);
     }
+  }
+
+  // A property of an object (`increment obj.v`)
+  if (property && isObjectOwner(target)) {
+    return counterValue(target[property]);
   }
 
   // Handle string (variable name or element reference)
@@ -407,7 +424,7 @@ export function getCurrentNumericValue(
  * @param context - Execution context
  */
 export function setTargetValue(
-  target: string | HTMLElement | number,
+  target: string | HTMLElement | number | Record<string, unknown>,
   property: string | undefined,
   scope: string | undefined,
   newValue: unknown,
@@ -416,6 +433,10 @@ export function setTargetValue(
   // Handle HTMLElement
   if (isHTMLElement(target)) {
     const element = target as HTMLElement;
+    if (property?.startsWith('@')) {
+      element.setAttribute(property.slice(1), String(newValue));
+      return;
+    }
     if (property) {
       // Set element property or attribute
       if (
@@ -434,6 +455,12 @@ export function setTargetValue(
         element.textContent = String(newValue);
       }
     }
+    return;
+  }
+
+  // A property of an object (`increment obj.v`)
+  if (property && isObjectOwner(target)) {
+    target[property] = newValue;
     return;
   }
 

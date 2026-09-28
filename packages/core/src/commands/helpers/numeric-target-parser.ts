@@ -10,7 +10,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 import { isLiteralNode } from '../../ast/guards';
 import { isHTMLElement } from '../../utils/element-check';
-import { counterAmount } from './variable-access';
+import { counterAmount, isObjectOwner } from './variable-access';
+import { resolveAttributeWriteTarget } from './attribute-target';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -35,7 +36,8 @@ export interface NumericCustomWrite {
  * Typed input after parsing
  */
 export interface NumericTargetInput {
-  target: string | HTMLElement | number;
+  /** A variable's name, an element, a number, or an object whose `property` is counted. */
+  target: string | HTMLElement | number | Record<string, unknown>;
   property?: string;
   scope?: 'global' | 'local';
   amount: number;
@@ -104,7 +106,7 @@ export async function parseNumericTargetInput(
 
   // Extract target from first argument
   const targetArg = raw.args[0];
-  let target: string | number | HTMLElement;
+  let target: string | number | HTMLElement | Record<string, unknown>;
   let property: string | undefined;
   let extractedScope: 'global' | 'local' | undefined;
   let customWrite: NumericCustomWrite | undefined;
@@ -124,10 +126,21 @@ export async function parseNumericTargetInput(
     // the reactivity plugin's caretVar writer. We read the current value via
     // the standard expression evaluator and let `execute` dispatch the write.
     const writer = getRegisteredNodeWriter(nodeType);
-    const prop = writer ? null : propertyTarget(targetArg);
+    const attribute = writer
+      ? null
+      : await resolveAttributeWriteTarget(targetArg, evaluator, context, async () =>
+          context.me ? [context.me as HTMLElement] : []
+        );
+    const prop = writer || attribute ? null : propertyTarget(targetArg);
     const owner = prop ? await evaluator.evaluate(prop.owner, context) : undefined;
     const ownerElement = Array.isArray(owner) ? owner[0] : owner;
-    if (prop && isHTMLElement(ownerElement)) {
+    if (attribute?.elements[0]) {
+      // An attribute (`increment @title`, `increment @count of #a`): read and
+      // write it, counting from 0 when it is unset, as upstream does. Evaluating
+      // it gave its value, which the write below sent nowhere.
+      target = attribute.elements[0];
+      property = `@${attribute.name}`;
+    } else if (prop && isHTMLElement(ownerElement)) {
       // A PROPERTY of an element (`increment the textContent of the previous
       // <output/>`): read and write that property. Evaluating the whole access
       // yielded only its value, which the write below then sent nowhere. Core's
@@ -135,6 +148,11 @@ export async function parseNumericTargetInput(
       // X + n` — but the multilingual front-end hands the command the access
       // itself, so every translated property counter ran and changed nothing.
       target = ownerElement;
+      property = prop.name;
+    } else if (prop && isObjectOwner(owner)) {
+      // A property of an object (`increment obj.v`, `obj's v`, `v of obj`): the
+      // same, on the object.
+      target = owner;
       property = prop.name;
     } else if (writer) {
       const currentRaw = await evaluator.evaluate(targetArg, context);
