@@ -38,10 +38,8 @@ import {
   translatePropertyName,
   translateConnective,
   expressionWordOf,
-  isConnectiveOperand,
   isKnownPropertySurface,
   isConversionTypeName,
-  isCopulaIn,
   ambiguousSenseOf,
   ofChainEnd,
 } from './utils/expression-lexicon';
@@ -50,12 +48,17 @@ import {
   POSTFIX_PHRASES,
   TYPE_CHECK_PHRASES,
 } from '../ast-builder/expression-parser/parser';
-import { EXPRESSION_WORDS, OPERATOR_WORDS, readsAsOneExpression } from './utils/value-extent';
+import {
+  type ExtentContext,
+  longestWholeRun,
+  possessiveLinkEnds,
+  tokensAdjacent,
+  valueTailEnds,
+} from './utils/value-extent';
 import { COMPARISON_OPERATORS, RUN_OPERATORS } from './utils/operators';
 import {
   SlotContext,
   articleIsVariable,
-  isParticleAfterOf,
   keywordIsVariable,
   loneKeywordValue,
   maySkipVerbSlot,
@@ -675,56 +678,11 @@ export class PatternMatcher {
   }
 
   /**
-   * Let the expression parser say where a value ends.
-   *
-   * The captures above each take one known SHAPE of value: a token, a
-   * possessive pair, a property path, an operator run over known operands.
-   * When a value is longer than the shape they recognized (`obj's v`, `length
-   * of arr`, `#a's textContent's length`, `String(n) + 2`, `-n`), the capture
-   * stops short. The leftover tokens then fail the pattern's next marker and
-   * the command drops (`put obj's v into #out` parsed as a bare `on click`),
-   * or the pattern completes and the tail is lost (`set x to v of obj` kept
-   * `v`). Every translation is rendered from the English parse, so it
-   * inherited the loss in all 24 languages.
-   *
-   * So after a capture, while tokens remain before the value's boundary, take
-   * the longest run from the capture's start that the expression parser reads
-   * WHOLE, joined to English as every expression value is. The boundary is:
-   *
-   * - a marker the pattern still owes, or the clause's end;
-   * - a marker of ANY role of the command, in this language, whether or not
-   *   the matching variant has a slot for it. Otherwise a variant without
-   *   that role wins by swallowing its marker (uk `з` is both swap's `with`
-   *   and `of`), and fetch's responseType, whose marker a language may leave
-   *   in English (es `como json` joins as `as json`);
-   * - a `.class` across a space after an operand (`.active .active`, `null
-   *   .error`): another value, which the English parser would read as a
-   *   member;
-   * - any keyword that is not expression vocabulary: a command verb (`set x
-   *   to true and put 2 …`), an event name (tl `wait from document
-   *   pointermove o pointerup`), a marker (`continuesValue`).
-   *
-   * And the run must read as ONE expression (`readsAsOneExpression`): no
-   * unclosed quote (`'s v "Y"`, a split taken after an owner) and no word the
-   * English parser cannot read.
-   *
-   * Each of these exists because the whole-corpus probe or the value matrix
-   * caught its absence turning a failing variant or SOV clause split into a
-   * winning one, or semantic's own suite caught it losing a command. A first
-   * cut also refused identifiers outside ASCII, stopped at any word naming a
-   * command, and refused a value that began at an operator word or a
-   * possessive marker: dropped, since the value matrix measured them costing
-   * 437 fixed pairs and nothing measured them protecting anything.
-   *
-   * Where a marker or the clause end bounds the value, that is all. A slot
-   * followed directly by another role (it/pl/ru/uk `set`'s destination, then
-   * its value; an increment's bare amount in the languages that write it
-   * without `by`) has no marker to stop at: the parser would take both. There
-   * the value runs on only through a possessive (`possessiveTailEnd`): `obj's
-   * v` and `v of obj` are one written target, and nothing else continues it,
-   * so `impostare in obj's v 5` keeps its `5`. Without it the target stopped
-   * at `obj` and the next role took the rest: `increment obj by '`, `set v
-   * to of`.
+   * Let the expression parser say where a value ends: extend the capture to the
+   * longest run the value-extent rule allows that reads as one expression
+   * (C13–C16, `utils/value-extent.ts`). Not the event or the action, not a class
+   * NAME (`toggle .open in #panel` keeps `.open`, not a scoped query), and not a
+   * slot that takes no expression.
    */
   private absorbExpressionTail(
     tokens: TokenStream,
@@ -734,82 +692,33 @@ export class PatternMatcher {
     startIdx: number
   ): void {
     if (patternToken.role === 'event' || patternToken.role === 'action') return;
-    // A class NAME is not an expression: `toggle .open in #panel` must keep
-    // `.open`, not read `.open in #panel` as a scoped query, which toggles
-    // nothing and says nothing.
     if (this.isClassNameSlot(patternToken)) return;
     if (!captured.has(patternToken.role)) return;
     if (tokens.position() <= startIdx) return;
     const types = patternToken.expectedTypes;
     if (types && types.length > 0 && !types.includes('expression')) return;
-    if (!PatternMatcher.boundedByMarker(nextPatternToken)) {
-      this.absorbPossessiveTail(tokens, patternToken, captured, startIdx);
-      return;
-    }
+    const ends = PatternMatcher.boundedByMarker(nextPatternToken)
+      ? valueTailEnds(tokens.tokens, tokens.position(), this.extentContext())
+      : possessiveLinkEnds(tokens.tokens, tokens.position(), this.currentProfile);
+    const run = longestWholeRun(tokens.tokens, startIdx, ends, this.currentProfile);
+    if (!run) return;
+    while (tokens.position() < run.end) tokens.advance();
+    captured.set(patternToken.role, {
+      type: 'expression',
+      raw: run.raw,
+      value: run.raw,
+    } as SemanticValue);
+  }
 
+  /** What the value-extent rule needs from the pattern being matched. */
+  private extentContext(): ExtentContext {
     const owed = this.restLiterals();
-    const markers = this.commandMarkers();
-    const lang = this.currentProfile?.code ?? 'en';
-    const stopsAt = (i: number): boolean => {
-      const t = tokens.tokens[i]!;
-      if (isCopulaIn(lang, tokens.tokens, i) || isParticleAfterOf(tokens.tokens, i)) return false;
-      return this.isValueBoundary(t, owed) || markers.has(t.value.toLowerCase());
+    return {
+      profile: this.currentProfile,
+      owes: token => owed.some(pt => this.patternTokenWouldMatch(pt, token)),
+      commandMarkers: this.commandMarkers(),
+      hasResponseType: !!this.currentSchema()?.roles.some(r => r.role === 'responseType'),
     };
-    if (!tokens.peek() || stopsAt(tokens.position())) return;
-
-    let end = tokens.position();
-    while (end < tokens.tokens.length) {
-      if (stopsAt(end) || !this.continuesValue(tokens.tokens, end)) break;
-      end++;
-    }
-    for (let k = end; k > tokens.position(); k--) {
-      const raw = joinExpressionTokens(tokens.tokens.slice(startIdx, k), this.currentProfile);
-      if (!readsAsOneExpression(raw)) continue;
-      while (tokens.position() < k) tokens.advance();
-      captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
-      return;
-    }
-  }
-
-  /**
-   * Extend a capture that no marker bounds through a possessive tail, the
-   * longest one that reads as one expression (see absorbExpressionTail).
-   */
-  private absorbPossessiveTail(
-    tokens: TokenStream,
-    patternToken: PatternToken & { type: 'role' },
-    captured: Map<SemanticRole, SemanticValue>,
-    startIdx: number
-  ): void {
-    const ends = this.possessiveLinkEnds(tokens.tokens, tokens.position());
-    for (const k of ends.reverse()) {
-      const raw = joinExpressionTokens(tokens.tokens.slice(startIdx, k), this.currentProfile);
-      if (!readsAsOneExpression(raw)) continue;
-      while (tokens.position() < k) tokens.advance();
-      captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
-      return;
-    }
-  }
-
-  /**
-   * Where each possessive link after a value ends: `'s v` (en splits it into
-   * `'` `s`; uk keeps `obj's` one word, so the property follows it), or an
-   * of-marker and its owner. The caller keeps the longest that reads as one
-   * expression.
-   */
-  private possessiveLinkEnds(all: readonly LanguageToken[], from: number): number[] {
-    const ends: number[] = [];
-    let k = from;
-    for (;;) {
-      const t = all[k];
-      if (!t) break;
-      if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
-      else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
-      else if (this.isOfPossessiveMarker(t) && all[k + 1]) k += 2;
-      else break;
-      ends.push(k);
-    }
-    return ends;
   }
 
   /**
@@ -881,61 +790,6 @@ export class PatternMatcher {
     }
     out.delete('');
     return out;
-  }
-
-  /**
-   * May a value run on through the token at `i`? Operands (literals,
-   * selectors, identifiers in any script), operators and punctuation,
-   * possessive markers, and keywords whose English sense is expression
-   * vocabulary. Not another keyword: a command verb (`true and put 2 …`), an
-   * event name (tl `pointermove o pointerup`), a marker. Not a `.class`
-   * across a space after an operand, and not the command's responseType
-   * marker in its English sense (`fetch … as json`, es `como json`).
-   */
-  private continuesValue(all: readonly LanguageToken[], i: number): boolean {
-    const token = all[i]!;
-    const prev = all[i - 1];
-    const lang = this.currentProfile?.code ?? 'en';
-    if (token.kind === 'literal') return true;
-    // en splits a possessive `obj's` into `obj` `'` `s`.
-    if (token.value === "'" && all[i + 1]?.value === 's') return true;
-    if (token.value === 's' && prev?.value === "'") return true;
-    if (token.kind === 'selector') {
-      // After an operator or an operator word (`no .w`, `+ .x`) a `.class`
-      // across a space is the next operand; after an operand, another value.
-      if (!token.value.startsWith('.') || !prev || PatternMatcher.tokensAdjacent(prev, token)) {
-        return true;
-      }
-      if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
-      const prevWord = expressionWordOf(lang, prev, all[i - 2], token, undefined).toLowerCase();
-      return OPERATOR_WORDS.has(prevWord);
-    }
-    if (RUN_OPERATORS.has(token.value)) return true;
-    if (/^[()[\],.!<>=+\-*/%]+$/.test(token.value)) return true;
-    if (this.isOfPossessiveMarker(token)) return true;
-    if (isConnectiveOperand(lang, token, prev, all[i + 1])) return true;
-    if (isCopulaIn(lang, all, i) || isParticleAfterOf(all, i)) return true;
-    const word = expressionWordOf(lang, token, prev, all[i + 1], undefined).toLowerCase();
-    if (word === 'as' && this.currentSchema()?.roles.some(r => r.role === 'responseType')) {
-      return false;
-    }
-    if (EXPRESSION_WORDS.has(word)) return true;
-    // An identifier in any script: the join translates a localized property
-    // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what
-    // it leaves untranslated. qu and uk keep an apostrophe in a word, so
-    // `foo's` in `obj's foo's bar` is one token.
-    return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?$/u.test(token.value);
-  }
-
-  /** The clause's end, or a marker the pattern still owes. */
-  private isValueBoundary(token: LanguageToken, owed: readonly PatternToken[]): boolean {
-    if (token.kind === 'conjunction') return true;
-    if (token.kind === 'keyword') {
-      const norm = (token.normalized ?? token.value).toLowerCase();
-      if (norm === 'then' || norm === 'end' || norm === 'else') return true;
-      if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) return true;
-    }
-    return owed.some(pt => this.patternTokenWouldMatch(pt, token));
   }
 
   /**
@@ -1157,8 +1011,8 @@ export class PatternMatcher {
     if (
       colon?.value === ':' &&
       suffix &&
-      PatternMatcher.tokensAdjacent(type, colon) &&
-      PatternMatcher.tokensAdjacent(colon, suffix) &&
+      tokensAdjacent(type, colon) &&
+      tokensAdjacent(colon, suffix) &&
       isConversionTypeName(`${type.value}:${suffix.value}`)
     ) {
       return at - offset + 3;
@@ -2113,18 +1967,6 @@ export class PatternMatcher {
     return !!token && /^[A-Za-z_][A-Za-z0-9_]*$/.test(token.value);
   }
 
-  /** Do these two tokens touch in the SOURCE (no whitespace between them)? */
-  private static tokensAdjacent(
-    left: { position?: { start?: number; end?: number } } | null | undefined,
-    right: { position?: { start?: number; end?: number } } | null | undefined
-  ): boolean {
-    return (
-      left?.position?.end !== undefined &&
-      right?.position?.start !== undefined &&
-      left.position.end === right.position.start
-    );
-  }
-
   /**
    * Try to match a multi-token operator-run expression:
    *   <operand> <op> <operand> (<op> <operand>)*
@@ -2217,8 +2059,8 @@ export class PatternMatcher {
         !hyphen ||
         hyphen.value !== '-' ||
         !PatternMatcher.isBareWordToken(word) ||
-        !PatternMatcher.tokensAdjacent(tokens.peek(ahead - 1), hyphen) ||
-        !PatternMatcher.tokensAdjacent(hyphen, word)
+        !tokensAdjacent(tokens.peek(ahead - 1), hyphen) ||
+        !tokensAdjacent(hyphen, word)
       ) {
         break;
       }
