@@ -56,11 +56,16 @@ import {
   SlotContext,
   articleIsVariable,
   isParticleAfterOf,
-  isRunOperator,
   keywordIsVariable,
   loneKeywordValue,
+  maySkipVerbSlot,
+  namesCommand,
+  neverAValue,
+  notWordIsVariable,
   particleIsOperand,
   particleIsValue,
+  verbEndsCountSlot,
+  verbSkipsOptionalSlot,
 } from './value-reading';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -334,10 +339,11 @@ export class PatternMatcher {
       // on a strictly shorter token list — never a re-run of other patterns
       // (the abandoned last-resort retry in matchBest, which compounded).
       if (
-        this.shouldTrySkippingVerbSlot(
+        maySkipVerbSlot(
           patternToken,
-          tokens,
-          patternTokens[i + 1] ?? nextAfterSequence
+          tokens.peek(),
+          patternTokens[i + 1] ?? nextAfterSequence,
+          this.wouldMatch
         )
       ) {
         const skipMark = tokens.mark();
@@ -1290,69 +1296,13 @@ export class PatternMatcher {
       }
     }
 
-    // A sequence CONNECTIVE (`then`) or stray BLOCK TERMINATOR (`end`), by
-    // normalized form, is never a role VALUE on any command. The trailing
-    // marker-less optional {quantity} slot of the generated increment
-    // patterns otherwise swallows the normalized connective that opens the
-    // next statement (it `allora`, pl `wtedy`, ar `ثم` → quantity:literal=
-    // "then" — increment by NaN at runtime; repeat-while/repeat-until-event
-    // across it/ms/pl/ru/uk/ar/tl/vi), and the generated verb-first wait
-    // duration slot swallows a following তারপর/শেষ the same way (bn
-    // duration="then"/"end" ×5 — R3 families F1/F2). Kind-gated to `keyword`
-    // so a string literal "then" (kind `literal`) is untouched; en
-    // connectives normalize identically, so the reference parse and every
-    // translation change symmetrically. Multi-token literal phrases (`at end
-    // of`) match via matchLiteralToken and never reach this. Deliberately NOT
-    // the full CLAUSE_BOUNDARY_KEYWORDS set: `and` collides with the
-    // untranslated English pronoun `I` (pl `i` = and — the unless-condition
-    // corpus), and `end` keeps its positional-`last` reading before a
-    // selector (bn `শেষ <li/>`, the isBlockEndToken lookahead). An optional
-    // slot skips (the schema default fills, e.g. quantity=1); a required slot
-    // fails the pattern — the same net effect as the load-bearing
-    // capture-and-fail (see the trailing-verb guard below).
-    if (token.kind === 'keyword') {
-      const connNorm = (token.normalized ?? token.value).toLowerCase();
-      if (connNorm === 'then' || (connNorm === 'end' && tokens.peek(1)?.kind !== 'selector')) {
-        return patternToken.optional || false;
-      }
-      // A CURATED end word (by VALUE — tr `son`, qu `tukuy`) is never a role
-      // value, even before a selector and even when the tokenizer normalizes
-      // it to something else (tr son→'last', the positional homonym): the
-      // curated sets are audited so those words are always the terminator
-      // (tr emits `sonuncu` for positional last). Without this, a loop's own
-      // `son` directly before the next command's selector matched
-      // tryMatchPositionalExpression and prefixed that command's role value
-      // (tr behavior-sortable remove.patient="last .{dragClass}").
-      if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) {
-        return patternToken.optional || false;
-      }
-      // A COMMAND VERB is never a loop/count QUANTITY — nor the generated
-      // repeat's own [{event}] slot. The trailing marker-less optional slots
-      // of `repeat-<lang>-generated` otherwise swallow the NEXT command's
-      // verb: de `wiederholen forever umschalten .pulse` captured
-      // `quantity:literal="toggle"` (and with quantity guarded, the [{event}]
-      // slot behind it swallowed the verb instead), the toggle never formed,
-      // and `.pulse` dropped as junk (repeat-forever ar/de/fr/zh — the
-      // languages whose handler body reaches the generated repeat instead of
-      // a fused event pattern). The event half is scoped to `repeat`: on
-      // trigger/send a keyword event name is a legitimate custom event, and
-      // the handler-head guards above already police `on`. Same
-      // skip-don't-fail contract as the connective guard above.
-      if (
-        patternToken.role === 'quantity' ||
-        (patternToken.role === 'event' && this.currentPatternCommand === 'repeat')
-      ) {
-        const qNorm = (token.normalized ?? token.value).toLowerCase();
-        // After the slot's marker a verb that stands alone is the value, a
-        // variable the language spells like it: es `incrementar i por ir` (by
-        // ir), it `di se` (by se). So is one right before the pattern's own next
-        // literal: tr `i i al artır` (increment i by al), where the increment
-        // verb follows the amount. A marker-less slot before another command
-        // keeps the guard (`wiederholen forever umschalten .pulse`).
-        if (qNorm in commandSchemas && !this.verbIsSlotValue(slot) && !slot.nextIsMarker) {
-          return patternToken.optional || false;
-        }
-      }
+    // Structure that is never a value (C3), and a command verb that begins the
+    // next command, not a count (C4). See value-reading.ts.
+    if (
+      neverAValue(slot, this.currentProfile?.code ?? '') ||
+      verbEndsCountSlot(slot, this.currentPatternCommand)
+    ) {
+      return patternToken.optional || false;
     }
 
     // A `duration` slot is never a positional/scope keyword. The temporal
@@ -1369,55 +1319,8 @@ export class PatternMatcher {
       }
     }
 
-    // A TRAILING optional role slot never captures a bare command VERB. halt's
-    // optional patient (`halt {patient}`, patient is the pattern's last token)
-    // otherwise swallows the juxtaposed next command's keyword — `… halt call
-    // saveDocument()` → patient=literal:"call" — and the call drops from the en
-    // reference AND every same-path language (window-keydown, en + 16 SVO
-    // languages; the SOV seven split verb-first and kept it). Scoped to the
-    // FINAL slot only (nextPatternToken undefined): a mid-pattern optional slot
-    // must keep capturing the verb and failing the pattern — that failure is
-    // load-bearing (ja `opacity を 遷移 0 に 300ms`: the no-goal variant's
-    // duration/style slots capture 遷移, the pattern fails, and the richer
-    // verb-anchoring fallback reclaims goal+duration; skipping instead lets the
-    // sloppy pattern complete and strand the tail). Also away from
-    // `event`/`action` roles, which carry their own bespoke guards above.
-    // EXCEPT when the slot is shape-anchored on `'keyword'`: its value IS a
-    // fixed keyword phrase sitting behind required marker literals that have
-    // already matched (`using view {manner}` — the word is `transition`, which
-    // is also a command). There the guard's premise is false: nothing can begin
-    // a new command in that position, because `using view` was consumed to get
-    // there. Without this exemption swap/process silently drop
-    // `using view transition` on the semantic path in all 24 languages, which
-    // is exactly the bug the manner role was added to fix.
-    // The second admissible case is a MID-pattern optional slot whose very next
-    // pattern token is a LITERAL the verb itself satisfies. A generated slot
-    // carries a marker only where the profile has one — ja's duration group is
-    // `[間 {duration}]`, tr's is a bare `[{duration}]` — and a bare slot sitting
-    // immediately before the verb literal takes the verb: `.card e .expanded i
-    // değiştir` bound `duration:literal="toggle"`, so the trailing `değiştir`
-    // literal had nothing left, `toggle-tr-generated` FAILED, and the fallback
-    // `-simple` dropped the destination. The premise of the final-slot scoping
-    // above — that a mid-pattern capture must fail so a richer fallback can
-    // reclaim the tail — does not hold when the pattern's own next literal is
-    // waiting for this exact token: skipping the slot lets the SAME pattern
-    // complete with more roles, not fewer.
-    if (
-      patternToken.optional &&
-      patternToken.role !== 'event' &&
-      patternToken.role !== 'action' &&
-      patternToken.valueShape !== 'keyword' &&
-      token.kind === 'keyword'
-    ) {
-      const verbNorm = (token.normalized ?? token.value).toLowerCase();
-      if (
-        verbNorm in commandSchemas &&
-        (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token)) &&
-        !this.verbIsSlotValue(slot)
-      ) {
-        return true; // skip the optional slot; the verb is not its value
-      }
-    }
+    // A command verb the slot must not take: skip the optional slot (C5).
+    if (verbSkipsOptionalSlot(slot)) return true;
 
     // Owner-first possessive with a POSITIONAL owner (ja `前 <output/> の textContent`,
     // ko `이전 <output/> 의 …`, zh/bn/hi/tl/vi alike) — the render of `the
@@ -1929,59 +1832,6 @@ export class PatternMatcher {
   }
 
   /**
-   * Whether a pattern token (literal, or a group starting with a literal) would
-   * match the given stream token. Used to keep the event-head source-clause
-   * consumption from stealing a marker the pattern explicitly expects.
-   */
-  /**
-   * Is this pattern token an optional, marker-less role slot staring at a
-   * command VERB that the pattern's next token does not want? That is the
-   * shape whose capture would fail the pattern (see the call site).
-   *
-   * Deliberately mirrors the matchRoleToken guard's exclusions — `event` and
-   * `action` carry their own bespoke guards, and a `'keyword'`-shaped slot's
-   * value legitimately IS a command word (`using view transition`). The
-   * `nextPatternToken` clauses are the complement of that guard's: where it
-   * already fires, this must not.
-   */
-  private shouldTrySkippingVerbSlot(
-    patternToken: PatternToken,
-    tokens: TokenStream,
-    nextPatternToken?: PatternToken
-  ): boolean {
-    // The generator emits a marker-less slot as a bare role token in some
-    // languages and as a single-role GROUP in others (`[{method}]`), so unwrap
-    // the group form — the skip decision is identical. A group carrying any
-    // LITERAL is marker-BEARING (`[{patient} を]`, `[using view {manner}]`):
-    // its marker is what anchors it, it cannot silently eat a verb, and it is
-    // excluded here.
-    const slot =
-      patternToken.type === 'group' && patternToken.optional
-        ? patternToken.tokens.every(t => t.type === 'role')
-          ? patternToken.tokens[0]
-          : undefined
-        : patternToken;
-    if (!slot || slot.type !== 'role' || !slot.optional) return false;
-    if (slot.role === 'event' || slot.role === 'action') return false;
-    if (slot.valueShape === 'keyword') return false;
-    const token = tokens.peek();
-    if (!token || token.kind !== 'keyword') return false;
-    // Where the existing per-slot guard already skips, leave it to it: it
-    // handles the final slot outright, and a verb the next token wants.
-    if (nextPatternToken === undefined) return false;
-    const wouldMatch = this.patternTokenWouldMatch(nextPatternToken, token);
-    if ((token.normalized ?? token.value).toLowerCase() in commandSchemas) return !wouldMatch;
-    // Not a command verb, so the existing guard never looks at it — but the
-    // pattern's very NEXT literal is waiting for this exact token, which no
-    // marker-less slot may spend. tl's verb-first swap is
-    // `palitan_pwesto [{method}] sa {destination} …`, and the bare `[{method}]`
-    // ate the `sa` its own pattern owes, so the whole pattern failed and the
-    // `-simple` fallback dropped the patient. Outcome-gated like the verb case:
-    // adopted only if skipping lets the pattern consume its whole clause.
-    return wouldMatch;
-  }
-
-  /**
    * Is the stream out of clause? Either genuinely at the end, or facing a
    * boundary token that belongs to the NEXT clause rather than this pattern
    * (a conjunction, or a `then`/`end`-class keyword).
@@ -1996,6 +1846,11 @@ export class PatternMatcher {
     return isCuratedEndKeyword(next.value, this.currentProfile?.code ?? '');
   }
 
+  /**
+   * Whether a pattern token (literal, or a group starting with a literal) would
+   * match the given stream token. Used to keep the event-head source-clause
+   * consumption from stealing a marker the pattern explicitly expects.
+   */
   private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
     if (!pt) return false;
     if (pt.type === 'literal') {
@@ -2251,17 +2106,6 @@ export class PatternMatcher {
       nextPatternToken,
       this.wouldMatch
     );
-  }
-
-  /**
-   * Is a verb in this slot its value? Right after a literal the pattern
-   * matched (the slot's marker: `[por {quantity}]`), a verb that stands alone
-   * cannot begin a command: es `incrementar i por ir` (by ir), it `di se` (by
-   * se). A verb with more after it is still the next command (a stored zh row's
-   * `停止 把 调用 saveDocument()`, halt then call).
-   */
-  private verbIsSlotValue(slot: SlotContext): boolean {
-    return slot.afterLiteral && (slot.clauseEndsAfter || slot.nextIsMarker);
   }
 
   /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
@@ -2619,16 +2463,8 @@ export class PatternMatcher {
     if (this.logicalConnectiveOf(tokens) === 'not') {
       const mark = tokens.mark();
       tokens.advance();
-      // Unless what follows is a marker and its value: then the word is a
-      // variable spelled like `not` (sw `weka si kwa #out`, put si into
-      // #out), and the particle is the next role's.
-      const after = tokens.peek(1);
-      if (
-        tokens.peek()?.kind === 'particle' &&
-        after &&
-        ['selector', 'literal', 'identifier'].includes(after.kind) &&
-        !isRunOperator(tokens.peek(1) ?? undefined)
-      ) {
+      // Unless the word is a variable spelled like `not` (C12).
+      if (notWordIsVariable(tokens.peek() ?? undefined, tokens.peek(1) ?? undefined)) {
         tokens.reset(mark);
         return false;
       }
@@ -2649,12 +2485,7 @@ export class PatternMatcher {
 
     // After `and`/`or`, a command verb starts the next command (semantic reads
     // `put 1 into #a and put 2 into #c` as two commands), never an operand.
-    if (
-      afterConnective &&
-      COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
-    ) {
-      return false;
-    }
+    if (afterConnective && namesCommand(token)) return false;
 
     // A particle beside an operator is an operand (C10: particleIsOperand).
     if (particleIsOperand(token, afterOperator, tokens.peek(1) ?? undefined)) {

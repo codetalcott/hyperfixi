@@ -35,7 +35,8 @@
 import type { LanguageToken, PatternToken, SemanticValue, TokenStream } from '../types';
 import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
-import { loneKeywordKind } from './utils/expression-lexicon';
+import { COMMAND_ACTION_KEYWORDS, loneKeywordKind } from './utils/expression-lexicon';
+import { isCuratedEndKeyword } from './end-keywords';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
 /** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
@@ -61,6 +62,7 @@ export class SlotContext {
   readonly prev: LanguageToken | undefined;
   readonly next: LanguageToken | undefined;
   private nextIsMarkerMemo: boolean | undefined;
+  private tokenIsMarkerMemo: boolean | undefined;
 
   constructor(
     tokens: TokenStream,
@@ -75,6 +77,17 @@ export class SlotContext {
     this.token = tokens.tokens[at]!;
     this.prev = tokens.tokens[at - 1];
     this.next = tokens.tokens[at + 1];
+  }
+
+  /** The pattern ends with this slot. */
+  get lastSlot(): boolean {
+    return this.nextPatternToken === undefined;
+  }
+
+  /** The pattern's next token wants this token itself. */
+  get tokenIsMarker(): boolean {
+    this.tokenIsMarkerMemo ??= this.wouldMatch(this.nextPatternToken, this.token);
+    return this.tokenIsMarkerMemo;
   }
 
   /** The pattern's next token is a role: no marker bounds the slot. */
@@ -113,6 +126,141 @@ export function articleIsVariable(slot: SlotContext): boolean {
   if (word !== 'a' && word !== 'an') return false;
   const next = slot.next;
   return next !== undefined && (BINARY_OPERATORS.has(next.value) || slot.nextIsMarker);
+}
+
+/** A keyword naming a command: a verb. */
+export function isCommandVerb(token: LanguageToken): boolean {
+  return (
+    token.kind === 'keyword' &&
+    COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
+  );
+}
+
+/**
+ * C3: `then`, `end` and a curated end word are never a value (#635). A
+ * sequence connective or a block terminator by normalized form — the generated
+ * increment's trailing `{quantity}` swallowed the `then` that opens the next
+ * statement (it `allora`, pl `wtedy`: increment by NaN), and a verb-first
+ * wait's duration a following bn তারপর/শেষ — except `end` before a selector,
+ * which keeps its positional `last` reading (bn `শেষ <li/>`). A curated end
+ * word by value (tr `son`, qu `tukuy`), whatever the tokenizer normalized it
+ * to (tr `son` → `last`): a loop's own `son` before the next command's selector
+ * prefixed that command's value. Only a keyword: a string "then" is a value.
+ * Not `and`: pl's `i` is also the pronoun `I` (the unless-condition rows).
+ */
+export function neverAValue(slot: SlotContext, language: string): boolean {
+  const token = slot.token;
+  if (token.kind !== 'keyword') return false;
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (norm === 'then' || (norm === 'end' && slot.next?.kind !== 'selector')) return true;
+  return isCuratedEndKeyword(token.value, language);
+}
+
+/**
+ * C4, C5: a verb that stands alone right after the slot's marker — before the
+ * pattern's next marker or its clause's end — is the slot's value, a variable
+ * the language spells like it (es `incrementar i por ir`, by ir; it `di se`):
+ * the marker has matched, so no command can begin there. A verb with more
+ * after it is still the next command (a stored zh row's `停止 把 调用
+ * saveDocument()`, halt then call). PR 84.
+ */
+export function verbStandsAlone(slot: SlotContext): boolean {
+  return slot.afterLiteral && (slot.clauseEndsAfter || slot.nextIsMarker);
+}
+
+/**
+ * C4: a command verb in a `quantity` slot, or in `repeat`'s own event slot,
+ * begins the next command (#961: the generated repeat's trailing slots took
+ * the verb of `wiederholen forever umschalten .pulse`, and the toggle never
+ * formed) — unless it stands alone after the slot's marker (verbStandsAlone),
+ * or stands right before the pattern's own next marker (tr `i i al artır`,
+ * increment i by al, where the verb follows the amount; PR 84). The event half
+ * is `repeat`'s: on trigger/send a keyword event name is a custom event.
+ */
+export function verbEndsCountSlot(slot: SlotContext, command: string | undefined): boolean {
+  const role = slot.patternToken.role;
+  if (role !== 'quantity' && !(role === 'event' && command === 'repeat')) return false;
+  return isCommandVerb(slot.token) && !verbStandsAlone(slot) && !slot.nextIsMarker;
+}
+
+/**
+ * C5: a command verb in an optional slot is not its value, and the slot is
+ * skipped, where the slot ends its pattern (halt's patient took the `call` of
+ * `halt call saveDocument()`, and the call dropped in English and 16 languages
+ * — a9e4fcf5a) or where the pattern's next token wants the verb itself (tr
+ * `.card e .expanded i değiştir`: a bare duration slot took the verb its own
+ * literal was waiting for — #950). Unless it stands alone after the slot's
+ * marker (verbStandsAlone, PR 84). A mid-pattern slot before another token
+ * keeps capturing the verb and failing: that failure is load-bearing (ja
+ * `opacity を 遷移 0 に 300ms`: the verb-anchoring fallback reclaims the tail).
+ * Never the event's or the action's slot, which have their own guards, nor one
+ * that holds a keyword (`using view transition`: `using view` has matched, so
+ * no command can begin there).
+ */
+export function verbSkipsOptionalSlot(slot: SlotContext): boolean {
+  const pt = slot.patternToken;
+  if (!pt.optional || pt.role === 'event' || pt.role === 'action') return false;
+  if (pt.valueShape === 'keyword' || !isCommandVerb(slot.token)) return false;
+  return (slot.lastSlot || slot.tokenIsMarker) && !verbStandsAlone(slot);
+}
+
+/**
+ * C6: may the matcher try skipping an optional, marker-less slot (a bare role,
+ * or a group of roles only) that faces a keyword? Where it faces a command verb
+ * the pattern's next token does not want, or any keyword that token does want
+ * (#968: tl's verb-first swap `palitan_pwesto [{method}] sa {destination}` lost
+ * the `sa` its own pattern owes to the bare `[{method}]`). The matcher adopts
+ * the skip only when the rest of the pattern then takes the whole clause: the
+ * shape is identical to ja's no-goal transition variant, whose capture must
+ * fail so the verb-anchoring fallback can reclaim goal and duration, and only
+ * the outcome tells them apart. Where C5 already skips (the pattern's last
+ * slot), this does not.
+ */
+export function maySkipVerbSlot(
+  patternToken: PatternToken,
+  token: LanguageToken | null,
+  nextPatternToken: PatternToken | undefined,
+  wouldMatch: (pt: PatternToken | undefined, token: LanguageToken) => boolean
+): boolean {
+  const slot =
+    patternToken.type === 'group' && patternToken.optional
+      ? patternToken.tokens.every(t => t.type === 'role')
+        ? patternToken.tokens[0]
+        : undefined
+      : patternToken;
+  if (!slot || slot.type !== 'role' || !slot.optional) return false;
+  if (slot.role === 'event' || slot.role === 'action' || slot.valueShape === 'keyword')
+    return false;
+  if (!token || token.kind !== 'keyword' || nextPatternToken === undefined) return false;
+  const wanted = wouldMatch(nextPatternToken, token);
+  return isCommandVerb(token) ? !wanted : wanted;
+}
+
+/**
+ * C11: in an operator run, after `and`/`or`, a word naming a command begins
+ * the next command (`set x to true and put 2 into #c` is two commands; PR 44).
+ * Any token kind: a tokenizer may leave a command word an identifier.
+ */
+export function namesCommand(token: LanguageToken): boolean {
+  return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase());
+}
+
+/**
+ * C12: in an operator run, a `not` word followed by a particle and its value
+ * is a variable spelled like `not`, and the particle is the next role's
+ * marker (sw `weka si kwa #out`, put si into #out; PR 84) — unless an operator
+ * follows the particle, which is then `not`'s operand (`set x to not a < 3`).
+ */
+export function notWordIsVariable(
+  afterNot: LanguageToken | undefined,
+  following: LanguageToken | undefined
+): boolean {
+  return (
+    afterNot?.kind === 'particle' &&
+    !!following &&
+    ['selector', 'literal', 'identifier'].includes(following.kind) &&
+    !isRunOperator(following)
+  );
 }
 
 /**
