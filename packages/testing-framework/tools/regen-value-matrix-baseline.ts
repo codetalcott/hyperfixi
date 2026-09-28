@@ -85,6 +85,7 @@ function report(results: readonly CellResult[], cells: readonly MatrixCell[]): v
     `\nvalue matrix: ${doc.cells} cells, ${doc.pairs} pairs, ${doc.failing} failing ` +
       `(${((100 * doc.failing) / Math.max(doc.pairs, 1)).toFixed(1)}%), ${Object.keys(doc.entries).length} cells with a failure`
   );
+  console.log(`  ${doc.failing - (doc.accepted ?? 0)} open, ${doc.accepted ?? 0} accepted (ACCEPTED)`);
   table('by family (where the loss sits):', results, r => doc.entries[r.id]?.family);
   table('by position:', results, r => byId.get(r.id)?.position);
   table('by operand kind (cells that test one):', results, r => byId.get(r.id)?.operand);
@@ -134,6 +135,9 @@ async function main(): Promise<void> {
     [...kept, ...Object.entries(fresh.entries)].sort(([a], [b]) => at(a) - at(b))
   );
   const failing = Object.values(entries).reduce((n, e) => n + expandLanes(e.lanes).length, 0);
+  const accepted = Object.values(entries)
+    .filter(e => e.accepted)
+    .reduce((n, e) => n + expandLanes(e.lanes).length, 0);
 
   const diff = previous ? diffBaseline(results, previous) : { added: [], fixed: [] };
   const orphans = previous
@@ -169,6 +173,7 @@ async function main(): Promise<void> {
     cells: allCells.length,
     pairs: allCells.reduce((n, c) => n + LANES.length - 2 * (c.skip?.length ?? 0), 0),
     failing,
+    accepted,
     entries,
   };
   writeFileSync(target, JSON.stringify(doc, null, 2) + '\n');

@@ -802,6 +802,8 @@ export interface BaselineEntry {
   lanes: string;
   /** Where the loss sits, for reading the burn-down (see familyOf); not asserted. */
   family: string;
+  /** Why the failure is kept, when the owner accepted every failing lane (see ACCEPTED). */
+  accepted?: string;
 }
 
 export interface ValueMatrixBaseline {
@@ -810,6 +812,8 @@ export interface ValueMatrixBaseline {
   cells: number;
   pairs: number;
   failing: number;
+  /** Of the failing pairs, how many the owner accepted (see ACCEPTED). */
+  accepted?: number;
   entries: Record<string, BaselineEntry>;
 }
 
@@ -877,6 +881,47 @@ export function familyOf(lanes: readonly string[]): string {
   return parts.join('+') || 'none';
 }
 
+/**
+ * Failing pairs the owner decided to keep, and why. They stay in the baseline
+ * (the gate still fails when one starts passing, so a change of mind prunes
+ * it); their entries carry the reason, and the report counts them apart from
+ * open work.
+ */
+export const ACCEPTED: ReadonlyArray<{
+  cells: readonly string[];
+  /** The accepted lanes, in the baseline's shorthand. */
+  lanes: string;
+  reason: string;
+}> = [
+  {
+    cells: ['put', 'set', 'while', 'increment'].map(p => `${p}|the textContent of #a as Int`),
+    lanes: 'en *direct',
+    reason:
+      'known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)',
+  },
+  {
+    cells: [
+      'increment|#a.textContent',
+      'increment|#a.textContent + 2',
+      'increment|#a.textContent as Int',
+    ],
+    lanes: 'it it/up',
+    reason:
+      'ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`',
+  },
+];
+
+/** The reason a cell's failing lanes are kept, when ACCEPTED covers every one of them. */
+export function acceptedReason(id: string, lanes: readonly string[]): string | undefined {
+  if (!lanes.length) return undefined;
+  for (const entry of ACCEPTED) {
+    if (!entry.cells.includes(id)) continue;
+    const accepted = new Set(expandLanes(entry.lanes));
+    if (lanes.every(lane => accepted.has(lane))) return entry.reason;
+  }
+  return undefined;
+}
+
 /** The baseline a run implies. */
 export function baselineFrom(
   results: readonly CellResult[],
@@ -885,13 +930,28 @@ export function baselineFrom(
   const entries: Record<string, BaselineEntry> = {};
   let pairs = 0;
   let failing = 0;
+  let acceptedPairs = 0;
   for (const r of results) {
     pairs += Object.keys(r.lanes).length;
     const lanes = failingLanes(r);
     failing += lanes.length;
-    if (lanes.length) entries[r.id] = { lanes: compressLanes(lanes), family: familyOf(lanes) };
+    if (!lanes.length) continue;
+    const accepted = acceptedReason(r.id, lanes);
+    if (accepted) acceptedPairs += lanes.length;
+    entries[r.id] = {
+      lanes: compressLanes(lanes),
+      family: familyOf(lanes),
+      ...(accepted ? { accepted } : {}),
+    };
   }
-  return { description, cells: results.length, pairs, failing, entries };
+  return {
+    description,
+    cells: results.length,
+    pairs,
+    failing,
+    accepted: acceptedPairs,
+    entries,
+  };
 }
 
 export interface BaselineDiff {
