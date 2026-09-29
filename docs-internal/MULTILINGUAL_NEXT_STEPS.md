@@ -6941,6 +6941,22 @@ it is written `(si)`", and reports no occurrence already written so.
   `… dann setze x auf n + 3 dann …`, and de reads `auf n` (`auf` is also `on`) as `on n`: the
   read-back is `on click set n to 2`, then a handler for an event `n`. Any variable name; `3 * n` and a first `set` are fine.
   The matrix has one `set` per cell, so it never meets this.
+- ~~**English `put event's detail into #out` parsed as a bare `on click`**~~ **FIXED by PR 105**
+  (and `set x to event's detail` kept `event's`): `detail`, `target`, `body` and `result` are
+  reference keywords, which a value's extent did not run through, so a possessive's property could
+  not be one. They are expression words now (not `event`, an event marker's normalized form, nor
+  `window` and `document`, whose addition gave qu behavior-draggable's `wait` a spurious `or
+  document`). Found by a probe of PR 104's `event` exclusion, which PR 104 had dropped as
+  unmeasured: it protects `event's type` (de `ereignis's type`), a shape no oracle held while
+  English could not read `event's detail` — restored in PR 104 before it merged.
+- **qu and uk keep `'s` on a localized reference**: `put event's type into #out` renders qu
+  `ruway's type`, uk `подія's type`, and neither reads the reference back (`ruway's` is one word to
+  both tokenizers). On main.
+- **pl reads the English pronoun `I` as `and`**: `if I have .x` renders `jeśli I mam .x`, and pl's
+  tokenizer takes `I` for its conjunction `i`. On main.
+- **qu: a camelCase variable ending like a case marker** (`userData`, `myPiData`) splits at it
+  (`userDa` + `ta`). PR 107 keeps a PascalCase word whole (a type's name, `FormData`); a camelCase
+  one cannot be told from a variable with its marker attached (`triggerElta`, which a test pins).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
