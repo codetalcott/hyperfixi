@@ -211,3 +211,46 @@ it.each(MORE_CONDITIONS)('English, through buildAST: if %s', async (condition, e
   expect(node, condition).toBeTruthy();
   expect(await run(buildAST(node!).ast)).toBe(expected);
 });
+
+// `has` in every language, on the direct path (PR 106): the renderer writes
+// the language's word, which the reader took for a variable (es `tiene`) or,
+// in bn, tl and tr, for `exists`. Upstream has no `has`, so the value matrix
+// cannot run it; the answer here is core's.
+const EVERY_LANGUAGE = [
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+] as const;
+
+describe.each([
+  ['#d1 has .x', 'yes'],
+  ['#d1 has .y', 'no'],
+])('if %s', (condition, expected) => {
+  it.each(EVERY_LANGUAGE)('%s', async language => {
+    const code = render(parseSemantic(handler(condition), 'en').node!, language);
+    const compiled = await hyperscript.compile(code, { language });
+    expect(compiled.ok, `${language}: ${code}`).toBe(true);
+    expect(compiled.meta.directPath, `${language}: ${code}`).toBe(true);
+    expect(await run(compiled.ast)).toBe(expected);
+  });
+});

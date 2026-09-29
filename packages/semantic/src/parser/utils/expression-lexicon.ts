@@ -818,6 +818,16 @@ const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
     marks: hi `मान` (value) spells its vowel with one. */
 const OPERAND_WORD = /^[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*$/u;
 
+/**
+ * core's `has` (and the first person's `have`), in the language's own word,
+ * before a class (`#a has .x`, `I have .x`): the
+ * word is often a plain one (es `tiene`, pl `ma`), a variable's name (fr `a`)
+ * or another concept's (tl `may`, tr `var`: `exists`), so it reads `has` only
+ * where `has` can stand. hi `है` reads it already, and ar `لديه`/`لدي` are
+ * whole-token keywords.
+ */
+const HAS: AmbiguousSenseRule = { beforeClassRef: 'has' };
+
 const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, AmbiguousSenseRule>>>> = {
   ar: {
     هو: { beforePredicate: 'is', afterOperand: 'is' },
@@ -827,27 +837,46 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
     है: { beforePredicate: 'is', beforeClassRef: 'has', afterOperand: 'is' },
     खाली: { afterCopula: 'empty' },
   },
-  id: { kosong: { afterCopula: 'empty' } },
+  id: { kosong: { afterCopula: 'empty' }, punya: HAS },
   th: {
     เป็น: { beforeTypeName: 'as', beforePredicate: 'is', afterOperand: 'is' },
     ว่าง: { afterCopula: 'empty' },
+    มี: HAS,
   },
-  ja: { 空: { afterCopula: 'empty' } },
-  sw: { tupu: { afterCopula: 'empty', otherwise: 'null' }, na: { betweenOperands: 'and' } },
-  zh: { 没有: { beforeBareIdentifier: 'no', beforeSelector: 'no' } },
+  ja: { 空: { afterCopula: 'empty' }, ある: HAS },
+  sw: {
+    tupu: { afterCopula: 'empty', otherwise: 'null' },
+    na: { betweenOperands: 'and' },
+    ana: HAS,
+    nina: HAS,
+  },
+  zh: { 没有: { beforeBareIdentifier: 'no', beforeSelector: 'no' }, 有: HAS },
   tl: {
     walang: { beforeBareIdentifier: 'no', beforeSelector: 'no' },
-    may: { afterSubject: 'exists' },
+    may: { afterSubject: 'exists', beforeClassRef: 'has' },
   },
-  bn: { আছে: { afterSubject: 'exists' } },
+  bn: { আছে: { afterSubject: 'exists', beforeClassRef: 'has' }, আছি: HAS },
   qu: {
     mana: { beforeOperand: 'not' },
     chusaq: { afterCopula: 'empty' },
+    kachkan: HAS,
+    kachkani: HAS,
   },
   tr: {
-    var: { afterSubject: 'exists' },
+    var: { afterSubject: 'exists', beforeClassRef: 'has' },
     boş: { afterCopula: 'empty' },
   },
+  de: { hat: HAS, habe: HAS },
+  es: { tiene: HAS, tengo: HAS },
+  fr: { a: HAS, ai: HAS },
+  it: { ha: HAS, ho: HAS },
+  ko: { 있다: HAS },
+  ms: { ada: HAS },
+  pl: { ma: HAS, mam: HAS },
+  pt: { tem: HAS, tenho: HAS },
+  ru: { имеет: HAS, имею: HAS },
+  uk: { має: HAS, маю: HAS },
+  vi: { có: HAS },
 };
 
 /** Fetch's response types (core's `FetchResponseType`), which follow its `as`
@@ -961,11 +990,13 @@ function resolveAmbiguousSense(
   }
   if (rule.beforeOperand && startsOperand(next)) return rule.beforeOperand;
   if (rule.beforeSelector && next?.kind === 'selector') return rule.beforeSelector;
-  if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
-    return rule.afterSubject;
-  }
+  // Before a class, `has`: `exists` takes no operand, so tl `#a may .x` is
+  // `#a has .x` although `may` after a subject is `exists`.
   if (rule.beforeClassRef && next && CLASS_REF.test(next.value)) {
     return rule.beforeClassRef;
+  }
+  if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
+    return rule.afterSubject;
   }
   if (rule.betweenOperands && endsOperand(prev) && startsOperand(next)) {
     return rule.betweenOperands;

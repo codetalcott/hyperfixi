@@ -98,6 +98,18 @@ const CONNECTIVE_CONCEPTS: ReadonlyArray<readonly [bucket: string, concept: stri
 ];
 const connectives: Record<string, Record<string, string>> = {};
 
+/**
+ * Concepts that are one operator on both engines, so a surface they share is
+ * no collision: `contains`/`includes`, which tl and tr give one word since PR
+ * 100 (the first listed wins). Without this, a regeneration dropped tl
+ * `naglalaman` and tr `içerir`. `has` is not here: its word is often another
+ * concept's too (tl `may`, tr `var` are `exists`; fr `a`), so the semantic
+ * lexicon reads it by position instead (AMBIGUOUS_SENSES, before a class).
+ */
+const SAME_OPERATOR: ReadonlyArray<ReadonlySet<string>> = [new Set(['contains', 'includes'])];
+const sameOperator = (a: string, b: string): boolean =>
+  SAME_OPERATOR.some(group => group.has(a) && group.has(b));
+
 /** Every (concept → surface) pair in a dictionary, across all buckets. */
 function allSenses(dict: any): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
@@ -121,10 +133,12 @@ for (const lang of langs) {
     if (surface.toLowerCase() === concept.toLowerCase()) continue; // identity
     const collides = senses.some(
       ([otherConcept, otherSurface]) =>
-        otherConcept !== concept && otherSurface.toLowerCase() === surface.toLowerCase()
+        otherConcept !== concept &&
+        !sameOperator(otherConcept, concept) &&
+        otherSurface.toLowerCase() === surface.toLowerCase()
     );
     if (collides) continue;
-    map[surface.toLowerCase()] = concept;
+    map[surface.toLowerCase()] ??= concept;
   }
   if (Object.keys(map).length) connectives[lang] = map;
 }
