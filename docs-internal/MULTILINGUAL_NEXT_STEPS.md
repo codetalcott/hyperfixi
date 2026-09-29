@@ -6578,6 +6578,18 @@ pairs, by where the loss sits:
 - ~~**it `does not include`, 46**~~ **FIXED by PR 96**: the join's connective table turned the
   `include` of `does non include` into `includes` (it's word for both); the verb of a `does not`
   phrase now stays as written after the negation.
+- ~~**`if #a has .x` fails in 21 languages**~~ **FIXED by PR 106** (core-only `has`; upstream lacks it,
+  so the value matrix cannot run it). The renderer writes each language's own word (es `tiene`, pl
+  `ma`, fr `a`) and no reader read it back: a plain word was a variable, and bn `আছে`, tl `may`
+  and tr `var`, which are also `exists`, read `if #a exists .x`. The word now reads `has` before
+  a class, where only `has` can stand (`AMBIGUOUS_SENSES`, `beforeClassRef`, now checked ahead of
+  `afterSubject`), and so does each first-person `have` form (es `tengo`, de `habe`); ar's `لديه`
+  and `لدي` are whole-token keywords (the prefix split read `ل` + `ديه`). A connective entry would
+  have read fr `a` as `has` everywhere, so the words are read by position. `has-word.test.ts`
+  round-trips `has` and `exists` in 23 languages, and core's `condition-phrases-direct-path.test.ts`
+  runs `#d1 has .x` both ways on the direct path in all 23. The generator
+  (`i18n/scripts/extract-property-lexicon.ts`) now treats `contains`/`includes` as one operator:
+  since PR 100 a regeneration dropped tl `naglalaman` and tr `içerir`.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
