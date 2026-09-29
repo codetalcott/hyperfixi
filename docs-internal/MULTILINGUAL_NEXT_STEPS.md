@@ -6510,7 +6510,7 @@ an object's property through `'s`/`of`, the `of` operator's, and a counted attri
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
 `equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`); 482
-after PR 100 (tl and tr `includes`).
+after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a comparison phrase).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6556,9 +6556,17 @@ pairs, by where the loss sits:
   Recommended: 1, unless tl and tr readers should see "includes" rather than "contains" (then 2).
   Once decided, tl and tr can join core's `condition-phrases-direct-path.test.ts` for every
   condition: each of the others passes there (measured with PR 96).
-- **the direct path before `#a's textContent`, 111** (and `includes #a.textContent` in the `if`
-  position): bn, hi, ja, ko, tl, vi, zh. Measured again after PR 100 (210 pairs, 18 cells, every one
-  on the direct path): `6 is equal to` and `"xab6" includes` before `#a's textContent` (and `1 is
+- ~~**the direct path before `#a's textContent`, 111**~~ **FIXED by PR 101** (and `includes
+  #a.textContent` in the `if` position): bn, hi, ja, ko, tl, vi, zh. semantic's expression
+  tokenizer reads `#a` as a selector only after a token that can precede an operand, and kept its
+  own list of the comparison words that can — the one-word phrases, so not `to`, `than`, `really`,
+  `equal`, `includes`, `include` or `contain`: `6 is equal to #a.textContent` read the identifier
+  `a`. English runs on core's parser, and the adapter lanes on upstream's, so only the direct path
+  (buildAST) lost it. The words are now every phrase's last word, from core's phrase table
+  (`expression-parser/phrases.ts`); `expression-parser.test.ts` runs a selector after each phrase,
+  and core's `condition-phrases-direct-path.test.ts` runs the shapes on the direct path. 210
+  pairs, 0 new. Measured after PR 100, before the fix (18 cells, every one on the direct
+  path): `6 is equal to` and `"xab6" includes` before `#a's textContent` (and `1 is
   greater than or equal to` / `[1, 2, 6] includes` before `#a's textContent's length`) in those
   seven, and before `#a.textContent` in all 23 languages' direct lanes (the adapter lanes pass).
 - ~~**it `does not include`, 46**~~ **FIXED by PR 96**: the join's connective table turned the
