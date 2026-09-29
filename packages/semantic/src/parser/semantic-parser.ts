@@ -47,6 +47,7 @@ import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
+import { tokenValue } from './token-value';
 import { curatedEndKeywordSet, endWordIsValue } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
@@ -5346,62 +5347,11 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Convert a single token to a SemanticValue.
+   * A single token's value, as the role capture reads it (`token-value.ts`); a
+   * token that is no value (a particle) keeps its text as a literal.
    */
   private tokenToSemanticValue(token: LanguageToken): SemanticValue {
-    const val = token.value;
-
-    // Selectors: #id, .class, @attr, *cssProperty
-    if (
-      token.kind === 'selector' ||
-      val.startsWith('#') ||
-      val.startsWith('.') ||
-      val.startsWith('@') ||
-      val.startsWith('*')
-    ) {
-      return createSelector(val);
-    }
-
-    // String literals — strip the quote characters like the pattern-matcher
-    // path does (parseLiteralValue); keeping them put literal `"Done!"`
-    // (quotes and all) into the DOM at runtime in the particle-based parse
-    // path while en wrote `Done!`.
-    if (val.startsWith('"') || val.startsWith("'")) {
-      return createLiteral(stripQuotes(val), 'string');
-    }
-
-    // Numbers
-    if (/^-?\d+(\.\d+)?$/.test(val)) {
-      return createLiteral(parseFloat(val));
-    }
-
-    // Booleans (including translated forms)
-    if (val === 'true' || val === '真' || val === '참' || val === 'doğru') {
-      return createLiteral(true);
-    }
-    if (val === 'false' || val === '偽' || val === '거짓' || val === 'yanlış') {
-      return createLiteral(false);
-    }
-
-    // Variable references (`:local` / `$global`) — mirrors the pattern-path
-    // single-token classifier; without this branch a fallback-captured `$x`
-    // fell to the literal default while every pattern capture (and the en
-    // reference) types it reference (R1 Family D, beep-debug-expression).
-    if (val.length > 1 && (val.startsWith(':') || val.startsWith('$'))) {
-      return createReference(val as Parameters<typeof createReference>[0]);
-    }
-
-    // References: me, it, you (check normalized form)
-    const ref = token.normalized?.toLowerCase();
-    if (ref === 'me' || ref === 'it' || ref === 'you' || ref === 'result' || ref === 'body') {
-      return createReference(ref as 'me' | 'it' | 'you' | 'result');
-    }
-    if ((token.kind as string) === 'reference') {
-      return createReference((token.normalized as 'me' | 'it' | 'you') || 'me');
-    }
-
-    // Default to literal
-    return createLiteral(val);
+    return tokenValue(token) ?? createLiteral(token.value);
   }
 
   /**
