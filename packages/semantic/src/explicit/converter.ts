@@ -8,7 +8,8 @@
 import type { SemanticNode } from '../types';
 import { parse } from '../parser';
 import { getRegisteredLanguages } from '../registry';
-import { render, renderExplicit } from './renderer';
+import { renderExplicit } from './renderer';
+import { render } from './verified-render';
 import { parseExplicit, isExplicitSyntax } from './parser';
 
 // =============================================================================

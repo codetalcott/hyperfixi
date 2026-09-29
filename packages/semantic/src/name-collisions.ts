@@ -15,12 +15,14 @@
  * (`NAME_COLLISION`).
  */
 import { tokenize } from './tokenizers';
+import { setStructureNamePredicate } from './registry';
 import { commandSchemas } from './generators/command-schemas';
 import { translateConnective } from './parser/utils/expression-lexicon';
 import { parseExpression } from './ast-builder/expression-parser/parser';
 import { parseWithConfidence } from './utils/confidence-calculator';
 import { render } from './explicit/renderer';
 import type { LanguageToken, SemanticNode } from './types';
+import { VALUE_WORDS } from './value-words';
 
 /** What a variable named like a word of the language collides with. */
 export type NameCollision = 'structure' | 'pronoun';
@@ -28,8 +30,8 @@ export type NameCollision = 'structure' | 'pronoun';
 /** English words every language's reader treats as structure: the articles its role capture skips. */
 const ENGLISH_NOISE_WORDS: ReadonlySet<string> = new Set(['a', 'an', 'the']);
 
-/** The words a pronoun keyword stands for: a variable spelled like one is that pronoun. */
-const REFERENCE_WORDS: ReadonlySet<string> = new Set([
+/** The pronouns among the value words, which a collision's message names so. */
+const PRONOUNS: ReadonlySet<string> = new Set([
   'me',
   'my',
   'you',
@@ -74,7 +76,7 @@ function readingOf(name: string, language: string): Reading | null {
   const token = tokens[0];
   if (tokens.length !== 1 || !token) return { collision: 'structure', word: 'words' };
   const normalized = token.normalized !== name ? token.normalized : undefined;
-  if (token.kind === 'keyword' && REFERENCE_WORDS.has(normalized ?? '')) {
+  if (token.kind === 'keyword' && VALUE_WORDS.has(normalized ?? '')) {
     return { collision: 'pronoun', word: 'pronoun', sense: normalized };
   }
   if (token.kind === 'identifier' && !normalized) {
@@ -108,7 +110,77 @@ function readingOf(name: string, language: string): Reading | null {
  * - `null`: it reads as the plain identifier it is.
  */
 export function nameCollision(name: string, language: string): NameCollision | null {
-  return readingOf(name, language)?.collision ?? null;
+  const key = `${language}\u0000${name}`;
+  let collision = collisionMemo.get(key);
+  if (collision === undefined) {
+    collision = readingOf(name, language)?.collision ?? null;
+    collisionMemo.set(key, collision);
+  }
+  return collision;
+}
+
+const collisionMemo = new Map<string, NameCollision | null>();
+
+// The reader fuses `(word)` into a name where the word spells structure.
+setStructureNamePredicate((word, language) => nameCollision(word, language) === 'structure');
+
+/**
+ * `raw`, an English expression, with each variable that collides with a
+ * structure word of `language` in parentheses: es `si + 1` → `(si) + 1`. A
+ * variable is an identifier of the expression that is not a property, a
+ * method, a conversion's type, or English vocabulary; one already in
+ * parentheses stays as it is. The reader fuses `(si)` into one name
+ * (`registry.tokenize`).
+ */
+export function parenthesizeCollidingNames(raw: string, language: string): string {
+  const parsed = parseExpression(raw);
+  if (!parsed.success || !parsed.node) return raw;
+  const spans: Array<[number, number]> = [];
+  const walk = (expr: unknown, key: string | undefined): void => {
+    if (Array.isArray(expr)) {
+      for (const item of expr) walk(item, key);
+      return;
+    }
+    if (!expr || typeof expr !== 'object') return;
+    const n = expr as { type?: string; name?: string; start?: number; end?: number };
+    if (
+      n.type === 'identifier' &&
+      key !== 'property' &&
+      key !== 'targetType' &&
+      typeof n.name === 'string' &&
+      n.start !== undefined &&
+      n.end !== undefined &&
+      raw.slice(n.start, n.end) === n.name &&
+      !isEnglishKeyword(n.name) &&
+      nameCollision(n.name, language) === 'structure'
+    ) {
+      spans.push([n.start, n.end]);
+    }
+    for (const [k, v] of Object.entries(expr)) if (v && typeof v === 'object') walk(v, k);
+  };
+  walk(parsed.node, undefined);
+  let out = raw;
+  for (const [start, end] of spans.sort((a, b) => b[0] - a[0])) {
+    if (out[start - 1] === '(' && out[end] === ')') continue;
+    out = `${out.slice(0, start)}(${out.slice(start, end)})${out.slice(end)}`;
+  }
+  return out;
+}
+
+/** A name alone in parentheses, not a call's: `(si)` → `si`, for comparing two readings. */
+function withoutNameParens(code: string): string {
+  return code.replace(/(^|[^\p{L}\p{N}_$)\]])\(([\p{L}_$][\p{L}\p{M}\p{N}_$]*)\)/gu, '$1$2');
+}
+
+/**
+ * Does `code`, in `language`, read as `node` does: the same reading (its
+ * English, and no input left bound to no role), a name in parentheses aside?
+ */
+export function readsAs(code: string, language: string, node: SemanticNode): boolean {
+  const back = parseWithConfidence(code, language).node;
+  return (
+    !!back && withoutNameParens(readingOfNode(back)) === withoutNameParens(readingOfNode(node))
+  );
 }
 
 /** A variable of a program that collides with a word of the program's language. */
@@ -238,12 +310,14 @@ function describe(name: string, reading: Reading, language: string): string {
     marker: `a role marker in ${language}`,
     connective: `the word for \`${reading.sense}\` in ${language}`,
     article: 'an English article, which the reader of every language skips',
-    pronoun: `the pronoun \`${reading.sense}\` in ${language}`,
+    pronoun: PRONOUNS.has(reading.sense ?? '')
+      ? `the pronoun \`${reading.sense}\` in ${language}`
+      : `the word for \`${reading.sense}\` in ${language}`,
     words: `more than one word in ${language}`,
   }[reading.word];
   return reading.collision === 'pronoun'
     ? `Variable \`${name}\` is also ${is}: no reader can tell them apart.`
-    : `Variable \`${name}\` is also ${is}: a reader tells them apart only by where it stands.`;
+    : `Variable \`${name}\` is also ${is}: a reader tells them apart only by where it stands, or when it is written \`(${name})\`.`;
 }
 
 /**
