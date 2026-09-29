@@ -283,6 +283,31 @@ function isWordA(token: LanguageToken): boolean {
   return token.value === 'a';
 }
 
+/**
+ * The references EXPRESSION_WORDS leaves out, which an of-marker's owner still
+ * is (isReferenceAfterOf).
+ */
+const OF_OWNER_REFERENCES: ReadonlySet<string> = new Set(['event', 'window', 'document']);
+
+/**
+ * Is the token at `i` a reference right after an of-marker (`the type of
+ * event`, `the scrollY of window`)? An of-marker is followed by its owner,
+ * never by an event name or an event source, which are why EXPRESSION_WORDS
+ * leaves `event`, `window` and `document` out. Without it the value stopped
+ * at the reference, and English `put the type of event into #out` parsed as a
+ * bare `on click`, and so did every translation (PR 109).
+ */
+function isReferenceAfterOf(
+  all: readonly LanguageToken[],
+  i: number,
+  profile: LanguageProfile | undefined
+): boolean {
+  const token = all[i];
+  const prev = all[i - 1];
+  if (!token || !prev || !isOfPossessiveMarker(profile, prev)) return false;
+  return OF_OWNER_REFERENCES.has((token.normalized ?? token.value).toLowerCase());
+}
+
 /** C13: the clause's end, or a marker the pattern still owes. */
 export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
   if (token.kind === 'conjunction') return true;
@@ -332,8 +357,10 @@ export function continuesValue(
   if (token.kind === 'selector') {
     // After an operator or an operator word (`no .w`, `+ .x`) a `.class`
     // across a space is the next operand; after an operand, another value.
+    // After an of-marker it is the owner (es `textContent de .w`).
     if (!token.value.startsWith('.') || !prev || tokensAdjacent(prev, token)) return true;
     if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
+    if (isOfPossessiveMarker(ctx.profile, prev)) return true;
     const prevWord = expressionWordOf(language, prev, all[i - 2], token, undefined).toLowerCase();
     return OPERATOR_WORDS.has(prevWord);
   }
@@ -343,6 +370,7 @@ export function continuesValue(
   // C14: a conjunction where none can stand (PR 59).
   if (isConnectiveOperand(language, token, prev, all[i + 1])) return true;
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return true;
+  if (isReferenceAfterOf(all, i, ctx.profile)) return true;
   if (endsEqualTo(all, i, language)) return true;
   const word = expressionWordOf(language, token, prev, all[i + 1], undefined).toLowerCase();
   if (word === 'as' && ctx.hasResponseType) return false;

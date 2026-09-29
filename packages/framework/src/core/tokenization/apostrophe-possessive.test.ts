@@ -25,6 +25,18 @@ describe('StringLiteralExtractor: apostrophe after a word character', () => {
     expect(extractor.canExtract(input, position)).toBe(false);
   });
 
+  // A word can end in a combining mark: bn, hi and th write `event` with a
+  // final vowel sign or tone mark (PR 109: `ঘটনা's target's id` lexed `'s
+  // target'` as one string).
+  it.each(["ঘটনা's target's id", "घटना's target's id", "เหตุการณ์'s target's id"])(
+    'does not open a string after a combining mark in %s',
+    input => {
+      for (let i = input.indexOf("'"); i >= 0; i = input.indexOf("'", i + 1)) {
+        expect(extractor.canExtract(input, i)).toBe(false);
+      }
+    }
+  );
+
   it.each([
     ["put 'hello' into me", 4],
     ["log 'a' + 'b'", 4],

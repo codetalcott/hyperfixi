@@ -1036,7 +1036,12 @@ export const ACCEPTED: ReadonlyArray<{
   reason: string;
 }> = [
   {
-    cells: ['put', 'set', 'while', 'increment'].map(p => `${p}|the textContent of #a as Int`),
+    cells: [
+      ...['put', 'set', 'while', 'increment'].map(p => `${p}|the textContent of #a as Int`),
+      // The same difference with a reference owner (PR 108); upstream's
+      // `window as Int` is null, and in a loop bound both read 0 iterations.
+      ...['put', 'set', 'increment'].map(p => `${p}|the scrollY of window as Int`),
+    ],
     lanes: 'en *direct',
     reason:
       'known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)',

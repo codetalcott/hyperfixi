@@ -165,7 +165,12 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
       // matching inside ñit'iyq leaves a stray `q` token). Boundary-broken
       // suffix splits (wasita → wasi + ta) still happen in the word-walk below.
       const after = input[startPos + len];
-      if (after !== undefined && isQuechuaLetter(after)) continue;
+      // An English possessive written onto a keyword ends the keyword (`k_iri's
+      // scrollY`, window's): without it an underscore compound failed its
+      // whole-token match and split at `_` (`k` `_` `iri's`). The word comes out
+      // whole, `'s` and all, for splitReferencePossessive to read apart.
+      const possessive = after === "'" && /^s(?!\p{L})/iu.test(input.slice(startPos + len + 1));
+      if (after !== undefined && isQuechuaLetter(after) && !possessive) continue;
 
       // Check all chars are Quechua. An interior `_` is allowed so the dict's
       // underscore compounds (k_iri, hatun_kay — exact keyword entries) can
@@ -184,6 +189,10 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
 
       // Look up keyword entry
       const keywordEntry = this.context.lookupKeyword(candidate);
+      if (keywordEntry && possessive) return { value: `${candidate}'s`, length: len + 2 };
+      // Only a keyword ends before an attached `'s`: a stem the normalizer finds
+      // in a longer word (`ity`, it + y) left `'s` behind as a string.
+      if (possessive) continue;
       if (keywordEntry) {
         return {
           value: candidate,

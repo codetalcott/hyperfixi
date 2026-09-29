@@ -11,8 +11,9 @@
  * - Imperative form used in software UI (infinitive also common)
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
+import { splitReferencePossessive } from './reference-possessive-split';
 import { UkrainianMorphologicalNormalizer } from './morphology/ukrainian-normalizer';
 import { ukrainianProfile } from '../generators/profiles/ukrainian';
 import {
@@ -165,6 +166,11 @@ export class UkrainianTokenizer extends BaseTokenizer {
       new OperatorExtractor(),
       new PunctuationExtractor(),
     ]);
+  }
+
+  /** A reference's `'s` stays on its word (`подія's`): see splitReferencePossessive. */
+  override tokenize(input: string): TokenStream {
+    return splitReferencePossessive(super.tokenize(input), word => super.tokenize(word).tokens);
   }
 
   classifyToken(token: string): TokenKind {

@@ -782,6 +782,9 @@ const OPERAND_KEYWORDS = new Set([
   'event',
   'target',
   'body',
+  'detail',
+  'document',
+  'window',
 ]);
 
 function isOperandToken(token: LanguageToken): boolean {

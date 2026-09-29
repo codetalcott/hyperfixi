@@ -2,8 +2,8 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 3592,
   "pairs": 172284,
-  "failing": 3521,
-  "accepted": 102,
+  "failing": 503,
+  "accepted": 174,
   "entries": {
     "chain|{}": {
       "lanes": "de de/up",
@@ -46,7 +46,7 @@
       "family": "translation"
     },
     "chain|textContent of .w": {
-      "lanes": "de de/up es es/up",
+      "lanes": "de de/up",
       "family": "translation"
     },
     "increment|#a.textContent": {
@@ -94,94 +94,6 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "chain|event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "chain|the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "chain|target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id": {
-      "lanes": "bn/up hi/up qu qu/up th/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "chain|event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "put|event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "while|event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "increment|event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "chain|event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "chain|n + 2": {
       "lanes": "de de/up",
       "family": "translation"
@@ -191,124 +103,8 @@
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
-    "put|event's detail + 2": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "set|event's detail + 2": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "while|event's detail + 2": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "increment|event's detail + 2": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "put|2 + event's detail": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "set|2 + event's detail": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "while|2 + event's detail": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "increment|2 + event's detail": {
-      "lanes": "qu/up uk uk/up",
-      "family": "translation+adapter"
-    },
-    "put|the scrollY of window + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "while|the scrollY of window + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "increment|the scrollY of window + 2": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|2 + the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "chain|s + \"q\"": {
       "lanes": "de de/up",
-      "family": "translation"
-    },
-    "put|event's type + \"q\"": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type + \"q\"": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|\"q\" + event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"q\" + event's type": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|the type of event + \"q\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event + \"q\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|\"q\" + the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|\"q\" + the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id + \"q\"": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id + \"q\"": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|\"q\" + target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"q\" + target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|event's target's id + \"q\"": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id + \"q\"": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "put|\"q\" + event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"q\" + event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
       "family": "translation"
     },
     "chain|n - 2": {
@@ -331,42 +127,6 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's detail < 4": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail < 4": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail < 4": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|1 < event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|1 < event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|1 < event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the scrollY of window < 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window < 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|1 < the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "chain|n > 4": {
       "lanes": "de de/up",
       "family": "translation"
@@ -383,129 +143,9 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's detail is 6": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail is 6": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail is 6": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|6 is event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|6 is event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|6 is event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the scrollY of window is 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window is 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|6 is the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "chain|s is \"ab\"": {
       "lanes": "de de/up",
       "family": "translation"
-    },
-    "put|event's type is \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type is \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type is \"ab\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"ab\" is event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is event's type": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the type of event is \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event is \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|\"ab\" is the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id is \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id is \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id is \"ab\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"ab\" is target's id": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is target's id": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is target's id": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|event's target's id is \"ab\"": {
-      "lanes": "bn bn/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id is \"ab\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id is \"ab\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|\"ab\" is event's target's id": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is event's target's id": {
-      "lanes": "bn bn/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is event's target's id": {
-      "lanes": "bn/up hi/up th/up uk/up",
-      "family": "adapter"
     },
     "chain|n is not 6": {
       "lanes": "de de/up",
@@ -567,269 +207,21 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's type contains \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type contains \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type contains \"a\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" contains event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains event's type": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the type of event contains \"a\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event contains \"a\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|\"xab6\" contains the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id contains \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id contains \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id contains \"a\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" contains target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|event's target's id contains \"a\"": {
-      "lanes": "bn bn/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id contains \"a\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id contains \"a\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" contains event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" contains event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" contains event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
     "chain|arr contains 2": {
       "lanes": "de de/up",
       "family": "translation"
-    },
-    "put|[1, 2, 6] contains event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] contains event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] contains event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|[1, 2, 6] contains the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
     },
     "chain|n is in [1, 2, 6]": {
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's detail is in [1, 2, 6]": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail is in [1, 2, 6]": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail is in [1, 2, 6]": {
-      "lanes": "ar/up hi/up uk/up",
-      "family": "adapter"
-    },
-    "put|the scrollY of window is in [1, 2, 6]": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window is in [1, 2, 6]": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "if|the scrollY of window is in [1, 2, 6]": {
-      "lanes": "ar/up hi/up",
-      "family": "adapter"
-    },
     "chain|n is equal to 6": {
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's detail is equal to 6": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail is equal to 6": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail is equal to 6": {
-      "lanes": "ar/up hi/up uk/up",
-      "family": "adapter"
-    },
-    "put|6 is equal to event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|6 is equal to event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|6 is equal to event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the scrollY of window is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "if|the scrollY of window is equal to 6": {
-      "lanes": "ar/up hi/up",
-      "family": "adapter"
-    },
-    "put|6 is equal to the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "chain|s is equal to \"ab\"": {
       "lanes": "de de/up",
       "family": "translation"
-    },
-    "put|event's type is equal to \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type is equal to \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type is equal to \"ab\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"ab\" is equal to event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is equal to event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is equal to event's type": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the type of event is equal to \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event is equal to \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|\"ab\" is equal to the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id is equal to \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id is equal to \"ab\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id is equal to \"ab\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"ab\" is equal to target's id": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is equal to target's id": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is equal to target's id": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|event's target's id is equal to \"ab\"": {
-      "lanes": "bn bn/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id is equal to \"ab\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id is equal to \"ab\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|\"ab\" is equal to event's target's id": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"ab\" is equal to event's target's id": {
-      "lanes": "bn bn/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"ab\" is equal to event's target's id": {
-      "lanes": "bn/up hi/up th/up uk/up",
-      "family": "adapter"
     },
     "chain|n is not equal to 6": {
       "lanes": "de de/up",
@@ -863,50 +255,6 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's detail is greater than or equal to 4": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail is greater than or equal to 4": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail is greater than or equal to 4": {
-      "lanes": "ar/up hi/up uk/up",
-      "family": "adapter"
-    },
-    "put|1 is greater than or equal to event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|1 is greater than or equal to event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|1 is greater than or equal to event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|the scrollY of window is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "if|the scrollY of window is greater than or equal to 4": {
-      "lanes": "ar/up hi/up",
-      "family": "adapter"
-    },
-    "put|1 is greater than or equal to the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|1 is greater than or equal to the scrollY of window": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
     "chain|n is less than or equal to 4": {
       "lanes": "de de/up",
       "family": "translation"
@@ -919,109 +267,9 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|event's type includes \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type includes \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type includes \"a\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" includes event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" includes event's type": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" includes event's type": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|the type of event includes \"a\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event includes \"a\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|\"xab6\" includes the type of event": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id includes \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id includes \"a\"": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id includes \"a\"": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" includes target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" includes target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" includes target's id": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "put|event's target's id includes \"a\"": {
-      "lanes": "bn bn/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id includes \"a\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id includes \"a\"": {
-      "lanes": "bn bn/up hi hi/up th th/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|\"xab6\" includes event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" includes event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" includes event's target's id": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
     "chain|arr includes 2": {
       "lanes": "de de/up",
       "family": "translation"
-    },
-    "put|[1, 2, 6] includes event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] includes event's detail": {
-      "lanes": "uk uk/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] includes event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "put|[1, 2, 6] includes the scrollY of window": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
     },
     "chain|s does not include \"a\"": {
       "lanes": "de de/up",
@@ -1059,22 +307,6 @@
       "lanes": "de de/up",
       "family": "translation"
     },
-    "put|-event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|-event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "while|-event's detail": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "increment|-event's detail": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
     "chain|no .w": {
       "lanes": "de de/up",
       "family": "translation"
@@ -1098,50 +330,6 @@
     "chain|obj is empty": {
       "lanes": "de de/up",
       "family": "translation"
-    },
-    "put|event's type is empty": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type is empty": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type is empty": {
-      "lanes": "qu qu/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|the type of event is empty": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event is empty": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id is empty": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id is empty": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id is empty": {
-      "lanes": "qu qu/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|event's target's id is empty": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id is empty": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id is empty": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk/up",
-      "family": "translation+adapter"
     },
     "chain|null is not empty": {
       "lanes": "de de/up",
@@ -1256,33 +444,20 @@
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
-    "put|event's detail as Int": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail as Int": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "while|event's detail as Int": {
-      "lanes": "uk/up",
-      "family": "adapter"
-    },
-    "increment|event's detail as Int": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
     "put|the scrollY of window as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en *direct",
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "set|the scrollY of window as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en *direct",
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "increment|the scrollY of window as Int": {
-      "lanes": "en en-rt *direct *up",
-      "family": "core+semantic-en"
+      "lanes": "en *direct",
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "chain|n as String": {
       "lanes": "de de/up",
@@ -1318,74 +493,6 @@
     },
     "chain|obj is a Number": {
       "lanes": "de de/up",
-      "family": "translation"
-    },
-    "put|event's type is a Number": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's type is a Number": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's type is a Number": {
-      "lanes": "qu qu/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|the type of event is a Number": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the type of event is a Number": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|target's id is a Number": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "set|target's id is a Number": {
-      "lanes": "qu qu/up uk uk/up",
-      "family": "translation"
-    },
-    "if|target's id is a Number": {
-      "lanes": "qu qu/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|event's target's id is a Number": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's target's id is a Number": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's target's id is a Number": {
-      "lanes": "bn bn/up hi hi/up qu qu/up th th/up uk/up",
-      "family": "translation+adapter"
-    },
-    "put|event's detail is a Number": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "set|event's detail is a Number": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "if|event's detail is a Number": {
-      "lanes": "ar ar/up hi hi/up uk uk/up",
-      "family": "translation"
-    },
-    "put|the scrollY of window is a Number": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|the scrollY of window is a Number": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "if|the scrollY of window is a Number": {
-      "lanes": "ar ar/up hi hi/up",
       "family": "translation"
     },
     "chain|true is not a Number": {

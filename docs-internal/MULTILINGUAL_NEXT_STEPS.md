@@ -6514,7 +6514,7 @@ after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a compar
 check), every one ACCEPTED: the operator-phrase queue is empty. PR 108 widened it with a
 reference's property as an operand, a `set` in the second command of a chain, and the colliding
 names as operands (972 cells, 3,592 in all): 3,521 of 172,284, 3,419 of them open (the
-reference-and-chain queue, below).
+reference-and-chain queue, below); 503 after PR 109 (a reference's property), 329 of them open.
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6602,39 +6602,48 @@ set x to … then put x into #out`, for every `set` value but an operand kind's 
 operators), and each colliding name as an operand (`name + 1`, `1 + name`, `name < 3`, `not
 name`). Every cell has an upstream oracle. The 3,419 open pairs, by where the loss sits:
 
-- **a reference after an of-marker, 2,353 pairs in 50 cells** (semantic's English parse):
+- ~~**a reference after an of-marker, 2,353 pairs in 50 cells**~~ **FIXED by PR 109** (semantic's English parse):
   `the type of event` and `the scrollY of window` put and set nothing, in English and so in every
   translation (`if` reads them: the condition scan takes its text whole). `event`, `window` and
   `document` are no expression words (PR 105 left them out: an event marker normalizes to
   `event`, and an event source follows `from`), so the value stopped at the reference, short of
-  what its `of` owns. `the id of target` reads: `target` is an expression word.
-- **qu and uk `'s` on a localized reference, 453 pairs in 172 cells**: `ruway's`, `подія's` are
+  what its `of` owns. `the id of target` reads: `target` is an expression word. A reference right
+  after an of-marker is its owner now (`isReferenceAfterOf`, C15), and so is a `.class`.
+- ~~**qu and uk `'s` on a localized reference, 453 pairs in 172 cells**~~ **FIXED by PR 109**: `ruway's`, `подія's` are
   one word to both tokenizers (their apostrophe is a letter: qu `t'ikray`, uk `м'ясо`), so qu
   reads a variable named `ruway` and uk a word the join cannot read. Every other language
-  tokenizes `evento` `'` `s`.
+  tokenizes `evento` `'` `s`. Both now read a reference and its `'s` apart
+  (`tokenizers/reference-possessive-split.ts`), and a variable's `obj's` stays one token (PR 83).
+  qu's whole-keyword match ends an exact keyword before an attached `'s` (`k_iri's`, window's,
+  split at `_` before); a stem only the normalizer finds (`ity`, it + y) does not.
 - **the de chain, 326 pairs in 163 cells**: every `set` value in a chain's second command but a
   lone token before `dann`. The program layer's trigger split reads `auf` — de's `on`, and set's
   and put's `to` — as a new handler (`on n`), and only toggle and trigger were allowed their own
   on-spelled marker.
-- **bn, hi and th `event's target's id`, 207 pairs in 38 cells**: each language's word for
+- ~~**bn, hi and th `event's target's id`, 207 pairs in 38 cells**~~ **FIXED by PR 109**: each language's word for
   `event` ends in a combining mark (bn and hi a vowel sign, th a thanthakhat), which the string
   extractor's possessive check did not count as part of a word, so the two apostrophes lexed
-  `'s target'` as a string.
-- **ar and hi `event's detail` before a phrase operator, 54 pairs in 17 cells** (`is equal to`,
+  `'s target'` as a string. It counts `\p{M}` now (the framework's `StringLiteralExtractor`).
+- ~~**ar and hi `event's detail` before a phrase operator, 54 pairs in 17 cells**~~ **FIXED by PR 109** (`is equal to`,
   `is in`, `is greater than or equal to`, `is a Number`; `the scrollY of window` through the
   adapter): both translate the property `detail` (a reference word), and the copula after it (ar
-  `هو`, hi `है`) reads `is` only after an operand, which `detail` was not.
-- **the direct path before `the scrollY of window`, 21 pairs in 1 cell**: `set x to 1 is greater
-  than or equal to the scrollY of window` reads false on the direct lanes.
+  `هو`, hi `है`) reads `is` only after an operand, which `detail` was not. `detail`, `document` and
+  `window` are operands to the senses now (J4's `OPERAND_KEYWORDS`: literals and references).
+- ~~**the direct path before `the scrollY of window`, 21 pairs in 1 cell**~~ **FIXED by PR 109**:
+  `set x to 1 is greater than or equal to the scrollY of window` read false on the direct lanes.
+  The English parse had dropped `of window` there too (`… or equal to the scrollY`), which
+  upstream happens to read as `window.scrollY`; the direct path read `the` as a variable.
 - **qu `not pa`, `not pi`, `not ta` through the adapter, 3 cells**: qu `mana` reads `not` only
   before an operand, and neither the particle-shaped name nor its parenthesized `(pa)` counts as
   one, so the verified render has no reading to choose (the direct lane passes by accident:
   `false pa` is false too).
-- **es `textContent of .w` in the chain, 1 cell**: a `.class` across a space continues a value
-  only after an operator word, and es `de` is an of-marker (the first `set` reads it another way).
+- ~~**es `textContent of .w` in the chain, 1 cell**~~ **FIXED by PR 109**: a `.class` across a
+  space continued a value only after an operator word, and es `de` is an of-marker (the first
+  `set` reads it another way). After an of-marker it is the owner.
 
-`the scrollY of window as Int` (4 cells) is the kept `the X of Y as T` difference once its English
-reads. The names inside expressions pass in every lane but the qu row above: the extended names
+`the scrollY of window as Int` is the kept `the X of Y as T` difference once its English reads:
+ACCEPTED since PR 109 for put, set and increment (a loop bound reads 0 iterations on both).
+PR 109 moved no stored corpus row and no entry of the extended names oracle. The names inside expressions pass in every lane but the qu row above: the extended names
 oracle's misreads among these 56 names are read-backs that run alike.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
@@ -6656,7 +6665,7 @@ in the order it applies:
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `notWordIsVariable` (`value-reading.ts`), from `tryConsumeRunOperand` | 84                                     | `colliding-names.test.ts`                                                                   |
 | C13 | a value runs on through operands (a name the reader fused, `(si)`, among them), operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53; fused names 103                    | `value-extent.test.ts`, `verified-render.test.ts`                                           |
 | C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand` (`utils/value-extent.ts`) | 59                                     | `connective-operand.test.ts`                                                                |
-| C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`) and the `to` of `equal to`; the word `a` (a type check's; es/it/pt `to`, tr's dative) never stops one                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo`, `isWordA` (`utils/value-extent.ts`) | 69, 74, 94, 102 | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`                                             |
+| C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`), the `to` of `equal to`, and an of-marker's owner (a reference, `the type of event`, or a `.class`, es `de .w`); the word `a` (a type check's; es/it/pt `to`, tr's dative) never stops one                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo`, `isWordA`, `isReferenceAfterOf` (`utils/value-extent.ts`) | 69, 74, 94, 102, 109 | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`, `reference-owners.test.ts`                                             |
 | C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `possessiveLinkEnds`, `longestWholeRun` (`utils/value-extent.ts`) | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
 
 **The join** (`joinExpressionTokens` → `expressionWordOf`, `parser/utils/expression-lexicon.ts`),
@@ -6667,7 +6676,7 @@ word by word:
 | J1  | a lone structure word or command verb joined as a whole value is its surface (tr `eğer al`, if al); a role marker anywhere in an expression is too (tr `değil na`, de `length of aus`)                   | `loneKeywordKind`, shared with C8; `expressionWordOf` | 84; markers 104       | `colliding-names.test.ts`                                                                         |
 | J2  | `equal to`'s `to` stays `to` (pl reads `to` as `it`)                                                                                                                                                      | `expressionWordOf`                           | 62                    | `connective-operand.test.ts`                                                                      |
 | J3  | the `in` after a copula stays `in`                                                                                                                                                                         | `expressionWordOf`                           | 69                    | `copula-in.test.ts`                                                                               |
-| J4  | a word with two senses takes one by where it stands: ar `هو`, hi `है`, th `เป็น`, sw `na`/`tupu`, qu `mana`, zh `没有`, tl `walang`/`may`, bn `আছে`, tr `var`, and each `empty` word after a copula     | `AMBIGUOUS_SENSES`, `resolveAmbiguousSense`  | #731; 71, 72, 78      | `expression-lexicon.test.ts`, `and-word.test.ts`, `not-word.test.ts`, `null-empty-word.test.ts`   |
+| J4  | a word with two senses takes one by where it stands: ar `هو`, hi `है`, th `เป็น`, sw `na`/`tupu`, qu `mana`, zh `没有`, tl `walang`/`may`, bn `আছে`, tr `var`, and each `empty` word after a copula; every reference is an operand there (`detail`, `window`, `document` since PR 109) | `AMBIGUOUS_SENSES`, `resolveAmbiguousSense`  | #731; 71, 72, 78      | `expression-lexicon.test.ts`, `and-word.test.ts`, `not-word.test.ts`, `null-empty-word.test.ts`   |
 | J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or first in the value (pl `i`, es `si y`, pl `i - 1`)                                    | `isConnectiveOperand` → `precedesOperand`, `followsOperand` (over `utils/operators.ts`) | 59; alone 81; first 104 | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
 | J6  | a `<property> <of-marker>` chain reads to its selector owner                                                                                                                                               | `ofChainEnd`                                 | 58, 65                | `property-before-of.test.ts`, `possessive-chain.test.ts`                                          |
 
@@ -7015,7 +7024,7 @@ it is written `(si)`", and reports no occurrence already written so.
   document`). Found by a probe of PR 104's `event` exclusion, which PR 104 had dropped as
   unmeasured: it protects `event's type` (de `ereignis's type`), a shape no oracle held while
   English could not read `event's detail` — restored in PR 104 before it merged.
-- **qu and uk keep `'s` on a localized reference**: `put event's type into #out` renders qu
+- ~~**qu and uk keep `'s` on a localized reference**~~ **FIXED by PR 109**: `put event's type into #out` renders qu
   `ruway's type`, uk `подія's type`, and neither reads the reference back (`ruway's` is one word to
   both tokenizers). On main; PR 108's reference operands: 172 cells.
 - ~~**pl reads the English pronoun `I` as `and`**~~ **FIXED by PR 104** (J5: a conjunction first in
