@@ -134,7 +134,7 @@ cd packages/core && npx playwright test src/compatibility/
 ```bash
 # Tests
 npm test --prefix packages/i18n                     # Run vitest (900+ tests)
-npx vitest run src/grammar/grammar.test.ts          # Grammar transformation tests
+npx vitest run src/grammar/profiles.test.ts         # Word-order profile tests
 
 # Build
 npm run build:browser --prefix packages/i18n        # Build browser bundle
@@ -766,9 +766,11 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 used to name had **zero** implementers and was deleted 2026-08-30 with the rest
 of the dead type surface — see `docs-internal/ENGINE_MIGRATION_PLAN.md` Arc 6a.)
 
-### Grammar Transformation (i18n)
+### Native Word Order
 
-The i18n package transforms hyperscript to native word order:
+A translation is `@lokascript/semantic`'s `render(parse(code, 'en'), language)`, in
+each language's own word order (i18n's `GrammarTransformer` did this until its
+retirement, #1001; i18n keeps the vocabulary and the word-order profiles):
 
 - **SVO** (English, Chinese, Spanish): `on click increment #count`
 - **SOV** (Japanese, Korean, Turkish): `#count を クリック で 増加`
@@ -776,7 +778,7 @@ The i18n package transforms hyperscript to native word order:
 
 Key files:
 
-- `packages/i18n/src/grammar/transformer.ts` - GrammarTransformer class
+- `packages/semantic/src/explicit/renderer.ts` - `render(node, language)`
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
@@ -836,7 +838,7 @@ npm run test:quick --prefix packages/core  # Exit 0 = pass, 1 = fail
 npm test --prefix packages/core -- --run src/expressions/logical.test.ts
 
 # Playwright for browser tests - MUST run from packages/core directory
-cd packages/core && npx playwright test --grep "Grammar Transformation"
+cd packages/core && npx playwright test --grep "Command Compatibility"
 
 # Bundle compatibility matrix - tests all bundles against gallery examples
 cd packages/core && npx playwright test src/compatibility/browser-tests/bundle-compatibility.spec.ts
@@ -901,7 +903,7 @@ window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initB
 2. Add language profile in `packages/i18n/src/grammar/profiles/`
 3. Create keyword provider in `packages/i18n/src/parser/`
 4. Export from `packages/i18n/src/browser.ts`
-5. Add tests in `packages/i18n/src/grammar/grammar.test.ts`
+5. Add tests in `packages/i18n/src/grammar/profiles.test.ts`
 
 ### Adding Semantic Language Support
 
@@ -1019,7 +1021,7 @@ and narrows with `instanceof`. See
 | `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
 | `packages/core/docs/API.md`                              | API documentation                            |
 | `packages/server-integration/src/types/`                 | Server-specific types                        |
-| `packages/i18n/src/grammar/transformer.ts`               | GrammarTransformer class                     |
+| `packages/semantic/src/explicit/renderer.ts`             | Renders a parse in any of the 24 languages   |
 | `packages/i18n/src/browser.ts`                           | Browser bundle exports                       |
 | `packages/semantic/src/parser/semantic-parser.ts`        | Semantic parser                              |
 | `packages/semantic/src/tokenizers/`                      | 24 language tokenizers                       |
