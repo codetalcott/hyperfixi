@@ -226,7 +226,11 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
       // (which silently dropped the behavior `init` block — the parser saw `in`,
       // not the `init` keyword), `ñit'iy` → `ñ` + `it` + `'iy`. Only real case
       // markers legitimately agglutinate onto a stem; English fallbacks never do.
-      if (word.length > 0 && quechuaSuffixStartsAt(input, pos)) {
+      // Never in a PascalCase word, a type's name (`FormData`, `JSONString`),
+      // which is code, not Quechua: `FormData` split as `FormDa` + `ta` (the
+      // accusative), and `x as FormData` lost its type and its value. A
+      // camelCase variable keeps its attached marker (`triggerElta`).
+      if (word.length > 0 && !/^\p{Lu}/u.test(word) && quechuaSuffixStartsAt(input, pos)) {
         break;
       }
       word += input[pos];
