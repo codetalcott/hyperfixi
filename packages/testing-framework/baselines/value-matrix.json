@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 2614,
   "pairs": 125400,
-  "failing": 3118,
+  "failing": 1800,
   "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
@@ -27,54 +27,6 @@
       "lanes": "bn hi ja ko tl vi zh",
       "family": "direct-path"
     },
-    "put|obj's v is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|obj's v is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|arr's length is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|arr's length is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|#a's textContent's length is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|#a's textContent's length is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|v of obj is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|v of obj is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|length of arr is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|length of arr is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|v of w of obj is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|v of w of obj is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
     "put|6 is equal to #a.textContent": {
       "lanes": "*direct",
       "family": "direct-path"
@@ -87,46 +39,6 @@
       "lanes": "*direct",
       "family": "direct-path"
     },
-    "put|String(n) is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|String(n) is equal to 6": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|@title of #a is equal to \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|@title of #a is equal to \"ab\"": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|obj's v is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|obj's v is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|arr's length is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|arr's length is greater than or equal to 4": {
-      "lanes": "en-rt *up",
-      "family": "semantic-en"
-    },
-    "put|#a's textContent's length is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|#a's textContent's length is greater than or equal to 4": {
-      "lanes": "en-rt *up",
-      "family": "semantic-en"
-    },
     "put|1 is greater than or equal to #a's textContent's length": {
       "lanes": "bn hi ja ko tl vi zh",
       "family": "direct-path"
@@ -138,38 +50,6 @@
     "if|1 is greater than or equal to #a's textContent's length": {
       "lanes": "bn hi ja ko tl vi zh",
       "family": "direct-path"
-    },
-    "put|v of obj is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|v of obj is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "put|length of arr is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|length of arr is greater than or equal to 4": {
-      "lanes": "en-rt *up",
-      "family": "semantic-en"
-    },
-    "put|v of w of obj is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|v of w of obj is greater than or equal to 4": {
-      "lanes": "en-rt *up",
-      "family": "semantic-en"
-    },
-    "put|String(n) is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
-    },
-    "set|String(n) is greater than or equal to 4": {
-      "lanes": "en-rt *direct *up",
-      "family": "semantic-en"
     },
     "put|\"xab6\" includes \"a\"": {
       "lanes": "tl tl/up tr tr/up",

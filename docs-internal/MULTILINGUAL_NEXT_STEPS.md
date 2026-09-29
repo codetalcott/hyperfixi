@@ -6508,17 +6508,19 @@ its clause, a lone marker/control/copula keyword, a lone conjunction); 330 after
 an object's property through `'s`/`of`, the `of` operator's, and a counted attribute); 262 after PR
 83 (a possessive target before a role with no marker); 102 after PR 84 (the colliding names left),
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
-in a shard of their own): 3,118 of 125,400, 3,016 of them open.
+in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
+`equal to`).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
 type check) meets every operand kind. Thirteen of the 23 phrases pass in every lane. The 3,016 open
 pairs, by where the loss sits:
 
-- **semantic's English parse, 1,318** (`obj's v is equal to 6`, `v of obj is greater than or equal
-  to 4`): the value extent stops at `to`, a marker and a `set` marker, so a possessive or `of`
-  operand before `equal to` loses the rest (`put` drops its whole value, `set` keeps `obj's v`). An
-  `obj.v` operand is the operator run's, which reads the phrase.
+- ~~**semantic's English parse, 1,318**~~ **FIXED by PR 94** (`obj's v is equal to 6`, `v of obj
+  is greater than or equal to 4`): the value extent stopped at `to`, a marker and a `set` marker,
+  so a possessive or `of` operand before `equal to` lost the rest (`put` dropped its whole value,
+  `set` kept `obj's v`). An `obj.v` operand is the operator run's, which read the phrase. The `to`
+  that ends an `equal to` after a comparison word now continues the value (C15).
 - **the type name, 930**: `is an Element` / `is not an Element` (760) translate `Element` in 18
   languages (`as Element` too), and `{} is a Number`/`String` (170) in es/it/pt/tr. Both engines
   read type names in English.
@@ -6548,7 +6550,7 @@ in the order it applies:
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `notWordIsVariable` (`value-reading.ts`), from `tryConsumeRunOperand` | 84                                     | `colliding-names.test.ts`                                                                   |
 | C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53                                     | `value-extent.test.ts`                                                                      |
 | C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand` (`utils/value-extent.ts`) | 59                                     | `connective-operand.test.ts`                                                                |
-| C15 | the `in` after a copula continues a value (de/it `into` marker), and so does a particle after `of` (pl `w`)                                                                                                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf` (`utils/value-extent.ts`)         | 69, 74  | `copula-in.test.ts`, `operand-readings.test.ts`                                             |
+| C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`) and the `to` of `equal to`                                                                                                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo` (`utils/value-extent.ts`)         | 69, 74, 94  | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`                                             |
 | C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `possessiveLinkEnds`, `longestWholeRun` (`utils/value-extent.ts`) | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
 
 **The join** (`joinExpressionTokens` → `expressionWordOf`, `parser/utils/expression-lexicon.ts`),
