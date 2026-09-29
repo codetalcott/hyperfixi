@@ -384,9 +384,10 @@ export const UNARY_OPERATORS: readonly UnaryOperator[] = [
 ];
 
 /**
- * The operator phrases the after-85 handoff's part 2 added: their cells run in
- * a shard of their own (value-matrix.phrases.test.ts), which adds half again
- * to the matrix, and the position shards leave them out.
+ * The operator phrases the after-85 handoff's part 2 added. They add half
+ * again to the matrix, so each position's phrase cells run in a shard of
+ * their own (`value-matrix.<position>-phrases.test.ts`), which the position's
+ * shard leaves them to.
  */
 export const PHRASE_OPERATORS: ReadonlySet<string> = new Set([
   'is equal to',

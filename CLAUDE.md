@@ -617,26 +617,25 @@ two WRITTEN-target positions (what a `set` writes, what an `increment` counts) a
 derived axis of **colliding names** — variables spelled like some language's marker,
 particle or connective (es `a`, pl `w`, de `um`), which a translation writes
 verbatim — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 2,614 cells. It EXECUTES each one: the English source on upstream `hyperscript.org` is the
-oracle, and 48 lanes must match it — hyperfixi's English, semantic's English round
-trip, and each language on hyperfixi's direct path and through the adapter on
-upstream. Its baseline (`baselines/value-matrix.json`) lists every failing (cell,
-lane) pair, and it only shrinks: 18,509 of 63,744 when it landed (PR 52), 102 of
-83,352 after PR 84, every one of them ACCEPTED (the kept `the X of Y as T`
-difference and it's `di` ambiguity: listed, gated, reported apart), and 3,118 of
-125,400 since PR 93 added the operator phrases (2026-09-28) — the queue for part 2
-of the after-85 handoff, by family, in the doc below. The per-PR
-burn-down, and an inventory of the rules that tell a variable spelled like a
+…) — 2,614 cells. It EXECUTES each one: the English source on upstream
+`hyperscript.org` is the oracle, and 48 lanes must match it — hyperfixi's English,
+semantic's English round trip, and each language on hyperfixi's direct path and
+through the adapter on upstream. Its baseline (`baselines/value-matrix.json`) lists
+every failing (cell, lane) pair, and it only shrinks: 18,509 of 63,744 when it
+landed (PR 52), 102 of 83,352 after PR 84, every one of them ACCEPTED (the kept `the
+X of Y as T` difference and it's `di` ambiguity: listed, gated, reported apart). PR
+93 added the operator phrases (2026-09-28) and their 3,016 failing pairs, the queue
+for part 2 of the after-85 handoff. The current count, the per-PR burn-down, the
+queue by family, and an inventory of the rules that tell a variable spelled like a
 structure word from the word (each with its PR and the test that pins it), are in
 `docs-internal/MULTILINGUAL_NEXT_STEPS.md` ("Value reading"). A name that is a
 PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
-can tell them apart. The gate (`value-matrix.<position>.test.ts` and
-`value-matrix.phrases.test.ts`, eight parallel shards in the package's ordinary
-suite) fails on a new
-failing pair AND on a listed pair that passes. After a fix, prune with `npx tsx
-tools/regen-value-matrix-baseline.ts` (it refuses to add pairs without
-`--allow-new`). It is the queue for value work: the family and lane tables it prints
-say what to fix next.
+can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
+phrase cells in `value-matrix.<position>-phrases.test.ts`: ten parallel shards in
+the package's ordinary suite) fails on a new failing pair AND on a listed pair that
+passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (it
+refuses to add pairs without `--allow-new`). It is the queue for value work: the
+family and lane tables it prints say what to fix next.
 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a

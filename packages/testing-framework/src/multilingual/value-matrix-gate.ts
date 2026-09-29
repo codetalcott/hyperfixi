@@ -1,7 +1,8 @@
 /**
  * The value matrix gate (see value-matrix.ts), one position per test file —
- * `value-matrix.<position>.test.ts`, and the operator phrases in
- * `value-matrix.phrases.test.ts` — so vitest runs the shards in parallel. Each shard judges only its own cells against the shared baseline.
+ * `value-matrix.<position>.test.ts`, and a position's operator-phrase cells in
+ * `value-matrix.<position>-phrases.test.ts` — so vitest runs the shards in
+ * parallel. Each shard judges only its own cells against the shared baseline.
  *
  * Assertions:
  *   1. every cell has an oracle: upstream runs its English source (the
@@ -14,7 +15,7 @@
  * (shrink-only; `--allow-new` to accept new failures, with a reason in the PR).
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -45,15 +46,19 @@ function capped(lines: string[], max = 40): string[] {
 }
 
 /**
- * One shard: a position's cells, without the operator phrases, or (`'phrases'`)
- * every phrase cell, whatever its position.
+ * One shard: a position's cells without the operator phrases (`values`), or
+ * its phrase cells (`phrases`), which add half again to the matrix and would
+ * double a position's shard.
  */
-export function describeValueMatrixShard(shard: Position | 'phrases'): void {
+export function describeValueMatrixShard(
+  position: Position,
+  part: 'values' | 'phrases' = 'values'
+): void {
   const all = generateCells();
-  const cells =
-    shard === 'phrases'
-      ? all.filter(isPhraseCell)
-      : all.filter(cell => cell.position === shard && !isPhraseCell(cell));
+  const cells = all.filter(
+    cell => cell.position === position && isPhraseCell(cell) === (part === 'phrases')
+  );
+  const shard = part === 'phrases' ? `${position}-phrases` : position;
   const baseline = loadBaseline();
 
   describe(`value matrix: ${shard}`, () => {
@@ -90,14 +95,24 @@ export function describeValueMatrixShard(shard: Position | 'phrases'): void {
       expect(capped(fixed.map(f => `${f.id} [${f.lane}]`))).toEqual([]);
     });
 
-    // A position shard owns its prefix's entries, phrase cells included; the
-    // phrase shard owns none (its cells' positions are put, set and if).
+    // The values shard owns its position's entries, phrase cells included.
     it('no listed cell is gone from the generator', () => {
-      if (shard === 'phrases') return;
+      if (part === 'phrases') return;
       const own = Object.fromEntries(
-        Object.entries(baseline.entries).filter(([id]) => id.startsWith(`${shard}|`))
+        Object.entries(baseline.entries).filter(([id]) => id.startsWith(`${position}|`))
       );
       expect(orphanedEntries({ entries: own }, all)).toEqual([]);
+    });
+
+    // A phrase added to a position with no phrases shard would run nowhere.
+    it('every phrase cell of the position has its shard', () => {
+      if (part === 'phrases') return;
+      const phrases = all.filter(cell => cell.position === position && isPhraseCell(cell));
+      const file = path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        `value-matrix.${position}-phrases.test.ts`
+      );
+      expect(phrases.length === 0 || existsSync(file), file).toBe(true);
     });
   });
 }
