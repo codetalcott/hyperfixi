@@ -135,7 +135,9 @@ export const tr: Dictionary = {
     exists: 'var',
     matches: 'eşleşir',
     contains: 'içerir',
-    includes: 'dahil',
+    // `includes` takes `contains`' word: both engines read them as one operator,
+    // and `dahil` is `inclusive` (pick's range word), which the reader takes it for.
+    includes: 'içerir',
     equals: 'eşittir',
     has: 'var',
     have: 'var',

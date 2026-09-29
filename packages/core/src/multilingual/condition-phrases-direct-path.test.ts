@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { parseSemantic, render, buildAST } from '@lokascript/semantic';
 import { hyperscript } from '../api/hyperscript-api';
 
-const LANGUAGES = ['es', 'he', 'it', 'pl'] as const;
+const LANGUAGES = ['es', 'he', 'it', 'pl', 'tl', 'tr'] as const;
 
 /** Run the handler on #b and read #out. */
 async function run(ast: unknown): Promise<string> {
@@ -115,8 +115,9 @@ describe.each(CONDITIONS)('if %s', (condition, expected) => {
 // the fifteen more languages it found them failing in: the value lexicon
 // translated the type name like a word (`#d1 is an Element` read back `is an
 // elemento`), and a translated type is a variable to both engines (PR 95).
-// Every condition above passes in these languages too (measured, and tl/tr
-// `includes`, an owner vocabulary decision, aside); the matrix runs them all.
+// Every condition above passes in these languages too (measured; tl and tr,
+// whose `includes` reads back since PR 100, run them all above); the matrix
+// runs them all.
 const TYPE_CHECK_LANGUAGES = [
   'ar',
   'fr',

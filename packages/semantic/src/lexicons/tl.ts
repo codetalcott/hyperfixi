@@ -51,7 +51,9 @@ export const tagalogLexicon: LanguageLexicon = {
     has: { primary: 'may' },
     have: { primary: 'may' },
     if: { primary: 'kung' },
-    includes: { primary: 'kasama' },
+    // `includes` takes `contains`' word: both engines read them as one operator,
+    // and `kasama` is `inclusive` (pick's range word), which the reader takes it for.
+    includes: { primary: 'naglalaman' },
     is: { primary: 'ay' },
     live: { primary: 'live' },
     matches: { primary: 'tumutugma' },
