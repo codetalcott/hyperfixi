@@ -125,6 +125,16 @@ export const EXPRESSION_WORDS: ReadonlySet<string> = new Set([
   'undefined',
   'you',
   'your',
+  // The references a value may name after a possessive (`event's detail`,
+  // `x's target`): without them the value ended at `x's`, and English `put
+  // event's detail into #out` parsed as a bare `on click`. Not `event`, which
+  // some languages' event marker normalizes to, nor `window` and `document`,
+  // which a value never names as a property and an event source often
+  // follows (`… or pointerup from document`).
+  'result',
+  'target',
+  'body',
+  'detail',
 ]);
 
 /**

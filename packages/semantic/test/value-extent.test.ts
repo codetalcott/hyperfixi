@@ -85,6 +85,13 @@ const SOURCES: Array<[string, string[]]> = [
   [`on click put String(n) is a String into #out`, []],
   [`on click put { } is not a String into #out`, []],
   [`on click set x to length of arr is a Number then put x into #out`, LOCAL_LENGTH],
+  // A reference after a possessive is the property (PR 105): English itself
+  // parsed `put event's detail into #out` as a bare `on click`. qu and uk keep
+  // `'s` on a localized reference (`ruway's`), which reads no reference (filed).
+  [`on click put event's detail into #out`, ['qu', 'uk']],
+  [`on click put obj's target into #out`, []],
+  [`on click set x to obj's body then put x into #out`, []],
+  [`on click if event's detail is 1 put "Y" into #out end`, ['qu', 'uk']],
 ];
 
 describe.each(SOURCES)('%s', (source, broken) => {
@@ -97,6 +104,13 @@ describe.each(SOURCES)('%s', (source, broken) => {
   it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
     const foreign = render(parse(source, 'en')!, language);
     expect(normalize(render(parse(foreign, language)!, 'en')), foreign).toBe(normalize(source));
+  });
+});
+
+describe("a reference word is a possessive's property (PR 105)", () => {
+  it.each(['result', 'target', 'body', 'detail'])("obj's %s", word => {
+    const source = `on click put obj's ${word} into #out`;
+    expect(render(parse(source, 'en')!, 'en')).toBe(source);
   });
 });
 
