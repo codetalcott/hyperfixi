@@ -35,8 +35,29 @@ import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src/index';
 
 const FOREIGN = [
-  'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
-  'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ] as const;
 
 type Position = 'put' | 'set' | 'if' | 'increment' | 'assign' | 'count';
@@ -364,6 +385,55 @@ describe.each(Object.keys(TEMPLATES) as Position[])('%s', position => {
     const back = parse(foreign, language);
     expect(back ? render(back, 'en') : `(no parse: ${foreign})`, foreign).toBe(
       render(parse(source, 'en')!, 'en')
+    );
+  });
+});
+
+// Hand-written shapes the consolidation's mutants found misread (PR 104): a
+// translation of the English writes each of them, and a writer may too.
+describe('names the value-reading rules misread, hand-written', () => {
+  it.each([
+    // A conjunction first in a value has nothing on its left to join: pl `i`
+    // (and) before `-`, which may be unary and so reads no operand before it.
+    [
+      'pl',
+      'gdy click ustaw do x i - 1 wtedy umieść x do #out',
+      'on click set x to i - 1 then put x into #out',
+    ],
+    [
+      'es',
+      'al clic establecer x a y - 1 entonces poner x en #out',
+      'on click set x to y - 1 then put x into #out',
+    ],
+    // A leading negation keeps nothing: tr's `if` body comes right after the
+    // condition, so `yok` (no) held the branch's patient.
+    [
+      'tr',
+      'tıklama i üzerinde eğer yok "Y" i #out e koy son',
+      'on click if yok put "Y" into #out end',
+    ],
+    // A role marker in an expression is a variable, not its role's name.
+    [
+      'tr',
+      'tıklama i üzerinde x i değil na < 3 e ayarla ardından x i #out e koy',
+      'on click set x to not na < 3 then put x into #out',
+    ],
+    ['de', 'wenn klick setzen length of aus in #out', 'on click put length of aus into #out'],
+    ['fr', 'quand clic mettre length of de dans #out', 'on click put length of de into #out'],
+  ])('%s: %s', (language, code, english) => {
+    expect(render(parse(code, language)!, 'en')).toBe(english);
+  });
+
+  // `event` is a role marker's normalized form and the event reference's.
+  it.each(FOREIGN.filter(l => l !== 'qu' && l !== 'uk'))("%s: event's type", language => {
+    const source = "on click put event's type into #out";
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+  });
+
+  it('a conjunction between two operands still joins them', () => {
+    expect(render(parse('gdy click ustaw do x a i b wtedy umieść x do #out', 'pl')!, 'en')).toBe(
+      'on click set x to a and b then put x into #out'
     );
   });
 });

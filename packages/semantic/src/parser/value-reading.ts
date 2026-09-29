@@ -406,9 +406,11 @@ export const CONDITION_PREDICATES: ReadonlySet<string> = new Set(['empty', 'null
  *   ambiguous rendered surfaces only before a predicate adjective.
  * - S3: except where the copula is the condition's first word. No operand
  *   stands before it, so it is a variable the language spells like `is` (es
- *   `si es poner …`, sw `kama ni weka …`), and the branch begins after it. A
- *   negation there takes its operand after it, so it keeps its next word unless
- *   that is a command verb, never a predicate (sw `kama si weka …`). PR 84.
+ *   `si es poner …`, sw `kama ni weka …`), and the branch begins after it. PR
+ *   84. A leading negation holds nothing either: its half of S3 kept the next
+ *   word unless it was a command verb, and tr writes the branch's patient right
+ *   after the condition, so `eğer yok "Y" i #out e koy` (if yok) read `if no
+ *   "Y"`. Dropped by PR 104; nothing else measured moved.
  */
 export function copulaHoldsCondition(
   before: LanguageToken,
@@ -423,10 +425,5 @@ export function copulaHoldsCondition(
     CONDITION_COPULAS.has(prev) ||
     CONDITION_COPULAS.has(translateConnective(language, prevValue)) ||
     (CONDITION_COPULAS_SURFACE.has(prevValue) && CONDITION_PREDICATES.has(cur));
-  if (!copula || !copulaIsFirst) return copula;
-  const negation =
-    prev === 'not' || prev === 'no' || translateConnective(language, prevValue) === 'not';
-  const verb =
-    token.kind === 'keyword' && COMMAND_ACTION_KEYWORDS.has(cur) && !CONDITION_PREDICATES.has(cur);
-  return negation && !verb;
+  return copula && !copulaIsFirst;
 }

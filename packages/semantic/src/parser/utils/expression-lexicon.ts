@@ -1050,8 +1050,11 @@ export function isConnectiveOperand(
       ? (token.normalized ?? '').toLowerCase()
       : translateConnective(languageCode, token.value).toLowerCase();
   if (sense !== 'and' && sense !== 'or') return false;
-  // Alone, it joins nothing: an `if` condition that is only the word (es `si y`).
-  if (prev === undefined && next === undefined) return true;
+  // First, it has nothing on its left to join: alone, an `if` condition that
+  // is only the word (es `si y`); before an operator, the value's first
+  // operand (pl `ustaw do x i - 1`, set x to i - 1, where `-` may be unary and
+  // so reads no operand before it).
+  if (prev === undefined) return true;
   if (prev !== undefined && precedesOperand(prev.value)) return true;
   if (next === undefined) return false;
   if (followsOperand(next.value)) return true;
@@ -1121,7 +1124,15 @@ export function expressionWordOf(
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
   const connective = translateConnective(languageCode, token.value);
   if (connective !== token.value) return connective;
-  return token.kind === 'keyword' ? (token.normalized ?? token.value) : token.value;
+  if (token.kind !== 'keyword') return token.value;
+  // A role marker (normalized to its role, as tr `na` is `destination`) is no
+  // expression vocabulary, so in an expression it is a variable spelled like
+  // one: tr `değil na < 3` (not na < 3) joined as `not destination < 3`, de
+  // `length of aus` as `length of source`. Not `event`, which is also the
+  // event reference: de `ereignis's type` is `event's type`.
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (norm !== 'event' && ROLE_MARKER_CONCEPTS.has(norm)) return token.value;
+  return token.normalized ?? token.value;
 }
 
 /**

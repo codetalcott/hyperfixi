@@ -7,9 +7,11 @@
  *
  * The value-reading rules (`parser/value-reading.ts`) tell most such names
  * from the word by where they stand, and there the render is unchanged: every
- * tr and pl loop over `i` stays `i`. Where the rules cannot — de `ist` (is),
- * `auf` (on), `von` (of), fr `sur` (on), es `si` (if) inside an expression —
- * the plain render lost the variable, and the parenthesized one keeps it.
+ * tr and pl loop over `i` stays `i`. Where the rules cannot — de `ist` (is)
+ * and `bei` (at), fr `est` (is), es `si` (if) inside an expression — the
+ * plain render lost the variable, and the parenthesized one keeps it. (de
+ * `auf`, `von`, `aus` and fr `sur` needed it too, until PR 104 read a role
+ * marker in an expression as a variable.)
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, semanticRenderer, tokenize } from '../src/index';
@@ -47,21 +49,31 @@ describe('a variable the plain render loses is written in parentheses', () => {
   ];
   it.each([
     ['de', 'ist'],
-    ['de', 'auf'],
-    ['de', 'von'],
     ['de', 'bei'],
-    ['de', 'aus'],
-    ['fr', 'sur'],
+    ['fr', 'est'],
+    ['es', 'si'],
+    ['pt', 'ir'],
+    ['tr', 'al'],
   ])('%s `%s`', (language, name) => {
+    let parenthesized = 0;
     for (const template of TEMPLATES) {
       const node = parse(template(name), 'en')!;
       const english = render(node, 'en');
       const plain = semanticRenderer.render(node, language);
       const code = render(node, language);
-      expect(readBack(plain, language), plain).not.toBe(english);
-      expect(code).toContain(`(${name})`);
+      // It reads back, and differs from the plain render only where that one
+      // does not (PR 104's role-marker reading reads `setzen auf + 1` plain).
       expect(readBack(code, language), code).toBe(english);
+      if (readBack(plain, language) === english) expect(code).toBe(plain);
+      else {
+        expect(code).toContain(`(${name})`);
+        parenthesized++;
+      }
     }
+    expect(
+      parenthesized,
+      `${language} ${name}: some template needs the parentheses`
+    ).toBeGreaterThan(0);
   });
 
   it('an `of` owner: es `length of (si)`', () => {
