@@ -6920,6 +6920,11 @@ what A cannot in rendered text, with no visible cost where A already reads:
 | Full names oracle (2,522,364 read-backs)                              | 136 fixed, 0 worse                            |
 | Parenthesized value words (21 × 2 templates × 23)                     | identical to main                             |
 
+After PR 104 (a role marker in an expression reads as a variable), A reads de `auf`, `von`, `aus`
+and fr `sur` in the probe's positions plain, and B's share of the three-letter probe is 58 pairs
+(plain 5,875 of 6,003 → verified 5,933, 0 broken): de `ist`/`bei`, fr `est`, es `si`/`ir`/`es`,
+pt `ir`, tr `al`, sw `si`.
+
 The 11 worse are one garbage English source, `put (not) into #out` (`not` alone is no value),
 whose localized `(nicht)` now reads as a name. What is left misread: pronoun collisions (tr `o`,
 de `es`; no spelling tells them apart), qu's `click (x)` read as the event's parameters (filed
