@@ -47,7 +47,7 @@ import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
-import { curatedEndKeywordSet } from './end-keywords';
+import { curatedEndKeywordSet, endWordIsValue } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
   eventNameTranslations,
@@ -3344,7 +3344,9 @@ export class SemanticParserImpl implements ISemanticParser {
       const isEnd =
         current.kind === 'keyword' &&
         this.isEndKeyword(current.value, language) &&
-        !isPositionalEndNoun;
+        !isPositionalEndNoun &&
+        // An end word an operator follows is a variable spelled like it (C3).
+        !endWordIsValue(followingToken ?? undefined);
 
       // Depth-aware termination. An `end` that closes a NESTED block accumulated
       // mid-clause must not terminate the whole body. A nested `if`/`unless`/
@@ -7481,6 +7483,9 @@ export class SemanticParserImpl implements ISemanticParser {
     next: LanguageToken | undefined,
     language: string
   ): boolean {
+    // An end word an operator follows is a variable spelled like it (C3):
+    // tr `eğer son ve flag` (if son and flag) ended its block at `son`.
+    if (endWordIsValue(next)) return false;
     if (this.isEndKeyword(tok.value, language)) return true;
     if (tok.kind !== 'keyword' || (tok.normalized ?? '').toLowerCase() !== 'end') return false;
     return !(next && next.kind === 'selector');

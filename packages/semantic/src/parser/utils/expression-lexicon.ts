@@ -32,11 +32,12 @@
  */
 
 import type { LanguageToken } from '../../types';
-import { BINARY_OPERATORS, OPERATOR_CHARACTERS } from './operators';
+import { BINARY_OPERATORS, COMPARISON_OPERATORS, OPERATOR_CHARACTERS } from './operators';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
 import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
+import { endWordIsValue, isCuratedEndKeyword } from '../end-keywords';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 
 // prettier-ignore
@@ -502,9 +503,12 @@ export function matchPositionalRun(
   ];
   let i = start + 1;
 
-  // Required: the queried selector (e.g. <.message/>, .message, <button/>).
+  // Required: the queried selector (e.g. <.message/>, .message, <button/>). Not
+  // a comparison that some tokenizers lex as a selector: tr `son < 3` (a
+  // variable spelled like tr's end word, whose reading is `last`) joined as
+  // `last <` (PR 112).
   const sel = tokens[i];
-  if (!sel || sel.kind !== 'selector') return null;
+  if (!sel || sel.kind !== 'selector' || COMPARISON_OPERATORS.has(sel.value)) return null;
   parts.push({ text: sel.value, token: sel });
   i++;
 
@@ -1167,6 +1171,12 @@ export function expressionWordOf(
   // event reference: de `ereignis's type` is `event's type`.
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm !== 'event' && ROLE_MARKER_CONCEPTS.has(norm)) return token.value;
+  // An end word before an operator is a variable spelled like it (C3,
+  // endWordIsValue): es `fin < 3` joined as `end < 3`, tr `son ve flag` (its
+  // `son` reads `last`) as `last and flag`.
+  if ((norm === 'end' || isCuratedEndKeyword(token.value, languageCode)) && endWordIsValue(next)) {
+    return token.value;
+  }
   return token.normalized ?? token.value;
 }
 

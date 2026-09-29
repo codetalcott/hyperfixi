@@ -6662,7 +6662,7 @@ in the order it applies:
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
 | C1  | `a`/`an` before an operator is a variable, not an article (`put a + b`)                                                                                                                                                                                                                                                                                     | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | #1175                                  | `en-reference-meaning.test.ts`                                                              |
 | C2  | `a`/`an` before the pattern's next marker is a variable (de `erhöhe a um 1`)                                                                                                                                                                                                                                                                                | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | 84                                     | `colliding-names.test.ts`                                                                   |
-| C3  | `then`, `end` (not before a selector) and a curated end word are never a value                                                                                                                                                                                                                                                                              | `neverAValue` (`value-reading.ts`)                                | #635                                   | `multilingual-roadmap-fixes.test.ts`                                                        |
+| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word an operator, `and`, `or` or the copula follows is one (the block scan, the clause walk and the join agree) | `neverAValue` (`value-reading.ts`), `endWordIsValue` (`end-keywords.ts`) | #635; before an operator 112 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | `verbEndsCountSlot`, `verbStandsAlone` (`value-reading.ts`)       | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | `verbSkipsOptionalSlot`, `verbStandsAlone` (`value-reading.ts`)   | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `maySkipVerbSlot` (`value-reading.ts`), from `matchTokenSequence` | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
@@ -6831,7 +6831,16 @@ of it keeps the difference explicit and is filed instead.
   (`semantic-parser.ts`): none of C9's readings (a lone conjunction, `empty`, an article), and a
   bare identifier is a literal there, where the matcher's reads a variable. A second value
   classifier, for the SOV verb-anchoring paths.
-- **C3's curated end word misreads a variable spelled like one** (found by PR 90's mutants): tr
+- ~~**C3's curated end word misreads a variable spelled like one**~~ **FIXED by PR 112**, where an
+  operator, `and`, `or` or the copula follows it (a block's end never is): the block scan, the
+  handler body's clause walk, C3 and the join each read it as the variable now,
+  and the verified render keeps the plain spelling there (es `fin < 3`, no longer `(fin)`). Left:
+  an end word as a whole value right before a real end (`increment fin fin`, which B writes
+  `(fin)`), sw `na` after an end word (its `and` sense needs an operand), and tl `tapos` in the
+  fused tl if-event. tr `x i son < 3 e ayarla` reads too: tr lexes `<` as a selector, and
+  `matchPositionalRun` had taken `son <` (`son` reads `last`) for a positional query; a
+  comparison is no query selector now. A probe rendering each language's end words as variables
+  plainly (the hand-written form) into seven shapes misread all 154 cases on main and 28 now. The filing (found by PR 90's mutants): tr
   `eğer son ve flag …` (if son and flag) loses its whole `if`, and es `set x to fin < 3` reads
   `set x to <`. Without the curated half of C3 both read closer (`if last and flag`, `set x to end
   < 3`: still the end word, not the variable) and no corpus row moves, including the tr
@@ -6877,6 +6886,11 @@ of it keeps the difference explicit and is filed instead.
   an operator run, bracket or condition: es `si`, fr `fin`, id `aku`/`dia`/`nya`, tr `son`, pt
   `sua`/`tu`, qu (1,275 entries alone). The renderer also translates a variable spelled like an
   English lexicon word inside an expression: `set x to at < 3` renders ru `в < 3`, tr `de < 3`.
+  **After PR 112 (measured 2026-09-29), no structure collision is left**: among names English can
+  have, 893 read-backs still differ (1,776 on main before PR 111), and 802 of them are pronoun
+  collisions — a variable spelled like a value word (tl `ako`, fr `je`, id `aku`, pl `cel`, de
+  `ich`), which no spelling tells apart — and 91 are the name `no`, upstream's operator, which
+  neither engine takes for a variable (the renderer translates it: es `ningún`).
 
 ### Name collisions: parser inference, or renderer + diagnostic? (spike, 2026-09-28)
 
