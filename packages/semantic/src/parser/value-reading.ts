@@ -110,11 +110,6 @@ export class SlotContext {
   get clauseEndsAfter(): boolean {
     return clauseEndsAt(this.next);
   }
-
-  /** A run operator follows the token. */
-  get operatorFollows(): boolean {
-    return isRunOperator(this.next);
-  }
 }
 
 /**
@@ -123,7 +118,7 @@ export class SlotContext {
  * rule took `return a + b` for "article, noun" and kept `return +` — #1175)
  * and before the pattern's next marker (de `erhöhe a um 1`, increment a by 1,
  * whose `um` the tokenizer leaves an identifier — PR 84). Its operators are
- * the binary ones: `mod` is none here, where it is one for C7 and C10.
+ * the binary ones: `mod` is none here, where it is one for C10.
  */
 export function articleIsVariable(slot: SlotContext): boolean {
   const word = slot.token.value.toLowerCase();
@@ -274,8 +269,6 @@ export function notWordIsVariable(
  *
  * - directly before the pattern's next marker, with a particle on either side
  *   of it (`i i 2 artır`; `k i i artır`, increment k by i) — PR 64;
- * - directly before an operator (`i < - 2`: the operator run cannot take a
- *   unary minus, and the value's tail reads it from here) — PR 67;
  * - right after its slot's own marker, before an unmarked role, whose value
  *   the next token is (pl `ustaw do o 5`, set o to 5) — PR 84. Before a value
  *   of its own it is part of the marker (id `ke dalam #out`);
@@ -289,8 +282,8 @@ export function particleIsValue(slot: SlotContext): boolean {
   const next = slot.next;
   return (
     (next !== undefined &&
-      ((slot.nextIsMarker && (next.kind === 'particle' || slot.prev?.kind === 'particle')) ||
-        slot.operatorFollows)) ||
+      slot.nextIsMarker &&
+      (next.kind === 'particle' || slot.prev?.kind === 'particle')) ||
     (slot.afterLiteral && slot.beforeRole) ||
     slot.clauseEndsAfter
   );
