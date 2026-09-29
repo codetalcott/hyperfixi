@@ -6836,9 +6836,11 @@ of it keeps the difference explicit and is filed instead.
   handler body's clause walk, C3 and the join each read it as the variable now,
   and the verified render keeps the plain spelling there (es `fin < 3`, no longer `(fin)`). Left:
   an end word as a whole value right before a real end (`increment fin fin`, which B writes
-  `(fin)`), tr's SOV verb-anchoring fallback (`x i son < 3 e ayarla` joins through the second
-  classifier), sw `na` after an end word (its `and` sense needs an operand), and tl `tapos` in
-  the fused tl if-event. The filing (found by PR 90's mutants): tr
+  `(fin)`), sw `na` after an end word (its `and` sense needs an operand), and tl `tapos` in the
+  fused tl if-event. tr `x i son < 3 e ayarla` reads too: tr lexes `<` as a selector, and
+  `matchPositionalRun` had taken `son <` (`son` reads `last`) for a positional query; a
+  comparison is no query selector now. A probe rendering each language's end words as variables
+  plainly (the hand-written form) into seven shapes misread all 154 cases on main and 28 now. The filing (found by PR 90's mutants): tr
   `eğer son ve flag …` (if son and flag) loses its whole `if`, and es `set x to fin < 3` reads
   `set x to <`. Without the curated half of C3 both read closer (`if last and flag`, `set x to end
   < 3`: still the end word, not the variable) and no corpus row moves, including the tr
