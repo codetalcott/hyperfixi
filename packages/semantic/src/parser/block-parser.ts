@@ -231,6 +231,52 @@ function patternLiterals(tokens: readonly PatternToken[]): string[] {
  */
 const TAKES_ON_TARGET: ReadonlySet<string> = new Set(['toggle', 'trigger']);
 
+/** A literal of a pattern, its groups' inline, in order: its spellings and the role it introduces. */
+interface LiteralSlot {
+  readonly words: readonly string[];
+  readonly role: string | undefined;
+}
+
+function literalSlots(tokens: readonly PatternToken[]): LiteralSlot[] {
+  return tokens.flatMap((t, i): LiteralSlot[] => {
+    if (t.type === 'group') return literalSlots(t.tokens);
+    if (t.type !== 'literal') return [];
+    const next = tokens[i + 1];
+    return [
+      {
+        words: [t.value, ...(t.alternatives ?? [])].map(w => w.toLowerCase()),
+        role: next?.type === 'role' ? next.role : undefined,
+      },
+    ];
+  });
+}
+
+/**
+ * Does the pattern still owe `surface`, after its verb and the words `written`
+ * since? It writes `surface` for a role the command requires, and every marker
+ * written since the verb is one of an earlier literal, in order. An optional
+ * role leaves the `on` to open a handler: ar `أضف .active على keyup` (add
+ * .active, on keyup) is two, and so is every role English marks with `on`
+ * (set's scope, toggle's target), all of them optional.
+ */
+function owesMarker(
+  slots: readonly LiteralSlot[],
+  surface: string,
+  written: readonly string[],
+  required: ReadonlySet<string>
+): boolean {
+  return slots.some((slot, at) => {
+    if (!slot.words.includes(surface) || !slot.role || !required.has(slot.role)) return false;
+    let from = 0;
+    for (const word of written) {
+      const k = slots.findIndex((s, i) => i >= from && i < at && s.words.includes(word));
+      if (k < 0) return false;
+      from = k + 1;
+    }
+    return true;
+  });
+}
+
 /**
  * Is the `on`-marker at `j` the preceding command's own? The trigger split read
  * the `on el` of `toggle .a on el log 1` as a second handler, and the commands
@@ -240,6 +286,15 @@ const TAKES_ON_TARGET: ReadonlySet<string> = new Set(['toggle', 'trigger']);
  * toggle reads `trên` only in its handcrafted one; a handler's fused patterns
  * are registered as `on`'s), and has not used it already (`toggle .a on #x on
  * keyup …` splits at the second `on`).
+ *
+ * It is also the command's when the language spells another of the command's
+ * markers like `on`, and the command still owes it (owesMarker): de `auf` is
+ * `on`, and set's and put's `to`, so `setze x auf n + 3` (set x to n + 3)
+ * after a `dann` read as a handler for an event `n`, and he `ב` is also put's
+ * `into` (PR 110). Not a role the command can do without (add's destination;
+ * set's `on` scope, which leaves a following `on` to open a handler on both
+ * engines), and not once the command has passed that marker's place (es
+ * `establecer x a 5 en keyup` has written its `a`, `en`'s alternative).
  */
 function isPrecedingCommandMarker(
   tokens: readonly LanguageToken[],
@@ -254,12 +309,22 @@ function isPrecedingCommandMarker(
     if (endsClause(t) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
     if (!isAction(action)) continue;
-    return (
-      TAKES_ON_TARGET.has(action) &&
-      getPatternsForLanguage(language).some(
-        p => p.command === action && patternLiterals(p.template.tokens).includes(surface)
-      )
+    const patterns = getPatternsForLanguage(language).filter(p => p.command === action);
+    if (TAKES_ON_TARGET.has(action)) {
+      return patterns.some(p => patternLiterals(p.template.tokens).includes(surface));
+    }
+    const required = new Set(
+      (commandSchemas[action]?.roles ?? []).filter(r => r.required).map(r => r.role as string)
     );
+    return patterns.some(p => {
+      const slots = literalSlots(p.template.tokens);
+      const words = new Set(slots.flatMap(slot => slot.words));
+      const written = tokens
+        .slice(k + 1, j)
+        .map(u => u.value.toLowerCase())
+        .filter(w => words.has(w));
+      return owesMarker(slots, surface, written, required);
+    });
   }
   return false;
 }

@@ -83,11 +83,15 @@ describe('a variable the plain render loses is written in parentheses', () => {
     expect(readBack(code, 'es')).toBe(source);
   });
 
-  it('where neither render reads, the plain one', () => {
-    // de reads the second `set` of this chain as a handler for any variable
-    // (`auf n` as `on n`, filed): the parentheses would fix nothing.
-    const node = parse('on click set ist to 2 then set x to ist + 3 then put x into #out', 'en')!;
-    expect(render(node, 'de')).toBe(semanticRenderer.render(node, 'de'));
+  it('de `ist` in the second `set` of a chain', () => {
+    // de read that `set` as a handler (`auf ist` as `on ist`) until PR 110; now
+    // it reads, and `ist + 3` needs its parentheses as it does anywhere.
+    const source = 'on click set ist to 2 then set x to ist + 3 then put x into #out';
+    const code = render(parse(source, 'en')!, 'de');
+    expect(code).toBe(
+      'wenn klick setze (ist) auf 2 dann setze x auf (ist) + 3 dann setzen x in #out'
+    );
+    expect(readBack(code, 'de')).toBe(source);
   });
 
   it('es `si` inside an expression', () => {
