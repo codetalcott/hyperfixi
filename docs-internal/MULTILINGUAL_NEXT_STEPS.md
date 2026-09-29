@@ -6509,7 +6509,7 @@ an object's property through `'s`/`of`, the `of` operator's, and a counted attri
 83 (a possessive target before a role with no marker); 102 after PR 84 (the colliding names left),
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
-`equal to`); 1,040 after PR 95 (a type name stays English).
+`equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6528,12 +6528,32 @@ pairs, by where the loss sits:
 - **an object literal before a type check, 170**: `{} is a Number`/`String` in es/it/pt/tr (the
   type name is not the cause: `Number` was never translated). The `{ }` operand and the phrase do
   not read back as one value (es `{ } es a Number` parses as a bare `on click`).
-- **tl and tr `includes`, 611**: an owner vocabulary decision (their words for `includes` read
-  back as something else).
+- **tl and tr `includes`, 611 — an owner vocabulary decision.** Both i18n dictionaries give
+  `includes` the word they give `inclusive`, pick's range word: tl `kasama`, tr `dahil`
+  (`packages/i18n/src/dictionaries/{tl,tr}.ts`), and both tokenizers normalize it to `inclusive`
+  (`tokenizers/tl.ts`, `turkish.ts`). The renderer's lexicon is locked to the dictionary
+  (`packages/i18n/src/lexicon-parity.test.ts`), so it writes `kasama`/`dahil`, and the reader
+  takes `inclusive`: tl `ilagay "xab6" kasama "a" sa #out` parses as a bare `on click`, tr `eğer
+  s dahil "a"` reads `if s inclusive "a"`. `contains` round-trips in both (tl `naglalaman`, tr
+  `içerir`). The options:
+  1. **`includes` gets `contains`' word** in both dictionaries. Both engines read `includes` and
+     `contains` as one operator, so the program means the same; the read-back says `contains`.
+     One dictionary entry per language, nothing new in the reader. The smallest change.
+  2. **A word of its own for `includes`** (tl `kabilang`?, tr `kapsar`? — a native speaker's
+     call), in the dictionary and the tokenizer. The read-back says `includes`.
+  3. **A word of its own for `inclusive`** instead, which programs use far less, keeping
+     `kasama`/`dahil` for `includes`: the tokenizers' normalized form changes with it.
+  4. **Tell them apart by position in the reader** (between two operands, `includes`; after a
+     range, `inclusive`): a new reading rule, which part 3's freeze on inference argues against.
+
+  Recommended: 1, unless tl and tr readers should see "includes" rather than "contains" (then 2).
+  Once decided, tl and tr can join core's `condition-phrases-direct-path.test.ts` for every
+  condition: each of the others passes there (measured with PR 96).
 - **the direct path before `#a's textContent`, 111** (and `includes #a.textContent` in the `if`
   position): bn, hi, ja, ko, tl, vi, zh.
-- **it `does not include`, 46**: the join's connective table turns the `include` of `does non
-  include` into `includes`.
+- ~~**it `does not include`, 46**~~ **FIXED by PR 96**: the join's connective table turned the
+  `include` of `does non include` into `includes` (it's word for both); the verb of a `does not`
+  phrase now stays as written after the negation.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
