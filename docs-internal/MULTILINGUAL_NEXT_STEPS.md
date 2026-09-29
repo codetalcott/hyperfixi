@@ -6778,8 +6778,12 @@ of it keeps the difference explicit and is filed instead.
   may not precede an operator (J5's `followsOperand`), except `-`, which "may be unary" — so pl's
   variable `i`, also its `and`, before a binary `- 1` reads as `and`. Counting `-` fixes it; what
   the exclusion was for is unmeasured.
-- **qu `put (o) into #out` reads `on click(o) put into ta #out`**: `click (o)` is taken for the
-  event's parameters. On main.
+- ~~**qu `put (o) into #out` reads `on click(o) put into ta #out`**~~ **FIXED by PR 107**: a group
+  apart from its event, before a case marker, is that marker's value, not the event's parameters.
+  Parameters touch their event in every rendering (`click(evt)`), and the SOV event markers that
+  follow them (bn `ক্লিক(evt) তে`, tr `tıklama(evt) i üzerinde`) still do; a spaced group before a
+  command is still the parameters (es `al clic (evt) poner …`). The filing: `click (o)` is taken
+  for the event's parameters. On main.
 - ~~**tr `değil na < 3` (not na < 3) reads `not destination < 3`**~~ **FIXED by PR 104**: a role
   marker in an expression is a variable spelled like one, not its role's name (J1, generalized
   past a lone word). The filing: `set x to not na * 2`
@@ -6796,7 +6800,10 @@ of it keeps the difference explicit and is filed instead.
   condition). Without the negation half of S3 it reads right, and nothing else measured moves but
   names English cannot have; the same holding reads bn/hi/ja/ko/qu `if not` and `if no` with no
   operand that way.
-- **qu `put x as FormData into #out` reads `put ta into #out`** (found by PR 95's type-name test,
+- ~~**qu `put x as FormData into #out` reads `put ta into #out`**~~ **FIXED by PR 107**: the qu
+  tokenizer no longer splits an attached case marker off a PascalCase word (a type's name); a
+  camelCase variable keeps its attached marker (`triggerElta`), so `userData` stays ambiguous. The
+  filing: (found by PR 95's type-name test,
   on main too): qu's tokenizer takes a word's final `ta` for its accusative, so `FormData` is
   `FormDa` and a marker. fetch's `with` fold rejoins it (Arc E); a value does not.
 - **Names inside expressions** (part 3's question, measured): the extended names oracle's
