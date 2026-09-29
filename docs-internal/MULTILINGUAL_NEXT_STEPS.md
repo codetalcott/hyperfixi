@@ -6510,7 +6510,8 @@ an object's property through `'s`/`of`, the `of` operator's, and a counted attri
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
 `equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`); 482
-after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a comparison phrase).
+after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a comparison phrase); 102 after PR 102 (the `a` of a type
+check), every one ACCEPTED: the operator-phrase queue is empty.
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6526,9 +6527,14 @@ pairs, by where the loss sits:
   `Element` in 18 languages (`as Element` too), and the reader took the word for a variable. Both
   engines read type names in English, and the value lexicon now masks one after `as` or `is a`/`is
   an` (`type-names.test.ts` round-trips every conversion and checked type through 23 languages).
-- **an object literal before a type check, 170**: `{} is a Number`/`String` in es/it/pt/tr (the
-  type name is not the cause: `Number` was never translated). The `{ }` operand and the phrase do
-  not read back as one value (es `{ } es a Number` parses as a bare `on click`).
+- ~~**an object literal before a type check, 170**~~ **FIXED by PR 102**: `{} is a Number`/`String`
+  in es/it/pt/tr (the type name is not the cause: `Number` was never translated). Not the object
+  literal either: any operand longer than one token (`obj's v`, `v of obj`, `String(n)`, `{ }`)
+  before `is a`, whose `a` is es/it/pt's `to` and tr's dative — the command's marker there — so the
+  value's extent stopped at it (es `{ } es a Number` parsed as a bare `on click`). A lone operand
+  passed: the operator run reads the phrase. The word `a` no longer stops a value (C15), and the
+  expression parser says where the value ends; a copula and a type-name guard protected nothing
+  measured and were dropped. `value-extent.test.ts` runs the shapes in 23 languages.
 - ~~**tl and tr `includes`, 611 — an owner vocabulary decision.**~~ **DECIDED and FIXED by PR 100:
   option 1** (512 pairs; the 99 `includes` pairs left are the direct-path family below). tl writes
   `includes` as `naglalaman` and tr as `içerir`, `contains`' words, in the dictionaries and the
@@ -6592,7 +6598,7 @@ in the order it applies:
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `notWordIsVariable` (`value-reading.ts`), from `tryConsumeRunOperand` | 84                                     | `colliding-names.test.ts`                                                                   |
 | C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53                                     | `value-extent.test.ts`                                                                      |
 | C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand` (`utils/value-extent.ts`) | 59                                     | `connective-operand.test.ts`                                                                |
-| C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`) and the `to` of `equal to`                                                                                                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo` (`utils/value-extent.ts`)         | 69, 74, 94  | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`                                             |
+| C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`) and the `to` of `equal to`; the word `a` (a type check's; es/it/pt `to`, tr's dative) never stops one                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo`, `isWordA` (`utils/value-extent.ts`) | 69, 74, 94, 102 | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`                                             |
 | C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `possessiveLinkEnds`, `longestWholeRun` (`utils/value-extent.ts`) | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
 
 **The join** (`joinExpressionTokens` → `expressionWordOf`, `parser/utils/expression-lexicon.ts`),
