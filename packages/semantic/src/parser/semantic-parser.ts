@@ -42,13 +42,18 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { joinExpressionTokens } from './utils/expression-lexicon';
+import {
+  endWordIsValue,
+  endWordPlace,
+  joinExpressionTokens,
+  type EndWordPlace,
+} from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { tokenValue } from './token-value';
-import { curatedEndKeywordSet, endWordIsValue } from './end-keywords';
+import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
   eventNameTranslations,
@@ -2542,7 +2547,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const loopHeadAction = actionName === 'repeat' || actionName === 'while';
         const endsClause = (k: number): boolean =>
           isClauseBoundary(all[k]) ||
-          (loopHeadAction && this.isBlockEndToken(all[k], all[k + 1], language));
+          (loopHeadAction && this.isBlockEndToken(all[k], endWordPlace(all, k), language));
         // The scan-back below identifies the verb by its NORMALIZED form. That
         // misses whenever the language's verb normalizes to something other
         // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -2592,7 +2597,7 @@ export class SemanticParserImpl implements ISemanticParser {
             ) {
               nested++;
             } else if (nested > 0) {
-              if (this.isBlockEndToken(t, all[clauseEnd + 1], language)) nested--;
+              if (this.isBlockEndToken(t, endWordPlace(all, clauseEnd), language)) nested--;
             } else if (endsClause(clauseEnd)) {
               break;
             }
@@ -3324,7 +3329,8 @@ export class SemanticParserImpl implements ISemanticParser {
       // Check if this is a conjunction token (clause boundary)
       const isConjunction =
         current.kind === 'conjunction' ||
-        (current.kind === 'keyword' && this.isThenKeyword(current.value, language));
+        (current.kind === 'keyword' &&
+          this.isThenAt(current, endWordPlace(tokens.tokens, tokens.position()), language));
 
       // Check if this is an 'end' keyword (terminates block). The English
       // positional-put phrase `at end of <target>` contains the literal word
@@ -3346,8 +3352,8 @@ export class SemanticParserImpl implements ISemanticParser {
         current.kind === 'keyword' &&
         this.isEndKeyword(current.value, language) &&
         !isPositionalEndNoun &&
-        // An end word an operator follows is a variable spelled like it (C3).
-        !endWordIsValue(followingToken ?? undefined);
+        // An end word where a value stands is a variable spelled like it (C3).
+        !endWordIsValue(endWordPlace(tokens.tokens, tokens.position()), language);
 
       // Depth-aware termination. An `end` that closes a NESTED block accumulated
       // mid-clause must not terminate the whole body. A nested `if`/`unless`/
@@ -3381,7 +3387,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const closesBlock =
         isEnd ||
         (!isPositionalEndNoun &&
-          this.isBlockEndToken(current, followingToken ?? undefined, language));
+          this.isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
       if (closesBlock && pendingOpenerKinds.every(kind => kind === 'loop')) {
         if (this.closeLoopAtEnd(tokens, currentClauseTokens, clauses, commandPatterns, language)) {
           currentClauseTokens.length = 0;
@@ -5442,7 +5448,7 @@ export class SemanticParserImpl implements ISemanticParser {
         current &&
         openLoops() > 0 &&
         !this.isEndKeyword(current.value, language) &&
-        this.isBlockEndToken(current, tokens.peek(1) ?? undefined, language) &&
+        this.isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language) &&
         !isAtEndPositionNoun(language, current.value, tokens.peek(-1)?.value, tokens.peek(1)?.value)
       ) {
         flushClause();
@@ -6960,6 +6966,17 @@ export class SemanticParserImpl implements ISemanticParser {
     if (isForWord) tokens.advance();
   }
 
+  /**
+   * Is `tok` the language's `then` where it stands? tl `tapos` is both `then`
+   * and one of its end words, and where a value stands it is neither (C3,
+   * endWordIsValue): `kung tapos at flag …` (if tapos and flag) read `if` with
+   * no condition, then its branch.
+   */
+  private isThenAt(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
+    if (!this.isThenKeyword(tok.value, language)) return false;
+    return !(this.isEndKeyword(tok.value, language) && endWordIsValue(place, language));
+  }
+
   private isThenKeyword(value: string, language: string): boolean {
     const v = value.toLowerCase();
     const thenKeywords: Record<string, Set<string>> = {
@@ -7428,17 +7445,16 @@ export class SemanticParserImpl implements ISemanticParser {
    * normalized-only recognition: a curated surface form (`end`, ja 終わり, …)
    * keeps terminating even before a selector-led sibling clause.
    */
-  private isBlockEndToken(
-    tok: LanguageToken,
-    next: LanguageToken | undefined,
-    language: string
-  ): boolean {
-    // An end word an operator follows is a variable spelled like it (C3):
-    // tr `eğer son ve flag` (if son and flag) ended its block at `son`.
-    if (endWordIsValue(next)) return false;
-    if (this.isEndKeyword(tok.value, language)) return true;
-    if (tok.kind !== 'keyword' || (tok.normalized ?? '').toLowerCase() !== 'end') return false;
-    return !(next && next.kind === 'selector');
+  private isBlockEndToken(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
+    const next = place.next;
+    const endWord =
+      this.isEndKeyword(tok.value, language) ||
+      (tok.kind === 'keyword' &&
+        (tok.normalized ?? '').toLowerCase() === 'end' &&
+        !(next && next.kind === 'selector'));
+    // An end word where a value stands is a variable spelled like it (C3): tr
+    // `eğer son ve flag` (if son and flag) ended its block at `son`.
+    return endWord && !endWordIsValue(place, language);
   }
 
   /**
@@ -7502,6 +7518,10 @@ export class SemanticParserImpl implements ISemanticParser {
     // its branch parses made describe a parse that never happened.
     const foldCoverageMark = this.coverageMark();
     tokens.advance(); // consume if/unless
+    // The block's tokens stand in the stream from here on: where an end word
+    // stands (endWordPlace) is read there, the `if` before the first included.
+    const all = tokens.tokens;
+    const blockStart = tokens.position();
 
     // Collect the whole block from the stream: every token up to the matching
     // depth-0 `end` (or the stream end). A nested block opener (see
@@ -7523,7 +7543,7 @@ export class SemanticParserImpl implements ISemanticParser {
         tokens.advance();
         continue;
       }
-      if (this.isBlockEndToken(t, tokens.peek(1) ?? undefined, language)) {
+      if (this.isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
         if (depth === 0) {
           tokens.advance(); // consume the terminating `end`
           break;
@@ -7561,8 +7581,8 @@ export class SemanticParserImpl implements ISemanticParser {
       // stay visible to the command-start test below.
       if (i > 0 && (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language))) {
         bodyDepth++;
-      } else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
-      if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
+      } else if (this.isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) bodyDepth--;
+      if (bodyDepth === 0 && this.isThenAt(t, endWordPlace(all, blockStart + i), language)) {
         sawThen = true;
         i++; // skip the `then`
         break;
@@ -7648,7 +7668,7 @@ export class SemanticParserImpl implements ISemanticParser {
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
       if (this.opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
-      else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) branchDepth--;
+      else if (this.isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) branchDepth--;
       if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
         inElse = true;
         continue; // skip the `else`

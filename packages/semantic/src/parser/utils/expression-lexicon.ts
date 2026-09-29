@@ -31,13 +31,19 @@
  * selectors — and a wrong rewrite here is silent.
  */
 
-import type { LanguageToken } from '../../types';
-import { BINARY_OPERATORS, COMPARISON_OPERATORS, OPERATOR_CHARACTERS } from './operators';
+import type { ActionType, LanguagePattern, LanguageToken } from '../../types';
+import {
+  BINARY_OPERATORS,
+  COMPARISON_OPERATORS,
+  OPERATOR_CHARACTERS,
+  RUN_OPERATORS,
+} from './operators';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
 import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
-import { endWordIsValue, isCuratedEndKeyword } from '../end-keywords';
+import { isCuratedEndKeyword } from '../end-keywords';
+import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 
 // prettier-ignore
@@ -958,8 +964,7 @@ function resolveAmbiguousSense(
   prevText: string | undefined,
   afterNext: LanguageToken | undefined
 ): string | undefined {
-  const table = AMBIGUOUS_SENSES[languageCode];
-  const rule = table?.[token.value] ?? table?.[token.value.toLowerCase()];
+  const rule = senseRuleOf(languageCode, token);
   if (!rule) return undefined;
   // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
   // though `Number` could look identifier-bare; the sets are disjoint anyway.
@@ -996,7 +1001,15 @@ function resolveAmbiguousSense(
   ) {
     return rule.beforeBareIdentifier;
   }
-  if (rule.beforeOperand && startsOperand(next)) return rule.beforeOperand;
+  // An end word where a value stands is an operand too (C3): qu `mana tukuy`
+  // (not tukuy), whose `tukuy` is also an end word.
+  const nextEndWordOperand =
+    !!next &&
+    isEndWord(next, languageCode) &&
+    endWordIsValue({ prev: token, beforePrev: prev, next: afterNext }, languageCode);
+  if (rule.beforeOperand && (startsOperand(next) || nextEndWordOperand)) {
+    return rule.beforeOperand;
+  }
   if (rule.beforeSelector && next?.kind === 'selector') return rule.beforeSelector;
   // Before a class, `has`: `exists` takes no operand, so tl `#a may .x` is
   // `#a has .x` although `may` after a subject is `exists`.
@@ -1006,7 +1019,10 @@ function resolveAmbiguousSense(
   if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
     return rule.afterSubject;
   }
-  if (rule.betweenOperands && endsOperand(prev) && startsOperand(next)) {
+  // An end word the join read as its own word is an operand (sw `mwisho na
+  // flag`, mwisho and flag).
+  const prevEndWordOperand = !!prev && isEndWord(prev, languageCode) && prevText === prev.value;
+  if (rule.betweenOperands && (endsOperand(prev) || prevEndWordOperand) && startsOperand(next)) {
     return rule.betweenOperands;
   }
   // A keyword operand (`true`, `null`, `me`) and a closing bracket end an
@@ -1015,6 +1031,12 @@ function resolveAmbiguousSense(
     return rule.afterOperand;
   }
   return rule.otherwise;
+}
+
+/** The sense table's rule for a word, if the language has one. */
+function senseRuleOf(languageCode: string, token: LanguageToken): AmbiguousSenseRule | undefined {
+  const table = AMBIGUOUS_SENSES[languageCode];
+  return table?.[token.value] ?? table?.[token.value.toLowerCase()];
 }
 
 /**
@@ -1171,10 +1193,10 @@ export function expressionWordOf(
   // event reference: de `ereignis's type` is `event's type`.
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm !== 'event' && ROLE_MARKER_CONCEPTS.has(norm)) return token.value;
-  // An end word before an operator is a variable spelled like it (C3,
+  // An end word where a value stands is a variable spelled like it (C3,
   // endWordIsValue): es `fin < 3` joined as `end < 3`, tr `son ve flag` (its
   // `son` reads `last`) as `last and flag`.
-  if ((norm === 'end' || isCuratedEndKeyword(token.value, languageCode)) && endWordIsValue(next)) {
+  if (isEndWord(token, languageCode) && endWordIsValue({ prev, next, afterNext }, languageCode)) {
     return token.value;
   }
   return token.normalized ?? token.value;
@@ -1242,6 +1264,176 @@ function isStructureKeyword(token: LanguageToken): boolean {
   return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
 }
 
+/** An end word: a keyword normalized `end`, or one of the language's curated end words. */
+export function isEndWord(token: LanguageToken, languageCode: string): boolean {
+  if (token.kind !== 'keyword') return false;
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  return norm === 'end' || isCuratedEndKeyword(token.value, languageCode);
+}
+
+/**
+ * Where an end word stands: the two tokens either side of it. `beforePrev`
+ * says whether `prev` is itself a value (a verb's or a marker's), and
+ * `afterNext` whether `next` is the end word's own marker.
+ */
+export interface EndWordPlace {
+  readonly prev?: LanguageToken | undefined;
+  readonly beforePrev?: LanguageToken | undefined;
+  readonly next?: LanguageToken | undefined;
+  readonly afterNext?: LanguageToken | undefined;
+}
+
+/** The place of the token at `i` of `tokens`. */
+export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWordPlace {
+  return {
+    prev: tokens[i - 1],
+    beforePrev: tokens[i - 2],
+    next: tokens[i + 1],
+    afterNext: tokens[i + 2],
+  };
+}
+
+/** The words after which an end word is an operand (endWordIsValue). */
+const END_WORD_OPERANDS: ReadonlySet<string> = new Set(['and', 'or', 'is']);
+
+/**
+ * The words that owe the value after them (endWordIsValue), where no verb or
+ * marker takes them as its own value. `not` owes one wherever it stands.
+ */
+const OWING_WORDS: ReadonlySet<string> = new Set([
+  'if',
+  'unless',
+  'while',
+  'until',
+  'is',
+  'and',
+  'or',
+]);
+
+const isAction = (word: string): word is ActionType =>
+  Object.prototype.hasOwnProperty.call(commandSchemas, word);
+
+/** A command verb: a keyword, or a word the tokenizer normalized to one. */
+function verbOf(token: LanguageToken): ActionType | undefined {
+  if (token.kind !== 'keyword' && !(token.normalized && token.normalized !== token.value)) {
+    return undefined;
+  }
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  return isAction(norm) ? norm : undefined;
+}
+
+const markersAfterVerbMemo = new WeakMap<readonly LanguagePattern[], Map<string, Set<string>>>();
+
+/**
+ * The markers a command's own patterns write right after its verb: it
+ * `impostare in {destination} {patient}` (set), pl `ustaw do …`. Such a marker
+ * right after the verb is the marker, not a variable the verb takes.
+ */
+function markersAfterVerb(languageCode: string, action: ActionType): ReadonlySet<string> {
+  let patterns: readonly LanguagePattern[];
+  try {
+    patterns = getPatternsForLanguage(languageCode);
+  } catch {
+    return new Set();
+  }
+  let byAction = markersAfterVerbMemo.get(patterns);
+  if (!byAction) {
+    byAction = new Map();
+    markersAfterVerbMemo.set(patterns, byAction);
+  }
+  let markers = byAction.get(action);
+  if (!markers) {
+    markers = new Set();
+    for (const pattern of patterns) {
+      if (pattern.command !== action) continue;
+      const [verb, after] = pattern.template.tokens;
+      if (verb?.type !== 'literal' || after?.type !== 'literal') continue;
+      for (const word of [after.value, ...(after.alternatives ?? [])]) {
+        markers.add(word.toLowerCase());
+      }
+    }
+    byAction.set(action, markers);
+  }
+  return markers;
+}
+
+/** A role marker: a particle, or a keyword normalized to the role it marks (fr `à`, de `auf`). */
+function isMarker(token: LanguageToken): boolean {
+  if (token.kind === 'particle') return true;
+  return (
+    token.kind === 'keyword' && ROLE_MARKER_CONCEPTS.has((token.normalized ?? '').toLowerCase())
+  );
+}
+
+/** The English word a token spells in an expression: a keyword's normalized form, or a connective. */
+function wordOf(token: LanguageToken, languageCode: string): string {
+  if (token.kind === 'keyword' && token.normalized) return token.normalized.toLowerCase();
+  return translateConnective(languageCode, token.value).toLowerCase();
+}
+
+/**
+ * C3: is an end word a value — a variable spelled like it? A block's end
+ * stands after a command's last word, and before a command, `then`, another end
+ * or nothing. So an end word is a value:
+ *
+ * - before an operator, `and`, `or` or the copula (PR 112: tr `eğer son ve
+ *   flag`, if son and flag, lost its whole `if`, and es `set x to fin < 3` read
+ *   `set x to <`), or a possessive `'s` (`fin's length`);
+ * - before its own case marker, where markers follow their values (tr `son i
+ *   #out e koy`, put son into #out), unless another particle follows the
+ *   marker, which is then the value (`son i i artır`, end, increment i);
+ * - after an operator symbol or `not` (es `no`, pt `não`, qu `mana`);
+ * - after a word that owes a value — `if`, `while`, the copula, `and` — and,
+ *   where the verb comes first, after a command's verb when the command
+ *   requires a role (es `poner fin en #out`, `incrementar fin`; hide's is
+ *   optional, so `ocultar fin` ends), and, where markers come first, after a
+ *   marker (`establecer x a fin`). Not where that word is itself a value, after
+ *   a verb or a marker that takes it (es `incrementar a fin`, increment a, end,
+ *   whose `a` is also a marker) — though a marker the verb's own patterns write
+ *   right after it is the marker (it `impostare in fine 1`, set fine to 1).
+ *
+ * The block scan and its condition and branch splits, the handler body's
+ * clause walk, the role capture (C3), the operator run and the join each read
+ * an end word by it, so they agree (PR 112 read the first rule, PR 114 the
+ * rest). Hand-written text only: the verified render writes `(fin)` where the
+ * plain render would misread.
+ */
+export function endWordIsValue(place: EndWordPlace, languageCode: string): boolean {
+  const { prev, beforePrev, next, afterNext } = place;
+  if (next) {
+    if (RUN_OPERATORS.has(next.value)) return true;
+    if (END_WORD_OPERANDS.has((next.normalized ?? next.value).toLowerCase())) return true;
+    if (next.value === "'" && afterNext?.value.toLowerCase() === 's') return true;
+    // A word that is `and` only between two operands (sw `na`).
+    const between = senseRuleOf(languageCode, next)?.betweenOperands;
+    if ((between === 'and' || between === 'or') && startsOperand(afterNext)) return true;
+  }
+  const profile = tryGetProfile(languageCode);
+  const markerFinal = !!profile && profile.markingStrategy !== 'preposition';
+  if (markerFinal && next?.kind === 'particle' && afterNext?.kind !== 'particle') return true;
+  if (!prev) return false;
+  if (BINARY_OPERATORS.has(prev.value)) return true;
+  const word = wordOf(prev, languageCode);
+  if (word === 'not' || word === 'no') return true;
+  // A word that is `not` only before an operand (qu `mana`).
+  if (senseRuleOf(languageCode, prev)?.beforeOperand === 'not') return true;
+  const verbFirst = profile?.wordOrder !== 'SOV';
+  // The word before is itself a value, a verb's or a marker's — unless it is
+  // a marker the verb's own patterns write right after it (it `impostare in
+  // fine 1`, set fine to 1).
+  const takenBy = beforePrev && verbFirst ? verbOf(beforePrev) : undefined;
+  if (
+    (takenBy && !markersAfterVerb(languageCode, takenBy).has(prev.value.toLowerCase())) ||
+    (beforePrev && !markerFinal && isMarker(beforePrev))
+  ) {
+    return false;
+  }
+  if (OWING_WORDS.has(word)) return true;
+  const verb = verbFirst ? verbOf(prev) : undefined;
+  if (verb && commandSchemas[verb].roles.some(role => role.required)) return true;
+  return !markerFinal && isMarker(prev);
+}
+
 /**
  * What a keyword spells when it stands alone where a value must: `structure`
  * (above) or `verb` (a command verb); undefined for any other keyword (a
@@ -1297,8 +1489,11 @@ export function joinExpressionTokens(
 ): string {
   const languageCode = profile?.code ?? 'en';
   const [only] = tokens;
-  // J1: a keyword alone is the variable it spells (loneKeywordKind).
-  if (tokens.length === 1 && only && loneKeywordKind(only)) return only.value;
+  // J1: a keyword alone is the variable it spells (loneKeywordKind), and so is
+  // an end word: joined whole, it is a value (es `si fin poner …`, if fin).
+  if (tokens.length === 1 && only && (loneKeywordKind(only) || isEndWord(only, languageCode))) {
+    return only.value;
+  }
   let out = '';
   let previous: LanguageToken | undefined;
   /** The text appended for `previous`: how this join read the last word. */

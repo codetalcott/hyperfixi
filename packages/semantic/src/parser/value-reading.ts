@@ -37,10 +37,14 @@ import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
 import {
   COMMAND_ACTION_KEYWORDS,
+  endWordIsValue,
+  endWordPlace,
+  isEndWord,
   loneKeywordKind,
   translateConnective,
+  type EndWordPlace,
 } from './utils/expression-lexicon';
-import { endWordIsValue, isCuratedEndKeyword } from './end-keywords';
+import { isCuratedEndKeyword } from './end-keywords';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
 /** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
@@ -65,6 +69,8 @@ export class SlotContext {
   readonly token: LanguageToken;
   readonly prev: LanguageToken | undefined;
   readonly next: LanguageToken | undefined;
+  /** The token and its neighbours two deep, as an end word's readers see it (C3). */
+  readonly place: EndWordPlace;
   private nextIsMarkerMemo: boolean | undefined;
   private tokenIsMarkerMemo: boolean | undefined;
 
@@ -81,6 +87,7 @@ export class SlotContext {
     this.token = tokens.tokens[at]!;
     this.prev = tokens.tokens[at - 1];
     this.next = tokens.tokens[at + 1];
+    this.place = endWordPlace(tokens.tokens, at);
   }
 
   /** The pattern ends with this slot. */
@@ -146,16 +153,27 @@ export function isCommandVerb(token: LanguageToken): boolean {
  * to (tr `son` → `last`): a loop's own `son` before the next command's selector
  * prefixed that command's value. Only a keyword: a string "then" is a value.
  * Not `and`: pl's `i` is also the pronoun `I` (the unless-condition rows). An
- * end word before an operator is a value (endWordIsValue).
+ * end word where a value stands is a value (endWordIsValue: before an operator,
+ * PR 112; after a verb, a marker, `if` or `not`, and the rest, PR 114).
  */
 export function neverAValue(slot: SlotContext, language: string): boolean {
   const token = slot.token;
   if (token.kind !== 'keyword') return false;
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm === 'then') return true;
-  if (endWordIsValue(slot.next)) return false;
-  if (norm === 'end' && slot.next?.kind !== 'selector') return true;
-  return isCuratedEndKeyword(token.value, language);
+  const endWord =
+    (norm === 'end' && slot.next?.kind !== 'selector') ||
+    isCuratedEndKeyword(token.value, language);
+  return endWord && !endWordIsValue(slot.place, language);
+}
+
+/**
+ * C3's other half: an end word where a value stands (endWordIsValue) is a
+ * variable spelled like it, and alone it is the whole value (es `poner fin en
+ * #out`, put fin into #out). Captured whole it was the English word `end`.
+ */
+export function endWordIsVariable(slot: SlotContext, language: string): boolean {
+  return isEndWord(slot.token, language) && endWordIsValue(slot.place, language);
 }
 
 /**
