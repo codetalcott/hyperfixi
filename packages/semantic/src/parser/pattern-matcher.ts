@@ -41,6 +41,8 @@ import {
   isConversionTypeName,
   ambiguousSenseOf,
   ofChainEnd,
+  endWordIsValue,
+  endWordPlace,
 } from './utils/expression-lexicon';
 import {
   BINARY_PHRASES,
@@ -62,6 +64,7 @@ import {
   maySkipVerbSlot,
   namesCommand,
   neverAValue,
+  endWordIsVariable,
   notWordIsVariable,
   particleIsOperand,
   particleIsValue,
@@ -1548,7 +1551,11 @@ export class PatternMatcher {
     // A word spelled like structure, alone where a value stands, is the variable
     // it spells: a particle where no marker can stand (C7), a structure keyword
     // or command verb (C8). See value-reading.ts.
-    if (particleIsValue(slot) || keywordIsVariable(slot, this.currentSchema())) {
+    if (
+      particleIsValue(slot) ||
+      keywordIsVariable(slot, this.currentSchema()) ||
+      endWordIsVariable(slot, this.currentProfile?.code ?? '')
+    ) {
       captured.set(patternToken.role, { type: 'expression', raw: token.value } as SemanticValue);
       tokens.advance();
       return true;
@@ -2385,20 +2392,32 @@ export class PatternMatcher {
 
     // Single value token. Particles/conjunctions/punctuation are never
     // operands (they belong to the surrounding pattern), and neither is a
-    // block's own word (sw `mwisho`, `end`, after `inafanana`, matches).
+    // block's own word (sw `mwisho`, `end`, after `inafanana`, matches) —
+    // unless it stands where a value does (C3: `1 + fin`, es `fin`, a
+    // variable).
+    const norm = (token.normalized ?? '').toLowerCase();
     if (
       (token.kind === 'literal' ||
         token.kind === 'identifier' ||
         token.kind === 'selector' ||
         token.kind === 'keyword') &&
       !RUN_OPERATORS.has(token.value) &&
-      !['end', 'then', 'else'].includes((token.normalized ?? '').toLowerCase()) &&
+      !['then', 'else'].includes(norm) &&
+      (norm !== 'end' || this.endWordIsValueAt(tokens)) &&
       token.value !== ')'
     ) {
       tokens.advance();
       return true;
     }
     return false;
+  }
+
+  /** C3: is the end word at the stream's position a value (endWordIsValue)? */
+  private endWordIsValueAt(tokens: TokenStream): boolean {
+    return endWordIsValue(
+      endWordPlace(tokens.tokens, tokens.position()),
+      this.currentProfile?.code ?? ''
+    );
   }
 
   /**

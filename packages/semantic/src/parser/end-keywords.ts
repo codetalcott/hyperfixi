@@ -1,6 +1,3 @@
-import type { LanguageToken } from '../types';
-import { RUN_OPERATORS } from './utils/operators';
-
 /**
  * Curated per-language block-terminator surfaces.
  *
@@ -66,19 +63,3 @@ export function curatedEndKeywordSet(language: string): Set<string> | undefined 
 export function isCuratedEndKeyword(value: string, language: string): boolean {
   return CURATED_END_KEYWORDS[language]?.has(value.toLowerCase()) ?? false;
 }
-
-/**
- * C3: is an end word a value — a variable spelled like it — because an
- * operator, `and`, `or` or the copula follows it? A block's end is followed by
- * a command, `then`, another end or nothing, never by an operator: tr `eğer son
- * ve flag` (if son and flag) lost its whole `if` (the block scan took `son` for
- * the block's end), and es `set x to fin < 3` read `set x to <` (PR 112).
- */
-export function endWordIsValue(next: LanguageToken | undefined): boolean {
-  if (!next) return false;
-  if (RUN_OPERATORS.has(next.value)) return true;
-  return END_WORD_OPERANDS.has((next.normalized ?? next.value).toLowerCase());
-}
-
-/** The words after which an end word is an operand (endWordIsValue). */
-const END_WORD_OPERANDS: ReadonlySet<string> = new Set(['and', 'or', 'is']);
