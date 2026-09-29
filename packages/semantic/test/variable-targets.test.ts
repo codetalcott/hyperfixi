@@ -15,8 +15,29 @@ import { parse, render } from '../src/index';
 import { tryGetProfile } from '../src/registry';
 
 const FOREIGN = [
-  'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
-  'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ] as const;
 
 const inLoop = (body: string): string => `on click repeat for el in .x ${body} end`;
@@ -48,6 +69,11 @@ const CASES: string[] = [
   'on click get #d1 then set el to it then trigger foo on el then add .b to #d2',
   // es/pt/he write put's `into` as their `on`.
   'on click get #d1 then set el to it then put "x" into el then add .b to #d2',
+  // de writes set's `to` as its `on` (`auf`): a chain's second `set` read
+  // `auf n` as a handler for an event `n` (PR 110).
+  'on click set p to 1 then set x to n + 3 then put x into #out',
+  "on click set p to 1 then set x to obj's v then put x into #out",
+  'on click set p to 1 then set x to not flag then put x into #out',
 ];
 
 describe.each(CASES)('%s, through every language', src => {
@@ -75,6 +101,11 @@ const SPLITS: [string, string][] = [
     'on click toggle .a then foo() on keyup log 2',
     'on click toggle .a then call foo()\nend\non keyup log 2\nend',
   ],
+  // A marker the command has used is no longer owed: de `auf 1`, es/pt/he
+  // `into x`, then the next handler (PR 110: each split a segment that was no
+  // handler, and the whole program read as one).
+  ['on click set x to 1 on keyup log 2', 'on click set x to 1\nend\non keyup log 2\nend'],
+  ['on click put 1 into x on keyup log 2', 'on click put 1 into x\nend\non keyup log 2\nend'],
 ];
 
 // Without a `then`, the `on` is still toggle's or trigger's: the commands that
@@ -97,6 +128,24 @@ describe.each(WITHOUT_THEN)('%s, without a `then`', (src, expected) => {
     const then = tryGetProfile(language)!.keywords.then!.primary;
     const foreign = render(parse(src, 'en')!, language).split(` ${then} `).join(' ');
     expect(render(parse(foreign, language)!, 'en'), foreign).toBe(expected);
+  });
+});
+
+describe('a marker the command has passed opens a handler (PR 110)', () => {
+  // es `en` is es's `on`, and an alternative to set's `a`: written after `a`,
+  // it is no longer set's, and a hand-written chain splits there.
+  it('es `establecer x a 5 en keyup`', () => {
+    expect(render(parse('al clic establecer x a 5 en keyup registrar 2', 'es')!, 'en')).toBe(
+      'on click set x to 5\nend\non keyup log 2\nend'
+    );
+  });
+
+  // de `bei` begins put's `bei ende von` (at end of): a literal that marks no
+  // role alone is owed by nothing.
+  it('de `setzen 1 in #out bei keyup`', () => {
+    expect(
+      render(parse('bei klick setzen 1 in #out bei keyup setzen 2 in #out', 'de')!, 'en')
+    ).toBe('on click put 1 into #out\nend\non keyup put 2 into #out\nend');
   });
 });
 

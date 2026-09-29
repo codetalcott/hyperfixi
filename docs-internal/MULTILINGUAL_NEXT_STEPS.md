@@ -6514,7 +6514,8 @@ after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a compar
 check), every one ACCEPTED: the operator-phrase queue is empty. PR 108 widened it with a
 reference's property as an operand, a `set` in the second command of a chain, and the colliding
 names as operands (972 cells, 3,592 in all): 3,521 of 172,284, 3,419 of them open (the
-reference-and-chain queue, below); 503 after PR 109 (a reference's property), 329 of them open.
+reference-and-chain queue, below); 503 after PR 109 (a reference's property), 329 of them open;
+177 after PR 110 (the de chain), 3 of them open.
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6616,10 +6617,15 @@ name`). Every cell has an upstream oracle. The 3,419 open pairs, by where the lo
   (`tokenizers/reference-possessive-split.ts`), and a variable's `obj's` stays one token (PR 83).
   qu's whole-keyword match ends an exact keyword before an attached `'s` (`k_iri's`, window's,
   split at `_` before); a stem only the normalizer finds (`ity`, it + y) does not.
-- **the de chain, 326 pairs in 163 cells**: every `set` value in a chain's second command but a
+- ~~**the de chain, 326 pairs in 163 cells**~~ **FIXED by PR 110**: every `set` value in a chain's second command but a
   lone token before `dann`. The program layer's trigger split reads `auf` — de's `on`, and set's
   and put's `to` — as a new handler (`on n`), and only toggle and trigger were allowed their own
-  on-spelled marker.
+  on-spelled marker. Now any command keeps an on-spelled marker it still owes: its patterns write
+  the marker for a role it requires, and the markers written since its verb come from earlier
+  literals, in order (`owesMarker`, `block-parser.ts`). An optional role leaves the `on` to open a
+  handler (ar `أضف .active على keyup` is two), and every role English marks with `on` is optional,
+  so English is unchanged. The same split had read he `ב`, es and pt put's `into` in `put 1 into x
+  on keyup …` as a handler, and merged a de program whose first handler ended in `setze x auf 1`.
 - ~~**bn, hi and th `event's target's id`, 207 pairs in 38 cells**~~ **FIXED by PR 109**: each language's word for
   `event` ends in a combining mark (bn and hi a vowel sign, th a thanthakhat), which the string
   extractor's possessive check did not count as part of a word, so the two apostrophes lexed
@@ -7010,7 +7016,7 @@ it is written `(si)`", and reports no occurrence already written so.
 
 **Found by B's probes, not fixed by it:**
 
-- **de reads the second `set` of a chain as a handler** when its value begins with a variable and
+- ~~**de reads the second `set` of a chain as a handler**~~ **FIXED by PR 110** when its value begins with a variable and
   an operator: `set n to 2 then set x to n + 3 then put x into #out` renders
   `… dann setze x auf n + 3 dann …`, and de reads `auf n` (`auf` is also `on`) as `on n`: the
   read-back is `on click set n to 2`, then a handler for an event `n`. Any variable name; `3 * n` and a first `set` are fine.
