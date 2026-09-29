@@ -6827,7 +6827,14 @@ of it keeps the difference explicit and is filed instead.
   variable named `mod` became the value. Every other shape C7(b) read, C10 reads first (the
   operator run takes a unary minus since PR 74, which was C7(b)'s reason). No other oracle item
   moved, all 18,278 names included, and the value matrix is unchanged.
-- **The semantic parser's fallbacks read a token with their own `tokenToSemanticValue`**
+- ~~**The semantic parser's fallbacks read a token with their own `tokenToSemanticValue`**~~
+  **FIXED by PR 113**: the role capture's classifier moved, unchanged, to `parser/token-value.ts`
+  (`tokenValue`), and the fallbacks call it; a token that is no value keeps its text as a literal.
+  bn `d কে অপেক্ষা` (wait d), which reaches the verb-anchoring fallback, waited for the string "d"
+  and waits for the variable now. The corpus moves 11 stored rows in 7 patterns, each only by a
+  filled-in `dataType` (`number` for a transition's `0` goal, `duration` for bn's waits); every
+  value and English read-back is unchanged, and the extended names oracle moves only the name
+  `not` in ja and ko (which English cannot have). The filing:
   (`semantic-parser.ts`): none of C9's readings (a lone conjunction, `empty`, an article), and a
   bare identifier is a literal there, where the matcher's reads a variable. A second value
   classifier, for the SOV verb-anchoring paths.
