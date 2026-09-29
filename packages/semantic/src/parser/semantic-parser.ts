@@ -6455,7 +6455,19 @@ export class SemanticParserImpl implements ISemanticParser {
     const names: string[] = [];
     for (let j = startIdx + 1; j < allTokens.length; j++) {
       const v = allTokens[j].value;
-      if (v === ')') return { len: j - startIdx + 1, names };
+      // Parameters touch their event (`click(evt)`, as every rendering writes
+      // them). A group apart from it, before a case marker, is that marker's
+      // value: qu writes the patient right after the event, so `click (o) ta
+      // #out man churay` (put (o) into #out) took `(o)` for the parameters and
+      // put nothing. (SOV event markers follow parameters too: bn `ক্লিক(evt)
+      // তে`, tr `tıklama(evt) i üzerinde`.)
+      if (v === ')') {
+        const event = allTokens[startIdx - 1];
+        const apart = event?.position?.end !== allTokens[startIdx]?.position?.start;
+        return apart && allTokens[j + 1]?.kind === 'particle'
+          ? { len: 0, names: [] }
+          : { len: j - startIdx + 1, names };
+      }
       if (v === ',') continue;
       // Any identifier-shaped word: a name like `detail` or `target` is also a
       // keyword, and tokenizes as one. Never a reference (`me`, `it`): that is a
