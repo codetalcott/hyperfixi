@@ -511,10 +511,9 @@ export function tokenize(input: string, language: string): TokenStream {
 
 /**
  * Does a word spell structure in a language, so that `(word)` is a name?
- * `name-collisions.ts` registers `nameCollision`, which also knows the
- * structure a tokenizer leaves an identifier (de `um`, a schema marker; tl
- * `o`, a connective; the articles). Until it does, a keyword, particle or
- * conjunction that is not a value word.
+ * `name-collisions.ts` registers `nameCollision`, which knows the structure a
+ * tokenizer marks and the structure it leaves an identifier (de `um`, a schema
+ * marker; tl `o`, a connective; the articles). Until it does, nothing fuses.
  */
 let structureName: (word: string, language: string) => boolean = () => false;
 
@@ -550,10 +549,7 @@ function fuseParenthesizedNames(stream: TokenStream, language: string): TokenStr
       close?.value === ')' &&
       /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(word.value) &&
       !VALUE_WORDS.has((word.normalized ?? word.value).toLowerCase()) &&
-      (structureName(word.value, language) ||
-        word.kind === 'keyword' ||
-        word.kind === 'particle' ||
-        word.kind === 'conjunction') &&
+      structureName(word.value, language) &&
       open.position.end === word.position.start &&
       word.position.end === close.position.start &&
       !(

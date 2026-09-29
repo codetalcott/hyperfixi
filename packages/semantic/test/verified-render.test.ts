@@ -13,6 +13,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, semanticRenderer, tokenize } from '../src/index';
+import { parenthesizeCollidingNames } from '../src/name-collisions';
 
 /** The English `code` reads back as, a name alone in parentheses aside. */
 function readBack(code: string, language: string): string {
@@ -108,6 +109,11 @@ describe('the reader fuses a name alone in parentheses', () => {
     }
   });
 
+  it('a structure word the tokenizer leaves an identifier: de `(um)`, es `(a)`', () => {
+    expect(values('(um) + 1', 'de')).toEqual(['(um)', '+', '1']);
+    expect(values('(a) + b', 'es')).toEqual(['(a)', '+', 'b']);
+  });
+
   it('a plain name in parentheses stays three tokens, as every reader expects', () => {
     expect(values('(x) + 1', 'es')).toEqual(['(', 'x', ')', '+', '1']);
     expect(readBack('al clic poner length of (x) en #out', 'es')).toBe(
@@ -120,5 +126,20 @@ describe('the reader fuses a name alone in parentheses', () => {
     expect(values('(yo)', 'es')).not.toContain('(yo)');
     expect(values('( si )', 'es')).not.toContain('(si)');
     expect(values('(if)', 'en')).not.toContain('(if)');
+  });
+});
+
+describe('parenthesizeCollidingNames: the variables of an English expression', () => {
+  it.each([
+    ['si + 1', '(si) + 1'],
+    // A property, a method or a conversion's type is not a variable.
+    ['obj.si + si', 'obj.si + (si)'],
+    ["obj's si", "obj's si"],
+    // English vocabulary is not a name: `me` is es `yo`, rendered by the lexicon.
+    ['me + si', 'me + (si)'],
+    // Already in parentheses.
+    ['(si) + 1', '(si) + 1'],
+  ])('es: %s', (raw, expected) => {
+    expect(parenthesizeCollidingNames(raw, 'es')).toBe(expected);
   });
 });
