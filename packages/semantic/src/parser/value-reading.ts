@@ -40,7 +40,7 @@ import {
   loneKeywordKind,
   translateConnective,
 } from './utils/expression-lexicon';
-import { isCuratedEndKeyword } from './end-keywords';
+import { endWordIsValue, isCuratedEndKeyword } from './end-keywords';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
 /** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
@@ -145,13 +145,16 @@ export function isCommandVerb(token: LanguageToken): boolean {
  * word by value (tr `son`, qu `tukuy`), whatever the tokenizer normalized it
  * to (tr `son` → `last`): a loop's own `son` before the next command's selector
  * prefixed that command's value. Only a keyword: a string "then" is a value.
- * Not `and`: pl's `i` is also the pronoun `I` (the unless-condition rows).
+ * Not `and`: pl's `i` is also the pronoun `I` (the unless-condition rows). An
+ * end word before an operator is a value (endWordIsValue).
  */
 export function neverAValue(slot: SlotContext, language: string): boolean {
   const token = slot.token;
   if (token.kind !== 'keyword') return false;
   const norm = (token.normalized ?? token.value).toLowerCase();
-  if (norm === 'then' || (norm === 'end' && slot.next?.kind !== 'selector')) return true;
+  if (norm === 'then') return true;
+  if (endWordIsValue(slot.next)) return false;
+  if (norm === 'end' && slot.next?.kind !== 'selector') return true;
   return isCuratedEndKeyword(token.value, language);
 }
 

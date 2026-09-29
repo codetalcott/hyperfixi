@@ -37,6 +37,7 @@ import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
 import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
+import { endWordIsValue, isCuratedEndKeyword } from '../end-keywords';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 
 // prettier-ignore
@@ -1167,6 +1168,12 @@ export function expressionWordOf(
   // event reference: de `ereignis's type` is `event's type`.
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm !== 'event' && ROLE_MARKER_CONCEPTS.has(norm)) return token.value;
+  // An end word before an operator is a variable spelled like it (C3,
+  // endWordIsValue): es `fin < 3` joined as `end < 3`, tr `son ve flag` (its
+  // `son` reads `last`) as `last and flag`.
+  if ((norm === 'end' || isCuratedEndKeyword(token.value, languageCode)) && endWordIsValue(next)) {
+    return token.value;
+  }
   return token.normalized ?? token.value;
 }
 
