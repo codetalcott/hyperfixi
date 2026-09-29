@@ -140,7 +140,9 @@ export const tagalogDictionary: Dictionary = {
     exists: 'may',
     matches: 'tumutugma',
     contains: 'naglalaman',
-    includes: 'kasama',
+    // `includes` takes `contains`' word: both engines read them as one operator,
+    // and `kasama` is `inclusive` (pick's range word), which the reader takes it for.
+    includes: 'naglalaman',
     equals: 'katumbas',
     has: 'may',
     have: 'may',

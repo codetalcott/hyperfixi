@@ -47,7 +47,9 @@ export const turkishLexicon: LanguageLexicon = {
     exists: { primary: 'var' },
     has: { primary: 'var' },
     have: { primary: 'var' },
-    includes: { primary: 'dahil' },
+    // `includes` takes `contains`' word: both engines read them as one operator,
+    // and `dahil` is `inclusive` (pick's range word), which the reader takes it for.
+    includes: { primary: 'içerir' },
     is: { primary: 'dir' },
     live: { primary: 'canlı' },
     matches: { primary: 'eşleşir' },

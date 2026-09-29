@@ -103,19 +103,25 @@ describe.each(PHRASES)('%s', (source, broken) => {
 });
 
 // `contains`, `includes` and `equals` read back through the expression
-// lexicon's connectives. Each is skipped where the dictionary uses its word for
-// another concept (tl `kasama` is also `with`, tr `dahil` also `inclusive`).
-// The words a tokenizer split (qu `ukupi_kan`, hi `में_है`, zh `等于`, pl
-// `równa się`) are whole-token entries now.
-const WORDS: Array<[string, string[]]> = [
-  ['on click put [1, 2] contains 1 into #out', []],
-  ['on click put [1, 2] includes 1 into #out', ['tl', 'tr']],
-  ['on click put n equals 3 into #out', []],
+// lexicon's connectives. The words a tokenizer split (qu `ukupi_kan`, hi
+// `में_है`, zh `等于`, pl `równa się`) are whole-token entries now. tl and tr
+// write `includes` with `contains`' word (PR 100: their own, tl `kasama` and tr
+// `dahil`, is `inclusive`'s, which the reader took it for), so it reads back as
+// `contains` there: one operator on both engines.
+const INCLUDES_READS_CONTAINS = ['tl', 'tr'];
+
+const WORDS: string[] = [
+  'on click put [1, 2] contains 1 into #out',
+  'on click put [1, 2] includes 1 into #out',
+  'on click put n equals 3 into #out',
 ];
 
-describe.each(WORDS)('%s', (source, broken) => {
-  it.each(LANGUAGES.filter(language => !broken.includes(language)))('%s', language => {
+describe.each(WORDS)('%s', source => {
+  it.each(LANGUAGES)('%s', language => {
     const foreign = render(parse(source, 'en')!, language);
-    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+    const expected = INCLUDES_READS_CONTAINS.includes(language)
+      ? source.replace(' includes ', ' contains ')
+      : source;
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(expected);
   });
 });
