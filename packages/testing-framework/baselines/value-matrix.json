@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 2620,
   "pairs": 125688,
-  "failing": 272,
+  "failing": 102,
   "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
@@ -39,94 +39,6 @@
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
-    },
-    "put|{} is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|{} is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|obj's v is a Number": {
-      "lanes": "es es/up it it/up pt pt/up",
-      "family": "translation"
-    },
-    "set|obj's v is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|arr's length is a Number": {
-      "lanes": "es es/up it it/up pt pt/up",
-      "family": "translation"
-    },
-    "set|arr's length is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|v of obj is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|v of obj is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|length of arr is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|length of arr is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|@title of #a is a Number": {
-      "lanes": "es es/up it it/up pt pt/up",
-      "family": "translation"
-    },
-    "set|@title of #a is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|v of w of obj is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|v of w of obj is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|String(n) is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|String(n) is a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|{} is not a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|{} is not a Number": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|{} is a String": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|{} is a String": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "put|{} is not a String": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
-    },
-    "set|{} is not a String": {
-      "lanes": "es es/up it it/up pt pt/up tr tr/up",
-      "family": "translation"
     }
   }
 }
