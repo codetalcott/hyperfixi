@@ -236,6 +236,27 @@ export function tokensAdjacent(
   );
 }
 
+/** The words an `equal to` phrase follows: `is`, `not`, `really`, `am`, and `or equal to`. */
+const EQUAL_TO_LEADS: ReadonlySet<string> = new Set(['is', 'not', 'really', 'am', 'or']);
+
+/**
+ * Does the token at `i` end an `equal to` phrase (`is equal to`, `is not equal
+ * to`, `is really equal to`, `is greater than or equal to`)? That `to` is the
+ * operator's, not a marker: without this `obj's v is equal to 6` stopped at
+ * it, and `set` lost `is equal to 6` (`to` is its own marker) while `put`
+ * dropped its whole value. Only after a comparison word, so a variable named
+ * `equal` keeps its marker (`set equal to 5`).
+ */
+function endsEqualTo(all: readonly LanguageToken[], i: number, language: string): boolean {
+  const word = (k: number): string => {
+    const token = all[k];
+    return token
+      ? expressionWordOf(language, token, all[k - 1], all[k + 1], undefined).toLowerCase()
+      : '';
+  };
+  return word(i) === 'to' && word(i - 1) === 'equal' && EQUAL_TO_LEADS.has(word(i - 2));
+}
+
 /** C13: the clause's end, or a marker the pattern still owes. */
 export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
   if (token.kind === 'conjunction') return true;
@@ -250,11 +271,13 @@ export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boole
 /**
  * Does the value stop at the token at `i`: a boundary, or a marker of the
  * command? Not at the `in` after a copula, the operator (C15, PR 69), nor at a
- * particle after `of`, its owner (C15, PR 74).
+ * particle after `of`, its owner (C15, PR 74), nor at the `to` of `equal to`
+ * (C15, PR 94).
  */
 function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): boolean {
   const language = ctx.profile?.code ?? 'en';
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return false;
+  if (endsEqualTo(all, i, language)) return false;
   const token = all[i]!;
   return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
 }
@@ -294,6 +317,7 @@ export function continuesValue(
   // C14: a conjunction where none can stand (PR 59).
   if (isConnectiveOperand(language, token, prev, all[i + 1])) return true;
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return true;
+  if (endsEqualTo(all, i, language)) return true;
   const word = expressionWordOf(language, token, prev, all[i + 1], undefined).toLowerCase();
   if (word === 'as' && ctx.hasResponseType) return false;
   if (EXPRESSION_WORDS.has(word)) return true;
