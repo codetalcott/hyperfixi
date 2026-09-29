@@ -6509,7 +6509,8 @@ an object's property through `'s`/`of`, the `of` operator's, and a counted attri
 83 (a possessive target before a role with no marker); 102 after PR 84 (the colliding names left),
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
-`equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`).
+`equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`); 482
+after PR 100 (tl and tr `includes`).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6528,7 +6529,13 @@ pairs, by where the loss sits:
 - **an object literal before a type check, 170**: `{} is a Number`/`String` in es/it/pt/tr (the
   type name is not the cause: `Number` was never translated). The `{ }` operand and the phrase do
   not read back as one value (es `{ } es a Number` parses as a bare `on click`).
-- **tl and tr `includes`, 611 — an owner vocabulary decision.** Both i18n dictionaries give
+- ~~**tl and tr `includes`, 611 — an owner vocabulary decision.**~~ **DECIDED and FIXED by PR 100:
+  option 1** (512 pairs; the 99 `includes` pairs left are the direct-path family below). tl writes
+  `includes` as `naglalaman` and tr as `içerir`, `contains`' words, in the dictionaries and the
+  render lexicons; the read-back says `contains`, which both engines evaluate the same way
+  (upstream's `sloppyContains`, core's `containsExpression`), and tl and tr run every condition in
+  core's `condition-phrases-direct-path.test.ts`. Option 2 needed a native speaker's word and
+  option 4 a new reading rule; option 1 needed neither. The filing, as it was: both i18n dictionaries give
   `includes` the word they give `inclusive`, pick's range word: tl `kasama`, tr `dahil`
   (`packages/i18n/src/dictionaries/{tl,tr}.ts`), and both tokenizers normalize it to `inclusive`
   (`tokenizers/tl.ts`, `turkish.ts`). The renderer's lexicon is locked to the dictionary
@@ -6550,7 +6557,10 @@ pairs, by where the loss sits:
   Once decided, tl and tr can join core's `condition-phrases-direct-path.test.ts` for every
   condition: each of the others passes there (measured with PR 96).
 - **the direct path before `#a's textContent`, 111** (and `includes #a.textContent` in the `if`
-  position): bn, hi, ja, ko, tl, vi, zh.
+  position): bn, hi, ja, ko, tl, vi, zh. Measured again after PR 100 (210 pairs, 18 cells, every one
+  on the direct path): `6 is equal to` and `"xab6" includes` before `#a's textContent` (and `1 is
+  greater than or equal to` / `[1, 2, 6] includes` before `#a's textContent's length`) in those
+  seven, and before `#a.textContent` in all 23 languages' direct lanes (the adapter lanes pass).
 - ~~**it `does not include`, 46**~~ **FIXED by PR 96**: the join's connective table turned the
   `include` of `does non include` into `includes` (it's word for both); the verb of a `does not`
   phrase now stays as written after the negation.
