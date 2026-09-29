@@ -270,11 +270,11 @@
   },
   "devDependencies": {
     "@lokascript/semantic": "^3.1.1",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "@types/vscode": "^1.138.0",
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^5.0.0"
   },
   "repository": {
