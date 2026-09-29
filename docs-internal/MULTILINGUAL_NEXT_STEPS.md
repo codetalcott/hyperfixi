@@ -6606,11 +6606,11 @@ word by word:
 
 | #   | Reads                                                                                                                                                                                                      | Where                                        | PR                    | Pinned by                                                                                         |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
-| J1  | a lone structure word or command verb joined as a whole value is its surface (tr `eğer al`, if al)                                                                                                         | `loneKeywordKind`, shared with C8            | 84                    | `colliding-names.test.ts`                                                                         |
+| J1  | a lone structure word or command verb joined as a whole value is its surface (tr `eğer al`, if al); a role marker anywhere in an expression is too (tr `değil na`, de `length of aus`)                   | `loneKeywordKind`, shared with C8; `expressionWordOf` | 84; markers 104       | `colliding-names.test.ts`                                                                         |
 | J2  | `equal to`'s `to` stays `to` (pl reads `to` as `it`)                                                                                                                                                      | `expressionWordOf`                           | 62                    | `connective-operand.test.ts`                                                                      |
 | J3  | the `in` after a copula stays `in`                                                                                                                                                                         | `expressionWordOf`                           | 69                    | `copula-in.test.ts`                                                                               |
 | J4  | a word with two senses takes one by where it stands: ar `هو`, hi `है`, th `เป็น`, sw `na`/`tupu`, qu `mana`, zh `没有`, tl `walang`/`may`, bn `আছে`, tr `var`, and each `empty` word after a copula     | `AMBIGUOUS_SENSES`, `resolveAmbiguousSense`  | #731; 71, 72, 78      | `expression-lexicon.test.ts`, `and-word.test.ts`, `not-word.test.ts`, `null-empty-word.test.ts`   |
-| J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or alone (pl `i`, es `si y`)                                                            | `isConnectiveOperand` → `precedesOperand`, `followsOperand` (over `utils/operators.ts`) | 59; alone 81 | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
+| J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or first in the value (pl `i`, es `si y`, pl `i - 1`)                                    | `isConnectiveOperand` → `precedesOperand`, `followsOperand` (over `utils/operators.ts`) | 59; alone 81; first 104 | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
 | J6  | a `<property> <of-marker>` chain reads to its selector owner                                                                                                                                               | `ofChainEnd`                                 | 58, 65                | `property-before-of.test.ts`, `possessive-chain.test.ts`                                          |
 
 **The condition scan** (`SemanticParserImpl.tryParseConditionalBlock`, `semantic-parser.ts`):
@@ -6619,7 +6619,7 @@ word by word:
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
 | S1  | a condition's first `if` word opens no nested block (es `si si …`)                                                                                                                            | block collection | 84                           | `colliding-names.test.ts`                                                                          |
 | S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | `copulaHoldsCondition` (`value-reading.ts`) | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, core `condition-copula-direct-path.test.ts` |
-| S3  | a copula that is the condition's first word is a variable (es `si es poner …`); a leading negation keeps its operand unless a command verb follows (sw `kama si weka …`)                     | `copulaHoldsCondition` (`value-reading.ts`) | 84                           | `colliding-names.test.ts`                                                                          |
+| S3  | a copula that is the condition's first word is a variable (es `si es poner …`); ~~a leading negation keeps its operand unless a command verb follows~~ (dropped by PR 104: tr `if yok`)       | `copulaHoldsCondition` (`value-reading.ts`) | 84; negation half 84–104     | `colliding-names.test.ts`                                                                          |
 
 **What they share.** Four sub-predicates recur. Since PR 87 each has one definition, on the
 `SlotContext` a capture builds once, at the token its value starts at (`value-reading.ts`):
@@ -6760,17 +6760,25 @@ of it keeps the difference explicit and is filed instead.
   `set x to <`. Without the curated half of C3 both read closer (`if last and flag`, `set x to end
   < 3`: still the end word, not the variable) and no corpus row moves, including the tr
   behavior-sortable `son` shape it was written for (#635), which something else reads now.
-- **pl `set x to i - 1` reads `set x to and - 1`** (found by PR 89's mutants). A conjunction
+- ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
+  a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
+  (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
   may not precede an operator (J5's `followsOperand`), except `-`, which "may be unary" — so pl's
   variable `i`, also its `and`, before a binary `- 1` reads as `and`. Counting `-` fixes it; what
   the exclusion was for is unmeasured.
 - **qu `put (o) into #out` reads `on click(o) put into ta #out`**: `click (o)` is taken for the
   event's parameters. On main.
-- **tr `değil na < 3` (not na < 3) reads `not destination < 3`**, and `set x to not na * 2`
+- ~~**tr `değil na < 3` (not na < 3) reads `not destination < 3`**~~ **FIXED by PR 104**: a role
+  marker in an expression is a variable spelled like one, not its role's name (J1, generalized
+  past a lone word). The filing: `set x to not na * 2`
   likewise: a marker-shaped name inside an expression joins as its role name. On main. So does
   one after `of` (found by PR 91's mutants): de `length of aus`, `length of von` and fr `length
   of de` read `length of source`.
-- **tr `if yok put …` (a variable spelled like tr `no`) reads `if no "Y" …`** in the SOV `if`
+- ~~**tr `if yok put …` (a variable spelled like tr `no`) reads `if no "Y" …`**~~ **FIXED by PR
+  104** (S3's negation half dropped). PR 104's three fixes together: the extended names oracle
+  195 read-backs better and 0 worse among names English can have, the matrix unchanged, and one
+  corpus row's already-garbled de/fr `when` condition reading `von`/`de` for `source`. The
+  filing: in the SOV `if`
   (found by PR 92's mutants): S3 takes `yok` for a leading negation, which holds its next word, and
   the next word is the branch's patient (`eğer yok "Y" i #out e koy` keeps `"Y"` in the
   condition). Without the negation half of S3 it reads right, and nothing else measured moves but
