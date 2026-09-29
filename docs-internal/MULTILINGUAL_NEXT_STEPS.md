@@ -6509,7 +6509,7 @@ an object's property through `'s`/`of`, the `of` operator's, and a counted attri
 83 (a possessive target before a role with no marker); 102 after PR 84 (the colliding names left),
 every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
-`equal to`).
+`equal to`); 1,040 after PR 95 (a type name stays English).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6521,9 +6521,13 @@ pairs, by where the loss sits:
   so a possessive or `of` operand before `equal to` lost the rest (`put` dropped its whole value,
   `set` kept `obj's v`). An `obj.v` operand is the operator run's, which read the phrase. The `to`
   that ends an `equal to` after a comparison word now continues the value (C15).
-- **the type name, 930**: `is an Element` / `is not an Element` (760) translate `Element` in 18
-  languages (`as Element` too), and `{} is a Number`/`String` (170) in es/it/pt/tr. Both engines
-  read type names in English.
+- ~~**the type name, 760**~~ **FIXED by PR 95**: `is an Element` / `is not an Element` translated
+  `Element` in 18 languages (`as Element` too), and the reader took the word for a variable. Both
+  engines read type names in English, and the value lexicon now masks one after `as` or `is a`/`is
+  an` (`type-names.test.ts` round-trips every conversion and checked type through 23 languages).
+- **an object literal before a type check, 170**: `{} is a Number`/`String` in es/it/pt/tr (the
+  type name is not the cause: `Number` was never translated). The `{ }` operand and the phrase do
+  not read back as one value (es `{ } es a Number` parses as a bare `on click`).
 - **tl and tr `includes`, 611**: an owner vocabulary decision (their words for `includes` read
   back as something else).
 - **the direct path before `#a's textContent`, 111** (and `includes #a.textContent` in the `if`
@@ -6727,6 +6731,9 @@ of it keeps the difference explicit and is filed instead.
   condition). Without the negation half of S3 it reads right, and nothing else measured moves but
   names English cannot have; the same holding reads bn/hi/ja/ko/qu `if not` and `if no` with no
   operand that way.
+- **qu `put x as FormData into #out` reads `put ta into #out`** (found by PR 95's type-name test,
+  on main too): qu's tokenizer takes a word's final `ta` for its accusative, so `FormData` is
+  `FormDa` and a marker. fetch's `with` fold rejoins it (Arc E); a value does not.
 - **Names inside expressions** (part 3's question, measured): the extended names oracle's
   reference, on main, has 4,433 of 113,321 entries (3.9%) whose read-back differs from the English
   re-render. Without the English keywords a variable cannot be named in English either (`at`,
