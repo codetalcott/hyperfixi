@@ -70,6 +70,13 @@ const SOURCES: Array<[string, string[]]> = [
     `on click put #a's textContent's length into #out`,
     LANGUAGES.filter(l => !['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'].includes(l)),
   ],
+  // The `to` of an `equal to` phrase is the operator's, not a marker (PR 94):
+  // `put` dropped its whole value there, and `set` (whose marker it is) kept
+  // `obj's v` alone.
+  [`on click put obj's v is equal to 6 into #out`, []],
+  [`on click put v of obj is greater than or equal to 4 into #out`, []],
+  [`on click put obj's v is really equal to 6 into #out`, []],
+  [`on click set x to obj's v is equal to 6 then put x into #out`, []],
 ];
 
 describe.each(SOURCES)('%s', (source, broken) => {
@@ -99,6 +106,16 @@ describe('a class name is not an expression', () => {
     expect(found).toContain(`${action}(`);
     expect(found).toContain('patient:selector');
   });
+});
+
+describe('a variable named `equal` keeps its marker', () => {
+  // The `to` of `equal to` continues a value only after a comparison word.
+  it.each(['on click set equal to 5 then put equal into #out', 'on click put equal into #out'])(
+    '%s',
+    source => {
+      expect(render(parse(source, 'en')!, 'en')).toBe(source);
+    }
+  );
 });
 
 describe('a variable spelled like the of-marker, after `of`', () => {
