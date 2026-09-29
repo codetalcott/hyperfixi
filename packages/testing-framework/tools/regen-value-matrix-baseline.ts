@@ -74,7 +74,9 @@ function table(
   }
   console.log(`\n${title}`);
   for (const [key, n] of [...pairs].sort((a, b) => b[1] - a[1])) {
-    console.log(`  ${String(n).padStart(6)} pairs  ${String(cells.get(key)?.size ?? 0).padStart(4)} cells  ${key}`);
+    console.log(
+      `  ${String(n).padStart(6)} pairs  ${String(cells.get(key)?.size ?? 0).padStart(4)} cells  ${key}`
+    );
   }
 }
 
@@ -85,14 +87,16 @@ function report(results: readonly CellResult[], cells: readonly MatrixCell[]): v
     `\nvalue matrix: ${doc.cells} cells, ${doc.pairs} pairs, ${doc.failing} failing ` +
       `(${((100 * doc.failing) / Math.max(doc.pairs, 1)).toFixed(1)}%), ${Object.keys(doc.entries).length} cells with a failure`
   );
-  console.log(`  ${doc.failing - (doc.accepted ?? 0)} open, ${doc.accepted ?? 0} accepted (ACCEPTED)`);
+  console.log(
+    `  ${doc.failing - (doc.accepted ?? 0)} open, ${doc.accepted ?? 0} accepted (ACCEPTED)`
+  );
   table('by family (where the loss sits):', results, r => doc.entries[r.id]?.family);
   table('by position:', results, r => byId.get(r.id)?.position);
   table('by operand kind (cells that test one):', results, r => byId.get(r.id)?.operand);
   table('by operator (cells that test one):', results, r => byId.get(r.id)?.operator);
   table('by colliding name (see collidingNames):', results, r => {
     const cell = byId.get(r.id);
-    return cell?.group === 'name' ? cell.expression : undefined;
+    return cell?.group === 'name' ? cell.name : undefined;
   });
   table('by lane:', results, (_r, lane) => lane);
 }
@@ -156,12 +160,16 @@ async function main(): Promise<void> {
     `\nvs the baseline: ${diff.fixed.length} pair(s) fixed, ${diff.added.length} new, ${orphans.length} cell(s) gone`
   );
   for (const a of diff.added.slice(0, 60)) {
-    console.log(`  NEW ${a.id} [${a.lane}] want ${JSON.stringify(a.want)}, got ${JSON.stringify(a.got)}`);
+    console.log(
+      `  NEW ${a.id} [${a.lane}] want ${JSON.stringify(a.want)}, got ${JSON.stringify(a.got)}`
+    );
   }
   if (diff.added.length > 60) console.log(`  … and ${diff.added.length - 60} more`);
 
   if (diff.added.length && previous && !process.argv.includes('--allow-new')) {
-    console.error('\nrefusing to write: pairs newly fail. Fix them, or pass --allow-new and say why.');
+    console.error(
+      '\nrefusing to write: pairs newly fail. Fix them, or pass --allow-new and say why.'
+    );
     process.exitCode = 1;
     return;
   }
@@ -177,7 +185,9 @@ async function main(): Promise<void> {
     entries,
   };
   writeFileSync(target, JSON.stringify(doc, null, 2) + '\n');
-  console.log(`wrote ${path.relative(process.cwd(), target)}: ${Object.keys(entries).length} cells, ${failing} failing pairs`);
+  console.log(
+    `wrote ${path.relative(process.cwd(), target)}: ${Object.keys(entries).length} cells, ${failing} failing pairs`
+  );
 }
 
 main().then(

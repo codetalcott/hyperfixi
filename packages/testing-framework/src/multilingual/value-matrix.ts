@@ -9,16 +9,18 @@
  *
  * This does. A CELL is one value expression in one position:
  *
- *   - OPERANDS: nine kinds (literal, variable, selector, possessive, `of`,
- *     dotted, call, array, parens), each with instances of the value types it
+ *   - OPERANDS: ten kinds (literal, variable, selector, possessive, `of`,
+ *     dotted, call, array, parens, and a reference's property: `event's
+ *     type`, `the id of target`), each with instances of the value types it
  *     produces;
  *   - OPERATORS: arithmetic, comparison, equality, logic, membership, and the
  *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
  *     `exists`, `as`), and core's operator PHRASES (`is greater than or equal
  *     to`, `does not include`, `is an Element`, …);
  *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
- *     while` condition, an `increment … by` amount, and two written targets:
- *     what a `set` writes (`assign`) and what an `increment` counts (`count`).
+ *     while` condition, an `increment … by` amount, a `set` value in the
+ *     second command of a chain (`chain`), and two written targets: what a
+ *     `set` writes (`assign`) and what an `increment` counts (`count`).
  *
  * The generator crosses them as a covering design, not a full product: every
  * operand alone; every operator with literal and variable operands on each
@@ -30,9 +32,10 @@
  *   - TARGETS: a plain variable, a property and an attribute as `assign` and
  *     `count` targets;
  *   - NAMES: variables spelled like another language's structure word (es
- *     `a`, pl `w`, tr `de`, de `um`), in six positions. A translation writes a
- *     variable verbatim, so its reader has to tell the variable from the word
- *     by where it stands (see collidingNames).
+ *     `a`, pl `w`, tr `de`, de `um`), as a whole value in seven positions and
+ *     as an operand in four expressions (NAME_EXPRESSIONS). A translation
+ *     writes a variable verbatim, so its reader has to tell the variable from
+ *     the word by where it stands (see collidingNames).
  *
  * ## Lanes
  * Each cell runs its English source on the real `hyperscript.org` engine: that
@@ -93,9 +96,10 @@ export type OperandKind =
   | 'dotted'
   | 'call'
   | 'array'
-  | 'parens';
+  | 'parens'
+  | 'reference';
 
-export type Position = 'put' | 'set' | 'if' | 'while' | 'increment' | 'assign' | 'count';
+export type Position = 'put' | 'set' | 'if' | 'while' | 'increment' | 'chain' | 'assign' | 'count';
 
 export const POSITIONS: readonly Position[] = [
   'put',
@@ -103,6 +107,7 @@ export const POSITIONS: readonly Position[] = [
   'if',
   'while',
   'increment',
+  'chain',
   'assign',
   'count',
 ];
@@ -125,6 +130,8 @@ export interface MatrixCell {
   operand?: OperandKind;
   /** The operator under test, when any. */
   operator?: string;
+  /** The colliding name under test, in a `name` cell (see collidingNames). */
+  name?: string;
   /**
    * Languages whose two lanes do not run: the cell's variable is spelled like
    * that language's pronoun, so no reader can tell them apart (see
@@ -191,6 +198,19 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'parens', type: 'num', text: '(n + 1)' },
   { kind: 'parens', type: 'str', text: '(s + "c")' },
   { kind: 'parens', type: 'bool', text: '(n > 1)' },
+  // A reference word's property, each way a property is written. The owner is
+  // a keyword every language translates, where a variable is written verbatim:
+  // PR 104 dropped a guard that kept `event's type` reading in five languages,
+  // with every oracle green, since no cell had a reference owner. The click is
+  // synthetic, so `event's detail` is 0, and jsdom never scrolls.
+  { kind: 'reference', type: 'str', text: "event's type" },
+  { kind: 'reference', type: 'str', text: 'the type of event' },
+  { kind: 'reference', type: 'str', text: 'event.type' },
+  { kind: 'reference', type: 'str', text: "target's id" },
+  { kind: 'reference', type: 'str', text: 'the id of target' },
+  { kind: 'reference', type: 'str', text: "event's target's id" },
+  { kind: 'reference', type: 'num', text: "event's detail" },
+  { kind: 'reference', type: 'num', text: 'the scrollY of window' },
 ];
 
 /** An operator slot, and the value types that fill it. */
@@ -458,10 +478,36 @@ export const TARGETS: readonly string[] = [
 export const NAME_VALUE = 7;
 
 /**
- * A colliding name's positions. Not `while`: probing every name in all seven,
- * it failed in no lane that another position did not.
+ * A colliding name's positions as a whole value. Not `while`: probing every
+ * name in all seven, it failed in no lane that another position did not.
  */
-const NAME_POSITIONS: readonly Position[] = ['put', 'set', 'if', 'increment', 'assign', 'count'];
+const NAME_POSITIONS: readonly Position[] = [
+  'put',
+  'set',
+  'if',
+  'increment',
+  'chain',
+  'assign',
+  'count',
+];
+
+/**
+ * A colliding name as an operand: before an operator and after one, in a
+ * comparison, and after `not`. The rules that tell a name from a structure
+ * word read its neighbours, and a whole value has none: the extended names
+ * oracle misreads a tenth of these names in these shapes on main, where the
+ * whole-value cells all pass. Each condition is false for the name's value,
+ * so the misreadings that drop the operator (`if si`) read as true.
+ */
+export const NAME_EXPRESSIONS: ReadonlyArray<{
+  position: Position;
+  form: (name: string) => string;
+}> = [
+  { position: 'put', form: name => `${name} + 1` },
+  { position: 'set', form: name => `1 + ${name}` },
+  { position: 'if', form: name => `${name} < 3` },
+  { position: 'if', form: name => `not ${name}` },
+];
 
 export interface CollidingName {
   name: string;
@@ -521,6 +567,7 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
   if: e => `on click if ${e} then put "Y" into #out else put "N" into #out end`,
   while: e => `on click set i to 0 then repeat while i < ${e} increment i end then put i into #out`,
   increment: e => `on click set i to 1 then increment i by ${e} then put i into #out`,
+  chain: e => `on click set p to 1 then set x to ${e} then put x into #out`,
   assign: e => `on click set ${e} to 5 then put ${e} into #out`,
   count: e => `on click increment ${e} then put ${e} into #out`,
 };
@@ -529,11 +576,19 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
  * The positions an expression fills: any value is put or set; a condition
  * takes a boolean, or an operand alone (its truthiness); a loop bound and an
  * increment take a number.
+ *
+ * A value the second command of a chain sets (`chain`) is every `set` value
+ * but an operand kind's cross with the operators: the cells that meet each
+ * operator with a variable and a literal on each side, each operand alone, the
+ * compounds and the names. A command after `then` is read where a handler can
+ * start: de reads `setze x auf n + 3` there as `on n` (`auf` is also `on`),
+ * and every cell had one command before the value's.
  */
-function positionsFor(type: ValueType, bare: boolean): Position[] {
+function positionsFor(type: ValueType, bare: boolean, group: MatrixCell['group']): Position[] {
   const out: Position[] = ['put', 'set'];
   if (type === 'bool' || bare) out.push('if');
   if (type === 'num' || type === 'nstr') out.push('while', 'increment');
+  if (group !== 'operand-operator') out.push('chain');
   return out;
 }
 
@@ -549,7 +604,7 @@ export function generateCells(): MatrixCell[] {
     result: ValueType,
     meta: Pick<MatrixCell, 'group'> & Partial<Pick<MatrixCell, 'operand' | 'operator'>>
   ): void => {
-    for (const position of positionsFor(result, meta.group === 'operand')) {
+    for (const position of positionsFor(result, meta.group === 'operand', meta.group)) {
       const id = `${position}|${expression}`;
       if (cells.has(id)) continue;
       cells.set(id, { id, position, expression, source: TEMPLATES[position](expression), ...meta });
@@ -608,9 +663,9 @@ export function generateCells(): MatrixCell[] {
     place('count', target, { group: 'target' });
   }
   for (const { name, pronounIn } of collidingNames()) {
-    for (const position of NAME_POSITIONS) {
-      place(position, name, { group: 'name', ...(pronounIn.length ? { skip: pronounIn } : {}) });
-    }
+    const meta = { group: 'name', name, ...(pronounIn.length ? { skip: pronounIn } : {}) } as const;
+    for (const position of NAME_POSITIONS) place(position, name, meta);
+    for (const { position, form } of NAME_EXPRESSIONS) place(position, form(name), meta);
   }
 
   return [...cells.values()];
