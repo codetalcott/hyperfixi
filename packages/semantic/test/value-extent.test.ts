@@ -86,12 +86,12 @@ const SOURCES: Array<[string, string[]]> = [
   [`on click put { } is not a String into #out`, []],
   [`on click set x to length of arr is a Number then put x into #out`, LOCAL_LENGTH],
   // A reference after a possessive is the property (PR 105): English itself
-  // parsed `put event's detail into #out` as a bare `on click`. qu and uk keep
-  // `'s` on a localized reference (`ruway's`), which reads no reference (filed).
-  [`on click put event's detail into #out`, ['qu', 'uk']],
+  // parsed `put event's detail into #out` as a bare `on click`. qu and uk read
+  // a reference's `'s` apart since PR 109 (`ruway` `'` `s`).
+  [`on click put event's detail into #out`, []],
   [`on click put obj's target into #out`, []],
   [`on click set x to obj's body then put x into #out`, []],
-  [`on click if event's detail is 1 put "Y" into #out end`, ['qu', 'uk']],
+  [`on click if event's detail is 1 put "Y" into #out end`, []],
 ];
 
 describe.each(SOURCES)('%s', (source, broken) => {

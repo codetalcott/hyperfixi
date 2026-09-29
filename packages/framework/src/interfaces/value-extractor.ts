@@ -92,7 +92,11 @@ export class StringLiteralExtractor implements ValueExtractor {
     // literal, which swallowed the operator and hid the property noun from
     // translation in every language that renders `'s`. A quote that opens a
     // string always follows whitespace, punctuation, or the start of input.
-    if (char === "'" && position > 0 && /[\p{L}\p{N}_)\]]/u.test(input[position - 1])) {
+    // A word can end in a combining mark: bn `ঘটনা`, hi `घटना` and th
+    // `เหตุการณ์` (event) end in a vowel sign or a tone mark, and without
+    // `\p{M}` their `'s` paired with the next one (`ঘটনা's target's id` lexed
+    // `'s target'` as a string).
+    if (char === "'" && position > 0 && /[\p{L}\p{M}\p{N}_)\]]/u.test(input[position - 1])) {
       return false;
     }
     return (

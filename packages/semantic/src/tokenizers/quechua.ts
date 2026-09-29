@@ -10,8 +10,9 @@
  * - Evidential markers
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
+import { splitReferencePossessive } from './reference-possessive-split';
 import { quechuaProfile } from '../generators/profiles/quechua';
 import { quechuaMorphologicalNormalizer } from './morphology/quechua-normalizer';
 import { NumberExtractor, OperatorExtractor, PunctuationExtractor } from './generic-extractors';
@@ -281,8 +282,10 @@ export class QuechuaTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
-  // All tokenization logic delegated to registered extractors (context-aware)
+  /** A reference's `'s` stays on its word (`ruway's`): see splitReferencePossessive. */
+  override tokenize(input: string): TokenStream {
+    return splitReferencePossessive(super.tokenize(input), word => super.tokenize(word).tokens);
+  }
 
   classifyToken(token: string): TokenKind {
     const lower = token.toLowerCase();
