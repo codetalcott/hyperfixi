@@ -551,5 +551,5 @@ export type { InterchangeNode, EventModifiers as InterchangeEventModifiers } fro
 // Name Collisions (a variable spelled like a word of the language)
 // =============================================================================
 
-export { findNameCollisions, nameCollision } from './name-collisions';
+export { findNameCollisions, findTranslationCollisions, nameCollision } from './name-collisions';
 export type { NameCollision, NameCollisionFinding } from './name-collisions';

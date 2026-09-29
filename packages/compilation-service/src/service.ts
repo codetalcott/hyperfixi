@@ -51,10 +51,23 @@ import type { ComponentRenderer } from './renderers/component-types.js';
 // Service
 // =============================================================================
 
+/** semantic's `findTranslationCollisions`, as the service calls it. */
+type TranslationCollisionsFn = (
+  code: string,
+  from: string,
+  to: string
+) => ReadonlyArray<{
+  readonly name: string;
+  readonly occurrences: ReadonlyArray<unknown>;
+  readonly rename: string | undefined;
+  readonly message: string;
+}>;
+
 export class CompilationService {
   private cache: SemanticCache;
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
+  private translationCollisionsFn: TranslationCollisionsFn | null = null;
   private testRenderers: Map<string, TestRenderer>;
   private componentRenderers: Map<string, ComponentRenderer>;
 
@@ -133,6 +146,7 @@ export class CompilationService {
 
     // Store translate function
     service.translateFn = semantic.translate;
+    service.translationCollisionsFn = semantic.findTranslationCollisions;
 
     return service;
   }
@@ -295,7 +309,7 @@ export class CompilationService {
         ok: true,
         code: result,
         ...(verification !== undefined ? { verification } : {}),
-        diagnostics: [],
+        diagnostics: this.translationCollisions(request),
       };
     } catch (error) {
       return {
@@ -309,6 +323,23 @@ export class CompilationService {
         ],
       };
     }
+  }
+
+  /**
+   * A variable of the source that the target language reads as a value word
+   * (tl `ako` is `me`): the translation reads the value, and no spelling of
+   * the name tells them apart, so the fix is a rename before translating.
+   */
+  private translationCollisions(request: TranslateRequest): Diagnostic[] {
+    const findings = this.translationCollisionsFn?.(request.code, request.from, request.to) ?? [];
+    return findings.map(finding => ({
+      severity: 'warning' as const,
+      code: 'NAME_COLLISION',
+      message: finding.message,
+      suggestion: finding.rename
+        ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the source (${finding.occurrences.length} place(s)), then translate.`
+        : `Rename \`${finding.name}\` in the source, then translate.`,
+    }));
   }
 
   /**
