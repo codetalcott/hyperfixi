@@ -490,6 +490,35 @@ describe('CompilationService', () => {
       expect(result.code).toBeDefined();
       expect(result.code).not.toBe('toggle .active');
     });
+
+    // A variable the target language reads as a value word: no spelling tells
+    // them apart, so the translation says so and offers a rename (PR 116).
+    it('warns about a variable the target language reads as a pronoun', () => {
+      const result = service.translate({
+        code: 'on click put ako into #out',
+        from: 'en',
+        to: 'tl',
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.diagnostics).toHaveLength(1);
+      expect(result.diagnostics[0]).toMatchObject({ severity: 'warning', code: 'NAME_COLLISION' });
+      expect(result.diagnostics[0]!.message).toContain('`ako` is the pronoun `me`');
+      expect(result.diagnostics[0]!.suggestion).toContain('`ako1`');
+      // The verification sees the loss; the warning says why.
+      expect(result.verification?.faithful).toBe(false);
+    });
+
+    it('says nothing for a name the target language reads as a name', () => {
+      const result = service.translate({
+        code: 'on click put x into #out',
+        from: 'en',
+        to: 'tl',
+      });
+
+      expect(result.diagnostics).toEqual([]);
+      expect(result.verification?.faithful).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------

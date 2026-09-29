@@ -77,7 +77,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'translate_code',
     description:
-      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Every result carries a `verification` report (the output scored against the source via score_fidelity): verification.faithful === true is the claim "this rendering is structurally exact", so present it alongside the translation when showing code to a user for review. Higher fidelity than translate_hyperscript; preferred for production translations.',
+      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Every result carries a `verification` report (the output scored against the source via score_fidelity): verification.faithful === true is the claim "this rendering is structurally exact", so present it alongside the translation when showing code to a user for review. A variable the target language reads as a pronoun or another value word (tl `ako` is `me`) comes back as a NAME_COLLISION warning with a rename: rename it in the source and translate again. Higher fidelity than translate_hyperscript; preferred for production translations.',
     inputSchema: {
       type: 'object',
       properties: {

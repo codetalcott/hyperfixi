@@ -125,6 +125,19 @@ describe('translate_code', () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.code).toBeDefined();
   }, 30000);
+
+  it('warns about a variable the target language reads as a pronoun', async () => {
+    // tl `ako` is `me`: the translation reads the pronoun, and says so.
+    const result = await handleCompilationTool('translate_code', {
+      code: 'on click put ako into #out',
+      from: 'en',
+      to: 'tl',
+    });
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.diagnostics.map((d: { code: string }) => d.code)).toEqual(['NAME_COLLISION']);
+  }, 30000);
 });
 
 describe('generate_tests', () => {

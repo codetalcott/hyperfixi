@@ -15,7 +15,7 @@
  * (`NAME_COLLISION`).
  */
 import { tokenize } from './tokenizers';
-import { setStructureNamePredicate } from './registry';
+import { setStructureNamePredicate, tryGetProfile } from './registry';
 import { commandSchemas } from './generators/command-schemas';
 import { translateConnective } from './parser/utils/expression-lexicon';
 import { parseExpression } from './ast-builder/expression-parser/parser';
@@ -281,11 +281,64 @@ function wholeWord(name: string, flags: string): RegExp {
 }
 
 /**
- * A name `code` does not use that reads as a plain identifier in `language`,
- * from `candidates` in order.
+ * A name `code` does not use that reads as a plain identifier in each of
+ * `languages`, from `candidates` in order.
  */
-function freeName(code: string, language: string, candidates: readonly string[]) {
-  return candidates.find(name => !usesName(code, name) && readingOf(name, language) === null);
+function freeName(code: string, languages: readonly string[], candidates: readonly string[]) {
+  return candidates.find(
+    name => !usesName(code, name) && languages.every(language => readingOf(name, language) === null)
+  );
+}
+
+/**
+ * Renames for `name`, in the order a finding offers them. A digit splits the
+ * word in some tokenizers (tr, qu): the candidates are checked, not assumed.
+ */
+function renamesFor(name: string): string[] {
+  return [
+    `${name}1`,
+    `${name}2`,
+    `${name}Value`,
+    `${name}Var`,
+    `my${name[0]!.toUpperCase()}${name.slice(1)}`,
+  ];
+}
+
+/**
+ * Where the parse of `code` (in `language`) reads `name` as the variable.
+ * Taken in order, an occurrence is the variable when writing an unambiguous
+ * name in its place, and in the places already taken, leaves the program's
+ * reading unchanged. Undefined when no unambiguous name is free.
+ */
+function occurrencesOf(
+  code: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  reading: string,
+  name: string
+): Array<{ start: number; end: number }> | undefined {
+  const probe = freeName(
+    code,
+    [language],
+    [...'abcdefghijklmnopqrstuvwxyz'].map(c => `zqv${c}`)
+  );
+  if (!probe) return undefined;
+  const asName = wholeWord(probe, 'gu');
+  const occurrences: Array<{ start: number; end: number }> = [];
+  for (const token of tokens) {
+    const start = token.position?.start;
+    const end = token.position?.end;
+    if (token.value !== name || start === undefined || end === undefined) continue;
+    if (token.kind === 'literal' || token.kind === 'selector') continue;
+    const probed = parseWithConfidence(
+      withName(code, [...occurrences, { start, end }], probe),
+      language
+    ).node;
+    if (probed && readingOfNode(probed).replace(asName, name) === reading) {
+      occurrences.push({ start, end });
+    }
+  }
+  return occurrences;
 }
 
 /** `code` with each span replaced by `name`. */
@@ -320,6 +373,15 @@ function describe(name: string, reading: Reading, language: string): string {
     : `Variable \`${name}\` is also ${is}: a reader tells them apart only by where it stands, or when it is written \`(${name})\`.`;
 }
 
+/** What a translation into `language` reads `name` as, and what to do about it. */
+function describeInTranslation(name: string, reading: Reading, language: string): string {
+  const word = PRONOUNS.has(reading.sense ?? '')
+    ? `the pronoun \`${reading.sense}\``
+    : `the word for \`${reading.sense}\``;
+  const into = tryGetProfile(language)?.name ?? language;
+  return `Variable \`${name}\` is ${word} in ${into}: a translation into ${into} reads it as that word, and no spelling tells them apart. Rename it before translating.`;
+}
+
 /**
  * The variables of `code` (in `language`) that collide with a word of the
  * language, and where the parse reads each as the variable.
@@ -348,42 +410,52 @@ export function findNameCollisions(code: string, language: string): NameCollisio
     const collision = readingOf(name, language);
     if (!collision) continue;
     tokens ??= tokenize(code, language).tokens;
-    const probe = freeName(
-      code,
-      language,
-      [...'abcdefghijklmnopqrstuvwxyz'].map(c => `zqv${c}`)
-    );
-    if (!probe) break;
-    const asName = wholeWord(probe, 'gu');
-    const occurrences: Array<{ start: number; end: number }> = [];
-    for (const token of tokens) {
-      const start = token.position?.start;
-      const end = token.position?.end;
-      if (token.value !== name || start === undefined || end === undefined) continue;
-      if (token.kind === 'literal' || token.kind === 'selector') continue;
-      const probed = parseWithConfidence(
-        withName(code, [...occurrences, { start, end }], probe),
-        language
-      ).node;
-      if (probed && readingOfNode(probed).replace(asName, name) === reading) {
-        occurrences.push({ start, end });
-      }
-    }
+    const occurrences = occurrencesOf(code, language, tokens, reading, name);
+    if (!occurrences) break;
     if (occurrences.length === 0) continue;
     findings.push({
       name,
       collision: collision.collision,
       occurrences,
-      // A digit splits the word in some tokenizers (tr, qu): the candidates
-      // are checked, not assumed.
-      rename: freeName(code, language, [
-        `${name}1`,
-        `${name}2`,
-        `${name}Value`,
-        `${name}Var`,
-        `my${name[0]!.toUpperCase()}${name.slice(1)}`,
-      ]),
+      rename: freeName(code, [language], renamesFor(name)),
       message: describe(name, collision, language),
+    });
+  }
+  return findings;
+}
+
+/**
+ * The variables of `code` (in `from`) that its translation into `to` cannot
+ * keep: each is a value word there, a pronoun (tl `ako` is `me`, it `io`) or
+ * another reference (es `objetivo` is `target`), so the translation reads the
+ * value. No spelling tells the two apart — the verified render's parentheses
+ * are for structure words, and a value word in parentheses is still the value
+ * — so renaming the variable before translating is the only fix. (A structure
+ * collision needs none: the render writes `(si)` where the plain spelling
+ * would misread.) The rename reads as a plain name in both languages.
+ */
+export function findTranslationCollisions(
+  code: string,
+  from: string,
+  to: string
+): NameCollisionFinding[] {
+  const { node } = parseWithConfidence(code, from);
+  if (!node) return [];
+  const reading = readingOfNode(node);
+  const findings: NameCollisionFinding[] = [];
+  let tokens: readonly LanguageToken[] | undefined;
+  for (const name of variablesOf(node)) {
+    const collision = readingOf(name, to);
+    if (collision?.collision !== 'pronoun') continue;
+    tokens ??= tokenize(code, from).tokens;
+    const occurrences = occurrencesOf(code, from, tokens, reading, name);
+    if (!occurrences?.length) continue;
+    findings.push({
+      name,
+      collision: 'pronoun',
+      occurrences,
+      rename: freeName(code, [from, to], renamesFor(name)),
+      message: describeInTranslation(name, collision, to),
     });
   }
   return findings;
