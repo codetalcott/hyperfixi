@@ -147,6 +147,53 @@ describe('an end word where a value stands is a value (PR 114)', () => {
   });
 });
 
+describe('an end word in a loop head is a value where one stands (PR 117)', () => {
+  it.each([
+    // With the language's own `repeat` verb, the fused loop head's clause scan
+    // ended at the end word, and the loop read `repeat mientras`.
+    [
+      'es',
+      'al clic repetir mientras fin < 3 incrementar x fin entonces poner x en #out',
+      'on click repeat while fin < 3 increment x end then put x into #out',
+    ],
+    [
+      'es',
+      'al clic repetir mientras fin incrementar x fin entonces poner x en #out',
+      'on click repeat while fin increment x end then put x into #out',
+    ],
+    [
+      'pt',
+      'ao clique repetir enquanto fim < 3 incrementar x fim então colocar x em #out',
+      'on click repeat while fim < 3 increment x end then put x into #out',
+    ],
+    // tl `tapos` is also tl's `then`, which the loop head's scan took it for.
+    [
+      'tl',
+      'kapag click ulitin habang tapos < 3 dagdagan x wakas pagkatapos ilagay x sa #out',
+      'on click repeat while tapos < 3 increment x end then put x into #out',
+    ],
+    // …and a counted loop lost its whole body at `incrementar fin`.
+    [
+      'es',
+      'al clic repetir 3 times incrementar fin fin entonces poner fin en #out',
+      'on click repeat 3 times increment fin end then put fin into #out',
+    ],
+    // A loop's count before `times`, and a for loop's list after its `in`.
+    [
+      'tr',
+      'tıklama i üzerinde son times i repeat x i artır son ardından x i #out e koy',
+      'on click repeat son times increment x end then put x into #out',
+    ],
+    [
+      'qu',
+      'maykama click repeat x ukupi tukuy x ta #out man churay tukukuy chaymantataq 1 ta #out man churay',
+      'on click repeat for x in tukuy put x into #out end then put 1 into #out',
+    ],
+  ])('%s: %s', (language, code, expected) => {
+    expect(english(code, language)).toBe(expected);
+  });
+});
+
 describe('an end word is still the end', () => {
   it.each([
     [

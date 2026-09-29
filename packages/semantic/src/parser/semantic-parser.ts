@@ -2538,16 +2538,26 @@ export class SemanticParserImpl implements ISemanticParser {
         const isVerbFirst = match.pattern.id.includes('verb-first');
         const all = tokens.tokens;
         const pos = tokens.position();
-        const isClauseBoundary = (t: LanguageToken): boolean =>
-          t.kind === 'conjunction' ||
-          (t.kind === 'keyword' &&
-            (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        // A clause ends at a conjunction, `then` or an end word, but not at an
+        // end word where a value stands (C3): es `repetir mientras fin < 3 …`
+        // (repeat while fin < 3) ended its head at `fin`, and read `repeat
+        // mientras` (PR 117).
+        const isClauseBoundary = (k: number): boolean => {
+          const t = all[k]!;
+          if (t.kind === 'conjunction') return true;
+          if (t.kind !== 'keyword') return false;
+          const place = endWordPlace(all, k);
+          return (
+            this.isThenAt(t, place, language) ||
+            (this.isEndKeyword(t.value, language) && !endWordIsValue(place, language))
+          );
+        };
         // A loop head's clause also stops at the loop's own `end` where
         // isEndKeyword cannot list it (bn শেষ, also `last`): read past, the
         // `end` was swallowed as a stray terminator and the loop lost its extent.
         const loopHeadAction = actionName === 'repeat' || actionName === 'while';
         const endsClause = (k: number): boolean =>
-          isClauseBoundary(all[k]) ||
+          isClauseBoundary(k) ||
           (loopHeadAction && this.isBlockEndToken(all[k], endWordPlace(all, k), language));
         // The scan-back below identifies the verb by its NORMALIZED form. That
         // misses whenever the language's verb normalizes to something other
@@ -2567,7 +2577,7 @@ export class SemanticParserImpl implements ISemanticParser {
         let verbIdx = -1;
         for (let k = pos - 1; k >= 0; k--) {
           const t = all[k];
-          if (isClauseBoundary(t)) break; // don't cross into a previous clause
+          if (isClauseBoundary(k)) break; // don't cross into a previous clause
           const tn = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
           if (tn === actionName || verbSurfaces.has(t.value.toLowerCase())) {
             verbIdx = k;

@@ -1293,8 +1293,11 @@ export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWo
   };
 }
 
-/** The words after which an end word is an operand (endWordIsValue). */
-const END_WORD_OPERANDS: ReadonlySet<string> = new Set(['and', 'or', 'is']);
+/**
+ * The words before which an end word is a value (endWordIsValue): an operand's
+ * `and`, `or` or copula, and a loop's `times` (`repeat son times`, the count).
+ */
+const END_WORD_OPERANDS: ReadonlySet<string> = new Set(['and', 'or', 'is', 'times']);
 
 /**
  * The words that owe the value after them (endWordIsValue), where no verb or
@@ -1308,6 +1311,8 @@ const OWING_WORDS: ReadonlySet<string> = new Set([
   'is',
   'and',
   'or',
+  // A loop's or a membership's `in` (qu `repeat x ukupi tukuy`, for x in tukuy).
+  'in',
 ]);
 
 const isAction = (word: string): word is ActionType =>
