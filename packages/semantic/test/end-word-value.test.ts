@@ -36,6 +36,13 @@ describe('an end word before an operator is a value', () => {
     ],
     ['es', 'al clic si fin es 3 poner 1 en #out fin', 'on click if fin is 3 put 1 into #out end'],
     ['fr', 'quand clic mettre fin + 1 dans #out', 'on click put fin + 1 into #out'],
+    // tr's `son` reads `last`, and tr lexes `<` as a selector: the join took
+    // `son <` for a positional query (`last <`).
+    [
+      'tr',
+      'tıklama i üzerinde x i son < 3 e ayarla ardından x i #out e koy',
+      'on click set x to son < 3 then put x into #out',
+    ],
   ])('%s: %s', (language, code, expected) => {
     expect(english(code, language)).toBe(expected);
   });

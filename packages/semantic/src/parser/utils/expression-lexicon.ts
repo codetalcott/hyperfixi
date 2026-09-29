@@ -32,7 +32,7 @@
  */
 
 import type { LanguageToken } from '../../types';
-import { BINARY_OPERATORS, OPERATOR_CHARACTERS } from './operators';
+import { BINARY_OPERATORS, COMPARISON_OPERATORS, OPERATOR_CHARACTERS } from './operators';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
@@ -503,9 +503,12 @@ export function matchPositionalRun(
   ];
   let i = start + 1;
 
-  // Required: the queried selector (e.g. <.message/>, .message, <button/>).
+  // Required: the queried selector (e.g. <.message/>, .message, <button/>). Not
+  // a comparison that some tokenizers lex as a selector: tr `son < 3` (a
+  // variable spelled like tr's end word, whose reading is `last`) joined as
+  // `last <` (PR 112).
   const sel = tokens[i];
-  if (!sel || sel.kind !== 'selector') return null;
+  if (!sel || sel.kind !== 'selector' || COMPARISON_OPERATORS.has(sel.value)) return null;
   parts.push({ text: sel.value, token: sel });
   i++;
 
