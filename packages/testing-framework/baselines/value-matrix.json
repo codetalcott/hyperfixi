@@ -1,8 +1,8 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 3592,
-  "pairs": 172284,
-  "failing": 177,
+  "cells": 3603,
+  "pairs": 172812,
+  "failing": 174,
   "accepted": 174,
   "entries": {
     "increment|#a.textContent": {
@@ -54,18 +54,6 @@
       "lanes": "en *direct",
       "family": "core",
       "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
-    },
-    "if|not pa": {
-      "lanes": "qu/up",
-      "family": "adapter"
-    },
-    "if|not pi": {
-      "lanes": "qu/up",
-      "family": "adapter"
-    },
-    "if|not ta": {
-      "lanes": "qu/up",
-      "family": "adapter"
     }
   }
 }
