@@ -559,6 +559,28 @@ function validateHyperscript(
         });
       }
 
+      // A variable spelled like a word of the code's language (es `si`, tr
+      // `i`): its readers tell the two apart only by where it stands. The
+      // editor's warning, from the same semantic finder.
+      if (language !== 'en' && result.confidence >= 0.5) {
+        const findings = (semanticPackage?.findNameCollisions?.(code, language) ?? []) as Array<{
+          name: string;
+          occurrences: unknown[];
+          rename?: string;
+          message: string;
+        }>;
+        for (const finding of findings) {
+          warnings.push({
+            code: 'NAME_COLLISION',
+            message: finding.message,
+            suggestion: finding.rename
+              ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the ${finding.occurrences.length} place(s) the parse reads it as the variable.`
+              : `Rename \`${finding.name}\`.`,
+            source: 'semantic-parser',
+          });
+        }
+      }
+
       // Add confidence warning if parsing succeeded but with low confidence
       if (result.confidence > 0 && result.confidence < 0.5) {
         warnings.push({

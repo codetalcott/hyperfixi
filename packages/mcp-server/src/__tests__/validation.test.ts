@@ -196,6 +196,17 @@ describe('validate_hyperscript reports what the parsers actually did', () => {
     expect(w?.message).toMatch(/frob/);
   });
 
+  it('warns about a variable spelled like a word of the language', async () => {
+    // es `y` is `and`: the reader tells the variable from the word by where it
+    // stands (semantic's findNameCollisions, as the language server warns).
+    const r = await run('al clic establecer y a 5 entonces poner y en #out', 'es');
+    const w = r.warnings.find((x: any) => x.code === 'NAME_COLLISION');
+    expect(w?.message).toMatch(/`y` is also the word for `and` in es/);
+    expect(w?.suggestion).toMatch(/to `y1` in the 2 place/);
+    const clean = await run('al clic establecer n a 5 entonces poner n en #out', 'es');
+    expect(clean.warnings.some((x: any) => x.code === 'NAME_COLLISION')).toBe(false);
+  });
+
   it('the book counter and pseudo-command parse with nothing unconsumed', async () => {
     for (const code of [
       'on click increment the textContent of the previous <output/>',

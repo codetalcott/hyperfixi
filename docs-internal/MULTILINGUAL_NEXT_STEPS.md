@@ -6762,6 +6762,96 @@ of it keeps the difference explicit and is filed instead.
   `sua`/`tu`, qu (1,275 entries alone). The renderer also translates a variable spelled like an
   English lexicon word inside an expression: `set x to at < 3` renders ru `в < 3`, tr `de < 3`.
 
+### Name collisions: parser inference, or renderer + diagnostic? (spike, 2026-09-28)
+
+The after-85 handoff's part 3. A translation writes a variable verbatim, so a variable spelled like a
+structure word of the target language (es `si`, pl `w`, tr `al`) reaches that language's reader as
+the word. Today the parser infers which it is by position (option **A**: nine PRs of rules, C2–C12,
+J1, J5, S1, S3 in the inventory above). The spike measured option **B**: the renderer spells a
+colliding variable `(si)`, and the reader reads `(si)` as the variable. Prototype in the proto
+worktree, three parts:
+
+- **Detection**, `nameCollision(name, language)` (semantic, new): `structure`, `pronoun` or none, for
+  any identifier. Structure = the language's tokenizer reads the name as anything but one plain
+  identifier, or a command schema uses it as a role marker there (de `um`), or the join reads it as
+  a connective (tl `o` is `or`, though tl's tokenizer leaves it an identifier), or it is an English
+  article (the role capture skips those in every language). The last two were found by the spike:
+  without them B missed de `increment a` and tl `if o`.
+- **Renderer**: parse the English value with semantic's expression parser; wrap every identifier
+  node that is a variable — not a `property` (`obj.v`, `obj's v`, `v of obj`, a method) or a
+  conversion's `targetType`, not an English keyword or reference (`event`, `it`, `window`, `beep`)
+  — when it collides in the target language.
+- **Reader**: the tokenizer fuses `(` word `)`, adjacent and not after a callee (Unicode-aware:
+  an Arabic event name before `(clientY)` is a callee), into one identifier token `(si)`. One place,
+  and every reader downstream sees an opaque name. A first cut patched the join and the `if` scan
+  instead and was still wrong: twelve places recognize `if` by its surface, and a fused VSO
+  if-event pattern found the inner `si`.
+
+**Measured** (value matrix on both engines, 48 lanes; the rules of A switched off by a flag):
+
+| Configuration                 | Failing pairs  | Name pairs | Other pairs A protects |
+| ----------------------------- | -------------- | ---------- | ---------------------- |
+| A (today)                     | 102 (accepted) | 0          | 0                      |
+| A + B                         | 102            | 0          | 0                      |
+| B alone (A's name rules off)  | 102            | 0          | 0                      |
+| neither                       | 1,765          | 907        | 858 (tr's loop `i`, …) |
+
+- **Three-letter names** (es `por`/`con`/`sin`/`del`, pt `com`/`sem`, it `per`/`dal`, de
+  `von`/`auf`/`aus`/`bei`/`und`/`ist`, fr `par`/`sur`/`est`/`les`; six positions, 48 lanes):
+  **A fails 22 pairs today** (de `ist`, `auf`, `bei`, `von`, `aus`; fr `sur`, `est`); A + B and B
+  alone fail **0**.
+- **Names inside expressions** (the extended names oracle, 379 names in thirteen operator,
+  bracket, condition and possessive positions, read back as text): 4,433 of 113,321 read-backs
+  differ today (3.9%); 3,493 with B (3.1%). Without the names English itself cannot use as a
+  variable (`at`, `and`, `is`, …): 3,037 → 2,072 (−32%). B does not finish it: an owner after `of`
+  (`length of (a)`) is a shape the `of` readers do not yet accept, and qu keeps ~1,080.
+- **The stored corpus**: five rows' renders move, none of their parses: `retornar (a) + b`
+  (worker-basic, 23 languages), pl/tr `(I) match .active` (if-condition, if-matches,
+  unless-condition), and es `medir (y)` (behavior-draggable) — a false positive: `measure y`
+  names a dimension, and nothing in the English expression says so.
+
+**What it looks like** (B's renders; a language where the name does not collide is unchanged):
+
+```
+on click put si into #out            es  al clic poner (si) en #out
+                                     sw  unapo click weka (si) kwa #out
+on click increment ir then …         pt  ao clique incrementar (ir) então colocar (ir) em #out
+on click set w to 5 then …           pl  gdy click ustaw do (w) 5 wtedy umieść (w) do #out
+on click repeat while i < 3 …        pl  gdy click repeat dopóki (i) < 3 zwiększ (i) koniec …
+                                     tr  tıklama i üzerinde süresince (i) < 3 tekrarla (i) i artır son …
+on click put a + b into #out         es  al clic poner (a) + b en #out  (every language: an article)
+```
+
+The pl and tr loop variable `i` is the most visible cost: every loop over `i` gains parentheses in
+those two languages.
+
+**The call** (the owner's): B is correct by construction for machine-rendered text — it covers every
+matrix pair A covers, and the three-letter names A does not — but its parentheses show, and it does
+nothing for hand-written text. A diagnostic (C) covers hand-written text either way. Before B could
+replace any rule of A, a hand-written test set has to show the rule protects nothing there (the
+handoff's condition). Open questions if B goes ahead: which positions accept `(name)` (an `of`
+owner does not yet), the `measure y` class (a keyword-like argument the English expression cannot
+distinguish from a variable), and whether a name colliding only through an English article (`a`,
+`an`) should be spelled `(a)` in all 23 languages.
+
+**What shipped (PR 97): C, the diagnostic, either way.** semantic's `name-collisions.ts` exports
+`nameCollision(name, language)` (the detection above) and `findNameCollisions(code, language)`:
+the variables a program's parse reads that collide in its own language, where the parse reads
+each as the variable, and a rename. An occurrence is the variable when an unambiguous name written
+there, and in the places already taken, leaves the program's reading unchanged — its English and
+the input it leaves unconsumed (the English cannot show a dropped token) — so a rename of those
+places keeps the program's meaning, and the es `y` of `si a y b` (if a and b) or a tr accusative
+`i` after a variable `i` is left alone. The rename collides with nothing and is unused in the code;
+a digit splits a word in tr and qu, so it is checked, not assumed (tr `i` → `iValue`). The
+language server warns at each place (`name-collision`), with one quick fix renaming all of them;
+MCP `validate_hyperscript` warns (`NAME_COLLISION`). The value matrix now derives its colliding
+names from `nameCollision`, which found one it lacked, fr `ou` (`or`): its six cells pass every
+lane. Not findable: a pronoun collision in the code's own language (the parse reads the
+pronoun), and English, which reports nothing.
+
+**A is frozen**: no new per-name parser rules. A collision newly found in rendered text goes to
+the renderer (B, if the owner takes it); in hand-written text, to the diagnostic.
+
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
 **RESOLVED (2026-07-13, Arc E — `feat/arc-e-fetch-with`,
