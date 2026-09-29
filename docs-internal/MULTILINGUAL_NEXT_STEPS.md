@@ -6511,7 +6511,10 @@ every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 c
 in a shard per position): 3,118 of 125,400, 3,016 of them open; 1,800 after PR 94 (the `to` of
 `equal to`); 1,040 after PR 95 (a type name stays English); 994 after PR 96 (it `does not include`); 482
 after PR 100 (tl and tr `includes`); 272 after PR 101 (a selector after a comparison phrase); 102 after PR 102 (the `a` of a type
-check), every one ACCEPTED: the operator-phrase queue is empty.
+check), every one ACCEPTED: the operator-phrase queue is empty. PR 108 widened it with a
+reference's property as an operand, a `set` in the second command of a chain, and the colliding
+names as operands (972 cells, 3,592 in all): 3,521 of 172,284, 3,419 of them open (the
+reference-and-chain queue, below).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6590,6 +6593,49 @@ pairs, by where the loss sits:
   runs `#d1 has .x` both ways on the direct path in all 23. The generator
   (`i18n/scripts/extract-property-lexicon.ts`) now treats `contains`/`includes` as one operator:
   since PR 100 a regeneration dropped tl `naglalaman` and tr `içerir`.
+
+**The reference-and-chain queue** (PR 108, 2026-09-29; the after-107 handoff, item 7). The
+widening's three axes: a reference's property as an operand (`event's type`, `the type of event`,
+`event.type`, `target's id`, `the id of target`, `event's target's id`, `event's detail`, `the
+scrollY of window`), a `set` value in the second command of a chain (`chain`: `set p to 1 then
+set x to … then put x into #out`, for every `set` value but an operand kind's cross with the
+operators), and each colliding name as an operand (`name + 1`, `1 + name`, `name < 3`, `not
+name`). Every cell has an upstream oracle. The 3,419 open pairs, by where the loss sits:
+
+- **a reference after an of-marker, 2,353 pairs in 50 cells** (semantic's English parse):
+  `the type of event` and `the scrollY of window` put and set nothing, in English and so in every
+  translation (`if` reads them: the condition scan takes its text whole). `event`, `window` and
+  `document` are no expression words (PR 105 left them out: an event marker normalizes to
+  `event`, and an event source follows `from`), so the value stopped at the reference, short of
+  what its `of` owns. `the id of target` reads: `target` is an expression word.
+- **qu and uk `'s` on a localized reference, 453 pairs in 172 cells**: `ruway's`, `подія's` are
+  one word to both tokenizers (their apostrophe is a letter: qu `t'ikray`, uk `м'ясо`), so qu
+  reads a variable named `ruway` and uk a word the join cannot read. Every other language
+  tokenizes `evento` `'` `s`.
+- **the de chain, 326 pairs in 163 cells**: every `set` value in a chain's second command but a
+  lone token before `dann`. The program layer's trigger split reads `auf` — de's `on`, and set's
+  and put's `to` — as a new handler (`on n`), and only toggle and trigger were allowed their own
+  on-spelled marker.
+- **bn, hi and th `event's target's id`, 207 pairs in 38 cells**: each language's word for
+  `event` ends in a combining mark (bn and hi a vowel sign, th a thanthakhat), which the string
+  extractor's possessive check did not count as part of a word, so the two apostrophes lexed
+  `'s target'` as a string.
+- **ar and hi `event's detail` before a phrase operator, 54 pairs in 17 cells** (`is equal to`,
+  `is in`, `is greater than or equal to`, `is a Number`; `the scrollY of window` through the
+  adapter): both translate the property `detail` (a reference word), and the copula after it (ar
+  `هو`, hi `है`) reads `is` only after an operand, which `detail` was not.
+- **the direct path before `the scrollY of window`, 21 pairs in 1 cell**: `set x to 1 is greater
+  than or equal to the scrollY of window` reads false on the direct lanes.
+- **qu `not pa`, `not pi`, `not ta` through the adapter, 3 cells**: qu `mana` reads `not` only
+  before an operand, and neither the particle-shaped name nor its parenthesized `(pa)` counts as
+  one, so the verified render has no reading to choose (the direct lane passes by accident:
+  `false pa` is false too).
+- **es `textContent of .w` in the chain, 1 cell**: a `.class` across a space continues a value
+  only after an operator word, and es `de` is an of-marker (the first `set` reads it another way).
+
+`the scrollY of window as Int` (4 cells) is the kept `the X of Y as T` difference once its English
+reads. The names inside expressions pass in every lane but the qu row above: the extended names
+oracle's misreads among these 56 names are read-backs that run alike.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
@@ -6959,7 +7005,8 @@ it is written `(si)`", and reports no occurrence already written so.
   an operator: `set n to 2 then set x to n + 3 then put x into #out` renders
   `… dann setze x auf n + 3 dann …`, and de reads `auf n` (`auf` is also `on`) as `on n`: the
   read-back is `on click set n to 2`, then a handler for an event `n`. Any variable name; `3 * n` and a first `set` are fine.
-  The matrix has one `set` per cell, so it never meets this.
+  The matrix has one `set` per cell, so it never meets this. It does now (PR 108's `chain`
+  position): every value but a lone token before `dann`, 163 cells.
 - ~~**English `put event's detail into #out` parsed as a bare `on click`**~~ **FIXED by PR 105**
   (and `set x to event's detail` kept `event's`): `detail`, `target`, `body` and `result` are
   reference keywords, which a value's extent did not run through, so a possessive's property could
@@ -6970,9 +7017,12 @@ it is written `(si)`", and reports no occurrence already written so.
   English could not read `event's detail` — restored in PR 104 before it merged.
 - **qu and uk keep `'s` on a localized reference**: `put event's type into #out` renders qu
   `ruway's type`, uk `подія's type`, and neither reads the reference back (`ruway's` is one word to
-  both tokenizers). On main.
-- **pl reads the English pronoun `I` as `and`**: `if I have .x` renders `jeśli I mam .x`, and pl's
-  tokenizer takes `I` for its conjunction `i`. On main.
+  both tokenizers). On main; PR 108's reference operands: 172 cells.
+- ~~**pl reads the English pronoun `I` as `and`**~~ **FIXED by PR 104** (J5: a conjunction first in
+  the value is an operand), with PR 106 for the `mam` after it: measured 2026-09-29 on the commits
+  before and after each, `jeśli I mam .x` reads `if and mam .x` before PR 104 and `if I has .x`
+  from PR 106 on, on every lane (`I match .x` too). The filing: `if I have .x` renders `jeśli I mam
+  .x`, and pl's tokenizer takes `I` for its conjunction `i`.
 - **qu: a camelCase variable ending like a case marker** (`userData`, `myPiData`) splits at it
   (`userDa` + `ta`). PR 107 keeps a PascalCase word whole (a type's name, `FormData`); a camelCase
   one cannot be told from a variable with its marker attached (`triggerElta`, which a test pins).
