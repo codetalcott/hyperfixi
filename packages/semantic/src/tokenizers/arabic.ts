@@ -110,6 +110,10 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
 
   // Values/Literals
   { native: 'ليس', normalized: 'not' },
+  // core's `has` and `have` (`#a لديه .x`, `I لدي .x`): one word each, which
+  // the prefix split read as `ل` (to) and `ديه`/`دي`.
+  { native: 'لديه', normalized: 'has' },
+  { native: 'لدي', normalized: 'have' },
   { native: 'صحيح', normalized: 'true' },
   { native: 'خطأ', normalized: 'false' },
   { native: 'null', normalized: 'null' },
