@@ -22,6 +22,7 @@
  *
  * WHAT IS NEVER TOUCHED — the reason this is safe to run over a raw expression:
  *   - anything inside quotes, backticks, or a template interpolation (user text)
+ *   - a type name after `as` or `is a`/`is an` (TYPE_NAME)
  *   - anything inside a BRACE GROUP (`{name: 'Demo', admin: true}`, `.{cls}`):
  *     an object literal is data the runtime evaluates as JS, not prose. Measured
  *     2026-08-27: `true` inside one was localized on render (`admin: verdadero`)
@@ -63,6 +64,19 @@ const MASK_TOKEN = /\uE010(\d+)\uE011/g;
  * one-letter token is far more likely a variable than a keyword.
  */
 const WORD = /(^|[^\w$.#@*:-])([A-Za-z][A-Za-z-]+)(?![\w$.:-])/g;
+
+/**
+ * A TYPE NAME — what `as` converts to, what `is a`/`is an` checks — is the
+ * runtime's vocabulary, not the language's: both engines read `Element`,
+ * `Number`, `HTMLElement` in English. Localized (es `elemento`, ja `要素`, tr
+ * `öğe`), it read back as a variable: `#a is an Element` became `#a is an
+ * elemento`, false in all 18 languages whose lexicon names `element`, and `set
+ * x to 7 as Element` lost its conversion (es) or became the string
+ * `"7as要素"` (ja). `Number` survived only because no lexicon names it. A
+ * capitalized name after `as`, or after `is a`/`is an`/`is not a`/`is not an`,
+ * stays as written, with a `:` suffix (`Fixed:2`, `Values:Form`). PR 95.
+ */
+const TYPE_NAME = /(\bas\s+|\bis\s+(?:not\s+)?an?\s+)([A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?)\b/g;
 
 export interface ValueLexicon {
   /** English word (lowercased) → the form to render in this language. */
@@ -185,7 +199,13 @@ export function localizeValueInterior(
     spans.push(match);
     return `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
   });
-  const masked = maskBraceGroups(stringsMasked, spans);
+  const masked = maskBraceGroups(stringsMasked, spans).replace(
+    TYPE_NAME,
+    (_, lead: string, type: string) => {
+      spans.push(type);
+      return `${lead}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+    }
+  );
 
   const localized = masked.replace(WORD, (whole, lead: string, word: string) => {
     const hit = words.get(word.toLowerCase());
