@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 2620,
   "pairs": 125688,
-  "failing": 482,
+  "failing": 272,
   "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
@@ -14,78 +14,6 @@
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
-    },
-    "put|6 is equal to #a's textContent": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "set|6 is equal to #a's textContent": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "if|6 is equal to #a's textContent": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "put|6 is equal to #a.textContent": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "set|6 is equal to #a.textContent": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "if|6 is equal to #a.textContent": {
-      "lanes": "*direct",
-      "family": "direct-path"
-    },
-    "put|1 is greater than or equal to #a's textContent's length": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "set|1 is greater than or equal to #a's textContent's length": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "if|1 is greater than or equal to #a's textContent's length": {
-      "lanes": "bn hi ja ko tl vi zh",
-      "family": "direct-path"
-    },
-    "put|\"xab6\" includes #a's textContent": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
-    },
-    "set|\"xab6\" includes #a's textContent": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
-    },
-    "if|\"xab6\" includes #a's textContent": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
-    },
-    "put|\"xab6\" includes #a.textContent": {
-      "lanes": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
-      "family": "direct-path"
-    },
-    "set|\"xab6\" includes #a.textContent": {
-      "lanes": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
-      "family": "direct-path"
-    },
-    "if|\"xab6\" includes #a.textContent": {
-      "lanes": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
-      "family": "direct-path"
-    },
-    "put|[1, 2, 6] includes #a's textContent's length": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
-    },
-    "set|[1, 2, 6] includes #a's textContent's length": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
-    },
-    "if|[1, 2, 6] includes #a's textContent's length": {
-      "lanes": "bn hi ja ko vi zh",
-      "family": "direct-path"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
