@@ -6662,7 +6662,7 @@ in the order it applies:
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
 | C1  | `a`/`an` before an operator is a variable, not an article (`put a + b`)                                                                                                                                                                                                                                                                                     | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | #1175                                  | `en-reference-meaning.test.ts`                                                              |
 | C2  | `a`/`an` before the pattern's next marker is a variable (de `erhöhe a um 1`)                                                                                                                                                                                                                                                                                | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | 84                                     | `colliding-names.test.ts`                                                                   |
-| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word an operator, `and`, `or` or the copula follows is one (the block scan, the clause walk and the join agree) | `neverAValue` (`value-reading.ts`), `endWordIsValue` (`end-keywords.ts`) | #635; before an operator 112 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
+| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word where a value stands is one: before an operator, `and`, `or`, the copula, `'s` or its own case marker, after an operator, `not`, `if`, a verb that requires a role or a marker (the block scan, the clause walk, the capture, the operator run and the join agree) | `neverAValue`, `endWordIsVariable` (`value-reading.ts`), `endWordIsValue` (`expression-lexicon.ts`) | #635; before an operator 112; the rest 114 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | `verbEndsCountSlot`, `verbStandsAlone` (`value-reading.ts`)       | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | `verbSkipsOptionalSlot`, `verbStandsAlone` (`value-reading.ts`)   | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `maySkipVerbSlot` (`value-reading.ts`), from `matchTokenSequence` | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
@@ -6841,10 +6841,10 @@ of it keeps the difference explicit and is filed instead.
 - ~~**C3's curated end word misreads a variable spelled like one**~~ **FIXED by PR 112**, where an
   operator, `and`, `or` or the copula follows it (a block's end never is): the block scan, the
   handler body's clause walk, C3 and the join each read it as the variable now,
-  and the verified render keeps the plain spelling there (es `fin < 3`, no longer `(fin)`). Left:
-  an end word as a whole value right before a real end (`increment fin fin`, which B writes
-  `(fin)`), sw `na` after an end word (its `and` sense needs an operand), and tl `tapos` in the
-  fused tl if-event. tr `x i son < 3 e ayarla` reads too: tr lexes `<` as a selector, and
+  and the verified render keeps the plain spelling there (es `fin < 3`, no longer `(fin)`). Left
+  (all read since PR 114, below): an end word as a whole value right before a real end
+  (`increment fin fin`, which B writes `(fin)`), sw `na` after an end word (its `and` sense needs
+  an operand), and tl `tapos` in the fused tl if-event. tr `x i son < 3 e ayarla` reads too: tr lexes `<` as a selector, and
   `matchPositionalRun` had taken `son <` (`son` reads `last`) for a positional query; a
   comparison is no query selector now. A probe rendering each language's end words as variables
   plainly (the hand-written form) into seven shapes misread all 154 cases on main and 28 now. The filing (found by PR 90's mutants): tr
@@ -6852,6 +6852,36 @@ of it keeps the difference explicit and is filed instead.
   `set x to <`. Without the curated half of C3 both read closer (`if last and flag`, `set x to end
   < 3`: still the end word, not the variable) and no corpus row moves, including the tr
   behavior-sortable `son` shape it was written for (#635), which something else reads now.
+- ~~**An end word as a whole value, hand-written**~~ **FIXED by PR 114** (the after-113 handoff,
+  item 1). PR 112's "left" list undersold it: hand-written, an end word misread in every place
+  a value stands but before an operator. A probe of put, set's value and its destination,
+  increment, an `if` condition, `not`, an operand after an operator, a possessive owner, a branch
+  before `else` and a loop body misread 268 of 396 cases in the nine languages whose end words
+  are Latin-script — es `poner fin en #out` (put fin into #out) was a bare `on click`, and
+  `incrementar fin` did not parse. A block's end stands after a command's last word, and before a
+  command, `then`, another end or nothing, so an end word is a value wherever a value is owed
+  (`endWordIsValue`, now beside `loneKeywordKind` in the expression lexicon, reading the two
+  tokens either side): before an operator, `and`, `or`, the copula (PR 112) or `'s`; before its
+  own case marker where markers follow their values (tr `son i #out e koy`), unless another
+  particle follows it (`son i i artır` is end, then increment i); after an operator symbol or a
+  `not` word (es `no`, pt `não`, qu `mana`); and after a word that owes one — `if`, `while`, the
+  copula, `and`; where the verb comes first a command's verb when the command requires a role
+  (hide's is optional: `si x ocultar fin` still ends); where markers come first a marker (fr
+  `à`, de `auf`) — unless that word is itself a verb's or a marker's value (es `incrementar a
+  fin` is increment a, end), though a marker the verb's own patterns write right after it is the
+  marker (it `impostare in fine 1`, set fine to 1). The block scan and its condition and branch
+  splits, the clause walk, the capture (alone, it is the variable), the operator run and the join
+  read it; tl `tapos`, also tl's `then`, is no `then` where a value stands, sw `na` is `and`
+  after an end word the join kept, and qu `mana` is `not` before one. 396 of 396 read now (the
+  handoff's seven-shape probe: 154 of 154), and 70 of 72 in it, ms and pl. The stored corpus
+  moves no row; neither names oracle moves an entry among names English can have but renders
+  (`(fin)` becomes `fin` where the plain spelling reads now) and the name `no` (upstream's
+  operator, never a variable), whose `no end` in a garbage English template now reads as an
+  operand; the value matrix does not move (its names are one or two letters). Left: it and pl
+  `set x to fine`, where the value follows the destination with no marker between (it
+  `impostare in x fine`); a writer can write `(fine)`. Three call sites of the block-end test
+  (the loop head's two and the fused body walk's) take the same place and move nothing measured:
+  a curated or profile end word ends those clauses before they ask.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
@@ -7046,7 +7076,8 @@ the join's senses, and only a keyword's reading is a value word. The extended na
 value matrix's last three open pairs (qu `not pa`, `pi`, `ta` through the adapter) pass, and so do
 the cells of its new `CODE_NAMES` name, `userData`: 174 failing, 0 open. What is left is the pronoun class (tl `ako`, fr `je`, id `aku`,
 pl `cel`: a variable spelled like a value word, which no spelling tells apart), the end word as a
-whole value before a real end (`increment fin fin`), and a few sw and tl readings.
+whole value before a real end (`increment fin fin`), and a few sw and tl readings (the end words
+all read since PR 114).
 
 The diagnostic (C) now says a structure-word name is told apart "only by where it stands, or when
 it is written `(si)`", and reports no occurrence already written so.
