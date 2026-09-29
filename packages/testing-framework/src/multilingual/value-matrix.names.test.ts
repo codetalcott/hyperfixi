@@ -38,14 +38,19 @@ describe('value matrix: colliding names', () => {
   it("keeps a name that is a pronoun elsewhere, without that language's lanes", () => {
     expect(names.get('o')?.pronounIn).toEqual(['tr']); // es and it `or`; tr `it`
     expect(names.get('es')?.pronounIn).toEqual(['de']); // es `is`; de `it`
-    const cells = generateCells().filter(cell => cell.expression === 'o');
-    expect(cells.map(cell => cell.position)).toEqual([
-      'put',
-      'set',
-      'if',
-      'increment',
-      'assign',
-      'count',
+    const cells = generateCells().filter(cell => cell.name === 'o');
+    expect(cells.map(cell => `${cell.position}|${cell.expression}`)).toEqual([
+      'put|o',
+      'set|o',
+      'if|o',
+      'increment|o',
+      'chain|o',
+      'assign|o',
+      'count|o',
+      'put|o + 1',
+      'set|1 + o',
+      'if|o < 3',
+      'if|not o',
     ]);
     expect(cells.every(cell => cell.skip?.join() === 'tr')).toBe(true);
   });
