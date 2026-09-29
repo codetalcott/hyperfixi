@@ -6566,7 +6566,7 @@ in the order it applies:
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | `verbEndsCountSlot`, `verbStandsAlone` (`value-reading.ts`)       | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | `verbSkipsOptionalSlot`, `verbStandsAlone` (`value-reading.ts`)   | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `maySkipVerbSlot` (`value-reading.ts`), from `matchTokenSequence` | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
-| C7  | a particle is the value: (a) before the pattern's next marker, with a particle on either side (tr `i i 2 artır`); (b) before a run operator (tr `i < -2`); (c) right after the slot's marker, before an unmarked role (pl `ustaw do o 5`); (d) at its clause's end (es `incrementar a entonces`). After a value and before the verb it is that value's marker (`1s i bekle`). | `particleIsValue` (`value-reading.ts`)                            | (a) 64, (b) 67, (c) 84, (d) 81         | `particle-variable.test.ts`, `colliding-names.test.ts`, `wait-alternatives.test.ts`         |
+| C7  | a particle is the value: (a) before the pattern's next marker, with a particle on either side (tr `i i 2 artır`); ~~(b) before a run operator~~ (dropped by PR 99: C10 reads it); (c) right after the slot's marker, before an unmarked role (pl `ustaw do o 5`); (d) at its clause's end (es `incrementar a entonces`). After a value and before the verb it is that value's marker (`1s i bekle`). | `particleIsValue` (`value-reading.ts`)                            | (a) 64, (b) 67–99, (c) 84, (d) 81      | `particle-variable.test.ts`, `colliding-names.test.ts`, `wait-alternatives.test.ts`         |
 | C8  | a structure keyword alone in a value slot is a variable: a role marker (tr `na`), a control word (es `si`), the copula (es `es`), a conjunction; so is a command verb (es `ir`), except in a command that takes a body (`tell #modal to show`), one that names an event (`trigger init`), and `empty`                                                    | `keywordIsVariable` (`value-reading.ts`) → `loneKeywordKind`       | 81; verbs 84                           | `colliding-names.test.ts`, `tell-to.test.ts`                                                |
 | C9  | a lone value token: `empty` is `null`, an article is the variable (a lone conjunction's reading, PR 59's, is C8's since PR 81, and PR 88 dropped it here)                                                                                                                                                                                   | `loneKeywordValue` (`value-reading.ts`), from `tokenToSemanticValue` | 59, 61, 75                          | `connective-operand.test.ts`, `null-empty-word.test.ts`, `article-variable.test.ts`         |
 | C10 | in an operator run, a particle right after or before an operator is an operand (es `retornar a + b`)                                                                                                                                                                                                                                                       | `particleIsOperand` (`value-reading.ts`), from `tryConsumeRunOperand` | #1175                               | `en-reference-meaning.test.ts`                                                              |
@@ -6604,8 +6604,8 @@ word by word:
   inside `verbStandsAlone`), C5 (`verbStandsAlone`), C7(a), and C2 (on a slot built at the
   article, before `skipNoiseWords` skips it);
 - `clauseEndsAfter`, _the clause ends after this token_: C4, C5 (`verbStandsAlone`), C7(d);
-- `operatorFollows`, _a run operator follows_: C7(b); C10 and C12, which read an operator run's
-  stream, not a slot, call the same `isRunOperator`. C1 tests the binary operators, which have no
+- `operatorFollows`, _a run operator follows_: C7(b), until PR 99 dropped it; C10 and C12, which
+  read an operator run's stream, not a slot, call the same `isRunOperator`. C1 tests the binary operators, which have no
   `mod` (a difference kept explicit, not unified; PR 89 names both sets in `utils/operators.ts`);
 - `afterLiteral`, _the slot follows a literal the pattern matched_: C4, C5, C7(c).
 
@@ -6721,11 +6721,12 @@ of it keeps the difference explicit and is filed instead.
 
 **Found by the consolidation, not fixed in it** (a refactor PR moves no oracle item):
 
-- **C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.** A particle before a run
-  operator is the value — and `mod` is a run operator, so zh's `把` marker before a variable named
-  `mod` became the value. Every other shape C7(b) reads, C10 reads first (the operator run takes a
-  unary minus since PR 74, which was C7(b)'s reason). Dropping C7(b) fixes this entry and moves no
-  other item of the oracle, all 18,278 names included: a one-line fix PR.
+- ~~**C7(b) reads zh `增加 把 mod` (increment mod) as `increment 把`.**~~ **FIXED by PR 99**
+  (C7(b) dropped; `particle-variable.test.ts` pins zh/ja/ko/tr `increment mod`). A particle
+  before a run operator was the value — and `mod` is a run operator, so zh's `把` marker before a
+  variable named `mod` became the value. Every other shape C7(b) read, C10 reads first (the
+  operator run takes a unary minus since PR 74, which was C7(b)'s reason). No other oracle item
+  moved, all 18,278 names included, and the value matrix is unchanged.
 - **The semantic parser's fallbacks read a token with their own `tokenToSemanticValue`**
   (`semantic-parser.ts`): none of C9's readings (a lone conjunction, `empty`, an article), and a
   bare identifier is a literal there, where the matcher's reads a variable. A second value
