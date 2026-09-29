@@ -6507,7 +6507,27 @@ reported apart); 438 after PR 81 (a variable spelled like a structure word: a pa
 its clause, a lone marker/control/copula keyword, a lone conjunction); 330 after PR 82 (core writes
 an object's property through `'s`/`of`, the `of` operator's, and a counted attribute); 262 after PR
 83 (a possessive target before a role with no marker); 102 after PR 84 (the colliding names left),
-every one of them ACCEPTED.
+every one of them ACCEPTED. PR 93 widened it with core's operator phrases (876 cells, 2,614 in all,
+in a shard of their own): 3,118 of 125,400, 3,016 of them open.
+
+**The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
+reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
+type check) meets every operand kind. Thirteen of the 23 phrases pass in every lane. The 3,016 open
+pairs, by where the loss sits:
+
+- **semantic's English parse, 1,318** (`obj's v is equal to 6`, `v of obj is greater than or equal
+  to 4`): the value extent stops at `to`, a marker and a `set` marker, so a possessive or `of`
+  operand before `equal to` loses the rest (`put` drops its whole value, `set` keeps `obj's v`). An
+  `obj.v` operand is the operator run's, which reads the phrase.
+- **the type name, 930**: `is an Element` / `is not an Element` (760) translate `Element` in 18
+  languages (`as Element` too), and `{} is a Number`/`String` (170) in es/it/pt/tr. Both engines
+  read type names in English.
+- **tl and tr `includes`, 611**: an owner vocabulary decision (their words for `includes` read
+  back as something else).
+- **the direct path before `#a's textContent`, 111** (and `includes #a.textContent` in the `if`
+  position): bn, hi, ja, ko, tl, vi, zh.
+- **it `does not include`, 46**: the join's connective table turns the `include` of `does non
+  include` into `includes`.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:

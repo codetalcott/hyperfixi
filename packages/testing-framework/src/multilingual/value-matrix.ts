@@ -14,7 +14,8 @@
  *     produces;
  *   - OPERATORS: arithmetic, comparison, equality, logic, membership, and the
  *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
- *     `exists`, `as`);
+ *     `exists`, `as`), and core's operator PHRASES (`is greater than or equal
+ *     to`, `does not include`, `is an Element`, …);
  *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
  *     while` condition, an `increment … by` amount, and two written targets:
  *     what a `set` writes (`assign`) and what an `increment` counts (`count`).
@@ -286,6 +287,56 @@ export const BINARY_OPERATORS: readonly BinaryOperator[] = [
     signatures: [sig('num', 'arr', '2', '[1, 2, 6]', 'bool')],
   },
   { op: 'matches', representative: true, signatures: [sig('one', 'none', '#a', '.x', 'bool')] },
+  // Operator PHRASES (the after-85 handoff, part 2): the words each language
+  // renders for them are read back by the join and the sense table, which no
+  // single-word operator exercises. One of each class is representative, so the
+  // class meets every operand kind without every phrase multiplying the cells.
+  {
+    op: 'is equal to',
+    representative: true,
+    signatures: [sig('num', 'num', '6', '6', 'bool'), sig('text', 'text', '"ab"', '"ab"', 'bool')],
+  },
+  {
+    op: 'is not equal to',
+    signatures: [sig('num', 'num', '6', '6', 'bool'), sig('text', 'text', '"ab"', '"ab"', 'bool')],
+  },
+  { op: 'is really equal to', signatures: [sig('num', 'num', '6', '6', 'bool')] },
+  { op: 'is not really equal to', signatures: [sig('num', 'num', '6', '6', 'bool')] },
+  { op: 'really equals', signatures: [sig('num', 'num', '6', '6', 'bool')] },
+  { op: 'equals', signatures: [sig('num', 'num', '6', '6', 'bool')] },
+  { op: 'is really', signatures: [sig('num', 'num', '6', '6', 'bool')] },
+  {
+    op: 'is greater than or equal to',
+    representative: true,
+    signatures: [sig('num', 'num', '1', '4', 'bool')],
+  },
+  { op: 'is less than or equal to', signatures: [sig('num', 'num', '1', '4', 'bool')] },
+  { op: 'is not in', signatures: [sig('num', 'arr', '2', '[1, 2, 6]', 'bool')] },
+  {
+    op: 'includes',
+    representative: true,
+    signatures: [
+      sig('str', 'str', '"xab6"', '"a"', 'bool'),
+      sig('arr', 'num', '[1, 2, 6]', '2', 'bool'),
+    ],
+  },
+  {
+    op: 'does not include',
+    signatures: [
+      sig('str', 'str', '"xab6"', '"a"', 'bool'),
+      sig('arr', 'num', '[1, 2, 6]', '2', 'bool'),
+    ],
+  },
+  {
+    op: 'does not contain',
+    signatures: [
+      sig('str', 'str', '"xab6"', '"a"', 'bool'),
+      sig('arr', 'num', '[1, 2, 6]', '2', 'bool'),
+    ],
+  },
+  { op: 'does not match', signatures: [sig('one', 'none', '#a', '.x', 'bool')] },
+  { op: 'precedes', signatures: [sig('one', 'one', '#a', '#b', 'bool')] },
+  { op: 'follows', signatures: [sig('one', 'one', '#a', '#b', 'bool')] },
 ];
 
 export const UNARY_OPERATORS: readonly UnaryOperator[] = [
@@ -308,7 +359,65 @@ export const UNARY_OPERATORS: readonly UnaryOperator[] = [
   { op: 'exists', fix: 'postfix', slot: 'el', anchor: '#a', result: 'bool', representative: true },
   { op: 'as Int', fix: 'postfix', slot: 'num', anchor: '"7"', result: 'num', representative: true },
   { op: 'as String', fix: 'postfix', slot: 'num', anchor: '7', result: 'str' },
+  // Operator phrases (see BINARY_OPERATORS): existence and type checks.
+  {
+    op: 'does not exist',
+    fix: 'postfix',
+    slot: 'el',
+    anchor: '#a',
+    result: 'bool',
+    representative: true,
+  },
+  {
+    op: 'is a Number',
+    fix: 'postfix',
+    slot: 'any',
+    anchor: '6',
+    result: 'bool',
+    representative: true,
+  },
+  { op: 'is not a Number', fix: 'postfix', slot: 'any', anchor: '6', result: 'bool' },
+  { op: 'is a String', fix: 'postfix', slot: 'any', anchor: '"q"', result: 'bool' },
+  { op: 'is not a String', fix: 'postfix', slot: 'any', anchor: '"q"', result: 'bool' },
+  { op: 'is an Element', fix: 'postfix', slot: 'any', anchor: '#a', result: 'bool' },
+  { op: 'is not an Element', fix: 'postfix', slot: 'any', anchor: '#a', result: 'bool' },
 ];
+
+/**
+ * The operator phrases the after-85 handoff's part 2 added. They add half
+ * again to the matrix, so each position's phrase cells run in a shard of
+ * their own (`value-matrix.<position>-phrases.test.ts`), which the position's
+ * shard leaves them to.
+ */
+export const PHRASE_OPERATORS: ReadonlySet<string> = new Set([
+  'is equal to',
+  'is not equal to',
+  'is really equal to',
+  'is not really equal to',
+  'really equals',
+  'equals',
+  'is really',
+  'is greater than or equal to',
+  'is less than or equal to',
+  'is not in',
+  'includes',
+  'does not include',
+  'does not contain',
+  'does not match',
+  'precedes',
+  'follows',
+  'does not exist',
+  'is a Number',
+  'is not a Number',
+  'is a String',
+  'is not a String',
+  'is an Element',
+  'is not an Element',
+]);
+
+/** Is this cell one of the phrase shard's? */
+export const isPhraseCell = (cell: MatrixCell): boolean =>
+  cell.operator !== undefined && PHRASE_OPERATORS.has(cell.operator);
 
 /**
  * Multi-operator expressions: precedence, chaining, and mixed operand kinds.
