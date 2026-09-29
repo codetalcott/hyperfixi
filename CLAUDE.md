@@ -778,7 +778,11 @@ retirement, #1001; i18n keeps the vocabulary and the word-order profiles):
 
 Key files:
 
-- `packages/semantic/src/explicit/renderer.ts` - `render(node, language)`
+- `packages/semantic/src/explicit/renderer.ts` - the renderer; the public `render(node, language)`
+  is `explicit/verified-render.ts`, which writes a variable spelled like a structure word of the
+  target language in parentheses (`(si)`) where the plain render would be misread, and only
+  there (the reader fuses `(si)` into one name; `docs-internal/MULTILINGUAL_NEXT_STEPS.md`, "Name
+  collisions")
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 

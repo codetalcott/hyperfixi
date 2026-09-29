@@ -6596,7 +6596,7 @@ in the order it applies:
 | C10 | in an operator run, a particle right after or before an operator is an operand (es `retornar a + b`)                                                                                                                                                                                                                                                       | `particleIsOperand` (`value-reading.ts`), from `tryConsumeRunOperand` | #1175                               | `en-reference-meaning.test.ts`                                                              |
 | C11 | in an operator run, a command verb after `and`/`or` begins the next command (`set x to true and put 2 …`)                                                                                                                                                                                                                                                  | `namesCommand` (`value-reading.ts`), from `tryConsumeRunOperand`  | 44                                     | `value-operators.test.ts`                                                                   |
 | C12 | in an operator run, a `not` word before a marker and its value is a variable (sw `weka si kwa #out`)                                                                                                                                                                                                                                                       | `notWordIsVariable` (`value-reading.ts`), from `tryConsumeRunOperand` | 84                                     | `colliding-names.test.ts`                                                                   |
-| C13 | a value runs on through operands, operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53                                     | `value-extent.test.ts`                                                                      |
+| C13 | a value runs on through operands (a name the reader fused, `(si)`, among them), operators, possessive markers and expression words, to a marker the pattern owes, a marker of its command, or the clause's end, as far as the expression parser reads it whole                                                                                           | `valueTailEnds`, `continuesValue`, `isValueBoundary` (`utils/value-extent.ts`) | 53; fused names 103                    | `value-extent.test.ts`, `verified-render.test.ts`                                           |
 | C14 | a conjunction where none can stand continues a value                                                                                                                                                                                                                                                                                                        | `continuesValue` → `isConnectiveOperand` (`utils/value-extent.ts`) | 59                                     | `connective-operand.test.ts`                                                                |
 | C15 | the `in` after a copula continues a value (de/it `into` marker), and so do a particle after `of` (pl `w`) and the `to` of `equal to`; the word `a` (a type check's; es/it/pt `to`, tr's dative) never stops one                                                                                                                                                                | `stopsAt`, `continuesValue` → `isCopulaIn`, `isParticleAfterOf`, `endsEqualTo`, `isWordA` (`utils/value-extent.ts`) | 69, 74, 94, 102 | `copula-in.test.ts`, `operand-readings.test.ts`, `value-extent.test.ts`                                             |
 | C16 | where no marker bounds a value, it runs on through a possessive link only                                                                                                                                                                                                                                                                                  | `possessiveLinkEnds`, `longestWholeRun` (`utils/value-extent.ts`) | 83                                     | `possessive-tail-before-role.test.ts`                                                       |
@@ -6875,7 +6875,59 @@ lane. Not findable: a pronoun collision in the code's own language (the parse re
 pronoun), and English, which reports nothing.
 
 **A is frozen**: no new per-name parser rules. A collision newly found in rendered text goes to
-the renderer (B, if the owner takes it); in hand-written text, to the diagnostic.
+the renderer (B, below); in hand-written text, to the diagnostic.
+
+**Decided (2026-09-29): B, verified (PR 103).** The owner's call, taken as recommended: B's
+parentheses only where the plain render would be misread. A stays (frozen), C stays, and B covers
+what A cannot in rendered text, with no visible cost where A already reads:
+
+- **The verified render** (`explicit/verified-render.ts`) is the public `render` (and so
+  `translate`, the corpus writer, MCP `translate_code`, core's `MultilingualHyperscript`). It
+  renders with each colliding variable in parentheses (`parenthesizeCollidingNames`, over every
+  expression value: a variable, not a property, a method, a conversion's type or English
+  vocabulary); if nothing was wrapped, that is the plain render. Otherwise it keeps the plain
+  render when that reads as the source does (`readsAs`: the same English, and no input left bound
+  to no role — the diagnostic's own notion of a reading), else the parenthesized one when that
+  does, else the plain one.
+- **The reader** fuses `(word)` into one identifier token where the word spells structure in the
+  language (`registry.tokenize`, through `nameCollision`, which `name-collisions.ts` registers):
+  adjacent, not after a callee, never in English, and never a VALUE word (`value-words.ts`: the
+  references and literals, `me`, `target`, `window`, `true`, `null`, `empty`, …, which are still
+  that value in parentheses — es `(objetivo)` is `(target)`; a variable spelled like one is a
+  pronoun collision now, like `me`). A plain `(x)` stays three tokens: fusing every name broke
+  hand-written `length of (x)`, which main reads. The value extent runs through a fused name
+  (C13), which answers the `of` owner: `length of (si)` reads.
+- **The three open questions**, answered by the verification rather than by rules: an `of` owner
+  accepts `(name)` now, and where a position still does not, the plain render stands; `measure y`
+  and an article-only collision (`a + b`) read right plain, so they are never parenthesized.
+
+**Measured** (against main after PR 102; every render change is where the plain render misread):
+
+| Oracle                                                                | Result                                        |
+| --------------------------------------------------------------------- | --------------------------------------------- |
+| Value matrix (2,620 cells, 48 lanes)                                  | 0 fixed, 0 new (A reads every matrix name)    |
+| Corpus probe (3,936 stored rows re-parsed, every en row × 23 renders) | 0 rows moved (no stored render gains a paren) |
+| Three-letter and matrix names × 9 positions × 23 languages (6,003)    | 77 fixed, 0 broken, 77 parenthesized          |
+| Extended names oracle (113,321 read-backs)                            | 1,056 fixed, 11 worse                         |
+| Full names oracle (2,522,364 read-backs)                              | 136 fixed, 0 worse                            |
+| Parenthesized value words (21 × 2 templates × 23)                     | identical to main                             |
+
+The 11 worse are one garbage English source, `put (not) into #out` (`not` alone is no value),
+whose localized `(nicht)` now reads as a name. What is left misread: pronoun collisions (tr `o`,
+de `es`; no spelling tells them apart), qu's `click (x)` read as the event's parameters (filed
+above; fusing plain names fixed 269 of those, but that is the change that broke `length of (x)`),
+and de reading the second `set` of `set n to 2 then set x to n + 3` as a handler (below).
+
+The diagnostic (C) now says a structure-word name is told apart "only by where it stands, or when
+it is written `(si)`", and reports no occurrence already written so.
+
+**Found by B's probes, not fixed by it:**
+
+- **de reads the second `set` of a chain as a handler** when its value begins with a variable and
+  an operator: `set n to 2 then set x to n + 3 then put x into #out` renders
+  `… dann setze x auf n + 3 dann …`, and de reads `auf n` (`auf` is also `on`) as `on n`: the
+  read-back is `on click set n to 2`, then a handler for an event `n`. Any variable name; `3 * n` and a first `set` are fine.
+  The matrix has one `set` per cell, so it never meets this.
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
