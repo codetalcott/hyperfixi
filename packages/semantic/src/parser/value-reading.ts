@@ -35,7 +35,11 @@
 import type { LanguageToken, PatternToken, SemanticValue, TokenStream } from '../types';
 import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
-import { COMMAND_ACTION_KEYWORDS, loneKeywordKind } from './utils/expression-lexicon';
+import {
+  COMMAND_ACTION_KEYWORDS,
+  loneKeywordKind,
+  translateConnective,
+} from './utils/expression-lexicon';
 import { isCuratedEndKeyword } from './end-keywords';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
@@ -362,4 +366,74 @@ export function isParticleAfterOf(tokens: readonly LanguageToken[], i: number): 
     tokens[i - 1]?.value.toLowerCase() === 'of' &&
     /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(token.value)
   );
+}
+
+/**
+ * Copula and negation words, by normalized form, that keep the next word in an
+ * `if` condition even where it doubles as a command verb: `empty` is both the
+ * command and the predicate of `is empty`, so `if my value is empty add …` cut
+ * the condition at `empty` and opened the branch with it (#396).
+ */
+export const CONDITION_COPULAS: ReadonlySet<string> = new Set([
+  'is',
+  'am',
+  'are',
+  'be',
+  'was',
+  'were',
+  'not',
+  'no',
+]);
+
+/**
+ * Rendered copulas that do not normalize to `is`, because each has another
+ * sense: ar هو is also the pronoun `it` (`إذا هو اضبط …` is `if it set …`), hi
+ * है also `has`, th เป็น also `as`; hi नहीं is `not` after the copula (`है नहीं
+ * खाली`, is not empty; PR 41), and qu mana is too (`kanqa mana chusaq`, and
+ * also `false`; PR 78). They hold the condition only before a predicate. (The
+ * surfaces registered as `is` keywords — fr est, ru есть, uk є, pt é, tl ay, ms
+ * adalah, bn হয়, tr dir, qu kanqa — are CONDITION_COPULAS.)
+ */
+export const CONDITION_COPULAS_SURFACE: ReadonlySet<string> = new Set([
+  'هو',
+  'เป็น',
+  'है',
+  'नहीं',
+  'mana',
+]);
+
+/** Predicate adjectives (normalized) that follow a copula inside a condition. */
+export const CONDITION_PREDICATES: ReadonlySet<string> = new Set(['empty', 'null', 'undefined']);
+
+/**
+ * S2, S3: does the word before `token` keep `token` in an `if` condition?
+ *
+ * - S2: after a copula the next word is its predicate, not the branch's first
+ *   command: a copula by normalized form or connective, always; one of the
+ *   ambiguous rendered surfaces only before a predicate adjective.
+ * - S3: except where the copula is the condition's first word. No operand
+ *   stands before it, so it is a variable the language spells like `is` (es
+ *   `si es poner …`, sw `kama ni weka …`), and the branch begins after it. A
+ *   negation there takes its operand after it, so it keeps its next word unless
+ *   that is a command verb, never a predicate (sw `kama si weka …`). PR 84.
+ */
+export function copulaHoldsCondition(
+  before: LanguageToken,
+  token: LanguageToken,
+  copulaIsFirst: boolean,
+  language: string
+): boolean {
+  const prev = (before.normalized ?? before.value).toLowerCase();
+  const prevValue = before.value.toLowerCase();
+  const cur = (token.normalized ?? token.value).toLowerCase();
+  const copula =
+    CONDITION_COPULAS.has(prev) ||
+    CONDITION_COPULAS.has(translateConnective(language, prevValue)) ||
+    (CONDITION_COPULAS_SURFACE.has(prevValue) && CONDITION_PREDICATES.has(cur));
+  if (!copula || !copulaIsFirst) return copula;
+  const negation =
+    prev === 'not' || prev === 'no' || translateConnective(language, prevValue) === 'not';
+  const verb =
+    token.kind === 'keyword' && COMMAND_ACTION_KEYWORDS.has(cur) && !CONDITION_PREDICATES.has(cur);
+  return negation && !verb;
 }
