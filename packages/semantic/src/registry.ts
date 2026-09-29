@@ -540,18 +540,38 @@ function fuseParenthesizedNames(stream: TokenStream, language: string): TokenStr
   let changed = false;
   for (let i = 0; i < tokens.length; i++) {
     const open = tokens[i]!;
-    const word = tokens[i + 1];
-    const close = tokens[i + 2];
     const before = tokens[i - 1];
+    // The word may reach the reader in pieces: qu splits `userData` at the
+    // `ta` it ends with (its accusative), so `(userData)` is four tokens, and
+    // the render that spells it so could never be read (PR 111). The pieces
+    // touch, and together spell one word.
+    let close = i + 2;
+    while (
+      close < tokens.length &&
+      tokens[close]?.value !== ')' &&
+      tokens[close - 1]!.position.end === tokens[close]!.position.start
+    ) {
+      close++;
+    }
+    const pieces = tokens.slice(i + 1, close);
+    const word = pieces.map(t => t.value).join('');
+    const first = pieces[0];
+    const last = pieces[pieces.length - 1];
     if (
       open.value === '(' &&
-      word &&
-      close?.value === ')' &&
-      /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(word.value) &&
-      !VALUE_WORDS.has((word.normalized ?? word.value).toLowerCase()) &&
-      structureName(word.value, language) &&
-      open.position.end === word.position.start &&
-      word.position.end === close.position.start &&
+      first &&
+      last &&
+      tokens[close]?.value === ')' &&
+      /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(word) &&
+      // A value word by its reading, not a marker's role name: qu's particle
+      // `pi` is normalized `event` (the event marker), and `(pi)` is a name.
+      !(
+        first.kind !== 'particle' &&
+        VALUE_WORDS.has((first.normalized ?? first.value).toLowerCase())
+      ) &&
+      structureName(word, language) &&
+      open.position.end === first.position.start &&
+      last.position.end === tokens[close]!.position.start &&
       !(
         before &&
         before.position.end === open.position.start &&
@@ -559,11 +579,11 @@ function fuseParenthesizedNames(stream: TokenStream, language: string): TokenStr
       )
     ) {
       out.push({
-        value: `(${word.value})`,
+        value: `(${word})`,
         kind: 'identifier',
-        position: { ...open.position, end: close.position.end },
+        position: { ...open.position, end: tokens[close]!.position.end },
       } as LanguageToken);
-      i += 2;
+      i = close;
       changed = true;
       continue;
     }

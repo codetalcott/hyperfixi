@@ -15,6 +15,10 @@ describe('value matrix: colliding names', () => {
     expect(names.has('wo')).toBe(true); // de `where`
   });
 
+  it('takes a longer name as code writes it, which a tokenizer splits', () => {
+    expect(names.get('userData')?.pronounIn).toEqual([]); // qu `userDa` + `ta`
+  });
+
   it('takes a schema marker the tokenizer leaves an identifier', () => {
     expect(names.has('um')).toBe(true); // de `increment … by`
   });

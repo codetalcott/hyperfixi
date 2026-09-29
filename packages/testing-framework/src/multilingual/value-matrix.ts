@@ -518,6 +518,13 @@ export interface CollidingName {
 let collidingNamesMemo: readonly CollidingName[] | undefined;
 
 /**
+ * Longer names, as code writes them, that a tokenizer splits: qu reads the end
+ * of a camelCase word as a case marker (`userData` → `userDa` + `ta`, its
+ * accusative), and the render lost the whole variable (PR 111).
+ */
+const CODE_NAMES: readonly string[] = ['userData'];
+
+/**
  * Variables spelled like a structure word of a language the matrix translates
  * into: every one- or two-letter name semantic's `nameCollision` finds
  * colliding with one — a particle, a connective, a copula, a verb, a role
@@ -540,7 +547,7 @@ let collidingNamesMemo: readonly CollidingName[] | undefined;
 export function collidingNames(): readonly CollidingName[] {
   if (collidingNamesMemo) return collidingNamesMemo;
   const letters = [...'abcdefghijklmnopqrstuvwxyz'];
-  const candidates = [...letters, ...letters.flatMap(a => letters.map(b => a + b))];
+  const candidates = [...letters, ...letters.flatMap(a => letters.map(b => a + b)), ...CODE_NAMES];
   const reserved = new Set(['i', 'x', 'no', ...Object.keys(GLOBALS)]);
   const englishKeyword = (word: string): boolean => {
     if (word === 'a' || word === 'an') return false;

@@ -145,6 +145,35 @@ describe('the reader fuses a name alone in parentheses', () => {
   });
 });
 
+describe('qu: a name the reader splits, or a sense rule does not count (PR 111)', () => {
+  const values = (code: string): string[] => tokenize(code, 'qu').tokens.map(t => t.value);
+
+  it('fuses a word the tokenizer splits inside the parentheses: `(userData)`', () => {
+    expect(values('(userData) ta')).toEqual(['(userData)', 'ta']);
+    // Hand-written, the attached marker still reads as one (`triggerElta`).
+    expect(values('triggerElta')).toEqual(['triggerEl', 'ta']);
+  });
+
+  it('only pieces that touch: `(user Data)` is two words', () => {
+    expect(values('(user Data) ta')).not.toContain('(userData)');
+  });
+
+  it('fuses a particle whose role name is a value word: `(pi)` (the event marker)', () => {
+    expect(values('mana (pi)')).toEqual(['mana', '(pi)']);
+  });
+
+  it.each([
+    ['on click put userData into #out', '(userData)'],
+    ['on click set userData to 2 then put userData + 1 into #out', '(userData)'],
+    ['on click if not pa then put "Y" into #out else put "N" into #out end', '(pa)'],
+    ['on click if not pi then put "Y" into #out else put "N" into #out end', '(pi)'],
+  ])('%s', (source, spelled) => {
+    const code = render(parse(source, 'en')!, 'qu');
+    expect(code).toContain(spelled);
+    expect(readBack(code, 'qu'), code).toBe(render(parse(source, 'en')!, 'en'));
+  });
+});
+
 describe('parenthesizeCollidingNames: the variables of an English expression', () => {
   it.each([
     ['si + 1', '(si) + 1'],

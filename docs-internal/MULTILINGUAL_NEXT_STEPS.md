@@ -6515,7 +6515,9 @@ check), every one ACCEPTED: the operator-phrase queue is empty. PR 108 widened i
 reference's property as an operand, a `set` in the second command of a chain, and the colliding
 names as operands (972 cells, 3,592 in all): 3,521 of 172,284, 3,419 of them open (the
 reference-and-chain queue, below); 503 after PR 109 (a reference's property), 329 of them open;
-177 after PR 110 (the de chain), 3 of them open.
+177 after PR 110 (the de chain), 3 of them open; 174 after PR 111 (qu `not pa`), with the
+`userData` name's 11 cells (3,603 in all), every one ACCEPTED: the reference-and-chain queue is
+empty.
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6639,10 +6641,11 @@ name`). Every cell has an upstream oracle. The 3,419 open pairs, by where the lo
   `set x to 1 is greater than or equal to the scrollY of window` read false on the direct lanes.
   The English parse had dropped `of window` there too (`… or equal to the scrollY`), which
   upstream happens to read as `window.scrollY`; the direct path read `the` as a variable.
-- **qu `not pa`, `not pi`, `not ta` through the adapter, 3 cells**: qu `mana` reads `not` only
+- ~~**qu `not pa`, `not pi`, `not ta` through the adapter, 3 cells**~~ **FIXED by PR 111**: qu `mana` reads `not` only
   before an operand, and neither the particle-shaped name nor its parenthesized `(pa)` counts as
   one, so the verified render has no reading to choose (the direct lane passes by accident:
-  `false pa` is false too).
+  `false pa` is false too). A fused `(pa)` is an operand to the senses now, and `(pi)` fuses: its
+  particle is normalized `event` (the event marker), which the fusion took for the reference.
 - ~~**es `textContent of .w` in the chain, 1 cell**~~ **FIXED by PR 109**: a `.class` across a
   space continued a value only after an operator word, and es `de` is an of-marker (the first
   `set` reads it another way). After an of-marker it is the owner.
@@ -7011,6 +7014,19 @@ de `es`; no spelling tells them apart), qu's `click (x)` read as the event's par
 above; fusing plain names fixed 269 of those, but that is the change that broke `length of (x)`),
 and de reading the second `set` of `set n to 2 then set x to n + 3` as a handler (below).
 
+**PR 111 completes the reader's half.** Two gaps left a render B chose unreadable, so the verified
+render kept the plain one: qu's tokenizer splits a word at a case-marker-shaped end even inside
+parentheses (`(userData)` was four tokens, and `(apa)` three), and qu `mana` (not) reads `not` only
+before an operand, which a fused `(pa)` was not; `(pi)` never fused, its particle being normalized
+`event`. The reader now fuses touching pieces that spell one word, a fused name is an operand to
+the join's senses, and only a keyword's reading is a value word. The extended names oracle reads
+883 more entries (qu 868, sw 15), 0 worse: its misreads among names English can have fall from
+1,776 to 893, qu's from 894 to 26. The full names oracle reads 468 more (all qu), 0 worse; the
+value matrix's last three open pairs (qu `not pa`, `pi`, `ta` through the adapter) pass, and so do
+the cells of its new `CODE_NAMES` name, `userData`: 174 failing, 0 open. What is left is the pronoun class (tl `ako`, fr `je`, id `aku`,
+pl `cel`: a variable spelled like a value word, which no spelling tells apart), the end word as a
+whole value before a real end (`increment fin fin`), and a few sw and tl readings.
+
 The diagnostic (C) now says a structure-word name is told apart "only by where it stands, or when
 it is written `(si)`", and reports no occurrence already written so.
 
@@ -7041,6 +7057,13 @@ it is written `(si)`", and reports no occurrence already written so.
 - **qu: a camelCase variable ending like a case marker** (`userData`, `myPiData`) splits at it
   (`userDa` + `ta`). PR 107 keeps a PascalCase word whole (a type's name, `FormData`); a camelCase
   one cannot be told from a variable with its marker attached (`triggerElta`, which a test pins).
+  **Rendered, FIXED by PR 111**: the verified render writes `(userData)`, and the reader fuses a
+  word the tokenizer split inside the parentheses (the pieces touch and spell one word), so a
+  rendered `put userData into #out` (which read `put ta into #out`) reads. The matrix has the
+  name now (`CODE_NAMES`). **Hand-written, still ambiguous**: `userData ta` reads the attached
+  marker, as `triggerElta` must, and the diagnostic cannot see it (the parse never reads `userData`
+  as a name); the writer can write `(userData)`. Which reading should win in hand-written text is
+  the owner's call (see the after-107 handoff's item 6).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
