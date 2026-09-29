@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parseExpression } from '../src/ast-builder/expression-parser';
+import { BINARY_PHRASES } from '../src/ast-builder/expression-parser/parser';
 
 describe('ExpressionParser', () => {
   describe('Literals', () => {
@@ -397,6 +398,31 @@ describe('ExpressionParser', () => {
         type: 'binaryExpression',
         operator: 'matches',
         right: { type: 'selector', value: '.active' },
+      });
+    });
+
+    // Every binary phrase, not only the one-word ones: the tokenizer kept its
+    // own list of the words a selector may follow, which lacked the last word
+    // of every longer phrase and `includes`, so `6 is equal to #a.textContent`
+    // read the identifier `a` (the value matrix's direct-path family, PR 101).
+    it.each(BINARY_PHRASES)('a selector follows `%s`', phrase => {
+      const result = parseExpression(`p ${phrase} #a.textContent`);
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'binaryExpression',
+        operator: expect.any(String),
+        right: {
+          type: 'memberExpression',
+          object: { type: 'selector', value: '#a' },
+          property: { type: 'identifier', name: 'textContent' },
+        },
+      });
+    });
+
+    it("a possessive selector follows a phrase: `6 is equal to #a's textContent`", () => {
+      expect(parseExpression("6 is equal to #a's textContent").node).toMatchObject({
+        operator: 'is equal to',
+        right: { type: 'possessiveExpression', object: { type: 'selector', value: '#a' } },
       });
     });
 

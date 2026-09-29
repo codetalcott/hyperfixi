@@ -93,6 +93,14 @@ const CONDITIONS: Array<[string, string]> = [
   ['the textContent of #d1 is "z"', 'no'],
   ['textContent of #d1 is "d"', 'yes'],
   ['textContent of #d1 is "z"', 'no'],
+  // A selector after a phrase's last word (PR 101): semantic's expression
+  // tokenizer let one follow only its own list of words, which lacked `to` and
+  // `includes`, so `#d1` read the variable `d1` on the direct path.
+  ['"d" is equal to #d1.textContent', 'yes'],
+  ['"z" is equal to #d1.textContent', 'no'],
+  ['"d" is equal to #d1\'s textContent', 'yes'],
+  ['"xd" includes #d1.textContent', 'yes'],
+  ['"xz" includes #d1.textContent', 'no'],
 ];
 
 describe.each(CONDITIONS)('if %s', (condition, expected) => {

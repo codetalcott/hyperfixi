@@ -5,6 +5,8 @@
  * Focused on expression-level constructs, not full hyperscript syntax.
  */
 
+import { BINARY_PHRASES } from './phrases';
+
 // =============================================================================
 // Token Types
 // =============================================================================
@@ -89,27 +91,18 @@ const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
 
 /**
- * Keyword infix comparison operators (tokenized as IDENTIFIER, matched by value
- * in the parser), by the word that ends them. A selector is valid immediately
- * after one — `target matches .modal-backdrop`, `me matches .active`, `#d1 has
- * .x` — so `previousTokenAllowsSelector` treats them like the symbolic
- * comparison operators. `match` is accepted as an alias of `matches` (the
- * multilingual corpus uses the bare form).
+ * The words that end one of core's binary comparison phrases. A selector is
+ * valid right after one — `target matches .modal-backdrop`, `#d1 has .x`, `6
+ * is equal to #a.textContent` — so `previousTokenAllowsSelector` treats them
+ * like the symbolic comparison operators. The tokenizer kept its own list,
+ * which lacked the last word of every longer phrase (`to`, `than`, `really`,
+ * `equal`) and `includes`, `include` and `contain`: `6 is equal to
+ * #a.textContent` read the identifier `a`, and every translation of it on the
+ * direct path read a variable.
  */
-const COMPARISON_KEYWORDS = new Set([
-  'is',
-  'matches',
-  'match',
-  'contains',
-  'equals',
-  'has',
-  'have',
-  'precedes',
-  'precede',
-  'follows',
-  'follow',
-  'in',
-]);
+const PHRASE_END_WORDS: ReadonlySet<string> = new Set(
+  BINARY_PHRASES.map(phrase => phrase.slice(phrase.lastIndexOf(' ') + 1))
+);
 
 /**
  * Positional builtins whose operand is a selector (`next .dropdown-menu`,
@@ -147,9 +140,9 @@ export function tokenize(input: string): Token[] {
   function previousTokenAllowsSelector(): boolean {
     if (tokens.length === 0) return true;
     const prev = tokens[tokens.length - 1];
-    // A keyword comparison operator (tokenized as IDENTIFIER) is followed by a
-    // selector operand: `matches .modal-backdrop`, `is .active`.
-    if (prev.type === TokenType.IDENTIFIER && COMPARISON_KEYWORDS.has(prev.value.toLowerCase())) {
+    // A keyword comparison phrase (tokenized as IDENTIFIER) is followed by a
+    // selector operand: `matches .modal-backdrop`, `is .active`, `is equal to #a`.
+    if (prev.type === TokenType.IDENTIFIER && PHRASE_END_WORDS.has(prev.value.toLowerCase())) {
       return true;
     }
     // A positional builtin is followed by its selector operand:
