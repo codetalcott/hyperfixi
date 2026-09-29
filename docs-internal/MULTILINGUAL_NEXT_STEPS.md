@@ -6937,8 +6937,9 @@ of it keeps the difference explicit and is filed instead.
   **After PR 112 (measured 2026-09-29), no structure collision is left**: among names English can
   have, 893 read-backs still differ (1,776 on main before PR 111), and 802 of them are pronoun
   collisions — a variable spelled like a value word (tl `ako`, fr `je`, id `aku`, pl `cel`, de
-  `ich`), which no spelling tells apart — and 91 are the name `no`, upstream's operator, which
-  neither engine takes for a variable (the renderer translates it: es `ningún`).
+  `ich`), which no spelling tells apart, and which a translation reports since PR 116 (below) —
+  and 91 are the name `no`, upstream's operator, which neither engine takes for a variable (the
+  renderer translates it: es `ningún`).
 
 ### Name collisions: parser inference, or renderer + diagnostic? (spike, 2026-09-28)
 
@@ -7025,7 +7026,16 @@ language server warns at each place (`name-collision`), with one quick fix renam
 MCP `validate_hyperscript` warns (`NAME_COLLISION`). The value matrix now derives its colliding
 names from `nameCollision`, which found one it lacked, fr `ou` (`or`): its six cells pass every
 lane. Not findable: a pronoun collision in the code's own language (the parse reads the
-pronoun), and English, which reports nothing.
+pronoun), and English, which reports nothing. A **translation** finds one since PR 116 (the
+after-113 handoff, item 3): `findTranslationCollisions(code, from, to)` returns each variable of
+the source that the target reads as a value word — a pronoun (tl `ako` is `me`, it `io`, fr `je`)
+or another reference (es `objetivo` is `target`) — where the parse of the source reads it as the
+variable, with a rename that reads as a plain name in both languages (tr splits `ben1` at its
+digit, so `ben` gets `benValue`). No spelling tells the two apart (a value word in parentheses is
+still the value), so the rename is the only fix; the compilation service's `translate`, and so MCP
+`translate_code`, warns `NAME_COLLISION` beside the verification, which already scored such a
+translation unfaithful without saying why. A structure collision is not reported: the verified
+render writes `(si)` where the plain spelling would misread.
 
 **A is frozen**: no new per-name parser rules. A collision newly found in rendered text goes to
 the renderer (B, below); in hand-written text, to the diagnostic.
