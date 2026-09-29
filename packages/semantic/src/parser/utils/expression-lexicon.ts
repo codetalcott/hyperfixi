@@ -1062,6 +1062,9 @@ export function isConnectiveOperand(
   return COMPARISON_AFTER_OPERAND.has(nextWord);
 }
 
+/** The verbs of core's `does not …` phrases, which follow the negation in English. */
+const DOES_NOT_VERBS: ReadonlySet<string> = new Set(['include', 'contain', 'match', 'exist']);
+
 /** Is `word` (a word as the join read it) the copula of a comparison? */
 function isCopulaWord(word: string | undefined): boolean {
   const lowered = word?.toLowerCase();
@@ -1106,6 +1109,13 @@ export function expressionWordOf(
   // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
   if (prevText?.toLowerCase() === 'equal' && token.value.toLowerCase() === 'to') return 'to';
   if (isCopulaWord(prevText) && token.value.toLowerCase() === 'in') return 'in';
+  // The verb of `does not include` (`contain`, `match`, `exist`) stays English
+  // in every rendering. it's connective table reads `include` as `includes`
+  // (its word for both), so `does non include "a"` joined as `does not
+  // includes "a"`, and the `put` lost its value with its destination. PR 96.
+  if (prevText?.toLowerCase() === 'not' && DOES_NOT_VERBS.has(token.value.toLowerCase())) {
+    return token.value.toLowerCase();
+  }
   const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText, afterNext);
   if (sense !== undefined) return sense;
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;

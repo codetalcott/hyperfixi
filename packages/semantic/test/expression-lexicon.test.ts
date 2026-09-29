@@ -690,3 +690,22 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
     expect(out).toContain('if no dragHandle');
   });
 });
+
+describe('the verb of `does not …` stays English after the negation (PR 96)', () => {
+  // it's connective table reads `include` as `includes`, its word for both:
+  // `does non include "a"` joined as `does not includes "a"`, and the `put`
+  // lost its value with its destination.
+  const LANGUAGES = ['it', 'es', 'pt', 'fr', 'de', 'pl', 'ru', 'ja', 'ko', 'tr', 'zh', 'ar'];
+  it.each(
+    LANGUAGES.flatMap(language => [
+      [language, 'on click put "xab6" does not include "a" into #out'],
+      [language, 'on click put [1, 2, 6] does not include 2 into #out'],
+      [language, 'on click if "q" does not include "a" then put 1 into #out end'],
+    ])
+  )('%s: %s', (language, source) => {
+    const english = render(parse(source, 'en')!, 'en');
+    const foreign = render(parse(source, 'en')!, language);
+    const back = parse(foreign, language);
+    expect(back ? render(back, 'en') : '(no parse)', foreign).toBe(english);
+  });
+});

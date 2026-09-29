@@ -72,6 +72,14 @@ const CONDITIONS: Array<[string, string]> = [
   ['p is a String', 'no'],
   ['p is not a String', 'yes'],
   ['p is not a Number', 'no'],
+  ['#d1 is an Element', 'yes'],
+  ['p is an Element', 'no'],
+  ['#d1 is not an Element', 'no'],
+  ['p is not an Element', 'yes'],
+  ['[1, 2] includes 1', 'yes'],
+  ['[1, 2] includes 3', 'no'],
+  ['[1, 2] does not include 3', 'yes'],
+  ['[1, 2] does not include 1', 'no'],
   ['p is not null', 'yes'],
   ['p is not empty', 'yes'],
   ['t is empty', 'yes'],
@@ -95,6 +103,47 @@ describe.each(CONDITIONS)('if %s', (condition, expected) => {
   });
 
   it.each(LANGUAGES)('%s', async language => {
+    const code = render(parseSemantic(handler(condition), 'en').node!, language);
+    const compiled = await hyperscript.compile(code, { language });
+    expect(compiled.ok, `${language}: ${code}`).toBe(true);
+    expect(compiled.meta.directPath, `${language}: ${code}`).toBe(true);
+    expect(await run(compiled.ast)).toBe(expected);
+  });
+});
+
+// The type checks the value matrix's phrase cells found failing (PR 93), in
+// the fifteen more languages it found them failing in: the value lexicon
+// translated the type name like a word (`#d1 is an Element` read back `is an
+// elemento`), and a translated type is a variable to both engines (PR 95).
+// Every condition above passes in these languages too (measured, and tl/tr
+// `includes`, an owner vocabulary decision, aside); the matrix runs them all.
+const TYPE_CHECK_LANGUAGES = [
+  'ar',
+  'fr',
+  'hi',
+  'id',
+  'ja',
+  'ko',
+  'ms',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'tl',
+  'tr',
+  'uk',
+  'zh',
+] as const;
+
+const TYPE_CHECKS: Array<[string, string]> = [
+  ['#d1 is an Element', 'yes'],
+  ['p is an Element', 'no'],
+  ['#d1 is not an Element', 'no'],
+  ['p is not an Element', 'yes'],
+];
+
+describe.each(TYPE_CHECKS)('if %s', (condition, expected) => {
+  it.each(TYPE_CHECK_LANGUAGES)('%s', async language => {
     const code = render(parseSemantic(handler(condition), 'en').node!, language);
     const compiled = await hyperscript.compile(code, { language });
     expect(compiled.ok, `${language}: ${code}`).toBe(true);
@@ -130,12 +179,8 @@ const MORE_CONDITIONS: Array<[string, string]> = [
   ['p equals 2', 'no'],
   ['#d1 equals #d1', 'yes'],
   ['#d1 equals #d2', 'no'],
-  ['[1, 2] includes 1', 'yes'],
-  ['[1, 2] includes 3', 'no'],
   ['[1, 2] include 1', 'yes'],
   ['[1, 2] include 3', 'no'],
-  ['[1, 2] does not include 3', 'yes'],
-  ['[1, 2] does not include 1', 'no'],
   ['[1, 2] contain 1', 'yes'],
   ['[1, 2] contain 3', 'no'],
   ['[1, 2] do not contain 3', 'yes'],

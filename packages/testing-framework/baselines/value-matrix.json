@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 2614,
   "pairs": 125400,
-  "failing": 1040,
+  "failing": 994,
   "accepted": 102,
   "entries": {
     "increment|#a.textContent": {
@@ -613,102 +613,6 @@
     },
     "if|[1, 2, 6] includes (n + 1)": {
       "lanes": "tl tl/up tr tr/up",
-      "family": "translation"
-    },
-    "put|\"xab6\" does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|\"q\" does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|\"q\" does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|\"q\" does not include \"a\"": {
-      "lanes": "it/up",
-      "family": "adapter"
-    },
-    "put|\"xab6\" does not include \"q\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" does not include \"q\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" does not include \"q\"": {
-      "lanes": "it/up",
-      "family": "adapter"
-    },
-    "put|s does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|s does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|s does not include \"a\"": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|\"xab6\" does not include s": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|\"xab6\" does not include s": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|\"xab6\" does not include s": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|[1, 2, 6] does not include 2": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] does not include 2": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] does not include 2": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|[1, 2, 6] does not include n": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|[1, 2, 6] does not include n": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|[1, 2, 6] does not include n": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "put|arr does not include 2": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "set|arr does not include 2": {
-      "lanes": "it it/up",
-      "family": "translation"
-    },
-    "if|arr does not include 2": {
-      "lanes": "it it/up",
       "family": "translation"
     },
     "put|the textContent of #a as Int": {
