@@ -257,6 +257,22 @@ function endsEqualTo(all: readonly LanguageToken[], i: number, language: string)
   return word(i) === 'to' && word(i - 1) === 'equal' && EQUAL_TO_LEADS.has(word(i - 2));
 }
 
+/**
+ * Is the token the word `a`? The `a` of a type check (`is a Number`, `is not a
+ * String`) is the operator's, not a marker: es, it and pt spell `to` `a` and
+ * tr has a dative `a`, so after a value longer than one token (`obj's v`, `v
+ * of obj`, `String(n)`, `{}`) `obj's v es a Number` stopped at it and lost the
+ * check, or the whole command (a lone operand is the operator run's, which
+ * reads the phrase). Where `a` is the marker (`establecer x a 5`), no run
+ * through it reads as one expression, and the value ends before it
+ * (longestWholeRun). `an` is no marker anywhere; a copula and a type-name guard
+ * protected nothing the matrix, the corpus, the names oracle or the suite
+ * measure (PR 102).
+ */
+function isWordA(token: LanguageToken): boolean {
+  return token.value === 'a';
+}
+
 /** C13: the clause's end, or a marker the pattern still owes. */
 export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
   if (token.kind === 'conjunction') return true;
@@ -272,12 +288,12 @@ export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boole
  * Does the value stop at the token at `i`: a boundary, or a marker of the
  * command? Not at the `in` after a copula, the operator (C15, PR 69), nor at a
  * particle after `of`, its owner (C15, PR 74), nor at the `to` of `equal to`
- * (C15, PR 94).
+ * (C15, PR 94), nor at the word `a`, a type check's (C15, PR 102).
  */
 function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): boolean {
   const language = ctx.profile?.code ?? 'en';
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return false;
-  if (endsEqualTo(all, i, language)) return false;
+  if (endsEqualTo(all, i, language) || isWordA(all[i]!)) return false;
   const token = all[i]!;
   return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
 }

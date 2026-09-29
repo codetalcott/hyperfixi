@@ -77,6 +77,14 @@ const SOURCES: Array<[string, string[]]> = [
   [`on click put v of obj is greater than or equal to 4 into #out`, []],
   [`on click put obj's v is really equal to 6 into #out`, []],
   [`on click set x to obj's v is equal to 6 then put x into #out`, []],
+  // The article of a type check is the operator's, not a marker (PR 102): es,
+  // it and pt spell `to` `a` and tr a dative, so a value longer than one token
+  // stopped there, and `put` dropped its whole value (es `{ } es a Number`).
+  [`on click put obj's v is a Number into #out`, []],
+  [`on click put v of obj is not a Number into #out`, []],
+  [`on click put String(n) is a String into #out`, []],
+  [`on click put { } is not a String into #out`, []],
+  [`on click set x to length of arr is a Number then put x into #out`, LOCAL_LENGTH],
 ];
 
 describe.each(SOURCES)('%s', (source, broken) => {
@@ -116,6 +124,16 @@ describe('a variable named `equal` keeps its marker', () => {
       expect(render(parse(source, 'en')!, 'en')).toBe(source);
     }
   );
+});
+
+describe('a variable named `a` keeps its marker', () => {
+  // The article of `is a` continues a value only after a copula and before a
+  // type name: es/it/pt `a` is still `set`'s marker after a value.
+  it.each(['es', 'it', 'pt', 'tr'])('%s', language => {
+    const source = "on click set obj's v to a then put a into #out";
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+  });
 });
 
 describe('a variable spelled like the of-marker, after `of`', () => {
