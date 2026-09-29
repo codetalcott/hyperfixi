@@ -1128,8 +1128,10 @@ export function expressionWordOf(
   // A role marker (normalized to its role, as tr `na` is `destination`) is no
   // expression vocabulary, so in an expression it is a variable spelled like
   // one: tr `değil na < 3` (not na < 3) joined as `not destination < 3`, de
-  // `length of aus` as `length of source`.
-  if (ROLE_MARKER_CONCEPTS.has((token.normalized ?? token.value).toLowerCase())) return token.value;
+  // `length of aus` as `length of source`. Not `event`, which is also the
+  // event reference: de `ereignis's type` is `event's type`.
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (norm !== 'event' && ROLE_MARKER_CONCEPTS.has(norm)) return token.value;
   return token.normalized ?? token.value;
 }
 

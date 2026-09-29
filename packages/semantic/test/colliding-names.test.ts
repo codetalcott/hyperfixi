@@ -424,6 +424,13 @@ describe('names the value-reading rules misread, hand-written', () => {
     expect(render(parse(code, language)!, 'en')).toBe(english);
   });
 
+  // `event` is a role marker's normalized form and the event reference's.
+  it.each(FOREIGN.filter(l => l !== 'qu' && l !== 'uk'))("%s: event's type", language => {
+    const source = "on click put event's type into #out";
+    const foreign = render(parse(source, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+  });
+
   it('a conjunction between two operands still joins them', () => {
     expect(render(parse('gdy click ustaw do x a i b wtedy umieść x do #out', 'pl')!, 'en')).toBe(
       'on click set x to a and b then put x into #out'
