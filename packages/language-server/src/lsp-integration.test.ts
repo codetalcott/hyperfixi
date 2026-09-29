@@ -44,6 +44,7 @@ interface LspDiagnostic {
   code?: string | number;
   source?: string;
   message: string;
+  data?: unknown;
 }
 
 interface PublishDiagnosticsParams {
@@ -654,6 +655,50 @@ describe('Multilingual Auto-Detection', () => {
     const diags = await client.open('file:///test/japanese.hs', 'クリック で .active を トグル');
     expect(codes(diags)).not.toContain('parse-error');
     expect(diags.filter(d => d.severity === 1)).toEqual([]);
+  });
+
+  // es `y` is `and`: a variable spelled like it is read by where it stands, so
+  // the server warns at each place the parse reads the variable (not the `y`
+  // that is `and`), and offers a rename that collides with nothing.
+  it('warns about a variable spelled like a word of the language, with a rename', async () => {
+    const uri = 'file:///test/collision.hs';
+    const code = 'al clic si y > 3 y z < 2 poner y en #out fin';
+    const collisions = (await client.open(uri, code)).filter(d => d.code === 'name-collision');
+    expect(collisions.map(d => code.slice(d.range.start.character, d.range.end.character))).toEqual(
+      ['y', 'y']
+    );
+    expect(collisions.map(d => d.range.start.character)).toEqual([11, 31]);
+    expect(collisions.every(d => d.severity === 2)).toBe(true);
+    expect(collisions[0]!.message).toMatch(/`y` is also the word for `and` in es/);
+
+    const response = await client.sendRequest('textDocument/codeAction', {
+      textDocument: { uri },
+      range: collisions[0]!.range,
+      context: { diagnostics: [collisions[0]] },
+    });
+    const actions = response.result as Array<{
+      title: string;
+      edit: { changes: Record<string, Array<{ range: LspDiagnostic['range']; newText: string }>> };
+    }>;
+    const rename = actions.find(a => a.title === 'Rename `y` to `y1`');
+    expect(rename).toBeDefined();
+    expect(rename!.edit.changes[uri]!.map(e => [e.range.start.character, e.newText])).toEqual([
+      [11, 'y1'],
+      [31, 'y1'],
+    ]);
+  });
+
+  it('maps a name collision and its rename into an HTML attribute', async () => {
+    const uri = 'file:///test/collision.html';
+    const code = 'al clic establecer y a 5 entonces poner y en #out';
+    const html = `<button _="${code}">b</button>`;
+    const offset = html.indexOf(code);
+    const collisions = (await client.open(uri, html, 'html')).filter(
+      d => d.code === 'name-collision'
+    );
+    expect(collisions.map(d => d.range.start.character)).toEqual([offset + 19, offset + 40]);
+    const data = collisions[0]!.data as { ranges: Array<LspDiagnostic['range']> };
+    expect(data.ranges.map(r => r.start.character)).toEqual([offset + 19, offset + 40]);
   });
 
   it('still reports a real syntax error in Spanish code', async () => {

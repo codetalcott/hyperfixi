@@ -74,7 +74,7 @@
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { commandSchemas, tokenize } from '@lokascript/semantic';
+import { nameCollision, tokenize } from '@lokascript/semantic';
 import { installGlobals } from './shipped-examples-execution';
 
 // ---------------------------------------------------------------------------
@@ -463,9 +463,6 @@ export const NAME_VALUE = 7;
  */
 const NAME_POSITIONS: readonly Position[] = ['put', 'set', 'if', 'increment', 'assign', 'count'];
 
-/** The words a pronoun keyword stands for: a variable spelled like one is that pronoun. */
-const REFERENCE_WORDS = new Set(['me', 'my', 'you', 'your', 'it', 'its', 'result', 'event']);
-
 export interface CollidingName {
   name: string;
   /** Languages whose tokenizer reads the name as a pronoun: their lanes do not run. */
@@ -476,14 +473,15 @@ let collidingNamesMemo: readonly CollidingName[] | undefined;
 
 /**
  * Variables spelled like a structure word of a language the matrix translates
- * into: a one- or two-letter name its tokenizer does not read as a plain
- * identifier (a particle, a connective, a copula, a verb), or that a command
- * schema uses as a role marker (de `um`, which the tokenizer leaves an
- * identifier; every profile role marker the tokenizers already read as a
- * particle). A translation writes the variable verbatim, so the
- * reader has to tell it from the word by where it stands, as PR 59 did for a
- * conjunction, PR 64 for tr's particle `i` and PR 75 for an article. Derived,
- * so a vocabulary change that makes a new word collide adds its cells.
+ * into: every one- or two-letter name semantic's `nameCollision` finds
+ * colliding with one — a particle, a connective, a copula, a verb, a role
+ * marker (de `um`, which the tokenizer leaves an identifier), a connective the
+ * join reads (tl `o`, fr `ou`), an English article. A translation writes the
+ * variable verbatim, so the reader has to tell it from the word by where it
+ * stands, as PR 59 did for a conjunction, PR 64 for tr's particle `i` and PR 75
+ * for an article. Derived, and from the definition the validator and the
+ * editor warn with, so a vocabulary change that makes a new word collide adds
+ * its cells.
  *
  * Left out: English keywords, which hyperfixi's own English cannot take as a
  * variable either (except the articles, which it can, PR 75); `no`, which
@@ -497,34 +495,6 @@ export function collidingNames(): readonly CollidingName[] {
   if (collidingNamesMemo) return collidingNamesMemo;
   const letters = [...'abcdefghijklmnopqrstuvwxyz'];
   const candidates = [...letters, ...letters.flatMap(a => letters.map(b => a + b))];
-  const shaped = (word: string | undefined): word is string =>
-    word !== undefined && /^[a-z]{1,2}$/.test(word);
-  const structural = new Set<string>();
-  const pronoun = new Map<string, string[]>();
-  for (const language of FOREIGN_LANGUAGES) {
-    for (const word of candidates) {
-      const tokens = tokenize(word, language).tokens;
-      const token = tokens[0];
-      const normalized = token?.normalized !== word ? token?.normalized : undefined;
-      if (tokens.length === 1 && token?.kind === 'identifier' && !normalized) continue;
-      if (
-        tokens.length === 1 &&
-        token?.kind === 'keyword' &&
-        REFERENCE_WORDS.has(normalized ?? '')
-      ) {
-        pronoun.set(word, [...(pronoun.get(word) ?? []), language]);
-      } else {
-        structural.add(word);
-      }
-    }
-    const schemaMarkers = Object.values(commandSchemas).flatMap(schema =>
-      schema.roles.flatMap(role => [
-        role.markerOverride?.[language],
-        ...(role.markerVariants?.[language] ?? []),
-      ])
-    );
-    for (const word of schemaMarkers) if (shaped(word)) structural.add(word);
-  }
   const reserved = new Set(['i', 'x', 'no', ...Object.keys(GLOBALS)]);
   const englishKeyword = (word: string): boolean => {
     if (word === 'a' || word === 'an') return false;
@@ -532,8 +502,16 @@ export function collidingNames(): readonly CollidingName[] {
     return tokens.length === 1 && tokens[0]?.kind !== 'identifier';
   };
   collidingNamesMemo = candidates
-    .filter(word => structural.has(word) && !reserved.has(word) && !englishKeyword(word))
-    .map(name => ({ name, pronounIn: pronoun.get(name) ?? [] }));
+    .filter(word => !reserved.has(word) && !englishKeyword(word))
+    .flatMap(name => {
+      const readings = FOREIGN_LANGUAGES.map(language => ({
+        language,
+        collision: nameCollision(name, language),
+      }));
+      if (!readings.some(reading => reading.collision === 'structure')) return [];
+      const pronounIn = readings.filter(r => r.collision === 'pronoun').map(r => r.language);
+      return [{ name, pronounIn }];
+    });
   return collidingNamesMemo;
 }
 

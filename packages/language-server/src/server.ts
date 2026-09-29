@@ -44,7 +44,12 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServerSettings, ServerMode } from './types.js';
 import { defaultSettings } from './types.js';
 import { detectLokascriptFeatures } from './command-tiers.js';
-import { isHtmlDocument, extractHyperscriptRegions, findRegionAtPosition } from './extraction.js';
+import {
+  isHtmlDocument,
+  extractHyperscriptRegions,
+  findRegionAtPosition,
+  offsetToPosition,
+} from './extraction.js';
 import { getWordAtPosition } from './utils.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
@@ -64,6 +69,7 @@ import { getCommandDescription } from './localized-descriptions.js';
 // want an English-only server replace it with a shim (vscode-extension-hyperscript),
 // which is why the capability probes below still exist.
 import * as semanticImport from '@lokascript/semantic';
+import type { NameCollisionFinding } from '@lokascript/semantic';
 import {
   translateWithVerification,
   type TranslateWithVerificationParams,
@@ -686,26 +692,30 @@ async function validateDocument(document: TextDocument): Promise<void> {
             }))
           : await getDiagnostics(region.code, globalSettings.language);
 
-      // Map diagnostics back to document positions
+      // Map diagnostics back to document positions (a name collision's
+      // rename ranges too: its quick fix edits them).
+      const toDocument = (range: Range): Range => ({
+        start: {
+          line: region.startLine + range.start.line,
+          character:
+            range.start.line === 0
+              ? region.startChar + range.start.character
+              : range.start.character,
+        },
+        end: {
+          line: region.startLine + range.end.line,
+          character:
+            range.end.line === 0 ? region.startChar + range.end.character : range.end.character,
+        },
+      });
       for (const diag of diagnostics) {
+        const collision = nameCollisionData(diag);
         allDiagnostics.push({
           ...diag,
-          range: {
-            start: {
-              line: region.startLine + diag.range.start.line,
-              character:
-                diag.range.start.line === 0
-                  ? region.startChar + diag.range.start.character
-                  : diag.range.start.character,
-            },
-            end: {
-              line: region.startLine + diag.range.end.line,
-              character:
-                diag.range.end.line === 0
-                  ? region.startChar + diag.range.end.character
-                  : diag.range.end.character,
-            },
-          },
+          range: toDocument(diag.range),
+          ...(collision && {
+            data: { ...collision, ranges: collision.ranges.map(toDocument) },
+          }),
         });
       }
     }
@@ -715,6 +725,52 @@ async function validateDocument(document: TextDocument): Promise<void> {
   }
 
   connection.sendDiagnostics({ uri, diagnostics: allDiagnostics });
+}
+
+/** A name-collision diagnostic's data: what its quick fix renames, to what, and where. */
+interface NameCollisionData {
+  name: string;
+  rename: string;
+  ranges: Range[];
+}
+
+function nameCollisionData(diagnostic: Diagnostic): NameCollisionData | undefined {
+  const data = diagnostic.data as Partial<NameCollisionData> | undefined;
+  return diagnostic.code === 'name-collision' && data?.name && data.rename && data.ranges
+    ? (data as NameCollisionData)
+    : undefined;
+}
+
+/**
+ * A warning at each place the parse reads a colliding variable as the
+ * variable (semantic's `findNameCollisions`), carrying the rename its quick
+ * fix applies. A bundle whose semantic package is a shim reports none.
+ */
+function nameCollisionDiagnostics(code: string, language: string, source: string): Diagnostic[] {
+  const find = semanticPackage?.findNameCollisions as
+    ((code: string, language: string) => NameCollisionFinding[]) | undefined;
+  if (typeof find !== 'function') return [];
+  const diagnostics: Diagnostic[] = [];
+  for (const finding of find(code, language)) {
+    const ranges = finding.occurrences.map(({ start, end }) => ({
+      start: offsetToPosition(code, start),
+      end: offsetToPosition(code, end),
+    }));
+    const message = finding.rename
+      ? `${finding.message} Rename it (to \`${finding.rename}\`, say).`
+      : finding.message;
+    for (const range of ranges) {
+      diagnostics.push({
+        range,
+        severity: DiagnosticSeverity.Warning,
+        code: 'name-collision',
+        source,
+        message,
+        ...(finding.rename && { data: { name: finding.name, rename: finding.rename, ranges } }),
+      });
+    }
+  }
+  return diagnostics;
 }
 
 async function getDiagnostics(code: string, language: string): Promise<Diagnostic[]> {
@@ -804,6 +860,12 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
       }
 
       semanticParsedForeign = result.confidence >= 0.5 && usedLanguage !== 'en';
+
+      // A variable spelled like a word of the code's language (es `si`, tr
+      // `i`): its readers tell the two apart only by where it stands.
+      if (semanticParsedForeign) {
+        diagnostics.push(...nameCollisionDiagnostics(code, usedLanguage, brand));
+      }
 
       // Validate semantic roles
       if (result.confidence >= 0.5 && result.command) {
@@ -1958,8 +2020,29 @@ function extractSymbols(code: string, language: string): DocumentSymbol[] {
 connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
   const diagnostics = params.context.diagnostics;
   const actions: CodeAction[] = [];
+  const renamed = new Set<string>();
 
   for (const diagnostic of diagnostics) {
+    // A colliding variable: rename it everywhere the parse reads it as one.
+    const collision = nameCollisionData(diagnostic);
+    if (collision && !renamed.has(collision.name)) {
+      renamed.add(collision.name);
+      actions.push({
+        title: `Rename \`${collision.name}\` to \`${collision.rename}\``,
+        kind: CodeActionKind.QuickFix,
+        diagnostics: [diagnostic],
+        isPreferred: true,
+        edit: {
+          changes: {
+            [params.textDocument.uri]: collision.ranges.map(range => ({
+              range,
+              newText: collision.rename,
+            })),
+          },
+        },
+      });
+    }
+
     if (diagnostic.code === 'missing-role' && diagnostic.message.includes('toggle')) {
       actions.push({
         title: 'Add class target to toggle',
