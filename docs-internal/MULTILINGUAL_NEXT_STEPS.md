@@ -6838,6 +6838,17 @@ of it keeps the difference explicit and is filed instead.
   (`semantic-parser.ts`): none of C9's readings (a lone conjunction, `empty`, an article), and a
   bare identifier is a literal there, where the matcher's reads a variable. A second value
   classifier, for the SOV verb-anchoring paths.
+- ~~**The fallback's multi-token join**~~ **FIXED by PR 115** (the after-113 handoff, item 2): a
+  run of several tokens still took the old path after PR 113 — `tokensToSemanticValue` joined it
+  and made it a literal, where the role capture reads a run the expression parser reads whole as
+  an expression (C13, `longestWholeRun`) — so the direct path took the text as written:
+  hand-written bn `ক্লিক তে d + 1 কে অপেক্ষা` (on click wait d + 1) built `wait "d + 1"`. The
+  fallback now asks `readsAsOneExpression` of the joined run first; a run it does not read whole
+  keeps the old readings (the selector glue, a quoted string, the joined text). Measured before
+  the change, as the handoff asked: 27 runs across every stored row and every render reach the
+  multi-token join, 9 of them whole, none in a final parse, so the corpus moves no row; the value
+  matrix does not move and both names oracles are byte-identical. The renderer writes bn `wait`
+  without the particle, so only hand-written text reaches it (`fallback-token-value.test.ts`).
 - ~~**C3's curated end word misreads a variable spelled like one**~~ **FIXED by PR 112**, where an
   operator, `and`, `or` or the copula follows it (a block's end never is): the block scan, the
   handler body's clause walk, C3 and the join each read it as the variable now,

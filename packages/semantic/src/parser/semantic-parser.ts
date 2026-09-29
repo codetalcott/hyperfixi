@@ -53,6 +53,7 @@ import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { tokenValue } from './token-value';
+import { readsAsOneExpression } from './utils/value-extent';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
@@ -5321,6 +5322,13 @@ export class SemanticParserImpl implements ISemanticParser {
       return this.tokenToSemanticValue(meaningful[0]);
     }
 
+    // A run the expression parser reads whole is an expression, as the role
+    // capture reads a value (C13, longestWholeRun). Joined as text it was a
+    // string, which the direct path took as written: bn `d + 1 কে অপেক্ষা`
+    // (wait d + 1) waited for the text "d + 1" (PR 115).
+    const joined = this.joinTokenText(meaningful, language);
+    if (readsAsOneExpression(joined)) return { type: 'expression', raw: joined };
+
     // Multiple tokens — concatenate values and infer type from the first token
     const combined = meaningful.map(t => t.value).join('');
     const first = meaningful[0];
@@ -5349,7 +5357,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // anchor fires (`私の 値` → `my value`) and spaces are preserved, yielding
     // `beep! my value`. The selector/literal/reference branches keep the raw glue
     // on purpose (`#foo.bar`, quoted strings), so only this fall-through changes.
-    return createLiteral(this.joinTokenText(meaningful, language));
+    return createLiteral(joined);
   }
 
   /**
