@@ -6,7 +6,8 @@
  */
 
 export { parseExplicit, isExplicitSyntax } from './parser';
-export { SemanticRendererImpl, semanticRenderer, render, renderExplicit } from './renderer';
+export { SemanticRendererImpl, semanticRenderer, renderExplicit } from './renderer';
+export { render } from './verified-render';
 export {
   toExplicit,
   fromExplicit,

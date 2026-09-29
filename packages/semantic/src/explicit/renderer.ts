@@ -118,6 +118,24 @@ const EN_PROPERTY_WORDS: ReadonlySet<string> = new Set(
 // =============================================================================
 
 export class SemanticRendererImpl implements ISemanticRenderer {
+  /** Rewrites each expression value's English before it is localized (renderWith). */
+  private valueGuard: ((raw: string) => string) | undefined;
+
+  /**
+   * Render a node with each expression value's English rewritten by `guard`
+   * first: the verified render (`verified-render.ts`) spells a colliding
+   * variable `(si)` this way.
+   */
+  renderWith(node: SemanticNode, language: string, guard: (raw: string) => string): string {
+    const previous = this.valueGuard;
+    this.valueGuard = guard;
+    try {
+      return this.render(node, language);
+    } finally {
+      this.valueGuard = previous;
+    }
+  }
+
   /**
    * Render a semantic node in the specified language.
    */
@@ -1199,7 +1217,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // A POSSESSIVE inside the expression is localized first, structurally:
         // `'s` is English syntax, not vocabulary, and the word-level localizer
         // cannot touch it.
-        return this.localizeValue(this.localizeInteriorPossessives(value.raw, language), language);
+        return this.localizeValue(
+          this.localizeInteriorPossessives(this.valueGuard?.(value.raw) ?? value.raw, language),
+          language
+        );
 
       case 'flag':
         return this.localizeValue(value.name, language);

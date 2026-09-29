@@ -18,7 +18,7 @@ when it spots htmx v4 features). See the
 | Bundle            | Size (gzip) | What it is                                                                                          |
 | ----------------- | ----------- | --------------------------------------------------------------------------------------------------- |
 | `hyperfixi-hx.js` | ~22.0 KB    | The small one. Hybrid AST parser, blocks, expressions, event modifiers, plus htmx v1/v2 attributes. |
-| `hyperfixi.js`    | ~349 KB     | Everything. Full parser, reactivity and realtime plugins, 24 languages, `window.hyperfixi`.         |
+| `hyperfixi.js`    | ~352 KB     | Everything. Full parser, reactivity and realtime plugins, 24 languages, `window.hyperfixi`.         |
 
 Start with `hyperfixi-hx.js`. A command it does not ship fails **loudly** —
 the console names the command and `hyperfixi.js` — so the upgrade moment is
@@ -28,7 +28,7 @@ Two further bundles are separate products, not sizes of the same thing:
 
 | Bundle                      | Size (gzip) | Product                                                                                                                       |
 | --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `hyperfixi-hx-v4.js`        | ~360 KB     | htmx v4 on the full runtime: `hx-live`, `bind`, `when`, SSE and WebSocket, auto-installed. The Vite plugin selects it itself. |
+| `hyperfixi-hx-v4.js`        | ~363 KB     | htmx v4 on the full runtime: `hx-live`, `bind`, `when`, SSE and WebSocket, auto-installed. The Vite plugin selects it itself. |
 | `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with a `@lokascript/semantic` browser bundle (below).                                  |
 
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
@@ -120,7 +120,7 @@ When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the 
 
 The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command.
 
-**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~360 KB vs 22.0 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
+**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~363 KB vs 22.0 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
 
 ```html
 <script src="hyperfixi-hx-v4.js"></script>
@@ -304,7 +304,7 @@ For developers writing hyperscript in their native language:
 </script>
 ```
 
-**Total size:** ~296 KB gz (93 KB multilingual + 203 KB all-24 semantic) vs ~349 KB gz full bundle
+**Total size:** ~296 KB gz (93 KB multilingual + 203 KB all-24 semantic) vs ~352 KB gz full bundle
 
 ## Full Bundle Usage
 

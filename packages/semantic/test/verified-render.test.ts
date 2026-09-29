@@ -1,0 +1,145 @@
+/**
+ * The verified render (`explicit/verified-render.ts`, PR 103): a variable
+ * spelled like a structure word of the target language is written in
+ * parentheses, `(ist)`, exactly where the plain render would be read back as
+ * something else, and the reader fuses `(ist)` into one name
+ * (`registry.tokenize`).
+ *
+ * The value-reading rules (`parser/value-reading.ts`) tell most such names
+ * from the word by where they stand, and there the render is unchanged: every
+ * tr and pl loop over `i` stays `i`. Where the rules cannot — de `ist` (is),
+ * `auf` (on), `von` (of), fr `sur` (on), es `si` (if) inside an expression —
+ * the plain render lost the variable, and the parenthesized one keeps it.
+ */
+import { describe, it, expect } from 'vitest';
+import { parse, render, semanticRenderer, tokenize } from '../src/index';
+import { parenthesizeCollidingNames } from '../src/name-collisions';
+
+/** The English `code` reads back as, a name alone in parentheses aside. */
+function readBack(code: string, language: string): string {
+  return render(parse(code, language)!, 'en').replace(/(^|[^\w)\]])\((\w+)\)/g, '$1$2');
+}
+
+describe('a render the reader already reads is unchanged', () => {
+  it.each([
+    ['on click set i to 0 then repeat while i < 3 increment i end then put i into #out', 'pl'],
+    ['on click set i to 0 then repeat while i < 3 increment i end then put i into #out', 'tr'],
+    ['on click put a + b into #out', 'es'],
+    ['on click put a + b into #out', 'tr'],
+    ['on click set si to 2 then put si into #out', 'es'],
+    ['on click set w to 5 then put w into #out', 'pl'],
+    ['on click set ir to 1 then increment ir then put ir into #out', 'pt'],
+  ])('%s (%s)', (source, language) => {
+    const node = parse(source, 'en')!;
+    const code = render(node, language);
+    expect(code).toBe(semanticRenderer.render(node, language));
+    expect(code).not.toMatch(/\(\w+\)/);
+    expect(readBack(code, language), code).toBe(source);
+  });
+});
+
+describe('a variable the plain render loses is written in parentheses', () => {
+  const TEMPLATES = [
+    (n: string) => `on click set ${n} to 2 then put ${n} + 1 into #out`,
+    (n: string) => `on click set ${n} to 2 then if ${n} is 2 then put "Y" into #out end`,
+    (n: string) =>
+      `on click set ${n} to 0 then repeat while ${n} < 3 increment ${n} end then put ${n} into #out`,
+  ];
+  it.each([
+    ['de', 'ist'],
+    ['de', 'auf'],
+    ['de', 'von'],
+    ['de', 'bei'],
+    ['de', 'aus'],
+    ['fr', 'sur'],
+  ])('%s `%s`', (language, name) => {
+    for (const template of TEMPLATES) {
+      const node = parse(template(name), 'en')!;
+      const english = render(node, 'en');
+      const plain = semanticRenderer.render(node, language);
+      const code = render(node, language);
+      expect(readBack(plain, language), plain).not.toBe(english);
+      expect(code).toContain(`(${name})`);
+      expect(readBack(code, language), code).toBe(english);
+    }
+  });
+
+  it('an `of` owner: es `length of (si)`', () => {
+    const source = 'on click put length of si into #out';
+    const code = render(parse(source, 'en')!, 'es');
+    expect(code).toBe('al clic poner length of (si) en #out');
+    expect(readBack(code, 'es')).toBe(source);
+  });
+
+  it('where neither render reads, the plain one', () => {
+    // de reads the second `set` of this chain as a handler for any variable
+    // (`auf n` as `on n`, filed): the parentheses would fix nothing.
+    const node = parse('on click set ist to 2 then set x to ist + 3 then put x into #out', 'en')!;
+    expect(render(node, 'de')).toBe(semanticRenderer.render(node, 'de'));
+  });
+
+  it('es `si` inside an expression', () => {
+    const source = 'on click set x to si + 1 then put x into #out';
+    const code = render(parse(source, 'en')!, 'es');
+    expect(code).toBe('al clic establecer x a (si) + 1 entonces poner x en #out');
+    expect(readBack(code, 'es')).toBe(source);
+  });
+});
+
+describe('the reader fuses a name alone in parentheses', () => {
+  const values = (code: string, language: string): string[] =>
+    tokenize(code, language).tokens.map(token => token.value);
+
+  it('reads `(si)` as one name, and a hand-written one as the variable', () => {
+    expect(values('(si) + 1', 'es')).toEqual(['(si)', '+', '1']);
+    expect(readBack('al clic establecer x a (si) + 1 entonces poner x en #out', 'es')).toBe(
+      'on click set x to si + 1 then put x into #out'
+    );
+  });
+
+  it('a reference or literal in parentheses is still the value (VALUE_WORDS)', () => {
+    // es `objetivo` is `target`: fused, `(target)` would read as a variable.
+    for (const [source, language] of [
+      ['on click put (target) into #out', 'es'],
+      ['on click put (window) into #out', 'de'],
+      ['on click put (true) into #out', 'ja'],
+    ] as const) {
+      const code = render(parse(source, 'en')!, language);
+      expect(render(parse(code, language)!, 'en'), code).toBe(source);
+    }
+  });
+
+  it('a structure word the tokenizer leaves an identifier: de `(um)`, es `(a)`', () => {
+    expect(values('(um) + 1', 'de')).toEqual(['(um)', '+', '1']);
+    expect(values('(a) + b', 'es')).toEqual(['(a)', '+', 'b']);
+  });
+
+  it('a plain name in parentheses stays three tokens, as every reader expects', () => {
+    expect(values('(x) + 1', 'es')).toEqual(['(', 'x', ')', '+', '1']);
+    expect(readBack('al clic poner length of (x) en #out', 'es')).toBe(
+      'on click put length of ( x ) into #out'
+    );
+  });
+
+  it('not a call, a value word, a spaced group, or English', () => {
+    expect(values('f(si)', 'es')).not.toContain('(si)');
+    expect(values('(yo)', 'es')).not.toContain('(yo)');
+    expect(values('( si )', 'es')).not.toContain('(si)');
+    expect(values('(if)', 'en')).not.toContain('(if)');
+  });
+});
+
+describe('parenthesizeCollidingNames: the variables of an English expression', () => {
+  it.each([
+    ['si + 1', '(si) + 1'],
+    // A property, a method or a conversion's type is not a variable.
+    ['obj.si + si', 'obj.si + (si)'],
+    ["obj's si", "obj's si"],
+    // English vocabulary is not a name: `me` is es `yo`, rendered by the lexicon.
+    ['me + si', 'me + (si)'],
+    // Already in parentheses.
+    ['(si) + 1', '(si) + 1'],
+  ])('es: %s', (raw, expected) => {
+    expect(parenthesizeCollidingNames(raw, 'es')).toBe(expected);
+  });
+});

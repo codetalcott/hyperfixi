@@ -340,8 +340,12 @@ export function continuesValue(
   // An identifier in any script: the join translates a localized property
   // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what it
   // leaves untranslated. qu and uk keep an apostrophe in a word, so `foo's` in
-  // `obj's foo's bar` is one token.
-  return token.kind === 'identifier' && /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?$/u.test(token.value);
+  // `obj's foo's bar` is one token. A name the reader fused, `(si)`, is one too
+  // (registry.tokenize): `length of (si)`.
+  return (
+    token.kind === 'identifier' &&
+    /^(?:[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(token.value)
+  );
 }
 
 /**

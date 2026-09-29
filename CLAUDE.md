@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~349 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **22.0 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes from CI's bundle-size job on 2026-09-28 (PR 85). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–85) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~352 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **22.0 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -778,7 +778,11 @@ retirement, #1001; i18n keeps the vocabulary and the word-order profiles):
 
 Key files:
 
-- `packages/semantic/src/explicit/renderer.ts` - `render(node, language)`
+- `packages/semantic/src/explicit/renderer.ts` - the renderer; the public `render(node, language)`
+  is `explicit/verified-render.ts`, which writes a variable spelled like a structure word of the
+  target language in parentheses (`(si)`) where the plain render would be misread, and only
+  there (the reader fuses `(si)` into one name; `docs-internal/MULTILINGUAL_NEXT_STEPS.md`, "Name
+  collisions")
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
@@ -850,7 +854,7 @@ The bundle compatibility test suite automatically tests every built bundle again
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: hybrid-complete (11.4 KB, plugin-internal), hybrid-hx (22.0 KB), hybrid-hx-v4 (~360 KB), browser (~349 KB)
+- Bundles: hybrid-complete (11.4 KB, plugin-internal), hybrid-hx (22.0 KB), hybrid-hx-v4 (~363 KB), browser (~352 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -1074,8 +1078,8 @@ Quick selection (sizes gzipped):
 | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
 | via `@hyperfixi/vite-plugin` | minimal   | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
 | `hyperfixi-hx.js`            | ~22.0 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
-| `hyperfixi.js`               | ~349 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
-| `hyperfixi-hx-v4.js`         | ~360 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
+| `hyperfixi.js`               | ~352 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
+| `hyperfixi-hx-v4.js`         | ~363 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
 | `hyperfixi-multilingual.js`  | ~93 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
 | semantic bundles             | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
 

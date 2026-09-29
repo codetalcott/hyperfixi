@@ -78,9 +78,17 @@ describe('findNameCollisions', () => {
     const code = render(parse('on click set si to 1 then put si into #out', 'en')!, 'es');
     const [finding] = findNameCollisions(code, 'es');
     expect(finding?.message).toBe(
-      'Variable `si` is also the word for `if` in es: a reader tells them apart only by where it stands.'
+      'Variable `si` is also the word for `if` in es: a reader tells them apart only by where it stands, or when it is written `(si)`.'
     );
     expect(finding?.rename).toBe('si1');
+  });
+
+  it('reports no occurrence already written in parentheses', () => {
+    const findings = findNameCollisions(
+      'al clic establecer (si) a 1 entonces poner (si) en #out',
+      'es'
+    );
+    expect(findings).toEqual([]);
   });
 
   it('suggests a rename a digit does not split (tr, qu)', () => {

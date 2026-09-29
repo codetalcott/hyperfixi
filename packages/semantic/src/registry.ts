@@ -19,7 +19,9 @@
  * ```
  */
 
-import type { LanguageTokenizer, LanguagePattern, TokenStream } from './types';
+import type { LanguageTokenizer, LanguagePattern, LanguageToken, TokenStream } from './types';
+import { TokenStreamImpl } from './tokenizers/token-utils';
+import { VALUE_WORDS } from './value-words';
 
 // Re-export profile types from generators for convenience
 export type {
@@ -503,7 +505,71 @@ export function isLanguageSupported(code: string): boolean {
  */
 export function tokenize(input: string, language: string): TokenStream {
   const tokenizer = getTokenizer(language);
-  return tokenizer.tokenize(input);
+  const stream = tokenizer.tokenize(input);
+  return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+}
+
+/**
+ * Does a word spell structure in a language, so that `(word)` is a name?
+ * `name-collisions.ts` registers `nameCollision`, which knows the structure a
+ * tokenizer marks and the structure it leaves an identifier (de `um`, a schema
+ * marker; tl `o`, a connective; the articles). Until it does, nothing fuses.
+ */
+let structureName: (word: string, language: string) => boolean = () => false;
+
+/** Register what spells structure (name-collisions.ts does, on load). */
+export function setStructureNamePredicate(
+  predicate: (word: string, language: string) => boolean
+): void {
+  structureName = predicate;
+}
+
+/**
+ * `(si)`, a structure word alone in parentheses, is a variable: the verified
+ * render spells a variable that collides with a structure word of the
+ * language that way (es `si`, if), and so may a writer. Fused into one
+ * identifier token, no reader downstream can take it for the word. Only a word
+ * that spells structure there — a plain `(x)` stays three tokens, as every
+ * reader expects it — never a value word (`(me)`, es `(objetivo)`, target:
+ * VALUE_WORDS), not after a callee (`f(si)` is a call), and never in English,
+ * where no keyword is a variable.
+ */
+function fuseParenthesizedNames(stream: TokenStream, language: string): TokenStream {
+  const tokens = stream.tokens;
+  const out: LanguageToken[] = [];
+  let changed = false;
+  for (let i = 0; i < tokens.length; i++) {
+    const open = tokens[i]!;
+    const word = tokens[i + 1];
+    const close = tokens[i + 2];
+    const before = tokens[i - 1];
+    if (
+      open.value === '(' &&
+      word &&
+      close?.value === ')' &&
+      /^[\p{L}_$][\p{L}\p{M}\p{N}_$]*$/u.test(word.value) &&
+      !VALUE_WORDS.has((word.normalized ?? word.value).toLowerCase()) &&
+      structureName(word.value, language) &&
+      open.position.end === word.position.start &&
+      word.position.end === close.position.start &&
+      !(
+        before &&
+        before.position.end === open.position.start &&
+        /[\p{L}\p{N}_)\]]$/u.test(before.value)
+      )
+    ) {
+      out.push({
+        value: `(${word.value})`,
+        kind: 'identifier',
+        position: { ...open.position, end: close.position.end },
+      } as LanguageToken);
+      i += 2;
+      changed = true;
+      continue;
+    }
+    out.push(open);
+  }
+  return changed ? new TokenStreamImpl(out, language) : stream;
 }
 
 // =============================================================================

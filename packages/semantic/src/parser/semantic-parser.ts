@@ -59,7 +59,7 @@ import { isAtEndPositionNoun } from '../patterns/put';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { rewritePseudoCommand } from './pseudo-command';
 import { findEventModifierPhrase } from './event-modifier-lift';
-import { render as renderExplicitFn } from '../explicit/renderer';
+import { render as renderExplicitFn } from '../explicit/verified-render';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 
 /**
