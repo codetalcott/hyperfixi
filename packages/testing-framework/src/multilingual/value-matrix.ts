@@ -20,8 +20,8 @@
  *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
  *     while` condition, a loop's count (`repeat … times`), an `increment …
  *     by` amount, a `set` value in the second command of a chain (`chain`),
- *     and two written targets: what a `set` writes (`assign`) and what an
- *     `increment` counts (`count`).
+ *     what a `get` reads (`get`), and two written targets: what a `set`
+ *     writes (`assign`) and what an `increment` counts (`count`).
  *
  * The generator crosses them as a covering design, not a full product: every
  * operand alone; every operator with literal and variable operands on each
@@ -33,7 +33,7 @@
  *   - TARGETS: a plain variable, a property and an attribute as `assign` and
  *     `count` targets;
  *   - NAMES: variables spelled like another language's structure word (es
- *     `a`, pl `w`, tr `de`, de `um`), as a whole value in seven positions and
+ *     `a`, pl `w`, tr `de`, de `um`), as a whole value in eight positions and
  *     as an operand in four expressions (NAME_EXPRESSIONS). A translation
  *     writes a variable verbatim, so its reader has to tell the variable from
  *     the word by where it stands (see collidingNames).
@@ -102,7 +102,7 @@ export type OperandKind =
   | 'sigil';
 
 export type Position =
-  'put' | 'set' | 'if' | 'while' | 'times' | 'increment' | 'chain' | 'assign' | 'count';
+  'put' | 'set' | 'if' | 'while' | 'times' | 'increment' | 'chain' | 'get' | 'assign' | 'count';
 
 export const POSITIONS: readonly Position[] = [
   'put',
@@ -112,6 +112,7 @@ export const POSITIONS: readonly Position[] = [
   'times',
   'increment',
   'chain',
+  'get',
   'assign',
   'count',
 ];
@@ -498,6 +499,7 @@ const NAME_POSITIONS: readonly Position[] = [
   'if',
   'increment',
   'chain',
+  'get',
   'assign',
   'count',
 ];
@@ -587,6 +589,7 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
   times: e => `on click set i to 0 then repeat ${e} times increment i end then put i into #out`,
   increment: e => `on click set i to 1 then increment i by ${e} then put i into #out`,
   chain: e => `on click set p to 1 then set x to ${e} then put x into #out`,
+  get: e => `on click get ${e} then put it into #out`,
   assign: e => `on click set ${e} to 5 then put ${e} into #out`,
   count: e => `on click increment ${e} then put ${e} into #out`,
 };
@@ -603,12 +606,17 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
  * compounds and the names. A command after `then` is read where a handler can
  * start: de reads `setze x auf n + 3` there as `on n` (`auf` is also `on`),
  * and every cell had one command before the value's.
+ *
+ * What a `get` reads (`get`) is the same set: `get` takes any value and sets
+ * `it`, but its role took no literal, so English dropped `get "hello"`, `get
+ * 3` and `get true` whole (and every translation with them) while `get n` and
+ * `get #a's textContent` read.
  */
 function positionsFor(type: ValueType, bare: boolean, group: MatrixCell['group']): Position[] {
   const out: Position[] = ['put', 'set'];
   if (type === 'bool' || bare) out.push('if');
   if (type === 'num' || type === 'nstr') out.push('while', 'times', 'increment');
-  if (group !== 'operand-operator') out.push('chain');
+  if (group !== 'operand-operator') out.push('chain', 'get');
   return out;
 }
 
