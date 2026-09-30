@@ -6662,7 +6662,7 @@ in the order it applies:
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
 | C1  | `a`/`an` before an operator is a variable, not an article (`put a + b`)                                                                                                                                                                                                                                                                                     | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | #1175                                  | `en-reference-meaning.test.ts`                                                              |
 | C2  | `a`/`an` before the pattern's next marker is a variable (de `erhöhe a um 1`)                                                                                                                                                                                                                                                                                | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | 84                                     | `colliding-names.test.ts`                                                                   |
-| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word where a value stands is one: before an operator, `and`, `or`, the copula, `'s` or its own case marker, after an operator, `not`, `if`, a verb that requires a role or a marker (the block scan, the clause walk, the capture, the operator run and the join agree) | `neverAValue`, `endWordIsVariable` (`value-reading.ts`), `endWordIsValue` (`expression-lexicon.ts`) | #635; before an operator 112; the rest 114; the loop head 117 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
+| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word where a value stands is one: before an operator, `and`, `or`, the copula, `'s` or its own case marker, after an operator, `not`, `if`, a verb that requires a role, a marker or a word a loop's pattern writes before a role (the block scan, the clause walk, the capture, the operator run and the join agree) | `neverAValue`, `endWordIsVariable` (`value-reading.ts`), `endWordIsValue` (`expression-lexicon.ts`) | #635; before an operator 112; the rest 114; the loop head 117; loop words 121 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | `verbEndsCountSlot`, `verbStandsAlone` (`value-reading.ts`)       | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | `verbSkipsOptionalSlot`, `verbStandsAlone` (`value-reading.ts`)   | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `maySkipVerbSlot` (`value-reading.ts`), from `matchTokenSequence` | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
@@ -6905,7 +6905,8 @@ of it keeps the difference explicit and is filed instead.
   10 of 110 misread, with the language's own `repeat` 66 → 23 of 80; the corpus, the matrix and
   names English can have do not move. Left, both hand-written: loop forms whose form words the
   render writes as plain identifiers (fr `repeat tantque fin`, `repeat x en fin`, tr `repeat x
-  içinde son`, tl `repeat x sa_loob wakas`: 10 cases), which no token rule sees; and the
+  içinde son`, tl `repeat x sa_loob wakas`: 10 cases), which no token rule sees (read since PR 121,
+  below); and the
   language's own `repeat` with `until` (es `al clic repetir hasta fin es 3 …`, 13 cases), where
   `repeat-event-es-vso` is accepted only when an end word follows `hasta` — pattern competition, not
   a reader. Two more edits (the fused body walk's end check, the fused next-token check) moved
@@ -6964,6 +6965,20 @@ of it keeps the difference explicit and is filed instead.
   `verstecke`, `zeige` (the generated pattern's optional event slot takes the body's verb), and the
   English `repeat` beside a native word before hi `मैं में hello पर भेजें` (`for … in`) or tr `"/api"
   getir` (the English verb is an identifier there, and `fetch` takes it).
+- ~~**An end word after a loop's form word ends the loop**~~ **FIXED by PR 121** (PR 117's first
+  "left"). Loop forms write words right before a role the render keeps as plain words: fr `repeat
+  {patient} en {source}` and `repeat tantque {condition}`, tl `sa_loob`, tr `içinde`. No marker
+  test sees them (fr `en` and tl `sa_loob` are identifiers; tr `içinde` is a particle but no marker
+  of the profile), so an end word after one was the loop's end, and the loop was lost: fr `repeat x
+  en fin mettre x dans #out fin` read `put x into #out`. A word a repeat pattern writes right
+  before a role owes the value after it now, as a marker does (`loopWordsBeforeRole`, read by
+  `endWordIsValue`, so every reader of an end word sees it). Not the profile's role markers, which
+  keep their own reading: where markers follow values a command can end with one, and hi's stored
+  behavior-sortable row ends its loop's last command with `में` (`… ट्रिगर मैं में समाप्त`), whose
+  end the loop swallowed with the two commands after it when the markers were counted too. The
+  hand-written end-word probe: 10 → 0 of 484, and with the language's own `repeat` 23 → 13 of 80;
+  the corpus, the matrix and both names oracles do not move (`end-word-value.test.ts`). Left: the
+  13, the es-family `until` pattern competition above.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction

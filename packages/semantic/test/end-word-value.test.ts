@@ -9,7 +9,9 @@
  * after a verb that requires a role, a marker, `if`, `not` or an operator, and
  * before a case marker or `'s`; hand-written, every one of them read the block's
  * end, and es `poner fin en #out` (put fin into #out) was a bare `on click`. (A
- * rendered one was already written `(fin)`: the verified render, PR 103.)
+ * rendered one was already written `(fin)`: the verified render, PR 103.) PR
+ * 117 reads a loop head's, and PR 121 the value after a word a loop's patterns
+ * write before a role (fr `repeat x en fin`, for x in fin).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, semanticRenderer } from '../src/index';
@@ -191,6 +193,71 @@ describe('an end word in a loop head is a value where one stands (PR 117)', () =
     ],
   ])('%s: %s', (language, code, expected) => {
     expect(english(code, language)).toBe(expected);
+  });
+});
+
+describe("an end word after a loop's own word is a value (PR 121)", () => {
+  // The words a loop's patterns write right before a role (fr `repeat {patient}
+  // en {source}`, `repeat tantque {condition}`) render as plain words no marker
+  // test sees: the head's scan ended at the end word and the loop was lost.
+  it.each([
+    [
+      'fr',
+      'quand clic repeat x en fin mettre x dans #out fin puis mettre 1 dans #out',
+      'on click repeat for x in fin put x into #out end then put 1 into #out',
+    ],
+    [
+      'fr',
+      'quand clic repeat tantque fin incrémenter x fin puis mettre x dans #out',
+      'on click repeat while fin increment x end then put x into #out',
+    ],
+    [
+      'tl',
+      'kapag click repeat x sa_loob wakas ilagay x sa #out wakas pagkatapos ilagay 1 sa #out',
+      'on click repeat for x in wakas put x into #out end then put 1 into #out',
+    ],
+    // tr `içinde` is a particle, but no marker of the profile.
+    [
+      'tr',
+      'tıklama i üzerinde repeat x içinde son x i #out e koy son ardından 1 i #out e koy',
+      'on click repeat for x in son put x into #out end then put 1 into #out',
+    ],
+  ])('%s: %s', (language, code, expected) => {
+    expect(english(code, language)).toBe(expected);
+  });
+
+  // The stored hi behavior-sortable row, whose loop's last command ends with a
+  // marker (`sortable:move को ट्रिगर मैं में`, trigger sortable:move on me): with
+  // `में` read as a loop word, its `समाप्त` was a value, and the loop swallowed the
+  // two commands after it (PR 121's words are no profile's markers).
+  it('a loop ends after a marker its last command ends with (hi)', () => {
+    const code = [
+      'Sortable(dragClass) को व्यवहार',
+      '    प्रारंभ',
+      '        अगर dragClass है अपरिभाषित',
+      '            dragClass को "sorting" में सेट',
+      '        समाप्त',
+      '    समाप्त',
+      '    pointerdown(clientY) पर मैं से',
+      '        item को the target.closest("li") में सेट',
+      '        अगर item है खाली',
+      '            बाहर',
+      '        समाप्त',
+      '        the घटना को रोकें',
+      '        .{dragClass} को जोड़ें item में',
+      '        sortable:start को ट्रिगर मैं में',
+      '        तक घटना pointerup को दोहराएं दस्तावेज़ से',
+      '            प्रतीक्षा pointermove(clientY) या pointerup(clientY) दस्तावेज़ से',
+      '            sortable:move को ट्रिगर मैं में',
+      '        समाप्त',
+      '        .{dragClass} को हटाएं item से',
+      '        sortable:end को ट्रिगर मैं में',
+      '    समाप्त',
+      'समाप्त',
+    ].join('\n');
+    expect(english(code, 'hi')).toContain(
+      'trigger sortable:move end then remove .{dragClass} from item then trigger sortable:end'
+    );
   });
 });
 
