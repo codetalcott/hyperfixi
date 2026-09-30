@@ -7065,15 +7065,16 @@ of it keeps the difference explicit and is filed instead.
   פעמים, id kali, sw mara, tr kez/kere/defa, ja 回/度, ko 번/회, zh 次/遍, hi बार, qu kuti) is read,
   never written: the counted heads take it beside their count word (the render and the
   dictionaries do not change), and the count readers take any count before it, where a head needs a
-  marker the writer left out (ja `n 回 繰り返し`, zh `重复 n 次`). Variable counts 41 of 41 (and
+  marker the writer left out (ja `n 回 繰り返し`, zh `重复 n 次`). sw writes its count after the
+  word (`rudia mara 3`, which read `repeat mara`, `forever`), and a head below the render's reads
+  that order. Variable counts 41 of 41 (and
   `$n`, and `3`); 18 bodies × counted loops 516 → 522 of 522; the 52 hand-written counted loops and
   their index 52 of 52. The matrix (its renders write the dictionary's word), the corpus and both
   names oracles do not move (`native-count-word.test.ts`). Left: hi verb-first with English
   `times` (`click पर दोहराएं 3 times …`, the after-123 handoff's item 4) still loses its count, a
   code-switched order no writer of hi uses: the fused `repeat-event-hi-sov-simple` ends at the verb
   and the fused body walk drops `3 times` (a reclaim like the one for increment's amount would
-  read it); sw writes its count after the word (`rudia mara 3`), which no head reads; and de
-  `warte` (the imperative) is no wait word at all.
+  read it); and de `warte` (the imperative) is no wait word at all.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction

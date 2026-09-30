@@ -32,6 +32,7 @@ describe("a variable count before the language's own word", () => {
     ['it', 'su click ripetere n volte incrementare x fine'],
     ['id', 'ketika klik ulangi n kali tingkatkan x selesai'],
     ['sw', 'unapo click rudia n mara ongezeko x mwisho'],
+    ['sw', 'unapo click rudia mara n ongezeko x mwisho'],
     ['pl', 'gdy click powtórz n razy zwiększ x koniec'],
     ['ru', 'при click повторить n раз увеличить x конец'],
     ['uk', 'при click повторити n разів збільшити x кінець'],
@@ -47,6 +48,16 @@ describe("a variable count before the language's own word", () => {
     ['bn', 'ক্লিক তে n বার পুনরাবৃত্তি x কে বৃদ্ধি শেষ'],
   ])('%s: %s', (language, code) => {
     expect(english(code, language)).toBe('on click repeat n times increment x end');
+  });
+
+  // sw writes the count after its word; the render keeps English `times`.
+  it('reads sw word-first and renders as before', () => {
+    expect(english('unapo click rudia mara 3 ongezeko x mwisho', 'sw')).toBe(
+      'on click repeat 3 times increment x end'
+    );
+    expect(render(parse('on click repeat 3 times increment x end', 'en')!, 'sw')).toBe(
+      'unapo click rudia 3 times ongezeko x mwisho'
+    );
   });
 
   it('builds a counted loop, not a forever one', () => {
