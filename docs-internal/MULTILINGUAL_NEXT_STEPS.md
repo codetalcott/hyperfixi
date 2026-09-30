@@ -6688,8 +6688,8 @@ pairs, by where the loss sits:
 PR 125 moved no stored corpus row, and no entry of either names oracle (neither has a loop count;
 the extended oracle's loop templates read the same). Found while probing it, not fixed: `repeat it
 times` in ms (`ulang ia kali` reads `ia kali` as `its kali`, a possessive) and qu (`chay times ta
-repeat` drops the loop); and `get 3` (a lone literal after `get`) is dropped in English, which no
-position of the matrix has.
+repeat` drops the loop); and English drops a `get` whose operand is a literal (`get "hello"`, `get
+3`, `get true`: the whole command, so `it` is never set), which no position of the matrix has.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
@@ -7309,16 +7309,22 @@ it is written `(si)`", and reports no occurrence already written so.
   before and after each, `jeśli I mam .x` reads `if and mam .x` before PR 104 and `if I has .x`
   from PR 106 on, on every lane (`I match .x` too). The filing: `if I have .x` renders `jeśli I mam
   .x`, and pl's tokenizer takes `I` for its conjunction `i`.
-- **qu: a camelCase variable ending like a case marker** (`userData`, `myPiData`) splits at it
-  (`userDa` + `ta`). PR 107 keeps a PascalCase word whole (a type's name, `FormData`); a camelCase
-  one cannot be told from a variable with its marker attached (`triggerElta`, which a test pins).
+- ~~**qu: a camelCase variable ending like a case marker**~~ **FIXED** (rendered by PR 111,
+  hand-written by PR 128). `userData`, `myPiData` split at the marker-shaped end (`userDa` +
+  `ta`). PR 107 keeps a PascalCase word whole (a type's name, `FormData`); a camelCase one cannot be
+  told from a variable with its marker attached (`triggerElta`, which a test pins) by its spelling.
   **Rendered, FIXED by PR 111**: the verified render writes `(userData)`, and the reader fuses a
   word the tokenizer split inside the parentheses (the pieces touch and spell one word), so a
-  rendered `put userData into #out` (which read `put ta into #out`) reads. The matrix has the
-  name now (`CODE_NAMES`). **Hand-written, still ambiguous**: `userData ta` reads the attached
-  marker, as `triggerElta` must, and the diagnostic cannot see it (the parse never reads `userData`
-  as a name); the writer can write `(userData)`. Which reading should win in hand-written text is
-  the owner's call (see the after-107 handoff's item 6).
+  rendered `put userData into #out` (which read `put ta into #out`) reads. The matrix has the name
+  now (`CODE_NAMES`). **Hand-written, FIXED by PR 128** (the owner's call in the after-107 to
+  after-123 handoffs, decided as recommended there: neither (a) keep the attached reading nor (b)
+  keep a camelCase word whole, but (c)): a word takes one case marker, so when the next word is one
+  (`ta`, `-ta`, attached `data-ta` too), the marker-shaped ending is the word's own. `userData ta`,
+  `data ta` and `delta ta` (lowercase names split too, which (b) would have missed) read, and
+  `triggerElta` and `wasita` still split. The corpus moves no row; the names oracles move 316 +
+  159 qu entries, every one a render only (the verified render no longer parenthesizes a name the
+  plain spelling reads: `apa ta`, not `(apa) ta`), 0 better or worse read-backs
+  (`qu-marker-shaped-name.test.ts`).
 
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 

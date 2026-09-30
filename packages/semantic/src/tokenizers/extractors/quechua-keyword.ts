@@ -84,10 +84,29 @@ function quechuaSuffixStartsAt(input: string, pos: number): boolean {
   const remaining = input.slice(pos);
   for (const marker of AGGLUTINATIVE_MARKERS) {
     if (!remaining.startsWith(marker)) continue;
-    const after = input[pos + marker.length];
-    if (after === undefined || !isQuechuaLetter(after)) return true;
+    const end = pos + marker.length;
+    const after = input[end];
+    if (after !== undefined && isQuechuaLetter(after)) continue;
+    // A word takes one case marker: when the next word is one, this ending
+    // is the word's own (`userData ta`, `data ta`, `delta ta`), where the word
+    // itself was split and no reading was left (PR 128).
+    if (markerWordAt(input, end)) continue;
+    return true;
   }
   return false;
+}
+
+/**
+ * Whether the next word after `pos`, past any spaces, is a case marker (`ta`,
+ * `manta`), or its hyphenated form (`-ta`, attached too: `data-ta`).
+ */
+function markerWordAt(input: string, pos: number): boolean {
+  let start = pos;
+  while (start < input.length && /\s/.test(input[start])) start++;
+  if (input[start] === '-') start++;
+  let end = start;
+  while (end < input.length && isQuechuaLetter(input[end])) end++;
+  return AGGLUTINATIVE_MARKERS.has(input.slice(start, end).toLowerCase());
 }
 
 /**

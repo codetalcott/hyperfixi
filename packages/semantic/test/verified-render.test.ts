@@ -163,7 +163,9 @@ describe('qu: a name the reader splits, or a sense rule does not count (PR 111)'
   });
 
   it.each([
-    ['on click put userData into #out', '(userData)'],
+    // Before its marker the name reads plain since PR 128 (a word takes one
+    // case marker), so the render no longer needs the parentheses there.
+    ['on click put userData into #out', 'userData ta'],
     ['on click set userData to 2 then put userData + 1 into #out', '(userData)'],
     ['on click if not pa then put "Y" into #out else put "N" into #out end', '(pa)'],
     ['on click if not pi then put "Y" into #out else put "N" into #out end', '(pi)'],
