@@ -158,6 +158,7 @@ export const pt: Dictionary = {
     s: 's',
     min: 'min',
     h: 'h',
+    times: 'vezes',
   },
 
   values: {

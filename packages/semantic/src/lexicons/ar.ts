@@ -72,6 +72,7 @@ export const arabicLexicon: LanguageLexicon = {
     s: { primary: 'ث' },
     second: { primary: 'ثانية' },
     seconds: { primary: 'ثوانِ' },
+    times: { primary: 'مرات' },
   },
   values: {
     body: { primary: 'جسم' },

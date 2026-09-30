@@ -73,6 +73,7 @@ export const turkishLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'saniye' },
     seconds: { primary: 'saniye' },
+    times: { primary: 'kez' },
   },
   values: {
     body: { primary: 'gövde' },

@@ -154,6 +154,7 @@ export const ko: Dictionary = {
     s: '초',
     min: '분',
     h: '시',
+    times: '번',
   },
 
   values: {

@@ -71,6 +71,7 @@ export const quechuaLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'sikundu' },
     seconds: { primary: 'sikundukuna' },
+    times: { primary: 'kuti' },
   },
   values: {
     body: { primary: 'kurku' },

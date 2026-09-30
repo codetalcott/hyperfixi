@@ -154,6 +154,7 @@ export const it: Dictionary = {
     s: 's',
     min: 'min',
     h: 'h',
+    times: 'volte',
   },
 
   values: {

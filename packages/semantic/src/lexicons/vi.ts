@@ -59,6 +59,7 @@ export const vietnameseLexicon: LanguageLexicon = {
     now: { primary: 'bây giờ' },
     once: { primary: 'một lần' },
     sometimes: { primary: 'đôi khi' },
+    times: { primary: 'lần' },
     today: { primary: 'hôm nay' },
     tomorrow: { primary: 'ngày mai' },
     twice: { primary: 'hai lần' },

@@ -71,6 +71,7 @@ export const portugueseLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'segundo' },
     seconds: { primary: 'segundos' },
+    times: { primary: 'vezes' },
   },
   values: {
     body: { primary: 'corpo' },

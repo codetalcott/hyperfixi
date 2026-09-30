@@ -165,6 +165,7 @@ export const ukrainianDictionary: Dictionary = {
     once: 'один_раз',
     every: 'кожний',
     until: 'до',
+    times: 'разів',
   },
 
   values: {

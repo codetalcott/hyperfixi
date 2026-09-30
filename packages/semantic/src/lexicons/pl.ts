@@ -71,6 +71,7 @@ export const polishLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'sekunda' },
     seconds: { primary: 'sekundy' },
+    times: { primary: 'razy' },
   },
   values: {
     body: { primary: 'body' },

@@ -154,6 +154,7 @@ export const ar: Dictionary = {
     s: 'ث',
     min: 'د',
     h: 'س',
+    times: 'مرات',
   },
 
   values: {

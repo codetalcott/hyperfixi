@@ -77,6 +77,7 @@ export const russianLexicon: LanguageLexicon = {
     second: { primary: 'секунда' },
     seconds: { primary: 'секунд' },
     until: { primary: 'до' },
+    times: { primary: 'раз' },
   },
   values: {
     body: { primary: 'тело' },

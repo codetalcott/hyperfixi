@@ -166,6 +166,7 @@ export const hindiDictionary: Dictionary = {
     once: 'एक_बार',
     every: 'हर',
     until: 'तक',
+    times: 'बार',
   },
 
   values: {

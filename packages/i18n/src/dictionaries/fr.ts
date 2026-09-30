@@ -157,6 +157,7 @@ export const fr: Dictionary = {
     s: 's',
     min: 'min',
     h: 'h',
+    times: 'fois',
   },
 
   values: {

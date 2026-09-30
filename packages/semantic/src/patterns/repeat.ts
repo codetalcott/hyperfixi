@@ -21,9 +21,11 @@
  *   committed patterns.db can lag with the older `kutichiy`=`return`, but CI always
  *   re-populates, so the qu HEAD fires there.)
  *
- * The count word is taken VERBATIM from the corpus: most languages leave the
- * English `times` untranslated (es `repetir 3 times`); a few translate it
- * (th `ครั้ง`, vi `lần`, tl `beses`, bn `বার`).
+ * The count word is each language's own (es `repetir 3 veces`, ja `3 回 を
+ * 繰り返し`), the word its i18n dictionary gives `times`; English `times` and
+ * the language's other words (`count-words.ts`) are read beside it. The render
+ * wrote English `times` in 18 languages, and English `repeat` in the SOV six,
+ * until PR 131.
  */
 
 import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
@@ -38,12 +40,15 @@ import { NATIVE_COUNT_WORDS } from './count-words';
  */
 const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
 
-/** The count word: the one the render writes, and the language's own (PR 127). */
+/**
+ * The count word: the one the render writes, and the language's other words
+ * (PR 127) and English `times` (PR 131), which are read.
+ */
 function countWordToken(language: string, countWord: string): PatternToken {
-  const alternatives = NATIVE_COUNT_WORDS[language]?.filter(word => word !== countWord);
-  return alternatives?.length
-    ? { type: 'literal', value: countWord, alternatives }
-    : { type: 'literal', value: countWord };
+  const alternatives = [...(NATIVE_COUNT_WORDS[language] ?? []), 'times'].filter(
+    word => word !== countWord
+  );
+  return { type: 'literal', value: countWord, alternatives };
 }
 
 /**
@@ -83,25 +88,25 @@ function repeatTimesHead(
   };
 }
 
-// [lang, repeat-verb (corpus form), count-word, markerBefore?]
+// [lang, repeat-verb (corpus form), count-word (the dictionary's `times`), markerBefore?]
 const VERB_FIRST_REPEAT_TIMES: Array<[string, string, string, string?]> = [
-  ['es', 'repetir', 'times'],
-  ['de', 'wiederholen', 'times'],
-  ['fr', 'répéter', 'times'],
-  ['it', 'ripetere', 'times'],
-  ['pt', 'repetir', 'times'],
-  ['ru', 'повторить', 'times'],
-  ['uk', 'повторити', 'times'],
-  ['pl', 'powtórz', 'times'],
-  ['ar', 'كرر', 'times'],
-  ['he', 'חזור', 'times', 'את'],
-  ['id', 'ulangi', 'times'],
+  ['es', 'repetir', 'veces'],
+  ['de', 'wiederholen', 'mal'],
+  ['fr', 'répéter', 'fois'],
+  ['it', 'ripetere', 'volte'],
+  ['pt', 'repetir', 'vezes'],
+  ['ru', 'повторить', 'раз'],
+  ['uk', 'повторити', 'разів'],
+  ['pl', 'powtórz', 'razy'],
+  ['ar', 'كرر', 'مرات'],
+  ['he', 'חזור', 'פעמים', 'את'],
+  ['id', 'ulangi', 'kali'],
   ['ms', 'ulang', 'kali'],
-  ['sw', 'rudia', 'times'],
+  ['sw', 'rudia', 'mara'],
   ['th', 'ทำซ้ำ', 'ครั้ง'],
   ['vi', 'lặp lại', 'lần'],
   ['tl', 'ulitin', 'beses'],
-  ['zh', '重复', 'times', '把'],
+  ['zh', '重复', '次', '把'],
 ];
 
 /**
@@ -111,19 +116,27 @@ const VERB_FIRST_REPEAT_TIMES: Array<[string, string, string, string?]> = [
  * (ja `を` / ko `를` / tr `i` / hi `को` / bn `কে`) sits between the count phrase and
  * the clause-final verb and must be consumed for the verb token to align.
  */
-function repeatTimesHeadSOV(language: string, countWord: string, marker: string): LanguagePattern {
+function repeatTimesHeadSOV(
+  language: string,
+  countWord: string,
+  marker: string,
+  verb: string
+): LanguagePattern {
   return {
     id: `repeat-${language}-times`,
     language,
     command: 'repeat',
     priority: 110, // > the generated positional repeat (100)
     template: {
-      format: `{quantity} ${countWord} ${marker} repeat`,
+      format: `{quantity} ${countWord} ${marker} ${verb}`,
       tokens: [
         { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
         countWordToken(language, countWord),
         { type: 'literal', value: marker },
-        { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
+        // The render writes the language's verb (it wrote English `repeat`
+        // until PR 131); `repeat` matches the verb's normalized form, so every
+        // conjugation the profile lists reads, and English `repeat` too.
+        { type: 'literal', value: verb, alternatives: ['repeat'] },
       ],
     },
     extraction: {
@@ -132,14 +145,14 @@ function repeatTimesHeadSOV(language: string, countWord: string, marker: string)
   };
 }
 
-// [lang, count-word (corpus form), object-marker]
-const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
-  ['ja', 'times', 'を'],
-  ['ko', 'times', '를'],
-  ['tr', 'times', 'i'],
-  ['hi', 'times', 'को'],
-  ['bn', 'বার', 'কে'],
-  ['qu', 'times', 'ta'],
+// [lang, count-word (the dictionary's `times`), object-marker, verb (the profile's primary)]
+const SOV_REPEAT_TIMES: Array<[string, string, string, string]> = [
+  ['ja', '回', 'を', '繰り返し'],
+  ['ko', '번', '를', '반복'],
+  ['tr', 'kez', 'i', 'tekrarla'],
+  ['hi', 'बार', 'को', 'दोहराएं'],
+  ['bn', 'বার', 'কে', 'পুনরাবৃত্তি'],
+  ['qu', 'kuti', 'ta', 'kutipay'],
 ];
 
 /**
@@ -760,8 +773,8 @@ const addPattern = (lang: string, p: LanguagePattern) => {
 for (const [lang, verb, countWord, marker] of VERB_FIRST_REPEAT_TIMES) {
   addPattern(lang, repeatTimesHead(lang, verb, countWord, marker));
 }
-for (const [lang, countWord, marker] of SOV_REPEAT_TIMES) {
-  addPattern(lang, repeatTimesHeadSOV(lang, countWord, marker));
+for (const [lang, countWord, marker, verb] of SOV_REPEAT_TIMES) {
+  addPattern(lang, repeatTimesHeadSOV(lang, countWord, marker, verb));
 }
 addPattern('sw', repeatTimesHeadWordFirst('sw', 'rudia', 'mara'));
 for (const [lang, spec] of FOR_IN_HEADS) {

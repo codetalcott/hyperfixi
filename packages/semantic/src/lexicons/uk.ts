@@ -77,6 +77,7 @@ export const ukrainianLexicon: LanguageLexicon = {
     second: { primary: 'секунда' },
     seconds: { primary: 'секунд' },
     until: { primary: 'до' },
+    times: { primary: 'разів' },
   },
   values: {
     body: { primary: 'тіло' },

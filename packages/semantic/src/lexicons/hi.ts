@@ -77,6 +77,7 @@ export const hindiLexicon: LanguageLexicon = {
     second: { primary: 'सेकंड' },
     seconds: { primary: 'सेकंड' },
     until: { primary: 'तक' },
+    times: { primary: 'बार' },
   },
   values: {
     body: { primary: 'बॉडी' },

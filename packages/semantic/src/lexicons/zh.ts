@@ -72,6 +72,7 @@ export const chineseLexicon: LanguageLexicon = {
     s: { primary: '秒' },
     second: { primary: '秒' },
     seconds: { primary: '秒' },
+    times: { primary: '次' },
   },
   values: {
     body: { primary: '主体' },
