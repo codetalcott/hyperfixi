@@ -26,7 +26,9 @@ import './lexicons/pl';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-pl';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-pl`;
 
 // =============================================================================
 // Supported Languages

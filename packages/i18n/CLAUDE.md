@@ -5,7 +5,7 @@ This file provides guidance for working with the `@lokascript/i18n` package.
 ## Package Purpose
 
 Per-language **vocabulary and keyword providers**: the dictionaries that let the
-parser recognise hyperscript written in 23 languages, plus the grammar
+parser recognise hyperscript written in 24 languages, plus the grammar
 **profiles** (word order, role markers) that describe each one.
 
 **It no longer translates.** `grammar/transformer.ts` — `GrammarTransformer`,

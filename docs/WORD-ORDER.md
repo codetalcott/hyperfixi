@@ -20,13 +20,13 @@ can't drift into marketing: if a claim here breaks, a test goes red.
 
 The canonical `toggle .active on #button`:
 
-| Order   | Languages                                  | Surface shape                     | Example                              |
-| ------- | ------------------------------------------ | --------------------------------- | ------------------------------------ |
-| **SVO** | en, es, fr, pt, it, id, ms, sw, zh, vi, tl | verb leads                        | `on click toggle .active on #button` |
-| **SOV** | ja, ko, tr, qu, hi, bn                     | verb last; particles mark roles   | ja `#button で .active を トグル`    |
-| **VSO** | ar                                         | verb first                        | ar `بدّل .active على #button`        |
-| **V2**  | de                                         | finite verb second, particle last | de `schalte .active auf #button um`  |
-| other   | ru, uk, pl, th, he                         | mixed / case-marked               | —                                    |
+| Order   | Languages                              | Surface shape                     | Example                              |
+| ------- | -------------------------------------- | --------------------------------- | ------------------------------------ |
+| **SVO** | en, es, fr, pt, it, id, ms, sw, zh, vi | verb leads                        | `on click toggle .active on #button` |
+| **SOV** | ja, ko, tr, qu, hi, bn                 | verb last; particles mark roles   | ja `#button で .active を トグル`    |
+| **VSO** | ar, tl                                 | verb first                        | ar `بدّل .active على #button`        |
+| **V2**  | de                                     | finite verb second, particle last | de `schalte .active auf #button um`  |
+| other   | ru, uk, pl, th, he                     | mixed / case-marked               | —                                    |
 
 A faithful parse of all of these collapses to the **same** semantic node
 (`toggle`, patient `.active`, destination `#button`). The phenomena below are the
@@ -34,14 +34,15 @@ ways that collapse goes wrong — and how the engine handles each. Mechanisms li
 [`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts),
 [`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts), and the
 per-language [`tokenizers/`](../packages/semantic/src/tokenizers/); the inverse
-transform is [`i18n/.../transformer.ts`](../packages/i18n/src/grammar/transformer.ts).
+transform is the renderer, [`semantic/.../renderer.ts`](../packages/semantic/src/explicit/renderer.ts)
+(i18n's `transformer.ts` was retired 2026-08-28).
 
 ---
 
 ## 1. Verb position — final _and_ medial (SOV)
 
-**Challenge.** SOV puts the verb last (`.active を トグル`), but the grammar
-transform often emits a verb _between_ roles for two-role commands
+**Challenge.** SOV puts the verb last (`.active を トグル`), but the retired i18n
+grammar transform often emitted a verb _between_ roles for two-role commands
 (`destination を verb patient に`). A pattern matcher that expects strict
 verb-final order matches neither.
 
@@ -150,13 +151,14 @@ in condition position.
 `` `is empty` predicate alignment (verb vs adjective) `` ·
 `temporal in must not swallow a locative in <scope> (first-in-parent / B1)`
 
-## 8. Dict ↔ tokenizer ↔ transformer alignment
+## 8. Dict ↔ tokenizer ↔ renderer alignment
 
 **Challenge.** The three components must agree on every native surface form. The
-transform emits a word the tokenizer didn't list (Malay `bind ke`, Swahili input
-event `ingizo`, Korean fetch `가져오기` vs loanword `패치`) → it tokenizes as a bare
-identifier and the command silently degrades. This is the single largest _class_ of
-guards — most "keyword alignment" tests.
+renderer (before 2026-08-28, i18n's transformer) emits a word the tokenizer didn't
+list (Malay `bind ke`, Swahili input event `ingizo`, Korean fetch `가져오기` vs
+loanword `패치`) → it tokenizes as a bare identifier and the command silently
+degrades. This is the single largest _class_ of guards — most "keyword alignment"
+tests.
 
 **Mechanism.** Register the emitted native form as a tokenizer alternative aligned
 to the same normalized action; keep schema markers, profile markers, and tokenizer

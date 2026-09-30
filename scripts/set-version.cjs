@@ -119,6 +119,9 @@ const GENERATED_VERSION_FILES = [
   // Each now has a version.test.ts asserting equality with its manifest.
   'packages/reactivity/src/version.ts',
   'packages/realtime/src/version.ts',
+  // semantic's exported VERSION was a `0.1.0` literal from its first release
+  // (and each browser bundle its own `1.0.0-<lang>`); test/version.test.ts.
+  'packages/semantic/src/version.ts',
 ];
 
 GENERATED_VERSION_FILES.forEach(relPath => {

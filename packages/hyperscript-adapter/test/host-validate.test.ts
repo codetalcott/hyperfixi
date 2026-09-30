@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   acceptedByHost,
+  referenceReadAsEvent,
   warnRejectedOnce,
   resetHostValidationWarnings,
 } from '../src/host-validate';
@@ -34,6 +35,16 @@ describe('acceptedByHost — channel folding (mock hosts)', () => {
   it('rejects when parse() collects grammar errors', () => {
     const host = { parse: () => ({ errors: [{ message: "Expected 'end' but found 'then'" }] }) };
     expect(acceptedByHost(host, 'repeat 3 times then add .x')).toBe(false);
+  });
+
+  it('rejects a parse that reads a reference as a handler event', () => {
+    const host = { parse: () => ({ errors: [], features: [{ events: [{ on: 'click' }] }, { events: [{ on: 'me' }] }] }) };
+    expect(acceptedByHost(host, 'on click on me toggle .active')).toBe(false);
+  });
+
+  it('accepts handlers for real events', () => {
+    const host = { parse: () => ({ errors: [], features: [{ events: [{ on: 'click' }, { on: 'keyup' }] }, {}] }) };
+    expect(acceptedByHost(host, 'on click or keyup toggle .active')).toBe(true);
   });
 
   it("rejects when the tokenizer's throw channel fires", () => {
@@ -71,6 +82,16 @@ describe('acceptedByHost — real vendored engine', () => {
 
   it('accepts plain canonical hyperscript', () => {
     expect(acceptedByHost(hs, 'on click toggle .active on me')).toBe(true);
+  });
+
+  // The README's Japanese quickstart translated to exactly this, which the
+  // engine reads as an empty click handler plus a handler for an event named
+  // `me`: valid, and a dead button.
+  it('rejects a reference read as a handler event (a dead button)', () => {
+    expect(hs.parse('on click on me toggle .active').errors ?? []).toEqual([]);
+    expect(referenceReadAsEvent(hs.parse('on click on me toggle .active'))).toBe('me');
+    expect(acceptedByHost(hs, 'on click on me toggle .active')).toBe(false);
+    expect(acceptedByHost(hs, 'on click or it toggle .active')).toBe(false);
   });
 
   it('rejects text that never was hyperscript', () => {

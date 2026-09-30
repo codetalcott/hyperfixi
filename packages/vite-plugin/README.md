@@ -93,7 +93,7 @@ Enable semantic parsing for natural language hyperscript and multilingual suppor
 | `semantic`       | `boolean \| 'en' \| 'auto'`                        | `false` | Enable semantic parser                  |
 | `languages`      | `string[]`                                         | `[]`    | Explicit language codes to support      |
 | `region`         | `'western' \| 'east-asian' \| 'priority' \| 'all'` | auto    | Force a regional bundle                 |
-| `grammar`        | `boolean`                                          | `false` | Enable grammar transformation (SOV/VSO) |
+| `grammar`        | `boolean`                                          | `false` | Add `translateHyperscript()` to the API |
 | `extraLanguages` | `string[]`                                         | `[]`    | Languages to always include             |
 
 ### Supported Languages (24)
@@ -122,7 +122,7 @@ hyperfixi({ languages: ['en', 'es', 'ja'] });
 // Force a specific regional bundle
 hyperfixi({ region: 'western' });
 
-// Full multilingual with grammar transformation
+// Semantic parsing plus translateHyperscript(code, from, to)
 hyperfixi({ semantic: true, grammar: true });
 ```
 
@@ -142,19 +142,21 @@ The plugin automatically selects the smallest bundle that covers all detected la
 
 ### Semantic Bundle Sizes
 
-| Bundle                 | Languages             |
-| ---------------------- | --------------------- |
-| `semantic: 'en'`       | English only          |
-| `semantic: 'es'`       | Spanish only          |
-| `region: 'es-en'`      | English + Spanish     |
-| `region: 'western'`    | en, es, pt, fr, de    |
-| `region: 'east-asian'` | ja, zh, ko            |
-| `region: 'priority'`   | 11 priority languages |
-| `region: 'all'`        | All 24 languages      |
+| Bundle                    | Languages                                                        |
+| ------------------------- | ---------------------------------------------------------------- |
+| `semantic: 'en'`          | English only                                                     |
+| `languages: ['es']`       | Spanish only                                                     |
+| `languages: ['en', 'es']` | English + Spanish                                                |
+| `region: 'western'`       | en, es, pt, fr, de, it                                           |
+| `region: 'east-asian'`    | ja, zh, ko                                                       |
+| `region: 'priority'`      | 13 languages: en, es, pt, fr, de, it, ja, zh, ko, ar, tr, ru, hi |
+| `region: 'all'`           | All 24 languages                                                 |
 
-Final size depends on Vite's tree-shaking of the selected languages; for reference,
-the prebuilt standalone semantic bundles range from ~62 KB (core) to ~203 KB
-(all 24 languages) gzipped — see `docs/BROWSER_BUNDLES.md` in the repo.
+English is always included as the fallback. The generated code imports
+`@lokascript/semantic/core` plus one `@lokascript/semantic/languages/<code>` module
+per language, so the final size depends on Vite's tree-shaking; for reference, the
+prebuilt standalone semantic bundles range from ~90 KB (no languages) to ~260 KB
+(all 24 languages) gzipped, measured locally — see `docs/BROWSER_BUNDLES.md` in the repo.
 
 ### Tiered Bundle Architecture
 
@@ -165,7 +167,7 @@ Level 1: + Semantic English
          ↓ languages detected/specified
 Level 2: + Regional Semantic Bundle
          ↓ grammar: true
-Level 3: + Grammar Transformation
+Level 3: + translateHyperscript() (semantic's translate)
 ```
 
 Each level adds bundle weight; the plugin picks the lowest level that covers the
@@ -219,7 +221,7 @@ hyperfixi({
   semantic: false, // boolean | 'en' | 'auto'
   languages: [], // ['en', 'es', 'ja']
   region: undefined, // 'western' | 'east-asian' | 'priority' | 'all'
-  grammar: false, // Enable grammar transformation
+  grammar: false, // Add translateHyperscript() to the API (implies semantic)
   extraLanguages: [], // Languages to always include
 });
 ```
@@ -357,7 +359,7 @@ This example demonstrates language auto-detection with Japanese, Spanish, and Ko
 | `semantic`       | `boolean \| 'en' \| 'auto'` | `false`               | Enable semantic parser                |
 | `languages`      | `string[]`                  | `[]`                  | Explicit language codes               |
 | `region`         | `string`                    | auto                  | Force regional bundle                 |
-| `grammar`        | `boolean`                   | `false`               | Enable grammar transformation         |
+| `grammar`        | `boolean`                   | `false`               | Add `translateHyperscript()` to API   |
 | `extraLanguages` | `string[]`                  | `[]`                  | Languages to always include           |
 
 ### Default Include Pattern

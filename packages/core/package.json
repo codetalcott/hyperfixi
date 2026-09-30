@@ -4,6 +4,8 @@
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
   "main": "dist/index.cjs",
+  "unpkg": "dist/hyperfixi.js",
+  "jsdelivr": "dist/hyperfixi.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {

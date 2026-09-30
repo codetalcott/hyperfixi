@@ -7,8 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-30
+
+A correctness release for multilingual hyperscript. The semantic parser behind
+`translate()`, `@lokascript/hyperscript-adapter`, MCP `translate_code` and hyperfixi's
+non-English path now keeps whole programs that it used to shorten or drop: values,
+conditions, loops and handler heads. Every value shape in a generated matrix of 4,205
+(executed in 24 languages, directly and through the adapter, against upstream
+\_hyperscript) now matches upstream, apart from two documented differences. Core
+matches upstream \_hyperscript on more forms.
+
 ### Added
 
+- **Counted loops are written in each language's own words**: es `repetir 3 veces`,
+  fr `répéter 3 fois`, ja `3 回 を 繰り返し`, hi `3 बार को दोहराएं`, where translations
+  wrote English `times` in 18 languages and English `repeat` in the SOV six. English
+  `times`/`repeat` and each language's other count words (es `vez`, ru `раза`, …) still
+  read. 18 i18n dictionaries gain a `temporal.times` word.
+- **Variable names that are words of the target language.** A variable spelled like a
+  structure word (es `si`, pl `w`, tr `al`) is written in parentheses, `(si)`, where the
+  plain translation would be misread, and read back as the variable. The language server
+  warns (`name-collision`, with a rename quick fix), MCP `validate_hyperscript` reports
+  `NAME_COLLISION`, and `translate_code` warns when a variable reads as a value word in
+  the target (tl `ako` is `me`). `@lokascript/semantic` exports `nameCollision`,
+  `findNameCollisions` and `findTranslationCollisions`.
+- Event-handler modifiers (`once`, `debounced at`, `throttled at`, `from`) render in every
+  language and are scored by the fidelity signals.
+- `of`-paths and pseudo-commands (`reset() the closest <form/>`) survive translation.
+- `@lokascript/hyperscript-adapter`'s host gate also rejects a translation that reads a
+  reference as a handler's event (`on click on me toggle .active`, an empty click handler
+  plus a handler for an event named `me`), falling back to the author's text with a
+  warning; such a translation used to parse cleanly and do nothing.
 - **Localized htmx attributes: all 23 non-English languages now cover
   every attribute the _Hypermedia Systems_ book's code listings use** —
   `hx-vals`, `hx-select`, `hx-swap-oob` and `hx-sync` join the Contact.app
@@ -48,6 +77,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rendered vocabulary** (owner decisions): `null` is written `null` in ar, hi, id, qu,
+  sw, th and tr, where it shared the word for `empty`; hi writes `no` as `कोई नहीं`; qu
+  writes `and` as `hinallataq`; tl and tr write `includes` with `contains`' word (both
+  engines read the two as one operator).
+- `@lokascript/semantic` exports its real `VERSION` (it was `0.1.0` since the first
+  release); browser bundles report `<version>-<bundle>`.
+- MCP `translate_hyperscript` is described accurately: it uses the same semantic engine as
+  `translate_code`, without the verification.
 - **Audited primaries for `hx-trigger` / `hx-swap`** in ja (`hx-トリガー`,
   `hx-置換`), es (`hx-disparador`, `hx-intercambio`), pt (`hx-gatilho`,
   `hx-troca`) and ko (`hx-교체`), following loka-js's terminology reviews. The
@@ -59,6 +96,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Translations that lost code** (semantic parse and render, in every language):
+  - `get` of a literal (`get "hello"`, `get 3`, `get true`) dropped the whole command; an
+    object literal after `get` was cut to `get {`.
+  - Loops keep their extent and body; `repeat until` stops; a loop keeps its index
+    variable, the tail after an `if` inside it, and the command after an empty loop its own
+    `end` closes; a count may be any value (a variable, `$n`, `it`, a possessive), where
+    some translations read `forever`, a silent infinite loop.
+  - Handler heads keep `or` events, filters and event parameters; a translated
+    `wait for <event>` waits instead of throwing; behaviors keep their handlers and init
+    blocks; an else-if chain shares one `end`.
+  - Values keep their comparison phrases (`is equal to`, `includes`, `is an Element`, …),
+    `and`/`or`/`not`, `mod`, possessive and `of` chains, object and array literals, every
+    conversion core supports (`as Int`, `as Fixed:2`, piped conversions), unary minus and
+    property paths; `true`/`false`/`null` keep their meaning.
+  - Commands keep `put … into <variable>`, `tell … to show`, fetch's `do not throw` and
+    response type, event-source/socket URLs, show/hide `with` strategies, `go`/`scroll`
+    positions, `${…}` URLs, core's `has`, and a class query's `in` scope.
+- **`@hyperfixi/core` follows upstream \_hyperscript**:
+  - `X of Y` binds as property access, and the X of a null target is null.
+  - `increment` reads its amount and counter as upstream does, and writing an object's
+    property through `'s`/`of` works.
+  - A loop's count reads as upstream's `index < times` does: `"6.5"` loops 7 times and
+    `"6abc"` none, in the full runtime and in the hybrid bundles (`hyperfixi-hx.js`,
+    plugin bundles), which read `parseInt`.
+  - Blocks close at the end of input; `morph … to`; `render … with name: value`; `beep!`
+    as an expression; `transition`'s owners, several properties, `from` and `using`; three
+    handler forms from _Hypermedia Systems_; four upstream-valid forms that compiled and
+    then failed at run time; `.item in #list` keeps its scope; `on click once` fires on
+    the first click.
+- htmx: camelCase event names survive an attribute name.
+- MCP: the validators report what the parsers actually did.
+- The AOT compiler (experimental): loops were compiled to `while (true)`; targets,
+  property access, scoped queries, `empty` and variable scope now compile to what they
+  mean.
+- `@lokascript/hyperscript-adapter` and `@hyperscript-tools/multilingual` READMEs: the
+  Japanese quickstart example was a dead button, and the multi-language example loaded
+  only the Spanish bundle; the examples are now native and run in a test. Bundle sizes are
+  measured.
+- Bare CDN URLs now serve a browser bundle: `unpkg.com/@lokascript/hyperscript-adapter@3` (and
+  jsDelivr) served `dist/index.cjs`, which throws in a `<script>` tag. The adapter,
+  `@hyperscript-tools/multilingual`, `@lokascript/semantic`, `@hyperfixi/core` and
+  `@lokascript/htmx-adapter` declare `unpkg`/`jsdelivr` entries.
+- `hyperfixi-multilingual.js`'s error names the semantic bundle that exists (the full
+  `browser.global.js`, the only one that defines `LokaScriptSemantic`).
+- READMEs: `@lokascript/i18n` no longer claims to translate (and its `/lsp` export and CLI,
+  which do not exist, are gone); `@lokascript/semantic`, `@hyperfixi/vite-plugin` and
+  `@hyperfixi/core` have correct package names, API calls, language lists (24) and measured
+  bundle sizes.
+- Dependencies: the js-yaml and smol-toml advisories; Vite 8, vitest 5 and happy-dom 20.14.
 - **Vietnamese `hx-get` / `hx-target` / `hx-swap` / `hx-trigger` / `sse-swap`
   never worked**: the names were emitted with spaces (`hx-lấy giá trị`), which
   HTML reads as three attributes. They are now hyphen-joined

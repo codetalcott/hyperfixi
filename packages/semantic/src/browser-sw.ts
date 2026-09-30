@@ -26,7 +26,9 @@ import './lexicons/sw';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-sw';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-sw`;
 
 // =============================================================================
 // Supported Languages

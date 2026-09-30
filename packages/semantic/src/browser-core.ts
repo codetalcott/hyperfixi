@@ -33,7 +33,9 @@
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-core';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-core`;
 
 // =============================================================================
 // Registry (Core)

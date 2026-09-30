@@ -1,4 +1,4 @@
-# @lokascript/core
+# @hyperfixi/core
 
 An experimental hyperscript engine that provides fast parsing, command execution, and comprehensive error handling for web applications. Built with TypeScript-first design.
 
@@ -7,7 +7,7 @@ An experimental hyperscript engine that provides fast parsing, command execution
 - 🎯 **\_hyperscript Compatible** - Tested via gallery examples, bundle compatibility matrix, and command/expression browser tests
 - 🚀 **High Performance** - Optimized tokenizer and parser for large expressions
 - 🔧 **TypeScript First** - Complete type safety with comprehensive type definitions
-- 🧪 **Thoroughly Tested** - 2800+ tests with 98.5%+ reliability
+- 🧪 **Thoroughly Tested** - Vitest unit suites plus Playwright browser tests
 - 🌊 **Complete Command System** - All major commands implemented (PUT, SET, ADD, SHOW/HIDE, etc.)
 - ⚡ **HTML Integration** - Automatic `_=""` attribute processing and event binding
 - 🛡️ **Error Recovery** - Graceful handling of syntax errors with helpful guidance
@@ -15,26 +15,26 @@ An experimental hyperscript engine that provides fast parsing, command execution
 ## Installation
 
 ```bash
-npm install @lokascript/core
+npm install @hyperfixi/core
 # or
-yarn add @lokascript/core
+yarn add @hyperfixi/core
 ```
 
 ## Quick Start
 
 ```typescript
-import { hyperscript } from '@lokascript/core';
+import { hyperscript } from '@hyperfixi/core';
 
 // Simple expression evaluation
-const result = await hyperscript.run('5 + 3 * 2'); // Returns 11
+const result = await hyperscript.eval('5 + 3 * 2'); // Returns 11
 
 // DOM manipulation with commands
 const button = document.getElementById('myButton');
 const context = hyperscript.createContext(button);
 
-await hyperscript.run('hide me', context); // Hides the button
-await hyperscript.run('put "Hello World" into my innerHTML', context);
-await hyperscript.run('set my className to "active"', context);
+await hyperscript.eval('hide me', context); // Hides the button
+await hyperscript.eval('put "Hello World" into my innerHTML', context);
+await hyperscript.eval('set my className to "active"', context);
 ```
 
 ### HTML Integration (Automatic)
@@ -52,18 +52,18 @@ await hyperscript.run('set my className to "active"', context);
 
 ## Debugging
 
-LokaScript includes a built-in debug control API for troubleshooting compilation and execution issues.
+HyperFixi includes a built-in debug control API for troubleshooting compilation and execution issues.
 
 ### Enable Debug Logging
 
 ```javascript
 // In browser console
-lokascript.debugControl.enable(); // Enable detailed logging
+hyperfixi.debugControl.enable(); // Enable detailed logging
 // Reload page to see logs
 
-lokascript.debugControl.disable(); // Disable logging
-lokascript.debugControl.isEnabled(); // Check if enabled
-lokascript.debugControl.status(); // Get detailed status
+hyperfixi.debugControl.disable(); // Disable logging
+hyperfixi.debugControl.isEnabled(); // Check if enabled
+hyperfixi.debugControl.status(); // Get detailed status
 ```
 
 Debug settings persist across page reloads via localStorage. Logs include:
@@ -94,13 +94,13 @@ that fell back to its English rendering — reports.
 
 ## Runtime Hooks
 
-LokaScript provides a hooks system for observing and intercepting command execution:
+HyperFixi provides a hooks system for observing and intercepting command execution:
 
 ```javascript
-import { HookRegistry, createHooks } from '@lokascript/core';
+import { hyperscript } from '@hyperfixi/core';
 
 // Create hooks for logging, analytics, or debugging
-const hooks = createHooks({
+const hooks = {
   beforeExecute: ctx => {
     console.log(`Executing: ${ctx.commandName}`);
   },
@@ -115,34 +115,26 @@ const hooks = createHooks({
     // Return true to skip command execution
     return name === 'disabled-command';
   },
-});
+};
 
 // Register hooks with the runtime
-lokascript.registerHooks('my-hooks', hooks);
+hyperscript.registerHooks('my-hooks', hooks);
 ```
-
-Built-in hook utilities:
-
-- `loggingHooks()` - Pre-configured debug logging hooks
-- `createTimingHooks()` - Performance timing hooks
 
 ## Cleanup & Memory Management
 
 The runtime automatically tracks event listeners and observers for cleanup when elements are removed from the DOM. You can also manually trigger cleanup:
 
 ```javascript
-// Clean up a specific element
-lokascript.cleanup(element);
-
-// Clean up element and all descendants
-lokascript.cleanupTree(containerElement);
+// Clean up an element and all its descendants
+hyperscript.cleanup(containerElement);
 
 // Get cleanup statistics
-const stats = lokascript.getCleanupStats();
+const stats = hyperscript.getDefaultRuntime().getCleanupStats();
 // { elementsTracked: 5, listeners: 12, observers: 2, ... }
 
 // Full runtime shutdown
-lokascript.destroy();
+hyperscript.getDefaultRuntime().destroy();
 ```
 
 ## API Reference
@@ -153,12 +145,12 @@ For complete API documentation, see [API.md](./docs/API.md).
 
 - `hyperscript.compile(code)` - Compile hyperscript to AST
 - `hyperscript.execute(ast, context)` - Execute compiled AST
-- `hyperscript.run(code, context)` - Compile and execute in one step
+- `hyperscript.eval(code, context)` - Compile and execute in one step
 - `hyperscript.createContext(element)` - Create execution context
-- `evalHyperScript(code, context)` - \_hyperscript compatibility API
+- `evalHyperScript(code, context)` - \_hyperscript compatibility API (a global in the `hyperfixi.js` browser bundle)
 - `hyperscript.registerHooks(name, hooks)` - Register runtime hooks
-- `hyperscript.cleanup(element)` - Clean up element resources
-- `hyperscript.destroy()` - Full runtime shutdown
+- `hyperscript.cleanup(element)` - Clean up an element and its descendants
+- `hyperscript.getDefaultRuntime().destroy()` - Full runtime shutdown
 
 ## Supported Features
 
@@ -193,7 +185,7 @@ See [EXAMPLES.md](./docs/EXAMPLES.md) for comprehensive usage examples.
 
 ## Compatibility Testing
 
-This package includes compatibility tests that validate LokaScript against the official \_hyperscript library:
+This package includes compatibility tests that validate HyperFixi against the official \_hyperscript library:
 
 ```bash
 # Run compatibility tests with official hyperscript test suite

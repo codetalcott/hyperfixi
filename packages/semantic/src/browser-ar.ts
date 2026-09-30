@@ -26,7 +26,9 @@ import './lexicons/ar';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-ar';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-ar`;
 
 // =============================================================================
 // Supported Languages

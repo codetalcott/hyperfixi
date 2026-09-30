@@ -3,7 +3,7 @@
 HyperFixi is organized as a monorepo with two npm scopes:
 
 - **`@hyperfixi/*`** -- Core engine: runtime, parser, commands, bundling, tooling
-- **`@lokascript/*`** -- Multilingual layer: semantic parser, grammar transformation, domain DSLs
+- **`@lokascript/*`** -- Multilingual layer: semantic parser and translator, per-language vocabulary, domain DSLs
 
 Use `@hyperfixi/*` packages by default. Add `@lokascript/*` packages only if you need multilingual support.
 
@@ -30,16 +30,16 @@ packages/
 │   ├── patterns/       # Command pattern generation
 │   └── parser/         # Semantic parser with confidence scoring
 │
-├── i18n/               # @lokascript/i18n — Grammar transformation
-│   ├── grammar/        # SOV/VSO word order transformation
-│   └── profiles/       # Language profiles with markers
+├── i18n/               # @lokascript/i18n — Per-language vocabulary (translation moved to semantic)
+│   ├── dictionaries/   # Keyword dictionaries (24 languages)
+│   └── grammar/        # Word-order profiles with markers
 │
 ├── framework/          # @lokascript/framework — Generic DSL framework
 │                       # (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 │
 ├── compilation-service/# @lokascript/compilation-service — Multi-target codegen
 ├── hyperscript-adapter/# @lokascript/hyperscript-adapter — Plugin for original _hyperscript
-├── language-server/    # @lokascript/language-server — LSP implementation (21 languages)
+├── language-server/    # @lokascript/language-server — LSP implementation (24 languages)
 ├── aot-compiler/       # @hyperfixi/aot-compiler — Ahead-of-time compiler
 ├── server-bridge/      # @hyperfixi/server-bridge — Server-side route extraction
 │
@@ -64,15 +64,15 @@ packages/
 fallback (`@hyperfixi/core/browser/hybrid-complete`); the lite / lite-plus /
 minimal / standard names were retired in the 4.0 cycle.
 
-**Semantic bundles** (optional, for multilingual support):
+**Semantic bundles** (optional, for multilingual support; gzipped, measured locally 2026-09-30):
 
-| Bundle                                  | Size  | Languages          |
-| --------------------------------------- | ----- | ------------------ |
-| browser-en.en.global.js                 | 20 KB | English only       |
-| browser-western.western.global.js       | 30 KB | en, es, pt, fr, de |
-| browser-east-asian.east-asian.global.js | 24 KB | ja, zh, ko         |
-| browser-priority.priority.global.js     | 48 KB | 11 priority        |
-| browser.global.js                       | 90 KB | All 24 languages   |
+| Bundle                                  | Size    | Languages              |
+| --------------------------------------- | ------- | ---------------------- |
+| browser-en.en.global.js                 | ~111 KB | English only           |
+| browser-western.western.global.js       | ~128 KB | en, es, pt, fr, de, it |
+| browser-east-asian.east-asian.global.js | ~106 KB | ja, zh, ko             |
+| browser-priority.priority.global.js     | ~151 KB | 11 priority            |
+| browser.global.js                       | ~260 KB | All 24 languages       |
 
 See [packages/core/bundle-configs/README.md](../packages/core/bundle-configs/README.md) for custom bundle generation.
 

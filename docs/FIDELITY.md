@@ -158,15 +158,17 @@ firestorm on one pattern means "suspect the en parse first."
 ### Render fidelity (RF): the direction the other signals never look at
 
 Every signal above scores the **stored** corpus — the `pattern_translations`
-rows, which `@lokascript/i18n`'s `GrammarTransformer` writes. R4's en-side leg
-is en→en and its foreign leg is foreign→en. So none of them ever call
-`render(node, L)` for a non-English `L`.
+rows. When RF landed those rows were written by `@lokascript/i18n`'s
+`GrammarTransformer`; since **2026-08-28** they are written by
+`@lokascript/semantic`'s `render`, and the transformer is retired. R4's en-side
+leg is en→en and its foreign leg is foreign→en. So none of them ever call
+`render(node, L)` for a non-English `L` themselves.
 
 That is the direction a reader actually sees: MCP `translate_code`,
 `hyperfixi.translate`, `getAllTranslations`, core's `MultilingualHyperscript`,
 and the editor's "Show in my language" badge all render English into a target
-language with `@lokascript/semantic`, not with the transformer that wrote the
-corpus. Measured for the first time on **2026-08-26**, that path was **73.3%**
+language with `@lokascript/semantic`, not with the transformer that then wrote
+the corpus. Measured for the first time on **2026-08-26**, that path was **73.3%**
 structurally clean against the English reference where the corpus was 97.0% —
 a gap nothing could see, because nothing looked.
 
@@ -188,8 +190,9 @@ Two properties worth knowing:
   unlike R4's foreign leg it runs in the ordinary test suite.
 
 **Read the numbers accordingly.** `avgFidelity 1.000` and friends describe the
-i18n-written corpus. The renderer behind the public tools is a separate
-measurement, published separately, and currently lower.
+stored corpus, which is now written by the same renderer as the public tools.
+RF still measures that renderer separately, with the strict walker; its
+baseline stands at 3588 of 3588 (pattern, language) pairs clean.
 
 ### Canonical validity (R4): the does-the-real-engine-accept-it detector
 

@@ -26,7 +26,9 @@ import './lexicons/tl';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-tl';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-tl`;
 
 // =============================================================================
 // Supported Languages

@@ -131,8 +131,9 @@ function getSemanticModule(): typeof import('@lokascript/semantic') {
     return (window as any).LokaScriptSemantic;
   }
   throw new Error(
-    'LokaScriptSemantic not found. Load the semantic bundle before the multilingual bundle:\n' +
-      '<script src="lokascript-semantic.browser.global.js"></script>\n' +
+    'LokaScriptSemantic not found. Load the full semantic bundle (all 24 languages, the one ' +
+      'that defines LokaScriptSemantic) before the multilingual bundle:\n' +
+      '<script src="https://unpkg.com/@lokascript/semantic@3/dist/browser.global.js"></script>\n' +
       '<script src="hyperfixi-multilingual.js"></script>'
   );
 }
@@ -558,7 +559,7 @@ if (typeof window !== 'undefined') {
     Object.defineProperty(window, 'lokascript', {
       get() {
         console.warn(
-          '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
+          '[DEPRECATED] window.lokascript is deprecated and will be removed in a future major release. ' +
             'Please use window.hyperfixi instead.'
         );
         return (window as any).hyperfixi;
