@@ -26,7 +26,9 @@ import './lexicons/ms';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-ms';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-ms`;
 
 // =============================================================================
 // Supported Languages

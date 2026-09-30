@@ -33,7 +33,9 @@ import './lexicons/es';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-es-en';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-es-en`;
 
 // =============================================================================
 // Supported Languages

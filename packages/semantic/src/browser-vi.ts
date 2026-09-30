@@ -26,7 +26,9 @@ import './lexicons/vi';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-vi';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-vi`;
 
 // =============================================================================
 // Supported Languages

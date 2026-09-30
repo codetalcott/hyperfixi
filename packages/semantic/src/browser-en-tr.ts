@@ -28,7 +28,9 @@ import './lexicons/tr';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-en-tr';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-en-tr`;
 
 // =============================================================================
 // Supported Languages

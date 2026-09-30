@@ -255,10 +255,8 @@ export function getSupportedLanguages(): string[] {
   return [...SUPPORTED_LANGUAGES];
 }
 
-/**
- * Version of the semantic package.
- */
-export const VERSION = '0.1.0';
+/** Version of the semantic package (src/version.ts, rewritten at each release). */
+export { VERSION } from './version';
 
 // =============================================================================
 // Core Parser Bridge

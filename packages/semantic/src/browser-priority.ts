@@ -57,7 +57,9 @@ import './lexicons/id';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-priority';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-priority`;
 
 // =============================================================================
 // Supported Languages

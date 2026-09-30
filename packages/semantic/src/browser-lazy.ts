@@ -27,7 +27,9 @@
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-lazy';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-lazy`;
 
 // =============================================================================
 // Language Loader (Core Feature)

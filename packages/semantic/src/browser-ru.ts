@@ -26,7 +26,9 @@ import './lexicons/ru';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-ru';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-ru`;
 
 // =============================================================================
 // Supported Languages

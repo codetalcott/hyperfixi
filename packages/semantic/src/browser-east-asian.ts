@@ -36,7 +36,9 @@ import './lexicons/ko';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-east-asian';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-east-asian`;
 
 // =============================================================================
 // Supported Languages

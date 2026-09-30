@@ -26,7 +26,9 @@ import './lexicons/ko';
 // Version
 // =============================================================================
 
-export const VERSION = '1.0.0-ko';
+import { VERSION as PACKAGE_VERSION } from './version';
+
+export const VERSION = `${PACKAGE_VERSION}-ko`;
 
 // =============================================================================
 // Supported Languages
