@@ -253,19 +253,42 @@ describe('RepeatCommand', () => {
       expect(input.count).toBe(10);
     });
 
-    it('should throw error if count is not a number', async () => {
-      const evaluator = createMockEvaluator('invalid');
+    // Upstream compares the index with the count (`index < times`), so a count
+    // that is no number loops no times, and the handler goes on. This threw.
+    it.each([
+      ['a word', 'invalid', 0],
+      ['null', null, 0],
+      ['a string with a number first', '6abc', 0],
+      ['a fraction', '6.5', 6.5],
+      ['true', true, 1],
+    ])('reads %s as upstream does', async (_name, value, count) => {
+      const evaluator = createMockEvaluator(value);
       const context = createMockContext();
 
       const timesNode = { type: 'identifier', name: 'times' } as ASTNode;
-      const countNode = { type: 'string', value: 'invalid' } as ASTNode;
+      const countNode = { type: 'identifier', name: 'n' } as ASTNode;
+
+      const input = await command.parseInput(
+        rawWithBodies({
+          args: [],
+          modifiers: { loopType: timesNode as never, times: countNode as never },
+        }),
+        evaluator,
+        context
+      );
+
+      expect(input.count).toBe(count);
+    });
+
+    it('still throws when the count is missing', async () => {
+      const evaluator = createMockEvaluator(5);
+      const context = createMockContext();
+
+      const timesNode = { type: 'identifier', name: 'times' } as ASTNode;
 
       await expect(
         command.parseInput(
-          rawWithBodies({
-            args: [],
-            modifiers: { loopType: timesNode as never, times: countNode as never },
-          }),
+          rawWithBodies({ args: [], modifiers: { loopType: timesNode as never } }),
           evaluator,
           context
         )

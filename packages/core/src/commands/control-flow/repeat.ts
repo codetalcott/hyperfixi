@@ -205,10 +205,19 @@ export class RepeatCommand implements DecoratedCommand {
       };
     }
     if (loopType === 'times' || m.times) {
-      const countValue = m.times && (await evaluator.evaluate(m.times, context));
-      const count = typeof countValue === 'number' ? countValue : parseInt(String(countValue), 10);
-      if (isNaN(count)) throw new Error('times loops require a count number');
-      return { type: 'times', count, indexVariable, commands, elseCommands };
+      // A missing count is a parse's loss, not a value.
+      if (!m.times) throw new Error('times loops require a count number');
+      // A count reads as upstream's `index < times` reads it: a value that is
+      // no number loops no times. This threw, and the rest of the handler never
+      // ran (`repeat v of obj as Int times`: `v of (obj as Int)` is null).
+      const count = Number(await evaluator.evaluate(m.times, context));
+      return {
+        type: 'times',
+        count: Number.isNaN(count) ? 0 : count,
+        indexVariable,
+        commands,
+        elseCommands,
+      };
     }
     if (loopType === 'while' || m.while) {
       const condition = m.while;
