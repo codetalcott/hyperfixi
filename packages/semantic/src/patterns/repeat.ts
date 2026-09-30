@@ -136,8 +136,9 @@ const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
 // clause-loop recovery (roles lost entirely). Each head below captures the
 // canonical roles and STOPS before the loop body, so the surrounding clause
 // loop parses the body as sibling commands (the same contract as the `-times`
-// heads; ids must stay under the /^repeat-.*-(times|for-in|while-head|
-// until-head)$/ head-only allowlist in semantic-parser's fused re-parse gate).
+// heads; ids must stay under the HEAD_ONLY_REPEAT allowlist in
+// semantic-parser's fused re-parse gate, which the until-condition head below
+// missed until PR 123).
 //
 // Surface forms are taken VERBATIM from the freshly-populated corpus (the i18n
 // transformer's emission is deterministic — see the probe tables in the

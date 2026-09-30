@@ -411,6 +411,16 @@ function describeUnconsumedInput(
   return `pattern ${match.pattern.id} left ${dropped} token(s) unconsumed: "${shown}"`;
 }
 
+/**
+ * The repeat HEAD patterns: each stops before the loop body (see
+ * patterns/repeat.ts), so a fused handler's re-parse can swap one in without
+ * swallowing a body command. The until-condition head joined late (PR 123):
+ * without it a fused `al {event} ripetere {loopType}` took the language's own
+ * `until` word alone for the loop's form (it `ripetere fino x > 3`), and the
+ * loop lost its condition, while its `while` twin was swapped in.
+ */
+const HEAD_ONLY_REPEAT = /^repeat-.*-(times|for-in|while-head|until-head|until-condition-head)$/;
+
 /** The forms a loop's `loopType` names: each a variant `buildLoopNode` reads. */
 const LOOP_FORMS: ReadonlySet<string> = new Set([
   'forever',
@@ -2807,11 +2817,11 @@ export class SemanticParserImpl implements ISemanticParser {
               '';
             const headOnlyOk =
               !BLOCK_BODY_ACTIONS.has(actionName) ||
-              // All four repeat HEAD families are HEAD-ONLY by construction
-              // (they stop before the loop body — see patterns/repeat.ts), so
-              // the swap can never swallow a body command. The body-swallowing
-              // generated repeat matches none of these ids.
-              /^repeat-.*-(times|for-in|while-head|until-head)$/.test(reparsePid);
+              // The repeat HEAD families are HEAD-ONLY by construction
+              // (HEAD_ONLY_REPEAT), so the swap can never swallow a body
+              // command. The body-swallowing generated repeat matches none of
+              // these ids.
+              HEAD_ONLY_REPEAT.test(reparsePid);
             // A HEAD-ONLY re-parse legitimately returns MORE than one command:
             // the head stops after its count word, and `parseClause` carries on
             // to the loop body in the same clause (`repetir 3 times agregar
@@ -2819,12 +2829,10 @@ export class SemanticParserImpl implements ISemanticParser {
             // vetoed every counted loop inside a handler — 13 languages, one
             // corpus row each — even though every other condition held. The
             // extra commands ARE the body, so keep them (spliced in below)
-            // rather than dropping them with the clause. Only the four
-            // head-only families qualify, so #530's body-swallowing generated
-            // repeat is still excluded by `headOnlyOk`.
-            const headOnlyPattern = /^repeat-.*-(times|for-in|while-head|until-head)$/.test(
-              reparsePid
-            );
+            // rather than dropping them with the clause. Only the head-only
+            // families qualify, so #530's body-swallowing generated repeat is
+            // still excluded by `headOnlyOk`.
+            const headOnlyPattern = HEAD_ONLY_REPEAT.test(reparsePid);
             if (
               (reparsed.length === 1 || (headOnlyPattern && reparsed.length > 1)) &&
               first &&
