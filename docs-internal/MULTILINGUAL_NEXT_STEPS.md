@@ -6910,15 +6910,26 @@ of it keeps the difference explicit and is filed instead.
   `repeat-event-es-vso` is accepted only when an end word follows `hasta` — pattern competition, not
   a reader. Two more edits (the fused body walk's end check, the fused next-token check) moved
   nothing measured and were dropped.
-- **An unknown word after a loop's count reads a `forever` loop** (found by PR 117's probes;
-  hand-written, not value reading). `times` is localized in some languages and not others (tl
-  renders `ulitin 3 beses`; es `repetir 3 times`, tr `3 times i repeat`: no dictionary, profile or
-  tokenizer has es `veces` or tr `kez`). A word the reader does not know after the count — es
-  `repetir 3 veces …`, or English `times` after tl's `ulitin` — reads loopType the number 3 with
-  variant `forever`: a silent infinite loop on the direct path. tr `3 kez tekrarla` keeps `kez` as
-  the count's value instead. At the least, a number and an unknown word should never make
-  `forever`; reading the native words is a vocabulary decision (the render lexicon is locked to the
-  i18n dictionary).
+- ~~**An unknown word after a loop's count reads a `forever` loop**~~ **FIXED by PR 118** where
+  the count lands in the loop's form (found by PR 117's probes; hand-written). `times` is localized
+  in some renders and not others (tl `ulitin 3 beses`, but es `repetir 3 times`, tr `3 times i
+  repeat`: no dictionary, profile or tokenizer has es `veces` or fr `fois`), so a writer's own word
+  is unknown to the reader, and the generated repeat pattern took the count for the loop's form and
+  the word after it for the count or for nothing. es `repetir 3 veces …` (and pt, it, id, sw, pl,
+  ru, uk) read `forever`: a silent infinite loop on the direct path. fr `répéter 3 fois …` (and de,
+  tr, ja, ko, ar) counted to a variable named `fois`. A number where the loop's form goes is its
+  count now (`buildLoopNode`), whatever the word after it. A probe of 52 hand-written counted loops
+  (each language's own and English `repeat`, its own and English `times`): 29 → 43 read right, 12
+  → 4 `forever`, 6 → 0 wrong counts; the corpus, the matrix and the names oracles do not move
+  (`counted-loop-number.test.ts`). The loop index reader allows only the loop's own words between
+  the head and `index`, and the native word now stands outside the head: it allows the word right
+  after a number count too. The same 52 loops with `index idx`: 35 → 43 keep the index (fr, de, tr,
+  ja, ko, ar kept it before only because the word was the count). The adapter's slim path keeps the
+  es `repeat` parity row's count (`on click repeat 3 add …`); slim's render still drops `times`, so
+  the output stays engine-invalid and its safety pin holds. Left: he, hi, qu and zh with their own verb and word lose the
+  count entirely (`חזור את 3 פעמים …`, loopType none: still `forever`), and English `repeat` beside
+  a native word in the SOV verb-final forms does not parse. Reading the native words at all is a
+  vocabulary decision (the render lexicon is locked to the i18n dictionary).
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
