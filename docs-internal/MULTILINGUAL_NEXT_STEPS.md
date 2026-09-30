@@ -6945,9 +6945,25 @@ of it keeps the difference explicit and is filed instead.
   without one it reads as before, since `forever` would turn a dropped loop into an infinite one.
   The 52 hand-written counted loops: 43 → 52 read right, and with `index idx` 43 → 52 keep the index;
   the corpus, the matrix and the extended names oracle do not move (`counted-loop-number.test.ts`).
-  Left: hi and qu with their own verb and word, when the body opens with a value the verb-first
-  fallback pattern takes (`kutipay {loopType}`: hi `3 बार को दोहराएं 1s प्रतीक्षा` reads `repeat 1s`,
-  and the wait is gone) — 8 of 174 in a probe of six bodies × both verbs.
+  Left (read since PR 120, below): hi and qu with their own verb and word, when the body opens with
+  a value the verb-first fallback pattern takes (`kutipay {loopType}`: hi `3 बार को दोहराएं 1s
+  प्रतीक्षा` reads `repeat 1s`, and the wait is gone) — 8 of 174 in a probe of six bodies × both
+  verbs.
+- ~~**An SOV loop verb's match reads on into the body**~~ **FIXED by PR 120** (what PR 119 left). An
+  SOV loop head ends with its verb, so a repeat match anchored at the verb reads the body: hi and
+  qu's verb-first fallback (`kutipay {loopType}`, for code-switched input) took the body's first
+  value for the loop's form (qu `3 kuti ta kutipay 1s suyay` read `repeat 1s`, the wait gone; hi `3
+  बार को दोहराएं 1 को रखें #out में` counted to 1), and after a count any loop pattern could take
+  the body (hi `… दोहराएं मैं में hello पर भेजें` read `repeat for me in hello`). In an SOV language
+  such a match gives the verb back as a bare head (`loopHeadReadsBody`) when a count stands before
+  the verb, or when its form is no loop form; a loop form (`kutipay forever`) and a number with no
+  count before the verb stay the head's. qu's bare verb before a value is `forever` with that body
+  now, as hi and ja read it. Hand-written counted loops with 12 bodies: 333 → 342 of 348; with 6
+  more: 166 → 174 of 174; the corpus, the matrix and the extended names oracle do not move. Left, all
+  reading right with the rendered `times`: de `wiederholen 3 mal` before `setze`, `senden`,
+  `verstecke`, `zeige` (the generated pattern's optional event slot takes the body's verb), and the
+  English `repeat` beside a native word before hi `मैं में hello पर भेजें` (`for … in`) or tr `"/api"
+  getir` (the English verb is an identifier there, and `fetch` takes it).
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
