@@ -1,19 +1,43 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 3603,
-  "pairs": 172812,
-  "failing": 174,
-  "accepted": 174,
+  "cells": 3787,
+  "pairs": 181644,
+  "failing": 569,
+  "accepted": 198,
   "entries": {
+    "times|#a's textContent": {
+      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
+    "times|#a's textContent's length": {
+      "lanes": "de de/up es es/up fr fr/up he he/up id id/up it it/up pl pl/up pt pt/up ru ru/up uk uk/up",
+      "family": "translation"
+    },
     "increment|#a.textContent": {
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
+    "times|event's detail": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "times|$n": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
     "increment|#a.textContent + 2": {
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
+    },
+    "times|event's detail + 2": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
+    },
+    "times|textContent of #a as Int": {
+      "lanes": "en *direct",
+      "family": "core"
     },
     "put|the textContent of #a as Int": {
       "lanes": "en *direct",
@@ -30,15 +54,36 @@
       "family": "core",
       "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
+    "times|the textContent of #a as Int": {
+      "lanes": "en *direct",
+      "family": "core",
+      "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
+    },
     "increment|the textContent of #a as Int": {
       "lanes": "en *direct",
       "family": "core",
       "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
+    "times|v of obj as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "times|length of arr as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
+    "times|v of w of obj as Int": {
+      "lanes": "en *direct",
+      "family": "core"
+    },
     "increment|#a.textContent as Int": {
       "lanes": "it it/up",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
+    },
+    "times|event's detail as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     },
     "put|the scrollY of window as Int": {
       "lanes": "en *direct",
@@ -54,6 +99,10 @@
       "lanes": "en *direct",
       "family": "core",
       "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
+    },
+    "times|$n as Int": {
+      "lanes": "en-rt *direct *up",
+      "family": "semantic-en"
     }
   }
 }
