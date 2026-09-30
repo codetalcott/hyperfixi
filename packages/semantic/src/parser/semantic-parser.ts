@@ -3707,7 +3707,7 @@ export class SemanticParserImpl implements ISemanticParser {
    * turns every head … close span into a {@link LoopSemanticNode}. A loop still
    * open at the end of the list closes there, which is what the flat list
    * meant (the renderer used to close every loop at the tail). A head with no
-   * body stays the flat head it was.
+   * body stays the flat head it was, unless its own `end` closed it.
    */
   private foldLoopBlocks(entries: readonly WalkEntry[]): SemanticNode[] {
     const out: SemanticNode[] = [];
@@ -3715,16 +3715,16 @@ export class SemanticParserImpl implements ISemanticParser {
     const append = (node: SemanticNode): void => {
       (open.length > 0 ? open[open.length - 1].body : out).push(node);
     };
-    const close = (): void => {
+    const close = (closed: boolean): void => {
       const frame = open.pop();
-      if (frame) append(this.buildLoopNode(frame.head, frame.body));
+      if (frame) append(this.buildLoopNode(frame.head, frame.body, closed));
     };
     for (const entry of entries) {
-      if (isLoopClose(entry)) close();
+      if (isLoopClose(entry)) close(true);
       else if (isOpenLoopHead(entry)) open.push({ head: entry, body: [] });
       else append(entry);
     }
-    while (open.length > 0) close();
+    while (open.length > 0) close(false);
     return out;
   }
 
@@ -3732,9 +3732,19 @@ export class SemanticParserImpl implements ISemanticParser {
    * A loop node from a flat head and its body. The head's roles carry over
    * unchanged, so every role and value walker scores the loop exactly as it
    * scored the flat head.
+   *
+   * A head with no body stays flat, and a flat head's body is every command
+   * after it. A loop its own `end` closed (`closed`) is empty, and a command
+   * after that `end` is not its body: `repeat 3 times end then increment n`
+   * put the increment in the loop, three times over, in English and every
+   * language, and dropped it from a bare sequence (PR 126).
    */
-  private buildLoopNode(head: CommandSemanticNode, body: SemanticNode[]): SemanticNode {
-    if (body.length === 0) return head;
+  private buildLoopNode(
+    head: CommandSemanticNode,
+    body: SemanticNode[],
+    closed = false
+  ): SemanticNode {
+    if (body.length === 0 && !closed) return head;
     const loopType = head.roles.get('loopType');
     // A number where the loop's form goes is its count: a pattern whose count
     // slot comes second took the count for the form, and the word after it —
@@ -3746,7 +3756,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const roles = new Map(head.roles);
       roles.set('quantity', loopType);
       roles.set('loopType', { type: 'literal', value: 'times' });
-      return this.buildLoopNode({ ...head, roles }, body);
+      return this.buildLoopNode({ ...head, roles }, body, closed);
     }
     const form = loopType?.type === 'literal' ? String(loopType.value) : undefined;
     // `until event X` is an `until` loop; its `loopType` role keeps the exact form.

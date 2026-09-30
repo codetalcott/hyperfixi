@@ -7036,6 +7036,20 @@ of it keeps the difference explicit and is filed instead.
   hand-written end-word probe: 10 → 0 of 484, and with the language's own `repeat` 23 → 13 of 80;
   the corpus, the matrix and both names oracles do not move (`end-word-value.test.ts`). The 13 left
   read since PR 123 (above).
+- ~~**An empty loop takes the command after it**~~ **FIXED by PR 126** (the after-123 handoff's
+  item 3, filed from hand-written tr, qu and ja; it was English's). The walkers mark where an `end`
+  closes a loop, and foldLoopBlocks nests the body, but a head with no body stayed the flat head
+  it was, and a flat head's body is every command after it: `repeat 3 times end then increment n`
+  put the increment in the loop, three times over, in English and so in every translation (47 of
+  48 lanes read 3 where upstream reads 1), and a bare sequence dropped the command (`repeat 3 times
+  end then put 1 into #out` read `repeat 3 times`). A loop its own `end` closes is a loop now,
+  empty or not; a head no `end` closes stays flat. In the SOV six the `end` right after the loop's
+  verb (ja `3 times を repeat 終わり`) read as a variable, by PR 121's loop words (the verb-first
+  for-in writes a role after the verb); an SOV loop's verb ends its head (PR 120), so the end word
+  closes the loop. 48 of 48 lanes now; the matrix (no empty loop), the corpus and the full names
+  oracle do not move, and the extended names oracle moves 268 entries of its loop templates, all
+  names English cannot have (`by`, `of`, `the`, …), whose misread condition leaves an empty loop
+  that no longer takes the `put` (`empty-loop.test.ts`).
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction

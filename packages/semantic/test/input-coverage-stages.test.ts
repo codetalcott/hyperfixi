@@ -78,11 +78,14 @@ describe('per-segment input coverage (Arc C)', () => {
   });
 
   describe('no double-count against the Stage-2 emission', () => {
-    it('top-level break-in-loop fires exactly once (the Stage-2 path)', () => {
+    // The loop its `end` closes is a loop (PR 126), so the top-level loop
+    // path keeps the body walk's reading, and its record of the dropped
+    // `break`, where Stage 2 reported the same run.
+    it('top-level break-in-loop fires exactly once (the top-level loop path)', () => {
       const node = parse('repeat 3 times break end', 'en');
       const messages = unconsumedMessages(node);
       expect(messages).toHaveLength(1);
-      expect(messages[0]).toMatch(/^pattern repeat-en-times/);
+      expect(messages[0]).toMatch(/^body clause left 1 token\(s\) unconsumed: "break"/);
     });
 
     it('top-level and-conjunct fires exactly once (the Stage-2 path)', () => {
