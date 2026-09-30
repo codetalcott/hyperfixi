@@ -58,6 +58,11 @@ The product's gaps are now in what no gate reads. From here:
 
 ### M0: ship what is done (3.2.0)
 
+**Status (2026-09-30):** 3.2.0 is on npm (25 packages; release smoke green). Shipped with it: D1 and the
+adapter's reference-event guard, D3, D4 (in the package READMEs and `docs/`), S2, CDN entries for five
+packages, and README examples executed for the adapter. Left: D2 (the sites, pending the owner's
+docs-site decision), D5, D6, and README-example tests beyond the adapter.
+
 **Why.** 168 commits of fixes no npm user has, and the docs site shows 2.10.0.
 
 **Work:**
