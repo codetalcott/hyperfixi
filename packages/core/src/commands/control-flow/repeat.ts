@@ -119,6 +119,18 @@ async function evaluateLoopCondition(
   return evaluateCondition(condition, context);
 }
 
+/**
+ * A loop's count as upstream reads it, comparing the index with it (`index <
+ * times`): a value that is no number loops no times. This threw, and the rest
+ * of the handler never ran (`repeat v of obj as Int times`: `v of (obj as
+ * Int)` is null). `Number`, not `parseInt`: `6abc` loops no times and `6.5`
+ * keeps its fraction, as upstream.
+ */
+function loopCount(value: unknown): number {
+  const count = Number(value);
+  return Number.isNaN(count) ? 0 : count;
+}
+
 @command({ name: 'repeat' })
 export class RepeatCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
@@ -205,19 +217,10 @@ export class RepeatCommand implements DecoratedCommand {
       };
     }
     if (loopType === 'times' || m.times) {
-      // A missing count is a parse's loss, not a value.
+      // A missing count is a parse's loss, not a value (loopCount reads one).
       if (!m.times) throw new Error('times loops require a count number');
-      // A count reads as upstream's `index < times` reads it: a value that is
-      // no number loops no times. This threw, and the rest of the handler never
-      // ran (`repeat v of obj as Int times`: `v of (obj as Int)` is null).
-      const count = Number(await evaluator.evaluate(m.times, context));
-      return {
-        type: 'times',
-        count: Number.isNaN(count) ? 0 : count,
-        indexVariable,
-        commands,
-        elseCommands,
-      };
+      const count = loopCount(await evaluator.evaluate(m.times, context));
+      return { type: 'times', count, indexVariable, commands, elseCommands };
     }
     if (loopType === 'while' || m.while) {
       const condition = m.while;
