@@ -1,55 +1,43 @@
-# LokaScript Documentation
+# docs-internal
 
-Welcome to the LokaScript documentation directory.
+Internal plans and design records for the monorepo. User-facing docs live in `docs/` and in each
+package's README. Finished work is not kept here: its docs are deleted under a tag and listed in
+[`ARCHIVE.md`](ARCHIVE.md). How to write here: [`CLAUDE.md`](CLAUDE.md).
 
-## Documentation Structure
+## Live queues
 
-### Core Documentation
+| Doc                                                                    | What it holds                                                                                                               |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [`MULTILINGUAL_NEXT_STEPS.md`](MULTILINGUAL_NEXT_STEPS.md)             | The multilingual roadmap: where the gates stand, what no gate measures, the arcs, and the policies in force                  |
+| [`multilingual/OPEN_ITEMS.md`](multilingual/OPEN_ITEMS.md)             | Every open multilingual item, one line each, with the IDs the roadmap uses                                                  |
+| [`multilingual/VALUE_READING.md`](multilingual/VALUE_READING.md)       | The rules that tell a variable from a structure word, and the name-collision policy (a PR that moves a rule updates its row) |
+| [`PARSER_NEXT_STEPS.md`](PARSER_NEXT_STEPS.md)                         | Core parser defects (`packages/core/src/parser/`), diagnosed and queued                                                     |
+| [`AGENT_ERA_ROADMAP.md`](AGENT_ERA_ROADMAP.md)                         | Arcs 1–5 landed; Arc 6 and the deferrals are open                                                                          |
+| [`HYPERSCRIPT_TOOLS_NEXT_STEPS.md`](HYPERSCRIPT_TOOLS_NEXT_STEPS.md)   | The `@hyperscript-tools/*` queue (parts are stale; re-check before acting)                                                  |
 
-- **[API Reference](../packages/core/docs/API.md)** - Complete API documentation
-- **[Examples](../packages/core/docs/EXAMPLES.md)** - Real-world usage examples
-- **[Coverage](../packages/core/docs/COVERAGE.md)** - Feature support matrix
+## Design records (current, not queues)
 
-### Package Documentation
+| Doc                                                                                    | Why it stays                                                                             |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [`ENGINE_MIGRATION_PLAN.md`](ENGINE_MIGRATION_PLAN.md)                                 | Every arc closed (2026-09-03); the target design the type-escape and layering ratchets cite |
+| [`COMMAND_ARCHITECTURE_NEXT_STEPS.md`](COMMAND_ARCHITECTURE_NEXT_STEPS.md)             | All six arcs done; the command layer's design principles                                 |
+| [`analysis/TYPE_SAFETY_DESIGN.md`](analysis/TYPE_SAFETY_DESIGN.md)                     | Environment-specific conditional types (root CLAUDE.md links it)                         |
+| [`proposals/aot-compiler-design.md`](proposals/aot-compiler-design.md)                 | The AOT compiler's design (AOT is parked, owner 2026-09-27)                              |
+| [`build/CHANGELOG_GUIDELINES.md`](build/CHANGELOG_GUIDELINES.md), [`build/CHANGELOG_PROTECTION.md`](build/CHANGELOG_PROTECTION.md) | `scripts/validate-changelog.cjs` and `bump-version.cjs` print their paths               |
 
-- **[@lokascript/core](../packages/core/README.md)** - Pure hyperscript engine
-- **[@lokascript/i18n](../packages/i18n/README.md)** - 13-language internationalization
-- **[@lokascript/semantic](../packages/semantic/README.md)** - Semantic-first parsing
+## Open briefs (work not started)
 
-### Development Documentation
+- [`HANDOFF-imperative-forms.md`](HANDOFF-imperative-forms.md): the de residual; re-check it is still open.
+- [`HANDOFF_ts6-migration.md`](HANDOFF_ts6-migration.md): TypeScript 6.
+- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, never sent.
+- [`multilingual/plan.md`](multilingual/plan.md): de-duplicating semantic against the framework (Phase 3,
+  the PatternMatcher fork, is the roadmap's M3 (e)).
+- [`proposals/community-review-system.md`](proposals/community-review-system.md),
+  [`proposals/lse-syntax-new-directions.md`](proposals/lse-syntax-new-directions.md),
+  [`proposals/PLAN-siren.md`](proposals/PLAN-siren.md),
+  [`sessions/DOMAIN_VOICE_STRUCTURAL_REVIEW.md`](sessions/DOMAIN_VOICE_STRUCTURAL_REVIEW.md).
 
-- **[Roadmap](../roadmap/)** - Project planning and development roadmap
-- **[CLAUDE.md](../CLAUDE.md)** - AI development context and guidelines
+## Reference
 
-### Internal Documentation
-
-- **[release/](./release/)** - Release guides, NPM publishing, publication plans
-- **[analysis/](./analysis/)** - Bundle audits, type safety design, implementation summaries
-- **[build/](./build/)** - Rebuild workflows, git hooks, changelog guidelines
-- **[investigations/](./investigations/)** - Technical investigations and findings
-- **[proposals/](./proposals/)** - Feature proposals
-- **[sessions/](./sessions/)** - Development session summaries
-
-## Quick Links
-
-### Getting Started
-
-- [Installation & Setup](../README.md#quick-start)
-- [Examples Gallery](../examples/)
-- [Basic Examples](../packages/core/docs/EXAMPLES.md#basic-dom-manipulation)
-
-### API Reference
-
-- [Main API](../packages/core/docs/API.md#main-api)
-- [Expression Types](../packages/core/docs/API.md#types)
-- [Error Handling](../packages/core/docs/API.md#error-handling)
-
-### Advanced Usage
-
-- [Performance Patterns](../packages/core/docs/EXAMPLES.md#performance-patterns)
-- [Integration Patterns](../packages/core/docs/EXAMPLES.md#state-management)
-- [Internationalization](../packages/i18n/README.md)
-
-## Contributing
-
-See the main [README](../README.md#contributing) for contribution guidelines.
+- [`multilingual/Computational Linguistics & Localization Analysis.md`](<multilingual/Computational Linguistics & Localization Analysis.md>):
+  the research report behind `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
