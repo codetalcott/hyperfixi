@@ -4,6 +4,8 @@
   "description": "Semantic multilingual parser for hyperscript (24 languages)",
   "type": "module",
   "main": "dist/index.cjs",
+  "unpkg": "dist/browser.global.js",
+  "jsdelivr": "dist/browser.global.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "browser": "dist/index.js",

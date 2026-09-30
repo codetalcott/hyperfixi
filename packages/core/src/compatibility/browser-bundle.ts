@@ -363,7 +363,7 @@ if (typeof window !== 'undefined') {
         if (!warned) {
           warned = true;
           console.warn(
-            '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
+            '[DEPRECATED] window.lokascript is deprecated and will be removed in a future major release. ' +
               'Please use window.hyperfixi instead. ' +
               'See https://github.com/codetalcott/hyperfixi/blob/main/MIGRATION.md'
           );

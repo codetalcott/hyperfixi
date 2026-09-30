@@ -65,7 +65,7 @@ export const patternTools: Tool[] = [
   {
     name: 'translate_hyperscript',
     description:
-      'Translate hyperscript keywords between any of 24 languages via pattern substitution. Preserves selectors and values. For higher-fidelity translation with grammar transformation, use translate_code instead.',
+      "Translate hyperscript between any of 24 languages with @lokascript/semantic (parse, then render in the target language's word order); selectors and values are preserved. Same engine as translate_code, which also returns a fidelity verification and name-collision warnings.",
     inputSchema: {
       type: 'object',
       properties: {

@@ -4,6 +4,8 @@
   "description": "Write original _hyperscript in 24 languages — Japanese, Korean, Spanish, Arabic, Chinese, Turkish, and more",
   "type": "module",
   "main": "dist/index.js",
+  "unpkg": "dist/hyperscript-i18n.global.js",
+  "jsdelivr": "dist/hyperscript-i18n.global.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
