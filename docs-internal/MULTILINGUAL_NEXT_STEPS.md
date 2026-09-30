@@ -6909,7 +6909,8 @@ of it keeps the difference explicit and is filed instead.
   below); and the
   language's own `repeat` with `until` (es `al clic repetir hasta fin es 3 …`, 13 cases), where
   `repeat-event-es-vso` is accepted only when an end word follows `hasta` — pattern competition, not
-  a reader. Two more edits (the fused body walk's end check, the fused next-token check) moved
+  a reader (read since PR 123, below: an `until` loop with the language's own verb lost its
+  condition with any operand in six languages). Two more edits (the fused body walk's end check, the fused next-token check) moved
   nothing measured and were dropped.
 - ~~**An unknown word after a loop's count reads a `forever` loop**~~ **FIXED by PR 118** where
   the count lands in the loop's form (found by PR 117's probes; hand-written). `times` is localized
@@ -6932,6 +6933,17 @@ of it keeps the difference explicit and is filed instead.
   loopType none: still `forever`), and English `repeat` beside a native word in the SOV verb-final
   forms does not parse. Reading the native words at all is a vocabulary decision (the render
   lexicon is locked to the i18n dictionary).
+- ~~**An `until` loop with the language's own verb loses its condition**~~ **FIXED by PR 123**
+  (PR 117's second "left", filed as pattern competition; measured wider, not an end-word matter).
+  With the language's own `repeat` verb (the render keeps English `repeat`), the fused handler
+  pattern (it `su {event} ripetere {loopType}`) takes the until word alone for the loop's form: it
+  `ripetere fino x > 3` read `repeat fino`, and so did ms, pl, th, tl and vi with any condition; es
+  and the languages whose until word is a particle only where an end word followed it (`repetir
+  hasta fin es 3`). The fused handler re-parses a loop head's clause and swaps in a head-only
+  repeat head, and the allowlist missed the until-condition head, written later as the while
+  head's twin (`HEAD_ONLY_REPEAT` now). 7 until/while forms × 23 languages × both verbs: 244 → 280
+  of 280; the hand-written end-word probe's 13 `until` misreads → 0; the corpus, the matrix and
+  both names oracles do not move (`until-loop.test.ts`).
 - ~~**A count beside a repeat verb no loop pattern matches reads `forever`**~~ **FIXED by PR 119**
   (what PR 118 left). The counted patterns of he, hi, qu and zh write a marker by the count and the
   English `times` after it (he `חזור את {quantity} times`, hi `{quantity} times को repeat`), so with
@@ -6977,8 +6989,8 @@ of it keeps the difference explicit and is filed instead.
   behavior-sortable row ends its loop's last command with `में` (`… ट्रिगर मैं में समाप्त`), whose
   end the loop swallowed with the two commands after it when the markers were counted too. The
   hand-written end-word probe: 10 → 0 of 484, and with the language's own `repeat` 23 → 13 of 80;
-  the corpus, the matrix and both names oracles do not move (`end-word-value.test.ts`). Left: the
-  13, the es-family `until` pattern competition above.
+  the corpus, the matrix and both names oracles do not move (`end-word-value.test.ts`). The 13 left
+  read since PR 123 (above).
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
