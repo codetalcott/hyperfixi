@@ -219,7 +219,7 @@
     "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
     "full": "on click repeat 3 times add \"<p>Line</p>\" to me end",
-    "slim": "on click repeat add \"<p>Line</p>\""
+    "slim": "on click repeat 3 add \"<p>Line</p>\""
   },
   {
     "lang": "ja",

@@ -3717,6 +3717,18 @@ export class SemanticParserImpl implements ISemanticParser {
   private buildLoopNode(head: CommandSemanticNode, body: SemanticNode[]): SemanticNode {
     if (body.length === 0) return head;
     const loopType = head.roles.get('loopType');
+    // A number where the loop's form goes is its count: a pattern whose count
+    // slot comes second took the count for the form, and the word after it —
+    // the language's own `times`, which the render never writes (es `repetir
+    // 3 veces`, fr `répéter 3 fois`) — for the count or nothing. The loop read
+    // `forever`, a silent infinite loop, or counted to a variable named `fois`
+    // (PR 118).
+    if (loopType?.type === 'literal' && typeof loopType.value === 'number') {
+      const roles = new Map(head.roles);
+      roles.set('quantity', loopType);
+      roles.set('loopType', { type: 'literal', value: 'times' });
+      return this.buildLoopNode({ ...head, roles }, body);
+    }
     const form = loopType?.type === 'literal' ? String(loopType.value) : undefined;
     // `until event X` is an `until` loop; its `loopType` role keeps the exact form.
     const variant: LoopVariant =
@@ -6227,7 +6239,18 @@ export class SemanticParserImpl implements ISemanticParser {
         const gap = arr.filter(
           t => t.position.start >= headEnd(loop) && t.position.start < phraseStart
         );
-        if (!gap.every(isLoopWord)) continue;
+        // The word right after a number count is the loop's own `times`,
+        // written in the language's own spelling no pattern knows (es `3
+        // veces`, ja `3 回`): buildLoopNode reads the number as the count
+        // whatever follows it (PR 118).
+        const count = loop.roles.get('quantity');
+        const countEnd =
+          count?.type === 'literal' && typeof count.value === 'number'
+            ? count.position?.end
+            : undefined;
+        const timesWord =
+          countEnd === undefined ? undefined : arr.find(t => t.position.start >= countEnd);
+        if (!gap.every(t => t === timesWord || isLoopWord(t))) continue;
         (loop as { indexVariable?: string }).indexVariable = withIndex
           ? 'index'
           : arr[at + 1].value;
