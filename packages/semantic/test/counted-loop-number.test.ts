@@ -16,7 +16,8 @@
  * decision; the count is never in doubt.
  *
  * PR 119: in he, hi, qu and zh no loop pattern matched at all, and the clause
- * walk read the verb alone, `forever`, dropping the count beside it.
+ * walk read the verb alone, `forever`, dropping the count beside it. PR 120:
+ * in hi and qu a loop pattern matched at the verb and read on into the body.
  */
 import { describe, it, expect } from 'vitest';
 import { buildAST, parse, render } from '../src/index';
@@ -127,6 +128,50 @@ describe('a count beside a repeat verb no loop pattern matches', () => {
     const json = JSON.stringify(ast);
     expect(json).toContain('"loopType":{"type":"literal","value":"times"');
     expect(json).not.toContain('"forever"');
+  });
+});
+
+// PR 120. An SOV loop head ends with its verb, so a repeat match anchored at
+// the verb reads on into the body: the verb-first fallback (qu `kutipay
+// {loopType}`) took the body's first value for the loop's form, and after a
+// count any loop pattern could take the body (hi's `for … in`).
+describe('an SOV loop verb ends its head', () => {
+  it.each([
+    ['hi', 'click पर 3 बार को दोहराएं 1s प्रतीक्षा समाप्त', 'wait 1s'],
+    ['qu', 'maykama click 3 kuti ta kutipay 1s suyay tukukuy', 'wait 1s'],
+    ['qu', 'maykama click 3 kuti ta kutipay click suyay tukukuy', 'wait for click'],
+    ['qu', 'maykama click 3 kuti ta kutipay "x" ta qillqakuy tukukuy', 'log "x"'],
+    // A number after the verb is the body's too, after a count.
+    ['hi', 'click पर 3 बार को दोहराएं 1 को लॉग समाप्त', 'log 1'],
+    // And so is a whole loop form: `me in hello` read `for me in hello`.
+    ['hi', 'click पर 3 बार को दोहराएं मैं में hello पर भेजें समाप्त', 'send hello to me'],
+  ])('%s: %s', (language, code, body) => {
+    expect(english(code, language)).toBe(`on click repeat 3 times ${body} end`);
+  });
+
+  // Without a count, the bare verb before a body is `forever`, as hi and ja
+  // read it (qu read `repeat 1s` and lost the wait).
+  it('the bare verb before a value (qu)', () => {
+    expect(english('maykama click kutipay 1s suyay tukukuy', 'qu')).toBe(
+      'on click repeat wait 1s end'
+    );
+  });
+
+  // Only where the verb ends the head: before a verb-first loop a stray
+  // number is not its count, and the loop keeps its form.
+  it('a number before a verb-first loop (es)', () => {
+    expect(english('al clic 3 repetir mientras x < 3 incrementar x fin', 'es')).toBe(
+      'on click repeat while x < 3 increment x end'
+    );
+  });
+
+  // Code-switched verb-first forms stay the head's: a loop form, or a number
+  // with no count before the verb.
+  it.each([
+    ["maykama click kutipay forever .a ta t'ikray tukukuy", 'repeat forever'],
+    ["maykama click kutipay 3 .a ta t'ikray tukukuy", 'repeat 3 times'],
+  ])('qu: %s', (code, head) => {
+    expect(english(code, 'qu')).toBe(`on click ${head} toggle .a end`);
   });
 });
 

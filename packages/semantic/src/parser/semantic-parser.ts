@@ -411,6 +411,16 @@ function describeUnconsumedInput(
   return `pattern ${match.pattern.id} left ${dropped} token(s) unconsumed: "${shown}"`;
 }
 
+/** The forms a loop's `loopType` names: each a variant `buildLoopNode` reads. */
+const LOOP_FORMS: ReadonlySet<string> = new Set([
+  'forever',
+  'times',
+  'for',
+  'while',
+  'until',
+  'until-event',
+]);
+
 /**
  * Normalized keyword forms that are legitimate skip-residue for the per-segment
  * coverage check (Arc C): role markers the matcher deliberately leaves
@@ -3936,34 +3946,69 @@ export class SemanticParserImpl implements ISemanticParser {
     skipped: LanguageToken[],
     language: string
   ): LanguageToken | undefined {
-    // A number, as PR 118 reads one where the loop's form goes.
-    const isCount = (t: LanguageToken | null | undefined): t is LanguageToken => {
-      const value = t?.kind === 'literal' ? tokenValue(t) : null;
-      return value?.type === 'literal' && typeof value.value === 'number';
-    };
-    const isWord = (t: LanguageToken | null | undefined): boolean => t?.kind === 'identifier';
-    const isMarker = (t: LanguageToken | null | undefined): boolean => t?.kind === 'particle';
     if (tryGetProfile(language)?.wordOrder === 'SOV') {
-      // Before the verb: <number> [word] [marker] (hi `3 बार को दोहराएं`).
-      let end = skipped.length;
-      if (isMarker(skipped[end - 1])) end--;
-      if (isWord(skipped[end - 1]) && isCount(skipped[end - 2])) end--;
-      const count = skipped[end - 1];
-      if (!isCount(count)) return undefined;
-      skipped.length = end - 1;
+      const at = SemanticParserImpl.countBeforeVerb(skipped);
+      if (at < 0) return undefined;
+      const count = skipped[at];
+      skipped.length = at;
       return count;
     }
     // After it: [marker] <number> [word] (he `חזור את 3 פעמים`).
     const mark = stream.mark();
-    if (isMarker(stream.peek())) stream.advance();
+    if (stream.peek()?.kind === 'particle') stream.advance();
     const count = stream.peek();
-    if (!isCount(count)) {
+    if (!SemanticParserImpl.isCountToken(count)) {
       stream.reset(mark);
       return undefined;
     }
     stream.advance();
-    if (isWord(stream.peek())) stream.advance();
+    if (stream.peek()?.kind === 'identifier') stream.advance();
     return count;
+  }
+
+  /** A number, as PR 118 reads one where the loop's form goes. */
+  private static isCountToken(t: LanguageToken | null | undefined): t is LanguageToken {
+    const value = t?.kind === 'literal' ? tokenValue(t) : null;
+    return value?.type === 'literal' && typeof value.value === 'number';
+  }
+
+  /**
+   * Where a count stands at the end of a run an SOV loop verb follows:
+   * `<number> [word] [marker]` (hi `3 बार को दोहराएं`). Its index, or -1.
+   */
+  private static countBeforeVerb(run: readonly LanguageToken[]): number {
+    const isCount = SemanticParserImpl.isCountToken;
+    let end = run.length;
+    if (run[end - 1]?.kind === 'particle') end--;
+    if (run[end - 1]?.kind === 'identifier' && isCount(run[end - 2])) end--;
+    return isCount(run[end - 1]) ? end - 1 : -1;
+  }
+
+  /**
+   * Whether a repeat match anchored at the verb read the loop's body as its
+   * head. An SOV loop head ends with its verb, so a match that starts there
+   * reads on into the body. With a count before the verb, the verb ended the
+   * head, whatever matched after it: hi `3 बार को दोहराएं 1 को रखें #out में`
+   * (put 1 into #out) counted to 1, and `3 बार को दोहराएं मैं में hello पर
+   * भेजें` (send hello to me) read `repeat for me in hello`. Without one, the
+   * verb-first fallback (qu `kutipay {loopType}`) took the body's first value
+   * for the form unless it is one: qu `kutipay 1s suyay` read `repeat 1s`,
+   * and the wait was gone; a code-switched `kutipay forever` or a number is the
+   * head's. Such a match gives the verb back as a bare head (PR 120).
+   */
+  private loopHeadReadsBody(
+    match: PatternMatchResult,
+    skipped: readonly LanguageToken[],
+    language: string
+  ): boolean {
+    if (tryGetProfile(language)?.wordOrder !== 'SOV') return false;
+    if (SemanticParserImpl.countBeforeVerb(skipped) >= 0) return true;
+    const form = match.captured.get('loopType' as SemanticRole);
+    return (
+      form?.type === 'literal' &&
+      typeof form.value !== 'number' &&
+      !LOOP_FORMS.has(String(form.value))
+    );
   }
 
   /** A loop head for a repeat verb no loop pattern matched: counted, or bare (`forever`). */
@@ -4136,11 +4181,13 @@ export class SemanticParserImpl implements ISemanticParser {
       // NON-repeat command anchors AT the repeat keyword, reject the swallow:
       // rewind, emit the bare repeat, and consume only that keyword so the
       // verb-final command re-matches cleanly on the next iteration. A genuine
-      // `repeat` variant (`repeat N times`/`repeat for …`) keeps its full match.
+      // `repeat` variant (`repeat N times`/`repeat for …`) keeps its full match,
+      // unless it read the body as its head (`loopHeadReadsBody`).
       if (
         startIsRepeatKw &&
         commandMatch &&
-        (commandMatch.pattern.command as string) !== 'repeat'
+        ((commandMatch.pattern.command as string) !== 'repeat' ||
+          this.loopHeadReadsBody(commandMatch, skipped, language))
       ) {
         clauseStream.reset(startMark);
         clauseStream.advance(); // consume only the repeat keyword (and a count by it)
