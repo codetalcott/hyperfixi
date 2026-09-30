@@ -26,7 +26,8 @@
  * (th `ครั้ง`, vi `lần`, tl `beses`, bn `বার`).
  */
 
-import type { ExpectedType, LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
+import { NATIVE_COUNT_WORDS } from './count-words';
 
 /**
  * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
@@ -36,6 +37,14 @@ import type { ExpectedType, LanguagePattern } from '../types';
  * `forever` (PR 125).
  */
 const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
+
+/** The count word: the one the render writes, and the language's own (PR 127). */
+function countWordToken(language: string, countWord: string): PatternToken {
+  const alternatives = NATIVE_COUNT_WORDS[language]?.filter(word => word !== countWord);
+  return alternatives?.length
+    ? { type: 'literal', value: countWord, alternatives }
+    : { type: 'literal', value: countWord };
+}
 
 /**
  * One verb-first counted-loop HEAD pattern.
@@ -58,7 +67,7 @@ function repeatTimesHead(
   tokens.push({ type: 'literal', value: verb });
   if (markerBefore) tokens.push({ type: 'literal', value: markerBefore });
   tokens.push({ type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES });
-  tokens.push({ type: 'literal', value: countWord });
+  tokens.push(countWordToken(language, countWord));
   return {
     id: `repeat-${language}-times`,
     language,
@@ -112,7 +121,7 @@ function repeatTimesHeadSOV(language: string, countWord: string, marker: string)
       format: `{quantity} ${countWord} ${marker} repeat`,
       tokens: [
         { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
-        { type: 'literal', value: countWord },
+        countWordToken(language, countWord),
         { type: 'literal', value: marker },
         { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
       ],

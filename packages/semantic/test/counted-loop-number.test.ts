@@ -87,9 +87,12 @@ describe('a count beside a repeat verb no loop pattern matches', () => {
     expect(unconsumed).toEqual([]);
   });
 
-  // A number, as PR 118 reads one: a string or a duration there is no count.
+  // A number, as PR 118 reads one: a string or a duration there is no count,
+  // past a word no reader knows (zh `趟`). The language's own word says it is
+  // one, as the render's English word does (PR 127: `重复 把 "a" 次` is `repeat
+  // "a" times`).
   it.each(['"a"', '3s'])('%s beside the verb is no count (zh)', value => {
-    expect(english(`一 点击 就 重复 把 ${value} 次 增加 把 x 结束`, 'zh')).not.toContain('times');
+    expect(english(`一 点击 就 重复 把 ${value} 趟 增加 把 x 结束`, 'zh')).not.toContain('times');
   });
 
   it.each([

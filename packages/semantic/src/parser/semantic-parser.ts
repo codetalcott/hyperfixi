@@ -54,6 +54,7 @@ import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { tokenValue } from './token-value';
+import { NATIVE_COUNT_WORDS } from '../patterns/count-words';
 import { readsAsOneExpression } from './utils/value-extent';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
@@ -3965,16 +3966,22 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): LanguageToken | undefined {
     if (tryGetProfile(language)?.wordOrder === 'SOV') {
-      const at = SemanticParserImpl.countBeforeVerb(skipped);
+      const at = SemanticParserImpl.countBeforeVerb(skipped, language);
       if (at < 0) return undefined;
       const count = skipped[at];
       skipped.length = at;
       return count;
     }
-    // After it: [marker] <number> [word] (he `חזור את 3 פעמים`).
+    // After it: [marker] <number> [word] (he `חזור את 3 פעמים`), or any count
+    // before the language's own word (zh `重复 n 次`).
     const mark = stream.mark();
     if (stream.peek()?.kind === 'particle') stream.advance();
     const count = stream.peek();
+    if (count && SemanticParserImpl.countsBefore(count, stream.peek(1), language)) {
+      stream.advance();
+      stream.advance();
+      return count;
+    }
     if (!SemanticParserImpl.isCountToken(count)) {
       stream.reset(mark);
       return undefined;
@@ -3991,13 +3998,30 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Where a count stands at the end of a run an SOV loop verb follows:
-   * `<number> [word] [marker]` (hi `3 बार को दोहराएं`). Its index, or -1.
+   * Is `count` a loop's count because the language's own word for `times`
+   * follows it (ja `n 回`, zh `n 次`)? Then it need be no number: a variable
+   * counts too, where the counted heads need a marker the writer may leave out
+   * (PR 127).
    */
-  private static countBeforeVerb(run: readonly LanguageToken[]): number {
+  private static countsBefore(
+    count: LanguageToken | null | undefined,
+    word: LanguageToken | null | undefined,
+    language: string
+  ): boolean {
+    if (!count || !word || !NATIVE_COUNT_WORDS[language]?.includes(word.value)) return false;
+    return count.kind === 'identifier' || SemanticParserImpl.isCountToken(count);
+  }
+
+  /**
+   * Where a count stands at the end of a run an SOV loop verb follows:
+   * `<number> [word] [marker]` (hi `3 बार को दोहराएं`), or any count before the
+   * language's own word (ja `n 回 繰り返す`). Its index, or -1.
+   */
+  private static countBeforeVerb(run: readonly LanguageToken[], language: string): number {
     const isCount = SemanticParserImpl.isCountToken;
     let end = run.length;
     if (run[end - 1]?.kind === 'particle') end--;
+    if (SemanticParserImpl.countsBefore(run[end - 2], run[end - 1], language)) return end - 2;
     if (run[end - 1]?.kind === 'identifier' && isCount(run[end - 2])) end--;
     return isCount(run[end - 1]) ? end - 1 : -1;
   }
@@ -4020,7 +4044,7 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): boolean {
     if (tryGetProfile(language)?.wordOrder !== 'SOV') return false;
-    if (SemanticParserImpl.countBeforeVerb(skipped) >= 0) return true;
+    if (SemanticParserImpl.countBeforeVerb(skipped, language) >= 0) return true;
     const form = match.captured.get('loopType' as SemanticRole);
     return (
       form?.type === 'literal' &&
