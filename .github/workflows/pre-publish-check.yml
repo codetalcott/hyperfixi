@@ -155,6 +155,13 @@ jobs:
             fi
           done
 
+      # testing-framework's R2 execution lock reads patterns.db, and the
+      # committed copy lags the corpus (it lacks book-counter-increment):
+      # publish.yml populates before its tests for the same reason. Without
+      # this the 3.2.0 check failed testing-framework on a stale DB.
+      - name: Populate patterns-reference database
+        run: npm run populate --prefix packages/patterns-reference
+
       - name: Run tests
         # VITEST_TIMEOUT: the same 5 minutes as ci.yml and publish.yml's test
         # steps; scripts/vitest-run.sh's 120s default is shorter than core's
