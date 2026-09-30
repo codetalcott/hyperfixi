@@ -1498,7 +1498,15 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
     return false;
   }
   if (OWING_WORDS.has(word)) return true;
-  if (loopWordsBeforeRole(languageCode).has(prev.value.toLowerCase())) return true;
+  // Not an SOV loop's own verb, which ends its head (PR 120): the end word
+  // after it closes an empty loop (ja `3 times を repeat 終わり`), though a
+  // for-in written verb-first puts a role there (PR 126).
+  if (
+    loopWordsBeforeRole(languageCode).has(prev.value.toLowerCase()) &&
+    (verbFirst || word !== 'repeat')
+  ) {
+    return true;
+  }
   const verb = verbFirst ? verbOf(prev) : undefined;
   if (verb && commandSchemas[verb].roles.some(role => role.required)) return true;
   return !markerFinal && isMarker(prev);

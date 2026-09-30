@@ -93,7 +93,8 @@ const SHAPES = {
   // es/it/pt/… match a FUSED `repeat` handler pattern: the loop head is
   // captured before the body walk starts.
   fusedHead: 'on click repeat 3 times append "x" to #o end then append "!" to #o',
-  topLevel: 'repeat until event pointerup from document trigger moved on me end then remove .x from me',
+  topLevel:
+    'repeat until event pointerup from document trigger moved on me end then remove .x from me',
   topLevelCounted: 'repeat 3 times add .x to me end then log "done"',
 };
 
@@ -129,9 +130,7 @@ describe('English keeps each loop where the source closes it', () => {
     expect(node.kind).toBe('compound');
     const [loop] = loops(node);
     expect(bodyActions(loop)).toEqual(['trigger']);
-    expect(
-      (node.diagnostics ?? []).filter(d => d.code === 'unconsumed-input')
-    ).toHaveLength(0);
+    expect((node.diagnostics ?? []).filter(d => d.code === 'unconsumed-input')).toHaveLength(0);
   });
 
   it('closes an unterminated loop at the end of the list, as before', () => {
@@ -140,8 +139,13 @@ describe('English keeps each loop where the source closes it', () => {
     expect(render(node, 'en')).toBe('on click repeat 3 times add .x to me end');
   });
 
-  it('leaves a loop head with no body flat', () => {
-    expect(loops(parseEn('on click repeat 3 times end'))).toHaveLength(0);
+  it('leaves a loop head with no body and no end flat', () => {
+    expect(loops(parseEn('on click repeat 3 times'))).toHaveLength(0);
+  });
+
+  // PR 126: its own `end` closes it, so a command after it is not its body.
+  it('makes an empty loop its end closes a loop', () => {
+    expect(loops(parseEn('on click repeat 3 times end'))).toHaveLength(1);
   });
 });
 
