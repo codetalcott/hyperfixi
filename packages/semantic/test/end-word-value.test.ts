@@ -10,8 +10,9 @@
  * before a case marker or `'s`; hand-written, every one of them read the block's
  * end, and es `poner fin en #out` (put fin into #out) was a bare `on click`. (A
  * rendered one was already written `(fin)`: the verified render, PR 103.) PR
- * 117 reads a loop head's, and PR 121 the value after a word a loop's patterns
- * write before a role (fr `repeat x en fin`, for x in fin).
+ * 117 reads a loop head's, PR 121 the value after a word a loop's patterns
+ * write before a role (fr `repeat x en fin`, for x in fin), and PR 122 the
+ * unmarked value after a marker's (it `impostare in x fine`, set x to fine).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, semanticRenderer } from '../src/index';
@@ -258,6 +259,43 @@ describe("an end word after a loop's own word is a value (PR 121)", () => {
     expect(english(code, 'hi')).toContain(
       'trigger sortable:move end then remove .{dragClass} from item then trigger sortable:end'
     );
+  });
+});
+
+describe("an end word after an unmarked role's value is a value (PR 122)", () => {
+  // it and pl `set` write a marker after the verb and two roles after it, the
+  // second unmarked (it `impostare in {destination} {patient}`): the end word
+  // after the destination was taken for the block's end.
+  it.each([
+    [
+      'it',
+      'su click impostare in x fine allora mettere x in #out',
+      'on click set x to fine then put x into #out',
+    ],
+    [
+      'pl',
+      'gdy click ustaw do x koniec wtedy umieść x do #out',
+      'on click set x to koniec then put x into #out',
+    ],
+  ])('%s: %s', (language, code, expected) => {
+    expect(english(code, language)).toBe(expected);
+  });
+
+  // Only where the pattern writes a second role: zh `把` and he `את` stand
+  // after every verb, before its one role, and the end word after it ends.
+  it.each([
+    [
+      'zh',
+      '一 点击 就 如果 flag 增加 把 x 结束 然后 增加 把 y',
+      'on click if flag increment x end then increment y',
+    ],
+    [
+      'he',
+      'ב click אם flag הגדל את x סוף אז הגדל את y',
+      'on click if flag increment x end then increment y',
+    ],
+  ])('still the end: %s: %s', (language, code, expected) => {
+    expect(english(code, language)).toBe(expected);
   });
 });
 
