@@ -430,7 +430,7 @@ the committed baseline:
 - **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. **0.**
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
-  history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
+  history in `MULTILINGUAL_ROADMAP.md`, archived: see `docs-internal/ARCHIVE.md`.)
 - **faithful** (fid = 1.0). **3792 / 3792.** Cross-language `avgFidelity` = 1.000,
   `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
   `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 1.000 (all 23). Since
@@ -481,8 +481,8 @@ yields a 0 delta):
    deferred-tail arc (#638).
    The nine other rows this signal originally flagged (colon-qualified event names
    `draggable:start` split at the local-variable sigil by every non-en tokenizer, plus
-   two masked co-causes) were fixed in the colon-event-names arc — history in
-   `docs-internal/HANDOFF_colon-event-names.md`.
+   two masked co-causes) were fixed in the colon-event-names arc (its handoff is
+   archived: `docs-internal/ARCHIVE.md`).
 6. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
    (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
    verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
@@ -727,8 +727,8 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > before triaging a parse bug; several are already diagnosed with a written brief.
 > Two entries there are held by a gate that fails on its own (the `and` KNOWN GAP
 > tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
-> the doc exists. `docs-internal/PARSER_FIX_STATUS.md` is an **archived**
-> single-defect report, not an index, despite its name.
+> the doc exists. Docs for finished arcs are deleted under a tag and indexed in
+> `docs-internal/ARCHIVE.md` (2026-09-30).
 >
 > **Structural work on the command layer** — registration, metadata, output
 > contracts, bundle executors — has its own queue in
