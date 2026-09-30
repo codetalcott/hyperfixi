@@ -1279,6 +1279,8 @@ export function isEndWord(token: LanguageToken, languageCode: string): boolean {
 export interface EndWordPlace {
   readonly prev?: LanguageToken | undefined;
   readonly beforePrev?: LanguageToken | undefined;
+  /** The token before `beforePrev`. */
+  readonly third?: LanguageToken | undefined;
   readonly next?: LanguageToken | undefined;
   readonly afterNext?: LanguageToken | undefined;
 }
@@ -1288,6 +1290,7 @@ export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWo
   return {
     prev: tokens[i - 1],
     beforePrev: tokens[i - 2],
+    third: tokens[i - 3],
     next: tokens[i + 1],
     afterNext: tokens[i + 2],
   };
@@ -1332,9 +1335,15 @@ const markersAfterVerbMemo = new WeakMap<readonly LanguagePattern[], Map<string,
 /**
  * The markers a command's own patterns write right after its verb: it
  * `impostare in {destination} {patient}` (set), pl `ustaw do …`. Such a marker
- * right after the verb is the marker, not a variable the verb takes.
+ * right after the verb is the marker, not a variable the verb takes. With
+ * `beforeRolePair`, only the markers a pattern follows with two roles, the
+ * second unmarked (those two, the destination and then the patient).
  */
-function markersAfterVerb(languageCode: string, action: ActionType): ReadonlySet<string> {
+function markersAfterVerb(
+  languageCode: string,
+  action: ActionType,
+  beforeRolePair = false
+): ReadonlySet<string> {
   let patterns: readonly LanguagePattern[];
   try {
     patterns = getPatternsForLanguage(languageCode);
@@ -1346,18 +1355,20 @@ function markersAfterVerb(languageCode: string, action: ActionType): ReadonlySet
     byAction = new Map();
     markersAfterVerbMemo.set(patterns, byAction);
   }
-  let markers = byAction.get(action);
+  const key = beforeRolePair ? `${action} before a role pair` : action;
+  let markers = byAction.get(key);
   if (!markers) {
     markers = new Set();
     for (const pattern of patterns) {
       if (pattern.command !== action) continue;
-      const [verb, after] = pattern.template.tokens;
+      const [verb, after, first, second] = pattern.template.tokens;
       if (verb?.type !== 'literal' || after?.type !== 'literal') continue;
+      if (beforeRolePair && (first?.type !== 'role' || second?.type !== 'role')) continue;
       for (const word of [after.value, ...(after.alternatives ?? [])]) {
         markers.add(word.toLowerCase());
       }
     }
-    byAction.set(action, markers);
+    byAction.set(key, markers);
   }
   return markers;
 }
@@ -1465,6 +1476,17 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
   // A word that is `not` only before an operand (qu `mana`).
   if (senseRuleOf(languageCode, prev)?.beforeOperand === 'not') return true;
   const verbFirst = profile?.wordOrder !== 'SOV';
+  // The value after a marker's value, where the verb's own pattern follows that
+  // marker with two roles: it `impostare in x fine` (set x to fine) owes the
+  // second, which no marker introduces (PR 122).
+  const pairVerb = place.third ? verbOf(place.third) : undefined;
+  if (
+    pairVerb &&
+    beforePrev &&
+    markersAfterVerb(languageCode, pairVerb, true).has(beforePrev.value.toLowerCase())
+  ) {
+    return true;
+  }
   // The word before is itself a value, a verb's or a marker's — unless it is
   // a marker the verb's own patterns write right after it (it `impostare in
   // fine 1`, set fine to 1).
