@@ -156,6 +156,11 @@ jobs:
           done
 
       - name: Run tests
+        # VITEST_TIMEOUT: the same 5 minutes as ci.yml and publish.yml's test
+        # steps; scripts/vitest-run.sh's 120s default is shorter than core's
+        # and semantic's suites now take on a 4-core runner.
+        env:
+          VITEST_TIMEOUT: '300'
         run: |
           set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
