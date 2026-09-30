@@ -167,6 +167,7 @@ export const de: Dictionary = {
     s: 's',
     min: 'min',
     h: 'std',
+    times: 'mal',
   },
 
   values: {

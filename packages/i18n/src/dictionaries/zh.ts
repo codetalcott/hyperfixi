@@ -167,6 +167,7 @@ export const zh: Dictionary = {
     s: '秒',
     min: '分',
     h: '时',
+    times: '次',
   },
 
   values: {

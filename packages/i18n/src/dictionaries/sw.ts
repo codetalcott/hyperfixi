@@ -176,6 +176,7 @@ export const sw: Dictionary = {
     s: 's',
     min: 'dk',
     h: 'sa',
+    times: 'mara',
   },
 
   values: {

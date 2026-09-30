@@ -71,6 +71,7 @@ export const frenchLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'seconde' },
     seconds: { primary: 'secondes' },
+    times: { primary: 'fois' },
   },
   values: {
     body: { primary: 'corps' },

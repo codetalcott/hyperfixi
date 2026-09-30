@@ -72,6 +72,7 @@ export const japaneseLexicon: LanguageLexicon = {
     s: { primary: '秒' },
     second: { primary: '秒' },
     seconds: { primary: '秒' },
+    times: { primary: '回' },
   },
   values: {
     body: { primary: 'ボディ' },

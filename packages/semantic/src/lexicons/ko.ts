@@ -72,6 +72,7 @@ export const koreanLexicon: LanguageLexicon = {
     s: { primary: '초' },
     second: { primary: '초' },
     seconds: { primary: '초' },
+    times: { primary: '번' },
   },
   values: {
     body: { primary: '바디' },

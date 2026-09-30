@@ -14,9 +14,10 @@
  *   body as the head (hi `3 बार को repeat मैं में hello पर भेजें`, `repeat for me
  *   in hello`).
  *
- * The words are read, never written (`patterns/count-words.ts`): the counted
- * heads take them, and so do the count readers, where a head needs a marker
- * the writer left out (ja `n 回 繰り返し`, zh `重复 n 次`).
+ * The words are read (`patterns/count-words.ts`): the counted heads take them,
+ * and so do the count readers, where a head needs a marker the writer left out
+ * (ja `n 回 繰り返し`, zh `重复 n 次`). Since PR 131 the render writes them too
+ * (`native-count-render.test.ts`).
  */
 import { describe, it, expect } from 'vitest';
 import { buildAST, parse, render } from '../src/index';
@@ -50,13 +51,14 @@ describe("a variable count before the language's own word", () => {
     expect(english(code, language)).toBe('on click repeat n times increment x end');
   });
 
-  // sw writes the count after its word; the render keeps English `times`.
-  it('reads sw word-first and renders as before', () => {
+  // sw writes the count after its word; the render writes it before (the
+  // render's head outranks the word-first one), in sw's own word since PR 131.
+  it('reads sw word-first and renders count-first', () => {
     expect(english('unapo click rudia mara 3 ongezeko x mwisho', 'sw')).toBe(
       'on click repeat 3 times increment x end'
     );
     expect(render(parse('on click repeat 3 times increment x end', 'en')!, 'sw')).toBe(
-      'unapo click rudia 3 times ongezeko x mwisho'
+      'unapo click rudia 3 mara ongezeko x mwisho'
     );
   });
 

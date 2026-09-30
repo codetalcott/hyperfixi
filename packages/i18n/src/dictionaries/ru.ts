@@ -166,6 +166,7 @@ export const russianDictionary: Dictionary = {
     once: 'однажды',
     every: 'каждый',
     until: 'до',
+    times: 'раз',
   },
 
   values: {

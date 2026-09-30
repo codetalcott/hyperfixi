@@ -162,6 +162,7 @@ export const tr: Dictionary = {
     s: 's',
     min: 'dk',
     h: 'sa',
+    times: 'kez',
   },
 
   values: {

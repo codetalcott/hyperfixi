@@ -71,6 +71,7 @@ export const germanLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'sekunde' },
     seconds: { primary: 'sekunden' },
+    times: { primary: 'mal' },
   },
   values: {
     body: { primary: 'körper' },

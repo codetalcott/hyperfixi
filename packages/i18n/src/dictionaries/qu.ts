@@ -177,6 +177,7 @@ export const qu: Dictionary = {
     s: 's',
     min: 'm',
     h: 'h',
+    times: 'kuti',
   },
 
   values: {

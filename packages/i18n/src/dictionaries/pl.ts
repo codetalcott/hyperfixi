@@ -160,6 +160,7 @@ export const pl: Dictionary = {
     s: 's',
     min: 'min',
     h: 'godz',
+    times: 'razy',
   },
 
   values: {

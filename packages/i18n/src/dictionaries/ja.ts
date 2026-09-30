@@ -158,6 +158,7 @@ export const ja: Dictionary = {
     s: '秒',
     min: '分',
     h: '時',
+    times: '回',
   },
 
   values: {

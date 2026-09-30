@@ -166,6 +166,7 @@ export const id: Dictionary = {
     s: 'd',
     min: 'mnt',
     h: 'j',
+    times: 'kali',
   },
 
   values: {

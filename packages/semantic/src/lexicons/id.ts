@@ -71,6 +71,7 @@ export const indonesianLexicon: LanguageLexicon = {
     s: { primary: 'd' },
     second: { primary: 'detik' },
     seconds: { primary: 'detik' },
+    times: { primary: 'kali' },
   },
   values: {
     body: { primary: 'badan' },

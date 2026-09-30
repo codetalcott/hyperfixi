@@ -71,6 +71,7 @@ export const italianLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'secondo' },
     seconds: { primary: 'secondi' },
+    times: { primary: 'volte' },
   },
   values: {
     body: { primary: 'corpo' },

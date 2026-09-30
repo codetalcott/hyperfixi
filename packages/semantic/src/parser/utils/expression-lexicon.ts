@@ -45,6 +45,7 @@ import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
 import { isCuratedEndKeyword } from '../end-keywords';
 import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
+import { NATIVE_COUNT_WORDS } from '../../patterns/count-words';
 
 // prettier-ignore
 export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
@@ -1499,11 +1500,19 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
   }
   if (OWING_WORDS.has(word)) return true;
   // Not an SOV loop's own verb, which ends its head (PR 120): the end word
-  // after it closes an empty loop (ja `3 times を repeat 終わり`), though a
-  // for-in written verb-first puts a role there (PR 126).
+  // after it closes an empty loop (ja `3 回 を 繰り返し 終わり`), though a
+  // for-in written verb-first puts a role there (PR 126). Nor a count word
+  // after its count, which ends the head too: sw's word-first head writes
+  // `mara` before the count (`rudia mara mwisho`, repeat mwisho times), but
+  // the render writes it after (`rudia 3 mara mwisho`, an empty loop) (PR 131).
+  const countWordAfterCount =
+    !!beforePrev &&
+    wordOf(beforePrev, languageCode) !== 'repeat' &&
+    !!NATIVE_COUNT_WORDS[languageCode]?.includes(prev.value);
   if (
     loopWordsBeforeRole(languageCode).has(prev.value.toLowerCase()) &&
-    (verbFirst || word !== 'repeat')
+    (verbFirst || word !== 'repeat') &&
+    !countWordAfterCount
   ) {
     return true;
   }

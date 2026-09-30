@@ -71,6 +71,7 @@ export const spanishLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'segundo' },
     seconds: { primary: 'segundos' },
+    times: { primary: 'veces' },
   },
   values: {
     body: { primary: 'cuerpo' },

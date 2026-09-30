@@ -71,6 +71,7 @@ export const swahiliLexicon: LanguageLexicon = {
     s: { primary: 's' },
     second: { primary: 'sekunde' },
     seconds: { primary: 'sekunde' },
+    times: { primary: 'mara' },
   },
   values: {
     body: { primary: 'mwili' },

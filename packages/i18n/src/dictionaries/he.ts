@@ -86,7 +86,9 @@ export const he: Dictionary = {
     where: 'איפה',
   },
 
-  temporal: {},
+  temporal: {
+    times: 'פעמים',
+  },
 
   values: {
     body: 'גוף',

@@ -28,6 +28,9 @@ export const hebrewLexicon: LanguageLexicon = {
     when: { primary: 'כאשר' },
     where: { primary: 'איפה' },
   },
+  temporal: {
+    times: { primary: 'פעמים' },
+  },
   values: {
     body: { primary: 'גוף' },
     event: { primary: 'אירוע' },
