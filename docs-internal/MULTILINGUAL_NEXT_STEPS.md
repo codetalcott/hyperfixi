@@ -6688,8 +6688,8 @@ pairs, by where the loss sits:
 PR 125 moved no stored corpus row, and no entry of either names oracle (neither has a loop count;
 the extended oracle's loop templates read the same). Found while probing it, not fixed: `repeat it
 times` in ms (`ulang ia kali` reads `ia kali` as `its kali`, a possessive) and qu (`chay times ta
-repeat` drops the loop); and `get 3` (a lone literal after `get`) is dropped in English, which no
-position of the matrix has.
+repeat` drops the loop); and English drops a `get` whose operand is a literal (`get "hello"`, `get
+3`, `get true`: the whole command, so `it` is never set), which no position of the matrix has.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
