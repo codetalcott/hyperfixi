@@ -1362,6 +1362,48 @@ function markersAfterVerb(languageCode: string, action: ActionType): ReadonlySet
   return markers;
 }
 
+const loopWordsMemo = new WeakMap<readonly LanguagePattern[], Set<string>>();
+
+/**
+ * The words a loop's own patterns write right before a role: fr `en` and
+ * `tantque` (`repeat {patient} en {source}`, `repeat tantque {condition}`), tr
+ * `içinde`, tl `sa_loob`. The render writes them as plain words no marker test
+ * sees, and each owes the value after it, as a marker does (PR 121). Not the
+ * profile's role markers, which have their own reading: where markers follow
+ * values, a marker after its value owes nothing, and a command can end with one
+ * (hi `sortable:move को ट्रिगर मैं में समाप्त`, trigger sortable:move on me, end).
+ */
+function loopWordsBeforeRole(languageCode: string): ReadonlySet<string> {
+  let patterns: readonly LanguagePattern[];
+  try {
+    patterns = getPatternsForLanguage(languageCode);
+  } catch {
+    return new Set();
+  }
+  let words = loopWordsMemo.get(patterns);
+  if (!words) {
+    const markers = new Set(
+      Object.values(tryGetProfile(languageCode)?.roleMarkers ?? {})
+        .flatMap(marker => (marker ? [marker.primary, ...(marker.alternatives ?? [])] : []))
+        .map(word => word.toLowerCase())
+    );
+    const found = new Set<string>();
+    for (const pattern of patterns) {
+      if (pattern.command !== 'repeat') continue;
+      const tokens = pattern.template.tokens;
+      tokens.forEach((token, i) => {
+        if (token.type !== 'literal' || tokens[i + 1]?.type !== 'role') return;
+        for (const word of [token.value, ...(token.alternatives ?? [])]) {
+          if (!markers.has(word.toLowerCase())) found.add(word.toLowerCase());
+        }
+      });
+    }
+    words = found;
+    loopWordsMemo.set(patterns, words);
+  }
+  return words;
+}
+
 /** A role marker: a particle, or a keyword normalized to the role it marks (fr `à`, de `auf`). */
 function isMarker(token: LanguageToken): boolean {
   if (token.kind === 'particle') return true;
@@ -1434,6 +1476,7 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
     return false;
   }
   if (OWING_WORDS.has(word)) return true;
+  if (loopWordsBeforeRole(languageCode).has(prev.value.toLowerCase())) return true;
   const verb = verbFirst ? verbOf(prev) : undefined;
   if (verb && commandSchemas[verb].roles.some(role => role.required)) return true;
   return !markerFinal && isMarker(prev);
