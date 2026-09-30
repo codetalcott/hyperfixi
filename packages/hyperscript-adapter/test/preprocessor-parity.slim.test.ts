@@ -53,10 +53,13 @@ describe('preprocessor parity — slim path', () => {
 /**
  * SAFETY PIN for the one remaining divergence (the es `repeat` row): its
  * slim output must stay engine-INVALID until the repeat surface is fixed
- * whole. Today the schema-generated event pattern drops `3 times` — a bare
- * `repeat` is FOREVER — and only the output's invalidity makes that safe:
- * the host-validate gate (#900) rejects it and the author's original text
- * stays. A partial repair that makes this render valid while still
+ * whole. The schema-generated event pattern took the count for the loop's
+ * form, and slim's render dropped it — a bare `repeat` is FOREVER. The count
+ * reads now (PR 118: a number where the form goes is the count), but slim's
+ * SYNTAX render still drops `times`, so the output is `on click repeat 3 add
+ * …`, which the engine rejects (a count needs `times`). Only that invalidity
+ * makes it safe: the host-validate gate (#900) rejects it and the author's
+ * original text stays. A partial repair that makes this render valid while still
  * dropping the quantity (measured: mirroring semantic's string-content
  * `to me` exception alone does exactly that) would commit an infinite
  * loop. If this test reddens, do NOT relax it — fix quantity capture, the
