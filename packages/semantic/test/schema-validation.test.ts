@@ -38,6 +38,10 @@ const ALLOWED_WARNINGS: Record<string, string[]> = {
   // go: a destination is a URL (a literal) or an element to scroll to
   // (`go to #d1`), as it is on both engines.
   go: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  // get: what it reads is any value, as set's is (`get "hello"`, `get #a`,
+  // `get #a's textContent` in the of form translations write); without a
+  // literal English dropped the whole command (PR 130).
+  get: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   increment: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   morph: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
   // set: a variable takes any value, a literal or an element (`set el to
