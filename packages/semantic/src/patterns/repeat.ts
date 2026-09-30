@@ -26,7 +26,8 @@
  * (th `ครั้ง`, vi `lần`, tl `beses`, bn `বার`).
  */
 
-import type { ExpectedType, LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
+import { NATIVE_COUNT_WORDS } from './count-words';
 
 /**
  * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
@@ -36,6 +37,14 @@ import type { ExpectedType, LanguagePattern } from '../types';
  * `forever` (PR 125).
  */
 const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
+
+/** The count word: the one the render writes, and the language's own (PR 127). */
+function countWordToken(language: string, countWord: string): PatternToken {
+  const alternatives = NATIVE_COUNT_WORDS[language]?.filter(word => word !== countWord);
+  return alternatives?.length
+    ? { type: 'literal', value: countWord, alternatives }
+    : { type: 'literal', value: countWord };
+}
 
 /**
  * One verb-first counted-loop HEAD pattern.
@@ -58,7 +67,7 @@ function repeatTimesHead(
   tokens.push({ type: 'literal', value: verb });
   if (markerBefore) tokens.push({ type: 'literal', value: markerBefore });
   tokens.push({ type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES });
-  tokens.push({ type: 'literal', value: countWord });
+  tokens.push(countWordToken(language, countWord));
   return {
     id: `repeat-${language}-times`,
     language,
@@ -112,7 +121,7 @@ function repeatTimesHeadSOV(language: string, countWord: string, marker: string)
       format: `{quantity} ${countWord} ${marker} repeat`,
       tokens: [
         { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
-        { type: 'literal', value: countWord },
+        countWordToken(language, countWord),
         { type: 'literal', value: marker },
         { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
       ],
@@ -132,6 +141,33 @@ const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
   ['bn', 'বার', 'কে'],
   ['qu', 'times', 'ta'],
 ];
+
+/**
+ * sw writes the count after its word for `times` (`rudia mara 3`, repeat 3
+ * times), where the render writes `rudia 3 times`: the head read `rudia mara`,
+ * a `forever` loop (PR 127). Parse-only: its priority sits below the render's
+ * head, which the renderer keeps. The id ends `-times`, a head-only repeat head
+ * (HEAD_ONLY_REPEAT), so a fused handler's re-parse can take it.
+ */
+function repeatTimesHeadWordFirst(language: string, verb: string, word: string): LanguagePattern {
+  return {
+    id: `repeat-${language}-word-first-times`,
+    language,
+    command: 'repeat',
+    priority: 109,
+    template: {
+      format: `${verb} ${word} {quantity}`,
+      tokens: [
+        { type: 'literal', value: verb },
+        { type: 'literal', value: word },
+        { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
+      ],
+    },
+    extraction: {
+      loopType: { default: { type: 'literal', value: 'times' } },
+    },
+  };
+}
 
 // =============================================================================
 // R1 cluster D — `repeat for X in Y` / `repeat while C` / `repeat until event E
@@ -727,6 +763,7 @@ for (const [lang, verb, countWord, marker] of VERB_FIRST_REPEAT_TIMES) {
 for (const [lang, countWord, marker] of SOV_REPEAT_TIMES) {
   addPattern(lang, repeatTimesHeadSOV(lang, countWord, marker));
 }
+addPattern('sw', repeatTimesHeadWordFirst('sw', 'rudia', 'mara'));
 for (const [lang, spec] of FOR_IN_HEADS) {
   addPattern(lang, repeatForInHead(lang, spec));
 }
