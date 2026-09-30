@@ -6678,7 +6678,11 @@ pairs, by where the loss sits:
   loops require a count number`), and the rest of the handler never ran. Core reads a count as the
   comparison does now (`Number`, so `6abc` loops no times and `6.5` keeps its fraction, where
   `parseInt` read 6 for both); a missing count still throws. `the textContent of #a as Int` keeps
-  its ACCEPTED difference (24 pairs).
+  its ACCEPTED difference (24 pairs). The hybrid bundles' template (`bundle-generator/templates.ts`,
+  generated into hybrid-complete and every plugin bundle) read a count that was no number with
+  `parseInt` until PR 129, and reads it with `Number` now: a literal `6.5` was always a number and
+  looped 7 times, but `"6.5"` or an element's `6.5` looped 6, `"6abc"` 6 and `true` none
+  (`shipped-bundle-execution.test.ts`).
 - ~~**translation, 40 pairs in 2 cells**~~ **FIXED by PR 125**: `#a's textContent`, `#a's
   textContent's length`, which ten languages render in the of form (es `textContent de #a`). No
   counted-loop head read a property path: es, it, pl, ru and uk dropped the loop and the command
