@@ -16,21 +16,31 @@ Or use a CDN — see [Browser](#browser) below.
 
 ```html
 <script src="https://unpkg.com/hyperscript.org"></script>
-<script src="https://unpkg.com/@lokascript/hyperscript-adapter@2/dist/hyperscript-i18n-es.global.js"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n-es.global.js"></script>
 
 <!-- Spanish -->
-<button _="on click alternar .active on me" data-lang="es">Toggle</button>
-
-<!-- Japanese -->
-<button _="on click .active を me で 切り替え" data-lang="ja">切り替え</button>
-
-<!-- Inherited language for all children -->
-<div data-hyperscript-lang="fr">
-  <button _="on click basculer .active on me">Basculer</button>
-</div>
+<button _="al clic alternar .active" data-lang="es">Alternar</button>
 ```
 
 The plugin auto-registers when `_hyperscript` is available. No extra JS needed.
+
+Several languages on one page need a bundle that holds them: `hyperscript-i18n.global.js` (all 24)
+or a regional one (see [Bundle Options](#bundle-options)):
+
+```html
+<script src="https://unpkg.com/hyperscript.org"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n.global.js"></script>
+
+<!-- Japanese -->
+<button _="クリック で .active を 切り替え" data-lang="ja">切り替え</button>
+
+<!-- Inherited language for all children -->
+<div data-hyperscript-lang="fr">
+  <button _="quand clic basculer .active">Basculer</button>
+</div>
+```
+
+English keywords mixed into another language (`on click alternar .active`) read too.
 
 See the [live demo](https://lokascript-docs.fly.dev/multilingual-plugin/) for interactive examples.
 
@@ -70,21 +80,17 @@ Pick the bundle that matches your use case. All bundles auto-register with `_hyp
 
 Each bundle includes the adapter + semantic parser for the specified languages.
 
-| Bundle                                  | Languages      | Size   |
-| --------------------------------------- | -------------- | ------ |
-| `hyperscript-i18n.global.js`            | All 24         | 568 KB |
-| `hyperscript-i18n-western.global.js`    | es, pt, fr, de | 146 KB |
-| `hyperscript-i18n-east-asian.global.js` | ja, ko, zh     | 146 KB |
-| `hyperscript-i18n-tr.global.js`         | tr             | 101 KB |
-| `hyperscript-i18n-ko.global.js`         | ko             | 100 KB |
-| `hyperscript-i18n-ar.global.js`         | ar             | 95 KB  |
-| `hyperscript-i18n-ja.global.js`         | ja             | 95 KB  |
-| `hyperscript-i18n-es.global.js`         | es             | 94 KB  |
-| `hyperscript-i18n-zh.global.js`         | zh             | 88 KB  |
-| `hyperscript-i18n-fr.global.js`         | fr             | 87 KB  |
-| `hyperscript-i18n-de.global.js`         | de             | 86 KB  |
-| `hyperscript-i18n-pt.global.js`         | pt             | 86 KB  |
-| `hyperscript-i18n-id.global.js`         | id             | 85 KB  |
+Sizes are gzipped, measured on the 3.2.0 build; a page adds \_hyperscript itself (~45 KB).
+
+| Bundle                                         | Languages                           | Gzipped   |
+| ---------------------------------------------- | ----------------------------------- | --------- |
+| `hyperscript-i18n.global.js`                   | All 24                              | ~232 KB   |
+| `hyperscript-i18n-western.global.js`           | es, pt, fr, de                      | ~88 KB    |
+| `hyperscript-i18n-east-asian.global.js`        | ja, ko, zh                          | ~89 KB    |
+| `hyperscript-i18n-slavic.global.js`            | pl, ru, uk                          | ~89 KB    |
+| `hyperscript-i18n-southeast-asian.global.js`   | id, ms, tl, th, vi                  | ~88 KB    |
+| `hyperscript-i18n-south-asian.global.js`       | hi, bn                              | ~83 KB    |
+| `hyperscript-i18n-<lang>.global.js` (one each) | one of the 23 non-English languages | ~79–82 KB |
 
 ```html
 <!-- Django / Flask / FastAPI: just pick your language -->
@@ -94,17 +100,16 @@ Each bundle includes the adapter + semantic parser for the specified languages.
 
 ### Lite adapter (two `<script>` tags, smallest total)
 
-A 2 KB adapter that expects a `@lokascript/semantic` bundle loaded separately. Pair with any semantic regional bundle for the smallest possible total.
+A ~1 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle loaded separately.
 
 ```html
 <script src="_hyperscript.js"></script>
-<script src="lokascript-semantic-es.global.js"></script>
-<!-- from @lokascript/semantic -->
+<!-- from @lokascript/semantic: dist/browser-<lang>.<lang>.global.js, or a regional one -->
+<script src="https://unpkg.com/@lokascript/semantic@3/dist/browser-es.es.global.js"></script>
 <script src="hyperscript-i18n-lite.global.js"></script>
-<!-- 2 KB -->
 ```
 
-Use this when you already load `@lokascript/semantic` for other purposes, or when you need a language bundle not listed above (e.g., `lokascript-semantic-priority.global.js` for 11 languages).
+Use this when you already load `@lokascript/semantic` for other purposes, or when you need a language set not listed above (e.g. `browser-priority.priority.global.js`: en, es, pt, fr, de, ja, zh, ko, ar, tr, id).
 
 ## Language Resolution
 
