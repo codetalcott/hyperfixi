@@ -29,7 +29,7 @@ Two further bundles are separate products, not sizes of the same thing:
 | Bundle                      | Size (gzip) | Product                                                                                                                       |
 | --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `hyperfixi-hx-v4.js`        | ~363 KB     | htmx v4 on the full runtime: `hx-live`, `bind`, `when`, SSE and WebSocket, auto-installed. The Vite plugin selects it itself. |
-| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with a `@lokascript/semantic` browser bundle (below).                                  |
+| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with the all-24 `@lokascript/semantic` browser bundle (below).                         |
 
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
 > `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
@@ -106,9 +106,9 @@ Fixi features include request dropping (anti-double-submit), `fx-ignore` attribu
 | Bundle                                               | Global                  | Size (gzip) | Use Case                             |
 | ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
 | `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | Lazy behavior resolver (8 behaviors) |
-| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 43.3 KB     | Per-language vocabulary and profiles |
+| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 38.5 KB     | Per-language vocabulary and profiles |
 
-> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Backward-compatible aliases (`lokascript-*.js`) are provided but will be removed in v3.0.0. See [MIGRATION.md](../MIGRATION.md).
+> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Deprecated `lokascript-*.js` copies of some of them (`lokascript-browser.js`, `lokascript-hybrid-hx.js`, `lokascript-multilingual.js`, …) are still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); they were slated for removal in v3.0.0 but still ship in 3.x. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
 
 ## `hx-live` reactive expressions (htmx v4)
 
@@ -273,15 +273,19 @@ See [bundle-configs/README.md](../packages/core/bundle-configs/README.md) for fu
 
 ## Semantic Bundles (Regional Options)
 
-| Bundle                                    | Global                        | Size (gzip) | Languages          |
-| ----------------------------------------- | ----------------------------- | ----------- | ------------------ |
-| `browser.global.js`                       | `LokaScriptSemantic`          | 195 KB      | All 24             |
-| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | 107 KB      | 11 priority        |
-| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | 89 KB       | en, es, pt, fr, de |
-| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | 70 KB       | ja, zh, ko         |
-| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | 79 KB       | en, es             |
-| `browser-en.en.global.js`                 | `LokaScriptSemanticEn`        | 75 KB       | en only            |
-| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | 62 KB       | es only            |
+Files live in `@lokascript/semantic/dist/`; each is also exported as `@lokascript/semantic/browser` (all 24) or `@lokascript/semantic/browser/<name>` (e.g. `/browser/priority`, `/browser/es`). Sizes are gzipped, measured locally on 2026-09-30 (`gzip -9`, macOS; CI's Linux zlib reads slightly higher).
+
+| Bundle                                    | Global                        | Size (gzip) | Languages                                      |
+| ----------------------------------------- | ----------------------------- | ----------- | ---------------------------------------------- |
+| `browser.global.js`                       | `LokaScriptSemantic`          | ~260 KB     | All 24                                         |
+| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~151 KB     | 11: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
+| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~128 KB     | en, es, pt, fr, de, it                         |
+| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~106 KB     | ja, zh, ko                                     |
+| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~116 KB     | en, es                                         |
+| `browser-en.en.global.js`                 | `LokaScriptSemanticEn`        | ~111 KB     | en only                                        |
+| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | ~96 KB      | es only                                        |
+
+Every other language except Hebrew has its own `browser-<code>.<code>.global.js` (~94–98 KB). Most of each bundle is the shared parser (`browser-core.core.global.js`, which registers no language, is ~90 KB), so a language costs only a few KB on top.
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 
@@ -291,7 +295,7 @@ For developers writing hyperscript in their native language:
 
 ```html
 <!-- Load both bundles -->
-<script src="lokascript-semantic.browser.global.js"></script>
+<script src="node_modules/@lokascript/semantic/dist/browser.global.js"></script>
 <script src="hyperfixi-multilingual.js"></script>
 <script>
   // Execute in any of 24 supported languages
@@ -304,17 +308,18 @@ For developers writing hyperscript in their native language:
 </script>
 ```
 
-**Total size:** ~296 KB gz (93 KB multilingual + 203 KB all-24 semantic) vs ~352 KB gz full bundle
+`hyperfixi-multilingual.js` looks up the `LokaScriptSemantic` global, which only the all-24 `browser.global.js` defines; the regional and single-language bundles use other globals (`LokaScriptSemanticEs`, …).
+
+**Total size:** ~353 KB gz (93 KB multilingual + ~260 KB all-24 semantic) vs ~352 KB gz full bundle
 
 ## Full Bundle Usage
 
 ```html
 <script src="hyperfixi.js"></script>
-<script src="lokascript-i18n.min.js"></script>
-<script src="lokascript-semantic.browser.global.js"></script>
+<script src="node_modules/@lokascript/semantic/dist/browser.global.js"></script>
 <script>
-  // Grammar transformation (i18n)
-  const result = LokaScriptI18n.translate('on click toggle .active', 'en', 'ja');
+  // Translation (semantic; i18n's translator was retired 2026-08-28)
+  const result = LokaScriptSemantic.translate('toggle .active', 'en', 'ja');
 
   // Semantic parsing (24 languages)
   const parsed = LokaScriptSemantic.parse('トグル .active', 'ja');

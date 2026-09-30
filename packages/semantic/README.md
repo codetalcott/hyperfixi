@@ -2,9 +2,11 @@
 
 Semantic-first multilingual parser for LokaScript. Parses hyperscript-like syntax from 24 languages into a language-agnostic semantic representation.
 
+It is also the translator: `translate(code, from, to)` (or `render(parse(code, from), to)`) writes code in any of the 24 languages. That used to be `@lokascript/i18n`'s job; its grammar transformer was retired in favor of this package on 2026-08-28, and i18n now provides vocabulary only.
+
 ## Features
 
-- **23 Languages**: Arabic, Bengali, Chinese, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Portuguese, Quechua, Russian, Swahili, Thai, Tagalog, Turkish, Ukrainian, Vietnamese
+- **24 Languages**: Arabic, Bengali, Chinese, English, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Portuguese, Quechua, Russian, Spanish, Swahili, Thai, Tagalog, Turkish, Ukrainian, Vietnamese
 - **Semantic Roles**: Language-agnostic intermediate representation (patient, destination, source, etc.)
 - **Confidence Scoring**: Graceful degradation with scored parse results
 - **Morphological Normalization**: Handles verb conjugations in agglutinative languages
@@ -21,38 +23,54 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 
 ### Bundle Matrix
 
-#### Tier 1: Single Language (~14-20 KB gzip)
+Sizes are gzipped, measured locally on 2026-09-30 (`gzip -9`, macOS); CI's Linux zlib reads slightly higher. Most of every bundle is the shared parser — `browser-core.core.global.js`, with no language registered, is ~90 KB — so each language adds only a few KB on top. Every bundle is also exported by path: `@lokascript/semantic/browser` (all 24) and `@lokascript/semantic/browser/<name>` (e.g. `/browser/es`, `/browser/priority`).
 
-| Bundle                    | Global                 | Size   | Languages |
-| ------------------------- | ---------------------- | ------ | --------- |
-| `browser-en.en.global.js` | `LokaScriptSemanticEn` | ~20 KB | en        |
-| `browser-es.es.global.js` | `LokaScriptSemanticEs` | ~16 KB | es        |
-| `browser-ja.ja.global.js` | `LokaScriptSemanticJa` | ~17 KB | ja        |
-| `browser-ar.ar.global.js` | `LokaScriptSemanticAr` | ~17 KB | ar        |
-| `browser-ko.ko.global.js` | `LokaScriptSemanticKo` | ~18 KB | ko        |
-| `browser-zh.zh.global.js` | `LokaScriptSemanticZh` | ~15 KB | zh        |
-| `browser-tr.tr.global.js` | `LokaScriptSemanticTr` | ~18 KB | tr        |
-| `browser-pt.pt.global.js` | `LokaScriptSemanticPt` | ~14 KB | pt        |
-| `browser-fr.fr.global.js` | `LokaScriptSemanticFr` | ~14 KB | fr        |
-| `browser-de.de.global.js` | `LokaScriptSemanticDe` | ~14 KB | de        |
-| `browser-id.id.global.js` | `LokaScriptSemanticId` | ~14 KB | id        |
-| `browser-qu.qu.global.js` | `LokaScriptSemanticQu` | ~14 KB | qu        |
-| `browser-sw.sw.global.js` | `LokaScriptSemanticSw` | ~14 KB | sw        |
+#### Tier 1: Single Language (~94-98 KB gzip; English ~111 KB)
+
+| Bundle                    | Global                 | Size    | Languages |
+| ------------------------- | ---------------------- | ------- | --------- |
+| `browser-en.en.global.js` | `LokaScriptSemanticEn` | ~111 KB | en        |
+| `browser-es.es.global.js` | `LokaScriptSemanticEs` | ~96 KB  | es        |
+| `browser-ja.ja.global.js` | `LokaScriptSemanticJa` | ~97 KB  | ja        |
+| `browser-ar.ar.global.js` | `LokaScriptSemanticAr` | ~97 KB  | ar        |
+| `browser-ko.ko.global.js` | `LokaScriptSemanticKo` | ~97 KB  | ko        |
+| `browser-zh.zh.global.js` | `LokaScriptSemanticZh` | ~96 KB  | zh        |
+| `browser-tr.tr.global.js` | `LokaScriptSemanticTr` | ~96 KB  | tr        |
+| `browser-pt.pt.global.js` | `LokaScriptSemanticPt` | ~95 KB  | pt        |
+| `browser-fr.fr.global.js` | `LokaScriptSemanticFr` | ~95 KB  | fr        |
+| `browser-de.de.global.js` | `LokaScriptSemanticDe` | ~95 KB  | de        |
+| `browser-id.id.global.js` | `LokaScriptSemanticId` | ~94 KB  | id        |
+| `browser-qu.qu.global.js` | `LokaScriptSemanticQu` | ~96 KB  | qu        |
+| `browser-sw.sw.global.js` | `LokaScriptSemanticSw` | ~94 KB  | sw        |
+| `browser-bn.bn.global.js` | `LokaScriptSemanticBn` | ~96 KB  | bn        |
+| `browser-hi.hi.global.js` | `LokaScriptSemanticHi` | ~96 KB  | hi        |
+| `browser-it.it.global.js` | `LokaScriptSemanticIt` | ~96 KB  | it        |
+| `browser-ms.ms.global.js` | `LokaScriptSemanticMs` | ~94 KB  | ms        |
+| `browser-pl.pl.global.js` | `LokaScriptSemanticPl` | ~96 KB  | pl        |
+| `browser-ru.ru.global.js` | `LokaScriptSemanticRu` | ~98 KB  | ru        |
+| `browser-th.th.global.js` | `LokaScriptSemanticTh` | ~95 KB  | th        |
+| `browser-tl.tl.global.js` | `LokaScriptSemanticTl` | ~95 KB  | tl        |
+| `browser-uk.uk.global.js` | `LokaScriptSemanticUk` | ~98 KB  | uk        |
+| `browser-vi.vi.global.js` | `LokaScriptSemanticVi` | ~95 KB  | vi        |
+
+Hebrew (`he`) has no single-language browser bundle; use the full or lazy bundle, or the ESM import `@lokascript/semantic/languages/he`.
 
 #### Tier 2-5: Multi-Language Bundles
 
-| Bundle                                    | Global                        | Size   | Languages          |
-| ----------------------------------------- | ----------------------------- | ------ | ------------------ |
-| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~25 KB | en, es             |
-| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~30 KB | en, es, pt, fr, de |
-| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~24 KB | ja, zh, ko         |
-| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~48 KB | 11 languages       |
-| `browser.global.js`                       | `LokaScriptSemantic`          | ~61 KB | All 24             |
-| `browser-lazy.lazy.global.js`             | `LokaScriptSemanticLazy`      | ~15 KB | On-demand          |
+| Bundle                                    | Global                        | Size    | Languages                                                |
+| ----------------------------------------- | ----------------------------- | ------- | -------------------------------------------------------- |
+| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~116 KB | en, es                                                   |
+| `browser-en-tr.en-tr.global.js`           | `LokaScriptSemanticEnTr`      | ~116 KB | en, tr                                                   |
+| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~128 KB | en, es, pt, fr, de, it                                   |
+| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~106 KB | ja, zh, ko                                               |
+| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~151 KB | 11 languages: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
+| `browser.global.js`                       | `LokaScriptSemantic`          | ~260 KB | All 24                                                   |
+| `browser-lazy.lazy.global.js`             | `LokaScriptSemanticLazy`      | ~194 KB | On-demand                                                |
+| `browser-core.core.global.js`             | `LokaScriptSemanticCore`      | ~90 KB  | None (load languages by URL)                             |
 
-### Lazy Loading (Smallest Initial Bundle)
+### Lazy Loading
 
-For applications that need minimal initial bundle size:
+The lazy bundle registers no languages until you call `loadLanguage()`. It is an IIFE, so it still carries every language's code (~194 KB gzipped): it defers registration, not download. For the smallest download, pick a single-language or regional bundle.
 
 ```html
 <script src="node_modules/@lokascript/semantic/dist/browser-lazy.lazy.global.js"></script>
@@ -564,7 +582,7 @@ const ast = buildAST(node);
 ### With MultilingualHyperscript (Core Package)
 
 ```typescript
-import { MultilingualHyperscript } from '@lokascript/core';
+import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 
 const ml = new MultilingualHyperscript();
 await ml.initialize();
@@ -641,16 +659,29 @@ registerCommandMapper({
 | id   | Indonesian | SVO        | Tier 3 |
 | qu   | Quechua    | SOV        | Tier 3 |
 | sw   | Swahili    | SVO        | Tier 3 |
+| bn   | Bengali    | SOV        | —      |
+| he   | Hebrew     | SVO        | —      |
+| hi   | Hindi      | SOV        | —      |
+| it   | Italian    | SVO        | —      |
+| ms   | Malay      | SVO        | —      |
+| pl   | Polish     | SVO        | —      |
+| ru   | Russian    | SVO        | —      |
+| th   | Thai       | SVO        | —      |
+| tl   | Tagalog    | VSO        | —      |
+| uk   | Ukrainian  | SVO        | —      |
+| vi   | Vietnamese | SVO        | —      |
 
 ## Language Support Tiers
+
+The tiers predate 11 of the 24 languages (bn, he, hi, it, ms, pl, ru, th, tl, uk, vi), which are left untiered. All 24 parse every one of the 157 patterns in the multilingual test corpus faithfully (committed baseline, 2026-09-25).
 
 ### Tier 1: Native Idiom Support (en, ja, ko, es, zh)
 
 - Multiple natural phrasings accepted (conditional, temporal, compact forms)
-- Native speaker reviewed patterns
+- Idiom patterns are approximations; most have not been reviewed by native speakers
 - Comprehensive morphological normalization
 - Dedicated idiom test suites (50-400+ tests per language)
-- English: Event alternatives (`when`, `upon`, `if`), command synonyms, natural articles, British spelling
+- English: Event alternatives (`upon`, `if`), command synonyms, natural articles, British spelling
 
 ### Tier 2: Full Grammar Support (ar, tr, de, fr, pt)
 

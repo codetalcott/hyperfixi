@@ -2,6 +2,8 @@
 
 Comprehensive internationalization (i18n) support for LokaScript and \_hyperscript applications.
 
+> **This package no longer translates code.** Its grammar transformer was retired on 2026-08-28 (#1001). To translate hyperscript between languages, use [`@lokascript/semantic`](https://www.npmjs.com/package/@lokascript/semantic): `translate(code, from, to)` or `render(parse(code, from), to)`. `@lokascript/i18n` provides the per-language vocabulary — dictionaries, keyword providers, locale utilities and word-order profiles.
+
 ## Installation
 
 ```bash
@@ -15,7 +17,7 @@ npm install @lokascript/i18n
 - **⚡ SSR Integration**: Server-side rendering with locale detection, SEO optimization, and hydration support
 - **📊 Pluralization**: CLDR-compliant pluralization rules for complex languages (Russian, Arabic, etc.)
 - **💰 Formatting**: Locale-aware number, date, currency, and unit formatting with fallbacks
-- **🛠️ Build Tool Integration**: Vite and Webpack plugins for build-time translation
+- **🛠️ Build Tool Integration**: Vite and Webpack plugins for build-time keyword substitution
 - **🔍 Language Detection**: Automatically detect the language of hyperscript code from content
 - **✅ Validation**: Comprehensive dictionary validation with coverage reports and warnings
 - **🎯 Type Safety**: Full TypeScript support with comprehensive type definitions
@@ -26,42 +28,44 @@ npm install @lokascript/i18n
 
 LokaScript has two packages for multilingual support with different purposes:
 
-| Package                  | Purpose                                      | Use Case                                             |
-| ------------------------ | -------------------------------------------- | ---------------------------------------------------- |
-| **@lokascript/semantic** | Parse code written in any language → execute | Users **write** hyperscript in their native language |
-| **@lokascript/i18n**     | Transform code between languages             | **Translate** code examples for docs/teaching        |
+| Package                  | Purpose                                                            | Use Case                                                                 |
+| ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **@lokascript/semantic** | Parse code written in any language → execute; translate it         | Users **write** hyperscript in their native language; **translate** code |
+| **@lokascript/i18n**     | Per-language vocabulary: dictionaries, keyword providers, profiles | Tools and runtimes that need the **words** of each language              |
 
 **Use @lokascript/semantic** when your users will write hyperscript in their native language. It parses multilingual input directly into executable AST nodes with native idiom support (e.g., Japanese conditionals like `クリックしたら`).
 
-**Use @lokascript/i18n** (this package) when you need to translate code examples between languages for documentation, tutorials, or teaching materials. It transforms existing code for display purposes—showing learners how the same logic looks in different languages.
+**Use @lokascript/semantic** too when you need to translate code examples between languages for documentation, tutorials, or teaching materials. It parses the code and renders it in the target language's own word order.
 
 Example workflow for documentation:
 
 ```typescript
+import { translate } from '@lokascript/semantic';
+
 // You have English examples in your docs
-const english = 'on click toggle .active';
+const english = 'toggle .active';
 
 // Translate to show Japanese readers the equivalent
-const japanese = translator.translate(english, { from: 'en', to: 'ja' });
-// → "クリック で .active を 切り替え"
+const japanese = translate(english, 'en', 'ja');
+// → ".active を 切り替え"
 ```
+
+**Use @lokascript/i18n** (this package) for the vocabulary itself: keyword dictionaries, keyword providers for parsers and editors, locale detection and formatting, and the word-order profiles.
 
 ## Quick Start
 
-### Basic Translation
+### Keyword Substitution
+
+`HyperscriptTranslator` (and the ready-made `defaultTranslator`) swaps keywords word-for-word using the dictionaries. It does not parse the code or reorder words, so its output is not a faithful translation — for that, use `@lokascript/semantic`'s `translate`.
 
 ```typescript
 import { HyperscriptTranslator } from '@lokascript/i18n';
 
-const translator = new HyperscriptTranslator({ locale: 'es' });
+const translator = new HyperscriptTranslator({ locale: 'en' });
 
-// Translate from Spanish to English
-const english = translator.translate('en clic alternar .activo', { to: 'en' });
-// Result: "on click toggle .activo"
-
-// Translate from English to Korean
+// Swap English keywords for Korean ones, in place
 const korean = translator.translate('on click toggle .active', { from: 'en', to: 'ko' });
-// Result: "클릭 토글 .active"
+// Result: "에 클릭 토글 .active" (keywords substituted; English word order kept)
 ```
 
 ### Language Detection
@@ -72,6 +76,8 @@ const detectedLocale = translator.detectLanguage('si verdadero entonces registra
 ```
 
 ### Build Tool Integration
+
+Both plugins run `HyperscriptTranslator` over hyperscript attributes at build time, so they substitute keywords; they do not translate.
 
 #### Vite
 
@@ -123,6 +129,17 @@ module.exports = {
 | Indonesian | `id` | ✅ Complete | SVO        | Agglutinative support                      |
 | Quechua    | `qu` | ✅ Complete | SOV        | Agglutinative support                      |
 | Swahili    | `sw` | ✅ Complete | SVO        | Noun class system                          |
+| Bengali    | `bn` | ✅ Complete | SOV        | —                                          |
+| Hebrew     | `he` | ✅ Complete | SVO        | RTL support                                |
+| Hindi      | `hi` | ✅ Complete | SOV        | —                                          |
+| Italian    | `it` | ✅ Complete | SVO        | Pluralization                              |
+| Malay      | `ms` | ✅ Complete | SVO        | —                                          |
+| Polish     | `pl` | ✅ Complete | SVO        | Pluralization                              |
+| Russian    | `ru` | ✅ Complete | SVO        | Pluralization                              |
+| Tagalog    | `tl` | ✅ Complete | VSO        | —                                          |
+| Thai       | `th` | ✅ Complete | SVO        | —                                          |
+| Ukrainian  | `uk` | ✅ Complete | SVO        | —                                          |
+| Vietnamese | `vi` | ✅ Complete | SVO        | —                                          |
 
 ## API Reference
 
@@ -132,7 +149,7 @@ module.exports = {
 class HyperscriptTranslator {
   constructor(config: I18nConfig);
 
-  // Translate hyperscript text
+  // Substitute keywords word-for-word (no parsing, no reordering)
   translate(text: string, options: TranslationOptions): string;
 
   // Get detailed translation with token information
@@ -209,33 +226,6 @@ const translator = new HyperscriptTranslator({
     fr: customDictionary,
   },
 });
-```
-
-### LSP Integration
-
-```typescript
-import { I18nLanguageProvider } from '@lokascript/i18n/lsp';
-
-const provider = new I18nLanguageProvider('es');
-
-// Get completions
-const completions = await provider.provideCompletions(document, position);
-
-// Get hover information
-const hover = await provider.provideHover(document, position);
-```
-
-### CLI Usage
-
-```bash
-# Install globally
-npm install -g @lokascript/i18n
-
-# Translate a file
-lokascript-translate input.html output.html --from es --to en
-
-# Translate a directory
-lokascript-translate src/ dist/ --from es --to en
 ```
 
 ## Contributing

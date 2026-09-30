@@ -788,10 +788,10 @@ Key files:
 
 ### Unified Multilingual API
 
-The `MultilingualHyperscript` class provides a unified API that integrates semantic parsing with grammar transformation:
+The `MultilingualHyperscript` class provides a unified API over semantic parsing and translation (exported from `@hyperfixi/core/multilingual`, not the package root):
 
 ```typescript
-import { MultilingualHyperscript } from '@hyperfixi/core';
+import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 
 const ml = new MultilingualHyperscript();
 await ml.initialize();
@@ -1071,14 +1071,14 @@ generator, and semantic regional bundles — lives in
 
 Quick selection (sizes gzipped):
 
-| Bundle                       | Size      | Use case                                                                                                |
-| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| via `@hyperfixi/vite-plugin` | minimal   | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
-| `hyperfixi-hx.js`            | ~22.0 KB  | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
-| `hyperfixi.js`               | ~352 KB   | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
-| `hyperfixi-hx-v4.js`         | ~363 KB   | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
-| `hyperfixi-multilingual.js`  | ~93 KB    | Separate product: parser-free multilingual (pair with a semantic bundle)                                |
-| semantic bundles             | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
+| Bundle                       | Size       | Use case                                                                                                |
+| ---------------------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
+| via `@hyperfixi/vite-plugin` | minimal    | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
+| `hyperfixi-hx.js`            | ~22.0 KB   | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
+| `hyperfixi.js`               | ~352 KB    | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
+| `hyperfixi-hx-v4.js`         | ~363 KB    | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
+| `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                         |
+| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
 with `hyperfixi-hx.js` and moves to `hyperfixi.js` the first time the console

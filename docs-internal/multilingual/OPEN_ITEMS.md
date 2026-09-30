@@ -182,5 +182,6 @@ No gate measures these; the survey's scripts are the baseline (see the roadmap, 
 - **S3 · `@lokascript/compilation-service` has no README.**
 - **S4 · Weight is ungated**: a single-language page costs ~82 KiB gz (adapter) or ~93 + ~96 KiB gz (`hyperfixi-multilingual.js` + semantic es) against 22 KB for English `hyperfixi-hx.js`; CI ceilings cover only core's bundles.
 - **S5 · Semantic-built nodes carry no nested source positions**, so LSP hover/diagnostic ranges are blind to arguments in non-English code (PARSER_NEXT_STEPS L67/L68/L932).
+- **S8 · vite-plugin `region: 'slavic'` and `'south-asian'` import nothing**: both are in the type, but `getLanguagesForBundleType` (`packages/vite-plugin/src/semantic-integration.ts`) has no case for them, so only English and explicitly listed languages load (found 2026-09-30; the README documents only the four regions that work). Its debug `SEMANTIC_BUNDLE_SIZES` (Jan 2025, 14–61 KB) is stale too.
 - **S6 · `swap`'s strategy forms** (`swap into #t with it`, `swap innerHTML of #t with "X"`) never bind content on the semantic path; English lacks the pattern (COMMAND_ARCH L706). **S7 · `async <cmd>`**: semantic strips `async` in all 24 (PARSER L2665).
 

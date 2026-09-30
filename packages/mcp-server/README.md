@@ -118,12 +118,12 @@ The **103** tools below, plus the **5** GRAIL tools above, total **108** defined
 
 ### Pattern Lookup (4)
 
-| Tool                    | Description                                                    |
-| ----------------------- | -------------------------------------------------------------- |
-| `get_examples`          | Get working code examples matching a task description          |
-| `search_patterns`       | Search pattern database by keyword or category                 |
-| `translate_hyperscript` | Translate keywords between 24 languages (pattern substitution) |
-| `get_pattern_stats`     | Get statistics about patterns and languages                    |
+| Tool                    | Description                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| `get_examples`          | Get working code examples matching a task description                                      |
+| `search_patterns`       | Search pattern database by keyword or category                                             |
+| `translate_hyperscript` | Translate between 24 languages (same engine as `translate_code`, without its verification) |
+| `get_pattern_stats`     | Get statistics about patterns and languages                                                |
 
 ### LSP Bridge (4)
 
