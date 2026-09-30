@@ -110,7 +110,10 @@ const repeatTimesEnglish: LanguagePattern = {
     format: 'repeat {quantity} times',
     tokens: [
       { type: 'literal', value: 'repeat' },
-      { type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression'] },
+      // A variable with its sigil (`$n`, `:n`), `it` and `event's detail`
+      // read as references, which the head did not take: the whole loop was
+      // dropped, and every translation lost it too (PR 125).
+      { type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression', 'reference'] },
       { type: 'literal', value: 'times' },
     ],
   },

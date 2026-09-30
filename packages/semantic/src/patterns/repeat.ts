@@ -26,7 +26,16 @@
  * (th `ครั้ง`, vi `lần`, tl `beses`, bn `বার`).
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+
+/**
+ * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
+ * `event's detail` read as references, and the `of` form a translation writes
+ * for `#a's textContent` (es `textContent de #a`) as a property path. The head
+ * took neither: the loop was dropped with the command after it, or read
+ * `forever` (PR 125).
+ */
+const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
 
 /**
  * One verb-first counted-loop HEAD pattern.
@@ -48,7 +57,7 @@ function repeatTimesHead(
   // identical to the previous per-word push.
   tokens.push({ type: 'literal', value: verb });
   if (markerBefore) tokens.push({ type: 'literal', value: markerBefore });
-  tokens.push({ type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression'] });
+  tokens.push({ type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES });
   tokens.push({ type: 'literal', value: countWord });
   return {
     id: `repeat-${language}-times`,
@@ -102,7 +111,7 @@ function repeatTimesHeadSOV(language: string, countWord: string, marker: string)
     template: {
       format: `{quantity} ${countWord} ${marker} repeat`,
       tokens: [
-        { type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression'] },
+        { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
         { type: 'literal', value: countWord },
         { type: 'literal', value: marker },
         { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
