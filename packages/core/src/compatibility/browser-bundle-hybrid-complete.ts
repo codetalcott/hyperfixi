@@ -981,7 +981,9 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
 
     case 'repeat': {
       const count = await evaluate(block.condition!, ctx);
-      const n = typeof count === 'number' ? count : parseInt(String(count));
+      // A count reads as upstream's `index < times` does, and core's loopCount:
+      // "6.5" loops 7 times, "6abc" none (parseInt read 6 for both), true once.
+      const n = Number(count) || 0;
       for (let i = 0; i < n && i < MAX_LOOP_ITERATIONS; i++) {
         ctx.locals.set('__loop_index__', i);
         ctx.locals.set('__loop_count__', i + 1);
