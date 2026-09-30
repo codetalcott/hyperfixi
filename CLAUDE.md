@@ -56,7 +56,7 @@ packages/
 ├── server-bridge/   # Server-side route extraction from HTML
 │
 ├── patterns-reference/  # Queryable patterns database with multilingual translations
-├── language-server/     # LSP implementation for LokaScript/hyperscript (21 languages)
+├── language-server/     # LSP implementation for LokaScript/hyperscript (24 languages)
 ├── behaviors/           # Reusable hyperscript behaviors (draggable, sortable, etc.)
 ├── types-browser/       # TypeScript type definitions for browser globals
 │
@@ -409,8 +409,10 @@ this gate already covers.
 
 **Known Issues:**
 
-- Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (all 23 at 1.0 since the 2026-09-23 baseline — the en→foreign render arc, #931–#996, closed nearly all of it; the event-modifier arc, which added `eventModifiers` to the R1/R3 walkers, the last pl row). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- None tracked here. Every behavior (curated, optional and experimental) compiles from its hyperscript
+  `source`; every multilingual ratchet signal is at 1.000 in all 24 languages. What the gates do NOT
+  measure (English words left in renders, pronoun case, command shapes outside the corpus, stale user
+  docs) is the multilingual roadmap: `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -440,8 +442,8 @@ the committed baseline:
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,
-> not truth. Current plan + per-arc history:
-> `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+> not truth. Current plan: `docs-internal/MULTILINGUAL_NEXT_STEPS.md` (per-arc
+> history before 2026-09-30: tag `archived/multilingual-next-steps-2026-09-30`).
 
 The `--regression` gate ratchets on **eleven** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
@@ -625,16 +627,10 @@ operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Eleme
 `hyperscript.org` is the oracle, and 48 lanes must match it — hyperfixi's English,
 semantic's English round trip, and each language on hyperfixi's direct path and
 through the adapter on upstream. Its baseline (`baselines/value-matrix.json`) lists
-every failing (cell, lane) pair, and it only shrinks: 18,509 of 63,744 when it
-landed (PR 52), 102 of 83,352 after PR 84, every one of them ACCEPTED (the kept `the
-X of Y as T` difference and it's `di` ambiguity: listed, gated, reported apart). PR
-93 added the operator phrases (2026-09-28) and their 3,016 failing pairs; PR 108
-(2026-09-29) the reference operands, the chain and the names inside expressions, and
-their 3,419, the queue for the after-107 handoff; PR 124 (2026-09-30) a loop's count and
-the sigil variable, and their 371; PR 130 (2026-09-30) what a `get` reads, and its 887. The current count, the per-PR burn-down, the
-queue by family, and an inventory of the rules that tell a variable spelled like a
-structure word from the word (each with its PR and the test that pins it), are in
-`docs-internal/MULTILINGUAL_NEXT_STEPS.md` ("Value reading"). A name that is a
+every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (the kept `the X of Y as T`
+difference and it's `di` ambiguity) stay listed and are reported apart. The rules that tell a variable
+spelled like a structure word from the word (each with its PR and the test that pins it) are in
+`docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
 PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
 phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
@@ -651,10 +647,9 @@ degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
 (Mac-generated baseline vs CI Linux float/collation drift), not absorbers of local
 run-to-run jitter — don't read a green gate as "within noise." The per-pattern
 signals (lossy, R2, R4, R5) are all at 0: a binary flip has no such noise to
-absorb, and the lossy cushion was measured swallowing a real regression. The remaining
-fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, swap F6,
-the non-`when` reactive `on.event` rows) and the R3 residual rows — current queue in
-`docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+absorb, and the lossy cushion was measured swallowing a real regression. There is no
+corpus fidelity headroom left (every signal is 1.000); the open work is what the corpus
+cannot show — `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 #### Running the multilingual `--regression` gate locally
 
@@ -738,14 +733,13 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > **Structural work on the command layer** — registration, metadata, output
 > contracts, bundle executors — has its own queue in
 > `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`. Read it before adding,
-> removing, or restructuring a command surface: the command set is currently
-> described in ~20 hand-maintained places and executed in 4 implementations, and
-> that doc holds the staged plan for collapsing both.
+> removing, or restructuring a command surface. Its six arcs (D→C→A→B→E→F) are all
+> done (last 2026-07-31); it stays as the design-principles record.
 >
 > **Cross-layer engine migration** — one typed AST, commands as grammar + op,
-> compile-to-closures, the engine/front-end boundary — is planned in
-> `docs-internal/ENGINE_MIGRATION_PLAN.md` (written 2026-08-30, no arc
-> started). Read it before moving a boundary between `parser/`, `runtime/`,
+> compile-to-closures, the engine/front-end boundary — is
+> `docs-internal/ENGINE_MIGRATION_PLAN.md`: every arc has closed (2026-09-03), and it
+> stays as the target-design doc the type/layering ratchets cite. Read it before moving a boundary between `parser/`, `runtime/`,
 > `commands/`, `expressions/`, or the semantic front-end.
 
 ### Command Pattern
@@ -787,8 +781,8 @@ Key files:
 - `packages/semantic/src/explicit/renderer.ts` - the renderer; the public `render(node, language)`
   is `explicit/verified-render.ts`, which writes a variable spelled like a structure word of the
   target language in parentheses (`(si)`) where the plain render would be misread, and only
-  there (the reader fuses `(si)` into one name; `docs-internal/MULTILINGUAL_NEXT_STEPS.md`, "Name
-  collisions")
+  there (the reader fuses `(si)` into one name; `docs-internal/multilingual/VALUE_READING.md`,
+  "Name collisions")
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
@@ -1013,9 +1007,7 @@ Legacy methods (`compile()`, `run()`, `evaluate()`) still work but log deprecati
 
 Zero-cost conditional types keep browser and server code honest: browser code uses
 `BrowserEventPayload` (`@hyperfixi/core/registry/browser` — target must be Element,
-nativeEvent must be Event); server code uses `ServerEventPayload`
-(`@lokascript/server-integration` — no `nativeEvent`, using it is a type error);
-code for both uses `UniversalEventPayload` (`@hyperfixi/core/registry/universal`)
+nativeEvent must be Event); code for both uses `UniversalEventPayload` (`@hyperfixi/core/registry/universal`)
 and narrows with `instanceof`. See
 [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md).
 
@@ -1030,7 +1022,6 @@ and narrows with `instanceof`. See
 | `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
 | `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
 | `packages/core/docs/API.md`                              | API documentation                            |
-| `packages/server-integration/src/types/`                 | Server-specific types                        |
 | `packages/semantic/src/explicit/renderer.ts`             | Renders a parse in any of the 24 languages   |
 | `packages/i18n/src/browser.ts`                           | Browser bundle exports                       |
 | `packages/semantic/src/parser/semantic-parser.ts`        | Semantic parser                              |
