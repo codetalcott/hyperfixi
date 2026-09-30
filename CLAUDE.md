@@ -613,14 +613,15 @@ Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
 generates them instead: eleven operand kinds (a reference's property among them:
 `event's type`, `the type of event`; and a sigil variable, `$n`) × the operators ×
-seven value positions (`put` and `set` values, a `set` in the second command of a
-chain, `if` and `repeat while` conditions, a loop's count, `increment … by`), plus
+eight value positions (`put` and `set` values, a `set` in the second command of a
+chain, `if` and `repeat while` conditions, a loop's count, `increment … by`, what a
+`get` reads), plus
 two WRITTEN-target positions (what a `set`
 writes, what an `increment` counts) and a derived axis of **colliding names** —
 variables spelled like some language's marker, particle or connective (es `a`, pl
 `w`, de `um`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 3,787 cells. It EXECUTES each one: the English source on upstream
+…) — 4,205 cells. It EXECUTES each one: the English source on upstream
 `hyperscript.org` is the oracle, and 48 lanes must match it — hyperfixi's English,
 semantic's English round trip, and each language on hyperfixi's direct path and
 through the adapter on upstream. Its baseline (`baselines/value-matrix.json`) lists
@@ -630,13 +631,13 @@ X of Y as T` difference and it's `di` ambiguity: listed, gated, reported apart).
 93 added the operator phrases (2026-09-28) and their 3,016 failing pairs; PR 108
 (2026-09-29) the reference operands, the chain and the names inside expressions, and
 their 3,419, the queue for the after-107 handoff; PR 124 (2026-09-30) a loop's count and
-the sigil variable, and their 371. The current count, the per-PR burn-down, the
+the sigil variable, and their 371; PR 130 (2026-09-30) what a `get` reads, and its 887. The current count, the per-PR burn-down, the
 queue by family, and an inventory of the rules that tell a variable spelled like a
 structure word from the word (each with its PR and the test that pins it), are in
 `docs-internal/MULTILINGUAL_NEXT_STEPS.md` ("Value reading"). A name that is a
 PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
-phrase cells in `value-matrix.<position>-phrases.test.ts`: thirteen parallel shards in
+phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
 the package's ordinary suite) fails on a new failing pair AND on a listed pair that
 passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (it
 refuses to add pairs without `--allow-new`). It is the queue for value work: the
