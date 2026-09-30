@@ -6926,10 +6926,28 @@ of it keeps the difference explicit and is filed instead.
   after a number count too. The same 52 loops with `index idx`: 35 → 43 keep the index (fr, de, tr,
   ja, ko, ar kept it before only because the word was the count). The adapter's slim path keeps the
   es `repeat` parity row's count (`on click repeat 3 add …`); slim's render still drops `times`, so
-  the output stays engine-invalid and its safety pin holds. Left: he, hi, qu and zh with their own verb and word lose the
-  count entirely (`חזור את 3 פעמים …`, loopType none: still `forever`), and English `repeat` beside
-  a native word in the SOV verb-final forms does not parse. Reading the native words at all is a
-  vocabulary decision (the render lexicon is locked to the i18n dictionary).
+  the output stays engine-invalid and its safety pin holds. Left (both read since PR 119, below):
+  he, hi, qu and zh with their own verb and word lose the count entirely (`חזור את 3 פעמים …`,
+  loopType none: still `forever`), and English `repeat` beside a native word in the SOV verb-final
+  forms does not parse. Reading the native words at all is a vocabulary decision (the render
+  lexicon is locked to the i18n dictionary).
+- ~~**A count beside a repeat verb no loop pattern matches reads `forever`**~~ **FIXED by PR 119**
+  (what PR 118 left). The counted patterns of he, hi, qu and zh write a marker by the count and the
+  English `times` after it (he `חזור את {quantity} times`, hi `{quantity} times को repeat`), so with
+  the language's own word (he `פעמים`, zh `次`, hi `बार`, qu `kuti`) no loop pattern matched, and the
+  clause walk emitted its bare `repeat` for the verb and dropped the count with an
+  `unconsumed-input` warning: `forever`, a silent infinite loop. A number beside the verb, past at
+  most the marker and one word, is the count now (`takeRepeatCount`): after the verb where it comes
+  first, before it (off the end of the skipped run) in the SOV languages. The same reading covers the
+  verb a verb-final command swallows (qu `kutipay suyay`) and the English `repeat` the SOV renders
+  write, which those tokenizers read as a plain identifier: with a count by it, it is a counted loop
+  head (tr `3 kez i repeat …` did not parse; qu `3 kuti ta repeat click suyay` dropped the loop);
+  without one it reads as before, since `forever` would turn a dropped loop into an infinite one.
+  The 52 hand-written counted loops: 43 → 52 read right, and with `index idx` 43 → 52 keep the index;
+  the corpus, the matrix and the extended names oracle do not move (`counted-loop-number.test.ts`).
+  Left: hi and qu with their own verb and word, when the body opens with a value the verb-first
+  fallback pattern takes (`kutipay {loopType}`: hi `3 बार को दोहराएं 1s प्रतीक्षा` reads `repeat 1s`,
+  and the wait is gone) — 8 of 174 in a probe of six bodies × both verbs.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction

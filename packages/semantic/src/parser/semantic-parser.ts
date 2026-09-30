@@ -33,6 +33,7 @@ import {
   createLiteral,
   createReference,
   isValidReference,
+  withPosition,
 } from '../types';
 import {
   tokenize as tokenizeInternal,
@@ -3917,6 +3918,73 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * The count beside a repeat verb no loop pattern matched: a number after the
+   * verb (consumed with the marker before it and one word after it), or before
+   * it (taken off the end of `skipped` with the same). The stream stands just
+   * past the verb.
+   *
+   * The counted patterns of he, hi, qu and zh write a marker by the count and
+   * the English `times` after it (he `חזור את {quantity} times`, hi
+   * `{quantity} times को repeat`). A writer's own word (he `פעמים`, zh `次`, hi
+   * `बार`, qu `kuti`) matches no pattern, so the walk emitted a bare `repeat`
+   * and dropped the count: a silent infinite loop (PR 119). A number beside
+   * the verb, past at most the marker and one word, is the count, as a number
+   * where the loop's form goes is (PR 118).
+   */
+  private takeRepeatCount(
+    stream: TokenStreamImpl,
+    skipped: LanguageToken[],
+    language: string
+  ): LanguageToken | undefined {
+    // A number, as PR 118 reads one where the loop's form goes.
+    const isCount = (t: LanguageToken | null | undefined): t is LanguageToken => {
+      const value = t?.kind === 'literal' ? tokenValue(t) : null;
+      return value?.type === 'literal' && typeof value.value === 'number';
+    };
+    const isWord = (t: LanguageToken | null | undefined): boolean => t?.kind === 'identifier';
+    const isMarker = (t: LanguageToken | null | undefined): boolean => t?.kind === 'particle';
+    if (tryGetProfile(language)?.wordOrder === 'SOV') {
+      // Before the verb: <number> [word] [marker] (hi `3 बार को दोहराएं`).
+      let end = skipped.length;
+      if (isMarker(skipped[end - 1])) end--;
+      if (isWord(skipped[end - 1]) && isCount(skipped[end - 2])) end--;
+      const count = skipped[end - 1];
+      if (!isCount(count)) return undefined;
+      skipped.length = end - 1;
+      return count;
+    }
+    // After it: [marker] <number> [word] (he `חזור את 3 פעמים`).
+    const mark = stream.mark();
+    if (isMarker(stream.peek())) stream.advance();
+    const count = stream.peek();
+    if (!isCount(count)) {
+      stream.reset(mark);
+      return undefined;
+    }
+    stream.advance();
+    if (isWord(stream.peek())) stream.advance();
+    return count;
+  }
+
+  /** A loop head for a repeat verb no loop pattern matched: counted, or bare (`forever`). */
+  private bareRepeatHead(count: LanguageToken | undefined, language: string): SemanticNode {
+    const quantity = count ? tokenValue(count) : null;
+    return createCommandNode(
+      'repeat' as ActionType,
+      count && quantity
+        ? {
+            loopType: createLiteral('times'),
+            quantity: withPosition(quantity, {
+              start: count.position.start,
+              end: count.position.end,
+            }),
+          }
+        : {},
+      { sourceLanguage: language, confidence: 0.6 }
+    );
+  }
+
+  /**
    * Parse a single clause (sequence of tokens between conjunctions).
    * Returns array of semantic nodes parsed from the clause.
    */
@@ -4075,16 +4143,11 @@ export class SemanticParserImpl implements ISemanticParser {
         (commandMatch.pattern.command as string) !== 'repeat'
       ) {
         clauseStream.reset(startMark);
+        clauseStream.advance(); // consume only the repeat keyword (and a count by it)
+        const count = this.takeRepeatCount(clauseStream, skipped, language);
         flushSkipped();
-        commands.push(
-          createCommandNode(
-            'repeat' as ActionType,
-            {},
-            { sourceLanguage: language, confidence: 0.6 }
-          )
-        );
+        commands.push(this.bareRepeatHead(count, language));
         directHits++;
-        clauseStream.advance(); // consume only the repeat keyword
         continue;
       }
 
@@ -4178,19 +4241,22 @@ export class SemanticParserImpl implements ISemanticParser {
         // matches). When matchBest fails on a token whose normalized form is the
         // `repeat` loop keyword, emit the loop action directly so it survives.
         const tok = clauseStream.peek();
-        if (tok && tok.normalized?.toLowerCase() === 'repeat') {
-          flushSkipped();
-          commands.push(
-            createCommandNode(
-              'repeat' as ActionType,
-              {},
-              { sourceLanguage: language, confidence: 0.6 }
-            )
-          );
-          directHits++;
-        } else if (tok) {
-          skipped.push(tok);
+        // The English verb the render writes in some languages (qu `3 times ta
+        // repeat`) is a plain identifier: a loop head only with a count by it.
+        const englishRepeat = tok?.kind === 'identifier' && tok.value.toLowerCase() === 'repeat';
+        if (tok && (tok.normalized?.toLowerCase() === 'repeat' || englishRepeat)) {
+          const verb = clauseStream.mark();
+          clauseStream.advance();
+          const count = this.takeRepeatCount(clauseStream, skipped, language);
+          if (count || !englishRepeat) {
+            flushSkipped();
+            commands.push(this.bareRepeatHead(count, language));
+            directHits++;
+            continue;
+          }
+          clauseStream.reset(verb);
         }
+        if (tok) skipped.push(tok);
         // Skip unrecognized token
         clauseStream.advance();
       }

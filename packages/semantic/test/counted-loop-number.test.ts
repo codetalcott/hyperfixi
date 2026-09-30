@@ -14,6 +14,9 @@
  *
  * Found by PR 117's loop probes. Reading the native words is a vocabulary
  * decision; the count is never in doubt.
+ *
+ * PR 119: in he, hi, qu and zh no loop pattern matched at all, and the clause
+ * walk read the verb alone, `forever`, dropping the count beside it.
  */
 import { describe, it, expect } from 'vitest';
 import { buildAST, parse, render } from '../src/index';
@@ -57,10 +60,82 @@ describe("the index after the language's own `times` word", () => {
   });
 });
 
+// PR 119. The counted patterns of he, hi, qu and zh write a marker by the
+// count and the English `times` after it (he `חזור את {quantity} times`). With
+// the language's own word no loop pattern matched, and the clause walk read
+// the verb alone: a bare `repeat`, `forever`, with the count dropped.
+describe('a count beside a repeat verb no loop pattern matches', () => {
+  it.each([
+    ['he', 'ב click חזור את 3 פעמים הגדל את x סוף'],
+    ['zh', '一 点击 就 重复 把 3 次 增加 把 x 结束'],
+    ['hi', 'click पर 3 बार को दोहराएं x को बढ़ाएं समाप्त'],
+    ['qu', 'maykama click 3 kuti ta kutipay x ta yapachiy tukukuy'],
+  ])('%s: %s', (language, code) => {
+    expect(english(code, language)).toBe('on click repeat 3 times increment x end');
+  });
+
+  // The count, its marker and the word after it are the loop's: nothing is
+  // left over, where the walk used to report the run it dropped.
+  it.each([
+    ['he', 'ב click חזור את 3 פעמים הגדל את x סוף'],
+    ['hi', 'click पर 3 बार को दोहराएं x को बढ़ाएं समाप्त'],
+  ])('leaves nothing unconsumed: %s', (language, code) => {
+    const unconsumed = (parse(code, language)?.diagnostics ?? []).filter(
+      d => d.code === 'unconsumed-input'
+    );
+    expect(unconsumed).toEqual([]);
+  });
+
+  // A number, as PR 118 reads one: a string or a duration there is no count.
+  it.each(['"a"', '3s'])('%s beside the verb is no count (zh)', value => {
+    expect(english(`一 点击 就 重复 把 ${value} 次 增加 把 x 结束`, 'zh')).not.toContain('times');
+  });
+
+  it.each([
+    ['zh', '一 点击 就 重复 把 3 次 index idx 日志 把 idx 结束'],
+    ['hi', 'click पर 3 बार को दोहराएं index idx idx को लॉग समाप्त'],
+  ])('keeps the index: %s: %s', (language, code) => {
+    expect(english(code, language)).toBe('on click repeat 3 times index idx log idx end');
+  });
+
+  // The English verb the render writes in the SOV languages (qu `3 times ta
+  // repeat`) is a plain identifier there, which no bare-verb reading saw: with
+  // the language's own `times` the loop was dropped, or the parse failed.
+  it.each([
+    ['qu', 'maykama click 3 kuti ta repeat click suyay tukukuy', 'wait for click'],
+    ['tr', 'tıklama i üzerinde 3 kez i repeat x i artır son', 'increment x'],
+    ['ja', 'クリック を で 3 回 を repeat x を 増加 終わり', 'increment x'],
+  ])('beside the English verb: %s: %s', (language, code, body) => {
+    expect(english(code, language)).toBe(`on click repeat 3 times ${body} end`);
+  });
+
+  // A verb-final command that anchors at the verb (qu `kutipay suyay`) gives
+  // the verb back as a bare loop head; the count before it is its count.
+  it('when a verb-final command takes the verb (qu)', () => {
+    const code = "maykama click 3 kuti ta kutipay suyay .a ta t'ikray tukukuy";
+    expect(english(code, 'qu')).toBe('on click repeat 3 times toggle .a end');
+  });
+
+  // The English verb with no count reads as it did: not a loop head (a
+  // `forever` would turn a dropped loop into an infinite one).
+  it('the English verb alone is no loop (qu)', () => {
+    expect(english('maykama click repeat x ta yapachiy tukukuy', 'qu')).not.toContain('repeat');
+  });
+
+  it('builds a counted loop, not a forever one', () => {
+    const { ast } = buildAST(parse('ב click חזור את 3 פעמים הגדל את x סוף', 'he')!);
+    const json = JSON.stringify(ast);
+    expect(json).toContain('"loopType":{"type":"literal","value":"times"');
+    expect(json).not.toContain('"forever"');
+  });
+});
+
 describe('the rendered forms still read', () => {
   it.each([
     ['es', 'al clic repetir 3 times incrementar x fin'],
     ['tl', 'kapag click ulitin 3 beses dagdagan x wakas'],
+    ['he', 'ב click חזור את 3 times הגדל את x סוף'],
+    ['qu', 'maykama click 3 times ta repeat x ta yapachiy tukukuy'],
   ])('%s: %s', (language, code) => {
     expect(english(code, language)).toBe('on click repeat 3 times increment x end');
   });
