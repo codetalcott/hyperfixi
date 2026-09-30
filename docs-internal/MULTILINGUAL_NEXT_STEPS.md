@@ -6710,7 +6710,7 @@ in the order it applies:
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
 | C1  | `a`/`an` before an operator is a variable, not an article (`put a + b`)                                                                                                                                                                                                                                                                                     | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | #1175                                  | `en-reference-meaning.test.ts`                                                              |
 | C2  | `a`/`an` before the pattern's next marker is a variable (de `erhöhe a um 1`)                                                                                                                                                                                                                                                                                | `articleIsVariable` (`value-reading.ts`), from `skipNoiseWords`   | 84                                     | `colliding-names.test.ts`                                                                   |
-| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word where a value stands is one: before an operator, `and`, `or`, the copula, `'s` or its own case marker, after an operator, `not`, `if`, a verb that requires a role, a marker or a word a loop's pattern writes before a role, and after the value of a marker the verb's pattern follows with two roles (the block scan, the clause walk, the capture, the operator run and the join agree) | `neverAValue`, `endWordIsVariable` (`value-reading.ts`), `endWordIsValue` (`expression-lexicon.ts`) | #635; before an operator 112; the rest 114; the loop head 117; loop words 121; the role pair 122 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts` |
+| C3  | `then`, `end` (not before a selector) and a curated end word are never a value; an end word where a value stands is one: before an operator, `and`, `or`, the copula, `'s` or its own case marker, after an operator, `not`, `if`, a verb that requires a role, a marker or a word a loop's pattern writes before a role (not a count word after its count), and after the value of a marker the verb's pattern follows with two roles (the block scan, the clause walk, the capture, the operator run and the join agree) | `neverAValue`, `endWordIsVariable` (`value-reading.ts`), `endWordIsValue` (`expression-lexicon.ts`) | #635; before an operator 112; the rest 114; the loop head 117; loop words 121; the role pair 122; a count word 131 | `multilingual-roadmap-fixes.test.ts`, `end-word-value.test.ts`, `native-count-render.test.ts` |
 | C4  | a command verb in a `quantity` slot (or `repeat`'s event slot) begins the next command, except one that stands alone right after the slot's marker (es `por ir`), or right before the pattern's next marker (tr `i i al artır`)                                                                                                                           | `verbEndsCountSlot`, `verbStandsAlone` (`value-reading.ts`)       | #961; exemptions 84                    | `repeat-loop-heads.test.ts`, `colliding-names.test.ts`                                      |
 | C5  | a command verb in a trailing optional slot, or one the pattern's next marker wants, begins the next command, except one that stands alone right after the slot's marker                                                                                                                                                                                 | `verbSkipsOptionalSlot`, `verbStandsAlone` (`value-reading.ts`)   | a9e4fcf5a, #950; exemption 84          | `marker-less-optional-slot-verb.test.ts`, `colliding-names.test.ts`                         |
 | C6  | an optional marker-less slot facing a verb its pattern's next token does not want is skipped, when skipping lets the pattern take its whole clause                                                                                                                                                                                                         | `maySkipVerbSlot` (`value-reading.ts`), from `matchTokenSequence` | #968                                   | `marker-less-optional-slot-verb.test.ts`, `view-transition-manner.test.ts`                  |
@@ -6990,7 +6990,7 @@ of it keeps the difference explicit and is filed instead.
   loopType none: still `forever`), and English `repeat` beside a native word in the SOV verb-final
   forms does not parse. Reading the native words at all is a vocabulary decision (the render
   lexicon is locked to the i18n dictionary): decided in the after-123 arc, read since PR 127
-  (below), never written.
+  (below), and written since PR 131.
 - ~~**An `until` loop with the language's own verb loses its condition**~~ **FIXED by PR 123**
   (PR 117's second "left", filed as pattern competition; measured wider, not an end-word matter).
   With the language's own `repeat` verb (the render keeps English `repeat`), the fused handler
@@ -7074,8 +7074,8 @@ of it keeps the difference explicit and is filed instead.
   slot took `setze`, and `verstecke`, `zeige`, `senden`, `warten`), and the English `repeat` beside
   a native word read the body as the head. Each language's own word (`patterns/count-words.ts`: es
   veces/vez, fr fois, de mal, it volte, pt vezes, pl razy, ru раз/раза, uk разів/рази, ar مرات, he
-  פעמים, id kali, sw mara, tr kez/kere/defa, ja 回/度, ko 번/회, zh 次/遍, hi बार, qu kuti) is read,
-  never written: the counted heads take it beside their count word (the render and the
+  פעמים, id kali, sw mara, tr kez/kere/defa, ja 回/度, ko 번/회, zh 次/遍, hi बार, qu kuti) is read
+  (and, since PR 131, written): the counted heads take it beside their count word (the render and the
   dictionaries do not change), and the count readers take any count before it, where a head needs a
   marker the writer left out (ja `n 回 繰り返し`, zh `重复 n 次`). sw writes its count after the
   word (`rudia mara 3`, which read `repeat mara`, `forever`), and a head below the render's reads
@@ -7087,6 +7087,25 @@ of it keeps the difference explicit and is filed instead.
   code-switched order no writer of hi uses: the fused `repeat-event-hi-sov-simple` ends at the verb
   and the fused body walk drops `3 times` (a reclaim like the one for increment's amount would
   read it); and de `warte` (the imperative) is no wait word at all.
+- ~~**The render writes English `times`, and English `repeat` in the SOV counted head**~~ **FIXED
+  by PR 131** (the owner's vocabulary decision PR 127 left open: write the words, not only read
+  them). es `repetir 3 times`, ar `كرر 3 times`, and ja `3 times を repeat`, bn `3 বার কে repeat`:
+  the 18 dictionaries without a `times` word left the head's English literal, and the SOV heads
+  matched the verb by its normalized form, which a literal renders as written. The 18 dictionaries
+  and render lexicons carry `temporal.times` now, the first word `count-words.ts` lists for each
+  (he gains a temporal block in both; vi's lexicon the `lần` its dictionary keeps under
+  `modifiers`); the counted heads write it, and the SOV heads the profile's verb (ja `3 回 を
+  繰り返し`, hi `3 बार को दोहराएं`, qu `3 kuti ta kutipay`), with English `times` and `repeat` read
+  beside them. One reader rule moved with it: sw's parse-only word-first head writes `mara` before
+  the count, so PR 121's loop words took an end word after any `mara` for a value, and the render's
+  empty loop (`rudia 3 mara mwisho kisha …`) took the commands after it (hand-written, the same
+  text misread on main). A count word after a count ends the head (C3). The stored corpus moves
+  19 writer renders, all in `repeat-times`, and no parse; the matrix's 126 counted cells pass every
+  lane with the new words (`native-count-render.test.ts`). Left, and not decided: the other loop
+  forms keep English words — `repeat` in `for … in` (23 languages), `until event` (23), `while` and
+  `until` (17), and `forever` (15) — measured with PR 131, a separate vocabulary decision. The
+  words' grammar is the dictionary's single form: ru `3 раз` and uk `3 разів` want `раза`/`рази`
+  after 2–4, which a native speaker's review may prefer to settle.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
