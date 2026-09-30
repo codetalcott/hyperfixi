@@ -1811,7 +1811,7 @@ export const getCommandSchema: CommandSchema = {
       role: 'source',
       description: 'The source to get from',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 2,
       // Marker overrides for GET pattern

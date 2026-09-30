@@ -23,7 +23,19 @@
  * outright.
  */
 
-import type { LanguagePattern } from '../types';
+import type { ExpectedType, LanguagePattern } from '../types';
+import { getCommandSchema } from '../generators/command-schemas';
+
+/**
+ * A handcrafted get's source takes what the schema's does: a literal (`get
+ * "hello"`, `get 3`, `get {}`) and the of form a translation writes for a
+ * possessive (es `textContent de #a`) too. de and zh copied the older, narrower
+ * list; de's pattern is the one its render writes, so every de `get` of a
+ * literal lost its command (PR 130).
+ */
+const GET_SOURCE_TYPES: ExpectedType[] = [
+  ...(getCommandSchema.roles.find(role => role.role === 'source')?.expectedTypes ?? []),
+];
 
 function getGetPatternsBn(): LanguagePattern[] {
   return [
@@ -76,7 +88,7 @@ function getGetPatternsDe(): LanguagePattern[] {
         format: 'hole {source}',
         tokens: [
           { type: 'literal', value: 'hole', alternatives: ['holen', 'get', 'bekomme', 'bekommen'] },
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: GET_SOURCE_TYPES },
         ],
       },
       extraction: {
@@ -408,7 +420,7 @@ function getGetPatternsZh(): LanguagePattern[] {
             optional: true,
             tokens: [{ type: 'literal', value: '把', alternatives: ['从', '由'] }],
           },
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: GET_SOURCE_TYPES },
         ],
       },
       extraction: {
