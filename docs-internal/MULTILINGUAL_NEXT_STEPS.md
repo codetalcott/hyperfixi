@@ -6977,7 +6977,8 @@ of it keeps the difference explicit and is filed instead.
   he, hi, qu and zh with their own verb and word lose the count entirely (`חזור את 3 פעמים …`,
   loopType none: still `forever`), and English `repeat` beside a native word in the SOV verb-final
   forms does not parse. Reading the native words at all is a vocabulary decision (the render
-  lexicon is locked to the i18n dictionary).
+  lexicon is locked to the i18n dictionary): decided in the after-123 arc, read since PR 127
+  (below), never written.
 - ~~**An `until` loop with the language's own verb loses its condition**~~ **FIXED by PR 123**
   (PR 117's second "left", filed as pattern competition; measured wider, not an end-word matter).
   With the language's own `repeat` verb (the render keeps English `repeat`), the fused handler
@@ -7021,7 +7022,8 @@ of it keeps the difference explicit and is filed instead.
   reading right with the rendered `times`: de `wiederholen 3 mal` before `setze`, `senden`,
   `verstecke`, `zeige` (the generated pattern's optional event slot takes the body's verb), and the
   English `repeat` beside a native word before hi `मैं में hello पर भेजें` (`for … in`) or tr `"/api"
-  getir` (the English verb is an identifier there, and `fetch` takes it).
+  getir` (the English verb is an identifier there, and `fetch` takes it). Both read since PR 127
+  (below).
 - ~~**An end word after a loop's form word ends the loop**~~ **FIXED by PR 121** (PR 117's first
   "left"). Loop forms write words right before a role the render keeps as plain words: fr `repeat
   {patient} en {source}` and `repeat tantque {condition}`, tl `sa_loob`, tr `içinde`. No marker
@@ -7050,6 +7052,28 @@ of it keeps the difference explicit and is filed instead.
   oracle do not move, and the extended names oracle moves 268 entries of its loop templates, all
   names English cannot have (`by`, `of`, `the`, …), whose misread condition leaves an empty loop
   that no longer takes the `put` (`empty-loop.test.ts`).
+- ~~**A loop's count before the language's own `times` word**~~ **FIXED by PR 127** (the after-123
+  handoff's owner question 2, decided as recommended, and its open-queue items 1 and 2). The render
+  writes English `times` in every language whose dictionary has no word for it (all but bn, ms,
+  th, tl and vi), so a writer's own word was unknown, and PRs 118–119 read only a NUMBER before it,
+  by position. A variable count read `forever`, a silent infinite loop (es `repetir n veces`, fr
+  `répéter n fois`, de `wiederholen n mal`), or lost the loop (ja `n 回 繰り返し`): measured, 6 of
+  41 read right. de `wiederholen 3 mal setze x auf 1` lost its body (the generated pattern's event
+  slot took `setze`, and `verstecke`, `zeige`, `senden`, `warten`), and the English `repeat` beside
+  a native word read the body as the head. Each language's own word (`patterns/count-words.ts`: es
+  veces/vez, fr fois, de mal, it volte, pt vezes, pl razy, ru раз/раза, uk разів/рази, ar مرات, he
+  פעמים, id kali, sw mara, tr kez/kere/defa, ja 回/度, ko 번/회, zh 次/遍, hi बार, qu kuti) is read,
+  never written: the counted heads take it beside their count word (the render and the
+  dictionaries do not change), and the count readers take any count before it, where a head needs a
+  marker the writer left out (ja `n 回 繰り返し`, zh `重复 n 次`). Variable counts 41 of 41 (and
+  `$n`, and `3`); 18 bodies × counted loops 516 → 522 of 522; the 52 hand-written counted loops and
+  their index 52 of 52. The matrix (its renders write the dictionary's word), the corpus and both
+  names oracles do not move (`native-count-word.test.ts`). Left: hi verb-first with English
+  `times` (`click पर दोहराएं 3 times …`, the after-123 handoff's item 4) still loses its count, a
+  code-switched order no writer of hi uses: the fused `repeat-event-hi-sov-simple` ends at the verb
+  and the fused body walk drops `3 times` (a reclaim like the one for increment's amount would
+  read it); sw writes its count after the word (`rudia mara 3`), which no head reads; and de
+  `warte` (the imperative) is no wait word at all.
 - ~~**pl `set x to i - 1` reads `set x to and - 1`**~~ **FIXED by PR 104**: a conjunction first in
   a value has nothing on its left to join, so it is an operand (J5), which keeps the `-` exclusion
   (`a i -b` is still `a and -b`). The filing: (found by PR 89's mutants). A conjunction
