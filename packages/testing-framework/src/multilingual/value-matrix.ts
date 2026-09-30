@@ -9,18 +9,19 @@
  *
  * This does. A CELL is one value expression in one position:
  *
- *   - OPERANDS: ten kinds (literal, variable, selector, possessive, `of`,
- *     dotted, call, array, parens, and a reference's property: `event's
- *     type`, `the id of target`), each with instances of the value types it
- *     produces;
+ *   - OPERANDS: eleven kinds (literal, variable, selector, possessive, `of`,
+ *     dotted, call, array, parens, a reference's property: `event's type`,
+ *     `the id of target`, and a sigil variable: `$n`), each with instances
+ *     of the value types it produces;
  *   - OPERATORS: arithmetic, comparison, equality, logic, membership, and the
  *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
  *     `exists`, `as`), and core's operator PHRASES (`is greater than or equal
  *     to`, `does not include`, `is an Element`, …);
  *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
- *     while` condition, an `increment … by` amount, a `set` value in the
- *     second command of a chain (`chain`), and two written targets: what a
- *     `set` writes (`assign`) and what an `increment` counts (`count`).
+ *     while` condition, a loop's count (`repeat … times`), an `increment …
+ *     by` amount, a `set` value in the second command of a chain (`chain`),
+ *     and two written targets: what a `set` writes (`assign`) and what an
+ *     `increment` counts (`count`).
  *
  * The generator crosses them as a covering design, not a full product: every
  * operand alone; every operator with literal and variable operands on each
@@ -97,15 +98,18 @@ export type OperandKind =
   | 'call'
   | 'array'
   | 'parens'
-  | 'reference';
+  | 'reference'
+  | 'sigil';
 
-export type Position = 'put' | 'set' | 'if' | 'while' | 'increment' | 'chain' | 'assign' | 'count';
+export type Position =
+  'put' | 'set' | 'if' | 'while' | 'times' | 'increment' | 'chain' | 'assign' | 'count';
 
 export const POSITIONS: readonly Position[] = [
   'put',
   'set',
   'if',
   'while',
+  'times',
   'increment',
   'chain',
   'assign',
@@ -157,6 +161,8 @@ export const GLOBALS: Readonly<Record<string, () => unknown>> = {
   flag: () => true,
   arr: () => [1, 2],
   obj: () => ({ v: 6, w: { v: 2 } }),
+  // Both engines read a `$` variable off the global scope.
+  $n: () => 3,
 };
 
 export const OPERANDS: readonly Operand[] = [
@@ -211,6 +217,10 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'reference', type: 'str', text: "event's target's id" },
   { kind: 'reference', type: 'num', text: "event's detail" },
   { kind: 'reference', type: 'num', text: 'the scrollY of window' },
+  // A variable with its scope's sigil. A translation writes it verbatim, like
+  // a variable, but no cell had one: semantic's English dropped a whole loop
+  // counted by one (`repeat $n times`), and every translation with it.
+  { kind: 'sigil', type: 'num', text: '$n' },
 ];
 
 /** An operator slot, and the value types that fill it. */
@@ -478,8 +488,9 @@ export const TARGETS: readonly string[] = [
 export const NAME_VALUE = 7;
 
 /**
- * A colliding name's positions as a whole value. Not `while`: probing every
- * name in all seven, it failed in no lane that another position did not.
+ * A colliding name's positions as a whole value. Not the two loops, `while`
+ * and `times`: probing every name in each, it failed in no lane that another
+ * position did not.
  */
 const NAME_POSITIONS: readonly Position[] = [
   'put',
@@ -573,6 +584,7 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
   set: e => `on click set x to ${e} then put x into #out`,
   if: e => `on click if ${e} then put "Y" into #out else put "N" into #out end`,
   while: e => `on click set i to 0 then repeat while i < ${e} increment i end then put i into #out`,
+  times: e => `on click set i to 0 then repeat ${e} times increment i end then put i into #out`,
   increment: e => `on click set i to 1 then increment i by ${e} then put i into #out`,
   chain: e => `on click set p to 1 then set x to ${e} then put x into #out`,
   assign: e => `on click set ${e} to 5 then put ${e} into #out`,
@@ -581,8 +593,9 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
 
 /**
  * The positions an expression fills: any value is put or set; a condition
- * takes a boolean, or an operand alone (its truthiness); a loop bound and an
- * increment take a number.
+ * takes a boolean, or an operand alone (its truthiness); a loop bound, a
+ * loop's count and an increment take a number. A reader that loses a count
+ * loops forever: es read `repetir n veces` as `repeat forever`.
  *
  * A value the second command of a chain sets (`chain`) is every `set` value
  * but an operand kind's cross with the operators: the cells that meet each
@@ -594,7 +607,7 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
 function positionsFor(type: ValueType, bare: boolean, group: MatrixCell['group']): Position[] {
   const out: Position[] = ['put', 'set'];
   if (type === 'bool' || bare) out.push('if');
-  if (type === 'num' || type === 'nstr') out.push('while', 'increment');
+  if (type === 'num' || type === 'nstr') out.push('while', 'times', 'increment');
   if (group !== 'operand-operator') out.push('chain');
   return out;
 }
@@ -1044,7 +1057,9 @@ export const ACCEPTED: ReadonlyArray<{
 }> = [
   {
     cells: [
-      ...['put', 'set', 'while', 'increment'].map(p => `${p}|the textContent of #a as Int`),
+      ...['put', 'set', 'while', 'times', 'increment'].map(
+        p => `${p}|the textContent of #a as Int`
+      ),
       // The same difference with a reference owner (PR 108); upstream's
       // `window as Int` is null, and in a loop bound both read 0 iterations.
       ...['put', 'set', 'increment'].map(p => `${p}|the scrollY of window as Int`),

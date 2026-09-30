@@ -6517,7 +6517,8 @@ names as operands (972 cells, 3,592 in all): 3,521 of 172,284, 3,419 of them ope
 reference-and-chain queue, below); 503 after PR 109 (a reference's property), 329 of them open;
 177 after PR 110 (the de chain), 3 of them open; 174 after PR 111 (qu `not pa`), with the
 `userData` name's 11 cells (3,603 in all), every one ACCEPTED: the reference-and-chain queue is
-empty.
+empty. PR 124 widened it with a loop's count (`repeat … times`) and a variable with its sigil
+(`$n`) (184 cells, 3,787 in all): 569 of 181,644, 371 of them open (the loop-count queue, below).
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6654,6 +6655,28 @@ name`). Every cell has an upstream oracle. The 3,419 open pairs, by where the lo
 ACCEPTED since PR 109 for put, set and increment (a loop bound reads 0 iterations on both).
 PR 109 moved no stored corpus row and no entry of the extended names oracle. The names inside expressions pass in every lane but the qu row above: the extended names
 oracle's misreads among these 56 names are read-backs that run alike.
+
+**The loop-count queue** (PR 124, 2026-09-30; the after-123 handoff). A loop's count is a value
+like any other, and a reader that loses it loops forever (es `repetir n veces` read `repeat
+forever`), but no cell had one: every number-typed value is a count now (`on click set i to 0 then
+repeat … times increment i end then put i into #out`), as it is a loop bound and an increment
+amount. And no cell had a variable with its scope's sigil: `$n`, a global the fixture sets, is an
+operand now, and passes in every position but the count. The colliding names stay out of both
+loops (probing every name as a count, it failed in no lane another position did not). The 371 open
+pairs, by where the loss sits:
+
+- **semantic's English parse, 235 pairs in 5 cells**: `$n`, `$n as Int`, `event's detail`,
+  `event's detail + 2`, `event's detail as Int`. A sigil variable, `it` and `event` read as
+  references, which no counted-loop head took (`literal` and `expression` only), so English dropped
+  the whole loop, and every translation with it.
+- **core, 96 pairs in 4 cells**: `textContent of #a as Int`, `v of obj as Int`, `length of arr as
+  Int`, `v of w of obj as Int`. Upstream reads each `X of (Y as Int)`, null, and a count that is
+  no number loops no times there; core threw (`times loops require a count number`), and the rest
+  of the handler never ran. `the textContent of #a as Int` keeps its ACCEPTED difference (24 pairs).
+- **translation, 40 pairs in 2 cells**: `#a's textContent`, `#a's textContent's length`, which
+  ten languages render in the of form (es `textContent de #a`). No counted-loop head read a
+  property path: es, it, pl, ru and uk dropped the loop and the command after it, and de, fr, he,
+  id and pt read `forever`.
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
