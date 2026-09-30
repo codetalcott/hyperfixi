@@ -734,12 +734,11 @@ export class PatternMatcher {
     );
   }
 
-  /** Is this slot a `put` or `set` value, where `{…}` is an object? */
+  /** Is this slot a `put` or `set` value, or what a `get` reads, where `{…}` is an object? */
   private isObjectValueSlot(patternToken: PatternToken & { type: 'role' }): boolean {
-    return (
-      patternToken.role === 'patient' &&
-      (this.currentRoleCommand === 'put' || this.currentRoleCommand === 'set')
-    );
+    const command = this.currentRoleCommand;
+    if (patternToken.role === 'source') return command === 'get';
+    return patternToken.role === 'patient' && (command === 'put' || command === 'set');
   }
 
   /** Is the slot followed by a marker (or nothing), which can bound its value? */

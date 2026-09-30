@@ -49,6 +49,7 @@ describe('value matrix: colliding names', () => {
       'if|o',
       'increment|o',
       'chain|o',
+      'get|o',
       'assign|o',
       'count|o',
       'put|o + 1',

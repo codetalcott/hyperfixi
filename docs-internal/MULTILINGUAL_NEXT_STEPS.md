@@ -6520,7 +6520,8 @@ reference-and-chain queue, below); 503 after PR 109 (a reference's property), 32
 empty. PR 124 widened it with a loop's count (`repeat … times`) and a variable with its sigil
 (`$n`) (184 cells, 3,787 in all): 569 of 181,644, 371 of them open (the loop-count queue, below);
 198 after PR 125 (a count's types, and core's count), every one ACCEPTED: the loop-count queue is
-empty.
+empty. PR 130 widened it with what a `get` reads (418 cells, 4,205 in all; 887 open pairs on main)
+and fixed them in the same PR: 198 failing, every one ACCEPTED.
 
 **The operator-phrase queue** (PR 93, 2026-09-28; the after-85 handoff's part 2). Every phrase core
 reads is a cell on upstream's answer; one of each class (equality, ordering, membership, existence,
@@ -6692,8 +6693,15 @@ pairs, by where the loss sits:
 PR 125 moved no stored corpus row, and no entry of either names oracle (neither has a loop count;
 the extended oracle's loop templates read the same). Found while probing it, not fixed: `repeat it
 times` in ms (`ulang ia kali` reads `ia kali` as `its kali`, a possessive) and qu (`chay times ta
-repeat` drops the loop); and English drops a `get` whose operand is a literal (`get "hello"`, `get
-3`, `get true`: the whole command, so `it` is never set), which no position of the matrix has.
+repeat` drops the loop); and ~~English drops a `get` whose operand is a literal~~ **FIXED by PR
+130** (`get "hello"`, `get 3`, `get true`: the whole command, so `it` was never set). A `get`
+position (`on click get <v> then put it into #out`, the chain position's values) found 887 open
+pairs in 20 cells: `get`'s source role took no `literal` (English dropped 7 literal-headed cells)
+and no `property-path` (18 translations lost the of form of `#a's textContent`); a `{…}` there
+folded to text, cut to `get {` (11 cells); and de's and zh's handcrafted get patterns copied the
+narrow list, de's being the one its render writes (`hole 2`). The schema's source takes both
+types, the handcrafted patterns read the schema's list (as put's do), and `isObjectValueSlot`
+covers get's source. 887 → 0; the corpus moves no row (`get-value.test.ts`).
 
 **The role capture** (`PatternMatcher.matchRoleTokenCore` and its helpers, `pattern-matcher.ts`),
 in the order it applies:
