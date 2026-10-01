@@ -12,7 +12,7 @@ import {
   styleLiteral,
 } from '../expressions';
 import type { Grammar, Parser } from '../parser';
-import { dataOf, implicitLoop, implicitLoopWhen, nullCheck } from '../runtime';
+import { config, dataOf, implicitLoop, implicitLoopWhen, nullCheck } from '../runtime';
 import { all, get, isEl, num, then1 } from '../util';
 
 // ---------------------------------------------------------------------------
@@ -294,8 +294,14 @@ export const strategies: Record<string, Visibility> = {
   },
 };
 
+/** The strategy named in `with <name>`, the configured default, or `display`. */
 export function strategy(p: Parser, name?: string): Visibility {
-  return strategies[name ?? 'display'] ?? p.err('Unknown show/hide strategy : ' + name);
+  const chosen = name ?? config.defaultHideShowStrategy ?? 'display';
+  return (
+    config.hideShowStrategies[chosen] ??
+    strategies[chosen] ??
+    p.err('Unknown show/hide strategy : ' + chosen)
+  );
 }
 
 // ---------------------------------------------------------------------------

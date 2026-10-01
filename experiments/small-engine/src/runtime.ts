@@ -13,10 +13,25 @@ import { fn, get, isEl, isIterable, isP, obj, set, then1, type MaybeP } from './
 
 export type Conversion = (value: unknown) => unknown;
 
-export const config = {
+export interface Config {
+  /** Attributes that hold a script. */
+  attributes: string;
+  defaultTransition: string;
+  disableSelector: string;
+  /** Strategy `hide` / `show` / `toggle` use when none is named; `display` if unset. */
+  defaultHideShowStrategy?: string;
+  /** Extra strategies by name. */
+  hideShowStrategies: Record<
+    string,
+    (op: 'hide' | 'show' | 'toggle', elt: HTMLElement, arg?: string) => void
+  >;
+}
+
+export const config: Config = {
   attributes: '_, script, data-script',
   defaultTransition: 'all 500ms ease-in',
   disableSelector: '[disable-scripting], [data-disable-scripting]',
+  hideShowStrategies: {},
 };
 
 /** `as <Name>` conversions. The everyday ones are built in; `conversions.ts` adds the rest. */
@@ -259,6 +274,18 @@ export function triggerEvent(
 export const scopeOf = (elt: object, name = 'elementScope'): Record<string, unknown> =>
   ((dataOf(elt).scopes ??= {})[name] ??= {});
 
+/**
+ * Names every script can read without declaring them. Locals inherit from this
+ * object, so a context costs nothing extra and a local of the same name wins.
+ */
+export const ambient: Record<string, unknown> = Object.create(null, {
+  selection: { get: () => getSelection()?.toString(), enumerable: true },
+  clipboard: {
+    get: () => navigator.clipboard.readText(),
+    set: (value: unknown) => void navigator.clipboard.writeText(String(value)),
+  },
+});
+
 export function makeContext(
   owner: unknown,
   feature: Feature | undefined,
@@ -266,7 +293,7 @@ export function makeContext(
   event: unknown
 ): Ctx {
   const detail = get(event, 'detail');
-  const locals: Record<string, unknown> = {};
+  const locals: Record<string, unknown> = Object.create(ambient);
   // Functions defined on the owner or an ancestor are visible as plain names.
   for (let elt = isEl(owner) ? owner : null; elt; elt = elt.parentElement) {
     Object.assign(locals, peekData(elt)?.features);

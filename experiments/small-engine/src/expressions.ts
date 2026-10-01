@@ -634,7 +634,7 @@ export function namedArgumentList(p: Parser): NamedArgsNode | undefined {
   };
 }
 
-function symbol(p: Parser): SymbolNode | undefined {
+export function symbol(p: Parser): SymbolNode | undefined {
   const start = p.pos();
   let declared: Scope | undefined;
   if (p.match('global')) declared = 'global';
