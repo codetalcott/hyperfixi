@@ -143,6 +143,13 @@ export function repeat(g: Grammar): void {
           if (collection && identifier) ctx.result = ctx.locals[identifier] = value;
           else ctx.result = current;
           if (indexIdentifier) ctx.locals[indexIdentifier] = current;
+          // In a template, mark where this iteration's output starts (see `templates.ts`).
+          const template = ctx.meta.template;
+          if (template && collection) {
+            const slot = `${identifier}_${start}`;
+            template.loops[slot] ??= { identifier, indexIdentifier, source: collection };
+            template.out.push(`<!--hs-scope:${slot}:${current}-->`);
+          }
           return then1(runList(body, ctx), signal => {
             const kind = get(signal, 'k');
             if (kind === 'break') return { signal: undefined };

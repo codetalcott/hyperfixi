@@ -20,6 +20,15 @@ export interface Meta {
   context?: unknown;
   returned?: boolean;
   returnValue?: unknown;
+  /** While a template renders: its output so far, and what each of its loops iterates over. */
+  template?: { out: string[]; loops: Record<string, LoopScope> };
+}
+
+/** A loop in a template, kept so an element in its output can take the loop's variables. */
+export interface LoopScope {
+  identifier?: string;
+  indexIdentifier?: string;
+  source: unknown;
 }
 
 export interface Ctx {

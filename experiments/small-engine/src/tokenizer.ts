@@ -5,7 +5,8 @@
  *
  * `template` is the mode used for the inside of a backtick string or a query
  * reference: text is kept verbatim until `$` / `${`, where normal lexing resumes.
- * Upstream's third mode (`"lines"`, for the `render` command) is not implemented.
+ * Upstream's third mode (`"lines"`, for the `render` command) is not here: `templates.ts`
+ * splits a template into lines itself and tokenizes the command lines with this function.
  */
 
 export interface Token {
@@ -19,6 +20,8 @@ export interface Token {
   op?: boolean;
   /** A backtick string, or a `.{…}` / `#{…}` reference. */
   template?: boolean;
+  /** The text of a template line (`templates.ts`). */
+  content?: string;
 }
 
 const OPS = new Set(

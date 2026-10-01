@@ -15,6 +15,7 @@ import {
 import { send, wait } from '../commands/events';
 import { js } from '../commands/js';
 import { loopControl, repeat, tell } from '../commands/loops';
+import { morph } from '../commands/morph';
 import { askAnswer, breakpoint, get_, log, pseudoCommand } from '../commands/misc';
 import { pick } from '../commands/pick';
 import { fetchCommand, go, scroll } from '../commands/platform';
@@ -25,12 +26,14 @@ import { boot, register } from '../engine';
 import { expressionsExtra } from '../expressions-extra';
 import { behavior, def, init, install, setFeature } from '../features';
 import { on } from '../on';
+import { liveTemplates } from '../live-templates';
 import { reactivity } from '../reactivity';
+import { render } from '../templates';
 
 // prettier-ignore
 register(
   // features
-  on, def, init, behavior, install, setFeature, js, reactivity,
+  on, def, init, behavior, install, setFeature, js, reactivity, liveTemplates,
   // expressions
   conversions, expressionsExtra, cookies,
   // commands
@@ -38,6 +41,6 @@ register(
   set, defaultCommand, increment, put, pick,
   ifCommand, repeat, loopControl, tell, halt, returnCommand, throwCommand,
   send, wait, fetchCommand, go, scroll, transition, settle, viewTransition,
-  log, get_, pseudoCommand, askAnswer, breakpoint
+  log, get_, pseudoCommand, askAnswer, breakpoint, render, morph
 );
 boot();

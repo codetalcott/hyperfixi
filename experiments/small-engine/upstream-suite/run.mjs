@@ -7,7 +7,7 @@
 //   --bundle <path>   IIFE bundle that defines `window._hyperscript` (callable, with
 //                     `.processNode`). Required.
 //   --set <name>      `spike` (the spike's 14 files), `all` (default: commands, core,
-//                     expressions, features).
+//                     expressions, features, templates).
 //   --files a,b       Explicit list relative to upstream's test dir, e.g. `commands/add.js`.
 //   --fails           Also print the title of every failing test.
 //   --json <path>     Write the per-file summary as JSON.
@@ -45,7 +45,7 @@ const SPIKE_FILES = [
     'halt',
   ].map(c => `commands/${c}.js`),
 ];
-const ALL_DIRS = ['commands', 'core', 'expressions', 'features'];
+const ALL_DIRS = ['commands', 'core', 'expressions', 'features', 'templates'];
 
 const args = process.argv.slice(2);
 const opt = name => {
@@ -100,6 +100,9 @@ if (files) {
   for (const d of ALL_DIRS) cpSync(join(testRoot, d), join(work, 'test', d), { recursive: true });
 }
 cpSync(join(here, 'fixtures.js'), join(work, 'test', 'fixtures.js'));
+// `templates/templates.js` imports upstream's source and never uses it.
+mkdirSync(join(work, 'src'));
+writeFileSync(join(work, 'src', '_hyperscript.js'), 'export default {};\n');
 
 const report = join(work, 'report.json');
 const run = spawnSync(

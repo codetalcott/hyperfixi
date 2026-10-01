@@ -4,7 +4,7 @@
  *
  * Semantics follow upstream _hyperscript's `core/runtime/runtime.js`.
  */
-import type { Cmd, Completion, Ctx, Expr, Feature, Handlers, Scope } from './ast';
+import type { Cmd, Completion, Ctx, Expr, Feature, Handlers, LoopScope, Scope } from './ast';
 import { fn, get, isEl, isIterable, isP, obj, set, then1, type MaybeP } from './util';
 
 // ---------------------------------------------------------------------------
@@ -52,6 +52,8 @@ export const dynamicResolvers: ((name: string, value: unknown) => unknown)[] = [
 /** Set by `engine.ts`, so commands can initialise content they insert. */
 export const host = {
   process(_node: unknown): void {},
+  /** A scripted element is being initialised, or was found again. Templates use it. */
+  enter(_elt: Element): void {},
 };
 
 // ---------------------------------------------------------------------------
@@ -77,6 +79,8 @@ export interface ElementData {
   originalDisplay?: string;
   /** Property values before the first `transition`, for `to initial`. */
   transitionInitials?: Record<number, unknown>;
+  /** The loops of the template rendered into this element. */
+  loops?: Record<string, LoopScope>;
 }
 
 const store = new WeakMap<object, ElementData>();

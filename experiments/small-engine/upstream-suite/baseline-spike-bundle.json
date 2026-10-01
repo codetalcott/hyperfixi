@@ -1,6 +1,6 @@
 {
-  "passed": 1319,
-  "failed": 100,
+  "passed": 1395,
+  "failed": 72,
   "perFile": {
     "commands/add.js": {
       "passed": 19,
@@ -98,8 +98,8 @@
       "skipped": 0
     },
     "commands/morph.js": {
-      "passed": 0,
-      "failed": 10,
+      "passed": 10,
+      "failed": 0,
       "skipped": 0
     },
     "commands/pick.js": {
@@ -238,8 +238,8 @@
       "skipped": 0
     },
     "core/liveTemplate.js": {
-      "passed": 0,
-      "failed": 16,
+      "passed": 16,
+      "failed": 0,
       "skipped": 0
     },
     "core/parser.js": {
@@ -498,8 +498,8 @@
       "skipped": 0
     },
     "features/live.js": {
-      "passed": 21,
-      "failed": 2,
+      "passed": 23,
+      "failed": 0,
       "skipped": 0
     },
     "features/on.js": {
@@ -536,6 +536,11 @@
       "passed": 0,
       "failed": 1,
       "skipped": 7
+    },
+    "templates/templates.js": {
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0
     }
   }
 }

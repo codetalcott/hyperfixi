@@ -120,7 +120,7 @@ function initElement(elt: Element): void {
   // The hash is of what is written, so a rewrite never looks like a changed script.
   const scriptHash = hash(written);
   if (peekData(elt)?.initialized) {
-    if (peekData(elt)?.scriptHash === scriptHash) return;
+    if (peekData(elt)?.scriptHash === scriptHash) return host.enter(elt);
     // The script changed under us (a morph, an attribute write): start over.
     cleanup(elt);
   }
@@ -131,7 +131,9 @@ function initElement(elt: Element): void {
   let src = written;
   try {
     for (const transform of transforms) src = transform(src, elt) ?? src;
-    for (const feature of parseProgram(src).features) feature.install(target, elt);
+    const { features } = parseProgram(src);
+    host.enter(elt);
+    for (const feature of features) feature.install(target, elt);
     elt.setAttribute('data-hyperscript-powered', 'true');
     triggerEvent(elt, 'hyperscript:after:init');
     setTimeout(() => triggerEvent(target, 'load', { hyperscript: true }), 1);

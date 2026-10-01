@@ -9,18 +9,19 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 
 ## Layout
 
-| File                                             | What it holds                                                                                                |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `src/tokenizer.ts`, `src/parser.ts`              | Lexer, token stream, grammar registry, parse errors                                                          |
-| `src/expressions.ts`                             | The expression chain and the core expression kinds                                                           |
-| `src/expressions-extra.ts`, `src/conversions.ts` | Optional modules: positional, `closest`, collection operators, type checks; the less common `as` conversions |
-| `src/statements.ts`                              | Commands, command lists, programs                                                                            |
-| `src/runtime.ts`, `src/engine.ts`                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                |
-| `src/on.ts`, `src/features.ts`                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                        |
-| `src/commands/*`                                 | 50 command keywords, one module export each                                                                  |
-| `src/bundles/*`                                  | Bundle entries: a bundle is a list of modules passed to `register()`                                         |
-| `upstream-suite/`                                | Runs upstream's Playwright suite against any engine bundle                                                   |
-| `matrix/`                                        | Hosts the value matrix and R4 on this engine, beside upstream                                                |
+| File                                                             | What it holds                                                                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/tokenizer.ts`, `src/parser.ts`                              | Lexer, token stream, grammar registry, parse errors                                                          |
+| `src/expressions.ts`                                             | The expression chain and the core expression kinds                                                           |
+| `src/expressions-extra.ts`, `src/conversions.ts`                 | Optional modules: positional, `closest`, collection operators, type checks; the less common `as` conversions |
+| `src/statements.ts`                                              | Commands, command lists, programs                                                                            |
+| `src/runtime.ts`, `src/engine.ts`                                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                |
+| `src/on.ts`, `src/features.ts`                                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                        |
+| `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                               |
+| `src/commands/*`                                                 | 52 command keywords, one module export each                                                                  |
+| `src/bundles/*`                                                  | Bundle entries: a bundle is a list of modules passed to `register()`                                         |
+| `upstream-suite/`                                                | Runs upstream's Playwright suite against any engine bundle                                                   |
+| `matrix/`                                                        | Hosts the value matrix and R4 on this engine, beside upstream                                                |
 
 ## Commands
 
@@ -45,19 +46,23 @@ npx tsx experiments/small-engine/matrix/adapter-host.mts       # the adapter's p
 
 |                        | new engine (`spike` bundle) | `hyperfixi.js`          | upstream |
 | ---------------------- | --------------------------- | ----------------------- | -------- |
-| Whole suite (1,419)    | 1,319                       | 825                     | 1,410    |
-| Command tests (516)    | 505                         | 306                     | 515      |
+| Whole suite (1,467)    | 1,395                       | 825                     | 1,458    |
+| Command tests (516)    | 515                         | 306                     | 515      |
 | Expression tests (459) | 452                         | 370                     | 454      |
-| Feature tests (254)    | 235                         | 100                     | 251      |
-| Size, gzipped          | 30.6 KB with every module   | 92 KB engine-only build | 45.8 KB  |
+| Feature tests (254)    | 237                         | 100                     | 251      |
+| Core tests (190)       | 143                         | 49                      | 190      |
+| Template tests (48)    | 48                          | 0                       | 48       |
+| Size, gzipped          | 33.6 KB with every module   | 92 KB engine-only build | 45.8 KB  |
 
 Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.3 KB, `common` (15 everyday
-commands) 18.3 KB, `spike` (everything) 30.6 KB, `core` (no commands) 13.8 KB.
+commands) 18.4 KB, `spike` (everything) 33.6 KB, `core` (no commands) 13.8 KB. Templates, live
+templates and `morph` together are 3.1 KB of the `spike` bundle.
 
-The 100 tests that do not pass: `morph` (10), templates and live templates (20), sockets and
-workers (17), cookies (5, a harness artifact that fails for upstream too), and upstream's
-internal-API surface (`internals.tokenizer`, `evalStatically`, source info, error collection: 47),
-and one `answer` dialog test (a harness artifact).
+The 72 tests that do not pass: upstream's internal-API surface (`internals.tokenizer`,
+`evalStatically`, source info, error collection: 47), sockets and workers (17, upstream
+extensions that are not built), two collection-expression tests that need upstream's component
+extension, and six harness artifacts (cookies 5, one `answer` dialog test) that fail for
+upstream too.
 
 The engine was first ported from, and scored against, a checkout at 0.9.91 (1,300 / 1,400).
 This repo's other gates (R4, the value matrix, the adapter's browser tests) use 0.9.93, so the
@@ -75,11 +80,10 @@ As a host for the multilingual text path (semantic renders a translation, the ad
   Italian `di` ambiguity, and they miss on upstream too. (`packages/core` misses 8 cells in
   English and 187 pairs on its direct path.)
 - **R4** (`matrix/r4.mts`). Of the 273 distinct English strings the gate puts to upstream's
-  parser (corpus rows and renders of every authored translation), the two parsers disagree on 6,
-  all `render` or `morph`.
-- Of the 159 translatable English corpus patterns, 130 parse on both engines, 26 on neither, 3
-  on upstream only (`render`, `morph`), and none on this engine only.
-
+  parser (corpus rows and renders of every authored translation), the two parsers disagree on
+  none.
+- Of the 159 translatable English corpus patterns, 133 parse on both engines and 26 on neither;
+  none parses on one engine only.
 - **The plugin itself** (`matrix/adapter-host.mts`). The engine has one hook upstream lacks,
   `_hyperscript.addSourceTransform((source, element) => english)`: a script is rewritten as it
   is read, so the element keeps what its author wrote, and a parse error in the rewritten script
@@ -90,5 +94,5 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 The matrix found one difference upstream's own suite does not test: a missing value inserted
 into the DOM (`put noSuchVariable into me`) shows as "null" on upstream. Fixed here.
 
-Source: 7,400 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
+Source: 8,100 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.
