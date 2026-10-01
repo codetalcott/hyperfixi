@@ -51,7 +51,8 @@ internal-API surface (`internals.tokenizer`, `evalStatically`, source info, erro
 
 As a host for the shipped `@lokascript/hyperscript-adapter` bundles: 12 translated scripts in 21
 languages give the same outcome as on upstream in all 252 cases (jsdom). Of the 159 translatable
-English corpus patterns, 133 parse on both engines, 26 on neither, and none on only one.
+English corpus patterns, 130 parse on both engines, 26 on neither, 3 on upstream only (`render`,
+`morph`), and none on this engine only.
 
 Source: 7,300 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.
