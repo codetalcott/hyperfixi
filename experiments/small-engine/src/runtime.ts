@@ -1,0 +1,380 @@
+/**
+ * Runtime values: contexts, symbol scopes, collections, conversions, events.
+ * Nothing here parses; `engine.ts` connects parsing to the DOM.
+ *
+ * Semantics follow upstream _hyperscript's `core/runtime/runtime.js`.
+ */
+import type { Cmd, Completion, Ctx, Expr, Feature, Scope } from './ast';
+import { fn, get, isEl, isIterable, isP, obj, set, type MaybeP } from './util';
+
+// ---------------------------------------------------------------------------
+// Configuration and host hooks
+// ---------------------------------------------------------------------------
+
+export type Conversion = (value: unknown) => unknown;
+
+export const config = {
+  attributes: '_, script, data-script',
+  defaultTransition: 'all 500ms ease-in',
+  disableSelector: '[disable-scripting], [data-disable-scripting]',
+};
+
+/** `as <Name>` conversions. The everyday ones are built in; `conversions.ts` adds the rest. */
+export const conversions: Record<string, Conversion> = Object.assign(Object.create(null), {
+  String: (v: unknown) => String(v),
+  Int: (v: unknown) => parseInt(String(v)),
+  Float: (v: unknown) => parseFloat(String(v)),
+  Number: (v: unknown) => Number(v),
+  Fragment: (v: unknown) => toFragment(v),
+});
+
+/** Tried before the table, for parameterised names such as `Fixed:2`. */
+export const dynamicResolvers: ((name: string, value: unknown) => unknown)[] = [];
+
+/** Set by `engine.ts`, so commands can initialise content they insert. */
+export const host = {
+  process(_node: unknown): void {},
+};
+
+// ---------------------------------------------------------------------------
+// Per-element state
+// ---------------------------------------------------------------------------
+
+export interface EventQueue {
+  queue: Ctx[];
+  executing: boolean;
+}
+
+export interface ElementData {
+  initialized?: boolean;
+  scriptHash?: number;
+  elementScope?: Record<string, unknown>;
+  listeners?: { target: EventTarget; event: string; handler: EventListener }[];
+  observers?: { disconnect(): void }[];
+  timers?: Set<ReturnType<typeof setTimeout>>;
+  eventQueues?: Map<object, EventQueue>;
+  originalDisplay?: string;
+}
+
+const store = new WeakMap<object, ElementData>();
+
+export const peekData = (elt: object): ElementData | undefined => store.get(elt);
+export const dropData = (elt: object): boolean => store.delete(elt);
+
+export function dataOf(elt: object): ElementData {
+  let d = store.get(elt);
+  if (!d) store.set(elt, (d = {}));
+  return d;
+}
+
+// ---------------------------------------------------------------------------
+// Collections
+// ---------------------------------------------------------------------------
+
+export const getRootNode = (node: unknown): Document | ShadowRoot => {
+  if (node instanceof Node) {
+    const root = node.getRootNode();
+    if (root instanceof Document || root instanceof ShadowRoot) return root;
+  }
+  return document;
+};
+
+export const escapeSelector = (s: string): string => s.replace(/[:&()[\]/]/g, c => '\\' + c);
+
+/** A live query: re-run each time it is iterated, like upstream's ElementCollection. */
+export class ElementCollection implements Iterable<Element> {
+  constructor(
+    private readonly raw: string,
+    private readonly relativeTo: unknown,
+    private readonly escape = false
+  ) {}
+
+  get css(): string {
+    return this.escape ? escapeSelector(this.raw) : this.raw;
+  }
+
+  get className(): string {
+    return this.raw.slice(1);
+  }
+
+  get length(): number {
+    return this.select().length;
+  }
+
+  contains(node: Node): boolean {
+    for (const e of this) if (e.contains(node)) return true;
+    return false;
+  }
+
+  select(): NodeListOf<Element> {
+    return getRootNode(this.relativeTo).querySelectorAll(this.css);
+  }
+
+  [Symbol.iterator](): Iterator<Element> {
+    return this.select()[Symbol.iterator]();
+  }
+}
+
+export const shouldAutoIterate = (v: unknown): v is Iterable<unknown> =>
+  v instanceof ElementCollection ||
+  Array.isArray(v) ||
+  v instanceof NodeList ||
+  v instanceof HTMLCollection ||
+  v instanceof FileList;
+
+/** Apply to each member of a collection, or to the value itself. */
+export function implicitLoop(value: unknown, f: (v: unknown) => void): void {
+  if (shouldAutoIterate(value)) for (const v of value) f(v);
+  else f(value);
+}
+
+export function forEach(value: unknown, f: (v: unknown) => void): void {
+  if (value == null) return;
+  if (isIterable(value)) for (const v of value) f(v);
+  else f(value);
+}
+
+const flatGet = (root: unknown, getter: (o: unknown) => unknown): unknown => {
+  if (root == null) return;
+  const value = getter(root);
+  if (value !== undefined) return value;
+  if (shouldAutoIterate(root)) return Array.from(root, getter);
+};
+
+export const resolveProperty = (root: unknown, prop: string): unknown =>
+  flatGet(root, o => get(o, prop));
+
+export const resolveAttribute = (root: unknown, name: string): unknown =>
+  flatGet(root, o => (isEl(o) ? o.getAttribute(name) : undefined));
+
+export const resolveStyle = (root: unknown, prop: string): unknown =>
+  flatGet(root, o => get(get(o, 'style'), prop));
+
+export const resolveComputedStyle = (root: unknown, prop: string): unknown =>
+  flatGet(root, o => (isEl(o) ? getComputedStyle(o).getPropertyValue(prop) : undefined));
+
+export const setAttribute = (target: unknown, name: string, value: unknown): void =>
+  implicitLoop(target, elt => {
+    if (!isEl(elt)) return;
+    if (value == null) elt.removeAttribute(name);
+    else elt.setAttribute(name, String(value));
+  });
+
+export const setStyle = (target: unknown, prop: string, value: unknown): void =>
+  implicitLoop(target, elt => set(get(elt, 'style'), prop, value));
+
+export const setProperty = (target: unknown, prop: string, value: unknown): void =>
+  implicitLoop(target, elt => set(elt, prop, value));
+
+// ---------------------------------------------------------------------------
+// Value tests
+// ---------------------------------------------------------------------------
+
+export function nullCheck(value: unknown, source: string): void {
+  if (value == null) throw new Error(`'${source}' is null`);
+}
+
+export const isEmpty = (v: unknown): boolean => v == null || get(v, 'length') === 0;
+
+export function doesExist(v: unknown): boolean {
+  if (v == null) return false;
+  if (shouldAutoIterate(v)) {
+    for (const _ of v) return true;
+    return false;
+  }
+  return true;
+}
+
+export function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
+  if (value == null && nullOk) return true;
+  if (Object.prototype.toString.call(value).slice(8, -1) === typeName) return true;
+  const ctor = get(globalThis, typeName);
+  return fn(ctor) && value instanceof ctor;
+}
+
+export function convert(value: unknown, type: string): unknown {
+  for (const resolver of dynamicResolvers) {
+    const converted = resolver(type, value);
+    if (converted !== undefined) return converted;
+  }
+  if (value == null) return null;
+  const conversion = conversions[type];
+  if (conversion) return conversion(value);
+  throw new Error('Unknown conversion : ' + type);
+}
+
+/** Turn a value into nodes to insert: nodes are moved, anything else is parsed as HTML. */
+export function toFragment(value: unknown): DocumentFragment {
+  const frag = document.createDocumentFragment();
+  implicitLoop(value, v => {
+    if (v instanceof Node) frag.append(v);
+    else {
+      const template = document.createElement('template');
+      template.innerHTML = String(v);
+      frag.append(template.content);
+    }
+  });
+  return frag;
+}
+
+/** Replace each target element with the value (a node is cloned per target), then initialise it. */
+export function replaceInDom(target: unknown, value: unknown): void {
+  implicitLoop(target, elt => {
+    if (!isEl(elt)) return;
+    const parent = elt.parentElement;
+    elt.replaceWith(value instanceof Node ? value.cloneNode(true) : toFragment(value));
+    if (parent) host.process(parent);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+
+export function triggerEvent(
+  target: unknown,
+  name: string,
+  detail: Record<string, unknown> = {},
+  sender?: unknown
+): boolean {
+  if (!(target instanceof EventTarget)) return true;
+  detail.sender = sender;
+  const event = Object.assign(new Event(name, { bubbles: true, cancelable: true, composed: true }), {
+    detail,
+  });
+  return target.dispatchEvent(event);
+}
+
+// ---------------------------------------------------------------------------
+// Contexts and symbol scopes
+// ---------------------------------------------------------------------------
+
+export function makeContext(owner: unknown, feature: Feature | undefined, me: unknown, event: unknown): Ctx {
+  const detail = get(event, 'detail');
+  return {
+    meta: { owner, feature },
+    locals: {},
+    me,
+    you: undefined,
+    result: undefined,
+    beingTested: null,
+    event,
+    target: get(event, 'target') ?? null,
+    detail: detail ?? null,
+    sender: get(detail, 'sender') ?? null,
+    body: typeof document === 'undefined' ? null : document.body,
+  };
+}
+
+/** Names that read the context itself rather than a local variable. */
+const RESERVED = ['meta', 'it', 'result', 'locals', 'event', 'target', 'detail', 'sender', 'body'];
+
+const elementScope = (ctx: Ctx): Record<string, unknown> => {
+  const owner = ctx.meta.owner;
+  return obj(owner) ? (dataOf(owner).elementScope ??= {}) : {};
+};
+
+/** `^name`: the nearest ancestor that has the variable, honouring `dom-scope`. */
+function inherited(name: string, ctx: Ctx, start: unknown): { value: unknown; element: Element | null } {
+  let elt = isEl(start) ? start : isEl(ctx.meta.owner) ? ctx.meta.owner : null;
+  while (elt) {
+    const scope = peekData(elt)?.elementScope;
+    if (scope && name in scope) return { value: scope[name], element: elt };
+    const domScope = elt.getAttribute('dom-scope');
+    if (domScope === 'isolated') break;
+    const closest = domScope?.match(/^closest\s+(.+)/);
+    const parentOf = domScope?.match(/^parent\s+of\s+(.+)/);
+    if (closest) elt = elt.parentElement?.closest(closest[1]) ?? null;
+    else if (parentOf) elt = elt.closest(parentOf[1])?.parentElement ?? null;
+    else elt = elt.parentElement;
+  }
+  return { value: undefined, element: null };
+}
+
+export function resolveSymbol(name: string, ctx: Ctx, scope?: Scope, target?: unknown): unknown {
+  if (name === 'me' || name === 'my' || name === 'I') return ctx.me;
+  if (name === 'it' || name === 'its') return ctx.beingTested ?? ctx.result;
+  if (name === 'result') return ctx.result;
+  if (name === 'you' || name === 'your' || name === 'yourself') return ctx.you;
+  if (scope === 'global') return get(globalThis, name);
+  if (scope === 'element') return elementScope(ctx)[name];
+  if (scope === 'inherited') return inherited(name, ctx, target).value;
+
+  // Inside an `on …[filter]`, bare names read the event and its detail first.
+  const filterContext = ctx.meta.context;
+  if (filterContext != null) {
+    const fromEvent = get(filterContext, name);
+    if (fromEvent !== undefined) return fromEvent;
+    const fromDetail = get(get(filterContext, 'detail'), name);
+    if (fromDetail !== undefined) return fromDetail;
+  }
+  const local = RESERVED.includes(name) ? get(ctx, name) : ctx.locals[name];
+  if (local !== undefined) return local;
+  const fromElement = elementScope(ctx)[name];
+  if (fromElement !== undefined) return fromElement;
+  return get(globalThis, name);
+}
+
+export function setSymbol(name: string, ctx: Ctx, scope: Scope | undefined, value: unknown, target?: unknown): void {
+  if (scope === 'global') {
+    set(globalThis, name, value);
+  } else if (scope === 'element') {
+    elementScope(ctx)[name] = value;
+  } else if (scope === 'inherited') {
+    const found = inherited(name, ctx, target).element;
+    const owner = found ?? (isEl(target) ? target : ctx.meta.owner);
+    if (obj(owner)) (dataOf(owner).elementScope ??= {})[name] = value;
+  } else if (!RESERVED.includes(name) && ctx.locals[name] !== undefined) {
+    ctx.locals[name] = value;
+  } else if (elementScope(ctx)[name] !== undefined) {
+    elementScope(ctx)[name] = value;
+  } else if (!RESERVED.includes(name)) {
+    ctx.locals[name] = value;
+  } else set(ctx, name, value);
+}
+
+// ---------------------------------------------------------------------------
+// Execution
+// ---------------------------------------------------------------------------
+
+/**
+ * Run commands in order. Synchronous commands run in this call; the first one
+ * that returns a promise makes the rest continue when it settles. A command that
+ * returns a signal (`return`, `break`, `continue`) stops the list and hands the
+ * signal to whoever called it.
+ */
+export function runList(cmds: Cmd[], ctx: Ctx, from = 0): MaybeP<Completion> {
+  for (let i = from; i < cmds.length; i++) {
+    const result = cmds[i].run(ctx);
+    if (isP(result)) return result.then(signal => signal || runList(cmds, ctx, i + 1));
+    if (result) return result;
+  }
+}
+
+/**
+ * Evaluate a `when` clause once per target with `it` bound to the target, then
+ * apply `yes` to the targets that passed and `no` to the rest. The result is the
+ * list that passed.
+ */
+export function implicitLoopWhen(
+  targets: unknown,
+  when: Expr,
+  ctx: Ctx,
+  yes: (elt: unknown) => void,
+  no: (elt: unknown) => void
+): MaybeP<void> {
+  const elements: unknown[] = [];
+  implicitLoop(targets, elt => elements.push(elt));
+  const conditions = elements.map(elt => {
+    ctx.beingTested = elt;
+    return when.ev(ctx);
+  });
+  ctx.beingTested = null;
+  const apply = (results: unknown[]) => {
+    ctx.result = elements.filter((elt, i) => {
+      (results[i] ? yes : no)(elt);
+      return results[i];
+    });
+  };
+  return conditions.some(isP) ? Promise.all(conditions).then(apply) : apply(conditions);
+}
