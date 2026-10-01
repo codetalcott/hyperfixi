@@ -34,7 +34,7 @@ export const config: Config = {
   defaultTransition: 'all 500ms ease-in',
   disableSelector: '[disable-scripting], [data-disable-scripting]',
   hideShowStrategies: {},
-  fetchThrowsOn: [/4.*/, /5.*/],
+  fetchThrowsOn: [/^4/, /^5/],
 };
 
 /** `as <Name>` conversions. The everyday ones are built in; `conversions.ts` adds the rest. */
@@ -106,6 +106,8 @@ export const rx = {
   readElement(_name: string, _element: unknown): void {},
   readProperty(_object: unknown, _name: string): void {},
   readAttribute(_element: unknown, _name: string): void {},
+  /** A selector was queried under `root`: any DOM change inside it re-runs the reader. */
+  readQuery(_root: Node): void {},
   wroteGlobal(_name: string): void {},
   wroteElement(_name: string, _element: unknown): void {},
   /** A property was assigned, or the object was mutated in place. */
@@ -147,6 +149,12 @@ export const getRootNode = (node: unknown): Document | ShadowRoot => {
 
 export const escapeSelector = (s: string): string => s.replace(/[:&()[\]/]/g, c => '\\' + c);
 
+/** `querySelectorAll`, recorded as a dependency of the effect that is evaluating. */
+export function query(root: ParentNode & Node, css: string): NodeListOf<Element> {
+  if (rx.tracking) rx.readQuery(root);
+  return root.querySelectorAll(css);
+}
+
 /** A live query: re-run each time it is iterated, like upstream's ElementCollection. */
 export class ElementCollection implements Iterable<Element> {
   constructor(
@@ -173,7 +181,7 @@ export class ElementCollection implements Iterable<Element> {
   }
 
   select(): NodeListOf<Element> {
-    return getRootNode(this.relativeTo).querySelectorAll(this.css);
+    return query(getRootNode(this.relativeTo), this.css);
   }
 
   [Symbol.iterator](): Iterator<Element> {

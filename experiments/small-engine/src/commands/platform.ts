@@ -44,7 +44,8 @@ const RESPONSE_TYPES: Record<string, string> = {
 /** `fetch <url> [as <type>] [with <options>] [as <type>] [do not throw]`. */
 export function fetchCommand(g: Grammar): void {
   g.commands.fetch = (p, _keyword, start) => {
-    const url = urlOrExpression(p);
+    // `as` belongs to the command: `fetch "/x" as JSON` converts the response, not the URL.
+    const url = p.withFollow(['as'], () => urlOrExpression(p));
     const conversion = () => {
       if (!p.match('as')) return;
       if (!p.match('a')) p.match('an');
@@ -89,6 +90,7 @@ export function fetchCommand(g: Grammar): void {
           const me = ctx.me;
           const detail: Record<string, unknown> = obj(given) ? given : {};
           detail.headers ||= {};
+          detail.conversion = kind.startsWith(':') ? kind.slice(1) : kind;
           const controller = new AbortController();
           const abort = () => controller.abort();
           if (me instanceof EventTarget) me.addEventListener('fetch:abort', abort, { once: true });

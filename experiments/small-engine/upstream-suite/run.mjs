@@ -12,8 +12,11 @@
 //   --fails           Also print the title of every failing test.
 //   --json <path>     Write the per-file summary as JSON.
 //
-// Upstream's tests are read from HYPERSCRIPT_TEST_ROOT (default: a `_hyperscript` checkout
-// beside this repo) and copied into a gitignored work dir; nothing upstream is modified.
+// The oracle is PINNED: upstream's tests are extracted with `git archive` at HYPERSCRIPT_REF
+// (default 0.9.93, the release this repo's other gates vendor) from the repository at
+// HYPERSCRIPT_REPO (default: a `_hyperscript` checkout beside this repo), whatever branch that
+// checkout is on. HYPERSCRIPT_TEST_ROOT, if set, reads a test directory as it is on disk
+// instead. Either way the tests go into a gitignored work dir; nothing upstream is modified.
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -21,14 +24,26 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../..');
-const testRoot =
-  process.env.HYPERSCRIPT_TEST_ROOT || resolve(repoRoot, '../_hyperscript/test');
+const upstreamRepo = process.env.HYPERSCRIPT_REPO || resolve(repoRoot, '../_hyperscript');
+const upstreamRef = process.env.HYPERSCRIPT_REF || '0.9.93';
 
 const SPIKE_FILES = [
   'features/on.js',
-  ...['add', 'remove', 'toggle', 'set', 'put', 'if', 'increment', 'send', 'trigger', 'wait', 'log', 'call', 'halt'].map(
-    c => `commands/${c}.js`
-  ),
+  ...[
+    'add',
+    'remove',
+    'toggle',
+    'set',
+    'put',
+    'if',
+    'increment',
+    'send',
+    'trigger',
+    'wait',
+    'log',
+    'call',
+    'halt',
+  ].map(c => `commands/${c}.js`),
 ];
 const ALL_DIRS = ['commands', 'core', 'expressions', 'features'];
 
@@ -42,10 +57,6 @@ if (!bundle || !existsSync(bundle)) {
   console.error('run.mjs: --bundle <file.js> is required and must exist');
   process.exit(2);
 }
-if (!existsSync(testRoot)) {
-  console.error(`run.mjs: upstream tests not found at ${testRoot} (set HYPERSCRIPT_TEST_ROOT)`);
-  process.exit(2);
-}
 
 const files = opt('files')
   ? opt('files').split(',')
@@ -56,6 +67,29 @@ const files = opt('files')
 const work = join(here, '.work');
 rmSync(work, { recursive: true, force: true });
 mkdirSync(join(work, 'test'), { recursive: true });
+
+let testRoot = process.env.HYPERSCRIPT_TEST_ROOT;
+if (!testRoot) {
+  mkdirSync(join(work, 'upstream'));
+  const archive = spawnSync('git', ['-C', upstreamRepo, 'archive', upstreamRef, 'test'], {
+    maxBuffer: 1 << 28,
+  });
+  const untar =
+    archive.status === 0 &&
+    spawnSync('tar', ['-x', '-C', join(work, 'upstream')], { input: archive.stdout });
+  if (!untar || untar.status !== 0) {
+    console.error(String(archive.stderr || (untar && untar.stderr) || ''));
+    console.error(`run.mjs: could not read test/ at ${upstreamRef} from ${upstreamRepo}`);
+    process.exit(2);
+  }
+  testRoot = join(work, 'upstream', 'test');
+} else if (!existsSync(testRoot)) {
+  console.error(`run.mjs: upstream tests not found at ${testRoot}`);
+  process.exit(2);
+}
+console.log(
+  `upstream tests: ${process.env.HYPERSCRIPT_TEST_ROOT ? testRoot : `${upstreamRef} (${upstreamRepo})`}`
+);
 writeFileSync(join(work, 'package.json'), '{"type":"module","private":true}\n');
 if (files) {
   for (const f of files) {
@@ -68,11 +102,17 @@ if (files) {
 cpSync(join(here, 'fixtures.js'), join(work, 'test', 'fixtures.js'));
 
 const report = join(work, 'report.json');
-const run = spawnSync('npx', ['playwright', 'test', '--config', join(here, 'playwright.config.js')], {
-  cwd: here,
-  env: { ...process.env, HS_BUNDLE: resolve(bundle), HS_REPORT: report },
-  encoding: 'utf8',
-});
+const run = spawnSync(
+  'npx',
+  ['playwright', 'test', '--config', join(here, 'playwright.config.js')],
+  {
+    cwd: here,
+    env: { ...process.env, HS_BUNDLE: resolve(bundle), HS_REPORT: report },
+    encoding: 'utf8',
+    // A failing engine can print megabytes; the default 1 MB limit would kill the run.
+    maxBuffer: 1 << 28,
+  }
+);
 if (!existsSync(report)) {
   console.error(run.stdout, run.stderr);
   console.error('run.mjs: Playwright produced no report');
@@ -106,7 +146,10 @@ for (const [file, row] of Object.entries(perFile).sort()) {
   console.log(`${file.padEnd(40)} ${String(row.passed).padStart(4)} / ${row.passed + row.failed}`);
 }
 const rate = ((100 * passed) / (passed + failed || 1)).toFixed(1);
-console.log(`${'TOTAL'.padEnd(40)} ${String(passed).padStart(4)} / ${passed + failed}  (${rate}%)  ${Math.round(json.stats.duration / 1000)}s`);
+console.log(
+  `${'TOTAL'.padEnd(40)} ${String(passed).padStart(4)} / ${passed + failed}  (${rate}%)  ${Math.round(json.stats.duration / 1000)}s`
+);
 if (args.includes('--fails')) console.log('\n' + fails.join('\n'));
-if (opt('json')) writeFileSync(opt('json'), JSON.stringify({ passed, failed, perFile }, null, 2) + '\n');
+if (opt('json'))
+  writeFileSync(opt('json'), JSON.stringify({ passed, failed, perFile }, null, 2) + '\n');
 process.exit(0);

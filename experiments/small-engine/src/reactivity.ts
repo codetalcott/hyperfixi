@@ -2,9 +2,10 @@
  * Reactivity: effects that re-run when what they read changes, and the three
  * features built on them — `when … changes`, `live`, `bind`.
  *
- * While an effect evaluates, the runtime reports every variable, property and
- * attribute it reads (through `rx` in `runtime.ts`); those become the effect's
- * dependencies. Writes schedule the dependent effects for the next microtask.
+ * While an effect evaluates, the runtime reports every variable, property,
+ * attribute and DOM query it reads (through `rx` in `runtime.ts`); those become
+ * the effect's dependencies. Writes schedule the dependent effects for the next
+ * microtask.
  * Follows upstream `core/runtime/reactivity.js` and `parsetree/features/{when,live,bind}.js`.
  */
 import type { Cmd, Ctx, Expr, Feature } from './ast';
@@ -31,24 +32,26 @@ type Dependency =
   | { type: 'global'; name: string }
   | { type: 'element'; name: string; element: object }
   | { type: 'attribute'; name: string; element: Element }
-  | { type: 'property'; object: object };
-
-interface Watchers {
-  effects: Set<Effect>;
-  stop(): void;
-}
+  | { type: 'property'; object: object }
+  | { type: 'query'; root: Node };
 
 interface ObjectState {
   id: number;
   /** Element-scoped variable name → effects reading it. */
   symbols?: Map<string, Set<Effect>>;
-  /** One for all properties: property subscriptions are per object, not per name. */
-  properties?: Watchers;
-  attributes?: Map<string, Watchers>;
 }
 
+type Subscriptions<K> = Map<K, Set<Effect>>;
+
 const states = new WeakMap<object, ObjectState>();
-const globals = new Map<string, Set<Effect>>();
+/** Global variable name → effects reading it. */
+const globals: Subscriptions<string> = new Map();
+/** `<attribute>:<element id>` → effects reading that attribute. */
+const attributes: Subscriptions<string> = new Map();
+/** Object id → effects reading any property of it. */
+const properties: Subscriptions<number> = new Map();
+/** Query root → effects that queried under it. */
+const queries: Subscriptions<Node> = new Map();
 const pending = new Set<Effect>();
 const owned = new WeakMap<Element, Set<Effect>>();
 let nextId = 0;
@@ -121,15 +124,11 @@ class Effect {
     unsubscribe(this);
     const before = this.dependencies;
     this.dependencies = new Map();
-    if (!this.evaluate()) {
-      // Keep what it depended on, so a later change can try again.
-      this.dependencies = before;
-      subscribe(this);
-      return;
-    }
+    // Keep what it depended on if it threw, so a later change can try again.
+    const ok = this.evaluate();
+    if (!ok) this.dependencies = before;
     subscribe(this);
-    release(before);
-    if (!Object.is(this.next, this.last)) {
+    if (ok && !Object.is(this.next, this.last)) {
       this.last = this.next;
       this.handle(this.next);
     }
@@ -143,7 +142,6 @@ class Effect {
     if (this.stopped) return;
     this.stopped = true;
     unsubscribe(this);
-    release(this.dependencies);
     pending.delete(this);
   }
 }
@@ -170,84 +168,90 @@ function schedule(effect: Effect): void {
 
 const scheduleAll = (effects?: Set<Effect>) => effects?.forEach(schedule);
 
-function watchers(stop: () => void): Watchers {
-  return { effects: new Set(), stop };
+// One observer and one pair of delegated listeners serve every attribute, property and
+// query dependency. They are attached while any such dependency exists, and only then.
+
+/** Re-run the effects that queried under a root containing one of these nodes. */
+function scheduleQueries(changed: Iterable<Node>): void {
+  for (const [root, effects] of queries) {
+    for (const node of changed) {
+      if (root.contains(node)) {
+        scheduleAll(effects);
+        break;
+      }
+    }
+  }
+}
+
+let observer: MutationObserver | undefined;
+
+function observe(): void {
+  observer ??= new MutationObserver(mutations => {
+    const changed = new Set<Node>();
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes') {
+        const state = states.get(mutation.target);
+        if (state) scheduleAll(attributes.get(`${mutation.attributeName}:${state.id}`));
+      }
+      changed.add(mutation.target);
+    }
+    scheduleQueries(changed);
+  });
+  // Observing again replaces the earlier observation; adding the same listener is a no-op.
+  observer.observe(document, { attributes: true, childList: true, subtree: true });
+  document.addEventListener('input', edited, true);
+  document.addEventListener('change', edited, true);
+}
+
+/** A form control's value changes without any script writing it. */
+function edited(event: Event): void {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const state = states.get(target);
+  if (state) scheduleAll(properties.get(state.id));
+  scheduleQueries([target]);
+}
+
+function add<K>(subscriptions: Subscriptions<K>, key: K, effect: Effect): void {
+  let effects = subscriptions.get(key);
+  if (!effects) subscriptions.set(key, (effects = new Set()));
+  effects.add(effect);
+}
+
+function drop<K>(subscriptions: Subscriptions<K>, key: K, effect: Effect): void {
+  const effects = subscriptions.get(key);
+  effects?.delete(effect);
+  if (effects?.size === 0) subscriptions.delete(key);
+}
+
+/** Add or drop an effect under each of its dependencies. True if any of them is DOM state. */
+function link(effect: Effect, apply: typeof add): boolean {
+  let dom = false;
+  for (const dep of effect.dependencies.values()) {
+    if (dep.type === 'global') apply(globals, dep.name, effect);
+    else if (dep.type === 'element')
+      apply((stateOf(dep.element).symbols ??= new Map()), dep.name, effect);
+    else {
+      dom = true;
+      if (dep.type === 'query') apply(queries, dep.root, effect);
+      else if (dep.type === 'property') apply(properties, stateOf(dep.object).id, effect);
+      else apply(attributes, `${dep.name}:${stateOf(dep.element).id}`, effect);
+    }
+  }
+  return dom;
 }
 
 function subscribe(effect: Effect): void {
-  for (const dep of effect.dependencies.values()) {
-    if (dep.type === 'global') {
-      if (!globals.has(dep.name)) globals.set(dep.name, new Set());
-      globals.get(dep.name)?.add(effect);
-    } else if (dep.type === 'element') {
-      const symbols = (stateOf(dep.element).symbols ??= new Map());
-      if (!symbols.has(dep.name)) symbols.set(dep.name, new Set());
-      symbols.get(dep.name)?.add(effect);
-    } else if (dep.type === 'attribute') {
-      const attributes = (stateOf(dep.element).attributes ??= new Map());
-      let entry = attributes.get(dep.name);
-      if (!entry) {
-        const observer = new MutationObserver(() => scheduleAll(entry?.effects));
-        observer.observe(dep.element, { attributes: true, attributeFilter: [dep.name] });
-        attributes.set(dep.name, (entry = watchers(() => observer.disconnect())));
-      }
-      entry.effects.add(effect);
-    } else {
-      const state = stateOf(dep.object);
-      let entry = state.properties;
-      if (!entry) {
-        const object = dep.object;
-        const queue = () => scheduleAll(state.properties?.effects);
-        // A form control's value changes without any script writing it.
-        if (object instanceof Element) {
-          object.addEventListener('input', queue);
-          object.addEventListener('change', queue);
-        }
-        entry = state.properties = watchers(() => {
-          if (object instanceof Element) {
-            object.removeEventListener('input', queue);
-            object.removeEventListener('change', queue);
-          }
-        });
-      }
-      entry.effects.add(effect);
-    }
-  }
+  // An effect that reads only variables never starts the observer.
+  if (link(effect, add)) observe();
 }
 
 function unsubscribe(effect: Effect): void {
-  for (const dep of effect.dependencies.values()) {
-    if (dep.type === 'global') {
-      const effects = globals.get(dep.name);
-      effects?.delete(effect);
-      if (effects?.size === 0) globals.delete(dep.name);
-    } else if (dep.type === 'element') {
-      const symbols = states.get(dep.element)?.symbols;
-      symbols?.get(dep.name)?.delete(effect);
-      if (symbols?.get(dep.name)?.size === 0) symbols.delete(dep.name);
-    } else if (dep.type === 'attribute') {
-      states.get(dep.element)?.attributes?.get(dep.name)?.effects.delete(effect);
-    } else states.get(dep.object)?.properties?.effects.delete(effect);
-  }
-}
-
-/** Drop the observers and listeners of dependencies nothing reads any more. */
-function release(dependencies: Map<string, Dependency>): void {
-  for (const dep of dependencies.values()) {
-    if (dep.type === 'attribute') {
-      const attributes = states.get(dep.element)?.attributes;
-      const entry = attributes?.get(dep.name);
-      if (entry?.effects.size === 0) {
-        entry.stop();
-        attributes?.delete(dep.name);
-      }
-    } else if (dep.type === 'property') {
-      const state = states.get(dep.object);
-      if (state?.properties?.effects.size === 0) {
-        state.properties.stop();
-        state.properties = undefined;
-      }
-    }
+  link(effect, drop);
+  if (observer && !attributes.size && !properties.size && !queries.size) {
+    observer.disconnect();
+    document.removeEventListener('input', edited, true);
+    document.removeEventListener('change', edited, true);
   }
 }
 
@@ -296,9 +300,11 @@ function connect(): void {
   rx.wroteElement = (name, element) => {
     if (isObject(element)) scheduleAll(states.get(element)?.symbols?.get(name));
   };
+  rx.readQuery = root =>
+    void current?.dependencies.set('query:' + stateOf(root).id, { type: 'query', root });
   rx.wroteProperty = object => {
-    if (isObject(object) && !get(object, '_hsSkipTracking'))
-      scheduleAll(states.get(object)?.properties?.effects);
+    const state = isObject(object) && !get(object, '_hsSkipTracking') && states.get(object);
+    if (state) scheduleAll(properties.get(state.id));
   };
   rx.stop = element => {
     owned.get(element)?.forEach(effect => effect.stop());

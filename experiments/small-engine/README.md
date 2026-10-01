@@ -27,32 +27,41 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 npx tsc -p experiments/small-engine/tsconfig.json      # typecheck (strict)
 node experiments/small-engine/build.mjs                # build dist/, print sizes
 
-# Upstream's tests need a `_hyperscript` checkout beside this repo (or HYPERSCRIPT_TEST_ROOT).
+# Upstream's tests are read at a pinned tag (HYPERSCRIPT_REF, default 0.9.93) from a `_hyperscript`
+# checkout beside this repo (HYPERSCRIPT_REPO), whatever branch it is on. HYPERSCRIPT_TEST_ROOT
+# reads a test directory from disk instead.
 node experiments/small-engine/upstream-suite/run.mjs --bundle experiments/small-engine/dist/spike.js --set spike --fails
 node experiments/small-engine/upstream-suite/run.mjs --bundle <any-bundle.js>      # whole suite
 ```
 
-## Measured (2026-10-01, upstream checkout 0.9.91-dev)
+## Measured (2026-10-01, upstream 0.9.93)
 
 |                        | new engine (`spike` bundle) | `hyperfixi.js`          | upstream |
 | ---------------------- | --------------------------- | ----------------------- | -------- |
-| Whole suite (1,400)    | 1,300                       | 818                     | 1,392    |
-| Command tests (511)    | 500                         | 301                     | 510      |
+| Whole suite (1,419)    | 1,319                       | 825                     | 1,410    |
+| Command tests (516)    | 505                         | 306                     | 515      |
 | Expression tests (459) | 452                         | 370                     | 454      |
-| Feature tests (254)    | 235                         | 100                     | 252      |
-| Size, gzipped          | 30.4 KB with every module   | 92 KB engine-only build | 45.1 KB  |
+| Feature tests (254)    | 235                         | 100                     | 251      |
+| Size, gzipped          | 30.5 KB with every module   | 92 KB engine-only build | 45.8 KB  |
 
-Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.1 KB, `common` (15 everyday
-commands) 18.2 KB, `spike` (everything) 30.4 KB, `core` (no commands) 13.6 KB.
+Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.2 KB, `common` (15 everyday
+commands) 18.3 KB, `spike` (everything) 30.5 KB, `core` (no commands) 13.7 KB.
 
 The 100 tests that do not pass: `morph` (10), templates and live templates (20), sockets and
 workers (17), cookies (5, a harness artifact that fails for upstream too), and upstream's
-internal-API surface (`internals.tokenizer`, `evalStatically`, source info, error collection: 48).
+internal-API surface (`internals.tokenizer`, `evalStatically`, source info, error collection: 47),
+and one `answer` dialog test (a harness artifact).
+
+The engine was first ported from, and scored against, a checkout at 0.9.91 (1,300 / 1,400).
+This repo's other gates (R4, the value matrix, the adapter's browser tests) use 0.9.93, so the
+oracle is now pinned there and the 0.9.93 changes are ported: `as` after a `fetch` URL belongs to
+the command, `fetchThrowsOn` is anchored, `in … where`, and reactive DOM queries behind one
+document-wide observer.
 
 As a host for the shipped `@lokascript/hyperscript-adapter` bundles: 12 translated scripts in 21
 languages give the same outcome as on upstream in all 252 cases (jsdom). Of the 159 translatable
 English corpus patterns, 130 parse on both engines, 26 on neither, 3 on upstream only (`render`,
 `morph`), and none on this engine only.
 
-Source: 7,300 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
+Source: 7,400 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.

@@ -48,6 +48,7 @@ import {
   isEmpty,
   maybeNotify,
   nullCheck,
+  query,
   replaceInDom,
   resolveAttribute,
   resolveComputedStyle,
@@ -1065,7 +1066,7 @@ function inExpression(p: Parser, root: Expr): Expr | undefined {
     const found: unknown[] = [];
     const css = get(r, 'css');
     if (typeof css === 'string') {
-      implicitLoop(within, t => isEl(t) && found.push(...t.querySelectorAll(css)));
+      implicitLoop(within, t => isEl(t) && found.push(...query(t, css)));
     } else if (isEl(r)) {
       let inside = false;
       implicitLoop(within, t => {
@@ -1087,7 +1088,10 @@ function inExpression(p: Parser, root: Expr): Expr | undefined {
     lhs: ctx => node.ev(ctx),
     put: (_ctx, lhs, value) => replaceInDom(lhs, value),
   };
-  return indirect(p, node);
+  // `<li/> in #list where …` filters what was found, even where only a unary is read.
+  let filtered: Expr | undefined;
+  if (p.peek('where')) for (const rule of p.g.collections) filtered ??= rule(p, node);
+  return indirect(p, filtered ?? node);
 }
 
 function asExpression(p: Parser, root: Expr): Expr | undefined {

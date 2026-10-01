@@ -1,5 +1,5 @@
 {
-  "passed": 1300,
+  "passed": 1319,
   "failed": 100,
   "perFile": {
     "commands/add.js": {
@@ -43,7 +43,7 @@
       "skipped": 0
     },
     "commands/fetch.js": {
-      "passed": 23,
+      "passed": 28,
       "failed": 0,
       "skipped": 0
     },
@@ -245,6 +245,11 @@
     "core/parser.js": {
       "passed": 13,
       "failed": 1,
+      "skipped": 0
+    },
+    "core/reactive-queries.js": {
+      "passed": 14,
+      "failed": 0,
       "skipped": 0
     },
     "core/reactivity.js": {
