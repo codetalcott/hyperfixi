@@ -17,9 +17,24 @@ import type {
   PostfixNode,
   RelativeNode,
 } from './ast';
-import { attributeAccessNode, attributeRef, expr, implicitMe, leaf, unary, unaryNode } from './expressions';
+import {
+  attributeAccessNode,
+  attributeRef,
+  expr,
+  implicitMe,
+  leaf,
+  unary,
+  unaryNode,
+} from './expressions';
 import type { Grammar, Parser } from './parser';
-import { implicitLoop, isEmpty, replaceInDom, shouldAutoIterate, triggerEvent, typeCheck } from './runtime';
+import {
+  implicitLoop,
+  isEmpty,
+  replaceInDom,
+  shouldAutoIterate,
+  triggerEvent,
+  typeCheck,
+} from './runtime';
 import { all, get, isEl, isIterable, num, then1 } from './util';
 
 const list = (v: unknown): unknown[] => (isIterable(v) ? Array.from(v) : []);
@@ -44,7 +59,12 @@ function positional(p: Parser): Expr | undefined {
         if (!value) return;
         // An element stands for its children; any other collection is read as a list.
         const items = Array.isArray(value) ? value : list(get(value, 'children') ?? value);
-        const index = operator === 'first' ? 0 : operator === 'last' ? items.length - 1 : Math.floor(Math.random() * items.length);
+        const index =
+          operator === 'first'
+            ? 0
+            : operator === 'last'
+              ? items.length - 1
+              : Math.floor(Math.random() * items.length);
         return items[index];
       }),
   };
@@ -71,7 +91,10 @@ function relative(p: Parser): Expr | undefined {
     if (!(origin instanceof Node)) return;
     const wanted = forward ? Node.DOCUMENT_POSITION_PRECEDING : Node.DOCUMENT_POSITION_FOLLOWING;
     const ordered = forward ? found : found.reverse();
-    return ordered.find(e => e.compareDocumentPosition(origin) === wanted) ?? (wrapping ? ordered[0] : undefined);
+    return (
+      ordered.find(e => e.compareDocumentPosition(origin) === wanted) ??
+      (wrapping ? ordered[0] : undefined)
+    );
   };
   const inList = (origin: unknown, items: unknown, css: string) => {
     const candidates = list(items).filter(e => e === origin || (isEl(e) && e.matches(css)));
@@ -93,11 +116,15 @@ function relative(p: Parser): Expr | undefined {
     start,
     end: p.endPos(),
     ev: ctx =>
-      all([thing.ev(ctx), from.ev(ctx), inElt?.ev(ctx), withinElt?.ev(ctx)], ([value, origin, items, within]) => {
-        const css = get(value, 'css');
-        if (typeof css !== 'string') throw new Error('Expected a CSS value to be returned by ' + thingText);
-        return inElt ? items && inList(origin, items, css) : inDocument(origin, within, css);
-      }),
+      all(
+        [thing.ev(ctx), from.ev(ctx), inElt?.ev(ctx), withinElt?.ev(ctx)],
+        ([value, origin, items, within]) => {
+          const css = get(value, 'css');
+          if (typeof css !== 'string')
+            throw new Error('Expected a CSS value to be returned by ' + thingText);
+          return inElt ? items && inList(origin, items, css) : inDocument(origin, within, css);
+        }
+      ),
   };
   return node;
 }
@@ -109,7 +136,9 @@ function closest(p: Parser): Expr | undefined {
   if (!p.match('closest')) return;
   const parentSearch = !!p.match('parent');
   const attribute = p.cur().type === 'ATTRIBUTE_REF' ? attributeRef(p) : undefined;
-  const css = attribute ? `[${attribute.name}]` : (unary(p).css ?? p.err('Expected a CSS expression'));
+  const css = attribute
+    ? `[${attribute.name}]`
+    : (unary(p).css ?? p.err('Expected a CSS expression'));
   const to = p.match('to') ? expr(p) : implicitMe(p);
   const node: ClosestNode = {
     type: 'closestExpr',
@@ -155,6 +184,7 @@ function collectionOp(p: Parser, root: Expr): Expr | undefined {
   const each = (ctx: Ctx, items: unknown[]) => {
     const results = items.map(item => {
       ctx.beingTested = item;
+      if (node.varName) ctx.locals[node.varName] = item;
       return operand.ev(ctx);
     });
     ctx.beingTested = null;
@@ -163,7 +193,8 @@ function collectionOp(p: Parser, root: Expr): Expr | undefined {
 
   const apply = (ctx: Ctx, collection: unknown): unknown => {
     if (!collection) return collection;
-    if (operator === 'split') return then1(operand.ev(ctx), by => String(collection).split(String(by)));
+    if (operator === 'split')
+      return then1(operand.ev(ctx), by => String(collection).split(String(by)));
     const items = list(collection);
     if (operator === 'joined') return then1(operand.ev(ctx), by => items.join(String(by)));
     const results = each(ctx, items);
@@ -172,13 +203,18 @@ function collectionOp(p: Parser, root: Expr): Expr | undefined {
     const direction = descending ? -1 : 1;
     return items
       .map((_, i) => i)
-      .sort((a, b) => (results[a] == results[b] ? 0 : (num(results[a]) < num(results[b]) ? -1 : 1) * direction))
+      .sort((a, b) =>
+        results[a] == results[b] ? 0 : (num(results[a]) < num(results[b]) ? -1 : 1) * direction
+      )
       .map(i => items[i]);
   };
 
   const node: CollectionNode = {
     type: 'collectionExpression',
-    operator: operator === 'where' || operator === 'sorted' || operator === 'mapped' || operator === 'split' ? operator : 'joined',
+    operator:
+      operator === 'where' || operator === 'sorted' || operator === 'mapped' || operator === 'split'
+        ? operator
+        : 'joined',
     root,
     operand,
     descending,
@@ -251,14 +287,31 @@ function beep(p: Parser): Expr | undefined {
   if (!p.match('beep!')) return;
   const root = unary(p);
   const source = p.text(root);
-  return unaryNode(p, 'beepExpression', start, root, (value, ctx) => {
-    if (triggerEvent(ctx.me, 'hyperscript:beep', { element: ctx.me, expression: root, value })) {
-      const typeName = value == null ? 'object (null)' : (get(get(value, 'constructor'), 'name') ?? 'unknown');
-      const shown = typeof value === 'string' ? `"${value}"` : shouldAutoIterate(value) ? Array.from(value) : value;
-      console.log(`///_ BEEP! The expression (${source}) evaluates to:`, shown, 'of type ' + typeName);
-    }
-    return value;
-  }, false);
+  return unaryNode(
+    p,
+    'beepExpression',
+    start,
+    root,
+    (value, ctx) => {
+      if (triggerEvent(ctx.me, 'hyperscript:beep', { element: ctx.me, expression: root, value })) {
+        const typeName =
+          value == null ? 'object (null)' : (get(get(value, 'constructor'), 'name') ?? 'unknown');
+        const shown =
+          typeof value === 'string'
+            ? `"${value}"`
+            : shouldAutoIterate(value)
+              ? Array.from(value)
+              : value;
+        console.log(
+          `///_ BEEP! The expression (${source}) evaluates to:`,
+          shown,
+          'of type ' + typeName
+        );
+      }
+      return value;
+    },
+    false
+  );
 }
 
 export function expressionsExtra(g: Grammar): void {

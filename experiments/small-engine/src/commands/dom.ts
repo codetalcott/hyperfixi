@@ -2,7 +2,15 @@
  * `add`, `remove`, `toggle`. Follows upstream `parsetree/commands/dom.js`.
  */
 import type { AttributeRefNode, ClassRefNode, Cmd, Ctx, Expr, StyleLiteralNode } from '../ast';
-import { assignable, attributeRef, classRef, eventName, expr, implicitMe, styleLiteral } from '../expressions';
+import {
+  assignable,
+  attributeRef,
+  classRef,
+  eventName,
+  expr,
+  implicitMe,
+  styleLiteral,
+} from '../expressions';
 import type { Grammar, Parser } from '../parser';
 import { dataOf, implicitLoop, implicitLoopWhen, nullCheck } from '../runtime';
 import { all, get, isEl, num, then1 } from '../util';
@@ -29,7 +37,8 @@ const cssProperties = (css: string) =>
     .map(declaration => declaration.split(':')[0].trim())
     .filter(Boolean);
 
-const styleOf = (elt: unknown) => (elt instanceof HTMLElement || elt instanceof SVGElement ? elt.style : undefined);
+const styleOf = (elt: unknown) =>
+  elt instanceof HTMLElement || elt instanceof SVGElement ? elt.style : undefined;
 
 /** Apply once per target, or — with a `when` clause — apply to the targets that pass and undo on the rest. */
 const eachTarget = (
@@ -40,7 +49,13 @@ const eachTarget = (
   undo: (elt: Element) => void
 ) =>
   when
-    ? implicitLoopWhen(targets, when, ctx, t => isEl(t) && apply(t), t => isEl(t) && undo(t))
+    ? implicitLoopWhen(
+        targets,
+        when,
+        ctx,
+        t => isEl(t) && apply(t),
+        t => isEl(t) && undo(t)
+      )
     : implicitLoop(targets, t => isEl(t) && apply(t));
 
 // ---------------------------------------------------------------------------
@@ -66,7 +81,8 @@ export function add(g: Grammar): void {
     let value: Expr | undefined;
     if (!refs && !attribute && !css) {
       value = p.withFollow(['to'], () => expr(p));
-      if (p.cur().value !== 'to') p.err('Expected either a class reference or attribute expression');
+      if (p.cur().value !== 'to')
+        p.err('Expected either a class reference or attribute expression');
     }
     const to = p.match('to') ? expr(p) : implicitMe(p);
     const whenClause = p.match('when') ? expr(p) : undefined;
@@ -84,35 +100,45 @@ export function add(g: Grammar): void {
       start,
       end: p.endPos(),
       run: ctx =>
-        all([to.ev(ctx), css?.ev(ctx), value?.ev(ctx), ...classNames(refs, ctx)], ([target, cssText, item, ...names]) => {
-          nullCheck(target, toText);
-          if (value) {
-            if (Array.isArray(target)) target.push(item);
-            else if (target instanceof Set) target.add(item);
-            else if (target instanceof Map) throw new Error("Use 'set myMap[key] to value' for Maps");
-            else throw new Error('Cannot add to ' + typeof target);
-          } else if (refs) {
-            return all(
-              names.map(name =>
-                eachTarget(target, when, ctx, t => t.classList.add(String(name)), t => t.classList.remove(String(name)))
-              ),
-              () => {}
-            );
-          } else if (attribute) {
-            return eachTarget(
-              target,
-              when,
-              ctx,
-              t => t.setAttribute(attribute.name, String(attribute.value)),
-              t => t.removeAttribute(attribute.name)
-            );
-          } else {
-            implicitLoop(target, t => {
-              const style = styleOf(t);
-              if (style) style.cssText += cssText;
-            });
+        all(
+          [to.ev(ctx), css?.ev(ctx), value?.ev(ctx), ...classNames(refs, ctx)],
+          ([target, cssText, item, ...names]) => {
+            nullCheck(target, toText);
+            if (value) {
+              if (Array.isArray(target)) target.push(item);
+              else if (target instanceof Set) target.add(item);
+              else if (target instanceof Map)
+                throw new Error("Use 'set myMap[key] to value' for Maps");
+              else throw new Error('Cannot add to ' + typeof target);
+            } else if (refs) {
+              return all(
+                names.map(name =>
+                  eachTarget(
+                    target,
+                    when,
+                    ctx,
+                    t => t.classList.add(String(name)),
+                    t => t.classList.remove(String(name))
+                  )
+                ),
+                () => {}
+              );
+            } else if (attribute) {
+              return eachTarget(
+                target,
+                when,
+                ctx,
+                t => t.setAttribute(attribute.name, String(attribute.value)),
+                t => t.removeAttribute(attribute.name)
+              );
+            } else {
+              implicitLoop(target, t => {
+                const style = styleOf(t);
+                if (style) style.cssText += cssText;
+              });
+            }
           }
-        }),
+        ),
     };
     return node;
   };
@@ -133,7 +159,8 @@ export interface RemoveNode extends Cmd {
   when?: Expr;
 }
 
-const isDomTarget = (v: unknown) => v instanceof Node || v instanceof NodeList || v instanceof HTMLCollection;
+const isDomTarget = (v: unknown) =>
+  v instanceof Node || v instanceof NodeList || v instanceof HTMLCollection;
 
 export function remove(g: Grammar): void {
   g.commands.remove = (p, _keyword, start) => {
@@ -164,7 +191,11 @@ export function remove(g: Grammar): void {
         container.delete(value);
       } else {
         implicitLoop(value, t => {
-          if (isEl(t) && t.parentElement && (container == null || (container instanceof Node && container.contains(t)))) {
+          if (
+            isEl(t) &&
+            t.parentElement &&
+            (container == null || (container instanceof Node && container.contains(t)))
+          ) {
             t.parentElement.removeChild(t);
           }
         });
@@ -189,11 +220,19 @@ export function remove(g: Grammar): void {
             nullCheck(container, fromText);
             if (css) {
               const properties = cssProperties(String(cssText));
-              implicitLoop(container, t => properties.forEach(property => styleOf(t)?.removeProperty(property)));
+              implicitLoop(container, t =>
+                properties.forEach(property => styleOf(t)?.removeProperty(property))
+              );
             } else if (refs) {
               return all(
                 names.map(name =>
-                  eachTarget(container, when, ctx, t => t.classList.remove(String(name)), t => t.classList.add(String(name)))
+                  eachTarget(
+                    container,
+                    when,
+                    ctx,
+                    t => t.classList.remove(String(name)),
+                    t => t.classList.add(String(name))
+                  )
                 ),
                 () => {}
               );
@@ -223,7 +262,8 @@ const byStyle =
   (property: 'visibility' | 'opacity', hidden: string, shown: string): Visibility =>
   (op, elt, arg) => {
     if (arg) elt.style[property] = arg;
-    else if (op === 'toggle') elt.style[property] = getComputedStyle(elt)[property] === hidden ? shown : hidden;
+    else if (op === 'toggle')
+      elt.style[property] = getComputedStyle(elt)[property] === hidden ? shown : hidden;
     else elt.style[property] = op === 'hide' ? hidden : shown;
   };
 
@@ -236,11 +276,13 @@ export const strategies: Record<string, Visibility> = {
     }
     const data = dataOf(elt);
     if (arg) elt.style.display = arg;
-    else if (op === 'toggle') strategies.display(getComputedStyle(elt).display === 'none' ? 'show' : 'hide', elt);
+    else if (op === 'toggle')
+      strategies.display(getComputedStyle(elt).display === 'none' ? 'show' : 'hide', elt);
     else if (op === 'hide') {
       data.originalDisplay ??= elt.style.display;
       elt.style.display = 'none';
-    } else if (data.originalDisplay && data.originalDisplay !== 'none') elt.style.display = data.originalDisplay;
+    } else if (data.originalDisplay && data.originalDisplay !== 'none')
+      elt.style.display = data.originalDisplay;
     else elt.style.removeProperty('display');
   },
   visibility: byStyle('visibility', 'hidden', 'visible'),
@@ -295,7 +337,8 @@ export function toggle(g: Grammar): void {
         p.req('and');
         node.between = [first, classRef(p) ?? p.err('Expected classRef')];
       } else {
-        const attribute = attributeRef(p) ?? p.err('Expected either a class reference or attribute expression');
+        const attribute =
+          attributeRef(p) ?? p.err('Expected either a class reference or attribute expression');
         p.req('and');
         node.between = [attribute, attributeRef(p) ?? p.err('Expected attributeRef')];
       }
@@ -314,7 +357,8 @@ export function toggle(g: Grammar): void {
       p.req('and');
       values.push(expr(p));
     }
-    if (node.target && !node.betweenValues) p.err("toggle <expression> requires 'between' with values");
+    if (node.target && !node.betweenValues)
+      p.err("toggle <expression> requires 'between' with values");
 
     if (p.peek('for') && !p.peek('in', 2)) {
       p.match('for');
@@ -327,18 +371,22 @@ export function toggle(g: Grammar): void {
 
     const { on, target, betweenValues, between, attributeRef: attribute, styleProp } = node;
     const onText = on ? p.text(on) : '';
-    const next = (values: unknown[], current: unknown) => values[(values.findIndex(v => v == current) + 1) % values.length];
+    const next = (values: unknown[], current: unknown) =>
+      values[(values.findIndex(v => v == current) + 1) % values.length];
 
     const flip = (ctx: Ctx, targets: unknown, values: unknown[], names: unknown[]) => {
       if (betweenValues && target?.lhs && target.put) {
         const write = target;
-        return all([target.ev(ctx), target.lhs(ctx)], ([current, lhs]) => write.put?.(ctx, lhs, next(values, current)));
+        return all([target.ev(ctx), target.lhs(ctx)], ([current, lhs]) =>
+          write.put?.(ctx, lhs, next(values, current))
+        );
       }
       if (betweenValues && styleProp) {
         return implicitLoop(targets, t => {
           const style = styleOf(t);
           if (!style || !isEl(t)) return;
-          const current = style.getPropertyValue(styleProp) || getComputedStyle(t).getPropertyValue(styleProp);
+          const current =
+            style.getPropertyValue(styleProp) || getComputedStyle(t).getPropertyValue(styleProp);
           style.setProperty(styleProp, String(next(values, current)));
         });
       }
@@ -372,7 +420,16 @@ export function toggle(g: Grammar): void {
 
     node.run = ctx =>
       all(
-        [on?.ev(ctx), node.time?.ev(ctx), node.from?.ev(ctx), all((betweenValues ?? []).map(v => v.ev(ctx)), v => v), ...classNames(node.classRefs, ctx)],
+        [
+          on?.ev(ctx),
+          node.time?.ev(ctx),
+          node.from?.ev(ctx),
+          all(
+            (betweenValues ?? []).map(v => v.ev(ctx)),
+            v => v
+          ),
+          ...classNames(node.classRefs, ctx),
+        ],
         ([targets, time, source, values, ...names]) => {
           const once = () => flip(ctx, targets, Array.isArray(values) ? values : [], names);
           if (node.time) {

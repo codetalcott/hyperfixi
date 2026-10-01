@@ -44,13 +44,17 @@ export function ifCommand(g: Grammar): void {
       falseBranch,
       start,
       end: p.endPos(),
-      run: ctx => then1(condition.ev(ctx), yes => (yes ? runList(trueBranch, ctx) : falseBranch && runList(falseBranch, ctx))),
+      run: ctx =>
+        then1(condition.ev(ctx), yes =>
+          yes ? runList(trueBranch, ctx) : falseBranch && runList(falseBranch, ctx)
+        ),
     };
     return node;
   };
 }
 
-const EXIT: Signal = { k: 'return', value: undefined };
+/** `exit`, and `halt` without `the event`: leave the handler; a function returns null. */
+const EXIT: Signal = { k: 'return', value: null };
 
 export interface HaltNode extends Cmd {
   type: 'haltCommand';
@@ -104,7 +108,7 @@ export function returnCommand(g: Grammar): void {
       start,
       end: p.endPos(),
       run: ctx =>
-        then1(value?.ev(ctx), v => {
+        then1(value ? value.ev(ctx) : null, v => {
           ctx.meta.returned = true;
           ctx.meta.returnValue = v;
           const signal: Signal = { k: 'return', value: v };

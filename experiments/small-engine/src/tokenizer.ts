@@ -51,7 +51,14 @@ export function tokenize(src: string, template = false): Token[] {
     } else column++;
     return last;
   };
-  const make = (type: string): Token => ({ type, value: '', start: pos, end: pos + 1, line, column });
+  const make = (type: string): Token => ({
+    type,
+    value: '',
+    start: pos,
+    end: pos + 1,
+    line,
+    column,
+  });
   const done = (token: Token, value: string) => {
     token.value = value;
     token.end = pos;
@@ -73,7 +80,8 @@ export function tokenize(src: string, template = false): Token[] {
       token.template = true;
       value += eat();
       value += eatWhile(c => c !== '}');
-      if (cur() !== '}') throw new Error('Unterminated ' + (keepBrace ? 'class' : 'id') + ' reference');
+      if (cur() !== '}')
+        throw new Error('Unterminated ' + (keepBrace ? 'class' : 'id') + ' reference');
       const brace = eat();
       if (keepBrace) value += brace;
     } else if (keepBrace) {
@@ -99,7 +107,9 @@ export function tokenize(src: string, template = false): Token[] {
         else if (next === 'x') {
           const hex = cur() && at(1) ? parseInt(eat() + eat(), 16) : NaN;
           if (Number.isNaN(hex)) {
-            throw new Error(`Invalid hexadecimal escape at [Line: ${token.line}, Column: ${token.column}]`);
+            throw new Error(
+              `Invalid hexadecimal escape at [Line: ${token.line}, Column: ${token.column}]`
+            );
           }
           value += String.fromCharCode(hex);
         } else value += next;
@@ -178,7 +188,8 @@ export function tokenize(src: string, template = false): Token[] {
   const quoteStartsString = () => {
     const prev = tokens.at(-1);
     if (!prev) return true;
-    if (prev.type === 'IDENTIFIER' || prev.type === 'CLASS_REF' || prev.type === 'ID_REF') return false;
+    if (prev.type === 'IDENTIFIER' || prev.type === 'CLASS_REF' || prev.type === 'ID_REF')
+      return false;
     return !(prev.op && (prev.value === '>' || prev.value === ')'));
   };
 

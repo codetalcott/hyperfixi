@@ -77,7 +77,8 @@ function logical(p: Parser): Expr {
   const next = () => p.match('and') ?? p.match('or');
   for (let t = next(); t; t = next()) {
     first ??= t.value;
-    if (first !== t.value) p.err('You must parenthesize logical operations with different operators');
+    if (first !== t.value)
+      p.err('You must parenthesize logical operations with different operators');
     left = logicalNode(t.value, left, comparison(p));
   }
   return left;
@@ -132,7 +133,7 @@ function math(p: Parser): Expr {
 /** `where`, `sorted by`, … bind looser than `.prop` and `in`, tighter than math. */
 function collection(p: Parser): Expr {
   let root = unary(p);
-  for (let changed = true; changed; ) {
+  for (let changed = true; changed;) {
     changed = false;
     for (const rule of p.g.collections) {
       const next = rule(p, root);
@@ -193,7 +194,12 @@ function postfix(p: Parser): Expr {
   return root;
 }
 
-function postfixNode(p: Parser, type: PostfixNode['type'], root: Expr, suffix: number | string): PostfixNode {
+function postfixNode(
+  p: Parser,
+  type: PostfixNode['type'],
+  root: Expr,
+  suffix: number | string
+): PostfixNode {
   const apply = (v: unknown) => (typeof suffix === 'number' ? num(v) * suffix : `${v}${suffix}`);
   const node: PostfixNode = {
     type,
@@ -233,7 +239,8 @@ export function assignable(p: Parser): Expr {
 /** Strip parentheses: `(x)` writes to `x`. */
 export function unwrap(node: Expr): Expr {
   let inner = node;
-  while (inner.type === 'parenthesized' && 'expr' in inner && isExpr(inner.expr)) inner = inner.expr;
+  while (inner.type === 'parenthesized' && 'expr' in inner && isExpr(inner.expr))
+    inner = inner.expr;
   return inner;
 }
 
@@ -249,7 +256,9 @@ export function evalStatic(node: Expr): unknown {
 // Comparison
 // ---------------------------------------------------------------------------
 
-function comparisonOperator(p: Parser): { operator: string; right: boolean; isType: boolean } | undefined {
+function comparisonOperator(
+  p: Parser
+): { operator: string; right: boolean; isType: boolean } | undefined {
   const symbol = p.matchAnyOp('<', '>', '<=', '>=', '==', '===', '!=', '!==');
   if (symbol) return { operator: symbol.value, right: true, isType: false };
   const is = (operator: string, right = true, isType = false) => ({ operator, right, isType });
@@ -290,7 +299,8 @@ function comparisonOperator(p: Parser): { operator: string; right: boolean; isTy
   if (not) p.req('not');
   const prefix = not ? 'not ' : '';
   // After `does not` only the bare verb is accepted, as upstream.
-  const verb = (bare: string, third: string) => p.match(bare) ?? (not && bare !== 'match' && bare !== 'contain' ? undefined : p.match(third));
+  const verb = (bare: string, third: string) =>
+    p.match(bare) ?? (not && bare !== 'match' && bare !== 'contain' ? undefined : p.match(third));
   if (verb('match', 'matches')) return is(prefix + 'match');
   if (verb('contain', 'contains')) return is(prefix + 'contain');
   if (not && p.match('exist')) return is('not exist', false);
@@ -338,7 +348,11 @@ function comparison(p: Parser): Expr {
   const lower = (v: unknown) => (ignoringCase && typeof v === 'string' ? v.toLowerCase() : v);
   // `x is checked`: an unbound bare word on the right reads as a property of the left.
   const flag =
-    right?.type === 'symbol' && 'scope' in right && right.scope === 'local' && right.name !== 'undefined' && right.name !== 'null'
+    right?.type === 'symbol' &&
+    'scope' in right &&
+    right.scope === 'local' &&
+    right.name !== 'undefined' &&
+    right.name !== 'null'
       ? right.name
       : undefined;
   const node: ComparisonNode = {
@@ -536,7 +550,11 @@ function arrayLiteral(p: Parser): ArrayNode {
     values,
     start,
     end: p.endPos(),
-    ev: ctx => all(values.map(v => v.ev(ctx)), vals => vals),
+    ev: ctx =>
+      all(
+        values.map(v => v.ev(ctx)),
+        vals => vals
+      ),
   };
 }
 
@@ -556,7 +574,11 @@ export function objectLiteral(p: Parser): ObjectNode {
       } else {
         // An unquoted key may contain dashes: `{data-id: 1}`.
         let key = '';
-        for (let t = p.matchType('IDENTIFIER') ?? p.matchOp('-'); t; t = p.matchType('IDENTIFIER') ?? p.matchOp('-')) {
+        for (
+          let t = p.matchType('IDENTIFIER') ?? p.matchOp('-');
+          t;
+          t = p.matchType('IDENTIFIER') ?? p.matchOp('-')
+        ) {
           key += t.value;
         }
         keys.push(key);
@@ -601,8 +623,13 @@ export function namedArgumentList(p: Parser): NamedArgsNode | undefined {
     start,
     end: p.endPos(),
     ev: ctx =>
-      all(values.map(v => v.ev(ctx)), vals =>
-        Object.fromEntries<unknown>([['_namedArgList_', true], ...names.map((n, i) => [n, vals[i]] as const)])
+      all(
+        values.map(v => v.ev(ctx)),
+        vals =>
+          Object.fromEntries<unknown>([
+            ['_namedArgList_', true],
+            ...names.map((n, i) => [n, vals[i]] as const),
+          ])
       ),
   };
 }
@@ -677,7 +704,10 @@ export function classRef(p: Parser): ClassRefNode | undefined {
     end: t.end,
     ev: () => null,
     lhs: () => undefined,
-    put: (ctx, _lhs, value) => then1(node.ev(ctx), c => replaceInDom(Array.from(c instanceof ElementCollection ? c : []), value)),
+    put: (ctx, _lhs, value) =>
+      then1(node.ev(ctx), c =>
+        replaceInDom(Array.from(c instanceof ElementCollection ? c : []), value)
+      ),
   };
   if (t.template) {
     const inner = (node.expr = templated(p, t));
@@ -701,7 +731,9 @@ class TemplatedQuery extends ElementCollection {
 
   override get css(): string {
     let i = 0;
-    return this.parts.map(part => (isEl(part) ? `[data-hs-query-id='${i++}']` : `${part ?? ''}`)).join('');
+    return this.parts
+      .map(part => (isEl(part) ? `[data-hs-query-id='${i++}']` : `${part ?? ''}`))
+      .join('');
   }
 
   override select(): NodeListOf<Element> {
@@ -730,7 +762,9 @@ function queryRef(p: Parser): QueryRefNode {
     ev: ctx => new ElementCollection(css, ctx.me),
     lhs: () => undefined,
     put: (ctx, _lhs, value) =>
-      then1(node.ev(ctx), c => replaceInDom(Array.from(c instanceof ElementCollection ? c : []), value)),
+      then1(node.ev(ctx), c =>
+        replaceInDom(Array.from(c instanceof ElementCollection ? c : []), value)
+      ),
   };
   // `$=` is the attribute ends-with operator, not an interpolation.
   if (/\$[^=]/.test(css)) {
@@ -803,7 +837,10 @@ export function styleLiteral(p: Parser): StyleLiteralNode | undefined {
     start,
     end: p.endPos(),
     ev: ctx =>
-      all(exprs.map(e => e.ev(ctx)), vals => parts.map((part, i) => part + (i in vals ? `${vals[i]}` : '')).join('')),
+      all(
+        exprs.map(e => e.ev(ctx)),
+        vals => parts.map((part, i) => part + (i in vals ? `${vals[i]}` : '')).join('')
+      ),
   };
 }
 
@@ -899,9 +936,15 @@ function ofExpression(p: Parser, root: Expr): Expr | undefined {
   };
   const kind = kinds[innermost.type];
   const name = innermost.name;
-  if (!kind || name === undefined) return p.err('Cannot take a property of a non-symbol: ' + innermost.type);
+  if (!kind || name === undefined)
+    return p.err('Cannot take a property of a non-symbol: ' + innermost.type);
   const ownerText = p.text(owner);
-  const read = { property: resolveProperty, attribute: resolveAttribute, style: resolveStyle, computed: resolveComputedStyle }[kind];
+  const read = {
+    property: resolveProperty,
+    attribute: resolveAttribute,
+    style: resolveStyle,
+    computed: resolveComputedStyle,
+  }[kind];
   const node: OfNode = {
     type: 'ofExpression',
     root: owner,
@@ -1044,18 +1087,27 @@ function functionCall(p: Parser, root: Expr): Expr | undefined {
       const callee = node.root;
       const method = callee.prop;
       const owner = method === undefined ? undefined : callee.root;
-      return all([(owner ?? callee).ev(ctx), ...args.map(a => a.ev(ctx))], ([target, ...values]) => {
-        if (!owner || method === undefined) return call(target, undefined, values, ctx, rootText);
-        nullCheck(target, ownerText);
-        return call(get(target, method), target, values, ctx, rootText);
-      });
+      return all(
+        [(owner ?? callee).ev(ctx), ...args.map(a => a.ev(ctx))],
+        ([target, ...values]) => {
+          if (!owner || method === undefined) return call(target, undefined, values, ctx, rootText);
+          nullCheck(target, ownerText);
+          return call(get(target, method), target, values, ctx, rootText);
+        }
+      );
     },
   };
   return indirect(p, node);
 }
 
 /** Call a function value; a hyperscript-defined function also receives the calling context. */
-export function call(f: unknown, receiver: unknown, args: unknown[], ctx: Ctx, source: string): unknown {
+export function call(
+  f: unknown,
+  receiver: unknown,
+  args: unknown[],
+  ctx: Ctx,
+  source: string
+): unknown {
   if (!fn(f)) {
     nullCheck(f, source);
     throw new Error(`'${source}' is not a function`);
@@ -1070,7 +1122,11 @@ function attributeAccess(p: Parser, root: Expr): Expr | undefined {
 }
 
 /** `<root>@attr`: an attribute of the root's value. */
-export function attributeAccessNode(p: Parser, root: Expr, attribute: AttributeRefNode): AttributeAccessNode {
+export function attributeAccessNode(
+  p: Parser,
+  root: Expr,
+  attribute: AttributeRefNode
+): AttributeAccessNode {
   const rootText = p.text(root);
   const node: AttributeAccessNode = {
     type: 'attributeRefAccess',
@@ -1101,7 +1157,8 @@ function arrayIndex(p: Parser, root: Expr): Expr | undefined {
   }
   p.reqOp(']');
   const rootText = p.text(root);
-  const fromEnd = (list: unknown, i: unknown) => (num(i) < 0 ? num(get(list, 'length')) + num(i) : num(i));
+  const fromEnd = (list: unknown, i: unknown) =>
+    num(i) < 0 ? num(get(list, 'length')) + num(i) : num(i);
   const slice = (list: unknown, from: number, to?: number) => {
     const method = get(list, 'slice');
     return fn(method) ? Reflect.apply(method, list, [from, to]) : undefined;
@@ -1119,7 +1176,8 @@ function arrayIndex(p: Parser, root: Expr): Expr | undefined {
       all([node.root.ev(ctx), first.ev(ctx), second?.ev(ctx)], ([list, i, j]) => {
         if (list == null) return null;
         if (andBefore) return slice(list, 0, fromEnd(list, i) + 1);
-        if (andAfter) return j == null ? slice(list, num(i)) : slice(list, num(i), fromEnd(list, j) + 1);
+        if (andAfter)
+          return j == null ? slice(list, num(i)) : slice(list, num(i), fromEnd(list, j) + 1);
         return get(list, String(i));
       }),
     lhs: ctx => all([node.root.ev(ctx), first.ev(ctx)], pair => pair),

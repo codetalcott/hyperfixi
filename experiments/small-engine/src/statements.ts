@@ -5,7 +5,7 @@
  * place — a leftover token is a parse error, never a silently dropped word.
  * Follows upstream `core/kernel.js`.
  */
-import type { Cmd, Expr, Feature, Program } from './ast';
+import type { Cmd, Expr, Feature, Handlers, Program } from './ast';
 import { expr } from './expressions';
 import type { Parser } from './parser';
 import { then1 } from './util';
@@ -82,12 +82,6 @@ export function program(p: Parser): Program {
     else p.err();
   }
   return { type: 'hyperscript', features, start, end: p.endPos() };
-}
-
-export interface Handlers {
-  errorSymbol?: string;
-  errorHandler?: Cmd[];
-  finallyHandler?: Cmd[];
 }
 
 /** `catch <name> <commands>` and `finally <commands>` after a handler body. */

@@ -28,11 +28,15 @@ function values(root: unknown): Record<string, unknown> {
     }
     if (value === undefined) return;
     const existing = result[name];
-    result[name] = existing === undefined ? value : (Array.isArray(existing) ? existing : [existing]).concat(value);
+    result[name] =
+      existing === undefined
+        ? value
+        : (Array.isArray(existing) ? existing : [existing]).concat(value);
   };
   implicitLoop(root, node => {
     if (get(node, 'name') != null && get(node, 'value') != null) addField(node);
-    else if (node instanceof Element) node.querySelectorAll('input,select,textarea').forEach(addField);
+    else if (node instanceof Element)
+      node.querySelectorAll('input,select,textarea').forEach(addField);
   });
   return result;
 }
@@ -40,16 +44,19 @@ function values(root: unknown): Record<string, unknown> {
 export function conversions(_g: Grammar): void {
   Object.assign(table, {
     Boolean: (v: unknown) => !!v,
-    Date: (v: unknown) => (typeof v === 'number' || v instanceof Date ? new Date(v) : new Date(String(v))),
+    Date: (v: unknown) =>
+      typeof v === 'number' || v instanceof Date ? new Date(v) : new Date(String(v)),
     Array: list,
     JSON: (v: unknown) => (v instanceof Response ? v.json() : JSON.parse(String(v))),
     JSONString: (v: unknown) => JSON.stringify(v),
-    Object: (v: unknown) => (typeof v === 'string' || v instanceof String ? JSON.parse(String(v)) : { ...Object(v) }),
+    Object: (v: unknown) =>
+      typeof v === 'string' || v instanceof String ? JSON.parse(String(v)) : { ...Object(v) },
     FormEncoded: (v: unknown) => new URLSearchParams(Object(v)).toString(),
     Set: (v: unknown) => new Set(list(v)),
     Map: (v: unknown) => new Map(Object.entries(Object(v))),
     Keys: (v: unknown) => (v instanceof Map ? Array.from(v.keys()) : Object.keys(Object(v))),
-    Entries: (v: unknown) => (v instanceof Map ? Array.from(v.entries()) : Object.entries(Object(v))),
+    Entries: (v: unknown) =>
+      v instanceof Map ? Array.from(v.entries()) : Object.entries(Object(v)),
     Reversed: (v: unknown) => list(v).reverse(),
     Unique: (v: unknown) => [...new Set(list(v))],
     Flat: (v: unknown) => list(v).flat(),
@@ -57,7 +64,8 @@ export function conversions(_g: Grammar): void {
   });
   dynamicResolvers.push(
     (name, value) => {
-      if (name === 'Fixed' || name.startsWith('Fixed:')) return Number(value).toFixed(parseInt(name.split(':')[1]) || 0);
+      if (name === 'Fixed' || name.startsWith('Fixed:'))
+        return Number(value).toFixed(parseInt(name.split(':')[1]) || 0);
     },
     (name, value) => (name === 'Values' ? values(value) : undefined)
   );

@@ -10,12 +10,20 @@
  * synchronously until a command returns a promise, so `halt the event` takes
  * effect before `dispatchEvent` returns.
  */
-import type { Cmd, Ctx, Expr, Feature } from './ast';
+import type { Cmd, Ctx, Expr, Feature, Handlers } from './ast';
 import { evalStatic, eventName, expr, unary } from './expressions';
 import type { Grammar, Parser } from './parser';
-import { dataOf, implicitLoop, makeContext, runList, triggerEvent, type EventQueue } from './runtime';
-import { commandList, errorAndFinally, eventArgs, type Handlers } from './statements';
-import { get, isP, type MaybeP } from './util';
+import {
+  dataOf,
+  guard,
+  implicitLoop,
+  makeContext,
+  runBlock,
+  triggerEvent,
+  type EventQueue,
+} from './runtime';
+import { commandList, errorAndFinally, eventArgs } from './statements';
+import { get, then1 } from './util';
 
 export interface EventSpec {
   on: string;
@@ -49,53 +57,6 @@ interface EventState {
   lastExec?: number;
 }
 
-/** Run `f`; call `ok` when it finishes and `fail` if it throws or rejects. */
-function settle(f: () => MaybeP<unknown>, ok: () => void, fail: (e: unknown) => void): void {
-  let result: MaybeP<unknown>;
-  try {
-    result = f();
-  } catch (e) {
-    return fail(e);
-  }
-  if (isP(result)) result.then(ok, fail);
-  else ok();
-}
-
-/**
- * Body, then `catch` on an error, then `finally` in every case. An error with
- * no `catch`, or one thrown inside the `catch` block, is reported to `done`.
- */
-function runHandler(ctx: Ctx, feature: OnFeature, done: (failure?: { error: unknown }) => void): void {
-  let failure: { error: unknown } | undefined;
-  const finish = () => done(failure);
-  const runFinally = () => {
-    const block = feature.finallyHandler;
-    if (!block) return finish();
-    settle(
-      () => runList(block, ctx),
-      finish,
-      e => {
-        console.error(' Exception in finally block: ', e);
-        finish();
-      }
-    );
-  };
-  const fail = (error: unknown) => {
-    failure = { error };
-    runFinally();
-  };
-  settle(
-    () => runList(feature.body, ctx),
-    runFinally,
-    error => {
-      const block = feature.errorHandler;
-      if (!block || !feature.errorSymbol) return fail(error);
-      ctx.locals[feature.errorSymbol] = error;
-      settle(() => runList(block, ctx), runFinally, fail);
-    }
-  );
-}
-
 function queueFor(elt: unknown, feature: OnFeature): EventQueue {
   if (typeof elt !== 'object' || elt === null) return { queue: [], executing: false };
   const queues = (dataOf(elt).eventQueues ??= new Map<object, EventQueue>());
@@ -114,7 +75,7 @@ function execute(ctx: Ctx, feature: OnFeature): void {
     return;
   }
   info.executing = true;
-  runHandler(ctx, feature, failure => {
+  const finish = (failure?: { error: unknown }) => {
     info.executing = false;
     const queued = info.queue.shift();
     if (queued) setTimeout(() => execute(queued, feature), 1);
@@ -124,7 +85,11 @@ function execute(ctx: Ctx, feature: OnFeature): void {
       console.error(get(error, 'stack'));
       triggerEvent(ctx.me, 'exception', { error });
     }
-  });
+  };
+  guard(
+    () => then1(runBlock(ctx, feature.body, feature), () => finish()),
+    error => finish({ error })
+  );
 }
 
 function install(feature: OnFeature, elt: unknown): void {
@@ -144,7 +109,11 @@ function install(feature: OnFeature, elt: unknown): void {
 
     implicitLoop(targets, target => {
       if (!(target instanceof EventTarget)) {
-        console.warn("'%s' feature ignored because target does not exists:", feature.displayName, elt);
+        console.warn(
+          "'%s' feature ignored because target does not exists:",
+          feature.displayName,
+          elt
+        );
         return;
       }
       let name = spec.on;
@@ -160,7 +129,13 @@ function install(feature: OnFeature, elt: unknown): void {
         name = 'hyperscript:intersection';
         const observer = new IntersectionObserver(entries => {
           for (const entry of entries) {
-            triggerEvent(target, name, { observer, entry, intersecting: entry.isIntersecting, isIntersecting: entry.isIntersecting, intersectionRatio: entry.intersectionRatio });
+            triggerEvent(target, name, {
+              observer,
+              entry,
+              intersecting: entry.isIntersecting,
+              isIntersecting: entry.isIntersecting,
+              intersectionRatio: entry.intersectionRatio,
+            });
           }
         }, spec.intersectionSpec);
         observer.observe(target);
@@ -186,7 +161,13 @@ function install(feature: OnFeature, elt: unknown): void {
           return;
         }
         const ctx = makeContext(elt, feature, elt, event);
-        if (spec.elsewhere && elt instanceof Node && event.target instanceof Node && elt.contains(event.target)) return;
+        if (
+          spec.elsewhere &&
+          elt instanceof Node &&
+          event.target instanceof Node &&
+          elt.contains(event.target)
+        )
+          return;
         if (spec.from) ctx.result = target;
 
         for (const arg of spec.args) {
@@ -214,9 +195,14 @@ function install(feature: OnFeature, elt: unknown): void {
         state.execCount++;
         if (spec.startCount) {
           const count = state.execCount;
-          if (spec.endCount ? count < spec.startCount || count > spec.endCount
-            : spec.unbounded ? count < spec.startCount
-            : count !== spec.startCount) return;
+          if (
+            spec.endCount
+              ? count < spec.startCount || count > spec.endCount
+              : spec.unbounded
+                ? count < spec.startCount
+                : count !== spec.startCount
+          )
+            return;
         }
 
         if (spec.debounceTime) {
@@ -224,7 +210,9 @@ function install(feature: OnFeature, elt: unknown): void {
             clearTimeout(state.debounced);
             timers.delete(state.debounced);
           }
-          timers.add((state.debounced = setTimeout(() => execute(ctx, feature), spec.debounceTime)));
+          timers.add(
+            (state.debounced = setTimeout(() => execute(ctx, feature), spec.debounceTime))
+          );
           return;
         }
 
@@ -253,11 +241,23 @@ function stringLike(p: Parser): string {
 
 function mutationSpec(p: Parser): MutationObserverInit {
   if (!p.match('of')) {
-    return { attributes: true, characterData: true, childList: true, attributeOldValue: true, characterDataOldValue: true };
+    return {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      attributeOldValue: true,
+      characterDataOldValue: true,
+    };
   }
   const spec: MutationObserverInit = {};
   do {
-    if (p.match('anything')) Object.assign(spec, { attributes: true, subtree: true, characterData: true, childList: true });
+    if (p.match('anything'))
+      Object.assign(spec, {
+        attributes: true,
+        subtree: true,
+        characterData: true,
+        childList: true,
+      });
     else if (p.match('childList')) spec.childList = true;
     else if (p.match('attributes')) spec.attributes = true;
     else if (p.match('subtree')) spec.subtree = true;
@@ -311,7 +311,16 @@ function eventSpec(p: Parser, first: boolean): EventSpec {
     }
   }
 
-  const spec: EventSpec = { on, args, filter, startCount, endCount, unbounded, elsewhere: false, resizeSpec: on === 'resize' };
+  const spec: EventSpec = {
+    on,
+    args,
+    filter,
+    startCount,
+    endCount,
+    unbounded,
+    elsewhere: false,
+    resizeSpec: on === 'resize',
+  };
   if (on === 'intersection') spec.intersectionSpec = intersectionSpec(p);
   else if (on === 'mutation') spec.mutationSpec = mutationSpec(p);
 

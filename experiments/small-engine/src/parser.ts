@@ -177,7 +177,11 @@ export class Parser {
   consumeUntil(value?: string, type?: string): Token[] {
     const out: Token[] = [];
     let t = this.cur();
-    while ((type == null || t.type !== type) && (value == null || t.value !== value) && t.type !== 'EOF') {
+    while (
+      (type == null || t.type !== type) &&
+      (value == null || t.value !== value) &&
+      t.type !== 'EOF'
+    ) {
       out.push(t);
       this.i++;
       t = this.cur();

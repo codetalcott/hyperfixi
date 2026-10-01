@@ -74,6 +74,8 @@ export interface Expr extends Node {
   name?: string;
   /** Property name of a property access. */
   prop?: string;
+  /** On a `where` clause inside `for x in …`: the loop variable each item is bound to. */
+  varName?: string;
 }
 
 export type Scope = 'local' | 'element' | 'global' | 'inherited';
@@ -295,7 +297,16 @@ export interface Cmd extends Node {
 export interface Feature extends Node {
   /** `on click or keyup`, for traces. */
   displayName?: string;
+  /** Set on the features of a `behavior`: they share that behavior's variable scope. */
+  behavior?: string;
   install(target: unknown, source: unknown): void;
+}
+
+/** The optional `catch` / `finally` blocks of a handler or a function. */
+export interface Handlers {
+  errorSymbol?: string;
+  errorHandler?: Cmd[];
+  finallyHandler?: Cmd[];
 }
 
 export interface Program extends Node {

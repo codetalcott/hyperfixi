@@ -4,8 +4,8 @@
  *
  * Semantics follow upstream _hyperscript's `core/runtime/runtime.js`.
  */
-import type { Cmd, Completion, Ctx, Expr, Feature, Scope } from './ast';
-import { fn, get, isEl, isIterable, isP, obj, set, type MaybeP } from './util';
+import type { Cmd, Completion, Ctx, Expr, Feature, Handlers, Scope } from './ast';
+import { fn, get, isEl, isIterable, isP, obj, set, then1, type MaybeP } from './util';
 
 // ---------------------------------------------------------------------------
 // Configuration and host hooks
@@ -48,7 +48,10 @@ export interface EventQueue {
 export interface ElementData {
   initialized?: boolean;
   scriptHash?: number;
-  elementScope?: Record<string, unknown>;
+  /** Variable scopes: `elementScope`, plus one per installed behavior. */
+  scopes?: Record<string, Record<string, unknown>>;
+  /** Functions and namespaces defined by `def` on this element. */
+  features?: Record<string, unknown>;
   listeners?: { target: EventTarget; event: string; handler: EventListener }[];
   observers?: { disconnect(): void }[];
   timers?: Set<ReturnType<typeof setTimeout>>;
@@ -239,9 +242,12 @@ export function triggerEvent(
 ): boolean {
   if (!(target instanceof EventTarget)) return true;
   detail.sender = sender;
-  const event = Object.assign(new Event(name, { bubbles: true, cancelable: true, composed: true }), {
-    detail,
-  });
+  const event = Object.assign(
+    new Event(name, { bubbles: true, cancelable: true, composed: true }),
+    {
+      detail,
+    }
+  );
   return target.dispatchEvent(event);
 }
 
@@ -249,11 +255,25 @@ export function triggerEvent(
 // Contexts and symbol scopes
 // ---------------------------------------------------------------------------
 
-export function makeContext(owner: unknown, feature: Feature | undefined, me: unknown, event: unknown): Ctx {
+/** The scope an element keeps for its own script, or for one installed behavior. */
+export const scopeOf = (elt: object, name = 'elementScope'): Record<string, unknown> =>
+  ((dataOf(elt).scopes ??= {})[name] ??= {});
+
+export function makeContext(
+  owner: unknown,
+  feature: Feature | undefined,
+  me: unknown,
+  event: unknown
+): Ctx {
   const detail = get(event, 'detail');
+  const locals: Record<string, unknown> = {};
+  // Functions defined on the owner or an ancestor are visible as plain names.
+  for (let elt = isEl(owner) ? owner : null; elt; elt = elt.parentElement) {
+    Object.assign(locals, peekData(elt)?.features);
+  }
   return {
     meta: { owner, feature },
-    locals: {},
+    locals,
     me,
     you: undefined,
     result: undefined,
@@ -266,19 +286,40 @@ export function makeContext(owner: unknown, feature: Feature | undefined, me: un
   };
 }
 
+/** Define `path.name` globally (for the body or no element) or on an element's own features. */
+export function assignToNamespace(
+  elt: unknown,
+  path: string[],
+  name: string,
+  value: unknown
+): void {
+  let root: unknown =
+    elt == null || elt === document.body || !obj(elt) ? globalThis : (dataOf(elt).features ??= {});
+  for (const part of path) {
+    if (get(root, part) == null) set(root, part, {});
+    root = get(root, part);
+  }
+  set(root, name, value);
+}
+
 /** Names that read the context itself rather than a local variable. */
 const RESERVED = ['meta', 'it', 'result', 'locals', 'event', 'target', 'detail', 'sender', 'body'];
 
 const elementScope = (ctx: Ctx): Record<string, unknown> => {
   const owner = ctx.meta.owner;
-  return obj(owner) ? (dataOf(owner).elementScope ??= {}) : {};
+  const behavior = ctx.meta.feature?.behavior;
+  return obj(owner) ? scopeOf(owner, behavior ? behavior + 'Scope' : undefined) : {};
 };
 
 /** `^name`: the nearest ancestor that has the variable, honouring `dom-scope`. */
-function inherited(name: string, ctx: Ctx, start: unknown): { value: unknown; element: Element | null } {
+function inherited(
+  name: string,
+  ctx: Ctx,
+  start: unknown
+): { value: unknown; element: Element | null } {
   let elt = isEl(start) ? start : isEl(ctx.meta.owner) ? ctx.meta.owner : null;
   while (elt) {
-    const scope = peekData(elt)?.elementScope;
+    const scope = peekData(elt)?.scopes?.elementScope;
     if (scope && name in scope) return { value: scope[name], element: elt };
     const domScope = elt.getAttribute('dom-scope');
     if (domScope === 'isolated') break;
@@ -315,7 +356,13 @@ export function resolveSymbol(name: string, ctx: Ctx, scope?: Scope, target?: un
   return get(globalThis, name);
 }
 
-export function setSymbol(name: string, ctx: Ctx, scope: Scope | undefined, value: unknown, target?: unknown): void {
+export function setSymbol(
+  name: string,
+  ctx: Ctx,
+  scope: Scope | undefined,
+  value: unknown,
+  target?: unknown
+): void {
   if (scope === 'global') {
     set(globalThis, name, value);
   } else if (scope === 'element') {
@@ -323,7 +370,7 @@ export function setSymbol(name: string, ctx: Ctx, scope: Scope | undefined, valu
   } else if (scope === 'inherited') {
     const found = inherited(name, ctx, target).element;
     const owner = found ?? (isEl(target) ? target : ctx.meta.owner);
-    if (obj(owner)) (dataOf(owner).elementScope ??= {})[name] = value;
+    if (obj(owner)) scopeOf(owner)[name] = value;
   } else if (!RESERVED.includes(name) && ctx.locals[name] !== undefined) {
     ctx.locals[name] = value;
   } else if (elementScope(ctx)[name] !== undefined) {
@@ -350,6 +397,62 @@ export function runList(cmds: Cmd[], ctx: Ctx, from = 0): MaybeP<Completion> {
     if (result) return result;
   }
 }
+
+/** `try { f() } catch (e) { rescue(e) }` for a value that may be a promise. */
+export function guard<T>(f: () => MaybeP<T>, rescue: (e: unknown) => MaybeP<T>): MaybeP<T> {
+  try {
+    const result = f();
+    return isP(result) ? result.then(undefined, rescue) : result;
+  } catch (e) {
+    return rescue(e);
+  }
+}
+
+/**
+ * Run the body of a handler or function: the body, its `catch` block on an
+ * error, and its `finally` block in every case. An error with no `catch`, or
+ * one thrown inside the `catch` block, propagates — thrown if everything so far
+ * was synchronous, as a rejection otherwise.
+ */
+export function runBlock(ctx: Ctx, body: Cmd[], handlers: Handlers): MaybeP<Completion> {
+  const { errorSymbol, errorHandler, finallyHandler } = handlers;
+  const main = () =>
+    guard(
+      () =>
+        then1(runList(body, ctx), signal => {
+          const kind = get(signal, 'k');
+          if (kind === 'break' || kind === 'continue') {
+            throw new Error(`Command \`${kind}\` cannot be used outside of a \`repeat\` loop.`);
+          }
+          return signalOf(signal);
+        }),
+      error => {
+        if (!errorHandler || !errorSymbol) throw error;
+        ctx.locals[errorSymbol] = error;
+        return runList(errorHandler, ctx);
+      }
+    );
+  if (!finallyHandler) return main();
+  const cleanUp = () =>
+    guard(
+      () => then1(runList(finallyHandler, ctx), () => {}),
+      error => console.error(' Exception in finally block: ', error)
+    );
+  return guard(
+    () => then1(main(), signal => then1(cleanUp(), () => signalOf(signal))),
+    error =>
+      then1(cleanUp(), () => {
+        throw error;
+      })
+  );
+}
+
+/** Narrow what came back from a command list to a completion. */
+export const signalOf = (v: unknown): Completion => {
+  const kind = get(v, 'k');
+  if (kind === 'return') return { k: 'return', value: get(v, 'value') };
+  if (kind === 'break' || kind === 'continue') return { k: kind };
+};
 
 /**
  * Evaluate a `when` clause once per target with `it` bound to the target, then

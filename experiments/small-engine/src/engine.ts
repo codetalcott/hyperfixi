@@ -135,8 +135,12 @@ function initElement(elt: Element): void {
 
 /** Initialise every scripted element in a subtree. Elements already initialised are skipped. */
 export function processNode(node: unknown): void {
-  if (!(node instanceof Element || node instanceof Document || node instanceof DocumentFragment)) return;
-  const selector = attributes().map(a => `[${a}]`).join(', ') + ", [type='text/hyperscript']";
+  if (!(node instanceof Element || node instanceof Document || node instanceof DocumentFragment))
+    return;
+  const selector =
+    attributes()
+      .map(a => `[${a}]`)
+      .join(', ') + ", [type='text/hyperscript']";
   if (node instanceof Element && node.matches(selector)) initElement(node);
   node.querySelectorAll(selector).forEach(initElement);
 }
@@ -146,7 +150,8 @@ export function cleanup(elt: Element): void {
   const data = peekData(elt);
   if (!data) return;
   triggerEvent(elt, 'hyperscript:before:cleanup');
-  for (const { target, event, handler } of data.listeners ?? []) target.removeEventListener(event, handler);
+  for (const { target, event, handler } of data.listeners ?? [])
+    target.removeEventListener(event, handler);
   for (const observer of data.observers ?? []) observer.disconnect();
   for (const timer of data.timers ?? []) clearTimeout(timer);
   elt.querySelectorAll('[data-hyperscript-powered]').forEach(cleanup);

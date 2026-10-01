@@ -32,7 +32,9 @@ export function send(g: Grammar): void {
       run: ctx =>
         all([to.ev(ctx), details?.ev(ctx)], ([targets, detail]) => {
           nullCheck(targets, toText);
-          implicitLoop(targets, target => triggerEvent(target, event, obj(detail) ? detail : {}, ctx.me));
+          implicitLoop(targets, target =>
+            triggerEvent(target, event, obj(detail) ? detail : {}, ctx.me)
+          );
         }),
     };
     return node;
@@ -64,7 +66,8 @@ export function wait(g: Grammar): void {
       const fromText = from ? p.text(from) : 'me';
       node.run = ctx =>
         then1(from ? from.ev(ctx) : ctx.me, source => {
-          if (!(source instanceof EventTarget)) throw new Error('Not a valid event target: ' + fromText);
+          if (!(source instanceof EventTarget))
+            throw new Error('Not a valid event target: ' + fromText);
           return new Promise<void>(resolve => {
             for (const spec of events) {
               if ('event' in spec) {
@@ -94,7 +97,11 @@ export function wait(g: Grammar): void {
       let time: Expr | undefined;
       if (p.match('a')) p.req('tick');
       else time = node.time = expr(p);
-      node.run = ctx => then1(time?.ev(ctx), ms => new Promise<void>(resolve => setTimeout(resolve, time ? num(ms) : 0)));
+      node.run = ctx =>
+        then1(
+          time?.ev(ctx),
+          ms => new Promise<void>(resolve => setTimeout(resolve, time ? num(ms) : 0))
+        );
     }
     node.end = p.endPos();
     return node;
