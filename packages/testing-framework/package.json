@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../patterns-reference ../core ../aot-compiler ../compilation-service",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../engine ../patterns-reference ../core ../aot-compiler ../compilation-service",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -73,6 +73,7 @@
     "vite": "^8.3.1"
   },
   "devDependencies": {
+    "@hyperfixi/engine": "^3.2.0",
     "@lokascript/hyperscript-adapter": "^3.2.0",
     "@types/diff": "^5.0.0",
     "@types/node": "^26.6.3",

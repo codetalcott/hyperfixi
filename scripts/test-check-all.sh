@@ -19,6 +19,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/framework" \
   "$REPO_ROOT/packages/semantic" \
   "$REPO_ROOT/packages/hyperscript-adapter" \
+  "$REPO_ROOT/packages/engine" \
   "$REPO_ROOT/packages/i18n" \
   "$REPO_ROOT/packages/patterns-reference" \
   "$REPO_ROOT/packages/aot-compiler" \

@@ -33,6 +33,13 @@ export const set = (o: unknown, key: string, value: unknown): void => {
 
 export const isEl = (v: unknown): v is Element => v instanceof Element;
 
+/**
+ * Can events be heard on it? Asked by shape, as upstream's `on` does, not with
+ * `instanceof EventTarget`: an element of another window (an iframe's, or jsdom's beside
+ * node's own `EventTarget`) is a target too.
+ */
+export const isTarget = (v: unknown): v is EventTarget => fn(get(v, 'addEventListener'));
+
 // Asked by reading the iterator, as upstream does: a proxy (`cookies`) answers a `get`, not an `in`.
 export const isIterable = (v: unknown): v is Iterable<unknown> =>
   typeof v === 'object' && v !== null && typeof Reflect.get(v, Symbol.iterator) === 'function';

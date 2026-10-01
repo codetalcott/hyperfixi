@@ -1,19 +1,15 @@
 // Run English sources on upstream and on the new engine, side by side, on the matrix's fixture.
-//   npx tsx packages/engine/matrix/probe.mts '<source>' ['<source>' …]
+//   npx tsx packages/engine/tools/probe.mts '<source>' ['<source>' …]
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { installGlobals } from '../../testing-framework/src/multilingual/shipped-examples-execution';
-import {
-  FIXTURE,
-  GLOBALS,
-} from '../../testing-framework/src/multilingual/value-matrix';
+import { FIXTURE, GLOBALS } from '../../testing-framework/src/multilingual/value-matrix';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/' });
 installGlobals(dom);
-Reflect.set(globalThis, 'EventTarget', dom.window.EventTarget);
 const errors: string[] = [];
 const log = console.log;
 console.error = (...a: unknown[]) => void errors.push(a.map(String).join(' ').split('\n')[0]);
@@ -22,9 +18,7 @@ interface Host {
   parse(source: string): { errors?: Array<{ message: string }> } | undefined;
   processNode(element: Element): void;
 }
-const require = createRequire(
-  pathToFileURL(join(here, '../../testing-framework/package.json'))
-);
+const require = createRequire(pathToFileURL(join(here, '../../testing-framework/package.json')));
 const esm = require.resolve('hyperscript.org').replace(/[^/\\]+$/, '_hyperscript.esm.js');
 const upstream: Host = (await import(pathToFileURL(esm).href)).default;
 await import('../src/bundles/full');

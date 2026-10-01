@@ -41,6 +41,7 @@ test/
 ├── plugin.test.ts             # Plugin registration, warn-once, serialize→reparse behavior
 ├── attribute-translator.test.ts  # Hook seam: WeakSet idempotency, zero DOM mutation
 ├── host-validate.test.ts      # Validity gate: channel folding (mock + REAL vendored engine)
+├── engine-host.test.ts        # The real plugin on the real @hyperfixi/engine: runs, attribute stays as written
 ├── parity-harness.ts          # Shared parity corpus (no preprocessor imports — see file doc)
 ├── whole-string-first.test.ts # Repaired block-body rows, validated on the vendored engine
 ├── preprocessor-parity.full.test.ts  # Full path vs committed snapshot

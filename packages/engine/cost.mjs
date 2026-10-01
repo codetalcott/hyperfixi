@@ -4,8 +4,8 @@
 //   node packages/engine/cost.mjs                  # every registered module, one at a time
 //   node packages/engine/cost.mjs add,remove put   # these sets (a comma joins a set)
 //
-// Reads `src/bundles/full.ts`, removes the named modules from its `register(...)` call and
-// rebuilds. The difference is what the module adds to a bundle that has everything else, so
+// Reads the list in `src/everything.ts`, builds a bundle that registers it without the named
+// modules, and compares. The difference is what the module adds to a bundle that has everything else, so
 // code it shares with other modules is not counted.
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -13,11 +13,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-const dir = join(dirname(fileURLToPath(import.meta.url)), 'src/bundles');
-const source = readFileSync(join(dir, 'full.ts'), 'utf8');
-const call = source.indexOf('\nregister(') + 1;
+const dir = join(dirname(fileURLToPath(import.meta.url)), 'src');
+const source = readFileSync(join(dir, 'everything.ts'), 'utf8');
+const open = 'export const everything: Module[] = [';
+const list = source.indexOf(open);
 const registered = source
-  .slice(call + 'register('.length, source.indexOf(');', call))
+  .slice(list + open.length, source.indexOf('];', list))
   .replace(/\/\/.*$/gm, '')
   .split(',')
   .map(name => name.trim())
@@ -28,7 +29,13 @@ async function size(drop) {
     if (!registered.includes(name)) throw new Error(`not registered: ${name}`);
   }
   const kept = registered.filter(name => !drop.includes(name));
-  const contents = source.slice(0, call) + `register(${kept.join(', ')});\nboot();\n`;
+  const contents =
+    source
+      .slice(0, list)
+      .replace(
+        "import type { Module } from './engine';",
+        "import { boot, register } from './engine';"
+      ) + `register(${kept.join(', ')});\nboot();\n`;
   const result = await build({
     stdin: { contents, resolveDir: dir, loader: 'ts' },
     bundle: true,

@@ -17,6 +17,7 @@ export {
   register,
 } from './engine';
 export type { Module, Parsed, SourceTransform } from './engine';
+export { everything } from './everything';
 export { ParseError, Parser, createGrammar, formatError } from './parser';
 export type { ChainRule, CommandRule, FeatureRule, Grammar, LeafRule } from './parser';
 export { tokenize } from './tokenizer';

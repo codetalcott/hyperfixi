@@ -13,7 +13,7 @@ import {
 } from '../expressions';
 import type { Grammar, Parser } from '../parser';
 import { config, conversions, convert, implicitLoop, toFragment, triggerEvent } from '../runtime';
-import { all, get, isEl, num, obj, then1 } from '../util';
+import { all, get, isEl, isTarget, num, obj, then1 } from '../util';
 
 // ---------------------------------------------------------------------------
 // fetch
@@ -93,7 +93,7 @@ export function fetchCommand(g: Grammar): void {
           detail.conversion = kind.startsWith(':') ? kind.slice(1) : kind;
           const controller = new AbortController();
           const abort = () => controller.abort();
-          if (me instanceof EventTarget) me.addEventListener('fetch:abort', abort, { once: true });
+          if (isTarget(me)) me.addEventListener('fetch:abort', abort, { once: true });
           detail.signal = controller.signal;
           triggerEvent(me, 'hyperscript:beforeFetch', detail, me);
           triggerEvent(me, 'fetch:beforeRequest', detail, me);
@@ -143,9 +143,7 @@ export function fetchCommand(g: Grammar): void {
               triggerEvent(me, 'fetch:error', { reason });
               throw reason;
             })
-            .finally(
-              () => me instanceof EventTarget && me.removeEventListener('fetch:abort', abort)
-            );
+            .finally(() => isTarget(me) && me.removeEventListener('fetch:abort', abort));
         }),
     };
     return node;

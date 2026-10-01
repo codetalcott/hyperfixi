@@ -6,7 +6,7 @@ import { eventName, expr, implicitMe, namedArgumentList } from '../expressions';
 import type { Grammar } from '../parser';
 import { implicitLoop, nullCheck, triggerEvent } from '../runtime';
 import { eventArgs } from '../statements';
-import { all, get, num, obj, then1 } from '../util';
+import { all, get, isTarget, num, obj, then1 } from '../util';
 
 export interface SendNode extends Cmd {
   type: 'sendCommand';
@@ -66,8 +66,7 @@ export function wait(g: Grammar): void {
       const fromText = from ? p.text(from) : 'me';
       node.run = ctx =>
         then1(from ? from.ev(ctx) : ctx.me, source => {
-          if (!(source instanceof EventTarget))
-            throw new Error('Not a valid event target: ' + fromText);
+          if (!isTarget(source)) throw new Error('Not a valid event target: ' + fromText);
           return new Promise<void>(resolve => {
             for (const spec of events) {
               if ('event' in spec) {

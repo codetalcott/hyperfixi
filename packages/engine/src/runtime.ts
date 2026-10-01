@@ -5,7 +5,7 @@
  * Semantics follow upstream _hyperscript's `core/runtime/runtime.js`.
  */
 import type { Cmd, Completion, Ctx, Expr, Feature, Handlers, LoopScope, Scope } from './ast';
-import { fn, get, isEl, isIterable, isP, obj, set, then1, type MaybeP } from './util';
+import { fn, get, isEl, isIterable, isP, isTarget, obj, set, then1, type MaybeP } from './util';
 
 // ---------------------------------------------------------------------------
 // Configuration and host hooks
@@ -327,7 +327,7 @@ export function triggerEvent(
   detail: Record<string, unknown> = {},
   sender?: unknown
 ): boolean {
-  if (!(target instanceof EventTarget)) return true;
+  if (!isTarget(target)) return true;
   detail.sender = sender;
   const event = Object.assign(
     new Event(name, { bubbles: true, cancelable: true, composed: true }),

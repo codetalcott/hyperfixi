@@ -23,7 +23,7 @@ import {
   type EventQueue,
 } from './runtime';
 import { commandList, errorAndFinally, eventArgs } from './statements';
-import { get, then1 } from './util';
+import { get, isTarget, then1 } from './util';
 
 export interface EventSpec {
   on: string;
@@ -93,7 +93,7 @@ function execute(ctx: Ctx, feature: OnFeature): void {
 }
 
 function install(feature: OnFeature, elt: unknown): void {
-  if (!(elt instanceof EventTarget)) return;
+  if (!isTarget(elt)) return;
   const data = dataOf(elt);
   const listeners = (data.listeners ??= []);
   const observers = (data.observers ??= []);
@@ -108,7 +108,7 @@ function install(feature: OnFeature, elt: unknown): void {
         : [elt];
 
     implicitLoop(targets, target => {
-      if (!(target instanceof EventTarget)) {
+      if (!isTarget(target)) {
         console.warn(
           "'%s' feature ignored because target does not exists:",
           feature.displayName,

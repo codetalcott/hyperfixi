@@ -13,7 +13,7 @@ import {
 } from '../expressions';
 import type { Grammar, Parser } from '../parser';
 import { config, dataOf, implicitLoop, implicitLoopWhen, nullCheck, rx } from '../runtime';
-import { all, get, isEl, num, then1 } from '../util';
+import { all, get, isEl, isTarget, num, then1 } from '../util';
 
 // ---------------------------------------------------------------------------
 // Shared pieces
@@ -445,7 +445,7 @@ export function toggle(g: Grammar): void {
             const until = node.until;
             const eventSource = source || ctx.me;
             return new Promise<void>(resolve => {
-              if (eventSource instanceof EventTarget) {
+              if (isTarget(eventSource)) {
                 eventSource.addEventListener(
                   until,
                   () => {

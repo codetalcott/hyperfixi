@@ -7,7 +7,7 @@ import { eventName, expr } from '../expressions';
 import type { Grammar } from '../parser';
 import { runList, signalOf } from '../runtime';
 import { commandList } from '../statements';
-import { all, get, isIterable, isP, num, obj, then1, type MaybeP } from '../util';
+import { all, get, isIterable, isP, isTarget, num, obj, then1, type MaybeP } from '../util';
 
 export interface RepeatNode extends Cmd {
   type: 'repeatCommand';
@@ -128,7 +128,7 @@ export function repeat(g: Grammar): void {
         let fired = false;
         if (event) {
           const target = source || ctx.me;
-          if (target instanceof EventTarget)
+          if (isTarget(target))
             target.addEventListener(event, () => (fired = true), { once: true });
         }
 

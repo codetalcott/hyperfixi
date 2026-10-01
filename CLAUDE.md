@@ -628,14 +628,16 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
 …) — 4,205 cells. It EXECUTES each one: the English source on upstream
-`hyperscript.org` is the oracle, and 48 lanes must match it — hyperfixi's English,
-semantic's English round trip, and each language on hyperfixi's direct path and
-through the adapter on upstream. Its baseline (`baselines/value-matrix.json`) lists
+`hyperscript.org` is the oracle, and 72 lanes must match it — hyperfixi's English,
+semantic's English round trip, each language on hyperfixi's direct path and
+through the adapter on upstream, and (since 2026-10-01) the English source and each
+language's adapter output on `@hyperfixi/engine` (`eng`, `<lang>/eng`: the same text the
+`/up` lane runs, so a difference between the two is a difference between the engines). Its baseline (`baselines/value-matrix.json`) lists
 every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (the kept `the X of Y as T`
 difference and it's `di` ambiguity) stay listed and are reported apart. The rules that tell a variable
 spelled like a structure word from the word (each with its PR and the test that pins it) are in
 `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
-PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
+PRONOUN in some language (tr `o` is `it`) skips that language's three lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
 phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
 the package's ordinary suite) fails on a new failing pair AND on a listed pair that

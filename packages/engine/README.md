@@ -50,7 +50,7 @@ uses the hook when the host has it.
 | `src/commands/*`                                                 | 52 command keywords, one module export each                                                                  |
 | `src/bundles/*`                                                  | Browser bundle entries. `full` is everything; `core`, `minimal`, `common` exist to measure size              |
 | `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                 |
-| `matrix/`                                                        | The multilingual text path on this engine beside upstream: value matrix, R4, the adapter's plugin            |
+| `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                       |
 
 A node is typed data plus the closure that runs it, bound when the node is parsed: an
 expression has `ev`, a command has `run`, a feature has `install`. Control flow is a value a
@@ -67,20 +67,27 @@ npm run cost --prefix packages/engine           # what each module costs in the 
 # Any engine bundle can be scored on the same suite:
 node packages/engine/upstream-suite/run.mjs --bundle <bundle.js> --fails
 
-# The multilingual text path on both hosts (needs fresh semantic and adapter dists):
-npx tsx packages/engine/matrix/run.mts          # value matrix, about 4 minutes
-npx tsx packages/engine/matrix/r4.mts           # R4's strings on both parsers
-npx tsx packages/engine/matrix/adapter-host.mts # the adapter's plugin on both hosts
-npx tsx packages/engine/matrix/probe.mts '<source>'   # one source on both engines
+# One source on this engine and on upstream, side by side:
+npx tsx packages/engine/tools/probe.mts '<source>'
 ```
 
-## The gate
+## The gates
 
-`test:upstream` runs upstream's own tests (`upstream-suite/vendor/`, release 0.9.93, the one
-this repository's other gates use) against `dist/full.js`. The tests that fail must be exactly
-the ones listed in `upstream-suite/known-failures.json`. A new failure fails the gate. So does a
-listed test that now passes: prune it with `npm run test:upstream:update` in the same change,
-so the list stays what does not pass. CI runs it in the `browser-tests` job.
+**Upstream's suite.** `test:upstream` runs upstream's own tests (`upstream-suite/vendor/`,
+release 0.9.93, the one this repository's other gates use) against `dist/full.js`. The tests
+that fail must be exactly the ones listed in `upstream-suite/known-failures.json`. A new failure
+fails the gate. So does a listed test that now passes: prune it with
+`npm run test:upstream:update` in the same change, so the list stays what does not pass. CI runs
+it in the `browser-tests` job.
+
+**The multilingual gates**, in the packages that own them:
+
+- The value matrix (`packages/testing-framework`, `value-matrix.ts`) has an `eng` lane, the
+  English source on this engine, and a `<lang>/eng` lane per language: the adapter's English,
+  the same string the `/up` lane runs on upstream, on this engine.
+- `engine-parser-parity.test.ts` (same package) puts every string the canonical-validity gates
+  ask upstream's parser about to this engine's parser; the two must agree.
+- `packages/hyperscript-adapter/test/engine-host.test.ts` hosts the real plugin on this engine.
 
 ## Measured (2026-10-01, upstream 0.9.93)
 
@@ -106,19 +113,17 @@ absent.
 As a host for the multilingual text path (semantic renders a translation, the adapter's
 `preprocess` turns it back into English, the engine runs the English):
 
-- **Value matrix** (`matrix/run.mts`, the gate's own 4,205 cells and oracle). English on this
-  engine gives the oracle's value in 4,205 / 4,205 cells, and semantic's English round trip in
-  4,205 / 4,205. Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs give
-  the oracle's value, and the two hosts agree on every pair: the three that miss are the accepted
-  Italian `di` ambiguity, and they miss on upstream too. (`packages/core` misses 8 cells in
-  English and 187 pairs on its direct path.)
-- **R4** (`matrix/r4.mts`). Of the 273 distinct English strings the gate puts to upstream's
-  parser (corpus rows and renders of every authored translation), the two parsers disagree on
-  none.
+- **Value matrix.** 4,205 cells. English on this engine gives the oracle's value in every cell.
+  Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs do, and the two
+  hosts agree on every pair: the three that miss are the accepted Italian `di` ambiguity, and
+  they miss on upstream too. (`packages/core` misses 8 cells in English and 187 pairs on its
+  direct path.)
+- **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
+  upstream's parser, the two parsers disagree on none.
 - Of the 159 translatable English corpus patterns, 133 parse on both engines and 26 on neither;
   none parses on one engine only. The 26 are mostly syntax only `packages/core` accepts.
-- **The plugin itself** (`matrix/adapter-host.mts`): the shipped adapter plugin in six
-  languages on both hosts. Here the attribute stays as written; on upstream it is rewritten.
+- **The adapter's plugin** in six languages: the script runs and the attribute stays as
+  written. On upstream the plugin has to rewrite the attribute.
 
 ## Where the bytes are
 

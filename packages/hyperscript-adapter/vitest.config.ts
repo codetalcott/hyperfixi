@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 const semanticSrc = path.resolve(__dirname, '../semantic/src');
+const engineSrc = path.resolve(__dirname, '../engine/src');
 
 export default defineConfig({
   resolve: {
@@ -20,6 +21,12 @@ export default defineConfig({
       {
         find: '@lokascript/semantic',
         replacement: `${semanticSrc}/index.ts`,
+      },
+      // The engine from source too: test/engine-host.test.ts hosts the plugin on
+      // it, and a dist would have to be rebuilt before every run.
+      {
+        find: '@hyperfixi/engine',
+        replacement: `${engineSrc}/index.ts`,
       },
     ],
   },
