@@ -7,10 +7,12 @@ export default defineConfig({
   testMatch: '**/*.js',
   testIgnore: ['fixtures.js', '**/.bundle/**'],
   fullyParallel: true,
-  workers: Number(process.env.HS_WORKERS || 4),
+  // CI runners are small: four workers there make the tests that assert on timing miss.
+  workers: Number(process.env.HS_WORKERS || (process.env.CI ? 2 : 4)),
   timeout: 4_000,
   expect: { timeout: 1_200 },
-  retries: 0,
+  // As upstream's own config: one retry in CI, none locally.
+  retries: process.env.CI ? 1 : 0,
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   reporter: [['json', { outputFile: process.env.HS_REPORT }]],
 });

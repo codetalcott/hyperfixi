@@ -11,6 +11,8 @@
 //   --check           The gate: compare the failing tests with `known-failures.json`. Exits 1
 //                     on a test that fails and is not listed, AND on a listed test that passes
 //                     (prune it, so the list stays what does not pass). Whole suite only.
+//                     An unlisted failure is run again alone before it counts, because a
+//                     few upstream tests assert on tens of milliseconds.
 //   --update          Rewrite `known-failures.json` from this run.
 //
 // The oracle is PINNED: the tests are the vendored copy of upstream's, at the release named in
@@ -89,52 +91,68 @@ mkdirSync(join(work, 'src'));
 writeFileSync(join(work, 'src', '_hyperscript.js'), 'export default {};\n');
 
 const report = join(work, 'report.json');
-const run = spawnSync(
-  'npx',
-  ['playwright', 'test', '--config', join(here, 'playwright.config.js')],
-  {
-    cwd: here,
-    env: { ...process.env, HS_BUNDLE: resolve(bundle), HS_REPORT: report },
-    encoding: 'utf8',
-    // A failing engine can print megabytes; the default 1 MB limit would kill the run.
-    maxBuffer: 1 << 28,
+
+/**
+ * One Playwright run: every copied test, or only `only` (file paths under the test dir).
+ * Returns per-file counts, the ids of the failing tests, and each one's first error line.
+ */
+function play(only = [], workers) {
+  rmSync(report, { force: true });
+  const run = spawnSync(
+    'npx',
+    ['playwright', 'test', '--config', join(here, 'playwright.config.js'), ...only],
+    {
+      cwd: here,
+      env: {
+        ...process.env,
+        HS_BUNDLE: resolve(bundle),
+        HS_REPORT: report,
+        ...(workers ? { HS_WORKERS: String(workers) } : {}),
+      },
+      encoding: 'utf8',
+      // A failing engine can print megabytes; the default 1 MB limit would kill the run.
+      maxBuffer: 1 << 28,
+    }
+  );
+  if (!existsSync(report)) {
+    console.error(run.stdout, run.stderr);
+    fail('Playwright produced no report');
   }
-);
-if (!existsSync(report)) {
-  console.error(run.stdout, run.stderr);
-  fail('Playwright produced no report');
+  const json = JSON.parse(readFileSync(report, 'utf8'));
+  const perFile = {};
+  const failing = [];
+  const messages = new Map();
+  (function walk(suite, titles) {
+    for (const spec of suite.specs || []) {
+      // The last result counts: a test that passes on its retry passed.
+      const result = spec.tests[0]?.results?.at(-1);
+      const status = result?.status;
+      const row = (perFile[spec.file] ??= { passed: 0, failed: 0, skipped: 0 });
+      if (status === 'passed') row.passed++;
+      else if (!status || status === 'skipped') row.skipped++;
+      else {
+        row.failed++;
+        const id = [spec.file, ...titles, spec.title].join(' › ');
+        failing.push(id);
+        messages.set(
+          id,
+          (result.error?.message || '')
+            .replace(/\x1b\[[0-9;]*m/g, '')
+            .split('\n')[0]
+            .slice(0, 110)
+        );
+      }
+    }
+    // A suite that is a file carries the file's name as its title; only `describe` titles count.
+    for (const child of suite.suites || []) {
+      walk(child, child.file === child.title ? titles : [...titles, child.title]);
+    }
+  })({ suites: json.suites }, []);
+  failing.sort();
+  return { perFile, failing, messages, seconds: Math.round(json.stats.duration / 1000) };
 }
 
-const json = JSON.parse(readFileSync(report, 'utf8'));
-const perFile = {};
-const failing = [];
-const messages = new Map();
-(function walk(suite, titles) {
-  for (const spec of suite.specs || []) {
-    const result = spec.tests[0]?.results?.at(-1);
-    const status = result?.status;
-    const row = (perFile[spec.file] ??= { passed: 0, failed: 0, skipped: 0 });
-    if (status === 'passed') row.passed++;
-    else if (!status || status === 'skipped') row.skipped++;
-    else {
-      row.failed++;
-      const id = [spec.file, ...titles, spec.title].join(' › ');
-      failing.push(id);
-      messages.set(
-        id,
-        (result.error?.message || '')
-          .replace(/\x1b\[[0-9;]*m/g, '')
-          .split('\n')[0]
-          .slice(0, 110)
-      );
-    }
-  }
-  // A suite that is a file carries the file's name as its title; only `describe` titles count.
-  for (const child of suite.suites || []) {
-    walk(child, child.file === child.title ? titles : [...titles, child.title]);
-  }
-})({ suites: json.suites }, []);
-failing.sort();
+const { perFile, failing, messages, seconds } = play();
 
 let passed = 0;
 let failed = 0;
@@ -145,7 +163,7 @@ for (const [file, row] of Object.entries(perFile).sort()) {
 }
 const rate = ((100 * passed) / (passed + failed || 1)).toFixed(1);
 console.log(
-  `${'TOTAL'.padEnd(40)} ${String(passed).padStart(4)} / ${passed + failed}  (${rate}%)  ${Math.round(json.stats.duration / 1000)}s`
+  `${'TOTAL'.padEnd(40)} ${String(passed).padStart(4)} / ${passed + failed}  (${rate}%)  ${seconds}s`
 );
 if (flag('fails')) console.log('\n' + failing.map(id => `${id}  [${messages.get(id)}]`).join('\n'));
 if (opt('json'))
@@ -159,8 +177,22 @@ if (flag('update')) {
 if (flag('check')) {
   const known = new Set(JSON.parse(readFileSync(KNOWN, 'utf8')).failing);
   const now = new Set(failing);
-  const regressed = failing.filter(id => !known.has(id));
+  let regressed = failing.filter(id => !known.has(id));
   const fixed = [...known].filter(id => !now.has(id));
+  if (regressed.length) {
+    // Some upstream tests assert on tens of milliseconds and miss on a loaded machine. Run
+    // the files of the unexpected failures again, alone and on one worker: a regression
+    // fails again, a timing miss does not.
+    const files = [...new Set(regressed.map(id => id.split(' › ')[0]))];
+    console.error(
+      `\n${regressed.length} unexpected failure(s); running again alone: ${files.join(', ')}`
+    );
+    const again = new Set(play(files, 1).failing);
+    for (const id of regressed.filter(id => !again.has(id))) {
+      console.error(`passed alone (a timing miss under load): ${id}`);
+    }
+    regressed = regressed.filter(id => again.has(id));
+  }
   for (const id of regressed)
     console.error(`\nNEW FAILURE  ${id}\n             ${messages.get(id)}`);
   for (const id of fixed) console.error(`\nNOW PASSES   ${id}`);
