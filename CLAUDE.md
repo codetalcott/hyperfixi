@@ -22,6 +22,10 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
+├── engine/         # The engine meant to replace core's: typed, modular, upstream-faithful (private, unpublished)
+│   ├── src/                  # Grammar modules: a bundle is the list passed to register()
+│   └── upstream-suite/       # The gate: upstream _hyperscript's own tests (vendored 0.9.93) + known-failures.json
+│
 ├── i18n/           # Per-language VOCABULARY (24 languages) — no longer translates
 │   ├── src/
 │   │   ├── grammar/          # SOV/VSO word-order PROFILES (transformer retired 2026-08-28)
@@ -624,14 +628,16 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
 …) — 4,205 cells. It EXECUTES each one: the English source on upstream
-`hyperscript.org` is the oracle, and 48 lanes must match it — hyperfixi's English,
-semantic's English round trip, and each language on hyperfixi's direct path and
-through the adapter on upstream. Its baseline (`baselines/value-matrix.json`) lists
+`hyperscript.org` is the oracle, and 72 lanes must match it — hyperfixi's English,
+semantic's English round trip, each language on hyperfixi's direct path and
+through the adapter on upstream, and (since 2026-10-01) the English source and each
+language's adapter output on `@hyperfixi/engine` (`eng`, `<lang>/eng`: the same text the
+`/up` lane runs, so a difference between the two is a difference between the engines). Its baseline (`baselines/value-matrix.json`) lists
 every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (the kept `the X of Y as T`
 difference and it's `di` ambiguity) stay listed and are reported apart. The rules that tell a variable
 spelled like a structure word from the word (each with its PR and the test that pins it) are in
 `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
-PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
+PRONOUN in some language (tr `o` is `it`) skips that language's three lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
 phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
 the package's ordinary suite) fails on a new failing pair AND on a listed pair that
@@ -735,6 +741,15 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`. Read it before adding,
 > removing, or restructuring a command surface. Its six arcs (D→C→A→B→E→F) are all
 > done (last 2026-07-31); it stays as the design-principles record.
+>
+> **`packages/engine` is the engine that replaces `packages/core`'s** (owner decision
+> 2026-10-01; nothing depends on it yet). Its acceptance oracle is upstream
+> `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
+packages/engine` fails on a new failing test AND on a listed one that now passes
+> (`upstream-suite/known-failures.json`, prune with `test:upstream:update`). It has no
+> `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
+> so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
+> changing it; port from upstream's source, and measure before and after.
 >
 > **Cross-layer engine migration** — one typed AST, commands as grammar + op,
 > compile-to-closures, the engine/front-end boundary — is

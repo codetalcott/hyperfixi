@@ -228,6 +228,10 @@ jobs:
       - name: Build hyperscript-adapter package
         run: npm run build --prefix packages/hyperscript-adapter
 
+      # No workspace dependencies: its position in this list is free.
+      - name: Build engine package
+        run: npm run build --prefix packages/engine
+
       - name: Build htmx-adapter package
         run: npm run build --prefix packages/htmx-adapter
 
@@ -305,6 +309,7 @@ jobs:
             packages/behaviors/dist/
             packages/patterns-reference/dist/
             packages/hyperscript-adapter/dist/
+            packages/engine/dist/
             packages/htmx-adapter/dist/
             packages/aot-compiler/dist/
             packages/compilation-service/dist/
@@ -779,6 +784,7 @@ jobs:
           npm run typecheck --prefix packages/behaviors
           npm run typecheck --prefix packages/components
           npm run typecheck --prefix packages/developer-tools
+          npm run typecheck --prefix packages/engine
           npm run typecheck --prefix packages/framework
           npm run typecheck --prefix packages/hyperscript-tools-i18n
           npm run typecheck --prefix packages/intent
@@ -1316,6 +1322,15 @@ jobs:
       - name: Run hyperscript-adapter e2e (real _hyperscript, vendored)
         run: npx playwright test
         working-directory: packages/hyperscript-adapter
+
+      # The engine's acceptance gate: upstream _hyperscript's own Playwright
+      # suite (vendored at the release the other gates use), run against
+      # packages/engine/dist/full.js. The failing tests must be exactly
+      # upstream-suite/known-failures.json: a new failure fails the step, and
+      # so does a listed test that now passes (prune it in the same change).
+      # ~30s.
+      - name: Run engine acceptance (upstream _hyperscript suite, vendored)
+        run: npm run test:upstream --prefix packages/engine
 
       # NOTE: paths are relative to the repo root, NOT this job's
       # working-directory. The report/traces are written under

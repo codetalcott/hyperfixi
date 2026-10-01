@@ -1,17 +1,17 @@
 {
-  "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
+  "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>` (hyperfixi direct path), `<lang>/up` (the adapter, on upstream) or `<lang>/eng` (the adapter, on @hyperfixi/engine); `*direct`, `*up` and `*eng` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 4205,
-  "pairs": 201696,
-  "failing": 198,
-  "accepted": 198,
+  "pairs": 302544,
+  "failing": 201,
+  "accepted": 201,
   "entries": {
     "increment|#a.textContent": {
-      "lanes": "it it/up",
+      "lanes": "it it/up it/eng",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
     "increment|#a.textContent + 2": {
-      "lanes": "it it/up",
+      "lanes": "it it/up it/eng",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },
@@ -41,7 +41,7 @@
       "accepted": "known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)"
     },
     "increment|#a.textContent as Int": {
-      "lanes": "it it/up",
+      "lanes": "it it/up it/eng",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
     },

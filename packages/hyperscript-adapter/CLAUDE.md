@@ -41,6 +41,7 @@ test/
 ├── plugin.test.ts             # Plugin registration, warn-once, serialize→reparse behavior
 ├── attribute-translator.test.ts  # Hook seam: WeakSet idempotency, zero DOM mutation
 ├── host-validate.test.ts      # Validity gate: channel folding (mock + REAL vendored engine)
+├── engine-host.test.ts        # The real plugin on the real @hyperfixi/engine: runs, attribute stays as written
 ├── parity-harness.ts          # Shared parity corpus (no preprocessor imports — see file doc)
 ├── whole-string-first.test.ts # Repaired block-body rows, validated on the vendored engine
 ├── preprocessor-parity.full.test.ts  # Full path vs committed snapshot
@@ -92,6 +93,12 @@ extension point. The hook fires on the subtree root passed to `processNode()`
 before the runtime reads the configured script attributes (`_`, `script`,
 `data-script` via `config.attributes`) or `<script type="text/hyperscript">`
 bodies, so rewriting them in place at hook time translates before parse.
+
+A host that offers `addSourceTransform` (`@hyperfixi/engine`;
+\_hyperscript.org has no such hook) is given the translator through it instead. That host hands
+each script to the translator as it reads it, so the attribute keeps the
+author's text and nothing in the DOM is rewritten. Feature-detected in
+`installAttributeTranslator`, so all three plugin variants get it.
 
 Historical note: every plugin variant here used to monkey-patch
 `internals.runtime.getScript`. Current \_hyperscript builds make `#getScript`

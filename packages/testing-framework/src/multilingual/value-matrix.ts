@@ -49,7 +49,12 @@
  *              `render(parse_en(src), L)`, compiled with `{ language: L }`;
  *   - `<L>/up` the same translation through `@lokascript/hyperscript-adapter`
  *              (`preprocess`, back to English) on upstream: the multilingual
- *              product for original _hyperscript users.
+ *              product for original _hyperscript users;
+ *   - `eng`    the English source on `@hyperfixi/engine`, the engine that
+ *              replaces core's;
+ *   - `<L>/eng` the adapter's English (the string the `/up` lane runs) on
+ *              that engine: where it differs from `<L>/up`, the two ENGINES
+ *              differ, since they were given the same text.
  *
  * A (cell, lane) pair FAILS when its result differs from the oracle's.
  *
@@ -69,7 +74,9 @@
  *
  * A translation that loses a loop's condition can loop forever. Core caps a
  * loop at 10,000 iterations; upstream has no cap and blocks the thread, so
- * every upstream run gets an evaluation budget (see EVAL_BUDGET).
+ * every upstream run gets an evaluation budget (see EVAL_BUDGET). The new
+ * engine has no cap and no hook for one: a string that spent the budget on
+ * upstream is not run on it, and its `/eng` lane reads `✗budget` too.
  *
  * Node-only: imports the real `hyperscript.org` build off disk and needs the
  * node vitest environment (see the shipped-examples gate for why).
@@ -733,7 +740,8 @@ export const FOREIGN_LANGUAGES = [
 export const LANES: readonly string[] = [
   'en',
   'en-rt',
-  ...FOREIGN_LANGUAGES.flatMap(language => [language, `${language}/up`]),
+  'eng',
+  ...FOREIGN_LANGUAGES.flatMap(language => [language, `${language}/up`, `${language}/eng`]),
 ];
 
 /**
@@ -743,10 +751,14 @@ export const LANES: readonly string[] = [
  */
 const EVAL_BUDGET = 20_000;
 
-/** The upstream surface this uses (`hyperscript.org`'s ESM default export). */
-interface UpstreamEngine {
+/** What a lane needs of a host that reads scripts off attributes: upstream, or the new engine. */
+interface ScriptHost {
   parse(source: string): { errors?: Array<{ message: string }> } | undefined;
   processNode(element: Element): void;
+}
+
+/** The upstream surface this uses (`hyperscript.org`'s ESM default export). */
+interface UpstreamEngine extends ScriptHost {
   internals: {
     runtime: { unifiedEval(parseElement: unknown, context: unknown): unknown };
   };
@@ -809,6 +821,9 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   const require = createRequire(import.meta.url);
   const esm = require.resolve('hyperscript.org').replace(/[^/\\]+$/, '_hyperscript.esm.js');
   const upstream: UpstreamEngine = (await import(pathToFileURL(esm).href)).default;
+  const engineModule = await import('@hyperfixi/engine');
+  engineModule.register(...engineModule.everything);
+  const engine: ScriptHost = engineModule.api;
 
   // The evaluation budget: every upstream evaluation goes through unifiedEval.
   const runtime = upstream.internals.runtime;
@@ -862,20 +877,21 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   };
   const read = (): string => document.getElementById('out')?.textContent ?? '✗no #out';
 
-  /** Run English on upstream. */
-  const onUpstream = (source: string): string => {
-    const errors = upstream.parse(source)?.errors ?? [];
+  /** Run English on a host that reads the script off the button. */
+  const onHost = (host: ScriptHost, source: string): string => {
+    const errors = host.parse(source)?.errors ?? [];
     if (errors.length) return `✗parse: ${errors[0]?.message.split('\n')[0] ?? ''}`;
     const button = reset();
     button.setAttribute('_', source);
     evaluations = 0;
     const before = reportedErrors;
-    upstream.processNode(button);
+    host.processNode(button);
     click(button);
     if (evaluations > EVAL_BUDGET) return '✗budget';
     const got = read();
     return reportedErrors > before && got === '∅' ? '✗threw' : got;
   };
+  const onUpstream = (source: string): string => onHost(upstream, source);
 
   /** Install a compiled handler on hyperfixi, click, and settle. */
   const onHyperfixi = async (ast: Ast): Promise<string> => {
@@ -914,6 +930,7 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
       lanes['en-rt'] = await guard(() =>
         english ? onUpstream(render(english, 'en')) : '✗untranslatable'
       );
+      lanes.eng = await guard(() => onHost(engine, cell.source));
 
       for (const language of FOREIGN_LANGUAGES) {
         if (cell.skip?.includes(language)) continue;
@@ -926,6 +943,7 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
         if (code === null) {
           lanes[language] = '✗untranslatable';
           lanes[`${language}/up`] = '✗untranslatable';
+          lanes[`${language}/eng`] = '✗untranslatable';
           continue;
         }
         const translated = code;
@@ -934,7 +952,15 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
           if (!compiled.ok || !compiled.ast) return '✗compile';
           return onHyperfixi(compiled.ast);
         });
-        lanes[`${language}/up`] = await guard(() => onUpstream(preprocess(translated, language)));
+        // The adapter's English, once, for both hosts.
+        const adapted = await guard(() => preprocess(translated, language));
+        const up = (lanes[`${language}/up`] = adapted.startsWith('✗')
+          ? adapted
+          : await guard(() => onUpstream(adapted)));
+        lanes[`${language}/eng`] =
+          adapted.startsWith('✗') || up === '✗budget'
+            ? up
+            : await guard(() => onHost(engine, adapted));
       }
       return result;
     },
@@ -966,8 +992,9 @@ export async function runValueMatrix(cells: readonly MatrixCell[]): Promise<Cell
 
 export interface BaselineEntry {
   /**
-   * The failing lanes, space-separated, in LANES order, with two shorthands:
-   * `*direct` for all 23 languages on hyperfixi, `*up` for all 23 on upstream.
+   * The failing lanes, space-separated, in LANES order, with three shorthands:
+   * `*direct` for all 23 languages on hyperfixi, `*up` for all 23 on upstream,
+   * `*eng` for all 23 on the new engine.
    */
   lanes: string;
   /** Where the loss sits, for reading the burn-down (see familyOf); not asserted. */
@@ -989,6 +1016,7 @@ export interface ValueMatrixBaseline {
 
 const DIRECT_LANES: readonly string[] = FOREIGN_LANGUAGES;
 const ADAPTER_LANES: readonly string[] = FOREIGN_LANGUAGES.map(language => `${language}/up`);
+const ENGINE_LANES: readonly string[] = FOREIGN_LANGUAGES.map(language => `${language}/eng`);
 
 /** Lanes (in LANES order) as a baseline string, with a shorthand for each full group. */
 export function compressLanes(lanes: readonly string[]): string {
@@ -996,14 +1024,17 @@ export function compressLanes(lanes: readonly string[]): string {
   const out: string[] = [];
   const direct = DIRECT_LANES.every(l => set.has(l));
   const adapter = ADAPTER_LANES.every(l => set.has(l));
+  const engine = ENGINE_LANES.every(l => set.has(l));
   for (const lane of LANES) {
     if (!set.has(lane)) continue;
     if (direct && DIRECT_LANES.includes(lane)) continue;
     if (adapter && ADAPTER_LANES.includes(lane)) continue;
+    if (engine && ENGINE_LANES.includes(lane)) continue;
     out.push(lane);
   }
   if (direct) out.push('*direct');
   if (adapter) out.push('*up');
+  if (engine) out.push('*eng');
   return out.join(' ');
 }
 
@@ -1013,6 +1044,7 @@ export function expandLanes(text: string): string[] {
   for (const token of text.split(' ').filter(Boolean)) {
     if (token === '*direct') out.push(...DIRECT_LANES);
     else if (token === '*up') out.push(...ADAPTER_LANES);
+    else if (token === '*eng') out.push(...ENGINE_LANES);
     else out.push(token);
   }
   return out;
@@ -1031,7 +1063,10 @@ export function failingLanes(result: CellResult): string[] {
  *                    translation inherits the loss;
  *   - `translation`  some foreign lanes, on both engines;
  *   - `direct-path`  hyperfixi's foreign lanes only;
- *   - `adapter`      upstream's foreign lanes only.
+ *   - `adapter`      upstream's foreign lanes only;
+ *   - `engine`       the new engine differs from upstream on the same text:
+ *                    its English run, or a language's `/eng` lane without
+ *                    its `/up` lane.
  *
  * Several can hold at once; they are joined in that order.
  */
@@ -1047,6 +1082,9 @@ export function familyOf(lanes: readonly string[]): string {
     if (both.length) parts.push('translation');
     if (direct.length > both.length && !set.has('en')) parts.push('direct-path');
     if (adapter.length > both.length) parts.push('adapter');
+  }
+  if (set.has('eng') || FOREIGN_LANGUAGES.some(l => set.has(`${l}/eng`) !== set.has(`${l}/up`))) {
+    parts.push('engine');
   }
   return parts.join('+') || 'none';
 }
@@ -1082,7 +1120,7 @@ export const ACCEPTED: ReadonlyArray<{
       'increment|#a.textContent + 2',
       'increment|#a.textContent as Int',
     ],
-    lanes: 'it it/up',
+    lanes: 'it it/up it/eng',
     reason:
       'ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`',
   },

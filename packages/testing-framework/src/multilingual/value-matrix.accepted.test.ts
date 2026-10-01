@@ -23,6 +23,9 @@ describe('value matrix: accepted pairs', () => {
       known!.reason
     );
     expect(acceptedReason('increment|#a.textContent', ['it', 'it/up'])).toBe(ambiguity!.reason);
+    expect(acceptedReason('increment|#a.textContent', ['it', 'it/up', 'it/eng'])).toBe(
+      ambiguity!.reason
+    );
   });
 
   it('leaves it open when one failing lane is not', () => {

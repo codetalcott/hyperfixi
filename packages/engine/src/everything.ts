@@ -1,0 +1,45 @@
+/** Every module, as one list: `register(...everything)` is the whole language. */
+import { settle, transition, viewTransition } from './commands/animation';
+import { halt, ifCommand, returnCommand, throwCommand } from './commands/control';
+import { add, remove, toggle } from './commands/dom';
+import {
+  append,
+  hideShow,
+  make,
+  measure,
+  openClose,
+  swap,
+  take,
+  targetCommands,
+} from './commands/dom-more';
+import { send, wait } from './commands/events';
+import { js } from './commands/js';
+import { loopControl, repeat, tell } from './commands/loops';
+import { morph } from './commands/morph';
+import { askAnswer, breakpoint, get_, log, pseudoCommand } from './commands/misc';
+import { pick } from './commands/pick';
+import { fetchCommand, go, scroll } from './commands/platform';
+import { defaultCommand, increment, put, set } from './commands/setters';
+import { conversions } from './conversions';
+import { cookies } from './cookies';
+import type { Module } from './engine';
+import { expressionsExtra } from './expressions-extra';
+import { behavior, def, init, install, setFeature } from './features';
+import { on } from './on';
+import { liveTemplates } from './live-templates';
+import { reactivity } from './reactivity';
+import { render } from './templates';
+
+// prettier-ignore
+export const everything: Module[] = [
+  // features
+  on, def, init, behavior, install, setFeature, js, reactivity, liveTemplates,
+  // expressions
+  conversions, expressionsExtra, cookies,
+  // commands
+  add, remove, toggle, hideShow, take, measure, targetCommands, openClose, make, append, swap,
+  set, defaultCommand, increment, put, pick,
+  ifCommand, repeat, loopControl, tell, halt, returnCommand, throwCommand,
+  send, wait, fetchCommand, go, scroll, transition, settle, viewTransition,
+  log, get_, pseudoCommand, askAnswer, breakpoint, render, morph
+];

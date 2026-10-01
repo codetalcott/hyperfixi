@@ -1,7 +1,7 @@
 {
   "name": "@lokascript/hyperscript-adapter",
   "version": "3.2.0",
-  "description": "Multilingual adapter plugin for original _hyperscript — write hyperscript in 24 languages",
+  "description": "Multilingual adapter plugin for original _hyperscript \u2014 write hyperscript in 24 languages",
   "type": "module",
   "main": "dist/index.cjs",
   "unpkg": "dist/hyperscript-i18n.global.js",
@@ -150,6 +150,7 @@
     "@lokascript/i18n": "*"
   },
   "devDependencies": {
+    "@hyperfixi/engine": "^3.2.0",
     "@types/node": "^26.6.3",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",

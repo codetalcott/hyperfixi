@@ -46,9 +46,10 @@ const target = path.resolve(
 const DESCRIPTION =
   'Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. ' +
   'A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic ' +
-  'English round trip, on upstream), `<lang>` (hyperfixi direct path) or `<lang>/up` (the ' +
-  'adapter, on upstream); `*direct` and `*up` stand for all 23 of each. Shrink-only: regenerate ' +
-  'with tools/regen-value-matrix-baseline.ts.';
+  'English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>` (hyperfixi ' +
+  'direct path), `<lang>/up` (the adapter, on upstream) or `<lang>/eng` (the adapter, on ' +
+  '@hyperfixi/engine); `*direct`, `*up` and `*eng` stand for all 23 of each. Shrink-only: ' +
+  'regenerate with tools/regen-value-matrix-baseline.ts.';
 
 function argValue(name: string): string | undefined {
   const i = process.argv.indexOf(name);
@@ -175,11 +176,11 @@ async function main(): Promise<void> {
   }
   if (process.argv.includes('--dry-run')) return;
 
-  // Every cell runs every lane but the two of each language it skips.
+  // Every cell runs every lane but the three of each language it skips.
   const doc: ValueMatrixBaseline = {
     description: DESCRIPTION,
     cells: allCells.length,
-    pairs: allCells.reduce((n, c) => n + LANES.length - 2 * (c.skip?.length ?? 0), 0),
+    pairs: allCells.reduce((n, c) => n + LANES.length - 3 * (c.skip?.length ?? 0), 0),
     failing,
     accepted,
     entries,
