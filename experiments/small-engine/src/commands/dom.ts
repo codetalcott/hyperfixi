@@ -58,6 +58,46 @@ const eachTarget = (
       )
     : implicitLoop(targets, t => isEl(t) && apply(t));
 
+const setAttribute = (elt: Element, { name, value }: AttributeRefNode, on: boolean) =>
+  on ? elt.setAttribute(name, String(value)) : elt.removeAttribute(name);
+
+/** What `add` and `remove` share: classes, or one attribute, put on (or taken off) each target. */
+const mark = (
+  on: boolean,
+  targets: unknown,
+  when: Expr | undefined,
+  ctx: Ctx,
+  names: unknown[],
+  attribute?: AttributeRefNode
+) =>
+  attribute
+    ? eachTarget(
+        targets,
+        when,
+        ctx,
+        t => setAttribute(t, attribute, on),
+        t => setAttribute(t, attribute, !on)
+      )
+    : all(
+        names.map(name =>
+          eachTarget(
+            targets,
+            when,
+            ctx,
+            t => t.classList.toggle(String(name), on),
+            t => t.classList.toggle(String(name), !on)
+          )
+        ),
+        () => {}
+      );
+
+/** The first thing after `add` / `remove`: class references, an attribute, or a CSS literal. */
+function subject(p: Parser) {
+  const refs = classRefs(p);
+  const attribute = refs ? undefined : attributeRef(p);
+  return { refs, attribute, css: refs || attribute ? undefined : styleLiteral(p) };
+}
+
 // ---------------------------------------------------------------------------
 // add
 // ---------------------------------------------------------------------------
@@ -75,9 +115,7 @@ export interface AddNode extends Cmd {
 
 export function add(g: Grammar): void {
   g.commands.add = (p, _keyword, start) => {
-    const refs = classRefs(p);
-    const attribute = refs ? undefined : attributeRef(p);
-    const css = refs || attribute ? undefined : styleLiteral(p);
+    const { refs, attribute, css } = subject(p);
     let value: Expr | undefined;
     if (!refs && !attribute && !css) {
       value = p.withFollow(['to'], () => expr(p));
@@ -111,28 +149,8 @@ export function add(g: Grammar): void {
                 throw new Error("Use 'set myMap[key] to value' for Maps");
               else throw new Error('Cannot add to ' + typeof target);
               rx.wroteProperty(target);
-            } else if (refs) {
-              return all(
-                names.map(name =>
-                  eachTarget(
-                    target,
-                    when,
-                    ctx,
-                    t => t.classList.add(String(name)),
-                    t => t.classList.remove(String(name))
-                  )
-                ),
-                () => {}
-              );
-            } else if (attribute) {
-              return eachTarget(
-                target,
-                when,
-                ctx,
-                t => t.setAttribute(attribute.name, String(attribute.value)),
-                t => t.removeAttribute(attribute.name)
-              );
-            } else {
+            } else if (!css) return mark(true, target, when, ctx, names, attribute);
+            else {
               implicitLoop(target, t => {
                 const style = styleOf(t);
                 if (style) style.cssText += cssText;
@@ -165,9 +183,7 @@ const isDomTarget = (v: unknown) =>
 
 export function remove(g: Grammar): void {
   g.commands.remove = (p, _keyword, start) => {
-    const refs = classRefs(p);
-    const attribute = refs ? undefined : attributeRef(p);
-    const css = refs || attribute ? undefined : styleLiteral(p);
+    const { refs, attribute, css } = subject(p);
     const element = refs || attribute || css ? undefined : expr(p);
     const from = p.match('from') ? expr(p) : element ? undefined : implicitMe(p);
     let when: Expr | undefined;
@@ -226,28 +242,7 @@ export function remove(g: Grammar): void {
               implicitLoop(container, t =>
                 properties.forEach(property => styleOf(t)?.removeProperty(property))
               );
-            } else if (refs) {
-              return all(
-                names.map(name =>
-                  eachTarget(
-                    container,
-                    when,
-                    ctx,
-                    t => t.classList.remove(String(name)),
-                    t => t.classList.add(String(name))
-                  )
-                ),
-                () => {}
-              );
-            } else if (attribute) {
-              return eachTarget(
-                container,
-                when,
-                ctx,
-                t => t.removeAttribute(attribute.name),
-                t => t.setAttribute(attribute.name, String(attribute.value))
-              );
-            }
+            } else return mark(false, container, when, ctx, names, attribute);
           }
         ),
     };
@@ -412,18 +407,13 @@ export function toggle(g: Grammar): void {
             t.classList.toggle(first, !had);
             t.classList.toggle(second, had);
           } else if (a.type === 'attributeRef' && b.type === 'attributeRef') {
-            if (t.getAttribute(a.name) === String(a.value)) {
-              t.removeAttribute(a.name);
-              t.setAttribute(b.name, String(b.value));
-            } else {
-              t.removeAttribute(b.name);
-              t.setAttribute(a.name, String(a.value));
-            }
+            const hadFirst = t.getAttribute(a.name) === String(a.value);
+            // Remove before setting: the two may be the same attribute with different values.
+            setAttribute(t, hadFirst ? a : b, false);
+            setAttribute(t, hadFirst ? b : a, true);
           }
-        } else if (attribute) {
-          if (t.hasAttribute(attribute.name)) t.removeAttribute(attribute.name);
-          else t.setAttribute(attribute.name, String(attribute.value));
-        } else names.forEach(name => t.classList.toggle(String(name)));
+        } else if (attribute) setAttribute(t, attribute, !t.hasAttribute(attribute.name));
+        else names.forEach(name => t.classList.toggle(String(name)));
       });
     };
 

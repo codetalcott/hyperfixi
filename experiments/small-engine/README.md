@@ -28,6 +28,7 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 ```bash
 npx tsc -p experiments/small-engine/tsconfig.json      # typecheck (strict)
 node experiments/small-engine/build.mjs                # build dist/, print sizes
+node experiments/small-engine/cost.mjs                 # what each module costs in the full bundle
 
 # Upstream's tests are read at a pinned tag (HYPERSCRIPT_REF, default 0.9.93) from a `_hyperscript`
 # checkout beside this repo (HYPERSCRIPT_REPO), whatever branch it is on. HYPERSCRIPT_TEST_ROOT
@@ -93,6 +94,35 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 
 The matrix found one difference upstream's own suite does not test: a missing value inserted
 into the DOM (`put noSuchVariable into me`) shows as "null" on upstream. Fixed here.
+
+## Where the bytes are (size pass, 2026-10-01)
+
+`node experiments/small-engine/cost.mjs` rebuilds the full bundle without each registered module
+and prints the difference. Of the 33.6 KB: the fixed core (tokenizer, parser, the core
+expression kinds, runtime, engine) is 12.2 KB; `on` is 1.6; the optional modules add up to
+14.4; code that several modules share is 5.4. The largest modules: `expressionsExtra` 1.5,
+`reactivity` 1.3, `render` 1.0, `repeat` 0.8, `toggle` 0.8, `fetch` 0.7, `pick` 0.7. A simple
+command costs 20 to 190 bytes (`throw` 18, `get` 53, `log` 73, `send` 101, `append` 189).
+
+Three ideas for the command layer were measured. None is worth doing for size:
+
+| Idea                                                              | Minified  | Gzipped                                                                     |
+| ----------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- |
+| Share the class / attribute handling of `add`, `remove`, `toggle` | −188      | −4 (`minimal`), +6 (all)                                                    |
+| Drop the descriptive fields from node literals (65 of them)       | −1,459    | −566 (all), −177 (`minimal`)                                                |
+| A table-driven grammar for the simple commands                    | not built | an estimate: under 200, since the eight simplest commands cost 700 in total |
+
+Gzip already removes repeated text, so removing duplication between commands shrinks the
+minified file and not the download. The first row is kept because it is less code. The second
+saves 1.7 % and would cost the typed half of each node. The third would have to parse those
+commands for nothing to break even.
+
+What does pay is what the fixed core contains, since it is three quarters of a small bundle.
+Measured by stubbing them out: the comparison operators (`is`, `matches`, `is greater than`,
+`starts with`, …) are 1.25 KB of `core` and of `minimal`, the math operators 0.15 KB. Moving
+comparison into an optional module would take `minimal` from 16.3 to about 15.0 KB, at the price
+of a bundle that rejects `when it matches .x`. Not done: how lean the core should be is a
+product decision.
 
 Source: 8,100 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.
