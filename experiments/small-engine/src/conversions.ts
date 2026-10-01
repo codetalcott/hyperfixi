@@ -40,7 +40,7 @@ function values(root: unknown): Record<string, unknown> {
 export function conversions(_g: Grammar): void {
   Object.assign(table, {
     Boolean: (v: unknown) => !!v,
-    Date: (v: unknown) => new Date(String(v)),
+    Date: (v: unknown) => (typeof v === 'number' || v instanceof Date ? new Date(v) : new Date(String(v))),
     Array: list,
     JSON: (v: unknown) => (v instanceof Response ? v.json() : JSON.parse(String(v))),
     JSONString: (v: unknown) => JSON.stringify(v),

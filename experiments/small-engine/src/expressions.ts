@@ -163,7 +163,8 @@ export function unaryNode(
   type: UnaryNode['type'],
   start: number,
   root: Expr,
-  f: (v: unknown, ctx: Ctx) => unknown
+  f: (v: unknown, ctx: Ctx) => unknown,
+  chain = type !== 'negativeNumber'
 ): Expr {
   const node: UnaryNode = {
     type,
@@ -173,7 +174,7 @@ export function unaryNode(
     ev: ctx => then1(root.ev(ctx), v => f(v, ctx)),
   };
   // `not`, `no`, … are prefix forms: an access after them applies to the result.
-  return type === 'negativeNumber' ? node : indirect(p, node);
+  return chain ? indirect(p, node) : node;
 }
 
 /** CSS units; `in` is left out because it is a hyperscript keyword. */
@@ -432,7 +433,7 @@ function compare(operator: string, l: unknown, r: unknown, r2: unknown): boolean
 // Leaves
 // ---------------------------------------------------------------------------
 
-function leaf(p: Parser): Expr | undefined {
+export function leaf(p: Parser): Expr | undefined {
   const t = p.cur();
   switch (t.type) {
     case 'NUMBER':
@@ -1065,7 +1066,11 @@ export function call(f: unknown, receiver: unknown, args: unknown[], ctx: Ctx, s
 
 function attributeAccess(p: Parser, root: Expr): Expr | undefined {
   const attribute = attributeRef(p);
-  if (!attribute) return;
+  return attribute && attributeAccessNode(p, root, attribute);
+}
+
+/** `<root>@attr`: an attribute of the root's value. */
+export function attributeAccessNode(p: Parser, root: Expr, attribute: AttributeRefNode): AttributeAccessNode {
   const rootText = p.text(root);
   const node: AttributeAccessNode = {
     type: 'attributeRefAccess',

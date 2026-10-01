@@ -1,0 +1,536 @@
+{
+  "passed": 819,
+  "failed": 581,
+  "perFile": {
+    "commands/add.js": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/append.js": {
+      "passed": 0,
+      "failed": 13,
+      "skipped": 0
+    },
+    "commands/askAnswer.js": {
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    },
+    "commands/breakpoint.js": {
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0
+    },
+    "commands/call.js": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/default.js": {
+      "passed": 1,
+      "failed": 14,
+      "skipped": 0
+    },
+    "commands/dialog.js": {
+      "passed": 2,
+      "failed": 10,
+      "skipped": 0
+    },
+    "commands/empty.js": {
+      "passed": 0,
+      "failed": 13,
+      "skipped": 0
+    },
+    "commands/fetch.js": {
+      "passed": 0,
+      "failed": 23,
+      "skipped": 0
+    },
+    "commands/focus.js": {
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0
+    },
+    "commands/go.js": {
+      "passed": 3,
+      "failed": 2,
+      "skipped": 0
+    },
+    "commands/halt.js": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/hide.js": {
+      "passed": 1,
+      "failed": 15,
+      "skipped": 0
+    },
+    "commands/if.js": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/increment.js": {
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/js.js": {
+      "passed": 0,
+      "failed": 6,
+      "skipped": 0
+    },
+    "commands/log.js": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/make.js": {
+      "passed": 0,
+      "failed": 8,
+      "skipped": 0
+    },
+    "commands/measure.js": {
+      "passed": 1,
+      "failed": 5,
+      "skipped": 0
+    },
+    "commands/morph.js": {
+      "passed": 0,
+      "failed": 10,
+      "skipped": 0
+    },
+    "commands/pick.js": {
+      "passed": 0,
+      "failed": 24,
+      "skipped": 0
+    },
+    "commands/pseudoCommand.js": {
+      "passed": 10,
+      "failed": 1,
+      "skipped": 0
+    },
+    "commands/put.js": {
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/remove.js": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/repeat.js": {
+      "passed": 2,
+      "failed": 28,
+      "skipped": 0
+    },
+    "commands/reset.js": {
+      "passed": 0,
+      "failed": 8,
+      "skipped": 0
+    },
+    "commands/scroll.js": {
+      "passed": 0,
+      "failed": 8,
+      "skipped": 0
+    },
+    "commands/select.js": {
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0
+    },
+    "commands/send.js": {
+      "passed": 7,
+      "failed": 1,
+      "skipped": 0
+    },
+    "commands/set.js": {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/settle.js": {
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0
+    },
+    "commands/show.js": {
+      "passed": 0,
+      "failed": 18,
+      "skipped": 0
+    },
+    "commands/swap.js": {
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0
+    },
+    "commands/take.js": {
+      "passed": 0,
+      "failed": 15,
+      "skipped": 0
+    },
+    "commands/tell.js": {
+      "passed": 0,
+      "failed": 10,
+      "skipped": 0
+    },
+    "commands/throw.js": {
+      "passed": 3,
+      "failed": 4,
+      "skipped": 0
+    },
+    "commands/toggle.js": {
+      "passed": 25,
+      "failed": 2,
+      "skipped": 0
+    },
+    "commands/transition.js": {
+      "passed": 0,
+      "failed": 17,
+      "skipped": 0
+    },
+    "commands/trigger.js": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/unlessModifier.js": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "commands/viewTransition.js": {
+      "passed": 1,
+      "failed": 8,
+      "skipped": 0
+    },
+    "commands/wait.js": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "core/api.js": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "core/asyncError.js": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "core/bootstrap.js": {
+      "passed": 22,
+      "failed": 4,
+      "skipped": 0
+    },
+    "core/dom-scope.js": {
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    },
+    "core/evalStatically.js": {
+      "passed": 0,
+      "failed": 8,
+      "skipped": 0
+    },
+    "core/liveTemplate.js": {
+      "passed": 0,
+      "failed": 16,
+      "skipped": 0
+    },
+    "core/parser.js": {
+      "passed": 11,
+      "failed": 3,
+      "skipped": 0
+    },
+    "core/reactivity.js": {
+      "passed": 1,
+      "failed": 7,
+      "skipped": 0
+    },
+    "core/regressions.js": {
+      "passed": 13,
+      "failed": 3,
+      "skipped": 0
+    },
+    "core/runtime.js": {
+      "passed": 3,
+      "failed": 4,
+      "skipped": 0
+    },
+    "core/runtimeErrors.js": {
+      "passed": 12,
+      "failed": 6,
+      "skipped": 0
+    },
+    "core/scoping.js": {
+      "passed": 13,
+      "failed": 7,
+      "skipped": 0
+    },
+    "core/security.js": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "core/sourceInfo.js": {
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0
+    },
+    "core/tokenizer.js": {
+      "passed": 1,
+      "failed": 29,
+      "skipped": 0
+    },
+    "expressions/arrayIndex.js": {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/arrayLiteral.js": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/asExpression.js": {
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/assignableElements.js": {
+      "passed": 6,
+      "failed": 2,
+      "skipped": 0
+    },
+    "expressions/attributeRef.js": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/beep!.js": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/blockLiteral.js": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/boolean.js": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/classRef.js": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/closest.js": {
+      "passed": 9,
+      "failed": 1,
+      "skipped": 0
+    },
+    "expressions/collectionExpressions.js": {
+      "passed": 24,
+      "failed": 4,
+      "skipped": 0
+    },
+    "expressions/comparisonOperator.js": {
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/cookies.js": {
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    },
+    "expressions/dom-scope.js": {
+      "passed": 3,
+      "failed": 17,
+      "skipped": 0
+    },
+    "expressions/functionCalls.js": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/idRef.js": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/in.js": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/logicalOperator.js": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/mathOperator.js": {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/no.js": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/not.js": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/null.js": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/numbers.js": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/objectLiteral.js": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/positionalExpression.js": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/possessiveExpression.js": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/propertyAccess.js": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/queryRef.js": {
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/relativePositionalExpression.js": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/some.js": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/splitJoin.js": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/stringPostfix.js": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/strings.js": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/styleRef.js": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/symbol.js": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expressions/typecheck.js": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "features/behavior.js": {
+      "passed": 0,
+      "failed": 10,
+      "skipped": 0
+    },
+    "features/bind.js": {
+      "passed": 2,
+      "failed": 42,
+      "skipped": 0
+    },
+    "features/def.js": {
+      "passed": 0,
+      "failed": 27,
+      "skipped": 0
+    },
+    "features/init.js": {
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0
+    },
+    "features/js.js": {
+      "passed": 1,
+      "failed": 4,
+      "skipped": 0
+    },
+    "features/live.js": {
+      "passed": 0,
+      "failed": 23,
+      "skipped": 0
+    },
+    "features/on.js": {
+      "passed": 68,
+      "failed": 2,
+      "skipped": 0
+    },
+    "features/reactive-properties.js": {
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0
+    },
+    "features/resize.js": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "features/set.js": {
+      "passed": 0,
+      "failed": 6,
+      "skipped": 0
+    },
+    "features/socket.js": {
+      "passed": 0,
+      "failed": 16,
+      "skipped": 0
+    },
+    "features/when.js": {
+      "passed": 6,
+      "failed": 35,
+      "skipped": 0
+    },
+    "features/worker.js": {
+      "passed": 0,
+      "failed": 1,
+      "skipped": 7
+    }
+  }
+}

@@ -7,7 +7,18 @@
 import type { Cmd, Ctx, Expr, Program } from './ast';
 import { expr } from './expressions';
 import { ParseError, Parser, createGrammar, formatError, type Grammar } from './parser';
-import { config, conversions, dataOf, dropData, host, makeContext, peekData, runList, triggerEvent } from './runtime';
+import {
+  config,
+  conversions,
+  dataOf,
+  dropData,
+  dynamicResolvers,
+  host,
+  makeContext,
+  peekData,
+  runList,
+  triggerEvent,
+} from './runtime';
 import { commandList, program } from './statements';
 import { tokenize } from './tokenizer';
 import { get, then1 } from './util';
@@ -151,8 +162,8 @@ host.process = processNode;
 // ---------------------------------------------------------------------------
 
 export const api = Object.assign(evaluate, {
-  config,
-  conversions,
+  // Upstream's shape: `config.conversions.Foo = …` and `config.conversions.dynamicResolvers.push(…)`.
+  config: Object.assign(config, { conversions: Object.assign(conversions, { dynamicResolvers }) }),
   use,
   evaluate,
   parse,

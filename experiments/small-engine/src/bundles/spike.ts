@@ -6,7 +6,8 @@ import { get_, log, pseudoCommand } from '../commands/misc';
 import { increment, put, set } from '../commands/setters';
 import { conversions } from '../conversions';
 import { boot, use } from '../engine';
+import { expressionsExtra } from '../expressions-extra';
 import { on } from '../on';
 
-use(on, conversions, add, remove, toggle, set, increment, put, ifCommand, halt, returnCommand, throwCommand, send, wait, log, get_, pseudoCommand);
+use(on, conversions, expressionsExtra, add, remove, toggle, set, increment, put, ifCommand, halt, returnCommand, throwCommand, send, wait, log, get_, pseudoCommand);
 boot();
