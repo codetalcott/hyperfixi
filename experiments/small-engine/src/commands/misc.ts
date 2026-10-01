@@ -106,3 +106,63 @@ export function pseudoCommand(g: Grammar): void {
     return node;
   };
 }
+
+export interface AskNode extends Cmd {
+  type: 'askCommand' | 'answerCommand';
+  message: Expr;
+  /** `answer … with <a> or <b>`: the two choices of a confirmation. */
+  choices?: [Expr, Expr];
+}
+
+/** `ask <message>` prompts; `answer <message> [with <a> or <b>]` alerts or confirms. */
+export function askAnswer(g: Grammar): void {
+  g.commands.ask = (p, _keyword, start) => {
+    const message = expr(p);
+    const node: AskNode = {
+      type: 'askCommand',
+      message,
+      start,
+      end: p.endPos(),
+      run: ctx =>
+        then1(message.ev(ctx), text => {
+          ctx.result = prompt(String(text));
+        }),
+    };
+    return node;
+  };
+  g.commands.answer = (p, _keyword, start) => {
+    const message = expr(p);
+    let choices: [Expr, Expr] | undefined;
+    if (p.match('with')) {
+      const first = p.withFollow(['or'], () => expr(p));
+      p.req('or');
+      choices = [first, expr(p)];
+    }
+    const node: AskNode = {
+      type: 'answerCommand',
+      message,
+      choices,
+      start,
+      end: p.endPos(),
+      run: ctx =>
+        all([message.ev(ctx), choices?.[0].ev(ctx), choices?.[1].ev(ctx)], ([text, yes, no]) => {
+          if (choices) ctx.result = confirm(String(text)) ? yes : no;
+          else alert(String(text));
+        }),
+    };
+    return node;
+  };
+}
+
+/** `breakpoint`: stop in the debugger. */
+export function breakpoint(g: Grammar): void {
+  g.commands.breakpoint = (p, _keyword, start) => ({
+    type: 'breakpointCommand',
+    start,
+    end: p.endPos(),
+    run: () => {
+      // eslint-disable-next-line no-debugger
+      debugger;
+    },
+  });
+}

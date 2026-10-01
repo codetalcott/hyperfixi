@@ -25,6 +25,8 @@ export interface Config {
     string,
     (op: 'hide' | 'show' | 'toggle', elt: HTMLElement, arg?: string) => void
   >;
+  /** `fetch` throws when the response status matches one of these. */
+  fetchThrowsOn: RegExp[];
 }
 
 export const config: Config = {
@@ -32,6 +34,7 @@ export const config: Config = {
   defaultTransition: 'all 500ms ease-in',
   disableSelector: '[disable-scripting], [data-disable-scripting]',
   hideShowStrategies: {},
+  fetchThrowsOn: [/4.*/, /5.*/],
 };
 
 /** `as <Name>` conversions. The everyday ones are built in; `conversions.ts` adds the rest. */
@@ -72,6 +75,8 @@ export interface ElementData {
   timers?: Set<ReturnType<typeof setTimeout>>;
   eventQueues?: Map<object, EventQueue>;
   originalDisplay?: string;
+  /** Property values before the first `transition`, for `to initial`. */
+  transitionInitials?: Record<number, unknown>;
 }
 
 const store = new WeakMap<object, ElementData>();

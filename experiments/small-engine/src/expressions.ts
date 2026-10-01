@@ -604,8 +604,16 @@ export function objectLiteral(p: Parser): ObjectNode {
 
 /** `(name: value, …)` after an event name: the event's detail. */
 export function namedArgumentList(p: Parser): NamedArgsNode | undefined {
-  const start = p.pos();
   if (!p.matchOp('(')) return;
+  const start = p.last.start;
+  const node = nakedNamedArguments(p, start);
+  p.reqOp(')');
+  node.end = p.endPos();
+  return node;
+}
+
+/** `name: value, …` with no parentheses: `fetch /url with method: "POST"`. */
+export function nakedNamedArguments(p: Parser, start = p.pos()): NamedArgsNode {
   const names: string[] = [];
   const values: Expr[] = [];
   if (p.cur().type === 'IDENTIFIER') {
@@ -615,7 +623,6 @@ export function namedArgumentList(p: Parser): NamedArgsNode | undefined {
       values.push(expr(p));
     } while (p.matchOp(','));
   }
-  p.reqOp(')');
   return {
     type: 'namedArgumentList',
     names,
@@ -632,6 +639,36 @@ export function namedArgumentList(p: Parser): NamedArgsNode | undefined {
           ])
       ),
   };
+}
+
+/** A quoted string, or bare text up to the next whitespace. */
+export function stringLike(p: Parser): string {
+  return (
+    p.matchType('STRING')?.value ??
+    p
+      .consumeUntil(undefined, 'WHITESPACE')
+      .map(t => t.value)
+      .join('')
+  );
+}
+
+/** A bare URL (`/path`, `https://…`) taken as text, or an expression. */
+export function urlOrExpression(p: Parser): Expr {
+  const t = p.cur();
+  const bare =
+    (t.op && t.value === '/') ||
+    (t.type === 'IDENTIFIER' && ['http', 'https', 'ws', 'wss'].includes(t.value));
+  if (!bare) return expr(p);
+  const value = stringLike(p);
+  const node: StringNode = {
+    type: 'string',
+    value,
+    start: t.start,
+    end: p.endPos(),
+    ev: () => value,
+    stat: () => value,
+  };
+  return node;
 }
 
 export function symbol(p: Parser): SymbolNode | undefined {

@@ -15,8 +15,9 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 | `src/expressions.ts`                             | The expression chain and the core expression kinds                                                           |
 | `src/expressions-extra.ts`, `src/conversions.ts` | Optional modules: positional, `closest`, collection operators, type checks; the less common `as` conversions |
 | `src/statements.ts`                              | Commands, command lists, programs                                                                            |
-| `src/runtime.ts`, `src/engine.ts`                | Contexts, scopes, collections; DOM init, cleanup, public API                                                 |
-| `src/on.ts`, `src/commands/*`                    | The `on` feature and the spike's 16 commands                                                                 |
+| `src/runtime.ts`, `src/engine.ts`                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                |
+| `src/on.ts`, `src/features.ts`                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                        |
+| `src/commands/*`                                 | 50 command keywords, one module export each                                                                  |
 | `src/bundles/*`                                  | Bundle entries: a bundle is a list of modules passed to `use()`                                              |
 | `upstream-suite/`                                | Runs upstream's Playwright suite against any engine bundle                                                   |
 
@@ -33,11 +34,17 @@ node experiments/small-engine/upstream-suite/run.mjs --bundle <any-bundle.js>   
 
 ## Measured (2026-10-01, upstream checkout 0.9.91-dev)
 
-|                                 | new engine (`spike` bundle)           | `hyperfixi.js`          | `hyperfixi-hybrid-complete.js` | upstream                                          |
-| ------------------------------- | ------------------------------------- | ----------------------- | ------------------------------ | ------------------------------------------------- |
-| Spike files (275 tests)         | 270                                   | 163                     | 56                             | 275                                               |
-| Upstream expression tests (459) | 430                                   | 370                     | not run                        | 454                                               |
-| Whole suite (1,400)             | 819, with 16 commands and one feature | 818                     | not run                        | 1,392                                             |
-| Size, gzipped                   | 19.1 KB (core alone 12.9 KB)          | 92 KB engine-only build | 11.7 KB                        | 45.1 KB full, 34.5 KB for a comparable module set |
+|                        | new engine (`spike` bundle)  | `hyperfixi.js`          | upstream |
+| ---------------------- | ---------------------------- | ----------------------- | -------- |
+| Whole suite (1,400)    | 1,183                        | 818                     | 1,392    |
+| Command tests (511)    | 500                          | 301                     | 510      |
+| Expression tests (459) | 444                          | 370                     | 454      |
+| Feature tests (254)    | 133                          | 100                     | 252      |
+| Size, gzipped          | 27.2 KB (core alone 13.2 KB) | 92 KB engine-only build | 45.1 KB  |
 
-`upstream-suite/baseline-spike-bundle.json` is the per-file record of the whole-suite run.
+What the new engine does not have yet: reactivity (`when`, `bind`, `live`, live templates:
+about 135 tests), `morph`, sockets, workers, cookies, and upstream's internal-API surface
+(`_hyperscript.internals`, error collection, source info: about 45 tests).
+
+Source: 6,550 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
+`src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.

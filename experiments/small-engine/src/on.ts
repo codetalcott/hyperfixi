@@ -11,7 +11,7 @@
  * effect before `dispatchEvent` returns.
  */
 import type { Cmd, Ctx, Expr, Feature, Handlers } from './ast';
-import { evalStatic, eventName, expr, unary } from './expressions';
+import { evalStatic, eventName, expr, stringLike, unary } from './expressions';
 import type { Grammar, Parser } from './parser';
 import {
   dataOf,
@@ -227,16 +227,6 @@ function install(feature: OnFeature, elt: unknown): void {
       listeners.push({ target, event: name, handler });
     });
   }
-}
-
-/** A quoted string, or bare text up to the next whitespace. */
-function stringLike(p: Parser): string {
-  const quoted = p.matchType('STRING');
-  if (quoted) return quoted.value;
-  return p
-    .consumeUntil(undefined, 'WHITESPACE')
-    .map(t => t.value)
-    .join('');
 }
 
 function mutationSpec(p: Parser): MutationObserverInit {
