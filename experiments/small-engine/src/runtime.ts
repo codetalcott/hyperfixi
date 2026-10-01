@@ -287,14 +287,19 @@ export function convert(value: unknown, type: string): unknown {
 /** Turn a value into nodes to insert: nodes are moved, anything else is parsed as HTML. */
 export function toFragment(value: unknown): DocumentFragment {
   const frag = document.createDocumentFragment();
-  implicitLoop(value, v => {
-    if (v instanceof Node) frag.append(v);
-    else {
-      const template = document.createElement('template');
-      template.innerHTML = String(v);
-      frag.append(template.content);
-    }
-  });
+  // Upstream converts a missing value to null before it inserts it, and the DOM writes
+  // null as the text "null": `put noSuchVariable into me` shows "null", not "undefined".
+  if (value == null) frag.append('null');
+  else
+    implicitLoop(value, v => {
+      if (v instanceof Node) frag.append(v);
+      else {
+        const template = document.createElement('template');
+        // Assigning null to innerHTML clears it.
+        template.innerHTML = v === null ? '' : String(v);
+        frag.append(template.content);
+      }
+    });
   return frag;
 }
 

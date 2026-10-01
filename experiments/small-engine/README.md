@@ -20,6 +20,7 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 | `src/commands/*`                                 | 50 command keywords, one module export each                                                                  |
 | `src/bundles/*`                                  | Bundle entries: a bundle is a list of modules passed to `register()`                                         |
 | `upstream-suite/`                                | Runs upstream's Playwright suite against any engine bundle                                                   |
+| `matrix/`                                        | Hosts the value matrix and R4 on this engine, beside upstream                                                |
 
 ## Commands
 
@@ -32,6 +33,11 @@ node experiments/small-engine/build.mjs                # build dist/, print size
 # reads a test directory from disk instead.
 node experiments/small-engine/upstream-suite/run.mjs --bundle experiments/small-engine/dist/spike.js --set spike --fails
 node experiments/small-engine/upstream-suite/run.mjs --bundle <any-bundle.js>      # whole suite
+
+# The multilingual text path on this engine and on upstream (needs fresh semantic and adapter dists):
+npx tsx experiments/small-engine/matrix/run.mts        # value matrix, both hosts (about 4 minutes)
+npx tsx experiments/small-engine/matrix/r4.mts         # R4's strings on both parsers
+npx tsx experiments/small-engine/matrix/probe.mts '<source>'   # one source on both engines
 ```
 
 ## Measured (2026-10-01, upstream 0.9.93)
@@ -58,10 +64,23 @@ oracle is now pinned there and the 0.9.93 changes are ported: `as` after a `fetc
 the command, `fetchThrowsOn` is anchored, `in … where`, and reactive DOM queries behind one
 document-wide observer.
 
-As a host for the shipped `@lokascript/hyperscript-adapter` bundles: 12 translated scripts in 21
-languages give the same outcome as on upstream in all 252 cases (jsdom). Of the 159 translatable
-English corpus patterns, 130 parse on both engines, 26 on neither, 3 on upstream only (`render`,
-`morph`), and none on this engine only.
+As a host for the multilingual text path (semantic renders a translation, the adapter's
+`preprocess` turns it back into English, the engine runs the English):
+
+- **Value matrix** (`matrix/run.mts`, the gate's own 4,205 cells and oracle). English on this
+  engine gives the oracle's value in 4,205 / 4,205 cells, and semantic's English round trip in
+  4,205 / 4,205. Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs give
+  the oracle's value, and the two hosts agree on every pair: the three that miss are the accepted
+  Italian `di` ambiguity, and they miss on upstream too. (`packages/core` misses 8 cells in
+  English and 187 pairs on its direct path.)
+- **R4** (`matrix/r4.mts`). Of the 273 distinct English strings the gate puts to upstream's
+  parser (corpus rows and renders of every authored translation), the two parsers disagree on 6,
+  all `render` or `morph`.
+- Of the 159 translatable English corpus patterns, 130 parse on both engines, 26 on neither, 3
+  on upstream only (`render`, `morph`), and none on this engine only.
+
+The matrix found one difference upstream's own suite does not test: a missing value inserted
+into the DOM (`put noSuchVariable into me`) shows as "null" on upstream. Fixed here.
 
 Source: 7,400 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.
