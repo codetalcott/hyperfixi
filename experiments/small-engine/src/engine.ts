@@ -105,11 +105,20 @@ const hash = (s: string) => {
   return h;
 };
 
+/**
+ * A plugin's rewrite of a script, applied as the script is read (the multilingual adapter
+ * turns it into English). The element keeps the text its author wrote. Returning nothing
+ * leaves the script as it is.
+ */
+export type SourceTransform = (source: string, element: Element) => string | null | undefined;
+const transforms: SourceTransform[] = [];
+
 function initElement(elt: Element): void {
   if (elt.closest(config.disableSelector)) return;
-  const src = scriptOf(elt);
-  if (!src) return;
-  const scriptHash = hash(src);
+  const written = scriptOf(elt);
+  if (!written) return;
+  // The hash is of what is written, so a rewrite never looks like a changed script.
+  const scriptHash = hash(written);
   if (peekData(elt)?.initialized) {
     if (peekData(elt)?.scriptHash === scriptHash) return;
     // The script changed under us (a morph, an attribute write): start over.
@@ -119,15 +128,20 @@ function initElement(elt: Element): void {
   Object.assign(dataOf(elt), { initialized: true, scriptHash });
   // A script tag's features belong to the document body.
   const target = isScript(elt) ? document.body : elt;
+  let src = written;
   try {
+    for (const transform of transforms) src = transform(src, elt) ?? src;
     for (const feature of parseProgram(src).features) feature.install(target, elt);
     elt.setAttribute('data-hyperscript-powered', 'true');
     triggerEvent(elt, 'hyperscript:after:init');
     setTimeout(() => triggerEvent(target, 'load', { hyperscript: true }), 1);
   } catch (e) {
     if (e instanceof ParseError) {
+      // The error is in the rewritten script; say what the author wrote.
+      if (src !== written) e.written = written;
       triggerEvent(elt, 'hyperscript:parse-error', { errors: [e] });
-      console.error('hyperscript: 1 parse error(s) on:', elt, '\n\n' + formatError(e));
+      const from = e.written ? `\n  rewritten from: ${e.written}\n` : '';
+      console.error('hyperscript: 1 parse error(s) on:', elt, '\n\n' + formatError(e) + from);
     } else {
       triggerEvent(elt, 'exception', { error: e });
       console.error('hyperscript errors were found on the following element:', elt, '\n\n', e);
@@ -202,6 +216,8 @@ export const api = Object.assign(evaluate, {
   },
   addBeforeProcessHook: (hook: ProcessHook) => void beforeProcess.push(hook),
   addAfterProcessHook: (hook: ProcessHook) => void afterProcess.push(hook),
+  /** Not in upstream: rewrite a script as it is read, leaving the attribute as written. */
+  addSourceTransform: (transform: SourceTransform) => void transforms.push(transform),
   evaluate,
   parse: hostParse,
   process: processNode,

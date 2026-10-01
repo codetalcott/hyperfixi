@@ -114,6 +114,41 @@ describe('installAttributeTranslator', () => {
     container.remove();
   });
 
+  it('uses the host source transform when there is one, and rewrites nothing', () => {
+    // A host that hands each script to its transforms as it reads it.
+    const transforms: Array<(src: string, elt: Element) => string | null> = [];
+    const read: string[] = [];
+    const hs = {
+      addBeforeProcessHook: vi.fn(),
+      addSourceTransform: vi.fn((fn: (src: string, elt: Element) => string | null) => {
+        transforms.push(fn);
+      }),
+      process(root: Element) {
+        root.querySelectorAll('[_]').forEach(elt => {
+          let src = elt.getAttribute('_') ?? '';
+          for (const fn of transforms) src = fn(src, elt) ?? src;
+          read.push(src);
+        });
+      },
+    };
+    const translate = vi.fn((src: string) =>
+      src === 'alternar .active' ? 'toggle .active' : null
+    );
+    installAttributeTranslator(hs, translate);
+
+    expect(hs.addSourceTransform).toHaveBeenCalledTimes(1);
+    expect(hs.addBeforeProcessHook).not.toHaveBeenCalled();
+
+    const container = mount('<button _="alternar .active"></button><i _="log 1"></i>');
+    hs.process(container);
+
+    // The host parses the English; the DOM still holds what the author wrote.
+    expect(read).toEqual(['toggle .active', 'log 1']);
+    expect(container.innerHTML).toBe('<button _="alternar .active"></button><i _="log 1"></i>');
+    expect(translate).toHaveBeenCalledWith('alternar .active', container.querySelector('button'));
+    container.remove();
+  });
+
   it('warns and installs nothing on hosts without addBeforeProcessHook', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const host: HyperscriptHost = {}; // e.g. _hyperscript ≤ 0.9.14

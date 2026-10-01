@@ -13,6 +13,9 @@ import type { Cmd, Expr, Feature } from './ast';
 import type { Token } from './tokenizer';
 
 export class ParseError extends Error {
+  /** What the author wrote, when a plugin rewrote the script before it was parsed. */
+  written?: string;
+
   constructor(
     message: string,
     readonly token: Token,

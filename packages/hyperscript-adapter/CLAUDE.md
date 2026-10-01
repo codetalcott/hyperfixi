@@ -93,6 +93,12 @@ before the runtime reads the configured script attributes (`_`, `script`,
 `data-script` via `config.attributes`) or `<script type="text/hyperscript">`
 bodies, so rewriting them in place at hook time translates before parse.
 
+A host that offers `addSourceTransform` (the engine in `experiments/small-engine`;
+\_hyperscript.org has no such hook) is given the translator through it instead. That host hands
+each script to the translator as it reads it, so the attribute keeps the
+author's text and nothing in the DOM is rewritten. Feature-detected in
+`installAttributeTranslator`, so all three plugin variants get it.
+
 Historical note: every plugin variant here used to monkey-patch
 `internals.runtime.getScript`. Current \_hyperscript builds make `#getScript`
 a private class field, so that assignment created a stray own-property the

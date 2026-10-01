@@ -38,6 +38,7 @@ node experiments/small-engine/upstream-suite/run.mjs --bundle <any-bundle.js>   
 npx tsx experiments/small-engine/matrix/run.mts        # value matrix, both hosts (about 4 minutes)
 npx tsx experiments/small-engine/matrix/r4.mts         # R4's strings on both parsers
 npx tsx experiments/small-engine/matrix/probe.mts '<source>'   # one source on both engines
+npx tsx experiments/small-engine/matrix/adapter-host.mts       # the adapter's plugin on both hosts
 ```
 
 ## Measured (2026-10-01, upstream 0.9.93)
@@ -48,10 +49,10 @@ npx tsx experiments/small-engine/matrix/probe.mts '<source>'   # one source on b
 | Command tests (516)    | 505                         | 306                     | 515      |
 | Expression tests (459) | 452                         | 370                     | 454      |
 | Feature tests (254)    | 235                         | 100                     | 251      |
-| Size, gzipped          | 30.5 KB with every module   | 92 KB engine-only build | 45.8 KB  |
+| Size, gzipped          | 30.6 KB with every module   | 92 KB engine-only build | 45.8 KB  |
 
-Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.2 KB, `common` (15 everyday
-commands) 18.3 KB, `spike` (everything) 30.5 KB, `core` (no commands) 13.7 KB.
+Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.3 KB, `common` (15 everyday
+commands) 18.3 KB, `spike` (everything) 30.6 KB, `core` (no commands) 13.8 KB.
 
 The 100 tests that do not pass: `morph` (10), templates and live templates (20), sockets and
 workers (17), cookies (5, a harness artifact that fails for upstream too), and upstream's
@@ -78,6 +79,13 @@ As a host for the multilingual text path (semantic renders a translation, the ad
   all `render` or `morph`.
 - Of the 159 translatable English corpus patterns, 130 parse on both engines, 26 on neither, 3
   on upstream only (`render`, `morph`), and none on this engine only.
+
+- **The plugin itself** (`matrix/adapter-host.mts`). The engine has one hook upstream lacks,
+  `_hyperscript.addSourceTransform((source, element) => english)`: a script is rewritten as it
+  is read, so the element keeps what its author wrote, and a parse error in the rewritten script
+  carries the written text (`error.written`, and a line in the console report). The adapter uses
+  the hook when the host has it and rewrites the attribute in place otherwise, as it must on
+  upstream. Checked in six languages on both hosts.
 
 The matrix found one difference upstream's own suite does not test: a missing value inserted
 into the DOM (`put noSuchVariable into me`) shows as "null" on upstream. Fixed here.

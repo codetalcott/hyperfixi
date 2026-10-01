@@ -16,10 +16,18 @@
  * attribute/body in place — before the runtime's own scan reaches it — gets
  * the same "translate before parse" effect through a mechanism the runtime
  * actually calls.
+ *
+ * A host may offer `addSourceTransform` instead (the engine in
+ * `experiments/small-engine` does; _hyperscript.org does not). The host then
+ * hands each script to the translator as it reads it, and the attribute keeps
+ * the author's text: nothing in the DOM is rewritten, and a parse error can
+ * say what was written.
  */
 
 export interface HyperscriptHost {
   addBeforeProcessHook?: (fn: (elt: Element) => void) => void;
+  /** Rewrite a script as the host reads it; the element is left as written. */
+  addSourceTransform?: (fn: (src: string, elt: Element) => string | null) => void;
   config?: { attributes?: string };
 }
 
@@ -49,8 +57,9 @@ function findScriptAttribute(elt: Element, attrNames: string[]): string | null {
 }
 
 /**
- * Install a translator that rewrites non-English script attributes to English
- * in place, before `_hyperscript.org` parses them.
+ * Install a translator that turns non-English scripts into English before the
+ * host parses them: through the host's source transform when it has one,
+ * otherwise by rewriting the script attributes in place.
  *
  * @param translate Given the raw source and its element, return the English
  *   translation, or `null`/the same string to leave the element untouched
@@ -60,6 +69,13 @@ export function installAttributeTranslator(
   hs: HyperscriptHost,
   translate: (src: string, elt: Element) => string | null
 ): void {
+  if (typeof hs.addSourceTransform === 'function') {
+    // The host asks only for an element it is about to initialise, so the
+    // processed-set below is not needed on this path.
+    hs.addSourceTransform(translate);
+    return;
+  }
+
   if (typeof hs.addBeforeProcessHook !== 'function') {
     console.warn(
       '[hyperscript-i18n] _hyperscript.addBeforeProcessHook is unavailable — ' +
