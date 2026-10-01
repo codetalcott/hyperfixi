@@ -20,17 +20,19 @@ import { pick } from '../commands/pick';
 import { fetchCommand, go, scroll } from '../commands/platform';
 import { defaultCommand, increment, put, set } from '../commands/setters';
 import { conversions } from '../conversions';
+import { cookies } from '../cookies';
 import { boot, register } from '../engine';
 import { expressionsExtra } from '../expressions-extra';
 import { behavior, def, init, install, setFeature } from '../features';
 import { on } from '../on';
+import { reactivity } from '../reactivity';
 
 // prettier-ignore
 register(
   // features
-  on, def, init, behavior, install, setFeature, js,
+  on, def, init, behavior, install, setFeature, js, reactivity,
   // expressions
-  conversions, expressionsExtra,
+  conversions, expressionsExtra, cookies,
   // commands
   add, remove, toggle, hideShow, take, measure, targetCommands, openClose, make, append, swap,
   set, defaultCommand, increment, put, pick,

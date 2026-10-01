@@ -12,7 +12,7 @@ import {
   styleLiteral,
 } from '../expressions';
 import type { Grammar, Parser } from '../parser';
-import { config, dataOf, implicitLoop, implicitLoopWhen, nullCheck } from '../runtime';
+import { config, dataOf, implicitLoop, implicitLoopWhen, nullCheck, rx } from '../runtime';
 import { all, get, isEl, num, then1 } from '../util';
 
 // ---------------------------------------------------------------------------
@@ -110,6 +110,7 @@ export function add(g: Grammar): void {
               else if (target instanceof Map)
                 throw new Error("Use 'set myMap[key] to value' for Maps");
               else throw new Error('Cannot add to ' + typeof target);
+              rx.wroteProperty(target);
             } else if (refs) {
               return all(
                 names.map(name =>
@@ -187,8 +188,10 @@ export function remove(g: Grammar): void {
       if (Array.isArray(container)) {
         const index = container.indexOf(value);
         if (index > -1) container.splice(index, 1);
+        rx.wroteProperty(container);
       } else if (container instanceof Set || container instanceof Map) {
         container.delete(value);
+        rx.wroteProperty(container);
       } else {
         implicitLoop(value, t => {
           if (

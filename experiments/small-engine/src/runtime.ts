@@ -91,6 +91,49 @@ export function dataOf(elt: object): ElementData {
 }
 
 // ---------------------------------------------------------------------------
+// Reactivity hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Where reads and writes report to the reactivity module. Every member is a
+ * no-op until `reactivity.ts` is registered, so a bundle without `when`, `bind`
+ * or `live` pays only for these calls.
+ */
+export const rx = {
+  /** True while an effect is evaluating: reads are then recorded as its dependencies. */
+  tracking: false,
+  readGlobal(_name: string): void {},
+  readElement(_name: string, _element: unknown): void {},
+  readProperty(_object: unknown, _name: string): void {},
+  readAttribute(_element: unknown, _name: string): void {},
+  wroteGlobal(_name: string): void {},
+  wroteElement(_name: string, _element: unknown): void {},
+  /** A property was assigned, or the object was mutated in place. */
+  wroteProperty(_object: unknown): void {},
+  stop(_element: Element): void {},
+};
+
+/** A value read through a variable: an in-place change to it (a push, say) re-runs the reader. */
+const tracked = (value: unknown): unknown => {
+  if (rx.tracking && typeof value === 'object' && value !== null)
+    rx.readProperty(value, '__mutation__');
+  return value;
+};
+
+/** Methods that change their receiver, by constructor name. */
+export const mutatingMethods: Record<string, string[]> = {
+  Array: ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin'],
+  Set: ['add', 'delete', 'clear'],
+  Map: ['set', 'delete', 'clear'],
+};
+
+/** After calling `target.method(…)`: report the change if the method is a mutating one. */
+export function maybeNotify(target: unknown, method: string): void {
+  const type = get(get(target, 'constructor'), 'name');
+  if (typeof type === 'string' && mutatingMethods[type]?.includes(method)) rx.wroteProperty(target);
+}
+
+// ---------------------------------------------------------------------------
 // Collections
 // ---------------------------------------------------------------------------
 
@@ -164,11 +207,15 @@ const flatGet = (root: unknown, getter: (o: unknown) => unknown): unknown => {
   if (shouldAutoIterate(root)) return Array.from(root, getter);
 };
 
-export const resolveProperty = (root: unknown, prop: string): unknown =>
-  flatGet(root, o => get(o, prop));
+export const resolveProperty = (root: unknown, prop: string): unknown => {
+  if (rx.tracking) rx.readProperty(root, prop);
+  return flatGet(root, o => get(o, prop));
+};
 
-export const resolveAttribute = (root: unknown, name: string): unknown =>
-  flatGet(root, o => (isEl(o) ? o.getAttribute(name) : undefined));
+export const resolveAttribute = (root: unknown, name: string): unknown => {
+  if (rx.tracking) rx.readAttribute(root, name);
+  return flatGet(root, o => (isEl(o) ? o.getAttribute(name) : undefined));
+};
 
 export const resolveStyle = (root: unknown, prop: string): unknown =>
   flatGet(root, o => get(get(o, 'style'), prop));
@@ -187,7 +234,10 @@ export const setStyle = (target: unknown, prop: string, value: unknown): void =>
   implicitLoop(target, elt => set(get(elt, 'style'), prop, value));
 
 export const setProperty = (target: unknown, prop: string, value: unknown): void =>
-  implicitLoop(target, elt => set(elt, prop, value));
+  implicitLoop(target, elt => {
+    set(elt, prop, value);
+    rx.wroteProperty(elt);
+  });
 
 // ---------------------------------------------------------------------------
 // Value tests
@@ -369,9 +419,21 @@ export function resolveSymbol(name: string, ctx: Ctx, scope?: Scope, target?: un
   if (name === 'it' || name === 'its') return ctx.beingTested ?? ctx.result;
   if (name === 'result') return ctx.result;
   if (name === 'you' || name === 'your' || name === 'yourself') return ctx.you;
-  if (scope === 'global') return get(globalThis, name);
-  if (scope === 'element') return elementScope(ctx)[name];
-  if (scope === 'inherited') return inherited(name, ctx, target).value;
+  const owner = ctx.meta.owner;
+  const global = () => {
+    if (rx.tracking) rx.readGlobal(name);
+    return tracked(get(globalThis, name));
+  };
+  if (scope === 'global') return global();
+  if (scope === 'element') {
+    if (rx.tracking) rx.readElement(name, owner);
+    return tracked(elementScope(ctx)[name]);
+  }
+  if (scope === 'inherited') {
+    const found = inherited(name, ctx, target);
+    if (rx.tracking) rx.readElement(name, found.element ?? (isEl(target) ? target : owner));
+    return tracked(found.value);
+  }
 
   // Inside an `on …[filter]`, bare names read the event and its detail first.
   const filterContext = ctx.meta.context;
@@ -384,8 +446,12 @@ export function resolveSymbol(name: string, ctx: Ctx, scope?: Scope, target?: un
   const local = RESERVED.includes(name) ? get(ctx, name) : ctx.locals[name];
   if (local !== undefined) return local;
   const fromElement = elementScope(ctx)[name];
-  if (fromElement !== undefined) return fromElement;
-  return get(globalThis, name);
+  if (fromElement !== undefined) {
+    if (rx.tracking) rx.readElement(name, owner);
+    return tracked(fromElement);
+  }
+  // Found or not, the read is recorded as a global so the first write is noticed.
+  return global();
 }
 
 export function setSymbol(
@@ -397,16 +463,20 @@ export function setSymbol(
 ): void {
   if (scope === 'global') {
     set(globalThis, name, value);
+    rx.wroteGlobal(name);
   } else if (scope === 'element') {
     elementScope(ctx)[name] = value;
+    rx.wroteElement(name, ctx.meta.owner);
   } else if (scope === 'inherited') {
     const found = inherited(name, ctx, target).element;
     const owner = found ?? (isEl(target) ? target : ctx.meta.owner);
     if (obj(owner)) scopeOf(owner)[name] = value;
+    rx.wroteElement(name, owner);
   } else if (!RESERVED.includes(name) && ctx.locals[name] !== undefined) {
     ctx.locals[name] = value;
   } else if (elementScope(ctx)[name] !== undefined) {
     elementScope(ctx)[name] = value;
+    rx.wroteElement(name, ctx.meta.owner);
   } else if (!RESERVED.includes(name)) {
     ctx.locals[name] = value;
   } else set(ctx, name, value);

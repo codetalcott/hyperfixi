@@ -17,6 +17,7 @@ import {
   makeContext,
   peekData,
   runList,
+  rx,
   triggerEvent,
 } from './runtime';
 import { commandList, program } from './statements';
@@ -163,6 +164,7 @@ export function cleanup(elt: Element): void {
     target.removeEventListener(event, handler);
   for (const observer of data.observers ?? []) observer.disconnect();
   for (const timer of data.timers ?? []) clearTimeout(timer);
+  rx.stop(elt);
   elt.querySelectorAll('[data-hyperscript-powered]').forEach(cleanup);
   triggerEvent(elt, 'hyperscript:after:cleanup');
   elt.removeAttribute('data-hyperscript-powered');
@@ -206,6 +208,8 @@ export const api = Object.assign(evaluate, {
   /** Upstream's older name for `process`. */
   processNode,
   cleanup,
+  /** The part of upstream's `internals` that pages and tests reach for. */
+  internals: { runtime: { cleanup, processNode } },
   version: '0.0.0-spike',
 });
 

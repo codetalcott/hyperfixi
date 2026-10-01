@@ -1,6 +1,6 @@
 {
-  "passed": 1183,
-  "failed": 217,
+  "passed": 1300,
+  "failed": 100,
   "perFile": {
     "commands/add.js": {
       "passed": 19,
@@ -248,8 +248,8 @@
       "skipped": 0
     },
     "core/reactivity.js": {
-      "passed": 1,
-      "failed": 7,
+      "passed": 8,
+      "failed": 0,
       "skipped": 0
     },
     "core/regressions.js": {
@@ -353,8 +353,8 @@
       "skipped": 0
     },
     "expressions/dom-scope.js": {
-      "passed": 12,
-      "failed": 8,
+      "passed": 20,
+      "failed": 0,
       "skipped": 0
     },
     "expressions/functionCalls.js": {
@@ -473,8 +473,8 @@
       "skipped": 0
     },
     "features/bind.js": {
-      "passed": 2,
-      "failed": 42,
+      "passed": 44,
+      "failed": 0,
       "skipped": 0
     },
     "features/def.js": {
@@ -493,8 +493,8 @@
       "skipped": 0
     },
     "features/live.js": {
-      "passed": 0,
-      "failed": 23,
+      "passed": 21,
+      "failed": 2,
       "skipped": 0
     },
     "features/on.js": {
@@ -503,8 +503,8 @@
       "skipped": 0
     },
     "features/reactive-properties.js": {
-      "passed": 0,
-      "failed": 4,
+      "passed": 4,
+      "failed": 0,
       "skipped": 0
     },
     "features/resize.js": {
@@ -523,8 +523,8 @@
       "skipped": 0
     },
     "features/when.js": {
-      "passed": 6,
-      "failed": 35,
+      "passed": 41,
+      "failed": 0,
       "skipped": 0
     },
     "features/worker.js": {

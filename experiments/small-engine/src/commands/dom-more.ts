@@ -21,6 +21,7 @@ import {
   implicitLoopWhen,
   nullCheck,
   resolveSymbol,
+  rx,
   setSymbol,
 } from '../runtime';
 import { all, fn, get, isEl, isIterable, num, then1 } from '../util';
@@ -353,9 +354,11 @@ export function targetCommands(g: Grammar): void {
   targetCommand(g, ['blur'], callMethod('blur'));
   targetCommand(g, ['select'], callMethod('select'));
   targetCommand(g, ['empty', 'clear'], target => {
-    if (Array.isArray(target)) target.splice(0);
-    else if (target instanceof Set || target instanceof Map) target.clear();
-    else implicitLoop(target, e => eachField(e, clearField) || (isEl(e) && e.replaceChildren()));
+    if (Array.isArray(target) || target instanceof Set || target instanceof Map) {
+      if (Array.isArray(target)) target.splice(0);
+      else target.clear();
+      rx.wroteProperty(target);
+    } else implicitLoop(target, e => eachField(e, clearField) || (isEl(e) && e.replaceChildren()));
   });
   targetCommand(g, ['reset'], target =>
     implicitLoop(target, e => (e instanceof HTMLFormElement ? e.reset() : eachField(e, resetField)))
@@ -470,9 +473,11 @@ export function append(g: Grammar): void {
             target?.lhs?.(ctx),
           ],
           ([current, v, lhs]) => {
-            if (Array.isArray(current)) current.push(v);
-            else if (current instanceof Set) current.add(v);
-            else if (isEl(current)) {
+            if (Array.isArray(current) || current instanceof Set) {
+              if (Array.isArray(current)) current.push(v);
+              else current.add(v);
+              rx.wroteProperty(current);
+            } else if (isEl(current)) {
               if (isEl(v)) current.insertAdjacentElement('beforeend', v);
               else current.insertAdjacentHTML('beforeend', String(v));
               host.process(current);

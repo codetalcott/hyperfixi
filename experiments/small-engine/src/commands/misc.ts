@@ -5,7 +5,7 @@
 import type { Cmd, Expr } from '../ast';
 import { call as callFunction, expr, implicitMe, primary } from '../expressions';
 import type { Grammar } from '../parser';
-import { nullCheck } from '../runtime';
+import { maybeNotify, nullCheck } from '../runtime';
 import { all, fn, get, then1 } from '../util';
 
 export interface LogNode extends Cmd {
@@ -100,6 +100,7 @@ export function pseudoCommand(g: Grammar): void {
         return all([receiver.ev(ctx), ...args.map((a: Expr) => a.ev(ctx))], ([owner, ...vals]) => {
           nullCheck(owner, targetText);
           ctx.result = callFunction(get(owner, method), owner, vals, ctx, valueText);
+          maybeNotify(owner, method);
         });
       },
     };

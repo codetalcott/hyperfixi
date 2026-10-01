@@ -34,17 +34,24 @@ node experiments/small-engine/upstream-suite/run.mjs --bundle <any-bundle.js>   
 
 ## Measured (2026-10-01, upstream checkout 0.9.91-dev)
 
-|                        | new engine (`spike` bundle)  | `hyperfixi.js`          | upstream |
-| ---------------------- | ---------------------------- | ----------------------- | -------- |
-| Whole suite (1,400)    | 1,183                        | 818                     | 1,392    |
-| Command tests (511)    | 500                          | 301                     | 510      |
-| Expression tests (459) | 444                          | 370                     | 454      |
-| Feature tests (254)    | 133                          | 100                     | 252      |
-| Size, gzipped          | 27.2 KB (core alone 13.2 KB) | 92 KB engine-only build | 45.1 KB  |
+|                        | new engine (`spike` bundle) | `hyperfixi.js`          | upstream |
+| ---------------------- | --------------------------- | ----------------------- | -------- |
+| Whole suite (1,400)    | 1,300                       | 818                     | 1,392    |
+| Command tests (511)    | 500                         | 301                     | 510      |
+| Expression tests (459) | 452                         | 370                     | 454      |
+| Feature tests (254)    | 235                         | 100                     | 252      |
+| Size, gzipped          | 30.4 KB with every module   | 92 KB engine-only build | 45.1 KB  |
 
-What the new engine does not have yet: reactivity (`when`, `bind`, `live`, live templates:
-about 135 tests), `morph`, sockets, workers, cookies, and upstream's internal-API surface
-(`_hyperscript.internals`, error collection, source info: about 45 tests).
+Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.1 KB, `common` (15 everyday
+commands) 18.2 KB, `spike` (everything) 30.4 KB, `core` (no commands) 13.6 KB.
 
-Source: 6,550 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
+The 100 tests that do not pass: `morph` (10), templates and live templates (20), sockets and
+workers (17), cookies (5, a harness artifact that fails for upstream too), and upstream's
+internal-API surface (`internals.tokenizer`, `evalStatically`, source info, error collection: 48).
+
+As a host for the shipped `@lokascript/hyperscript-adapter` bundles: 12 translated scripts in 21
+languages give the same outcome as on upstream in all 252 cases (jsdom). Of the 159 translatable
+English corpus patterns, 133 parse on both engines, 26 on neither, and none on only one.
+
+Source: 7,300 lines, `tsc --strict`, no `any`, one documented type assertion (`num` in
 `src/util.ts`). `upstream-suite/baseline-spike-bundle.json` is the per-file record.

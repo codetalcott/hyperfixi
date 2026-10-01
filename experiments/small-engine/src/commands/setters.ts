@@ -7,7 +7,7 @@
 import type { Cmd, Ctx, Expr, ObjectNode } from '../ast';
 import { assignable, expr, objectLiteral, unwrap } from '../expressions';
 import type { Grammar, Parser } from '../parser';
-import { host, implicitLoop, nullCheck, toFragment } from '../runtime';
+import { host, implicitLoop, nullCheck, rx, toFragment } from '../runtime';
 import { all, isEl, then1 } from '../util';
 
 export interface SetNode extends Cmd {
@@ -193,6 +193,7 @@ export function put(g: Grammar): void {
         if (Array.isArray(root)) {
           if (method === 'prepend') root.unshift(v);
           else root.push(v);
+          rx.wroteProperty(root);
           return;
         }
         implicitLoop(root, elt => {

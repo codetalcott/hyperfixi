@@ -46,6 +46,7 @@ import {
   getRootNode,
   implicitLoop,
   isEmpty,
+  maybeNotify,
   nullCheck,
   replaceInDom,
   resolveAttribute,
@@ -53,6 +54,7 @@ import {
   resolveProperty,
   resolveStyle,
   resolveSymbol,
+  rx,
   setAttribute,
   setProperty,
   setStyle,
@@ -949,7 +951,10 @@ function propertyAccess(p: Parser, root: Expr): Expr | undefined {
     },
     del: (_ctx, lhs) => {
       nullCheck(lhs, rootText);
-      implicitLoop(lhs, o => obj(o) && delete o[prop]);
+      implicitLoop(lhs, o => {
+        if (obj(o)) delete o[prop];
+        rx.wroteProperty(o);
+      });
     },
   };
   return indirect(p, node);
@@ -1001,8 +1006,10 @@ function ofExpression(p: Parser, root: Expr): Expr | undefined {
       nullCheck(lhs, ownerText);
       implicitLoop(lhs, o => {
         if (kind === 'attribute') isEl(o) && o.removeAttribute(name);
-        else if (kind === 'property') obj(o) && delete o[name];
-        else if (o instanceof HTMLElement) o.style.removeProperty(name);
+        else if (kind === 'property') {
+          if (obj(o)) delete o[name];
+          rx.wroteProperty(o);
+        } else if (o instanceof HTMLElement) o.style.removeProperty(name);
       });
     },
   };
@@ -1129,7 +1136,9 @@ function functionCall(p: Parser, root: Expr): Expr | undefined {
         ([target, ...values]) => {
           if (!owner || method === undefined) return call(target, undefined, values, ctx, rootText);
           nullCheck(target, ownerText);
-          return call(get(target, method), target, values, ctx, rootText);
+          const result = call(get(target, method), target, values, ctx, rootText);
+          maybeNotify(target, method);
+          return result;
         }
       );
     },
@@ -1229,6 +1238,7 @@ function arrayIndex(p: Parser, root: Expr): Expr | undefined {
       nullCheck(list, rootText);
       if (Array.isArray(list)) list.splice(fromEnd(list, i), 1);
       else if (obj(list)) delete list[String(i)];
+      rx.wroteProperty(list);
     },
   };
   return indirect(p, node);
