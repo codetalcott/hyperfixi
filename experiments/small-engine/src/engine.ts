@@ -1,7 +1,7 @@
 /**
  * The engine: one grammar, DOM initialisation, and the public `_hyperscript` API.
  *
- * A bundle builds its engine by calling `use(...)` with the modules it wants.
+ * A bundle builds its engine by calling `register(...)` with the modules it wants.
  * Follows upstream `_hyperscript.js` and the DOM half of `core/runtime/runtime.js`.
  */
 import type { Cmd, Ctx, Expr, Program } from './ast';
@@ -27,7 +27,8 @@ export type Module = (g: Grammar) => void;
 
 export const grammar = createGrammar();
 
-export function use(...modules: Module[]): void {
+/** Add grammar modules to this bundle's engine. */
+export function register(...modules: Module[]): void {
   for (const module of modules) module(grammar);
 }
 
@@ -133,16 +134,24 @@ function initElement(elt: Element): void {
   }
 }
 
+type ProcessRoot = Element | Document | DocumentFragment;
+type ProcessHook = (root: ProcessRoot) => void;
+const beforeProcess: ProcessHook[] = [];
+const afterProcess: ProcessHook[] = [];
+
 /** Initialise every scripted element in a subtree. Elements already initialised are skipped. */
 export function processNode(node: unknown): void {
   if (!(node instanceof Element || node instanceof Document || node instanceof DocumentFragment))
     return;
+  // A plugin may rewrite scripts before they are read (the multilingual adapter does).
+  for (const hook of beforeProcess) hook(node);
   const selector =
     attributes()
       .map(a => `[${a}]`)
       .join(', ') + ", [type='text/hyperscript']";
   if (node instanceof Element && node.matches(selector)) initElement(node);
   node.querySelectorAll(selector).forEach(initElement);
+  for (const hook of afterProcess) hook(node);
 }
 
 /** Remove everything an element's script installed: listeners, observers, timers, state. */
@@ -166,12 +175,33 @@ host.process = processNode;
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * `parse` as a host exposes it, in upstream's shape: the parsed node with an
+ * `errors` list. A grammar error is reported in the list; a tokenizer error throws.
+ */
+export function hostParse(src: string): { errors: ParseError[]; features?: Program['features'] } {
+  try {
+    const parsed = parse(src);
+    if (parsed.kind === 'features') return { ...parsed.program, errors: [] };
+    return { ...(parsed.kind === 'commands' ? parsed.commands[0] : parsed.expression), errors: [] };
+  } catch (e) {
+    if (e instanceof ParseError) return { errors: [e] };
+    throw e;
+  }
+}
+
+/** The public object, shaped like upstream's `_hyperscript` so its plugins can be used. */
 export const api = Object.assign(evaluate, {
   // Upstream's shape: `config.conversions.Foo = …` and `config.conversions.dynamicResolvers.push(…)`.
   config: Object.assign(config, { conversions: Object.assign(conversions, { dynamicResolvers }) }),
-  use,
+  /** `use(plugin)`: the plugin receives this object. */
+  use(plugin: (hyperscript: unknown) => void) {
+    plugin(api);
+  },
+  addBeforeProcessHook: (hook: ProcessHook) => void beforeProcess.push(hook),
+  addAfterProcessHook: (hook: ProcessHook) => void afterProcess.push(hook),
   evaluate,
-  parse,
+  parse: hostParse,
   process: processNode,
   /** Upstream's older name for `process`. */
   processNode,

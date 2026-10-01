@@ -1,4 +1,4 @@
-/** The spike's bundle: every module written so far. A bundle is the list of modules passed to `use()`. */
+/** The spike's bundle: every module written so far. A bundle is the list of modules passed to `register()`. */
 import { settle, transition, viewTransition } from '../commands/animation';
 import { halt, ifCommand, returnCommand, throwCommand } from '../commands/control';
 import { add, remove, toggle } from '../commands/dom';
@@ -20,13 +20,13 @@ import { pick } from '../commands/pick';
 import { fetchCommand, go, scroll } from '../commands/platform';
 import { defaultCommand, increment, put, set } from '../commands/setters';
 import { conversions } from '../conversions';
-import { boot, use } from '../engine';
+import { boot, register } from '../engine';
 import { expressionsExtra } from '../expressions-extra';
 import { behavior, def, init, install, setFeature } from '../features';
 import { on } from '../on';
 
 // prettier-ignore
-use(
+register(
   // features
   on, def, init, behavior, install, setFeature, js,
   // expressions

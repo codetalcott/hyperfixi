@@ -18,7 +18,7 @@ Not a workspace package and not published. Nothing in `packages/` depends on it.
 | `src/runtime.ts`, `src/engine.ts`                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                |
 | `src/on.ts`, `src/features.ts`                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                        |
 | `src/commands/*`                                 | 50 command keywords, one module export each                                                                  |
-| `src/bundles/*`                                  | Bundle entries: a bundle is a list of modules passed to `use()`                                              |
+| `src/bundles/*`                                  | Bundle entries: a bundle is a list of modules passed to `register()`                                         |
 | `upstream-suite/`                                | Runs upstream's Playwright suite against any engine bundle                                                   |
 
 ## Commands

@@ -1,6 +1,6 @@
 /** Size probe: the engine with the `on` feature and no commands. */
-import { boot, use } from '../engine';
+import { boot, register } from '../engine';
 import { on } from '../on';
 
-use(on);
+register(on);
 boot();
