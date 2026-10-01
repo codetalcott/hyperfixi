@@ -69,6 +69,9 @@ node packages/engine/upstream-suite/run.mjs --bundle <bundle.js> --fails
 
 # One source on this engine and on upstream, side by side:
 npx tsx packages/engine/tools/probe.mts '<source>'
+
+# What this engine reads of the sources this repository ships, beside core and upstream:
+npx tsx packages/engine/tools/shipped-sources.mts
 ```
 
 ## The gates
@@ -124,6 +127,30 @@ As a host for the multilingual text path (semantic renders a translation, the ad
   none parses on one engine only. The 26 are mostly syntax only `packages/core` accepts.
 - **The adapter's plugin** in six languages: the script runs and the attribute stays as
   written. On upstream the plugin has to rewrite the attribute.
+
+## Against what this repository ships
+
+`npx tsx packages/engine/tools/shipped-sources.mts` puts every hyperscript source in
+`examples/` and the doc trees (the shipped-sources gate's collection: 387 sources, 337
+distinct) to three parsers. Measured 2026-10-01:
+
+- upstream accepts 242, this engine 243, `packages/core` 320;
+- **78 sources that core accepts are rejected here** (and by upstream). They are syntax only
+  core has, and they are what replacing core's engine would break for a page copied from our
+  own material. By form: `toggle` on an element or dialog (`toggle #dialog`, `… modal`,
+  `… as modal`: 29), JavaScript `new` (`new Date().toLocaleTimeString()`: about 11), history
+  commands (`push url`, `replace url`: 10), `toggle *display on <target>` (5),
+  `on click.debounce(300)` (4), `swap` strategies and `using view transition` (6), and a tail
+  of single uses (`copy`, prefix `unless`, a spaced `${…}` in a naked URL, `fetch … and …`).
+
+## Known difference from upstream
+
+One, found by the measurement above: `my @id as String` (an attribute read through `my` /
+`its` / `your`, then a conversion or any further access). Upstream rejects it, because its
+attribute-access rule does not continue the expression chain as every other access does; the
+possessive form `#a's @title as String` works on both. This engine continues the chain. It is
+kept because the stricter reading looks like an upstream slip and a shipped example uses the
+form (`its @data-stock as Number > 0`).
 
 ## Where the bytes are
 
