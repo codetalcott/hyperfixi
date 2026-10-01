@@ -22,6 +22,10 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
+├── engine/         # The engine meant to replace core's: typed, modular, upstream-faithful (private, unpublished)
+│   ├── src/                  # Grammar modules: a bundle is the list passed to register()
+│   └── upstream-suite/       # The gate: upstream _hyperscript's own tests (vendored 0.9.93) + known-failures.json
+│
 ├── i18n/           # Per-language VOCABULARY (24 languages) — no longer translates
 │   ├── src/
 │   │   ├── grammar/          # SOV/VSO word-order PROFILES (transformer retired 2026-08-28)
@@ -735,6 +739,15 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`. Read it before adding,
 > removing, or restructuring a command surface. Its six arcs (D→C→A→B→E→F) are all
 > done (last 2026-07-31); it stays as the design-principles record.
+>
+> **`packages/engine` is the engine that replaces `packages/core`'s** (owner decision
+> 2026-10-01; nothing depends on it yet). Its acceptance oracle is upstream
+> `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
+packages/engine` fails on a new failing test AND on a listed one that now passes
+> (`upstream-suite/known-failures.json`, prune with `test:upstream:update`). It has no
+> `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
+> so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
+> changing it; port from upstream's source, and measure before and after.
 >
 > **Cross-layer engine migration** — one typed AST, commands as grammar + op,
 > compile-to-closures, the engine/front-end boundary — is

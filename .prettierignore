@@ -23,3 +23,7 @@ docs-internal/
 **/test-results/
 **/*.min.js
 package-lock.json
+
+# The engine's acceptance oracle: upstream _hyperscript's tests, vendored unmodified
+# (packages/engine/upstream-suite/vendor/README.md).
+packages/engine/upstream-suite/vendor/

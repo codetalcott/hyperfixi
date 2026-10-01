@@ -17,8 +17,8 @@
  * the same "translate before parse" effect through a mechanism the runtime
  * actually calls.
  *
- * A host may offer `addSourceTransform` instead (the engine in
- * `experiments/small-engine` does; _hyperscript.org does not). The host then
+ * A host may offer `addSourceTransform` instead (`@hyperfixi/engine`
+ * does; _hyperscript.org does not). The host then
  * hands each script to the translator as it reads it, and the attribute keeps
  * the author's text: nothing in the DOM is rewritten, and a parse error can
  * say what was written.
