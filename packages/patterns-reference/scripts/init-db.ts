@@ -549,24 +549,27 @@ export const SEED_EXAMPLES: SeedExample[] = [
   // ==========================================================================
   // Counters
   // ==========================================================================
+  // A counter in an element is `increment #x's textContent`: upstream and
+  // @hyperfixi/engine do not count in a bare `#x` (core does), so the bare
+  // form parses everywhere and counts only on core (2026-10-02).
   {
     id: 'increment-counter',
     title: 'Increment Counter',
-    raw_code: 'on click increment #counter',
+    raw_code: "on click increment #counter's textContent",
     description: 'Increment a numeric counter element',
     feature: 'counters',
   },
   {
     id: 'increment-by-amount',
     title: 'Increment By Amount',
-    raw_code: 'on click increment #score by 10',
+    raw_code: "on click increment #score's textContent by 10",
     description: 'Increment counter by specific amount',
     feature: 'counters',
   },
   {
     id: 'decrement-counter',
     title: 'Decrement Counter',
-    raw_code: 'on click decrement #counter',
+    raw_code: "on click decrement #counter's textContent",
     description: 'Decrement a numeric counter element',
     feature: 'counters',
   },
@@ -736,8 +739,7 @@ export const SEED_EXAMPLES: SeedExample[] = [
     // upstream 0.9.93 has no such keyword. Kept because it is the only corpus
     // row exercising the multilingual front-end's `async` keyword stripper.
     raw_code: 'on click async fetch /api/data then put it into me',
-    description:
-      'The `async` prefix — no engine runs it (the multilingual front-end strips it)',
+    description: 'The `async` prefix — no engine runs it (the multilingual front-end strips it)',
     feature: 'advanced',
   },
   {
@@ -1018,7 +1020,8 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'repeat-until-event',
     title: 'Repeat Until Event',
-    raw_code: 'on mousedown repeat until event mouseup increment #counter wait 100ms end',
+    raw_code:
+      "on mousedown repeat until event mouseup increment #counter's textContent wait 100ms end",
     description: 'Repeat action while button is held',
     feature: 'loops',
   },
@@ -1032,7 +1035,8 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'repeat-while',
     title: 'Repeat While Condition',
-    raw_code: 'on click repeat while #counter.innerText < 10 increment #counter wait 200ms end',
+    raw_code:
+      "on click repeat while #counter.innerText < 10 increment #counter's textContent wait 200ms end",
     description: 'Repeat while condition is true',
     feature: 'loops',
   },
@@ -1843,7 +1847,7 @@ const SEED_LLM_EXAMPLES: Array<{
     code_example_id: 'increment-counter',
     language: 'en',
     prompt: 'Increment a counter when clicking',
-    completion: 'on click increment #counter',
+    completion: "on click increment #counter's textContent",
   },
   {
     code_example_id: 'log-value',
