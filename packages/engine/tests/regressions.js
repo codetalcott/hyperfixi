@@ -19,3 +19,19 @@ test.describe('start view transition', () => {
     await expect(find('div')).toHaveText('2');
   });
 });
+
+test.describe('an attribute after `my`, `its`, `your`', () => {
+  // Upstream's build tries "attribute of" before the possessive, and an attribute access takes
+  // nothing after it. This engine tried the possessive first and so accepted three forms
+  // upstream rejects: a page written against it would fail on upstream.
+  for (const tail of ['as Int', '.length', '[0]'])
+    test(`\`my @data-n ${tail}\` is an error, as it is on upstream`, async ({ error }) => {
+      expect(await error(`put my @data-n ${tail} into me`)).toMatch(/Expected one of/);
+    });
+
+  test('parenthesized, the conversion reads the attribute', async ({ html, find }) => {
+    await html(`<div data-n="41" _="on click put (my @data-n) as Int + 1 into me"></div>`);
+    await find('div').dispatchEvent('click');
+    await expect(find('div')).toHaveText('42');
+  });
+});
