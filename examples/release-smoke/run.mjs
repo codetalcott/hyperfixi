@@ -68,6 +68,7 @@ const PACKAGES = [
   '@hyperfixi/components',
   '@hyperfixi/mcp-server',
   '@hyperfixi/behaviors',
+  '@hyperfixi/engine',
 ];
 
 const CONTENT_TYPES = {
@@ -362,6 +363,7 @@ async function main() {
     console.log('\n3. Browser bundles (Playwright / chromium)');
     copyFileSync(join(FIXTURES, 'core.html'), join(tmp, 'core.html'));
     copyFileSync(join(FIXTURES, 'hx-v4.html'), join(tmp, 'hx-v4.html'));
+    copyFileSync(join(FIXTURES, 'hs.html'), join(tmp, 'hs.html'));
     server = await startServer(tmp);
 
     let chromium;
@@ -383,6 +385,15 @@ async function main() {
       });
 
       // hx-v4 bundle: hx-live reactive expression re-runs on $count change.
+      await browserCase(chromium, server.port, 'hs.html', 'hyperfixi-hs.js (@hyperfixi/engine) — toggle + put', async (page) => {
+        await page.click('#toggle-btn');
+        const toggled = await page.locator('#toggle-btn').evaluate((el) => el.classList.contains('active'));
+        if (!toggled) throw new Error('toggle did not add .active');
+        await page.click('#put-btn');
+        const text = await page.locator('#out').textContent();
+        if (text.trim() !== 'clicked') throw new Error(`put expected "clicked", got "${text.trim()}"`);
+      });
+
       await browserCase(chromium, server.port, 'hx-v4.html', 'hyperfixi-hx-v4.js — hx-live reactive', async (page) => {
         await page.click('#inc');
         await page.waitForFunction(

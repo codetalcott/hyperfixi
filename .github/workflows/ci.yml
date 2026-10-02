@@ -578,7 +578,7 @@ jobs:
           set -o pipefail
           status=0
           if ! node scripts/validate-exports.mjs \
-            behaviors compilation-service components core \
+            behaviors compilation-service components core engine \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
             language-server mcp-server patterns-reference planner reactivity \
             realtime semantic server-bridge speech vite-plugin \

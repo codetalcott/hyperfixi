@@ -5,9 +5,25 @@ upstream's own test suite as the acceptance oracle. It is typed (`tsc --strict`,
 synchronous until a script really waits on something, and built from modules, so a bundle
 contains the commands it registers and nothing else.
 
-It is meant to replace the engine in `packages/core`. Today it is `private` (not published) and
-nothing else in the repository depends on it; the migration plan is
-`~/.claude/plans/engine-replaces-core.md`.
+It is meant to replace the engine in `packages/core`, and is published as its own package
+(since 2026-10-02). Nothing else in the repository depends on it at run time yet; the migration
+plan is `~/.claude/plans/engine-replaces-core.md`.
+
+## Install
+
+The script-tag bundle, hyperscript and nothing else (34.1 KB gzipped). It installs as
+`window._hyperscript` and `window.hyperfixi`, and reads the document when it is ready:
+
+```html
+<script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
+<button _="on click toggle .active on me">Toggle</button>
+```
+
+Or, with a bundler, build an engine from the modules a page needs:
+
+```sh
+npm install @hyperfixi/engine
+```
 
 ## Use
 

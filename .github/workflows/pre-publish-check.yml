@@ -40,7 +40,7 @@ jobs:
         run: |
           PACKAGES="${{ github.event.inputs.packages }}"
           if [ "$PACKAGES" = "all" ]; then
-            PACKAGES="intent,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,aot-compiler,compilation-service,planner,mcp-server,vite-plugin,behaviors,reactivity,components,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
+            PACKAGES="intent,engine,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,aot-compiler,compilation-service,planner,mcp-server,vite-plugin,behaviors,reactivity,components,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
           fi
           echo "Checking packages: $PACKAGES"
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
