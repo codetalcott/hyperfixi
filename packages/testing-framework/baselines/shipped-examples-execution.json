@@ -8,7 +8,8 @@
     "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md.",
     "2026-08-31 — recipes.html::keyup REMOVED, and this is a coverage LOSS worth stating rather than a convergence. The parser now reports the input it discards, and that handler is one of the sources it reports on, so this gate's eligibility filter ('hyperfixi does not compile it clean') now skips it. Its recorded reason here was ALSO A MISDIAGNOSIS: not a show/hide-strategy difference, but hyperfixi silently discarding the `in the next <div/> when its textContent contains my value` clause — so it showed every blockquote where upstream filtered. Upstream ACCEPTS that source, so it is a real hyperfixi parser defect; it is now tracked by the shipped-sources validity gate instead, and it comes back here the moment the parse is fixed.",
     "2026-10-01 — the four swap-morph.html `swap afterBegin/beforeEnd of X with Y` entries REMOVED: the page now writes `put Y at start of / at end of X`, which both engines run to the same DOM. (The old reason, 'upstream has no swap command, so it no-ops', was half right: upstream's `swap a with b` exchanges two values, so the source set an expando property and inserted nothing.) Two `toggle *display of X` entries ADDED, a new bookkeeping family: see their reason.",
-    "2026-10-01 — ENGINE LANE added: `allowedEngineDivergences` lists the handlers whose effect on @hyperfixi/engine differs from upstream's. First run: 134 compared, 89 real matches, 44 empty on both, 1 diverging, and that one is upstream's stale `document` in this harness. (The core lane over the same handlers: 31 diverging.)"
+    "2026-10-01 — ENGINE LANE added: `allowedEngineDivergences` lists the handlers whose effect on @hyperfixi/engine differs from upstream's. First run: 134 compared, 89 real matches, 44 empty on both, 1 diverging, and that one is upstream's stale `document` in this harness. (The core lane over the same handlers: 31 diverging.)",
+    "2026-10-02 — the thirteen `increment #x` / `decrement #x` entries REMOVED: the pages now write `increment #x's textContent`, which hyperfixi, upstream and @hyperfixi/engine run to the same DOM (core counted in the element's text; upstream and the engine do not, and the element was gone after one click). The rewrite uncovered what those entries hid on counter.html: its mirror handler, `on change in #count`, is a second core-only reading; two entries added for it."
   ],
   "allowedDivergences": [
     {
@@ -59,28 +60,28 @@
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
     },
     {
-      "key": "examples/events-and-dom/counter.html::6f9009e740::click",
+      "key": "examples/events-and-dom/counter.html::b3e71fd218::click",
       "file": "examples/events-and-dom/counter.html",
       "event": "click",
-      "excerpt": "on click decrement #count",
+      "excerpt": "on click decrement #count's textContent",
       "hyperfixi": [
         "Δdiv:14#count cls[counter-display] attr[id=count] style[] text[-1]",
         "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[-1]"
       ],
-      "upstream": ["-div:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "upstream": ["Δdiv:14#count cls[counter-display] attr[id=count] style[] text[-1]"],
+      "reason": "`on change in <element>`: the page's mirror (`on change in #count put #count's textContent into me`) runs on hyperfixi, which watches the content of the element after `in`; upstream reads `in` as a filter on where a `change` EVENT came from, and no such event fires, so its mirror stays. The count itself is the same on both. Upstream spells the watch `on mutation of childList from #count`, which hyperfixi does not parse, so the page has no spelling both run"
     },
     {
-      "key": "examples/events-and-dom/counter.html::7f5ebb38b0::click",
+      "key": "examples/events-and-dom/counter.html::ddad27c231::click",
       "file": "examples/events-and-dom/counter.html",
       "event": "click",
-      "excerpt": "on click increment #count",
+      "excerpt": "on click increment #count's textContent",
       "hyperfixi": [
         "Δdiv:14#count cls[counter-display] attr[id=count] style[] text[1]",
         "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[1]"
       ],
-      "upstream": ["-div:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "upstream": ["Δdiv:14#count cls[counter-display] attr[id=count] style[] text[1]"],
+      "reason": "`on change in <element>`: the page's mirror (`on change in #count put #count's textContent into me`) runs on hyperfixi, which watches the content of the element after `in`; upstream reads `in` as a filter on where a `change` EVENT came from, and no such event fires, so its mirror stays. The count itself is the same on both. Upstream spells the watch `on mutation of childList from #count`, which hyperfixi does not parse, so the page has no spelling both run"
     },
     {
       "key": "examples/events-and-dom/show-hide.html::8aeb3a46f9::click",
@@ -132,104 +133,6 @@
         "Δinput:32#confirm cls[error] attr[id=confirm,placeholder=Re-enter password,type=password] style[] text[]"
       ],
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/adaptive-rtl-ltr.html::f701a8b242::click",
-      "file": "examples/multilingual/adaptive-rtl-ltr.html",
-      "event": "click",
-      "excerpt": "on click decrement #counter",
-      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
-      "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/adaptive-rtl-ltr.html::0d0a6b9a18::click",
-      "file": "examples/multilingual/adaptive-rtl-ltr.html",
-      "event": "click",
-      "excerpt": "on click increment #counter",
-      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
-      "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/index.html::6f9009e740::click",
-      "file": "examples/multilingual/index.html",
-      "event": "click",
-      "excerpt": "on click decrement #count",
-      "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[-1]"],
-      "upstream": ["-div:51#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/index.html::7f5ebb38b0::click",
-      "file": "examples/multilingual/index.html",
-      "event": "click",
-      "excerpt": "on click increment #count",
-      "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[1]"],
-      "upstream": ["-div:51#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/multilingual-sync.html::227e004ae8::click",
-      "file": "examples/multilingual/multilingual-sync.html",
-      "event": "click",
-      "excerpt": "on click decrement #shared-count then call window.logAction('decrement')",
-      "hyperfixi": [
-        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
-      ],
-      "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/multilingual-sync.html::aeeb82b882::click",
-      "file": "examples/multilingual/multilingual-sync.html",
-      "event": "click",
-      "excerpt": "on click increment #shared-count then call window.logAction('increment')",
-      "hyperfixi": [
-        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
-      ],
-      "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/polyglot-playground.html::6f9009e740::click",
-      "file": "examples/multilingual/polyglot-playground.html",
-      "event": "click",
-      "excerpt": "on click decrement #count",
-      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
-      "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/polyglot-playground.html::7f5ebb38b0::click",
-      "file": "examples/multilingual/polyglot-playground.html",
-      "event": "click",
-      "excerpt": "on click increment #count",
-      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
-      "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/showcase.html::406e02080b::click",
-      "file": "examples/multilingual/showcase.html",
-      "event": "click",
-      "excerpt": "on click decrement #counter-value",
-      "hyperfixi": [
-        "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[-1]"
-      ],
-      "upstream": ["-div:36#counter-value"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/showcase.html::3d4a481500::click",
-      "file": "examples/multilingual/showcase.html",
-      "event": "click",
-      "excerpt": "on click increment #counter-value",
-      "hyperfixi": [
-        "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[1]"
-      ],
-      "upstream": ["-div:36#counter-value"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
     },
     {
       "key": "examples/multilingual/showcase.html::1db01d96f1::click",
@@ -286,15 +189,6 @@
         "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked "
       ],
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/multilingual/test-classic-i18n.html::7f5ebb38b0::click",
-      "file": "examples/multilingual/test-classic-i18n.html",
-      "event": "click",
-      "excerpt": "on click increment #count",
-      "hyperfixi": ["Δspan:17#count cls[counter] attr[id=count] style[] text[1]"],
-      "upstream": ["-span:17#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
     },
     {
       "key": "examples/multilingual/test-classic-i18n.html::ffd8337a94::click",

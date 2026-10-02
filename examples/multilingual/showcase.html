@@ -532,16 +532,16 @@
                 </div>
                 <div class="code-block" id="counter-code">
                     <button class="copy-btn" onclick="copyCode('counter-code')">Copy</button>
-                    <span id="counter-code-increment">on click increment #counter-value</span>
+                    <span id="counter-code-increment">on click increment #counter-value's textContent</span>
                 </div>
             </div>
 
             <div class="demo-section">
                 <div class="demo-label">Live Demo:</div>
                 <div class="counter-demo">
-                    <button class="demo-btn secondary" id="counter-demo-decrement" _="on click decrement #counter-value">Decrease</button>
+                    <button class="demo-btn secondary" id="counter-demo-decrement" _="on click decrement #counter-value's textContent">Decrease</button>
                     <div class="counter-value" id="counter-value">0</div>
-                    <button class="demo-btn primary" id="counter-demo-increment" _="on click increment #counter-value">Increase</button>
+                    <button class="demo-btn primary" id="counter-demo-increment" _="on click increment #counter-value's textContent">Increase</button>
                     <button class="demo-btn danger" id="counter-demo-reset" _="on click put 0 into #counter-value">Reset</button>
                 </div>
             </div>
@@ -711,8 +711,8 @@
         const examples = {
             counter: {
                 scripts: {
-                    increment: 'on click increment #counter-value',
-                    decrement: 'on click decrement #counter-value',
+                    increment: "on click increment #counter-value's textContent",
+                    decrement: "on click decrement #counter-value's textContent",
                     reset: 'on click put 0 into #counter-value'
                 },
                 displayScript: 'increment' // Which script to show in the code block

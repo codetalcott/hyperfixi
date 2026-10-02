@@ -286,9 +286,9 @@
                     <textarea id="code-input" class="code-input" placeholder="Type hyperscript in any language..."></textarea>
 
                     <div class="examples-bar">
-                        <button class="example-btn" data-code="on click increment #count">increment</button>
+                        <button class="example-btn" data-code="on click increment #count's textContent">increment</button>
                         <button class="example-btn" data-code="on click toggle .active on #toggle-box">toggle</button>
-                        <button class="example-btn" data-code="on click decrement #count">decrement</button>
+                        <button class="example-btn" data-code="on click decrement #count's textContent">decrement</button>
                         <button class="example-btn" data-code="on click add .active to #toggle-box">add class</button>
                         <button class="example-btn" data-code="on click remove .active from #toggle-box">remove class</button>
                     </div>
@@ -306,9 +306,9 @@
                     <div class="execution-area">
                         <div class="exec-label">Interactive Targets (click elements or use code)</div>
                         <div class="exec-target">
-                            <button class="demo-btn dec" _="on click decrement #count">−</button>
+                            <button class="demo-btn dec" _="on click decrement #count's textContent">−</button>
                             <div class="demo-counter" id="count">0</div>
-                            <button class="demo-btn inc" _="on click increment #count">+</button>
+                            <button class="demo-btn inc" _="on click increment #count's textContent">+</button>
                         </div>
                         <div class="exec-target" style="margin-top: 15px;">
                             <div class="demo-box" id="toggle-box" _="on click toggle .active">Click</div>
@@ -470,8 +470,8 @@
             });
 
             // Initial state
-            updateTranslations('on click increment #count');
-            input.value = 'on click increment #count';
+            updateTranslations("on click increment #count's textContent");
+            input.value = "on click increment #count's textContent";
 
             console.log('LokaScript loaded:', !!window.hyperfixi);
             console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);

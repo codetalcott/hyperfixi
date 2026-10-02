@@ -295,7 +295,23 @@ const CAPABILITIES: Capability[] = [
     setup: d => (t(d).style.opacity = '0.5'),
     check: o => t(o.doc).style.opacity === '0.25' && t(o.doc).textContent === 'seed',
   },
-  // `via`/`with`. The check inspects the REQUEST, not the response: the
+  // Any other possessive writes the property: `increment #t's textContent`
+  // is the spelling upstream runs. The fallback evaluated it to the TEXT and
+  // looked that up as a selector, which throws on a number.
+  {
+    id: 'increment_property',
+    command: 'increment',
+    code: "increment #t's textContent by 2",
+    setup: d => (t(d).textContent = '5'),
+    check: o => t(o.doc).textContent === '7',
+  },
+  {
+    id: 'decrement_property',
+    command: 'decrement',
+    code: "decrement #t's textContent",
+    setup: d => (t(d).textContent = '5'),
+    check: o => t(o.doc).textContent === '4',
+  },
   // pre-step-2 template dropped both and issued a plain GET, which still
   // resolved and still filled #t. A row asserting only the swapped-in body
   // would have passed against the defect — the fallback-measuring trap the

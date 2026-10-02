@@ -223,9 +223,9 @@
             <h2>Shared State (interact here)</h2>
             <div class="shared-controls">
                 <div class="control-group">
-                    <button class="shared-btn dec" _="on click decrement #shared-count then call window.logAction('decrement')">−</button>
+                    <button class="shared-btn dec" _="on click decrement #shared-count's textContent then call window.logAction('decrement')">−</button>
                     <div class="shared-counter" id="shared-count">0</div>
-                    <button class="shared-btn inc" _="on click increment #shared-count then call window.logAction('increment')">+</button>
+                    <button class="shared-btn inc" _="on click increment #shared-count's textContent then call window.logAction('increment')">+</button>
                 </div>
                 <div class="control-group">
                     <div class="shared-box" id="shared-box" _="on click toggle .active then call window.logAction('toggle')">
@@ -268,8 +268,8 @@
         ];
 
         const actionTemplates = {
-            increment: 'on click increment #shared-count',
-            decrement: 'on click decrement #shared-count',
+            increment: "on click increment #shared-count's textContent",
+            decrement: "on click decrement #shared-count's textContent",
             toggle: 'on click toggle .active on #shared-box',
         };
 

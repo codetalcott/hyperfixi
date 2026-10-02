@@ -523,13 +523,15 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
         return newVal;
       }
 
-      if (target.type === 'possessive' && isStyleProp(target.property)) {
+      if (target.type === 'possessive') {
+        const style = isStyleProp(target.property);
         const obj = await evaluate(target.object, ctx);
         const elements = toElementArray(obj);
         for (const el of elements) {
-          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
-          const newVal = current + amount;
-          setStyleProp(el, target.property, newVal);
+          const was = style ? getStyleProp(el, target.property) : Reflect.get(el, target.property);
+          const newVal = (parseFloat(was || '0') || 0) + amount;
+          if (style) setStyleProp(el, target.property, newVal);
+          else Reflect.set(el, target.property, newVal);
           ctx.it = newVal;
         }
         return ctx.it;
@@ -559,13 +561,15 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
         return newVal;
       }
 
-      if (target.type === 'possessive' && isStyleProp(target.property)) {
+      if (target.type === 'possessive') {
+        const style = isStyleProp(target.property);
         const obj = await evaluate(target.object, ctx);
         const elements = toElementArray(obj);
         for (const el of elements) {
-          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
-          const newVal = current - amount;
-          setStyleProp(el, target.property, newVal);
+          const was = style ? getStyleProp(el, target.property) : Reflect.get(el, target.property);
+          const newVal = (parseFloat(was || '0') || 0) - amount;
+          if (style) setStyleProp(el, target.property, newVal);
+          else Reflect.set(el, target.property, newVal);
           ctx.it = newVal;
         }
         return ctx.it;

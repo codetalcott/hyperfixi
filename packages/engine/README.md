@@ -138,10 +138,10 @@ pages that need only hyperscript. Core's Playwright suites run them, and the bun
 column of the bundle-compatibility matrix (`?bundle=hs` in the examples' loader). What keeps
 the other pages on `hyperfixi.js`, counted over the 37 pages that load it: page script that
 calls the `hyperfixi` API (8), behaviors (5), the intent element (4), htmx attributes (2),
-the history commands, and one behavior this engine does not have: `increment #count` on core
-counts in the element's text, where upstream and this engine want `increment #count's
-textContent`. Fourteen shipped handlers rely on that; whether the engine takes core's reading
-is undecided.
+and the history commands. One behavior of core's is not in this engine, by decision
+(2026-10-02): `increment #count` on core counts in the element's text, where upstream and this
+engine want `increment #count's textContent`. The examples write the second, which every
+bundle runs to the same count (the bundle matrix's Counter row).
 
 The 66 known failures: upstream's internal-API surface (`internals.tokenizer`,
 `evalStatically`, source info, error collection: 47), sockets and workers (17, upstream

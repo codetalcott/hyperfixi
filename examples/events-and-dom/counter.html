@@ -92,7 +92,7 @@
             <div id="count" class="counter-display">0</div>
 
             <div class="button-group">
-                <button _="on click decrement #count">
+                <button _="on click decrement #count's textContent">
                     Decrease
                 </button>
 
@@ -100,7 +100,7 @@
                     Reset
                 </button>
 
-                <button _="on click increment #count">
+                <button _="on click increment #count's textContent">
                     Increase
                 </button>
             </div>
@@ -115,7 +115,7 @@
         <div class="code">
 &lt;div <span class="keyword">id</span>=<span class="string">"count"</span> <span class="keyword">class</span>=<span class="string">"counter-display"</span>&gt;0&lt;/div&gt;
 
-&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count's textContent"</span>&gt;
   Decrease
 &lt;/button&gt;
 
@@ -123,7 +123,7 @@
   Reset
 &lt;/button&gt;
 
-&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count's textContent"</span>&gt;
   Increase
 &lt;/button&gt;
         </div>
@@ -131,15 +131,15 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>increment #count</code> - Adds 1 to the counter's value</li>
-                <li><code>decrement #count</code> - Subtracts 1 from the counter's value</li>
+                <li><code>increment #count's textContent</code> - Adds 1 to the counter's value</li>
+                <li><code>decrement #count's textContent</code> - Subtracts 1 from the counter's value</li>
                 <li><code>put 0 into #count</code> - Resets the counter to zero</li>
             </ul>
 
             <h3>Advanced Increment/Decrement:</h3>
             <ul>
-                <li><code>increment #count by 5</code> - Add 5 instead of 1</li>
-                <li><code>decrement #count by 10</code> - Subtract 10</li>
+                <li><code>increment #count's textContent by 5</code> - Add 5 instead of 1</li>
+                <li><code>decrement #count's textContent by 10</code> - Subtract 10</li>
                 <li><code>increment my value</code> - Increment an element's value attribute</li>
                 <li><code>increment @data-score</code> - Increment a data attribute</li>
             </ul>

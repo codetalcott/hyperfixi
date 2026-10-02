@@ -335,9 +335,9 @@
                     <div class="demo-label" id="counter-label">Counter:</div>
                     <div class="demo-content">
                         <div class="counter-row">
-                            <button class="counter-btn dec" _="on click decrement #counter">−</button>
+                            <button class="counter-btn dec" _="on click decrement #counter's textContent">−</button>
                             <div class="counter-value" id="counter">0</div>
-                            <button class="counter-btn inc" _="on click increment #counter">+</button>
+                            <button class="counter-btn inc" _="on click increment #counter's textContent">+</button>
                         </div>
                     </div>
                 </div>
@@ -370,8 +370,8 @@
                 <span style="margin-left: auto; font-size: 0.8rem;">Hyperscript in current language</span>
             </div>
             <div class="code-content" id="code-content">
-                <div class="code-line">on click increment #counter</div>
-                <div class="code-line">on click decrement #counter</div>
+                <div class="code-line">on click increment #counter's textContent</div>
+                <div class="code-line">on click decrement #counter's textContent</div>
                 <div class="code-line">on click toggle .active</div>
             </div>
         </div>
@@ -402,8 +402,8 @@
                 progress: 'Progress:',
                 toggleText: 'Click to toggle',
                 code: [
-                    'on click increment #counter',
-                    'on click decrement #counter',
+                    "on click increment #counter's textContent",
+                    "on click decrement #counter's textContent",
                     'on click toggle .active'
                 ]
             },
@@ -415,8 +415,8 @@
                 progress: '進捗:',
                 toggleText: 'クリックで切り替え',
                 code: [
-                    '#counter を クリック で 増加',
-                    '#counter を クリック で 減少',
+                    '#counterのtextContent を クリック で 増加',
+                    '#counterのtextContent を クリック で 減少',
                     'クリック で .active を 切り替え'
                 ]
             },
@@ -428,8 +428,8 @@
                 progress: 'التقدم:',
                 toggleText: 'انقر للتبديل',
                 code: [
-                    'زِد #counter عند النقر',
-                    'انقص #counter عند النقر',
+                    'زِد textContent لـ #counter عند النقر',
+                    'انقص textContent لـ #counter عند النقر',
                     'بدّل .active عند النقر'
                 ]
             },
@@ -441,8 +441,8 @@
                 progress: 'התקדמות:',
                 toggleText: 'לחץ להחלפה',
                 code: [
-                    'הגדל #counter בלחיצה',
-                    'הקטן #counter בלחיצה',
+                    'הגדל את textContent של #counter בלחיצה',
+                    'הקטן את textContent של #counter בלחיצה',
                     'החלף .active בלחיצה'
                 ]
             }
