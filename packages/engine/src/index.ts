@@ -60,3 +60,7 @@ export { pick } from './commands/pick';
 export { fetchCommand, go, scroll } from './commands/platform';
 export { defaultCommand, increment, put, set } from './commands/setters';
 export { render } from './templates';
+
+// Modules: syntax upstream does not have.
+export { construct, toggleElement } from './additions';
+export type { ConstructNode, ToggleElementNode } from './additions';

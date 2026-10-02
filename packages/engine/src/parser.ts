@@ -46,6 +46,8 @@ export interface Grammar {
   collections: ChainRule[];
   /** A bare call used as a command: `foo()`, `me.focus()`. */
   pseudo?: (p: Parser, start: number) => Cmd | undefined;
+  /** `toggle <element>`, with no `between`: not upstream's (`additions.ts`). */
+  toggleElement?: (p: Parser, target: Expr, start: number) => Cmd;
 }
 
 export const createGrammar = (): Grammar => ({

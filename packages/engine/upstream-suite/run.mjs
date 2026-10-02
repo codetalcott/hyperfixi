@@ -14,6 +14,8 @@
 //                     An unlisted failure is run again alone before it counts, because a
 //                     few upstream tests assert on tens of milliseconds.
 //   --update          Rewrite `known-failures.json` from this run.
+//   --own             Run this package's own tests (`../tests`, for the syntax upstream does
+//                     not have) instead of upstream's. Exits 1 if any fails.
 //
 // The oracle is PINNED: the tests are the vendored copy of upstream's, at the release named in
 // VENDORED (see vendor/README.md). To try another upstream version, set HYPERSCRIPT_REPO (a
@@ -44,7 +46,9 @@ const fail = message => {
 const bundle = opt('bundle');
 if (!bundle || !existsSync(bundle)) fail('--bundle <file.js> is required and must exist');
 const files = opt('files')?.split(',');
-if (files && (flag('check') || flag('update'))) fail('--check and --update need the whole suite');
+const own = flag('own');
+if ((files || own) && (flag('check') || flag('update')))
+  fail('--check and --update need the whole upstream suite');
 
 const work = join(here, '.work');
 rmSync(work, { recursive: true, force: true });
@@ -72,9 +76,11 @@ if (!testRoot && process.env.HYPERSCRIPT_REF) {
   origin = `${VENDORED} (vendored)`;
 }
 if (!existsSync(testRoot)) fail(`upstream tests not found at ${testRoot}`);
-console.log(`upstream tests: ${origin}`);
+console.log(own ? "this package's own tests (../tests)" : `upstream tests: ${origin}`);
 
-if (files) {
+if (own) {
+  cpSync(join(here, '..', 'tests'), join(work, 'test', 'own'), { recursive: true });
+} else if (files) {
   for (const f of files) {
     mkdirSync(dirname(join(work, 'test', f)), { recursive: true });
     cpSync(join(testRoot, f), join(work, 'test', f));
@@ -165,7 +171,9 @@ const rate = ((100 * passed) / (passed + failed || 1)).toFixed(1);
 console.log(
   `${'TOTAL'.padEnd(40)} ${String(passed).padStart(4)} / ${passed + failed}  (${rate}%)  ${seconds}s`
 );
-if (flag('fails')) console.log('\n' + failing.map(id => `${id}  [${messages.get(id)}]`).join('\n'));
+if (flag('fails') || own)
+  console.log('\n' + failing.map(id => `${id}  [${messages.get(id)}]`).join('\n'));
+if (own && (failed || !passed)) process.exit(1);
 if (opt('json'))
   writeFileSync(opt('json'), JSON.stringify({ passed, failed, perFile }, null, 2) + '\n');
 

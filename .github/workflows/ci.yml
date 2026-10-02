@@ -1332,6 +1332,12 @@ jobs:
       - name: Run engine acceptance (upstream _hyperscript suite, vendored)
         run: npm run test:upstream --prefix packages/engine
 
+      # The two forms the engine has that upstream does not (`new X()`,
+      # `toggle <element>`: src/additions.ts) have no upstream tests; these are
+      # the package's own, on the same fixtures. Every one must pass. ~2s.
+      - name: Run engine tests for its own additions
+        run: npm run test:own --prefix packages/engine
+
       # NOTE: paths are relative to the repo root, NOT this job's
       # working-directory. The report/traces are written under
       # packages/core/ (the Playwright cwd), so the path must be

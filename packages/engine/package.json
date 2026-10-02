@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "test:upstream": "node upstream-suite/run.mjs --bundle dist/full.js --check",
     "test:upstream:update": "node upstream-suite/run.mjs --bundle dist/full.js --update",
+    "test:own": "node upstream-suite/run.mjs --bundle dist/full.js --own",
     "cost": "node cost.mjs"
   },
   "author": "LokaScript Contributors",
