@@ -183,7 +183,7 @@
                        add .hx-swapping to #boosted-content
                        wait 300ms
                        set homeHtml to '<div class=card><h3>Home Page</h3><p>Welcome! This content was loaded via AJAX.</p><p>The URL updated but the page did not reload.</p></div>'
-                       swap innerHTML of #boosted-content with homeHtml
+                       put homeHtml into #boosted-content
                        push url '#/home'
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
@@ -198,7 +198,7 @@
                        add .hx-swapping to #boosted-content
                        wait 300ms
                        set productsHtml to '<div class=card style=background:linear-gradient(135deg,#4caf50,#2e7d32)><h3>Products Page</h3><p>Browse our amazing products!</p><p>All loaded via AJAX - fast and smooth.</p></div>'
-                       swap innerHTML of #boosted-content with productsHtml
+                       put productsHtml into #boosted-content
                        push url '#/products'
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
@@ -213,7 +213,7 @@
                        add .hx-swapping to #boosted-content
                        wait 300ms
                        set aboutHtml to '<div class=card style=background:linear-gradient(135deg,#2196f3,#1976d2)><h3>About Page</h3><p>Learn about our company.</p><p>Smooth transitions between pages!</p></div>'
-                       swap innerHTML of #boosted-content with aboutHtml
+                       put aboutHtml into #boosted-content
                        push url '#/about'
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
@@ -228,7 +228,7 @@
                        add .hx-swapping to #boosted-content
                        wait 300ms
                        set contactHtml to '<div class=card style=background:linear-gradient(135deg,#e91e63,#c2185b)><h3>Contact Page</h3><p>Get in touch with us!</p><p>All navigation is boosted.</p></div>'
-                       swap innerHTML of #boosted-content with contactHtml
+                       put contactHtml into #boosted-content
                        push url '#/contact'
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
@@ -264,12 +264,12 @@
                    set query to #search-input's value
                    if query is ''
                      set errorHtml to '<p style=color:#f44336>Please enter a search term</p>'
-                     swap innerHTML of #search-results with errorHtml
+                     put errorHtml into #search-results
                    else
                      add .hx-swapping to #search-results
                      wait 500ms
                      set resultsHtml to '<div class=card><h3>Search Results</h3><p>Searching for: <strong>' + query + '</strong></p><p>Results would appear here (simulated)</p></div>'
-                     swap innerHTML of #search-results with resultsHtml
+                     put resultsHtml into #search-results
                      set fullUrl to '#/search?q=' + query
                      replace url fullUrl
                      remove .hx-swapping from #search-results
@@ -329,7 +329,9 @@
       halt the event
       add .hx-swapping to #content
       fetch the @href of me as html
-      swap #content with it using view transition
+      start view transition
+        put it into #content
+      end
       push url the @href of me
       remove .hx-swapping from #content"</span>&gt;
   Page Link
@@ -343,7 +345,7 @@
          set formData to new FormData(me)
          set params to new URLSearchParams(formData)
          fetch `/search?${params}` as html
-         swap #results with it
+         put it into #results
          replace url `/search?${params}`"</span>&gt;
   &lt;input name="q" /&gt;
   &lt;button type="submit"&gt;Search&lt;/button&gt;

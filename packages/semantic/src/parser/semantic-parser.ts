@@ -6238,11 +6238,13 @@ export class SemanticParserImpl implements ISemanticParser {
    * `tell <target> to <command>`, core's form (upstream rejects the `to`). No
    * tell pattern reads the `to`, so it dropped in silence, in English and so in
    * every translation. And pl reads `to` as its own word ("it"). So, as with
-   * tryDoNotThrow, the word is excised BEFORE any pattern sees it, the rest
-   * re-parsed, and the flag set on the tell it follows: the one whose target
-   * starts last before it, when only that tell's own words sit in between. It
-   * is English in every language, as the renderer writes it, after the whole
-   * tell command. One `to` per call: the re-parse takes the next.
+   * tryDoNotThrow, the word is excised BEFORE any pattern sees it and the rest
+   * re-parsed, when it follows a tell: the one whose target starts last before
+   * it, with only that tell's own words in between. The `to` is READ and not
+   * written: the node is the one `tell <target> <command>` gives, and the
+   * renderer writes that form, the one upstream and @hyperfixi/engine accept
+   * (2026-10-01; it rendered as written before). One `to` per call: the
+   * re-parse takes the next.
    */
   private tryTellTo(
     arr: readonly LanguageToken[],
@@ -6301,7 +6303,6 @@ export class SemanticParserImpl implements ISemanticParser {
         if (targetEnd < 0) continue;
         const gap = arr.filter(t => t.position.start >= targetEnd && t.position.start < wordStart);
         if (!gap.every(t => isTell(t) || markerForms.has(t.value))) continue;
-        (told as { tellTo?: boolean }).tellTo = true;
         return reparsed;
       } catch {
         continue;
@@ -6320,7 +6321,9 @@ export class SemanticParserImpl implements ISemanticParser {
    * follows: the one whose head's last value ends last before it, when only
    * that loop's own words sit in between (`3 times を repeat index i`). It is
    * English in every language, as the renderer writes it, after the loop
-   * head. One phrase per call: the re-parse takes the next.
+   * head; `with index` is read and written back as `index index`, the same
+   * binding in the form both engines accept (2026-10-01). One phrase per
+   * call: the re-parse takes the next.
    */
   private tryLoopIndex(
     arr: readonly LanguageToken[],
@@ -6409,7 +6412,6 @@ export class SemanticParserImpl implements ISemanticParser {
         (loop as { indexVariable?: string }).indexVariable = withIndex
           ? 'index'
           : arr[at + 1].value;
-        if (withIndex) (loop as { indexWith?: boolean }).indexWith = true;
         return reparsed;
       } catch {
         continue;
@@ -6955,6 +6957,11 @@ export class SemanticParserImpl implements ISemanticParser {
       for (let i = 0; i < allTokens.length; i++) {
         const token = allTokens[i];
         if (token.kind !== 'identifier') continue;
+        // A template literal tokenizes as an identifier and is never an event
+        // name: ko read a bare `fetch <template URL> as json then …` as a
+        // handler for the event named by the URL, because the "identifier
+        // right before the body's verb" cue below held for it.
+        if (token.value.startsWith('`')) continue;
 
         if (eventMarkers.size > 0) {
           // Marker languages: the event-marker particle right after the

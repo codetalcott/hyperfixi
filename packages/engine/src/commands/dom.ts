@@ -10,6 +10,8 @@ import {
   expr,
   implicitMe,
   styleLiteral,
+  unary,
+  writable,
 } from '../expressions';
 import type { Grammar, Parser } from '../parser';
 import { config, dataOf, implicitLoop, implicitLoopWhen, nullCheck, rx } from '../runtime';
@@ -347,7 +349,15 @@ export function toggle(g: Grammar): void {
         node.between = [attribute, attributeRef(p) ?? p.err('Expected attributeRef')];
       }
     } else if (!(node.classRefs = classRefs(p)) && !(node.attributeRef = attributeRef(p))) {
-      node.target = p.withFollow(['between'], () => assignable(p));
+      const element = p.g.toggleElement;
+      if (!element) node.target = p.withFollow(['between'], () => assignable(p));
+      else {
+        // With the element form registered, the target may be any element
+        // expression, and `as modal` after it is not a conversion.
+        const target = p.withFollow(['between', 'as'], () => unary(p));
+        if (!p.peek('between')) return element(p, target, start);
+        node.target = writable(p, target);
+      }
     }
 
     if (!node.styleProp && !node.target) node.on = p.match('on') ? expr(p) : implicitMe(p);

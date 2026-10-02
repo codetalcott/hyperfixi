@@ -58,7 +58,7 @@ This is the reverse pattern and is equally powerful. An action in one component 
   id="product-modal"
   class="hidden"
   _="on showProduct(id)
-          fetch /products/${id} and put it into me
+          fetch /products/${id} then put it into me
           then remove .hidden from me"
 ></div>
 ```

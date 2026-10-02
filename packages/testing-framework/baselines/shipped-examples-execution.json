@@ -6,7 +6,9 @@
     "Keys embed a hash of the source: editing the handler changes the key, so entries go",
     "stale and the stale-entry assertion forces their removal — the list only ratchets down.",
     "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md.",
-    "2026-08-31 — recipes.html::keyup REMOVED, and this is a coverage LOSS worth stating rather than a convergence. The parser now reports the input it discards, and that handler is one of the sources it reports on, so this gate's eligibility filter ('hyperfixi does not compile it clean') now skips it. Its recorded reason here was ALSO A MISDIAGNOSIS: not a show/hide-strategy difference, but hyperfixi silently discarding the `in the next <div/> when its textContent contains my value` clause — so it showed every blockquote where upstream filtered. Upstream ACCEPTS that source, so it is a real hyperfixi parser defect; it is now tracked by the shipped-sources validity gate instead, and it comes back here the moment the parse is fixed."
+    "2026-08-31 — recipes.html::keyup REMOVED, and this is a coverage LOSS worth stating rather than a convergence. The parser now reports the input it discards, and that handler is one of the sources it reports on, so this gate's eligibility filter ('hyperfixi does not compile it clean') now skips it. Its recorded reason here was ALSO A MISDIAGNOSIS: not a show/hide-strategy difference, but hyperfixi silently discarding the `in the next <div/> when its textContent contains my value` clause — so it showed every blockquote where upstream filtered. Upstream ACCEPTS that source, so it is a real hyperfixi parser defect; it is now tracked by the shipped-sources validity gate instead, and it comes back here the moment the parse is fixed.",
+    "2026-10-01 — the four swap-morph.html `swap afterBegin/beforeEnd of X with Y` entries REMOVED: the page now writes `put Y at start of / at end of X`, which both engines run to the same DOM. (The old reason, 'upstream has no swap command, so it no-ops', was half right: upstream's `swap a with b` exchanges two values, so the source set an expando property and inserted nothing.) Two `toggle *display of X` entries ADDED, a new bookkeeping family: see their reason.",
+    "2026-10-01 — ENGINE LANE added: `allowedEngineDivergences` lists the handlers whose effect on @hyperfixi/engine differs from upstream's. First run: 134 compared, 89 real matches, 44 empty on both, 1 diverging, and that one is upstream's stale `document` in this harness. (The core lane over the same handlers: 31 diverging.)"
   ],
   "allowedDivergences": [
     {
@@ -304,49 +306,13 @@
       "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
     },
     {
-      "key": "examples/swap-and-morph/swap-morph.html::f3c10ab34d::click",
-      "file": "examples/swap-and-morph/swap-morph.html",
-      "event": "click",
-      "excerpt": "on click set newCard to '<div class=card>Card added at start</div>' swap afterBegin of #strategies-l",
-      "hyperfixi": ["+div[31] cls[card] attr[] style[] text[Card added at start]"],
-      "upstream": [],
-      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
-    },
-    {
-      "key": "examples/swap-and-morph/swap-morph.html::6e8c21c053::click",
-      "file": "examples/swap-and-morph/swap-morph.html",
-      "event": "click",
-      "excerpt": "on click set newCard to '<div class=card>Card added at end</div>' swap beforeEnd of #strategies-list",
-      "hyperfixi": ["+div[31] cls[card] attr[] style[] text[Card added at end]"],
-      "upstream": [],
-      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
-    },
-    {
-      "key": "examples/swap-and-morph/swap-morph.html::6a5ba2e70d::click",
-      "file": "examples/swap-and-morph/swap-morph.html",
-      "event": "click",
-      "excerpt": "on click set newItem to '<div class=item>New Item (afterBegin)</div>' swap afterBegin of #item-list ",
-      "hyperfixi": ["+div[48] cls[item] attr[] style[] text[New Item (afterBegin)]"],
-      "upstream": [],
-      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
-    },
-    {
-      "key": "examples/swap-and-morph/swap-morph.html::d66ad4c5eb::click",
-      "file": "examples/swap-and-morph/swap-morph.html",
-      "event": "click",
-      "excerpt": "on click set newItem to '<div class=item>New Item (beforeEnd)</div>' swap beforeEnd of #item-list wi",
-      "hyperfixi": ["+div[51] cls[item] attr[] style[] text[New Item (beforeEnd)]"],
-      "upstream": [],
-      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
-    },
-    {
       "key": "examples/swap-and-morph/test-property-access.html::e264f605a5::click",
       "file": "examples/swap-and-morph/test-property-access.html",
       "event": "click",
       "excerpt": "on click put document.getElementById('test-input').value into #result4",
       "hyperfixi": [],
       "upstream": ["Δdiv:24#result4 cls[result] attr[id=result4] style[] text[null]"],
-      "reason": "js property-path argument (`document.getElementById(...).value`): hyperfixi produces no effect — REAL BUG CANDIDATE"
+      "reason": "HARNESS ARTIFACT on upstream's side (was recorded as a hyperfixi bug candidate; it is not one). See the same key under allowedEngineDivergences: upstream reads `document` from the page it loaded on, finds no element and writes 'null'; hyperfixi reads the page's own document and writes '' over an empty div, which is no effect and the right answer."
     },
     {
       "key": "examples/toggle-and-state/toggle-attributes.html::34237b9d73::click",
@@ -387,6 +353,43 @@
         "Δbutton:131#prop-btn cls[demo-target] attr[disabled=undefined,id=prop-btn] style[] text[\n                    Another Target\n                ]"
       ],
       "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+    },
+    {
+      "key": "examples/events-and-dom/show-hide.html::a34007b125::click",
+      "file": "examples/events-and-dom/show-hide.html",
+      "event": "click",
+      "excerpt": "on click toggle *display of #content1",
+      "hyperfixi": [
+        "Δdiv:26#content1 cls[content-box] attr[data-previous-display=block,id=content1] style[display: none;] text[]"
+      ],
+      "upstream": [
+        "Δdiv:26#content1 cls[content-box] attr[id=content1] style[display: none;] text[]"
+      ],
+      "reason": "visibility-toggle bookkeeping: hyperfixi records the display it hides in a `data-previous-display` attribute so the second toggle can restore it; upstream restores by clearing the inline style. The style written is the same (`display: none`). Comparable since 2026-10-01, when the page moved from hyperfixi's `toggle *display on X` to upstream's `toggle *display of X` (which core parsed and then failed to run until the same change)."
+    },
+    {
+      "key": "examples/toggle-and-state/toggle-attributes.html::becfceaeaa::click",
+      "file": "examples/toggle-and-state/toggle-attributes.html",
+      "event": "click",
+      "excerpt": "on click toggle *display of #display-box",
+      "hyperfixi": [
+        "Δdiv:82#display-box cls[visibility-box] attr[data-previous-display=block,id=display-box] style[display: none;] text[\n                    Visible Content\n                ]"
+      ],
+      "upstream": [
+        "Δdiv:82#display-box cls[visibility-box] attr[id=display-box] style[display: none;] text[\n                    Visible Content\n                ]"
+      ],
+      "reason": "visibility-toggle bookkeeping: hyperfixi records the display it hides in a `data-previous-display` attribute so the second toggle can restore it; upstream restores by clearing the inline style. The style written is the same (`display: none`). Comparable since 2026-10-01, when the page moved from hyperfixi's `toggle *display on X` to upstream's `toggle *display of X` (which core parsed and then failed to run until the same change)."
+    }
+  ],
+  "allowedEngineDivergences": [
+    {
+      "key": "examples/swap-and-morph/test-property-access.html::e264f605a5::click",
+      "file": "examples/swap-and-morph/test-property-access.html",
+      "event": "click",
+      "excerpt": "on click put document.getElementById('test-input').value into #result4",
+      "engine": [],
+      "upstream": ["Δdiv:24#result4 cls[result] attr[id=result4] style[] text[null]"],
+      "reason": "HARNESS ARTIFACT on upstream's side, not an engine difference. The page's input is empty, so the handler writes '' over an empty div: no effect is the right answer, and it is the engine's. Upstream captures its global scope once, when it loads (`typeof self !== 'undefined' ? self : global`), which here is the bootstrap page; this sweep swaps pages by re-pointing globalThis, so upstream's `document` is still the bootstrap document, its getElementById finds nothing, and it writes 'null'. On one document the two engines agree (`tools/probe.mts`: `put document.getElementById('a').title into #out` gives the same value on both)."
     }
   ]
 }

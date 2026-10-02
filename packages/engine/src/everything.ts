@@ -1,4 +1,5 @@
 /** Every module, as one list: `register(...everything)` is the whole language. */
+import { construct, toggleElement } from './additions';
 import { settle, transition, viewTransition } from './commands/animation';
 import { halt, ifCommand, returnCommand, throwCommand } from './commands/control';
 import { add, remove, toggle } from './commands/dom';
@@ -41,5 +42,7 @@ export const everything: Module[] = [
   set, defaultCommand, increment, put, pick,
   ifCommand, repeat, loopControl, tell, halt, returnCommand, throwCommand,
   send, wait, fetchCommand, go, scroll, transition, settle, viewTransition,
-  log, get_, pseudoCommand, askAnswer, breakpoint, render, morph
+  log, get_, pseudoCommand, askAnswer, breakpoint, render, morph,
+  // not upstream's (additions.ts)
+  construct, toggleElement
 ];

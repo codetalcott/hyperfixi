@@ -226,11 +226,32 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     // target plus the mode slot. (Stopping the argument before `as` would not
     // help — `parseOneArgument` only refuses to START at a boundary.)
     const classArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON]) as
-      (ASTNode & { expression?: ASTNode; targetType?: unknown }) | undefined;
+      | (ASTNode & {
+          expression?: ASTNode;
+          targetType?: unknown;
+          operator?: string;
+          left?: ASTNode & { value?: unknown };
+          right?: ASTNode;
+        })
+      | undefined;
     const mode = classArg?.type === 'asExpression' ? dialogModeOf(classArg.targetType) : undefined;
     if (classArg && mode !== undefined && classArg.expression) {
       args.push(classArg.expression);
       modifiers['as'] = literalModifier(mode);
+    } else if (
+      classArg?.type === 'binaryExpression' &&
+      classArg.operator === 'of' &&
+      classArg.left?.type === 'selector' &&
+      typeof classArg.left.value === 'string' &&
+      classArg.left.value.startsWith('*') &&
+      classArg.right
+    ) {
+      // `toggle [the] *display of <target>` is upstream's spelling of the
+      // visibility toggle (`on <target>` is HyperFixi's). The expression parser
+      // reads `*display of #t` as ONE `of` expression; split it into the
+      // property and the destination slot, so both spellings are one node.
+      args.push(classArg.left);
+      modifiers['on'] = classArg.right as ExpressionNode;
     } else if (classArg) {
       args.push(classArg);
     }

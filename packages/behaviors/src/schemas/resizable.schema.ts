@@ -61,8 +61,8 @@ behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)
     set startY to clientY
     repeat until event pointerup from document
       wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document
-      set newWidth to startWidth + clientX - startX
-      set newHeight to startHeight + clientY - startY
+      set newWidth to (startWidth + clientX) - startX
+      set newHeight to (startHeight + clientY) - startY
       if newWidth < minWidth then set newWidth to minWidth end
       if newWidth > maxWidth then set newWidth to maxWidth end
       if newHeight < minHeight then set newHeight to minHeight end

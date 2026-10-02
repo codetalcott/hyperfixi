@@ -231,3 +231,68 @@ export function checkShippedSourcesValidity(
 
   return { checked: sources.length, clean, findings };
 }
+
+/** A shipped source `packages/core` compiles clean and `@hyperfixi/engine` rejects. */
+export interface EngineRejection extends ShippedSource {
+  /** Stable key: file plus a hash of the source, as the validity gate's. */
+  key: string;
+  /** The engine's first parse error, first line. */
+  error: string;
+  excerpt: string;
+}
+
+export interface ShippedSourcesOnEngineResult {
+  /** Distinct (file, source) pairs core compiles clean. */
+  coreClean: number;
+  /** Of those, the ones the engine parses. */
+  engineAccepts: number;
+  rejections: EngineRejection[];
+}
+
+/**
+ * What replacing core's engine with `@hyperfixi/engine` would break in the
+ * material we ship: every source core compiles clean, put to the engine's
+ * parser. `engineErrors` returns the engine's parse errors ([] = it parses).
+ *
+ * The denominator is core-clean sources on purpose. A source core itself
+ * rejects or recovers from is already broken where it is shipped, and is the
+ * validity gate's business; the question here is only what would STOP working.
+ */
+export function checkShippedSourcesOnEngine(
+  compile: CompileForValidity,
+  engineErrors: (code: string) => string[],
+  doc: Parameters<typeof extractHyperscriptFromMarkup>[0],
+  opts?: { roots?: string[]; repoRoot?: string }
+): ShippedSourcesOnEngineResult {
+  const seen = new Set<string>();
+  const rejections: EngineRejection[] = [];
+  let coreClean = 0;
+  let engineAccepts = 0;
+
+  for (const s of collectShippedSources(doc, opts)) {
+    const key = keyFor(s.file, s.source);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    let clean = false;
+    try {
+      const result = compile(s.source);
+      clean = result.ok && (result.errors ?? []).length === 0;
+    } catch {
+      /* not core-clean */
+    }
+    if (!clean) continue;
+    coreClean++;
+    const errors = engineErrors(s.source);
+    if (errors.length === 0) {
+      engineAccepts++;
+      continue;
+    }
+    rejections.push({
+      ...s,
+      key,
+      error: (errors[0] ?? '').split('\n')[0] ?? '',
+      excerpt: s.source.replace(/\s+/g, ' ').trim().slice(0, 100),
+    });
+  }
+  return { coreClean, engineAccepts, rejections };
+}

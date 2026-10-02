@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
       "html": "HTML-markup patterns: every _= / hx-live / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); hx-live/sse-*/ws-* markup is hyperfixi-only (blocks the upstream claim) and earns its lokascript credit only by running in dist/hyperfixi-hx-v4.js (sse events swap into hx-target, ws-send reaches the socket, hx-live re-renders); a row with no source earns no credit"
     },
-    "lokascriptVersion": "3.1.1",
+    "lokascriptVersion": "3.2.0",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -13,13 +13,13 @@
     "accordion-toggle": "both",
     "add-class-basic": "both",
     "add-class-to-other": "both",
-    "announce-screen-reader": "lokascript",
+    "announce-screen-reader": "both",
     "append-content": "both",
     "async-block": null,
     "beep-debug-expression": "both",
     "behavior-draggable": "both",
     "behavior-removable": "both",
-    "behavior-resizable": "lokascript",
+    "behavior-resizable": "both",
     "behavior-sortable": "both",
     "bind-auto-detect": "both",
     "bind-explicit-property": "both",
@@ -47,7 +47,7 @@
     "document-ready": "both",
     "dropdown-close-outside": "both",
     "dropdown-toggle": "both",
-    "event-debounce": "lokascript",
+    "event-debounce": "both",
     "event-from-elsewhere": "both",
     "event-key-combo": "both",
     "event-once": "both",
@@ -85,7 +85,7 @@
     "increment-by-amount": "both",
     "increment-counter": "both",
     "input-char-count": "both",
-    "input-clear": "lokascript",
+    "input-clear": "both",
     "input-mirror": "both",
     "input-validation": "both",
     "install-behavior": "both",
@@ -111,7 +111,7 @@
     "multiple-events": "both",
     "next-element": "both",
     "on-custom-event-receive": "both",
-    "optional-chaining-possessive": "lokascript",
+    "optional-chaining-possessive": "both",
     "pick-text-range": "both",
     "previous-element": "both",
     "put-after": "both",
@@ -146,14 +146,14 @@
     "socket-send": "both",
     "sse-connect-swap": "lokascript",
     "sse-multi-event": "lokascript",
-    "stagger-animation": "lokascript",
+    "stagger-animation": "both",
     "swap-content": "both",
     "swap-view-transition": "lokascript",
-    "tabs-aria": "lokascript",
+    "tabs-aria": "both",
     "tabs-basic": "both",
     "tabs-content": "both",
     "take-class-from-siblings": "both",
-    "tell-command": "lokascript",
+    "tell-command": "both",
     "tell-other-element": "both",
     "template-literal-interpolation": "both",
     "template-literal-list-build": "both",
@@ -167,7 +167,7 @@
     "transition-transform": "both",
     "trigger-event": "both",
     "two-way-binding": "both",
-    "unless-condition": "lokascript",
+    "unless-condition": "both",
     "wait-for-event": "both",
     "wait-then": "both",
     "when-multiple-changes": "both",
@@ -197,8 +197,7 @@
     },
     "announce-screen-reader": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected event name"
+      "hyperscript": true
     },
     "append-content": {
       "lokascript": true,
@@ -224,8 +223,7 @@
     },
     "behavior-resizable": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "You must parenthesize math operations with different operators"
+      "hyperscript": true
     },
     "behavior-sortable": {
       "lokascript": true,
@@ -338,8 +336,7 @@
     },
     "event-debounce": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected Token : value"
+      "hyperscript": true
     },
     "event-from-elsewhere": {
       "lokascript": true,
@@ -494,8 +491,7 @@
     },
     "input-clear": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected 'to' but found '<'"
+      "hyperscript": true
     },
     "input-mirror": {
       "lokascript": true,
@@ -601,8 +597,7 @@
     },
     "optional-chaining-possessive": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected Token : ?"
+      "hyperscript": true
     },
     "pick-text-range": {
       "lokascript": true,
@@ -744,8 +739,7 @@
     },
     "stagger-animation": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected 'end' but found 'with'"
+      "hyperscript": true
     },
     "swap-content": {
       "lokascript": true,
@@ -758,8 +752,7 @@
     },
     "tabs-aria": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected event name"
+      "hyperscript": true
     },
     "tabs-basic": {
       "lokascript": true,
@@ -775,8 +768,7 @@
     },
     "tell-command": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected 'end' but found 'to'"
+      "hyperscript": true
     },
     "tell-other-element": {
       "lokascript": true,
@@ -832,8 +824,7 @@
     },
     "unless-condition": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected Token : unless"
+      "hyperscript": true
     },
     "wait-for-event": {
       "lokascript": true,

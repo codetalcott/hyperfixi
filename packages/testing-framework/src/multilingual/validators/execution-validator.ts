@@ -72,9 +72,11 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // patterns whose en reference now parses (the if/else conditional fold) and
   // executes (propertyAccess evaluator; matches/exists/is-empty condition
   // forms). Probed through this validator: each produces a non-empty,
-  // deterministic effect signature. `unless-condition` stays out — `unless` is
-  // deliberately NOT folded (see semantic-parser.tryParseConditionalBlock), so
-  // its flat parse still errors at runtime.
+  // deterministic effect signature. `unless-condition` stayed out while it was
+  // core's prefix `unless` (deliberately NOT folded: see
+  // semantic-parser.tryParseConditionalBlock; its flat parse errored at
+  // runtime). The row is `if I do not match …` since 2026-10-01 and has not
+  // been probed for this subset.
   'if-condition',
   'if-matches',
   'if-exists',

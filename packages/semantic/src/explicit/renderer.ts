@@ -310,10 +310,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private renderLoop(node: LoopSemanticNode, language: string): string {
     const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
-    // `index i`, or core's `with index`, in English in every language: the
-    // parser reads it right after the loop head.
+    // `index i`, in English in every language: the parser reads it right
+    // after the loop head. Core's `with index` (it binds `index`) is read too
+    // and written the same way, `index index`: upstream has only this form.
     if (node.indexVariable) {
-      parts.push(node.indexWith ? 'with index' : `index ${node.indexVariable}`);
+      parts.push(`index ${node.indexVariable}`);
     }
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);
@@ -866,12 +867,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // it after the whole command).
     if (node.action === 'fetch' && (node as CommandSemanticNode).doNotThrow) {
       parts.push('do not throw');
-    }
-
-    // `tell <target> to …`: the same, after the whole tell command (after its
-    // target where the verb leads, after its verb where the verb ends it).
-    if (node.action === 'tell' && (node as CommandSemanticNode).tellTo) {
-      parts.push('to');
     }
 
     // `smoothly`/`instantly` after a go or scroll: English in every language,

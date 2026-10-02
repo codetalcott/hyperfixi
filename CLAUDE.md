@@ -372,7 +372,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code / protocol / goclient / docsources)            |
 | 1   | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` **or** `docsources` paths   |
 | 2   | `bundles`                 | ✓   | ✓                 | ✓       | Browser bundles, 3 shards; gated on `code`                           |
-| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped-sources validity; ungated (walks examples/, docs/)           |
+| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: validity, engine list, execution; ungated           |
 | 4   | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                          |
 | 5   | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                           |
 | 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (the two heavyweight suites)      |
@@ -749,7 +749,14 @@ packages/engine` fails on a new failing test AND on a listed one that now passes
 > (`upstream-suite/known-failures.json`, prune with `test:upstream:update`). It has no
 > `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
 > so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
-> changing it; port from upstream's source, and measure before and after.
+> changing it; port from upstream's source, and measure before and after. It has two
+> forms upstream lacks (`new X()`, `toggle <element>`: `src/additions.ts`, tested by
+> `npm run test:own`); every other core-only form was dropped, and **examples and docs
+> are written in upstream's spelling**. Two gates in `packages/testing-framework` hold
+> that: `shipped-sources-engine.test.ts` (the shipped sources the engine rejects, a
+> shrink-only list: 12, the `push url` / `replace url` handlers and one hybrid-bundle
+> example) and the engine lane of `shipped-examples-execution.test.ts` (the DOM each
+> example handler leaves on the engine, against upstream).
 >
 > **Cross-layer engine migration** — one typed AST, commands as grammar + op,
 > compile-to-closures, the engine/front-end boundary — is

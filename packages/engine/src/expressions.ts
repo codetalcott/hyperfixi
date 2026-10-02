@@ -231,7 +231,11 @@ export function primary(p: Parser): Expr {
 /** A target that can be written to: `set <this> to …`. */
 export function assignable(p: Parser): Expr {
   p.match('the');
-  const node = primary(p);
+  return writable(p, primary(p));
+}
+
+/** The node under any parentheses, which must be one a value can be put into. */
+export function writable(p: Parser, node: Expr): Expr {
   const inner = unwrap(node);
   if (!inner.put) {
     p.err(`A target expression must be writable.  The expression type '${inner.type}' is not.`);

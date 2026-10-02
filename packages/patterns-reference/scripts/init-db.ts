@@ -702,7 +702,7 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tell-command',
     title: 'Tell Command',
-    raw_code: 'on click tell #modal to show',
+    raw_code: 'on click tell #modal show',
     description: 'Tell another element to execute a command',
     feature: 'behavior',
   },
@@ -769,12 +769,14 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tabs-aria',
     title: 'Accessible Tabs',
-    // NOTE: `set <value> on <target>` parses via the semantic surface (and
-    // translates faithfully in all 24 languages — it's in the R2 execution
-    // subset) but not via compileSync or upstream, so engine reads NULL.
-    // A dual-legal `of` rewrite was tried and reverted: it broke translation
-    // execution fidelity in bn/hi/ja/qu/tr/ru/th/uk.
-    raw_code: 'on click set @aria-selected to "false" on .tab set @aria-selected to "true" on me',
+    // `add [@attr='value'] to <targets>` is the spelling both engines apply to
+    // EVERY matched element. The row used core's `set @attr to V on <target>`
+    // (upstream rejects it) until 2026-10-01. Upstream's other spelling,
+    // `set @aria-selected of .tab to "false"`, is not a substitute here: core
+    // writes only the FIRST .tab with it (measured), which is what broke
+    // translation execution fidelity when an `of` rewrite was tried before.
+    raw_code:
+      "on click add [@aria-selected='false'] to .tab then add [@aria-selected='true'] to me",
     description: 'Tab navigation with ARIA attributes',
     feature: 'ui-components',
   },
@@ -874,7 +876,7 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'input-clear',
     title: 'Clear Input',
-    raw_code: 'on click set previous <input/>.value to ""',
+    raw_code: 'on click set the value of previous <input/> to ""',
     description: 'Clear the previous input field',
     feature: 'forms',
   },
@@ -1055,7 +1057,7 @@ export const SEED_EXAMPLES: SeedExample[] = [
     id: 'event-debounce',
     title: 'Event Debounce',
     raw_code:
-      'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
+      'on input debounced at 300ms fetch `/api/search?q=${my value}` as json then put it into #results',
     description: 'Debounce input for search',
     feature: 'events',
   },
@@ -1128,9 +1130,11 @@ export const SEED_EXAMPLES: SeedExample[] = [
   },
   {
     id: 'unless-condition',
-    title: 'Unless Condition',
-    raw_code: 'on click unless I match .disabled toggle .selected',
-    description: 'Execute unless condition is true',
+    title: 'Negated Condition',
+    // Core's prefix `unless <condition> <command>` until 2026-10-01; upstream's
+    // `unless` is a suffix on one command, which core does not read.
+    raw_code: 'on click if I do not match .disabled toggle .selected',
+    description: 'Run a command only when a condition does not hold',
     feature: 'control-flow',
   },
 
@@ -1173,7 +1177,7 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'stagger-animation',
     title: 'Stagger Animation',
-    raw_code: 'on load repeat for item in .item with index add .visible to item wait 100ms end',
+    raw_code: 'on load repeat for item in .item index i add .visible to item wait 100ms end',
     description: 'Staggered entrance animation',
     feature: 'animation',
   },
@@ -1210,11 +1214,12 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'announce-screen-reader',
     title: 'Screen Reader Announcement',
-    // NOTE: same story as tabs-aria — the `set … on <target>` form is
-    // semantic-surface-only (engine NULL); the dual-legal `of` rewrite
-    // regressed translation execution fidelity and was reverted.
+    // Upstream's `set @attr of <target> to V`; one target, so core's
+    // first-element-only reading of the `of` form (see tabs-aria) does not
+    // matter. It was core's `set @role to "alert" on #sr-announce` until
+    // 2026-10-01.
     raw_code:
-      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
+      'on success put event.detail.message into #sr-announce set @role of #sr-announce to "alert"',
     description: 'Announce message to screen readers',
     feature: 'accessibility',
   },
@@ -1268,9 +1273,11 @@ export const SEED_EXAMPLES: SeedExample[] = [
   },
   {
     id: 'optional-chaining-possessive',
-    title: 'Optional Chaining (Possessive)',
-    raw_code: 'on click log my?.dataset?.customValue',
-    description: 'Safe property access using optional chaining (HyperFixi extension)',
+    title: 'Null-Safe Property Chain',
+    // Core's `my?.dataset?.customValue` until 2026-10-01. No `?.` is needed: a
+    // missing link in a property chain gives null on both engines.
+    raw_code: 'on click log my.dataset.customValue',
+    description: 'A property chain is null-safe: a missing link gives null instead of throwing',
     feature: 'hyperfixi-extensions',
   },
   {
@@ -1879,7 +1886,7 @@ const SEED_LLM_EXAMPLES: Array<{
     code_example_id: 'optional-chaining-possessive',
     language: 'en',
     prompt: 'Safely access a data attribute that might not exist',
-    completion: 'on click log my?.dataset?.customValue',
+    completion: 'on click log my.dataset.customValue',
   },
   {
     code_example_id: 'get-attribute-possessive-dot',

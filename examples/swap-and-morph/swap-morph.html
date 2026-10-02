@@ -42,7 +42,7 @@
     <h1>Swap & Morph Example</h1>
 
     <div class="description">
-      <strong>Purpose:</strong> Demonstrates the swap and morph commands for updating DOM content.
+      <strong>Purpose:</strong> Demonstrates <code>put</code>, <code>morph</code> and <code>remove</code> for updating DOM content.
     </div>
 
     <div>
@@ -60,13 +60,13 @@
     <div>
       <button _="on click
         set newContent to '<h3>Updated at ' + (new Date()).toLocaleTimeString() + '</h3><p>Content was swapped!</p><input type=text placeholder=Type here>'
-        swap innerHTML of #morph-target with newContent
-      ">Swap innerHTML</button>
+        put newContent into #morph-target
+      ">Replace content</button>
 
       <button class="secondary" _="on click
         set html to '<h3>Put update at ' + (new Date()).toLocaleTimeString() + '</h3>'
         put html into #morph-target
-      ">Put Content (for comparison)</button>
+      ">Replace with a shorter update</button>
     </div>
 
     <h2>Morph vs innerHTML Comparison</h2>
@@ -76,7 +76,7 @@
       <input type="text" id="morph-input" name="morph-input" placeholder="Type here, morph will preserve this">
       <button id="morph-btn" _="on click
         set html to '<h4>Morph (preserves state)</h4><input type=text id=morph-input name=morph-input placeholder=morphed><button id=morph-btn _>Morph Content</button>'
-        morph #compare-morph with html
+        morph #compare-morph to html
       ">Morph Content</button>
     </div>
 
@@ -84,12 +84,12 @@
       <h4>innerHTML (destroys state)</h4>
       <input type="text" placeholder="Type here, innerHTML will lose this">
       <button _="on click
-        set html to '<h4>innerHTML (destroys state)</h4><input type=text placeholder=replaced><button _>Swap innerHTML</button>'
-        swap innerHTML of #compare-innerhtml with html
-      ">Swap innerHTML</button>
+        set html to '<h4>innerHTML (destroys state)</h4><input type=text placeholder=replaced><button _>Replace Content</button>'
+        put html into #compare-innerhtml
+      ">Replace Content</button>
     </div>
 
-    <h2>Position Swaps (Strategies List)</h2>
+    <h2>Insert at a Position</h2>
 
     <div class="demo">
       <p>Click buttons to add cards to the strategies list:</p>
@@ -99,13 +99,13 @@
       <div style="margin-top: 15px;">
         <button _="on click
           set newCard to '<div class=card>Card added at start</div>'
-          swap afterBegin of #strategies-list with newCard
-        ">afterBegin (prepend)</button>
+          put newCard at start of #strategies-list
+        ">at start of (prepend)</button>
 
         <button class="secondary" _="on click
           set newCard to '<div class=card>Card added at end</div>'
-          swap beforeEnd of #strategies-list with newCard
-        ">beforeEnd (append)</button>
+          put newCard at end of #strategies-list
+        ">at end of (append)</button>
       </div>
     </div>
 
@@ -114,19 +114,19 @@
     <div class="demo" id="delete-container">
       <div id="delete-1" class="card">
         <span>Card 1</span>
-        <button _="on click swap delete #delete-1">Delete</button>
+        <button _="on click remove #delete-1">Delete</button>
       </div>
       <div id="delete-2" class="card">
         <span>Card 2</span>
-        <button _="on click swap delete #delete-2">Delete</button>
+        <button _="on click remove #delete-2">Delete</button>
       </div>
       <div id="delete-3" class="card">
         <span>Card 3</span>
-        <button _="on click swap delete #delete-3">Delete</button>
+        <button _="on click remove #delete-3">Delete</button>
       </div>
     </div>
 
-    <h2>Legacy Position Swaps</h2>
+    <h2>Insert and Remove in a List</h2>
 
     <div class="demo" id="list-container">
       <div id="item-list">
@@ -136,17 +136,17 @@
       </div>
       <div style="margin-top: 15px;">
         <button _="on click
-          set newItem to '<div class=item>New Item (afterBegin)</div>'
-          swap afterBegin of #item-list with newItem
-        ">Prepend (afterBegin)</button>
+          set newItem to '<div class=item>New Item (at start)</div>'
+          put newItem at start of #item-list
+        ">Prepend (at start of)</button>
 
         <button class="secondary" _="on click
-          set newItem to '<div class=item>New Item (beforeEnd)</div>'
-          swap beforeEnd of #item-list with newItem
-        ">Append (beforeEnd)</button>
+          set newItem to '<div class=item>New Item (at end)</div>'
+          put newItem at end of #item-list
+        ">Append (at end of)</button>
 
         <button class="secondary" _="on click
-          swap delete .item:last-child
+          remove the last <.item/> in #item-list
         ">Delete Last Item</button>
       </div>
     </div>
@@ -193,10 +193,10 @@
 
     // Test compilation
     try {
-      const result = window.hyperfixi.compile('swap innerHTML of #test with "hello"');
-      console.log('Swap compile result:', result);
+      const result = window.hyperfixi.compile('put "hello" into #test');
+      console.log('Put compile result:', result);
     } catch (e) {
-      console.error('Swap compile error:', e.message);
+      console.error('Put compile error:', e.message);
     }
 
     console.log('Page ready');

@@ -168,6 +168,21 @@ No gate measures these; the survey's scripts are the baseline (see the roadmap, 
 - **N7 · he lexicon gaps** (`closest first next previous empty exists is or of at`), bn/hi `after`/`before`, qu `trigger`/`until`/`event`, th `unless`, tr `render`, bn/he/th `matches`, bn/he/th/vi `document`/`window`. · no gate · vocabulary.
 - **N8 · Count-word grammar** (= V2), and a native reviewer for the count words tr `kez`/`kere`/`defa`, ja `回`/`度`, ko `번`/`회`.
 
+### 2j. Core-only syntax the new engine drops (filed 2026-10-01)
+
+`packages/engine` replaces core's engine and keeps two core forms (`new X()`, `toggle <element>`); the
+rest are dropped. The rule (roadmap, decision 2): the reader keeps accepting a dropped form, the
+renderer writes upstream's spelling. `tell X to cmd` and `with index` are done. These are read and
+still written back AS WRITTEN, so the English the adapter hands to upstream or to the engine does
+not parse there:
+
+- **D1 · `set @a to v on X`** (the `scope` role): renders `set @a to "v" on X` in English and leaves `on` English in every language. Upstream's `set @a of X to v` writes every matched element; core's writes only the FIRST, so an `of` render is right for the adapter path and wrong on core's direct path for a collection (`add [@a='v'] to X` is right on both: the tabs-aria row uses it) · 10-01 · no · render · **probe confirmed**.
+- **D2 · Prefix `unless <condition> <command>`**: a flat `unless` command in the chain, so the block's extent is not in the node; upstream's `unless` is a suffix on one command. Needs the fold `if` has (`tryParseConditionalBlock`) before it can be written as `if not (…) … end` · 10-01 · no · parser/render · **probe confirmed**.
+- **D3 · `my?.a?.b`**: renders `my ?.a?.b`. A property chain is null-safe on both engines, so the render can drop the `?` · 10-01 · no · render · **probe confirmed**.
+- **D4 · A bare URL with a spaced `${…}`** (`fetch /search?q=${my value}`) and **`previous <input/>.value`**: both render as written; upstream wants a backtick string and `the value of previous <input/>` · 10-01 · no · render · **probe confirmed**.
+- **D5 · Commands semantic has a schema for and the engine has no keyword for**: `push`, `replace` (undecided, with htmx), `copy`, `prepend`, `process`, `clone`, and core's `swap` strategies (`swap innerHTML of X with Y` reads on upstream as an exchange of two values). A translation that uses one renders English no engine but core runs · 10-01 · no · schema/owner · measured (`packages/engine/README.md`).
+- **D6 · Two corpus rows are still core-only**: fetch-formdata (`as FormData` is not an upstream conversion) and swap-view-transition (semantic has no schema for upstream's `start view transition … end`; its render is `transition put`) · 10-01 · engine-verification.json records them `lokascript` · parser/owner · **probe confirmed**.
+
 ### 2i. User-facing docs and surfaces (found by the 2026-09-30 product survey)
 
 - **D1 · A README quickstart is a dead button**: `packages/hyperscript-adapter/README.md:25` (`on click .active を me で 切り替え`) preprocesses to `on click on me toggle .active`, which upstream 0.9.93 parses cleanly as an empty click handler plus a handler for an event named `me`; the host-validity gate accepts it. Same class as PARSER_NEXT_STEPS L61 (`install X on me`). A cheap guard: reject a translation that yields a handler for an event named `me`/`it`/`you`.

@@ -1,12 +1,14 @@
 /**
- * A loop's index variable, written as written.
+ * A loop's index variable.
  *
  * Nothing read upstream's `index i` (`repeat for x in xs index i`, `repeat 3
  * times index i`) or core's `with index` (which binds `index`), so both
- * dropped in English and so in every translation: stagger-animation's `with
- * index` rendered away, and a translated body's index was unbound. The loop
- * node carries `indexVariable` (and `indexWith` for core's spelling), and
- * renders write the phrase after the loop head in every language.
+ * dropped in English and so in every translation, and a translated body's
+ * index was unbound. The loop node carries `indexVariable`, and renders write
+ * `index <name>` after the loop head in every language. Core's `with index`
+ * is read and written back as `index index`: the same binding, in the form
+ * upstream and @hyperfixi/engine accept (2026-10-01; before that it rendered
+ * as written).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST } from '../src/index';
@@ -19,7 +21,6 @@ const FOREIGN = [
 type Walked = {
   kind: string;
   indexVariable?: string;
-  indexWith?: boolean;
   body?: Walked[];
   statements?: Walked[];
 };
@@ -47,9 +48,12 @@ const CASES = [
   'on click repeat until event pointerup from document index idx log idx end',
 ];
 
+/** Core's `with index` binds `index`; it is written back as upstream's `index index`. */
+const written = (src: string): string => src.replace(' with index ', ' index index ');
+
 describe('English', () => {
   it.each(CASES)('%s', src => {
-    expect(render(parse(src, 'en')!, 'en')).toBe(src);
+    expect(render(parse(src, 'en')!, 'en')).toBe(written(src));
   });
 
   it('indexes the loop it follows, not a later one', () => {
@@ -59,9 +63,9 @@ describe('English', () => {
 
   it('puts the variable on the loop', () => {
     const [named] = loops(parse('on click repeat 3 times index idx log idx end', 'en') as never);
-    expect([named.indexVariable, named.indexWith]).toEqual(['idx', undefined]);
+    expect(named.indexVariable).toBe('idx');
     const [core] = loops(parse(CASES[0], 'en') as never);
-    expect([core.indexVariable, core.indexWith]).toEqual(['index', true]);
+    expect(core.indexVariable).toBe('index');
   });
 
   // A body's `index` is a variable: only the loop's own words may sit between
@@ -79,7 +83,7 @@ describe('English', () => {
 describe.each(CASES)('%s, through every language', src => {
   it.each(FOREIGN)('%s', language => {
     const foreign = render(parse(src, 'en')!, language);
-    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(src);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(written(src));
   });
 });
 

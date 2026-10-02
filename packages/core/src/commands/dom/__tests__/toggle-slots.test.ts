@@ -39,6 +39,19 @@ describe("the parser carries toggle's syntax as slots", () => {
     }
   });
 
+  it('`toggle *display of #t` (upstream) and `toggle *display on #t` are the same node', () => {
+    for (const source of [
+      'toggle *display of #t',
+      'toggle the *display of #t',
+      'toggle *display on #t',
+    ]) {
+      const cmd = node(source);
+      expect(cmd.args, source).toHaveLength(1);
+      expect(assertNodeOfKind(cmd.args[0], 'selector').value).toBe('*display');
+      expect(assertNodeOfKind(cmd.modifiers?.on, 'selector').value).toBe('#t');
+    }
+  });
+
   it('`toggle .x on #t for 2s` keeps the temporal tail beside the destination', () => {
     const cmd = node('toggle .x on #t for 2s');
     expect(cmd.args).toHaveLength(1);
@@ -61,6 +74,13 @@ describe('ToggleCommand reads the slots, end to end', () => {
     await hyperscript.eval('toggle between .foo and .bar on #host', document.body);
     expect(host.classList.contains('foo')).toBe(true);
     expect(host.classList.contains('bar')).toBe(false);
+  });
+
+  it('css property: `toggle *display of #host` hides and shows the target', async () => {
+    await hyperscript.eval('toggle *display of #host', document.body);
+    expect(host.style.display).toBe('none');
+    await hyperscript.eval('toggle *display of #host', document.body);
+    expect(host.style.display).not.toBe('none');
   });
 
   it('dialog: `as modal` opens with showModal, the bare form with show', async () => {

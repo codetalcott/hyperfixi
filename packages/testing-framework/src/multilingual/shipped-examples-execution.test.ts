@@ -17,6 +17,12 @@
  *   3. no allowlisted key has silently converged (stale entries must be
  *      removed so the list only ever ratchets down).
  *
+ * The same three run for the ENGINE LANE: `@hyperfixi/engine`, the engine meant
+ * to replace core's, against the same oracle on every handler upstream accepts
+ * (`allowedEngineDivergences` in the same baseline). It is the gate for a
+ * handler that parses on both engines and runs differently, which the
+ * parse-level list in shipped-sources-engine.test.ts cannot see.
+ *
  * To update after an intentional change: re-run and regenerate
  * `baselines/shipped-examples-execution.json` (the allowlist key embeds a
  * source hash, so FIXING a handler changes its key and assertion 3 forces the
@@ -54,6 +60,14 @@ interface AllowlistDoc {
     excerpt: string;
     reason: string;
   }>;
+  /** The engine lane: `@hyperfixi/engine` against upstream. */
+  allowedEngineDivergences: Array<{
+    key: string;
+    file: string;
+    event: string;
+    excerpt: string;
+    reason: string;
+  }>;
 }
 
 const baselinePath = path.resolve(
@@ -62,12 +76,17 @@ const baselinePath = path.resolve(
 );
 const allowlist = JSON.parse(readFileSync(baselinePath, 'utf8')) as AllowlistDoc;
 const allowed = new Set(allowlist.allowedDivergences.map(e => e.key));
+const allowedOnEngine = new Set(allowlist.allowedEngineDivergences.map(e => e.key));
+
+/** One sweep, shared by both lanes' tests. */
+let sweeping: Promise<ExecutionParityResult> | undefined;
+const sweep = (): Promise<ExecutionParityResult> => (sweeping ??= runShippedExamplesExecution());
 
 describe('shipped-examples execution gate', () => {
   let result: ExecutionParityResult;
 
   beforeAll(async () => {
-    result = await runShippedExamplesExecution();
+    result = await sweep();
 
     // Visibility, not assertions: what the sweep could not compare, and why.
     // A silently shrinking denominator is this gate's own blind spot.
@@ -84,6 +103,12 @@ describe('shipped-examples execution gate', () => {
     for (const [r, n] of [...reasons].sort((a, b) => b[1] - a[1])) {
       console.log(`[shipped-examples-execution]   skip ×${n}: ${r}`);
     }
+    const onEngine = result.engineCompared;
+    console.log(
+      `[shipped-examples-execution] engine lane: compared=${onEngine.length} ` +
+        `(vacuous=${onEngine.filter(c => c.vacuous).length}) ` +
+        `diverging=${onEngine.filter(c => !c.match).length}`
+    );
   }, 240_000);
 
   it('walks pages and compares handlers (sanity: extraction and both engines working)', () => {
@@ -137,6 +162,56 @@ describe('shipped-examples execution gate', () => {
         ? `\nThese allowlisted handlers no longer diverge (fixed, or edited — the key embeds a\n` +
             `source hash; or no longer eligible, in which case the coverage loss should be deliberate).\n` +
             `Remove them from baselines/shipped-examples-execution.json:\n  ${stale.join('\n  ')}`
+        : ''
+    ).toEqual([]);
+  });
+});
+
+describe('shipped-examples execution gate: @hyperfixi/engine against upstream', () => {
+  let result: ExecutionParityResult;
+  beforeAll(async () => {
+    result = await sweep();
+  }, 240_000);
+
+  it('compares handlers on the engine (sanity: the lane ran and mostly agrees)', () => {
+    expect(result.engineCompared.length).toBeGreaterThan(90);
+    const realMatches = result.engineCompared.filter(c => c.match && !c.vacuous).length;
+    expect(realMatches).toBeGreaterThan(60);
+  });
+
+  it('has no NEW divergence from upstream outside the allowlist', () => {
+    const unexpected = result.engineCompared.filter(c => !c.match && !allowedOnEngine.has(c.key));
+    expect(
+      unexpected,
+      unexpected.length
+        ? `\nShipped handlers whose DOM effect on @hyperfixi/engine DIVERGES from the hyperscript.org ` +
+            `engine\n(the engine follows upstream's source: fix the engine, or allowlist with a reason ` +
+            `under allowedEngineDivergences):\n` +
+            unexpected
+              .map(
+                f =>
+                  `  [${f.key}]\n` +
+                  `      "${f.excerpt}"\n` +
+                  `      engine  : ${JSON.stringify(f.engineEffects).slice(0, 300)}\n` +
+                  `      upstream: ${JSON.stringify(f.upstreamEffects).slice(0, 300)}`
+              )
+              .join('\n') +
+            `\n\nOne source on both, on one page: npx tsx packages/engine/tools/probe.mts '<source>'`
+        : ''
+    ).toEqual([]);
+  });
+
+  it('has no stale allowlist entries', () => {
+    const stillDiverging = new Set(result.engineCompared.filter(c => !c.match).map(c => c.key));
+    const stale = allowlist.allowedEngineDivergences
+      .map(e => e.key)
+      .filter(k => !stillDiverging.has(k));
+    expect(
+      stale,
+      stale.length
+        ? `\nThese handlers no longer diverge on the engine (or were edited: the key embeds a\n` +
+            `source hash). Remove them from allowedEngineDivergences in\n` +
+            `baselines/shipped-examples-execution.json:\n  ${stale.join('\n  ')}`
         : ''
     ).toEqual([]);
   });

@@ -306,11 +306,6 @@ export interface CommandSemanticNode extends SemanticNode {
    */
   readonly doNotThrow?: boolean;
   /**
-   * `tell <target> to <command>`: core's optional `to` between the target and
-   * the body (upstream rejects it). Kept so the form renders as written.
-   */
-  readonly tellTo?: boolean;
-  /**
    * The position of a `go`/`scroll` destination, as written before its `of`:
    * `top` in `go to top of #d1`, `the bottom`, `top left`. Its first position
    * word is core's `modifiers.position`, and the destination `modifiers.of`.
@@ -401,11 +396,6 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly loopVariable?: string;
   /** Index variable name if specified (e.g., 'i' in 'for item in list index i') */
   readonly indexVariable?: string;
-  /**
-   * The index was written core's way, `with index` (it binds `index`), not
-   * upstream's `index <name>`. Kept so the form renders as written.
-   */
-  readonly indexWith?: boolean;
 }
 
 /**
