@@ -1,12 +1,15 @@
 /**
- * `tell <target> to <command>` and a bare `show` / `hide`, written as written.
+ * `tell <target> to <command>` and a bare `show` / `hide`.
  *
  * `on click tell #modal to show` rendered `on click tell #modal` in English and
  * so in every translation: show's and hide's target was required, so a bare
  * one matched no pattern and dropped, and no pattern read the `to`, core's
  * form (upstream rejects it). A bare show/hide now takes the implicit `me` and
  * renders bare (inside a tell, upstream reads a written `me` as the handler's
- * element, not the told one), and the `to` is a flag on the tell.
+ * element, not the told one). The `to` is read and NOT written back: the
+ * render is `tell #modal show end`, the form upstream and @hyperfixi/engine
+ * accept (2026-10-01; before that the `to` was a flag on the tell and the form
+ * rendered as written).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST } from '../src/index';
@@ -19,7 +22,6 @@ const FOREIGN = [
 type Walked = {
   kind: string;
   action?: string;
-  tellTo?: boolean;
   body?: Walked[];
   statements?: Walked[];
 };
@@ -33,14 +35,14 @@ function tells(node: Walked | null): Walked[] {
 // [source, its English render]. A tell's block is closed by an `end` the
 // source may leave to the end of input.
 const CASES: [string, string][] = [
-  ['on click tell #modal to show', 'on click tell #modal to show end'],
-  ['on click tell #panel to hide', 'on click tell #panel to hide end'],
-  ['on click tell #modal to add .x then log 1', 'on click tell #modal to add .x then log 1 end'],
-  ['on click tell <p/> in me to add .highlight', 'on click tell <p/> in me to add .highlight end'],
-  ['on click tell closest .card to hide', 'on click tell closest .card to hide end'],
+  ['on click tell #modal to show', 'on click tell #modal show end'],
+  ['on click tell #panel to hide', 'on click tell #panel hide end'],
+  ['on click tell #modal to add .x then log 1', 'on click tell #modal add .x then log 1 end'],
+  ['on click tell <p/> in me to add .highlight', 'on click tell <p/> in me add .highlight end'],
+  ['on click tell closest .card to hide', 'on click tell closest .card hide end'],
   // A `to` after the body is the body command's own.
   ['on click tell #modal add .x to #y', 'on click tell #modal add .x to #y end'],
-  ['on click tell #modal to add .x to #y', 'on click tell #modal to add .x to #y end'],
+  ['on click tell #modal to add .x to #y', 'on click tell #modal add .x to #y end'],
   ['on click tell #modal show', 'on click tell #modal show end'],
   ['on click show', 'on click show'],
   ['on click hide then log 1', 'on click hide then log 1'],
@@ -58,20 +60,16 @@ describe('English', () => {
     expect(render(parse(src, 'en')!, 'en')).toBe(expected);
   });
 
-  it('flags the tell a `to` follows, and only that one', () => {
-    expect(tells(parse('on click tell #modal to show', 'en') as never).map(t => t.tellTo)).toEqual([
-      true,
-    ]);
-    expect(
-      tells(parse('on click tell #modal add .x to #y', 'en') as never).map(t => t.tellTo)
-    ).toEqual([undefined]);
+  it('reads the `to` a tell is followed by, and writes the form without it', () => {
+    const withTo = parse('on click tell #modal to show', 'en');
+    expect(tells(withTo as never)).toHaveLength(1);
+    expect(render(withTo!, 'en')).toBe(render(parse('on click tell #modal show', 'en')!, 'en'));
   });
 
   // Excising a `set`'s `to` drops the set from the re-parse, which a check on
   // the re-parse alone cannot see: the `to` must follow the tell's own words.
   it('does not take a later command’s `to` for the tell’s', () => {
     const node = parse('on click tell #modal set my.textContent to "hi"', 'en');
-    expect(tells(node as never).map(t => t.tellTo)).toEqual([undefined]);
     expect(render(node!, 'en')).toBe('on click tell #modal set my textContent to "hi" end');
   });
 });

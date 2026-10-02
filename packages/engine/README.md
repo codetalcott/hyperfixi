@@ -142,8 +142,12 @@ As a host for the multilingual text path (semantic renders a translation, the ad
   direct path.)
 - **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
   upstream's parser, the two parsers disagree on none.
-- Of the 159 translatable English corpus patterns, 133 parse on both engines and 26 on neither;
-  none parses on one engine only. The 26 are mostly syntax only `packages/core` accepts.
+- Of the 168 corpus rows, 151 parse on both engines and 17 on neither; none parses on one
+  engine only. Fifteen of the 17 are markup or extension rows (components, `sse-*` / `ws-*` /
+  `hx-live`, sockets, workers, event sources, `intercept`) and one is valid nowhere. Two are
+  syntax only `packages/core` has: `as FormData` (fetch-formdata) and `swap … using view
+transition` (swap-view-transition). Nine more were, until the rows were rewritten in
+  upstream's spelling on 2026-10-01.
 - **The adapter's plugin** in six languages: the script runs and the attribute stays as
   written. On upstream the plugin has to rewrite the attribute.
 

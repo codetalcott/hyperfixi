@@ -45,16 +45,18 @@ describe('sw `na` is still `with`', () => {
     const code =
       'kwenye pakia rudia kwa item ndani .item na index kisha ongeza .visible kwa item mwisho';
     expect(render(parse(code, 'sw')!, 'en')).toBe(
-      'on load repeat for item in .item with index add .visible to item end'
+      'on load repeat for item in .item index index add .visible to item end'
     );
   });
 });
 
+// The phrase is READ in the language's own `with`; the English written back is
+// upstream's `index index` (the same binding: `with index` binds `index`).
 describe("a loop's `with index` in the language's own `with`", () => {
   it('es `con index`', () => {
     const code = 'al cargar repetir para item en .item con index agregar .visible a item fin';
     expect(render(parse(code, 'es')!, 'en')).toBe(
-      'on load repeat for item in .item with index add .visible to item end'
+      'on load repeat for item in .item index index add .visible to item end'
     );
   });
 });

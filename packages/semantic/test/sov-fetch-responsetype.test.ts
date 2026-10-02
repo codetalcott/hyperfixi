@@ -33,7 +33,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, translate } from '../src/index';
+import { parse, render, translate } from '../src/index';
 import type { CommandSemanticNode } from '../src/types';
 
 /** The six languages routed through `sovFetch`. */
@@ -141,5 +141,19 @@ describe('ko tells its two identical markers apart by position', () => {
     const node = parse('/api/user 를 가져오기 json 로', 'ko') as CommandSemanticNode;
     expect(node.roles.has('responseType' as never)).toBe(true);
     expect(node.roles.has('style' as never)).toBe(false);
+  });
+});
+
+// A template literal tokenizes as an identifier. With no handler head and a
+// second command after it, ko's marker-less custom-event cue ("an identifier
+// right before the body's verb") took the URL for an event name: the bare
+// surface read as `on <url> fetch json then …`, and the response type was lost.
+// A template is never an event name. Found when the event-debounce row moved
+// from a bare URL to a backtick template (2026-10-01).
+describe('a template URL before the verb is not an event name', () => {
+  const SOURCE = 'fetch `/api/search?q=${my value}` as json then put it into #results';
+  it.each(['bn', 'hi', 'ja', 'ko', 'qu', 'tr'])('%s', language => {
+    const foreign = render(parse(SOURCE, 'en')!, language);
+    expect(render(parse(foreign, language)!, 'en'), foreign).toBe(SOURCE);
   });
 });

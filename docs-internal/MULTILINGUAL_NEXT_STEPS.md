@@ -219,7 +219,10 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    - C, the diagnostic, covers hand-written text.
 
    Details are in `VALUE_READING.md`.
-2. **Core-only syntax renders as written.** An engine-invalid corpus row is fixed at its source.
+2. **Core-only syntax is read, and written back in upstream's spelling** (2026-10-01; it rendered as
+   written before). `packages/engine` replaces core's engine and drops most core-only forms, so English
+   that reaches an engine must be upstream's. Corpus rows are written in upstream's spelling, and an
+   engine-invalid row is fixed at its source. What is not yet written back: `OPEN_ITEMS.md` section 2j.
 3. **Canonical hyperscript first.** Showcase behaviors don't drive the queue.
 4. **The value matrix is shrink-only.**
    - ACCEPTED pairs stay in the baseline: core's `the X of Y as T` binding, and it `di`.
