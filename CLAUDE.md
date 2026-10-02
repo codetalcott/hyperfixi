@@ -758,7 +758,7 @@ packages/engine` fails on a new failing test AND on a listed one that now passes
 > example) and the engine lane of `shipped-examples-execution.test.ts` (the DOM each
 > example handler leaves on the engine, against upstream). Its script-tag bundle is
 > `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB; `?bundle=hs` in the
-> examples' loader); twenty-eight example pages load it instead of `hyperfixi.js`.
+> examples' loader); thirty-six example pages load it instead of `hyperfixi.js`.
 >
 > **Cross-layer engine migration** — one typed AST, commands as grammar + op,
 > compile-to-closures, the engine/front-end boundary — is

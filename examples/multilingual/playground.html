@@ -513,7 +513,7 @@ Examples:
   </div>
 
   <!-- Load LokaScript bundles -->
-  <script src="../bundle-loader.js"></script>
+  <script src="../bundle-loader.js" data-default="hs"></script>
   <script src="https://unpkg.com/@lokascript/i18n@2.3.0/dist/lokascript-i18n.min.js"></script>
 
   <script>
@@ -696,19 +696,16 @@ Examples:
           // Clear any previous hyperscript by replacing the button
           const newBtn = btn.cloneNode(true);
           newBtn.removeAttribute('_');
+          newBtn.removeAttribute('data-hyperscript-powered');
           btn.parentNode.replaceChild(newBtn, btn);
           window.demoBtn = newBtn;
 
-          // Use the programmatic API
-          const context = window.hyperfixi.createContext(newBtn);
-
-          window.hyperfixi.run(englishCode, context).then(() => {
-            newBtn.setAttribute('_', englishCode);
-            document.getElementById('current-code').textContent = englishCode;
-            logToConsole('Hyperscript applied! Click the button to test.', 'success');
-          }).catch(err => {
-            logToConsole('Error applying hyperscript: ' + err.message, 'error');
-          });
+          // Give the button the script and have the engine read it, as it reads
+          // any element: `processNode` is upstream's name for that, too.
+          newBtn.setAttribute('_', englishCode);
+          window.hyperfixi.processNode(newBtn);
+          document.getElementById('current-code').textContent = englishCode;
+          logToConsole('Hyperscript applied! Click the button to test.', 'success');
 
           currentDemoScript = englishCode;
         } else {

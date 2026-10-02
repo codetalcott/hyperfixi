@@ -632,9 +632,9 @@
                 <div class="demo-label">Live Demo:</div>
                 <div class="tabs-demo">
                     <div class="tab-buttons">
-                        <button class="tab-btn active" id="tabs-demo-tab1" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel1">Tab 1</button>
-                        <button class="tab-btn" id="tabs-demo-tab2" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel2">Tab 2</button>
-                        <button class="tab-btn" id="tabs-demo-tab3" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel3">Tab 3</button>
+                        <button class="tab-btn active" id="tabs-demo-tab1" _="on click remove .active from .tab-btn then add .active to me then remove .active from .tab-panel then add .active to #panel1">Tab 1</button>
+                        <button class="tab-btn" id="tabs-demo-tab2" _="on click remove .active from .tab-btn then add .active to me then remove .active from .tab-panel then add .active to #panel2">Tab 2</button>
+                        <button class="tab-btn" id="tabs-demo-tab3" _="on click remove .active from .tab-btn then add .active to me then remove .active from .tab-panel then add .active to #panel3">Tab 3</button>
                     </div>
                     <div class="tab-content">
                         <div class="tab-panel active" id="panel1">Content for Tab 1. This demonstrates multi-element coordination.</div>
@@ -686,7 +686,7 @@
     </div>
 
     <!-- Load LokaScript bundles -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script src="../../packages/semantic/dist/browser.global.js"></script>
 
     <script>

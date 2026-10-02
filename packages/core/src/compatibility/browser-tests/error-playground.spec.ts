@@ -12,7 +12,7 @@
 import { test, expect } from '@playwright/test';
 import { createErrorCollector } from './test-utils';
 
-test.describe('Error Playground', () => {
+test.describe('Error Playground @comprehensive', () => {
   test.beforeEach(async ({ page, baseURL }) => {
     await page.goto(`${baseURL}/examples/multilingual/error-playground.html`);
 
