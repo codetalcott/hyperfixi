@@ -35,6 +35,15 @@
  * before/after snapshot around it. See runHandlerOnEngine for why isolation is
  * worth its cost.
  *
+ * ## The engine lane
+ * `@hyperfixi/engine` is meant to replace core's engine, so the same sweep
+ * runs it against the same oracle: every handler upstream accepts (whether or
+ * not core compiles it clean) is executed on upstream and on the engine, and
+ * the two effect signatures are compared (`engineCompared`). The parse-level
+ * list of what the engine rejects (shipped-sources-engine.test.ts) cannot see
+ * a handler that parses on both and runs differently; this can. A handler
+ * upstream accepts and the engine rejects is compared too, and diverges.
+ *
  * ## Node-only
  * Imports the real `hyperscript.org` build off disk and swaps jsdom globals
  * per handler execution (both engines resolve `document` lazily through
@@ -144,6 +153,18 @@ export interface ComparedHandler extends ShippedHandler {
   excerpt: string;
 }
 
+/** One handler run on upstream and on `@hyperfixi/engine`. */
+export interface EngineComparedHandler extends ShippedHandler {
+  key: string;
+  event: string;
+  engineEffects: string[];
+  upstreamEffects: string[];
+  match: boolean;
+  /** Both signatures empty: not evidence of parity (see ComparedHandler.vacuous). */
+  vacuous: boolean;
+  excerpt: string;
+}
+
 export interface ExecutionParityResult {
   /** Pages walked. */
   pages: number;
@@ -153,6 +174,8 @@ export interface ExecutionParityResult {
   compared: ComparedHandler[];
   /** Handlers excluded, each with its reason. */
   skipped: SkippedHandler[];
+  /** Handlers upstream accepts, executed on upstream and on `@hyperfixi/engine`. */
+  engineCompared: EngineComparedHandler[];
 }
 
 /** Stable key for one handler execution. */
@@ -219,6 +242,10 @@ export interface Engines {
   hyperfixiInstall(source: string, el: Element): Promise<void>;
   /** Install a handler on an element via the upstream engine. */
   upstreamInstall(el: Element): void;
+  /** `@hyperfixi/engine`'s parse errors for a source; [] = it parses. */
+  engineErrors(source: string): string[];
+  /** Install a handler on an element via `@hyperfixi/engine`. */
+  engineInstall(el: Element): void;
 }
 
 /**
@@ -311,7 +338,20 @@ export async function initEngines(): Promise<Engines> {
     processNode(el: Node): void;
   };
 
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything);
+
   return {
+    engineErrors(source) {
+      try {
+        return engine.api.parse(source).errors.map(e => e.message.split('\n')[0] ?? '');
+      } catch (e) {
+        return ['threw: ' + (e as Error).message.split('\n')[0]];
+      }
+    },
+    engineInstall(el) {
+      engine.api.processNode(el);
+    },
     compileClean(source) {
       try {
         const r = core.hyperscript.compileSync(source);
@@ -425,6 +465,7 @@ export async function runShippedExamplesExecution(opts?: {
 
   const compared: ComparedHandler[] = [];
   const skipped: SkippedHandler[] = [];
+  const engineCompared: EngineComparedHandler[] = [];
   let pages = 0;
   let handlers = 0;
 
@@ -438,6 +479,9 @@ export async function runShippedExamplesExecution(opts?: {
       handlers += pageHandlers.length;
 
       const eligible: Array<ShippedHandler & { event: string }> = [];
+      // The engine lane's denominator: dispatchable, deterministic, and upstream
+      // accepts it. Core's verdict is not part of it.
+      const oracle: Array<ShippedHandler & { event: string }> = [];
       for (const h of pageHandlers) {
         if (!h.event) {
           skipped.push({ ...h, reason: 'not an `on <event>` handler' });
@@ -452,6 +496,8 @@ export async function runShippedExamplesExecution(opts?: {
           skipped.push({ ...h, reason: disq.reason });
           continue;
         }
+        const upstreamErrs = engines.upstreamErrors(h.source);
+        if (upstreamErrs.length === 0) oracle.push(h as ShippedHandler & { event: string });
         if (!engines.compileClean(h.source)) {
           skipped.push({
             ...h,
@@ -459,14 +505,18 @@ export async function runShippedExamplesExecution(opts?: {
           });
           continue;
         }
-        const upstreamErrs = engines.upstreamErrors(h.source);
         if (upstreamErrs.length > 0) {
           skipped.push({ ...h, reason: `upstream rejects it (no oracle): ${upstreamErrs[0]}` });
           continue;
         }
         eligible.push(h as ShippedHandler & { event: string });
       }
-      if (eligible.length === 0) continue;
+      if (eligible.length === 0 && oracle.length === 0) continue;
+      // Upstream's signatures from the core lane serve the engine lane too when
+      // the two lanes install the same handlers on the page.
+      const sameHandlers =
+        eligible.length === oracle.length && eligible.every((h, i) => h === oracle[i]);
+      const upstreamRun = new Map<ShippedHandler, string[]>();
 
       // Both engines log runtime errors to the console during dispatch
       // (COMMAND FAILED etc.). That is expected data here — the effect
@@ -488,10 +538,30 @@ export async function runShippedExamplesExecution(opts?: {
           const theirs = await runHandlerOnEngine(html, eligible, h, (_hh, el) =>
             engines.upstreamInstall(el)
           );
+          upstreamRun.set(h, theirs);
           compared.push({
             ...h,
             key: keyFor(h),
             hyperfixiEffects: ours,
+            upstreamEffects: theirs,
+            match: JSON.stringify(ours) === JSON.stringify(theirs),
+            vacuous: ours.length === 0 && theirs.length === 0,
+            excerpt: h.source.replace(/\s+/g, ' ').trim().slice(0, 100),
+          });
+        }
+        for (const h of oracle) {
+          const rejected = engines.engineErrors(h.source)[0];
+          const theirs =
+            (sameHandlers && upstreamRun.get(h)) ||
+            (await runHandlerOnEngine(html, oracle, h, (_hh, el) => engines.upstreamInstall(el)));
+          const ours =
+            rejected !== undefined
+              ? [`<engine rejects the source: ${rejected}>`]
+              : await runHandlerOnEngine(html, oracle, h, (_hh, el) => engines.engineInstall(el));
+          engineCompared.push({
+            ...h,
+            key: keyFor(h),
+            engineEffects: ours,
             upstreamEffects: theirs,
             match: JSON.stringify(ours) === JSON.stringify(theirs),
             vacuous: ours.length === 0 && theirs.length === 0,
@@ -507,5 +577,5 @@ export async function runShippedExamplesExecution(opts?: {
     }
   }
 
-  return { pages, handlers, compared, skipped };
+  return { pages, handlers, compared, skipped, engineCompared };
 }

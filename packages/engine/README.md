@@ -100,6 +100,17 @@ additions. CI runs it after the upstream suite.
   ask upstream's parser about to this engine's parser; the two must agree.
 - `packages/hyperscript-adapter/test/engine-host.test.ts` hosts the real plugin on this engine.
 
+**The shipped-sources gates**, also in `packages/testing-framework`:
+
+- `shipped-sources-engine.test.ts` lists the sources this repository ships (`examples/`, the doc
+  trees) that `packages/core` compiles and this engine rejects
+  (`baselines/shipped-sources-engine.json`). A new one fails; so does a listed one that now
+  parses. It is empty when replacing core's engine breaks no shipped page.
+- `shipped-examples-execution.test.ts` has an engine lane: every example handler upstream accepts
+  is run on upstream and on this engine, in jsdom, and the DOM effects must match. Measured
+  2026-10-01: 134 handlers, 89 matches with an effect, 44 with none on either, 1 difference
+  (upstream reads a stale `document` in that harness). `packages/core` differs on 31.
+
 ## Measured (2026-10-01, upstream 0.9.93)
 
 |                        | this engine (`full` bundle) | `hyperfixi.js`          | upstream |

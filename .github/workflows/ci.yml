@@ -499,7 +499,13 @@ jobs:
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
 
-      - name: Shipped-sources validity gate
+      # Three gates over the sources we ship, in the one job that runs on an
+      # examples/docs-only diff: validity on core (recovered parses), the list
+      # of sources the new engine rejects (shrink-only), and the execution
+      # sweep (the DOM each example handler leaves, core and the new engine
+      # each against upstream). The sweep also runs in testing-framework's own
+      # suite, which a diff that touches only examples/ never reaches. ~20s.
+      - name: Shipped-sources gates (validity, engine, execution)
         run: npm run test:shipped-sources --prefix packages/testing-framework
 
   # ============================================
