@@ -7,11 +7,11 @@
   "generationCountsNote": "These two are DOCUMENTATION, not assertions (the sanity test only requires >100 each). They read 454/411 until 2026-08-31 because they were stamped when the gate walked the working TREE; #1026 moved the corpus to `git ls-files` and did not restamp them, leaving them 67 sources too high. Re-measured on the git-tracked corpus. Restamp them whenever the corpus definition moves.",
   "allowedRecovered": [
     {
-      "key": "examples/drag-and-drop/sortable-list.html::d64eff65f5",
+      "key": "examples/drag-and-drop/sortable-list.html::dadc34d94a",
       "file": "examples/drag-and-drop/sortable-list.html",
       "error": "Expected property name after '.' - malformed member access",
-      "upstream": "You must parenthesize math operations with different operators",
-      "reason": "MIXED — both engines reject, but for unrelated reasons, so this is two bugs in one file. Upstream's is an authoring bug with a known fix: `set midpoint to box.top + box.height / 2` mixes `+` and `/` without parens, which hyperscript forbids (x2 occurrences); `box.top + (box.height / 2)` is the fix. Hyperfixi's complaint is DIFFERENT ('malformed member access') and survives that fix, so it is likely a second parser-side gap around the `add { prop: value; }` inline-style syntax — confirm before editing the example."
+      "upstream": "accepts (since 2026-10-02: the mixed `+` and `/` is parenthesized)",
+      "reason": "HYPERFIXI PARSER DEFECT, upstream accepts. The source used to be rejected by both engines for unrelated reasons; the authoring bug upstream named (`box.top + box.height / 2`, mixed operators without parentheses) is fixed in the page, which now loads hyperfixi-hs.js and runs there. Hyperfixi's own complaint ('malformed member access') is a different one and remains. Hyperfixi's complaint is DIFFERENT ('malformed member access') and survives that fix, so it is likely a second parser-side gap around the `add { prop: value; }` inline-style syntax — confirm before editing the example."
     },
     {
       "key": "packages/core/docs/EXAMPLES.md::186c0304cc",

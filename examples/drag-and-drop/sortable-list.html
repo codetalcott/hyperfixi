@@ -237,7 +237,7 @@
 
                      -- Calculate position relative to target
                      set box to dropTarget.getBoundingClientRect()
-                     set midpoint to box.top + box.height / 2
+                     set midpoint to box.top + (box.height / 2)
                      if event.clientY < midpoint then
                        set markerTop to box.top
                      else
@@ -264,7 +264,7 @@
 
                      -- Insert before or after based on cursor position
                      set box to dropTarget.getBoundingClientRect()
-                     set midpoint to box.top + box.height / 2
+                     set midpoint to box.top + (box.height / 2)
                      if event.clientY < midpoint then
                        call me.insertBefore(draggedItem, dropTarget)
                      else
@@ -391,7 +391,7 @@
 
          -- Position insertion marker
          set box to dropTarget.getBoundingClientRect()
-         set midpoint to box.top + box.height / 2
+         set midpoint to box.top + (box.height / 2)
          if event.clientY < midpoint then
            set markerTop to box.top
          else
@@ -408,7 +408,7 @@
          if dropTarget is null or draggedItem is null then exit end
 
          set box to dropTarget.getBoundingClientRect()
-         if event.clientY < box.top + box.height / 2 then
+         if event.clientY < box.top + (box.height / 2) then
            call me.insertBefore(draggedItem, dropTarget)
          else
            call me.insertBefore(draggedItem, dropTarget.nextSibling)
@@ -555,13 +555,8 @@
         </div>
     </div>
 
-    <!-- Enable debug mode -->
-    <script>
-        window.__HYPERFIXI_DEBUG__ = true;
-        localStorage.setItem('hyperfixi:debug', '*');
-    </script>
     <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script src="../prism-loader.js"></script>
 </body>
 </html>

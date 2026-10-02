@@ -161,7 +161,7 @@
     </div>
   </div>
 
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
   <script>
     // Debug logging - capture ALL console output
     const log = document.getElementById('log');
@@ -189,16 +189,6 @@
     };
 
     console.log('HyperFixi loaded:', typeof window.hyperfixi);
-    console.log('Registry commands:', window.hyperfixi?.Runtime ? 'Runtime available' : 'No Runtime');
-
-    // Test compilation
-    try {
-      const result = window.hyperfixi.compile('put "hello" into #test');
-      console.log('Put compile result:', result);
-    } catch (e) {
-      console.error('Put compile error:', e.message);
-    }
-
     console.log('Page ready');
   </script>
 </body>
