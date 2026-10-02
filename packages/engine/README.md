@@ -135,15 +135,16 @@ hyperscript and nothing else, every module, no htmx attributes, English only. It
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
 
-Twenty-eight example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02):
-the pages that need only hyperscript. (Nineteen by a script tag; nine through the examples'
-loader, `data-default="hs"`, so that `?bundle=` still switches them.) Core's Playwright suites
-run them, and the bundle is a column of the bundle-compatibility matrix (`?bundle=hs` in the
-examples' loader). No page needed an API shim: `processNode` is upstream's name too, and the
-other `hyperfixi.*` calls were core debugging code. What keeps the other pages on
-`hyperfixi.js`: the multilingual packages (8), the behaviors resolver (4), the intent element
-(4), core's own debug pages (2), `<script type="text/hyperscript" for="…">` (1), partial
-validation (1), htmx attributes (1),
+Thirty-six example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02):
+the pages that need only hyperscript. (Twenty-one by a script tag; fifteen through the
+examples' loader, `data-default="hs"`, so that `?bundle=` still switches them.) Core's
+Playwright suites run them, and the bundle is a column of the bundle-compatibility matrix
+(`?bundle=hs` in the examples' loader). No page needed an API shim: `processNode` is upstream's
+name too, and the other `hyperfixi.*` calls were core debugging code. The multilingual demo
+pages are among the thirty-six: their handlers are English, and what they translate for display
+comes from the i18n or semantic bundle, loaded beside the engine. What keeps the other pages on
+`hyperfixi.js`: the behaviors resolver (4), the intent element (4), core's own debug pages (2),
+`<script type="text/hyperscript" for="…">` (1), partial validation (1), htmx attributes (1),
 and the history commands. One behavior of core's is not in this engine, by decision
 (2026-10-02): `increment #count` on core counts in the element's text, where upstream and this
 engine want `increment #count's textContent`. The examples write the second, which every

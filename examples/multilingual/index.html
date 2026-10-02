@@ -497,7 +497,8 @@
     </div>
 
     <!-- Load LokaScript Core -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+    <script src="../../packages/semantic/dist/browser.global.js"></script>
 
     <!-- Load i18n Bundle -->
     <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
@@ -611,7 +612,7 @@
                 console.warn('LokaScript i18n bundle not loaded');
             } else {
                 console.log('LokaScript i18n loaded');
-                console.log('translate available (semantic, via hyperfixi):', typeof window.hyperfixi?.translate === 'function');
+                console.log('translate available (semantic):', typeof window.LokaScriptSemantic?.translate === 'function');
                 console.log('Profiles available:', window.LokaScriptI18n.getSupportedLocales?.() || 'N/A');
             }
 
@@ -667,17 +668,17 @@
                 return;
             }
 
-            // The translator is @lokascript/semantic, reached through the core
-            // bundle this page already loads (`hyperfixi.translate` IS semantic's
-            // `translate`). It used to be `LokaScriptI18n.translate` /
+            // The translator is @lokascript/semantic, from its own browser bundle
+            // (the page runs its handlers on hyperfixi-hs.js, which is hyperscript
+            // only). It used to be `LokaScriptI18n.translate` /
             // `new GrammarTransformer(...)`; that engine was retired 2026-08-28
             // after measuring 4/24 canonical-valid on an en -> L -> en round trip
             // against the real hyperscript.org parser, where semantic measures
             // 24/24. i18n still supplies this page's dictionaries and profiles.
-            const translate = window.hyperfixi?.translate;
+            const translate = window.LokaScriptSemantic?.translate;
 
             if (!translate) {
-                resultsDiv.innerHTML = '<p style="color: #c00;">Translation not available — hyperfixi.js did not load. Check console for errors.</p>';
+                resultsDiv.innerHTML = '<p style="color: #c00;">Translation not available — the semantic bundle did not load. Check console for errors.</p>';
                 return;
             }
 
