@@ -919,11 +919,14 @@ export function indirect(p: Parser, root: Expr): Expr {
   return (
     propertyAccess(p, root) ??
     ofExpression(p, root) ??
+    // Before `possessive`, as in upstream's build: `my @a` is an attribute access, and that
+    // takes nothing after it. `my @a as Int`, `my @a.length` and `my @a[0]` are errors there
+    // (`(my @a) as Int` is the spelling); read as a possessive they would parse here alone.
+    attributeAccess(p, root) ??
     possessive(p, root) ??
     inExpression(p, root) ??
     asExpression(p, root) ??
     functionCall(p, root) ??
-    attributeAccess(p, root) ??
     arrayIndex(p, root) ??
     extraIndirect(p, root) ??
     root
