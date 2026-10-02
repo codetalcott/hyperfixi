@@ -106,7 +106,7 @@
             </div>
 
             <p style="margin-top: 20px; color: #666;">
-                Current value: <span id="count-mirror" _="on change in #count put #count's textContent into me">0</span>
+                Current value: <span id="count-mirror" _="on mutation of childList from #count put #count's textContent into me">0</span>
             </p>
         </div>
 
@@ -147,9 +147,10 @@
             <h3>Reactive Updates:</h3>
             <p>
                 The count mirror below the buttons uses:
-                <code>on change in #count</code> to reactively update whenever the counter changes!
-                This pattern watches for content changes in the #count element and automatically
-                mirrors the value.
+                <code>on mutation of childList from #count</code> to update whenever the counter changes.
+                This watches the content of the #count element and mirrors the value, whoever wrote it.
+                (It is upstream _hyperscript's spelling, so this page loads <code>hyperfixi-hs.js</code>;
+                the larger bundles do not read it yet.)
             </p>
 
             <h3>Try it yourself:</h3>
@@ -209,8 +210,8 @@
         window.addEventListener('DOMContentLoaded', initDebugButton);
     </script>
 
-    <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
-    <script src="../bundle-loader.js"></script>
+    <!-- Load HyperFixi: hyperfixi-hs.js unless ?bundle= names another -->
+    <script src="../bundle-loader.js" data-default="hs"></script>
     <script src="../prism-loader.js"></script>
     <script src="../bundle-selector.js"></script>
 

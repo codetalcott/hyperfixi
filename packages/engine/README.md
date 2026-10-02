@@ -133,8 +133,9 @@ hyperscript and nothing else, every module, no htmx attributes, English only. It
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
 
-Sixteen example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02): the
-pages that need only hyperscript. Core's Playwright suites run them, and the bundle is a
+Seventeen example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02): the
+pages that need only hyperscript. (Sixteen by a script tag; the Counter page through the
+examples' loader, `data-default="hs"`, so that `?bundle=` still switches it.) Core's Playwright suites run them, and the bundle is a
 column of the bundle-compatibility matrix (`?bundle=hs` in the examples' loader). What keeps
 the other pages on `hyperfixi.js`, counted over the 37 pages that load it: page script that
 calls the `hyperfixi` API (8), behaviors (5), the intent element (4), htmx attributes (2),

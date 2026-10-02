@@ -65,7 +65,12 @@
 
   // Get current bundle from URL or default
   const urlParams = new URLSearchParams(window.location.search);
-  const currentBundle = urlParams.get('bundle') || 'browser';
+  const loaderTag = document.querySelector('script[src$="bundle-loader.js"]');
+  const currentBundle =
+    urlParams.get('bundle') ||
+    localStorage.getItem('hyperfixi:bundle') ||
+    (loaderTag && loaderTag.dataset.default) ||
+    'browser';
 
   // Panel state
   let panelVisible = false;

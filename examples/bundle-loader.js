@@ -9,7 +9,7 @@
  *   <!-- No need to include hyperfixi-browser.js -->
  *
  * URL Parameters:
- *   ?bundle=browser   - Full bundle (default)
+ *   ?bundle=browser   - Full bundle (default, unless the script tag has data-default)
  *   ?bundle=hybrid    - Mid-size hybrid bundle
  *   ?bundle=hs        - hyperfixi-hs.js: hyperscript only, on the new engine
  *   ?bundle=multilingual - Multilingual bundle
@@ -43,6 +43,11 @@
   // Fall back to localStorage preference
   if (!bundleKey) {
     bundleKey = localStorage.getItem('hyperfixi:bundle');
+  }
+
+  // A page can name its own default: <script src="../bundle-loader.js" data-default="hs">
+  if (!bundleKey || !BUNDLES[bundleKey]) {
+    bundleKey = document.currentScript && document.currentScript.dataset.default;
   }
 
   // Default to browser bundle

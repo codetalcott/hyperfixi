@@ -572,3 +572,25 @@ test.describe('Bundle Summary', () => {
     expect(true).toBe(true);
   });
 });
+
+// The Counter page names its own default bundle (`data-default="hs"` on the
+// loader's script tag): its mirror is upstream's `on mutation of childList from
+// #count`, which core's parser does not read.
+test.describe('Counter page default bundle', () => {
+  test('loads hyperfixi-hs.js with no ?bundle=, and its mirror follows the count', async ({
+    page,
+  }) => {
+    const scripts: string[] = [];
+    page.on('request', r => {
+      if (r.resourceType() === 'script') scripts.push(r.url());
+    });
+    await page.goto(`${BASE_URL}/examples/events-and-dom/counter.html`);
+    await page.waitForTimeout(500);
+    expect(scripts.some(u => u.endsWith('/packages/engine/dist/hyperfixi-hs.js'))).toBe(true);
+
+    await page.locator('button').filter({ hasText: 'Increase' }).first().click();
+    await page.locator('button').filter({ hasText: 'Increase' }).first().click();
+    await expect(page.locator('#count')).toHaveText('2');
+    await expect(page.locator('#count-mirror')).toHaveText('2');
+  });
+});
