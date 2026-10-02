@@ -147,7 +147,7 @@
             <strong>Update multiple elements from a single response</strong><br>
             HyperFixi supports two patterns for multi-target updates:
             <ul style="margin: 10px 0;">
-                <li><strong>Explicit swaps:</strong> Multiple swap commands in sequence</li>
+                <li><strong>Explicit updates:</strong> Several <code>put</code> commands in sequence</li>
                 <li><strong>Partials:</strong> <code>&lt;hx-partial&gt;</code> elements for automatic distribution</li>
             </ul>
         </div>
@@ -162,7 +162,7 @@
         <!-- Demo 1: Explicit Multi-Swap -->
         <div class="demo">
             <h2>Demo 1: Explicit Multi-Swap</h2>
-            <p>Multiple swap commands update different parts of the page:</p>
+            <p>Several <code>put</code> commands update different parts of the page:</p>
 
             <button
                 _="on click
@@ -170,16 +170,16 @@
                    set random to Math.floor(Math.random() * 1000)
 
                    set mainHtml to '<div class=card><h3>Main Content Updated</h3><p>Time: ' + timestamp + '</p></div>'
-                   swap innerHTML of #main-content with mainHtml
+                   put mainHtml into #main-content
 
                    set sidebarHtml to '<div class=card><h3>Sidebar Updated</h3><p>Random: ' + random + '</p></div>'
-                   swap innerHTML of #sidebar-content with sidebarHtml
+                   put sidebarHtml into #sidebar-content
 
                    set statsHtml to '<div class=card><h3>Stats</h3><div class=stat-value>' + random + '</div></div>'
-                   swap innerHTML of #stats-content with statsHtml
+                   put statsHtml into #stats-content
 
                    set notifHtml to '<div class=card><h3>New Notification</h3><p>Updated at ' + timestamp + '</p></div>'
-                   swap innerHTML of #notifications-content with notifHtml"
+                   put notifHtml into #notifications-content"
             >
                 Update All Panels
             </button>
@@ -240,13 +240,13 @@
                    set count to Math.floor(Math.random() * 100)
 
                    set mainPartialHtml to '<div class=card><h3>Main Area (from partial)</h3><p>Updated: ' + timestamp + '</p></div>'
-                   swap innerHTML of #partial-main with mainPartialHtml
+                   put mainPartialHtml into #partial-main
 
                    set counterPartialHtml to '<div class=card><h3>Counter</h3><div class=stat-value>' + count + '</div></div>'
-                   swap innerHTML of #partial-counter with counterPartialHtml
+                   put counterPartialHtml into #partial-counter
 
                    set alertHtml to '<div class=card style=margin-top:10px><p>Alert at ' + timestamp + '</p></div>'
-                   swap beforeEnd of #partial-alert with alertHtml"
+                   put alertHtml at end of #partial-alert"
             >
                 Process Partials Response
             </button>
@@ -301,16 +301,16 @@
                    set ts to new Date().toLocaleTimeString()
 
                    set usersHtml to '<div class=card><h3>Active Users</h3><div class=stat-value>' + users + '</div></div>'
-                   swap innerHTML of #dash-users with usersHtml
+                   put usersHtml into #dash-users
 
                    set revenueHtml to '<div class=card style=background:linear-gradient(135deg,#4caf50,#2e7d32)><h3>Revenue</h3><div class=stat-value>$' + revenue + '</div></div>'
-                   swap innerHTML of #dash-revenue with revenueHtml
+                   put revenueHtml into #dash-revenue
 
                    set ordersHtml to '<div class=card style=background:linear-gradient(135deg,#ff9800,#f57c00)><h3>Orders</h3><div class=stat-value>' + orders + '</div></div>'
-                   swap innerHTML of #dash-orders with ordersHtml
+                   put ordersHtml into #dash-orders
 
                    set activityHtml to '<div class=card style=margin-top:10px><p>Dashboard refreshed at ' + ts + '</p></div>'
-                   swap beforeEnd of #dash-activity with activityHtml
+                   put activityHtml at end of #dash-activity
 
                    remove .loading from me"
             >
@@ -410,7 +410,7 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><strong>Explicit swaps:</strong> Just chain multiple swap commands</li>
+                <li><strong>Explicit updates:</strong> Just chain several <code>put</code> commands</li>
                 <li><strong>hx-partial:</strong> Server returns structured response with targets</li>
                 <li><code>process partials</code> extracts and distributes content automatically</li>
                 <li>Each partial can have its own swap strategy</li>

@@ -251,11 +251,12 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
     expect(result.whenTrue).toBe('DISABLED');
   });
 
-  test("Possessive syntax: toggle #element's @disabled", async ({ page }) => {
+  test("An attribute with a value: toggle [@disabled='true'] on #element", async ({ page }) => {
     const propBtn = page.locator('#prop-btn');
+    const status = page.locator('#has-test');
 
-    // Use the existing button in the HTML with possessive syntax
-    const toggleBtn = page.locator('#test-possessive');
+    // The page's own button, which also reports what it did
+    const toggleBtn = page.locator('#test-with-value');
 
     // Initial state
     await expect(propBtn).not.toBeDisabled();
@@ -264,11 +265,13 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
     await toggleBtn.click();
     await page.waitForTimeout(200);
     await expect(propBtn).toBeDisabled();
+    await expect(status).toHaveText('YES');
 
     // Second toggle - should enable
     await toggleBtn.click();
     await page.waitForTimeout(200);
     await expect(propBtn).not.toBeDisabled();
+    await expect(status).toHaveText('NO');
 
     // Third toggle - should disable again
     await toggleBtn.click();

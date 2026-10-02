@@ -409,7 +409,7 @@
     <h1>LokaScript Translation Playground</h1>
     <div class="header-actions">
       <button class="btn" id="share-btn" title="Copy shareable link"
-              _="on click call buildShareUrl() then copy it then call logToConsole('Copied to clipboard!', 'success') then set my textContent to 'Copied!' then wait 2s then set my textContent to 'Share'">Share</button>
+              _="on click call buildShareUrl() then call navigator.clipboard.writeText(it) then call logToConsole('Copied to clipboard!', 'success') then set my textContent to 'Copied!' then wait 2s then set my textContent to 'Share'">Share</button>
     </div>
   </header>
 

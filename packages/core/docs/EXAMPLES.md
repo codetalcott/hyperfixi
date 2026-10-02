@@ -142,14 +142,14 @@ Update a counter:
 Toggle an attribute:
 
 ```html
-<button _="on click toggle [disabled] on #submit-btn">Toggle Submit Button</button>
+<button _="on click toggle @disabled on #submit-btn">Toggle Submit Button</button>
 <button id="submit-btn">Submit</button>
 ```
 
 Set an attribute:
 
 ```html
-<button _="on click set @aria-expanded to 'true' on #menu">Open Menu</button>
+<button _="on click set #menu's @aria-expanded to 'true'">Open Menu</button>
 <div id="menu" aria-expanded="false">Menu items</div>
 ```
 
@@ -204,7 +204,7 @@ Debounce input events (wait 300ms after typing stops):
 
 ```html
 <input
-  _="on input.debounce(300)
+  _="on input debounced at 300ms
      put my value into #output"
   placeholder="Type something..."
 />
@@ -215,7 +215,7 @@ Search with debounce:
 
 ```html
 <input
-  _="on input.debounce(500)
+  _="on input debounced at 500ms
      if my value's length > 2
        add .searching to me
        fetch `/api/search?q=${my value}` as json
@@ -233,7 +233,7 @@ Throttle scroll events (max once per 100ms):
 
 ```html
 <div
-  _="on scroll.throttle(100)
+  _="on scroll throttled at 100ms
      if my scrollTop > 100
        add .scrolled to <body/>
      else
@@ -872,14 +872,14 @@ Check input length:
 <div id="feedback"></div>
 ```
 
-### Unless
+### If Not
 
-Execute unless condition is true:
+Execute only when a condition does not hold:
 
 ```html
 <button
   _="on click
-     unless me has .disabled
+     if I do not match .disabled
        log 'Button clicked!'
      end"
 >
@@ -946,7 +946,7 @@ segment that happens to be a command word is therefore just part of the path:
 
 ```html
 <button _="on click fetch /api/${id} as json then put it into #output">Load</button>
-<input _="on input fetch /search?q=${my value} as json then put it into #results" />
+<input _="on input fetch `/search?q=${my value}` as json then put it into #results" />
 ```
 
 Quoting still works and is worth preferring when the URL is built from a variable
@@ -1149,7 +1149,7 @@ Load more content on scroll:
   id="content-container"
   _="on scroll
      if my scrollTop + my clientHeight >= my scrollHeight - 100
-       unless I match .loading
+       if I do not match .loading
          add .loading to me
          fetch /api/more-content as json
          append result.html to me

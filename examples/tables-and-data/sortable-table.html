@@ -62,13 +62,13 @@
                                  remove @aria-sort from <th/> in #products
                                  if my @data-dir is 'asc'
                                    set my @data-dir to 'desc'
-                                   set @aria-sort to 'descending' on me
+                                   set my @aria-sort to 'descending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-name desc at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
-                                   set @aria-sort to 'ascending' on me
+                                   set my @aria-sort to 'ascending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-name at end of #product-rows
                                    end
@@ -78,13 +78,13 @@
                                  remove @aria-sort from <th/> in #products
                                  if my @data-dir is 'asc'
                                    set my @data-dir to 'desc'
-                                   set @aria-sort to 'descending' on me
+                                   set my @aria-sort to 'descending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-price as Number desc at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
-                                   set @aria-sort to 'ascending' on me
+                                   set my @aria-sort to 'ascending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-price as Number at end of #product-rows
                                    end
@@ -94,13 +94,13 @@
                                  remove @aria-sort from <th/> in #products
                                  if my @data-dir is 'asc'
                                    set my @data-dir to 'desc'
-                                   set @aria-sort to 'descending' on me
+                                   set my @aria-sort to 'descending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-stock as Number desc at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
-                                   set @aria-sort to 'ascending' on me
+                                   set my @aria-sort to 'ascending'
                                    start view transition
                                      put <tr/> in #product-rows sorted by its @data-stock as Number at end of #product-rows
                                    end
@@ -130,7 +130,7 @@
          remove @aria-sort from &lt;th/&gt; in #products
          if my @data-dir is 'asc'
            set my @data-dir to 'desc'
-           set @aria-sort to 'descending' on me
+           set my @aria-sort to 'descending'
            start view transition
              put &lt;tr/&gt; in #product-rows
                sorted by its @data-price as Number desc

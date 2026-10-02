@@ -48,8 +48,8 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       const initialText = await page.textContent('#morph-target h3');
       expect(initialText).toContain('Original Content');
 
-      // Click swap button (first "Swap innerHTML" button in #morph-target area)
-      await page.click('#morph-target ~ div button:has-text("Swap innerHTML")');
+      // Click the first "Replace content" button in the #morph-target area
+      await page.click('#morph-target ~ div button:has-text("Replace content")');
       await page.waitForTimeout(300);
 
       // Content should be updated
@@ -99,7 +99,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(await innerHTMLInput.inputValue()).toBe('will be lost');
 
       // Click innerHTML swap button (in the #compare-innerhtml section specifically)
-      await page.click('#compare-innerhtml button:has-text("Swap innerHTML")');
+      await page.click('#compare-innerhtml button:has-text("Replace Content")');
       await page.waitForTimeout(300);
 
       // Input value should be empty (innerHTML destroys state)
@@ -107,8 +107,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(newValue).toBe('');
     });
 
-    // swap beforeEnd is implemented
-    test('swap beforeEnd appends content', async ({ page }) => {
+    test('put at end of appends content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
@@ -120,7 +119,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(initialItems).toBe(0);
 
       // Click beforeEnd button to append
-      await page.click('button:has-text("beforeEnd (append)")');
+      await page.click('button:has-text("at end of (append)")');
       await page.waitForTimeout(200);
 
       // Should have 1 item
@@ -128,7 +127,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(itemCount).toBe(1);
 
       // Click again
-      await page.click('button:has-text("beforeEnd (append)")');
+      await page.click('button:has-text("at end of (append)")');
       await page.waitForTimeout(200);
 
       // Should have 2 items
@@ -136,8 +135,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(itemCount).toBe(2);
     });
 
-    // swap afterBegin is implemented
-    test('swap afterBegin prepends content', async ({ page }) => {
+    test('put at start of prepends content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
@@ -145,11 +143,11 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       await waitForHyperfixi(page);
 
       // First add an item at end
-      await page.click('button:has-text("beforeEnd (append)")');
+      await page.click('button:has-text("at end of (append)")');
       await page.waitForTimeout(200);
 
       // Then add at beginning
-      await page.click('button:has-text("afterBegin (prepend)")');
+      await page.click('button:has-text("at start of (prepend)")');
       await page.waitForTimeout(200);
 
       // First card should say "added at start"
@@ -157,8 +155,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(firstCard).toContain('added at start');
     });
 
-    // swap delete is implemented
-    test('swap delete removes elements', async ({ page }) => {
+    test('remove deletes elements', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,

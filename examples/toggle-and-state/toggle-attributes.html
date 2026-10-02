@@ -133,12 +133,12 @@
                     <tr>
                         <td><code>*</code></td>
                         <td>CSS Property</td>
-                        <td><code>toggle *display on #box</code></td>
+                        <td><code>toggle *display of #box</code></td>
                     </tr>
                     <tr>
-                        <td><code>'s</code></td>
-                        <td>DOM Property</td>
-                        <td><code>toggle #btn's disabled</code></td>
+                        <td><code>[@…='…']</code></td>
+                        <td>Attribute with a value</td>
+                        <td><code>toggle [@aria-pressed='true'] on #btn</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -215,7 +215,7 @@
                 <div id="display-box" class="visibility-box">
                     Visible Content
                 </div>
-                <button _="on click toggle *display on #display-box">
+                <button _="on click toggle *display of #display-box">
                     Toggle Display
                 </button>
             </div>
@@ -223,7 +223,7 @@
 
             <div class="code">
 &lt;div <span class="keyword">id</span>=<span class="string">"display-box"</span>&gt;Visible Content&lt;/div&gt;
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *display on #display-box"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *display of #display-box"</span>&gt;
   Toggle Display
 &lt;/button&gt;
             </div>
@@ -238,7 +238,7 @@
                 <div id="visibility-box" class="visibility-box">
                     I take up space even when hidden
                 </div>
-                <button _="on click toggle *visibility on #visibility-box">
+                <button _="on click toggle *visibility of #visibility-box">
                     Toggle Visibility
                 </button>
             </div>
@@ -246,7 +246,7 @@
 
             <div class="code">
 &lt;div <span class="keyword">id</span>=<span class="string">"visibility-box"</span>&gt;Content&lt;/div&gt;
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *visibility on #visibility-box"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *visibility of #visibility-box"</span>&gt;
   Toggle Visibility
 &lt;/button&gt;
             </div>
@@ -261,7 +261,7 @@
                 <div id="opacity-box" class="visibility-box" style="transition: opacity 0.3s ease;">
                     Fading Content
                 </div>
-                <button _="on click toggle *opacity on #opacity-box">
+                <button _="on click toggle *opacity of #opacity-box">
                     Toggle Opacity
                 </button>
             </div>
@@ -271,7 +271,7 @@
 &lt;div <span class="keyword">id</span>=<span class="string">"opacity-box"</span> <span class="keyword">style</span>=<span class="string">"transition: opacity 0.3s"</span>&gt;
   Fading Content
 &lt;/div&gt;
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *opacity on #opacity-box"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle *opacity of #opacity-box"</span>&gt;
   Toggle Opacity
 &lt;/button&gt;
             </div>
@@ -289,16 +289,18 @@
                 <button _="on click toggle @disabled on #prop-btn">
                     Toggle Disabled
                 </button>
-                <button id="test-possessive" _="on click toggle #prop-btn's @disabled">
-                    Toggle via Possessive
+                <button id="test-with-value" _="on click
+                    toggle [@disabled='true'] on #prop-btn
+                    if #prop-btn matches <[disabled]/>
+                        put 'YES' into #has-test
+                    else
+                        put 'NO' into #has-test
+                    end">
+                    Toggle with a Value
                 </button>
             </div>
             <div class="status">
-                Test "has @disabled": <span id="has-test" _="on click from #test-possessive
-                    if #prop-btn has @disabled
-                        then put 'YES' into me
-                        else put 'NO' into me
-                    end">-</span>
+                Is it disabled? <span id="has-test">-</span>
             </div>
 
             <div class="code">
@@ -306,9 +308,9 @@
 &lt;button <span class="keyword">_</span>=<span class="string">"on click toggle @disabled on #prop-btn"</span>&gt;
   Toggle Disabled
 &lt;/button&gt;
-&lt;!-- Possessive syntax --&gt;
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle #prop-btn's @disabled"</span>&gt;
-  Toggle via Possessive
+&lt;!-- An attribute with a value --&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle [@disabled='true'] on #prop-btn"</span>&gt;
+  Toggle with a Value
 &lt;/button&gt;
             </div>
         </div>
@@ -320,7 +322,7 @@
                 <li><strong><code>.class</code></strong> - Toggle CSS classes for styling changes</li>
                 <li><strong><code>@attribute</code></strong> - Toggle HTML attributes (disabled, required, readonly, hidden)</li>
                 <li><strong><code>*property</code></strong> - Toggle CSS properties (display, visibility, opacity)</li>
-                <li><strong><code>element's @attribute</code></strong> - Reference attribute on specific element</li>
+                <li><strong><code>[@attribute='value']</code></strong> - Toggle an attribute that needs a value</li>
             </ul>
 
             <h3>Supported CSS Properties:</h3>

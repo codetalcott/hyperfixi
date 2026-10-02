@@ -130,9 +130,10 @@
                    log 'Fetch result:', it
                    put it into todoData
                    log 'todoData:', todoData
+                   if todoData.completed set mark to '✅' else set mark to '❌' end
                    put `<h3>Todo #${todoData.id}</h3>
                         <p>Title: ${todoData.title}</p>
-                        <p>Completed: ${todoData.completed ? '✅' : '❌'}</p>` into #native-output
+                        <p>Completed: ${mark}</p>` into #native-output
                    remove .loading from me"
             >
                 Test Native Fetch
