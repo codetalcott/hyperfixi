@@ -177,8 +177,11 @@ export function viewTransition(g: Grammar): void {
         if (!document.startViewTransition) return runList(body, ctx);
         if (running) throw new Error('A view transition is already in progress');
         running = true;
+        // Made now, as upstream does: the browser calls `update` a frame later, which
+        // can be after the body has finished, and a promise made then never resolves.
         let bodyDone = () => {};
-        const update = () => new Promise<void>(resolve => (bodyDone = resolve));
+        const bodyRan = new Promise<void>(resolve => (bodyDone = resolve));
+        const update = () => bodyRan;
         const started = transitionType
           ? document.startViewTransition({ update, types: [transitionType] })
           : document.startViewTransition(update);

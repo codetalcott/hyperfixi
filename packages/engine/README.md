@@ -51,7 +51,7 @@ uses the hook when the host has it.
 | `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                                                                       |
 | `src/bundles/*`                                                  | Browser bundle entries. `hyperfixi-hs` is the script-tag bundle; `full` is the same modules, for the gate; `core`, `minimal`, `common` exist to measure size |
 | `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                                                                 |
-| `tests/`                                                         | This package's own tests, for `src/additions.ts`, in the form of upstream's and on the same fixtures                                                         |
+| `tests/`                                                         | This package's own tests (`src/additions.ts`, and regressions upstream's tests did not show), in the form of upstream's and on the same fixtures             |
 | `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                                                                       |
 
 A node is typed data plus the closure that runs it, bound when the node is parsed: an
@@ -64,7 +64,7 @@ command returns (`return`, `break`, `continue`), not an exception.
 npm run build --prefix packages/engine          # dist/: library, bundles, declarations; prints sizes
 npm run typecheck --prefix packages/engine
 npm run test:upstream --prefix packages/engine  # the gate (needs a build; about 30 s)
-npm run test:own --prefix packages/engine       # the tests for src/additions.ts (needs a build; 2 s)
+npm run test:own --prefix packages/engine       # additions and regressions (needs a build; 2 s)
 npm run cost --prefix packages/engine           # what each module costs in the full bundle
 
 # Any engine bundle can be scored on the same suite:
@@ -89,7 +89,9 @@ it in the `browser-tests` job.
 **The package's own tests.** `test:own` runs `tests/` against the same bundle, for the two forms
 upstream has no tests for. Every one must pass. On upstream's own bundle 2 of the 21 pass (the
 two that check an upstream form still reads as it did), which is what shows the rest test the
-additions. CI runs it after the upstream suite.
+additions. `tests/regressions.js` holds the other kind: places where this engine differed from
+upstream and upstream's tests did not show it (each of those passes on upstream). CI runs both
+after the upstream suite.
 
 **The multilingual gates**, in the packages that own them:
 
@@ -133,12 +135,15 @@ hyperscript and nothing else, every module, no htmx attributes, English only. It
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
 
-Seventeen example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02): the
-pages that need only hyperscript. (Sixteen by a script tag; the Counter page through the
-examples' loader, `data-default="hs"`, so that `?bundle=` still switches it.) Core's Playwright suites run them, and the bundle is a
-column of the bundle-compatibility matrix (`?bundle=hs` in the examples' loader). What keeps
-the other pages on `hyperfixi.js`, counted over the 37 pages that load it: page script that
-calls the `hyperfixi` API (8), behaviors (5), the intent element (4), htmx attributes (2),
+Twenty-eight example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02):
+the pages that need only hyperscript. (Nineteen by a script tag; nine through the examples'
+loader, `data-default="hs"`, so that `?bundle=` still switches them.) Core's Playwright suites
+run them, and the bundle is a column of the bundle-compatibility matrix (`?bundle=hs` in the
+examples' loader). No page needed an API shim: `processNode` is upstream's name too, and the
+other `hyperfixi.*` calls were core debugging code. What keeps the other pages on
+`hyperfixi.js`: the multilingual packages (8), the behaviors resolver (4), the intent element
+(4), core's own debug pages (2), `<script type="text/hyperscript" for="…">` (1), partial
+validation (1), htmx attributes (1),
 and the history commands. One behavior of core's is not in this engine, by decision
 (2026-10-02): `increment #count` on core counts in the element's text, where upstream and this
 engine want `increment #count's textContent`. The examples write the second, which every

@@ -93,6 +93,30 @@
     </style>
 </head>
 <body class="example-page">
+    <!-- Define the Draggable behavior. A behavior is defined before the elements that install it. -->
+    <script type="text/hyperscript">
+behavior Draggable(dragHandle)
+  init
+    if no dragHandle set the dragHandle to me
+  end
+  on pointerdown(clientX, clientY) from dragHandle
+    halt the event
+    trigger draggable:start
+
+    set xoff to clientX - my offsetLeft
+    set yoff to clientY - my offsetTop
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) or
+               pointerup(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+      trigger draggable:move
+    end
+
+    trigger draggable:end
+  end
+end
+    </script>
+
     <div class="page-container">
         <div class="breadcrumb">
             <a href="../index.html">← Back to Gallery</a> / <strong>Drag & Drop</strong> / Draggable Elements
@@ -109,7 +133,6 @@
         <div>
             <span class="tag advanced">behavior</span>
             <span class="tag advanced">install</span>
-            <span class="tag feature">measure</span>
             <span class="tag feature">custom events</span>
             <span class="tag feature">halt event</span>
         </div>
@@ -159,13 +182,8 @@
     <span class="keyword">halt the event</span>        <span class="comment">-- Prevent text selection</span>
     <span class="keyword">trigger</span> draggable:start  <span class="comment">-- Custom event hook</span>
 
-    <span class="keyword">measure</span> x
-    <span class="keyword">set</span> startX <span class="keyword">to</span> it
-    <span class="keyword">measure</span> y
-    <span class="keyword">set</span> startY <span class="keyword">to</span> it
-
-    <span class="keyword">set</span> xoff <span class="keyword">to</span> clientX - startX
-    <span class="keyword">set</span> yoff <span class="keyword">to</span> clientY - startY
+    <span class="keyword">set</span> xoff <span class="keyword">to</span> clientX - <span class="keyword">my</span> offsetLeft
+    <span class="keyword">set</span> yoff <span class="keyword">to</span> clientY - <span class="keyword">my</span> offsetTop
 
     <span class="keyword">repeat until</span> <span class="keyword">event</span> pointerup <span class="keyword">from</span> document
       <span class="keyword">wait for</span> pointermove(clientX, clientY) <span class="keyword">or</span>
@@ -197,7 +215,7 @@
             <ol>
                 <li><strong>Install behavior:</strong> <code>install Draggable(dragHandle: .titlebar in me)</code></li>
                 <li><strong>Initialize:</strong> If no drag handle specified, use the element itself</li>
-                <li><strong>Capture start:</strong> On pointerdown, measure current position and calculate offset</li>
+                <li><strong>Capture start:</strong> On pointerdown, read the current position and calculate the offset</li>
                 <li><strong>Track movement:</strong> Loop until pointerup from document, updating position on each pointermove</li>
                 <li><strong>Custom events:</strong> Trigger draggable:start, draggable:move, draggable:end for hooks</li>
                 <li><strong>CSS injection:</strong> Use template strings to add position styles directly</li>
@@ -208,7 +226,7 @@
                 <li><strong>Behaviors:</strong> Reusable components that encapsulate logic</li>
                 <li><strong>Parameters:</strong> <code>Draggable(dragHandle)</code> accepts configuration</li>
                 <li><strong>init block:</strong> Runs once when behavior is installed</li>
-                <li><strong>measure:</strong> Get element dimensions and position</li>
+                <li><strong>my offsetLeft / offsetTop:</strong> Where the element sits inside its container</li>
                 <li><strong>halt the event:</strong> Prevent default behavior and stop propagation</li>
                 <li><strong>Event listening:</strong> <code>from document</code> listens for pointer events at document level</li>
                 <li><strong>Custom events:</strong> <code>trigger eventName</code> for lifecycle hooks</li>
@@ -245,36 +263,8 @@
     </div>
 
     <!-- Load HyperFixi -->
-    <script src="../bundle-loader.js"></script>
+    <script src="../bundle-loader.js" data-default="hs"></script>
     <script src="../prism-loader.js"></script>
     <script src="../bundle-selector.js"></script>
-
-    <!-- Define Draggable Behavior -->
-    <script type="text/hyperscript">
-behavior Draggable(dragHandle)
-  init
-    if no dragHandle set the dragHandle to me
-  end
-  on pointerdown(clientX, clientY) from dragHandle
-    halt the event
-    trigger draggable:start
-
-    measure x
-    set startX to it
-    measure y
-    set startY to it
-    set xoff to clientX - startX
-    set yoff to clientY - startY
-    repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) or
-               pointerup(clientX, clientY) from document
-      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
-      trigger draggable:move
-    end
-
-    trigger draggable:end
-  end
-end
-    </script>
 </body>
 </html>

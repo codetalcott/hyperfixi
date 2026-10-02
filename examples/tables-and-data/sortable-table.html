@@ -80,13 +80,13 @@
                                    set my @data-dir to 'desc'
                                    set my @aria-sort to 'descending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-price as Number descending at end of #product-rows
+                                     put <tr/> in #product-rows sorted by (its @data-price) as Number descending at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
                                    set my @aria-sort to 'ascending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-price as Number at end of #product-rows
+                                     put <tr/> in #product-rows sorted by (its @data-price) as Number at end of #product-rows
                                    end
                                  end">Price</th>
                         <th data-dir="asc"
@@ -96,13 +96,13 @@
                                    set my @data-dir to 'desc'
                                    set my @aria-sort to 'descending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-stock as Number descending at end of #product-rows
+                                     put <tr/> in #product-rows sorted by (its @data-stock) as Number descending at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
                                    set my @aria-sort to 'ascending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-stock as Number at end of #product-rows
+                                     put <tr/> in #product-rows sorted by (its @data-stock) as Number at end of #product-rows
                                    end
                                  end">Stock</th>
                         <th>Qty</th>
@@ -133,7 +133,7 @@
            set my @aria-sort to 'descending'
            start view transition
              put &lt;tr/&gt; in #product-rows
-               sorted by its @data-price as Number descending
+               sorted by (its @data-price) as Number descending
                at end of #product-rows
            end
          else
@@ -144,7 +144,7 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>&lt;tr/&gt; in #product-rows sorted by its @data-price as Number</code> — sorts
+                <li><code>&lt;tr/&gt; in #product-rows sorted by (its @data-price) as Number</code> — sorts
                     the <em>live row elements</em> by an attribute key. <code>as Number</code> matters:
                     attribute reads are strings, and <code>"100"</code> sorts before <code>"9"</code> lexically.</li>
                 <li><code>put … at end of #product-rows</code> — appending an existing child <em>moves</em> it,
@@ -169,7 +169,7 @@
     </div>
 
     <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
-    <script src="../bundle-loader.js"></script>
+    <script src="../bundle-loader.js" data-default="hs"></script>
     <script src="../prism-loader.js"></script>
     <script src="../bundle-selector.js"></script>
 </body>

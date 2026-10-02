@@ -370,13 +370,8 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const initialText = await eventLog.textContent();
       expect(initialText).toContain('Waiting');
 
-      // Execute send command manually (since click handler needs more time to initialize)
-      await page.evaluate(async () => {
-        const btn = document.querySelector('button.send-btn') as HTMLElement;
-        const hyperfixi = (window as any).hyperfixi;
-        const context = hyperfixi.createContext(btn);
-        await hyperfixi.run('send hello to #target-form', context);
-      });
+      // The page's own handler: `on click send hello to #target-form`.
+      await page.locator('button.send-btn').click();
       await page.waitForTimeout(100);
 
       // Event log should be updated
@@ -391,13 +386,8 @@ test.describe('Landing Page Examples @comprehensive', () => {
       });
       await page.waitForTimeout(500);
 
-      // Execute send command manually
-      await page.evaluate(async () => {
-        const btn = document.querySelector('button.send-btn') as HTMLElement;
-        const hyperfixi = (window as any).hyperfixi;
-        const context = hyperfixi.createContext(btn);
-        await hyperfixi.run('send hello to #target-form', context);
-      });
+      // The page's own handler: `on click send hello to #target-form`.
+      await page.locator('button.send-btn').click();
 
       // Wait for flash effect
       await page.waitForTimeout(400);

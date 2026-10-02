@@ -79,7 +79,7 @@
                       add @hidden to <tbody tr/> in #products
                       then remove @hidden from <tbody tr/> in #products
                         where (its textContent.toLowerCase() contains #search's value.toLowerCase()
-                          and (#stock-only's checked is false or its @data-stock as Number > 0))">
+                          and (#stock-only's checked is false or (its @data-stock) as Number > 0))">
                 <input id="search" type="search" placeholder="Filter by name…" aria-label="Filter rows by name">
                 <label><input id="stock-only" type="checkbox"> In stock only</label>
             </div>
@@ -117,7 +117,7 @@
       add @hidden to &lt;tbody tr/&gt; in #products
       then remove @hidden from &lt;tbody tr/&gt; in #products
         where (its textContent.toLowerCase() contains #search's value.toLowerCase()
-          and (#stock-only's checked is false or its @data-stock as Number &gt; 0))"</span>&gt;
+          and (#stock-only's checked is false or (its @data-stock) as Number &gt; 0))"</span>&gt;
   &lt;input <span class="keyword">id</span>=<span class="string">"search"</span> <span class="keyword">type</span>=<span class="string">"search"</span>&gt;
   &lt;label&gt;&lt;input <span class="keyword">id</span>=<span class="string">"stock-only"</span> <span class="keyword">type</span>=<span class="string">"checkbox"</span>&gt; In stock only&lt;/label&gt;
 &lt;/div&gt;
@@ -153,7 +153,7 @@
     </div>
 
     <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
-    <script src="../bundle-loader.js"></script>
+    <script src="../bundle-loader.js" data-default="hs"></script>
     <script src="../prism-loader.js"></script>
     <script src="../bundle-selector.js"></script>
 </body>
