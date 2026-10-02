@@ -130,7 +130,7 @@ commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
 
 ## The script-tag bundle: `hyperfixi-hs.js`
 
-`dist/hyperfixi-hs.js` (and `.min.js`, 34.1 KB gzipped) is the first product on this engine:
+`dist/hyperfixi-hs.js` (minified, 34.1 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
