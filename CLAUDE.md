@@ -22,7 +22,7 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
-├── engine/         # The engine meant to replace core's: typed, modular, upstream-faithful (private, unpublished)
+├── engine/         # The engine meant to replace core's: typed, modular, upstream-faithful (published 2026-10-02)
 │   ├── src/                  # Grammar modules: a bundle is the list passed to register()
 │   └── upstream-suite/       # The gate: upstream _hyperscript's own tests (vendored 0.9.93) + known-failures.json
 │

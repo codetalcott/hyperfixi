@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@hyperfixi/engine` is published.** A hyperscript engine written against upstream
+  `_hyperscript`'s source, with upstream's own test suite as the acceptance oracle (1,401 of
+  1,467 tests; the 66 known failures are upstream's internal API, sockets and workers). It
+  ships `dist/hyperfixi-hs.js`, a script-tag bundle of hyperscript and nothing else, 34.1 KB
+  gzipped, which 36 of the repository's example pages now load instead of `hyperfixi.js`. It
+  keeps two forms upstream lacks, `new X(...)` and `toggle <element>`; the other hyperfixi-only
+  forms are not in it, and the examples are written in upstream's spelling. It is meant to
+  replace the engine in `@hyperfixi/core`; nothing depends on it yet.
+
 ## [3.2.0] - 2026-09-30
 
 A correctness release for multilingual hyperscript. The semantic parser behind

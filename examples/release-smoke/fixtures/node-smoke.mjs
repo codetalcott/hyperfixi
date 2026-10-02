@@ -38,6 +38,16 @@ await check('@hyperfixi/core — bare-Node import (dom-globals shim)', async () 
   return `${Object.keys(m).length} exports + /commands`;
 });
 
+await check('@hyperfixi/engine — bare-Node import, parse', async () => {
+  const m = await import('@hyperfixi/engine');
+  assert(typeof m.register === 'function', 'register missing');
+  assert(Array.isArray(m.everything) && m.everything.length > 20, 'everything missing');
+  m.register(...m.everything);
+  const parsed = m.api.parse('on click toggle .active on me');
+  assert(parsed.errors.length === 0, 'parse reported errors');
+  return `${m.everything.length} modules, parse ok`;
+});
+
 await check('@hyperfixi/speech — plugin + commands', async () => {
   const m = await import('@hyperfixi/speech');
   assert(m.speechPlugin?.name === '@hyperfixi/speech', 'speechPlugin.name mismatch');

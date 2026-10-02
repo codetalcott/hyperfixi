@@ -153,6 +153,7 @@ jobs:
           # (this workflow is a hand-maintained list the ci.yml guards do not
           # cover — mirror #909-class deletions here by hand).
           npm run build --prefix packages/intent
+          npm run build --prefix packages/engine
           npm run build --prefix packages/framework
           npm run build --prefix packages/semantic
           npm run build --prefix packages/behaviors
@@ -264,7 +265,7 @@ jobs:
           # planner sits before mcp-server (which depends on it).
           # intent-element depends on intent + core, so it follows them.
           # (The domain-* family moved to lokascript-domains in #909.)
-          ALL_PACKAGES="intent semantic core i18n hyperscript-adapter patterns-reference \
+          ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
                         compilation-service planner mcp-server vite-plugin \
                         behaviors reactivity realtime components speech intent-element testing-framework language-server \
