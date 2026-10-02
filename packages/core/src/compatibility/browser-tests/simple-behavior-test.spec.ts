@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test('simple toggle test: click button should add active class', async ({ page }) => {
+test('simple toggle test: click button should add active class @comprehensive', async ({
+  page,
+}) => {
   // Capture console errors
   const errors: string[] = [];
   page.on('console', msg => {
@@ -59,7 +61,7 @@ test('simple toggle test: click button should add active class', async ({ page }
   expect(hasActiveAfter).toBe(true);
 });
 
-test('simple removable test: click should remove element', async ({ page }) => {
+test('simple removable test: click should remove element @comprehensive', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize
@@ -93,7 +95,7 @@ test('simple removable test: click should remove element', async ({ page }) => {
   await expect(removableItem).not.toBeVisible();
 });
 
-test('removable with confirmation: cancel should not remove', async ({ page }) => {
+test('removable with confirmation: cancel should not remove @comprehensive', async ({ page }) => {
   // Capture console logs
   page.on('console', msg => {
     console.log('[browser]', msg.text());
@@ -135,7 +137,7 @@ test('removable with confirmation: cancel should not remove', async ({ page }) =
   await expect(confirmItem).toBeVisible();
 });
 
-test('removable with confirmation: accept should remove', async ({ page }) => {
+test('removable with confirmation: accept should remove @comprehensive', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize

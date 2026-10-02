@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const BASE = 'http://127.0.0.1:3000/examples/behaviors/demo.html';
 
-test.describe('Behavior Resolver Bundle — Demo', () => {
+test.describe('Behavior Resolver Bundle — Demo @comprehensive', () => {
   test('page loads without errors and behaviors are registered', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -103,5 +103,19 @@ test.describe('Behavior Resolver Bundle — Demo', () => {
     await page.waitForTimeout(300);
 
     await expect(copyBtn).toHaveClass(/copied/, { timeout: 3000 });
+  });
+
+  test('Toggleable — an accordion item expands and collapses', async ({ page }) => {
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(500);
+
+    const item = page.locator('.accordion-item').first();
+    await expect(item).not.toHaveClass(/active/);
+
+    await item.click();
+    await expect(item).toHaveClass(/active/);
+
+    await item.click();
+    await expect(item).not.toHaveClass(/active/);
   });
 });

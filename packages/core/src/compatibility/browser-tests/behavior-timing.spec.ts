@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-test('check behaviors timing and installation', async ({ page }) => {
+test('check behaviors timing and installation @comprehensive', async ({ page }) => {
   const logs: string[] = [];
 
   page.on('console', msg => {
     logs.push(`[${msg.type()}] ${msg.text()}`);
   });
 
-  await page.goto('http://localhost:3000/examples/behaviors/demo.html');
+  await page.goto('http://127.0.0.1:3000/examples/behaviors/demo.html');
 
   // Wait a bit for everything to initialize
   await page.waitForTimeout(1000);
