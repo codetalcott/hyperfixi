@@ -29,6 +29,14 @@
       features: ['43 commands', 'semantic parser', 'i18n', 'debug tools'],
       color: '#667eea'
     },
+    'hs': {
+      name: 'Hyperscript (new engine)',
+      file: 'hyperfixi-hs.js',
+      size: '34 KB',
+      description: 'Hyperscript only, on the engine that follows upstream _hyperscript',
+      features: ['every command', 'upstream syntax', 'no htmx attrs', 'English only'],
+      color: '#ec4899'
+    },
     'hybrid-complete': {
       name: 'Hybrid Complete',
       file: 'hyperfixi-hybrid-complete.js',

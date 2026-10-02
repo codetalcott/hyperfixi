@@ -72,6 +72,30 @@ const BUNDLES = {
       fetch: true,
     },
   },
+  // hyperfixi-hs.js: hyperscript only, on packages/engine (the engine meant to
+  // replace core's). Built into packages/engine/dist; the loader knows the path.
+  hs: {
+    file: 'hyperfixi-hs.js',
+    size: '34 KB',
+    features: {
+      toggle: true,
+      addClass: true,
+      put: true,
+      // The Counter page writes `increment #count`: core counts in the
+      // element's text, upstream and this engine do not (they want
+      // `increment #count's textContent`). Whether the engine takes core's
+      // reading is undecided, so the page is not claimed here.
+      increment: false,
+      show: true,
+      hide: true,
+      blocks: true,
+      // `.once` / `.prevent` / `.stop` are core's dialect; upstream has none.
+      eventModifiers: false,
+      i18nAliases: false,
+      semanticParser: false,
+      fetch: true,
+    },
+  },
   browser: {
     file: 'hyperfixi.js',
     size: '~310 KB',
@@ -299,6 +323,13 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
         );
 
       test(`Gallery: ${example.name}`, async ({ page }) => {
+        // On upstream and on the new engine `increment #count` does not count
+        // in the element's text (core's reading), and the page's counter is
+        // gone after one click: nothing to discover, and the probe would hang.
+        test.skip(
+          bundleKey === 'hs' && example.name === 'Counter',
+          '`increment <element>` is core-only behavior; undecided for the engine'
+        );
         const errors: string[] = [];
         page.on('pageerror', err => {
           errors.push(err.message);

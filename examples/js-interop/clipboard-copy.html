@@ -103,7 +103,7 @@
         <code class="install-code">&lt;script src="https://unpkg.com/hyperscript.org"&gt;&lt;/script&gt;</code>
         <button class="copy-btn"
                 _="on click
-                     writeText(my previous.innerText) on navigator.clipboard
+                     writeText(my previousElementSibling's innerText) on navigator.clipboard
                      put 'copied!' into me
                      add .copied to me
                      wait 1s
@@ -120,7 +120,7 @@
           <code class="npm-install">npm install @hyperfixi/core</code>
           <button class="copy-btn"
                   _="on click
-                       writeText(my previous.innerText) on navigator.clipboard
+                       writeText(my previousElementSibling's innerText) on navigator.clipboard
                        set originalText to my innerText
                        put 'copied!' into me
                        add .copied to me
@@ -171,7 +171,7 @@
     <div class="code">&lt;code class="install-code"&gt;npm install @hyperfixi/core&lt;/code&gt;
 &lt;button class="copy-btn"
         _="on click
-             writeText(my previous.innerText) on navigator.clipboard
+             writeText(my previousElementSibling's innerText) on navigator.clipboard
              put 'copied!' into me
              add .copied to me
              wait 1s
@@ -189,7 +189,7 @@
     </ul>
   </div>
 
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script src="../prism-loader.js"></script>
 </body>
 </html>
