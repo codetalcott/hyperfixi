@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * Tests for ClickOutside + FocusTrap behavior composition
  * in examples/dialogs/modal.html (Demo 4)
  */
-test.describe('Behavior-Powered Modal @integration', () => {
+test.describe('Behavior-Powered Modal @integration @comprehensive', () => {
   const url = '/examples/dialogs/modal.html';
 
   async function setupPage(page: import('@playwright/test').Page) {
