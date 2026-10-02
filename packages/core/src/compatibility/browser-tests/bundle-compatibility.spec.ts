@@ -72,6 +72,26 @@ const BUNDLES = {
       fetch: true,
     },
   },
+  // hyperfixi-hs.js: hyperscript only, on packages/engine (the engine meant to
+  // replace core's). Built into packages/engine/dist; the loader knows the path.
+  hs: {
+    file: 'hyperfixi-hs.js',
+    size: '34 KB',
+    features: {
+      toggle: true,
+      addClass: true,
+      put: true,
+      increment: true,
+      show: true,
+      hide: true,
+      blocks: true,
+      // `.once` / `.prevent` / `.stop` are core's dialect; upstream has none.
+      eventModifiers: false,
+      i18nAliases: false,
+      semanticParser: false,
+      fetch: true,
+    },
+  },
   browser: {
     file: 'hyperfixi.js',
     size: '~310 KB',
@@ -177,12 +197,10 @@ const GALLERY_EXAMPLES = [
       const newText = (await countEl.textContent()) ?? '0';
       const newCount = parseInt(newText) || 0;
 
-      // Accept either increment working OR no JS errors
       if (newCount > initialCount) {
         return { passed: true, reason: `Count increased from ${initialCount} to ${newCount}` };
       }
-      // Even if count didn't change, clicking worked without errors
-      return { passed: true, reason: `Click worked (count: ${initialCount} -> ${newCount})` };
+      return { passed: false, reason: `Count did not increase (${initialText} -> ${newText})` };
     },
   },
   {
@@ -552,5 +570,27 @@ test.describe('Bundle Summary', () => {
     console.log(`╚═════════════════╧${bundleKeys.map(() => '═'.repeat(7)).join('╧')}╝`);
 
     expect(true).toBe(true);
+  });
+});
+
+// The Counter page names its own default bundle (`data-default="hs"` on the
+// loader's script tag): its mirror is upstream's `on mutation of childList from
+// #count`, which core's parser does not read.
+test.describe('Counter page default bundle', () => {
+  test('loads hyperfixi-hs.js with no ?bundle=, and its mirror follows the count', async ({
+    page,
+  }) => {
+    const scripts: string[] = [];
+    page.on('request', r => {
+      if (r.resourceType() === 'script') scripts.push(r.url());
+    });
+    await page.goto(`${BASE_URL}/examples/events-and-dom/counter.html`);
+    await page.waitForTimeout(500);
+    expect(scripts.some(u => u.endsWith('/packages/engine/dist/hyperfixi-hs.js'))).toBe(true);
+
+    await page.locator('button').filter({ hasText: 'Increase' }).first().click();
+    await page.locator('button').filter({ hasText: 'Increase' }).first().click();
+    await expect(page.locator('#count')).toHaveText('2');
+    await expect(page.locator('#count-mirror')).toHaveText('2');
   });
 });

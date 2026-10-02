@@ -29,6 +29,14 @@
       features: ['43 commands', 'semantic parser', 'i18n', 'debug tools'],
       color: '#667eea'
     },
+    'hs': {
+      name: 'Hyperscript (new engine)',
+      file: 'hyperfixi-hs.js',
+      size: '34 KB',
+      description: 'Hyperscript only, on the engine that follows upstream _hyperscript',
+      features: ['every command', 'upstream syntax', 'no htmx attrs', 'English only'],
+      color: '#ec4899'
+    },
     'hybrid-complete': {
       name: 'Hybrid Complete',
       file: 'hyperfixi-hybrid-complete.js',
@@ -57,7 +65,12 @@
 
   // Get current bundle from URL or default
   const urlParams = new URLSearchParams(window.location.search);
-  const currentBundle = urlParams.get('bundle') || 'browser';
+  const loaderTag = document.querySelector('script[src$="bundle-loader.js"]');
+  const currentBundle =
+    urlParams.get('bundle') ||
+    localStorage.getItem('hyperfixi:bundle') ||
+    (loaderTag && loaderTag.dataset.default) ||
+    'browser';
 
   // Panel state
   let panelVisible = false;

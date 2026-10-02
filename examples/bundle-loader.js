@@ -9,8 +9,9 @@
  *   <!-- No need to include hyperfixi-browser.js -->
  *
  * URL Parameters:
- *   ?bundle=browser   - Full bundle (default)
+ *   ?bundle=browser   - Full bundle (default, unless the script tag has data-default)
  *   ?bundle=hybrid    - Mid-size hybrid bundle
+ *   ?bundle=hs        - hyperfixi-hs.js: hyperscript only, on the new engine
  *   ?bundle=multilingual - Multilingual bundle
  *   ?bundle=dev       - Development bundle
  *   ?bundle=prod      - Production bundle
@@ -25,6 +26,7 @@
   // scripts/create-bundle-aliases.mjs).
   const BUNDLES = {
     'browser': 'hyperfixi.js',
+    'hs': 'hyperfixi-hs.js',
     'hybrid-complete': 'hyperfixi-hybrid-complete.js',
     'hybrid-hx': 'hyperfixi-hybrid-hx.js',
     'hybrid-hx-v4': 'hyperfixi-hx-v4.js',
@@ -41,6 +43,11 @@
   // Fall back to localStorage preference
   if (!bundleKey) {
     bundleKey = localStorage.getItem('hyperfixi:bundle');
+  }
+
+  // A page can name its own default: <script src="../bundle-loader.js" data-default="hs">
+  if (!bundleKey || !BUNDLES[bundleKey]) {
+    bundleKey = document.currentScript && document.currentScript.dataset.default;
   }
 
   // Default to browser bundle
@@ -68,20 +75,22 @@
     }
 
     // Local development: relative path to packages/core/dist/
+    // (hyperfixi-hs.js is built by packages/engine, into its own dist/).
+    const dist = bundleKey === 'hs' ? 'packages/engine/dist/' : 'packages/core/dist/';
     if (path.includes('/examples/')) {
       const afterExamples = path.split('/examples/')[1] || '';
       const depth = (afterExamples.match(/\//g) || []).length;
 
       if (depth === 0) {
-        return '../packages/core/dist/' + bundleFile;
+        return '../' + dist + bundleFile;
       } else if (depth === 1) {
-        return '../../packages/core/dist/' + bundleFile;
+        return '../../' + dist + bundleFile;
       } else {
-        return '../'.repeat(depth + 1) + 'packages/core/dist/' + bundleFile;
+        return '../'.repeat(depth + 1) + dist + bundleFile;
       }
     }
 
-    return '/packages/core/dist/' + bundleFile;
+    return '/' + dist + bundleFile;
   }
 
   // Create and inject script
@@ -102,7 +111,9 @@
 
       // Fallback to default bundle
       const fallback = document.createElement('script');
-      const browserPath = getBundlePath().replace(BUNDLES[bundleKey], BUNDLES['browser']);
+      const browserPath = getBundlePath()
+        .replace('packages/engine/dist/', 'packages/core/dist/')
+        .replace(BUNDLES[bundleKey], BUNDLES['browser']);
       fallback.src = browserPath;
 
       fallback.onerror = function () {

@@ -37,22 +37,22 @@ uses the hook when the host has it.
 
 ## Layout
 
-| File                                                             | What it holds                                                                                                |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `src/index.ts`                                                   | The library entry: the engine functions, the node types, every module                                        |
-| `src/tokenizer.ts`, `src/parser.ts`                              | Lexer, token stream, grammar registry, parse errors                                                          |
-| `src/expressions.ts`                                             | The expression chain and the core expression kinds                                                           |
-| `src/expressions-extra.ts`, `src/conversions.ts`                 | Optional modules: positional, `closest`, collection operators, type checks; the less common `as` conversions |
-| `src/statements.ts`                                              | Commands, command lists, programs                                                                            |
-| `src/runtime.ts`, `src/engine.ts`                                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                |
-| `src/on.ts`, `src/features.ts`                                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                        |
-| `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                               |
-| `src/commands/*`                                                 | 52 command keywords, one module export each                                                                  |
-| `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                       |
-| `src/bundles/*`                                                  | Browser bundle entries. `full` is everything; `core`, `minimal`, `common` exist to measure size              |
-| `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                 |
-| `tests/`                                                         | This package's own tests, for `src/additions.ts`, in the form of upstream's and on the same fixtures         |
-| `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                       |
+| File                                                             | What it holds                                                                                                                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`                                                   | The library entry: the engine functions, the node types, every module                                                                                        |
+| `src/tokenizer.ts`, `src/parser.ts`                              | Lexer, token stream, grammar registry, parse errors                                                                                                          |
+| `src/expressions.ts`                                             | The expression chain and the core expression kinds                                                                                                           |
+| `src/expressions-extra.ts`, `src/conversions.ts`                 | Optional modules: positional, `closest`, collection operators, type checks; the less common `as` conversions                                                 |
+| `src/statements.ts`                                              | Commands, command lists, programs                                                                                                                            |
+| `src/runtime.ts`, `src/engine.ts`                                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                                                                |
+| `src/on.ts`, `src/features.ts`                                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                                                                        |
+| `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                                                                               |
+| `src/commands/*`                                                 | 52 command keywords, one module export each                                                                                                                  |
+| `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                                                                       |
+| `src/bundles/*`                                                  | Browser bundle entries. `hyperfixi-hs` is the script-tag bundle; `full` is the same modules, for the gate; `core`, `minimal`, `common` exist to measure size |
+| `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                                                                 |
+| `tests/`                                                         | This package's own tests, for `src/additions.ts`, in the form of upstream's and on the same fixtures                                                         |
+| `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                                                                       |
 
 A node is typed data plus the closure that runs it, bound when the node is parsed: an
 expression has `ev`, a command has `run`, a feature has `install`. Control flow is a value a
@@ -125,6 +125,24 @@ additions. CI runs it after the upstream suite.
 
 Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.3 KB, `common` (15 everyday
 commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
+
+## The script-tag bundle: `hyperfixi-hs.js`
+
+`dist/hyperfixi-hs.js` (and `.min.js`, 34.1 KB gzipped) is the first product on this engine:
+hyperscript and nothing else, every module, no htmx attributes, English only. It installs
+`window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
+pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
+
+Seventeen example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-02): the
+pages that need only hyperscript. (Sixteen by a script tag; the Counter page through the
+examples' loader, `data-default="hs"`, so that `?bundle=` still switches it.) Core's Playwright suites run them, and the bundle is a
+column of the bundle-compatibility matrix (`?bundle=hs` in the examples' loader). What keeps
+the other pages on `hyperfixi.js`, counted over the 37 pages that load it: page script that
+calls the `hyperfixi` API (8), behaviors (5), the intent element (4), htmx attributes (2),
+and the history commands. One behavior of core's is not in this engine, by decision
+(2026-10-02): `increment #count` on core counts in the element's text, where upstream and this
+engine want `increment #count's textContent`. The examples write the second, which every
+bundle runs to the same count (the bundle matrix's Counter row).
 
 The 66 known failures: upstream's internal-API surface (`internals.tokenizer`,
 `evalStatically`, source info, error collection: 47), sockets and workers (17, upstream

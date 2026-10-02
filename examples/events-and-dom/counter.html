@@ -7,34 +7,6 @@
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
-        #debug-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background: #333;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
-            min-width: auto;
-        }
-
-        #debug-toggle:hover {
-            background: #007bff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        #debug-toggle.enabled {
-            background: #22c55e;
-        }
-
         .counter-display {
             font-size: 72px;
             font-weight: bold;
@@ -64,11 +36,6 @@
     </style>
 </head>
 <body class="example-page">
-    <!-- Debug Toggle Button -->
-    <button id="debug-toggle" onclick="toggleDebug()">
-        🐛 Debug: OFF
-    </button>
-
     <div class="page-container">
         <div class="breadcrumb">
             <a href="../index.html">← Back to Gallery</a> / <strong>Events & DOM</strong> / Counter
@@ -92,7 +59,7 @@
             <div id="count" class="counter-display">0</div>
 
             <div class="button-group">
-                <button _="on click decrement #count">
+                <button _="on click decrement #count's textContent">
                     Decrease
                 </button>
 
@@ -100,13 +67,13 @@
                     Reset
                 </button>
 
-                <button _="on click increment #count">
+                <button _="on click increment #count's textContent">
                     Increase
                 </button>
             </div>
 
             <p style="margin-top: 20px; color: #666;">
-                Current value: <span id="count-mirror" _="on change in #count put #count's textContent into me">0</span>
+                Current value: <span id="count-mirror" _="on mutation of childList from #count put #count's textContent into me">0</span>
             </p>
         </div>
 
@@ -115,7 +82,7 @@
         <div class="code">
 &lt;div <span class="keyword">id</span>=<span class="string">"count"</span> <span class="keyword">class</span>=<span class="string">"counter-display"</span>&gt;0&lt;/div&gt;
 
-&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count's textContent"</span>&gt;
   Decrease
 &lt;/button&gt;
 
@@ -123,7 +90,7 @@
   Reset
 &lt;/button&gt;
 
-&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count's textContent"</span>&gt;
   Increase
 &lt;/button&gt;
         </div>
@@ -131,15 +98,15 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>increment #count</code> - Adds 1 to the counter's value</li>
-                <li><code>decrement #count</code> - Subtracts 1 from the counter's value</li>
+                <li><code>increment #count's textContent</code> - Adds 1 to the counter's value</li>
+                <li><code>decrement #count's textContent</code> - Subtracts 1 from the counter's value</li>
                 <li><code>put 0 into #count</code> - Resets the counter to zero</li>
             </ul>
 
             <h3>Advanced Increment/Decrement:</h3>
             <ul>
-                <li><code>increment #count by 5</code> - Add 5 instead of 1</li>
-                <li><code>decrement #count by 10</code> - Subtract 10</li>
+                <li><code>increment #count's textContent by 5</code> - Add 5 instead of 1</li>
+                <li><code>decrement #count's textContent by 10</code> - Subtract 10</li>
                 <li><code>increment my value</code> - Increment an element's value attribute</li>
                 <li><code>increment @data-score</code> - Increment a data attribute</li>
             </ul>
@@ -147,9 +114,10 @@
             <h3>Reactive Updates:</h3>
             <p>
                 The count mirror below the buttons uses:
-                <code>on change in #count</code> to reactively update whenever the counter changes!
-                This pattern watches for content changes in the #count element and automatically
-                mirrors the value.
+                <code>on mutation of childList from #count</code> to update whenever the counter changes.
+                This watches the content of the #count element and mirrors the value, whoever wrote it.
+                (It is upstream _hyperscript's spelling, so this page loads <code>hyperfixi-hs.js</code>;
+                the larger bundles do not read it yet.)
             </p>
 
             <h3>Try it yourself:</h3>
@@ -167,67 +135,9 @@
         </div>
     </div>
 
-    <!-- Debug Mode Control -->
-    <script>
-        // Check localStorage on page load
-        if (localStorage.getItem('__HYPERFIXI_DEBUG__') === 'true') {
-            window.__HYPERFIXI_DEBUG__ = true;
-        }
-
-        // Initialize debug button state
-        function initDebugButton() {
-            const isEnabled = window.__HYPERFIXI_DEBUG__ === true;
-            const button = document.getElementById('debug-toggle');
-            if (isEnabled) {
-                button.textContent = '🐛 Debug: ON';
-                button.classList.add('enabled');
-            } else {
-                button.textContent = '🐛 Debug: OFF';
-                button.classList.remove('enabled');
-            }
-        }
-
-        // Toggle debug mode
-        function toggleDebug() {
-            const currentState = window.__HYPERFIXI_DEBUG__ === true;
-            const newState = !currentState;
-
-            // Store in localStorage to persist across reloads
-            if (newState) {
-                localStorage.setItem('__HYPERFIXI_DEBUG__', 'true');
-                window.__HYPERFIXI_DEBUG__ = true;
-            } else {
-                localStorage.removeItem('__HYPERFIXI_DEBUG__');
-                window.__HYPERFIXI_DEBUG__ = false;
-            }
-
-            // Reload page to apply debug settings
-            location.reload();
-        }
-
-        // Initialize button state when page loads
-        window.addEventListener('DOMContentLoaded', initDebugButton);
-    </script>
-
-    <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
-    <script src="../bundle-loader.js"></script>
+    <!-- Load HyperFixi: hyperfixi-hs.js unless ?bundle= names another -->
+    <script src="../bundle-loader.js" data-default="hs"></script>
     <script src="../prism-loader.js"></script>
     <script src="../bundle-selector.js"></script>
-
-    <!-- Report Debug Status -->
-    <script>
-        window.addEventListener('load', () => {
-            console.log('🎯 Counter Example Loaded');
-            console.log('🐛 Debug Mode:', window.__HYPERFIXI_DEBUG__ ? 'ENABLED' : 'DISABLED');
-
-            if (window.__HYPERFIXI_DEBUG__) {
-                console.log('📊 Watch for:');
-                console.log('  - MutationObserver setup messages');
-                console.log('  - Content change detection');
-                console.log('  - Command execution logs');
-                console.log('  - Context variable updates (oldValue, newValue)');
-            }
-        });
-    </script>
 </body>
 </html>

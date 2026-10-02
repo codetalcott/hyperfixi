@@ -392,6 +392,9 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
   // fell through to the textContent path, where `toElementArray` of an
   // evaluated style value yields no elements — so the command was a SILENT
   // NO-OP: no error, no effect, opacity unmoved (measured on both rows).
+  // Any other possessive (`increment #count's textContent`, the spelling
+  // upstream runs and the examples use since 2026-10-02) writes the property:
+  // it used to fall through too, and threw on `querySelectorAll('0')`.
   increment: `
     case 'increment': {
       const target = cmd.args[0];
@@ -407,13 +410,15 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
         return newVal;
       }
 
-      if (target.type === 'possessive' && isStyleProp(target.property)) {
+      if (target.type === 'possessive') {
+        const style = isStyleProp(target.property);
         const obj = await evaluate(target.object, ctx);
         const elements = toElementArray(obj);
         for (const el of elements) {
-          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
-          const newVal = current + amount;
-          setStyleProp(el, target.property, newVal);
+          const was = style ? getStyleProp(el, target.property) : Reflect.get(el, target.property);
+          const newVal = (parseFloat(was || '0') || 0) + amount;
+          if (style) setStyleProp(el, target.property, newVal);
+          else Reflect.set(el, target.property, newVal);
           ctx.it = newVal;
         }
         return ctx.it;
@@ -444,13 +449,15 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
         return newVal;
       }
 
-      if (target.type === 'possessive' && isStyleProp(target.property)) {
+      if (target.type === 'possessive') {
+        const style = isStyleProp(target.property);
         const obj = await evaluate(target.object, ctx);
         const elements = toElementArray(obj);
         for (const el of elements) {
-          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
-          const newVal = current - amount;
-          setStyleProp(el, target.property, newVal);
+          const was = style ? getStyleProp(el, target.property) : Reflect.get(el, target.property);
+          const newVal = (parseFloat(was || '0') || 0) - amount;
+          if (style) setStyleProp(el, target.property, newVal);
+          else Reflect.set(el, target.property, newVal);
           ctx.it = newVal;
         }
         return ctx.it;

@@ -359,7 +359,7 @@
                     <div class="code-header">
                         <span class="flag">&#x1F1FA;&#x1F1F8;</span> English (Reference)
                     </div>
-                    <div class="code-content" id="counter-en"><span class="keyword">on</span> <span class="event">click</span> <span class="command">increment</span> <span class="selector">#count</span></div>
+                    <div class="code-content" id="counter-en"><span class="keyword">on</span> <span class="event">click</span> <span class="command">increment</span> <span class="selector">#count's textContent</span></div>
                 </div>
                 <div class="code-block">
                     <div class="code-header">
@@ -367,15 +367,15 @@
                         <span id="counter-lang-name">English</span>
                         <button class="copy-btn" onclick="copyCode('counter')">Copy</button>
                     </div>
-                    <div class="code-content" id="counter-locale"><span class="keyword">on</span> <span class="event">click</span> <span class="command">increment</span> <span class="selector">#count</span></div>
+                    <div class="code-content" id="counter-locale"><span class="keyword">on</span> <span class="event">click</span> <span class="command">increment</span> <span class="selector">#count's textContent</span></div>
                 </div>
             </div>
             <div class="demo-area">
                 <h4>Try It</h4>
                 <div class="counter-demo">
-                    <button class="counter-btn dec" _="on click decrement #count">-</button>
+                    <button class="counter-btn dec" _="on click decrement #count's textContent">-</button>
                     <div class="counter-display" id="count">0</div>
-                    <button class="counter-btn inc" _="on click increment #count">+</button>
+                    <button class="counter-btn inc" _="on click increment #count's textContent">+</button>
                 </div>
             </div>
         </div>
@@ -452,11 +452,11 @@
                     Enter English Hyperscript:
                 </label>
                 <input type="text" id="grammar-input"
-                       value="on click increment #count"
+                       value="on click increment #count's textContent"
                        style="width: 100%; padding: 12px 15px; border: 2px solid #667eea; border-radius: 8px; font-family: monospace; font-size: 15px;"
                        placeholder="e.g., on click toggle .active">
                 <div style="margin-top: 8px;">
-                    <button onclick="setGrammarExample('on click increment #count')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">increment</button>
+                    <button onclick="setGrammarExample('on click increment #count\'s textContent')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">increment</button>
                     <button onclick="setGrammarExample('on click toggle .active')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">toggle</button>
                     <button onclick="setGrammarExample('put my value into #output')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">put...into</button>
                     <button onclick="setGrammarExample('add .highlight to me')" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">add...to</button>
@@ -533,7 +533,7 @@
         const examples = {
             counter: {
                 keywords: ['on', 'click', 'increment'],
-                template: (k) => `<span class="keyword">${k[0]}</span> <span class="event">${k[1]}</span> <span class="command">${k[2]}</span> <span class="selector">#count</span>`
+                template: (k) => `<span class="keyword">${k[0]}</span> <span class="event">${k[1]}</span> <span class="command">${k[2]}</span> <span class="selector">#count's textContent</span>`
             },
             toggle: {
                 keywords: ['on', 'click', 'toggle'],
