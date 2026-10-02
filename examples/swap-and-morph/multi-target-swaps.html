@@ -167,15 +167,15 @@
             <button
                 _="on click
                    set timestamp to new Date().toLocaleTimeString()
-                   set random to Math.floor(Math.random() * 1000)
+                   set roll to Math.floor(Math.random() * 1000)
 
                    set mainHtml to '<div class=card><h3>Main Content Updated</h3><p>Time: ' + timestamp + '</p></div>'
                    put mainHtml into #main-content
 
-                   set sidebarHtml to '<div class=card><h3>Sidebar Updated</h3><p>Random: ' + random + '</p></div>'
+                   set sidebarHtml to '<div class=card><h3>Sidebar Updated</h3><p>Random: ' + roll + '</p></div>'
                    put sidebarHtml into #sidebar-content
 
-                   set statsHtml to '<div class=card><h3>Stats</h3><div class=stat-value>' + random + '</div></div>'
+                   set statsHtml to '<div class=card><h3>Stats</h3><div class=stat-value>' + roll + '</div></div>'
                    put statsHtml into #stats-content
 
                    set notifHtml to '<div class=card><h3>New Notification</h3><p>Updated at ' + timestamp + '</p></div>'

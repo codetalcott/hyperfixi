@@ -214,18 +214,17 @@
                         repeat 10 times index i
                           set itemNum to ((:currentPage - 1) * 10) + i + 1
                           set timestamp to new Date().toLocaleTimeString()
-                          make a <li class='content-item'>
+                          put `<li class='content-item'>
                             <div class='item-header'>
-                              <span class='item-number'>#{itemNum}</span>
-                              <span class='item-timestamp'>{timestamp}</span>
+                              <span class='item-number'>#${itemNum}</span>
+                              <span class='item-timestamp'>${timestamp}</span>
                             </div>
-                            <div class='item-title'>Article Title #{itemNum}</div>
+                            <div class='item-title'>Article Title #${itemNum}</div>
                             <div class='item-description'>
                               This is a dynamically loaded article. Lorem ipsum dolor sit amet,
-                              consectetur adipiscing elit. Loaded on page {itemNum}.
+                              consectetur adipiscing elit. Loaded on page ${:currentPage}.
                             </div>
-                          </li> called newItem
-                          put newItem at end of #content-list
+                          </li>` at end of #content-list
                         end
 
                         -- Update stats
@@ -412,8 +411,7 @@
              -- Load more items
              increment :currentPage
              repeat 10 times
-               make a &lt;li&gt;New Item&lt;/li&gt; called newItem
-               put newItem at end of #content-list
+               put `&lt;li&gt;New Item&lt;/li&gt;` at end of #content-list
              end
 
              remove .active from #loading
@@ -440,8 +438,7 @@
          put result into items
 
          repeat for item in items
-           make a &lt;li&gt;${item.title}&lt;/li&gt; called newItem
-           put newItem at end of #list
+           put `&lt;li&gt;${item.title}&lt;/li&gt;` at end of #list
          end
 
          increment :currentPage

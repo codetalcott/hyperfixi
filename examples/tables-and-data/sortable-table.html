@@ -64,7 +64,7 @@
                                    set my @data-dir to 'desc'
                                    set my @aria-sort to 'descending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-name desc at end of #product-rows
+                                     put <tr/> in #product-rows sorted by its @data-name descending at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
@@ -80,7 +80,7 @@
                                    set my @data-dir to 'desc'
                                    set my @aria-sort to 'descending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-price as Number desc at end of #product-rows
+                                     put <tr/> in #product-rows sorted by its @data-price as Number descending at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
@@ -96,7 +96,7 @@
                                    set my @data-dir to 'desc'
                                    set my @aria-sort to 'descending'
                                    start view transition
-                                     put <tr/> in #product-rows sorted by its @data-stock as Number desc at end of #product-rows
+                                     put <tr/> in #product-rows sorted by its @data-stock as Number descending at end of #product-rows
                                    end
                                  else
                                    set my @data-dir to 'asc'
@@ -133,7 +133,7 @@
            set my @aria-sort to 'descending'
            start view transition
              put &lt;tr/&gt; in #product-rows
-               sorted by its @data-price as Number desc
+               sorted by its @data-price as Number descending
                at end of #product-rows
            end
          else
