@@ -2,9 +2,11 @@
  * Coverage for gallery example pages that had no Playwright spec:
  *   - dialogs/smart-element-toggle.html   (smart toggle of dialog/details/summary/select)
  *   - fetch-and-async/infinite-scroll.html (scroll-driven dynamic append)
- *   - forms/partial-validation.html        (validatePartialContent API + swap)
  *   - swap-and-morph/morph-comparison.html (morph vs innerHTML state preservation)
- *   - animation/color-cycling-debug.html   (transition template-literal interpolation)
+ * and two of core's own test pages, moved out of the gallery on 2026-10-03 because they
+ * inspect core's API (the gallery runs on hyperfixi-hs.js):
+ *   - packages/core/test-pages/partial-validation.html  (validatePartialContent API + swap)
+ *   - packages/core/test-pages/color-cycling-debug.html (transition template-literal interpolation)
  *
  * These specs assert precise DOM outcomes (exact values, counts, classes, JS
  * properties) and fail on any uncaught page error. The intent is to surface
@@ -103,7 +105,7 @@ test.describe('infinite-scroll.html @comprehensive', () => {
 
 test.describe('partial-validation.html @comprehensive', () => {
   test('validatePartialContent flags a full-page swap as critical', async ({ page }) => {
-    await load(page, '/examples/forms/partial-validation.html');
+    await load(page, '/packages/core/test-pages/partial-validation.html');
 
     // The partial-validation API must be exposed on the runtime global.
     expect(
@@ -119,7 +121,7 @@ test.describe('partial-validation.html @comprehensive', () => {
   });
 
   test('valid partial content reports no issues', async ({ page }) => {
-    await load(page, '/examples/forms/partial-validation.html');
+    await load(page, '/packages/core/test-pages/partial-validation.html');
 
     await page.getByRole('button', { name: 'Swap Valid Content' }).click();
     await expect(page.locator('#validation-log')).toContainText('No issues found');
@@ -157,7 +159,7 @@ test.describe('color-cycling-debug.html @comprehensive', () => {
   test('press-and-hold interpolates $rand into a real hsl() color', async ({ page }) => {
     const errors = createErrorCollector(page);
     errors.attach();
-    await load(page, '/examples/animation/color-cycling-debug.html');
+    await load(page, '/packages/core/test-pages/color-cycling-debug.html');
 
     const box = page.locator('#color-box');
     const bb = await box.boundingBox();

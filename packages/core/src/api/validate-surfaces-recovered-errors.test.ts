@@ -120,7 +120,7 @@ describe('ParseResult.recovered marks a degraded AST', () => {
  * compatibility. It read the singular `error` and dropped `errors`, so it
  * reported `{ success: true, errors: [] }` for genuinely malformed input —
  * #780's defect, surviving in a second surface. Demo pages consume it
- * (examples/animation/color-cycling-debug.html, test-classic-i18n.html).
+ * (packages/core/test-pages/color-cycling-debug.html, examples/multilingual/test-classic-i18n.html).
  */
 describe('classic-i18n compile() shim reports recovered errors', () => {
   it('does not claim a clean compile for a recovered parse', async () => {

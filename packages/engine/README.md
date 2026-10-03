@@ -151,20 +151,23 @@ hyperscript and nothing else, every module, no htmx attributes, English only. It
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
 
-Forty example pages load it instead of `packages/core/dist/hyperfixi.js` (2026-10-03):
-the pages that need only hyperscript, and the four behavior pages. (Twenty-five by a script
-tag; fifteen through the examples' loader, `data-default="hs"`, so that `?bundle=` still
-switches them.) Core's Playwright suites run them, and the bundle is a column of the
-bundle-compatibility matrix (`?bundle=hs` in the examples' loader). No page needed an API
-shim: `processNode` is upstream's name too, and the other `hyperfixi.*` calls were core
-debugging code. The multilingual demo pages are among them: their handlers are English, and
-what they translate for display comes from the i18n or semantic bundle, loaded beside the
-engine. The behavior pages load `@hyperfixi/behaviors`' bundle beside it, which defines its
-eleven behaviors on the engine with `evaluate` (the package peers on this engine since
-2026-10-03; its sources are in upstream's idioms and run on upstream too). What keeps the other
-pages on `hyperfixi.js`: the intent element (4), core's own debug pages (2),
-`<script type="text/hyperscript" for="…">` (1), partial validation (1), htmx attributes (1),
-and the history commands. One behavior of core's is not in this engine, by decision
+Forty-five of the gallery's forty-eight tracked pages load it instead of
+`packages/core/dist/hyperfixi.js` (2026-10-03). (Thirty by a script tag; fifteen through the
+examples' loader, `data-default="hs"`, so that `?bundle=` still switches them.) Core's
+Playwright suites run them, and the bundle is a column of the bundle-compatibility matrix
+(`?bundle=hs` in the examples' loader). No page needed an API shim: `processNode` is
+upstream's name too, and the other `hyperfixi.*` calls were core debugging code. The
+multilingual demo pages are among them: their handlers are English, and what they translate
+for display comes from the i18n or semantic bundle, loaded beside the engine. The behavior
+pages load `@hyperfixi/behaviors`' bundle beside it, which defines its eleven behaviors on
+the engine with `evaluate` (the package peers on this engine since 2026-10-03; its sources
+are in upstream's idioms and run on upstream too). The intent-element pages load the semantic
+English bundle beside it: `<lse-intent>` renders its LSE JSON to hyperscript text and hands
+it to the host's `evaluate`, the `lse_to_hyperscript` direction (core's `evalLSENode` was
+the AST path). Core's own debug pages left the gallery for `packages/core/test-pages/`. What
+keeps the last three pages on `hyperfixi.js` is the htmx revisit: the `hx-live` page (core's
+htmx attribute layer) and the two history pages (`push url` / `replace url`, and core's
+built-in `HistorySwap` behavior). One behavior of core's is not in this engine, by decision
 (2026-10-02): `increment #count` on core counts in the element's text, where upstream and this
 engine want `increment #count's textContent`. The examples write the second, which every
 bundle runs to the same count (the bundle matrix's Counter row).

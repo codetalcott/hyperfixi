@@ -272,6 +272,25 @@
   </style>
 </head>
 <body class="example-page">
+  <!-- Define the Draggable behavior, before the elements that install it (a behavior is
+       defined where the document reaches it). The drag handle defaults inline (`from` is resolved
+       when the behavior is installed, before `init` runs); the start offset is read from
+       the element's own position. -->
+  <script type="text/hyperscript">
+behavior Draggable(dragHandle)
+  on pointerdown(clientX, clientY) from (dragHandle or me)
+    halt the event
+    set xoff to clientX - my offsetLeft
+    set yoff to clientY - my offsetTop
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) or
+               pointerup(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+    end
+  end
+end
+  </script>
+
   <div class="page-container">
     <div class="breadcrumb">
       <a href="../index.html">← Back to Gallery</a> / <strong>Swap & Morph</strong> / Morph vs innerHTML
@@ -474,37 +493,15 @@
     </div>
   </div>
 
-  <!-- Load HyperFixi -->
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <!-- The engine's hyperscript-only bundle -->
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
 
-  <!-- Define Draggable Behavior -->
+
+  <!-- The innerHTML buttons' handlers, in one hyperscript script: `on click from <button>`
+       is how a script tag scripts another element (and it keeps the multi-line HTML out of
+       an attribute). -->
   <script type="text/hyperscript">
-behavior Draggable(dragHandle)
-  init
-    if no dragHandle set the dragHandle to me
-  end
-  on pointerdown(clientX, clientY) from dragHandle
-    halt the event
-    measure x
-    set startX to it
-    measure y
-    set startY to it
-    set xoff to clientX - startX
-    set yoff to clientY - startY
-    repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) or
-               pointerup(clientX, clientY) from document
-      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
-    end
-  end
-end
-  </script>
-
-  <!-- innerHTML button handlers using 'for' attribute for clean multi-line code -->
-  <!-- This avoids the terrible &#39; escaping required in inline _= attributes -->
-
-  <script type="text/hyperscript" for="#innerHTML-drag-btn">
-    on click
+    on click from #innerHTML-drag-btn
       set time to new Date().toLocaleTimeString()
       set html to `
         <div id="innerHTML-box" class="drag-box"
@@ -517,10 +514,9 @@ end
       put html into #innerHTML-drag-container
       call hyperfixi.processNode(#innerHTML-drag-container)
       add .flash-danger to #innerHTML-drag-status then wait 500ms then remove .flash-danger
-  </script>
+    end
 
-  <script type="text/hyperscript" for="#innerHTML-video-btn">
-    on click
+    on click from #innerHTML-video-btn
       set time to new Date().toLocaleTimeString()
       set html to `
         <video id="innerHTML-video" controls>
@@ -533,10 +529,9 @@ end
       wait 100ms
       set #innerHTML-video-time.innerText to "0.00s (reset!)"
       add .flash-danger to #innerHTML-video-status then wait 500ms then remove .flash-danger
-  </script>
+    end
 
-  <script type="text/hyperscript" for="#innerHTML-form-btn">
-    on click
+    on click from #innerHTML-form-btn
       set time to new Date().toLocaleTimeString()
       set html to `
         <label>
@@ -559,6 +554,7 @@ end
       `
       put html into #innerHTML-form-container
       add .flash-danger to #innerHTML-form-status then wait 500ms then remove .flash-danger
+    end
   </script>
 
   <!-- Video time tracking -->

@@ -88,15 +88,6 @@
       "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
     },
     {
-      "key": "examples/swap-and-morph/test-property-access.html::e264f605a5::click",
-      "file": "examples/swap-and-morph/test-property-access.html",
-      "event": "click",
-      "excerpt": "on click put document.getElementById('test-input').value into #result4",
-      "hyperfixi": [],
-      "upstream": ["Δdiv:24#result4 cls[result] attr[id=result4] style[] text[null]"],
-      "reason": "HARNESS ARTIFACT on upstream's side (was recorded as a hyperfixi bug candidate; it is not one). See the same key under allowedEngineDivergences: upstream reads `document` from the page it loaded on, finds no element and writes 'null'; hyperfixi reads the page's own document and writes '' over an empty div, which is no effect and the right answer."
-    },
-    {
       "key": "examples/toggle-and-state/toggle-attributes.html::34237b9d73::click",
       "file": "examples/toggle-and-state/toggle-attributes.html",
       "event": "click",
@@ -163,15 +154,5 @@
       "reason": "visibility-toggle bookkeeping: hyperfixi records the display it hides in a `data-previous-display` attribute so the second toggle can restore it; upstream restores by clearing the inline style. The style written is the same (`display: none`). Comparable since 2026-10-01, when the page moved from hyperfixi's `toggle *display on X` to upstream's `toggle *display of X` (which core parsed and then failed to run until the same change)."
     }
   ],
-  "allowedEngineDivergences": [
-    {
-      "key": "examples/swap-and-morph/test-property-access.html::e264f605a5::click",
-      "file": "examples/swap-and-morph/test-property-access.html",
-      "event": "click",
-      "excerpt": "on click put document.getElementById('test-input').value into #result4",
-      "engine": [],
-      "upstream": ["Δdiv:24#result4 cls[result] attr[id=result4] style[] text[null]"],
-      "reason": "HARNESS ARTIFACT on upstream's side, not an engine difference. The page's input is empty, so the handler writes '' over an empty div: no effect is the right answer, and it is the engine's. Upstream captures its global scope once, when it loads (`typeof self !== 'undefined' ? self : global`), which here is the bootstrap page; this sweep swaps pages by re-pointing globalThis, so upstream's `document` is still the bootstrap document, its getElementById finds nothing, and it writes 'null'. On one document the two engines agree (`tools/probe.mts`: `put document.getElementById('a').title into #out` gives the same value on both)."
-    }
-  ]
+  "allowedEngineDivergences": []
 }
