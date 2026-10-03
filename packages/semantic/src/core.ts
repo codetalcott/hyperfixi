@@ -23,6 +23,16 @@
  * ```
  */
 
+// The pattern generator. The registry answers `getPatternsForLanguage` for a
+// language that registered only its tokenizer and profile (every
+// `languages/<code>` module) by generating that language's patterns — and the
+// generator is installed by `patterns/index.ts` as a side effect, which the
+// full index imports and this entry did not. So `/core` plus a language module
+// registered the language and then threw "No patterns registered" on the first
+// parse; nothing executed that path until the Vite plugin's emitted bundle was
+// run (2026-10-03). The ESM twin of OPEN_ITEMS PR7 (the regional IIFEs).
+import './patterns/index';
+
 // =============================================================================
 // Core Parser Bridge (SemanticAnalyzer)
 // =============================================================================
