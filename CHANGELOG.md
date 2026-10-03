@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-02
+
+The first publication of `@hyperfixi/engine`, the hyperscript engine meant to replace the one
+in `@hyperfixi/core`, and the example gallery moved onto it.
+
 ### Added
 
 - **`@hyperfixi/engine` is published.** A hyperscript engine written against upstream
@@ -15,8 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ships `dist/hyperfixi-hs.js`, a script-tag bundle of hyperscript and nothing else, 34.1 KB
   gzipped, which 36 of the repository's example pages now load instead of `hyperfixi.js`. It
   keeps two forms upstream lacks, `new X(...)` and `toggle <element>`; the other hyperfixi-only
-  forms are not in it, and the examples are written in upstream's spelling. It is meant to
-  replace the engine in `@hyperfixi/core`; nothing depends on it yet.
+  forms are not in it. It is typed (`tsc --strict`, no `any`), built from modules, and exposes
+  upstream's public API shape plus one hook, `addSourceTransform`, which
+  `@lokascript/hyperscript-adapter` uses to run the 24 languages on it.
+
+### Changed
+
+- **Examples and docs are written in upstream `_hyperscript`'s spelling** wherever upstream has
+  one: `put Y into X` for the `swap` strategies, `debounced at 300ms`, `matches`, `set X's @a`,
+  `increment #count's textContent` (core counted in a bare `#count`; upstream does not),
+  `on mutation of childList from #x`, `my offsetLeft` in place of `measure x`. The multilingual
+  reader still accepts the old forms; the renderer writes upstream's. Corpus rows follow.
+- **`@lokascript/semantic` renders `repeat for x in xs index i`** (was `with index`) and
+  `tell X show` (was `tell X to show`), upstream's spellings.
+- **The examples' bundle loader** takes a per-page default (`data-default="hs"`), and `?bundle=hs`
+  switches any page to the engine bundle.
+
+### Fixed
+
+- **`@hyperfixi/core`**: `toggle *display of X` parsed and then threw.
+- **Hybrid bundles (`hyperfixi-hx.js`)**: `increment` / `decrement` of a possessive wrote only
+  style properties; `increment #count's textContent` evaluated to the text and threw on
+  `querySelectorAll('0')`. They now write the property.
+- **`@lokascript/semantic`**: a template-literal URL in a Korean handler was read as a custom
+  event name.
 
 ## [3.2.0] - 2026-09-30
 
@@ -872,7 +899,9 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/codetalcott/hyperfixi/compare/v3.2.0...v3.3.0
+[3.2.0]: https://github.com/codetalcott/hyperfixi/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/codetalcott/hyperfixi/compare/v3.0.0...v3.1.0
 [2.10.0]: https://github.com/codetalcott/hyperfixi/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/codetalcott/hyperfixi/compare/v2.8.0...v2.9.0
