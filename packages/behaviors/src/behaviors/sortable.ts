@@ -2,7 +2,7 @@
  * Sortable Behavior
  *
  * Drag-and-drop reordering of list items. Apply to a container element; its
- * `<li>` children become sortable. Compiled from its hyperscript `source` (single
+ * `<li>` children become sortable. Defined from its hyperscript `source` (single
  * source of truth) — no imperative installer.
  *
  * Note: This behavior fires lifecycle events but does NOT automatically reorder
@@ -18,34 +18,19 @@
  */
 
 import { sortableSchema } from '../schemas/sortable.schema';
-import type { LokaScriptInstance } from '../schemas/types';
-import { resolveRuntime } from '../schemas/types';
+import { defineBehavior, resolveRuntime } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const sortableSource = sortableSchema.source;
 export const sortableMetadata = sortableSchema;
 
 /**
- * Register the Sortable behavior with LokaScript by compiling its hyperscript
- * source and executing the resulting behavior definition.
+ * Define the Sortable behavior on a hyperscript host (`window.hyperfixi` when none is given)
+ * from its source, as a `<script type="text/hyperscript">` would.
  */
-export async function registerSortable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || resolveRuntime();
-
-  if (!hf) {
-    throw new Error(
-      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
-    );
-  }
-
-  const result = hf.compileSync(sortableSchema.source, { traditional: true });
-
-  if (!result.ok) {
-    throw new Error(`Failed to compile Sortable behavior: ${JSON.stringify(result.errors)}`);
-  }
-
-  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(result.ast, ctx);
+export async function registerSortable(host?: HyperscriptHost): Promise<void> {
+  defineBehavior(sortableSchema, host);
 }
 
 // Auto-register when loaded as a script tag

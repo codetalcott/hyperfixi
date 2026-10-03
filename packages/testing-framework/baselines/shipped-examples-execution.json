@@ -28,39 +28,6 @@
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. The marker CLASS is the whole remaining divergence here — the shipped input is empty, so `contains \"\"` holds for every blockquote and both engines show all four; upstream's show is a no-op on an already-visible element, hyperfixi's adds `.show`. The FILTER itself was measured against upstream with real search terms (a run with the input pre-filled, which this gate cannot do — it dispatches the page as shipped): for `code`, `zzz` and `programmer` the two engines produce a BYTE-IDENTICAL hide set, and the only diff is `.show` on the elements hyperfixi shows. Returned to this gate by the show/hide parser fix; before it this handler was skipped as 'hyperfixi does not compile it clean'."
     },
     {
-      "key": "examples/dialogs/modal.html::37ad17f250::click",
-      "file": "examples/dialogs/modal.html",
-      "event": "click",
-      "excerpt": "on click show #info-modal",
-      "hyperfixi": [
-        "Δdiv:16#info-modal cls[modal-overlay show] attr[id=info-modal] style[] text[]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/dialogs/modal.html::8dbe740dd3::click",
-      "file": "examples/dialogs/modal.html",
-      "event": "click",
-      "excerpt": "on click show #confirm-modal",
-      "hyperfixi": [
-        "Δdiv:31#confirm-modal cls[modal-overlay show] attr[id=confirm-modal] style[] text[]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/dialogs/modal.html::c9f964d2a2::click",
-      "file": "examples/dialogs/modal.html",
-      "event": "click",
-      "excerpt": "on click show #form-modal",
-      "hyperfixi": [
-        "Δdiv:46#form-modal cls[modal-overlay show] attr[id=form-modal] style[] text[]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
       "key": "examples/events-and-dom/show-hide.html::8aeb3a46f9::click",
       "file": "examples/events-and-dom/show-hide.html",
       "event": "click",

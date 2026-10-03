@@ -48,15 +48,9 @@ export const autoDismissSchema: BehaviorSchema = {
   source: `
 behavior AutoDismiss(delay, pauseOnHover, effect)
   init
-    if delay is undefined
-      set delay to 5000
-    end
-    if pauseOnHover is undefined
-      set pauseOnHover to true
-    end
-    if effect is undefined
-      set effect to "none"
-    end
+    if delay is undefined set element's delay to 5000 end
+    if pauseOnHover is undefined set element's pauseOnHover to true end
+    if effect is undefined set element's effect to "none" end
     js(me, delay, effect, pauseOnHover)
       me.dispatchEvent(new CustomEvent('autodismiss:start', { bubbles: true }));
       var remaining = delay;

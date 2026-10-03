@@ -1,39 +1,13 @@
 /**
- * Verify that all behavior schema sources compile successfully.
- * This catches syntax errors in behavior hyperscript source before
- * they get seeded into patterns-reference.
+ * Core's parser reads namespaced event names (`on custom:activate`) in a behavior.
+ *
+ * This file used to also compile every @hyperfixi/behaviors source with core's parser.
+ * Those sources are written in upstream's idioms for @hyperfixi/engine since 2026-10-03
+ * (`on click from (triggerEl or me)`, which core does not read), and the behaviors
+ * package runs them on the engine in its own suite; core is not their host.
  */
 import { describe, it, expect } from 'vitest';
 import { hyperscript } from '../../../api/hyperscript-api';
-
-// Import all schema sources from the behaviors package dist (avoid rootDir violation)
-import {
-  toggleableSchema,
-  removableSchema,
-  autoDismissSchema,
-  clipboardSchema,
-  draggableSchema,
-  clickOutsideSchema,
-  scrollRevealSchema,
-  tabsSchema,
-  focusTrapSchema,
-  sortableSchema,
-  resizableSchema,
-} from '../../../../../behaviors/dist/schemas/index';
-
-const schemas = [
-  toggleableSchema,
-  removableSchema,
-  autoDismissSchema,
-  clipboardSchema,
-  draggableSchema,
-  clickOutsideSchema,
-  scrollRevealSchema,
-  tabsSchema,
-  focusTrapSchema,
-  sortableSchema,
-  resizableSchema,
-];
 
 describe('behavior parser: namespaced events', () => {
   it('should parse on foo:bar event handlers in behaviors', () => {
@@ -72,17 +46,4 @@ end`;
     expect(ast.eventHandlers[0].event).toBe('click');
     expect(ast.eventHandlers[1].event).toBe('modal:close');
   });
-});
-
-describe('behavior schema sources compile', () => {
-  for (const schema of schemas) {
-    it(`${schema.name} should compile`, () => {
-      const result = hyperscript.compileSync(schema.source, { traditional: true });
-      expect(result.ok, `${schema.name} failed: ${JSON.stringify(result.errors)}`).toBe(true);
-
-      const ast = result.ast as any;
-      expect(ast.type).toBe('behavior');
-      expect(ast.name).toBe(schema.name);
-    });
-  }
 });

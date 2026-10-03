@@ -6,40 +6,25 @@
  * wiring / keyboard-navigation logic lives in the schema's hyperscript `source`
  * (an `init`-block `js()` body).
  *
- * Compiled from its hyperscript `source` — the single source of truth shared with
- * the CDN resolver bundle and patterns-reference. This collapses Tabs onto the one
+ * Defined from its hyperscript `source` — the single source of truth shared with
+ * the browser bundle and patterns-reference. This collapses Tabs onto the one
  * runtime path (no more imperative-installer fork between CDN and npm);
  * see docs-internal/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
  */
 
 import { tabsSchema } from '../schemas/tabs.schema';
-import type { LokaScriptInstance } from '../schemas/types';
-import { resolveRuntime } from '../schemas/types';
+import { defineBehavior, resolveRuntime } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 
 export const tabsSource = tabsSchema.source;
 export const tabsMetadata = tabsSchema;
 
 /**
- * Register the Tabs behavior with LokaScript by compiling its
- * hyperscript source and executing the resulting behavior definition.
+ * Define the Tabs behavior on a hyperscript host (`window.hyperfixi` when none is given)
+ * from its source, as a `<script type="text/hyperscript">` would.
  */
-export async function registerTabs(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || resolveRuntime();
-
-  if (!hf) {
-    throw new Error(
-      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
-    );
-  }
-
-  const result = hf.compileSync(tabsSchema.source, { traditional: true });
-
-  if (!result.ok) {
-    throw new Error(`Failed to compile Tabs behavior: ${JSON.stringify(result.errors)}`);
-  }
-
-  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(result.ast, ctx);
+export async function registerTabs(host?: HyperscriptHost): Promise<void> {
+  defineBehavior(tabsSchema, host);
 }
 
 // Auto-register when loaded as a script tag

@@ -43,15 +43,9 @@ export const scrollRevealSchema: BehaviorSchema = {
   source: `
 behavior ScrollReveal(cls, threshold, once)
   init
-    if cls is undefined
-      set cls to "revealed"
-    end
-    if threshold is undefined
-      set threshold to 0.1
-    end
-    if once is undefined
-      set once to true
-    end
+    if cls is undefined set element's cls to "revealed" end
+    if threshold is undefined set element's threshold to 0.1 end
+    if once is undefined set element's once to true end
     js(me, cls, threshold, once)
       var obs = new IntersectionObserver(function(entries) {
         for (var i = 0; i < entries.length; i++) {

@@ -213,6 +213,10 @@ jobs:
       - name: Verify semantic bundle output
         run: bash scripts/verify-semantic-bundle.sh
 
+      # No workspace dependencies. Before behaviors, whose tests run its dist.
+      - name: Build engine package
+        run: npm run build --prefix packages/engine
+
       - name: Build behaviors package
         run: npm run build --prefix packages/behaviors
 
@@ -227,10 +231,6 @@ jobs:
 
       - name: Build hyperscript-adapter package
         run: npm run build --prefix packages/hyperscript-adapter
-
-      # No workspace dependencies: its position in this list is free.
-      - name: Build engine package
-        run: npm run build --prefix packages/engine
 
       - name: Build htmx-adapter package
         run: npm run build --prefix packages/htmx-adapter

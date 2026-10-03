@@ -56,20 +56,16 @@ one or more `on <event>` handlers. Here is the curated **Toggleable** verbatim
 ([toggleable.schema.ts](src/schemas/toggleable.schema.ts)), annotated:
 
 ```hyperscript
-behavior Toggleable(cls, target)       -- PascalCase name + parameters
+behavior Toggleable(cls, targetEl)     -- PascalCase name + parameters
   init                                  -- runs once on install
-    if cls is undefined                 --   default a parameter
-      set cls to "active"
-    end
-    if target is undefined
-      set target to me
-    end
+    if cls is undefined set element's cls to "active" end        -- default a parameter
+    if targetEl is undefined set element's targetEl to me end
   end
   on click                              -- on event → DOM action
-    toggle .{cls} on target             --   .{cls} = dynamic class from a param
-    js(target, cls)                     --   a js() block dispatches the lifecycle
-      var name = target.classList.contains(cls) ? 'toggleable:on' : 'toggleable:off';
-      target.dispatchEvent(new CustomEvent(name, { bubbles: true }));
+    toggle .{cls} on targetEl           --   .{cls} = dynamic class from a param
+    js(targetEl, cls)                   --   a js() block dispatches the lifecycle
+      var name = targetEl.classList.contains(cls) ? 'toggleable:on' : 'toggleable:off';
+      targetEl.dispatchEvent(new CustomEvent(name, { bubbles: true }));
     end
   end
 end
@@ -78,13 +74,25 @@ end
 Install it on any element:
 
 ```html
-<button _="install Toggleable(cls: 'expanded', target: #menu)">Menu</button>
+<button _="install Toggleable(cls: 'expanded', targetEl: #menu)">Menu</button>
 ```
 
 ### Key source idioms
 
-- **Parameters + defaults** — declare in `behavior Name(a, b)`; default in `init`
-  with `if no a set a to …`.
+Every idiom here is upstream `_hyperscript`'s: the sources run on `@hyperfixi/engine` and
+on upstream alike (see the README's "Hosts").
+
+- **Parameters + defaults** — declare in `behavior Name(a, b)`; default a _value_ in
+  `init` with `if a is undefined set element's a to … end`. The parameters live in the
+  behavior's element scope, which is what `element's a` writes; a bare `set a to …` would
+  make a local of `init` that the handlers never see.
+- **A `from` target** cannot be defaulted in `init` — `from` is resolved when the behavior
+  is installed, before `init` runs. Default it inline: `on click from (triggerEl or me)`.
+- **Never name a parameter `target`** — that is hyperscript's name for the event target, and
+  it shadows the parameter in every handler. Removable's is `triggerEl`, Toggleable's
+  `targetEl`.
+- **Position and size** — `my offsetLeft` / `my offsetTop`, `my offsetWidth` /
+  `my offsetHeight` (`measure x` then `it` was a core-only reading).
 - **Dynamic class selector `.{param}`** — `toggle .{cls}`, `add .{cls}`,
   `remove .{cls}` resolve a parameter as a class name at runtime.
 - **Inline style writes** — `set my *width to "200px"` (the `*prop` style idiom) or
@@ -176,11 +184,12 @@ export const toggleableSchema: BehaviorSchema = {
 };
 ```
 
-Then add a thin loader in `src/behaviors/<name>.ts` that compiles the source (mirror
-any existing one, e.g. [`toggleable.ts`](src/behaviors/toggleable.ts)): a
-`register<Name>()` that calls `compileSync(schema.source, { traditional: true })` then
-`execute(...)`, plus a `default` export of `{ source, metadata, register }`. Register
-the loader + schema in [`src/loaders.ts`](src/loaders.ts) and the source in the
+Then add a thin loader in `src/behaviors/<name>.ts` (mirror any existing one, e.g.
+[`toggleable.ts`](src/behaviors/toggleable.ts)): a `register<Name>(host?)` that calls
+`defineBehavior(schema, host)` — the host's `evaluate(source)`, as a
+`<script type="text/hyperscript">` would — plus a `default` export of
+`{ source, metadata, register }`. Register the loader + schema in
+[`src/loaders.ts`](src/loaders.ts) and the source in the
 [`BEHAVIOR_SOURCES`](src/behavior-resolver.ts) map.
 
 ### Pick a curation status
@@ -192,13 +201,12 @@ runtime-tested), `optional` (kept primitive / nice-to-have), or `experimental`
 
 ## 7. Installing & registering
 
-**End users** install with the `_=` attribute; behaviors compile on first use when the
-resolver bundle is loaded:
+**End users** install with the `_=` attribute; the browser bundle defines every behavior
+on the host as it loads:
 
 ```html
-<script src="hyperfixi.js"></script>
+<script src="hyperfixi-hs.js"></script>
 <script src="resolver.browser.global.js"></script>
-<!-- lazy resolver -->
 <button _="install Toggleable(cls: 'active')">Toggle</button>
 ```
 
@@ -211,22 +219,11 @@ import { registerToggleable } from '@hyperfixi/behaviors/toggleable';
 await registerToggleable(); // just one
 ```
 
-**Custom behaviors** — register your own resolver so `install MyThing` compiles your
-source on demand. This is the public extension point:
-
-```javascript
-window._hyperscript.behaviors.resolve = name => {
-  if (name !== 'MyThing') return false; // not ours — let others try
-  const r = window.hyperfixi.compileSync(MY_SOURCE, { traditional: true });
-  if (!r.ok) return false;
-  window.hyperfixi.execute(r.ast, window.hyperfixi.createContext());
-  return true; // resolved
-};
-```
-
-…or compose the built-in resolver via `createBehaviorResolver(hyperfixi, behaviorAPI)`
-([`behavior-resolver.ts`](src/behavior-resolver.ts)) and extend the
-`BEHAVIOR_SOURCES` map.
+**Custom behaviors** — a behavior is a global the host defines when it reads a
+`behavior … end` program, so define yours the way upstream does, before the elements that
+install it: in a `<script type="text/hyperscript">`, or from a string with
+`window.hyperfixi.evaluate(MY_SOURCE)` (`defineBehavior(schema)` from this package does
+the same for a schema).
 
 ## 8. Testing — "parses ≠ works"
 
@@ -248,8 +245,10 @@ When asked to author a behavior, produce a `BehaviorSchema` and verify:
       `addEventListener`/observer installer. Platform APIs go in a small `js()` block.
 - [ ] **Schema complete:** PascalCase `name`; `category`; `tier`; every `parameter`
       (type, optional, default, description); every lifecycle `event` documented.
-- [ ] **Idioms:** parameters defaulted in `init`; dynamic classes via `.{param}`;
-      inline style via `*prop` or `style.prop`; event args via `on event(a, b)`.
+- [ ] **Idioms:** values defaulted in `init` with `set element's x to …`, `from` targets
+      inline with `from (x or me)`, no parameter named `target`; dynamic classes via
+      `.{param}`; inline style via `*prop` or `style.prop`; event args via
+      `on event(a, b)`.
 - [ ] **Curation (§6):** honest status. Curated ⇒ runtime-tested + multilingual-friendly.
 - [ ] **Test:** a register → install → drive → assert-effect-and-events runtime test.
 

@@ -4,48 +4,32 @@
  * A behavior that toggles a CSS class on click.
  * Useful for accordions, dropdowns, and toggle buttons.
  *
- * Compiled from its hyperscript `source` (the single source of truth shared with
- * the CDN resolver bundle and patterns-reference). The `.{cls}` dynamic class
- * selector resolves the behavior's `cls` parameter at runtime — see
- * `packages/core/src/commands/behaviors/__tests__/template-interpolation.test.ts`.
+ * Defined from its hyperscript `source` (the single source of truth shared with
+ * the browser bundle and patterns-reference). The `.{cls}` dynamic class
+ * selector resolves the behavior's `cls` parameter at runtime.
  *
  * @example
  * ```html
  * <button _="install Toggleable">Toggle</button>
  *
- * <button _="install Toggleable(cls: expanded, target: #menu)">Menu</button>
+ * <button _="install Toggleable(cls: 'expanded', targetEl: #menu)">Menu</button>
  * ```
  */
 
 import { toggleableSchema } from '../schemas/toggleable.schema';
-import type { LokaScriptInstance } from '../schemas/types';
-import { resolveRuntime } from '../schemas/types';
+import { defineBehavior, resolveRuntime } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const toggleableSource = toggleableSchema.source;
 export const toggleableMetadata = toggleableSchema;
 
 /**
- * Register the Toggleable behavior with LokaScript by compiling its
- * hyperscript source and executing the resulting behavior definition.
+ * Define the Toggleable behavior on a hyperscript host (`window.hyperfixi` when none is given)
+ * from its source, as a `<script type="text/hyperscript">` would.
  */
-export async function registerToggleable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || resolveRuntime();
-
-  if (!hf) {
-    throw new Error(
-      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
-    );
-  }
-
-  const result = hf.compileSync(toggleableSchema.source, { traditional: true });
-
-  if (!result.ok) {
-    throw new Error(`Failed to compile Toggleable behavior: ${JSON.stringify(result.errors)}`);
-  }
-
-  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(result.ast, ctx);
+export async function registerToggleable(host?: HyperscriptHost): Promise<void> {
+  defineBehavior(toggleableSchema, host);
 }
 
 // Auto-register when loaded as a script tag

@@ -2,39 +2,40 @@
 /**
  * Experimental behaviors — REAL runtime tests.
  *
- * Draggable / Sortable / Resizable used to run imperative JS installers. They now
- * compile from their hyperscript `source` like every other behavior (the
- * "no imperative JS" rule — no behavior may carry an imperative installer field).
- * These tests are the "parses ≠ works" guard: register → install → drive pointer
- * events → assert the DOM effect AND the documented lifecycle events.
+ * Draggable / Sortable / Resizable are defined from their hyperscript `source` like every
+ * other behavior (the "no imperative JS" rule). These tests are the "parses ≠ works" guard:
+ * define → install → drive pointer events → assert the DOM effect AND the lifecycle events.
  *
- * happy-dom has no PointerEvent and zero layout, so we drive `MouseEvent`s (which
- * carry clientX/clientY) and assert deltas, which are layout-independent.
+ * happy-dom has no PointerEvent and zero layout (`my offsetLeft` and `my offsetWidth` read
+ * 0), so we drive `MouseEvent`s (which carry clientX/clientY) and assert deltas, which are
+ * layout-independent.
  */
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { hyperscript } from '@hyperfixi/core';
+import { api, everything, processNode, register } from '@hyperfixi/engine';
 import { registerDraggable } from './draggable';
 import { registerSortable } from './sortable';
 import { registerResizable } from './resizable';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const hf = hyperscript as any;
 const tick = (ms = 30) => new Promise(r => setTimeout(r, ms));
 
 function pointer(type: string, x: number, y: number): MouseEvent {
   return new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true });
 }
 
+/** Install from an attribute, as a page does: the engine reads `_` and runs the install. */
 async function install(code: string, el: HTMLElement): Promise<void> {
-  const r = hyperscript.compileSync(code, { traditional: true });
-  if (!r.ok) throw new Error(`install compile failed: ${JSON.stringify(r.errors)}`);
-  await hyperscript.execute(r.ast, hyperscript.createContext(el));
+  el.setAttribute('_', code);
+  processNode(el);
+  await tick();
 }
 
 beforeAll(async () => {
-  await registerDraggable(hf);
-  await registerSortable(hf);
-  await registerResizable(hf);
+  // The engine is assembled from modules; this bundle is every one. Behaviors are globals
+  // (`window.Toggleable`), so define the set once per file.
+  register(...everything);
+  await registerDraggable(api);
+  await registerSortable(api);
+  await registerResizable(api);
 });
 
 afterEach(() => {
@@ -63,7 +64,7 @@ describe('Draggable — runtime (source-compiled)', () => {
     document.dispatchEvent(pointer('pointerup', 60, 80));
     await tick(40);
 
-    // measure x/y = 0 in happy-dom → xoff = 10, so left = 60 - 10 = 50, top = 80 - 10 = 70
+    // offsetLeft/offsetTop = 0 in happy-dom → xoff = 10, so left = 60 - 10 = 50, top = 80 - 10 = 70
     expect(el.style.left).toBe('50px');
     expect(el.style.top).toBe('70px');
     expect(ev).toContain('start');
@@ -126,7 +127,7 @@ describe('Resizable — runtime (source-compiled)', () => {
     document.dispatchEvent(pointer('pointerup', 60, 40));
     await tick(40);
 
-    // measure width/height = 0 in happy-dom → newWidth = 0 + 60 - 10 = 50, newHeight = 0 + 40 - 10 = 30
+    // offsetWidth/offsetHeight = 0 in happy-dom → newWidth = 0 + 60 - 10 = 50, newHeight = 0 + 40 - 10 = 30
     expect(box.style.width).toBe('50px');
     expect(box.style.height).toBe('30px');
     expect(ev).toContain('start');

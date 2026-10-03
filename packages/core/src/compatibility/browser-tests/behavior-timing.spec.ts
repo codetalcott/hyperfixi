@@ -1,108 +1,65 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * examples/behaviors/demo.html on hyperfixi-hs.js + the behaviors bundle: the bundle defines
+ * every behavior as a global on the engine before the document is processed, so each
+ * `install` in the page finds its behavior; and an element scripted after load is
+ * initialised with `hyperfixi.processNode` (upstream's name), which the page's toast helper uses.
+ */
 test('check behaviors timing and installation @comprehensive', async ({ page }) => {
-  const logs: string[] = [];
-
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
   page.on('console', msg => {
-    logs.push(`[${msg.type()}] ${msg.text()}`);
+    if (msg.type() === 'error') errors.push(msg.text());
   });
 
   await page.goto('http://127.0.0.1:3000/examples/behaviors/demo.html');
-
-  // Wait a bit for everything to initialize
-  await page.waitForTimeout(1000);
-
-  // Check debug log
-  const debugLog = await page.evaluate(() => {
-    return (window as any).__hyperfixi_debug || [];
+  await page.waitForFunction(() => typeof (window as any).Toggleable === 'function', {
+    timeout: 10000,
   });
-  console.log('Debug log:', debugLog);
+  await page.waitForTimeout(300);
 
-  // Check if behaviors are registered
-  const behaviorCheck = await page.evaluate(() => {
-    const hs = (window as any)._hyperscript;
-    return {
-      hasBehaviors: !!hs?.behaviors,
-      hasDraggable: hs?.behaviors?.has('Draggable'),
-      hasToggleable: hs?.behaviors?.has('Toggleable'),
-      hasRemovable: hs?.behaviors?.has('Removable'),
-      hasSortable: hs?.behaviors?.has('Sortable'),
-      hasResizable: hs?.behaviors?.has('Resizable'),
-      behaviorsReadyExists: typeof (window as any).__hyperfixi_behaviors_ready !== 'undefined',
-    };
+  // Every standard behavior is defined on the engine.
+  const defined = await page.evaluate(() =>
+    Object.fromEntries(
+      ['Draggable', 'Toggleable', 'Removable', 'Sortable', 'Resizable', 'AutoDismiss', 'Tabs'].map(
+        n => [n, typeof (window as any)[n] === 'function']
+      )
+    )
+  );
+  expect(defined).toEqual({
+    Draggable: true,
+    Toggleable: true,
+    Removable: true,
+    Sortable: true,
+    Resizable: true,
+    AutoDismiss: true,
+    Tabs: true,
   });
-  console.log('Behavior check:', behaviorCheck);
 
-  // Check if elements have behaviors installed
-  const elementCheck = await page.evaluate(() => {
-    const draggable = document.querySelector('.draggable-box');
-    const toggleable = document.querySelector('.toggle-button');
-    return {
-      draggableHasBehaviors: !!(draggable as any)?.__hyperscript?._behaviors?.length,
-      toggleableHasBehaviors: !!(toggleable as any)?.__hyperscript?._behaviors?.length,
-      draggable_hyperscript: (draggable as any)?.__hyperscript,
-      toggleable_hyperscript: (toggleable as any)?.__hyperscript,
-    };
-  });
-  console.log('Element check:', elementCheck);
-
-  // Try manually installing on an element and test if it works
+  // An element scripted after load: processNode installs the behavior and it works.
   const manualInstall = await page.evaluate(async () => {
-    const hf = (window as any).hyperfixi;
     const testBtn = document.createElement('button');
     testBtn.className = 'test-toggle';
     testBtn.textContent = 'Test';
+    testBtn.setAttribute('_', 'install Toggleable');
     document.body.appendChild(testBtn);
-
-    const result = hf.compileSync('install Toggleable');
-    if (!result.ok) return { error: result.errors };
-
-    const ctx = hf.createContext(testBtn);
-    await hf.execute(result.ast, ctx);
-
-    // Check class before click
-    const beforeClick = testBtn.classList.contains('active');
-
-    // Simulate click
-    testBtn.click();
-
-    // Wait a tick
+    (window as any).hyperfixi.processNode(testBtn);
     await new Promise(resolve => setTimeout(resolve, 50));
-
-    // Check class after click
+    const beforeClick = testBtn.classList.contains('active');
+    testBtn.click();
+    await new Promise(resolve => setTimeout(resolve, 50));
     const afterClick = testBtn.classList.contains('active');
-
-    return {
-      installed: !!(testBtn as any).__hyperscript?._behaviors?.length,
-      beforeClick,
-      afterClick,
-      toggled: !beforeClick && afterClick,
-    };
+    return { beforeClick, afterClick };
   });
-  console.log('Manual install:', manualInstall);
+  expect(manualInstall).toEqual({ beforeClick: false, afterClick: true });
 
-  // Test actual page button - toggle on and off
+  // The page's own button toggles on and off.
   const toggleButton = page.locator('.toggle-button').first();
-  const beforeClick = await toggleButton.evaluate(el => el.classList.contains('active'));
   await toggleButton.click();
-  await page.waitForTimeout(100);
-  const afterFirstClick = await toggleButton.evaluate(el => el.classList.contains('active'));
+  await expect(toggleButton).toHaveClass(/active/);
   await toggleButton.click();
-  await page.waitForTimeout(100);
-  const afterSecondClick = await toggleButton.evaluate(el => el.classList.contains('active'));
-  console.log('Page button test:', {
-    beforeClick,
-    afterFirstClick,
-    afterSecondClick,
-    toggledOn: !beforeClick && afterFirstClick,
-    toggledOff: afterFirstClick && !afterSecondClick,
-  });
+  await expect(toggleButton).not.toHaveClass(/active/);
 
-  // Log console messages
-  console.log('\nConsole logs:', logs);
-
-  expect(behaviorCheck.hasDraggable).toBe(true);
-  expect(behaviorCheck.hasToggleable).toBe(true);
-  expect(afterFirstClick).toBe(true);
-  expect(afterSecondClick).toBe(false);
+  expect(errors.filter(e => !e.includes('favicon'))).toEqual([]);
 });

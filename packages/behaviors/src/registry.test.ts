@@ -175,49 +175,24 @@ describe('registry', () => {
   });
 
   describe('registerWithRuntime', () => {
-    it('should load and call module.register (Draggable — now source-compiled)', async () => {
-      const mockInstance = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
+    it('should load the behavior and define its source on the host', async () => {
+      const host = { evaluate: vi.fn() };
 
       await loadBehavior('Draggable');
-      await registerWithRuntime('Draggable', mockInstance);
+      await registerWithRuntime('Draggable', host);
 
-      // Draggable used to install imperatively; it now compiles its hyperscript
-      // `source` like every other behavior (no imperative installer).
-      expect(mockInstance.compileSync).toHaveBeenCalled();
-      expect(mockInstance.execute).toHaveBeenCalled();
-    });
-
-    it('should load and call module.register (compiled behavior)', async () => {
-      const mockInstance = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
-
-      await loadBehavior('Removable');
-      await registerWithRuntime('Removable', mockInstance);
-
-      // Source-compiled behaviors use compileSync
-      expect(mockInstance.compileSync).toHaveBeenCalled();
+      expect(host.evaluate).toHaveBeenCalledTimes(1);
+      expect(host.evaluate.mock.calls[0][0]).toContain('behavior Draggable');
     });
   });
 
   describe('registerAllWithRuntime', () => {
-    it('should register all loaded behaviors', async () => {
-      const mockInstance = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
+    it('should define every loaded behavior', async () => {
+      const host = { evaluate: vi.fn() };
 
       await loadAll();
-      await registerAllWithRuntime(mockInstance);
-      // execute called for each behavior (all source-compiled now)
-      expect(mockInstance.execute.mock.calls.length).toBeGreaterThanOrEqual(10);
+      await registerAllWithRuntime(host);
+      expect(host.evaluate.mock.calls.length).toBeGreaterThanOrEqual(10);
     });
   });
 });

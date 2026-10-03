@@ -1825,12 +1825,17 @@ function getEventHandlerPatternsTh(): LanguagePattern[] {
         action: { position: 2 },
       },
     },
-    // With source: เมื่อ คลิก จาก #button สลับ .active
+    // With source: เมื่อ คลิก จาก #button สลับ .active. Above the plain SVO head (100),
+    // as en's event-en-source (110) is above event-en-standard: at 95 the plain head
+    // matched first and left the from-phrase in the body unconsumed whenever the fused
+    // <command>-event patterns declined the source — a parenthesized one,
+    // `เมื่อ click จาก (triggerEl หรือ ฉัน) ลบ ฉัน` (the behaviors' `from (triggerEl or
+    // me)`), dropped its `from` in th alone.
     {
       id: 'event-handler-th-with-source',
       language: 'th',
       command: 'on',
-      priority: 95,
+      priority: 110,
       template: {
         format: 'เมื่อ {event} จาก {source} {action}',
         tokens: [
@@ -2126,6 +2131,31 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
           { type: 'role', role: 'event' },
           { type: 'literal', value: '从', alternatives: ['在'] },
           { type: 'role', role: 'source' },
+        ],
+      },
+      extraction: {
+        event: { position: 1 },
+        source: { marker: '从', markerAlternatives: ['在'] },
+      },
+    },
+    // The immediate head with a source: `一 {event} 从 {source} 就 {body}` — what the
+    // renderer emits for `on click from X …`. Without this slot the shape parsed only
+    // when the fused <command>-event pattern took the source; a parenthesized source
+    // (`一 点击 从 (triggerEl 或 我) 就 移除 把 我`, the behaviors' `from (triggerEl or
+    // me)`) matched nothing at all.
+    {
+      id: 'event-zh-immediate-source',
+      language: 'zh',
+      command: 'on',
+      priority: 112,
+      template: {
+        format: '一 {event} 从 {source} 就 {body}',
+        tokens: [
+          { type: 'literal', value: '一' },
+          { type: 'role', role: 'event' },
+          { type: 'literal', value: '从', alternatives: ['在'] },
+          { type: 'role', role: 'source' },
+          { type: 'literal', value: '就' },
         ],
       },
       extraction: {

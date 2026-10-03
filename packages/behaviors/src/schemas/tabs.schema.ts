@@ -55,18 +55,10 @@ export const tabsSchema: BehaviorSchema = {
   source: `
 behavior Tabs(orientation, activeTab, wrap, activeClass)
   init
-    if orientation is undefined
-      set orientation to "horizontal"
-    end
-    if activeTab is undefined
-      set activeTab to 0
-    end
-    if wrap is undefined
-      set wrap to true
-    end
-    if activeClass is undefined
-      set activeClass to "active"
-    end
+    if orientation is undefined set element's orientation to "horizontal" end
+    if activeTab is undefined set element's activeTab to 0 end
+    if wrap is undefined set element's wrap to true end
+    if activeClass is undefined set element's activeClass to "active" end
     js(me, orientation, activeTab, wrap, activeClass)
       var tabs = Array.from(me.querySelectorAll('[role="tab"]'));
       var panels = Array.from(me.querySelectorAll('[role="tabpanel"]'));

@@ -1,9 +1,9 @@
 /**
  * Resizable Behavior
  *
- * Makes elements resizable by dragging. Compiled from its hyperscript `source`
- * (single source of truth) — no imperative installer. The source measures the
- * start size, runs a `repeat until event pointerup` loop, clamps to
+ * Makes elements resizable by dragging. Defined from its hyperscript `source`
+ * (single source of truth) — no imperative installer. The source reads the start
+ * size from `my offsetWidth` / `my offsetHeight`, runs a `repeat until event pointerup` loop, clamps to
  * min/max dimensions, and writes `*width` / `*height` inline styles.
  *
  * @example
@@ -15,34 +15,19 @@
  */
 
 import { resizableSchema } from '../schemas/resizable.schema';
-import type { LokaScriptInstance } from '../schemas/types';
-import { resolveRuntime } from '../schemas/types';
+import { defineBehavior, resolveRuntime } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const resizableSource = resizableSchema.source;
 export const resizableMetadata = resizableSchema;
 
 /**
- * Register the Resizable behavior with LokaScript by compiling its hyperscript
- * source and executing the resulting behavior definition.
+ * Define the Resizable behavior on a hyperscript host (`window.hyperfixi` when none is given)
+ * from its source, as a `<script type="text/hyperscript">` would.
  */
-export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || resolveRuntime();
-
-  if (!hf) {
-    throw new Error(
-      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
-    );
-  }
-
-  const result = hf.compileSync(resizableSchema.source, { traditional: true });
-
-  if (!result.ok) {
-    throw new Error(`Failed to compile Resizable behavior: ${JSON.stringify(result.errors)}`);
-  }
-
-  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(result.ast, ctx);
+export async function registerResizable(host?: HyperscriptHost): Promise<void> {
+  defineBehavior(resizableSchema, host);
 }
 
 // Auto-register when loaded as a script tag

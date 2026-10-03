@@ -37,24 +37,20 @@ export const sortableSchema: BehaviorSchema = {
   requirements: ['Users must handle DOM reordering in sortable:move event handlers'],
   source: `
 behavior Sortable(dragClass)
-  init
-    if dragClass is undefined
-      set dragClass to "sorting"
-    end
-  end
   on pointerdown(clientY) from me
     set item to the target.closest("li")
     if item is null
       exit
     end
     halt the event
-    add .{dragClass} to item
+    set cls to dragClass or "sorting"
+    add .{cls} to item
     trigger sortable:start on me
     repeat until event pointerup from document
       wait for pointermove(clientY) or pointerup(clientY) from document
       trigger sortable:move on me
     end
-    remove .{dragClass} from item
+    remove .{cls} from item
     trigger sortable:end on me
   end
 end`.trim(),

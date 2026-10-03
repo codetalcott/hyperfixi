@@ -53,10 +53,8 @@ behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)
   on pointerdown(clientX, clientY) from me
     halt the event
     trigger resizable:start
-    measure width
-    set startWidth to it
-    measure height
-    set startHeight to it
+    set startWidth to my offsetWidth
+    set startHeight to my offsetHeight
     set startX to clientX
     set startY to clientY
     repeat until event pointerup from document
@@ -73,6 +71,5 @@ behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)
     end
     trigger resizable:end
   end
-end
-`.trim(),
+end`.trim(),
 };

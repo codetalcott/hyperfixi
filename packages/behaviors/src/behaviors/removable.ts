@@ -13,33 +13,19 @@
  */
 
 import { removableSchema } from '../schemas/removable.schema';
-import type { LokaScriptInstance } from '../schemas/types';
-import { resolveRuntime } from '../schemas/types';
+import { defineBehavior, resolveRuntime } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const removableSource = removableSchema.source;
 export const removableMetadata = removableSchema;
 
 /**
- * Register the Removable behavior with LokaScript.
+ * Define the Removable behavior on a hyperscript host (`window.hyperfixi` when none is given)
+ * from its source, as a `<script type="text/hyperscript">` would.
  */
-export async function registerRemovable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || resolveRuntime();
-
-  if (!hf) {
-    throw new Error(
-      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
-    );
-  }
-
-  const result = hf.compileSync(removableSchema.source, { traditional: true });
-
-  if (!result.ok) {
-    throw new Error(`Failed to compile Removable behavior: ${JSON.stringify(result.errors)}`);
-  }
-
-  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(result.ast, ctx);
+export async function registerRemovable(host?: HyperscriptHost): Promise<void> {
+  defineBehavior(removableSchema, host);
 }
 
 // Auto-register when loaded as a script tag
