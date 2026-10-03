@@ -245,9 +245,13 @@ jobs:
       - name: Publish packages
         id: publish
         env:
-          # NPM_TOKEN required for initial publish of new packages
-          # (OIDC trusted publishing only works for packages already on npm)
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # A token is required for the FIRST publish of a new package (OIDC
+          # trusted publishing only works for packages already on npm), and it
+          # must be allowed to CREATE packages in the scope. NPM_TOKEN was not:
+          # the 3.3.0 release of @hyperfixi/engine got `404 … PUT` from it twice
+          # (2026-10-03), after a dry run that cannot see this (--dry-run sends
+          # no PUT). NPM_HYP (added 2026-10-03) can; NPM_TOKEN is the fallback.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_HYP || secrets.NPM_TOKEN }}
         run: |
           set -o pipefail
           VERSION="${{ steps.version.outputs.version }}"
