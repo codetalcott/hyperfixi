@@ -26,6 +26,13 @@
       "error": "Discarded input the parser could not place: '( me )'",
       "upstream": "rejects — Expected ')' but found '{'",
       "reason": "DOCS DEFECT / feature gap, both engines. `send profileUpdated({user: it})` passes an object literal as a call argument; upstream rejects the `{` and we drop the `formToJSON(me)` call arguments. The documented `send <event>(<detail>)` shape needs checking against what either engine actually supports before the example is rewritten."
+    },
+    {
+      "key": "examples/navigation/history-navigation.html::5b9516cefa",
+      "file": "examples/navigation/history-navigation.html",
+      "error": "Discarded input the parser could not place: '. href as html'",
+      "upstream": "accepts (probe.mts 2026-10-03: no parse error on upstream 0.9.93 or on @hyperfixi/engine; the page runs on the engine and back/forward re-fetches correctly in Chromium)",
+      "reason": "HYPERFIXI PARSER DEFECT, upstream accepts. core's `fetch` parser takes `location` as the whole URL and drops `.href as html`; upstream and the engine read `location.href` as a property chain. The source is the page's own HistorySwap behavior (core's built-in one was core-only), written 2026-10-03 when `push url` / `replace url` were rewritten as `call history.pushState(…)` / `replaceState` (owner decision: no engine addition). Core is not this page's host."
     }
   ],
   "localOnlyTrap": "The walk is restricted to `git ls-files` (2026-08-31). It previously walked the working TREE, which is not a clean checkout: 10 untracked/ignored files under examples/experiments, examples/playground, examples/vite-plugin-multilingual, examples/vite-plugin-test and one docs/*.md were scored locally and never existed in CI (local denominator 183 vs CI's 173). That is unfixable from the allowlist — an entry for such a file fails in CI as STALE, and no entry fails locally as NEW. The sibling shipped-examples-execution gate had derived its corpus from git since #862 for exactly this reason; this gate was never brought into line, and the gap cost a CI round-trip on 2026-08-31 (a fifth allowlist entry, the Spanish `on click alternar .active on me`, came from a local-only file and had to be withdrawn)."

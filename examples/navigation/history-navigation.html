@@ -37,6 +37,16 @@
   </style>
 </head>
 <body class="example-page">
+  <!-- HistorySwap, defined before the element that installs it: on back/forward, re-fetch the
+       current URL and put it into the target (htmx 4's approach: no snapshots). -->
+  <script type="text/hyperscript">
+behavior HistorySwap(targetEl)
+  on popstate from window
+    fetch location.href as html
+    put it into targetEl
+  end
+end
+  </script>
   <div class="page-container">
     <div class="breadcrumb">
       <a href="../index.html">← Back to Gallery</a> / <strong>htmx-like</strong> / 03: History Navigation
@@ -46,14 +56,14 @@
 
     <div class="description">
       <strong>Purpose:</strong> Demonstrates hypermedia navigation with server-fetched fragments,
-      <code>push url</code> / <code>replace url</code> commands, and the <code>HistorySwap</code> behavior
-      for handling browser back/forward.
+      the History API from hyperscript (<code>call history.pushState(…)</code> /
+      <code>replaceState</code>), and a <code>HistorySwap</code> behavior for browser back/forward.
       <div class="url-display">Current URL: <span id="current-url"></span></div>
     </div>
 
     <div>
-      <span class="tag htmx">push url</span>
-      <span class="tag htmx">replace url</span>
+      <span class="tag htmx">history.pushState</span>
+      <span class="tag htmx">history.replaceState</span>
       <span class="tag">history API</span>
     </div>
 
@@ -65,7 +75,7 @@
         add .active to me
         fetch '/examples/navigation/fragments/home.html' as html
         put it into #history-content
-        push url '/examples/navigation/fragments/home.html'
+        call history.pushState(null, '', '/examples/navigation/fragments/home.html')
       ">Home</button>
 
       <button id="nav-products" _="on click
@@ -73,7 +83,7 @@
         add .active to me
         fetch '/examples/navigation/fragments/products.html' as html
         put it into #history-content
-        push url '/examples/navigation/fragments/products.html'
+        call history.pushState(null, '', '/examples/navigation/fragments/products.html')
       ">Products</button>
 
       <button id="nav-about" _="on click
@@ -81,7 +91,7 @@
         add .active to me
         fetch '/examples/navigation/fragments/about.html' as html
         put it into #history-content
-        push url '/examples/navigation/fragments/about.html'
+        call history.pushState(null, '', '/examples/navigation/fragments/about.html')
       ">About</button>
 
       <button id="nav-contact" _="on click
@@ -89,15 +99,11 @@
         add .active to me
         fetch '/examples/navigation/fragments/contact.html' as html
         put it into #history-content
-        push url '/examples/navigation/fragments/contact.html'
+        call history.pushState(null, '', '/examples/navigation/fragments/contact.html')
       ">Contact</button>
     </div>
 
-    <div id="history-content" _="
-      on load
-        install HistorySwap(target: me, strategy: 'innerHTML')
-      end
-    ">
+    <div id="history-content" _="install HistorySwap(targetEl: me)">
       <h3>Home</h3>
       <p>Welcome to the home page!</p>
     </div>
@@ -109,13 +115,13 @@
       <button _="on click
         fetch '/examples/navigation/fragments/filter.html' as html
         put it into #history-content
-        replace url '/examples/navigation/fragments/filter.html'
+        call history.replaceState(null, '', '/examples/navigation/fragments/filter.html')
       ">Apply Filter (replace)</button>
 
       <button class="secondary" _="on click
         fetch '/examples/navigation/fragments/sort-date.html' as html
         put it into #history-content
-        replace url '/examples/navigation/fragments/sort-date.html'
+        call history.replaceState(null, '', '/examples/navigation/fragments/sort-date.html')
       ">Sort by Date (replace)</button>
     </div>
 
@@ -126,7 +132,7 @@
     </div>
   </div>
 
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
   <script>
     // Update URL display
     function updateUrlDisplay() {

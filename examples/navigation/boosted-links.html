@@ -184,7 +184,7 @@
                        wait 300ms
                        set homeHtml to '<div class=card><h3>Home Page</h3><p>Welcome! This content was loaded via AJAX.</p><p>The URL updated but the page did not reload.</p></div>'
                        put homeHtml into #boosted-content
-                       push url '#/home'
+                       call history.pushState(null, '', '#/home')
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
                 >
@@ -199,7 +199,7 @@
                        wait 300ms
                        set productsHtml to '<div class=card style=background:linear-gradient(135deg,#4caf50,#2e7d32)><h3>Products Page</h3><p>Browse our amazing products!</p><p>All loaded via AJAX - fast and smooth.</p></div>'
                        put productsHtml into #boosted-content
-                       push url '#/products'
+                       call history.pushState(null, '', '#/products')
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
                 >
@@ -214,7 +214,7 @@
                        wait 300ms
                        set aboutHtml to '<div class=card style=background:linear-gradient(135deg,#2196f3,#1976d2)><h3>About Page</h3><p>Learn about our company.</p><p>Smooth transitions between pages!</p></div>'
                        put aboutHtml into #boosted-content
-                       push url '#/about'
+                       call history.pushState(null, '', '#/about')
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
                 >
@@ -229,7 +229,7 @@
                        wait 300ms
                        set contactHtml to '<div class=card style=background:linear-gradient(135deg,#e91e63,#c2185b)><h3>Contact Page</h3><p>Get in touch with us!</p><p>All navigation is boosted.</p></div>'
                        put contactHtml into #boosted-content
-                       push url '#/contact'
+                       call history.pushState(null, '', '#/contact')
                        put window.location.href into #demo1-url
                        remove .hx-swapping from #boosted-content"
                 >
@@ -271,7 +271,7 @@
                      set resultsHtml to '<div class=card><h3>Search Results</h3><p>Searching for: <strong>' + query + '</strong></p><p>Results would appear here (simulated)</p></div>'
                      put resultsHtml into #search-results
                      set fullUrl to '#/search?q=' + query
-                     replace url fullUrl
+                     call history.replaceState(null, '', fullUrl)
                      remove .hx-swapping from #search-results
                    end"
             >
@@ -332,7 +332,7 @@
       start view transition
         put it into #content
       end
-      push url the @href of me
+      call history.pushState(null, '', my @href)
       remove .hx-swapping from #content"</span>&gt;
   Page Link
 &lt;/a&gt;
@@ -346,43 +346,25 @@
          set params to new URLSearchParams(formData)
          fetch `/search?${params}` as html
          put it into #results
-         replace url `/search?${params}`"</span>&gt;
+         call history.replaceState(null, '', `/search?${params}`)"</span>&gt;
   &lt;input name="q" /&gt;
   &lt;button type="submit"&gt;Search&lt;/button&gt;
 &lt;/form&gt;
         </div>
 
-        <h3>Programmatic Boosted Behavior:</h3>
-        <div class="code">
-<span class="comment">// Using the pre-built Boosted behavior (JavaScript)</span>
-<span class="keyword">import</span> { createBoosted } <span class="keyword">from</span> <span class="string">'@lokascript/core/behaviors'</span>;
-
-<span class="keyword">const</span> boost = createBoosted({
-  container: document.querySelector(<span class="string">'nav'</span>),
-  target: <span class="string">'#content'</span>,
-  strategy: <span class="string">'morph'</span>,
-  pushUrl: <span class="keyword">true</span>,
-  useViewTransition: <span class="keyword">true</span>,
-});
-        </div>
-
         <h3>Hyperscript Behavior Definition:</h3>
         <div class="code">
-<span class="keyword">behavior</span> Boosted(target, pushHistory)
-  <span class="keyword">init</span>
-    <span class="keyword">if no</span> target <span class="keyword">then set</span> target <span class="keyword">to</span> document.body <span class="keyword">end</span>
-    <span class="keyword">if no</span> pushHistory <span class="keyword">then set</span> pushHistory <span class="keyword">to true end</span>
-  <span class="keyword">end</span>
-
+<span class="keyword">behavior</span> Boosted(container, pushHistory)
   <span class="keyword">on</span> click <span class="keyword">from</span> &lt;a[href]/&gt; <span class="keyword">in</span> me
     <span class="comment">-- Skip if modifier keys pressed</span>
     <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">then exit end</span>
     <span class="keyword">halt the</span> event
-    <span class="keyword">add</span> .hx-swapping <span class="keyword">to</span> target
-    <span class="keyword">fetch the</span> @href <span class="keyword">of the</span> target <span class="keyword">as</span> html
-    <span class="keyword">swap</span> target <span class="keyword">with</span> it
-    <span class="keyword">remove</span> .hx-swapping <span class="keyword">from</span> target
-    <span class="keyword">if</span> pushHistory <span class="keyword">then push url the</span> @href <span class="keyword">of the</span> target <span class="keyword">end</span>
+    <span class="keyword">set</span> url <span class="keyword">to the</span> target's @href
+    <span class="keyword">add</span> .hx-swapping <span class="keyword">to</span> (container <span class="keyword">or</span> document.body)
+    <span class="keyword">fetch</span> url <span class="keyword">as</span> html
+    <span class="keyword">put it into</span> (container <span class="keyword">or</span> document.body)
+    <span class="keyword">remove</span> .hx-swapping <span class="keyword">from</span> (container <span class="keyword">or</span> document.body)
+    <span class="keyword">if</span> pushHistory <span class="keyword">is not</span> false <span class="keyword">call</span> history.pushState(null, '', url) <span class="keyword">end</span>
   <span class="keyword">end</span>
 <span class="keyword">end</span>
         </div>
@@ -393,7 +375,7 @@
                 <li>Intercept link clicks with <code>halt the event</code></li>
                 <li>Fetch content via AJAX using <code>fetch</code></li>
                 <li>Swap into target using <code>swap</code> or <code>morph</code></li>
-                <li>Update URL with <code>push url</code></li>
+                <li>Update the URL with <code>call history.pushState(null, '', url)</code></li>
                 <li>Smart detection skips external links and new tab clicks</li>
             </ul>
 
@@ -439,7 +421,7 @@
     </div>
 
     <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script src="../prism-loader.js"></script>
 </body>
 </html>
