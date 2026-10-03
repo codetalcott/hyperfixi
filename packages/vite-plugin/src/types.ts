@@ -55,17 +55,20 @@ export interface HyperfixiPluginOptions {
   positional?: boolean;
 
   /**
-   * Enable HTMX integration (auto-process after htmx:afterSettle).
+   * Hand content htmx swaps in to the engine (`htmx:load` / `htmx:afterSettle`
+   * → `processNode`). On by default when the scan finds htmx attributes.
+   * htmx itself is not bundled: load htmx 4 beside the generated bundle.
    */
   htmx?: boolean;
 
   /**
    * Development mode fallback strategy.
-   * - 'hybrid-complete': Use pre-built hybrid-complete bundle for faster dev (default)
-   * - 'full': Use full bundle for complete compatibility
-   * - 'auto': Generate minimal bundle even in dev
+   * - 'everything': the engine with every module (34 KB gzipped), for faster dev rebuilds
+   * - 'auto': generate the module-list bundle in dev too
+   * - 'hybrid-complete' | 'full': accepted for compatibility; both mean 'everything'
+   *   (core's prebuilt bundles are no longer what the plugin falls back to)
    */
-  devFallback?: 'hybrid-complete' | 'full' | 'auto';
+  devFallback?: 'everything' | 'hybrid-complete' | 'full' | 'auto';
 
   /**
    * Global variable name for the hyperfixi API.
@@ -301,9 +304,9 @@ export interface FileUsage {
 
   /**
    * Reactivity-requiring constructs detected directly inside `_=` script
-   * bodies (independent of htmx attributes). Today: `bind` features
-   * (`live`/`when`/`bind`/`^var`). When true, the generated bundle should
-   * auto-install `@hyperfixi/reactivity`.
+   * bodies (independent of htmx attributes): the engine's `live` / `when` /
+   * `bind` features and the `^var` form. When true, the generated bundle
+   * registers the engine's `reactivity` (and `liveTemplates`) modules.
    *
    * Kept top-level rather than under `htmx` because authors may use these
    * features without any htmx attributes at all (pure `_=` reactive code).
@@ -320,6 +323,12 @@ export interface FileUsage {
    * in an `_=` body. Implies `needsReactivity` too.
    */
   needsBindToProperty?: boolean;
+
+  /** `new X(…)` seen: the engine's `construct` addition is registered. */
+  needsConstruct?: boolean;
+
+  /** `cookies` seen: the engine's `cookies` expression module is registered. */
+  needsCookies?: boolean;
 }
 
 /**
@@ -353,6 +362,12 @@ export interface AggregatedUsage {
 
   /** Whether any file uses explicit-property bind. */
   needsBindToProperty?: boolean;
+
+  /** Whether any file uses `new X(…)` (the engine's `construct` addition). */
+  needsConstruct?: boolean;
+
+  /** Whether any file reads `cookies`. */
+  needsCookies?: boolean;
 
   /** Map of file paths to their usage */
   fileUsage: Map<string, FileUsage>;

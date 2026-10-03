@@ -196,64 +196,6 @@ export function getMultilingualCommandAliases(
 }
 
 /**
- * Generate code to add multilingual command aliases to HybridParser.
- */
-function generateMultilingualAliases(languages: Set<SupportedLanguage>): string {
-  const aliases: Record<string, string> = {};
-
-  for (const lang of languages) {
-    const langAliases = MULTILINGUAL_COMMAND_ALIASES[lang];
-    if (langAliases) {
-      Object.assign(aliases, langAliases);
-    }
-  }
-
-  if (Object.keys(aliases).length === 0) {
-    return `
-// No multilingual aliases needed - just pass through
-function preprocessMultilingual(code) { return code; }
-`;
-  }
-
-  // Generate code to add aliases to HybridParser via addCommandAliases
-  const aliasEntries = Object.entries(aliases)
-    .map(([key, val]) => `  '${key}': '${val}'`)
-    .join(',\n');
-
-  // Build regex pattern to match multilingual keywords
-  // Escape special regex characters in keys
-  const escapedKeys = Object.keys(aliases)
-    .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('|');
-
-  return `
-// Multilingual command aliases for HybridParser fallback
-const MULTILINGUAL_ALIASES = {
-${aliasEntries}
-};
-
-// Register multilingual aliases with the parser
-addCommandAliases(MULTILINGUAL_ALIASES);
-
-// Preprocessing regex to translate multilingual keywords to English
-// The HybridParser tokenizer only accepts ASCII identifiers, so we need
-// to translate non-ASCII keywords before parsing.
-const MULTILINGUAL_KEYWORD_REGEX = new RegExp('(^|\\\\s)(${escapedKeys})(?=\\\\s|\\\\.|$)', 'g');
-
-/**
- * Preprocess multilingual code to replace non-ASCII keywords with English equivalents.
- * This is needed because HybridParser's tokenizer only accepts ASCII identifiers.
- */
-function preprocessMultilingual(code) {
-  return code.replace(MULTILINGUAL_KEYWORD_REGEX, (match, prefix, keyword) => {
-    const english = MULTILINGUAL_ALIASES[keyword];
-    return english ? prefix + english : match;
-  });
-}
-`;
-}
-
-/**
  * Semantic bundle types available.
  * Single-language bundles are available for all 25 languages with semantic tokenizers.
  */
@@ -650,122 +592,77 @@ export function filterToAvailableLanguages(languages: Set<string>): Set<string> 
 }
 
 /**
- * Generate the semantic integration layer code.
- * This is injected into the generated bundle when semantic is enabled.
+ * Generate the multilingual layer of the bundle.
  *
- * Always uses '@lokascript/semantic/core' for the analyzer infrastructure and
- * individual '@lokascript/semantic/languages/<lang>' imports for each
- * required language. Languages without ESM exports are skipped (they don't
- * have semantic parser modules). This avoids importing the full
- * '@lokascript/semantic' index (1 MB source) for multi-language scenarios.
+ * Text is the interchange: a non-English script is parsed in its language and
+ * rendered to English as the engine reads it (`api.addSourceTransform`); the
+ * attribute stays as written. Imports `@lokascript/semantic/core` plus one
+ * `@lokascript/semantic/languages/<lang>` module per language, never the full
+ * `@lokascript/semantic` index (1 MB source, every language). Languages without
+ * an ESM module are skipped.
+ *
+ * (Until 4.0 this emitted a `parseWithSemantic` that built core's AST with
+ * semantic's `buildAST` and fell back to the hybrid parser: the direct path,
+ * retired with core's parser.)
  */
 export function generateSemanticIntegrationCode(config: SemanticConfig): string {
   if (!config.enabled || !config.bundleType) {
     return '';
   }
 
-  // Resolve all languages needed for this bundle type
   const resolvedLanguages = getLanguagesForBundleType(config.bundleType, config.languages);
-
-  // Filter to only languages with ESM subpath exports.
-  // Languages like 'it', 'ru', 'hi' don't have semantic parser modules
-  // and would previously cause fallback to the full @lokascript/semantic
-  // index (1 MB source). Now we always use core + per-language imports.
   const availableLanguages = filterToAvailableLanguages(resolvedLanguages);
-
   const languages = [...config.languages].join("', '");
 
   let code = `
 // =============================================================================
-// SEMANTIC PARSER INTEGRATION
+// MULTILINGUAL (semantic) — translated as read; the attribute stays as written
 // =============================================================================
 
 // Core infrastructure (no language data bundled)
-import {
-  parseWithConfidence,
-  buildAST,
-  isLanguageSupported,
-} from '@lokascript/semantic/core';
+import { parseWithConfidence, render, isLanguageRegistered } from '@lokascript/semantic/core';
 
 // Register required languages (self-registering side-effect imports)
 `;
-  // Sort for deterministic output
   const sortedLangs = [...availableLanguages].sort();
   for (const lang of sortedLangs) {
     code += `import '@lokascript/semantic/languages/${lang}';\n`;
   }
-
   if (config.grammarEnabled) {
-    // `translate` comes from the SAME module the parser above does. It used to be
-    // `import { GrammarTransformer, translate } from '@lokascript/i18n'` — a second
-    // translation stack in a bundle already carrying the semantic one, and one the
-    // consumer had to install separately (this plugin depends on neither i18n nor
-    // semantic directly; the generated code's imports are the user's to resolve).
-    //
-    // The i18n form was also DEAD ON ARRIVAL: `new GrammarTransformer()` passes no
-    // `targetLocale`, and the constructor throws `Unknown target locale: undefined`
-    // at module scope — so a `grammar: true` bundle failed on import. Nothing
-    // caught it because the only test asserted `code).toContain('GrammarTransformer')`,
-    // a string check on the generated text. The object was exported and never used.
-    code += `
-import { translate } from '@lokascript/semantic/core';
-`;
+    // The translator comes from the SAME module as the parser (never a second stack).
+    code += `\nimport { translate } from '@lokascript/semantic/core';\n`;
   }
-
-  // Generate multilingual command aliases for HybridParser fallback
-  const aliasesCode = generateMultilingualAliases(config.languages);
 
   code += `
 const SUPPORTED_SEMANTIC_LANGUAGES = ['${languages}', 'en'];
 const SEMANTIC_CONFIDENCE_THRESHOLD = 0.7;
 
-${aliasesCode}
+/** The element's language: data-lang, data-hyperscript-lang, the lang cascade, the document's. */
+function resolveLanguage(elt) {
+  const code =
+    elt.getAttribute('data-lang') ||
+    elt.closest?.('[data-hyperscript-lang]')?.getAttribute('data-hyperscript-lang') ||
+    elt.closest?.('[lang]')?.getAttribute('lang') ||
+    (typeof document !== 'undefined' ? document.documentElement?.lang : null);
+  return code ? code.toLowerCase().split(/[-_]/)[0] : null;
+}
 
 /**
- * Parse hyperscript using semantic parser with auto-language detection.
- * Tries each supported language until one returns a high-confidence result.
- * Falls back to HybridParser if none match.
- *
- * @param code - The hyperscript code to parse
- * @param lang - Optional language hint. If provided, tries this language first.
+ * The engine's source transform: the English for a non-English script, or null
+ * to leave the script as written (English, an unregistered language, a parse
+ * below the confidence threshold, or a render that changed nothing).
  */
-function parseWithSemantic(code, lang = null) {
-  // Determine languages to try: specified lang first, then others
-  let languagesToTry = [...SUPPORTED_SEMANTIC_LANGUAGES];
-  if (lang && !languagesToTry.includes(lang)) {
-    languagesToTry.unshift(lang);
-  } else if (lang) {
-    // Move specified lang to front
-    languagesToTry = [lang, ...languagesToTry.filter(l => l !== lang)];
+function translateSource(src, elt) {
+  const lang = elt ? resolveLanguage(elt) : null;
+  if (!lang || lang === 'en' || !isLanguageRegistered(lang)) return null;
+  try {
+    const result = parseWithConfidence(src, lang);
+    if (!result || !result.node || result.confidence < SEMANTIC_CONFIDENCE_THRESHOLD) return null;
+    const english = render(result.node, 'en');
+    return english && english !== src ? english : null;
+  } catch {
+    return null;
   }
-
-  // Try each language until one succeeds
-  for (const tryLang of languagesToTry) {
-    if (!isLanguageSupported(tryLang)) continue;
-    try {
-      const result = parseWithConfidence(code, tryLang);
-      if (result && result.confidence >= SEMANTIC_CONFIDENCE_THRESHOLD) {
-        // buildAST returns {ast, warnings} - extract the ast
-        const buildResult = buildAST(result.node);
-        const ast = buildResult.ast;
-
-        // Semantic parser doesn't fully handle event handlers - fallback to HybridParser
-        // Event handlers like "on click toggle .active" produce incomplete AST
-        if (ast && ast.type === 'command' && ast.name === 'on') {
-          break; // Fallback to HybridParser
-        }
-
-        return ast;
-      }
-    } catch (e) {
-      // Continue trying other languages
-    }
-  }
-
-  // Fallback to HybridParser for event handlers and unrecognized patterns
-  // Preprocess to translate non-ASCII keywords to English (tokenizer only accepts ASCII)
-  const preprocessedCode = preprocessMultilingual(code);
-  return new HybridParser(preprocessedCode).parse();
 }
 `;
 
@@ -776,9 +673,7 @@ function parseWithSemantic(code, lang = null) {
  *
  * Returns the input UNCHANGED when it cannot be parsed in \`fromLang\`, or when
  * \`toLang\` is not one of the languages this bundle registered. The semantic
- * translator throws in both cases; the i18n one this replaced never did — it
- * degraded to word substitution, which turned unparseable input into plausible
- * nonsense. Returning the source is the honest degradation.
+ * translator throws in both cases; returning the source is the honest degradation.
  */
 function translateHyperscript(code, fromLang, toLang) {
   try {
@@ -794,13 +689,13 @@ function translateHyperscript(code, fromLang, toLang) {
 }
 
 /**
- * Get the list of exports to add when semantic is enabled.
+ * The names the generated bundle attaches to its `api` when semantic is enabled.
  */
 export function getSemanticExports(config: SemanticConfig): string[] {
   const exports: string[] = [];
 
   if (config.enabled) {
-    exports.push('parseWithSemantic');
+    exports.push('translateSource');
     exports.push('SUPPORTED_SEMANTIC_LANGUAGES');
   }
 

@@ -27,8 +27,20 @@ export class Aggregator {
       const positionalEqual = existing.positional === usage.positional;
       const languagesEqual = this.setsEqual(existing.detectedLanguages, usage.detectedLanguages);
       const htmxEqual = this.htmxUsageEqual(existing.htmx, usage.htmx);
+      const flagsEqual =
+        !!existing.needsReactivity === !!usage.needsReactivity &&
+        !!existing.needsBindToProperty === !!usage.needsBindToProperty &&
+        !!existing.needsConstruct === !!usage.needsConstruct &&
+        !!existing.needsCookies === !!usage.needsCookies;
 
-      if (commandsEqual && blocksEqual && positionalEqual && languagesEqual && htmxEqual) {
+      if (
+        commandsEqual &&
+        blocksEqual &&
+        positionalEqual &&
+        languagesEqual &&
+        htmxEqual &&
+        flagsEqual
+      ) {
         return false; // No change
       }
     }
@@ -84,6 +96,8 @@ export class Aggregator {
     };
     let needsReactivity = false;
     let needsBindToProperty = false;
+    let needsConstruct = false;
+    let needsCookies = false;
 
     for (const usage of this.fileUsage.values()) {
       for (const cmd of usage.commands) commands.add(cmd);
@@ -92,6 +106,8 @@ export class Aggregator {
       if (usage.positional) positional = true;
       if (usage.needsReactivity) needsReactivity = true;
       if (usage.needsBindToProperty) needsBindToProperty = true;
+      if (usage.needsConstruct) needsConstruct = true;
+      if (usage.needsCookies) needsCookies = true;
 
       // Aggregate htmx usage
       if (usage.htmx) {
@@ -123,6 +139,8 @@ export class Aggregator {
       htmx,
       needsReactivity,
       needsBindToProperty,
+      needsConstruct,
+      needsCookies,
       fileUsage: new Map(this.fileUsage),
     };
 

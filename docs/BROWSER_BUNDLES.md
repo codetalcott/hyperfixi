@@ -33,11 +33,12 @@ document describes them. The embedded htmx layer they carry (`hx-live` with a hy
 users touched survives on upstream code (the engine's `live` blocks, the htmx adapter, loka-js).
 
 **Using Vite?** Add `@hyperfixi/vite-plugin` and stop reading: it scans your
-project and emits a bundle with only the commands you use, picking the parser
-tier itself (lite when your commands allow, hybrid otherwise, the full runtime
-when it spots htmx v4 features). See the
-[vite plugin README](../packages/vite-plugin/README.md). (Its generator is built on
-core's templates; moving it to engine modules is Phase C of the plan.)
+project and emits a bundle on `@hyperfixi/engine` that registers only the grammar
+modules your hyperscript uses (17.9 KB gzipped for three commands, 34.4 KB for
+everything; one grammar, upstream's). Non-English scripts are translated as the
+engine reads them. See the [vite plugin README](../packages/vite-plugin/README.md).
+(Since 2026-10-03, Phase C1 of the cutover plan; it no longer embeds core's parsers
+or falls back to core's bundles.)
 
 **Script tag, on core?** Two prebuilt names:
 
@@ -59,12 +60,12 @@ Two further bundles are separate products, not sizes of the same thing:
 
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
 > `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
-> exported. The regex "lite" tier lives on inside the Vite plugin's generated
-> bundles (and `@hyperfixi/core/parser/regex`); `minimal`/`standard` were the
-> full parser with a hand-picked command subset, which the plugin does better.
+> exported. The regex "lite" tier lived on inside the Vite plugin's generated
+> bundles until Phase C1 (2026-10-03), when the plugin moved to engine modules;
+> `minimal`/`standard` were the full parser with a hand-picked command subset.
 > `hyperfixi-hybrid-complete.js` is still built and exported as
-> `@hyperfixi/core/browser/hybrid-complete` because the plugin's generated
-> fallback imports it — treat it as plugin-internal, not a name to reach for.
+> `@hyperfixi/core/browser/hybrid-complete` until the cutover retires it — nothing
+> in this repo imports it any more; treat it as retired-but-shipping.
 
 ## What `hyperfixi-hx.js` runs
 
