@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ws-connect / ws-send chat — HyperFixi hx-v4</title>
+    <title>hx-ws:connect / hx-ws:send chat — htmx 4 beside hyperfixi-hs.js</title>
     <style>
       body {
         font-family:
@@ -64,12 +64,13 @@
     </style>
   </head>
   <body>
-    <h1>WebSocket — <code>ws-connect</code> / <code>ws-send</code></h1>
+    <h1>WebSocket — <code>hx-ws:connect</code> / <code>hx-ws:send</code></h1>
     <p class="note">
-      The form below uses <code>ws-send</code> to forward its fields as a JSON message over the
-      WebSocket opened by <code>ws-connect</code>. Incoming messages tagged with a
-      <code>target</code> field are routed through the existing <code>hx-target</code>/
-      <code>hx-swap</code> machinery — here the mock echoes each sent message as a swap envelope.
+      Real htmx 4 with its <code>hx-ws</code> extension, loaded beside <code>hyperfixi-hs.js</code>.
+      The form's <code>hx-ws:send</code> sends its fields as JSON over the socket that
+      <code>hx-ws:connect</code> opened. An incoming JSON message with <code>content</code>,
+      <code>target</code> and <code>swap</code> is swapped where it says; here the mock echoes each
+      message back in that shape.
     </p>
 
     <!-- In-page WebSocket mock — only activates for the demo URL. -->
@@ -77,44 +78,38 @@
       const NativeWebSocket = window.WebSocket;
       window.WebSocket = function MockWebSocket(url) {
         if (url !== 'wss://example/echo') return new NativeWebSocket(url);
-        const self = this;
+        const self = new EventTarget();
         self.url = url;
         self.readyState = 0;
-        self.onopen = null;
-        self.onmessage = null;
-        self.onerror = null;
-        self.onclose = null;
         self.close = () => {
           self.readyState = 3;
-          if (self.onclose) self.onclose({ code: 1000, reason: 'closed', wasClean: true });
+          self.dispatchEvent(new CloseEvent('close', { code: 1000, reason: 'closed', wasClean: true }));
         };
         self.send = data => {
-          // Echo back as a swap envelope after a short delay.
+          // Echo back in htmx 4's JSON message shape after a short delay.
           setTimeout(() => {
-            if (self.onmessage) {
-              const payload = JSON.parse(data);
-              const html =
-                '<div class="row"><span class="meta">' +
-                new Date().toLocaleTimeString() +
-                '</span><span class="echo">echo:</span> ' +
-                escapeHtml(payload.msg) +
-                '</div>';
-              self.onmessage({
-                data: JSON.stringify({
-                  target: '#messages',
-                  swap: 'beforeend',
-                  data: html,
-                }),
-              });
-            }
+            const payload = JSON.parse(data);
+            const html =
+              '<div class="row"><span class="meta">' +
+              new Date().toLocaleTimeString() +
+              '</span><span class="echo">echo:</span> ' +
+              escapeHtml(String(payload.msg ?? '')) +
+              '</div>';
+            self.dispatchEvent(
+              new MessageEvent('message', {
+                data: JSON.stringify({ target: '#messages', swap: 'beforeend', content: html }),
+              })
+            );
           }, 200);
         };
         setTimeout(() => {
           self.readyState = 1;
-          if (self.onopen) self.onopen(new Event('open'));
+          self.dispatchEvent(new Event('open'));
         }, 50);
         return self;
       };
+      // hx-ws compares readyState with these constants.
+      Object.assign(window.WebSocket, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
       function escapeHtml(s) {
         return s.replace(/[&<>"']/g, c =>
           c === '&'
@@ -130,11 +125,11 @@
       }
     </script>
 
-    <div ws-connect="wss://example/echo">
+    <div hx-ws:connect="wss://example/echo" hx-target="#messages" hx-swap="beforeend">
       <h2>Messages</h2>
       <div id="messages" class="messages">(echoed messages appear here)</div>
 
-      <form ws-send>
+      <form hx-ws:send>
         <input type="text" name="msg" placeholder="Say something" autocomplete="off" />
         <button type="submit">Send</button>
       </form>
@@ -143,25 +138,23 @@
     <h2>What's happening</h2>
     <ol>
       <li>
-        The processor sees <code>ws-connect="wss://example/echo"</code> and opens a
-        <code>WebSocket</code>. Submit handlers are installed on every <code>ws-send</code>
-        descendant — here, the form.
+        <code>hx-ws</code> sees <code>hx-ws:connect="wss://example/echo"</code> and opens a
+        <code>WebSocket</code>; the form's <code>hx-ws:send</code> sends its fields as JSON
+        (<code>{"headers": {…}, "msg": "…"}</code>) on submit.
       </li>
       <li>
-        On submit, the form's fields are serialized to JSON
-        (<code>{"msg":"..."}</code>) and sent over the socket.
+        The mock echoes <code>{"target": "#messages", "swap": "beforeend", "content": "&lt;div&gt;…"}</code>;
+        htmx swaps the content where the message says. A plain-HTML message uses the connection
+        element's <code>hx-target</code> / <code>hx-swap</code> instead.
       </li>
       <li>
-        The mock echoes back a swap envelope:
-        <code>{"target":"#messages","swap":"beforeend","data":"&lt;div&gt;..."}</code>. The processor
-        recognizes the envelope shape, runs the swap snippet, and appends the message.
-      </li>
-      <li>
-        On element removal, <code>MutationObserver</code> closes the socket and removes the form
-        listener.
+        A hyperscript handler on the engine can react to the socket's lifecycle
+        (<code>_="on htmx:ws:after:message:incoming …"</code>) without touching the transport.
       </li>
     </ol>
 
-    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+    <script src="../vendor/htmx-4.0.0/htmx.min.js"></script>
+    <script src="../vendor/htmx-4.0.0/ext/hx-ws.min.js"></script>
   </body>
 </html>

@@ -14,7 +14,7 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (96): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 6 · other 18 (12 core runtime, 6 AOT parked)
+## 2. Open items (97): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 18 (12 core runtime, 6 AOT parked)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
@@ -119,7 +119,7 @@ non-English direct path are the exposed surfaces.
 70. **G13 · Optional: split V4's vocab tier** (marker words that appear in patterns → warn, profile keywords → error) · 8117–8118 · 07-12 · no · gate · optional.
 71. **G14 · Pronoun collisions (accepted limitation)**: 802 of 893 differing read-backs in the extended names oracle are a variable spelled like a value word (tl `ako`, fr `je`, id `aku`, pl `cel`, de `ich`, tr `o`). No spelling tells them apart; rename is the only fix. `findTranslationCollisions` reports them (MCP `translate_code` warns `NAME_COLLISION`) · 7143–7155, 7241–7251, 7296–7298 · 09-29 · yes (diagnostic) · other/limitation · standing.
 
-### 2e. Product / release (6)
+### 2e. Product / release (7)
 
 72. **PR1 · Community review: the badge arc**: hash-pinned "verified by native speakers" badges, `verifications.json` / `vocab-verifications.json` ledgers, `verified_native*` columns plus the sync join, the text-hash util, an agent sweep/triage harness, changeset fan-out, and a per-language status ladder. "Needs a real inflow of reviewer sign-offs first" · 8602–8608 · 08-01 · n/a · product · deferred.
 73. **PR2 · Behavior boundary validator** (MCP/programmatic, rejects component-shaped behaviors). SKIPPED until third-party behavior authoring exists · 3965–3968 · 06-16 · n/a · product · deferred.
@@ -127,6 +127,7 @@ non-English direct path are the exposed surfaces.
 75. **PR4 · Bundle-diet secondary lever**: the main bundle's terser is weaker than hx-v4's (passes:1, no property mangling) · 8491–8493 · 07-14 · n/a · release · open.
 76. **PR5 · htmx v4 attribute names**: hyperfixi's SSE/WS compat uses the htmx-2 `sse-connect`/`ws-connect` names, where v4 ships `hx-sse`/`hx-ws` extensions. "Worth reconciling in the htmx-compat layer" · 3986–3988 · 06-17 · no · product · open (no `hx-sse` in core/docs).
 77. **PR6 · Arc B: the `derive.ts` dictionary flip**. The dictionaries are "generated/merged from semantic profiles — hand-written entries are preserved" (`generate:language-assets`), not the generated path. The ~4k-entry duplication stays and is held consistent by the V1 vocab gate. Note that 1409–1411 overstates this ("GENERATED from semantic profiles") · 8329–8334 · 07-12 · yes (vocab gate, lexicon-parity) · product/tech-debt · open.
+78. **PR7 · The regional `@lokascript/semantic` browser bundles do not work with the lite hyperscript adapter**: `browser-priority.priority.global.js` (and, by construction, the other regional/single-language IIFEs built with `treeShaking: true`) expose no `translate` and report "No patterns registered for language 'es'" — esbuild drops the side-effect `import './languages/<lang>'` registrations the full bundle keeps (`treeShaking: false`). `hyperscript-i18n-lite.global.js`, whose README pairs it with exactly these bundles, then leaves every non-English `_` attribute untranslated. Found 2026-10-03 moving examples/hx-v4-i18n/live-multilang.html onto the engine (it loads the full `browser.global.js` instead). Repro: load `browser-priority.priority.global.js`, call `LokaScriptSemanticPriority.parse('alternar .active', 'es')` · — · 10-03 · no gate (no test loads a regional IIFE) · product/build · **probe confirmed**.
 
 ### 2f. Other: core runtime divergences from upstream (12), filed in this file
 

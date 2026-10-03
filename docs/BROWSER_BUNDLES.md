@@ -7,13 +7,39 @@
 
 ## Choosing your bundle
 
+**The engine (2026-10-03).** `@hyperfixi/engine` replaces core's engine (the migration plan is
+`~/.claude/plans/engine-replaces-core.md`; every tracked gallery page runs on it). Its script-tag
+bundle is **`hyperfixi-hs.js`** (34.1 KB gzipped): hyperscript and nothing else, every module,
+upstream-faithful, with upstream's reactive features (`live`, `when`, `bind`) built in. For
+hypermedia attributes it pairs with an upstream library instead of reimplementing one:
+
+| Stack                                                              | Gzipped | For                                                                                                   |
+| ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `hyperfixi-hs.js`                                                  | ~34 KB  | Hyperscript, including reactive blocks (`_="live put $count into me"`)                                |
+| `hyperfixi-hs.js` + [fixi](https://github.com/bigskysoftware/fixi) | ~35 KB  | The minimal hypermedia stack: fixi's `fx-action` / `fx-target` / `fx-swap` beside hyperscript         |
+| `hyperfixi-hs.js` + htmx 4 (+ `@lokascript/htmx-adapter`)          | ~50 KB  | The full one: htmx's attributes, `hx-sse` / `hx-ws` extensions; the adapter localizes attribute names |
+
+Hyperscript handles behavior, the hypermedia library handles requests and streams, and neither
+reimplements the other. `examples/hx-v4/` and `examples/hx-v4-i18n/` are the second and third
+stacks running (htmx 4 is vendored for them under `examples/vendor/`). Localized attribute names
+on real htmx are the adapter's job ([packages/htmx-adapter](../packages/htmx-adapter/README.md));
+on fixi, loka-js's.
+
+**Core's bundles** (`hyperfixi.js`, `hyperfixi-hx.js`, `hyperfixi-hx-v4.js`,
+`hyperfixi-multilingual.js`) are still built and published until the cutover; the rest of this
+document describes them. The embedded htmx layer they carry (`hx-live` with a hyperscript body,
+`sse-connect`, `ws-connect`, fixi's `fx-*`, localized names) was retired by owner decision on
+2026-10-03 and goes with core: it reimplemented htmx on core's runtime, and what it offered that
+users touched survives on upstream code (the engine's `live` blocks, the htmx adapter, loka-js).
+
 **Using Vite?** Add `@hyperfixi/vite-plugin` and stop reading: it scans your
 project and emits a bundle with only the commands you use, picking the parser
 tier itself (lite when your commands allow, hybrid otherwise, the full runtime
 when it spots htmx v4 features). See the
-[vite plugin README](../packages/vite-plugin/README.md).
+[vite plugin README](../packages/vite-plugin/README.md). (Its generator is built on
+core's templates; moving it to engine modules is Phase C of the plan.)
 
-**Script tag?** Two prebuilt names:
+**Script tag, on core?** Two prebuilt names:
 
 | Bundle            | Size (gzip) | What it is                                                                                          |
 | ----------------- | ----------- | --------------------------------------------------------------------------------------------------- |
@@ -110,7 +136,13 @@ Fixi features include request dropping (anti-double-submit), `fx-ignore` attribu
 
 > **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Deprecated `lokascript-*.js` copies of some of them (`lokascript-browser.js`, `lokascript-hybrid-hx.js`, `lokascript-multilingual.js`, …) are still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); they were slated for removal in v3.0.0 but still ship in 3.x. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
 
-## `hx-live` reactive expressions (htmx v4)
+## Core-era htmx-compat layer (retired 2026-10-03; ships until the cutover)
+
+The sections below describe core's embedded layer. On the engine, a reactive block is
+`_="live … end"`, and SSE / WebSocket / localized names are real htmx 4 with its extensions and
+the htmx adapter (see "Choosing your bundle").
+
+### `hx-live` reactive expressions (htmx v4)
 
 When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the htmx v4 `hx-live` attribute and translates it to a `live ... end` block. The body is hyperscript syntax (not JavaScript like upstream htmx v4) — it gets fine-grained dependency tracking and inherits hyperscript's multilingual support:
 
@@ -128,9 +160,9 @@ The expression re-runs only when its tracked dependencies actually change (not o
 <button _="on click set $count to ($count or 0) + 1">+1</button>
 ```
 
-See the working demos in [`examples/hx-v4/`](../examples/hx-v4/).
+The pages in [`examples/hx-v4/`](../examples/hx-v4/) now show the same thing as the engine's `live` blocks.
 
-## `sse-connect` / `sse-swap` (htmx v4)
+### `sse-connect` / `sse-swap` (htmx v4)
 
 The htmx-compat processor recognizes `sse-connect="<url>"` to open a long-lived `EventSource` against the URL, and `sse-swap="<event-name>[, <event-name>...]"` to route named events through the existing `hx-target` / `hx-swap` machinery.
 
@@ -151,7 +183,7 @@ The connection auto-reconnects on transient errors with exponential backoff (1s 
 
 The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't ship the SSE module (size budget).
 
-## `ws-connect` / `ws-send` (htmx v4)
+### `ws-connect` / `ws-send` (htmx v4)
 
 WebSocket support follows the same shape as SSE but is bidirectional. `ws-connect="<url>"` on an element opens a per-element WebSocket; `ws-send` on a descendant form or button forwards a JSON-serialized payload over the socket on submit/click.
 
@@ -175,7 +207,7 @@ Reconnect on unclean close uses the same bounded exponential backoff as SSE (1s 
 
 The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't.
 
-## Localized htmx attribute names (Phase 8)
+### Localized htmx attribute names (Phase 8)
 
 The htmx-compat layer in `hyperfixi-hx-v4.js` recognizes localized attribute names per-element based on the nearest `lang=` ancestor. Spanish authors can write `hx-obtener` / `hx-objetivo` / `sse-conectar`; Japanese authors `hx-取得` / `hx-ターゲット`; Arabic `hx-احصل` / `hx-هدف`. The orchestrator translates them to canonical English (`hx-get` / `hx-target` / `sse-connect`) before they hit the existing processor paths.
 
@@ -208,9 +240,9 @@ Regional variants collapse to base codes (`es-MX` → `es`). Elements outside an
 
 **Out of scope** for this arc: localizing the `_=` hyperscript attribute itself. The vocab orchestrator translates htmx-compat attribute names only.
 
-See the live demos in [`examples/hx-v4-i18n/`](../examples/hx-v4-i18n/).
+The pages in [`examples/hx-v4-i18n/`](../examples/hx-v4-i18n/) now show the same thing on real htmx 4 through `@lokascript/htmx-adapter`.
 
-## htmx Lifecycle Events
+### htmx Lifecycle Events
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:
 

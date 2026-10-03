@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>hx-live multi-dep — HyperFixi</title>
+    <title>live with multiple dependencies — hyperfixi-hs.js</title>
     <style>
       body {
         font-family:
@@ -42,20 +42,15 @@
     </style>
   </head>
   <body>
-    <h1>hx-live with multiple dependencies</h1>
+    <h1><code>live</code> with multiple dependencies</h1>
     <p class="note">
       The live body reads <code>$price</code> and <code>$quantity</code>. Changing
       <em>either</em> triggers a re-render — the reactivity graph tracks both reads.
     </p>
 
-    <!-- The expression reads two globals; the dep set is computed at runtime
-         from whatever the body actually touched. Writing into `me's textContent`
-         is the honest form for plain-text output — the runtime won't have to
-         guess based on the value's shape. -->
-    <div
-      class="display"
-      hx-live="put 'Total: $' + ($price * $quantity) into me's textContent"
-    >Total: $0</div>
+    <!-- The body reads two globals; the dependency set is whatever it actually
+         touched, recorded as it runs. -->
+    <div class="display" _="live put 'Total: $' + ($price * $quantity) into me">Total: $0</div>
 
     <div class="controls">
       <fieldset>
@@ -88,20 +83,20 @@
       </li>
       <li>
         <strong>No wasted re-runs</strong>: mutating an unrelated global (try
-        <code>window.hyperfixi.run("set $other to 5")</code> in the console) does not re-execute
+        <code>hyperfixi.evaluate("set $other to 5")</code> in the console) does not re-execute
         the body.
       </li>
       <li>
-        <strong>Multilingual-ready</strong>: the body is hyperscript, not JS — it reads naturally
-        and (after Phase 8) will work with localized attribute names too.
+        <strong>Multilingual-ready</strong>: the body is hyperscript, not JS — see
+        <a href="../hx-v4-i18n/live-multilang.html">the same counter written in three languages</a>.
       </li>
     </ul>
 
-    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script>
       // Seed the globals so the first live render shows a number rather than NaN.
-      window.hyperfixi.run('set $price to 0');
-      window.hyperfixi.run('set $quantity to 0');
+      window.hyperfixi.evaluate('set $price to 0');
+      window.hyperfixi.evaluate('set $quantity to 0');
     </script>
   </body>
 </html>

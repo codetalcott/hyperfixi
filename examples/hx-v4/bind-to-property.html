@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>bind to .property — HyperFixi hx-v4</title>
+    <title>bind $var to el — hyperfixi-hs.js</title>
     <style>
       body {
         font-family:
@@ -60,12 +60,10 @@
   <body>
     <h1>bind <code>$var</code> to <code>el</code></h1>
     <p class="note">
-      The htmx-v4 bundle's <code>@hyperfixi/reactivity</code> provides two-way <code>bind</code>
-      for form elements. <code>bind $color to me</code> auto-detects the readable property
-      (<code>value</code> for inputs) and wires the bind in both directions. The explicit-property
-      form <code>bind $x to me's prop</code> is also supported; chained access
-      (<code>me's style.backgroundColor</code>) is deferred — the swatch below uses
-      <code>hx-live</code> instead for a reactive style update.
+      The engine's <code>bind</code> feature (in <code>hyperfixi-hs.js</code>, following upstream's)
+      ties two sides together: <code>bind $color to me</code> on a form element reads and writes its
+      <code>value</code>, so the global and the input stay in sync in both directions. The swatch
+      below uses a <code>live</code> block for a reactive style update.
     </p>
 
     <div class="row">
@@ -94,25 +92,22 @@
     </div>
 
     <div class="row">
-      <div
-        class="swatch"
-        hx-live="set my @style to 'background:' + $color"
-      ></div>
+      <div class="swatch" _="live set my @style to 'background:' + $color"></div>
       <span class="label">
-        <code>hx-live="set my @style to ..."</code> — reactive style update
+        <code>_="live set my @style to ..."</code> — reactive style update
       </span>
     </div>
 
     <p class="note">
       Try editing the text input directly (paste <code>red</code>, <code>#0af</code>,
       <code>rebeccapurple</code>) — the picker follows because both are bound to
-      <code>$color</code>. The swatch follows because its <code>hx-live</code> body reads
+      <code>$color</code>. The swatch follows because its <code>live</code> body reads
       <code>$color</code> and the reactivity graph notifies it on every change.
     </p>
 
-    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script>
-      window.hyperfixi.run('set $color to "#1f2937"');
+      window.hyperfixi.evaluate('set $color to "#1f2937"');
     </script>
   </body>
 </html>
