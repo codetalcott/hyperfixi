@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/engine",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "A small, typed hyperscript engine, faithful to upstream _hyperscript: its test suite is the acceptance oracle. Ships hyperfixi-hs.js, the script-tag bundle",
   "type": "module",
   "module": "dist/index.js",
