@@ -36,9 +36,7 @@ export const clickOutsideSchema: BehaviorSchema = {
   source: `
 behavior ClickOutside(active)
   init
-    if active is undefined
-      set active to true
-    end
+    if active is undefined set element's active to true end
   end
   on pointerdown from document
     js(me, active, event)
@@ -49,10 +47,10 @@ behavior ClickOutside(active)
     end
   end
   on clickoutside:activate
-    set active to true
+    set element's active to true
   end
   on clickoutside:deactivate
-    set active to false
+    set element's active to false
   end
 end`.trim(),
 };

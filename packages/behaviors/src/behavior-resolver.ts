@@ -1,20 +1,10 @@
 /**
- * Behavior Resolver — Lazy compilation of hyperscript behaviors
+ * The behavior sources, by name, and the function that defines them on a host.
  *
- * Provides a resolver function that compiles behavior source strings on demand.
- * When the runtime encounters `install X` and X isn't registered, it calls
- * the resolver. If the resolver has source for X, it compiles it, registers
- * the behavior, and installation proceeds normally.
- *
- * @example
- * ```typescript
- * import { createBehaviorResolver } from '@hyperfixi/behaviors/resolver';
- *
- * const resolve = createBehaviorResolver(window.hyperfixi, window._hyperscript.behaviors);
- * window._hyperscript.behaviors.resolve = resolve;
- *
- * // Now `install Toggleable` will compile the behavior on first use
- * ```
+ * Every consumer — the npm `register*()` functions, the browser bundle
+ * (`resolver.browser.global.js`) and `@hyperfixi/patterns-reference` — reads the same
+ * `source` string from each schema in `src/schemas/`. A host defines a behavior from its
+ * source exactly as it would from a page's `<script type="text/hyperscript">`.
  */
 
 import { toggleableSchema } from './schemas/toggleable.schema';
@@ -28,6 +18,7 @@ import { tabsSchema } from './schemas/tabs.schema';
 import { focusTrapSchema } from './schemas/focustrap.schema';
 import { sortableSchema } from './schemas/sortable.schema';
 import { resizableSchema } from './schemas/resizable.schema';
+import type { HyperscriptHost } from './schemas/types';
 
 export const BEHAVIOR_SOURCES: Record<string, string> = {
   Toggleable: toggleableSchema.source,
@@ -43,49 +34,26 @@ export const BEHAVIOR_SOURCES: Record<string, string> = {
   Resizable: resizableSchema.source,
 };
 
-interface CompileResult {
-  ok: boolean;
-  ast?: any;
-  errors?: unknown[];
-}
-
-interface BehaviorAPI {
-  set(name: string, definition: any): void;
-}
-
-interface HyperFixiAPI {
-  compileSync(code: string, options?: { traditional?: boolean }): CompileResult;
-}
-
 /**
- * Create a behavior resolver that compiles hyperscript source on demand.
+ * Define the named behaviors (every one by default) on a host. A source that does not
+ * parse is reported and skipped, so one bad behavior does not take the others with it.
  *
- * The returned function is meant to be assigned to `_hyperscript.behaviors.resolve`.
- * When called with a behavior name, it looks up the source, compiles it,
- * and registers the resulting AST in the behavior registry.
- *
- * @param hyperfixi - The hyperfixi API (needs compileSync)
- * @param behaviorAPI - The behavior registry API (needs set)
- * @returns Resolver function: (name: string) => boolean
+ * @returns the names that were defined
  */
-export function createBehaviorResolver(
-  hyperfixi: HyperFixiAPI,
-  behaviorAPI: BehaviorAPI
-): (name: string) => boolean {
-  return (name: string): boolean => {
+export function defineBehaviors(
+  host: HyperscriptHost,
+  names: readonly string[] = Object.keys(BEHAVIOR_SOURCES)
+): string[] {
+  const defined: string[] = [];
+  for (const name of names) {
     const source = BEHAVIOR_SOURCES[name];
-    if (!source) return false;
-
-    const result = hyperfixi.compileSync(source, { traditional: true });
-    if (!result.ok || !result.ast) return false;
-
-    const ast = result.ast as any;
-    behaviorAPI.set(name, {
-      name: ast.name,
-      parameters: ast.parameters,
-      eventHandlers: ast.eventHandlers,
-      initBlock: ast.initBlock,
-    });
-    return true;
-  };
+    if (!source) continue;
+    try {
+      host.evaluate(source);
+      defined.push(name);
+    } catch (e) {
+      console.error(`[behaviors] ${name} did not parse: ${(e as Error).message}`);
+    }
+  }
+  return defined;
 }

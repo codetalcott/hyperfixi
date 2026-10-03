@@ -119,7 +119,8 @@ export type {
   ParameterSchema,
   EventSchema,
   BehaviorModule,
-  LokaScriptInstance,
+  HyperscriptHost,
+  HyperscriptWindow,
 } from './schemas/types';
 
 // =============================================================================
@@ -214,15 +215,14 @@ import { registerClickOutside } from './behaviors/clickoutside';
 import { registerFocusTrap } from './behaviors/focustrap';
 import { registerScrollReveal } from './behaviors/scrollreveal';
 import { registerTabs } from './behaviors/tabs';
-import type { LokaScriptInstance } from './schemas/types';
+import type { HyperscriptHost } from './schemas/types';
 import { resolveRuntime } from './schemas/types';
-import type { LokaScriptWindow } from './schemas/types';
 
 /**
- * Register all behaviors with HyperFixi.
+ * Define every behavior on a hyperscript host.
  *
- * @param hyperfixi - The hyperfixi instance (defaults to window.hyperfixi)
- * @returns Promise that resolves when all behaviors are registered
+ * @param host - The host (`@hyperfixi/engine`'s `window.hyperfixi`, or upstream's
+ *   `window._hyperscript`); defaults to the one on `window`
  *
  * @example
  * ```javascript
@@ -230,59 +230,42 @@ import type { LokaScriptWindow } from './schemas/types';
  * await registerAll();
  * ```
  */
-export async function registerAll(hyperfixi?: LokaScriptInstance): Promise<void> {
+export async function registerAll(host?: HyperscriptHost): Promise<void> {
   await Promise.all([
-    registerDraggable(hyperfixi),
-    registerRemovable(hyperfixi),
-    registerToggleable(hyperfixi),
-    registerSortable(hyperfixi),
-    registerResizable(hyperfixi),
-    registerClipboard(hyperfixi),
-    registerAutoDismiss(hyperfixi),
-    registerClickOutside(hyperfixi),
-    registerFocusTrap(hyperfixi),
-    registerScrollReveal(hyperfixi),
-    registerTabs(hyperfixi),
+    registerDraggable(host),
+    registerRemovable(host),
+    registerToggleable(host),
+    registerSortable(host),
+    registerResizable(host),
+    registerClipboard(host),
+    registerAutoDismiss(host),
+    registerClickOutside(host),
+    registerFocusTrap(host),
+    registerScrollReveal(host),
+    registerTabs(host),
   ]);
 }
 
 // =============================================================================
-// Auto-registration for browser
+// Auto-definition for the browser bundles
 // =============================================================================
 
 /**
- * Promise that resolves when all behaviors are registered.
- * This is set when the package auto-registers in browser environments.
+ * Resolves when every behavior is defined, when the package was loaded as a script tag after
+ * the host; `null` otherwise.
  */
 export let ready: Promise<void> | null = null;
 
-// Auto-register all behaviors when loaded in browser with hyperfixi available
-const _runtime = resolveRuntime();
-if (_runtime) {
-  const lsWin = window as unknown as LokaScriptWindow;
-  ready = registerAll(_runtime);
-
-  lsWin.__hyperfixi_behaviors_ready = ready;
-
-  ready
+// Loaded as a script tag after the host, before the document is ready, this runs before the
+// host reads the page, so every `install` finds its behavior. Loaded later, the elements the
+// host has already seen are processed again, so their installs can succeed now.
+const _host = resolveRuntime();
+if (_host) {
+  ready = registerAll(_host)
     .then(() => {
-      const hf = _runtime as LokaScriptInstance & {
-        attributeProcessor?: { scanAndProcessAll: () => Promise<void> };
-        processNode?: (node: Document) => void;
-      };
-      const savedPromise = lsWin.__hyperfixi_behaviors_ready;
-      delete lsWin.__hyperfixi_behaviors_ready;
-
-      if (hf.attributeProcessor?.scanAndProcessAll) {
-        hf.attributeProcessor.scanAndProcessAll().finally(() => {
-          lsWin.__hyperfixi_behaviors_ready = savedPromise;
-        });
-      } else if (hf.processNode) {
-        hf.processNode(document);
-        lsWin.__hyperfixi_behaviors_ready = savedPromise;
-      }
+      if (document.readyState !== 'loading') _host.processNode?.(document.body);
     })
     .catch(err => {
-      console.error('[behaviors] Auto-registration failed:', err);
+      console.error('[behaviors] Auto-definition failed:', err);
     });
 }

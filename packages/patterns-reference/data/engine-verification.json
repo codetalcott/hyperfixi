@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
       "html": "HTML-markup patterns: every _= / hx-live / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); hx-live/sse-*/ws-* markup is hyperfixi-only (blocks the upstream claim) and earns its lokascript credit only by running in dist/hyperfixi-hx-v4.js (sse events swap into hx-target, ws-send reaches the socket, hx-live re-renders); a row with no source earns no credit"
     },
-    "lokascriptVersion": "3.2.0",
+    "lokascriptVersion": "3.3.0",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -17,8 +17,8 @@
     "append-content": "both",
     "async-block": null,
     "beep-debug-expression": "both",
-    "behavior-draggable": "both",
-    "behavior-removable": "both",
+    "behavior-draggable": "hyperscript",
+    "behavior-removable": "hyperscript",
     "behavior-resizable": "both",
     "behavior-sortable": "both",
     "bind-auto-detect": "both",
@@ -88,7 +88,7 @@
     "input-clear": "both",
     "input-mirror": "both",
     "input-validation": "both",
-    "install-behavior": "both",
+    "install-behavior": "hyperscript",
     "intercept-cache-strategies": null,
     "its-value-possessive-dot": "both",
     "js-inline": "both",
@@ -214,12 +214,14 @@
       "hyperscript": true
     },
     "behavior-draggable": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Expected \"end\" to close behavior event handler"
     },
     "behavior-removable": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Expected \"end\" to close behavior event handler"
     },
     "behavior-resizable": {
       "lokascript": true,
@@ -502,8 +504,9 @@
       "hyperscript": true
     },
     "install-behavior": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Failed to install behavior \"Draggable\": Behavior \"Draggable\" is not defined. Define it using the 'behavior' keyword before installing."
     },
     "intercept-cache-strategies": {
       "lokascript": false,

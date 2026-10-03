@@ -46,12 +46,7 @@ export const removableSchema: BehaviorSchema = {
   ],
   source: `
 behavior Removable(triggerEl, confirmRemoval, effect)
-  init
-    if triggerEl is undefined
-      set triggerEl to me
-    end
-  end
-  on click from triggerEl
+  on click from (triggerEl or me)
     if confirmRemoval
       js(me)
         if (!window.confirm("Are you sure?")) return "cancel";
@@ -67,6 +62,5 @@ behavior Removable(triggerEl, confirmRemoval, effect)
     trigger removable:removed
     remove me
   end
-end
-`.trim(),
+end`.trim(),
 };

@@ -103,10 +103,10 @@ Fixi features include request dropping (anti-double-submit), `fx-ignore` attribu
 
 ## Companion bundles
 
-| Bundle                                               | Global                  | Size (gzip) | Use Case                             |
-| ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
-| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | Lazy behavior resolver (8 behaviors) |
-| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 38.5 KB     | Per-language vocabulary and profiles |
+| Bundle                                               | Global                  | Size (gzip) | Use Case                                                                          |
+| ---------------------------------------------------- | ----------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | The 11 standard behaviors, defined on `hyperfixi-hs.js` (or upstream) as it loads |
+| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 38.5 KB     | Per-language vocabulary and profiles                                              |
 
 > **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Deprecated `lokascript-*.js` copies of some of them (`lokascript-browser.js`, `lokascript-hybrid-hx.js`, `lokascript-multilingual.js`, …) are still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); they were slated for removal in v3.0.0 but still ship in 3.x. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
 

@@ -1,45 +1,43 @@
 // @vitest-environment happy-dom
 /**
- * Curated behaviors — REAL runtime behavior tests (Phase 2).
+ * Curated behaviors — REAL runtime behavior tests.
  *
- * These exercise each curated behavior's actual hyperscript `source` through the
- * real @hyperfixi/core runtime: register → install on an element → drive the DOM →
- * assert both the effect AND the documented lifecycle events. This is the
- * "parses ≠ works" guard (BEHAVIORS_CONSOLIDATION_PLAN.md §2/§5) — the mock-based
- * unit tests only prove `register*()` calls compileSync; these prove the js()
- * bodies actually do the right thing at runtime.
+ * These exercise each curated behavior's actual hyperscript `source` on the real
+ * @hyperfixi/engine: define → install on an element → drive the DOM → assert both the
+ * effect AND the documented lifecycle events. This is the "parses ≠ works" guard — the
+ * mock-based unit tests only prove `register*()` hands the source to the host; these prove
+ * the sources do the right thing when they run.
  *
- * These tests already paid for themselves: they surfaced two source bugs the
- * imperative path was masking — ClickOutside read `event.target` without passing
- * `event` into its js() block, and Clipboard used top-level `await` (invalid in a
- * js() block). Both are fixed in the schema sources.
+ * The engine runs the same source the pages do, and upstream _hyperscript runs it the same
+ * way (measured in a browser, 2026-10-03, with at least one argument given: upstream's
+ * `install X` without parentheses throws; `install X()` works there).
  */
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
-import { hyperscript } from '@hyperfixi/core';
+import { api, everything, processNode, register } from '@hyperfixi/engine';
 import { registerToggleable } from './toggleable';
 import { registerRemovable } from './removable';
 import { registerClickOutside } from './clickoutside';
 import { registerClipboard } from './clipboard';
 import { registerAutoDismiss } from './autodismiss';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const hf = hyperscript as any;
-
 const tick = (ms = 30) => new Promise(r => setTimeout(r, ms));
 
+/** Install from an attribute, as a page does: the engine reads `_` and runs the install. */
 async function install(code: string, el: HTMLElement): Promise<void> {
-  const r = hyperscript.compileSync(code, { traditional: true });
-  if (!r.ok) throw new Error(`install compile failed: ${JSON.stringify(r.errors)}`);
-  await hyperscript.execute(r.ast, hyperscript.createContext(el));
+  el.setAttribute('_', code);
+  processNode(el);
+  await tick();
 }
 
 beforeAll(async () => {
-  // Behavior registry is a runtime singleton; register the curated set once.
-  await registerToggleable(hf);
-  await registerRemovable(hf);
-  await registerClickOutside(hf);
-  await registerClipboard(hf);
-  await registerAutoDismiss(hf);
+  // The engine is assembled from modules; this bundle is every one. Behaviors are globals
+  // (`window.Toggleable`), so define the set once per file.
+  register(...everything);
+  await registerToggleable(api);
+  await registerRemovable(api);
+  await registerClickOutside(api);
+  await registerClipboard(api);
+  await registerAutoDismiss(api);
 });
 
 afterEach(() => {

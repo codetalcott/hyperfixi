@@ -2,50 +2,28 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('Clipboard behavior', () => {
   describe('registerClipboard', () => {
-    it('should compile its hyperscript source and execute', async () => {
+    it('defines the behavior on the host from its hyperscript source', async () => {
       const { registerClipboard, clipboardSource } = await import('./clipboard');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
+      const host = { evaluate: vi.fn() };
 
-      await registerClipboard(mock);
+      await registerClipboard(host);
 
-      expect(mock.compileSync).toHaveBeenCalledWith(clipboardSource, { traditional: true });
-      expect(mock.execute).toHaveBeenCalledWith(
-        { type: 'behavior' },
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      expect(host.evaluate).toHaveBeenCalledWith(clipboardSource);
     });
 
-    it('should throw on compile failure', async () => {
+    it('should throw when the host rejects the source', async () => {
       const { registerClipboard } = await import('./clipboard');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
-        execute: vi.fn(),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      const host = {
+        evaluate: vi.fn(() => {
+          throw new Error('boom');
+        }),
       };
-      await expect(registerClipboard(mock)).rejects.toThrowError(/Failed to compile Clipboard/);
+      await expect(registerClipboard(host)).rejects.toThrowError(/Failed to define Clipboard/);
     });
 
-    it('should throw when no runtime available', async () => {
+    it('should throw when no host is available', async () => {
       const { registerClipboard } = await import('./clipboard');
-      await expect(registerClipboard(undefined)).rejects.toThrowError(/LokaScript not found/);
-    });
-
-    it('should fall back to manual context when createContext is missing', async () => {
-      const { registerClipboard } = await import('./clipboard');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-      };
-
-      await registerClipboard(mock as any);
-      expect(mock.execute).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      await expect(registerClipboard(undefined)).rejects.toThrowError(/No hyperscript host/);
     });
   });
 

@@ -18,8 +18,8 @@ test('simple toggle test: click button should add active class @comprehensive', 
 
   await page.goto('/examples/behaviors/demo.html');
 
-  // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+  // Wait for the engine to define the behaviors (a behavior is a global on the engine)
+  await page.waitForFunction(() => typeof (window as any).Toggleable === 'function', {
     timeout: 10000,
   });
   await page.waitForTimeout(1000); // Extra time for behaviors to install
@@ -29,9 +29,8 @@ test('simple toggle test: click button should add active class @comprehensive', 
     const btn = document.querySelector('.toggle-button');
     if (!btn) return 'Button not found';
 
-    // Check if hyperfixi processed this element
-    const hf = (window as any)._hyperscript;
-    if (!hf?.behaviors?.has('Toggleable')) return 'Toggleable behavior not registered';
+    // The behaviors bundle defines each behavior as a global on the engine
+    if (typeof (window as any).Toggleable !== 'function') return 'Toggleable behavior not defined';
 
     return 'OK';
   });
@@ -64,8 +63,8 @@ test('simple toggle test: click button should add active class @comprehensive', 
 test('simple removable test: click should remove element @comprehensive', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
-  // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+  // Wait for the engine to define the behaviors (a behavior is a global on the engine)
+  await page.waitForFunction(() => typeof (window as any).Toggleable === 'function', {
     timeout: 10000,
   });
   await page.waitForTimeout(1000);
@@ -103,8 +102,8 @@ test('removable with confirmation: cancel should not remove @comprehensive', asy
 
   await page.goto('/examples/behaviors/demo.html');
 
-  // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+  // Wait for the engine to define the behaviors (a behavior is a global on the engine)
+  await page.waitForFunction(() => typeof (window as any).Toggleable === 'function', {
     timeout: 10000,
   });
   await page.waitForTimeout(1000);
@@ -140,8 +139,8 @@ test('removable with confirmation: cancel should not remove @comprehensive', asy
 test('removable with confirmation: accept should remove @comprehensive', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
-  // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+  // Wait for the engine to define the behaviors (a behavior is a global on the engine)
+  await page.waitForFunction(() => typeof (window as any).Toggleable === 'function', {
     timeout: 10000,
   });
   await page.waitForTimeout(1000);

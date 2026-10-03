@@ -72,48 +72,55 @@ export interface BehaviorSchema {
 }
 
 /**
- * Runtime behavior module interface.
- * This is what gets registered with the hyperfixi runtime.
+ * Runtime behavior module interface: a behavior's source, its schema, and the function that
+ * defines it on a hyperscript host.
  */
 export interface BehaviorModule {
   source: string;
   metadata: BehaviorSchema;
-  register: (hyperfixi?: LokaScriptInstance) => Promise<void>;
+  register: (host?: HyperscriptHost) => Promise<void>;
 }
 
 /**
- * Minimal LokaScript instance interface for behavior registration.
+ * A hyperscript host, in upstream `_hyperscript`'s shape: `@hyperfixi/engine` (the
+ * `hyperfixi-hs.js` bundle, `window.hyperfixi` / `window._hyperscript`) or upstream itself.
+ * `evaluate(source)` of a `behavior … end` program defines the behavior; `processNode`
+ * initialises the scripted elements under a node.
  */
-export interface LokaScriptInstance {
-  compileSync: (
-    code: string,
-    options?: { traditional?: boolean; language?: string }
-  ) => {
-    ok: boolean;
-    ast?: unknown;
-    errors?: Array<{ message: string; line?: number; column?: number }>;
-  };
-  execute: (ast: unknown, ctx: unknown) => Promise<unknown>;
-  createContext?: () => { locals: Map<string, unknown>; globals: Map<string, unknown> };
+export interface HyperscriptHost {
+  evaluate: (source: string) => unknown;
+  processNode?: (node: Node) => void;
 }
 
-/**
- * Typed window interface for behavior auto-registration.
- * Avoids `(window as any)` casts throughout the codebase.
- * Checks both `window.lokascript` and `window.hyperfixi` for the runtime instance.
- */
-export interface LokaScriptWindow {
-  lokascript?: LokaScriptInstance;
-  hyperfixi?: LokaScriptInstance;
-  __hyperfixi_behaviors_ready?: Promise<void> | undefined;
+/** The window globals a host installs itself as. */
+export interface HyperscriptWindow {
+  hyperfixi?: HyperscriptHost;
+  _hyperscript?: HyperscriptHost;
 }
 
-/**
- * Resolve the LokaScript runtime from window globals.
- * Checks both `window.lokascript` and `window.hyperfixi`.
- */
-export function resolveRuntime(): LokaScriptInstance | null {
+/** The host on `window`: `hyperfixi` (the engine's bundle) or `_hyperscript` (upstream's name). */
+export function resolveRuntime(): HyperscriptHost | null {
   if (typeof window === 'undefined') return null;
-  const win = window as unknown as LokaScriptWindow;
-  return win.lokascript || win.hyperfixi || null;
+  const win = window as unknown as HyperscriptWindow;
+  const host = win.hyperfixi ?? win._hyperscript;
+  return host && typeof host.evaluate === 'function' ? host : null;
+}
+
+/**
+ * Define a behavior on a host from its schema's source, as a page's
+ * `<script type="text/hyperscript">` would. Throws when there is no host or the source
+ * does not parse.
+ */
+export function defineBehavior(schema: BehaviorSchema, host?: HyperscriptHost): void {
+  const hf = host ?? resolveRuntime();
+  if (!hf) {
+    throw new Error(
+      `No hyperscript host found: load @hyperfixi/engine (hyperfixi-hs.js) before defining ${schema.name}.`
+    );
+  }
+  try {
+    hf.evaluate(schema.source);
+  } catch (e) {
+    throw new Error(`Failed to define ${schema.name} behavior: ${(e as Error).message}`);
+  }
 }

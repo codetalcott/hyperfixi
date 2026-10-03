@@ -285,11 +285,11 @@
 
     <h3>With Trigger Button</h3>
     <p>Only the close button removes the notification (not clicking the content).</p>
-    <div class="notification" _="install Removable(triggerEl: .close-btn, effect: 'fade')">
+    <div class="notification" _="install Removable(triggerEl: .close-btn in me, effect: 'fade')">
       <button class="close-btn">&times;</button>
       <strong>Success!</strong> Your changes have been saved. Click the X to dismiss.
     </div>
-    <div class="notification" _="install Removable(triggerEl: .close-btn, confirm: true)">
+    <div class="notification" _="install Removable(triggerEl: .close-btn in me, confirmRemoval: true)">
       <button class="close-btn">&times;</button>
       <strong>Important!</strong> This requires confirmation to dismiss.
     </div>
@@ -410,9 +410,9 @@
     </div>
   </div>
 
-  <!-- Load HyperFixi core + behavior resolver -->
-  <!-- The resolver compiles behaviors on demand — no definitions needed -->
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <!-- The engine (hyperscript only), then the behaviors bundle, which defines every
+       standard behavior on it — no definitions needed in the page -->
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
   <script src="../../packages/behaviors/dist/resolver.browser.global.js"></script>
 
   <!-- Toast helper for AutoDismiss demo -->
@@ -426,10 +426,8 @@
       toast.textContent = 'Toast #' + toastCount + ' — auto-dismisses in ' + (delay / 1000) + 's';
       toast.setAttribute('_', 'install AutoDismiss(delay: ' + delay + ', effect: fade)');
       container.appendChild(toast);
-      // Re-process the new element
-      if (window.hyperfixi?.attributeProcessor?.processElement) {
-        window.hyperfixi.attributeProcessor.processElement(toast);
-      }
+      // Initialise the new element's script (upstream's name for it)
+      window.hyperfixi.processNode(toast);
     }
   </script>
 </body>

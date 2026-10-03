@@ -2,38 +2,30 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('ClickOutside behavior', () => {
   describe('registerClickOutside', () => {
-    it('should compile its hyperscript source and execute', async () => {
+    it('defines the behavior on the host from its hyperscript source', async () => {
       const { registerClickOutside, clickOutsideSource } = await import('./clickoutside');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      const host = { evaluate: vi.fn() };
+
+      await registerClickOutside(host);
+
+      expect(host.evaluate).toHaveBeenCalledWith(clickOutsideSource);
+    });
+
+    it('should throw when the host rejects the source', async () => {
+      const { registerClickOutside } = await import('./clickoutside');
+      const host = {
+        evaluate: vi.fn(() => {
+          throw new Error('boom');
+        }),
       };
-
-      await registerClickOutside(mock);
-
-      expect(mock.compileSync).toHaveBeenCalledWith(clickOutsideSource, { traditional: true });
-      expect(mock.execute).toHaveBeenCalledWith(
-        { type: 'behavior' },
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
+      await expect(registerClickOutside(host)).rejects.toThrowError(
+        /Failed to define ClickOutside/
       );
     });
 
-    it('should throw on compile failure', async () => {
+    it('should throw when no host is available', async () => {
       const { registerClickOutside } = await import('./clickoutside');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
-        execute: vi.fn(),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
-      await expect(registerClickOutside(mock)).rejects.toThrowError(
-        /Failed to compile ClickOutside/
-      );
-    });
-
-    it('should throw when no runtime available', async () => {
-      const { registerClickOutside } = await import('./clickoutside');
-      await expect(registerClickOutside(undefined)).rejects.toThrowError(/LokaScript not found/);
+      await expect(registerClickOutside(undefined)).rejects.toThrowError(/No hyperscript host/);
     });
   });
 

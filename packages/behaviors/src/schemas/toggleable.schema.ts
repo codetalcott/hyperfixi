@@ -21,11 +21,12 @@ export const toggleableSchema: BehaviorSchema = {
       description: 'CSS class to toggle',
     },
     {
-      name: 'target',
+      name: 'targetEl',
       type: 'selector',
       optional: true,
       default: 'me',
-      description: 'Element to toggle the class on',
+      description:
+        "Element to toggle the class on (not `target`: that is hyperscript's name for the event target)",
     },
   ],
   events: [
@@ -33,20 +34,16 @@ export const toggleableSchema: BehaviorSchema = {
     { name: 'toggleable:off', description: 'Fired when class is removed' },
   ],
   source: `
-behavior Toggleable(cls, target)
+behavior Toggleable(cls, targetEl)
   init
-    if cls is undefined
-      set cls to "active"
-    end
-    if target is undefined
-      set target to me
-    end
+    if cls is undefined set element's cls to "active" end
+    if targetEl is undefined set element's targetEl to me end
   end
   on click
-    toggle .{cls} on target
-    js(target, cls)
-      var eventName = target.classList.contains(cls) ? 'toggleable:on' : 'toggleable:off';
-      target.dispatchEvent(new CustomEvent(eventName, { bubbles: true }));
+    toggle .{cls} on targetEl
+    js(targetEl, cls)
+      var eventName = targetEl.classList.contains(cls) ? 'toggleable:on' : 'toggleable:off';
+      targetEl.dispatchEvent(new CustomEvent(eventName, { bubbles: true }));
     end
   end
 end`.trim(),
