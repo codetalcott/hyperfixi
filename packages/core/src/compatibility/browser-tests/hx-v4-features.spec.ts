@@ -1,15 +1,14 @@
 /**
- * Playwright spec exercising the hx-v4 bundle against the live demos in
- * examples/hx-v4/. Item 14 of htmx-v4-reactive-streaming.md follow-ups.
+ * Playwright spec for the demos in examples/hx-v4/, which since 2026-10-03 run on
+ * `hyperfixi-hs.js` (the engine) — the three reactive pages on the engine's own `live` and
+ * `bind` features, the SSE and WebSocket pages on REAL htmx 4 (vendored under
+ * examples/vendor/) with its hx-sse / hx-ws extensions, loaded beside the engine.
  *
- * bundle-compatibility.spec.ts registers `hybrid-hx-v4` and verifies basic
- * pre-v4 features (toggle/show/hide/etc.) work. This spec is the
- * complementary surface — it asserts the *new* reactive + streaming
- * behaviors that make the hx-v4 bundle distinct: hx-live re-renders,
- * bind two-way sync, SSE swap routing, WS envelope swaps.
+ * Before that the pages ran core's htmx-compat layer (`hyperfixi-hx-v4.js`: `hx-live`,
+ * `sse-connect`, `ws-connect`), retired by owner decision in the engine migration.
  *
- * The demos use in-page mocks for EventSource / WebSocket so no backend
- * is needed; the spec just drives the page state and observes DOM updates.
+ * The demos use in-page mocks for fetch / WebSocket so no backend is needed; the spec
+ * drives the page state and observes DOM updates.
  */
 import { test, expect, type Page } from '@playwright/test';
 import { waitForHyperfixi } from './test-utils';
@@ -25,12 +24,12 @@ async function loadDemo(page: Page, file: string): Promise<void> {
     timeout: 10000,
   });
   await waitForHyperfixi(page);
-  // Allow the htmx-compat scanner + reactivity init pass to complete.
+  // Allow the engine's first live run (a microtask) and htmx's init to complete.
   await page.waitForTimeout(150);
 }
 
-test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
-  test('hx-live-counter: clicks update the live-bound counter', async ({ page }) => {
+test.describe('hx-v4 demos on the engine and real htmx 4 @comprehensive', () => {
+  test('hx-live-counter: clicks update the live counter', async ({ page }) => {
     await loadDemo(page, 'hx-live-counter.html');
 
     const counter = page.locator('.counter');
@@ -55,7 +54,9 @@ test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
     await expect(counter).toHaveText('0');
   });
 
-  test('hx-live-multiple-deps: changing either dep triggers re-render', async ({ page }) => {
+  test('hx-live-multiple-deps: changing either dependency re-runs the live body', async ({
+    page,
+  }) => {
     await loadDemo(page, 'hx-live-multiple-deps.html');
 
     const display = page.locator('.display');
@@ -96,7 +97,9 @@ test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
     expect(errors.filter(m => /bind:/i.test(m))).toHaveLength(0);
   });
 
-  test('sse-stream: incoming mock SSE events append to the feed', async ({ page }) => {
+  test('sse-stream: htmx 4 hx-sse streams the mocked event-stream into the feed', async ({
+    page,
+  }) => {
     await loadDemo(page, 'sse-stream.html');
 
     const feed = page.locator('#feed');
@@ -107,40 +110,21 @@ test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
     // After ~2s we should see multiple ticks accumulated.
     await page.waitForTimeout(1800);
     const text = (await feed.textContent()) ?? '';
-    // The mock emits HTML fragments containing the word "tick" or a number;
-    // we don't pin the exact shape, just verify *something* streamed in.
+    // The mock emits `data: <div …>tick #N</div>` events; hx-sse swaps each one in.
+    expect(text).toContain('tick #');
     expect(text.length).toBeGreaterThan(20);
   });
 
-  test('hx-on:click fires on the no-reactivity demo (Phase 8-pre regression)', async ({ page }) => {
-    // Confirms hx-on:* now registers real DOM listeners even without
-    // reactivity installed and without any paired request attribute.
-    // Pre-8-pre: translator wrapped the body as `on click body` text and
-    // shipped it through executeCallback, which silently no-op'd.
-    await loadDemo(page, 'hx-live-no-reactivity.html');
-
-    // Scoped CSS selector instead of getByRole — the button's accessible name
-    // changes after the first click (from "I am wired..." to "clicked N time(s)"),
-    // which would break a role-name locator on subsequent assertions.
-    const button = page.locator('.other button');
-    await expect(button).toHaveText(/wired via hx-on:click/);
-    await button.click();
-    // Body increments $clicks and rewrites the button text. Two clicks proves
-    // the listener stays attached AND that the slim runtime's `set` persists
-    // state across invocations even without reactivity wired in.
-    await expect(button).toHaveText(/clicked 1 time/);
-    await button.click();
-    await expect(button).toHaveText(/clicked 2 time/);
-  });
-
-  test('ws-chat: ws-send submits to the mocked socket and echoes back', async ({ page }) => {
+  test('ws-chat: htmx 4 hx-ws:send submits to the mocked socket and the echo is swapped in', async ({
+    page,
+  }) => {
     await loadDemo(page, 'ws-chat.html');
 
     const messages = page.locator('#messages');
     await page.locator('input[name="msg"]').fill('hello world');
     await page.locator('button[type="submit"]').click();
 
-    // Mock echoes back as a JSON envelope; the swap puts it into #messages.
+    // The mock echoes htmx 4's JSON message shape ({target, swap, content}); hx-ws swaps it in.
     await expect
       .poll(async () => (await messages.textContent()) ?? '', { timeout: 3000 })
       .toContain('hello world');

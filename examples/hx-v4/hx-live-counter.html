@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>hx-live counter — HyperFixi</title>
+    <title>live counter — hyperfixi-hs.js</title>
     <style>
       body {
         font-family:
@@ -57,15 +57,16 @@
     </style>
   </head>
   <body>
-    <h1>hx-live counter</h1>
+    <h1><code>live</code> counter</h1>
     <p class="note">
-      The number below is rendered by <code>&lt;div hx-live="put $count into me"&gt;</code>. Mutating
-      <code>$count</code> from any handler re-runs the live body via fine-grained dep tracking.
+      The number below is rendered by <code>&lt;div _="live put $count into me"&gt;</code>. Writing
+      <code>$count</code> from any handler re-runs the live body: the engine tracks what the body
+      read, and nothing else wakes it.
     </p>
 
-    <!-- hx-live reads the $count global and writes the result into the element.
-         Any subsequent write to $count re-runs the body. -->
-    <div class="counter" hx-live="put $count into me">0</div>
+    <!-- The live block reads the $count global and writes it into the element.
+         Any later write to $count re-runs the body. -->
+    <div class="counter" _="live put $count into me">0</div>
 
     <div>
       <button _="on click set $count to ($count or 0) + 1">+1</button>
@@ -77,46 +78,44 @@
     <h2>What's happening</h2>
     <ol>
       <li>
-        The <code>hyperfixi-hx-v4.js</code> bundle loads. It bundles the full hyperscript runtime,
-        <code>@hyperfixi/reactivity</code>, and the htmx-compat attribute processor.
+        <code>hyperfixi-hs.js</code> loads: the engine, hyperscript only. Its <code>live</code>
+        feature (<code>src/reactivity.ts</code>, following upstream's <code>live</code> /
+        <code>when</code> / <code>bind</code>) is part of the bundle; nothing to install.
       </li>
       <li>
-        Reactivity is installed onto the default runtime at bundle init — that registers the
-        <code>live</code> feature globally and wires <code>$count</code> writes into the
-        notify chain.
+        The engine reads <code>_="live put $count into me"</code> and runs the body once, recording
+        every variable, property, attribute and query it read as a dependency.
       </li>
       <li>
-        On <code>DOMContentLoaded</code>, the htmx-compat scanner sees
-        <code>hx-live</code>, translates it to <code>live put $count into me end</code>, and runs
-        it through the same runtime — so its dep-tracked read of <code>$count</code> subscribes
-        to the reactive graph.
+        Each button writes <code>$count</code> with a plain <code>set</code>. A write schedules the
+        effects that read that variable for the next microtask; the live body re-runs.
       </li>
       <li>
-        Each button mutates <code>$count</code> via a regular <code>set</code> command. The full
-        runtime's <code>setGlobal()</code> calls <code>notifyGlobalWrite()</code> → reactivity
-        hook fires → the live body re-runs.
+        The raw-JS button writes through <code>hyperfixi.evaluate(…)</code>, so the write goes
+        through the same runtime and is seen the same way.
       </li>
     </ol>
 
     <h3>Console</h3>
     <div class="console" id="console">(events appear here)</div>
 
-    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script>
       const log = msg => {
         const c = document.getElementById('console');
         c.textContent += '\n' + msg;
         c.scrollTop = c.scrollHeight;
       };
-      log('hyperfixi-hx-v4 loaded — hx-live + reactivity active');
+      log('hyperfixi-hs.js loaded — live blocks active');
 
       // Initialize $count so the first live render shows 0 rather than undefined.
-      window.hyperfixi.run('set $count to 0').then(() => log('$count initialized to 0'));
+      window.hyperfixi.evaluate('set $count to 0');
+      log('$count initialized to 0');
 
       // "+1 from raw JS": write through hyperscript so the global write hook
       // fires (that's what wakes the live block's effect).
       document.getElementById('js-bump').addEventListener('click', () => {
-        window.hyperfixi.run('set $count to ($count or 0) + 1');
+        window.hyperfixi.evaluate('set $count to ($count or 0) + 1');
         log('raw-JS bump fired');
       });
     </script>

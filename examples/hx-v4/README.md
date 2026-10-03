@@ -1,10 +1,14 @@
 # hx-v4 examples
 
-Interactive demos of HyperFixi's htmx v4 attribute support — `hx-live`,
-`bind`, `sse-connect` / `sse-swap`, `ws-connect` / `ws-send`.
+Demos of the two stacks that replace hyperfixi's embedded htmx layer (retired with
+`packages/core` in the engine migration, 2026-10-03):
 
-All demos run on the single `hyperfixi-hx-v4.js` bundle (full runtime +
-`@hyperfixi/reactivity` + htmx-compat + SSE/WS, all auto-installed).
+- **the engine alone** — `hyperfixi-hs.js` has upstream's reactive features, `live`, `when` and
+  `bind`, built in: a hyperscript-bodied reactive block is `_="live put $count into me"`.
+- **the engine beside real htmx 4** — `hyperfixi-hs.js` + `examples/vendor/htmx-4.0.0/htmx.min.js`
+  and the extension a page needs (`hx-sse`, `hx-ws`). Hyperscript handles behavior, htmx handles
+  requests and streams; neither reimplements the other. Localized attribute names come from
+  `@lokascript/htmx-adapter` (see `../hx-v4-i18n/`).
 
 ## Run locally
 
@@ -18,91 +22,51 @@ Then open one of:
 
 - <http://127.0.0.1:3000/examples/hx-v4/hx-live-counter.html>
 - <http://127.0.0.1:3000/examples/hx-v4/hx-live-multiple-deps.html>
-- <http://127.0.0.1:3000/examples/hx-v4/hx-live-no-reactivity.html>
 - <http://127.0.0.1:3000/examples/hx-v4/bind-to-property.html>
 - <http://127.0.0.1:3000/examples/hx-v4/sse-stream.html>
 - <http://127.0.0.1:3000/examples/hx-v4/ws-chat.html>
 
 ## What each demo shows
 
-### `hx-live-counter.html`
+### `hx-live-counter.html` — engine alone
 
-The minimum viable `hx-live` setup. A counter mutates `$count`; a div with
-`hx-live="put $count into me"` re-renders on every change. Demonstrates that the
-live body re-runs whenever a tracked dependency changes.
+The minimum `live` block. A counter mutates `$count`; a div with `_="live put $count into me"`
+re-renders on every change. The engine records what the body read; a write to any of it re-runs
+the body on the next microtask.
 
-### `hx-live-multiple-deps.html`
+### `hx-live-multiple-deps.html` — engine alone
 
-Same idea, two dependencies. The live body reads `$price` and `$quantity` and
-displays their product. Either input change triggers a re-render — but mutating
-an unrelated global does NOT (try it in the console). This is the key
-ergonomic win over htmx v4's vanilla `hx-live`, which re-evaluates on every DOM
-mutation event regardless of relevance.
+Same idea, two dependencies. The live body reads `$price` and `$quantity` and displays their
+product. Either input change triggers a re-render, but writing an unrelated global does not (try
+`hyperfixi.evaluate("set $other to 5")` in the console). htmx 4's own `hx-live` extension, by
+contrast, holds a JavaScript expression and recomputes on every DOM mutation.
 
-### `hx-live-no-reactivity.html`
+### `bind-to-property.html` — engine alone
 
-The error path. This page intentionally loads the **slim** `hyperfixi-hx.js`
-bundle and does NOT install `@hyperfixi/reactivity`. The processor's gate
-fires: `hx-live` elements are skipped with a clear console error, and other
-htmx attributes on the same page (here, `hx-on:click`) continue to work. Open
-devtools console to see the diagnostic message.
+Two-way `bind`. A color picker and a text input both carry `_="bind $color to me"` and stay in
+sync through the shared `$color` global; a swatch's `live` block recomputes its `style`
+attribute whenever `$color` changes.
 
-### `bind-to-property.html`
+### `sse-stream.html` — engine + htmx 4 + hx-sse
 
-Two-way `bind`. A color picker and a text input both run `_="bind $color to me"`
-and stay in sync via the shared `$color` global. A swatch's `hx-live` body
-recomputes its `style` attribute reactively whenever `$color` changes.
-Demonstrates the auto-detect bind path for form elements plus reactivity for
-non-form display.
+`hx-sse:connect="/fake-stream"` against an in-page mock of `fetch` that answers with a streaming
+`text/event-stream` body (one unnamed `data: <div>…</div>` event every 800 ms). htmx swaps each
+event's HTML into `hx-target` with `hx-swap="afterbegin"`. In production, point it at a real SSE
+endpoint.
 
-### `sse-stream.html`
+### `ws-chat.html` — engine + htmx 4 + hx-ws
 
-`sse-connect` / `sse-swap` against an in-page mock `EventSource`. The mock pushes
-a synthetic `tick` event every 800ms; the processor routes each event's `data`
-through `hx-target` + `hx-swap="afterbegin"` to grow a live feed. In production,
-point `sse-connect` at a real `text/event-stream` endpoint.
+`hx-ws:connect` / `hx-ws:send` against an in-page `WebSocket` mock. The form's fields are sent as
+JSON; the mock echoes htmx 4's message shape (`{ target, swap, content }`), which htmx swaps
+where the message says.
 
-### `ws-chat.html`
-
-`ws-connect` / `ws-send` against an in-page mock `WebSocket`. The form's fields
-are serialized to JSON on submit and sent over the socket; the mock echoes
-back a swap envelope (`{target, swap, data}`) which the processor recognizes
-and applies through the standard swap machinery.
-
-## Bundle
-
-All reactive demos load a single script:
+## Bundles
 
 ```html
-<script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+<script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+<!-- only the pages that make requests or stream: -->
+<script src="../vendor/htmx-4.0.0/htmx.min.js"></script>
+<script src="../vendor/htmx-4.0.0/ext/hx-sse.min.js"></script>
 ```
 
-That bundle includes everything needed for the htmx v4 surface:
-
-1. **Full hyperscript runtime** — needed so the `set` command fires
-   `notifyGlobalWrite()` on writes to `$count` / `$price` / etc. The slim
-   `hybrid-complete` runtime in `hyperfixi-hx.js` skips that notify, which
-   is why the slim bundle's hx-live half-renders (initial value only, no
-   updates).
-2. **`@hyperfixi/reactivity`** — auto-installed at bundle init. Registers
-   the `live` / `when` / `bind` parser features and the global read/write
-   hooks that wire reads to effect subscriptions and writes to notify.
-3. **htmx-compat attribute processor** — auto-initialized on
-   `DOMContentLoaded`. Translates `hx-live`, routes `sse-*` / `ws-*` through
-   the SSE/WS modules.
-4. **SSE + WS modules** — connection management, bounded backoff reconnect,
-   cleanup on element removal via MutationObserver.
-
-Trade-off: `hyperfixi-hx-v4.js` is much larger than the slim
-`hyperfixi-hx.js` (~257 KB vs 13 KB gzipped). If you don't need any of
-hx-live / SSE / WS / bind, stay on the slim bundle. For production builds,
-use [`@hyperfixi/vite-plugin`](../../packages/vite-plugin/) — it scans your
-HTML and, when v4 features are detected, falls back to the hx-v4 bundle
-automatically; otherwise it ships the minimal handcrafted bundle.
-
-## Cross-link
-
-- Reactivity package: [`packages/reactivity/`](../../packages/reactivity/) —
-  the `hx-live` bridge is documented in
-  [its README](../../packages/reactivity/README.md#hx-live-bridge).
-- Plan: [`~/.claude/plans/htmx-v4-reactive-streaming.md`](file://~/.claude/plans/htmx-v4-reactive-streaming.md).
+`hyperfixi-hx-v4.js`, which these pages used to load, is core's bundle and retires with core.

@@ -1099,21 +1099,23 @@ Full reference — decision tree, htmx-compat layer (`hx-live`, `sse-connect`/`s
 generator, and semantic regional bundles — lives in
 [docs/BROWSER_BUNDLES.md](docs/BROWSER_BUNDLES.md).
 
-Quick selection (sizes gzipped):
+Quick selection (sizes gzipped). **The engine's `hyperfixi-hs.js` is the target** (every
+tracked gallery page runs on it since 2026-10-03); core's bundles ship until the cutover:
 
-| Bundle                       | Size       | Use case                                                                                                |
-| ---------------------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| via `@hyperfixi/vite-plugin` | minimal    | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (no options) |
-| `hyperfixi-hx.js`            | ~22.0 KB   | **The small prebuilt** — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes                      |
-| `hyperfixi.js`               | ~352 KB    | **Everything** — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages          |
-| `hyperfixi-hx-v4.js`         | ~363 KB    | Separate product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime                         |
-| `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                         |
-| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24)              |
+| Bundle                       | Size       | Use case                                                                                                                                                                                                                     |
+| ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hyperfixi-hs.js`            | ~34.1 KB   | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes |
+| via `@hyperfixi/vite-plugin` | minimal    | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (core's templates; moves to engine modules in Phase C)                                                                            |
+| `hyperfixi-hx.js`            | ~22.0 KB   | Core's small prebuilt — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes (the embedded htmx layer is retired with core)                                                                                             |
+| `hyperfixi.js`               | ~352 KB    | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                            |
+| `hyperfixi-hx-v4.js`         | ~363 KB    | Core's htmx v4 product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime (retired with core; on the engine these are `live` blocks + real htmx 4)                                                               |
+| `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                                                                                                                                              |
+| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — the regional IIFEs currently lack `translate` and their language registrations (OPEN_ITEMS 2e)                                  |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
-with `hyperfixi-hx.js` and moves to `hyperfixi.js` the first time the console
-says a command needs it (a small bundle fails loudly and names the full one —
-pinned by the bundle-compatibility matrix). `lite`, `lite-plus`, `minimal` and
+with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes
+(the owner's B2 decision, 2026-10-03). On core, `hyperfixi-hx.js` → `hyperfixi.js` the first time
+the console says a command needs it. `lite`, `lite-plus`, `minimal` and
 `standard` were retired as public names in the 4.0 cycle;
 `hyperfixi-hybrid-complete.js` is still built because the plugin's generated
 fallback imports it (`@hyperfixi/core/browser/hybrid-complete`), and is

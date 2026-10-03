@@ -80,11 +80,11 @@
     </style>
   </head>
   <body>
-    <h1>Localized htmx-compat attributes</h1>
+    <h1>Localized htmx attributes</h1>
     <p class="note">
       Three sections on one page, each in a different language. Each button uses the localized
       htmx attribute names from its <code>lang=</code> scope's vocab module. Devtools shows the
-      author-time attribute names — the orchestrator translates them to canonical English under
+      author-time attribute names — the adapter canonicalizes them to the hx-* names under
       the hood. The mocked fetch returns the URL it was called with so you can confirm each
       lang scope wired its own attribute correctly.
     </p>
@@ -131,7 +131,7 @@
         window.fetch = function (url, opts) {
           // Echo the requested URL back as plain text.
           return Promise.resolve(
-            new Response('Fetched: ' + url, {
+            new Response('Fetched: ' + decodeURI(String(url)), {
               status: 200,
               headers: { 'Content-Type': 'text/html' },
             })
@@ -140,14 +140,16 @@
       })();
     </script>
 
-    <!-- 1. Full hx-v4 bundle: runtime + reactivity + htmx-compat orchestrator. -->
-    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
-
-    <!-- 2. Vocab modules for the languages used on this page. Order matters:
-         these must load AFTER hx-v4 (which installs the orchestrator) but
-         BEFORE any DOMContentLoaded-driven scan starts. -->
+    <!-- 1. The engine (hyperscript) — the page's `_` handlers, if any, run here. -->
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+    <!-- 2. The htmx adapter, BEFORE htmx: it canonicalizes each localized attribute to its
+         hx-* name on the element before htmx processes the node. -->
+    <script src="../../packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <!-- 3. Vocab modules for the languages used on this page (self-registering). -->
     <script src="../../packages/core/vocab/htmx/es.js"></script>
     <script src="../../packages/core/vocab/htmx/ja.js"></script>
     <script src="../../packages/core/vocab/htmx/ar.js"></script>
+    <!-- 4. Real htmx 4. -->
+    <script src="../vendor/htmx-4.0.0/htmx.min.js"></script>
   </body>
 </html>

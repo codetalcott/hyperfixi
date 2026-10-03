@@ -1,11 +1,11 @@
 /**
- * Playwright smoke test for Phase 8 localized htmx attributes.
- * Drives the multi-language fixtures in `examples/hx-v4-i18n/` to
- * confirm vocab-aware attribute resolution works end-to-end in a real
- * browser.
+ * Playwright smoke test for the localized pages in `examples/hx-v4-i18n/`, which since
+ * 2026-10-03 run on the engine beside upstream libraries: multilang-page.html on REAL htmx 4
+ * with `@lokascript/htmx-adapter` canonicalizing the localized attribute names
+ * (`hx-obtener` → `hx-get`), live-multilang.html with three `live` blocks written in es /
+ * ja / ar and translated by the lite hyperscript adapter as the engine reads them.
  *
- * Companion to `hx-v4-features.spec.ts`. Same loader pattern, different
- * fixture directory.
+ * Companion to `hx-v4-features.spec.ts`. Same loader pattern, different fixture directory.
  */
 import { test, expect, type Page } from '@playwright/test';
 import { waitForHyperfixi } from './test-utils';
@@ -21,15 +21,15 @@ async function loadDemo(page: Page, file: string): Promise<void> {
     timeout: 10000,
   });
   await waitForHyperfixi(page);
-  // Allow vocab modules + orchestrator + processor scan to settle.
+  // Allow the adapter's sweep, htmx's init and the engine's first live run to settle.
   await page.waitForTimeout(200);
 }
 
-test.describe('hx-v4 localized htmx attributes @comprehensive', () => {
+test.describe('localized htmx attributes and live blocks on the engine @comprehensive', () => {
   test('multilang-page: each lang section issues its own localized fetch', async ({ page }) => {
     await loadDemo(page, 'multilang-page.html');
 
-    // Spanish: hx-obtener wires to fetch (mocked to echo URL into target).
+    // Spanish: hx-obtener is canonicalized to hx-get; htmx fetches (mocked to echo the URL).
     await page.getByRole('button', { name: 'Cargar usuarios' }).click();
     await expect(page.locator('#out-es')).toHaveText(/Fetched: \/api\/usuarios/);
 
@@ -46,14 +46,13 @@ test.describe('hx-v4 localized htmx attributes @comprehensive', () => {
     await expect(page.locator('#out-en')).toHaveText(/Fetched: \/api\/users/);
   });
 
-  test('live-multilang: localized hx-live re-renders all 3 counters from one shared var', async ({
+  test('live-multilang: live blocks in three languages re-render from one shared var', async ({
     page,
   }) => {
     await loadDemo(page, 'live-multilang.html');
 
-    // All three counters start at 0 (initial value before any clicks).
-    // The hx-live expression `put $global_count or 0 into me` renders
-    // 0 when the var is undefined.
+    // All three counters start at 0: each block is `live put $global_count or 0 into me`
+    // in its language, and renders 0 while the variable is undefined.
     const esCounter = page.locator('section[lang="es"] .counter');
     const jaCounter = page.locator('section[lang="ja"] .counter');
     const arCounter = page.locator('section[lang="ar"] .counter');
@@ -62,8 +61,7 @@ test.describe('hx-v4 localized htmx attributes @comprehensive', () => {
     await expect(jaCounter).toHaveText('0');
     await expect(arCounter).toHaveText('0');
 
-    // Click +1 three times. Each click updates $global_count; all 3
-    // localized hx-live counters re-render.
+    // Click +1 three times. Each click updates $global_count; all three live blocks re-run.
     const plus = page.getByRole('button', { name: '+1' });
     await plus.click();
     await plus.click();
