@@ -666,8 +666,8 @@
       src="../../packages/semantic/dist/browser.global.js"
       onload="window.__demoInit && window.__demoInit()"
     ></script>
-    <!-- Load hyperfixi runtime (exposes window.hyperfixi + evalLSENode) -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <!-- The hyperscript host (window.hyperfixi); the semantic bundle above is the renderer -->
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
     <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
   </body>
