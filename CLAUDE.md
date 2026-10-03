@@ -883,16 +883,20 @@ The bundle compatibility test suite automatically tests every built bundle again
 
 ### Using Behaviors (Browser)
 
-Include the resolver bundle after core — all standard behaviors resolve on demand:
+Include the behaviors bundle after the engine's `hyperfixi-hs.js` — it defines every
+standard behavior on the host as it loads (`@hyperfixi/behaviors` peers on
+`@hyperfixi/engine` since 2026-10-03; its sources are in upstream's idioms and also run
+on upstream `_hyperscript`, where a no-argument install is spelled `install X()`):
 
 ```html
-<script src="hyperfixi.js"></script>
+<script src="hyperfixi-hs.js"></script>
 <script src="resolver.browser.global.js"></script>
 <!-- install Toggleable, Draggable, etc. just work -->
 <button _="install Toggleable(cls: 'highlighted')">Toggle</button>
 ```
 
-Behaviors are hyperscript source strings compiled on first use. The resolver bundle is 5.7 KB gzipped.
+Behaviors are hyperscript source strings the host defines with `evaluate`, as it would a
+`<script type="text/hyperscript">`. The bundle is 5.7 KB gzipped.
 
 ### Dynamic Class Selectors
 
@@ -904,16 +908,18 @@ behavior MyBehavior(cls)
 end
 ```
 
-### Behavior Resolver Hook
+### Defining a Custom Behavior
 
-External code can register a resolver for custom behaviors:
+A behavior is a global the host defines when it reads a `behavior … end` program. Define it
+before the elements that install it, in a `<script type="text/hyperscript">` or from a
+string:
 
 ```javascript
-window._hyperscript.behaviors.resolve = name => {
-  /* compile & register, return true */
-};
-window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initBlock });
+window.hyperfixi.evaluate(`behavior MyThing on click add .done end`);
 ```
+
+(Core's `_hyperscript.behaviors.resolve` hook was core-only; the engine has no lazy
+resolver, and the behaviors bundle defines its eleven sources eagerly.)
 
 ### Adding a New Command
 

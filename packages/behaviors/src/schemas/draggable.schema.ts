@@ -30,18 +30,11 @@ export const draggableSchema: BehaviorSchema = {
   requirements: ['position: absolute or position: fixed on the element'],
   source: `
 behavior Draggable(dragHandle)
-  init
-    if no dragHandle set dragHandle to me
-  end
-  on pointerdown(clientX, clientY) from dragHandle
+  on pointerdown(clientX, clientY) from (dragHandle or me)
     halt the event
     trigger draggable:start
-    measure x
-    set startX to it
-    measure y
-    set startY to it
-    set xoff to clientX - startX
-    set yoff to clientY - startY
+    set xoff to clientX - my offsetLeft
+    set yoff to clientY - my offsetTop
     repeat until event pointerup from document
       wait for pointermove(clientX, clientY) or
                pointerup(clientX, clientY) from document
@@ -50,6 +43,5 @@ behavior Draggable(dragHandle)
     end
     trigger draggable:end
   end
-end
-`.trim(),
+end`.trim(),
 };

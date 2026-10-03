@@ -45,12 +45,8 @@ export const focusTrapSchema: BehaviorSchema = {
   source: `
 behavior FocusTrap(active, initialFocus, returnFocus)
   init
-    if active is undefined
-      set active to true
-    end
-    if returnFocus is undefined
-      set returnFocus to true
-    end
+    if active is undefined set element's active to true end
+    if returnFocus is undefined set element's returnFocus to true end
     js(me, active, initialFocus, returnFocus)
       var FOCUSABLE = 'a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])';
       var isActive = false;

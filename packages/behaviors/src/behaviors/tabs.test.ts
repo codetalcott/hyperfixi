@@ -2,50 +2,28 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('Tabs behavior', () => {
   describe('registerTabs', () => {
-    it('should compile its hyperscript source and execute', async () => {
+    it('defines the behavior on the host from its hyperscript source', async () => {
       const { registerTabs, tabsSource } = await import('./tabs');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
+      const host = { evaluate: vi.fn() };
 
-      await registerTabs(mock);
+      await registerTabs(host);
 
-      expect(mock.compileSync).toHaveBeenCalledWith(tabsSource, { traditional: true });
-      expect(mock.execute).toHaveBeenCalledWith(
-        { type: 'behavior' },
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      expect(host.evaluate).toHaveBeenCalledWith(tabsSource);
     });
 
-    it('should throw on compile failure', async () => {
+    it('should throw when the host rejects the source', async () => {
       const { registerTabs } = await import('./tabs');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
-        execute: vi.fn(),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      const host = {
+        evaluate: vi.fn(() => {
+          throw new Error('boom');
+        }),
       };
-      await expect(registerTabs(mock)).rejects.toThrowError(/Failed to compile Tabs/);
+      await expect(registerTabs(host)).rejects.toThrowError(/Failed to define Tabs/);
     });
 
-    it('should throw when no runtime available', async () => {
+    it('should throw when no host is available', async () => {
       const { registerTabs } = await import('./tabs');
-      await expect(registerTabs(undefined)).rejects.toThrowError(/LokaScript not found/);
-    });
-
-    it('should fall back to manual context when createContext is missing', async () => {
-      const { registerTabs } = await import('./tabs');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-      };
-
-      await registerTabs(mock as any);
-      expect(mock.execute).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      await expect(registerTabs(undefined)).rejects.toThrowError(/No hyperscript host/);
     });
   });
 

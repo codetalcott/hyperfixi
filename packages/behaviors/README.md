@@ -1,15 +1,35 @@
 # @hyperfixi/behaviors
 
-Reusable hyperscript behaviors for HyperFixi / LokaScript. A behavior is installed
-on any element with `_="install BehaviorName(params)"` and is defined in **pure
-hyperscript** (its `source`), compiled on demand.
+Reusable hyperscript behaviors. A behavior is installed on any element with
+`_="install BehaviorName(params)"` and is defined in **pure hyperscript** (its `source`),
+in upstream `_hyperscript`'s own idioms. The host is `@hyperfixi/engine` (the
+`hyperfixi-hs.js` script-tag bundle); every source also runs, unchanged, on upstream
+`_hyperscript` 0.9.93.
 
 ```html
-<script src="hyperfixi.js"></script>
+<script src="hyperfixi-hs.js"></script>
 <script src="resolver.browser.global.js"></script>
-<!-- install X just works — behaviors compile on first use -->
+<!-- install X just works — the bundle defines every behavior on the host -->
 <button _="install Toggleable(cls: 'active')">Toggle</button>
 ```
+
+## Hosts
+
+The bundle (and the npm `register*()` functions) define each behavior with the host's
+`evaluate(source)`, exactly as a page's `<script type="text/hyperscript">` would. Anything
+shaped like upstream's `_hyperscript` object is a host; `window.hyperfixi` is tried first,
+then `window._hyperscript`.
+
+- **`@hyperfixi/engine`** (`hyperfixi-hs.js`): the peer dependency, and what the tests run
+  on. `install Toggleable` with no arguments works.
+- **upstream `_hyperscript`** (0.9.93): every source runs the same, measured in a browser
+  (2026-10-03). One difference, upstream's: `install Toggleable` _without parentheses_ throws
+  there, so write `install Toggleable()` (or give an argument) on upstream.
+
+Two things the sources never do, because no hyperscript engine reads them that way: default a
+parameter with a bare `set cls to "active"` (it makes a local the handlers never see — the
+sources write `set element's cls to …`), and name a parameter `target` (that is hyperscript's
+own name for the event target, so Toggleable's is `targetEl`).
 
 ## The boundary rule — what a behavior _is_
 
@@ -22,10 +42,10 @@ This rule is why the set is small and tiered. Most "behaviors" people reach for 
 really just short inline scripts — see [Recipes](#recipes--most-things-are-inline-scripts).
 
 A single source of truth drives every consumer: the hyperscript `source` string in
-each `src/schemas/*.schema.ts`. The npm `register*()` functions, the CDN
-`resolver.browser.global.js` bundle, and `@hyperfixi/patterns-reference` all compile
+each `src/schemas/*.schema.ts`. The npm `register*()` functions, the browser
+`resolver.browser.global.js` bundle, and `@hyperfixi/patterns-reference` all define
 that **same source** — one runtime path, identical in the browser and Node. **Every
-behavior compiles from `source`; there is no imperative-JS installer.** (An earlier
+behavior is defined from `source`; there is no imperative-JS installer.** (An earlier
 imperative-installer experiment forked a second, diverging path; it has been removed
 for all tiers — including the three experimental components, which now run their
 pointer loops from `source` like everything else.)
@@ -87,7 +107,7 @@ recipe to an installed behavior only when it is genuinely reusable and parameter
 
 ```javascript
 import { registerAll } from '@hyperfixi/behaviors';
-await registerAll(); // registers every behavior with window.hyperfixi
+await registerAll(); // defines every behavior on window.hyperfixi (or window._hyperscript)
 
 import { registerToggleable } from '@hyperfixi/behaviors/toggleable';
 await registerToggleable(); // tree-shakeable single behavior

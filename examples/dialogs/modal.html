@@ -172,7 +172,7 @@
         <div class="demo">
             <h2>Demo 1: Simple Info Modal</h2>
 
-            <button _="on click show #info-modal">
+            <button _="on click add .show to #info-modal">
                 Open Info Modal
             </button>
 
@@ -180,7 +180,7 @@
                 <div class="modal" _="on click halt">
                     <div class="modal-header">
                         <h3>ℹ️ Information</h3>
-                        <button class="close-btn" _="on click hide #info-modal">×</button>
+                        <button class="close-btn" _="on click remove .show from #info-modal">×</button>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -195,7 +195,7 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button class="secondary" _="on click hide #info-modal">
+                        <button class="secondary" _="on click remove .show from #info-modal">
                             Close
                         </button>
                     </div>
@@ -207,7 +207,7 @@
         <div class="demo">
             <h2>Demo 2: Confirmation Dialog</h2>
 
-            <button class="danger" _="on click show #confirm-modal">
+            <button class="danger" _="on click add .show to #confirm-modal">
                 Delete Account
             </button>
 
@@ -215,7 +215,7 @@
                 <div class="modal" _="on click halt">
                     <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                         <h3>⚠️ Confirm Delete</h3>
-                        <button class="close-btn" _="on click hide #confirm-modal">×</button>
+                        <button class="close-btn" _="on click remove .show from #confirm-modal">×</button>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -226,12 +226,12 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button class="secondary" _="on click hide #confirm-modal">
+                        <button class="secondary" _="on click remove .show from #confirm-modal">
                             Cancel
                         </button>
                         <button class="danger"
                                 _="on click
-                                   hide #confirm-modal
+                                   remove .show from #confirm-modal
                                    then wait 100ms
                                    then log 'Account deleted!'">
                             Delete Account
@@ -245,7 +245,7 @@
         <div class="demo">
             <h2>Demo 3: Form Modal</h2>
 
-            <button class="success" _="on click show #form-modal">
+            <button class="success" _="on click add .show to #form-modal">
                 Add New User
             </button>
 
@@ -253,7 +253,7 @@
                 <div class="modal" _="on click halt">
                     <div class="modal-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                         <h3>👤 New User</h3>
-                        <button class="close-btn" _="on click hide #form-modal">×</button>
+                        <button class="close-btn" _="on click remove .show from #form-modal">×</button>
                     </div>
                     <div class="modal-body">
                         <form id="user-form">
@@ -268,14 +268,14 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="secondary" _="on click hide #form-modal">
+                        <button class="secondary" _="on click remove .show from #form-modal">
                             Cancel
                         </button>
                         <button class="success"
                                 _="on click
                                    if #username's value and #email's value
                                      log 'User created:' + #username's value
-                                     hide #form-modal
+                                     remove .show from #form-modal
                                    else
                                      log 'Please fill required fields'
                                    end">
@@ -339,12 +339,12 @@
 
         <!-- Global keyboard handler (for Demos 1-3 only; Demo 4 uses behaviors) -->
         <div _="on keydown[key=='Escape'] from window
-               hide .modal-overlay"></div>
+               remove .show from .modal-overlay"></div>
 
         <!-- Click outside to close (for Demos 1-3 only; Demo 4 uses ClickOutside behavior) -->
         <div _="on click from .modal-overlay
                if target matches .modal-overlay
-                 hide .modal-overlay
+                 remove .show from .modal-overlay
                end"></div>
 
         <!-- Code Explanation -->
@@ -356,21 +356,27 @@
   &lt;div <span class="keyword">class</span>=<span class="string">"modal"</span> <span class="keyword">_</span>=<span class="string">"on click halt"</span>&gt;
     &lt;div <span class="keyword">class</span>=<span class="string">"modal-header"</span>&gt;
       &lt;h3&gt;Title&lt;/h3&gt;
-      &lt;button <span class="keyword">_</span>=<span class="string">"on click hide #my-modal"</span>&gt;×&lt;/button&gt;
+      &lt;button <span class="keyword">_</span>=<span class="string">"on click remove .show from #my-modal"</span>&gt;×&lt;/button&gt;
     &lt;/div&gt;
     &lt;div <span class="keyword">class</span>=<span class="string">"modal-body"</span>&gt;
       Content goes here
     &lt;/div&gt;
     &lt;div <span class="keyword">class</span>=<span class="string">"modal-footer"</span>&gt;
-      &lt;button <span class="keyword">_</span>=<span class="string">"on click hide #my-modal"</span>&gt;Close&lt;/button&gt;
+      &lt;button <span class="keyword">_</span>=<span class="string">"on click remove .show from #my-modal"</span>&gt;Close&lt;/button&gt;
     &lt;/div&gt;
   &lt;/div&gt;
 &lt;/div&gt;
         </div>
 
         <h3>Open Modal:</h3>
+        <p style="text-align:left; max-width: 600px; margin: 0 auto 10px;">
+            The overlay is hidden by a stylesheet rule (<code>.modal-overlay { display: none }</code>),
+            so the handlers add and remove the <code>.show</code> class that the stylesheet shows it
+            with. (<code>show</code> / <code>hide</code> set the element's inline style, which does
+            not override a stylesheet rule.)
+        </p>
         <div class="code">
-&lt;button <span class="keyword">_</span>=<span class="string">"on click show #my-modal"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click add .show to #my-modal"</span>&gt;
   Open Modal
 &lt;/button&gt;
         </div>
@@ -379,7 +385,7 @@
         <div class="code">
 <span class="comment">&lt;!-- Global handler for ESC key --&gt;</span>
 &lt;div <span class="keyword">_</span>=<span class="string">"on keydown[key=='Escape'] from window
-     hide .modal-overlay"</span>&gt;&lt;/div&gt;
+     remove .show from .modal-overlay"</span>&gt;&lt;/div&gt;
         </div>
 
         <h3>Click Outside to Close:</h3>
@@ -387,7 +393,7 @@
 <span class="comment">&lt;!-- Click overlay (not modal content) to close --&gt;</span>
 &lt;div <span class="keyword">_</span>=<span class="string">"on click from .modal-overlay
      if target matches .modal-overlay
-       hide .modal-overlay
+       remove .show from .modal-overlay
      end"</span>&gt;&lt;/div&gt;
         </div>
 
@@ -454,9 +460,9 @@
 
 <span class="comment">&lt;!-- Auto-close after timeout --&gt;</span>
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
-         show #notification-modal
+         add .show to #notification-modal
          wait 3s
-         hide #notification-modal"</span>&gt;
+         remove .show from #notification-modal"</span>&gt;
   Show Notification
 &lt;/button&gt;
 
@@ -464,10 +470,10 @@
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
          if #form-modified
            if confirm('Discard changes?')
-             hide #form-modal
+             remove .show from #form-modal
            end
          else
-           hide #form-modal
+           remove .show from #form-modal
          end"</span>&gt;
   Close
 &lt;/button&gt;
@@ -479,11 +485,11 @@
 <span class="comment">&lt;!-- Before: Manual wiring (Demos 1-3) --&gt;</span>
 <span class="comment">&lt;!-- 1. Global ESC handler --&gt;</span>
 &lt;div <span class="keyword">_</span>=<span class="string">"on keydown[key=='Escape'] from window
-     hide .modal-overlay"</span>&gt;&lt;/div&gt;
+     remove .show from .modal-overlay"</span>&gt;&lt;/div&gt;
 <span class="comment">&lt;!-- 2. Global click-outside handler --&gt;</span>
 &lt;div <span class="keyword">_</span>=<span class="string">"on click from .modal-overlay
      if target matches .modal-overlay
-       hide .modal-overlay
+       remove .show from .modal-overlay
      end"</span>&gt;&lt;/div&gt;
 <span class="comment">&lt;!-- 3. Halt on each modal to prevent bubble --&gt;</span>
 &lt;div <span class="keyword">class</span>=<span class="string">"modal"</span> <span class="keyword">_</span>=<span class="string">"on click halt"</span>&gt;
@@ -536,9 +542,9 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi + Behaviors -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
-    <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
+    <!-- The engine, then the behaviors bundle (ClickOutside + FocusTrap come from it) -->
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+    <script src="../../packages/behaviors/dist/resolver.browser.global.js"></script>
     <script src="../prism-loader.js"></script>
 
     <!-- Behavior modal helpers (Demo 4) -->

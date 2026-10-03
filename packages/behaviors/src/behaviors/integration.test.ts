@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { LokaScriptInstance } from '../schemas/types';
+import type { HyperscriptHost } from '../schemas/types';
 import { registerDraggable, draggableSource } from './draggable';
 import { registerToggleable, toggleableSource } from './toggleable';
 import { registerRemovable, removableSource } from './removable';
@@ -12,21 +12,15 @@ import { registerFocusTrap, focusTrapSource } from './focustrap';
 import { registerScrollReveal, scrollRevealSource } from './scrollreveal';
 import { registerTabs, tabsSource } from './tabs';
 
-function createMockInstance(overrides: Partial<LokaScriptInstance> = {}): LokaScriptInstance {
-  return {
-    compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-    execute: vi.fn().mockResolvedValue(undefined),
-    createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-    ...overrides,
-  };
+function createMockHost(overrides: Partial<HyperscriptHost> = {}): HyperscriptHost {
+  return { evaluate: vi.fn(), ...overrides };
 }
 
-// Source-compiled behaviors (use compileSync + execute).
-// EVERY behavior compiles its hyperscript `source` — one runtime path, identical
-// browser/npm, no imperative JS installer (the "no imperative JS" rule). The optional
-// three (FocusTrap/ScrollReveal/Tabs) carry their web-API logic in an `init`-block
+// EVERY behavior is defined from its hyperscript `source` with the host's `evaluate` — one
+// path, identical browser/npm, no imperative JS installer (the "no imperative JS" rule). The
+// optional three (FocusTrap/ScrollReveal/Tabs) carry their web-API logic in an `init`-block
 // `js()` body, and the experimental three (Draggable/Sortable/Resizable) run their
-// pointer-drag loops via `repeat until event` — all through the single compile path.
+// pointer-drag loops via `repeat until event` — all through the single path.
 const compiledBehaviors = [
   { name: 'Removable', register: registerRemovable, source: removableSource },
   { name: 'Toggleable', register: registerToggleable, source: toggleableSource },
@@ -42,57 +36,28 @@ const compiledBehaviors = [
 ] as const;
 
 describe('behavior registration integration', () => {
-  describe('source-compiled behaviors', () => {
+  describe('source-defined behaviors', () => {
     for (const { name, register, source } of compiledBehaviors) {
       describe(name, () => {
-        it('should compile with traditional parser', async () => {
-          const mock = createMockInstance();
-          await register(mock);
+        it('should define the source on the host', async () => {
+          const host = createMockHost();
+          await register(host);
 
-          expect(mock.compileSync).toHaveBeenCalledWith(source, { traditional: true });
+          expect(host.evaluate).toHaveBeenCalledWith(source);
         });
 
-        it('should create context and execute', async () => {
-          const mock = createMockInstance();
-          await register(mock);
-
-          expect(mock.createContext).toHaveBeenCalled();
-          expect(mock.execute).toHaveBeenCalledWith(
-            { type: 'behavior' },
-            { locals: expect.any(Map), globals: expect.any(Map) }
-          );
-        });
-
-        it('should throw on compile failure', async () => {
-          const mock = createMockInstance({
-            compileSync: vi.fn().mockReturnValue({
-              ok: false,
-              errors: [{ message: 'syntax error', line: 1 }],
+        it('should throw when the host rejects the source', async () => {
+          const host = createMockHost({
+            evaluate: vi.fn(() => {
+              throw new Error('syntax error');
             }),
           });
 
-          await expect(register(mock)).rejects.toThrowError(
-            new RegExp(`Failed to compile ${name}`)
-          );
+          await expect(register(host)).rejects.toThrowError(new RegExp(`Failed to define ${name}`));
         });
 
-        it('should throw when lokascript is not available', async () => {
-          await expect(register(undefined)).rejects.toThrowError(/LokaScript not found/);
-        });
-
-        it('should fall back to manual context when createContext is missing', async () => {
-          const mock = createMockInstance();
-          delete (mock as Partial<LokaScriptInstance>).createContext;
-
-          await register(mock);
-
-          expect(mock.execute).toHaveBeenCalledWith(
-            { type: 'behavior' },
-            expect.objectContaining({
-              locals: expect.any(Map),
-              globals: expect.any(Map),
-            })
-          );
+        it('should throw when no host is available', async () => {
+          await expect(register(undefined)).rejects.toThrowError(/No hyperscript host/);
         });
       });
     }
