@@ -107,7 +107,7 @@ test.describe('index.html — gallery hub @comprehensive', () => {
     // The hub should link to the example pages.
     const links = page.locator('a[href$=".html"]');
     expect(await links.count()).toBeGreaterThan(15);
-    await expect(page.locator('a[href="forms/partial-validation.html"]')).toHaveCount(1);
+    await expect(page.locator('a[href="forms/form-validation.html"]')).toHaveCount(1);
 
     // Following a link reaches a real example page.
     await page.locator('a[href="toggle-and-state/toggle-class.html"]').first().click();

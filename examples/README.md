@@ -19,7 +19,6 @@ examples/
 ├── animation/                  # CSS transitions, color cycling, view transitions
 │   ├── color-cycling.html
 │   ├── color-cycling-simple.html
-│   ├── color-cycling-debug.html
 │   ├── fade-effects.html
 │   └── view-transitions.html
 ├── dialogs/                    # Modal dialogs and native <dialog> element
@@ -42,8 +41,7 @@ examples/
 │   ├── async-fetch.html
 │   └── infinite-scroll.html
 ├── forms/                      # Form validation and processing
-│   ├── form-validation.html
-│   └── partial-validation.html
+│   └── form-validation.html
 ├── js-interop/                 # JavaScript interoperability
 │   ├── js-interop.html
 │   └── clipboard-copy.html
@@ -55,8 +53,7 @@ examples/
 ├── swap-and-morph/             # Content swapping and DOM morphing
 │   ├── swap-morph.html
 │   ├── morph-comparison.html
-│   ├── multi-target-swaps.html
-│   └── test-property-access.html
+│   └── multi-target-swaps.html
 ├── toggle-and-state/           # Toggle patterns and state management
 │   ├── toggle-class.html
 │   └── toggle-attributes.html
