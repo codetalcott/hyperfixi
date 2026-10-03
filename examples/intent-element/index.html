@@ -29,12 +29,12 @@
 </head>
 <body>
   <h1>&lt;lse-intent&gt; Demo</h1>
-  <p class="subtitle">Browser custom element that validates LSE protocol JSON and executes it via the hyperfixi runtime.</p>
+  <p class="subtitle">Browser custom element that validates LSE protocol JSON, renders it to hyperscript and runs it on the page's hyperscript host.</p>
 
   <!-- ─── Example 1: trigger="click" — declarative click trigger ────── -->
   <section>
     <h2>1. <code>trigger="click"</code> — Toggle <code>.active</code> on <code>#sidebar</code></h2>
-    <p>No JavaScript wiring. The <code>trigger="click"</code> attribute attaches a click listener automatically; clicking anywhere inside the element fires <code>evalLSENode()</code>.</p>
+    <p>No JavaScript wiring. The <code>trigger="click"</code> attribute attaches a click listener automatically; clicking anywhere inside the element runs the intent.</p>
 
     <lse-intent id="demo-toggle" trigger="click">
       <script type="application/lse+json">
@@ -223,8 +223,10 @@
     document.addEventListener('lse:error', e => logEvent('lse:error', e.detail));
   </script>
 
-  <!-- Load hyperfixi runtime (provides window.hyperfixi + evalLSENode) -->
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <!-- The hyperscript host (window.hyperfixi) and the English renderer the element uses
+       to turn an intent into hyperscript text for the host's evaluate -->
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+  <script src="../../packages/semantic/dist/browser-en.en.global.js"></script>
   <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
   <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
 

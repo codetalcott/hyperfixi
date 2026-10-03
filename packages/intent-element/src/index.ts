@@ -1,15 +1,19 @@
 /**
  * @hyperfixi/intent-element
  *
- * Browser custom element that validates LSE protocol JSON and executes it
- * via the hyperfixi runtime. Zero-dependency validation via @lokascript/intent;
- * execution delegated to window.hyperfixi.evalLSENode (peer dep).
+ * Browser custom element that validates LSE protocol JSON and executes it on the
+ * page's hyperscript host. Zero-dependency validation via @lokascript/intent;
+ * execution renders the intent to English hyperscript (a LokaScriptSemantic bundle's
+ * `render`) and hands it to the host's `evaluate` — @hyperfixi/engine's hyperfixi-hs.js,
+ * or upstream _hyperscript. (@hyperfixi/core's `evalLSENode` is used when no renderer
+ * is loaded.)
  *
  * Auto-registers <lse-intent> when loaded as a browser script.
  *
  * @example
  * ```html
- * <script src="hyperfixi.js"></script>
+ * <script src="hyperfixi-hs.js"></script>
+ * <script src="browser-en.en.global.js"></script>
  * <script src="intent-element.iife.global.js"></script>
  *
  * <lse-intent>

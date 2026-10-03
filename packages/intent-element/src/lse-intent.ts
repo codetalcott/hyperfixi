@@ -2,9 +2,11 @@
  * <lse-intent> Custom Element
  *
  * Accepts LSE protocol JSON via an inline <script type="application/lse+json">
- * child (or a `src` attribute), validates it, and executes it via the hyperfixi
- * runtime according to a declarative trigger model. Degrades gracefully when
- * the runtime is unavailable.
+ * child (or a `src` attribute), validates it, and executes it on the page's hyperscript
+ * host according to a declarative trigger model. The host is `@hyperfixi/engine`
+ * (`hyperfixi-hs.js`) or upstream `_hyperscript`, which run the node rendered to English
+ * hyperscript by a `LokaScriptSemantic*` bundle; or `@hyperfixi/core`'s `evalLSENode`
+ * when no renderer is loaded. Degrades gracefully when there is no host.
  *
  * ## Trigger modes
  *
@@ -66,20 +68,111 @@ import { intentRegistry } from './schema-registry.js';
 import { sandboxed } from './sandbox.js';
 
 // ---------------------------------------------------------------------------
-// Runtime bridge — resolved lazily so the element works without @hyperfixi/core
+// Runtime bridge — resolved lazily so the element works without a hyperscript host
 // ---------------------------------------------------------------------------
 
-interface HyperfiziRuntime {
-  evalLSENode(node: SemanticNode, element?: Element): Promise<unknown>;
+/**
+ * How a prepared node runs. Two hosts are known:
+ *
+ * 1. A hyperscript host in upstream `_hyperscript`'s shape — `@hyperfixi/engine`
+ *    (`hyperfixi-hs.js`, `window.hyperfixi` / `window._hyperscript`) or upstream itself —
+ *    has `evaluate(source, context)`. The node is rendered to English hyperscript text
+ *    (`toggle .active on #sidebar`) and evaluated with the element as `me`. The renderer
+ *    is `@lokascript/semantic`'s `render(node, 'en')`, read from whichever
+ *    `LokaScriptSemantic*` bundle the page loaded (or set on `LSEIntentElement.render`).
+ *    This is the `lse_to_hyperscript` direction: text is the interchange.
+ * 2. `@hyperfixi/core`'s `window.hyperfixi.evalLSENode(node, element)`, which runs the
+ *    node through core's own AST. Used only when no renderer is loaded, so a page on
+ *    `hyperfixi.js` alone keeps working.
+ */
+interface LSERuntime {
+  run(node: SemanticNode, element: Element): Promise<unknown>;
 }
 
-function getRuntime(): HyperfiziRuntime | null {
+type Renderer = (node: SemanticNode, language: string) => string;
+
+interface HostLike {
+  evaluate?: (source: string, context?: Record<string, unknown>) => unknown;
+  evalLSENode?: (node: SemanticNode, element?: Element) => Promise<unknown>;
+}
+
+function findRenderer(): Renderer | null {
+  const override = LSEIntentElement.render;
+  if (typeof override === 'function') return override;
   const w = globalThis as Record<string, unknown>;
-  const api = w['hyperfixi'];
-  if (api && typeof (api as Record<string, unknown>)['evalLSENode'] === 'function') {
-    return api as HyperfiziRuntime;
+  for (const key of Object.getOwnPropertyNames(w)) {
+    if (!key.startsWith('LokaScriptSemantic')) continue;
+    const bundle = w[key] as { render?: unknown } | undefined;
+    if (bundle && typeof bundle.render === 'function') return bundle.render as Renderer;
   }
   return null;
+}
+
+/**
+ * A wire-format `literal` with a string value and no `dataType` is a string: core's AST
+ * path always read it so, and rendered without the type it would come out bare
+ * (`put Hello into #out`, a variable read). Stamp the type on the wire JSON before it
+ * becomes a node, so both execution paths see the same intent.
+ */
+function withLiteralTypes(raw: Record<string, unknown>): Record<string, unknown> {
+  const roles = raw['roles'];
+  if (!roles || typeof roles !== 'object' || Array.isArray(roles)) return raw;
+  const typed: Record<string, unknown> = {};
+  for (const [role, value] of Object.entries(roles as Record<string, unknown>)) {
+    const v = value as { type?: unknown; value?: unknown; dataType?: unknown } | null;
+    typed[role] =
+      v && v.type === 'literal' && typeof v.value === 'string' && v.dataType === undefined
+        ? { ...v, dataType: 'string' }
+        : value;
+  }
+  const body = raw['body'];
+  return {
+    ...raw,
+    roles: typed,
+    ...(Array.isArray(body)
+      ? {
+          body: body.map(b =>
+            b && typeof b === 'object' ? withLiteralTypes(b as Record<string, unknown>) : b
+          ),
+        }
+      : {}),
+  };
+}
+
+/** Why no runtime was found, for the diagnostic. */
+type RuntimeLookup =
+  { runtime: LSERuntime } | { runtime: null; code: 'NO_RUNTIME' | 'NO_RENDERER'; message: string };
+
+function getRuntime(): RuntimeLookup {
+  const w = globalThis as Record<string, unknown>;
+  const host = (w['hyperfixi'] ?? w['_hyperscript']) as HostLike | undefined;
+  if (!host || (typeof host.evaluate !== 'function' && typeof host.evalLSENode !== 'function')) {
+    return {
+      runtime: null,
+      code: 'NO_RUNTIME',
+      message:
+        'hyperscript host not found. Load hyperfixi-hs.js (and a LokaScriptSemantic bundle) before intent-element.iife.js to enable execution.',
+    };
+  }
+  const render = findRenderer();
+  if (render && typeof host.evaluate === 'function') {
+    const evaluate = host.evaluate;
+    return {
+      runtime: {
+        run: (node, element) => Promise.resolve(evaluate(render(node, 'en'), { me: element })),
+      },
+    };
+  }
+  if (typeof host.evalLSENode === 'function') {
+    const evalLSENode = host.evalLSENode;
+    return { runtime: { run: (node, element) => evalLSENode(node, element) } };
+  }
+  return {
+    runtime: null,
+    code: 'NO_RENDERER',
+    message:
+      'hyperscript host found but no LSE renderer: load a LokaScriptSemantic bundle (browser-en.en.global.js) so the intent can be rendered to hyperscript, or set LSEIntentElement.render.',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -113,6 +206,12 @@ interface PreparedNode {
 
 export class LSEIntentElement extends HTMLElement {
   static observedAttributes = ['src', 'disabled', 'timeout', 'trigger'];
+
+  /**
+   * The renderer that turns a node into English hyperscript for a host's `evaluate`.
+   * Defaults to the `render` of whichever `LokaScriptSemantic*` bundle the page loaded.
+   */
+  static render: ((node: SemanticNode, language: string) => string) | null = null;
 
   private _node: SemanticNode | null = null;
   private _diagnostics: IRDiagnostic[] = [];
@@ -332,7 +431,9 @@ export class LSEIntentElement extends HTMLElement {
     // Deserialize to SemanticNode
     let node: SemanticNode;
     try {
-      node = fromProtocolJSON(raw as unknown as Parameters<typeof fromProtocolJSON>[0]);
+      node = fromProtocolJSON(
+        withLiteralTypes(raw) as unknown as Parameters<typeof fromProtocolJSON>[0]
+      );
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       this._diagnostics = [
@@ -356,29 +457,25 @@ export class LSEIntentElement extends HTMLElement {
   }
 
   /**
-   * Execute a prepared node via the hyperfixi runtime. Emits `lse:executed`
+   * Execute a prepared node on the page's hyperscript host. Emits `lse:executed`
    * on success or `lse:error` on failure. Safe to call multiple times.
    *
    * **Event-handler unwrap.** If the prepared node is an event-handler (from
    * either verbose wire format or compact `trigger` sugar), the element's
    * own `trigger` attribute has already wired the DOM event listener — the
    * wire-format event metadata is redundant at this point. We unwrap the
-   * event-handler and execute each body command directly, rather than passing
-   * the event-handler node to `evalLSENode` (which would attempt to re-wire
-   * a listener at runtime, effectively discarding the body).
+   * event-handler and execute each body command directly, rather than running
+   * the event-handler node itself (which would attempt to re-wire a listener at
+   * runtime, effectively discarding the body).
    */
   private async _execute(node: SemanticNode): Promise<void> {
-    const runtime = getRuntime();
-    if (!runtime) {
-      // Runtime not loaded — emit a warning but don't error.
-      this._diagnostics.push({
-        severity: 'warning',
-        code: 'NO_RUNTIME',
-        message:
-          'hyperfixi runtime not found. Load hyperfixi.js before intent-element.iife.js to enable execution.',
-      });
+    const lookup = getRuntime();
+    if (!lookup.runtime) {
+      // No host (or no renderer for one) — emit a warning but don't error.
+      this._diagnostics.push({ severity: 'warning', code: lookup.code, message: lookup.message });
       return;
     }
+    const runtime = lookup.runtime;
 
     // Unwrap event-handler nodes into their body commands. See the comment
     // above and examples/llm-native-todo-demo/README.md for the motivation.
@@ -395,7 +492,7 @@ export class LSEIntentElement extends HTMLElement {
     // already mutated the DOM.
     const results: unknown[] = [];
     for (const cmd of executables) {
-      const result = await sandboxed(() => runtime.evalLSENode(cmd, this), timeoutMs);
+      const result = await sandboxed(() => runtime.run(cmd, this), timeoutMs);
       if (result.ok) {
         results.push(result.result);
       } else {

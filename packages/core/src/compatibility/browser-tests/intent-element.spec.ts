@@ -2,7 +2,7 @@
  * Playwright smoke test for <lse-intent> custom element.
  *
  * Loads the demo page (examples/intent-element/index.html) and verifies:
- * 1. hyperfixi.js loads and exposes evalLSENode
+ * 1. the hyperscript host (hyperfixi-hs.js) and the English renderer load
  * 2. intent-element IIFE auto-registers <lse-intent>
  * 3. Valid inline JSON validates and executes
  * 4. Invalid JSON shows the error slot
@@ -14,12 +14,13 @@ import { test, expect } from '@playwright/test';
 const DEMO_URL = '/examples/intent-element/index.html';
 
 test.describe('<lse-intent> browser integration', () => {
-  test('window.hyperfixi.evalLSENode is a function', async ({ page }) => {
+  test('the host and the renderer are loaded', async ({ page }) => {
     await page.goto(DEMO_URL);
-    const hasEvalLSENode = await page.evaluate(
-      () => typeof (window as any).hyperfixi?.evalLSENode === 'function'
-    );
-    expect(hasEvalLSENode).toBe(true);
+    const loaded = await page.evaluate(() => ({
+      evaluate: typeof (window as any).hyperfixi?.evaluate === 'function',
+      render: typeof (window as any).LokaScriptSemanticEn?.render === 'function',
+    }));
+    expect(loaded).toEqual({ evaluate: true, render: true });
   });
 
   test('<lse-intent> custom element is registered', async ({ page }) => {
@@ -73,7 +74,7 @@ test.describe('<lse-intent> browser integration', () => {
 
   test('toggle button click mutates #sidebar class', async ({ page }) => {
     await page.goto(DEMO_URL);
-    // Wait for element to initialize — connectedCallback auto-executes evalLSENode,
+    // Wait for element to initialize — connectedCallback auto-executes the intent,
     // so sidebar already has .active from the initial toggle
     await page.waitForTimeout(300);
 
@@ -82,7 +83,7 @@ test.describe('<lse-intent> browser integration', () => {
     // Record initial state (already toggled once on connect)
     const initialHasActive = await sidebar.evaluate(el => el.classList.contains('active'));
 
-    // Click the toggle button — this calls refresh() which re-executes evalLSENode
+    // Click the toggle button — this calls refresh() which re-executes the intent
     await page.click('#demo-toggle [slot="trigger"]');
     await page.waitForTimeout(200);
 
