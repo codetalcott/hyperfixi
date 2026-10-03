@@ -2,36 +2,28 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('AutoDismiss behavior', () => {
   describe('registerAutoDismiss', () => {
-    it('should compile its hyperscript source and execute', async () => {
+    it('defines the behavior on the host from its hyperscript source', async () => {
       const { registerAutoDismiss, autoDismissSource } = await import('./autodismiss');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
+      const host = { evaluate: vi.fn() };
 
-      await registerAutoDismiss(mock);
+      await registerAutoDismiss(host);
 
-      expect(mock.compileSync).toHaveBeenCalledWith(autoDismissSource, { traditional: true });
-      expect(mock.execute).toHaveBeenCalledWith(
-        { type: 'behavior' },
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      expect(host.evaluate).toHaveBeenCalledWith(autoDismissSource);
     });
 
-    it('should throw on compile failure', async () => {
+    it('should throw when the host rejects the source', async () => {
       const { registerAutoDismiss } = await import('./autodismiss');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
-        execute: vi.fn(),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      const host = {
+        evaluate: vi.fn(() => {
+          throw new Error('boom');
+        }),
       };
-      await expect(registerAutoDismiss(mock)).rejects.toThrowError(/Failed to compile AutoDismiss/);
+      await expect(registerAutoDismiss(host)).rejects.toThrowError(/Failed to define AutoDismiss/);
     });
 
-    it('should throw when no runtime available', async () => {
+    it('should throw when no host is available', async () => {
       const { registerAutoDismiss } = await import('./autodismiss');
-      await expect(registerAutoDismiss(undefined)).rejects.toThrowError(/LokaScript not found/);
+      await expect(registerAutoDismiss(undefined)).rejects.toThrowError(/No hyperscript host/);
     });
   });
 

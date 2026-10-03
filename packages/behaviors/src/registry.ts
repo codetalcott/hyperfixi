@@ -23,7 +23,7 @@ import type {
   BehaviorSchema,
   BehaviorCategory,
   BehaviorTier,
-  LokaScriptInstance,
+  HyperscriptHost,
 } from './schemas/types';
 
 // =============================================================================
@@ -284,21 +284,17 @@ export async function loadAll(): Promise<void> {
 // =============================================================================
 
 /**
- * Register a behavior with HyperFixi runtime.
- * Compiles and executes the behavior source.
+ * Load a behavior and define it on a hyperscript host (`window.hyperfixi` when none is given).
  */
-export async function registerWithRuntime(
-  name: string,
-  hyperfixi?: LokaScriptInstance
-): Promise<void> {
+export async function registerWithRuntime(name: string, host?: HyperscriptHost): Promise<void> {
   const module = await loadBehavior(name);
-  await module.register(hyperfixi);
+  await module.register(host);
 }
 
 /**
- * Register all loaded behaviors with HyperFixi runtime.
+ * Define every loaded behavior on a hyperscript host.
  */
-export async function registerAllWithRuntime(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const registrations = Array.from(behaviors.values()).map(module => module.register(hyperfixi));
+export async function registerAllWithRuntime(host?: HyperscriptHost): Promise<void> {
+  const registrations = Array.from(behaviors.values()).map(module => module.register(host));
   await Promise.all(registrations);
 }

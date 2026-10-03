@@ -2,38 +2,30 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('ScrollReveal behavior', () => {
   describe('registerScrollReveal', () => {
-    it('should compile its hyperscript source and execute', async () => {
+    it('defines the behavior on the host from its hyperscript source', async () => {
       const { registerScrollReveal, scrollRevealSource } = await import('./scrollreveal');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
-        execute: vi.fn().mockResolvedValue(undefined),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      const host = { evaluate: vi.fn() };
+
+      await registerScrollReveal(host);
+
+      expect(host.evaluate).toHaveBeenCalledWith(scrollRevealSource);
+    });
+
+    it('should throw when the host rejects the source', async () => {
+      const { registerScrollReveal } = await import('./scrollreveal');
+      const host = {
+        evaluate: vi.fn(() => {
+          throw new Error('boom');
+        }),
       };
-
-      await registerScrollReveal(mock);
-
-      expect(mock.compileSync).toHaveBeenCalledWith(scrollRevealSource, { traditional: true });
-      expect(mock.execute).toHaveBeenCalledWith(
-        { type: 'behavior' },
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
+      await expect(registerScrollReveal(host)).rejects.toThrowError(
+        /Failed to define ScrollReveal/
       );
     });
 
-    it('should throw on compile failure', async () => {
+    it('should throw when no host is available', async () => {
       const { registerScrollReveal } = await import('./scrollreveal');
-      const mock = {
-        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
-        execute: vi.fn(),
-        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
-      };
-      await expect(registerScrollReveal(mock)).rejects.toThrowError(
-        /Failed to compile ScrollReveal/
-      );
-    });
-
-    it('should throw when no runtime available', async () => {
-      const { registerScrollReveal } = await import('./scrollreveal');
-      await expect(registerScrollReveal(undefined)).rejects.toThrowError(/LokaScript not found/);
+      await expect(registerScrollReveal(undefined)).rejects.toThrowError(/No hyperscript host/);
     });
   });
 

@@ -195,7 +195,7 @@ describe('@hyperfixi/behaviors', () => {
 
     it('should use triggerEl parameter (not trigger)', () => {
       expect(removableSource).toContain('behavior Removable(triggerEl');
-      expect(removableSource).toContain('on click from triggerEl');
+      expect(removableSource).toContain('on click from (triggerEl or me)');
     });
   });
 
@@ -211,7 +211,7 @@ describe('@hyperfixi/behaviors', () => {
     });
 
     it('should default to "active" class', () => {
-      expect(toggleableSource).toContain('set cls to "active"');
+      expect(toggleableSource).toContain(`set element's cls to "active"`);
     });
   });
 

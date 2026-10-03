@@ -2,40 +2,35 @@
 /**
  * Optional behaviors — REAL runtime behavior tests.
  *
- * The optional three (FocusTrap / ScrollReveal / Tabs) were converted from
- * imperative installers onto the single source-compiled runtime path
- * (BEHAVIORS_CONSOLIDATION_PLAN.md §3d follow-up). Like curated-runtime.test.ts,
- * these exercise each behavior's actual hyperscript `source` through the real
- * @hyperfixi/core runtime — register → install on an element → drive the DOM →
- * assert both the effect AND the documented lifecycle events.
- *
- * This is the "parses ≠ works" guard (§2/§5): the mock-based unit tests only prove
- * `register*()` calls compileSync; these prove the `init`-block `js()` bodies (the
- * focus model, the IntersectionObserver, the ARIA/keyboard wiring) actually run
- * correctly once compiled — exactly the class of bug the imperative path masked.
+ * Like curated-runtime.test.ts, these exercise each behavior's actual hyperscript `source`
+ * on the real @hyperfixi/engine — define → install on an element → drive the DOM → assert
+ * both the effect AND the documented lifecycle events. The optional three carry their
+ * web-API logic (a focus model, an IntersectionObserver, ARIA/keyboard wiring) in an
+ * `init`-block `js()` body; these prove those bodies run correctly once the source is
+ * defined — exactly the class of bug a parse check cannot see.
  */
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
-import { hyperscript } from '@hyperfixi/core';
+import { api, everything, processNode, register } from '@hyperfixi/engine';
 import { registerFocusTrap } from './focustrap';
 import { registerScrollReveal } from './scrollreveal';
 import { registerTabs } from './tabs';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const hf = hyperscript as any;
-
 const tick = (ms = 30) => new Promise(r => setTimeout(r, ms));
 
+/** Install from an attribute, as a page does: the engine reads `_` and runs the install. */
 async function install(code: string, el: HTMLElement): Promise<void> {
-  const r = hyperscript.compileSync(code, { traditional: true });
-  if (!r.ok) throw new Error(`install compile failed: ${JSON.stringify(r.errors)}`);
-  await hyperscript.execute(r.ast, hyperscript.createContext(el));
+  el.setAttribute('_', code);
+  processNode(el);
+  await tick();
 }
 
 beforeAll(async () => {
-  // Behavior registry is a runtime singleton; register the optional set once.
-  await registerFocusTrap(hf);
-  await registerScrollReveal(hf);
-  await registerTabs(hf);
+  // The engine is assembled from modules; this bundle is every one. Behaviors are globals
+  // (`window.Toggleable`), so define the set once per file.
+  register(...everything);
+  await registerFocusTrap(api);
+  await registerScrollReveal(api);
+  await registerTabs(api);
 });
 
 afterEach(() => {

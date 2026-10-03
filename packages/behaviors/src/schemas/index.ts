@@ -13,7 +13,8 @@ export type {
   ParameterSchema,
   EventSchema,
   BehaviorModule,
-  LokaScriptInstance,
+  HyperscriptHost,
+  HyperscriptWindow,
 } from './types';
 
 // Individual schemas

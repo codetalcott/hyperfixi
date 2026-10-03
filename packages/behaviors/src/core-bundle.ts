@@ -11,25 +11,25 @@ export { registerToggleable, toggleableSource, toggleableMetadata } from './beha
 
 import { registerDraggable } from './behaviors/draggable';
 import { registerToggleable } from './behaviors/toggleable';
-import type { LokaScriptInstance, LokaScriptWindow } from './schemas/types';
+import type { HyperscriptHost } from './schemas/types';
+import { resolveRuntime } from './schemas/types';
 
 /**
- * Register all core tier behaviors.
+ * Define the core tier behaviors on a hyperscript host.
  */
-export async function registerCore(hyperfixi?: LokaScriptInstance): Promise<void> {
-  await Promise.all([registerDraggable(hyperfixi), registerToggleable(hyperfixi)]);
+export async function registerCore(host?: HyperscriptHost): Promise<void> {
+  await Promise.all([registerDraggable(host), registerToggleable(host)]);
 }
 
 /**
- * Promise that resolves when core behaviors are registered.
- * Set when the package auto-registers in browser environments.
+ * Resolves when the core behaviors are defined, when the package was loaded as a script tag
+ * after the host; `null` otherwise.
  */
 export let ready: Promise<void> | null = null;
 
-// Auto-register when loaded in browser
-if (typeof window !== 'undefined' && (window as unknown as LokaScriptWindow).lokascript) {
-  ready = registerCore();
-  ready.catch(err => {
-    console.error('[behaviors] Core auto-registration failed:', err);
+const _host = resolveRuntime();
+if (_host) {
+  ready = registerCore(_host).catch(err => {
+    console.error('[behaviors] Core auto-definition failed:', err);
   });
 }

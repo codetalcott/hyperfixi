@@ -51,12 +51,8 @@ export const clipboardSchema: BehaviorSchema = {
   source: `
 behavior Clipboard(text, source, feedback, feedbackDuration)
   init
-    if feedbackDuration is undefined
-      set feedbackDuration to 2000
-    end
-    if source is undefined
-      set source to me
-    end
+    if feedbackDuration is undefined set element's feedbackDuration to 2000 end
+    if source is undefined set element's source to me end
   end
   on click
     if text is not undefined
