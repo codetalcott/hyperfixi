@@ -1,6 +1,6 @@
 # @hyperfixi/intent-element
 
-The `<lse-intent>` custom element for [hyperfixi](https://github.com/codetalcott/hyperfixi) — a declarative way to run **LSE protocol JSON** (LokaScript Explicit Syntax) from HTML. The element validates the JSON against the LSE schema, then executes it through the hyperfixi runtime.
+The `<lse-intent>` custom element for [hyperfixi](https://github.com/codetalcott/hyperfixi) — a declarative way to run **LSE protocol JSON** (LokaScript Explicit Syntax) from HTML. The element validates the JSON against the LSE schema, renders it to English hyperscript, and runs that on the page's hyperscript host.
 
 ## Install
 
@@ -8,14 +8,20 @@ The `<lse-intent>` custom element for [hyperfixi](https://github.com/codetalcott
 npm install @hyperfixi/intent-element
 ```
 
-`@hyperfixi/core` is an optional peer dependency: validation works without it, but executing an intent needs the runtime (`window.hyperfixi.evalLSENode`).
+Every peer dependency is optional: validation works with none of them. Executing an intent needs a **hyperscript host** and a **renderer**:
+
+- the host is `@hyperfixi/engine`'s `hyperfixi-hs.js` (`window.hyperfixi`) or upstream `_hyperscript` — anything with `evaluate(source, context)`;
+- the renderer is `@lokascript/semantic`'s `render(node, 'en')`, taken from whichever `LokaScriptSemantic*` browser bundle the page loads (`browser-en.en.global.js` is the English-only one), or set on `LSEIntentElement.render`.
+
+The intent is rendered to English (`toggle .active on #sidebar`) and evaluated with the element as `me` — the same text path as the `lse_to_hyperscript` tool. A page on `@hyperfixi/core`'s `hyperfixi.js` alone still works: without a renderer the element falls back to core's `window.hyperfixi.evalLSENode`.
 
 ## Usage
 
 The browser build auto-registers `<lse-intent>`:
 
 ```html
-<script src="hyperfixi.js"></script>
+<script src="hyperfixi-hs.js"></script>
+<script src="browser-en.en.global.js"></script>
 <script src="intent-element.iife.global.js"></script>
 
 <!-- Inline LSE JSON -->

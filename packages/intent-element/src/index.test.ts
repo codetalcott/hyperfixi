@@ -4,7 +4,7 @@
  * Uses jsdom for DOM simulation. Execution tests stub window.hyperfixi.evalLSENode
  * so the suite runs without the full hyperfixi browser bundle.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LSEIntentElement } from './lse-intent.js';
 import { intentRegistry } from './schema-registry.js';
 import { sandboxed } from './sandbox.js';
@@ -357,19 +357,121 @@ describe('LSEIntentElement — execution', () => {
     document.body.removeChild(el);
   });
 
-  it('does not use _hyperscript fallback — only window.hyperfixi is supported', async () => {
+  it('a host without a renderer and without evalLSENode gets NO_RENDERER, not an execution', async () => {
     delete (globalThis as Record<string, unknown>)['hyperfixi'];
-    (globalThis as Record<string, unknown>)['_hyperscript'] = {
-      evalLSENode: vi.fn().mockResolvedValue('should-not-run'),
-    };
+    (globalThis as Record<string, unknown>)['_hyperscript'] = { evaluate: vi.fn() };
     const el = makeElement(VALID_JSON);
     const validated = waitForEvent(el, 'lse:validated');
     document.body.appendChild(el);
     await validated;
     await new Promise(r => setTimeout(r, 20));
-    // Should see NO_RUNTIME, not lse:executed
-    expect(el.diagnostics.some(d => d.code === 'NO_RUNTIME')).toBe(true);
+    expect(el.diagnostics.some(d => d.code === 'NO_RENDERER')).toBe(true);
     delete (globalThis as Record<string, unknown>)['_hyperscript'];
+    document.body.removeChild(el);
+  });
+});
+
+// ─── LSEIntentElement — the text path (engine / upstream host) ───────────────
+
+describe('LSEIntentElement — text path on a hyperscript host', () => {
+  const g = globalThis as Record<string, unknown>;
+  afterEach(() => {
+    delete g['hyperfixi'];
+    delete g['_hyperscript'];
+    delete g['LokaScriptSemanticEn'];
+    LSEIntentElement.render = null;
+  });
+
+  it('renders the node to English and evaluates it on the host with the element as me', async () => {
+    const evaluate = vi.fn().mockReturnValue('evaluated');
+    const render = vi.fn().mockReturnValue('toggle .active on #sidebar');
+    g['hyperfixi'] = { evaluate };
+    g['LokaScriptSemanticEn'] = { render };
+    const el = makeElement(VALID_JSON);
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    const event = await executed;
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(render.mock.calls[0][0].action).toBe('toggle');
+    expect(render.mock.calls[0][1]).toBe('en');
+    expect(evaluate).toHaveBeenCalledWith('toggle .active on #sidebar', { me: el });
+    expect(event.detail.result).toBe('evaluated');
+    document.body.removeChild(el);
+  });
+
+  it("upstream's global name works as the host too", async () => {
+    const evaluate = vi.fn();
+    g['_hyperscript'] = { evaluate };
+    g['LokaScriptSemanticEn'] = { render: () => 'toggle .active on #sidebar' };
+    const el = makeElement(VALID_JSON);
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    expect(evaluate).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('prefers the text path over evalLSENode when a renderer is loaded', async () => {
+    const evaluate = vi.fn();
+    const evalLSENode = vi.fn();
+    g['hyperfixi'] = { evaluate, evalLSENode };
+    g['LokaScriptSemanticEn'] = { render: () => 'toggle .active on #sidebar' };
+    const el = makeElement(VALID_JSON);
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    expect(evaluate).toHaveBeenCalledTimes(1);
+    expect(evalLSENode).not.toHaveBeenCalled();
+    document.body.removeChild(el);
+  });
+
+  it('LSEIntentElement.render overrides the bundle lookup', async () => {
+    const evaluate = vi.fn();
+    g['hyperfixi'] = { evaluate };
+    LSEIntentElement.render = () => 'add .x to me';
+    const el = makeElement(VALID_JSON);
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    expect(evaluate).toHaveBeenCalledWith('add .x to me', { me: el });
+    document.body.removeChild(el);
+  });
+
+  it('stamps a string literal without dataType as a string before rendering', async () => {
+    g['hyperfixi'] = { evaluate: vi.fn() };
+    const render = vi.fn().mockReturnValue('put "Hello" into #out');
+    g['LokaScriptSemanticEn'] = { render };
+    const el = makeElement(
+      JSON.stringify({
+        action: 'put',
+        roles: {
+          patient: { type: 'literal', value: 'Hello' },
+          destination: { type: 'selector', value: '#out' },
+        },
+      })
+    );
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    const node = render.mock.calls[0][0] as { roles: Map<string, { dataType?: string }> };
+    expect(node.roles.get('patient')?.dataType).toBe('string');
+    document.body.removeChild(el);
+  });
+
+  it('a host error on the text path is an EXECUTION_ERROR', async () => {
+    g['hyperfixi'] = {
+      evaluate: vi.fn(() => {
+        throw new Error('no such command');
+      }),
+    };
+    g['LokaScriptSemanticEn'] = { render: () => 'frobnicate me' };
+    const el = makeElement(VALID_JSON);
+    const errored = waitForEvent(el, 'lse:error');
+    document.body.appendChild(el);
+    const event = await errored;
+    expect(
+      event.detail.diagnostics.some((d: { code: string }) => d.code === 'EXECUTION_ERROR')
+    ).toBe(true);
     document.body.removeChild(el);
   });
 });
