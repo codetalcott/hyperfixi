@@ -621,6 +621,13 @@ English across languages floods R4 with new invalid pairs at once. A corrupted e
 _reference_ is different — R4's fair denominator silently EXCLUDES pairs whose en raw
 code the canonical parser rejects, so that class still needs the en-side vitest gate.)
 
+The **direct-path shapes** gate (`direct-path-shapes.<n>.test.ts`, 2026-10-03) carries
+core's 33 `*-direct-path.test.ts` files onto the text path before that path retires: their
+287 cases (English source, fixture, events), each translation run as written on the engine
+with the adapter plugin against upstream's English. 275 hold; `KNOWN` lists the rest
+(core-only forms awaiting their upstream render, one renderer loss, two vacuous) and only
+shrinks.
+
 Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
 generates them instead: eleven operand kinds (a reference's property among them:

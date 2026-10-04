@@ -1,0 +1,2621 @@
+[
+  {
+    "id": "behavior-handlers-direct-path#1",
+    "source": "behavior DemoA(h)\n  on click repeat while x < 3 increment x end end\n  on keyup add .k to me end\nend",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "keyup",
+    "languages": "all23"
+  },
+  {
+    "id": "behavior-handlers-direct-path#2",
+    "source": "behavior DemoX(h)\n  on click wait for pointerup end\n  on keyup add .k to me end\nend",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "keyup",
+    "languages": "all23"
+  },
+  {
+    "id": "class-query-scope-direct-path#1",
+    "source": "on click set x to .item in #list then put x.length into #out",
+    "fixture": "<ul id=\"list\"><li class=\"item\">a</li><li class=\"item\">b</li></ul><p class=\"item\">c</p><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "class-query-scope-direct-path#2",
+    "source": "on click add .z to .item in #list",
+    "fixture": "<ul id=\"list\"><li class=\"item\">a</li><li class=\"item\">b</li></ul><p class=\"item\">c</p><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "class-query-scope-direct-path#3",
+    "source": "on click for el in .item in #list put \"y\" into el end",
+    "fixture": "<ul id=\"list\"><li class=\"item\">a</li><li class=\"item\">b</li></ul><p class=\"item\">c</p><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "class-query-scope-direct-path#4",
+    "source": "on click if .item is in #list put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<ul id=\"list\"><li class=\"item\">a</li><li class=\"item\">b</li></ul><p class=\"item\">c</p><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-copula-direct-path#1",
+    "source": "on click set p to 1 then set q to 2 then if p is 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#2",
+    "source": "on click set p to 1 then set q to 2 then if p is q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#3",
+    "source": "on click set p to 1 then set q to 2 then if q is greater than p put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#4",
+    "source": "on click set p to 1 then set q to 2 then if p is greater than q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#5",
+    "source": "on click set p to 1 then set q to 2 then if p is not q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#6",
+    "source": "on click set p to 1 then set q to 2 then if p is not 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "hi", "th"]
+  },
+  {
+    "id": "condition-copula-direct-path#7",
+    "source": "on click set p to 1 then set q to 2 then if #d1 has .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-copula-direct-path#8",
+    "source": "on click set p to 1 then set q to 2 then if #d1 has .y put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-copula-direct-path#9",
+    "source": "on click set p to 1 then set q to 2 then if p is not null put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-copula-direct-path#10",
+    "source": "on click set p to 1 then set q to 2 then if s is not null put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-genitive-direct-path#1",
+    "source": "on click if #d1's textContent is \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#2",
+    "source": "on click if #d1's textContent is \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#3",
+    "source": "on click if #d1's textContent is not \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#4",
+    "source": "on click if #d1's textContent is not \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#5",
+    "source": "on click if #d1's textContent is #d2's textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#6",
+    "source": "on click if #d1's textContent is not #d2's textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#7",
+    "source": "on click if #i1's value is \"v\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "es", "fr", "hi", "it", "ja", "ko", "pt", "th", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#8",
+    "source": "on click if #i1's value is \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "es", "fr", "hi", "it", "ja", "ko", "pt", "th", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#9",
+    "source": "on click if #i1's value is not \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-genitive-direct-path#10",
+    "source": "on click if #i1's value is not \"v\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\">d</p><p id=\"d2\">e</p><input id=\"i1\" value=\"v\"><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "hi", "ja", "ko", "tl", "vi", "zh"]
+  },
+  {
+    "id": "condition-not-direct-path#1",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if not r put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "bn", "ja", "qu", "vi"]
+  },
+  {
+    "id": "condition-not-direct-path#2",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if not p put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "bn", "ja", "qu", "vi"]
+  },
+  {
+    "id": "condition-not-direct-path#3",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ja", "qu"]
+  },
+  {
+    "id": "condition-not-direct-path#4",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ja", "qu"]
+  },
+  {
+    "id": "condition-not-direct-path#5",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not empty put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "de", "fr", "ja", "pt", "ru", "tl", "uk"]
+  },
+  {
+    "id": "condition-not-direct-path#6",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if t is not empty put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["bn", "de", "fr", "ja", "pt", "ru", "tl", "uk"]
+  },
+  {
+    "id": "condition-phrases-direct-path#1",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#2",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#3",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#4",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is less than q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#5",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is less than 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#6",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is greater than q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#7",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is greater than or equal to 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#8",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is greater than or equal to 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#9",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is less than or equal to 0 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#10",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is equal to 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#11",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is equal to 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#12",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not equal to q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#13",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not equal to 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#14",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is really 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#15",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is really \"1\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#16",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is in [1, 2] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#17",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is in [3, 4] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#18",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not in [3, 4] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#19",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not in [1, 2] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#20",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 matches .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#21",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 does not match .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#22",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] does not contain 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#23",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 precedes #d2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#24",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d2 precedes #d1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#25",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d2 follows #d1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#26",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 follows #d2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#27",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d2 does not precede #d1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#28",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 does not precede #d2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#29",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #zz does not exist put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#30",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 does not exist put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#31",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is a Number put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#32",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is a String put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#33",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not a String put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#34",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not a Number put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#35",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 is an Element put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "zh"
+    ]
+  },
+  {
+    "id": "condition-phrases-direct-path#36",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is an Element put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "zh"
+    ]
+  },
+  {
+    "id": "condition-phrases-direct-path#37",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 is not an Element put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "zh"
+    ]
+  },
+  {
+    "id": "condition-phrases-direct-path#38",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not an Element put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "zh"
+    ]
+  },
+  {
+    "id": "condition-phrases-direct-path#39",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] includes 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#40",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] includes 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#41",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] does not include 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#42",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] does not include 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#43",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not null put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#44",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not empty put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#45",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if t is empty put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#46",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not q and q is 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#47",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not q and q is 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#48",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if not (p is q) put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#49",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1's textContent is \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#50",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1's textContent is \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#51",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1's textContent is not \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#52",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if the textContent of #d1 is \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#53",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if the textContent of #d1 is \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#54",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if textContent of #d1 is \"d\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#55",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if textContent of #d1 is \"z\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#56",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if \"d\" is equal to #d1.textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#57",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if \"z\" is equal to #d1.textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#58",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if \"d\" is equal to #d1's textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#59",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if \"xd\" includes #d1.textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#60",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if \"xz\" includes #d1.textContent put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["es", "he", "it", "pl", "tl", "tr"]
+  },
+  {
+    "id": "condition-phrases-direct-path#61",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#62",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#63",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am in [1, 2] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#64",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am in [3, 4] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#65",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am not in [3, 4] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#66",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p am not in [1, 2] put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#67",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is equal 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#68",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is equal 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#69",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not equal 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#70",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not equal 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#71",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not really \"1\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#72",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not really 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#73",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is really equal to 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#74",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is really equal to \"1\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#75",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not really equal to \"1\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#76",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p is not really equal to 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#77",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p really equals 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#78",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p really equals \"1\" put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#79",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p equals 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#80",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if p equals 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#81",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 equals #d1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#82",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 equals #d2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#83",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] include 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#84",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] include 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#85",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] contain 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#86",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] contain 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#87",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] do not contain 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#88",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] do not contain 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#89",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] does not contains 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#90",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if [1, 2] does not contains 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#91",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 do not match .y put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#92",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 do not match .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#93",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 does not follow #d2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#94",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d2 does not follow #d1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#95",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 has .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "condition-phrases-direct-path#96",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 has .y put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "condition-phrases-direct-path#97",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 have .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-phrases-direct-path#98",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then set t to \"\" then if #d1 have .y put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><p id=\"d2\">e</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": []
+  },
+  {
+    "id": "condition-words-direct-path#1",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if r or q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "de", "fr", "ms", "pt", "qu", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#2",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if r or 0 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar", "de", "fr", "ms", "pt", "qu", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#3",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if not r put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#4",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if not p put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#5",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if not r and p put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#6",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if not p or r put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "th", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#7",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p is not q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#8",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p is not 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["de", "fr", "id", "ms", "pt", "ru", "tl", "uk"]
+  },
+  {
+    "id": "condition-words-direct-path#9",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p and q put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar"]
+  },
+  {
+    "id": "condition-words-direct-path#10",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p and r put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ar"]
+  },
+  {
+    "id": "condition-words-direct-path#11",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p is 1 and q is 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ja", "ko"]
+  },
+  {
+    "id": "condition-words-direct-path#12",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p is not q and q is 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ja", "ko"]
+  },
+  {
+    "id": "condition-words-direct-path#13",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if p is 2 and q is 2 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["ja", "ko"]
+  },
+  {
+    "id": "condition-words-direct-path#14",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if #d1 does not match .y put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-words-direct-path#15",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if #d1 does not match .x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-words-direct-path#16",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if #zz does not exist put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-words-direct-path#17",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if #d1 does not exist put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": ["hi"]
+  },
+  {
+    "id": "condition-words-direct-path#18",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if [1, 2] contains 1 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "hi",
+      "id",
+      "it",
+      "ms",
+      "pl",
+      "pt",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "condition-words-direct-path#19",
+    "source": "on click set p to 1 then set q to 2 then set r to 0 then if [1, 2] contains 3 put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "hi",
+      "id",
+      "it",
+      "ms",
+      "pl",
+      "pt",
+      "ru",
+      "sw",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "constants-direct-path#1",
+    "source": "on click set #d1.disabled to false then put #d1.disabled into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"d1\" disabled>d</button><button id=\"host\">h</button>",
+    "installOn": "#host",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "constants-direct-path#2",
+    "source": "on click set x to true then if x is true put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"d1\" disabled>d</button><button id=\"host\">h</button>",
+    "installOn": "#host",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "constants-direct-path#3",
+    "source": "on click set x to false then if x put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"d1\" disabled>d</button><button id=\"host\">h</button>",
+    "installOn": "#host",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "constants-direct-path#4",
+    "source": "on click set x to 5 then set x to null then if x is null put \"yes\" into #out else put \"no\" into #out end",
+    "fixture": "<div id=\"out\">o</div><button id=\"d1\" disabled>d</button><button id=\"host\">h</button>",
+    "installOn": "#host",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "conversions-direct-path#26",
+    "source": "on click put \"2.5\" as Float | Int into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "conversions-direct-path#27",
+    "source": "on click put \"[1,2]\" as JSON | JSONString into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "conversions-direct-path#28",
+    "source": "on click put [3, 1, 3] as Unique | JSONString into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "conversions-direct-path#29",
+    "source": "on click set x to \"7\" as Int | String then put x + 1 into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "conversions-direct-path#30",
+    "source": "on click put 3.14159 as Fixed:2 into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "custom-or-event-direct-path#1",
+    "source": "on click or myEvent put \"ran\" into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "myEvent",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tl",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "else-if-direct-path#1",
+    "source": "on click if true add .a to me else if false add .b to me end then add .after to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "fetch-do-not-throw-direct-path#1",
+    "source": "on click fetch \"/missing\" do not throw then put \"ok\" into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "fetch-response-type-direct-path#1",
+    "source": "on click fetch \"/x\" as text then put it into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#1",
+    "source": "on click go back",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#2",
+    "source": "on click go forward",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#3",
+    "source": "on click go to url \"#frag\"",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#4",
+    "source": "on click go to url \"/x\" in new window then put \"y\" into #out",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#5",
+    "source": "on click go to /x in new window",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "go-direct-path#6",
+    "source": "on click go to #d1",
+    "fixture": "<div id=\"d1\"></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#1",
+    "source": "on click or keydown add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#2",
+    "source": "on keydown[key==\"Escape\"] add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "keydown",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#3",
+    "source": "on click(clientX) put clientX into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#4",
+    "source": "on myEvent(detail) put detail into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "myEvent",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#5",
+    "source": "on mousemove(clientX) put clientX into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "mousemove",
+    "languages": "all23"
+  },
+  {
+    "id": "handler-head-direct-path#6",
+    "source": "on keydown(key) put key into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "keydown",
+    "languages": "all23"
+  },
+  {
+    "id": "loop-direct-path#1",
+    "source": "on click repeat 3 times append \"x\" to #o end then append \"!\" to #o",
+    "fixture": "<div id=\"o\"></div><i class=\"i\"></i><i class=\"i\"></i><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "loop-direct-path#2",
+    "source": "on click for item in .i add .done to item end then append \"!\" to #o",
+    "fixture": "<div id=\"o\"></div><i class=\"i\"></i><i class=\"i\"></i><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": ["ar", "de", "es", "ja", "ko", "zh"]
+  },
+  {
+    "id": "loop-if-tail-direct-path#1",
+    "source": "on click repeat 2 times if x append \"a\" to me end end then append \"b\" to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi",
+      "zh"
+    ]
+  },
+  {
+    "id": "loop-if-tail-direct-path#2",
+    "source": "on click repeat 2 times if 2 < 1 append \"a\" to me end end then append \"b\" to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi",
+      "zh"
+    ]
+  },
+  {
+    "id": "loop-index-direct-path#1",
+    "source": "on click repeat for item in <li/> in #list index idx append idx to item end",
+    "fixture": "<ul id=\"list\"><li>a</li><li>b</li><li>c</li></ul><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "loop-index-direct-path#2",
+    "source": "on click repeat 3 times index idx append idx to #out end",
+    "fixture": "<p id=\"out\"></p><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "loop-index-direct-path#3",
+    "source": "on click repeat for item in <li/> in #list with index append index to item end",
+    "fixture": "<ul id=\"list\"><li>a</li><li>b</li><li>c</li></ul><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "tr",
+      "uk",
+      "vi",
+      "zh"
+    ]
+  },
+  {
+    "id": "naked-url-interpolation-direct-path#1",
+    "source": "on input fetch /search?q=${my value} then put it into #results",
+    "fixture": "<input value=\"abc\"><div id=\"results\"></div>",
+    "installOn": "input",
+    "event": "input",
+    "languages": "all23"
+  },
+  {
+    "id": "on-first-click-direct-path#1",
+    "source": "on first click append \"x\" to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#1",
+    "source": "on click put #d1's value into #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#2",
+    "source": "on click put the value of #d1 into #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#3",
+    "source": "on click set x to #d1's value then put x into #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#4",
+    "source": "on click set x to the value of #d1 then put x into #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#5",
+    "source": "on click append #d1's value to #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#6",
+    "source": "on click prepend #d1's value to #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#7",
+    "source": "on click default x to #d1's value then put x into #out",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "possessive-values-direct-path#8",
+    "source": "on click put 'x' into #out's textContent",
+    "fixture": "<input id=\"d1\" value=\"v1\"><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "put-into-variable-direct-path#1",
+    "source": "on click repeat for item in <li/> in #list put \"x\" into item end",
+    "fixture": "<ul id=\"list\"><li>a</li><li>b</li></ul><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "put-into-variable-direct-path#2",
+    "source": "on click put \"hi\" into my.textContent",
+    "fixture": "<button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "query-scope-direct-path#1",
+    "source": "on click add .x to <button/> in #box",
+    "fixture": "<div id=\"clicker\"></div><div id=\"box\"><button id=\"inside\"></button></div><button id=\"outside\"></button>",
+    "installOn": "#clicker",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#1",
+    "source": "on click go to top of #d1",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#2",
+    "source": "on click go to the bottom of #d1 smoothly",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#3",
+    "source": "on click go to right of me",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#4",
+    "source": "on click scroll to top of #d1",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#5",
+    "source": "on click scroll to the bottom of #d1",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#6",
+    "source": "on click scroll to middle of body",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#7",
+    "source": "on click scroll to #d1 smoothly",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#8",
+    "source": "on click scroll to #d1 instantly",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "scroll-position-direct-path#9",
+    "source": "on click scroll to top of #d1 smoothly",
+    "fixture": "<div id=\"d1\"></div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "selector-property-chains-direct-path#1",
+    "source": "on click put #d1.value.length into #out",
+    "fixture": "<input id=\"d1\" value=\"v1x\"><ul id=\"l1\"><li>a</li><li>b</li></ul><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "selector-property-chains-direct-path#2",
+    "source": "on click set x to #d1.value.length then put x into #out",
+    "fixture": "<input id=\"d1\" value=\"v1x\"><ul id=\"l1\"><li>a</li><li>b</li></ul><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "selector-property-chains-direct-path#3",
+    "source": "on click put #l1.children.length into #out",
+    "fixture": "<input id=\"d1\" value=\"v1x\"><ul id=\"l1\"><li>a</li><li>b</li></ul><div id=\"out\">o</div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#1",
+    "source": "on click set el to #d1 then put \"y\" into el",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#2",
+    "source": "on click set x to <div/> in #wrap then put x.length into #out",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#3",
+    "source": "on click set x to [1, 2] then put x.length into #out",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#4",
+    "source": "on click set my *opacity to 0.5 then set x to *opacity then put x into #out",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#5",
+    "source": "on click repeat for x in [1, 2] put x into #out end",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "set-element-value-direct-path#6",
+    "source": "on click put [1, 2] into x then put x.length into #out",
+    "fixture": "<div id=\"wrap\"><div id=\"d1\"></div><div id=\"d2\"></div></div><div id=\"out\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "tell-to-direct-path#1",
+    "source": "on click tell #modal to show",
+    "fixture": "<div id=\"modal\" style=\"display: none\"></div><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "tell-to-direct-path#2",
+    "source": "on click tell #panel to hide",
+    "fixture": "<div id=\"panel\"></div><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "tell-to-direct-path#3",
+    "source": "on click tell #panel add .open then add .visible",
+    "fixture": "<div id=\"panel\"></div><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "tell-to-direct-path#4",
+    "source": "on click tell <p/> in #box to add .x",
+    "fixture": "<div id=\"box\"><p></p><p></p></div><p id=\"outside\"></p><button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "tell-to-direct-path#5",
+    "source": "on click hide then add .done",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "until-loop-direct-path#1",
+    "source": "on click set n to 0 then repeat until n > 3 increment n then wait 1ms end then put n into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "until-loop-direct-path#2",
+    "source": "on click set n to 5 then repeat until n > 3 increment n then wait 1ms end then put n into #out",
+    "fixture": "<div id=\"out\">o</div><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#1",
+    "source": "on click set n to 3 then put n > 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#2",
+    "source": "on click set n to 3 then put n < 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#3",
+    "source": "on click set n to 3 then put n >= 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#4",
+    "source": "on click set n to 3 then put n <= 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#5",
+    "source": "on click set n to 3 then put n == 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#6",
+    "source": "on click set n to 3 then put n != 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#7",
+    "source": "on click set n to 3 then put n === 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#8",
+    "source": "on click set n to 3 then put n !== 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#9",
+    "source": "on click set n to 3 then put n mod 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#10",
+    "source": "on click set n to 3 then put n + 2 > 4 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#11",
+    "source": "on click set p to true then set q to false then put p or q into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#12",
+    "source": "on click set p to true then set q to false then put q or p into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#13",
+    "source": "on click set p to true then set q to false then put p and q into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#14",
+    "source": "on click set p to true then set q to false then put q and p into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#15",
+    "source": "on click set p to true then set q to false then put not p into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#16",
+    "source": "on click set p to true then set q to false then put not q into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#17",
+    "source": "on click set p to true then set q to false then put p and not q into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#18",
+    "source": "on click set n to 3 then put n is 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#19",
+    "source": "on click set n to 3 then put n is not 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#20",
+    "source": "on click set n to 3 then put n is greater than 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#21",
+    "source": "on click set n to 3 then put n is less than 2 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#22",
+    "source": "on click set n to 3 then put #d1 matches .x into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#23",
+    "source": "on click set n to 3 then put #d1 does not match .x into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#24",
+    "source": "on click set n to 3 then put #d1 exists into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#25",
+    "source": "on click set n to 3 then put #zz exists into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#26",
+    "source": "on click set n to 3 then put #zz does not exist into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#27",
+    "source": "on click set n to 3 then put n is a Number into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#28",
+    "source": "on click set n to 3 then put n is 3 or n is 4 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#29",
+    "source": "on click set n to 3 then put n is 4 or n is 5 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-operators-direct-path#30",
+    "source": "on click set n to 3 then put [1, 2] contains 1 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ms",
+      "pl",
+      "pt",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "value-operators-direct-path#31",
+    "source": "on click set n to 3 then put [1, 2] contains 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ms",
+      "pl",
+      "pt",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "value-operators-direct-path#32",
+    "source": "on click set n to 3 then put [1, 2] includes 1 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "uk",
+      "vi",
+      "zh"
+    ]
+  },
+  {
+    "id": "value-operators-direct-path#33",
+    "source": "on click set n to 3 then put [1, 2] includes 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pl",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "uk",
+      "vi",
+      "zh"
+    ]
+  },
+  {
+    "id": "value-operators-direct-path#34",
+    "source": "on click set n to 3 then put n equals 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "value-operators-direct-path#35",
+    "source": "on click set n to 3 then put n equals 4 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "he",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "ms",
+      "pt",
+      "qu",
+      "ru",
+      "sw",
+      "th",
+      "tl",
+      "tr",
+      "uk",
+      "vi"
+    ]
+  },
+  {
+    "id": "value-path-operands-direct-path#1",
+    "source": "on click set n to 3 then put #d1's textContent is \"d\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#2",
+    "source": "on click set n to 3 then put #d1's textContent is \"e\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#3",
+    "source": "on click set n to 3 then put #d1's textContent + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#4",
+    "source": "on click set n to 3 then put \"x\" + #d1's textContent into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#5",
+    "source": "on click set n to 3 then put textContent of #d1 + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#6",
+    "source": "on click set n to 3 then put \"x\" + textContent of #d1 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#7",
+    "source": "on click set n to 3 then put the textContent of #d1 + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#8",
+    "source": "on click set n to 3 then put \"x\" + the textContent of #d1 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#9",
+    "source": "on click set n to 3 then put #d1.textContent + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#10",
+    "source": "on click set n to 3 then put #d1.textContent is \"d\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#11",
+    "source": "on click set n to 3 then put me.textContent + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#12",
+    "source": "on click set n to 3 then put n + #d1's textContent into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#13",
+    "source": "on click set n to 3 then put #d1's className + \"!\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#14",
+    "source": "on click set n to 3 then put textContent of first <p/> + \"x\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#15",
+    "source": "on click set n to 3 then put #d1's textContent is \"d\" and n is 3 into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#16",
+    "source": "on click set n to 3 then put n is 3 and #d1's textContent is \"e\" into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#17",
+    "source": "on click set n to 3 then put not #d1's textContent into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "value-path-operands-direct-path#18",
+    "source": "on click set x to #d1's textContent + \"x\" then put x into #out",
+    "fixture": "<div id=\"out\">o</div><p id=\"d1\" class=\"x\">d</p><button id=\"b\">b</button>",
+    "installOn": "#b",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#1",
+    "source": "on click repeat for el in .x hide el end",
+    "fixture": "<div class=\"x\"></div><div class=\"x\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#2",
+    "source": "on click repeat for el in .x show el end",
+    "fixture": "<div class=\"x\" style=\"display: none\"></div><div class=\"x\" style=\"display: none\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#3",
+    "source": "on click repeat for el in .x remove el end",
+    "fixture": "<div class=\"x\"></div><div class=\"x\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#4",
+    "source": "on click repeat for el in .x toggle .a on el end",
+    "fixture": "<div class=\"x\"></div><div class=\"x\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#5",
+    "source": "on click repeat for el in .x trigger foo on el end",
+    "fixture": "<div class=\"x\"></div><div class=\"x\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#6",
+    "source": "on click repeat for el in .x take .a from el end",
+    "fixture": "<div class=\"x a\"></div><div class=\"x a\"></div><div id=\"other\" class=\"a\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#7",
+    "source": "on click repeat for el in .x tell el add .t end end",
+    "fixture": "<div class=\"x\"></div><div class=\"x\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#8",
+    "source": "on click get #d1 then set el to it then toggle .a on el then add .b to #d2",
+    "fixture": "<div id=\"d1\"></div><div id=\"d2\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "variable-targets-direct-path#9",
+    "source": "on click get #d1 then set el to it then put \"x\" into el then add .b to #d2",
+    "fixture": "<div id=\"d1\"></div><div id=\"d2\"></div><button>b</button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "wait-direct-path#1",
+    "source": "on click wait for keyup then add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "wait-direct-path#2",
+    "source": "on click wait 10ms then add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": ["ar", "es", "ja"]
+  },
+  {
+    "id": "wait-direct-path#3",
+    "source": "on click wait for pointermove(clientX) or pointerup(clientX) from document then put clientX into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  },
+  {
+    "id": "wait-direct-path#4",
+    "source": "on click wait for keyup or 20ms then add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": ["ar", "es", "ja", "zh"]
+  },
+  {
+    "id": "wait-direct-path#5",
+    "source": "on pointerdown(clientX) wait for pointerdown then put clientX into me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "pointerdown",
+    "languages": "all23"
+  },
+  {
+    "id": "wait-direct-path#6",
+    "source": "on click wait for mousemove then add .x to me",
+    "fixture": "<button></button>",
+    "installOn": "button",
+    "event": "click",
+    "languages": "all23"
+  }
+]
