@@ -6,20 +6,16 @@ import { test, expect } from '@playwright/test';
  * These tests cover the major expression types from the official _hyperscript test suite.
  * Each test uses direct page.evaluate() to avoid async/extraction issues.
  *
- * TODO: Known Limitations to Fix
- * ==============================
- * 1. TODO: `no` operator incorrectly handles empty strings
- *    - Test: "no empty string is false"
- *    - Syntax: `no ""`
- *    - Returns true, should return false (empty string is falsy but exists)
+ * They run on the engine (`hyperfixi-hs.js`) through compatibility-test.html,
+ * and the same specs run on upstream _hyperscript with `?engine=upstream`: the
+ * oracle for what each test expects.
  *
- * 2. TODO: `no` operator incorrectly handles false values
- *    - Test: "no false is true"
- *    - Syntax: `no false`
- *    - Returns false, should return true (false is "no value")
- *
- * Note: The `no` operator should check for null/undefined/empty-array,
- * not JavaScript falsiness. See official _hyperscript semantics.
+ * `no` (measured on upstream 0.9.93 and the engine, 2026-10-04): `no null`,
+ * `no ""` and `no []` are true; `no 0` and `no false` are false. Upstream's
+ * `no` asks "is this empty", and an empty string is; `false` is a value, not
+ * nothing. Core's parser answered `no ""` false and `no false` true, and these
+ * tests (then titled "no empty string is false", "no false is true") pinned
+ * core's answers.
  */
 
 test.describe('Expression Compatibility Tests @expression', () => {
@@ -348,17 +344,17 @@ test.describe('Expression Compatibility Tests @expression', () => {
       );
     });
 
-    test('no empty string is false', async ({ page }) => {
-      expect(await page.evaluate(async () => (window as any).evalHyperScript('no ""'))).toBe(false);
+    test('no empty string is true', async ({ page }) => {
+      expect(await page.evaluate(async () => (window as any).evalHyperScript('no ""'))).toBe(true);
     });
 
     test('no 0 is false', async ({ page }) => {
       expect(await page.evaluate(async () => (window as any).evalHyperScript('no 0'))).toBe(false);
     });
 
-    test('no false is true', async ({ page }) => {
+    test('no false is false', async ({ page }) => {
       expect(await page.evaluate(async () => (window as any).evalHyperScript('no false'))).toBe(
-        true
+        false
       );
     });
   });

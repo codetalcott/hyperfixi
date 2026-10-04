@@ -11,11 +11,11 @@ test('append/prepend preserve live state of existing children', async ({ page })
   await page.setContent(`
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8">
-<script src="/packages/core/dist/hyperfixi.js"></script>
+<script src="/packages/engine/dist/hyperfixi-hs.js"></script>
 </head><body>
   <ul id="list"><li><input id="typed"></li></ul>
   <button id="go" _="on click append '<li>Added</li>' to #list">go</button>
-  <button id="pre" _="on click prepend '<li>First</li>' to #list">pre</button>
+  <button id="pre" _="on click put '<li>First</li>' at start of #list">pre</button>
 </body></html>`);
   await waitForHyperfixi(page);
 
