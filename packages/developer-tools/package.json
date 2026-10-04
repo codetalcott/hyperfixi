@@ -78,7 +78,7 @@
   "dependencies": {
     "@hyperfixi/core": "^3.3.0",
     "@lokascript/i18n": "^3.3.0",
-    "boxen": "^8.0.1",
+    "boxen": "^9.0.0",
     "chalk": "^6.0.0",
     "chokidar": "^3.5.0",
     "commander": "^15.0.0",
