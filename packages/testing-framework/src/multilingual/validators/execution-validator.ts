@@ -5,33 +5,46 @@
  * parse that EXECUTES wrongly: the session-5 probe found translations whose
  * parse looks plausible but whose runtime behavior diverges from the English
  * reference — a dropped destination role lands the effect on `me` instead of
- * `#menu`, a mis-built AST throws `Unknown command: into`, a quoted literal
- * keeps its quotes in the DOM. This validator executes a CURATED subset of
- * corpus patterns in jsdom (semantic parse → buildAST → runtime.execute →
- * dispatch the trigger event) and compares the resulting DOM effects against
- * the English reference's effects.
+ * `#menu`, a quoted literal keeps its quotes in the DOM. This validator
+ * executes a CURATED subset of corpus patterns in jsdom and compares the
+ * resulting DOM effects against the English reference's effects.
+ *
+ * What runs where (since Phase C2 of the engine cutover): the en reference is
+ * the English source on upstream `_hyperscript` (the oracle, as for the value
+ * matrix and the shipped-examples gate); a translation is its foreign text
+ * AS WRITTEN on `@hyperfixi/engine` with `@lokascript/hyperscript-adapter`'s
+ * plugin installed and `lang` on the element — the product's multilingual
+ * path, where the engine translates the script as it reads it. Until C2 both
+ * ran on core's runtime through `parseSemantic → buildAST` (the direct path,
+ * which retires with core's parser). Measured before the switch, on a fresh
+ * populate: the engine matched upstream on all 49 en references, and all
+ * 1,127 translations matched on the engine; core's R2 path differed from
+ * upstream on 13 en references (core-only `show`/`toggle @attr`/`with
+ * *opacity`/`swap` semantics), which is why the oracle is upstream.
  *
  * Effect signature: a before/after diff of every element's classes, attributes,
- * inline style, and leaf text. Selectors/classes/attribute names are code (not
- * translated), so signatures are directly comparable across languages. A
- * pattern scores 1 when its signature EXACTLY matches the en reference's
- * (binary — extra effects are as wrong as missing ones). Trapped runtime
- * errors are recorded for diagnostics but are NOT part of the match: their
- * attribution depends on unhandled-rejection timing (racy), while the effect
- * snapshot is synchronous and deterministic. A mis-built AST that damages
- * behavior diverges in its effects regardless.
+ * inline style, and leaf text, plus (here only) the document order of the
+ * id'd elements when it changed — upstream's `swap #a with #b` exchanges the
+ * two elements and changes nothing else. Selectors/classes/attribute names are
+ * code (not translated), so signatures are directly comparable across
+ * languages. A pattern scores 1 when its signature EXACTLY matches the en
+ * reference's (binary — extra effects are as wrong as missing ones). Errors
+ * the host reports are recorded for diagnostics but are NOT part of the match;
+ * a script that damages behavior diverges in its effects regardless.
  *
- * Determinism: a fresh JSDOM document and a fresh Runtime per execution, no
- * network, no timers beyond a fixed settle window; the probe measured two full
- * sweeps byte-identical. Patterns whose en reference errors or produces no
- * effects are excluded (no usable reference — same semantics as R0/R1).
+ * Determinism: a fresh JSDOM document per execution, no network, no timers
+ * beyond a fixed settle window. Patterns whose en reference errors or produces
+ * no effects are excluded (no usable reference — same semantics as R0/R1).
  */
 
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { parseSemantic, buildAST } from '@lokascript/semantic';
 import { getAllPatterns, getTranslationsByLanguage } from '@hyperfixi/patterns-reference';
 import type { LanguageCode } from '../types';
 import { snapshot, diffSnapshots } from '../effect-signature';
+import { installGlobals } from '../shipped-examples-execution';
 
 /**
  * The curated execution subset: simple, deterministic, fixture-friendly
@@ -230,7 +243,7 @@ export const EXECUTION_SUBSET: readonly string[] = [
  * The SAME fixture (plus the same per-pattern setup) is used for the en
  * reference and every translation, so signatures are comparable.
  */
-const FIXTURE_HTML = `<!DOCTYPE html><html><body>
+export const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div class="card"><button id="btn">Click</button></div>
   <div id="item"></div>
   <div id="menu"></div>
@@ -254,7 +267,7 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */
-const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
+export const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   // `remove .highlight from me` needs the class present to have an effect.
   'remove-class-basic': doc => doc.getElementById('btn')!.classList.add('highlight'),
   // `show #modal` needs the modal hidden.
@@ -282,6 +295,19 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
     out.textContent = '5';
     doc.getElementById('btn')!.before(out);
   },
+  // `if #modal exists show #modal …` changes nothing on upstream while #modal
+  // is visible (core's `show` added a `show` class, which is what the
+  // reference used to record). Hidden, the `show` is observable.
+  'if-exists': doc => {
+    (doc.getElementById('modal') as HTMLElement).style.display = 'none';
+  },
+  // `toggle .open on closest .accordion-item` throws on upstream when there is
+  // no such ancestor (core fell back to `me`), and the second command never
+  // runs. #btn inside an item, as on a real accordion header.
+  'accordion-toggle': doc => doc.querySelector('.card')!.classList.add('accordion-item'),
+  // `toggle .open on next .panel` throws on upstream when nothing follows
+  // (core fell back to `me`), so the reference errored and was excluded.
+  'toggle-aria-expanded': doc => doc.getElementById('panel')!.classList.add('panel'),
 };
 
 /**
@@ -294,11 +320,11 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
  * reference and every translation (it is harness-supplied, not translated), so
  * effect signatures stay comparable across languages.
  */
-interface PatternTrigger {
+export interface PatternTrigger {
   readonly event: string;
   readonly detail?: unknown;
 }
-const PATTERN_TRIGGER: Record<string, PatternTrigger> = {
+export const PATTERN_TRIGGER: Record<string, PatternTrigger> = {
   // `on success put event.detail.message into #sr-announce set @role to "alert"
   // on #sr-announce` — a custom event carrying the announcement text. The fixed
   // message lands in #sr-announce's text; role=alert is set on the same node.
@@ -311,18 +337,27 @@ export interface ExecutionResult {
   language: LanguageCode;
   /** Sorted effect lines (see snapshot/diff). Empty on error or no effect. */
   effects: string[];
-  /** Parse/build/runtime error, when any. */
+  /** Errors the host reported (parse or runtime), when any. */
   error?: string;
   /** 1 = exact signature match vs the en reference, 0 = mismatch. Undefined for en itself or when no usable reference exists. */
   executionFidelity?: number;
 }
 
-// Effect-signature machinery (serializeElement/snapshot/diffSnapshots) moved to
-// ../effect-signature.ts (imported at the top), shared with the
-// shipped-examples execution gate so the two can never disagree about what a
-// DOM effect is. Notes that used to live on the local copies (leaf-text-only
-// rationale; body's own stable key, added in wave 3b when the runtime learned
-// to resolve `body`) moved with them.
+// Effect-signature machinery (serializeElement/snapshot/diffSnapshots) lives in
+// ../effect-signature.ts, shared with the shipped-examples execution gate so the
+// two can never disagree about what a DOM effect is.
+
+/**
+ * Where an execution runs: `engine` is `@hyperfixi/engine` with the
+ * multilingual plugin (English or any language); `upstream` is
+ * `hyperscript.org`, the oracle, which runs English only.
+ */
+export type ExecutionHost = 'engine' | 'upstream';
+
+/** What this needs of a host that reads scripts off attributes. */
+interface ScriptHost {
+  processNode(element: Element): void;
+}
 
 /** How long to let the dispatched handler settle (ms). The subset contains no
  * waits/transitions/fetches, so this only needs to drain micro/macrotasks. */
@@ -332,41 +367,52 @@ const SETTLE_MS = 20;
 const EXECUTION_TIMEOUT_MS = 5000;
 
 /**
+ * Both hosts, loaded once per process: the engine's grammar is a module
+ * singleton, and `register` re-runs every module against it.
+ */
+let hostsLoading: Promise<Record<ExecutionHost, ScriptHost>> | null = null;
+function loadHosts(): Promise<Record<ExecutionHost, ScriptHost>> {
+  hostsLoading ??= (async () => {
+    const engine = await import('@hyperfixi/engine');
+    engine.register(...engine.everything);
+    const { hyperscriptI18n } = await import('@lokascript/hyperscript-adapter');
+    engine.api.use(hyperscriptI18n());
+    const require = createRequire(import.meta.url);
+    const esm = path.join(path.dirname(require.resolve('hyperscript.org')), '_hyperscript.esm.js');
+    const upstream = (await import(pathToFileURL(esm).href)).default as ScriptHost;
+    return { engine: engine.api, upstream };
+  })();
+  return hostsLoading;
+}
+
+/** The ids of id'd elements in document order — what `swap` changes. */
+function idOrder(document: Document): string {
+  return Array.from(document.body.querySelectorAll('[id]'), el => el.id).join(',');
+}
+
+/**
  * R2 execution validator. `initialize()` MUST complete before `execute()`:
- * it bootstraps jsdom globals and only then loads `@hyperfixi/core`, whose
- * module evaluation touches `Element`/`document`.
+ * it bootstraps jsdom globals and only then loads the hosts, whose module
+ * evaluation touches DOM constructors.
  */
 export class ExecutionValidator {
-  private core: {
-    Runtime: new () => { execute(ast: unknown, ctx: unknown): Promise<unknown> };
-    createContext: (el: HTMLElement) => unknown;
-  } | null = null;
+  private hosts: Record<ExecutionHost, ScriptHost> | null = null;
 
-  /** Errors thrown inside dispatched listeners surface as unhandled rejections
-   * (the handler is async); trap them into the current execution's sink. */
-  private listenerErrors: string[] = [];
+  /** Errors the hosts report during the current execution: parse and runtime
+   * errors go to console.error, and an async handler's rejection to the
+   * process. */
+  private hostErrors: string[] = [];
   private trapInstalled = false;
 
   async initialize(): Promise<void> {
-    if (this.core) return;
-
-    // Bootstrap DOM globals BEFORE importing @hyperfixi/core (its dist
-    // evaluates `Element` at module load). The per-execution fresh document
-    // replaces these for each run.
-    this.installGlobals(new JSDOM(FIXTURE_HTML));
-
-    const core = await import('@hyperfixi/core');
-    this.core = {
-      Runtime: core.Runtime as unknown as new () => {
-        execute(ast: unknown, ctx: unknown): Promise<unknown>;
-      },
-      createContext: core.createContext as unknown as (el: HTMLElement) => unknown,
-    };
+    if (this.hosts) return;
+    installGlobals(new JSDOM(FIXTURE_HTML));
+    this.hosts = await loadHosts();
 
     if (!this.trapInstalled) {
       process.on('unhandledRejection', (reason: unknown) => {
         const msg = reason instanceof Error ? reason.message : String(reason);
-        this.listenerErrors.push(msg);
+        this.hostErrors.push(msg.split('\n')[0] ?? msg);
       });
       this.trapInstalled = true;
     }
@@ -376,25 +422,17 @@ export class ExecutionValidator {
     return 'ExecutionValidator';
   }
 
-  private installGlobals(dom: JSDOM): void {
-    const g = globalThis as Record<string, unknown>;
-    g.window = dom.window;
-    g.document = dom.window.document;
-    g.Event = dom.window.Event;
-    g.CustomEvent = dom.window.CustomEvent;
-    g.HTMLElement = dom.window.HTMLElement;
-    g.Element = dom.window.Element;
-    g.Node = dom.window.Node;
-    g.MutationObserver = dom.window.MutationObserver;
-    g.getComputedStyle = dom.window.getComputedStyle;
-  }
-
   /**
-   * Execute one pattern translation in a fresh fixture and return its effect
+   * Execute one pattern's source in a fresh fixture and return its effect
    * signature. Never throws; failures come back as `error`.
    */
-  async execute(codeExampleId: string, code: string, lang: string): Promise<ExecutionResult> {
-    const run = this.executeInner(codeExampleId, code, lang);
+  async execute(
+    codeExampleId: string,
+    code: string,
+    lang: string,
+    host: ExecutionHost = 'engine'
+  ): Promise<ExecutionResult> {
+    const run = this.executeInner(codeExampleId, code, lang, host);
     const timeout = new Promise<ExecutionResult>(resolve =>
       setTimeout(
         () =>
@@ -413,40 +451,44 @@ export class ExecutionValidator {
   private async executeInner(
     codeExampleId: string,
     code: string,
-    lang: string
+    lang: string,
+    host: ExecutionHost
   ): Promise<ExecutionResult> {
-    if (!this.core) await this.initialize();
+    if (!this.hosts) await this.initialize();
     const base: ExecutionResult = {
       codeExampleId,
       language: lang as LanguageCode,
       effects: [],
     };
+    if (host === 'upstream' && lang !== 'en') {
+      return { ...base, error: 'upstream runs English only' };
+    }
 
     const dom = new JSDOM(FIXTURE_HTML);
-    this.installGlobals(dom);
+    installGlobals(dom);
     const document = dom.window.document;
     PATTERN_SETUP[codeExampleId]?.(document);
     const btn = document.getElementById('btn')!;
-    this.listenerErrors = [];
+    // The plugin reads the language off the closest `lang`, as on a page; on
+    // <html>, outside the snapshot, so it is no part of any signature.
+    if (lang !== 'en') document.documentElement.setAttribute('lang', lang);
+    btn.setAttribute('_', code);
+    this.hostErrors = [];
 
-    // The runtime logs every failing command via console — across a full
-    // multi-language sweep that is pure noise; silence it for the execution.
+    // Both hosts log every failing script via console — across a full
+    // multi-language sweep that is noise; keep only the errors, as diagnostics.
     const saved = { log: console.log, warn: console.warn, error: console.error };
-    console.log = console.warn = console.error = () => {};
+    console.log = console.warn = () => {};
+    console.error = (...args: unknown[]) => {
+      const first = args.map(String).join(' ').split('\n')[0] ?? '';
+      this.hostErrors.push(first);
+    };
     try {
-      const parsed = parseSemantic(code, lang);
-      if (!parsed.node || parsed.confidence < 0.5) {
-        return { ...base, error: `parse failed (confidence ${parsed.confidence?.toFixed(2)})` };
-      }
-      const built = buildAST(parsed.node);
-      if (!built.ast) return { ...base, error: 'buildAST returned no AST' };
-
-      const runtime = new this.core!.Runtime();
-      const ctx = this.core!.createContext(btn as unknown as HTMLElement);
-      // Installs the event handler (or runs bare commands immediately).
-      await runtime.execute(built.ast, ctx);
+      this.hosts![host].processNode(btn);
+      await new Promise(r => setTimeout(r, 0));
 
       const before = snapshot(document);
+      const orderBefore = idOrder(document);
       const trigger = PATTERN_TRIGGER[codeExampleId];
       const triggerEvent =
         trigger?.detail !== undefined
@@ -454,11 +496,13 @@ export class ExecutionValidator {
           : new dom.window.Event(trigger?.event ?? 'click', { bubbles: true });
       btn.dispatchEvent(triggerEvent);
       await new Promise(r => setTimeout(r, SETTLE_MS));
-      const after = snapshot(document);
 
-      const effects = diffSnapshots(before, after);
-      if (this.listenerErrors.length > 0) {
-        return { ...base, effects, error: `runtime: ${this.listenerErrors.join('; ')}` };
+      const effects = diffSnapshots(before, snapshot(document));
+      const orderAfter = idOrder(document);
+      if (orderAfter !== orderBefore) effects.push(`order[${orderAfter}]`);
+      effects.sort();
+      if (this.hostErrors.length > 0) {
+        return { ...base, effects, error: this.hostErrors.join('; ') };
       }
       return { ...base, effects };
     } catch (e: unknown) {

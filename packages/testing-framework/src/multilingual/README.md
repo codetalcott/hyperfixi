@@ -256,17 +256,22 @@ Add to `.github/workflows/test.yml`:
 (literal, variable, selector, possessive, `of`, dotted, call, array, parens), the
 operators, and five positions (`put` and `set` values, `if` and `repeat while`
 conditions, `increment … by`). Each cell's English runs on the real
-`hyperscript.org` engine, which is the oracle, and then in 48 lanes:
+`hyperscript.org` engine, which is the oracle, and then in 49 lanes:
 
-| Lane     | What runs                                                                    |
-| -------- | ---------------------------------------------------------------------------- |
-| `en`     | hyperfixi's English path (core's parser and runtime)                         |
-| `en-rt`  | semantic's English parse, rendered back to English, on upstream              |
-| `<L>`    | each of 23 languages on hyperfixi's direct path                              |
-| `<L>/up` | the same translation, through `@lokascript/hyperscript-adapter`, on upstream |
+| Lane      | What runs                                                                    |
+| --------- | ---------------------------------------------------------------------------- |
+| `en`      | hyperfixi's English path (core's parser and runtime)                         |
+| `en-rt`   | semantic's English parse, rendered back to English, on upstream              |
+| `eng`     | the English source on `@hyperfixi/engine`                                    |
+| `<L>/up`  | each of 23 languages, through `@lokascript/hyperscript-adapter`, on upstream |
+| `<L>/eng` | the same adapter English on `@hyperfixi/engine`                              |
 
-`baselines/value-matrix.json` lists every failing (cell, lane) pair; `*direct` and
-`*up` stand for all 23 lanes of each. The gate runs in five shards,
+The `<L>` lane (each language on core's direct path) retired in Phase C2 of the
+engine cutover, when text became the multilingual interchange; no cell failed
+`<L>/eng` while passing `<L>`.
+
+`baselines/value-matrix.json` lists every failing (cell, lane) pair; `*up` and
+`*eng` stand for all 23 lanes of each. The gate runs in fifteen shards,
 `value-matrix.<position>.test.ts`, and fails on a failing pair the baseline does not
 list and on a listed pair that passes, so the list only shrinks.
 

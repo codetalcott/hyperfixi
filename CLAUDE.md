@@ -504,7 +504,13 @@ yields a 0 delta):
    un-regenerated baseline never retro-flags; pre-existing role-lossy patterns
    are the R1 burn-down list, not regressions.
 7. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
-   matched the en reference and now diverges (pass→fail; tolerance 0).
+   matched the en reference and now diverges (pass→fail; tolerance 0). Since
+   Phase C2 the reference is the English source on upstream `hyperscript.org`
+   and each translation runs AS WRITTEN on `@hyperfixi/engine` with the
+   adapter's plugin and `lang` on the page — the product's path, not core's
+   `buildAST` (measured before the switch: 49/49 en references and 1,127/1,127
+   translations matched; core's own path differed from upstream on 13 en
+   references).
 8. **value-recall ratchet (R3)** — a per-language **avgValueRecall** drop > 0.02.
    Signals 1–7 compare actions and role _types_; values are never compared (they are
    legitimately translated), so a parse with the right action counts and right role
@@ -548,7 +554,7 @@ yields a 0 delta):
     skips a failed parse _before_ scoring, removing it from numerator and
     denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
     **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
-    that did parse. R2 covers 41 curated ids (measured 2026-09-02; this said 47); R4's denominator excludes ~14% of
+    that did parse. R2 covers 49 curated ids (measured 2026-10-03); R4's denominator excludes ~14% of
     the corpus and is full-mode only. This is not hypothetical — #763's
     `markerOverride.he` change stopped `לך את back` parsing and the gate would
     have gone green; two vitest cases caught it instead. The other tolerances are
@@ -628,16 +634,18 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
 …) — 4,205 cells. It EXECUTES each one: the English source on upstream
-`hyperscript.org` is the oracle, and 72 lanes must match it — hyperfixi's English,
-semantic's English round trip, each language on hyperfixi's direct path and
-through the adapter on upstream, and (since 2026-10-01) the English source and each
-language's adapter output on `@hyperfixi/engine` (`eng`, `<lang>/eng`: the same text the
-`/up` lane runs, so a difference between the two is a difference between the engines). Its baseline (`baselines/value-matrix.json`) lists
+`hyperscript.org` is the oracle, and 49 lanes must match it — hyperfixi's English,
+semantic's English round trip, each language through the adapter on upstream, and
+(since 2026-10-01) the English source and each language's adapter output on
+`@hyperfixi/engine` (`eng`, `<lang>/eng`: the same text the `/up` lane runs, so a
+difference between the two is a difference between the engines). The `<lang>` lane
+(core's direct path) retired in Phase C2, when no cell failed `<lang>/eng` while
+passing it. Its baseline (`baselines/value-matrix.json`) lists
 every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (the kept `the X of Y as T`
 difference and it's `di` ambiguity) stay listed and are reported apart. The rules that tell a variable
 spelled like a structure word from the word (each with its PR and the test that pins it) are in
 `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
-PRONOUN in some language (tr `o` is `it`) skips that language's three lanes: no reader
+PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
 phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
 the package's ordinary suite) fails on a new failing pair AND on a listed pair that

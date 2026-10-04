@@ -19,17 +19,13 @@ describe('value matrix: accepted pairs', () => {
   const [known, ambiguity] = ACCEPTED;
 
   it('tags a cell whose failing lanes are all accepted', () => {
-    expect(acceptedReason('put|the textContent of #a as Int', ['en', 'es', 'ja'])).toBe(
-      known!.reason
-    );
-    expect(acceptedReason('increment|#a.textContent', ['it', 'it/up'])).toBe(ambiguity!.reason);
-    expect(acceptedReason('increment|#a.textContent', ['it', 'it/up', 'it/eng'])).toBe(
-      ambiguity!.reason
-    );
+    expect(acceptedReason('put|the textContent of #a as Int', ['en'])).toBe(known!.reason);
+    expect(acceptedReason('increment|#a.textContent', ['it/up'])).toBe(ambiguity!.reason);
+    expect(acceptedReason('increment|#a.textContent', ['it/up', 'it/eng'])).toBe(ambiguity!.reason);
   });
 
   it('leaves it open when one failing lane is not', () => {
-    expect(acceptedReason('increment|#a.textContent', ['it', 'es'])).toBeUndefined();
+    expect(acceptedReason('increment|#a.textContent', ['it/up', 'es/up'])).toBeUndefined();
     expect(acceptedReason('put|the textContent of #a as Int', ['en', 'es/up'])).toBeUndefined();
   });
 
@@ -37,12 +33,12 @@ describe('value matrix: accepted pairs', () => {
     const result = (lanes: Record<string, string>): CellResult => ({
       id: 'increment|#a.textContent',
       want: '7',
-      lanes: { en: '7', es: '7', ...lanes },
+      lanes: { en: '7', 'es/up': '7', ...lanes },
     });
-    const kept = baselineFrom([result({ it: '1', 'it/up': '1' })], '');
+    const kept = baselineFrom([result({ 'it/up': '1', 'it/eng': '1' })], '');
     expect(kept.entries['increment|#a.textContent']?.accepted).toBe(ambiguity!.reason);
     expect(kept.accepted).toBe(2);
-    const open = baselineFrom([result({ it: '1', es: '1' })], '');
+    const open = baselineFrom([result({ 'it/up': '1', 'es/up': '1' })], '');
     expect(open.entries['increment|#a.textContent']?.accepted).toBeUndefined();
     expect(open.accepted).toBe(0);
   });

@@ -1,14 +1,19 @@
 /**
  * R2 — execution smoke validator locks (session 5).
  *
+ * @vitest-environment node
+ * The node environment is required: under the suite default (happy-dom) the
+ * DOM constructors are happy-dom's, the per-execution jsdom's elements fail
+ * the hosts' `instanceof` checks, and every handler installs nothing.
+ *
  * Locks three things:
  *  1. The curated subset's MEMBERSHIP — expanding/shrinking it recalibrates
  *     every language's avgExecutionFidelity, so it must be a deliberate,
  *     baseline-regenerating change, never an accident.
- *  2. The en references EXECUTE: parse → buildAST → runtime.execute installs
- *     the click handler in jsdom and dispatch produces a non-empty,
- *     deterministic DOM-effect signature (the foundation every language is
- *     scored against).
+ *  2. The en references EXECUTE: upstream `_hyperscript` (the oracle) and
+ *     `@hyperfixi/engine` each install the handler in jsdom, dispatch produces
+ *     a non-empty, deterministic DOM-effect signature, and the two agree (the
+ *     foundation every language is scored against).
  *  3. Known cross-language behavior: a faithful translation reproduces the en
  *     signature exactly; a translation that drops the destination role lands
  *     its effect on `me` and MUST diverge (the failure class R2 exists to
@@ -17,6 +22,13 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
+
+/**
+ * Sources loaded off the db for the curated subset: en only, which
+ * `db:init:force` writes in CI before this suite runs (translations need a
+ * `populate`, which this suite does not have).
+ */
+let enSources: Map<string, string>;
 
 describe('R2 execution subset (lock)', () => {
   it('contains exactly the 49 curated patterns', () => {
@@ -142,6 +154,43 @@ describe('R2 execution validator (lock)', () => {
 
   beforeAll(async () => {
     await validator.initialize();
+    enSources = (await loadExecutionSubset(['en'])).get('en')!;
+  });
+
+  it('every en reference runs on the engine exactly as on upstream, with an effect', async () => {
+    // The oracle check behind the reference: the orchestrator scores each
+    // translation (on the engine) against upstream's English. An en reference
+    // the engine runs differently would fail that pattern in every language
+    // at once — this names the engine instead. An empty or erroring reference
+    // is excluded from scoring, so it would silently shrink the subset.
+    const report: string[] = [];
+    for (const id of EXECUTION_SUBSET) {
+      const code = enSources.get(id);
+      if (!code) continue; // the loadExecutionSubset test below names it
+      const up = await validator.execute(id, code, 'en', 'upstream');
+      const eng = await validator.execute(id, code, 'en');
+      if (up.effects.length === 0)
+        report.push(`${id}: no effect on upstream (${up.error ?? 'no error'})`);
+      else if (up.error) report.push(`${id}: upstream reports ${up.error}`);
+      else if (JSON.stringify(eng.effects) !== JSON.stringify(up.effects)) {
+        report.push(
+          `${id}:\n  upstream ${up.effects.join(' | ')}\n  engine   ${eng.effects.join(' | ')}`
+        );
+      }
+    }
+    expect(report, report.join('\n')).toEqual([]);
+  });
+
+  it('upstream swaps the two elements: the signature records the order', async () => {
+    // `swap #a with #b` changes no class, attribute, style or text — only the
+    // two elements' places, which the order line carries.
+    const res = await validator.execute(
+      'swap-content',
+      'on click swap #a with #b',
+      'en',
+      'upstream'
+    );
+    expect(res.effects.at(-1)).toMatch(/^order\[.*,b,a\]$/);
   });
 
   it('en reference executes: on click add .highlight to me', async () => {
@@ -206,13 +255,13 @@ describe('R2 execution validator (lock)', () => {
 
   it('the announce-screen-reader cell executes via its custom-event trigger', async () => {
     // First non-click cell: `on success put event.detail.message into
-    // #sr-announce set @role to "alert" on #sr-announce`. PATTERN_TRIGGER
+    // #sr-announce set @role of #sr-announce to "alert"`. PATTERN_TRIGGER
     // dispatches a `success` CustomEvent carrying detail.message; the handler
     // writes that text into #sr-announce and sets role=alert on it. Locks both
     // the per-cell trigger wiring and the two-line effect signature.
     const res = await validator.execute(
       'announce-screen-reader',
-      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
+      'on success put event.detail.message into #sr-announce set @role of #sr-announce to "alert"',
       'en'
     );
     expect(res.error).toBeUndefined();
@@ -261,11 +310,13 @@ describe('R2 execution validator (lock)', () => {
   it('wave-6 en references execute with their locked signatures', async () => {
     // The six wave-6 additions. Each en reference must produce a non-empty,
     // deterministic signature against the existing fixture (the foundation every
-    // language is scored against). next/closest positionals fall back to `me`
-    // when no match exists in the fixture; set *opacity/*transform write inline
-    // style; caret-var-on-target writes `null` into #btn (the undefined
-    // `^count`), as upstream's put writes a null value (PR 54; it used to
-    // clear the text).
+    // language is scored against). A next/closest positional with no match
+    // throws on upstream (core fell back to `me`), so PATTERN_SETUP gives
+    // toggle-aria-expanded a following .panel and accordion-toggle an
+    // enclosing item; `toggle @attr` writes upstream's `undefined`; set
+    // *opacity/*transform write inline style; caret-var-on-target writes
+    // `null` into #btn (the undefined `^count`), as upstream's put writes a
+    // null value.
     const cases: ReadonlyArray<[string, string, string[]]> = [
       [
         'next-element',
@@ -275,7 +326,10 @@ describe('R2 execution validator (lock)', () => {
       [
         'toggle-aria-expanded',
         'on click toggle @aria-expanded on me toggle .open on next .panel',
-        ['Δ#btn cls[open] attr[aria-expanded=,id=btn] style[] text[Click]'],
+        [
+          'Δ#btn cls[] attr[aria-expanded=undefined,id=btn] style[] text[Click]',
+          'Δ#panel cls[open panel] attr[id=panel] style[] text[]',
+        ],
       ],
       [
         'set-opacity',
@@ -290,7 +344,10 @@ describe('R2 execution validator (lock)', () => {
       [
         'accordion-toggle',
         'on click toggle .open on closest .accordion-item toggle @aria-expanded',
-        ['Δ#btn cls[open] attr[aria-expanded=,id=btn] style[] text[Click]'],
+        [
+          'Δ#btn cls[] attr[aria-expanded=undefined,id=btn] style[] text[Click]',
+          'Δdiv[0] cls[accordion-item card open] attr[] style[] text[]',
+        ],
       ],
       [
         'caret-var-on-target',
@@ -368,11 +425,10 @@ describe('R2 execution validator (lock)', () => {
   it('wave-9 en references execute with their locked signatures', async () => {
     // The three wave-9 additions. Each en reference must produce a non-empty,
     // deterministic signature against the existing fixture. The `*opacity`
-    // hide/show STRATEGIES are synchronous (no timer): hide writes display:none
-    // on #btn (its data-original-display memo is engine bookkeeping, excluded
-    // from signatures since the shared effect-signature module — see
-    // ENGINE_ATTRS there); show adds the visibility class on #modal.
-    // chained-access-possessive-dot writes the parent (.card) display.
+    // hide/show STRATEGIES are synchronous (no timer) and, on upstream, write
+    // the opacity itself: 0 on #btn, 1 on #modal (core ignored the strategy
+    // and toggled display, OPEN_ITEMS C1). chained-access-possessive-dot
+    // writes the parent (.card) display.
     const cases: ReadonlyArray<[string, string, string[]]> = [
       [
         'chained-access-possessive-dot',
@@ -382,12 +438,12 @@ describe('R2 execution validator (lock)', () => {
       [
         'hide-with-transition',
         'on click hide me with *opacity',
-        ['Δ#btn cls[] attr[id=btn] style[display: none;] text[Click]'],
+        ['Δ#btn cls[] attr[id=btn] style[opacity: 0;] text[Click]'],
       ],
       [
         'show-with-transition',
         'on click show #modal with *opacity',
-        ['Δ#modal cls[show] attr[id=modal] style[] text[]'],
+        ['Δ#modal cls[] attr[id=modal] style[opacity: 1;] text[]'],
       ],
     ];
     for (const [id, code, expected] of cases) {
@@ -403,7 +459,9 @@ describe('R2 execution validator (lock)', () => {
     // pre-existing document-order indices are preserved). The ja translations
     // lock the exact failure class each fix closed: append's fronted content
     // literal (was a bogus `event` role → runtime "append requires content")
-    // and increment's trailing bare amount (was dropped → +1 instead of +10).
+    // and increment's bare amount (was dropped → +1 instead of +10). The
+    // increment row counts in `#score's textContent` since the examples moved
+    // to upstream's spelling (2026-10-02); its ja is the current render.
     const cases: ReadonlyArray<[string, string, string, string]> = [
       [
         'append-content',
@@ -413,8 +471,8 @@ describe('R2 execution validator (lock)', () => {
       ],
       [
         'increment-by-amount',
-        'on click increment #score by 10',
-        '#score を クリック で 増加 10',
+        "on click increment #score's textContent by 10",
+        'クリック を で #scoreのtextContent を 10 増加',
         'text[10]',
       ],
     ];
