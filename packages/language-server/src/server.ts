@@ -65,9 +65,9 @@ import { getCommandDescription } from './localized-descriptions.js';
 // =============================================================================
 
 // @lokascript/semantic is a hard dependency of this package (see package.json):
-// the static import registers all 24 languages at startup. Bundled builds that
-// want an English-only server replace it with a shim (vscode-extension-hyperscript),
-// which is why the capability probes below still exist.
+// the static import registers all 24 languages at startup. A bundled build that
+// wants an English-only server can replace it with a shim, which is why the
+// capability probes below exist.
 import * as semanticImport from '@lokascript/semantic';
 import type { NameCollisionFinding } from '@lokascript/semantic';
 import {
@@ -469,11 +469,11 @@ function resolveMode(settings: ServerSettings): ResolvedMode {
   if (settings.mode === 'lokascript') return 'lokascript';
 
   // 'auto' mode: detect based on available packages.
-  // Probe a known export rather than the namespace itself — bundled builds
-  // (e.g. vscode-extension-hyperscript) replace @lokascript/semantic with an
-  // empty `export {}` shim, which is a truthy namespace object but exposes
-  // no API. Without this guard the shimmed bundle would auto-resolve to
-  // 'lokascript' and then crash on the first multilingual code path.
+  // Probe a known export rather than the namespace itself — a bundled build
+  // may replace @lokascript/semantic with an empty `export {}` shim, which is
+  // a truthy namespace object but exposes no API. Without this guard the
+  // shimmed bundle would auto-resolve to 'lokascript' and then crash on the
+  // first multilingual code path.
   return semanticPackage?.getRegisteredLanguages ? 'lokascript' : 'hyperscript';
 }
 
@@ -614,7 +614,7 @@ let hasConfigurationCapability = false;
  * The configuration section this server reads first. A wrapper that sets
  * HYPERSCRIPT_LS_DEFAULT_MODE is the `hyperscript` product, so its namespace
  * wins there; otherwise `lokascript` wins. The other namespace is the fallback,
- * so both work regardless of which extension launched the server.
+ * so both work regardless of which client launched the server.
  */
 const configSections: readonly string[] = envDefaultMode
   ? ['hyperscript', 'lokascript']
@@ -657,7 +657,7 @@ async function pullConfiguration(): Promise<void> {
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   hasConfigurationCapability = !!params.capabilities.workspace?.configuration;
-  // Both VS Code extensions pass `{ language }` here; wrappers may pass more.
+  // The VS Code extension passes `{ language }` here; wrappers may pass more.
   globalSettings = mergeSettings(baseSettings(), params.initializationOptions);
   // Resolve mode on initialization
   resolvedMode = resolveMode(globalSettings);

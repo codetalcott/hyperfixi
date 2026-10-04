@@ -16,7 +16,7 @@ export const debugTools: Tool[] = [
   {
     name: 'debug_analyze_snapshot',
     description:
-      'Analyze a HyperFixi debug snapshot. Given the current command, element, variables, and execution depth, explains what the command does, what state is available, and predicts what will happen next. Use when a developer is paused in the debugger and wants to understand the current state.',
+      'Analyze a HyperFixi debug snapshot. Given the current command, element, variables, and execution depth, explains what the command does, what state is available, and predicts what will happen next. Use with the state captured just before a command runs (at a `breakpoint` command, or from `log` output).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -268,9 +268,9 @@ function explainHandler(
     if (insight) lines.push(`   ${insight}`);
   });
 
-  // Suggested breakpoints
+  // Where to look: `log` and `breakpoint` (which pauses in the browser's DevTools)
   lines.push('');
-  lines.push('**Suggested breakpoints:**');
+  lines.push('**Where to look:**');
   const bpSuggestions = suggestBreakpoints(commands, issue);
   for (const bp of bpSuggestions) {
     lines.push(`- ${bp}`);
@@ -461,54 +461,50 @@ function suggestBreakpoints(commands: string[], issue?: string): string[] {
 
   if (commands.length > 1) {
     suggestions.push(
-      `Set breakpoint on command \`${commands[0].split(/\s+/)[0]}\` to verify the first step executes correctly.`
+      `Put \`breakpoint then\` before \`${commands[0].split(/\s+/)[0]}\` (the browser pauses there while DevTools is open) to confirm the handler runs.`
     );
   }
 
-  // If there's a fetch, suggest breakpoint after it
+  // If there's a fetch, log its result
   const fetchIdx = commands.findIndex(c => c.trim().startsWith('fetch'));
   if (fetchIdx >= 0) {
-    suggestions.push(
-      `Set breakpoint after \`fetch\` (step ${fetchIdx + 1}) to inspect the response in \`it\`.`
-    );
+    suggestions.push(`Add \`log it\` after \`fetch\` (step ${fetchIdx + 1}) to see the response.`);
   }
 
-  // If there's conditional logic, suggest breakpoint on the condition
+  // If there's conditional logic, log the condition
   const ifIdx = commands.findIndex(c => c.trim().startsWith('if'));
   if (ifIdx >= 0) {
-    suggestions.push(
-      `Set breakpoint on \`if\` (step ${ifIdx + 1}) to inspect the condition value.`
-    );
+    suggestions.push(`Log the condition before \`if\` (step ${ifIdx + 1}) to see its value.`);
   }
 
   if (issue && suggestions.length === 0) {
     suggestions.push(
-      'Set breakpoint on the first command and step through to find where behavior diverges from expectations.'
+      'Add `log` commands between steps to find where behavior diverges from expectations.'
     );
   }
 
   return suggestions.length > 0
     ? suggestions
-    : ['Step through from the beginning with F10 (Step Over).'];
+    : ['Add `log` commands between steps, or `breakpoint` where you want the browser to pause.'];
 }
 
 function diagnoseIssue(commands: string[], issue: string): string {
   const lowerIssue = issue.toLowerCase();
 
   if (lowerIssue.includes('not toggling') || lowerIssue.includes('class')) {
-    return 'Check that the CSS selector in `toggle` matches the intended element. Use the element highlighter in the debug overlay to verify which element is being targeted.';
+    return 'Check that the CSS selector in `toggle` matches the intended element. Log the selector (e.g. `log .target`) to see which elements it matches.';
   }
   if (lowerIssue.includes('null') || lowerIssue.includes('undefined')) {
-    return 'A variable is unexpectedly null. Step through each command and check `it` after each step — a command may be failing silently.';
+    return 'A variable is unexpectedly null. Add `log it` after each command — a command may be failing silently.';
   }
   if (
     lowerIssue.includes('fetch') ||
     lowerIssue.includes('network') ||
     lowerIssue.includes('api')
   ) {
-    return 'The fetch command may be failing. Set a breakpoint after `fetch` and check `it` for the response. Also check the browser Network tab for HTTP errors.';
+    return 'The fetch command may be failing. Add `log it` after `fetch` to see the response. Also check the browser Network tab for HTTP errors.';
   }
-  return 'Set a breakpoint on the first command and use Step Over (F10) to execute one command at a time, checking variables after each step.';
+  return 'Add `log` commands between steps to check values after each command, or `breakpoint` to pause in DevTools.';
 }
 
 function diagnosError(cmd: string, error: string, variables: Record<string, unknown>): string[] {
@@ -572,9 +568,7 @@ function generateFixes(
   }
 
   if (fixes.length === 0) {
-    fixes.push(
-      'Use the debug overlay to step through execution and identify the exact point where behavior diverges.'
-    );
+    fixes.push('Add `log` commands between steps to find the exact point where behavior diverges.');
     fixes.push('Check the browser console for additional error details.');
   }
 

@@ -40,11 +40,6 @@ export type {
   BundleAnalysis,
   BundleModule,
   BundleDependency,
-  DebugConfig,
-  DebugBreakpoint,
-  DebugSession,
-  DebugFrame,
-  DebugVariable,
 } from './types';
 
 // Export analyzer
@@ -82,19 +77,6 @@ export type {
 
 export { HyperScriptProfiler, profile, compareProfiles } from './profiler';
 export type { ProfilerConfig } from './profiler';
-
-// Export debugger
-export {
-  HyperScriptDebugger,
-  createDebugger,
-  BreakpointManager,
-  VariableInspector,
-} from './debugger/index';
-export type { DebugEvent, DebugEventType, DebugMessage } from './debugger/index';
-
-// Export debug overlay (browser-side interactive debugger)
-export { DebugOverlay } from './debug-overlay/overlay';
-export { ElementHighlighter } from './debug-overlay/element-highlighter';
 
 // Quick start functions
 export { quickStartAnalyzer } from './quick-start/analyzer';

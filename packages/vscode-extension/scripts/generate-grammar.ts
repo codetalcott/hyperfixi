@@ -5,15 +5,8 @@
  * Generates hyperscript.tmLanguage.json from semantic language profiles.
  * This keeps syntax highlighting in sync with the semantic package's 21 languages.
  *
- * Emits four files in two modes:
- *   - lokascript mode (full v2/v2.1 grammar) → vscode-extension/syntaxes/
- *   - hyperscript mode (no v2/v2.1 tokens)   → vscode-extension-hyperscript/syntaxes/
- *
- * The hyperscript mode is the strict subset valid in original _hyperscript;
- * tokens added by the v2/v2.1 component model (#if/#for/#else/#end/#continue,
- * ^reactiveVar, attrs.X, <template component>, ${...} interpolation) are
- * excluded so users of the _hyperscript-only extension don't see invalid
- * syntax highlight as legitimate.
+ * Writes syntaxes/hyperscript.tmLanguage.json. The injection grammar beside it
+ * (syntaxes/hyperscript-injection.tmLanguage.json) is hand-maintained.
  *
  * Usage:
  *   npx tsx scripts/generate-grammar.ts
@@ -21,7 +14,7 @@
  *   npm run generate:grammar
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -32,11 +25,8 @@ import {
   type KeywordTranslation,
 } from '@lokascript/semantic';
 
-type GrammarMode = 'lokascript' | 'hyperscript';
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOKASCRIPT_SYNTAXES = join(__dirname, '..', 'syntaxes');
-const HYPERSCRIPT_SYNTAXES = join(__dirname, '..', '..', 'vscode-extension-hyperscript', 'syntaxes');
+const SYNTAXES = join(__dirname, '..', 'syntaxes');
 
 // =============================================================================
 // Configuration
@@ -233,10 +223,9 @@ function buildPattern(latin: string[], nonLatin: string[]): string {
 // Grammar Generation
 // =============================================================================
 
-function generateGrammar(mode: GrammarMode): object {
-  console.log(`Collecting translations from semantic profiles (mode=${mode})...`);
+function generateGrammar(): object {
+  console.log('Collecting translations from semantic profiles...');
   console.log(`  Supported languages: ${Object.keys(KNOWN_PROFILES).join(', ')}`);
-  const includeV2 = mode === 'lokascript';
 
   // Collect translations for each category
   const commands = collectTranslations(COMMAND_KEYWORDS);
@@ -269,17 +258,17 @@ function generateGrammar(mode: GrammarMode): object {
       { include: '#numbers' },
       // v2 directives go before #event-handlers so `#if`/`#for` etc. don't get
       // mis-tokenized; they're line-anchored so they don't false-match in prose.
-      ...(includeV2 ? [{ include: '#directives' }] : []),
+      { include: '#directives' },
       { include: '#event-handlers' },
       { include: '#commands' },
       { include: '#keywords' },
       { include: '#selectors' },
       // Component scope (`attrs`, `attrs.X`) before #variables so `attrs.foo`
       // is tokenized as a unit rather than `attrs` + `.foo`.
-      ...(includeV2 ? [{ include: '#component-scope' }] : []),
+      { include: '#component-scope' },
       // Reactive vars (`^name`) before #operators so the `^` isn't first
       // matched as bitwise XOR.
-      ...(includeV2 ? [{ include: '#reactive-vars' }] : []),
+      { include: '#reactive-vars' },
       { include: '#variables' },
       { include: '#references' },
       { include: '#operators' },
@@ -443,92 +432,63 @@ function generateGrammar(mode: GrammarMode): object {
           },
         ],
       },
-      ...(includeV2
-        ? {
-            // v2 template directives. Line-anchored to mirror the runtime parser
-            // (packages/engine/src/templates.ts, upstream's). Surface inside
-            // <template component> bodies via the injection grammar; standalone
-            // hyperscript files won't typically contain them, but they don't hurt.
-            directives: {
-              patterns: [
-                {
-                  name: 'keyword.control.directive.if.hyperscript',
-                  match: '^\\s*#if\\b',
-                },
-                {
-                  name: 'keyword.control.directive.for.hyperscript',
-                  match: '^\\s*#for\\b',
-                },
-                {
-                  name: 'keyword.control.directive.else.hyperscript',
-                  match: '^\\s*#else\\s*$',
-                },
-                {
-                  name: 'keyword.control.directive.end.hyperscript',
-                  match: '^\\s*#end\\s*$',
-                },
-                {
-                  name: 'keyword.control.directive.continue.hyperscript',
-                  match: '^\\s*#continue\\s*$',
-                },
-              ],
+      // v2 template directives. Line-anchored to mirror the runtime parser
+      // (packages/engine/src/templates.ts, upstream's). Surface inside
+      // <template component> bodies via the injection grammar; standalone
+      // hyperscript files won't typically contain them, but they don't hurt.
+      directives: {
+        patterns: [
+          {
+            name: 'keyword.control.directive.if.hyperscript',
+            match: '^\\s*#if\\b',
+          },
+          {
+            name: 'keyword.control.directive.for.hyperscript',
+            match: '^\\s*#for\\b',
+          },
+          {
+            name: 'keyword.control.directive.else.hyperscript',
+            match: '^\\s*#else\\s*$',
+          },
+          {
+            name: 'keyword.control.directive.end.hyperscript',
+            match: '^\\s*#end\\s*$',
+          },
+          {
+            name: 'keyword.control.directive.continue.hyperscript',
+            match: '^\\s*#continue\\s*$',
+          },
+        ],
+      },
+      // v2 reactive variables: `^name`. Distinct scope from `:locals` and
+      // `$globals` so themes can color them differently.
+      'reactive-vars': {
+        patterns: [
+          {
+            name: 'variable.other.reactive.hyperscript',
+            match: '\\^[A-Za-z_][A-Za-z0-9_]*',
+          },
+        ],
+      },
+      // v2 component scope: `attrs.propertyName`. Tokenized as a single unit
+      // so `attrs` lights up as a support variable and the property name as a
+      // distinct property scope.
+      'component-scope': {
+        patterns: [
+          {
+            match: '\\b(attrs)(\\.)([A-Za-z_][A-Za-z0-9_]*)',
+            captures: {
+              '1': { name: 'support.variable.component.hyperscript' },
+              '2': { name: 'punctuation.accessor.hyperscript' },
+              '3': { name: 'variable.other.property.hyperscript' },
             },
-            // v2 reactive variables: `^name`. Distinct scope from `:locals` and
-            // `$globals` so themes can color them differently.
-            'reactive-vars': {
-              patterns: [
-                {
-                  name: 'variable.other.reactive.hyperscript',
-                  match: '\\^[A-Za-z_][A-Za-z0-9_]*',
-                },
-              ],
-            },
-            // v2 component scope: `attrs.propertyName`. Tokenized as a single unit
-            // so `attrs` lights up as a support variable and the property name as a
-            // distinct property scope.
-            'component-scope': {
-              patterns: [
-                {
-                  match: '\\b(attrs)(\\.)([A-Za-z_][A-Za-z0-9_]*)',
-                  captures: {
-                    '1': { name: 'support.variable.component.hyperscript' },
-                    '2': { name: 'punctuation.accessor.hyperscript' },
-                    '3': { name: 'variable.other.property.hyperscript' },
-                  },
-                },
-              ],
-            },
-          }
-        : {}),
+          },
+        ],
+      },
     },
   };
 
   return grammar;
-}
-
-// =============================================================================
-// Injection grammar — read the LokaScript injection JSON (hand-maintained) and,
-// for hyperscript mode, return a stripped copy without v2/v2.1 entries.
-// =============================================================================
-
-const V2_INJECTION_PATTERN_INCLUDES = new Set([
-  '#template-component-body',
-  '#script-template-body',
-]);
-const V2_INJECTION_REPOSITORY_KEYS = [
-  'template-component-body',
-  'script-template-body',
-  'template-directives',
-  'template-interpolation',
-];
-
-function stripV2FromInjection(grammar: Record<string, unknown>): Record<string, unknown> {
-  const patterns = (grammar.patterns as Array<{ include?: string }>).filter(
-    p => !p.include || !V2_INJECTION_PATTERN_INCLUDES.has(p.include)
-  );
-  const repository = { ...(grammar.repository as Record<string, unknown>) };
-  for (const key of V2_INJECTION_REPOSITORY_KEYS) delete repository[key];
-  return { ...grammar, patterns, repository };
 }
 
 // =============================================================================
@@ -542,31 +502,15 @@ function writeJson(path: string, obj: unknown): number {
 }
 
 function main() {
-  console.log('Generating TextMate grammars (lokascript + hyperscript modes)...\n');
+  console.log('Generating the TextMate grammar...\n');
 
-  // Main grammar — generated for both modes
-  const lokascriptGrammar = generateGrammar('lokascript');
-  const hyperscriptGrammar = generateGrammar('hyperscript');
-
-  const lokaMainPath = join(LOKASCRIPT_SYNTAXES, 'hyperscript.tmLanguage.json');
-  const hyperMainPath = join(HYPERSCRIPT_SYNTAXES, 'hyperscript.tmLanguage.json');
-  const lokaSize = writeJson(lokaMainPath, lokascriptGrammar);
-  const hyperSize = writeJson(hyperMainPath, hyperscriptGrammar);
-
-  // Injection grammar — read the LokaScript variant (hand-maintained) and
-  // emit a stripped copy for the hyperscript variant.
-  const lokaInjectionPath = join(LOKASCRIPT_SYNTAXES, 'hyperscript-injection.tmLanguage.json');
-  const hyperInjectionPath = join(HYPERSCRIPT_SYNTAXES, 'hyperscript-injection.tmLanguage.json');
-  const lokaInjection = JSON.parse(readFileSync(lokaInjectionPath, 'utf8'));
-  const hyperInjection = stripV2FromInjection(lokaInjection);
-  const hyperInjectionSize = writeJson(hyperInjectionPath, hyperInjection);
+  const grammarPath = join(SYNTAXES, 'hyperscript.tmLanguage.json');
+  const size = writeJson(grammarPath, generateGrammar());
 
   console.log('');
   console.log(`Generated:`);
-  console.log(`  ${lokaMainPath}  (${(lokaSize / 1024).toFixed(1)} KB)`);
-  console.log(`  ${hyperMainPath}  (${(hyperSize / 1024).toFixed(1)} KB)`);
-  console.log(`  ${hyperInjectionPath}  (${(hyperInjectionSize / 1024).toFixed(1)} KB)`);
-  console.log(`(LokaScript injection grammar at ${lokaInjectionPath} is hand-maintained.)`);
+  console.log(`  ${grammarPath}  (${(size / 1024).toFixed(1)} KB)`);
+  console.log(`(The injection grammar beside it is hand-maintained.)`);
 }
 
 main();

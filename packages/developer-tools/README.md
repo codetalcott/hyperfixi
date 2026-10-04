@@ -1,6 +1,6 @@
 # @lokascript/developer-tools
 
-CLI tools and APIs for LokaScript development, including project scaffolding, code analysis, visual building, and debugging.
+CLI tools and APIs for LokaScript development, including project scaffolding, code analysis, visual building, and profiling.
 
 ## Features
 
@@ -11,7 +11,6 @@ CLI tools and APIs for LokaScript development, including project scaffolding, co
 - **Development Server** - Live reload with WebSocket support
 - **Bundle Analyzer** - Analyze build output for optimization opportunities
 - **Performance Profiler** - Profile hyperscript execution and identify bottlenecks
-- **Debugger** - WebSocket-based debugging with breakpoints and variable inspection
 - **Version Migration** - Migrate between LokaScript versions with backup support
 
 ## Installation
@@ -127,9 +126,7 @@ import { VisualBuilderServer } from '@lokascript/developer-tools';
 const builder = new VisualBuilderServer({
   port: 8000,
   livereload: true,
-  components: [
-    /* your component definitions */
-  ],
+  components: [/* your component definitions */],
 });
 
 await builder.start();
@@ -169,25 +166,6 @@ const comparison = await profiler.compare([
 ]);
 ```
 
-### Debugger
-
-```typescript
-import { HyperScriptDebugger, createDebugger } from '@lokascript/developer-tools';
-
-const debugger = createDebugger({ port: 9229 });
-
-// Start debug session
-const session = await debugger.startSession();
-
-// Set breakpoints
-debugger.setBreakpoint({ file: 'index.html', line: 10, enabled: true });
-
-// Listen for events
-debugger.on('paused', (event) => {
-  console.log('Paused at:', event.data.callStack);
-});
-```
-
 ### Migrator
 
 ```typescript
@@ -212,9 +190,7 @@ const storage = new BuilderStorage();
 
 // Save project
 const project = createProject('My Components', {
-  components: [
-    /* ... */
-  ],
+  components: [/* ... */],
 });
 await storage.saveProject(project);
 

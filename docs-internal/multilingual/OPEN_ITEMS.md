@@ -197,7 +197,7 @@ words; the adapter's English is what changed. Still read and written AS WRITTEN:
 - **D5 · Five `examples/multilingual/` pages pin `@lokascript/i18n@2.3.0`** and call the retired translate helpers; `error-playground.html` pins semantic@2.3.0; `showcase`/`semantic-demo` say 13 languages.
 - **D6 · `apps/docs-site/`** (VitePress, never deployed) is two majors stale (`@lokascript/core`, `GrammarTransformer`, local absolute aliases, a tracked Vitest report).
 - **D7 · No multilingual quick start, package chooser or limitations statement**: five-plus entry points (`hyperfixi.js`, `hyperfixi-multilingual.js` + semantic, core `MultilingualHyperscript`, the adapter and its `@hyperscript-tools/multilingual` copy, build-time `@hyperscript-tools/i18n`, the htmx-adapter).
-- **S1 · VS Code extensions are not published** (Marketplace and Open VSX: not found; no workflow). Owner: publish or drop from the product story.
+- **S1 · VS Code extensions are not published** (Marketplace and Open VSX: not found; no workflow). Owner: publish or drop from the product story. **Partly decided 2026-10-04:** the standalone `_hyperscript` extension (`vscode-extension-hyperscript`) is retired, since upstream ships its own; the LokaScript extension's fate is still open.
 - **S2 · MCP `translate_hyperscript`** is described as "pattern substitution" but calls the same `semantic.translate` as `translate_code`.
 - **S3 · `@lokascript/compilation-service` has no README.**
 - **S4 · Weight is ungated**: a single-language page costs ~82 KiB gz (adapter) or ~93 + ~96 KiB gz (`hyperfixi-multilingual.js` + semantic es) against 22 KB for English `hyperfixi-hx.js`; CI ceilings cover only core's bundles.

@@ -15,7 +15,7 @@ The language server supports four operating modes:
 
 ### Mode Selection
 
-- **auto** (default): `lokascript` mode when the semantic package exposes its API; `hyperscript` mode in builds that replace it with a shim (the standalone `hyperscript-vscode` extension does this)
+- **auto** (default): `lokascript` mode when the semantic package exposes its API; `hyperscript` mode in builds that replace it with a shim
 - **hyperscript**: Enforces \_hyperscript-compatible syntax, English keywords only
 - **hyperscript-i18n**: Enforces \_hyperscript-compatible syntax with multilingual keyword support. Use this if you have original \_hyperscript with `@lokascript/hyperscript-adapter` for writing in non-English languages
 - **lokascript**: Enables all features including LokaScript extensions and multilingual support
@@ -117,8 +117,8 @@ require('lspconfig').lokascript.setup{}
 
 The server reads its settings three ways, and every field is optional (a partial object is merged over the defaults):
 
-1. `initializationOptions` on `initialize` (both VS Code extensions pass `{ language }` here);
-2. a `workspace/didChangeConfiguration` push carrying a `lokascript` or `hyperscript` section (vscode-languageclient only sends one when the client sets `synchronize.configurationSection`; both bundled extensions do);
+1. `initializationOptions` on `initialize` (the VS Code extension passes `{ language }` here);
+2. a `workspace/didChangeConfiguration` push carrying a `lokascript` or `hyperscript` section (vscode-languageclient only sends one when the client sets `synchronize.configurationSection`; the VS Code extension does);
 3. a `workspace/configuration` pull for the `lokascript` and `hyperscript` sections, made at startup and whenever a push arrives with no payload, for clients that advertise the capability.
 
 When both namespaces are present the `lokascript` one wins, unless the server was launched with `HYPERSCRIPT_LS_DEFAULT_MODE` set (the standalone hyperscript product), in which case `hyperscript` wins.
@@ -230,7 +230,7 @@ For users who prefer the `hyperscript` namespace:
 - `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions.
 - `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 
-A bundler that wants an English-only, dependency-free server (the standalone `hyperscript-vscode` extension) replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
+A bundler that wants an English-only, dependency-free server replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
 
 ## Development
 

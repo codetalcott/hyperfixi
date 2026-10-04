@@ -34,7 +34,7 @@ lspconfig.hyperscript.setup {
 
 ### VS Code
 
-Use the `@hyperscript-tools/vscode` extension instead — it bundles this server automatically.
+Upstream `_hyperscript` ships its own VS Code extension and language server (`tools/vscode` and `tools/lsp` in the `bigskysoftware/_hyperscript` repository). Any LSP client can run this server with `--stdio`, as in the Neovim example above.
 
 ## How It Works
 
