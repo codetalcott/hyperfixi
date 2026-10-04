@@ -178,6 +178,26 @@ the validator still says `ok`: they are silent because validation reads
 semantic's grammar, not the engine's. Phase C4d moves the diagnostics onto the
 engine's parse (owner decision 5), which should make all six visible.
 
+### Phase C4d: validated on the engine (2026-10-04)
+
+`CompilationService.validate` now also puts natural-language input to `@hyperfixi/engine`'s
+parser (the English as written, or a translation's English render), and a rejection is an
+error (`ENGINE_PARSE_ERROR`). Behavior is unchanged; what the loop can SEE changes:
+
+|                                       | C4b (semantic validator) | engine validator |
+| ------------------------------------- | ------------------------ | ---------------- |
+| parse (validator says ok)             | 36/37                    | **20/37**        |
+| behave correctly                      | 17/37                    | 17/37            |
+| wrong but **warned**                  | 12/37                    | 1/37             |
+| wrong and **rejected** (loop repairs) | 0/37                     | **16/37**        |
+| wrong and **silent**                  | 8/37                     | **3/37**         |
+
+Sixteen rows moved to `rejected`: eleven that only warned (the engine rejects what the
+inert-shape and unconsumed-input warnings described) and five of the six silent ones C4b
+measured. The three silent rows left are code the engine reads: `toggle .active on this`
+(`this` is a variable there, null at run time), and the valid-code-different-intent pair
+(`add .hidden to #menu`, `on mouseover`).
+
 ## Adding a task
 
 Append to [`tasks.ts`](./tasks.ts): a prompt with no hyperscript in it, a
