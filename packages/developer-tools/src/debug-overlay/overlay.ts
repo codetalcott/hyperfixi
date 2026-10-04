@@ -12,7 +12,7 @@
  *  F8 = Continue, F10 = Step Over, F11 = Step Into, Shift+F11 = Step Out
  */
 
-import type { DebugSnapshot, DebugController } from '@hyperfixi/core';
+import type { DebugSnapshot, DebugController } from './debug-api';
 import { OVERLAY_CSS } from './styles';
 import { ElementHighlighter } from './element-highlighter';
 

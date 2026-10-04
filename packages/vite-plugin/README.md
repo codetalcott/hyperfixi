@@ -74,13 +74,12 @@ only the command set differs. Scanning is by word, so a name the engine has no
 module for (a false positive in a string, or a form the engine dropped) selects
 nothing; `debug: true` lists them.
 
-## Compile Mode (parked)
+## Compile Mode (removed in 4.0)
 
 `mode: 'compile'` pre-compiled handlers to JavaScript with `@hyperfixi/core`'s hybrid
-parser (~500 bytes for a page of toggles). It is **parked** with the AOT compiler
-(owner decision 2026-10-03): it still runs on `@hyperfixi/core` 3.x and leaves with
-core's parser at 4.0. Selecting it logs a warning. The engine-module bundle above is
-the product; measure before reaching for compile mode.
+parser (~500 bytes for a page of toggles). It was parked with the AOT compiler (owner
+decision 2026-10-03) and left with core's parser in 4.0. Selecting it logs a warning and
+builds the engine-module bundle above, which is the product.
 
 ## Multilingual & Semantic Parsing
 
@@ -195,7 +194,7 @@ hyperscript-bodied `hx-live` attribute is a `_="live … end"` block on the engi
 
 ```javascript
 hyperfixi({
-  // Bundle mode: 'interpret' (default); 'compile' is parked (see above)
+  // Bundle mode: 'interpret' (default; 'compile' was removed in 4.0, see above)
   mode: 'interpret',
 
   // Extra commands to always include (for dynamic hyperscript)

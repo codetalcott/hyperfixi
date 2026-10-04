@@ -405,7 +405,9 @@ function extractDependencies(html: string): string[] {
     if (src.includes('hyperscript') || src.includes('_hyperscript')) {
       dependencies.add('hyperscript');
     }
-    if (src.includes('hyperfixi')) {
+    if (src.includes('@hyperfixi/engine') || src.includes('hyperfixi-hs')) {
+      dependencies.add('@hyperfixi/engine');
+    } else if (src.includes('hyperfixi')) {
       dependencies.add('@hyperfixi/core');
     }
     if (src.includes('alpine')) {

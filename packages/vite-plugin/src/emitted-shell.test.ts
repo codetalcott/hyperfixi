@@ -5,9 +5,10 @@
  * WHY THIS EXISTS (Arc E step 3 — `docs-internal/HANDOFF-command-arch-bundles.md`)
  * ---------------------------------------------------------------------------
  *
- * The boot shell is emitted from THREE sites in this package — `generator.ts`'s
- * main shell and its empty-bundle shell, plus `compiled-generator.ts` — on top
- * of the handwritten shells and the emitter in `@hyperfixi/core`. All of them
+ * The boot shell was emitted from THREE sites in this package — `generator.ts`'s
+ * main shell and its empty-bundle shell, plus `compiled-generator.ts` (compile
+ * mode, removed in 4.0) — on top of the handwritten shells and the emitter in
+ * `@hyperfixi/core`. All of them
  * assigned `window._hyperscript = api`, squatting the global belonging to the
  * library HyperFixi is compatible WITH.
  *
@@ -27,8 +28,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { Generator } from './generator';
-import { generateCompiledBundle } from './compiled-generator';
-import type { CompiledHandler } from './compiler';
 
 function createUsage(commands: string[], blocks: string[] = []) {
   return {
@@ -46,15 +45,6 @@ function createUsage(commands: string[], blocks: string[] = []) {
     },
   };
 }
-
-const handler: CompiledHandler = {
-  id: 'h0',
-  event: 'click',
-  modifiers: {},
-  code: '/* noop */',
-  needsEvaluator: false,
-  original: 'on click log "hi"',
-};
 
 describe('emitted shells do not claim window._hyperscript', () => {
   const generator = new Generator({ debug: false });
@@ -87,17 +77,6 @@ describe('emitted shells do not claim window._hyperscript', () => {
     // The empty shell is a distinct emission site with its own api literal —
     // it is why "fix the generator" was three edits in this package, not one.
     expect(code).toContain('Empty Bundle');
-    expect(code).not.toContain('_hyperscript');
-  });
-
-  it('compiled (AOT) bundle installs only its own global', () => {
-    const code = generateCompiledBundle({
-      handlers: [handler],
-      needsLocals: false,
-      needsGlobals: false,
-    });
-
-    expect(code).toContain('window.hyperfixi=api');
     expect(code).not.toContain('_hyperscript');
   });
 });
