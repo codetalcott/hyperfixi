@@ -47,7 +47,7 @@ const HX_LIVE_LOCALIZED_PATTERN = buildLocalizedHxLivePattern();
 
 /**
  * Phase 8: localized htmx-compat attribute names. Vocab modules under
- * `packages/core/vocab/htmx/` emit per-language maps like
+ * `packages/htmx-adapter/vocab/` emit per-language maps like
  *   `hx-obtener` (es) → `hx-get`
  *   `hx-取得`     (ja) → `hx-get`
  *   `sse-conectar`(es) → `sse-connect`

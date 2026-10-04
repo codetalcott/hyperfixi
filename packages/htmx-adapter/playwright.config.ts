@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PINNED_CHROMIUM = '/opt/pw-browsers/chromium';
 
 // Serves the REPO root so fixtures can reference both this package's
-// dist/ and packages/core/vocab/htmx/ vocab modules. Port is unique to
+// dist/ and packages/htmx-adapter/vocab/ vocab modules. Port is unique to
 // this package to avoid clashing with other suites' servers.
 export default defineConfig({
   testDir: './test/browser',

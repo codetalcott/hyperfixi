@@ -24,7 +24,7 @@ import { register, resetOrchestrator } from '../i18n-orchestrator.js';
 import { getHooks, resetHooks } from '../i18n-hooks.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../../../..');
-const VOCAB_DIR = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
+const VOCAB_DIR = resolve(REPO_ROOT, 'packages/htmx-adapter/vocab');
 
 let dom: JSDOM;
 let document: Document;

@@ -1,8 +1,8 @@
 /**
  * Localized htmx-compat attribute name maps for the scanner.
  *
- * The vocab generator at `packages/core/scripts/gen-htmx-vocab.mjs`
- * emits per-language vocab modules under `packages/core/vocab/htmx/`.
+ * The vocab generator at `packages/htmx-adapter/scripts/gen-htmx-vocab.mjs`
+ * emits per-language vocab modules under `packages/htmx-adapter/vocab/`.
  * Those modules drive the runtime orchestrator. The scanner needs the
  * same information at build time so it can route projects authored in
  * non-English languages to the correct bundle.
@@ -12,7 +12,7 @@
  *   npm run sync-htmx-vocab --prefix packages/vite-plugin
  *
  * Drift detection happens via a unit test that re-derives the maps from
- * `packages/core/vocab/htmx/*.js` and compares against this file's
+ * `packages/htmx-adapter/vocab/*.js` and compares against this file's
  * contents.
  */
 
@@ -20,7 +20,7 @@
  * Localized names that mean `hx-live` (htmx v4 reactive expression).
  * Used to set `needsHxLive` + `needsReactivity` for non-English authors.
  *
- * Auto-derived from `packages/core/vocab/htmx/*.js`. Re-sync if vocab
+ * Auto-derived from `packages/htmx-adapter/vocab/*.js`. Re-sync if vocab
  * changes (see file-level comment).
  */
 export const HX_LIVE_LOCALIZED: ReadonlySet<string> = new Set([

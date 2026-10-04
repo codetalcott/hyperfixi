@@ -4,12 +4,12 @@
  * Recommended script order (loka-js convention: adapter before library):
  *
  *   <script src="htmx-i18n.global.js"></script>       <!-- this file -->
- *   <script src="vocab/htmx/es.js"></script>          <!-- one or more -->
+ *   <script src="vocab/es.js"></script>               <!-- one or more -->
  *   <script src="htmx.js"></script>                   <!-- upstream htmx v4 -->
  *
  * On load this entry:
  *   1. Installs `window.__hyperfixi_i18n.register` so the generated vocab
- *      modules (`packages/core/vocab/htmx/{lang}.js`) self-register here
+ *      modules (`packages/htmx-adapter/vocab/{lang}.js`) self-register here
  *      exactly as they do against hyperfixi core. If a registry already
  *      exists (page also runs the embedded htmx-compat layer), we fan out
  *      so BOTH registries receive every registration.
