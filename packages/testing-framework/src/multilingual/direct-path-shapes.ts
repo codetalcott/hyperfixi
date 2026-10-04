@@ -70,39 +70,23 @@ export function loadDirectPathCases(): DirectPathCase[] {
 
 /**
  * The cases that fail, and why. `core-only`: upstream rejects the English and
- * the renderer has no upstream spelling for it yet (the renderer half of the
- * "reader accepts, renderer writes upstream" decision, C2c). `renderer`: the
- * render back to English loses the shape. `vacuous`: neither engine does
- * anything, so there is nothing to compare.
+ * nothing re-renders it (an English source reaches the engine as written).
+ * `renderer`: the render back to English loses the shape. `vacuous`: neither
+ * engine does anything, so there is nothing to compare. The nine `core-only`
+ * translations and the one `renderer` loss listed when the gate landed (C2b)
+ * were closed by English writing upstream's spelling
+ * (`semantic/src/explicit/upstream-spelling.ts`, C2c).
  */
 export const KNOWN: Readonly<
   Record<string, { family: 'core-only' | 'renderer' | 'vacuous'; reason: string }>
 > = {
-  'condition-copula-direct-path#7': { family: 'core-only', reason: '`#d1 has .x`' },
-  'condition-copula-direct-path#8': { family: 'core-only', reason: '`#d1 has .y`' },
-  'condition-phrases-direct-path#95': { family: 'core-only', reason: '`#d1 has .x`' },
-  'condition-phrases-direct-path#96': { family: 'core-only', reason: '`#d1 has .y`' },
   'condition-phrases-direct-path#97': {
     family: 'core-only',
-    reason: '`#d1 have .x`, English only',
+    reason: '`#d1 have .x`, English only: an English source reaches the engine as written',
   },
   'condition-phrases-direct-path#98': {
     family: 'core-only',
-    reason: '`#d1 have .y`, English only',
-  },
-  'fetch-do-not-throw-direct-path#1': { family: 'core-only', reason: '`fetch … do not throw`' },
-  'naked-url-interpolation-direct-path#1': {
-    family: 'core-only',
-    reason: 'a spaced `${…}` in a naked URL (OPEN_ITEMS 2j D4: write a template literal)',
-  },
-  'possessive-values-direct-path#6': {
-    family: 'core-only',
-    reason: '`prepend` (OPEN_ITEMS 2j D5: `put … at start of`)',
-  },
-  'go-direct-path#5': {
-    family: 'renderer',
-    reason:
-      '`go to /x in new window` renders back as `go "/x" in new window`, which goes nowhere: a string destination needs `url`',
+    reason: '`#d1 have .y`, English only: an English source reaches the engine as written',
   },
   'go-direct-path#2': {
     family: 'vacuous',

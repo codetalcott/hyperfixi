@@ -32,7 +32,8 @@ const CASES: Array<[string, string]> = [
   ["on click log #d1's value", "on click log #d1's value"],
   ['on click log the value of #d1', "on click log #d1's value"],
   ["on click append #d1's value to #b", "on click append #d1's value to #b"],
-  ["on click prepend #d1's value to #b", "on click prepend #d1's value to #b"],
+  // English writes upstream's spelling for core-only commands (upstream-spelling.ts).
+  ["on click prepend #d1's value to #b", "on click put #d1's value at start of #b"],
   ["on click copy #d1's value", "on click copy #d1's value"],
   ["on click default x to #d1's value", "on click default x to #d1's value"],
   ["on click throw #d1's value", "on click throw #d1's value"],
@@ -40,7 +41,7 @@ const CASES: Array<[string, string]> = [
   ["put #d1's value into #b", "put #d1's value into #b"],
   // English's hand-written set pattern is now one definition, so its `on`
   // scope stays with it.
-  ["on click set @aria-selected to 'false' on .tab", 'on click set @aria-selected to "false" on .tab'],
+  ["on click set @aria-selected to 'false' on .tab", 'on click set @aria-selected of .tab to "false"'],
 ];
 
 describe.each(CASES)('%s, through every language', (src, english) => {

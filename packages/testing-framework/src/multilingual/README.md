@@ -305,7 +305,7 @@ text as written on `@hyperfixi/engine` with the adapter's plugin and `lang` on `
 Upstream running the English is the oracle; where upstream rejects a core-only English
 source, upstream running the adapter's English is. Signatures are the body diff (text
 nodes normalized) plus a log of `fetch` / `history` / `window.open` / `scrollIntoView`
-calls. `KNOWN` lists the 12 failing cases with their reasons and only shrinks; the gate
+calls. `KNOWN` lists the 4 failing cases with their reasons and only shrinks; the gate
 runs in three shards, `direct-path-shapes.<n>.test.ts`.
 
 ## Troubleshooting

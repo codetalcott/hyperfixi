@@ -624,9 +624,10 @@ code the canonical parser rejects, so that class still needs the en-side vitest 
 The **direct-path shapes** gate (`direct-path-shapes.<n>.test.ts`, 2026-10-03) carries
 core's 33 `*-direct-path.test.ts` files onto the text path before that path retires: their
 287 cases (English source, fixture, events), each translation run as written on the engine
-with the adapter plugin against upstream's English. 275 hold; `KNOWN` lists the rest
-(core-only forms awaiting their upstream render, one renderer loss, two vacuous) and only
-shrinks.
+with the adapter plugin against upstream's English. 283 hold; `KNOWN` lists the other four
+(two English-only `have` cases, two vacuous) and only shrinks — the eight core-only and
+renderer cases it opened with closed when English started writing upstream's spelling for
+core-only forms (`semantic/src/explicit/upstream-spelling.ts`, C2c).
 
 Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
@@ -821,7 +822,9 @@ Key files:
   is `explicit/verified-render.ts`, which writes a variable spelled like a structure word of the
   target language in parentheses (`(si)`) where the plain render would be misread, and only
   there (the reader fuses `(si)` into one name; `docs-internal/multilingual/VALUE_READING.md`,
-  "Name collisions")
+  "Name collisions"); for English it first rewrites core-only forms into upstream's spelling
+  (`explicit/upstream-spelling.ts`: the reader accepts `prepend`, `X has .c`, `set @a … on X`;
+  English writes `put … at start of`, `X matches .c`, `set @a of X …`)
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
