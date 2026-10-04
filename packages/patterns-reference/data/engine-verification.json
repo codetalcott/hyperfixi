@@ -3,7 +3,7 @@
     "bar": {
       "lokascript": "compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path) with its first-party plugins installed (@hyperfixi/reactivity and @hyperfixi/realtime, both pre-installed in hyperfixi.js, and @hyperfixi/components), plus a jsdom top-level install smoke (no error within a 500ms settle window; registrations cleaned up afterwards)",
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
-      "html": "HTML-markup patterns: every _= / hx-live / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); hx-live/sse-*/ws-* markup is hyperfixi-only (blocks the upstream claim) and earns its lokascript credit only by running in dist/hyperfixi-hx-v4.js (sse events swap into hx-target, ws-send reaches the socket, hx-live re-renders); a row with no source earns no credit"
+      "html": "HTML-markup patterns: every _= / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); the retired core-only hx-live/sse-*/ws-* markup earns no credit on either leg; a row with no source earns no credit"
     },
     "lokascriptVersion": "3.3.0",
     "hyperscriptVersion": "0.9.93"
@@ -76,8 +76,6 @@
     "halt-propagation": "both",
     "hide-element": "both",
     "hide-with-transition": "both",
-    "hx-live-attribute": "lokascript",
-    "hx-live-with-mutator": "lokascript",
     "if-condition": "both",
     "if-empty": "both",
     "if-exists": "both",
@@ -96,6 +94,7 @@
     "last-in-collection": "both",
     "live-derived-value": "both",
     "live-multiple-deps": "both",
+    "live-with-handler": "both",
     "log-element": "both",
     "log-value": "both",
     "make-element": "both",
@@ -144,8 +143,6 @@
     "slide-toggle": "both",
     "socket-basic": "both",
     "socket-send": "both",
-    "sse-connect-swap": "lokascript",
-    "sse-multi-event": "lokascript",
     "stagger-animation": "both",
     "swap-content": "both",
     "swap-view-transition": "lokascript",
@@ -175,8 +172,7 @@
     "window-keydown": "both",
     "window-resize": "both",
     "window-scroll": "both",
-    "worker-basic": "both",
-    "ws-connect-send": "lokascript"
+    "worker-basic": "both"
   },
   "details": {
     "accordion-exclusive": {
@@ -452,16 +448,6 @@
       "lokascript": true,
       "hyperscript": true
     },
-    "hx-live-attribute": {
-      "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
-    },
-    "hx-live-with-mutator": {
-      "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
-    },
     "if-condition": {
       "lokascript": true,
       "hyperscript": true
@@ -534,6 +520,10 @@
       "hyperscript": true
     },
     "live-multiple-deps": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "live-with-handler": {
       "lokascript": true,
       "hyperscript": true
     },
@@ -729,16 +719,6 @@
       "lokascript": true,
       "hyperscript": true
     },
-    "sse-connect-swap": {
-      "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
-    },
-    "sse-multi-event": {
-      "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
-    },
     "stagger-animation": {
       "lokascript": true,
       "hyperscript": true
@@ -859,11 +839,6 @@
     "worker-basic": {
       "lokascript": true,
       "hyperscript": true
-    },
-    "ws-connect-send": {
-      "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "uses hyperfixi-only attributes (hx-live / sse-* / ws-*)"
     }
   }
 }

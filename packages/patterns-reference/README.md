@@ -17,7 +17,7 @@ time from the released source, the same database CI's gates judge — containing
 - 168 code examples covering hyperscript commands and real-world UI patterns,
   each with the engine(s) mechanically verified to run it (`engine`: `both`,
   `lokascript` = hyperfixi, `hyperscript` = upstream _hyperscript)
-- 4,032 translations (168 patterns × 24 languages)
+- 3,936 translations (164 patterns × 24 languages)
 - ~660 LLM few-shot examples for code generation (an example no engine runs is
   never served)
 

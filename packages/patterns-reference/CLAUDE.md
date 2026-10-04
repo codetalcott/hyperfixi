@@ -44,7 +44,7 @@ packages/patterns-reference/
 npm run populate
 
 # Individual steps
-npm run db:init:force      # Initialize the schema and the corpus (168 patterns)
+npm run db:init:force      # Initialize the schema and the corpus (164 patterns)
 npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 
 # There is ONE renderer: @lokascript/semantic's render(parse_en(en), L). The
@@ -127,14 +127,14 @@ npm run verify:engines:check --prefix packages/patterns-reference  # compare onl
 
 ## Database Contents
 
-After running `npm run populate` (counts as of 2026-09-25; `populate` prints
+After running `npm run populate` (counts as of 2026-10-04; `populate` prints
 the current ones):
 
 | Table                | Rows  | Description                                                                       |
 | -------------------- | ----- | --------------------------------------------------------------------------------- |
-| code_examples        | 168   | Patterns covering all hyperscript commands                                        |
-| pattern_translations | 4,032 | 168 patterns × 24 languages                                                       |
-| llm_examples         | 355   | Each pattern's description and title as prompts, plus `db:init`'s 19 hand-written |
+| code_examples        | 164   | Patterns covering all hyperscript commands                                        |
+| pattern_translations | 3,936 | 164 patterns × 24 languages                                                       |
+| llm_examples         | 347   | Each pattern's description and title as prompts, plus `db:init`'s 19 hand-written |
 
 `pattern_translations.verified_parses` is MEASURED at sync
 (src/sync/verify-parses.ts): 1 when the semantic parser accepts every
