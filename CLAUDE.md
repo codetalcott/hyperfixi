@@ -564,7 +564,7 @@ yields a 0 delta):
 
 **The corpus writer is SEMANTIC-ONLY (since 2026-08-28).** Every foreign row is
 `@lokascript/semantic`'s `render(parse_en(en), L)` — the same call MCP
-`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript` make.
+`translate_code`, `hyperfixi.translate` and `@hyperfixi/core/multilingual`'s `translate` make.
 
 It used to have three modes, because there used to be two renderers. `best`
 (#973) rendered each row with BOTH semantic and `@lokascript/i18n`'s
@@ -818,27 +818,28 @@ Key files:
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
-### Unified Multilingual API
+### Multilingual API
 
-The `MultilingualHyperscript` class provides a unified API over semantic parsing and translation (exported from `@hyperfixi/core/multilingual`, not the package root):
+`@hyperfixi/core/multilingual` (not the package root) is four functions over
+`@lokascript/semantic`, on text — `parse`, `render`, `translate` and
+`schemaRoleInferrer` (the owner's 4.0 shape; the `MultilingualHyperscript` class
+was removed in Phase C2):
 
 ```typescript
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
-
-const ml = new MultilingualHyperscript();
-await ml.initialize();
+import { parse, render, translate } from '@hyperfixi/core/multilingual';
 
 // Parse from any of 24 languages
-const node = await ml.parse('#button の .active を 切り替え', 'ja');
+const node = await parse('#button の .active を 切り替え', 'ja');
 
 // Translate between any languages
-const arabic = await ml.translate('toggle .active', 'en', 'ar');
+const arabic = await translate('toggle .active', 'en', 'ar');
 ```
 
 Key files:
 
-- `packages/core/src/multilingual/index.ts` - `MultilingualHyperscript` unified API
-- `packages/core/src/multilingual/bridge.ts` - `SemanticGrammarBridge` integration layer
+- `packages/core/src/multilingual/index.ts` - the four exports
+- `packages/core/src/multilingual/bridge.ts` - `SemanticGrammarBridge`: the functions, and core's
+  direct path (`compile(code, { language })` → `buildAST`), which retires with core's parser
 - `packages/semantic/src/tokenizers/` - 24 language tokenizers
 - `packages/semantic/src/parser/semantic-parser.ts` - Main semantic parser
 - `packages/semantic/CLAUDE.md` - Package-specific documentation

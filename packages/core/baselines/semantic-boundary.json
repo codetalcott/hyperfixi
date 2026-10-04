@@ -1,10 +1,10 @@
 {
-  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
-  "generated": "2026-09-03",
+  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs. Since Arc 1 steps 2-3 every row is on the FRONT-END SIDE (compatibility/browser-bundle*.ts and multilingual/); a front-end import anywhere else fails outright and cannot be added here.",
+  "generated": "2026-10-04",
   "totals": {
     "static-value": 5,
     "dynamic": 1,
-    "static-type": 2,
+    "static-type": 1,
     "typeof-import": 2
   },
   "files": {
@@ -29,10 +29,6 @@
       "typeof-import": 1,
       "dynamic": 1,
       "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 — the engine now owns that policy."
-    },
-    "multilingual/index.ts": {
-      "static-type": 1,
-      "reason": "Type-only. MultilingualHyperscript's public surface names SemanticNode/ASTNode. Front-end module; stays after Arc 1 step 3."
     },
     "multilingual/schema-roles.ts": {
       "static-value": 2,

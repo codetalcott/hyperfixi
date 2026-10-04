@@ -1,4 +1,4 @@
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
+import { parseSemantic } from '@lokascript/semantic';
 import { getTranslationsByLanguage } from '@hyperfixi/patterns-reference';
 import { collectActions } from '../src/multilingual/fidelity';
 
@@ -36,9 +36,6 @@ async function textOf(id: string, lang: string): Promise<string | undefined> {
 }
 
 async function main() {
-  const ml = new MultilingualHyperscript();
-  await ml.initialize();
-
   for (const [id, lang] of CASES) {
     const enText = await textOf(id, 'en');
     const trText = await textOf(id, lang);
@@ -49,8 +46,8 @@ async function main() {
       console.log(`  MISSING TEXT: en=${!!enText} ${lang}=${!!trText}`);
       continue;
     }
-    const enNode: any = await ml.parse(enText, 'en');
-    const trNode: any = await ml.parse(trText, lang);
+    const enNode: any = parseSemantic(enText, 'en').node;
+    const trNode: any = parseSemantic(trText, lang).node;
     const enA = collectActions(enNode);
     const trA = collectActions(trNode);
     const missing = enA.filter(a => !trA.includes(a));

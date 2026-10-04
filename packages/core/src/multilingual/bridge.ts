@@ -326,6 +326,10 @@ export async function getDefaultBridge(): Promise<SemanticGrammarBridge> {
   return _defaultBridge;
 }
 
+/**
+ * Translate hyperscript from one language to another. Returns the input
+ * unchanged when it cannot be translated (or when the languages match).
+ */
 export async function translate(
   input: string,
   sourceLang: string,
@@ -334,4 +338,19 @@ export async function translate(
   const bridge = await getDefaultBridge();
   const result = await bridge.transform(input, sourceLang, targetLang);
   return result.output;
+}
+
+/**
+ * Parse hyperscript written in `lang` to a semantic node, or null when it does
+ * not parse. Confidence is not filtered: a caller that executes decides.
+ */
+export async function parse(input: string, lang = 'en'): Promise<SemanticNode | null> {
+  const semantic = await getSemanticModule();
+  return semantic.parseSemantic(input, lang).node ?? null;
+}
+
+/** Render a semantic node as hyperscript in `lang`. */
+export async function render(node: SemanticNode, lang: string): Promise<string> {
+  const semantic = await getSemanticModule();
+  return semantic.render(node, lang);
 }

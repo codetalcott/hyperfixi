@@ -51,7 +51,7 @@ const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1]
  *
  * `@lokascript/semantic`'s `translate()` = `render(parse_en(en), L)` — the same
  * function MCP `translate_code`, `hyperfixi.translate` and core's
- * `MultilingualHyperscript` call. Every foreign row in the corpus comes from it.
+ * `multilingual` entry call. Every foreign row in the corpus comes from it.
  *
  * There used to be three modes (`i18n`, `semantic`, `best`), because there used
  * to be two renderers. `best` rendered each row with both and kept whichever won

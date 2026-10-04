@@ -61,9 +61,9 @@ src/
 │   └── browser-types.ts
 ├── api/                # API v2 implementation
 │   └── hyperscript-api.ts
-└── multilingual/       # MultilingualHyperscript unified API
+└── multilingual/       # parse / render / translate / schemaRoleInferrer (on text)
     ├── index.ts
-    └── bridge.ts       # SemanticGrammarBridge
+    └── bridge.ts       # the functions + SemanticGrammarBridge (core's direct path, until C6)
 ```
 
 ## Command Pattern

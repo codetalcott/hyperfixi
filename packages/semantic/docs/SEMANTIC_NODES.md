@@ -275,22 +275,20 @@ function parseMultilingual(input: string, lang: string): AST {
 ### Basic Translation
 
 ```typescript
-import { getMultilingual } from '@lokascript/core/multilingual';
-
-const ml = await getMultilingual();
+import { parse, render, translate } from '@hyperfixi/core/multilingual';
 
 // Parse to semantic node
-const node = await ml.parse('toggle .active on #button', 'en');
+const node = await parse('toggle .active on #button', 'en');
 
 // Translate to any language
-const japanese = await ml.translate('toggle .active', 'en', 'ja');
+const japanese = await translate('toggle .active', 'en', 'ja');
 // → '.active を 切り替え'
 
-const arabic = await ml.translate('toggle .active', 'en', 'ar');
+const arabic = await translate('toggle .active', 'en', 'ar');
 // → 'بدّل .active'
 
 // Render node to specific language
-const korean = await ml.render(node, 'ko');
+const korean = node && (await render(node, 'ko'));
 // → '#button 의 .active 를 전환'
 ```
 

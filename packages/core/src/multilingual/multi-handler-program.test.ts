@@ -11,12 +11,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MultilingualHyperscript } from './index';
+import { SemanticGrammarBridge } from './bridge';
 
 describe('multilingual multi-handler program — bridge → core Program', () => {
-  let ml: MultilingualHyperscript;
+  let ml: SemanticGrammarBridge;
   beforeEach(async () => {
-    ml = new MultilingualHyperscript();
+    ml = new SemanticGrammarBridge();
     await ml.initialize();
   });
 

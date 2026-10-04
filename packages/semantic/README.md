@@ -579,26 +579,20 @@ const ast = buildAST(node);
 // }
 ```
 
-### With MultilingualHyperscript (Core Package)
+### Through `@hyperfixi/core/multilingual`
+
+Core's multilingual entry is four functions over this package, on text —
+`parse`, `render`, `translate` and `schemaRoleInferrer`:
 
 ```typescript
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
+import { parse, render } from '@hyperfixi/core/multilingual';
 
-const ml = new MultilingualHyperscript();
-await ml.initialize();
-
-// Parse directly to AST
-const ast = await ml.parseToAST('#button の .active を 切り替え', 'ja');
-
-// With detailed result
-const result = await ml.parseToASTWithDetails('toggle .active', 'en');
-if (result.usedDirectPath) {
-  console.log('Direct AST:', result.ast);
-} else if (result.fallbackText) {
-  // Use fallback text with core parser
-  console.log('Fallback:', result.fallbackText);
-}
+const node = await parse('#button の .active を 切り替え', 'ja');
+const english = node && (await render(node, 'en')); // hyperscript any host reads
 ```
+
+(Its `MultilingualHyperscript` class, whose `parseToAST` went through `buildAST` to
+core's AST, was removed in the 4.0 cycle; `buildAST` above is still the direct route.)
 
 ### AST Node Types
 
