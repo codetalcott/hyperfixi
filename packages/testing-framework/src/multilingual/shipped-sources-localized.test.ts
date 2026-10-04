@@ -6,8 +6,9 @@
  * looked. On a page such a script runs through `@lokascript/hyperscript-
  * adapter`, which translates it under its element's `lang`. This gate does
  * the same and requires English that upstream `_hyperscript` and
- * `@hyperfixi/engine` both parse (Phase C2c; three attributes today, the
- * `live` blocks of examples/hx-v4-i18n/live-multilang.html).
+ * `@hyperfixi/engine` both parse (Phase C2c; four attributes today: the
+ * `live` blocks of examples/hx-v4-i18n/live-multilang.html, and the example in
+ * docs/BROWSER_BUNDLES.md's "Hyperscript in another language").
  *
  * @vitest-environment node
  * Required: the hosts and the collector need real jsdom documents.
@@ -44,6 +45,8 @@ describe('shipped sources written in another language', () => {
       'examples/hx-v4-i18n/live-multilang.html [es]',
       'examples/hx-v4-i18n/live-multilang.html [ja]',
       'examples/hx-v4-i18n/live-multilang.html [ar]',
+      // The engine + adapter example in "Hyperscript in another language" (C-R3).
+      'docs/BROWSER_BUNDLES.md [ja]',
     ]);
   });
 

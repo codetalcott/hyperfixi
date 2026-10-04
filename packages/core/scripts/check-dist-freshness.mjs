@@ -84,10 +84,8 @@ for (const b of stale) {
   const lag = lagMs > 86400000 ? `${Math.round(lagMs / 86400000)}d` : `${Math.round(lagMs / 1000)}s`;
   console.error(`    ${b.name}  (${lag} behind)`);
 }
-console.error('\n  rebuild all browser bundles:');
+console.error('\n  rebuild the browser bundle (hyperfixi.js and its aliases):');
 console.error('    npm run build:browser --prefix packages/core');
-console.error('  rebuild a single bundle (faster):');
-console.error('    npm run build:browser:main-only --prefix packages/core # or :multilingual, :classic-i18n, etc.');
 console.error('  bypass this check:');
 console.error('    SKIP_DIST_CHECK=1 <your command>\n');
 process.exit(1);

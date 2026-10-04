@@ -79,15 +79,6 @@
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
     },
     {
-      "key": "examples/multilingual/test-classic-i18n.html::ffd8337a94::click",
-      "file": "examples/multilingual/test-classic-i18n.html",
-      "event": "click",
-      "excerpt": "on click set #count to 0",
-      "hyperfixi": [],
-      "upstream": ["-span:17#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
       "key": "examples/toggle-and-state/toggle-attributes.html::34237b9d73::click",
       "file": "examples/toggle-and-state/toggle-attributes.html",
       "event": "click",

@@ -61,7 +61,7 @@ body:
       options:
         - 'hyperfixi.js (full)'
         - 'hyperfixi-hs.js (@hyperfixi/engine)'
-        - 'hyperfixi-multilingual.js'
+        - 'hyperfixi-hs.js + @lokascript/hyperscript-adapter (non-English)'
         - 'Vite plugin (auto-generated)'
         - 'Node.js / Server'
         - 'Not sure'

@@ -651,8 +651,9 @@ export interface BundleRef {
  * All available bundles with metadata
  */
 export const bundles: BundleRef[] = [
-  // hybrid-complete and hybrid-hx retired in Phase C3 of the engine cutover;
-  // the engine's hyperfixi-hs.js (@hyperfixi/engine) is the script-tag bundle.
+  // hybrid-complete and hybrid-hx retired in Phase C3 of the engine cutover,
+  // multilingual after them (C-R3); the engine's hyperfixi-hs.js
+  // (@hyperfixi/engine) is the script-tag bundle.
   {
     name: 'browser',
     file: 'lokascript-browser.js',
@@ -663,17 +664,6 @@ export const bundles: BundleRef[] = [
     hasPositional: true,
     useCase: 'Full bundle with all features',
     importPath: '@hyperfixi/core/browser',
-  },
-  {
-    name: 'multilingual',
-    file: 'lokascript-multilingual.js',
-    size: '64 KB',
-    commandCount: 43,
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    useCase: 'Full features + multilingual API (no parser)',
-    importPath: '@hyperfixi/core/browser/multilingual',
   },
 ];
 

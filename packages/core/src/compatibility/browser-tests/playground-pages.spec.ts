@@ -2,7 +2,6 @@
  * Coverage for the interactive multilingual / showcase example pages that had
  * no Playwright spec:
  *   - multilingual/showcase.html            (counter/toggle/mirror/tabs, local core + semantic)
- *   - multilingual/test-minimal.html        (hyperfixi.execute on classic-i18n bundle)
  *   - multilingual/polyglot-playground.html (local inc/dec/toggle demo)
  *   - multilingual/playground.html          (local demo mirror; i18n via unpkg CDN)
  *
@@ -94,25 +93,6 @@ test.describe('multilingual/showcase.html @comprehensive', () => {
     expect(result.hasNode).toBe(true);
     expect(typeof result.confidence).toBe('number');
     expect(result.confidence).toBeGreaterThan(0);
-  });
-});
-
-test.describe('multilingual/test-minimal.html @comprehensive', () => {
-  test('hyperfixi.execute writes into #result element', async ({ page }) => {
-    const consoleErrs: string[] = [];
-    page.on('console', m => {
-      if (m.type() === 'error') consoleErrs.push(m.text());
-    });
-    page.on('pageerror', e => consoleErrs.push(`PageError: ${e.message}`));
-
-    await load(page, '/examples/multilingual/test-minimal.html');
-    await expect(page.locator('#result')).toHaveText('not clicked');
-
-    await page.locator('#test-btn').click();
-    // execute('set #result to "clicked!"') should update the element text.
-    await expect(page.locator('#result')).toHaveText('clicked!', { timeout: 5000 });
-
-    expect(consoleErrs.filter(e => /Execute failed|Parse failed/.test(e))).toEqual([]);
   });
 });
 

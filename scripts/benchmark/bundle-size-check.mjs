@@ -24,12 +24,6 @@ const rootDir = path.resolve(__dirname, '../..');
 
 const BUNDLE_CONFIGS = [
   {
-    name: 'hyperfixi-multilingual.js',
-    path: 'packages/core/dist/hyperfixi-multilingual.js',
-    maxGzip: 100000, // 100 KB
-    description: 'Multilingual (no parser)',
-  },
-  {
     name: 'hyperfixi-browser.js',
     path: 'packages/core/dist/hyperfixi-browser.js',
     maxGzip: 150000, // 150 KB

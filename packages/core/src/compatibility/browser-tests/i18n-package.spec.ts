@@ -22,7 +22,7 @@ test.describe('LokaScript i18n Bundle', () => {
     expect(isLoaded).toBe(true);
   });
 
-  test('core hyperfixi bundle is also loaded', async ({ page }) => {
+  test('the engine (hyperfixi-hs.js) is also loaded', async ({ page }) => {
     const isLoaded = await page.evaluate(() => typeof (window as any).hyperfixi !== 'undefined');
     expect(isLoaded).toBe(true);
   });

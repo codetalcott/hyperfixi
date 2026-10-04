@@ -92,7 +92,6 @@ export default defineConfig({
         // bundle-compatibility suite (src/compatibility/browser-tests/), never by
         // vitest. Keeping them counted dragged core ~8pts on ~2,900 lines at ~2%.
         'src/compatibility/browser-bundle-*.ts',
-        'src/compatibility/browser-modular.ts',
         'src/compatibility/browser-tests/**', // Playwright specs + helpers
         // Test-only infrastructure (not shipped runtime):
         'src/__test-utils__/**',

@@ -36,15 +36,8 @@
       description: 'Hyperscript only, on the engine that follows upstream _hyperscript',
       features: ['every command', 'upstream syntax', 'no htmx attrs', 'English only'],
       color: '#ec4899'
-    },
-    'multilingual': {
-      name: 'Multilingual Bundle',
-      file: 'hyperfixi-multilingual.js',
-      size: '64 KB',
-      description: 'Requires semantic package loaded separately!',
-      features: ['needs semantic.js', 'i18n', '13 languages'],
-      color: '#f59e0b'
     }
+    // 'multilingual' (hyperfixi-multilingual.js) retired in Phase C3 (C-R3).
   };
 
   // Get current bundle from URL or default

@@ -20,7 +20,6 @@
     "src/performance/benchmarks.ts",
     "src/test-helpers/**/*",
     "vitest.config.ts",
-    "src/compatibility/browser-bundle.ts",
-    "src/compatibility/browser-bundle-classic-i18n.ts"
+    "src/compatibility/browser-bundle.ts"
   ]
 }

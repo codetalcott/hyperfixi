@@ -8,7 +8,7 @@
  *   node build-browser-bundles.mjs                    # Build all critical bundles in parallel
  *   node build-browser-bundles.mjs --verbose          # Show detailed output
  *   node build-browser-bundles.mjs --sequential       # Build sequentially
- *   node build-browser-bundles.mjs --only=main,multilingual  # Build specific bundles
+ *   node build-browser-bundles.mjs --only=main  # Build specific bundles
  */
 
 import { spawn } from 'child_process';
@@ -29,34 +29,13 @@ const BUNDLES = {
     output: 'dist/hyperfixi.js',
     critical: true,
   },
-  multilingual: {
-    name: 'multilingual',
-    script: 'build:browser:multilingual',
-    config: 'rollup.browser-multilingual.config.mjs',
-    output: 'dist/hyperfixi-multilingual.js',
-    critical: true,
-  },
-  'classic-i18n': {
-    name: 'classic-i18n',
-    script: 'build:browser:classic-i18n',
-    config: 'rollup.browser-classic-i18n.config.mjs',
-    output: 'dist/hyperfixi-classic-i18n.js',
-    critical: true,
-  },
-
-
-  // The small prebuilts (hybrid-hx = hyperfixi-hx.js, hybrid-complete) retired in
-  // Phase C3 of the engine cutover (C-R2), as hybrid-hx-v4 did before them: the
-  // engine's hyperfixi-hs.js is the script-tag bundle. lite / lite-plus /
-  // minimal / standard went in the 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b).
-
-  modular: {
-    name: 'modular',
-    script: 'build:browser:modular',
-    config: 'rollup.browser-modular.config.mjs',
-    output: 'dist/hyperfixi.mjs',  // ESM output for code-splitting bundle
-    critical: false,  // Non-critical: experimental modular bundle
-  },
+  // Every other core bundle has retired in Phase C3 of the engine cutover:
+  // hybrid-hx-v4 (C-R1); hybrid-hx (hyperfixi-hx.js) and hybrid-complete
+  // (C-R2); multilingual, classic-i18n and modular (C-R3; a page runs
+  // non-English hyperscript on the engine's hyperfixi-hs.js with
+  // @lokascript/hyperscript-adapter). lite / lite-plus / minimal / standard went
+  // in the 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b). main itself becomes the
+  // engine's bundle under the same name in C-R4.
 };
 
 // Parse command line arguments
@@ -82,13 +61,11 @@ Options:
 
 Available bundles:
   main                Main hyperfixi.js bundle
-  classic-i18n        Classic bundle with i18n support
-  multilingual        Parser-free multilingual bundle
 
 Examples:
   node build-browser-bundles.mjs
   node build-browser-bundles.mjs --verbose
-  node build-browser-bundles.mjs --only=main,multilingual
+  node build-browser-bundles.mjs --only=main
   node build-browser-bundles.mjs --sequential
 `);
   process.exit(0);

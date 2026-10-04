@@ -751,7 +751,7 @@ export function getSetupGuide(): object {
           },
           multilingual: {
             recommendation:
-              'Use lokascript-multilingual.js (250 KB) + a semantic bundle for your languages.',
+              "Load the engine's hyperfixi-hs.js (34 KB) with @lokascript/hyperscript-adapter: a per-language adapter bundle (~80 KB gz), or the lite adapter (1.8 KB) beside a @lokascript/semantic bundle.",
             next: null,
           },
         },

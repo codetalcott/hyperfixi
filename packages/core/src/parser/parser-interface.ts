@@ -9,11 +9,10 @@
  * - **fullParser**: ~180KB, all 59 commands, 100% hyperscript coverage
  *
  * The counts track the bundles these parsers shipped in — `lite`,
- * `hybrid-complete` (retired in Phase C3; the hybrid parser still backs the
- * modular and textshelf bundles and core's custom-bundle generator), and the
- * full-runtime bundles. Authoritative values live in `metadata.ts`'s
- * `bundleInfo`, which `verify:reference` re-derives from each bundle's source;
- * the full count is the manifest's (`COMMAND_NAMES`). The `48` here was stale by eleven commands.
+ * `hybrid-complete` (retired in Phase C3; the hybrid parser still backs core's
+ * custom-bundle generator and the runtime), and the full-runtime bundles. The
+ * full count is the manifest's (`COMMAND_NAMES`); `metadata.ts`'s `bundleInfo`
+ * lists only the full bundle now. The `48` here was stale by eleven commands.
  *
  * @example
  * ```typescript

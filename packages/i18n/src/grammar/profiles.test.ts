@@ -7,8 +7,9 @@
  * (see grammar/index.ts); these are not.
  *
  * They cover the half of `grammar/` that STAYS and has its own consumers:
- * `profiles/` (i18n's `runtime.ts`, and the classic-i18n browser bundle's
- * `getProfile` / `getSupportedGrammarLocales` / `profiles` surface), the role
+ * `profiles/` (i18n's `runtime.ts`; core's classic-i18n browser bundle exposed
+ * them as `getProfile` / `getSupportedGrammarLocales` / `profiles` until Phase
+ * C3 retired it), the role
  * helpers in `types.ts` (`reorderRoles` / `insertMarkers` / `joinTokens`, which
  * `constants.ts` imports from), and the has/have dictionary entries.
  */

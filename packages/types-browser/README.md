@@ -37,7 +37,7 @@ window.LokaScriptI18n.getProfile('ja');
 
 ### window.lokascript / window.\_hyperscript
 
-Core LokaScript API (from `lokascript-browser.js` or `lokascript-multilingual.js`):
+Core LokaScript API (from `hyperfixi.js`, also published as `lokascript-browser.js`):
 
 - `compile(source, options?)` - Compile hyperscript to AST
 - `execute(source, element?, context?)` - Execute hyperscript
