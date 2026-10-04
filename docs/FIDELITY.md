@@ -165,7 +165,7 @@ leg is en→en and its foreign leg is foreign→en. So none of them ever call
 `render(node, L)` for a non-English `L` themselves.
 
 That is the direction a reader actually sees: MCP `translate_code`,
-`hyperfixi.translate`, `getAllTranslations`, core's `MultilingualHyperscript`,
+`hyperfixi.translate`, `getAllTranslations`, `@hyperfixi/core/multilingual`,
 and the editor's "Show in my language" badge all render English into a target
 language with `@lokascript/semantic`, not with the transformer that then wrote
 the corpus. Measured for the first time on **2026-08-26**, that path was **73.3%**

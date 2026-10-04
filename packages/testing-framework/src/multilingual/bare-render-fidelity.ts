@@ -14,7 +14,7 @@
  *
  * It matters because the bare form is a first-class public surface: MCP
  * `translate_code`, `hyperfixi.translate`/`getAllTranslations`, core's
- * `MultilingualHyperscript` and the VS Code "Show in my language" badge are all
+ * `multilingual` entry and the VS Code "Show in my language" badge are all
  * routinely handed a single command with no handler around it.
  *
  * WHAT IT ASSERTS

@@ -124,11 +124,10 @@ const hyperscript = createRuntime({
 ### 4. Multilingual (Optional)
 
 ```typescript
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
+import { parse, translate } from '@hyperfixi/core/multilingual';
 
-const ml = new MultilingualHyperscript();
-await ml.initialize();
-await ml.parse('クリック で .active を トグル', 'ja');
+const node = await parse('クリック で .active を トグル', 'ja');
+const english = await translate('クリック で .active を トグル', 'ja', 'en');
 ```
 
 See [lokascript.org](https://lokascript.org) for multilingual documentation.

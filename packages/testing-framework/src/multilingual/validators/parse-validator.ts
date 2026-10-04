@@ -2,9 +2,8 @@
  * Parse Validator - Validates hyperscript parsing across languages
  */
 
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
-import { fillSchemaDefaults } from '@lokascript/semantic';
+import { fillSchemaDefaults, parseSemantic } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
 import {
   collectActions,
@@ -19,21 +18,12 @@ import {
  * Validates that hyperscript patterns parse correctly using the semantic parser.
  */
 export class ParseValidator implements Validator<ParseResult[]> {
-  private ml: MultilingualHyperscript;
-  private initialized = false;
-
-  constructor() {
-    this.ml = new MultilingualHyperscript();
-  }
-
   /**
-   * Initialize the validator
+   * Initialize the validator. Nothing to load: the semantic parser is a
+   * static import (it was reached through core's MultilingualHyperscript,
+   * whose `parse` was this same call, until Phase C2).
    */
-  async initialize(): Promise<void> {
-    if (this.initialized) return;
-    await this.ml.initialize();
-    this.initialized = true;
-  }
+  async initialize(): Promise<void> {}
 
   /**
    * Get validator name
@@ -65,11 +55,8 @@ export class ParseValidator implements Validator<ParseResult[]> {
     const startTime = performance.now();
 
     try {
-      // Parse the hyperscript
-      const semanticNode = (await this.ml.parse(
-        pattern.hyperscript,
-        pattern.language
-      )) as SemanticNode;
+      // Parse the hyperscript. Confidence is not filtered here.
+      const semanticNode = parseSemantic(pattern.hyperscript, pattern.language).node;
 
       if (!semanticNode) {
         return {

@@ -124,8 +124,9 @@ await check('@hyperfixi/core/commands — bare-Node require()', async () => {
 
 await check('@hyperfixi/core/multilingual — bare-Node require()', async () => {
   const m = requireCjs('@hyperfixi/core/multilingual');
-  assert(typeof m.schemaRoleInferrer === 'function', 'schemaRoleInferrer missing from require()');
-  return 'schemaRoleInferrer';
+  const names = ['parse', 'render', 'translate', 'schemaRoleInferrer'];
+  for (const name of names) assert(typeof m[name] === 'function', `${name} missing from require()`);
+  return names.join(' + ');
 });
 
 await check('@hyperfixi/core/commands — bare-Node import', async () => {

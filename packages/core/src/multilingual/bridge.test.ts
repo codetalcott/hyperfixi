@@ -238,167 +238,61 @@ describe('SemanticGrammarBridge', () => {
 });
 
 // =============================================================================
-// MultilingualHyperscript API Tests
+// The entry's functions (`@hyperfixi/core/multilingual`)
 // =============================================================================
 
-import { MultilingualHyperscript, getMultilingual, multilingual, type LanguageInfo } from './index';
+import * as entry from './index';
 
-describe('MultilingualHyperscript', () => {
-  let ml: MultilingualHyperscript;
+const { parse, render, translate } = entry;
 
-  beforeEach(async () => {
-    ml = new MultilingualHyperscript();
-    await ml.initialize();
-  });
-
-  describe('initialization', () => {
-    it('should initialize without errors', async () => {
-      const instance = new MultilingualHyperscript();
-      expect(instance.isInitialized()).toBe(false);
-      await instance.initialize();
-      expect(instance.isInitialized()).toBe(true);
-    });
-
-    it('should auto-initialize on first operation', async () => {
-      const instance = new MultilingualHyperscript();
-      expect(instance.isInitialized()).toBe(false);
-      await instance.translate('toggle .active', 'en', 'ja');
-      expect(instance.isInitialized()).toBe(true);
-    });
-
-    it('should only initialize once', async () => {
-      const instance = new MultilingualHyperscript();
-      await instance.initialize();
-      await instance.initialize(); // Should not throw
-      expect(instance.isInitialized()).toBe(true);
-    });
+describe('@hyperfixi/core/multilingual', () => {
+  it('exports exactly the four functions', () => {
+    expect(Object.keys(entry).sort()).toEqual([
+      'parse',
+      'render',
+      'schemaRoleInferrer',
+      'translate',
+    ]);
   });
 
   describe('parse', () => {
     it('should parse English input', async () => {
-      const node = await ml.parse('toggle .active on #button', 'en');
+      const node = await parse('toggle .active on #button', 'en');
       expect(node).not.toBeNull();
-      if (node) {
-        expect(node.action).toBe('toggle');
-      }
+      expect(node?.action).toBe('toggle');
     });
 
     it('should default to English language', async () => {
-      const node = await ml.parse('toggle .active');
+      const node = await parse('toggle .active');
       expect(node).not.toBeNull();
+    });
+
+    it('returns null for input that does not parse', async () => {
+      expect(await parse('completely unparseable gibberish', 'en')).toBeNull();
     });
   });
 
   describe('translate', () => {
     it('should translate English to Japanese', async () => {
-      const result = await ml.translate('toggle .active', 'en', 'ja');
+      const result = await translate('toggle .active', 'en', 'ja');
       expect(result).toContain('.active');
+      expect(result).not.toBe('toggle .active');
     });
 
     it('should return same text for same language', async () => {
-      const result = await ml.translate('toggle .active', 'en', 'en');
+      const result = await translate('toggle .active', 'en', 'en');
       expect(result).toBe('toggle .active');
-    });
-  });
-
-  describe('translateWithDetails', () => {
-    it('should return detailed translation result', async () => {
-      const result = await ml.translateWithDetails('toggle .active', 'en', 'ja');
-      expect(result.output).toContain('.active');
-      expect(result.sourceLang).toBe('en');
-      expect(result.targetLang).toBe('ja');
-      expect(typeof result.confidence).toBe('number');
     });
   });
 
   describe('render', () => {
     it('should render node to target language', async () => {
-      const node = await ml.parse('toggle .active', 'en');
-      if (node) {
-        const japanese = await ml.render(node, 'ja');
-        expect(japanese).toContain('.active');
-      }
+      const node = await parse('toggle .active', 'en');
+      expect(node).not.toBeNull();
+      const japanese = await render(node!, 'ja');
+      expect(japanese).toContain('.active');
+      expect(await render(node!, 'en')).toBe('toggle .active');
     });
-  });
-
-  describe('getAllTranslations', () => {
-    it('should return translations for all languages', async () => {
-      const translations = await ml.getAllTranslations('toggle .active', 'en');
-      const languages = ml.getSupportedLanguages();
-
-      for (const lang of languages) {
-        expect(translations[lang]).toBeDefined();
-        expect(translations[lang].targetLang).toBe(lang);
-      }
-    });
-  });
-
-  describe('language support', () => {
-    it('should return 13 supported languages', () => {
-      const languages = ml.getSupportedLanguages();
-      expect(languages).toHaveLength(13);
-      expect(languages).toContain('en');
-      expect(languages).toContain('ja');
-      expect(languages).toContain('ar');
-      expect(languages).toContain('ko');
-      expect(languages).toContain('zh');
-      expect(languages).toContain('tr');
-      expect(languages).toContain('qu');
-      expect(languages).toContain('sw');
-    });
-
-    it('should check if language is supported', () => {
-      expect(ml.isLanguageSupported('en')).toBe(true);
-      expect(ml.isLanguageSupported('ja')).toBe(true);
-      expect(ml.isLanguageSupported('xyz')).toBe(false);
-    });
-
-    it('should return language info', () => {
-      const info = ml.getLanguageInfo('ja');
-      expect(info).toBeDefined();
-      expect(info?.code).toBe('ja');
-      expect(info?.name).toBe('Japanese');
-      expect(info?.nativeName).toBe('日本語');
-      expect(info?.direction).toBe('ltr');
-      expect(info?.wordOrder).toBe('SOV');
-    });
-
-    it('should return undefined for unknown language', () => {
-      const info = ml.getLanguageInfo('xyz');
-      expect(info).toBeUndefined();
-    });
-
-    it('should return all language info', () => {
-      const allInfo = ml.getAllLanguageInfo();
-      expect(Object.keys(allInfo)).toHaveLength(13);
-      expect(allInfo.ar.direction).toBe('rtl');
-      expect(allInfo.ar.wordOrder).toBe('VSO');
-    });
-  });
-});
-
-describe('getMultilingual', () => {
-  it('should return initialized instance', async () => {
-    const instance = await getMultilingual();
-    expect(instance.isInitialized()).toBe(true);
-  });
-
-  it('should return same instance on repeated calls', async () => {
-    const instance1 = await getMultilingual();
-    const instance2 = await getMultilingual();
-    expect(instance1).toBe(instance2);
-  });
-});
-
-describe('multilingual export', () => {
-  it('should export default instance', () => {
-    expect(multilingual).toBeInstanceOf(MultilingualHyperscript);
-  });
-
-  it('should require initialization', () => {
-    // New instances start uninitialized
-    const instance = new MultilingualHyperscript();
-    expect(instance.isInitialized()).toBe(false);
   });
 });
 
@@ -407,10 +301,10 @@ describe('multilingual export', () => {
 // =============================================================================
 
 describe('parseToAST Integration', () => {
-  let ml: MultilingualHyperscript;
+  let ml: SemanticGrammarBridge;
 
   beforeEach(async () => {
-    ml = new MultilingualHyperscript();
+    ml = new SemanticGrammarBridge();
     await ml.initialize();
   });
 
@@ -564,10 +458,10 @@ describe('parseToAST Integration', () => {
 });
 
 describe('parseToASTWithDetails Integration', () => {
-  let ml: MultilingualHyperscript;
+  let ml: SemanticGrammarBridge;
 
   beforeEach(async () => {
-    ml = new MultilingualHyperscript();
+    ml = new SemanticGrammarBridge();
     await ml.initialize();
   });
 
@@ -604,10 +498,10 @@ describe('parseToASTWithDetails Integration', () => {
 });
 
 describe('Cross-Language AST Consistency', () => {
-  let ml: MultilingualHyperscript;
+  let ml: SemanticGrammarBridge;
 
   beforeEach(async () => {
-    ml = new MultilingualHyperscript();
+    ml = new SemanticGrammarBridge();
     await ml.initialize();
   });
 

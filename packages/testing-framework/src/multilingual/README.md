@@ -294,6 +294,20 @@ npx tsx tools/regen-value-matrix-baseline.ts --dry-run --results /tmp/matrix.jso
 A lane that fails in `en-rt` fails in nearly every translation: semantic's English
 parse lost the value, and every translation is rendered from it. Fix that first.
 
+## Direct-path shapes on the text path
+
+Core's `src/multilingual/*-direct-path.test.ts` files pin shapes core's direct path ran
+(an English source rendered into 23 languages, compiled with `{ language }` on core,
+installed in a fixture, triggered). That path retires with core's parser, so
+`direct-path-shapes.ts` runs the same 287 cases — extracted once into
+`direct-path-shapes.cases.json` — the way a page now runs a translation: the foreign
+text as written on `@hyperfixi/engine` with the adapter's plugin and `lang` on `<html>`.
+Upstream running the English is the oracle; where upstream rejects a core-only English
+source, upstream running the adapter's English is. Signatures are the body diff (text
+nodes normalized) plus a log of `fetch` / `history` / `window.open` / `scrollIntoView`
+calls. `KNOWN` lists the 12 failing cases with their reasons and only shrinks; the gate
+runs in three shards, `direct-path-shapes.<n>.test.ts`.
+
 ## Troubleshooting
 
 ### Bundle not found

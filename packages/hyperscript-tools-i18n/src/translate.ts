@@ -4,7 +4,7 @@
  * These used to come straight from `@lokascript/i18n`'s `GrammarTransformer`.
  * They now come from `@lokascript/semantic` — the renderer every runtime surface
  * in this repo already uses (`hyperfixi.translate`, MCP `translate_code`, core's
- * `MultilingualHyperscript`) and the one the 3,657-row corpus is written by.
+ * `multilingual` entry) and the one the 3,657-row corpus is written by.
  *
  * WHAT CHANGES FOR A CALLER
  * -------------------------

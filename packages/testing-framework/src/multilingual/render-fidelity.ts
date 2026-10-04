@@ -8,7 +8,7 @@
  * writes — it never calls `render(node, L)` at all. `canonical-validity` is
  * en→en and `foreign-canonical-validity` is foreign→en, both of which pass.
  * So `render(parse(en), L)` — the function behind MCP `translate_code`,
- * `hyperfixi.translate`, `getAllTranslations`, core's `MultilingualHyperscript`
+ * `hyperfixi.translate`, `getAllTranslations`, core's `multilingual` entry
  * and the VS Code "Show in my language" badge — was measured by nothing.
  *
  * When it was finally measured (2026-08-26) it was 73.3% structurally clean

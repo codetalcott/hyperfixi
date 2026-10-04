@@ -564,7 +564,7 @@ yields a 0 delta):
 
 **The corpus writer is SEMANTIC-ONLY (since 2026-08-28).** Every foreign row is
 `@lokascript/semantic`'s `render(parse_en(en), L)` — the same call MCP
-`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript` make.
+`translate_code`, `hyperfixi.translate` and `@hyperfixi/core/multilingual`'s `translate` make.
 
 It used to have three modes, because there used to be two renderers. `best`
 (#973) rendered each row with BOTH semantic and `@lokascript/i18n`'s
@@ -620,6 +620,13 @@ R4 has a related inversion for the RENDERER: a renderer change that corrupts the
 English across languages floods R4 with new invalid pairs at once. A corrupted en
 _reference_ is different — R4's fair denominator silently EXCLUDES pairs whose en raw
 code the canonical parser rejects, so that class still needs the en-side vitest gate.)
+
+The **direct-path shapes** gate (`direct-path-shapes.<n>.test.ts`, 2026-10-03) carries
+core's 33 `*-direct-path.test.ts` files onto the text path before that path retires: their
+287 cases (English source, fixture, events), each translation run as written on the engine
+with the adapter plugin against upstream's English. 275 hold; `KNOWN` lists the rest
+(core-only forms awaiting their upstream render, one renderer loss, two vacuous) and only
+shrinks.
 
 Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
@@ -818,27 +825,28 @@ Key files:
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
-### Unified Multilingual API
+### Multilingual API
 
-The `MultilingualHyperscript` class provides a unified API over semantic parsing and translation (exported from `@hyperfixi/core/multilingual`, not the package root):
+`@hyperfixi/core/multilingual` (not the package root) is four functions over
+`@lokascript/semantic`, on text — `parse`, `render`, `translate` and
+`schemaRoleInferrer` (the owner's 4.0 shape; the `MultilingualHyperscript` class
+was removed in Phase C2):
 
 ```typescript
-import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
-
-const ml = new MultilingualHyperscript();
-await ml.initialize();
+import { parse, render, translate } from '@hyperfixi/core/multilingual';
 
 // Parse from any of 24 languages
-const node = await ml.parse('#button の .active を 切り替え', 'ja');
+const node = await parse('#button の .active を 切り替え', 'ja');
 
 // Translate between any languages
-const arabic = await ml.translate('toggle .active', 'en', 'ar');
+const arabic = await translate('toggle .active', 'en', 'ar');
 ```
 
 Key files:
 
-- `packages/core/src/multilingual/index.ts` - `MultilingualHyperscript` unified API
-- `packages/core/src/multilingual/bridge.ts` - `SemanticGrammarBridge` integration layer
+- `packages/core/src/multilingual/index.ts` - the four exports
+- `packages/core/src/multilingual/bridge.ts` - `SemanticGrammarBridge`: the functions, and core's
+  direct path (`compile(code, { language })` → `buildAST`), which retires with core's parser
 - `packages/semantic/src/tokenizers/` - 24 language tokenizers
 - `packages/semantic/src/parser/semantic-parser.ts` - Main semantic parser
 - `packages/semantic/CLAUDE.md` - Package-specific documentation
