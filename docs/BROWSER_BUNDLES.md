@@ -216,8 +216,8 @@ The htmx-compat layer in `hyperfixi-hx.js` recognizes localized attribute names 
 ```html
 <script src="hyperfixi-hx.js"></script>
 <!-- Opt in to languages by loading their vocab modules. -->
-<script src="packages/core/vocab/htmx/es.js"></script>
-<script src="packages/core/vocab/htmx/ja.js"></script>
+<script src="packages/htmx-adapter/vocab/es.js"></script>
+<script src="packages/htmx-adapter/vocab/ja.js"></script>
 
 <section lang="es">
   <button hx-obtener="/api/usuarios" hx-objetivo="#out">Cargar</button>
@@ -236,7 +236,7 @@ The htmx-compat layer in `hyperfixi-hx.js` recognizes localized attribute names 
 
 Regional variants collapse to base codes (`es-MX` → `es`). Elements outside any lang scope use English literals — same behavior as before Phase 8. Missing-vocab langs log a one-time console warning per language and fall back to English.
 
-**Bundled vocab modules** (`packages/core/vocab/htmx/`) cover all 24 languages. Each is a self-registering `<script>` tag (loka-js convention). Attribute names that are hyperscript keywords (`get`, `swap`, `trigger`, …) come from `packages/semantic/src/generators/profiles/{lang}.ts`; htmx-only names (`post`, `delete`, `confirm`, `boost`, `push-url`, `indicator`, `include`, `vals`, `select`, `swap-oob`, `sync`) and the `search` trigger head are authored in `packages/core/scripts/htmx-attr-vocab.mjs` — for all 23 non-English languages, which cover every attribute the _Hypermedia Systems_ Contact.app uses and every attribute the book's code listings use (except `hx-ext`, which htmx 4 removed). A vocab may list several names for one attribute: the first is the form to teach, later ones are aliases that keep already-authored pages working (`hx-トリガー` leads, `hx-引き金` still resolves). Edit either source and run `npm run generate:htmx-vocab --prefix packages/core`. An attribute with no localized name is written in its canonical English form.
+**Bundled vocab modules** (`packages/htmx-adapter/vocab/`) cover all 24 languages. Each is a self-registering `<script>` tag (loka-js convention). Attribute names that are hyperscript keywords (`get`, `swap`, `trigger`, …) come from `packages/semantic/src/generators/profiles/{lang}.ts`; htmx-only names (`post`, `delete`, `confirm`, `boost`, `push-url`, `indicator`, `include`, `vals`, `select`, `swap-oob`, `sync`) and the `search` trigger head are authored in `packages/htmx-adapter/scripts/htmx-attr-vocab.mjs` — for all 23 non-English languages, which cover every attribute the _Hypermedia Systems_ Contact.app uses and every attribute the book's code listings use (except `hx-ext`, which htmx 4 removed). A vocab may list several names for one attribute: the first is the form to teach, later ones are aliases that keep already-authored pages working (`hx-トリガー` leads, `hx-引き金` still resolves). Edit either source and run `npm run generate:vocab --prefix packages/htmx-adapter`. An attribute with no localized name is written in its canonical English form.
 
 **The `hx-` / `sse-` / `ws-` prefixes are preserved across languages** — only the suffix is localized. Spanish writes `hx-obtener`, not `xx-obtener`. The brand prefix doubles as a discovery anchor.
 

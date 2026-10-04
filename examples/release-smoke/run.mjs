@@ -69,6 +69,7 @@ const PACKAGES = [
   '@hyperfixi/mcp-server',
   '@hyperfixi/behaviors',
   '@hyperfixi/engine',
+  '@lokascript/htmx-adapter',
 ];
 
 const CONTENT_TYPES = {
@@ -189,6 +190,7 @@ async function browserCase(chromium, port, file, name, fn) {
 function buildMatrixWebroot(tmp) {
   const webroot = join(tmp, 'webroot');
   mkdirSync(join(webroot, 'packages', 'core'), { recursive: true });
+  mkdirSync(join(webroot, 'packages', 'htmx-adapter'), { recursive: true });
   mkdirSync(join(webroot, 'packages', 'developer-tools'), { recursive: true });
 
   symlinkSync(join(REPO_ROOT, 'examples'), join(webroot, 'examples'), 'dir');
@@ -202,15 +204,16 @@ function buildMatrixWebroot(tmp) {
     join(webroot, 'packages', 'core', 'dist'),
     'dir',
   );
-  // hx-v4-i18n demos load `packages/core/vocab/htmx/{lang}.js` — vocab modules
-  // are part of the published surface (`files: ["vocab/**/*.js"]`), so we
-  // serve the registry-installed copy. Catches vocab-packaging bugs that would
-  // otherwise only surface when an end user tries to author localized htmx.
-  symlinkSync(
-    join(tmp, 'node_modules', '@hyperfixi', 'core', 'vocab'),
-    join(webroot, 'packages', 'core', 'vocab'),
-    'dir',
-  );
+  // hx-v4-i18n demos load the adapter and its `vocab/{lang}.js` modules — part
+  // of @lokascript/htmx-adapter's published surface (`files: ["vocab"]`; they
+  // were core's until Phase C3), so we serve the registry-installed copies.
+  for (const dir of ['dist', 'vocab']) {
+    symlinkSync(
+      join(tmp, 'node_modules', '@lokascript', 'htmx-adapter', dir),
+      join(webroot, 'packages', 'htmx-adapter', dir),
+      'dir',
+    );
+  }
   // prism-loader.js (used by every gallery page for code highlighting) pulls
   // `packages/developer-tools/dist/prism-hyperscript-i18n/browser.mjs`. It's a
   // docs-only dep, but a 404 here lands in the page's console as an error and
@@ -277,8 +280,8 @@ async function runMatrixStage(tmp) {
           // `multilang-page` test hits a separate pre-existing swap bug
           // (`fetch ... as html` → `put it into target` stringifies the
           // DocumentFragment instead of inserting it). The webroot already
-          // exposes `packages/core/vocab/` so the spec can be dropped in
-          // once those bugs are fixed.
+          // exposes `packages/htmx-adapter/{dist,vocab}/` so the spec can be
+          // dropped in once those bugs are fixed.
           '--project=full',
           '--reporter=line',
         ],
@@ -342,6 +345,19 @@ async function main() {
           : copies.length === 0
             ? 'not installed at all'
             : copies.map((c) => `${c.version} at ${c.dir}`).join(', '),
+      );
+    }
+
+    // ---- 1c. the htmx vocab modules ship ------------------------------------
+    // One self-registering script per language, loaded by <script> tag, so no
+    // import would notice one missing from the tarball.
+    {
+      const dir = join(tmp, 'node_modules', '@lokascript', 'htmx-adapter', 'vocab');
+      const modules = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.js')) : [];
+      record(
+        '@lokascript/htmx-adapter ships vocab/{lang}.js for 24 languages',
+        modules.length === 24,
+        `${modules.length} modules`,
       );
     }
 

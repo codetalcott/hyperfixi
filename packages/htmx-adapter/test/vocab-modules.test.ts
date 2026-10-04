@@ -1,6 +1,6 @@
 /**
  * Reuse guard: the generated vocab modules under
- * `packages/core/vocab/htmx/{lang}.js` must load and register cleanly
+ * `packages/htmx-adapter/vocab/{lang}.js` must load and register cleanly
  * against THIS adapter's registry, because the adapter's whole data story
  * is "one generated artifact, two consumers" (embedded htmx-compat layer
  * + upstream-htmx adapter). If core's generator output shape drifts,
@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { register, resetRegistry, isLangRegistered, vocabFor } from '../src/registry.js';
 import { canonicalizeTree } from '../src/canonicalize.js';
 
-const VOCAB_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../core/vocab/htmx');
+const VOCAB_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../vocab');
 const WINDOW_KEY = '__hyperfixi_i18n';
 
 function loadVocabModule(lang: string): void {
@@ -33,7 +33,7 @@ afterEach(() => {
   delete (window as unknown as Record<string, unknown>)[WINDOW_KEY];
 });
 
-describe('generated vocab modules (packages/core/vocab/htmx)', () => {
+describe('generated vocab modules (packages/htmx-adapter/vocab)', () => {
   it('every emitted module self-registers against the adapter registry', () => {
     const langs = readdirSync(VOCAB_DIR)
       .filter(f => f.endsWith('.js'))

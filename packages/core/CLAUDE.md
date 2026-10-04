@@ -189,71 +189,16 @@ The `htmx/` subdirectory implements the htmx + fixi attribute layer used by the 
 
 ### Localized attribute names (Phase 8)
 
-Vocab modules under `packages/core/vocab/htmx/{lang}.js` self-register via `window.__hyperfixi_i18n.register(lang, payload)`. The orchestrator builds an inverted index per language so per-attribute reads (e.g. `nameOf(elt, 'hx', 'get')`) walk the closest ancestor `lang=`, find the registered vocab, and return the localized form (`hx-obtener` for `lang="es"`).
+Vocab modules under `packages/htmx-adapter/vocab/{lang}.js` self-register via `window.__hyperfixi_i18n.register(lang, payload)`. The orchestrator builds an inverted index per language so per-attribute reads (e.g. `nameOf(elt, 'hx', 'get')`) walk the closest ancestor `lang=`, find the registered vocab, and return the localized form (`hx-obtener` for `lang="es"`).
 
-To regenerate vocab modules from semantic profiles + i18n dictionaries:
-
-```bash
-npm run build --prefix packages/semantic   # ensure profiles dist is fresh
-npm run generate:htmx-vocab                # emits vocab/htmx/{lang}.js
-```
-
-Attribute names resolve from two sources, in order: the hand-authored table
-`scripts/htmx-attr-vocab.mjs`, then the semantic profile. The table exists
-because most htmx attributes are not hyperscript keywords, and their natural
-words are often already a command's (ja `削除` / es `eliminar` are `remove`) —
-**do not add htmx-only names to a semantic profile.** It also _leads_ the
-profile where the profile's word suits a command but not an attribute name
-(ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
-terminology reviews). All 23 non-English languages are authored for the 12
-attributes the _Hypermedia Systems_ Contact.app uses plus the four more the
-book's code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`),
-and for the `search` trigger head; only ja, es, pt, ko, tr, de, fr and zh
-were authored with any care — the other 15 (2026-09-22) are unreviewed
-drafts meant as hooks for readers, every one flagged `lowConfidence`. tl
-leaves `hx-target` as the English identity on purpose (so does loka-js). (de also authors a lowercase `target`:
-the profile's `Ziel` shipped as `hx-Ziel`, which no parsed attribute can match
-because HTML lowercases attribute names.) `hx-indicator` / `hx-include` / `hx-select` /
-`hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
-htmx implements them under `@hyperfixi/htmx-adapter`; the embedded layer does
-not, so they are not in `i18n-hooks.ts` `KEYS`. **An adapter-only key resolves
-from the table alone, never the profile** — 22 profiles carry a `select`
-keyword meaning mark/highlight text (de `markieren`), which would otherwise
-have shipped as `hx-select`, permanently. `hx-ext` has no name on purpose:
-htmx 4 removed it.
-
-The table also has an `events` block for trigger heads no i18n dictionary
-names (`search`, the DOM event the book's search box fires). A dictionary
-event must also exist in the semantic profile's lexicon
-(`lexicon-parity.test.ts`), so an htmx-only head lives in the table. htmx's
-own trigger words (`revealed`, `every`, `intersect`) are trigger syntax, like
-`delay:`, and stay English.
-
-**Names are additive — never delete a shipped name, demote it.** Several
-localized names may map to one canonical; the first is the primary (the form
-to teach) and the rest are parse aliases. The orchestrator's `nameOf` answers
-with whichever registered form the element actually carries. A name retired by
-a profile/dictionary change goes in `scripts/htmx-vocab-legacy.json`, which the
-generator appends after the current names.
-
-`npm run check:htmx-vocab` (also a test in `i18n-vocab-modules.test.ts`) fails
-when the committed modules differ from what the generator emits — so editing a
-profile keyword or a dictionary event word that feeds the vocab now reddens
-core until you regenerate. **Read that diff**: a disappearing name breaks pages
-authored with it. The gate exists because the modules once sat months behind
-their inputs and a plain regeneration would have deleted 165 shipped event
-names.
-
-Two generator rules for multi-word words: an **event** name is skipped and
-reported (it is one `\S+` token of an `hx-trigger` value or an `hx-on:` suffix
-in both consumers, and a joined form would be an unreviewed coinage); an
-**attribute** name is hyphen-joined (vi `lấy giá trị` → `hx-lấy-giá-trị`, the
-convention the vi profile already uses for `trực-tiếp`).
+The modules, their generator and the rules for authoring names live in
+`@lokascript/htmx-adapter` (moved in Phase C3; see `packages/htmx-adapter/CLAUDE.md`,
+"The vocab"). This layer reads them until `hyperfixi-hx.js` retires.
 
 Tests:
 
 - `src/htmx/__tests__/i18n-hooks.test.ts` — contract surface (defaults, install/reset)
 - `src/htmx/__tests__/i18n-orchestrator.test.ts` — lang resolution + vocab registration
-- `src/htmx/__tests__/i18n-vocab-modules.test.ts` — emitted module loads cleanly
+- `src/htmx/__tests__/i18n-vocab-modules.test.ts` — each module registers; `nameOf`/`selectorFor` answer with the authored names
 - `src/htmx/__tests__/i18n-integration.test.ts` — end-to-end (uses jsdom, not happy-dom, for Unicode CSS selector support)
 - `src/compatibility/browser-tests/i18n-htmx.spec.ts` — Playwright smoke against multilang fixtures
