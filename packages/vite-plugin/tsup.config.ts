@@ -8,5 +8,5 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   minify: false,
-  external: ['vite', '@hyperfixi/core', '@hyperfixi/engine'],
+  external: ['vite', '@hyperfixi/engine'],
 });

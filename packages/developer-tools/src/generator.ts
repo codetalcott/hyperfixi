@@ -37,7 +37,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
 </head>
 <body>
     <h1>Welcome to {{name}}</h1>
@@ -136,7 +136,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}} - {{tenant}}</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
     <script src="https://unpkg.com/@lokascript/multi-tenant@latest/dist/index.min.js"></script>
 </head>
 <body>
@@ -294,7 +294,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}} - Analytics Demo</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
     <script src="https://unpkg.com/@lokascript/analytics@latest/dist/index.min.js"></script>
 </head>
 <body>
@@ -419,7 +419,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
 </head>
 <body>
     <h1>{{name}} - Full Stack</h1>
@@ -545,7 +545,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -573,7 +573,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - {{name}}</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>

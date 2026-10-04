@@ -8,7 +8,7 @@
  *   Browser (DebugController) <-> WebSocket <-> Node.js (CLI debugger, VS Code, MCP)
  */
 
-import type { DebugSnapshot } from '@hyperfixi/core';
+import type { DebugSnapshot } from '../debug-overlay/debug-api';
 
 // ---------------------------------------------------------------------------
 // Message Protocol (shared between browser client and Node.js server)

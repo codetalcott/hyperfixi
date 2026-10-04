@@ -30,14 +30,6 @@
  * })
  * ```
  *
- * @example
- * ```javascript
- * // Compile mode for smallest bundles (~500 bytes)
- * hyperfixi({
- *   mode: 'compile',  // Pre-compile hyperscript to JS
- *   debug: true,
- * })
- * ```
  */
 
 import type { Plugin, ResolvedConfig, ViteDevServer, HmrContext } from 'vite';
@@ -45,11 +37,6 @@ import type { HyperfixiPluginOptions, AggregatedUsage } from './types';
 import { Scanner } from './scanner';
 import { Aggregator } from './aggregator';
 import { Generator } from './generator';
-import { compile, resetCompiler, setMultilingualAliases, type CompiledHandler } from './compiler';
-import { generateCompiledBundle } from './compiled-generator';
-import { transformHTML, extractScripts } from './html-transformer';
-import { getMultilingualCommandAliases } from './semantic-integration';
-import type { SupportedLanguage } from './language-keywords';
 import { loadServerBridge, runServerBridge } from './server-bridge-integration';
 import { DomainScanner } from './domain-scanner';
 import { DomainAggregator } from './domain-aggregator';
@@ -69,10 +56,6 @@ export type {
 // Domain scanning (multi-domain support)
 export { DomainScanner, descriptorToScanRule } from './domain-scanner';
 export { DomainAggregator } from './domain-aggregator';
-export type { CompiledHandler, CompileOptions } from './compiler';
-
-// Re-export semantic parser integration functions for multilingual compile mode
-export { setSemanticParser, clearSemanticParser, hasSemanticParser } from './compiler';
 
 // Re-export language keyword utilities for customization
 export {
@@ -144,14 +127,13 @@ export function computeUsageHash(usage: AggregatedUsage): string {
  * @returns Vite plugin
  */
 export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
-  const mode = options.mode ?? 'interpret';
-  if (mode === 'compile') {
-    // Compile mode pre-compiles handlers with core's hybrid parser. It is parked
-    // with the AOT work (owner decision 2026-10-03): it still runs on core 3.x and
-    // goes with core's parser at 4.0. The engine-module bundle is the product.
+  if (options.mode === 'compile') {
+    // Compile mode pre-compiled handlers with @hyperfixi/core's hybrid parser. It was
+    // parked with the AOT work (owner decision 2026-10-03) and removed in Phase C4, with
+    // core's parser; the engine-module bundle is the product.
     console.warn(
-      '[hyperfixi] mode: "compile" is parked and leaves with @hyperfixi/core 3.x; ' +
-        'the default interpret mode now emits a bundle on @hyperfixi/engine.'
+      '[hyperfixi] mode: "compile" was removed in 4.0 (it compiled with @hyperfixi/core\'s ' +
+        'parser); building the bundle on @hyperfixi/engine instead.'
     );
   }
   const scanner = new Scanner(options);
@@ -168,13 +150,6 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   let lastUsageHash = '';
   let isDev = false;
 
-  // Compile mode state
-  const compiledHandlers: CompiledHandler[] = [];
-  const handlerMap = new Map<string, string>(); // script -> handlerId
-  const fallbackScripts = new Set<string>(); // Scripts that couldn't be compiled
-  let needsLocals = false;
-  let needsGlobals = false;
-
   /**
    * Invalidate the virtual module in dev server
    */
@@ -190,50 +165,6 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         console.log('[hyperfixi] Virtual module invalidated, triggering reload');
       }
     }
-  }
-
-  /**
-   * Compile a hyperscript snippet and add to handlers
-   */
-  function compileScript(script: string): string | null {
-    // Check if already compiled
-    if (handlerMap.has(script)) {
-      return handlerMap.get(script)!;
-    }
-
-    // Check if known fallback
-    if (fallbackScripts.has(script)) {
-      return null;
-    }
-
-    // Try to compile
-    const handler = compile(script);
-
-    if (handler) {
-      compiledHandlers.push(handler);
-      handlerMap.set(script, handler.id);
-
-      if (handler.needsEvaluator) {
-        // Check if needs locals/globals based on code
-        if (handler.code.includes('L.')) needsLocals = true;
-        if (handler.code.includes('G.')) needsGlobals = true;
-      }
-
-      if (options.debug) {
-        console.log(`[hyperfixi] Compiled: "${script}" -> ${handler.id}`);
-      }
-
-      return handler.id;
-    }
-
-    // Couldn't compile - mark as fallback
-    fallbackScripts.add(script);
-
-    if (options.debug) {
-      console.log(`[hyperfixi] Fallback (not compilable): "${script}"`);
-    }
-
-    return null;
   }
 
   /**
@@ -265,42 +196,8 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
     return cachedBundle;
   }
 
-  /**
-   * Generate the bundle code (compile mode)
-   */
-  function generateCompiledBundleCode(): string {
-    // Check if we have fallbacks that need the interpreter
-    if (fallbackScripts.size > 0) {
-      if (options.debug) {
-        console.log(`[hyperfixi] ${fallbackScripts.size} scripts need interpreter fallback`);
-      }
-      // Fall back to interpret mode for this build
-      return generateInterpretBundle();
-    }
-
-    const bundle = generateCompiledBundle({
-      handlers: compiledHandlers,
-      needsLocals,
-      needsGlobals,
-      globalName: options.globalName,
-      htmx: options.htmx,
-      debug: options.debug,
-    });
-
-    if (options.debug) {
-      console.log(`[hyperfixi] Compiled bundle: ${compiledHandlers.length} handlers`);
-    }
-
-    return bundle;
-  }
-
-  /**
-   * Generate the bundle code (dispatches to correct mode)
-   */
+  /** The bundle: the engine modules the scanned usage needs. */
   function generateBundle(): string {
-    if (mode === 'compile') {
-      return generateCompiledBundleCode();
-    }
     return generateInterpretBundle();
   }
 
@@ -397,29 +294,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         return null;
       }
 
-      // In compile mode, we compile scripts and transform HTML
-      if (mode === 'compile' && !isDev) {
-        // Extract and compile all scripts from this file
-        const scripts = extractScripts(code);
-
-        for (const script of scripts) {
-          compileScript(script);
-        }
-
-        // Transform HTML to use data-h attributes
-        const result = transformHTML(code, handlerMap, fallbackScripts);
-
-        if (result.modified) {
-          if (options.debug) {
-            console.log(`[hyperfixi] Transformed: ${id.split('/').pop()}`);
-          }
-          return { code: result.code, map: null };
-        }
-
-        return null;
-      }
-
-      // Interpret mode: just scan for usage
+      // Scan for usage
       const usage = scanner.scan(code, id);
       const changed = aggregator.add(id, usage);
 
@@ -442,7 +317,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         });
       }
 
-      return null; // Don't modify source files in interpret mode
+      return null; // Source files are never modified
     },
 
     /**
@@ -491,20 +366,6 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
      */
     async buildStart() {
       if (!isDev) {
-        // Reset compile mode state
-        if (mode === 'compile') {
-          resetCompiler();
-          compiledHandlers.length = 0;
-          handlerMap.clear();
-          fallbackScripts.clear();
-          needsLocals = false;
-          needsGlobals = false;
-
-          if (options.debug) {
-            console.log('[hyperfixi] Compile mode: ready for build');
-          }
-        }
-
         // Production build: scan entire project
         const cwd = process.cwd();
 
@@ -535,24 +396,6 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
           if (options.debug) {
             const domainSummary = domainAggregator.getUsage();
             console.log('[hyperfixi] Domain build scan:', domainSummary);
-          }
-        }
-
-        // Configure multilingual aliases for compile mode
-        if (mode === 'compile') {
-          const usage = aggregator.getUsage();
-          if (usage.detectedLanguages.size > 0) {
-            const aliases = getMultilingualCommandAliases(
-              usage.detectedLanguages as Set<SupportedLanguage>
-            );
-            if (Object.keys(aliases).length > 0) {
-              setMultilingualAliases(aliases);
-              if (options.debug) {
-                console.log(
-                  `[hyperfixi] Compile mode: configured ${Object.keys(aliases).length} multilingual aliases`
-                );
-              }
-            }
           }
         }
 

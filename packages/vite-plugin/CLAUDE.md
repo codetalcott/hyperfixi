@@ -37,9 +37,6 @@ src/
 ├── aggregator.ts           # Usage collection across files
 ├── generator.ts            # The emitted module-list bundle on the engine (interpret mode)
 ├── engine-modules.ts       # Keyword → module map, derived from @hyperfixi/engine
-├── compiled-generator.ts   # Compiled JS generation (compile mode — PARKED, leaves with core 3.x)
-├── compiler.ts             # Hyperscript → JS compilation (compile mode, core's hybrid parser)
-├── html-transformer.ts     # HTML attribute transformation
 ├── language-keywords.ts    # Multilingual keyword detection
 ├── semantic-integration.ts # Semantic parser integration
 ├── types.ts                # TypeScript types
@@ -54,7 +51,8 @@ src/
   (3 commands) → 34.4 KB (everything). The engine's fixed core is 13.8 KB: there is no
   sub-5 KB tier. The 3.x generator's regex "lite" (3.9 KB) and hybrid (12–16 KB) parsers
   and its 352 KB fallback are gone; one grammar, gated by upstream's suite.
-- **Compile mode**: PARKED with the AOT compiler; runs on core 3.x, warns on selection.
+- **Compile mode**: removed in 4.0 (Phase C4) with core's parser, which it compiled with;
+  selecting it warns and builds the engine-module bundle.
 
 Gates: `generator.test.ts` (emitted text), `engine-modules.test.ts` (the derived map),
 `generated-bundle.test.ts` (the emitted bundle RUN in jsdom, English and Spanish),
@@ -97,7 +95,7 @@ npm test --prefix packages/vite-plugin -- --run src/aggregator.test.ts
 
 ```javascript
 hyperfixi({
-  mode: 'interpret', // 'interpret' | 'compile'
+  mode: 'interpret', // 'compile' was removed in 4.0 (warns, builds the bundle)
   extraCommands: [], // Always include these commands
   extraBlocks: [], // Always include these blocks
   positional: false, // Include positional expressions

@@ -9,19 +9,9 @@
  */
 export interface HyperfixiPluginOptions {
   /**
-   * Bundle generation mode:
-   * - 'interpret': Generate minimal bundle with parser (default, ~8KB gzip)
-   * - 'compile': Pre-compile hyperscript to JS at build time (~500 bytes gzip)
-   *
-   * Compile mode limitations:
-   * - No dynamic hyperscript (runtime execute() won't work)
-   * - No block commands (if, for, repeat, while, fetch)
-   * - HTML must be transformed to use data-h attributes
-   *
-   * Use compile mode when:
-   * - Bundle size is critical (<1KB target)
-   * - All hyperscript is static (no dynamic generation)
-   * - Only simple commands are used (toggle, add, remove, set, etc.)
+   * @deprecated Removed in 4.0. `'compile'` pre-compiled handlers to JS with
+   * `@hyperfixi/core`'s parser; it went with that parser, and the plugin always emits the
+   * engine-module bundle now (setting `'compile'` logs a warning and does that).
    */
   mode?: 'interpret' | 'compile';
 

@@ -29,7 +29,10 @@ function init(): void {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init, { once: true });
     } else {
-      console.warn('[HyperFixi Debugger] hyperscript API not found. Load @hyperfixi/core first.');
+      console.warn(
+        '[HyperFixi Debugger] no hyperscript debug API found: it needs a host with `debug` ' +
+          '(@hyperfixi/core 3.x); @hyperfixi/engine has no debugger hooks.'
+      );
     }
     return;
   }
@@ -54,7 +57,7 @@ function init(): void {
 }
 
 interface HyperscriptLikeAPI {
-  debug: import('@hyperfixi/core').DebugController;
+  debug: import('./debug-api').DebugController;
 }
 
 function findHyperscriptAPI(): HyperscriptLikeAPI | null {
