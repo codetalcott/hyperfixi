@@ -19,7 +19,6 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   external: [
-    '@hyperfixi/core',
     'puppeteer',
     'playwright',
     'jsdom',

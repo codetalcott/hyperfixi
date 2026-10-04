@@ -21,6 +21,13 @@
  * Deterministic and generator-free: no LLM runs here, so this IS a legitimate
  * CI gate (the A/B run in README.md, which needs a generator, deliberately is
  * not). Full sweep measures ~6s.
+ *
+ * @vitest-environment node
+ * Required, not a preference: candidates execute on @hyperfixi/engine in jsdom,
+ * and under the suite default (happy-dom) the DOM constructors already exist on
+ * globalThis, so the engine binds happy-dom's and every jsdom element fails its
+ * instanceof checks (measured: every reference produced no effect). Same reason
+ * as shipped-examples-execution.test.ts.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';

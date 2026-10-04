@@ -1,7 +1,7 @@
 {
   "meta": {
     "bar": {
-      "lokascript": "compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path) with its first-party plugins installed (@hyperfixi/reactivity and @hyperfixi/realtime, both pre-installed in hyperfixi.js, and @hyperfixi/components), plus a jsdom top-level install smoke (no error within a 500ms settle window; registrations cleaned up afterwards)",
+      "lokascript": "@hyperfixi/engine with every module registered (what hyperfixi-hs.js runs): parse(code) with zero errors, plus a jsdom install smoke (the source as an _ attribute, processNode, nothing logged within 50ms; cleaned up afterwards)",
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
       "html": "HTML-markup patterns: every _= / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); the retired core-only hx-live/sse-*/ws-* markup earns no credit on either leg; a row with no source earns no credit"
     },
@@ -17,8 +17,8 @@
     "append-content": "both",
     "async-block": null,
     "beep-debug-expression": "both",
-    "behavior-draggable": "hyperscript",
-    "behavior-removable": "hyperscript",
+    "behavior-draggable": "both",
+    "behavior-removable": "both",
     "behavior-resizable": "both",
     "behavior-sortable": "both",
     "bind-auto-detect": "both",
@@ -35,11 +35,11 @@
     "caret-var-write": "both",
     "chained-access-possessive-dot": "both",
     "closest-ancestor": "both",
-    "component-click-counter": "both",
-    "component-hello-world": "both",
-    "component-with-attrs": "lokascript",
-    "component-with-conditional": "both",
-    "component-with-slots": "both",
+    "component-click-counter": "hyperscript",
+    "component-hello-world": "hyperscript",
+    "component-with-attrs": null,
+    "component-with-conditional": "hyperscript",
+    "component-with-slots": "hyperscript",
     "computed-value": "both",
     "copy-to-clipboard": "both",
     "decrement-counter": "both",
@@ -52,7 +52,7 @@
     "event-key-combo": "both",
     "event-once": "both",
     "event-throttle": "both",
-    "eventsource-basic": "both",
+    "eventsource-basic": "hyperscript",
     "fade-out-remove": "both",
     "fetch-basic": "both",
     "fetch-do-not-throw": "both",
@@ -86,7 +86,7 @@
     "input-clear": "both",
     "input-mirror": "both",
     "input-validation": "both",
-    "install-behavior": "hyperscript",
+    "install-behavior": "both",
     "intercept-cache-strategies": null,
     "its-value-possessive-dot": "both",
     "js-inline": "both",
@@ -141,11 +141,11 @@
     "show-element": "both",
     "show-with-transition": "both",
     "slide-toggle": "both",
-    "socket-basic": "both",
+    "socket-basic": "hyperscript",
     "socket-send": "both",
     "stagger-animation": "both",
     "swap-content": "both",
-    "swap-view-transition": "lokascript",
+    "swap-view-transition": null,
     "tabs-aria": "both",
     "tabs-basic": "both",
     "tabs-content": "both",
@@ -172,7 +172,7 @@
     "window-keydown": "both",
     "window-resize": "both",
     "window-scroll": "both",
-    "worker-basic": "both"
+    "worker-basic": "hyperscript"
   },
   "details": {
     "accordion-exclusive": {
@@ -202,7 +202,7 @@
     "async-block": {
       "lokascript": false,
       "hyperscript": false,
-      "lokascriptError": "Unexpected token: fetch",
+      "lokascriptError": "Unexpected Token : async",
       "hyperscriptError": "Unexpected Token : async"
     },
     "beep-debug-expression": {
@@ -210,14 +210,12 @@
       "hyperscript": true
     },
     "behavior-draggable": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Expected \"end\" to close behavior event handler"
+      "lokascript": true,
+      "hyperscript": true
     },
     "behavior-removable": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Expected \"end\" to close behavior event handler"
+      "lokascript": true,
+      "hyperscript": true
     },
     "behavior-resizable": {
       "lokascript": true,
@@ -284,25 +282,30 @@
       "hyperscript": true
     },
     "component-click-counter": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "component <click-counter> never rendered"
     },
     "component-hello-world": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "component <hello-world> never rendered"
     },
     "component-with-attrs": {
-      "lokascript": true,
+      "lokascript": false,
       "hyperscript": false,
+      "lokascriptError": "component <user-card> never rendered",
       "hyperscriptError": "uncaught: \"[object Object]\" is not valid JSON"
     },
     "component-with-conditional": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "component <user-card> never rendered"
     },
     "component-with-slots": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "component <my-layout> never rendered"
     },
     "computed-value": {
       "lokascript": true,
@@ -353,8 +356,9 @@
       "hyperscript": true
     },
     "eventsource-basic": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Unexpected Token : ChatStream"
     },
     "fade-out-remove": {
       "lokascript": true,
@@ -489,14 +493,13 @@
       "hyperscript": true
     },
     "install-behavior": {
-      "lokascript": false,
-      "hyperscript": true,
-      "lokascriptError": "Failed to install behavior \"Draggable\": Behavior \"Draggable\" is not defined. Define it using the 'behavior' keyword before installing."
+      "lokascript": true,
+      "hyperscript": true
     },
     "intercept-cache-strategies": {
       "lokascript": false,
       "hyperscript": false,
-      "lokascriptError": "Unexpected token: ,",
+      "lokascriptError": "Unexpected value: ,",
       "hyperscriptError": "Unexpected value: ,"
     },
     "its-value-possessive-dot": {
@@ -712,8 +715,9 @@
       "hyperscript": true
     },
     "socket-basic": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Unexpected Token : ChatSocket"
     },
     "socket-send": {
       "lokascript": true,
@@ -728,8 +732,9 @@
       "hyperscript": true
     },
     "swap-view-transition": {
-      "lokascript": true,
+      "lokascript": false,
       "hyperscript": false,
+      "lokascriptError": "Unexpected Token : using",
       "hyperscriptError": "Unexpected Token : using"
     },
     "tabs-aria": {
@@ -837,8 +842,9 @@
       "hyperscript": true
     },
     "worker-basic": {
-      "lokascript": true,
-      "hyperscript": true
+      "lokascript": false,
+      "hyperscript": true,
+      "lokascriptError": "Unexpected Token : Calculator"
     }
   }
 }

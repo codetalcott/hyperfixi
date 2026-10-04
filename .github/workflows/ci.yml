@@ -470,7 +470,7 @@ jobs:
   # introduce the bug. Small and fast — one vitest file over a built core.
   # ============================================
   shipped-sources:
-    name: Shipped Sources Validity
+    name: Shipped Sources
     runs-on: ubuntu-latest
     needs: build
     # PR-only, same reasoning as export-validation.
@@ -502,12 +502,14 @@ jobs:
           npm install
 
       # Three gates over the sources we ship, in the one job that runs on an
-      # examples/docs-only diff: validity on core (recovered parses), the list
-      # of sources the new engine rejects (shrink-only), and the execution
-      # sweep (the DOM each example handler leaves, core and the new engine
-      # each against upstream). The sweep also runs in testing-framework's own
-      # suite, which a diff that touches only examples/ never reaches. ~20s.
-      - name: Shipped-sources gates (validity, engine, execution)
+      # examples/docs-only diff: the list of English sources the engine rejects
+      # (shrink-only), the sources written in another language (each must
+      # translate to English upstream and the engine parse), and the execution
+      # sweep (the DOM each example handler leaves on the engine, against
+      # upstream). They also run in testing-framework's own suite, which a diff
+      # that touches only examples/ never reaches. (A fourth, core's
+      # recovered-parse validity gate, left with core's parser in Phase C4.)
+      - name: Shipped-sources gates (engine, localized, execution)
         run: npm run test:shipped-sources --prefix packages/testing-framework
 
   # ============================================
@@ -1094,7 +1096,7 @@ jobs:
         run: npm test --prefix packages/planner
 
       # Ten of testing-framework's files ran in NO job. The ones that did are
-      # invoked by id elsewhere — shipped-sources-validity in the
+      # invoked by id elsewhere — the shipped-sources gates in the
       # `shipped-sources` job, and the four DB-dependent gates (canonical-validity,
       # foreign-canonical-validity, render-fidelity, bare-render-fidelity) via
       # `test:canonical` in `multilingual-validation` — so the package's own suite

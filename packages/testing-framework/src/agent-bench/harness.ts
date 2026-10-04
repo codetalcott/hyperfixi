@@ -18,15 +18,19 @@
  * catch, so `parseRate` and `behaviorRate` are reported side by side and their
  * GAP is a headline number in its own right.
  *
- * Determinism: fresh JSDOM + fresh Runtime per execution, no network, no timers
- * beyond a fixed settle window. Effect-signature primitives are imported from
+ * Execution is `@hyperfixi/engine`, the product's engine: the candidate is the
+ * button's `_` attribute, as on a page. (Until Phase C4 it was `@hyperfixi/core`'s
+ * runtime, fed semantic's parse through `buildAST`.)
+ *
+ * Determinism: a fresh JSDOM per execution, no network, no timers beyond a
+ * fixed settle window. Effect-signature primitives are imported from
  * ../multilingual/effect-signature so this harness and the R2 ratchet can never
  * disagree about what a DOM effect is.
  */
 
 import { JSDOM } from 'jsdom';
-import { parseSemantic, buildAST } from '@lokascript/semantic';
 import { snapshot, diffSnapshots } from '../multilingual/effect-signature.js';
+import { installGlobals } from '../multilingual/shipped-examples-execution.js';
 import { SHARED_FIXTURE, type BenchTask } from './tasks.js';
 
 /** Settle window for the dispatched handler. No task waits/fetches. */
@@ -156,43 +160,29 @@ function buildDocument(task: BenchTask): JSDOM {
   return new JSDOM(`<!DOCTYPE html><html><body>${SHARED_FIXTURE}${task.fixture}</body></html>`);
 }
 
-function installGlobals(dom: JSDOM): void {
-  const g = globalThis as Record<string, unknown>;
-  g.window = dom.window;
-  g.document = dom.window.document;
-  g.Event = dom.window.Event;
-  g.CustomEvent = dom.window.CustomEvent;
-  g.HTMLElement = dom.window.HTMLElement;
-  g.Element = dom.window.Element;
-  g.Node = dom.window.Node;
-  g.MutationObserver = dom.window.MutationObserver;
-  g.getComputedStyle = dom.window.getComputedStyle;
+/** The engine's public surface this harness uses. */
+interface ScriptHost {
+  parse(source: string): { errors: Array<{ message: string }> };
+  processNode(node: unknown): void;
 }
 
-let core: {
-  Runtime: new () => { execute(ast: unknown, ctx: unknown): Promise<unknown> };
-  createContext: (el: HTMLElement) => unknown;
-} | null = null;
+let engine: ScriptHost | null = null;
 
-let listenerErrors: string[] = [];
-let trapInstalled = false;
-
-/** Bootstraps jsdom globals BEFORE loading core (its dist evaluates `Element`). */
+/** Bootstraps jsdom globals, then loads the engine with every module registered. */
 export async function initialize(): Promise<void> {
-  if (core) return;
+  if (engine) return;
   installGlobals(new JSDOM('<!DOCTYPE html><html><body></body></html>'));
-  const mod = (await import('@hyperfixi/core')) as unknown as {
-    Runtime: new () => { execute(ast: unknown, ctx: unknown): Promise<unknown> };
-    createContext: (el: HTMLElement) => unknown;
-  };
-  core = { Runtime: mod.Runtime, createContext: mod.createContext };
-  if (!trapInstalled) {
-    // Handler bodies are async, so a throw inside one surfaces as an unhandled
-    // rejection rather than propagating to our await.
-    process.on('unhandledRejection', (reason: unknown) => {
-      listenerErrors.push(reason instanceof Error ? reason.message : String(reason));
-    });
-    trapInstalled = true;
+  const mod = await import('@hyperfixi/engine');
+  mod.register(...mod.everything);
+  engine = mod.api;
+}
+
+/** The engine's first parse error for a source, first line; undefined when it parses. */
+function parseError(code: string): string | undefined {
+  try {
+    return engine!.parse(code).errors[0]?.message.split('\n')[0];
+  } catch (e: unknown) {
+    return (e instanceof Error ? e.message : String(e)).split('\n')[0];
   }
 }
 
@@ -203,22 +193,21 @@ async function executeInner(task: BenchTask, code: string): Promise<ExecutionOut
   const document = dom.window.document;
   task.setup?.(document);
   const btn = document.getElementById('btn')!;
-  listenerErrors = [];
 
-  // The runtime logs every failing command; across a full run that is noise.
+  // The engine reports a failing handler on the console (`hyperscript errors were
+  // found…`): record those, and drop the rest of the noise.
+  const runtimeErrors: string[] = [];
   const saved = { log: console.log, warn: console.warn, error: console.error };
-  console.log = console.warn = console.error = () => {};
+  console.log = console.warn = () => {};
+  console.error = (...args: unknown[]) => {
+    const error = args.find(a => a instanceof Error);
+    runtimeErrors.push(error instanceof Error ? error.message : String(args[0]));
+  };
   try {
-    const parsed = parseSemantic(code, 'en') as { node?: unknown; confidence?: number };
-    if (!parsed.node || (parsed.confidence ?? 0) < 0.5) {
-      return { effects: [], error: `parse failed (confidence ${parsed.confidence ?? 0})` };
-    }
-    const built = buildAST(parsed.node as never) as { ast?: unknown };
-    if (!built.ast) return { effects: [], error: 'buildAST returned no AST' };
-
-    const runtime = new core!.Runtime();
-    const ctx = core!.createContext(btn as unknown as HTMLElement);
-    await runtime.execute(built.ast, ctx);
+    const rejected = parseError(code);
+    if (rejected !== undefined) return { effects: [], error: `parse failed (engine: ${rejected})` };
+    btn.setAttribute('_', code);
+    engine!.processNode(btn);
 
     const before = snapshot(document);
     const trig = task.trigger ?? { event: 'click' };
@@ -232,8 +221,8 @@ async function executeInner(task: BenchTask, code: string): Promise<ExecutionOut
     await new Promise(r => setTimeout(r, SETTLE_MS));
 
     const effects = diffSnapshots(before, snapshot(document));
-    return listenerErrors.length > 0
-      ? { effects, error: `runtime: ${listenerErrors.join('; ')}` }
+    return runtimeErrors.length > 0
+      ? { effects, error: `runtime: ${runtimeErrors.join('; ')}` }
       : { effects };
   } catch (e: unknown) {
     return { effects: [], error: e instanceof Error ? e.message : String(e) };

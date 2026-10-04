@@ -101,7 +101,8 @@ npm install          # alias: npm run bootstrap — links workspaces + installs 
 > `npm run check:ci-order` → `scripts/check-ci-build-order.cjs`). For the
 > multilingual stack specifically, the ready-made ordered chain is
 > `npm run test:multilingual:build-deps` (intent → framework → semantic → i18n →
-> patterns-reference → core's `build:multilingual-dist`).
+> patterns-reference → engine → hyperscript-adapter; core left the chain in Phase C4,
+> when the harness stopped executing it).
 >
 > Some package builds print `DTS Build error` / `tsc --emitDeclarationOnly`
 > failures but **still emit usable JS** — the `.js` bundle is produced before the
@@ -301,8 +302,8 @@ When the last four were guarded (2026-08-01), three had drifted: export-validati
 > how the qu "unreproducible baseline" incident happened (roadmap §7g): a sweep
 > executed a stale `dist/` and scored code that differed from the checkout. The
 > multilingual CLI now guards this itself — `--regression` / `--save-baseline`
-> runs REFUSE when any of intent/framework/semantic/i18n/patterns-reference/core
-> has `src/` newer than `dist/index.js` (the dist sibling of the patterns.db
+> runs REFUSE when any of intent/framework/semantic/i18n/patterns-reference/
+> hyperscript-adapter/engine has `src/` newer than `dist/index.js` (the dist sibling of the patterns.db
 > provenance stamp). If you run vitest directly after editing an upstream
 > package, rebuild it first (`npm run check:fresh` or `npm run build --prefix
 packages/<dep>`); a green suite against a stale dist is vacuously green.
@@ -372,7 +373,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code / protocol / goclient / docsources)            |
 | 1   | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` **or** `docsources` paths   |
 | 2   | `bundles`                 | ✓   | ✓                 | ✓       | Browser bundles, 3 shards; gated on `code`                           |
-| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: validity, engine list, execution; ungated           |
+| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: engine list, localized, execution; ungated          |
 | 4   | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                          |
 | 5   | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                           |
 | 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (the two heavyweight suites)      |
@@ -642,15 +643,16 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
 …) — 4,205 cells. It EXECUTES each one: the English source on upstream
-`hyperscript.org` is the oracle, and 49 lanes must match it — hyperfixi's English,
-semantic's English round trip, each language through the adapter on upstream, and
-(since 2026-10-01) the English source and each language's adapter output on
-`@hyperfixi/engine` (`eng`, `<lang>/eng`: the same text the `/up` lane runs, so a
-difference between the two is a difference between the engines). The `<lang>` lane
-(core's direct path) retired in Phase C2, when no cell failed `<lang>/eng` while
-passing it. Its baseline (`baselines/value-matrix.json`) lists
-every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (the kept `the X of Y as T`
-difference and it's `di` ambiguity) stay listed and are reported apart. The rules that tell a variable
+`hyperscript.org` is the oracle, and 48 lanes must match it — semantic's English
+round trip, each language through the adapter on upstream, and (since 2026-10-01)
+the English source and each language's adapter output on `@hyperfixi/engine`
+(`eng`, `<lang>/eng`: the same text the `/up` lane runs, so a difference between the
+two is a difference between the engines). Core's lanes retired with its engine: the
+`<lang>` lane (its direct path) in Phase C2, when no cell failed `<lang>/eng` while
+passing it, and the `en` lane (its English) in C4, whose only failures were the eight
+accepted `the X of Y as T` cells. Its baseline (`baselines/value-matrix.json`) lists
+every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (it's `di`
+ambiguity) stay listed and are reported apart. The rules that tell a variable
 spelled like a structure word from the word (each with its PR and the test that pins it) are in
 `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
 PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
@@ -747,9 +749,9 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > `docs-internal/PARSER_NEXT_STEPS.md`** — the counterpart to
 > `MULTILINGUAL_NEXT_STEPS.md`, for the `packages/core/src/parser/` track. Check it
 > before triaging a parse bug; several are already diagnosed with a written brief.
-> Two entries there are held by a gate that fails on its own (the `and` KNOWN GAP
-> tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
-> the doc exists. Docs for finished arcs are deleted under a tag and indexed in
+> One entry there is held by a gate that fails on its own (the `and` KNOWN GAP
+> tests; the shipped-sources allowlist ratchet that held a second left with core's
+> parser in Phase C4) — the rest have no gate and are why the doc exists. Docs for finished arcs are deleted under a tag and indexed in
 > `docs-internal/ARCHIVE.md` (2026-09-30).
 >
 > **Structural work on the command layer** — registration, metadata, output
@@ -768,11 +770,12 @@ packages/engine` fails on a new failing test AND on a listed one that now passes
 > changing it; port from upstream's source, and measure before and after. It has two
 > forms upstream lacks (`new X()`, `toggle <element>`: `src/additions.ts`, tested by
 > `npm run test:own`); every other core-only form was dropped, and **examples and docs
-> are written in upstream's spelling**. Two gates in `packages/testing-framework` hold
-> that: `shipped-sources-engine.test.ts` (the shipped sources the engine rejects, a
-> shrink-only list: 12, the `push url` / `replace url` handlers and one hybrid-bundle
-> example) and the engine lane of `shipped-examples-execution.test.ts` (the DOM each
-> example handler leaves on the engine, against upstream). Its script-tag bundle is
+> are written in upstream's spelling**. Three gates in `packages/testing-framework` hold
+> that: `shipped-sources-engine.test.ts` (the English shipped sources the engine
+> rejects, a shrink-only list, empty since Phase B1), `shipped-sources-localized.test.ts`
+> (each source under a non-English `lang` must translate to English both engines
+> parse) and `shipped-examples-execution.test.ts` (the DOM each example handler leaves
+> on the engine, against upstream). Its script-tag bundle is
 > `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB; `?bundle=hs` in the
 > examples' loader); thirty-six example pages load it instead of `hyperfixi.js`.
 >

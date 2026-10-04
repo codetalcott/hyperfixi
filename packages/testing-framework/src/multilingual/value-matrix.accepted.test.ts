@@ -16,24 +16,22 @@ import {
 import { loadBaseline } from './value-matrix-gate';
 
 describe('value matrix: accepted pairs', () => {
-  const [known, ambiguity] = ACCEPTED;
+  const [ambiguity] = ACCEPTED;
 
   it('tags a cell whose failing lanes are all accepted', () => {
-    expect(acceptedReason('put|the textContent of #a as Int', ['en'])).toBe(known!.reason);
     expect(acceptedReason('increment|#a.textContent', ['it/up'])).toBe(ambiguity!.reason);
     expect(acceptedReason('increment|#a.textContent', ['it/up', 'it/eng'])).toBe(ambiguity!.reason);
   });
 
   it('leaves it open when one failing lane is not', () => {
     expect(acceptedReason('increment|#a.textContent', ['it/up', 'es/up'])).toBeUndefined();
-    expect(acceptedReason('put|the textContent of #a as Int', ['en', 'es/up'])).toBeUndefined();
   });
 
   it('a regenerated baseline carries the reason, and counts the pairs', () => {
     const result = (lanes: Record<string, string>): CellResult => ({
       id: 'increment|#a.textContent',
       want: '7',
-      lanes: { en: '7', 'es/up': '7', ...lanes },
+      lanes: { eng: '7', 'es/up': '7', ...lanes },
     });
     const kept = baselineFrom([result({ 'it/up': '1', 'it/eng': '1' })], '');
     expect(kept.entries['increment|#a.textContent']?.accepted).toBe(ambiguity!.reason);
@@ -44,7 +42,7 @@ describe('value matrix: accepted pairs', () => {
   });
 
   it('accepts only the cells it names', () => {
-    expect(acceptedReason('put|textContent of #a', ['en'])).toBeUndefined();
+    expect(acceptedReason('put|#a.textContent', ['it/up'])).toBeUndefined();
   });
 
   it('names cells the generator makes, and the baseline lists them as accepted', () => {

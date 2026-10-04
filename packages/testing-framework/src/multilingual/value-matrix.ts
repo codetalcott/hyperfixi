@@ -42,7 +42,6 @@
  * Each cell runs its English source on the real `hyperscript.org` engine: that
  * result is the ORACLE. Then, on the same fixture:
  *
- *   - `en`     hyperfixi's English path (core's parser and runtime);
  *   - `en-rt`  semantic's English parse rendered back to English, on upstream:
  *              where it fails, every translation inherits the loss;
  *   - `<L>/up` each of 23 languages — `render(parse_en(src), L)` — through
@@ -62,6 +61,9 @@
  * multilingual interchange. It retired after the measurement the plan asked
  * for: on the committed baseline no cell failed `<L>/eng` while passing `<L>`
  * (the only foreign failures, three Italian `di` cells, failed all three).
+ * An `en` lane ran the English source on `@hyperfixi/core`'s parser and runtime
+ * until Phase C4, when it left with core's engine; its only failures were the
+ * eight accepted cells of core's `the X of Y as T` reading, which `eng` passes.
  *
  * ## The ratchet
  * `baselines/value-matrix.json` lists every failing pair, per cell. The gate
@@ -74,14 +76,13 @@
  * One jsdom window for the whole run; each lane resets `<body>` and the
  * globals, installs the handler on a fresh button, clicks it, and reads
  * `#out`. Variables are window globals (see GLOBALS), so no source needs a
- * `set` prefix. Upstream runs synchronously; hyperfixi's handler settles
- * within one macrotask.
+ * `set` prefix. Both engines run synchronously unless the source waits.
  *
- * A translation that loses a loop's condition can loop forever. Core caps a
- * loop at 10,000 iterations; upstream has no cap and blocks the thread, so
- * every upstream run gets an evaluation budget (see EVAL_BUDGET). The new
- * engine has no cap and no hook for one: a string that spent the budget on
- * upstream is not run on it, and its `/eng` lane reads `✗budget` too.
+ * A translation that loses a loop's condition can loop forever. Upstream has
+ * no cap and blocks the thread, so every upstream run gets an evaluation
+ * budget (see EVAL_BUDGET). The new engine has no cap and no hook for one: a
+ * string that spent the budget on upstream is not run on it, and its `/eng`
+ * lane reads `✗budget` too.
  *
  * Node-only: imports the real `hyperscript.org` build off disk and needs the
  * node vitest environment (see the shipped-examples gate for why).
@@ -743,7 +744,6 @@ export const FOREIGN_LANGUAGES = [
 
 /** Every lane, in report order. */
 export const LANES: readonly string[] = [
-  'en',
   'en-rt',
   'eng',
   ...FOREIGN_LANGUAGES.flatMap(language => [`${language}/up`, `${language}/eng`]),
@@ -795,8 +795,8 @@ export interface MatrixEngines {
  *
  * Until `close()`, the console is silenced and unhandled rejections are
  * trapped: thousands of lanes fail by design, both engines report a failure
- * on the console, and hyperfixi's handler is an async listener, so an error
- * in it rejects a promise nobody holds. The process's own rejection
+ * on the console, and a handler that waits on something runs on after its
+ * click, so an error in it rejects a promise nobody holds. The process's own rejection
  * listeners (vitest's, under test) are set aside for the run and restored.
  */
 export async function initMatrixEngines(): Promise<MatrixEngines> {
@@ -823,7 +823,6 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   };
   process.on('unhandledRejection', trap);
 
-  const { hyperscript } = await import('@hyperfixi/core');
   const { parseSemantic, render } = await import('@lokascript/semantic');
   const { preprocess } = await import('@lokascript/hyperscript-adapter');
   const require = createRequire(import.meta.url);
@@ -844,13 +843,6 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
 
   const window = dom.window;
   const document = window.document;
-  type Ast = Parameters<typeof hyperscript.execute>[0];
-
-  // hyperfixi keeps its global variables in one Map that every context shares,
-  // and writes a window global there (`increment n`). It outlives the run, and
-  // it shadows window's copy, so every later lane would read the write.
-  const coreGlobals = hyperscript.createContext().globals;
-  const coreGlobalsAtStart = new Map(coreGlobals);
   const headAtStart = document.head.innerHTML;
   const names = collidingNames();
 
@@ -867,8 +859,6 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
       html.innerHTML = `<head>${headAtStart}</head><body></body>`;
     }
     document.body.innerHTML = FIXTURE;
-    coreGlobals.clear();
-    for (const [name, value] of coreGlobalsAtStart) coreGlobals.set(name, value);
     for (const [name, make] of Object.entries(GLOBALS)) {
       const value = make();
       Reflect.set(window, name, value);
@@ -901,15 +891,6 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
   };
   const onUpstream = (source: string): string => onHost(upstream, source);
 
-  /** Install a compiled handler on hyperfixi, click, and settle. */
-  const onHyperfixi = async (ast: Ast): Promise<string> => {
-    const button = reset();
-    await hyperscript.execute(ast, hyperscript.createContext(button));
-    click(button);
-    await new Promise(resolve => setTimeout(resolve, 0));
-    return read();
-  };
-
   const guard = async (run: () => Promise<string> | string): Promise<string> => {
     try {
       return await run();
@@ -927,12 +908,6 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
         return result;
       }
       const lanes = result.lanes;
-
-      lanes.en = await guard(async () => {
-        const compiled = hyperscript.compileSync(cell.source);
-        if (!compiled.ok || !compiled.ast) return '✗compile';
-        return onHyperfixi(compiled.ast);
-      });
 
       const english = parseSemantic(cell.source, 'en').node;
       lanes['en-rt'] = await guard(() =>
@@ -1054,7 +1029,6 @@ export function failingLanes(result: CellResult): string[] {
 /**
  * Where a cell's failure sits, from which lanes fail:
  *
- *   - `core`         core's English run differs from upstream's;
  *   - `semantic-en`  semantic's English parse loses it (`en-rt`), so every
  *                    translation inherits the loss;
  *   - `translation`  some foreign lanes on upstream: the adapter's English
@@ -1068,7 +1042,6 @@ export function failingLanes(result: CellResult): string[] {
 export function familyOf(lanes: readonly string[]): string {
   const set = new Set(lanes);
   const parts: string[] = [];
-  if (set.has('en')) parts.push('core');
   if (set.has('en-rt')) parts.push('semantic-en');
   else if (FOREIGN_LANGUAGES.some(l => set.has(`${l}/up`))) parts.push('translation');
   if (set.has('eng') || FOREIGN_LANGUAGES.some(l => set.has(`${l}/eng`) !== set.has(`${l}/up`))) {
@@ -1089,19 +1062,6 @@ export const ACCEPTED: ReadonlyArray<{
   lanes: string;
   reason: string;
 }> = [
-  {
-    cells: [
-      ...['put', 'set', 'while', 'times', 'increment'].map(
-        p => `${p}|the textContent of #a as Int`
-      ),
-      // The same difference with a reference owner (PR 108); upstream's
-      // `window as Int` is null, and in a loop bound both read 0 iterations.
-      ...['put', 'set', 'increment'].map(p => `${p}|the scrollY of window as Int`),
-    ],
-    lanes: 'en',
-    reason:
-      'known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)',
-  },
   {
     cells: [
       'increment|#a.textContent',

@@ -1,21 +1,24 @@
 /**
- * Shipped sources on `@hyperfixi/engine`: what replacing core's engine would break.
+ * Shipped sources on `@hyperfixi/engine`: every English source must parse.
  *
- * `packages/engine` is meant to replace the engine in `packages/core`. Every
- * hyperscript source this repository ships (`examples/` and the doc trees, the
- * validity gate's collection) that core compiles clean is put to the engine's
- * parser. The ones it rejects are listed in
+ * Every hyperscript source this repository ships in English (`examples/` and
+ * the doc trees; a source under a non-English `lang` is the localized gate's)
+ * is put to the engine's parser. The ones it rejects are listed in
  * `baselines/shipped-sources-engine.json`, each with the reason it is still
  * there. Three assertions, as the sibling gates:
  *   1. sanity: sources were found and the engine reads most of them;
  *   2. no NEW rejected source outside the list. A page or a doc example
- *      written in syntax only core has would break when core's engine goes;
- *      write upstream's spelling (`packages/engine/README.md` lists the forms
- *      that were considered and not kept), or list it with a reason;
+ *      written in syntax the engine lacks (core 3.x's own forms among it)
+ *      does not run; write upstream's spelling (`packages/engine/README.md`
+ *      lists the forms that were considered and not kept), or list it with a
+ *      reason;
  *   3. no stale entry: a listed source the engine now reads, or one that was
  *      edited (the key embeds a hash of the source), must be removed, so the
- *      list only shrinks. It is empty when core's engine can be replaced
- *      without breaking a shipped page.
+ *      list only shrinks. It has been empty since the history pages moved to
+ *      `call history.pushState` (Phase B1).
+ *
+ * Until Phase C4 the denominator was the sources `@hyperfixi/core` compiled
+ * clean (see `checkShippedSourcesOnEngine`).
  *
  * This is a PARSE-level gate. A source can parse on both engines and run
  * differently; the engine lane of `shipped-examples-execution.test.ts` is the
@@ -32,7 +35,6 @@ import { JSDOM } from 'jsdom';
 import { describe, it, expect, beforeAll } from 'vitest';
 import {
   checkShippedSourcesOnEngine,
-  type CompileForValidity,
   type ShippedSourcesOnEngineResult,
 } from './shipped-sources-validity';
 
@@ -51,14 +53,10 @@ describe('shipped sources on @hyperfixi/engine', () => {
   let result: ShippedSourcesOnEngineResult;
 
   beforeAll(async () => {
-    const core = (await import('@hyperfixi/core')) as unknown as {
-      hyperscript: { compileSync: CompileForValidity };
-    };
     const { api, everything, register } = await import('@hyperfixi/engine');
     register(...everything);
     const dom = new JSDOM('<!doctype html><html><body></body></html>');
     result = checkShippedSourcesOnEngine(
-      code => core.hyperscript.compileSync(code),
       code => {
         try {
           return api.parse(code).errors.map(error => error.message);
@@ -66,13 +64,15 @@ describe('shipped sources on @hyperfixi/engine', () => {
           return ['threw: ' + (e instanceof Error ? e.message : String(e))];
         }
       },
-      dom.window.document as unknown as Parameters<typeof checkShippedSourcesOnEngine>[2]
+      dom.window.document as unknown as Parameters<typeof checkShippedSourcesOnEngine>[1]
     );
   }, 120_000);
 
   it('finds the shipped sources and the engine reads most of them (sanity)', () => {
-    expect(result.coreClean).toBeGreaterThan(200);
-    expect(result.engineAccepts).toBeGreaterThan(200);
+    expect(result.checked).toBeGreaterThan(300);
+    expect(result.engineAccepts).toBeGreaterThan(300);
+    // Written in another language: the localized gate's, not this one's.
+    expect(result.localized).toBeGreaterThan(10);
   });
 
   it('has no NEW shipped source the engine rejects outside the list', () => {
@@ -80,7 +80,7 @@ describe('shipped sources on @hyperfixi/engine', () => {
     expect(
       unexpected,
       unexpected.length
-        ? `\nShipped sources core compiles and @hyperfixi/engine rejects (write upstream's spelling,\n` +
+        ? `\nShipped sources @hyperfixi/engine rejects (write upstream's spelling,\n` +
             `or list it in baselines/shipped-sources-engine.json with a reason):\n` +
             unexpected
               .map(r => `  [${r.key}]\n      "${r.excerpt}"\n      -> ${r.error}`)
