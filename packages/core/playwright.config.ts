@@ -56,6 +56,25 @@ export default defineConfig({
       timeout: 60000,
     },
     {
+      // The oracle for compatibility-test.html's specs: the same tests on
+      // upstream _hyperscript instead of the engine (the page reads
+      // `compat:engine` from localStorage, or ?engine=upstream). A test that
+      // fails here expects something upstream does not do. Run it explicitly:
+      //   npx playwright test --project=upstream-oracle <spec files>
+      name: 'upstream-oracle',
+      grepInvert: /@skip/,
+      timeout: 60000,
+      use: {
+        storageState: {
+          cookies: [],
+          origins: ['http://localhost:3000', 'http://127.0.0.1:3000'].map(origin => ({
+            origin,
+            localStorage: [{ name: 'compat:engine', value: 'upstream' }],
+          })),
+        },
+      },
+    },
+    {
       // Debug/diagnostic tests - only run explicitly
       name: 'debug',
       testDir: './src/compatibility/browser-tests/debug',

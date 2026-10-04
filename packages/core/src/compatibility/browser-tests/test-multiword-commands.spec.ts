@@ -20,7 +20,7 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
 <head>
   <meta charset="UTF-8">
   <title>Multi-Word Command Test</title>
-  <script src="/packages/core/dist/hyperfixi.js"></script>
+  <script src="/packages/engine/dist/hyperfixi-hs.js"></script>
 </head>
 <body>
   <div id="results"></div>
@@ -50,8 +50,12 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
   <div id="target" _="on myEvent put 'Event received!' into me"></div>
 
   <!-- Test: make a command -->
+  <!-- upstream's make takes a query literal; the content goes in after
+       (\`make a <div>Created element</div>\` was core-only: both upstream and
+       the engine reject it) -->
   <button id="test-make" _="on click
-    make a <div>Created element</div>
+    make a <div/>
+    then put 'Created element' into it
     then put it into #result-make">
     Test Make
   </button>

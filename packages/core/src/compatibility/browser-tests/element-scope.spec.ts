@@ -1,6 +1,7 @@
 /**
- * Element-scoped `:name` variables + numeric `increment @attr` — shipped full
- * bundle (`dist/hyperfixi.js`).
+ * Element-scoped `:name` variables + numeric `increment @attr` — the shipped
+ * script-tag bundle compatibility-test.html loads (the engine's
+ * `hyperfixi-hs.js` since Phase C3; core's `dist/hyperfixi.js` before).
  *
  * Regression guard for the hyperfixi.org `/try/` counter:
  *   on click increment :count then put 'Clicks: ' + :count into me
@@ -11,7 +12,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Shipped bundle — element-scoped `:name` @quick', () => {
-  // compatibility-test.html already loads dist/hyperfixi.js via <script src>.
+  // compatibility-test.html already loads the bundle via <script src>.
   // Do NOT inject a second copy (addScriptTag) — a second bundle instance brings
   // its own attribute-processor + MutationObserver, double-binding every handler.
   test.beforeEach(async ({ page, baseURL }) => {
