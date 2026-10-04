@@ -5,37 +5,22 @@
  * Also detects non-English language keywords for multilingual semantic support.
  */
 
-import { AVAILABLE_COMMANDS, FULL_RUNTIME_ONLY_COMMANDS } from '@hyperfixi/core/bundle-generator';
 import type { FileUsage, HyperfixiPluginOptions, HtmxUsage } from './types';
+import { SCANNABLE_KEYWORDS } from './engine-modules';
 import { detectLanguages } from './language-keywords';
 import { buildLocalizedHxLivePattern, SSE_NS_PATTERN, WS_NS_PATTERN } from './htmx-localized-attrs';
 
 /**
- * Command-detection pattern, derived from core's bundle-generator capability
- * lists instead of a hand-maintained duplicate (which had silently drifted:
- * `empty` was added to core without ever reaching the old hardcoded regex, so
- * projects using it got bundles without it). Hyphenated names (push-url,
- * replace-url, process-partials) are excluded: their hyperscript surface forms
- * are the space-separated `push url …` / `replace url …`, whose heads `push` /
- * `replace` are already in the list. Full-runtime-only names are included so
- * their use routes bundle selection to a tier that actually supports them; a
- * false positive only costs bundle size, never correctness.
+ * Command-detection pattern, derived from the engine's own grammar (every
+ * command and feature keyword its modules register) instead of a hand-maintained
+ * list. The earlier list came from core's bundle-generator and had drifted once
+ * (`empty` reached core without reaching the regex). A false positive only costs
+ * bundle size, never correctness: an unknown name selects no module.
+ *
+ * `live` / `when` / `bind` are in the list (they are engine features) and ALSO
+ * handled by the reactivity detection below, which the dev-server cache key reads.
  */
-const SCANNABLE_COMMANDS = [
-  ...new Set<string>([...AVAILABLE_COMMANDS, ...FULL_RUNTIME_ONLY_COMMANDS]),
-].filter(
-  cmd =>
-    /^[A-Za-z]+$/.test(cmd) &&
-    // `unless` is handled by the block detection below (it compiles to the
-    // lite-capable `if` block — flagging it as a full-runtime-only COMMAND
-    // would needlessly bump every unless-user to a full-runtime bundle).
-    // `bind` is handled by the dedicated reactivity detection below, which
-    // routes to the hx-v4 bundle (the tier that actually ships reactivity).
-    cmd !== 'unless' &&
-    cmd !== 'bind'
-);
-
-const COMMAND_PATTERN_SOURCE = `\\b(${SCANNABLE_COMMANDS.join('|')})\\b`;
+const COMMAND_PATTERN_SOURCE = `\\b(${SCANNABLE_KEYWORDS.join('|')})\\b`;
 
 // htmx/fixi attribute patterns
 const HTMX_REQUEST_PATTERN =
@@ -135,6 +120,8 @@ export class Scanner {
       detectedLanguages: new Set(),
       needsReactivity: false,
       needsBindToProperty: false,
+      needsConstruct: false,
+      needsCookies: false,
     };
 
     // Find all hyperscript in _="..." attributes (single, double, backtick quotes)
@@ -228,10 +215,21 @@ export class Scanner {
     if (/\bwhile\b/.test(script)) usage.blocks.add('while');
     if (/\bfetch\b/.test(script)) usage.blocks.add('fetch');
 
-    // Detect positional expressions
-    if (/\b(first|last|next|previous|closest|parent)\b/.test(script)) {
+    // Detect the expression kinds the engine keeps in its optional
+    // `expressionsExtra` module: positional (`first`, `last`, `random`),
+    // relative (`next`, `previous`), `closest`, the collection operators
+    // (`where`, `sorted by`, `mapped to`, `split by`, `joined by`), `some`,
+    // and `beep!`. Reported under the one `positional` flag.
+    if (
+      /\b(first|last|next|previous|closest|parent|random)\b/.test(script) ||
+      /\b(where|sorted\s+by|mapped\s+to|split\s+by|joined\s+by|some|beep!)/.test(script)
+    ) {
       usage.positional = true;
     }
+
+    // The engine's `new X(…)` addition (`construct`), and the cookies expression.
+    if (/\bnew\s+[A-Z$_][\w$.]*\s*\(/.test(script)) usage.needsConstruct = true;
+    if (/\bcookies\b/.test(script)) usage.needsCookies = true;
 
     // Detect non-English languages for multilingual semantic support
     const languages = detectLanguages(script);
@@ -240,8 +238,8 @@ export class Scanner {
     }
 
     // Reactivity features inside `_=` bodies. `live`, `when`, and `bind` are
-    // top-level features from `@hyperfixi/reactivity`. Their `^var` form
-    // (DOM-scoped inherited globals) also implies reactivity.
+    // the engine's reactive features (its `reactivity` module). Their `^var`
+    // form (DOM-scoped inherited globals) also implies reactivity.
     if (
       /\blive\b/.test(script) ||
       /\bwhen\s+\S+\s+changes\b/i.test(script) ||

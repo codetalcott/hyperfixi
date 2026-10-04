@@ -1080,14 +1080,21 @@ export default {
 import 'hyperfixi';
 ```
 
-The plugin automatically scans your files for `_="..."` attributes and generates a bundle with only the commands you use. Options:
+The plugin scans your files for `_="..."` attributes and emits a bundle on
+`@hyperfixi/engine` that registers only the grammar modules you use (a bundle on the
+engine is the list passed to `register()`; the keyword → module map is derived from the
+engine, not copied). Measured 2026-10-03: 17.9 KB gzipped for three commands, 34.4 KB for
+everything; the engine's fixed core is 13.8 KB, so the 3.x "lite" tier (3.9 KB) is gone and
+so is the 352 KB fallback any `fetch` used to trigger. Non-English scripts run through the
+engine's source transform. Options:
 
 ```javascript
 hyperfixi({
-  extraCommands: ['fetch'], // Always include these commands
-  extraBlocks: ['if'], // Always include these blocks
-  positional: true, // Include positional expressions
-  htmx: true, // Enable htmx integration
+  extraCommands: ['fetch'], // Always register these commands' modules
+  extraBlocks: ['if'], // Always register these blocks' modules
+  positional: true, // Always register the positional / collection expressions
+  htmx: true, // Hand htmx-swapped content to the engine (htmx itself is not bundled)
+  devFallback: 'everything', // Dev server: the whole engine, for faster rebuilds
   debug: true, // Verbose logging
 });
 ```
@@ -1105,7 +1112,7 @@ tracked gallery page runs on it since 2026-10-03); core's bundles ship until the
 | Bundle                       | Size       | Use case                                                                                                                                                                                                                     |
 | ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hyperfixi-hs.js`            | ~34.1 KB   | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes |
-| via `@hyperfixi/vite-plugin` | minimal    | **Default for Vite projects** — scans usage, emits the right bundle, picks the parser tier (core's templates; moves to engine modules in Phase C)                                                                            |
+| via `@hyperfixi/vite-plugin` | 18–34 KB   | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                          |
 | `hyperfixi-hx.js`            | ~22.0 KB   | Core's small prebuilt — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes (the embedded htmx layer is retired with core)                                                                                             |
 | `hyperfixi.js`               | ~352 KB    | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                            |
 | `hyperfixi-hx-v4.js`         | ~363 KB    | Core's htmx v4 product: `hx-live`, `bind`, `when`, SSE, WebSocket on the full runtime (retired with core; on the engine these are `live` blocks + real htmx 4)                                                               |

@@ -133,7 +133,8 @@ export function computeUsageHash(usage: AggregatedUsage): string {
         .join('')
     : 'none';
   const reactivity = `${usage.needsReactivity ? 1 : 0}${usage.needsBindToProperty ? 1 : 0}`;
-  return `${commands}|${blocks}|${usage.positional}|${languages}|${htmx}|${reactivity}`;
+  const extras = `${usage.needsConstruct ? 1 : 0}${usage.needsCookies ? 1 : 0}`;
+  return `${commands}|${blocks}|${usage.positional}|${languages}|${htmx}|${reactivity}|${extras}`;
 }
 
 /**
@@ -144,6 +145,15 @@ export function computeUsageHash(usage: AggregatedUsage): string {
  */
 export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   const mode = options.mode ?? 'interpret';
+  if (mode === 'compile') {
+    // Compile mode pre-compiles handlers with core's hybrid parser. It is parked
+    // with the AOT work (owner decision 2026-10-03): it still runs on core 3.x and
+    // goes with core's parser at 4.0. The engine-module bundle is the product.
+    console.warn(
+      '[hyperfixi] mode: "compile" is parked and leaves with @hyperfixi/core 3.x; ' +
+        'the default interpret mode now emits a bundle on @hyperfixi/engine.'
+    );
+  }
   const scanner = new Scanner(options);
   const aggregator = new Aggregator();
   const generator = new Generator(options);

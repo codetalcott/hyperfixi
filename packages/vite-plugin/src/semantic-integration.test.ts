@@ -460,7 +460,7 @@ describe('getSemanticExports', () => {
       grammarEnabled: false,
     };
     const exports = getSemanticExports(config);
-    expect(exports).toContain('parseWithSemantic');
+    expect(exports).toContain('translateSource');
     expect(exports).toContain('SUPPORTED_SEMANTIC_LANGUAGES');
     expect(exports).not.toContain('translateHyperscript');
   });
@@ -473,7 +473,7 @@ describe('getSemanticExports', () => {
       grammarEnabled: true,
     };
     const exports = getSemanticExports(config);
-    expect(exports).toContain('parseWithSemantic');
+    expect(exports).toContain('translateSource');
     expect(exports).toContain('translateHyperscript');
     // `grammarTransformer` is gone. It was exported and never used, and the
     // object it named could not be constructed — see the import test above.

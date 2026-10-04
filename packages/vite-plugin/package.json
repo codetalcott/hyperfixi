@@ -22,6 +22,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
+    "pretest": "../../scripts/ensure-fresh.sh ../engine ../core",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:watch": "vitest",
@@ -41,6 +42,7 @@
   },
   "dependencies": {
     "@hyperfixi/core": "^3.3.0",
+    "@hyperfixi/engine": "^3.3.0",
     "glob": "^13.0.6"
   },
   "devDependencies": {

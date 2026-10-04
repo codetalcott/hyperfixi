@@ -59,17 +59,25 @@ const handler: CompiledHandler = {
 describe('emitted shells do not claim window._hyperscript', () => {
   const generator = new Generator({ debug: false });
 
-  it('main shell (hybrid parser) installs only its own global', () => {
+  // Since 4.0 the main shell is a bundle on `@hyperfixi/engine`, and the
+  // engine's `boot()` DOES install `window._hyperscript` — legitimately: the
+  // engine is a _hyperscript implementation with upstream's api shape, so a
+  // plugin written for upstream works on it. What this file still holds is
+  // that the plugin's OWN emitted text assigns only its own global; the engine
+  // decides what it is.
+  it('main shell installs its own global and leaves _hyperscript to the engine', () => {
     const code = generator.generate(createUsage(['toggle'], ['if']) as never, {});
 
     expect(code).toContain('window.hyperfixi = api');
+    expect(code).toContain('boot();');
     expect(code).not.toContain('_hyperscript');
   });
 
-  it('main shell (lite parser) installs only its own global', () => {
-    const code = generator.generate(createUsage(['toggle']) as never, {});
+  it('dev fallback installs its own global and leaves _hyperscript to the engine', () => {
+    const code = generator.generateDevFallback('everything');
 
     expect(code).toContain('window.hyperfixi = api');
+    expect(code).toContain('boot();');
     expect(code).not.toContain('_hyperscript');
   });
 
@@ -78,7 +86,7 @@ describe('emitted shells do not claim window._hyperscript', () => {
 
     // The empty shell is a distinct emission site with its own api literal —
     // it is why "fix the generator" was three edits in this package, not one.
-    expect(code).toContain('LokaScript Empty Bundle');
+    expect(code).toContain('Empty Bundle');
     expect(code).not.toContain('_hyperscript');
   });
 

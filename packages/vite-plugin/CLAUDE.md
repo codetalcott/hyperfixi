@@ -4,7 +4,7 @@ This file provides guidance for working with the `@hyperfixi/vite-plugin` packag
 
 ## Package Purpose
 
-Zero-config Vite plugin that automatically generates minimal LokaScript bundles based on detected hyperscript usage in your project.
+Zero-config Vite plugin that emits a bundle on `@hyperfixi/engine` registering only the grammar modules the project's hyperscript uses. A bundle on the engine is the list passed to `register()`; the plugin's job is choosing that list.
 
 ## Essential Commands
 
@@ -26,7 +26,8 @@ npm run sync-keywords --prefix packages/vite-plugin
 
 1. **Scanner** (`scanner.ts`): Detects `_="..."` attributes in HTML/Vue/Svelte/JSX files
 2. **Aggregator** (`aggregator.ts`): Collects all detected commands, blocks, expressions across files
-3. **Generator** (`generator.ts`): Creates minimal bundle with only the features used
+3. **Generator** (`generator.ts`): Emits the virtual module — one `@hyperfixi/engine` import, `register(...)`, `boot()`; the multilingual path is the engine's source transform
+4. **Module map** (`engine-modules.ts`): keyword → engine module, DERIVED from the engine at load (every module in `everything` run against a fresh grammar) — never a hand-copied list
 
 ## Architecture
 
@@ -34,9 +35,10 @@ npm run sync-keywords --prefix packages/vite-plugin
 src/
 ├── scanner.ts              # Hyperscript detection in templates
 ├── aggregator.ts           # Usage collection across files
-├── generator.ts            # Minimal bundle generation (interpret mode)
-├── compiled-generator.ts   # Compiled JS generation (compile mode)
-├── compiler.ts             # Hyperscript → JS compilation
+├── generator.ts            # The emitted module-list bundle on the engine (interpret mode)
+├── engine-modules.ts       # Keyword → module map, derived from @hyperfixi/engine
+├── compiled-generator.ts   # Compiled JS generation (compile mode — PARKED, leaves with core 3.x)
+├── compiler.ts             # Hyperscript → JS compilation (compile mode, core's hybrid parser)
 ├── html-transformer.ts     # HTML attribute transformation
 ├── language-keywords.ts    # Multilingual keyword detection
 ├── semantic-integration.ts # Semantic parser integration
@@ -46,10 +48,18 @@ src/
 
 ## Key Features
 
-### Two Modes
+### One tier (since the engine cutover, 2026-10-03)
 
-- **Interpret mode** (default): ~8 KB gzip, includes runtime parser
-- **Compile mode**: ~500 bytes gzip, pre-compiles to JS at build time
+- **Interpret mode** (default): a bundle on `@hyperfixi/engine`; measured gzipped 17.9 KB
+  (3 commands) → 34.4 KB (everything). The engine's fixed core is 13.8 KB: there is no
+  sub-5 KB tier. The 3.x generator's regex "lite" (3.9 KB) and hybrid (12–16 KB) parsers
+  and its 352 KB fallback are gone; one grammar, gated by upstream's suite.
+- **Compile mode**: PARKED with the AOT compiler; runs on core 3.x, warns on selection.
+
+Gates: `generator.test.ts` (emitted text), `engine-modules.test.ts` (the derived map),
+`generated-bundle.test.ts` (the emitted bundle RUN in jsdom, English and Spanish),
+`generated-bundle-size.test.ts` (esbuild-bundled sizes; language registrations survive
+tree-shaking). The engine must be built (`pretest` runs ensure-fresh).
 
 ### Multilingual Detection
 
