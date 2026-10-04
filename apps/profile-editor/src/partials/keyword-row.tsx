@@ -27,7 +27,7 @@ export function KeywordRow({ code, keyword, translation, hasEdit }: KeywordRowPr
           value={primary}
           placeholder="translation..."
           _={`on change
-              fetch \`/profiles/${code}/keywords/${keyword}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'primary',value:my value}) as html
+              fetch \`/profiles/${code}/keywords/${keyword}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'primary',value:my value})} as html
               then put it into #status-${keyword}
             end
             on input add .modified to me`}
@@ -40,7 +40,7 @@ export function KeywordRow({ code, keyword, translation, hasEdit }: KeywordRowPr
           value={alternatives}
           placeholder="alt1, alt2..."
           _={`on change
-              fetch \`/profiles/${code}/keywords/${keyword}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'alternatives',value:my value}) as html
+              fetch \`/profiles/${code}/keywords/${keyword}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'alternatives',value:my value})} as html
               then put it into #status-${keyword}
             end
             on input add .modified to me`}
@@ -50,7 +50,7 @@ export function KeywordRow({ code, keyword, translation, hasEdit }: KeywordRowPr
         <select
           name="form"
           _={`on change
-              fetch \`/profiles/${code}/keywords/${keyword}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'form',value:my value}) as html
+              fetch \`/profiles/${code}/keywords/${keyword}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'form',value:my value})} as html
               then put it into #status-${keyword}
             end`}
         >

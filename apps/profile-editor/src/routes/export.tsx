@@ -56,7 +56,7 @@ export const exportRoutes = new Elysia({ prefix: '/export' })
                     </button>
                     <button
                       _={`on click
-                            fetch '/export/${code}/generate' with method:'POST' as html
+                            fetch '/export/${code}/generate' with {method:'POST'} as html
                             then put it into #preview-${code}
                             then remove .hidden from #preview-${code}
                           end`}

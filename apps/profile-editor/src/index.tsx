@@ -2,7 +2,7 @@
  * LokaScript Profile Editor
  *
  * A hypermedia-driven language profile editor built with Bun + Elysia + LokaScript.
- * Its pages load hyperfixi-hx.js from @hyperfixi/core 3.3.0 (see layouts/base.tsx).
+ * Its pages load the engine's hyperfixi-hs.js (see layouts/base.tsx).
  */
 
 import { Elysia } from 'elysia';

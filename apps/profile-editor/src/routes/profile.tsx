@@ -122,7 +122,7 @@ function MetadataTab({ code }: { code: string }) {
             for sel in <select/> in me
               set data[sel.name] to sel.value
             end
-            fetch \`/profiles/${code}/metadata\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify(data) as html
+            fetch \`/profiles/${code}/metadata\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)} as html
             then put it into #metadata-status
           end`}
     >
@@ -202,7 +202,7 @@ function ReferencesTab({ code }: { code: string }) {
             for input in <input/> in me
               set data[input.name] to input.value
             end
-            fetch \`/profiles/${code}/references\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify(data) as html
+            fetch \`/profiles/${code}/references\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)} as html
             then put it into #refs-status
           end`}
     >
@@ -239,7 +239,7 @@ function VerbTab({ code }: { code: string }) {
             for sel in <select/> in me
               set data[sel.name] to sel.value
             end
-            fetch \`/profiles/${code}/verb\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify(data) as html
+            fetch \`/profiles/${code}/verb\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)} as html
             then put it into #verb-status
           end`}
     >
@@ -306,13 +306,13 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             <button
               class="danger"
               _={`on click
-                    if not js(event) window.confirm('Revert all ${pending} pending edits for ${profile.name}?') end
+                    if not window.confirm('Revert all ${pending} pending edits for ${profile.name}?')
                       halt
                     end
-                    fetch \`/profiles/${code}/revert\` with method:'POST' as html
+                    fetch \`/profiles/${code}/revert\` with {method:'POST'} as html
                     then put it into #revert-status
                     then wait 1s
-                    then go to '/profiles/${code}'
+                    then go to url '/profiles/${code}'
                   end`}
             >
               Revert {pending} edits
@@ -330,7 +330,7 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             _={`on click
                   fetch '/profiles/${code}/tab/keywords' as html
                   then put it into #tab-content
-                  then remove .active from <a/> in closest nav
+                  then remove .active from <a/> in closest <nav/>
                   then add .active to me
                 end`}
           >
@@ -341,7 +341,7 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             _={`on click
                   fetch '/profiles/${code}/tab/markers' as html
                   then put it into #tab-content
-                  then remove .active from <a/> in closest nav
+                  then remove .active from <a/> in closest <nav/>
                   then add .active to me
                 end`}
           >
@@ -352,7 +352,7 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             _={`on click
                   fetch '/profiles/${code}/tab/metadata' as html
                   then put it into #tab-content
-                  then remove .active from <a/> in closest nav
+                  then remove .active from <a/> in closest <nav/>
                   then add .active to me
                 end`}
           >
@@ -363,7 +363,7 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             _={`on click
                   fetch '/profiles/${code}/tab/references' as html
                   then put it into #tab-content
-                  then remove .active from <a/> in closest nav
+                  then remove .active from <a/> in closest <nav/>
                   then add .active to me
                 end`}
           >
@@ -374,7 +374,7 @@ export const profileRoutes = new Elysia({ prefix: '/profiles' })
             _={`on click
                   fetch '/profiles/${code}/tab/verb' as html
                   then put it into #tab-content
-                  then remove .active from <a/> in closest nav
+                  then remove .active from <a/> in closest <nav/>
                   then add .active to me
                 end`}
           >

@@ -1,11 +1,12 @@
 /**
  * Base HTML layout for the profile editor.
  *
- * Uses missing.css for styling and hyperfixi-hx.js for interactivity — pinned to
- * @hyperfixi/core 3.3.0, the last release that ships it. Its handlers are in
- * the hybrid parser's dialect (`fetch … with a:1 and b:2`, `closest nav`), which
- * neither the engine nor core's full parser reads; moving them to upstream's
- * spelling (and hyperfixi-hs.js) is its own change.
+ * Uses missing.css for styling and the engine's hyperfixi-hs.js
+ * (@hyperfixi/engine) for interactivity. Every handler is in upstream
+ * _hyperscript's spelling and behaves the same on both: fetch options as one
+ * object (`with {method:'POST', …} as html`), `closest <nav/>`, `init`. Until
+ * Phase C3 the app loaded @hyperfixi/core 3.3.0's hyperfixi-hx.js and wrote the
+ * hybrid parser's dialect (`with a:1 and b:2`, `closest nav`).
  */
 
 import type { PropsWithChildren } from '@kitajs/html';
@@ -36,8 +37,8 @@ export function BaseLayout({ title, children }: PropsWithChildren<BaseLayoutProp
         {/* Custom theme */}
         <link rel="stylesheet" href="/public/theme.css" />
 
-        {/* hyperfixi-hx.js, pinned (see the header) */}
-        <script src="https://unpkg.com/@hyperfixi/core@3.3.0/dist/hyperfixi-hx.js"></script>
+        {/* The engine (see the header) */}
+        <script src="https://unpkg.com/@hyperfixi/engine@3/dist/hyperfixi-hs.js"></script>
 
         {/* Theme initialization */}
         <script>{`
@@ -71,8 +72,8 @@ export function BaseLayout({ title, children }: PropsWithChildren<BaseLayoutProp
               class="theme-toggle"
               title="Toggle dark mode"
               aria-label="Toggle dark mode"
-              _="on load
-                   if <html/> matches .dark-mode
+              _="init
+                   if document.documentElement matches .dark-mode
                      put 'light' into me
                    else
                      put 'dark' into me
@@ -80,7 +81,7 @@ export function BaseLayout({ title, children }: PropsWithChildren<BaseLayoutProp
                  end
                  on click
                    toggle .dark-mode on <html/>
-                   if <html/> matches .dark-mode
+                   if document.documentElement matches .dark-mode
                      set localStorage.theme to 'dark'
                      put 'light' into me
                    else
