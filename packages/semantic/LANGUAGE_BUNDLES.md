@@ -6,6 +6,11 @@ LokaScript Semantic provides single-language bundles for optimal bundle sizes. E
 
 ## Available Single-Language Bundles
 
+Every bundle except `core` and `lazy` also registers English (about 2 KB gzipped). English is the
+render target: `@lokascript/hyperscript-adapter` translates a parse with `render(node, 'en')`,
+because English is what `hyperfixi-hs.js` and `_hyperscript` read. Every bundle also exports
+`translate`.
+
 | Language   | Code | Bundle File               | Size   | Global Name            | Status   |
 | ---------- | ---- | ------------------------- | ------ | ---------------------- | -------- |
 | English    | en   | `browser-en.en.global.js` | ~94 KB | `LokaScriptSemanticEn` | ✅ Ready |

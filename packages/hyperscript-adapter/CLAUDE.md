@@ -42,6 +42,7 @@ test/
 ├── attribute-translator.test.ts  # Hook seam: WeakSet idempotency, zero DOM mutation
 ├── host-validate.test.ts      # Validity gate: channel folding (mock + REAL vendored engine)
 ├── engine-host.test.ts        # The real plugin on the real @hyperfixi/engine: runs, attribute stays as written
+├── semantic-iife-lite.test.ts # Built lite adapter × every built semantic IIFE on hyperfixi-hs.js (PR7 gate)
 ├── parity-harness.ts          # Shared parity corpus (no preprocessor imports — see file doc)
 ├── whole-string-first.test.ts # Repaired block-body rows, validated on the vendored engine
 ├── preprocessor-parity.full.test.ts  # Full path vs committed snapshot
@@ -83,7 +84,7 @@ The e2e suite serves the repo root on port **3010** (core's Playwright uses
 - **Warn once per language**: an unchanged translation is often legitimate (canonical-English hyperscript under a non-en lang scope), so the full plugin warns once per language per page load (mirroring htmx-adapter's `warnMissingLangOnce`); `{ debug: true }` gives per-element detail. `resetTranslationWarnings()` resets the once-state (mainly for tests)
 - **`fallbackToOriginal` is deprecated and inert**: it never did anything — the preprocessor's string contract always returns the original source on failure. Kept in the type for compile compatibility; ignored at runtime
 - **Generated SYNTAX table**: `src/generated/syntax-table.ts` derives from semantic's command schemas (`derive-syntax.test.ts` is the drift gate). Trap: the file is tracked but matches `.gitignore`, so restaging needs `git add -f` and that commit `--no-verify` (root CLAUDE.md, gate #2)
-- **Bundle sizes (2026-08-06, minified/gzipped)**: full ~975/197 KB, per-language ~250–270/~68 KB, lite ~3/1.3 KB (expects an external semantic global)
+- **Bundle sizes (2026-08-06, minified/gzipped)**: full ~975/197 KB, per-language ~250–270/~68 KB, lite ~3/1.8 KB (expects an external semantic global; 1.8 measured 2026-10-04)
 
 ## Integration Point
 
