@@ -48,6 +48,15 @@ declare global {
    * _hyperscript compatibility - global _hyperscript object
    */
   const _hyperscript: any;
+
+  interface Window {
+    /**
+     * The engine's API (the same object as window._hyperscript) plus
+     * compatibility-test.html's core-named helpers. Core's browser bundle
+     * (src/compatibility/browser-bundle.ts) declared this until C-R4b.
+     */
+    hyperfixi: typeof hyperfixi;
+  }
 }
 
 export {};

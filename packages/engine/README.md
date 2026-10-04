@@ -149,8 +149,9 @@ commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
 `dist/hyperfixi-hs.js` (minified, 34.1 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
-paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3);
-`hyperfixi.js` is everything.
+paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3). Since C-R4b
+`@hyperfixi/core` ships this same file as `dist/hyperfixi.js` (copied by core's
+`scripts/copy-engine-bundle.mjs`), where core's own everything-bundle used to be.
 
 Every tracked gallery page loads it instead of `packages/core/dist/hyperfixi.js`
 (2026-10-03: forty-seven pages; the error-path page for core's htmx layer was deleted with that

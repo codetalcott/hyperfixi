@@ -6,9 +6,10 @@
   </head>
   <body>
     <!--
-      Loads the published full browser bundle from the temp install's
-      node_modules. run.mjs serves this dir statically and drives the
-      buttons with Playwright.
+      Loads the published @hyperfixi/core dist/hyperfixi.js from the temp
+      install's node_modules: since Phase C3 (C-R4b) the engine's
+      hyperfixi-hs.js under core's name. run.mjs serves this dir statically and
+      drives the buttons with Playwright.
     -->
     <button id="toggle-btn" _="on click toggle .active on me">Toggle</button>
     <button id="put-btn" _="on click put 'clicked' into #out">Put</button>

@@ -141,7 +141,7 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build:multilingual-dist": "rollup -c",
     "build:browser": "node scripts/build-browser-bundles.mjs",
-    "build:browser:main-only": "rollup -c rollup.browser.config.mjs",
+    "build:browser:main-only": "node scripts/copy-engine-bundle.mjs",
     "postbuild:browser": "node scripts/create-bundle-aliases.mjs",
     "build:parser-modules": "rollup -c rollup.parser-modules.config.mjs",
     "snapshot:bundle-size": "node scripts/bundle-size-snapshot.mjs --check",

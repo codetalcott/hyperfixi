@@ -187,8 +187,8 @@ jobs:
           # silently skipped it (the audit's "dropped from the build-order
           # list" class, caught during the release itself).
           npm run build --prefix packages/htmx-adapter
-          # Core browser bundles depend on i18n/dist/browser.js + reactivity/dist
-          # and realtime/dist (browser-bundle.ts inlines both plugins)
+          # hyperfixi.js is the engine's hyperfixi-hs.js, copied from
+          # packages/engine/dist (built above) since C-R4b
           npm run build:browser --prefix packages/core
 
       # npm ships packages/patterns-reference/data/ (the package's `files`),

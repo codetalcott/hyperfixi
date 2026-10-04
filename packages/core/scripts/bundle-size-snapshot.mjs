@@ -40,7 +40,9 @@ const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
 const tolerance = (baseline.tolerance_percent ?? 5) / 100;
 
 function buildBundle(configPath) {
-  const cmd = `npx rollup -c ${configPath}`;
+  // hyperfixi.js is copied from the engine's build (C-R4b): its row names the
+  // copy script, which runs under node; every other config is a rollup config.
+  const cmd = configPath.startsWith('scripts/') ? `node ${configPath}` : `npx rollup -c ${configPath}`;
   execSync(cmd, { cwd: pkgDir, stdio: 'pipe' });
 }
 
