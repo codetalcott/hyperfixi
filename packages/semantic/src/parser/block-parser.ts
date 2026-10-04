@@ -625,6 +625,13 @@ export function tryParseProgram(
         depth--;
         continue;
       }
+      // A handler's `end` is never followed by `then` (both engines reject
+      // `on click … end then …`), so this `end` closes a block the opener count
+      // does not track — a `js … end` — and the handler goes on. Splitting here
+      // left `then <rest>` as a segment, which SOV can read as a handler: ja's
+      // `それから "/x" {method:"POST"} で フェッチ` became `on }` (its `で` is
+      // both the event marker and the instrument marker).
+      if (tokens[j + 1] && tokenMatches(tokens[j + 1], thenForms)) continue;
       const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
       if (text) segments.push(text);
       segStart = j + 1;

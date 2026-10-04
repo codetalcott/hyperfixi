@@ -778,6 +778,12 @@ function normalizeCommandRoles(
 }
 
 /**
+ * A custom event's name: a word (any script), then word characters and the
+ * separators event names use (`draggable:start`, `my-event`, `a.b`).
+ */
+const CUSTOM_EVENT_NAME = /^[\p{L}_$][\p{L}\p{N}_$:.\-]*$/u;
+
+/**
  * R1 default-role fill (Tier 2b) — a **fidelity-MEASUREMENT** normalization, NOT part
  * of `parse()`. Generated SVO patterns apply a schema role's `default` when the role
  * is absent (`toggle`/`add` destination → me, `remove`/`take` source → me,
@@ -6962,6 +6968,11 @@ export class SemanticParserImpl implements ISemanticParser {
         // handler for the event named by the URL, because the "identifier
         // right before the body's verb" cue below held for it.
         if (token.value.startsWith('`')) continue;
+        // Nor is anything that is not a name: ja reads the instrument `で` after
+        // an options object (`"/x" {method:"POST"} で フェッチ`) as the event
+        // marker, which made the object's `}` the event of a bare `js … end then
+        // fetch …`.
+        if (!CUSTOM_EVENT_NAME.test(token.value)) continue;
 
         if (eventMarkers.size > 0) {
           // Marker languages: the event-marker particle right after the

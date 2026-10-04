@@ -1427,7 +1427,11 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-formdata',
     title: 'Submit Form As FormData',
-    raw_code: 'on submit fetch /api/submit with method:"POST", body:(closest <form/> as FormData)',
+    // `as FormData` is core's alone (upstream has no such conversion), and core
+    // sent it as a string; `new FormData(…)` in a js block runs on both engines
+    // (Phase C2c, owner decision D6).
+    raw_code:
+      "on submit js(me) return new FormData(me.closest('form')) end then fetch /api/submit with method:\"POST\", body:it",
     description: 'Serialize the closest form as FormData and POST it',
     feature: 'async',
   },

@@ -57,7 +57,7 @@
     "fetch-basic": "both",
     "fetch-do-not-throw": "both",
     "fetch-error-handling": "both",
-    "fetch-formdata": "lokascript",
+    "fetch-formdata": "both",
     "fetch-json": "both",
     "fetch-loading-state": "both",
     "fetch-with-headers": "both",
@@ -378,8 +378,7 @@
     },
     "fetch-formdata": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Expected a CSS expression"
+      "hyperscript": true
     },
     "fetch-json": {
       "lokascript": true,
