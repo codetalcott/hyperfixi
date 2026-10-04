@@ -38,7 +38,7 @@ Save this as an HTML file and open it in your browser — or [try it live](https
         border-radius: 4px;
       }
     </style>
-    <script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
   </body>
 </html>
 ```
@@ -59,16 +59,16 @@ import { hyperfixi } from '@hyperfixi/vite-plugin';
 export default { plugins: [hyperfixi()] };
 ```
 
-**Script tag** — two prebuilt names, no table to read:
+**Script tag** — the engine's bundle, hyperscript with every module (~34 KB gz):
 
 ```html
-<!-- small: hyperscript + htmx v1/v2 attributes (~21.5 KB gz) -->
-<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js"></script>
-<!-- everything: full parser, reactivity, 24 languages (~310 KB gz) -->
-<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js"></script>
+<script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
 ```
 
-Start with the small one. When it meets a command it does not ship, it says so in the console and names `hyperfixi.js`; that is the moment to switch.
+For hypermedia attributes, add [fixi](https://github.com/bigskysoftware/fixi) or htmx 4 beside it
+(and `@lokascript/htmx-adapter` for `hx-*` names in other languages). Core's
+`hyperfixi.js` (~352 KB gz: full parser, reactivity, 24 languages) still ships until the engine
+replaces it; core's small `hyperfixi-hx.js` retired in the 4.0 cycle.
 
 ## For LLM Agents
 
@@ -80,11 +80,11 @@ The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `v
 
 - **43 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
 - **\_hyperscript compatible** -- existing hyperscript code works as-is
-- **Tree-shakeable** -- the Vite plugin ships only the commands you use; the small prebuilt is ~21.5 KB gz, the full one ~310 KB
+- **Tree-shakeable** -- the Vite plugin ships only the engine modules you use (18–34 KB gz); `hyperfixi-hs.js` is ~34 KB
 - **TypeScript types** -- full type safety with comprehensive definitions
 - **Agent-ready** -- MCP server with a deterministic validate/repair/compile loop ([AGENTS.md](./AGENTS.md))
 - **Optional multilingual** -- read and write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
-- **Optional htmx compat** -- htmx-like attributes via the `hyperfixi-hx.js` bundle
+- **htmx alongside** -- real htmx 4 or fixi beside the engine; `@lokascript/htmx-adapter` localizes `hx-*` names
 - **8100+ tests** across all packages
 
 ## Package Scopes

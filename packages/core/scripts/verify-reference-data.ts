@@ -42,11 +42,7 @@ import { COMMAND_MANIFEST, toRegisteredName } from '../src/commands/manifest';
 import { bundleInfo, packageInfo } from '../src/metadata';
 // The bundle→source pairing lives in one place so this gate and the audit test
 // cannot disagree about which file backs which bundle.
-import {
-  BUNDLES_WITH_COMMAND_LISTS,
-  BUNDLES_WITH_FACTORY_LISTS,
-  BUNDLES_INHERITING,
-} from '../src/compatibility/bundle-sources';
+import { BUNDLES_WITH_FACTORY_LISTS } from '../src/compatibility/bundle-sources';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(__dirname, '..');
@@ -374,16 +370,6 @@ function actualFactoryCount(sourceFile: string): number | null {
   return calls ? new Set(calls.map(c => c.trim())).size : null;
 }
 
-/** Count entries in a bundle source's `commands: [ ... ]` array. */
-function actualCommandCount(sourceFile: string): number | null {
-  const bundlePath = resolve(__dirname, '../src/compatibility', sourceFile);
-  if (!existsSync(bundlePath)) return null;
-  const source = readFileSync(bundlePath, 'utf-8');
-  const block = source.match(/commands:\s*\[([\s\S]*?)\]/);
-  if (!block) return null;
-  return (block[1].match(/'[^']+'/g) ?? []).length;
-}
-
 function verifyBundleCommandCounts() {
   const errors: string[] = [];
 
@@ -407,22 +393,9 @@ function verifyBundleCommandCounts() {
     );
   }
 
-  // Derive, don't trust: compare each list-publishing bundle's advertised count
-  // against the commands it actually ships.
-  for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_COMMAND_LISTS)) {
-    const bundle = bundleInfo.find(b => b.id === id);
-    if (!bundle) continue;
-    const actual = actualCommandCount(sourceFile);
-    if (actual === null) {
-      errors.push(`${id}: could not read the commands array from ${sourceFile}`);
-    } else if (actual !== bundle.commandCount) {
-      errors.push(
-        `${id} advertises ${bundle.commandCount} commands but ${sourceFile} ships ${actual}`
-      );
-    }
-  }
-
-  // Same, for the bundles that hand-pick factories without publishing an array.
+  // Derive, don't trust: compare each factory-list bundle's advertised count
+  // against the commands it actually registers. (The array-publishing and
+  // re-exporting arms went with hybrid-complete and hybrid-hx in Phase C3.)
   for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_FACTORY_LISTS)) {
     const bundle = bundleInfo.find(b => b.id === id);
     if (!bundle) continue;
@@ -432,18 +405,6 @@ function verifyBundleCommandCounts() {
     } else if (actual !== bundle.commandCount) {
       errors.push(
         `${id} advertises ${bundle.commandCount} commands but ${sourceFile} registers ${actual}`
-      );
-    }
-  }
-
-  // And the bundles that re-export another bundle wholesale.
-  for (const [id, inheritsFrom] of Object.entries(BUNDLES_INHERITING)) {
-    const bundle = bundleInfo.find(b => b.id === id);
-    const parent = bundleInfo.find(b => b.id === inheritsFrom);
-    if (!bundle || !parent) continue;
-    if (bundle.commandCount !== parent.commandCount) {
-      errors.push(
-        `${id} re-exports ${inheritsFrom} but advertises ${bundle.commandCount} vs its ${parent.commandCount}`
       );
     }
   }

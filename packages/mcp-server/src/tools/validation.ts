@@ -1214,14 +1214,14 @@ function getBundleConfig(
   const needsMultilingual = languages.length > 1 || languages.some(l => l !== 'en');
 
   // ---- Bundle recommendation ----
-  // Two prebuilt names for script-tag users since the 4.0 lineup collapse:
-  // hyperfixi-hx.js (the small one: hybrid parser + blocks + positional +
-  // htmx v1/v2 attributes) and hyperfixi.js (everything). A Vite project
-  // should not pick at all — the plugin does — which the generated config
-  // below is for. `blocks` / `positional` no longer change the answer: the
-  // small prebuilt carries both.
-  let bundle = 'hyperfixi-hx.js'; // 21.5 KB
-  let bundleSize = '21.5 KB';
+  // A script-tag user starts with the engine's hyperfixi-hs.js
+  // (@hyperfixi/engine: hyperscript only, every module, upstream's grammar).
+  // core's small prebuilt, hyperfixi-hx.js, retired in Phase C3 of the engine
+  // cutover. A Vite project should not pick at all — the plugin does — which
+  // the generated config below is for. `blocks` / `positional` do not change
+  // the answer: hyperfixi-hs.js carries both.
+  let bundle = 'hyperfixi-hs.js'; // 34.1 KB
+  let bundleSize = '34.1 KB';
 
   if (needsMultilingual) {
     bundle = 'hyperfixi-multilingual.js'; // 250 KB

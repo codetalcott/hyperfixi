@@ -100,7 +100,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 2. Export a named factory in `src/commands/index.ts` and add the command name to the `COMMANDS` set in `src/parser/parser-constants.ts`
 3. Register the factory in the runtime entry points that need it (`src/runtime/runtime.ts` and any `src/compatibility/browser-bundle-*.ts` that should ship the command)
 4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
-5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template and hybrid-complete's executor switches are generated (parser rules go in `src/parser/hybrid/parser-core.ts`, never in `parser-templates.ts`'s generated region)
+5. For custom-bundle coverage (`generate:bundle`, the `./bundle-generator` export), add cases to `src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template is generated (parser rules go in `src/parser/hybrid/parser-core.ts`, never in `parser-templates.ts`'s generated region)
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
 7. **No longer needed for the full-runtime counts** — `packageInfo.commands` and
    the `commandCount` of `browser` is derived from the
@@ -151,14 +151,15 @@ See [docs/API.md](docs/API.md) for complete documentation.
 
 ## Browser Bundles
 
-| Bundle                         | Size (gzip) | Use Case                                                          |
-| ------------------------------ | ----------- | ----------------------------------------------------------------- |
-| `hyperfixi-hx.js`              | 21.5 KB     | The small prebuilt: hybrid parser (~85% coverage) + htmx/fixi     |
-| `hyperfixi.js`                 | ~310 KB     | Everything + bundled reactivity/realtime plugins                  |
-| `hyperfixi-hybrid-complete.js` | 11.1 KB     | Plugin-internal (the vite plugin's generated fallback imports it) |
+| Bundle                      | Size (gzip) | Use Case                                                 |
+| --------------------------- | ----------- | -------------------------------------------------------- |
+| `hyperfixi.js`              | ~352 KB     | Everything + bundled reactivity/realtime plugins         |
+| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual; pairs with the semantic bundle |
 
-Vite projects use `@hyperfixi/vite-plugin` and never pick. `lite`, `lite-plus`,
-`minimal` and `standard` were retired as public names in the 4.0 cycle.
+The script-tag bundle is the engine's `hyperfixi-hs.js` (`@hyperfixi/engine`), and Vite
+projects use `@hyperfixi/vite-plugin` and never pick. Phase C3 retired core's small
+prebuilts — `hyperfixi-hx-v4.js`, `hyperfixi-hx.js`, `hyperfixi-hybrid-complete.js` — and
+`lite`, `lite-plus`, `minimal` and `standard` went as public names in the 4.0 cycle.
 
 ## Custom Bundle Generation
 
@@ -174,31 +175,11 @@ npx rollup -c rollup.browser-custom.config.mjs
 
 See [bundle-configs/README.md](bundle-configs/README.md) for full options.
 
-## htmx-compat layer
+## htmx-compat layer (retired)
 
-The `htmx/` subdirectory implements the htmx + fixi attribute layer used by the `hyperfixi-hx.js` (v1/v2) bundle (and by `hyperfixi-hx-v4.js`, v4 reactive + streaming, until it retired in Phase C3). Key files:
-
-| File                                   | Purpose                                                                                                                    |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `src/htmx/htmx-attribute-processor.ts` | Main scan + dispatch. Iterates `KEYS` from i18n-hooks for attribute reads, owns hx-on/SSE/WS lifecycle.                    |
-| `src/htmx/htmx-translator.ts`          | Translates collected config → hyperscript snippet. Does NOT handle `hx-on:*` (processor installs real listeners directly). |
-| `src/htmx/sse.ts` / `src/htmx/ws.ts`   | `SSEConnection` / `WSConnection` classes — open/close, backoff reconnect, JSON-envelope swap routing.                      |
-| `src/htmx/i18n-hooks.ts`               | `I18nHooks` contract (nameOf/selectorFor/eventNameOf) + `KEYS` registry (namespaced: `hx`, `sse`, `ws`).                   |
-| `src/htmx/i18n-orchestrator.ts`        | Per-element lang resolution. Stores vocab Map; first `register()` installs vocab-aware hooks.                              |
-| `src/htmx/lang-resolver.ts`            | `langOf()` ancestor walk; `normLang()` regional collapse.                                                                  |
-
-### Localized attribute names (Phase 8)
-
-Vocab modules under `packages/htmx-adapter/vocab/{lang}.js` self-register via `window.__hyperfixi_i18n.register(lang, payload)`. The orchestrator builds an inverted index per language so per-attribute reads (e.g. `nameOf(elt, 'hx', 'get')`) walk the closest ancestor `lang=`, find the registered vocab, and return the localized form (`hx-obtener` for `lang="es"`).
-
-The modules, their generator and the rules for authoring names live in
-`@lokascript/htmx-adapter` (moved in Phase C3; see `packages/htmx-adapter/CLAUDE.md`,
-"The vocab"). This layer reads them until `hyperfixi-hx.js` retires.
-
-Tests:
-
-- `src/htmx/__tests__/i18n-hooks.test.ts` — contract surface (defaults, install/reset)
-- `src/htmx/__tests__/i18n-orchestrator.test.ts` — lang resolution + vocab registration
-- `src/htmx/__tests__/i18n-vocab-modules.test.ts` — each module registers; `nameOf`/`selectorFor` answer with the authored names
-- `src/htmx/__tests__/i18n-integration.test.ts` — end-to-end (uses jsdom, not happy-dom, for Unicode CSS selector support)
-- `src/compatibility/browser-tests/i18n-htmx.spec.ts` — Playwright smoke against multilang fixtures
+`src/htmx/` implemented an htmx + fixi attribute layer on core's runtime for `hyperfixi-hx.js`
+and `hyperfixi-hx-v4.js`. It retired with them in Phase C3 (owner decision 2026-10-03): htmx 4 or
+fixi run beside the engine instead, `hx-live` is the engine's `live` block, and localized
+attribute names are `@lokascript/htmx-adapter`'s, whose package now holds the vocab modules and
+their generator (see `packages/htmx-adapter/CLAUDE.md`). `examples/hx-v4-i18n/` and
+`src/compatibility/browser-tests/i18n-htmx.spec.ts` cover that stack.

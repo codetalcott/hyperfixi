@@ -51,10 +51,9 @@ export function generateBundleCode(config: GeneratorOptions): string {
   const hasBlocks = blocks.length > 0;
   const hasReturn = commands.includes('return');
 
-  // Shared with `scripts/generate-bundles.ts`, which splices the same case
-  // bodies into the committed `browser-bundle-hybrid-complete.ts`. Alias
-  // resolution and dedupe live in the emitter so the two consumers cannot drift
-  // — see `executor-core.ts`.
+  // Alias resolution and dedupe live in the emitter (`executor-core.ts`), which
+  // `scripts/generate-bundles.ts` also used to splice the same case bodies into
+  // `browser-bundle-hybrid-complete.ts` until that bundle retired (Phase C3).
   const commandCases = emitCommandCases(commands, format);
   const blockCases = emitBlockCases(blocks, format);
 

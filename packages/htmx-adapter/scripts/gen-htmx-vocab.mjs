@@ -10,9 +10,9 @@
  * Output: one self-registering ES script per priority language under
  *   packages/htmx-adapter/vocab/{lang}.js
  *
- * (Moved here from @hyperfixi/core in Phase C3 of the engine cutover: the
- * adapter is the vocab's product. Core's embedded htmx layer, in
- * `hyperfixi-hx.js`, reads the same modules until it retires.)
+ * (Moved here from @hyperfixi/core in Phase C3 of the engine cutover, the
+ * adapter being the vocab's product; core's embedded htmx layer, which read
+ * the same modules, retired with `hyperfixi-hx.js` in the same phase.)
  *
  * Each emitted module calls `window.__hyperfixi_i18n.register('xx', { ... })`,
  * so consumers wire vocab via a single <script src=".../htmx/{lang}.js">
@@ -45,9 +45,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../../..');
 
 /**
- * Canonical attribute-key registry. Must stay in sync with
- * [packages/core/src/htmx/i18n-hooks.ts](../../core/src/htmx/i18n-hooks.ts) `KEYS`.
- * Duplicated here so the script needs no compile step on the core source.
+ * Canonical attribute keys whose names may come from a semantic profile (an
+ * attribute that is also a hyperscript keyword: `get`, `swap`, `trigger`, …).
+ * This mirrored core's embedded layer's `KEYS` (`htmx/i18n-hooks.ts`) until
+ * that layer retired in Phase C3; the list is now its own source of truth.
  */
 const KEYS = {
   hx: [
@@ -73,11 +74,12 @@ const KEYS = {
 };
 
 /**
- * Keys localized for the htmx-adapter only. Core's embedded htmx-compat
- * layer does not implement these attributes, so they stay OUT of `KEYS`
- * (which mirrors core and feeds its discovery/observer lists). Under the
- * adapter stock htmx implements them, and canonicalization is data-driven
- * from the emitted attrs map — so emitting the name is all it takes.
+ * Keys whose names come from the authored table ALONE, never a profile (see
+ * the `fallback` in buildAttrs): 22 profiles carry a `select` keyword that
+ * means mark/highlight text, which must not become `hx-select`. Core's
+ * embedded layer never implemented these, which is how the split began; stock
+ * htmx implements them, and canonicalization is data-driven from the emitted
+ * attrs map, so emitting the name is all it takes.
  */
 const ADAPTER_ONLY_KEYS = {
   // indicator/include: Contact.app. select/swap-oob/sync: the rest of the

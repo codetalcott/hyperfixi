@@ -55,14 +55,14 @@ packages/
 
 | Bundle                    | Size (gzip) | Use Case                                                           |
 | ------------------------- | ----------- | ------------------------------------------------------------------ |
-| hyperfixi-hx.js           | ~21.5 KB    | The small one: hybrid AST parser (~85% coverage) + htmx/fixi attrs |
-| hyperfixi.js              | ~310 KB     | Everything: full parser, reactivity/realtime plugins, 24 languages |
-| hyperfixi-hx-v4.js        | ~342 KB     | Separate product: htmx v4 (`hx-live`, `bind`, `when`, SSE, WS)     |
-| hyperfixi-multilingual.js | ~91 KB      | Separate product: parser-free multilingual, pairs with semantic    |
+| hyperfixi-hs.js (engine)  | ~34 KB      | Hyperscript only, every module, upstream's grammar                 |
+| hyperfixi.js              | ~352 KB     | Everything: full parser, reactivity/realtime plugins, 24 languages |
+| hyperfixi-multilingual.js | ~93 KB      | Separate product: parser-free multilingual, pairs with semantic    |
 
-`hyperfixi-hybrid-complete.js` is still built for the Vite plugin's generated
-fallback (`@hyperfixi/core/browser/hybrid-complete`); the lite / lite-plus /
-minimal / standard names were retired in the 4.0 cycle.
+`hyperfixi-hs.js` is `@hyperfixi/engine`'s; the other two are core's, until the cutover.
+Phase C3 retired core's small prebuilts (`hyperfixi-hx-v4.js`, `hyperfixi-hx.js`,
+`hyperfixi-hybrid-complete.js`); the lite / lite-plus / minimal / standard names went in the
+4.0 cycle.
 
 **Semantic bundles** (optional, for multilingual support; gzipped, measured locally 2026-09-30):
 
@@ -96,7 +96,7 @@ node scripts/generate-bundle.mjs --group western
 ### 1. CDN Script Tag (Simplest)
 
 ```html
-<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js"></script>
+<script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
 <button _="on click toggle .active on me">Toggle</button>
 ```
 

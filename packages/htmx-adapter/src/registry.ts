@@ -1,11 +1,10 @@
 /**
  * Vocab registry for the upstream-htmx adapter.
  *
- * Accepts the SAME payload shape as hyperfixi core's htmx-compat
- * orchestrator (`packages/core/src/htmx/i18n-orchestrator.ts`), so the
- * generated vocab modules in this package's `vocab/{lang}.js` (which call
- * `window.__hyperfixi_i18n.register(lang, payload)`) work verbatim against
- * both until core's layer retires with `hyperfixi-hx.js`.
+ * Accepts the payload shape of hyperfixi core's htmx-compat orchestrator
+ * (which retired with `hyperfixi-hx.js` in Phase C3), so the generated vocab
+ * modules in this package's `vocab/{lang}.js` (which call
+ * `window.__hyperfixi_i18n.register(lang, payload)`) work verbatim here.
  *
  *   register('es', {
  *     hyperfixi: {

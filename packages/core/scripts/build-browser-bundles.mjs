@@ -45,23 +45,10 @@ const BUNDLES = {
   },
 
 
-  // === The small prebuilt (hybrid-hx) and its plugin-internal base (hybrid-complete) ===
-  // lite / lite-plus / minimal / standard were retired as public names in the
-  // 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b, bundle lineup).
-  'hybrid-complete': {
-    name: 'hybrid-complete',
-    script: 'build:browser:hybrid-complete',
-    config: 'rollup.browser-hybrid-complete.config.mjs',
-    output: 'dist/hyperfixi-hybrid-complete.js',
-    critical: true,
-  },
-  'hybrid-hx': {
-    name: 'hybrid-hx',
-    script: 'build:browser:hybrid-hx',
-    config: 'rollup.browser-hybrid-hx.config.mjs',
-    output: 'dist/hyperfixi-hx.js',
-    critical: true,
-  },
+  // The small prebuilts (hybrid-hx = hyperfixi-hx.js, hybrid-complete) retired in
+  // Phase C3 of the engine cutover (C-R2), as hybrid-hx-v4 did before them: the
+  // engine's hyperfixi-hs.js is the script-tag bundle. lite / lite-plus /
+  // minimal / standard went in the 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b).
 
   modular: {
     name: 'modular',

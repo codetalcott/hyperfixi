@@ -1,9 +1,8 @@
 /**
  * Per-element language resolution for localized htmx attribute names.
  *
- * Mirrors `packages/core/src/htmx/lang-resolver.ts` (which in turn mirrors
- * loka-js's `lang-resolver.js`) so a page migrating between hyperfixi's
- * embedded htmx-compat layer and this upstream-htmx adapter resolves
+ * Mirrors loka-js's `lang-resolver.js` (as core's embedded htmx layer did,
+ * until it retired in Phase C3), so a page migrating from either resolves
  * languages identically. Resolution order:
  *
  *   1. `data-hyperfixi-lang` attribute on the element itself

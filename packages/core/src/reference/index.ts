@@ -12,7 +12,7 @@
  * console.log(commands.toggle.syntax); // 'toggle .class [on target]'
  *
  * // Find bundle by use case
- * const bundle = bundles.find(b => b.name === 'hybrid-complete');
+ * const bundle = bundles.find(b => b.name === 'browser');
  * ```
  */
 
@@ -651,28 +651,8 @@ export interface BundleRef {
  * All available bundles with metadata
  */
 export const bundles: BundleRef[] = [
-  {
-    name: 'hybrid-complete',
-    file: 'lokascript-hybrid-complete.js',
-    size: '7.3 KB',
-    commandCount: 21,
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    useCase: 'Most apps (~85% hyperscript coverage)',
-    importPath: '@hyperfixi/core/browser/hybrid-complete',
-  },
-  {
-    name: 'hybrid-hx',
-    file: 'lokascript-hybrid-hx.js',
-    size: '9.7 KB',
-    commandCount: 21,
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    useCase: 'htmx/fixi compatibility with hx-* attributes',
-    importPath: '@hyperfixi/core/browser/hybrid-hx',
-  },
+  // hybrid-complete and hybrid-hx retired in Phase C3 of the engine cutover;
+  // the engine's hyperfixi-hs.js (@hyperfixi/engine) is the script-tag bundle.
   {
     name: 'browser',
     file: 'lokascript-browser.js',

@@ -2,14 +2,14 @@
 
 ## What This Package Does
 
-Multilingual adapter for **upstream htmx v4** (not hyperfixi's embedded
-htmx-compat layer). Localized `hx-*`/`sse-*`/`ws-*` attribute names are
+Multilingual adapter for **upstream htmx v4** (the replacement for core 3.x's
+embedded htmx-compat layer, retired in Phase C3). Localized `hx-*`/`sse-*`/`ws-*` attribute names are
 canonicalized onto the element before stock htmx processes it, via an initial
 document sweep plus a registered htmx v4 extension
 (`htmx_before_process`; the executor-mode guard is the cancelable
 `htmx_before_on_init`). Vocab data is the generated `vocab/{lang}.js` modules
-in this package (moved from `@hyperfixi/core` in Phase C3; core's embedded
-layer, in `hyperfixi-hx.js`, reads them until it retires).
+in this package (moved from `@hyperfixi/core` in Phase C3, when core's embedded
+layer retired with `hyperfixi-hx.js`).
 
 ## Structure
 
@@ -17,11 +17,11 @@ layer, in `hyperfixi-hx.js`, reads them until it retires).
 src/
 ├── index.ts          # Library entry — re-exports the public API
 ├── browser.ts        # IIFE entry — installs window.__hyperfixi_i18n, auto-registers, sweeps
-├── registry.ts       # Vocab store; same payload shape as core's i18n-orchestrator
+├── registry.ts       # Vocab store; the payload shape of core's (retired) i18n-orchestrator
 ├── canonicalize.ts   # localized → canonical attribute copy + hx-trigger value translation
 ├── hx-on.ts          # executor mode: hyperscript hx-on: bodies (claim/translate/execute hooks)
 ├── extension.ts      # htmx v4 extension (+ v2 fallback) + installAutoSweep
-└── lang-resolver.ts  # langOf()/normLang() — byte-mirror of core's htmx/lang-resolver.ts
+└── lang-resolver.ts  # langOf()/normLang() — mirrors loka-js's lang-resolver
 scripts/
 ├── gen-htmx-vocab.mjs      # the generator (semantic profiles + i18n dictionaries + the table)
 ├── htmx-attr-vocab.mjs     # hand-authored names: htmx-only attributes, trigger heads
@@ -71,8 +71,8 @@ npm run check:vocab        # exit 1 if a committed module is stale
   set lives only in the generator (`scripts/gen-htmx-vocab.mjs`). The
   vocab-generator test is the drift guard.
 - **Same `window.__hyperfixi_i18n` public API as core** so the generated vocab
-  modules work verbatim; if core's registry already exists on the page, the
-  browser entry fans registrations out to both.
+  modules work verbatim; if a registry already exists on the page (core 3.x's
+  `hyperfixi-hx.js`), the browser entry fans registrations out to both.
 - **`hx-on:` bodies are JS by default (upstream semantics), hyperscript by
   opt-in**: `setBodyExecutor()` (auto-detected from `window._hyperscript`)
   flips the hx-on family into executor mode — the adapter claims every
@@ -128,8 +128,8 @@ npm run check:vocab        # exit 1 if a committed module is stale
   pt's 15 camelCase events came out `hx-on:teclabaixo` until this;
   `vocab-modules.test.ts` now drives every event of every language through an
   `hx-on` name parsed from markup, and the generator refuses two names of one
-  language that fold together. Core's embedded layer does the same through
-  `eventNameOf(…, { fromAttrName: true })`.
+  language that fold together. Core's embedded layer did the same through
+  `eventNameOf(…, { fromAttrName: true })` until it retired.
 - **`init(internalAPI)` takes ONE thing**: `HCON.split`. The rest of
   4.0.0's 14-member surface was evaluated and passed over — see the
   rationale on `createExtension` in extension.ts (notably `htmxProp`'s
@@ -173,8 +173,8 @@ leaves `hx-target` as the English identity on purpose (so does loka-js). (de als
 the profile's `Ziel` shipped as `hx-Ziel`, which no parsed attribute can match
 because HTML lowercases attribute names.) `hx-indicator` / `hx-include` / `hx-select` /
 `hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
-htmx implements them under this adapter; core's embedded layer does not, so
-they are not in its `i18n-hooks.ts` `KEYS`. **An adapter-only key resolves
+htmx implements them under this adapter; core's embedded layer never did,
+which is how they came to sit apart from `KEYS`. **An adapter-only key resolves
 from the table alone, never the profile** — 22 profiles carry a `select`
 keyword meaning mark/highlight text (de `markieren`), which would otherwise
 have shipped as `hx-select`, permanently. `hx-ext` has no name on purpose:

@@ -65,9 +65,6 @@ Full Bundle (224 KB)
 ├── lokascript-multilingual.js    # i18n support (250 KB)
 └── lokascript-semantic.browser.global.js  # Semantic parser (61 KB)
 
-Lite Bundles
-├── lokascript-lite.js            # 1.9 KB - 8 commands
-├── lokascript-lite-plus.js       # 2.6 KB - 14 commands
-├── lokascript-hybrid-complete.js # 6.7 KB - 21+ commands
-└── lokascript-hybrid-hx.js       # 9.7 KB - htmx compatibility
+(The 3.x small prebuilts — lite, lite-plus, hybrid-complete, hybrid-hx — are
+retired; the script-tag bundle is @hyperfixi/engine's hyperfixi-hs.js.)
 ```

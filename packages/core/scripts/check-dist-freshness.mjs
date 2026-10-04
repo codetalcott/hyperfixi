@@ -87,7 +87,7 @@ for (const b of stale) {
 console.error('\n  rebuild all browser bundles:');
 console.error('    npm run build:browser --prefix packages/core');
 console.error('  rebuild a single bundle (faster):');
-console.error('    npm run build:browser:hybrid-hx --prefix packages/core      # or :hybrid-complete, :lite, etc.');
+console.error('    npm run build:browser:main-only --prefix packages/core # or :multilingual, :classic-i18n, etc.');
 console.error('  bypass this check:');
 console.error('    SKIP_DIST_CHECK=1 <your command>\n');
 process.exit(1);

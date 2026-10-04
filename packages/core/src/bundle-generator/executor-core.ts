@@ -7,9 +7,10 @@
  *
  * Arc E exists because the same executor was hand-copied into five places and
  * the copies silently disagreed (`docs-internal/HANDOFF-command-arch-bundles.md`
- * § "The premise, corrected"). Step 4 removes one of those copies by GENERATING
+ * § "The premise, corrected"). Step 4 removed one of those copies by GENERATING
  * hybrid-complete's switch bodies from `templates.ts` — the same source
- * `generateBundleCode()` already emits from.
+ * `generateBundleCode()` already emits from. (That bundle retired in Phase C3;
+ * `generateBundleCode()` is the one consumer left.)
  *
  * That only removes a copy if both consumers share one emitter. If the script
  * that writes the committed bundle had its own `.map(k => impls[k]).join('\n')`,
