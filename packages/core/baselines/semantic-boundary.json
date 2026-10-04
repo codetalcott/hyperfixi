@@ -2,24 +2,12 @@
   "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs. Since Arc 1 steps 2-3 every row is on the FRONT-END SIDE (compatibility/browser-bundle*.ts and multilingual/); a front-end import anywhere else fails outright and cannot be added here.",
   "generated": "2026-10-04",
   "totals": {
-    "static-value": 5,
+    "static-value": 3,
     "dynamic": 1,
     "static-type": 1,
-    "typeof-import": 2
+    "typeof-import": 1
   },
   "files": {
-    "compatibility/browser-bundle-classic-i18n.ts": {
-      "static-value": 1,
-      "reason": "LEGITIMATE and terminal. This IS the classic-i18n bundle; importing @lokascript/i18n/browser is its entire reason to exist. Target-state row."
-    },
-    "compatibility/browser-bundle-multilingual.ts": {
-      "typeof-import": 1,
-      "reason": "LEGITIMATE. A `typeof import(...)` type query only — the module itself is loaded lazily by getSemanticModule(). Target-state row."
-    },
-    "compatibility/browser-bundle-semantic-complete.ts": {
-      "static-value": 1,
-      "reason": "LEGITIMATE and terminal. This IS the semantic-complete bundle. Target-state row."
-    },
     "compatibility/browser-bundle.ts": {
       "static-value": 1,
       "reason": "LEGITIMATE. The full browser bundle ships the multilingual API on purpose (hyperfixi.semantic.*). Target-state row."

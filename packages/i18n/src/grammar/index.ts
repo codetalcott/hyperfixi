@@ -70,7 +70,8 @@ export {
 // them (#998).
 //
 // The rest of this directory STAYS and is not part of that retirement: `profiles/`
-// is imported by i18n's own `runtime.ts` and re-exported to the classic-i18n
-// bundle; `types.ts` backs `constants.ts` and the role helpers above;
-// `direct-mappings.ts` is part of the browser API (`types-browser/i18n-api.ts`
-// declares it). This was never "delete the grammar directory".
+// is imported by i18n's own `runtime.ts` (and was re-exported to core's
+// classic-i18n bundle until it retired in Phase C3); `types.ts` backs
+// `constants.ts` and the role helpers above; `direct-mappings.ts` is part of the
+// browser API (`types-browser/i18n-api.ts` declares it). This was never "delete
+// the grammar directory".

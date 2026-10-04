@@ -42,7 +42,6 @@ import { COMMAND_MANIFEST, toRegisteredName } from '../src/commands/manifest';
 import { bundleInfo, packageInfo } from '../src/metadata';
 // The bundle→source pairing lives in one place so this gate and the audit test
 // cannot disagree about which file backs which bundle.
-import { BUNDLES_WITH_FACTORY_LISTS } from '../src/compatibility/bundle-sources';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(__dirname, '..');
@@ -353,22 +352,12 @@ function verifyAvailabilities() {
 // =============================================================================
 
 /**
- * Every bundle's advertised commandCount is re-derived from its own source
- * rather than trusted — the pairing lives in `compatibility/bundle-sources.ts`.
- * lite-plus and the two hybrids were stale by 4-5 commands each for months
- * because nothing compared the advertised number to the real list; step 4.4
- * widened the same idea to the rest and caught three more (`minimal` 30→10,
- * `standard` 35→25, `multilingual` 59→52).
+ * Every bundle's advertised commandCount used to be re-derived from its own
+ * source here (`compatibility/bundle-sources.ts` paired each with its file):
+ * lite-plus and the two hybrids were stale by 4-5 commands each for months, and
+ * widening the check caught three more. The bundles it compared all retired in
+ * Phase C3; what is left checks the full bundle against the package count.
  */
-
-/** Count `createXCommand()` calls in a bundle's tree-shakeable runtime list. */
-function actualFactoryCount(sourceFile: string): number | null {
-  const bundlePath = resolve(__dirname, '../src/compatibility', sourceFile);
-  if (!existsSync(bundlePath)) return null;
-  const source = readFileSync(bundlePath, 'utf-8');
-  const calls = source.match(/^\s+create[A-Za-z0-9]*Command\(\),?$/gm);
-  return calls ? new Set(calls.map(c => c.trim())).size : null;
-}
 
 function verifyBundleCommandCounts() {
   const errors: string[] = [];
@@ -391,22 +380,6 @@ function verifyBundleCommandCounts() {
     errors.push(
       `Browser bundle has ${browserBundle.commandCount} commands, expected ${packageInfo.commands}`
     );
-  }
-
-  // Derive, don't trust: compare each factory-list bundle's advertised count
-  // against the commands it actually registers. (The array-publishing and
-  // re-exporting arms went with hybrid-complete and hybrid-hx in Phase C3.)
-  for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_FACTORY_LISTS)) {
-    const bundle = bundleInfo.find(b => b.id === id);
-    if (!bundle) continue;
-    const actual = actualFactoryCount(sourceFile);
-    if (actual === null) {
-      errors.push(`${id}: could not read the factory list from ${sourceFile}`);
-    } else if (actual !== bundle.commandCount) {
-      errors.push(
-        `${id} advertises ${bundle.commandCount} commands but ${sourceFile} registers ${actual}`
-      );
-    }
   }
 
   const passed = errors.length === 0;

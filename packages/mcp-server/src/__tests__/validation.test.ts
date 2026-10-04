@@ -338,14 +338,26 @@ describe('get_bundle_config', () => {
     expect(parsed.recommendedBundle).toBe('hyperfixi-hs.js');
   });
 
-  it('recommends multilingual for non-English', async () => {
+  it('recommends hyperfixi-hs.js with the adapter for non-English', async () => {
     const result = await handleValidationTool('get_bundle_config', {
       commands: ['toggle'],
       languages: ['ja', 'ko'],
     });
 
     const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.recommendedBundle).toBe('hyperfixi-multilingual.js');
+    expect(parsed.recommendedBundle).toBe('hyperfixi-hs.js');
+    expect(parsed.adapter.package).toBe('@lokascript/hyperscript-adapter');
+    expect(parsed.adapter.bundle).toBe('hyperscript-i18n-east-asian.global.js');
+    expect(parsed.adapter.setup).toContain('hyperfixi-hs.js');
+  });
+
+  it('names no adapter for English', async () => {
+    const result = await handleValidationTool('get_bundle_config', {
+      commands: ['toggle'],
+      languages: ['en'],
+    });
+
+    expect(JSON.parse(result.content[0].text).adapter).toBeUndefined();
   });
 
   it('generates vite config', async () => {

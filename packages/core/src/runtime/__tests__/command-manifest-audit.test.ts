@@ -710,11 +710,9 @@ describe('COMMAND_KEYWORDS', () => {
  * must be removed.
  */
 const BUNDLE_COMMAND_COUNTS: Record<string, number> = {
-  'browser-bundle-classic-i18n.ts': 42,
-  'browser-bundle-classic.ts': 51,
+  // classic (51), classic-i18n (42) and the two textshelf profiles (10 each)
+  // retired in Phase C3 (C-R3). lite's file stays: the regex parser imports it.
   'browser-bundle-lite.ts': 8,
-  'browser-bundle-textshelf-minimal.ts': 10,
-  'browser-bundle-textshelf-profile.ts': 10,
 };
 
 /** Distinct quoted names across every `commands: [...]` array in each file. */
@@ -760,7 +758,8 @@ describe('the per-bundle commands arrays', () => {
 
   // `metadata.ts`'s commandCount for an array-publishing bundle was compared
   // with its array here until the last one it lists (hybrid-complete) retired
-  // in Phase C3; `verify:reference` compares the factory-list bundles.
+  // in Phase C3; `verify:reference` compared the factory-list bundles until
+  // the last of those (multilingual) retired in C-R3.
 });
 
 // ===========================================================================

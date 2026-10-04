@@ -8,12 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Backward-compat aliases are lokascript-*.js (for v1.x users)
 const BUNDLE_ALIASES = {
   'hyperfixi.js': 'lokascript-browser.js',
-  'hyperfixi-classic.js': 'lokascript-browser-classic.js',
-  'hyperfixi-classic-i18n.js': 'lokascript-browser-classic-i18n.js',
-  'hyperfixi-modular.js': 'lokascript-modular.js',
-  'hyperfixi-textshelf.js': 'lokascript-textshelf-profile.js',
-  'hyperfixi-textshelf-minimal.js': 'lokascript-textshelf-minimal.js',
-  'hyperfixi-multilingual.js': 'lokascript-multilingual.js',
+  // classic, classic-i18n, modular, textshelf and multilingual retired in
+  // Phase C3 (C-R3) with their bundles.
 };
 
 // In-era aliases for older hyperfixi-browser-* names that
@@ -21,7 +17,6 @@ const BUNDLE_ALIASES = {
 // the bundle-compatibility spec still reference these. Will be removed in v3.0.0.
 const HYPERFIXI_LEGACY_ALIASES = {
   'hyperfixi.js': 'hyperfixi-browser.js',
-  'hyperfixi-classic-i18n.js': 'hyperfixi-browser-classic-i18n.js',
 };
 
 const distDir = path.join(__dirname, '..', 'dist');

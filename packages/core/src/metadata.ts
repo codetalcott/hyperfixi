@@ -78,14 +78,11 @@ export interface BundleInfo {
    *
    * Bundles that register the whole registry (`browser`) use
    * `FULL_RUNTIME_COMMAND_COUNT` so they track the manifest automatically.
-   * Every other bundle hand-picks its commands, so its count is a measured
-   * literal — and `verify:reference` re-derives each one from the bundle
-   * source rather than trusting it.
-   *
-   * Widening that check in step 4.4 found three that were wrong, all in the
-   * ungated set: `minimal` 30→10, `standard` 35→25, `multilingual` 59→52.
-   * The two bundles that were already gated (`lite-plus`, `hybrid-complete`)
-   * were both correct — the errors were exactly where nothing was looking.
+   * The hand-picked bundles (lite, minimal, standard, the hybrids,
+   * multilingual) carried measured literals that `verify:reference` re-derived
+   * from their sources; widening that check in step 4.4 found three wrong, all
+   * where nothing had looked (`minimal` 30→10, `standard` 35→25,
+   * `multilingual` 59→52). All of them retired by Phase C3 (C-R3).
    */
   commandCount: number;
   /** Parser type used */
@@ -113,8 +110,9 @@ export interface BundleInfo {
  */
 export const bundleInfo: BundleInfo[] = [
   // hybrid-complete and hybrid-hx (hyperfixi-hx.js) retired in Phase C3 (C-R2),
-  // hybrid-hx-v4 in C-R1: the engine's hyperfixi-hs.js (@hyperfixi/engine) is
-  // the script-tag bundle.
+  // hybrid-hx-v4 in C-R1, multilingual (hyperfixi-multilingual.js) in C-R3: the
+  // engine's hyperfixi-hs.js (@hyperfixi/engine) is the script-tag bundle, and
+  // @lokascript/hyperscript-adapter runs non-English hyperscript on it.
   {
     id: 'browser',
     name: 'Full Browser',
@@ -134,28 +132,6 @@ export const bundleInfo: BundleInfo[] = [
     cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js',
     useCase: 'Complete bundle with all commands and features',
   },
-  {
-    id: 'multilingual',
-    name: 'Multilingual',
-    filename: 'hyperfixi-multilingual.js',
-    gzipSize: '93.4 KB',
-    rawSize: '376 KB',
-    // NOT a full-runtime bundle, despite the old 59. It hand-picks 51 via
-    // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
-    // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it
-    // SHOULD ship all 58 is a behavior question, deliberately left to its own
-    // PR — this step only stops the number from lying.
-    commandCount: 51,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: false,
-    importPath: '@hyperfixi/core/browser/multilingual',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-multilingual.js',
-    useCase: 'Full features with multilingual API (requires @lokascript/semantic)',
-  },
 ];
 
 // =============================================================================
@@ -166,27 +142,30 @@ export const bundleInfo: BundleInfo[] = [
  * Feature availability across bundles
  */
 export const featureMatrix = {
-  'toggle class': ['lite', 'lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'show/hide': ['lite', 'lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'add/remove class': ['lite', 'lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'set variable': ['lite', 'lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'put content': ['lite', 'lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'wait duration': ['lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'increment/decrement': ['lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'trigger event': ['lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  log: ['lite-plus', 'minimal', 'standard', 'browser', 'multilingual'],
-  'if/else blocks': ['minimal', 'standard', 'browser', 'multilingual'],
-  'repeat/for loops': ['minimal', 'standard', 'browser', 'multilingual'],
-  fetch: ['minimal', 'standard', 'browser', 'multilingual'],
-  'event modifiers': ['minimal', 'standard', 'browser', 'multilingual'],
-  'positional (first/last)': ['minimal', 'standard', 'browser', 'multilingual'],
+  'toggle class': ['lite', 'lite-plus', 'minimal', 'standard', 'browser'],
+  'show/hide': ['lite', 'lite-plus', 'minimal', 'standard', 'browser'],
+  'add/remove class': ['lite', 'lite-plus', 'minimal', 'standard', 'browser'],
+  'set variable': ['lite', 'lite-plus', 'minimal', 'standard', 'browser'],
+  'put content': ['lite', 'lite-plus', 'minimal', 'standard', 'browser'],
+  'wait duration': ['lite-plus', 'minimal', 'standard', 'browser'],
+  'increment/decrement': ['lite-plus', 'minimal', 'standard', 'browser'],
+  'trigger event': ['lite-plus', 'minimal', 'standard', 'browser'],
+  log: ['lite-plus', 'minimal', 'standard', 'browser'],
+  'if/else blocks': ['minimal', 'standard', 'browser'],
+  'repeat/for loops': ['minimal', 'standard', 'browser'],
+  fetch: ['minimal', 'standard', 'browser'],
+  'event modifiers': ['minimal', 'standard', 'browser'],
+  'positional (first/last)': ['minimal', 'standard', 'browser'],
   // hyperfixi-hx.js was the one bundle with htmx attributes; it retired in
   // Phase C3. htmx 4 + @lokascript/htmx-adapter is the replacement.
   'htmx attributes': [],
-  behaviors: ['minimal', 'standard', 'browser', 'multilingual'],
-  transitions: ['minimal', 'standard', 'browser', 'multilingual'],
-  morph: ['standard', 'browser', 'multilingual'],
-  'multilingual API': ['multilingual'],
+  behaviors: ['minimal', 'standard', 'browser'],
+  transitions: ['minimal', 'standard', 'browser'],
+  morph: ['standard', 'browser'],
+  // hyperfixi-multilingual.js retired in Phase C3 (C-R3); the multilingual
+  // API is @hyperfixi/core/multilingual (functions) and, on a page,
+  // @lokascript/hyperscript-adapter beside the engine.
+  'multilingual API': [],
 } as const;
 
 // =============================================================================
