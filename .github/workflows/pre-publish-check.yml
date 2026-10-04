@@ -286,7 +286,7 @@ jobs:
 
       - name: Validate exports
         # Runs AFTER "Build browser bundles" on purpose: core's exports map
-        # includes dist/hyperfixi.js and dist/hyperfixi-hx-v4.js, which only
+        # includes dist/hyperfixi.js and the other browser bundles, which only
         # exist once the browser bundles are built. This step used to run
         # before them and flagged core with a false "Missing exports" ❌ on
         # every run (the 2026-07-13 release-bar summary-reading ritual).
@@ -380,7 +380,6 @@ jobs:
           # Checked against duplication as above: the bundle's sourcemap
           # carries semantic as ONE dist file. ~5% headroom again.
           MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
-          MAX_HXV4=385000         # 385 KB (hyperfixi-hx-v4.js actual ~358 KB gz)
 
           failed=0
 
@@ -413,21 +412,6 @@ jobs:
             fi
           else
             echo "❌ hyperfixi.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
-            failed=1
-          fi
-
-          # Check the hx-v4 bundle (was covered by NO check: its filename
-          # does not match the hyperfixi-hybrid-* glob).
-          if [[ -f "packages/core/dist/hyperfixi-hx-v4.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-hx-v4.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_HXV4" ]]; then
-              echo "❌ hyperfixi-hx-v4.js (${size} bytes gzip) exceeds limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
-              failed=1
-            else
-              echo "✅ hyperfixi-hx-v4.js (${size} bytes gzip) within limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "❌ hyperfixi-hx-v4.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
             failed=1
           fi
 
@@ -487,7 +471,7 @@ jobs:
           # (vocab/htmx/{lang}.js) depend on window.__hyperfixi_i18n.register
           # being reachable in the published bundles. Surfaced 2.5.0 → 2.5.1.
           if npx playwright test src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts --reporter=list 2>&1 | tee /tmp/i18n-orchestrator-api.log; then
-            echo "✅ window.__hyperfixi_i18n.register reachable in hybrid-hx + hybrid-hx-v4" >> $GITHUB_STEP_SUMMARY
+            echo "✅ window.__hyperfixi_i18n.register reachable in hybrid-hx" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Orchestrator public API check failed — vocab modules will silently break" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY

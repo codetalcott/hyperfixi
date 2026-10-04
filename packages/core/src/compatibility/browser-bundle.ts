@@ -130,8 +130,8 @@ interface HyperFixiBrowserAPI {
   unregisterHooks: (name: string) => boolean;
   getRegisteredHooks: () => string[];
   // Force lazy default-runtime construction; idempotent. Bundle authors that
-  // need to install a plugin before any user code runs (e.g. hyperfixi-hx-v4
-  // wiring @hyperfixi/reactivity) call this to get the runtime instance.
+  // need to install a plugin before any user code runs (e.g. wiring
+  // @hyperfixi/reactivity) call this to get the runtime instance.
   getDefaultRuntime: typeof hyperscript.getDefaultRuntime;
   // Plugin registry for external plugins (e.g., @lokascript/siren)
   registry: LokaScriptRegistry;
@@ -323,8 +323,8 @@ const hyperfixiAPI = {
 // processor runs, so `_="socket …"` / `bind …` attributes compile on first
 // scan. Both installs are idempotent (hasFeature guards) and the parser
 // extension registry is globalThis-hoisted, so loading multiple bundles on
-// one page is safe. Casts through `never` for the same dist-vs-src nominal
-// type reason as browser-bundle-hybrid-hx-v4.ts.
+// one page is safe. Casts through `never`: the plugins' dist types and this
+// source's types are nominally distinct.
 function installBundledPlugins(): void {
   const runtime = hyperscript.getDefaultRuntime();
   installPlugin(runtime as never, reactivityPlugin as never);

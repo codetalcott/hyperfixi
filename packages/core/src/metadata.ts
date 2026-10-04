@@ -76,7 +76,7 @@ export interface BundleInfo {
   /**
    * Number of commands the bundle actually registers.
    *
-   * Bundles that register the whole registry (`browser`, `hybrid-hx-v4`) use
+   * Bundles that register the whole registry (`browser`) use
    * `FULL_RUNTIME_COMMAND_COUNT` so they track the manifest automatically.
    * Every other bundle hand-picks its commands, so its count is a measured
    * literal — and `verify:reference` re-derives each one from the bundle
@@ -152,24 +152,6 @@ export const bundleInfo: BundleInfo[] = [
     importPath: '@hyperfixi/core/browser/hybrid-hx',
     cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js',
     useCase: 'htmx/fixi drop-in replacement with hx-get, hx-post, hx-target',
-  },
-  {
-    id: 'hybrid-hx-v4',
-    name: 'Hybrid HX v4',
-    filename: 'hyperfixi-hx-v4.js',
-    gzipSize: '362.6 KB',
-    rawSize: '1653 KB',
-    // Re-exports `browser-bundle.ts`, so it inherits the full registry.
-    commandCount: FULL_RUNTIME_COMMAND_COUNT,
-    parser: 'full',
-    hasBlocks: true,
-    hasEventModifiers: true,
-    hasPositional: true,
-    hasFetch: true,
-    hasHtmxCompat: true,
-    importPath: '@hyperfixi/core/browser/hybrid-hx-v4',
-    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx-v4.js',
-    useCase: 'htmx v4 compat: hx-live reactivity, SSE/WebSocket streaming, full runtime',
   },
   {
     id: 'browser',

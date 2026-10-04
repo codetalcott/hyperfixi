@@ -1618,65 +1618,22 @@ export const SEED_EXAMPLES: SeedExample[] = [
   },
 
   // ==========================================================================
-  // HyperFixi htmx v4 reactive + streaming attributes
-  // Require the hyperfixi-hx-v4.js bundle (full runtime + reactivity + SSE/WS).
+  // Reactivity in markup. Until 2026-10-03 this section held core's htmx v4
+  // attributes (`hx-live`, `sse-connect`/`sse-swap`, `ws-connect`/`ws-send`),
+  // which ran only in hyperfixi-hx-v4.js. That bundle retired with core's htmx
+  // layer (Phase C3; owner decisions B2/B3): `hx-live` is the engine's `live`
+  // block, and SSE/WebSocket are htmx 4's own. The hx-live pair is kept below in
+  // the engine's spelling; the bare hx-live row duplicated live-derived-value,
+  // and the three SSE/WS rows held no hyperscript.
   // ==========================================================================
   {
-    id: 'hx-live-attribute',
-    title: 'hx-live Reactive Attribute',
-    raw_code: '<div hx-live="put $count into me"></div>',
+    id: 'live-with-handler',
+    title: 'Live Block Fed By A Handler',
+    raw_code:
+      '<button _="on click set $count to ($count or 0) + 1">+1</button>\n<div _="live put $count into me end"></div>',
     description:
-      'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
+      'A handler writes a global; a live block that reads it re-renders on every write',
     feature: 'reactivity',
-    translatable: false,
-    non_translatable_reason:
-      'HTML markup — hx-live attribute names are language-agnostic and resolved by vocab modules at runtime',
-  },
-  {
-    id: 'hx-live-with-mutator',
-    title: 'hx-live Plus Hyperscript Mutator',
-    raw_code:
-      '<button _="on click set $count to ($count or 0) + 1">+1</button>\n<div hx-live="put $count into me"></div>',
-    description:
-      'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
-    feature: 'reactivity',
-    translatable: false,
-    non_translatable_reason:
-      'HTML markup with embedded hyperscript — vocab modules handle per-language attribute resolution',
-  },
-  {
-    id: 'sse-connect-swap',
-    title: 'Server-Sent Events Stream Into Target',
-    raw_code:
-      '<div sse-connect="/events" sse-swap="tick" hx-target="#feed" hx-swap="afterbegin"></div>',
-    description: 'Open an EventSource and route named events through hx-target/hx-swap',
-    feature: 'realtime',
-    translatable: false,
-    non_translatable_reason:
-      'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
-  },
-  {
-    id: 'sse-multi-event',
-    title: 'SSE With Multiple Event Names',
-    raw_code:
-      '<div sse-connect="/feed" sse-swap="post, like, comment" hx-target="#timeline" hx-swap="afterbegin"></div>',
-    description: 'One SSE connection routing several named server events into the same target',
-    feature: 'realtime',
-    translatable: false,
-    non_translatable_reason:
-      'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
-  },
-  {
-    id: 'ws-connect-send',
-    title: 'WebSocket With Form Send',
-    raw_code:
-      '<div ws-connect="wss://example/api">\n  <form ws-send>\n    <input name="msg" />\n    <button type="submit">Send</button>\n  </form>\n</div>',
-    description:
-      'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
-    feature: 'realtime',
-    translatable: false,
-    non_translatable_reason:
-      'HTML markup — ws-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
 
   // ==========================================================================

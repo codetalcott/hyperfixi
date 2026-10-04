@@ -375,7 +375,7 @@ jobs:
           - shard: 2
             only: main,multilingual
           - shard: 3
-            only: hybrid-hx-v4,modular
+            only: modular
 
     steps:
       - name: Checkout
@@ -1286,9 +1286,10 @@ jobs:
       # plugins, and upstream _hyperscript (hyperscript.org) + its official
       # extensions. ~12s. It lives in this job because this job has everything
       # it executes — the package dists (build artifacts), hyperscript.org and
-      # jsdom (npm ci), and dist/hyperfixi-hx-v4.js (browser bundles), which
-      # the hx-live / sse-* / ws-* corpus rows are driven through. Before this
-      # gate the JSON went a month stale and over-claimed 10 rows. On failure:
+      # jsdom (npm ci). (It also drove the hx-live / sse-* / ws-* rows through
+      # dist/hyperfixi-hx-v4.js until that bundle and those rows retired in
+      # Phase C3.) Before this gate the JSON went a month stale and
+      # over-claimed 10 rows. On failure:
       # regenerate with
       # `npm run verify:engines --prefix packages/patterns-reference` and
       # commit the JSON.
@@ -1640,7 +1641,6 @@ jobs:
           # Checked against duplication as above: the bundle's sourcemap
           # carries semantic as ONE dist file. ~5% headroom again.
           MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
-          MAX_HXV4=385000         # 385 KB (hyperfixi-hx-v4.js actual ~358 KB gz)
 
           failed=0
 
@@ -1672,19 +1672,6 @@ jobs:
             fi
           else
             echo "::error::hyperfixi.js MISSING from dist — bundle build failed upstream"
-            failed=1
-          fi
-
-          if [[ -f "packages/core/dist/hyperfixi-hx-v4.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-hx-v4.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_HXV4" ]]; then
-              echo "::error::hyperfixi-hx-v4.js ($size bytes gzip) exceeds limit ($MAX_HXV4 bytes)"
-              failed=1
-            else
-              echo "hyperfixi-hx-v4.js: $size bytes gzip (limit $MAX_HXV4)"
-            fi
-          else
-            echo "::error::hyperfixi-hx-v4.js MISSING from dist — bundle build failed upstream"
             failed=1
           fi
 

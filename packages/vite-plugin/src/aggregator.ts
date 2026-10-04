@@ -222,9 +222,9 @@ export class Aggregator {
       this.setsEqual(a.urlManagement, b.urlManagement) &&
       a.usesConfirm === b.usesConfirm &&
       !!a.needsSwapTiming === !!b.needsSwapTiming &&
-      // htmx v4 / reactivity flags: these drive selection of the hx-v4 tier,
-      // so a change must count as "usage changed" or HMR serves a stale
-      // bundle. They were omitted when the v4 surface landed (#623).
+      // htmx / reactivity flags: these decide which engine modules the bundle
+      // registers, so a change must count as "usage changed" or HMR serves a
+      // stale bundle. They were omitted when the v4 surface landed (#623).
       !!a.needsHxLive === !!b.needsHxLive &&
       !!a.needsSSE === !!b.needsSSE &&
       !!a.needsWS === !!b.needsWS &&

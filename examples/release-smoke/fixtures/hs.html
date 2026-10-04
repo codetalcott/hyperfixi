@@ -9,6 +9,10 @@
     <button id="toggle-btn" _="on click toggle .active on me">Toggle</button>
     <button id="put-btn" _="on click put 'clicked' into #out">Put</button>
     <div id="out">initial</div>
+    <!-- A live block re-runs when a global it reads changes: what core's
+         hyperfixi-hx-v4.js `hx-live` attribute did before it retired. -->
+    <button id="inc" _="on click set $count to ($count or 0) + 1">+1</button>
+    <div id="live" _="live put $count into me end">0</div>
 
     <script src="node_modules/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
   </body>

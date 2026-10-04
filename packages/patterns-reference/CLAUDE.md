@@ -44,7 +44,7 @@ packages/patterns-reference/
 npm run populate
 
 # Individual steps
-npm run db:init:force      # Initialize the schema and the corpus (168 patterns)
+npm run db:init:force      # Initialize the schema and the corpus (164 patterns)
 npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 
 # There is ONE renderer: @lokascript/semantic's render(parse_en(en), L). The
@@ -80,16 +80,16 @@ Each engine runs with its official extensions:
 - **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
   devDependency) with its official socket/worker/eventsource/component
   extensions; parse-level for plain sources: zero recovered parse errors.
-- **HTML-markup patterns** — every `_=`/`hx-live`/script-tag source,
+- **HTML-markup patterns** — every `_=`/script-tag source,
   including those inside component template bodies, is verified on both
   legs. Template components are RENDERED on both legs and must show what
   `COMPONENT_FIXTURES` declares (upstream reads `attrs.X` as an expression,
   `@hyperfixi/components` as a raw string, so `component-with-attrs` parses on
-  both and renders on one). `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only
-  (blocks the upstream claim) and earns lokascript credit only by running in
-  `dist/hyperfixi-hx-v4.js` in an isolated jsdom: each `sse-swap` event must
-  land in its `hx-target`, each `ws-send` form must reach the socket, each
-  `hx-live` element must re-render. A row with no source earns no credit.
+  both and renders on one). Core's `hx-live`/`sse-*`/`ws-*` markup earns no
+  credit on either leg: it ran only in `dist/hyperfixi-hx-v4.js`, which
+  retired with core's htmx layer (Phase C3), and its five corpus rows went
+  with it (`hx-live` → the engine's `live` block: `live-with-handler`). A row
+  with no source earns no credit.
 - Every one of those checks has been shown to redden its row under a mutation
   (2026-09-25); keep it that way when changing the harness.
 
@@ -127,14 +127,14 @@ npm run verify:engines:check --prefix packages/patterns-reference  # compare onl
 
 ## Database Contents
 
-After running `npm run populate` (counts as of 2026-09-25; `populate` prints
+After running `npm run populate` (counts as of 2026-10-04; `populate` prints
 the current ones):
 
 | Table                | Rows  | Description                                                                       |
 | -------------------- | ----- | --------------------------------------------------------------------------------- |
-| code_examples        | 168   | Patterns covering all hyperscript commands                                        |
-| pattern_translations | 4,032 | 168 patterns × 24 languages                                                       |
-| llm_examples         | 355   | Each pattern's description and title as prompts, plus `db:init`'s 19 hand-written |
+| code_examples        | 164   | Patterns covering all hyperscript commands                                        |
+| pattern_translations | 3,936 | 164 patterns × 24 languages                                                       |
+| llm_examples         | 347   | Each pattern's description and title as prompts, plus `db:init`'s 19 hand-written |
 
 `pattern_translations.verified_parses` is MEASURED at sync
 (src/sync/verify-parses.ts): 1 when the semantic parser accepts every
@@ -159,17 +159,14 @@ in the next `npm run sync:translations`.
 
 ### Non-Translatable Patterns
 
-8 patterns are flagged `translatable=0`. `sync-translations.ts` stores
+3 patterns are flagged `translatable=0`. `sync-translations.ts` stores
 each as written in all 24 languages (method `non-translatable-identity`),
 and the multilingual sweep skips those rows: they are copies, not
 translations.
 
-- 7 are HTML markup. `hx-live-attribute`, `hx-live-with-mutator`,
-  `sse-connect-swap`, `sse-multi-event` and `ws-connect-send` use
-  attribute names (`hx-live`, `sse-connect`, etc.) that are
-  language-agnostic and resolved at runtime by vocab modules.
-  `component-hello-world` and `component-with-slots` carry no
-  hyperscript at all.
+- 2 are HTML markup with no hyperscript at all: `component-hello-world`
+  and `component-with-slots`. (Five more — core's `hx-live`/`sse-*`/`ws-*`
+  rows — left the corpus with hyperfixi-hx-v4.js in Phase C3.)
 - `intercept-cache-strategies` has no semantic schema, so every
   rendering dropped the whole body (the verb and `end`). It is stored as
   written until a schema exists.

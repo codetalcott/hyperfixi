@@ -47,5 +47,4 @@ export const BUNDLES_WITH_FACTORY_LISTS: Readonly<Record<string, string>> = {
  */
 export const BUNDLES_INHERITING: Readonly<Record<string, string>> = {
   'hybrid-hx': 'hybrid-complete',
-  'hybrid-hx-v4': 'browser',
 };

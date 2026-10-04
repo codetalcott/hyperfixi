@@ -45,9 +45,4 @@ test.describe('htmx i18n orchestrator public API @comprehensive', () => {
     await loadBundle(page, 'hyperfixi-hx.js');
     expect(await readApiShape(page)).toEqual({ type: 'object', registerType: 'function' });
   });
-
-  test('hyperfixi-hx-v4.js: window.__hyperfixi_i18n.register survives terser', async ({ page }) => {
-    await loadBundle(page, 'hyperfixi-hx-v4.js');
-    expect(await readApiShape(page)).toEqual({ type: 'object', registerType: 'function' });
-  });
 });

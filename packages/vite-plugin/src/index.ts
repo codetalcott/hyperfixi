@@ -110,10 +110,10 @@ const IMPORT_ALIASES = ['hyperfixi', 'lokascript', '@hyperfixi/core', 'virtual:h
  * Compute a hash of the current usage for dev-server cache invalidation.
  *
  * Every input that influences bundle SELECTION must be part of this hash.
- * The htmx/reactivity flags route to the hybrid-hx / hx-v4 tiers; before they
- * were hashed, adding or removing an hx-live/sse-connect/ws-send attribute —
- * without touching any command/block/language — left the cached dev bundle at
- * the wrong tier. Exported for tests.
+ * The htmx/reactivity flags decide which engine modules are registered; before
+ * they were hashed, adding or removing an hx-live/sse-connect/ws-send
+ * attribute — without touching any command/block/language — left the cached
+ * dev bundle stale. Exported for tests.
  */
 export function computeUsageHash(usage: AggregatedUsage): string {
   const commands = [...usage.commands].sort().join(',');
