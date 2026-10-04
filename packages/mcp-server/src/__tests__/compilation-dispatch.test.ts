@@ -374,12 +374,13 @@ describe('Next-step hint blocks', () => {
     expect(result.content[1].text).toContain('get_code_fixes');
   }, 30000);
 
-  it('appends the review hint when the parse succeeds but drops input', async () => {
-    // Parses to a bare `on click` with empty roles: the body is left
-    // unconsumed, so the result is `ok` with a warning and no error status —
-    // the silent band the repair hint cannot reach.
+  it('appends the review hint when the parse succeeds with a warning', async () => {
+    // Parses (on semantic and on the engine) to a write the runtime ignores, so the
+    // result is `ok` with a warning and no error status — the band the repair hint
+    // cannot reach. (The example was `on click frobnicate the .widget onto`, whose
+    // dropped body the engine now rejects outright: see the next test.)
     const result = await handleCompilationTool('validate_and_compile', {
-      code: 'on click frobnicate the .widget onto',
+      code: 'on click set the text of #output to "Saved"',
     });
 
     const parsed = JSON.parse(result.content[0].text);
@@ -392,6 +393,18 @@ describe('Next-step hint blocks', () => {
     expect(result.isError).toBe(false);
     expect(result.content).toHaveLength(2);
     expect(result.content[1].text).toContain('score_fidelity');
+  }, 30000);
+
+  it('a body the engine rejects is an error, with the repair hint', async () => {
+    const result = await handleCompilationTool('validate_and_compile', {
+      code: 'on click frobnicate the .widget onto',
+    });
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.diagnostics.some((d: { code: string }) => d.code === 'ENGINE_PARSE_ERROR')).toBe(
+      true
+    );
+    expect(result.isError).toBe(true);
   }, 30000);
 
   it('appends no hint when the parse is clean', async () => {

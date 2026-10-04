@@ -18,7 +18,7 @@ const shimDir = resolve(__dirname, 'src/shims');
 
 /**
  * Plugin that rewrites the optional-import log messages in the bundled server.
- * The catch blocks log warnings like "@hyperfixi/core not available" which are
+ * The catch blocks log warnings like "@hyperfixi/engine not available" which are
  * correct for the full LokaScript LS but misleading in standalone mode where
  * those packages are intentionally absent.
  */
@@ -34,7 +34,8 @@ const cleanLogsPlugin = {
 
       // Replace the misleading catch-block warnings with nothing
       const noisyPatterns = [
-        /console\.error\(\s*["']\[lokascript-ls\] @hyperfixi\/core not available[^"']*["']\s*\);?/g,
+        /console\.error\(\s*["']\[lokascript-ls\] @hyperfixi\/engine not available[^"']*["']\s*\);?/g,
+        /console\.error\(\s*["']\[lokascript-ls\] @hyperfixi\/core\/ast-utils not available[^"']*["']\s*\);?/g,
         /console\.error\(\s*["']\[lokascript-ls\] @hyperfixi\/core\/lsp-metadata not available[^"']*["']\s*\);?/g,
         /console\.error\(\s*["']\[lokascript-ls\] @lokascript\/framework not available[^"']*["']\s*\);?/g,
         // Also remove the "loaded" success messages (they'll never fire)
@@ -77,9 +78,8 @@ await build({
     '@lokascript/semantic/fidelity': resolve(__dirname, '../semantic/src/fidelity.ts'),
     '@lokascript/semantic': resolve(shimDir, 'lokascript-semantic.ts'),
     '@lokascript/framework': resolve(shimDir, 'lokascript-framework.ts'),
-    '@hyperfixi/core': resolve(shimDir, 'hyperfixi-core.ts'),
+    '@hyperfixi/engine': resolve(shimDir, 'hyperfixi-engine.ts'),
     '@hyperfixi/core/ast-utils': resolve(shimDir, 'hyperfixi-core-ast-utils.ts'),
-    '@hyperfixi/core/multilingual': resolve(shimDir, 'hyperfixi-core-multilingual.ts'),
     // lsp-metadata is a pure data module with no core deps — bundle it directly
     '@hyperfixi/core/lsp-metadata': resolve(__dirname, '../core/src/lsp-metadata.ts'),
   },

@@ -98,9 +98,10 @@ Configure the extension in your VS Code settings:
 ## Requirements
 
 None. The language server is bundled into the extension together with
-`@lokascript/semantic`, `@lokascript/framework` and `@hyperfixi/core`, so every
-feature — AST diagnostics, hover role inference, 24-language support — works
-without installing anything in your project.
+`@lokascript/semantic`, `@lokascript/framework`, `@hyperfixi/engine` and
+`@hyperfixi/core`'s tooling entries, so every feature — the engine's parse errors,
+AST diagnostics, hover roles, 24-language support — works without installing
+anything in your project.
 
 ## Development
 

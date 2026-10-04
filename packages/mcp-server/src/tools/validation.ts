@@ -23,15 +23,17 @@ try {
   // semantic not available - will use English-only fallback
 }
 
-// hyperfixi's own parser — the one that EXECUTES English. validate_hyperscript
-// used to consult only the semantic parser, so it called `on load click() me`
-// valid while get_diagnostics (which runs this parser) reported two errors for
-// the same line. Optional peer: absent, the check is skipped.
-let coreParse: typeof import('@hyperfixi/core').parse | null = null;
+// The engine that EXECUTES hyperscript (@hyperfixi/engine: hyperfixi-hs.js, and
+// hyperfixi.js since 4.0). validate_hyperscript used to consult only the semantic
+// parser, so it called lines valid that the runtime rejects. Until Phase C4 this was
+// @hyperfixi/core's parser. Optional peer: absent, the check is skipped.
+let engineParse: ((code: string) => { errors: Array<{ message: string }> }) | null = null;
 try {
-  coreParse = (await import('@hyperfixi/core')).parse;
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything);
+  engineParse = engine.api.parse;
 } catch {
-  // core not installed
+  // engine not installed
 }
 
 // =============================================================================
@@ -795,22 +797,33 @@ function validateHyperscript(
     }
   }
 
-  // English only: does hyperfixi's own parser (the one that runs English)
-  // accept the line? Other languages go through the semantic front-end, which
-  // is what the checks above measure.
-  if (coreParse && (language === 'en' || language.startsWith('en-'))) {
+  // Does the engine (the runtime) read the line? English as written; another
+  // language as the English @lokascript/hyperscript-adapter hands the engine on a
+  // page (semantic's render of its parse). The checks above measure the semantic
+  // front-end, whose grammar is more permissive.
+  const isEnglish = language === 'en' || language.startsWith('en-');
+  let engineSource: string | null = isEnglish ? code : null;
+  if (!isEnglish && semanticPackage) {
     try {
-      for (const err of coreParse(code).errors ?? []) {
+      const node = semanticPackage.parseSemantic(code, language)?.node;
+      if (node) engineSource = semanticPackage.render(node, 'en');
+    } catch {
+      engineSource = null;
+    }
+  }
+  if (engineParse && engineSource !== null) {
+    try {
+      for (const err of engineParse(engineSource).errors ?? []) {
         errors.push({
-          message: err.message,
-          source: 'core-parser',
+          message: err.message.split('\n')[0] ?? err.message,
+          source: 'engine',
           suggestion:
-            "hyperfixi's parser rejects this, so hyperfixi cannot run it as written " +
-            '(get_diagnostics gives the position).',
+            (isEnglish ? '' : `As English (${engineSource}): `) +
+            'the engine rejects this, so it cannot run as written (get_diagnostics gives the position).',
         });
       }
     } catch (e) {
-      errors.push({ message: e instanceof Error ? e.message : String(e), source: 'core-parser' });
+      errors.push({ message: e instanceof Error ? e.message : String(e), source: 'engine' });
     }
   }
 

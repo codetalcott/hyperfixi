@@ -227,9 +227,10 @@ For users who prefer the `hyperscript` namespace:
 ## Dependencies
 
 - `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
-- `@hyperfixi/core` is an **optional** peer. With it the server surfaces real parse errors, complexity diagnostics and schema-inferred roles in hover; without it, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs.
+- `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions.
+- `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 
-A bundler that wants an English-only, dependency-free server (the standalone `hyperscript-vscode` extension) replaces the semantic, framework and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
+A bundler that wants an English-only, dependency-free server (the standalone `hyperscript-vscode` extension) replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
 
 ## Development
 

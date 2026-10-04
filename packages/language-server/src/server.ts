@@ -86,39 +86,30 @@ function getOtherLanguages(): string[] {
 }
 
 let interchangeLSP: any = null;
-let fromCoreASTFn: any = null;
-let parseFunction: any = null;
+let engineParse: ((code: string) => unknown) | null = null;
 let lspMetadata: any = null;
 
-// Try to import core package for parsing and interchange-based LSP
+// The engine that runs hyperscript (@hyperfixi/engine: hyperfixi-hs.js, and hyperfixi.js
+// since 4.0). Its parse errors are the diagnostics, and its tree gives the interchange its
+// source positions (owner decision 5, Phase C4). Until then both came from
+// @hyperfixi/core's parse. `parse` throws a ParseError whose token is where it stopped.
 try {
-  const core = await import('@hyperfixi/core');
-  parseFunction = core.parse;
-
-  // `fromCoreAST` names semantic roles only for commands it has an explicit
-  // case for (`set`, `go`) unless a schema-driven inferrer is injected — 41 of
-  // the 43 role-bearing command names come from the front-end one. Bind it
-  // here so every call site downstream stays a one-argument call.
-  let inferRoles: unknown = null;
-  try {
-    ({ schemaRoleInferrer: inferRoles } = await import('@hyperfixi/core/multilingual'));
-  } catch {
-    console.error(
-      '[lokascript-ls] @hyperfixi/core/multilingual not available — hover shows roles for ' +
-        '`set` and `go` only. Install a core build that ships the multilingual entry.'
-    );
-  }
-  fromCoreASTFn = (node: unknown) =>
-    (core.fromCoreAST as (n: unknown, o?: unknown) => unknown)(
-      node,
-      inferRoles ? { inferRoles } : undefined
-    );
-
-  // Interchange-aware LSP module
-  interchangeLSP = await import('@hyperfixi/core/ast-utils');
-  console.error('[lokascript-ls] @hyperfixi/core loaded — AST parsing + interchange LSP enabled');
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything);
+  engineParse = engine.parse;
 } catch {
-  console.error('[lokascript-ls] @hyperfixi/core not available — diagnostics and hover degraded');
+  console.error('[lokascript-ls] @hyperfixi/engine not available — parse errors disabled');
+}
+
+// The interchange half of @hyperfixi/core/ast-utils: complexity diagnostics, hover,
+// symbols, and positions from the engine's tree. The nodes themselves come from
+// @lokascript/semantic (parseToInterchange below).
+try {
+  interchangeLSP = await import('@hyperfixi/core/ast-utils');
+} catch {
+  console.error(
+    '[lokascript-ls] @hyperfixi/core/ast-utils not available — AST diagnostics disabled'
+  );
 }
 
 // Try to import LSP metadata from core (canonical keyword/hover docs source)
@@ -149,8 +140,68 @@ try {
 
 // Log capability summary
 console.error(
-  `[lokascript-ls] capabilities: core=${!!parseFunction}, interchange=${!!interchangeLSP}, metadata=${!!lspMetadata}, framework=${!!frameworkIR}`
+  `[lokascript-ls] capabilities: engine=${!!engineParse}, interchange=${!!interchangeLSP}, metadata=${!!lspMetadata}, framework=${!!frameworkIR}`
 );
+
+/** A parse error the engine reported, with the position it stopped at (1-based line). */
+interface EngineError {
+  message: string;
+  line?: number;
+  column?: number;
+}
+
+/**
+ * Code as the language tools read it: interchange nodes from @lokascript/semantic
+ * (parseSemantic → buildAST → fromSemanticAST; roles named by semantic itself, every
+ * language), and for English the engine's parse errors, with its tree giving the nodes their
+ * source positions. Until Phase C4 both came from @hyperfixi/core: its parse, and
+ * `fromCoreAST` with the schema role inferrer.
+ */
+function parseToInterchange(
+  code: string,
+  language: string
+): { nodes: any[]; errors: EngineError[] } {
+  const errors: EngineError[] = [];
+  let engineTree: unknown = null;
+  if (engineParse && (language === 'en' || language.startsWith('en-'))) {
+    try {
+      engineTree = engineParse(code);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      const token = typeof e === 'object' && e !== null ? Reflect.get(e, 'token') : undefined;
+      const start =
+        typeof token === 'object' && token !== null ? Reflect.get(token, 'start') : undefined;
+      // The end-of-input token has an offset and no line: derive both from the offset.
+      const before = typeof start === 'number' ? code.slice(0, start) : null;
+      errors.push({
+        message: message.split('\n')[0] ?? message,
+        ...(before !== null
+          ? {
+              line: before.split('\n').length,
+              column: before.length - (before.lastIndexOf('\n') + 1),
+            }
+          : {}),
+      });
+    }
+  }
+  let nodes: any[] = [];
+  try {
+    const node = semanticPackage?.parseSemantic?.(code, language)?.node;
+    const ast = node ? semanticPackage.buildAST(node)?.ast : null;
+    if (ast) {
+      const converted = semanticPackage.fromSemanticAST(ast);
+      nodes = (Array.isArray(converted) ? converted : [converted]).filter(
+        (n: { type?: string }) => n?.type !== 'error'
+      );
+      if (engineTree && interchangeLSP?.withEnginePositions) {
+        nodes = interchangeLSP.withEnginePositions(nodes, code, engineTree);
+      }
+    }
+  } catch {
+    nodes = [];
+  }
+  return { nodes, errors };
+}
 
 // =============================================================================
 // Fallback Constants (used when @hyperfixi/core/lsp-metadata is unavailable)
@@ -798,9 +849,11 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
   // In hyperscript-compat mode: skip semantic analysis
   const analyzer = isMultilingualEnabled(resolvedMode) ? getSemanticAnalyzer() : null;
   // Set when the semantic front-end accepted the code in a NON-English
-  // language. Core's parser is English-only, so its "Unexpected token: hacer"
+  // language. The engine reads English only, so its "Unexpected Token : hacer"
   // on valid Spanish is noise, not a diagnostic — it is suppressed below.
   let semanticParsedForeign = false;
+  // The language the semantic front-end read the code in (detection may pick another).
+  let detectedLanguage = 'en';
   if (analyzer) {
     try {
       // First try with configured language
@@ -860,6 +913,7 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
       }
 
       semanticParsedForeign = result.confidence >= 0.5 && usedLanguage !== 'en';
+      if (semanticParsedForeign) detectedLanguage = usedLanguage;
 
       // A variable spelled like a word of the code's language (es `si`, tr
       // `i`): its readers tell the two apart only by where it stands.
@@ -897,16 +951,16 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // AST-based analysis via interchange format (works in both modes)
-  // Always runs when core is available — produces parse errors + complexity diagnostics
-  if (parseFunction && fromCoreASTFn) {
+  // AST-based analysis via interchange format (works in both modes): the engine's parse
+  // errors (English), then the interchange's complexity diagnostics.
+  if (engineParse || interchangeLSP) {
     try {
-      const parseResult = parseFunction(code);
+      const parsed = parseToInterchange(code, detectedLanguage);
 
       // Surface parse errors as diagnostics — unless the semantic front-end
       // already accepted this as non-English code (see semanticParsedForeign).
-      if (parseResult.errors?.length && !semanticParsedForeign) {
-        for (const err of parseResult.errors) {
+      if (parsed.errors.length && !semanticParsedForeign) {
+        for (const err of parsed.errors) {
           diagnostics.push({
             range: {
               start: {
@@ -926,15 +980,10 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
         }
       }
 
-      // Convert partial/full AST to interchange for complexity diagnostics
-      if (parseResult.node && interchangeLSP) {
-        const interchange = fromCoreASTFn(parseResult.node);
-        if (interchange && interchange.type !== 'literal') {
-          const nodes = Array.isArray(interchange) ? interchange : [interchange];
-          const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, {
-            source: brand,
-          });
-          diagnostics.push(...astDiagnostics);
+      if (parsed.nodes.length && interchangeLSP) {
+        const nodes = parsed.nodes.filter((n: { type?: string }) => n.type !== 'literal');
+        if (nodes.length) {
+          diagnostics.push(...interchangeLSP.interchangeToLSPDiagnostics(nodes, { source: brand }));
         }
       }
     } catch (parseError: any) {
@@ -1471,13 +1520,11 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
  * Returns null if parsing or rendering fails (non-fatal).
  */
 function tryGetLSE(code: string): string | null {
-  if (!interchangeLSP || !parseFunction || !fromCoreASTFn || !frameworkIR) return null;
+  if (!interchangeLSP || !frameworkIR) return null;
   try {
-    const parseResult = parseFunction(code);
-    if (!parseResult.node) return null;
-    const interchange = fromCoreASTFn(parseResult.node);
-    if (!interchange) return null;
-    const semanticNode = frameworkIR.fromInterchangeNode(interchange);
+    const [node] = parseToInterchange(code, globalSettings.language || 'en').nodes;
+    if (!node) return null;
+    const semanticNode = frameworkIR.fromInterchangeNode(node);
     return frameworkIR.renderExplicit(semanticNode);
   } catch {
     return null;

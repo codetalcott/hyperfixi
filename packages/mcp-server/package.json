@@ -13,7 +13,7 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
-    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../planner ../patterns-reference",
+    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../planner ../patterns-reference ../engine",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "service:setup": "echo 'Copy com.lokascript.mcp-server.plist.example to com.lokascript.mcp-server.plist and update paths, then run service:install'",
@@ -48,6 +48,7 @@
   },
   "peerDependencies": {
     "@hyperfixi/core": "^3.3.0",
+    "@hyperfixi/engine": "^3.3.0",
     "@hyperfixi/patterns-reference": "^3.3.0",
     "@hyperfixi/server-bridge": "^3.3.0",
     "@lokascript/compilation-service": "^3.3.0",
@@ -72,10 +73,14 @@
     },
     "@hyperfixi/server-bridge": {
       "optional": true
+    },
+    "@hyperfixi/engine": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@hyperfixi/core": "^3.3.0",
+    "@hyperfixi/engine": "^3.3.0",
     "@hyperfixi/patterns-reference": "^3.3.0",
     "@hyperfixi/server-bridge": "^3.3.0",
     "@lokascript/compilation-service": "^3.3.0",

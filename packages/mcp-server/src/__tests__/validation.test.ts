@@ -173,18 +173,23 @@ describe('validate_hyperscript reports what the parsers actually did', () => {
       ).content[0].text
     );
 
-  it('reports hyperfixi core rejecting an English line', async () => {
-    // `on load click() me` was the example until core learned event-named
-    // pseudo-commands (hxi18n Arc 4); a non-command body is one it never will.
+  it('reports the engine rejecting an English line', async () => {
     const r = await run('on click qqqq');
     expect(r.valid).toBe(false);
-    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(true);
+    expect(r.errors.some((e: any) => e.source === 'engine')).toBe(true);
   });
 
-  it("the book's `on load click() me` is valid on both parsers now", async () => {
-    const r = await run('on load click() me');
+  it('reports the engine rejecting what semantic reads (`put … in`)', async () => {
+    const r = await run('on click put "Saved" in #output');
+    expect(r.valid).toBe(false);
+    const error = r.errors.find((e: any) => e.source === 'engine');
+    expect(error?.message).toMatch(/'into'/);
+  });
+
+  it('the pseudo-command form the engine reads is valid', async () => {
+    const r = await run('on load call me.click()');
     expect(r.valid).toBe(true);
-    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(false);
+    expect(r.errors.some((e: any) => e.source === 'engine')).toBe(false);
   });
 
   it('surfaces tokens the semantic parser left unconsumed', async () => {
@@ -243,9 +248,9 @@ describe('validate_hyperscript reports what the parsers actually did', () => {
     expect(r.commandsFound).toEqual(expect.arrayContaining(['transition', 'take']));
   });
 
-  it('does not run the English parser on another language', async () => {
+  it('checks another language as the English the engine is handed', async () => {
     const r = await run('クリック で .active を 切り替え', 'ja');
-    expect(r.errors.some((e: any) => e.source === 'core-parser')).toBe(false);
+    expect(r.errors.some((e: any) => e.source === 'engine')).toBe(false);
   });
 });
 
