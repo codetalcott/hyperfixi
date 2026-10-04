@@ -43,6 +43,10 @@ function createAliases(map) {
       const mapDest = dest + '.map';
       if (fs.existsSync(mapSrc)) {
         fs.copyFileSync(mapSrc, mapDest);
+      } else {
+        // hyperfixi.js has no map since it became the engine's file (C-R4b);
+        // a map left from an earlier build would describe a different file.
+        fs.rmSync(mapDest, { force: true });
       }
     } else {
       missingCount++;

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~352 KB** full browser bundle (gzipped); the script-tag bundle is the engine's `hyperfixi-hs.js`, **34.1 KB** (core's small prebuilts retired: lite/lite-plus/minimal/standard in the 4.0 cycle, `hyperfixi-hx.js`/-hybrid-complete/-hx-v4 and `hyperfixi-multilingual.js`/classic-i18n/modular in Phase C3) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **34.1 KB** browser bundle (gzipped): the engine's `hyperfixi-hs.js`, which `@hyperfixi/core` also ships as `hyperfixi.js` since Phase C3 (C-R4b, 2026-10-04: the same file under two names for one major, `hyperfixi-hs.js` canonical). Core's own bundles have all retired: lite/lite-plus/minimal/standard in the 4.0 cycle; in Phase C3 `hyperfixi-hx.js`/-hybrid-complete/-hx-v4, `hyperfixi-multilingual.js`/classic-i18n/modular, and core's full `hyperfixi.js` (~352 KB: core's parser and runtime, the reactivity/realtime plugins, 24 languages; CI's bundle-size job, 2026-09-29). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` read ~2 KB lower on core's 352 KB bundle (on the engine's file the two agree: 34,068 B gz in CI's log, the same locally, 2026-10-04). `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -897,7 +897,7 @@ The bundle compatibility test suite automatically tests every built bundle again
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: hs (the engine's `hyperfixi-hs.js`, ~34 KB), browser (~352 KB) — core's hybrid-hx-v4, hybrid-hx and hybrid-complete retired in Phase C3
+- Bundles: hs (the engine's `hyperfixi-hs.js`, ~34 KB) and browser (`hyperfixi.js`: the same file since C-R4b, under core's name; release-smoke's `--matrix` runs it from core's tarball) — core's own bundles retired in Phase C3
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -1021,6 +1021,12 @@ registerCustomKeywords('my-lang', {
 
 Quick reference — full detail in [packages/core/docs/API.md](packages/core/docs/API.md).
 
+> **Core's runtime only.** These are on `@hyperfixi/core`'s node entry (and were on
+> `window.hyperfixi` while `hyperfixi.js` was core's own bundle). Since Phase C3 (C-R4b)
+> `window.hyperfixi` in a browser is the engine's API, the same object as `window._hyperscript`:
+> upstream's `evaluate`, `parse`, `processNode`, and parse errors as `hyperscript:parse-error`
+> events plus a `console.error`.
+
 ```javascript
 // Which parser produced a compile's AST (English is ALWAYS the core parser;
 // 'semantic' means the multilingual front-end built it, non-English only):
@@ -1126,13 +1132,13 @@ generator, and semantic regional bundles — lives in
 [docs/BROWSER_BUNDLES.md](docs/BROWSER_BUNDLES.md).
 
 Quick selection (sizes gzipped). **The engine's `hyperfixi-hs.js` is the target** (every
-tracked gallery page runs on it since 2026-10-03); core's bundles ship until the cutover:
+tracked gallery page runs on it since 2026-10-03); core ships the same file as `hyperfixi.js`:
 
 | Bundle                              | Size           | Use case                                                                                                                                                                                                                                   |
 | ----------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `hyperfixi-hs.js`                   | ~34.1 KB       | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes               |
 | via `@hyperfixi/vite-plugin`        | 18–34 KB       | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                                        |
-| `hyperfixi.js`                      | ~352 KB        | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                                          |
+| `hyperfixi.js`                      | ~34.1 KB       | The same file as `hyperfixi-hs.js`, under `@hyperfixi/core`'s name (`@hyperfixi/core/browser`) since C-R4b; core's own full bundle (~352 KB) retired                                                                                       |
 | + `@lokascript/hyperscript-adapter` | +1.7 / ~115 KB | Hyperscript in any of 24 languages on `hyperfixi-hs.js`: the lite adapter beside a semantic bundle, or a per-language adapter bundle; it translates each script as the engine reads it (replaced core's `hyperfixi-multilingual.js`, C-R3) |
 | semantic bundles                    | ~90–260 KB     | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                              |
 
@@ -1143,7 +1149,8 @@ with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia at
 `hyperfixi-hx-v4.js` (`hx-live` is the engine's `live` block, SSE/WebSocket are htmx 4's), then
 `hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js` with core's embedded htmx layer, then
 `hyperfixi-multilingual.js`, `classic-i18n` and `modular` (C-R3): non-English hyperscript runs on
-`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`.
+`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`; and core's own full `hyperfixi.js` (C-R4b),
+whose name now carries the engine's file.
 
 Multilingual usage (run and translate in any of 24 languages):
 

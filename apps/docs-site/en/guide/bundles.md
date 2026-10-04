@@ -5,11 +5,11 @@ project lets the plugin choose what to include; a page without a build step load
 
 ## Bundle Comparison
 
-| Bundle                                 | Size (gzip) | Use Case                                                                      |
-| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use               |
-| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in |
-| **`hyperfixi.js`** (`@hyperfixi/core`) | ~352 KB     | Core's everything bundle, until the engine replaces it in 4.0                 |
+| Bundle                                 | Size (gzip) | Use Case                                                                                 |
+| -------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use                          |
+| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in            |
+| **`hyperfixi.js`** (`@hyperfixi/core`) | ~34 KB      | The same file as `hyperfixi-hs.js`, under core's name (core's own 352 KB bundle retired) |
 
 The small prebuilts of the 3.x line (`lite`, `lite-plus`, `hybrid-complete`, `hyperfixi-hx.js`,
 `minimal`, `standard`) are retired. Their place is taken by the plugin, which builds the small

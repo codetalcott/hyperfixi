@@ -25,10 +25,13 @@ stacks running (htmx 4 is vendored for them under `examples/vendor/`). Localized
 on real htmx are the adapter's job ([packages/htmx-adapter](../packages/htmx-adapter/README.md));
 on fixi, loka-js's.
 
-**Core's bundle** (`hyperfixi.js`) is still built and published until the cutover, when the
-name passes to the engine's bundle (C-R4). Phase C3 retired the rest: `hyperfixi-hx-v4.js`
-first, then `hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js`, then the multilingual ones
-(`hyperfixi-multilingual.js`, `classic-i18n`, `modular`; C-R3). With
+**`@hyperfixi/core`'s `hyperfixi.js` is the engine's file** since C-R4b: the same bytes as
+`hyperfixi-hs.js`, copied into core's `dist/` so `@hyperfixi/core/browser` and CDN paths keep
+resolving (for one major; `hyperfixi-hs.js` is the canonical name). Phase C3 retired every bundle
+core built itself: `hyperfixi-hx-v4.js` first, then `hyperfixi-hx.js` and
+`hyperfixi-hybrid-complete.js`, then the multilingual ones (`hyperfixi-multilingual.js`,
+`classic-i18n`, `modular`; C-R3), then core's own full `hyperfixi.js` (~352 KB: core's parser and
+runtime, the reactivity and realtime plugins; C-R4b). With
 `hyperfixi-hx.js` went core's embedded htmx layer (`hx-live` with a hyperscript body,
 `sse-connect`, `ws-connect`, fixi's `fx-*`, localized names), retired by owner decision on
 2026-10-03: it reimplemented htmx on core's runtime, and what it offered that users touched
@@ -42,11 +45,11 @@ engine reads them. See the [vite plugin README](../packages/vite-plugin/README.m
 (Since 2026-10-03, Phase C1 of the cutover plan; it no longer embeds core's parsers
 or falls back to core's bundles.)
 
-**Script tag, on core?** One prebuilt name is left:
+**Script tag, from `@hyperfixi/core`?** Its one prebuilt is the engine's file under core's name:
 
-| Bundle         | Size (gzip) | What it is                                                                                  |
-| -------------- | ----------- | ------------------------------------------------------------------------------------------- |
-| `hyperfixi.js` | ~352 KB     | Everything. Full parser, reactivity and realtime plugins, 24 languages, `window.hyperfixi`. |
+| Bundle         | Size (gzip) | What it is                                                                                       |
+| -------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `hyperfixi.js` | ~34 KB      | `hyperfixi-hs.js`, byte for byte; `window.hyperfixi` is the engine's API (`window._hyperscript`) |
 
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
 > `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
@@ -158,10 +161,12 @@ parse straight on core's runtime (`hyperfixi.execute(code, lang)`), beside the a
 bundle: ~353 KB together. The engine and the lite adapter beside the same semantic bundle come to
 ~300 KB, and one language to ~160 KB.
 
-## Full Bundle Usage
+## Translation in the browser
+
+The semantic bundle's API, beside the engine (`hyperfixi.js` and `hyperfixi-hs.js` are the same file):
 
 ```html
-<script src="hyperfixi.js"></script>
+<script src="hyperfixi-hs.js"></script>
 <script src="node_modules/@lokascript/semantic/dist/browser.global.js"></script>
 <script>
   // Translation (semantic; i18n's translator was retired 2026-08-28)

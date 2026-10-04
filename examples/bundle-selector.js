@@ -22,11 +22,11 @@
   // Bundle configurations (sizes are gzipped)
   const BUNDLES = {
     'browser': {
-      name: 'Full Bundle',
-      file: 'hyperfixi-browser.js',
-      size: '203 KB',
-      description: 'Complete bundle with semantic parser, all commands, i18n support',
-      features: ['43 commands', 'semantic parser', 'i18n', 'debug tools'],
+      name: 'hyperfixi.js',
+      file: 'hyperfixi.js',
+      size: '34 KB',
+      description: "Core's name for hyperfixi-hs.js since Phase C3: the same file",
+      features: ['every command', 'upstream syntax', 'no htmx attrs', 'English only'],
       color: '#667eea'
     },
     'hs': {

@@ -92,11 +92,11 @@ This reads as: "On click, toggle the `.active` class on me (this element)."
 
 LokaScript offers multiple bundle sizes to match your needs:
 
-| Bundle                                 | Size (gzip) | Use Case                                                                      |
-| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use               |
-| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in |
-| **`hyperfixi.js`** (`@hyperfixi/core`) | ~352 KB     | Core's everything bundle, until the engine replaces it in 4.0                 |
+| Bundle                                 | Size (gzip) | Use Case                                                                                 |
+| -------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use                          |
+| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in            |
+| **`hyperfixi.js`** (`@hyperfixi/core`) | ~34 KB      | The same file as `hyperfixi-hs.js`, under core's name (core's own 352 KB bundle retired) |
 
 The 3.x small prebuilts (`lite`, `hybrid-complete`, `hyperfixi-hx.js`, …) are retired; see
 [Bundle Selection](/en/guide/bundles).

@@ -147,9 +147,9 @@ See [docs/API.md](docs/API.md) for complete documentation.
 
 ## Browser Bundles
 
-| Bundle         | Size (gzip) | Use Case                                         |
-| -------------- | ----------- | ------------------------------------------------ |
-| `hyperfixi.js` | ~352 KB     | Everything + bundled reactivity/realtime plugins |
+| Bundle         | Size (gzip) | Use Case                                                                   |
+| -------------- | ----------- | -------------------------------------------------------------------------- |
+| `hyperfixi.js` | ~34 KB      | The engine's `hyperfixi-hs.js`, copied by `scripts/copy-engine-bundle.mjs` |
 
 The script-tag bundle is the engine's `hyperfixi-hs.js` (`@hyperfixi/engine`), and Vite
 projects use `@hyperfixi/vite-plugin` and never pick. Phase C3 retired core's other
@@ -157,7 +157,9 @@ prebuilts — `hyperfixi-hx-v4.js`, `hyperfixi-hx.js`, `hyperfixi-hybrid-complet
 `hyperfixi-multilingual.js`, `classic-i18n` and `modular` (non-English hyperscript runs on
 `hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`; `test-multilingual-e2e.html` is that
 stack) — and `lite`, `lite-plus`, `minimal` and `standard` went as public names in the 4.0
-cycle. `hyperfixi.js` becomes the engine's bundle under the same name in C-R4.
+cycle. `hyperfixi.js` became the engine's bundle under the same name in C-R4b: `build:browser`
+copies `packages/engine/dist/hyperfixi-hs.js` (build the engine first), and core's
+`src/compatibility/browser-bundle.ts` is gone.
 
 ## Custom Bundle Generation
 

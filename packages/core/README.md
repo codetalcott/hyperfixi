@@ -147,7 +147,7 @@ For complete API documentation, see [API.md](./docs/API.md).
 - `hyperscript.execute(ast, context)` - Execute compiled AST
 - `hyperscript.eval(code, context)` - Compile and execute in one step
 - `hyperscript.createContext(element)` - Create execution context
-- `evalHyperScript(code, context)` - \_hyperscript compatibility API (a global in the `hyperfixi.js` browser bundle)
+- `evalHyperScript(code, context)` - \_hyperscript compatibility API (it was also a global in core's own `hyperfixi.js` browser bundle; since Phase C3 that file is the engine's `hyperfixi-hs.js`, whose `window._hyperscript` has upstream's `evaluate`)
 - `hyperscript.registerHooks(name, hooks)` - Register runtime hooks
 - `hyperscript.cleanup(element)` - Clean up an element and its descendants
 - `hyperscript.getDefaultRuntime().destroy()` - Full runtime shutdown

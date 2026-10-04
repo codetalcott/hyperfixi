@@ -22,10 +22,13 @@ const projectRoot = process.cwd();
 // All bundles declared in package.json exports must be built
 const BUNDLES = {
   // === Critical bundles (fail CI if these don't build) ===
+  // hyperfixi.js is the engine's hyperfixi-hs.js under core's name (C-R4b): the
+  // "build" copies packages/engine/dist/hyperfixi-hs.js, so `config` names the
+  // copy script rather than a rollup config.
   main: {
-    name: 'main (hyperfixi.js)',
+    name: 'main (hyperfixi.js = engine hyperfixi-hs.js)',
     script: 'build:browser:main-only',
-    config: 'rollup.browser.config.mjs',
+    config: 'scripts/copy-engine-bundle.mjs',
     output: 'dist/hyperfixi.js',
     critical: true,
   },
@@ -34,8 +37,8 @@ const BUNDLES = {
   // (C-R2); multilingual, classic-i18n and modular (C-R3; a page runs
   // non-English hyperscript on the engine's hyperfixi-hs.js with
   // @lokascript/hyperscript-adapter). lite / lite-plus / minimal / standard went
-  // in the 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b). main itself becomes the
-  // engine's bundle under the same name in C-R4.
+  // in the 4.0 cycle (ENGINE_MIGRATION_PLAN Arc 6b). main became the engine's
+  // bundle under the same name in C-R4b.
 };
 
 // Parse command line arguments
@@ -60,7 +63,7 @@ Options:
   --help, -h          Show this help message
 
 Available bundles:
-  main                Main hyperfixi.js bundle
+  main                hyperfixi.js (the engine's hyperfixi-hs.js, copied)
 
 Examples:
   node build-browser-bundles.mjs

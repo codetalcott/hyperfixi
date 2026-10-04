@@ -37,9 +37,13 @@ const BUNDLES = {
       fetch: true,
     },
   },
+  // hyperfixi.js: since Phase C3 (C-R4b) the same file as hyperfixi-hs.js,
+  // copied into core's dist/ under core's name. In-repo the column repeats
+  // `hs`; under release-smoke's --matrix it is the copy core's TARBALL ships.
+  // (Until C-R4b it was core's own full bundle, ~352 KB.)
   browser: {
     file: 'hyperfixi.js',
-    size: '~310 KB',
+    size: '34 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -48,9 +52,9 @@ const BUNDLES = {
       show: true,
       hide: true,
       blocks: true,
-      eventModifiers: true,
-      i18nAliases: true,
-      semanticParser: true,
+      eventModifiers: false,
+      i18nAliases: false,
+      semanticParser: false,
       fetch: true,
     },
   },
@@ -362,11 +366,11 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
     }
 
     // *property CSS style syntax. Ran on hybrid-complete only until that bundle
-    // retired (Phase C3); now on hs, the engine that replaces it. (Core's full
-    // bundle sets and increments `*opacity` but leaves it unchanged on
-    // `put 0.3 into *opacity`, measured 2026-10-04; core retires, so that
-    // column is not added.)
-    if (bundleKey === 'hs') {
+    // retired (Phase C3); now on the engine, hs and (since C-R4b) hyperfixi.js.
+    // (Core's own full bundle set and incremented `*opacity` but left it
+    // unchanged on `put 0.3 into *opacity`, measured 2026-10-04, so it was
+    // never added here.)
+    if (bundleKey === 'hs' || bundleKey === 'browser') {
       test('*property CSS style syntax works with set', async ({ page }) => {
         await page.goto(
           `${BASE_URL}/packages/core/test-pages/css-property-syntax.html?bundle=${bundleKey}`

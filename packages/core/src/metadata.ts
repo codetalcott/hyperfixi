@@ -76,17 +76,18 @@ export interface BundleInfo {
   /**
    * Number of commands the bundle actually registers.
    *
-   * Bundles that register the whole registry (`browser`) use
-   * `FULL_RUNTIME_COMMAND_COUNT` so they track the manifest automatically.
-   * The hand-picked bundles (lite, minimal, standard, the hybrids,
-   * multilingual) carried measured literals that `verify:reference` re-derived
-   * from their sources; widening that check in step 4.4 found three wrong, all
-   * where nothing had looked (`minimal` 30→10, `standard` 35→25,
-   * `multilingual` 59→52). All of them retired by Phase C3 (C-R3).
+   * Each is a measured literal that `verify:reference` re-derives rather than
+   * trusts. `browser` counts the engine's command keywords since C-R4b (it was
+   * `FULL_RUNTIME_COMMAND_COUNT`, core's whole registry, while the file was
+   * core's bundle). The hand-picked bundles (lite, minimal, standard, the
+   * hybrids, multilingual) were re-derived from their sources; widening that
+   * check in step 4.4 found three wrong, all where nothing had looked
+   * (`minimal` 30→10, `standard` 35→25, `multilingual` 59→52). All of them
+   * retired by Phase C3 (C-R3).
    */
   commandCount: number;
-  /** Parser type used */
-  parser: 'regex' | 'hybrid' | 'full';
+  /** Parser type used ('engine': @hyperfixi/engine's, upstream's grammar) */
+  parser: 'regex' | 'hybrid' | 'full' | 'engine';
   /** Whether if/else/repeat blocks are supported */
   hasBlocks: boolean;
   /** Whether event modifiers (.debounce, .throttle, .once) are supported */
@@ -114,15 +115,20 @@ export const bundleInfo: BundleInfo[] = [
   // engine's hyperfixi-hs.js (@hyperfixi/engine) is the script-tag bundle, and
   // @lokascript/hyperscript-adapter runs non-English hyperscript on it.
   {
+    // Since Phase C3 (C-R4b) this file IS the engine's hyperfixi-hs.js
+    // (@hyperfixi/engine), copied under core's name for one major
+    // (scripts/copy-engine-bundle.mjs). Until then it was core's own full
+    // bundle: core's parser and runtime with the reactivity and realtime
+    // plugins, 351.7 KB gzipped, 58 commands.
     id: 'browser',
-    name: 'Full Browser',
+    name: 'Engine (hyperfixi-hs.js)',
     filename: 'hyperfixi.js',
-    gzipSize: '351.7 KB',
-    rawSize: '1619 KB',
-    // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
-    // gaps and no extras vs the manifest).
-    commandCount: FULL_RUNTIME_COMMAND_COUNT,
-    parser: 'full',
+    gzipSize: '33.3 KB',
+    rawSize: '94 KB',
+    // The engine's command keywords, a measured literal: verify:reference
+    // re-derives it from the engine's built grammar.
+    commandCount: 52,
+    parser: 'engine',
     hasBlocks: true,
     hasEventModifiers: true,
     hasPositional: true,
@@ -130,7 +136,7 @@ export const bundleInfo: BundleInfo[] = [
     hasHtmxCompat: false,
     importPath: '@hyperfixi/core/browser',
     cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js',
-    useCase: 'Complete bundle with all commands and features',
+    useCase: "Hyperscript, upstream's grammar, every module; the same file as hyperfixi-hs.js",
   },
 ];
 

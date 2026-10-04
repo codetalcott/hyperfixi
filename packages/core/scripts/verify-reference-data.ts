@@ -355,9 +355,29 @@ function verifyAvailabilities() {
  * Every bundle's advertised commandCount used to be re-derived from its own
  * source here (`compatibility/bundle-sources.ts` paired each with its file):
  * lite-plus and the two hybrids were stale by 4-5 commands each for months, and
- * widening the check caught three more. The bundles it compared all retired in
- * Phase C3; what is left checks the full bundle against the package count.
+ * widening the check caught three more. Those bundles all retired in Phase C3.
+ *
+ * Since C-R4b dist/hyperfixi.js IS the engine's hyperfixi-hs.js, so the one row
+ * left (`browser`) counts the engine's command keywords, re-derived here the way
+ * the vite-plugin derives its keyword map: every module in `everything` run
+ * against a fresh grammar. Read from the engine's BUILT dist, which the bundle
+ * is built from too (CI's lint-typecheck job downloads it; locally,
+ * `npm run build --prefix packages/engine`).
  */
+async function engineCommandKeywords(): Promise<string[] | null> {
+  if (!existsSync(resolve(CORE_ROOT, '../engine/dist/index.js'))) return null;
+  const engine = await import('../../engine/dist/index.js');
+  const keywords = new Set<string>();
+  for (const mod of engine.everything) {
+    const grammar = engine.createGrammar();
+    mod(grammar);
+    // The template text line registers under `#text`, which no script can spell.
+    for (const key of Object.keys(grammar.commands)) if (/^[a-z]+$/.test(key)) keywords.add(key);
+  }
+  return [...keywords].sort();
+}
+
+const engineCommands = await engineCommandKeywords();
 
 function verifyBundleCommandCounts() {
   const errors: string[] = [];
@@ -374,12 +394,20 @@ function verifyBundleCommandCounts() {
     }
   }
 
-  // Verify browser (full) bundle has all commands
+  // hyperfixi.js is the engine's hyperfixi-hs.js: its row counts the engine.
   const browserBundle = bundleInfo.find(b => b.id === 'browser');
-  if (browserBundle && browserBundle.commandCount !== packageInfo.commands) {
-    errors.push(
-      `Browser bundle has ${browserBundle.commandCount} commands, expected ${packageInfo.commands}`
-    );
+  if (browserBundle) {
+    if (engineCommands === null) {
+      errors.push(
+        'browser: the engine is not built (npm run build --prefix packages/engine); ' +
+          "its row counts the engine's commands"
+      );
+    } else if (browserBundle.commandCount !== engineCommands.length) {
+      errors.push(
+        `browser (hyperfixi.js = the engine's hyperfixi-hs.js) advertises ` +
+          `${browserBundle.commandCount} commands; the engine registers ${engineCommands.length}`
+      );
+    }
   }
 
   const passed = errors.length === 0;

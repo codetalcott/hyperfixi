@@ -53,16 +53,17 @@ packages/
 
 **Prebuilt bundles** (script-tag users; Vite users let the plugin choose):
 
-| Bundle                   | Size (gzip) | Use Case                                                           |
-| ------------------------ | ----------- | ------------------------------------------------------------------ |
-| hyperfixi-hs.js (engine) | ~34 KB      | Hyperscript only, every module, upstream's grammar                 |
-| hyperfixi.js             | ~352 KB     | Everything: full parser, reactivity/realtime plugins, 24 languages |
+| Bundle                   | Size (gzip) | Use Case                                           |
+| ------------------------ | ----------- | -------------------------------------------------- |
+| hyperfixi-hs.js (engine) | ~34 KB      | Hyperscript only, every module, upstream's grammar |
+| hyperfixi.js             | ~34 KB      | The same file, under `@hyperfixi/core`'s name      |
 
-`hyperfixi-hs.js` is `@hyperfixi/engine`'s; `hyperfixi.js` is core's, until the cutover. Phase C3
-retired core's other prebuilts (`hyperfixi-hx-v4.js`, `hyperfixi-hx.js`,
-`hyperfixi-hybrid-complete.js`, then `hyperfixi-multilingual.js`, `classic-i18n` and `modular`:
-non-English hyperscript runs on `hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`); the
-lite / lite-plus / minimal / standard names went in the 4.0 cycle.
+`hyperfixi-hs.js` is `@hyperfixi/engine`'s; since Phase C3 (C-R4b) `@hyperfixi/core` ships it as
+`hyperfixi.js` too, for one major. Phase C3 retired every bundle core built itself
+(`hyperfixi-hx-v4.js`, `hyperfixi-hx.js`, `hyperfixi-hybrid-complete.js`, then
+`hyperfixi-multilingual.js`, `classic-i18n` and `modular` — non-English hyperscript runs on
+`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter` — and core's ~352 KB full
+`hyperfixi.js`); the lite / lite-plus / minimal / standard names went in the 4.0 cycle.
 
 **Semantic bundles** (optional, for multilingual support; gzipped, measured locally 2026-09-30):
 

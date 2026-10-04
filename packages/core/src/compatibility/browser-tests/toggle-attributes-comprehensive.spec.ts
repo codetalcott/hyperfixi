@@ -168,7 +168,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
 
       // Read via hyperscript
       const value = window.hyperfixi
-        ? // @ts-expect-error - evaluate() not in LokaScriptBrowserAPI type
+        ? // the engine's evaluate (upstream's API)
           window.hyperfixi.evaluate("#target-btn's @disabled", {})
         : null;
 
@@ -199,7 +199,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
 
       // Read via hyperscript
       const value = window.hyperfixi
-        ? // @ts-expect-error - evaluate() not in LokaScriptBrowserAPI type
+        ? // the engine's evaluate (upstream's API)
           window.hyperfixi.evaluate("#email-input's @required", {})
         : null;
 

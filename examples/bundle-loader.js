@@ -9,7 +9,7 @@
  *   <!-- No need to include hyperfixi-browser.js -->
  *
  * URL Parameters:
- *   ?bundle=browser   - Full bundle (default, unless the script tag has data-default)
+ *   ?bundle=browser   - hyperfixi.js, core's name for hyperfixi-hs.js (default, unless the script tag has data-default)
  *   ?bundle=hs        - hyperfixi-hs.js: hyperscript only, on the new engine
  */
 
@@ -17,9 +17,9 @@
   'use strict';
 
   // Bundle configurations.
-  // `browser` points at the canonical `hyperfixi.js` (hyperfixi-browser.js is a
-  // backward-compat copy that will be removed in v3.0.0 — see
-  // scripts/create-bundle-aliases.mjs).
+  // `browser` points at core's `hyperfixi.js`, which since Phase C3 (C-R4b) is
+  // the engine's hyperfixi-hs.js copied under core's name: the same file as
+  // `hs`, served from packages/core/dist/.
   const BUNDLES = {
     'browser': 'hyperfixi.js',
     'hs': 'hyperfixi-hs.js'

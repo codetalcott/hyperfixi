@@ -19,7 +19,6 @@
     "src/legacy/**/*",
     "src/performance/benchmarks.ts",
     "src/test-helpers/**/*",
-    "vitest.config.ts",
-    "src/compatibility/browser-bundle.ts"
+    "vitest.config.ts"
   ]
 }

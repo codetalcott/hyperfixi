@@ -263,8 +263,9 @@ jobs:
       - name: Build reactivity package
         run: npm run build --prefix packages/reactivity
 
-      # realtime depends only on core; must build before the core browser
-      # bundles (browser-bundle.ts inlines reactivity + realtime dists)
+      # realtime depends only on core. (Core's own browser bundle inlined the
+      # reactivity and realtime dists until C-R4b; hyperfixi.js is the engine's
+      # hyperfixi-hs.js now, which needs neither.)
       - name: Build realtime package
         run: npm run build --prefix packages/realtime
 
@@ -1632,7 +1633,11 @@ jobs:
           # expression parser (`as`, `@attr of`) added 330 B (hx-v4 +310).
           # Checked against duplication as above: the bundle's sourcemap
           # carries semantic as ONE dist file. ~5% headroom again.
-          MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
+          # Lowered 373000 -> 40000 on 2026-10-04 (Phase C3, C-R4b): hyperfixi.js
+          # is now the engine's hyperfixi-hs.js, copied (CI measures 34,1xx B with
+          # `gzip -c`). ~15% headroom: the engine is upstream's grammar, so a jump
+          # past this is a stray dependency or a second copy, not growth.
+          MAX_BROWSER=40000       # 40 KB (hyperfixi.js = hyperfixi-hs.js, ~34.1 KB gz)
 
           failed=0
 
