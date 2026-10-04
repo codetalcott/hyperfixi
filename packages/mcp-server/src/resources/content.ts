@@ -746,7 +746,7 @@ export function getSetupGuide(): object {
         options: {
           'english-only': {
             recommendation:
-              'Use the smallest bundle that covers your commands. lite (1.9 KB) → hybrid-complete (7.3 KB) → standard (63 KB) → browser (203 KB).',
+              "Use @hyperfixi/vite-plugin, which registers only the engine modules your pages use (18–34 KB); without Vite, load the engine's hyperfixi-hs.js (34 KB).",
             next: null,
           },
           multilingual: {

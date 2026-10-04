@@ -17,40 +17,6 @@ const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 // Bundle configurations with expected capabilities (sizes are gzipped)
 const BUNDLES = {
-  'hybrid-complete': {
-    file: 'hyperfixi-hybrid-complete.js',
-    size: '7.7 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true,
-      show: true,
-      hide: true,
-      blocks: true,
-      eventModifiers: true,
-      i18nAliases: true,
-      semanticParser: false,
-      fetch: true,
-    },
-  },
-  'hybrid-hx': {
-    file: 'hyperfixi-hybrid-hx.js',
-    size: '18 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true,
-      show: true,
-      hide: true,
-      blocks: true,
-      eventModifiers: true,
-      i18nAliases: true,
-      semanticParser: false,
-      fetch: true,
-    },
-  },
   // hyperfixi-hs.js: hyperscript only, on packages/engine (the engine meant to
   // replace core's). Built into packages/engine/dist; the loader knows the path.
   hs: {
@@ -89,9 +55,6 @@ const BUNDLES = {
     },
   },
 };
-
-/** The bundles that hand-pick their commands and cannot fall back to the full parser. */
-const SMALL_BUNDLES = new Set(['hybrid-complete', 'hybrid-hx']);
 
 // Gallery examples with functional tests
 const GALLERY_EXAMPLES = [
@@ -398,8 +361,12 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
       });
     }
 
-    // Test *property CSS style syntax (hybrid-complete only)
-    if (bundleKey === 'hybrid-complete') {
+    // *property CSS style syntax. Ran on hybrid-complete only until that bundle
+    // retired (Phase C3); now on hs, the engine that replaces it. (Core's full
+    // bundle sets and increments `*opacity` but leaves it unchanged on
+    // `put 0.3 into *opacity`, measured 2026-10-04; core retires, so that
+    // column is not added.)
+    if (bundleKey === 'hs') {
       test('*property CSS style syntax works with set', async ({ page }) => {
         await page.goto(
           `${BASE_URL}/packages/core/test-pages/css-property-syntax.html?bundle=${bundleKey}`
@@ -449,47 +416,6 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
         expect(opacity).toBe('0.2');
       });
     }
-
-    // A construct this bundle cannot run must fail LOUDLY and name the remedy.
-    // The bundle lineup collapses to two names in the 4.0 cycle
-    // (ENGINE_MIGRATION_PLAN Arc 6b); the escape hatch from the small bundle to
-    // the full one is only discoverable if the failure says which bundle has the
-    // missing command, at the moment it is missing. `make` is a full-runtime-only
-    // command (FULL_RUNTIME_ONLY_COMMANDS), so every small bundle lacks it.
-    if (SMALL_BUNDLES.has(bundleKey)) {
-      test(`unknown command fails loudly and names hyperfixi.js @comprehensive`, async ({
-        page,
-      }) => {
-        const consoleErrors: string[] = [];
-        page.on('console', msg => {
-          if (msg.type() === 'error') consoleErrors.push(msg.text());
-        });
-        await page.goto(
-          `${BASE_URL}/examples/toggle-and-state/toggle-class.html?bundle=${bundleKey}`
-        );
-        await page.waitForTimeout(500);
-
-        // The `_` attribute path, not `api.execute()`: that is where a script-tag
-        // user meets the failure, and where every bundle's error boundary logs.
-        await page.evaluate(() => {
-          const el = document.createElement('button');
-          el.id = 'probe-unknown';
-          el.setAttribute('_', 'on click make a <div/>');
-          document.body.appendChild(el);
-          (window as unknown as { hyperfixi: { process(root: Element): void } }).hyperfixi.process(
-            document.body
-          );
-        });
-        await page.click('#probe-unknown');
-        await page.waitForTimeout(200);
-
-        // Lite bundles reach the executor's `default:`; hybrid bundles reject at
-        // parse time. Either way: one console.error, naming the word AND the
-        // bundle that has it.
-        const loud = consoleErrors.filter(e => e.includes('make') && e.includes('hyperfixi.js'));
-        expect(loud, `console.error lines: ${JSON.stringify(consoleErrors)}`).toHaveLength(1);
-      });
-    }
   });
 }
 
@@ -526,8 +452,6 @@ test.describe('Bundle Summary', () => {
     // Header — one column per bundle key, so the matrix follows the lineup.
     const label = (k: string) =>
       ({
-        'hybrid-complete': 'h-cmp',
-        'hybrid-hx': 'h-hx',
         browser: 'brow',
       })[k] ?? k.slice(0, 6);
     console.log(`║ Feature         │${bundleKeys.map(k => col(label(k))).join('│')}║`);

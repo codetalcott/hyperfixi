@@ -51,6 +51,11 @@
  *   | parserName         | generated          | `examples/vite-plugin-test/main.js` |
  *   |                    |                    | and `-multilingual/main.js` read it |
  *
+ * (The table is the measurement as it was taken. lite-plus left in the 4.0
+ * bundle lineup; hybrid-complete, its spec and `hyperfixi-hx.js` retired in
+ * Phase C3 of the engine cutover, so of its shells only lite and the
+ * generated one remain.)
+ *
  * Nothing was added to a shell that did not already have it. Unioning every
  * key into every shell would have put unrequested API into four shipped
  * bundles and into every bundle the vite-plugin emits — the same trade the
@@ -93,8 +98,9 @@ export const SHELL_CORE_KEYS = [
 /**
  * The core surface every shell carries, typed. Generic over the bundle's AST
  * so `api.parse` keeps its real return type — erasing it to
- * `Record<string, unknown>` would break every consumer, including
- * `hyperfixi-hx.js`, which spreads hybrid-complete's api wholesale.
+ * `Record<string, unknown>` would break every consumer (as it would have
+ * broken `hyperfixi-hx.js`, which spread hybrid-complete's api wholesale until
+ * both retired).
  *
  * Bundles declare their api as a flat object literal satisfying this type
  * rather than receiving one from a factory. That is deliberate, and MEASURED:

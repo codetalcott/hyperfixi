@@ -86,8 +86,6 @@ Use `:` prefix for local variables:
 
 ## Positional Expressions
 
-_Available in hybrid-complete and larger bundles._
-
 ### `first` / `last`
 
 ```html

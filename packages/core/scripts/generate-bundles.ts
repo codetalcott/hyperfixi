@@ -2,57 +2,21 @@
 /**
  * Generate the committed generated regions of the bundle layer:
  *
- *   - `browser-bundle-hybrid-complete.ts`'s executor cores, from
- *     `bundle-generator/templates.ts` (Arc E step 4)
  *   - `parser-templates.ts`'s `HYBRID_PARSER_TEMPLATE`, from the real parser
  *     modules `parser/hybrid/{aliases,tokenizer,parser-core}.ts` (Arc E step 5)
  *
  *   npm run generate:bundles         # rewrite the generated regions in place
  *   npm run generate:bundles:check   # fail if the committed output is stale
  *
- * ---------------------------------------------------------------------------
- * WHAT THIS CLOSES (Finding 17)
- * ---------------------------------------------------------------------------
- *
- * `hyperfixi-hybrid-complete.js` and `hyperfixi-hx.js` PARSED 35 commands and
- * EXECUTED 24. The other eleven — beep, break, continue, copy, empty, exit, js,
- * morph, push, replace, throw — reached the parser, produced a node, and fell to
- * `default:` → `Unknown command`. The parser rules for them shipped as dead
- * weight in every one of those bundles.
- *
- * The two rejected fixes are recorded in
- * `docs-internal/HANDOFF-command-arch-manifest.md` § Finding 17: split the
- * parser, or hand-add eleven cases. The second is a FIFTH hand-maintained copy
- * of the executor, which is the thing Arc E exists to delete.
- *
- * ---------------------------------------------------------------------------
- * THE INPUT IS THE BUNDLE'S OWN ADVERTISED LIST — deliberately
- * ---------------------------------------------------------------------------
- *
- * The command set is read from the target's `commands: [...]` array rather than
- * declared here. That is what makes Finding 17 unrepeatable rather than merely
- * fixed: "advertised but not executed" stops being a state the file can be in.
- * Add a name to the array, run this script, and the case body arrives from the
- * templates. Nothing can advertise a command it does not execute, because the
- * advertisement IS the generation input.
- *
- * `blocks: [...]` is passed the same way and filtered by the emitter. Its `else`
- * and `unless` entries name SYNTAX, not dispatch types — the parser folds both
- * into an `if` node — so they correctly contribute no case.
- *
- * ---------------------------------------------------------------------------
- * ONLY THE CASE BODIES ARE GENERATED
- * ---------------------------------------------------------------------------
- *
- * The region markers sit INSIDE each `switch`. The switch itself, its `default:`
- * arm, the helper closures and every other runtime region stay handwritten,
- * because the two runtimes were measured to differ in all of them (see
- * `executor-core.ts`). This is also why the shell is untouched: the emitted and
- * handwritten api surfaces differ BY DESIGN and are gated as set equality in
- * both directions (`compatibility/bundle-shell.test.ts`,
- * `vite-plugin/src/emitted-shell.test.ts`), and `hyperfixi-hx.js` spreads
- * hybrid-complete's api, so any shell change is user-visible on two shipped
- * bundles.
+ * Until Phase C3 of the engine cutover it also generated the executor `case`
+ * bodies of `browser-bundle-hybrid-complete.ts` from
+ * `bundle-generator/templates.ts`, reading the bundle's own `commands: [...]`
+ * array as the generation input (Arc E step 4, which closed Finding 17: the
+ * hybrid bundles PARSED 35 commands and EXECUTED 24). That bundle and
+ * `hyperfixi-hx.js`, which spread its api, retired in C-R2; the templates
+ * still feed `generateBundleCode()` (core's custom-bundle generator:
+ * `generate:bundle`, the `./bundle-generator` export), whose execution gate is
+ * `bundle-generator/__tests__/capability-emission.test.ts`.
  *
  * ---------------------------------------------------------------------------
  * PRETTIER-IDEMPOTENT OR THE `--check` IS UNUSABLE
@@ -69,7 +33,6 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import * as prettier from 'prettier';
 import { transformSync } from 'esbuild';
-import { emitCommandCases, emitBlockCases } from '../src/bundle-generator/executor-core';
 
 /** Package root (`packages/core`); target paths are relative to it. */
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -81,8 +44,7 @@ interface Target {
   label: string;
   /**
    * Region id → body producer. The producer receives the target's CURRENT
-   * source, because some inputs live in the target itself (hybrid-complete's
-   * `commands: [...]` array is the generation input — see the header).
+   * source, for a region whose input lives in the target itself.
    */
   regions: Record<string, (prev: string) => string>;
 }
@@ -146,14 +108,6 @@ function buildHybridParserTemplate(): string {
 
 const TARGETS: Target[] = [
   {
-    file: 'src/compatibility/browser-bundle-hybrid-complete.ts',
-    label: 'hybrid-complete',
-    regions: {
-      commands: prev => emitCommandCases(readStringArray(prev, 'commands', 'hybrid-complete')),
-      blocks: prev => emitBlockCases(readStringArray(prev, 'blocks', 'hybrid-complete')),
-    },
-  },
-  {
     file: 'src/bundle-generator/parser-templates.ts',
     label: 'parser-templates',
     regions: {
@@ -164,13 +118,6 @@ const TARGETS: Target[] = [
 
 const BEGIN = (id: string) => `// #region generated:${id}`;
 const END = (id: string) => `// #endregion generated:${id}`;
-
-/** Read a `name: [ 'a', 'b' ]` string-array literal out of source text. */
-function readStringArray(source: string, name: string, label: string): string[] {
-  const match = source.match(new RegExp(`\\n\\s*${name}: \\[([^\\]]*)\\]`));
-  if (!match) throw new Error(`${label}: no \`${name}: [...]\` array found`);
-  return [...match[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
-}
 
 /**
  * Replace the body between `// #region generated:<id>` and its `#endregion`.

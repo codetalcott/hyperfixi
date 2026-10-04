@@ -10,7 +10,6 @@
  *
  * URL Parameters:
  *   ?bundle=browser   - Full bundle (default, unless the script tag has data-default)
- *   ?bundle=hybrid    - Mid-size hybrid bundle
  *   ?bundle=hs        - hyperfixi-hs.js: hyperscript only, on the new engine
  *   ?bundle=multilingual - Multilingual bundle
  *   ?bundle=dev       - Development bundle
@@ -27,9 +26,6 @@
   const BUNDLES = {
     'browser': 'hyperfixi.js',
     'hs': 'hyperfixi-hs.js',
-    'hybrid-complete': 'hyperfixi-hybrid-complete.js',
-    'hybrid-hx': 'hyperfixi-hybrid-hx.js',
-    'hybrid-hx-v4': 'hyperfixi-hx-v4.js',
     'multilingual': 'hyperfixi-multilingual.js',
     'semantic-complete': 'hyperfixi-semantic-complete.js',
     'dev': 'hyperfixi-browser.dev.js',
