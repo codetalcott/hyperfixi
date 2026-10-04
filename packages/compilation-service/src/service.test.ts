@@ -437,7 +437,12 @@ describe('CompilationService', () => {
         language: 'en',
       });
 
-      expect(result.ok).toBe(true); // lenient parse still succeeds — a warning, not an error
+      // Semantic's lenient parse succeeds with a warning; the engine, which runs it on a
+      // page, rejects it outright (`#item` is an unexpected token there and upstream).
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.find(d => d.code === 'ENGINE_PARSE_ERROR')?.message).toContain(
+        '#item'
+      );
       const warning = result.diagnostics.find(d => d.code === 'UNCONSUMED_INPUT');
       expect(warning).toBeDefined();
       expect(warning?.severity).toBe('warning');
@@ -455,23 +460,54 @@ describe('CompilationService', () => {
 
     it('flags inert shapes that consume every token (arc 3b gate 4)', () => {
       // Each of these parses at confidence 1.0 with everything consumed, and
-      // is provably useless at runtime. The gate warns; it never blocks.
-      const expectWarning = (code: string, warningCode: string) => {
+      // is provably useless at runtime. The gate warns; it never blocks. Three
+      // of them the engine rejects as well (as upstream does), which does block:
+      // `ok` is the engine's verdict, and the warning still says what is wrong.
+      const expectWarning = (code: string, warningCode: string, engineReads: boolean) => {
         const r = service.validate({ code, language: 'en' });
-        expect(r.ok, code).toBe(true);
+        expect(r.ok, code).toBe(engineReads);
+        expect(
+          r.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR'),
+          code
+        ).toBe(!engineReads);
         const w = r.diagnostics.find(d => d.code === warningCode);
         expect(w, `${code} should carry ${warningCode}`).toBeDefined();
         expect(w?.severity).toBe('warning');
         expect(w?.suggestion).toBeTruthy();
       };
-      expectWarning('on click add .done to all .todo', 'INERT_QUANTIFIER_TARGET');
-      expectWarning('on click remove .active from all .row', 'INERT_QUANTIFIER_TARGET');
-      expectWarning('on click set the text of #output to "Saved"', 'INERT_PROPERTY_WRITE');
+      expectWarning('on click add .done to all .todo', 'INERT_QUANTIFIER_TARGET', false);
+      expectWarning('on click remove .active from all .row', 'INERT_QUANTIFIER_TARGET', false);
+      expectWarning('on click set the text of #output to "Saved"', 'INERT_PROPERTY_WRITE', true);
       expectWarning(
         'on click if #box has class .danger add .warned to #box end',
-        'HALF_PARSED_CONDITION'
+        'HALF_PARSED_CONDITION',
+        false
       );
-      expectWarning('on click add .modal-open to <body/>', 'UNSUPPORTED_QUERY_LITERAL');
+      // The engine reads a query literal (upstream's syntax); the warning is for the
+      // compiled path, where `<body/>` reaches querySelector verbatim.
+      expectWarning('on click add .modal-open to <body/>', 'UNSUPPORTED_QUERY_LITERAL', true);
+    });
+
+    it('rejects English the engine cannot read, and a translation whose English it cannot', () => {
+      // Semantic reads `put … in` as `put … into`; the engine (and upstream) do not.
+      const english = service.validate({ code: 'on click put "Saved" in #output', language: 'en' });
+      expect(english.ok).toBe(false);
+      const error = english.diagnostics.find(d => d.code === 'ENGINE_PARSE_ERROR');
+      expect(error?.severity).toBe('error');
+      expect(error?.message).toContain("'into'");
+      expect(error?.suggestion).toBeTruthy();
+      // The same command as the engine reads it: fine.
+      expect(
+        service.validate({ code: 'on click put "Saved" into #output', language: 'en' }).ok
+      ).toBe(true);
+      // A translation is checked as the English the adapter hands the engine.
+      const spanish = service.validate({ code: 'al clic alternar .active en yo', language: 'es' });
+      expect(spanish.ok).toBe(true);
+      expect(spanish.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(false);
+      // compile() applies the same check before it compiles.
+      expect(service.compile({ code: 'on click put "Saved" in #output', language: 'en' }).ok).toBe(
+        false
+      );
     });
 
     it('inert-shape gate stays quiet on correct phrasings', () => {
