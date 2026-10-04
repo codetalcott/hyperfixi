@@ -169,10 +169,9 @@ jobs:
           npm run build --prefix packages/server-bridge
           npm run build --prefix packages/vite-plugin
           npm run build --prefix packages/language-server
-          # Plugin packages (HyperfixiPlugin) — reactivity before components (components depends on reactivity)
-          npm run build --prefix packages/reactivity
-          npm run build --prefix packages/realtime
-          npm run build --prefix packages/components
+          # speech is an engine module (peers on @hyperfixi/engine, built above).
+          # The core-era plugin packages (reactivity, realtime, components) left
+          # in Phase C4; their last versions on npm are 3.x.
           npm run build --prefix packages/speech
           # intent-element depends on @lokascript/intent + @hyperfixi/core (both built above)
           npm run build --prefix packages/intent-element
@@ -262,9 +261,8 @@ jobs:
           # All packages in dependency order
           # Packages that have version-lock with core use the same VERSION
           # New domain/framework packages start at 1.0.0 but will be bumped if VERSION_TYPE != current
-          # Plugin packages (reactivity, components, speech) listed after behaviors
-          # because components depends on reactivity; both depend on @hyperfixi/core
-          # (which is in position 2). speech depends on core only.
+          # speech (an engine module) is listed after behaviors; it peers on
+          # @hyperfixi/engine, in position 2.
           # intent is first — @hyperfixi/core and @lokascript/framework depend on it.
           # planner sits before mcp-server (which depends on it).
           # intent-element depends on intent + core, so it follows them.
@@ -272,7 +270,7 @@ jobs:
           ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
                         compilation-service planner mcp-server vite-plugin \
-                        behaviors reactivity realtime components speech intent-element testing-framework language-server \
+                        behaviors speech intent-element testing-framework language-server \
                         language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n htmx-adapter"
 

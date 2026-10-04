@@ -112,13 +112,6 @@ try {
 const GENERATED_VERSION_FILES = [
   'packages/core/src/version.ts',
   'packages/developer-tools/src/version.ts',
-  // The reactivity/realtime plugin descriptors carry a `version` field that
-  // `HyperfixiPlugin` does not declare — so no consumer and no test read it,
-  // and both inline literals froze at the release they were written in (2.3.1
-  // and 2.6.0) while shipping inside the browser bundle for many releases.
-  // Each now has a version.test.ts asserting equality with its manifest.
-  'packages/reactivity/src/version.ts',
-  'packages/realtime/src/version.ts',
   // semantic's exported VERSION was a `0.1.0` literal from its first release
   // (and each browser bundle its own `1.0.0-<lang>`); test/version.test.ts.
   'packages/semantic/src/version.ts',

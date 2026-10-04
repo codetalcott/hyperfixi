@@ -12,10 +12,8 @@ set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Order is dep-before-dependent: ensure-fresh rebuilds in argument order, so a
 # dep listed after its consumer gets rebuilt too late to help.
-# `core` before `reactivity` — reactivity's build consumes core's dist.
 "$REPO_ROOT/scripts/ensure-fresh.sh" \
   "$REPO_ROOT/packages/core" \
-  "$REPO_ROOT/packages/reactivity" \
   "$REPO_ROOT/packages/framework" \
   "$REPO_ROOT/packages/semantic" \
   "$REPO_ROOT/packages/hyperscript-adapter" \
@@ -27,8 +25,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent" \
   "$REPO_ROOT/packages/planner" \
-  "$REPO_ROOT/packages/intercept" \
-  "$REPO_ROOT/packages/realtime" \
   "$REPO_ROOT/packages/intent-element" \
   "$REPO_ROOT/packages/hyperscript-tools-i18n" \
   "$REPO_ROOT/packages/htmx-adapter" \
@@ -59,12 +55,8 @@ PACKAGES=(
   "smart-bundling:Smart Bundling"
   "htmx-adapter:htmx Adapter"
 
-  # Runtime plugins (HyperfixiPlugin) — reactivity before components (dep order)
-  "reactivity:Reactivity"
-  "components:Components"
+  # An engine module (`speak`)
   "speech:Speech"
-  "intercept:Intercept"
-  "realtime:Realtime"
   "intent-element:Intent Element"
 
   # Other

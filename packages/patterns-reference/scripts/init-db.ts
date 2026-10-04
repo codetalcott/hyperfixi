@@ -1638,8 +1638,8 @@ export const SEED_EXAMPLES: SeedExample[] = [
 
   // ==========================================================================
   // Components — <script type="text/hyperscript-template"> custom elements
-  // Static + slots run in HyperFixi today via @hyperfixi/components.
-  // Reactive ^var state and #if/#for directives need Components v2 (in progress).
+  // Upstream's component extension renders these; @hyperfixi/engine has no
+  // template components (@hyperfixi/components, core 3.x's, was deprecated in 4.0).
   // ==========================================================================
   {
     id: 'component-hello-world',
@@ -1690,8 +1690,8 @@ export const SEED_EXAMPLES: SeedExample[] = [
 
   // ==========================================================================
   // Service Workers — intercept (declarative caching DSL)
-  // Runs in HyperFixi when @hyperfixi/intercept plugin is installed.
-  // Both naked paths and quoted URLs are accepted (v2.1+).
+  // @hyperfixi/intercept's DSL, a core 3.x plugin removed in 4.0: the row is
+  // valid on neither engine (engine-verification.json: NULL).
   // ==========================================================================
   {
     id: 'intercept-cache-strategies',

@@ -1,20 +1,19 @@
 {
   "name": "@hyperfixi/speech",
   "version": "3.3.0",
-  "description": "Speech Synthesis and prompt() plugin for hyperfixi — adds `speak`, `ask`, and `answer` commands (upstream _hyperscript 0.9.90).",
+  "description": "The speak command (Web Speech API) for @hyperfixi/engine, as an engine module (upstream _hyperscript 0.9.90).",
   "type": "module",
   "sideEffects": false,
-  "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
+    "pretest": "../../scripts/ensure-fresh.sh ../engine",
     "build": "tsup && npm run build:types",
     "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
     "test": "vitest",
@@ -22,10 +21,11 @@
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@hyperfixi/core": "^3.3.0"
+  "peerDependencies": {
+    "@hyperfixi/engine": "^3.3.0"
   },
   "devDependencies": {
+    "@hyperfixi/engine": "^3.3.0",
     "@types/node": "^26.6.3",
     "happy-dom": "^20.14.5",
     "tsup": "^8.0.0",
@@ -43,10 +43,9 @@
     "hyperfixi",
     "hyperscript",
     "speech-synthesis",
-    "prompt",
-    "plugin",
     "_hyperscript",
-    "v0.9.90"
+    "v0.9.90",
+    "engine-module"
   ],
   "author": "LokaScript Contributors",
   "license": "MIT",

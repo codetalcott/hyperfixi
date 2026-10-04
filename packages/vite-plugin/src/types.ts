@@ -263,7 +263,7 @@ export interface HtmxUsage {
   needsWS?: boolean;
   /**
    * `bind $x to <expr>.<prop>` detected inside an `_=` attribute. Implies
-   * reactivity (the bind feature lives in `@hyperfixi/reactivity`).
+   * reactivity (the engine's reactivity modules).
    */
   needsBindToProperty?: boolean;
   /**
@@ -343,7 +343,7 @@ export interface AggregatedUsage {
   /**
    * Whether any file uses reactivity-requiring constructs (either via
    * `hx-live` attributes or inside `_=` scripts). Drives the generated
-   * bundle's auto-install of `@hyperfixi/reactivity`.
+   * bundle's registration of the engine's reactivity modules.
    *
    * Optional to keep test fixtures compatible; the aggregator always
    * emits an explicit boolean.

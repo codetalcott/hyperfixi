@@ -446,7 +446,7 @@ function generateGrammar(mode: GrammarMode): object {
       ...(includeV2
         ? {
             // v2 template directives. Line-anchored to mirror the runtime parser
-            // (@hyperfixi/components/src/template-ast.ts:28-31). Surface inside
+            // (packages/engine/src/templates.ts, upstream's). Surface inside
             // <template component> bodies via the injection grammar; standalone
             // hyperscript files won't typically contain them, but they don't hurt.
             directives: {

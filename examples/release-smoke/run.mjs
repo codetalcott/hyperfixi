@@ -64,8 +64,6 @@ const PACKAGES = [
   '@lokascript/i18n',
   '@hyperfixi/vite-plugin',
   '@hyperfixi/speech',
-  '@hyperfixi/reactivity',
-  '@hyperfixi/components',
   '@hyperfixi/mcp-server',
   '@hyperfixi/behaviors',
   '@hyperfixi/engine',

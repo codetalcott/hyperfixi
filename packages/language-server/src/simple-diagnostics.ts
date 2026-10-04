@@ -172,9 +172,11 @@ export function runSimpleDiagnostics(code: string, _language: string = 'en'): Di
 // Template Directive Diagnostics (v2 components)
 // =============================================================================
 //
-// These regexes mirror @hyperfixi/components/src/template-ast.ts so the LSP
-// validates the same shapes the runtime accepts. Directives are line-oriented:
-// each must occupy its own line modulo surrounding whitespace.
+// Template directives are upstream's (`render` and template components): the
+// engine reads them in packages/engine/src/templates.ts. (These regexes first
+// mirrored @hyperfixi/components' template-ast.ts, which left with 4.0.)
+// Directives are line-oriented: each must occupy its own line modulo
+// surrounding whitespace.
 
 const DIRECTIVE_IF = /^#if\b/;
 const DIRECTIVE_FOR = /^#for\b/;

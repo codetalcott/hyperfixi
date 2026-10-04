@@ -1,4 +1,0 @@
-src/**/*.test.ts
-src/_debug*
-node_modules
-*.tsbuildinfo

@@ -1,84 +1,68 @@
 # @hyperfixi/speech
 
-Web Speech API + `prompt()` plugin for [hyperfixi](https://github.com/codetalcott/hyperfixi). Adds three commands from upstream `_hyperscript 0.9.90`:
-
-| Command                                   | Purpose                                                                                           |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `speak "<text>" [with <option> <value>]*` | Speaks the text via `window.speechSynthesis`. Optional rate/pitch/voice/volume.                   |
-| `ask "<prompt>" [with default "<value>"]` | Calls `window.prompt()` and writes the answer to `result` and `it`.                               |
-| `answer with "<value>"`                   | Sets `result` and `it` to the value without prompting — useful for scripted flows and test mocks. |
-
-## Install
-
-```ts
-import { createRuntime, installPlugin } from '@hyperfixi/core';
-import { speechPlugin } from '@hyperfixi/speech';
-
-const runtime = createRuntime();
-installPlugin(runtime, speechPlugin);
-```
-
-Re-installing is safe: the plugin registers idempotent command keywords with the parser and replaces the existing command implementations in the runtime registry with identical ones.
-
-## `speak`
+The `speak` command for [`@hyperfixi/engine`](../engine/README.md): upstream `_hyperscript`'s
+command (0.9.90), as an engine module. It speaks text through the Web Speech API and waits until
+the utterance ends.
 
 ```hyperscript
 speak "Welcome back"
 speak "Hello" with rate 1.5 with pitch 0.8
 speak "Bonjour" with voice "Google français"
-speak "Loud and clear" with volume 1 with rate 1.2
+speak "Saved" then put "done" into #status    -- `put` runs once the speech has ended
 ```
 
-Options (all optional, any combination, in any order):
+## Install
 
-| Option   | Type   | Notes                                                                                                                  |
-| -------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `rate`   | number | Forwarded to `SpeechSynthesisUtterance.rate`. Browser default 1; valid range typically 0.1 – 10.                       |
-| `pitch`  | number | Forwarded to `SpeechSynthesisUtterance.pitch`. Browser default 1; valid range typically 0 – 2.                         |
-| `volume` | number | Forwarded to `SpeechSynthesisUtterance.volume`. Browser default 1; valid range 0 – 1.                                  |
-| `voice`  | string | Matched against `speechSynthesis.getVoices()` by `.name`. If no voice matches, the utterance uses the browser default. |
+An engine is the list of modules passed to `register`; add `speak` to it:
 
-Side effects: `context.result` is set to `true` on success, `false` when the Web Speech API is unavailable (Node, restricted contexts). The command never throws on missing browser support — it silently no-ops so the surrounding handler can keep running.
+```ts
+import { boot, everything, register } from '@hyperfixi/engine';
+import { speak } from '@hyperfixi/speech';
 
-## `ask`
-
-```hyperscript
-ask "What's your name?"
-put result into #greeting
-
-ask "Username?" with default "guest"
+register(...everything, speak);
+boot();
 ```
 
-Calls `window.prompt(text, defaultValue?)`. The user's answer is written to **both** `context.result` and `context.it`, so the natural follow-up is `put it into ...` or `put result into ...`.
+The script-tag bundle (`hyperfixi-hs.js`) is a fixed set of modules and does not include it.
 
-When `window.prompt` isn't available (headless / Node), the command returns `null` without setting `result` — let callers detect "no UI" by checking the value before using it.
+## Options
 
-## `answer`
+Each option follows its own `with`, in any order:
 
-```hyperscript
-answer with "programmatic value"
--- result and it are now "programmatic value"
+| Option   | Notes                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| `voice`  | Matched against `speechSynthesis.getVoices()` by `.name`. A voice that is not installed is ignored. |
+| `rate`   | `SpeechSynthesisUtterance.rate`. Browser default 1; valid range typically 0.1 – 10.                 |
+| `pitch`  | `SpeechSynthesisUtterance.pitch`. Browser default 1; valid range typically 0 – 2.                   |
+| `volume` | `SpeechSynthesisUtterance.volume`. Browser default 1; valid range 0 – 1.                            |
 
-answer "bare form also works"
--- the leading `with` is optional
-```
+Another word after `with` is a parse error that names the four.
 
-`answer` is the scripted counterpart to `ask` — no UI, just sets `result` and `it` to the given value. Useful for:
+## `ask` and `answer`
 
-- Stubbing user input in tests (`answer with "Test User"` to drive a flow that normally reads from `ask`)
-- Forwarding a value through `result` without an intermediate `put` step
+Upstream's two dialog commands are in the engine already (its `askAnswer` module, part of
+`everything`): `ask "Name?"` prompts and puts the reply in `it`; `answer "Saved"` alerts;
+`answer "Save?" with "Yes" or "No"` confirms and puts the choice in `it`.
 
 ## Notes on browser support
 
-- `speechSynthesis` is widely available but [voices load asynchronously on some browsers](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis/getVoices). If `with voice "<name>"` doesn't apply, the named voice may not yet be in `getVoices()`; the utterance falls through to the browser default.
-- iOS Safari requires a user gesture (tap/click) before `speechSynthesis.speak()` will produce audio. Calling `speak` from a `DOMContentLoaded` handler will silently fail there — wire it to a button click instead.
-- `window.prompt()` is blocked by some browsers in cross-origin iframes; `ask` will return `null` in those contexts.
+- Voices [load asynchronously on some browsers](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis/getVoices):
+  a `with voice` given before they load falls through to the default.
+- iOS Safari speaks only after a user gesture: run `speak` from a click handler, not on load.
+- Where the Web Speech API is missing, `speak` fails the way upstream's does (the handler
+  reports the error).
 
-## API exports
+## Exports
 
-- `speechPlugin` (default export): the `HyperfixiPlugin` to pass to `installPlugin`.
-- `speakCommand`, `askCommand`, `answerCommand`: the individual command implementations, exported for advanced wiring (e.g., registering against a custom registry).
-- Types: `SpeakCommandInput`, `AskCommandInput`, `AnswerCommandInput`.
+- `speak` (also the default export): the module, `(grammar) => void`.
+- `SpeakNode`: the type of the parsed command.
+
+## 4.0
+
+Until 4.0 this package was a plugin for `@hyperfixi/core`'s runtime: `speechPlugin`, installed with
+`installPlugin`, with its own `ask` (`with default …`) and `answer with "x"`, which set the result
+without a dialog. Core's runtime is gone; upstream's `ask` / `answer` are the engine's, and `speak`
+behaves as upstream's does (it waits for the speech to end, and no longer sets `result`).
 
 ## License
 

@@ -259,19 +259,9 @@ jobs:
       - name: Build language-server package
         run: npm run build --prefix packages/language-server
 
-      # Plugin packages — reactivity before components (components depends on reactivity); both depend on core
-      - name: Build reactivity package
-        run: npm run build --prefix packages/reactivity
-
-      # realtime depends only on core. (Core's own browser bundle inlined the
-      # reactivity and realtime dists until C-R4b; hyperfixi.js is the engine's
-      # hyperfixi-hs.js now, which needs neither.)
-      - name: Build realtime package
-        run: npm run build --prefix packages/realtime
-
-      - name: Build components package
-        run: npm run build --prefix packages/components
-
+      # An engine module (`speak`) published on its own; peers on the engine,
+      # built above. (The core-era plugin packages, reactivity, realtime,
+      # components and intercept, left the repository in Phase C4.)
       - name: Build speech package
         run: npm run build --prefix packages/speech
 
@@ -320,9 +310,6 @@ jobs:
             packages/server-bridge/dist/
             packages/vite-plugin/dist/
             packages/language-server/dist/
-            packages/reactivity/dist/
-            packages/realtime/dist/
-            packages/components/dist/
             packages/speech/dist/
             packages/intent-element/dist/
           retention-days: 3
@@ -392,10 +379,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # The bundles compile core from SOURCE, but still resolve workspace deps
-      # through node_modules: the main entry inlines @lokascript/semantic, and
-      # #616 added the prebuilt reactivity/realtime dists. So this job needs
-      # `build`'s artifacts and cannot run beside it.
+      # Core's one remaining bundle is a copy of the engine's built
+      # hyperfixi-hs.js (C-R4b), and the aliases are copies of it, so this job
+      # needs `build`'s artifacts and cannot run beside it.
       - name: Download build artifacts
         uses: actions/download-artifact@v8
         with:
@@ -582,10 +568,10 @@ jobs:
           set -o pipefail
           status=0
           if ! node scripts/validate-exports.mjs \
-            behaviors compilation-service components core engine \
+            behaviors compilation-service core engine \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
-            language-server mcp-server patterns-reference planner reactivity \
-            realtime semantic server-bridge speech vite-plugin \
+            language-server mcp-server patterns-reference planner \
+            semantic server-bridge speech vite-plugin \
             --strict 2>&1 | tee /tmp/export-validation.log; then
             status=1
           fi
@@ -792,20 +778,16 @@ jobs:
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
           npm run typecheck --prefix packages/behaviors
-          npm run typecheck --prefix packages/components
           npm run typecheck --prefix packages/developer-tools
           npm run typecheck --prefix packages/engine
           npm run typecheck --prefix packages/framework
           npm run typecheck --prefix packages/hyperscript-tools-i18n
           npm run typecheck --prefix packages/intent
           npm run typecheck --prefix packages/intent-element
-          npm run typecheck --prefix packages/intercept
           npm run typecheck --prefix packages/language-server-hyperscript
           npm run typecheck --prefix packages/multilingual-hyperscript
           npm run typecheck --prefix packages/planner
           npm run typecheck --prefix packages/playground
-          npm run typecheck --prefix packages/reactivity
-          npm run typecheck --prefix packages/realtime
           npm run typecheck --prefix packages/server-bridge
           npm run typecheck --prefix packages/smart-bundling
           npm run typecheck --prefix packages/speech
@@ -1044,17 +1026,8 @@ jobs:
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run
 
-      - name: Test reactivity
-        run: npm test --prefix packages/reactivity -- --run
-
-      - name: Test realtime
-        run: npm test --prefix packages/realtime -- --run
-
       - name: Test speech
         run: npm test --prefix packages/speech -- --run
-
-      - name: Test components
-        run: npm test --prefix packages/components -- --run
 
       # In the local test:check gate (scripts/test-check-all.sh) since the
       # beginning, but never enumerated here — so the express 4 → 5 major broke
@@ -1082,9 +1055,6 @@ jobs:
 
       - name: Test smart-bundling
         run: npm test --prefix packages/smart-bundling -- --run
-
-      - name: Test intercept
-        run: npm test --prefix packages/intercept -- --run
 
       - name: Test intent
         run: npm test --prefix packages/intent
