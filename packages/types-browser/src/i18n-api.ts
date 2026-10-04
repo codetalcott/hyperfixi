@@ -11,7 +11,7 @@ export interface LokaScriptI18nAPI {
   // The global keeps its DICTIONARIES, keyword providers, locale manager,
   // direct mappings and grammar PROFILES — everything that was not the
   // transformer. Translation is `@lokascript/semantic`'s job; in the browser
-  // that is `hyperfixi.translate` from the multilingual bundle.
+  // that is `LokaScriptSemantic.translate` (every semantic browser bundle has it).
 
   /**
    * Get supported locales for grammar transformation

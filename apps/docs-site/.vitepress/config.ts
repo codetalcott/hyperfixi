@@ -204,7 +204,6 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        '@hyperfixi/core': '/Users/williamtalcott/projects/hyperfixi/packages/core/src/index.ts',
         '@hyperfixi/semantic': '/Users/williamtalcott/projects/hyperfixi/packages/semantic/src/index.ts'
       }
     }

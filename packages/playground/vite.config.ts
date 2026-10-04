@@ -10,7 +10,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@hyperfixi/core': resolve(__dirname, '../core/src'),
+      '@hyperfixi/engine': resolve(__dirname, '../engine/src/index.ts'),
       '@lokascript/semantic': resolve(__dirname, '../semantic/src'),
     },
   },

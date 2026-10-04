@@ -23,10 +23,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { swKeywords } from '@lokascript/i18n/parser/sw';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: swKeywords });
- * parser.parse('kwenye bonyeza badilisha .active');
+ * swKeywords.resolve('badilisha'); // 'toggle'
+ * swKeywords.toLocale('on'); // 'kwenye'
  * ```
  */
 export const swKeywords: KeywordProvider = createKeywordProvider(sw, 'sw', {

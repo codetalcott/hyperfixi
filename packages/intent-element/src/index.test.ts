@@ -1,10 +1,10 @@
 /**
  * Tests for @hyperfixi/intent-element
  *
- * Uses jsdom for DOM simulation. Execution tests stub window.hyperfixi.evalLSENode
- * so the suite runs without the full hyperfixi browser bundle.
+ * Uses jsdom for DOM simulation. Execution tests stub the hyperscript host (`installHost`)
+ * so the suite runs without a browser bundle.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { LSEIntentElement } from './lse-intent.js';
 import { intentRegistry } from './schema-registry.js';
 import { sandboxed } from './sandbox.js';
@@ -15,6 +15,26 @@ if (!customElements.get('lse-intent')) {
 }
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
+
+type RenderedNode = Parameters<NonNullable<typeof LSEIntentElement.render>>[0];
+type HostRun = (node: RenderedNode, me: unknown) => unknown;
+
+/**
+ * A hyperscript host for the execution tests. `run(node, me)` sees what `<lse-intent>`
+ * executes: the renderer records the node it is handed and renders its index, and the
+ * host's `evaluate` looks the node up and returns `run`'s result.
+ */
+function installHost(run: HostRun): void {
+  const nodes: RenderedNode[] = [];
+  LSEIntentElement.render = node => String(nodes.push(node) - 1);
+  (globalThis as Record<string, unknown>)['hyperfixi'] = {
+    evaluate: (source: string, context: { me: unknown }) => run(nodes[Number(source)], context.me),
+  };
+}
+
+afterEach(() => {
+  LSEIntentElement.render = null;
+});
 
 const VALID_JSON = JSON.stringify({
   action: 'toggle',
@@ -226,9 +246,7 @@ describe('LSEIntentElement — validation', () => {
   it('uses 5000ms default when timeout attribute is empty string', async () => {
     // We can't directly test the timeout value, but we can confirm initialization
     // succeeds (doesn't immediately time out) with timeout=""
-    (globalThis as Record<string, unknown>)['hyperfixi'] = {
-      evalLSENode: vi.fn().mockResolvedValue('ok'),
-    };
+    installHost(vi.fn().mockResolvedValue('ok'));
     const el = makeElement(VALID_JSON);
     el.setAttribute('timeout', '');
     const executed = waitForEvent(el, 'lse:executed');
@@ -299,12 +317,10 @@ describe('LSEIntentElement — schema validation', () => {
 
 describe('LSEIntentElement — execution', () => {
   beforeEach(() => {
-    (globalThis as Record<string, unknown>)['hyperfixi'] = {
-      evalLSENode: vi.fn().mockResolvedValue('executed'),
-    };
+    installHost(vi.fn().mockResolvedValue('executed'));
   });
 
-  it('calls evalLSENode and dispatches lse:executed', async () => {
+  it('evaluates on the host and dispatches lse:executed', async () => {
     const el = makeElement(VALID_JSON);
     const executed = waitForEvent(el, 'lse:executed');
     document.body.appendChild(el);
@@ -314,10 +330,8 @@ describe('LSEIntentElement — execution', () => {
     document.body.removeChild(el);
   });
 
-  it('dispatches lse:error when evalLSENode throws', async () => {
-    (globalThis as Record<string, unknown>)['hyperfixi'] = {
-      evalLSENode: vi.fn().mockRejectedValue(new Error('runtime error')),
-    };
+  it("dispatches lse:error when the host's evaluate rejects", async () => {
+    installHost(vi.fn().mockRejectedValue(new Error('runtime error')));
     const el = makeElement(VALID_JSON);
     const errored = waitForEvent(el, 'lse:error');
     document.body.appendChild(el);
@@ -328,12 +342,8 @@ describe('LSEIntentElement — execution', () => {
     document.body.removeChild(el);
   });
 
-  it('dispatches lse:error when evalLSENode times out', async () => {
-    (globalThis as Record<string, unknown>)['hyperfixi'] = {
-      evalLSENode: vi
-        .fn()
-        .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 500))),
-    };
+  it('dispatches lse:error when the host times out', async () => {
+    installHost(vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 500))));
     const el = makeElement(VALID_JSON);
     el.setAttribute('timeout', '50');
     const errored = waitForEvent(el, 'lse:error');
@@ -357,8 +367,9 @@ describe('LSEIntentElement — execution', () => {
     document.body.removeChild(el);
   });
 
-  it('a host without a renderer and without evalLSENode gets NO_RENDERER, not an execution', async () => {
+  it('a host without a renderer gets NO_RENDERER, not an execution', async () => {
     delete (globalThis as Record<string, unknown>)['hyperfixi'];
+    LSEIntentElement.render = null;
     (globalThis as Record<string, unknown>)['_hyperscript'] = { evaluate: vi.fn() };
     const el = makeElement(VALID_JSON);
     const validated = waitForEvent(el, 'lse:validated');
@@ -408,20 +419,6 @@ describe('LSEIntentElement — text path on a hyperscript host', () => {
     document.body.appendChild(el);
     await executed;
     expect(evaluate).toHaveBeenCalledTimes(1);
-    document.body.removeChild(el);
-  });
-
-  it('prefers the text path over evalLSENode when a renderer is loaded', async () => {
-    const evaluate = vi.fn();
-    const evalLSENode = vi.fn();
-    g['hyperfixi'] = { evaluate, evalLSENode };
-    g['LokaScriptSemanticEn'] = { render: () => 'toggle .active on #sidebar' };
-    const el = makeElement(VALID_JSON);
-    const executed = waitForEvent(el, 'lse:executed');
-    document.body.appendChild(el);
-    await executed;
-    expect(evaluate).toHaveBeenCalledTimes(1);
-    expect(evalLSENode).not.toHaveBeenCalled();
     document.body.removeChild(el);
   });
 
@@ -479,11 +476,11 @@ describe('LSEIntentElement — text path on a hyperscript host', () => {
 // ─── LSEIntentElement — trigger modes ────────────────────────────────────────
 
 describe('LSEIntentElement — trigger modes', () => {
-  let evalMock: ReturnType<typeof vi.fn>;
+  let evalMock: Mock<HostRun>;
 
   beforeEach(() => {
-    evalMock = vi.fn().mockResolvedValue('executed');
-    (globalThis as Record<string, unknown>)['hyperfixi'] = { evalLSENode: evalMock };
+    evalMock = vi.fn<HostRun>().mockResolvedValue('executed');
+    installHost(evalMock);
   });
 
   it('trigger="load" (default) fires immediately on connect', async () => {
@@ -808,18 +805,18 @@ describe('LSEIntentElement — trigger modes', () => {
 // ─── LSEIntentElement — event-handler unwrap ────────────────────────────────
 
 describe('LSEIntentElement — event-handler unwrap', () => {
-  let evalMock: ReturnType<typeof vi.fn>;
+  let evalMock: Mock<HostRun>;
 
   beforeEach(() => {
-    evalMock = vi.fn().mockResolvedValue('executed');
-    (globalThis as Record<string, unknown>)['hyperfixi'] = { evalLSENode: evalMock };
+    evalMock = vi.fn<HostRun>().mockResolvedValue('executed');
+    installHost(evalMock);
   });
 
-  it('unwraps verbose event-handler form: body command is passed to evalLSENode, not the wrapper', async () => {
+  it('unwraps verbose event-handler form: body command is the node rendered, not the wrapper', async () => {
     // Verbose protocol form: kind:"event-handler" with body:[command{toggle}].
     // The element's own click listener provides the event wiring — the inner
     // event-handler metadata is redundant. _execute must unwrap the body and
-    // pass the plain command node to evalLSENode, not the event-handler node.
+    // render the plain command node, not the event-handler node.
     const verboseJson = JSON.stringify({
       kind: 'event-handler',
       action: 'on',
@@ -850,7 +847,7 @@ describe('LSEIntentElement — event-handler unwrap', () => {
     document.body.removeChild(el);
   });
 
-  it('unwraps compact trigger-sugar form: body command is passed to evalLSENode, not the wrapper', async () => {
+  it('unwraps compact trigger-sugar form: body command is the node rendered, not the wrapper', async () => {
     // Compact protocol form: {action, roles, trigger:{event}}. This is what
     // the compilation service now emits (Option A fix in @lokascript/intent).
     // fromProtocolJSON still deserializes it into an event-handler SemanticNode,
@@ -878,7 +875,7 @@ describe('LSEIntentElement — event-handler unwrap', () => {
     document.body.removeChild(el);
   });
 
-  it('passes bare command nodes to evalLSENode unchanged', async () => {
+  it('renders bare command nodes unchanged', async () => {
     // Regression guard: bare command JSON (no kind, no trigger) was the one
     // form that already worked pre-fix. Confirm the unwrap didn't break it.
     const el = makeElement(VALID_JSON);

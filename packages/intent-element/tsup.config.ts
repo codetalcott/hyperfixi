@@ -9,7 +9,6 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
     dts: false,
-    external: ['@hyperfixi/core'],
   },
   // IIFE browser bundle — self-registers the custom element
   {
@@ -20,6 +19,5 @@ export default defineConfig([
     sourcemap: true,
     minify: true,
     dts: false,
-    external: ['@hyperfixi/core'],
   },
 ]);

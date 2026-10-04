@@ -1,256 +1,150 @@
 /**
- * Type definitions for HyperFixi Core browser API
+ * Type definitions for the hyperscript host on `window.hyperfixi` and `window._hyperscript`.
+ *
+ * Both globals are one object: `@hyperfixi/engine`'s public API, which the engine's
+ * `hyperfixi-hs.js` installs, and which `@hyperfixi/core` ships as `hyperfixi.js` (the same
+ * file, since Phase C3 of the engine cutover). It is shaped like upstream `_hyperscript`'s
+ * public object, so upstream plugins can use it, plus one hook upstream lacks
+ * (`addSourceTransform`). `test/engine-api.check.ts` checks the engine's own `api` against
+ * this interface, so the two cannot drift apart.
+ *
+ * (Until then `hyperfixi.js` was core's own bundle, and `window.hyperfixi` had core's API:
+ * `compile`, `compileSync`, `execute`, `createContext`, `evalHyperScript`, … — none of which
+ * the engine has. Those types are gone; see `HyperfixiAPI` for what replaced each.)
  */
+
+/** The context `evaluate` runs its source in. Every field is optional. */
+export interface HyperscriptContext {
+  /** What `me` / `my` / `I` refer to (default: `document.body`). */
+  me?: unknown;
+  you?: unknown;
+  /** `it` / `result`. */
+  result?: unknown;
+  event?: unknown;
+  target?: unknown;
+  detail?: unknown;
+  sender?: unknown;
+  body?: unknown;
+  /** Local variables, by name. */
+  locals?: Record<string, unknown>;
+}
+
+/** The token a parse error points at. */
+export interface HyperscriptToken {
+  type: string;
+  value: string;
+  /** Offsets into the source. */
+  start: number;
+  end: number;
+  /** 1-based line, 0-based column. */
+  line: number;
+  column: number;
+}
+
+/** A grammar error, as `parse` reports it and as the `hyperscript:parse-error` event carries it. */
+export interface HyperscriptParseError {
+  message: string;
+  token: HyperscriptToken;
+  source: string;
+  /** The words the parser would have accepted, when it knows. */
+  expected?: string[];
+  /** What the author wrote, when a source transform rewrote the script before it was parsed. */
+  written?: string;
+}
+
+/** `parse`'s result: the parsed node in upstream's shape, with its `errors` (empty when it parsed). */
+export interface HyperscriptParseResult {
+  errors: HyperscriptParseError[];
+}
+
+/** A root `processNode` initialises: hooks receive it before and after. */
+export type HyperscriptProcessRoot = Element | Document | DocumentFragment;
 
 /**
- * HyperFixi core API exposed on window.hyperfixi
+ * A plugin's rewrite of a script, applied as the script is read; the element keeps the text its
+ * author wrote. Return nothing to leave the script as it is.
  */
-export interface LokaScriptCoreAPI {
-  // ==================== API v2 (Recommended) ====================
+export type HyperscriptSourceTransform = (
+  source: string,
+  element: Element
+) => string | null | undefined;
+
+/** `config`: upstream's settings, and the table `as <Name>` conversions read. */
+export interface HyperscriptConfig {
+  /** Attributes that hold a script (default `'_, script, data-script'`). */
+  attributes: string;
+  defaultTransition: string;
+  disableSelector: string;
+  /** The strategy `hide` / `show` / `toggle` use when none is named (`display` if unset). */
+  defaultHideShowStrategy?: string;
+  /** Extra strategies, by name. */
+  hideShowStrategies: Record<
+    string,
+    (op: 'hide' | 'show' | 'toggle', elt: HTMLElement, arg?: string) => void
+  >;
+  /** `fetch` throws when the response status matches one of these. */
+  fetchThrowsOn: RegExp[];
+  /** `as <Name>` conversions, by name; `dynamicResolvers` handle names with arguments. */
+  conversions: Record<string, (value: unknown) => unknown> & {
+    dynamicResolvers: ((name: string, value: unknown) => unknown)[];
+  };
+}
+
+/**
+ * `window.hyperfixi` / `window._hyperscript`. Callable: `hyperfixi(source, context?)` is
+ * `hyperfixi.evaluate(source, context?)`.
+ *
+ * Replacing core 3.x's API: `compileSync(code)` → `parse(code).errors`;
+ * `eval(code, element)` / `execute(code, element)` → `evaluate(code, { me: element })`;
+ * `processNode(node)` is unchanged; `compile(code, { language })` → load
+ * `@lokascript/hyperscript-adapter` beside a semantic bundle, which translates each script as
+ * the engine reads it.
+ */
+export interface HyperfixiAPI {
+  (source: string, context?: HyperscriptContext): unknown;
 
   /**
-   * Synchronously compile hyperscript code to AST (API v2).
-   * @since API v2
+   * Run source: commands, features (installed on `document.body`) or one expression.
+   * Synchronous unless the source itself waits on something; then it returns a promise.
+   * A parse error throws.
    */
-  compileSync(code: string, options?: NewCompileOptions): CompileResult;
+  evaluate(source: string, context?: HyperscriptContext): unknown;
 
-  /**
-   * Asynchronously compile hyperscript code (handles all 13 languages) (API v2).
-   * @since API v2
-   */
-  compile(code: string, options?: NewCompileOptions): Promise<CompileResult>;
+  /** Parse without running. A grammar error is reported in `errors`; a tokenizer error throws. */
+  parse(source: string): HyperscriptParseResult;
 
-  /**
-   * Compile and execute hyperscript in one step (API v2).
-   * @since API v2
-   */
-  eval(code: string, contextOrElement?: any): Promise<any>;
+  /** Initialise every scripted element under a node; elements already initialised are skipped. */
+  process(node: unknown): void;
 
-  /**
-   * Validate hyperscript syntax and return detailed errors (API v2).
-   * @since API v2
-   */
-  validate(code: string, options?: NewCompileOptions): Promise<ValidateResult>;
+  /** Upstream's older name for `process`. */
+  processNode(node: unknown): void;
 
-  /**
-   * Create execution context with optional parent (unified signature, API v2).
-   * @since API v2
-   */
-  createContext(element?: Element | null, parent?: any): any;
+  /** Remove everything an element's script installed: listeners, observers, timers, state. */
+  cleanup(element: Element): void;
 
-  // ==================== API v1 (Deprecated) ====================
+  config: HyperscriptConfig;
 
-  /**
-   * Evaluate hyperscript string directly
-   */
-  evalHyperScript(code: string, element?: Element): any;
+  /** `use(plugin)`: the plugin receives this object (upstream's plugin API). */
+  use(plugin: (hyperscript: unknown) => void): void;
 
-  /**
-   * Async evaluation of hyperscript
-   */
-  evalHyperScriptAsync(code: string, element?: Element): Promise<any>;
+  addBeforeProcessHook(hook: (root: HyperscriptProcessRoot) => void): void;
 
-  /**
-   * Smart evaluation with automatic context detection
-   */
-  evalHyperScriptSmart(code: string): Promise<any>;
+  addAfterProcessHook(hook: (root: HyperscriptProcessRoot) => void): void;
 
-  /**
-   * Compile multilingual hyperscript code
-   * @deprecated Use compile() with options.language instead
-   */
-  compileMultilingual(code: string, language: string, options?: CompileOptions): CompilationResult;
+  /** Not in upstream: rewrite a script as it is read, leaving the attribute as written. */
+  addSourceTransform(transform: HyperscriptSourceTransform): void;
 
-  /**
-   * Execute hyperscript code
-   */
-  execute(code: string, element?: Element, options?: ExecuteOptions): Promise<any>;
-
-  /**
-   * Run hyperscript code (alias for execute)
-   * @deprecated Use eval() instead
-   */
-  run(code: string, element?: Element, options?: ExecuteOptions): Promise<any>;
-
-  /**
-   * Create child execution context
-   * @deprecated Use createContext(element, parent) instead
-   */
-  createChildContext(parent: any, element?: Element): any;
-
-  /**
-   * Validate hyperscript syntax (returns boolean)
-   * @deprecated Use validate() instead (returns detailed result)
-   */
-  isValidHyperscript(code: string): boolean;
-
-  /**
-   * Create runtime instance
-   */
-  createRuntime(options?: RuntimeOptions): any;
-
-  /**
-   * Process DOM node
-   */
-  processNode(node: Node): void;
-
-  /**
-   * Process DOM node (alias)
-   */
-  process(node: Node): void;
-
-  /**
-   * Tokenize hyperscript code
-   */
-  tokenize(code: string): any[];
-
-  /**
-   * Low-level parser access
-   */
-  Parser: any;
-
-  /**
-   * Low-level runtime access
-   */
-  Runtime: any;
-
-  /**
-   * Attribute processor
-   */
-  attributeProcessor: any;
-
-  /**
-   * Debug utilities
-   */
-  debug: {
-    enableDebugLogging(): void;
-    disableDebugLogging(): void;
+  /** The part of upstream's `internals` that pages and tests reach for. */
+  internals: {
+    runtime: {
+      cleanup(element: Element): void;
+      processNode(node: unknown): void;
+    };
   };
 
-  /**
-   * Style batcher utility
-   */
-  styleBatcher: any;
-
-  /**
-   * Object pool utility
-   */
-  ObjectPool: any;
-
-  /**
-   * Semantic parsing utilities
-   */
-  semantic?: {
-    parse(code: string, language: string): any;
-    translate(code: string, fromLang: string, toLang: string): string | null;
-    buildAST(node: any): any;
-  };
-
-  /**
-   * Semantic debug utilities
-   */
-  semanticDebug?: any;
-
-  /**
-   * Version string
-   */
+  /** The engine's package version (`'dev'` when built from source without one). */
   version: string;
 }
 
-export interface CompileOptions {
-  language?: string;
-  strict?: boolean;
-  [key: string]: any;
-}
-
-export interface CompilationResult {
-  success: boolean;
-  code?: any;
-  error?: Error;
-  [key: string]: any;
-}
-
-export interface ExecuteOptions {
-  context?: any;
-  element?: Element;
-  [key: string]: any;
-}
-
-export interface ContextOptions {
-  element?: Element;
-  globals?: Record<string, any>;
-  [key: string]: any;
-}
-
-export interface RuntimeOptions {
-  [key: string]: any;
-}
-
-export type EvalHyperScriptFunction = (code: string, element?: Element) => any;
-
-export type EvalHyperScriptAsyncFunction = (code: string, element?: Element) => Promise<any>;
-
-export type EvalHyperScriptSmartFunction = (code: string) => Promise<any>;
-
-// ==================== API v2 Types ====================
-
-/**
- * Compilation result (API v2)
- */
-export interface CompileResult {
-  /** Whether compilation succeeded */
-  ok: boolean;
-  /** Compiled AST (only present if ok=true) */
-  ast?: any;
-  /** Compilation errors (only present if ok=false) */
-  errors?: CompileError[];
-  /** Compilation metadata */
-  meta: {
-    /** Parser used: semantic or traditional */
-    parser: 'semantic' | 'traditional';
-    /** Confidence score (0-1) if semantic parser was used */
-    confidence?: number;
-    /** Language code */
-    language: string;
-    /** Compilation time in milliseconds */
-    timeMs: number;
-    /** Whether direct path was taken (no fallback) */
-    directPath?: boolean;
-  };
-}
-
-/**
- * Compilation error (API v2)
- */
-export interface CompileError {
-  /** Error message */
-  message: string;
-  /** Line number where error occurred */
-  line: number;
-  /** Column number where error occurred */
-  column: number;
-  /** Optional suggestion for fixing the error */
-  suggestion?: string;
-}
-
-/**
- * Compilation options (API v2)
- */
-export interface NewCompileOptions {
-  /** Language code (default: 'en') */
-  language?: string;
-  /** Minimum confidence for semantic parsing (0-1, default: 0.5) */
-  confidenceThreshold?: number;
-  /** Force traditional parser, skip semantic analysis */
-  traditional?: boolean;
-}
-
-/**
- * Validation result (API v2)
- */
-export interface ValidateResult {
-  /** Whether code is valid */
-  valid: boolean;
-  /** Validation errors (only present if valid=false) */
-  errors?: CompileError[];
-}
+/** @deprecated The 3.x name; `window.hyperfixi` is a {@link HyperfixiAPI} since 4.0. */
+export type LokaScriptCoreAPI = HyperfixiAPI;

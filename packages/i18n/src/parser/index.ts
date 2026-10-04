@@ -3,20 +3,18 @@
 /**
  * Parser integration for multilingual hyperscript.
  *
- * This module provides KeywordProvider implementations that enable
- * the hyperscript parser to understand non-English keywords.
+ * This module provides KeywordProvider implementations: each resolves a
+ * locale's hyperscript keywords to canonical English and back.
  *
  * @example
  * ```typescript
  * // Spanish
  * import { esKeywords } from '@lokascript/i18n/parser';
- * const parser = new Parser({ keywords: esKeywords });
- * parser.parse('en clic alternar .active');
+ * esKeywords.resolve('alternar'); // 'toggle'
  *
  * // Japanese
  * import { jaKeywords } from '@lokascript/i18n/parser';
- * const parser = new Parser({ keywords: jaKeywords });
- * parser.parse('クリック で 切り替え .active');
+ * jaKeywords.resolve('切り替え'); // 'toggle'
  *
  * // Custom locale
  * import { createKeywordProvider } from '@lokascript/i18n/parser';

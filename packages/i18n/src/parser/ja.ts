@@ -22,10 +22,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { jaKeywords } from '@lokascript/i18n/parser/ja';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: jaKeywords });
- * parser.parse('クリック で 切り替え .active');
+ * jaKeywords.resolve('切り替え'); // 'toggle'
+ * jaKeywords.toLocale('on'); // 'で'
  * ```
  */
 export const jaKeywords: KeywordProvider = createKeywordProvider(ja, 'ja', {

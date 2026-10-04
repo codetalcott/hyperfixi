@@ -188,7 +188,7 @@ jobs:
       # 3. semantic (depends on framework)
       # 4. core (depends on semantic)
       # 5. patterns-reference (depends on semantic)
-      # 6. i18n (depends on core, semantic)
+      # 6. i18n (depends on semantic; its core dependency was doc-only, dropped in C4a)
       # 7. aot-compiler (depends on core, semantic)
       # 8. compilation-service (depends on aot-compiler, semantic)
       # 9. mcp-server (depends on semantic, patterns-reference, compilation-service)

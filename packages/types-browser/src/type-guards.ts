@@ -2,19 +2,19 @@
  * Type guards for browser globals
  */
 
-import type { LokaScriptCoreAPI } from './core-api';
+import type { HyperfixiAPI } from './core-api';
 import type { LokaScriptSemanticAPI } from './semantic-api';
 import type { LokaScriptI18nAPI } from './i18n-api';
 
 /**
- * Check if window.hyperfixi is available and properly typed
+ * Check that a value is the hyperscript host (`window.hyperfixi` / `window._hyperscript`):
+ * callable, with `evaluate` and `processNode`.
  */
-export function isHyperFixiCoreAvailable(obj?: any): obj is LokaScriptCoreAPI {
+export function isHyperFixiCoreAvailable(obj?: any): obj is HyperfixiAPI {
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.execute === 'function' &&
-    typeof obj.compile === 'function'
+    typeof obj === 'function' &&
+    typeof obj.evaluate === 'function' &&
+    typeof obj.processNode === 'function'
   );
 }
 
@@ -48,7 +48,7 @@ export function isHyperFixiI18nAvailable(obj?: any): obj is LokaScriptI18nAPI {
 /**
  * Safe access to window.hyperfixi with type checking
  */
-export function getHyperFixiCore(): LokaScriptCoreAPI | null {
+export function getHyperFixiCore(): HyperfixiAPI | null {
   if (typeof window !== 'undefined' && isHyperFixiCoreAvailable(window.hyperfixi)) {
     return window.hyperfixi;
   }

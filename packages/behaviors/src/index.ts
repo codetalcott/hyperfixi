@@ -26,7 +26,7 @@
  *
  * @example CDN usage
  * ```html
- * <script src="lokascript-browser.js"></script>
+ * <script src="hyperfixi-hs.js"></script>
  * <script src="@hyperfixi/behaviors/draggable.browser.js"></script>
  * <!-- Draggable is auto-registered -->
  * ```

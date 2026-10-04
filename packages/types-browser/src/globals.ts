@@ -5,7 +5,7 @@
  * HyperFixi and LokaScript global variables, providing IDE autocomplete and type safety.
  */
 
-import type { LokaScriptCoreAPI } from './core-api';
+import type { HyperfixiAPI } from './core-api';
 import type { LokaScriptSemanticAPI } from './semantic-api';
 import type { LokaScriptI18nAPI } from './i18n-api';
 
@@ -15,34 +15,28 @@ declare global {
    */
   interface Window {
     /**
-     * HyperFixi - Modern hyperscript engine with fixi/htmx integration
+     * The hyperscript engine (`@hyperfixi/engine`'s public object).
      *
-     * Loaded from: hyperfixi.js (the engine's hyperfixi-hs.js sets it too)
-     *
-     * @example
-     * ```typescript
-     * window.hyperfixi.execute('toggle .active', document.body)
-     * window.hyperfixi.compile('on click add .highlight')
-     * ```
-     */
-    hyperfixi: LokaScriptCoreAPI;
-
-    /**
-     * @deprecated Use `hyperfixi` instead. Will be removed in v3.0.0.
-     *
-     * Loaded from: hyperfixi.js (backward-compat alias)
-     */
-    lokascript: LokaScriptCoreAPI;
-
-    /**
-     * Compatibility alias for official _hyperscript API compatibility
+     * Loaded from: hyperfixi-hs.js (or hyperfixi.js, the same file under `@hyperfixi/core`'s name)
      *
      * @example
      * ```typescript
-     * window._hyperscript.compile('on click toggle .active')
+     * window.hyperfixi.evaluate('add .highlight to me', { me: document.body })
+     * window.hyperfixi.parse('on click toggle .active').errors // []
      * ```
      */
-    _hyperscript: LokaScriptCoreAPI;
+    hyperfixi: HyperfixiAPI;
+
+    /**
+     * The same object as `window.hyperfixi`, under upstream `_hyperscript`'s name — set by
+     * hyperfixi-hs.js, and by upstream `_hyperscript` itself.
+     *
+     * @example
+     * ```typescript
+     * window._hyperscript.processNode(document.body)
+     * ```
+     */
+    _hyperscript: HyperfixiAPI;
 
     /**
      * LokaScript Semantic - Multilingual semantic parsing (24 languages)
@@ -58,14 +52,14 @@ declare global {
     LokaScriptSemantic: LokaScriptSemanticAPI;
 
     /**
-     * LokaScript I18n - Grammar transformation for natural language word order
+     * LokaScript I18n - per-language vocabulary and word-order profiles (24 languages).
+     * Translation is `window.LokaScriptSemantic.translate`.
      *
      * Loaded from: lokascript-i18n.min.js
      *
      * @example
      * ```typescript
-     * const japanese = window.LokaScriptI18n.translate('on click toggle .active', 'en', 'ja')
-     * // Result: 'クリック で .active を 切り替え' (SOV word order)
+     * window.LokaScriptI18n.getProfile('ja')?.wordOrder // 'SOV'
      * ```
      */
     LokaScriptI18n: LokaScriptI18nAPI;
@@ -74,9 +68,8 @@ declare global {
   /**
    * globalThis interface augmentation (same as Window for browser contexts)
    */
-  var hyperfixi: LokaScriptCoreAPI;
-  var lokascript: LokaScriptCoreAPI;
-  var _hyperscript: LokaScriptCoreAPI;
+  var hyperfixi: HyperfixiAPI;
+  var _hyperscript: HyperfixiAPI;
   var LokaScriptSemantic: LokaScriptSemanticAPI;
   var LokaScriptI18n: LokaScriptI18nAPI;
 }
