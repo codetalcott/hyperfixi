@@ -29,20 +29,18 @@
  *     `initializeApp`, an unregistered behavior).
  *
  * HTML-markup patterns (raw_code starting with `<`):
- *   - every `_="…"`, `hx-live="…"` and `<script type="text/hyperscript">`
- *     source — including the `_` sources inside component template bodies —
- *     is verified on both legs as above;
+ *   - every `_="…"` and `<script type="text/hyperscript">` source — including
+ *     the `_` sources inside component template bodies — is verified on both
+ *     legs as above;
  *   - template components are RENDERED on both legs, because a component's
  *     behavior is its render and no parse can check it (upstream reads
  *     `attrs.X` as an expression, @hyperfixi/components as a raw string — the
  *     same source parses on both and renders on one). Each defined tag is
  *     instantiated (COMPONENT_INSTANCES supplies attributes and slot content)
  *     and must render non-empty with nothing logged or thrown;
- *   - the htmx-compat attributes (hx-live / sse-* / ws-*) are hyperfixi-only
- *     and block the upstream claim. Their lokascript credit comes from driving
- *     the markup through the bundle that ships them, dist/hyperfixi-hx-v4.js,
- *     in an isolated jsdom window (hxV4Smoke) — never from "the feature is
- *     tested elsewhere";
+ *   - core's htmx-compat attributes (hx-live / sse-* / ws-*) earn no credit on
+ *     either leg: they ran only in dist/hyperfixi-hx-v4.js, which retired with
+ *     core's htmx layer (Phase C3). Their corpus rows went with it;
  *   - a row with no source at all earns no credit on either leg.
  *
  * The engine column value is then:
@@ -66,12 +64,10 @@
  *
  *   npm run verify:engines --prefix packages/patterns-reference
  *
- * The run REFUSES when a package it executes has src/ newer than dist/ (or
- * the hx-v4 bundle is older than the source it bundles): a stale build
- * verifies code that differs from the checkout, which is how a 2026-09-23
- * re-run produced ~20 flips no one could attribute. Rebuild with
- * `npm run check:fresh` and `npm run build:browser:hybrid-hx-v4 --prefix
- * packages/core`.
+ * The run REFUSES when a package it executes has src/ newer than dist/: a
+ * stale build verifies code that differs from the checkout, which is how a
+ * 2026-09-23 re-run produced ~20 flips no one could attribute. Rebuild with
+ * `npm run check:fresh`.
  *
  * Flags:
  *   --check       recompute and compare with the committed JSON; write
@@ -106,17 +102,11 @@ const INSTALL_SETTLE_MS = 500;
  */
 const POST_INSTALL_MS = 50;
 
-/** Settle window for a component render or an hx-v4 wiring step (ms). */
+/** Settle window for a component render (ms). */
 const RENDER_SETTLE_MS = 150;
 
 /** Workspace packages whose built dist/ this harness executes. */
 const EXECUTED_PACKAGES = ['core', 'reactivity', 'realtime', 'components'];
-
-/** The browser bundle that implements hx-live / sse-* / ws-* (see hxV4Smoke). */
-const HX_V4_BUNDLE = join(PACKAGES_ROOT, 'core', 'dist', 'hyperfixi-hx-v4.js');
-
-/** Packages whose source that bundle is built from. */
-const HX_V4_SOURCES = ['core', 'reactivity', 'realtime'];
 
 interface ComponentFixture {
   /** Instance markup, as the page using the component would write it. Default `<tag></tag>`. */
@@ -190,11 +180,6 @@ function findStaleDists(): string[] {
       .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
     if (!marker || hasNewerTs(join(pkg, 'src'), statSync(marker).mtimeMs)) stale.push(name);
   }
-  // A separate build (`build:browser:hybrid-hx-v4`) of core+reactivity+realtime.
-  const bundleAt = existsSync(HX_V4_BUNDLE) ? statSync(HX_V4_BUNDLE).mtimeMs : 0;
-  if (!bundleAt || HX_V4_SOURCES.some(n => hasNewerTs(join(PACKAGES_ROOT, n, 'src'), bundleAt))) {
-    stale.push('core/dist/hyperfixi-hx-v4.js');
-  }
   return stale;
 }
 
@@ -204,7 +189,7 @@ const errorText = (e: unknown): string => (e instanceof Error ? e.message : Stri
 
 /**
  * Where engine errors go while a render smoke is watching: console.error
- * (both engines LOG failures in component and hx-v4 paths rather than
+ * (both engines LOG failures in component paths rather than
  * throwing to the caller), uncaught exceptions and unhandled rejections
  * (upstream's component init throws from a timer). Installed once for the
  * whole run — removing a process handler mid-run would let a late throw kill
@@ -393,190 +378,6 @@ function extractSnippets(dom: JSDOM, markup: string): MarkupSnippets {
   return extractHyperscriptFromMarkup(dom.window.document, markup);
 }
 
-interface StubListenerMap {
-  get(type: string): Array<(e: unknown) => void> | undefined;
-  set(type: string, fns: Array<(e: unknown) => void>): unknown;
-}
-
-function stubListen(map: StubListenerMap, type: string, fn: (e: unknown) => void): void {
-  map.set(type, [...(map.get(type) ?? []), fn]);
-}
-
-/**
- * Drive hx-live / sse-* / ws-* markup through the bundle that implements it.
- *
- * A FRESH jsdom window per call runs dist/hyperfixi-hx-v4.js exactly as a page
- * would (it auto-initializes and watches the body), with recording stubs for
- * EventSource and WebSocket. The markup must then DO something, per attribute:
- *   - each `sse-swap` event name, emitted on the connection its `sse-connect`
- *     opened, lands in its `hx-target` (or the element itself);
- *   - each `ws-send` form, submitted, reaches the socket its `ws-connect`
- *     opened;
- *   - each `hx-live` element re-renders when the `$vars` it reads change.
- * Anything the window logs as an error fails the row. Returns null on success.
- */
-async function hxV4Smoke(markup: string, bundleSource: string): Promise<string | null> {
-  const logged: string[] = [];
-  const virtualConsole = new VirtualConsole();
-  virtualConsole.on('error', (...args: unknown[]) => logged.push(args.map(errorText).join(' ')));
-  virtualConsole.on('jsdomError', (e: Error) => logged.push(e.message));
-  const dom = new JSDOM('<!doctype html><html><body></body></html>', {
-    url: 'http://localhost/',
-    runScripts: 'outside-only',
-    pretendToBeVisual: true,
-    virtualConsole,
-  });
-  const win = dom.window as unknown as {
-    document: typeof dom.window.document;
-    Event: typeof dom.window.Event;
-    MessageEvent: typeof dom.window.MessageEvent;
-    eval: (source: string) => unknown;
-    hyperfixi?: { run: (code: string, el: unknown) => Promise<unknown> };
-    [k: string]: unknown;
-  };
-  const sources: Array<{ url: string; emit: (type: string, data: string) => void }> = [];
-  const sockets: Array<{ url: string; sent: string[] }> = [];
-
-  win.EventSource = class {
-    url: string;
-    readyState = 1;
-    onmessage: ((e: unknown) => void) | null = null;
-    onopen: ((e: unknown) => void) | null = null;
-    onerror: ((e: unknown) => void) | null = null;
-    private listeners = new Map<string, Array<(e: unknown) => void>>();
-    constructor(url: string) {
-      this.url = String(url);
-      sources.push(this);
-    }
-    addEventListener(type: string, fn: (e: unknown) => void) {
-      stubListen(this.listeners, type, fn);
-    }
-    removeEventListener(type: string, fn: (e: unknown) => void) {
-      this.listeners.set(type, (this.listeners.get(type) ?? []).filter(f => f !== fn));
-    }
-    close() {
-      this.readyState = 2;
-    }
-    emit(type: string, data: string) {
-      const ev = new win.MessageEvent(type, { data });
-      for (const fn of this.listeners.get(type) ?? []) fn(ev);
-      if (type === 'message') this.onmessage?.(ev);
-    }
-  };
-  win.WebSocket = class {
-    static CONNECTING = 0;
-    static OPEN = 1;
-    static CLOSING = 2;
-    static CLOSED = 3;
-    url: string;
-    readyState = 1;
-    sent: string[] = [];
-    onopen: ((e: unknown) => void) | null = null;
-    onmessage: ((e: unknown) => void) | null = null;
-    onclose: ((e: unknown) => void) | null = null;
-    onerror: ((e: unknown) => void) | null = null;
-    private listeners = new Map<string, Array<(e: unknown) => void>>();
-    constructor(url: string) {
-      this.url = String(url);
-      sockets.push(this);
-      setTimeout(() => {
-        const ev = new win.Event('open');
-        this.onopen?.(ev);
-        for (const fn of this.listeners.get('open') ?? []) fn(ev);
-      }, 0);
-    }
-    addEventListener(type: string, fn: (e: unknown) => void) {
-      stubListen(this.listeners, type, fn);
-    }
-    removeEventListener(type: string, fn: (e: unknown) => void) {
-      this.listeners.set(type, (this.listeners.get(type) ?? []).filter(f => f !== fn));
-    }
-    send(data: unknown) {
-      this.sent.push(String(data));
-    }
-    close() {
-      this.readyState = 3;
-    }
-  };
-  win.fetch = () =>
-    Promise.resolve({
-      ok: true,
-      status: 200,
-      text: () => Promise.resolve(''),
-      json: () => Promise.resolve({}),
-      headers: { get: () => null },
-    });
-
-  const doc = win.document;
-  try {
-    win.eval(bundleSource);
-    if (!win.hyperfixi) return 'hyperfixi-hx-v4.js did not install window.hyperfixi';
-
-    // `#id` targets the markup points at but does not contain — the page
-    // around the pattern provides them.
-    const probe = doc.createElement('div');
-    probe.innerHTML = markup;
-    const missingTargets = Array.from(probe.querySelectorAll('[hx-target]'))
-      .map(el => el.getAttribute('hx-target') ?? '')
-      .filter(sel => /^#[\w-]+$/.test(sel) && !probe.querySelector(sel));
-    doc.body.innerHTML =
-      markup + [...new Set(missingTargets)].map(sel => `<div id="${sel.slice(1)}"></div>`).join('');
-    await sleep(RENDER_SETTLE_MS);
-
-    for (const el of Array.from(doc.querySelectorAll('[sse-swap]'))) {
-      const url = el.closest('[sse-connect]')?.getAttribute('sse-connect') ?? '';
-      const source = sources.find(s => s.url === url || s.url.endsWith(url));
-      if (!source) return `sse-connect="${url}" opened no EventSource`;
-      const targetSel = el.getAttribute('hx-target');
-      const target = targetSel ? doc.querySelector(targetSel) : el;
-      const names = (el.getAttribute('sse-swap') ?? '')
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-      for (const name of names) {
-        source.emit(name, `<i data-probe="${name}">${name}</i>`);
-        await sleep(20);
-        if (!target?.querySelector(`[data-probe="${name}"]`)) {
-          return `sse-swap event "${name}" did not swap into ${targetSel ?? 'its element'}`;
-        }
-      }
-    }
-
-    for (const form of Array.from(doc.querySelectorAll('form[ws-send]'))) {
-      const url = form.closest('[ws-connect]')?.getAttribute('ws-connect') ?? '';
-      const socket = sockets.find(s => s.url === url || s.url.endsWith(url));
-      if (!socket) return `ws-connect="${url}" opened no WebSocket`;
-      for (const input of Array.from(form.querySelectorAll('input[name]'))) {
-        (input as unknown as { value: string; name: string }).value =
-          `probe-${(input as unknown as { name: string }).name}`;
-      }
-      form.dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
-      await sleep(RENDER_SETTLE_MS);
-      if (!socket.sent.some(payload => payload.includes('probe-'))) {
-        return `ws-send: the submitted form never reached the socket (sent: ${JSON.stringify(socket.sent)})`;
-      }
-    }
-
-    for (const el of Array.from(doc.querySelectorAll('[hx-live]'))) {
-      const source = el.getAttribute('hx-live') ?? '';
-      const vars = [...new Set(source.match(/\$[A-Za-z_]\w*/g) ?? [])];
-      if (vars.length === 0) continue;
-      const before = el.outerHTML;
-      for (const v of vars) await win.hyperfixi.run(`set ${v} to 7`, doc.body);
-      await sleep(RENDER_SETTLE_MS);
-      if (el.outerHTML === before) {
-        return `hx-live="${source}" did not re-render when ${vars.join(', ')} changed`;
-      }
-    }
-
-    return logged.length > 0 ? logged[0].slice(0, 300) : null;
-  } catch (e) {
-    return errorText(e);
-  } finally {
-    dom.window.close();
-  }
-}
-
 async function main(): Promise<void> {
   const updateDb = process.argv.includes('--update-db');
   const checkOnly = process.argv.includes('--check');
@@ -593,7 +394,6 @@ async function main(): Promise<void> {
 
   const dom = installDomGlobals();
   installErrorSink();
-  const hxV4Bundle = readFileSync(HX_V4_BUNDLE, 'utf-8');
 
   // --- lokascript engine (this repo) ---
   const core = await import('@hyperfixi/core');
@@ -800,16 +600,16 @@ async function main(): Promise<void> {
     }
 
     // A leg earns credit only for what it exercised: a source that compiles
-    // (or parses), a component that renders, markup the hx-v4 bundle drives.
-    // Markup with none of those is unverified on both legs.
+    // (or parses), a component that renders. Markup with neither is unverified
+    // on both legs, and so is markup in core's retired htmx-compat attributes.
     const nothingToExercise = snippets.length === 0 && componentTags.length === 0;
+    const retired = upstreamBlocked
+      ? 'uses core-only attributes (hx-live / sse-* / ws-*), retired with hyperfixi-hx-v4.js'
+      : null;
     let lokascriptError: string | null =
-      nothingToExercise && !upstreamBlocked ? 'no verifiable source' : null;
-    let hyperscriptError: string | null = upstreamBlocked
-      ? 'uses hyperfixi-only attributes (hx-live / sse-* / ws-*)'
-      : nothingToExercise
-        ? 'no verifiable source'
-        : null;
+      retired ?? (nothingToExercise ? 'no verifiable source' : null);
+    let hyperscriptError: string | null =
+      retired ?? (nothingToExercise ? 'no verifiable source' : null);
 
     for (const snippet of snippets) {
       lokascriptError ??= await verifyLokascriptSnippet(snippet);
@@ -818,11 +618,6 @@ async function main(): Promise<void> {
     if (componentTags.length > 0) {
       lokascriptError ??= await renderComponents('lokascript', row.id, row.raw_code, componentTags);
       hyperscriptError ??= await renderComponents('hyperscript', row.id, row.raw_code, componentTags);
-    }
-    // hx-live / sse-* / ws-* exist only in hyperfixi-hx-v4.js: its lokascript
-    // credit is that bundle actually running the markup.
-    if (upstreamBlocked) {
-      lokascriptError ??= await hxV4Smoke(row.raw_code, hxV4Bundle);
     }
 
     results[row.id] = {
@@ -876,7 +671,7 @@ async function main(): Promise<void> {
         lokascript:
           'compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path) with its first-party plugins installed (@hyperfixi/reactivity and @hyperfixi/realtime, both pre-installed in hyperfixi.js, and @hyperfixi/components), plus a jsdom top-level install smoke (no error within a 500ms settle window; registrations cleaned up afterwards)',
         hyperscript: `upstream _hyperscript parse with zero recovered errors (extensions loaded: ${upstreamExtensions.join(', ') || 'none'}); parse-level for plain sources`,
-        html: 'HTML-markup patterns: every _= / hx-live / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); hx-live/sse-*/ws-* markup is hyperfixi-only (blocks the upstream claim) and earns its lokascript credit only by running in dist/hyperfixi-hx-v4.js (sse events swap into hx-target, ws-send reaches the socket, hx-live re-renders); a row with no source earns no credit',
+        html: 'HTML-markup patterns: every _= / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); the retired core-only hx-live/sse-*/ws-* markup earns no credit on either leg; a row with no source earns no credit',
       },
       // The versions this file was last regenerated at — informational only;
       // `--check` compares verdicts, not versions.

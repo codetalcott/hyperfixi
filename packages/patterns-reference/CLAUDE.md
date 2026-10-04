@@ -80,16 +80,16 @@ Each engine runs with its official extensions:
 - **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
   devDependency) with its official socket/worker/eventsource/component
   extensions; parse-level for plain sources: zero recovered parse errors.
-- **HTML-markup patterns** — every `_=`/`hx-live`/script-tag source,
+- **HTML-markup patterns** — every `_=`/script-tag source,
   including those inside component template bodies, is verified on both
   legs. Template components are RENDERED on both legs and must show what
   `COMPONENT_FIXTURES` declares (upstream reads `attrs.X` as an expression,
   `@hyperfixi/components` as a raw string, so `component-with-attrs` parses on
-  both and renders on one). `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only
-  (blocks the upstream claim) and earns lokascript credit only by running in
-  `dist/hyperfixi-hx-v4.js` in an isolated jsdom: each `sse-swap` event must
-  land in its `hx-target`, each `ws-send` form must reach the socket, each
-  `hx-live` element must re-render. A row with no source earns no credit.
+  both and renders on one). Core's `hx-live`/`sse-*`/`ws-*` markup earns no
+  credit on either leg: it ran only in `dist/hyperfixi-hx-v4.js`, which
+  retired with core's htmx layer (Phase C3), and its five corpus rows went
+  with it (`hx-live` → the engine's `live` block: `live-with-handler`). A row
+  with no source earns no credit.
 - Every one of those checks has been shown to redden its row under a mutation
   (2026-09-25); keep it that way when changing the harness.
 
@@ -159,17 +159,14 @@ in the next `npm run sync:translations`.
 
 ### Non-Translatable Patterns
 
-8 patterns are flagged `translatable=0`. `sync-translations.ts` stores
+3 patterns are flagged `translatable=0`. `sync-translations.ts` stores
 each as written in all 24 languages (method `non-translatable-identity`),
 and the multilingual sweep skips those rows: they are copies, not
 translations.
 
-- 7 are HTML markup. `hx-live-attribute`, `hx-live-with-mutator`,
-  `sse-connect-swap`, `sse-multi-event` and `ws-connect-send` use
-  attribute names (`hx-live`, `sse-connect`, etc.) that are
-  language-agnostic and resolved at runtime by vocab modules.
-  `component-hello-world` and `component-with-slots` carry no
-  hyperscript at all.
+- 2 are HTML markup with no hyperscript at all: `component-hello-world`
+  and `component-with-slots`. (Five more — core's `hx-live`/`sse-*`/`ws-*`
+  rows — left the corpus with hyperfixi-hx-v4.js in Phase C3.)
 - `intercept-cache-strategies` has no semantic schema, so every
   rendering dropped the whole body (the verb and `end`). It is stored as
   written until a schema exists.
