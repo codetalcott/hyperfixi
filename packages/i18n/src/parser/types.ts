@@ -3,15 +3,16 @@
 /**
  * KeywordProvider interface for locale-aware parsing.
  *
- * This interface allows the parser to resolve non-English keywords
- * to their canonical English equivalents, enabling multilingual
- * hyperscript syntax.
+ * A provider resolves a locale's keywords to their canonical English
+ * equivalents and back (`@hyperfixi/core` 3.x's parser reads one through its
+ * `keywords` parse option).
  *
  * @example
  * ```typescript
  * import { esKeywords } from '@lokascript/i18n/parser/es';
- * const parser = new Parser({ keywords: esKeywords });
- * parser.parse('en clic alternar .active'); // Works!
+ *
+ * esKeywords.resolve('alternar'); // 'toggle'
+ * esKeywords.toLocale('toggle'); // 'alternar'
  * ```
  */
 export interface KeywordProvider {

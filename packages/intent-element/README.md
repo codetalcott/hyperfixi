@@ -13,7 +13,7 @@ Every peer dependency is optional: validation works with none of them. Executing
 - the host is `@hyperfixi/engine`'s `hyperfixi-hs.js` (`window.hyperfixi`) or upstream `_hyperscript` — anything with `evaluate(source, context)`;
 - the renderer is `@lokascript/semantic`'s `render(node, 'en')`, taken from whichever `LokaScriptSemantic*` browser bundle the page loads (`browser-en.en.global.js` is the English-only one), or set on `LSEIntentElement.render`.
 
-The intent is rendered to English (`toggle .active on #sidebar`) and evaluated with the element as `me` — the same text path as the `lse_to_hyperscript` tool. A page on `@hyperfixi/core`'s `hyperfixi.js` alone still works: without a renderer the element falls back to core's `window.hyperfixi.evalLSENode`.
+The intent is rendered to English (`toggle .active on #sidebar`) and evaluated with the element as `me` — the same text path as the `lse_to_hyperscript` tool. Without a renderer the element validates but does not execute, and reports `NO_RENDERER`. (`@hyperfixi/core` 3.x's `window.hyperfixi.evalLSENode` fallback is gone: `hyperfixi.js` is the engine's file, which has no such method.)
 
 ## Usage
 

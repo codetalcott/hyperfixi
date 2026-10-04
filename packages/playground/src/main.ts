@@ -1,14 +1,27 @@
 /**
  * LokaScript Playground — main entry point.
  *
- * Split-pane editor: Source → LSE IR → Compiled output
+ * Split-pane editor: Source → LSE IR → the engine's parse
  * Translation view: See equivalent code in all supported languages
  */
 
-// Import the full API — playground doesn't care about bundle size
-// Vite aliases resolve these to source directories
-import { hyperscript } from '@hyperfixi/core/api/hyperscript-api';
-import { parseSemantic, renderExplicit, getAllTranslations } from '@lokascript/semantic';
+// The whole engine and the whole semantic front-end — the playground doesn't care about
+// bundle size. Vite aliases resolve both to their source directories.
+import { ParseError, everything, formatError, parse, register } from '@hyperfixi/engine';
+import { parseSemantic, render, renderExplicit, getAllTranslations } from '@lokascript/semantic';
+
+register(...everything);
+
+/**
+ * The English the engine reads for code in `language`: the code itself, or its semantic parse
+ * rendered to English (what `@lokascript/hyperscript-adapter` does on a page).
+ */
+function englishOf(code: string, language: string): string {
+  if (language === 'en') return code;
+  const node = parseSemantic(code, language).node;
+  if (!node) throw new Error(`not readable as ${language}`);
+  return render(node, 'en');
+}
 
 // ── Elements ──────────────────────────────────────────────────────────────────
 
@@ -97,23 +110,20 @@ async function updateCompilation() {
     lseOutput.textContent = `Error: ${e instanceof Error ? e.message : String(e)}`;
   }
 
-  // 2. Compile with core API
+  // 2. Parse on the engine (@hyperfixi/engine), in English
   try {
-    const result = hyperscript.compileSync(code, { language });
-    if (result.ok) {
-      compiledOutput.textContent = JSON.stringify(result.ast, null, 2);
-      diagnosticsOutput.textContent = 'No errors';
-      diagnosticsOutput.className = 'output diagnostic-ok';
-    } else {
-      compiledOutput.textContent = '';
-      const errors =
-        result.errors?.map((e: { message: string }) => e.message).join('\n') || 'Unknown error';
-      diagnosticsOutput.textContent = errors;
-      diagnosticsOutput.className = 'output diagnostic-error';
-    }
+    const english = englishOf(code, language);
+    const parsed = parse(english);
+    compiledOutput.textContent =
+      (english === code ? '' : `// ${english}\n`) + JSON.stringify(parsed, null, 2);
+    diagnosticsOutput.textContent = 'No errors';
+    diagnosticsOutput.className = 'output diagnostic-ok';
   } catch (e) {
     compiledOutput.textContent = '';
-    diagnosticsOutput.textContent = `Compilation error: ${e instanceof Error ? e.message : String(e)}`;
+    diagnosticsOutput.textContent =
+      e instanceof ParseError
+        ? `${e.message}\n\n${formatError(e)}`
+        : `Parse error: ${e instanceof Error ? e.message : String(e)}`;
     diagnosticsOutput.className = 'output diagnostic-error';
   }
 }

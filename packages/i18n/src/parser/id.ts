@@ -20,10 +20,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { idKeywords } from '@lokascript/i18n/parser/id';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: idKeywords });
- * parser.parse('pada klik ganti .active');
+ * idKeywords.resolve('alihkan'); // 'toggle'
+ * idKeywords.toLocale('on'); // 'pada'
  * ```
  */
 export const idKeywords: KeywordProvider = createKeywordProvider(id, 'id', {

@@ -24,10 +24,8 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { zhKeywords } from '@lokascript/i18n/parser/zh';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: zhKeywords });
- * parser.parse('当 点击 切换 .active');
+ * zhKeywords.resolve('切换'); // 'toggle'
  * ```
  */
 export const zhKeywords: KeywordProvider = createKeywordProvider(zh, 'zh', {

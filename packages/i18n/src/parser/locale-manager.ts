@@ -26,9 +26,6 @@ import { createEnglishProvider } from './create-provider';
  * // Get keyword provider for parsing
  * const provider = LocaleManager.get(); // Returns esKeywords
  * const frProvider = LocaleManager.get('fr'); // Returns frKeywords
- *
- * // Use with parser
- * const parser = new Parser({ keywords: LocaleManager.get() });
  * ```
  */
 export class LocaleManager {
@@ -169,10 +166,9 @@ export class LocaleManager {
  * @example
  * ```typescript
  * import { detectBrowserLocale } from '@lokascript/i18n/parser';
- * import { Parser } from '@hyperfixi/core';
  *
- * // Auto-detect and use browser locale
- * const parser = new Parser({ keywords: detectBrowserLocale() });
+ * // The provider for the browser's language (navigator.languages), or English
+ * detectBrowserLocale().locale; // e.g. 'es'
  * ```
  */
 export function detectBrowserLocale(): KeywordProvider {

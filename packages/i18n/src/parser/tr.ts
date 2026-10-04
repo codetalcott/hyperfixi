@@ -24,10 +24,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { trKeywords } from '@lokascript/i18n/parser/tr';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: trKeywords });
- * parser.parse('üzerinde tıklama değiştir .active');
+ * trKeywords.resolve('değiştir'); // 'toggle'
+ * trKeywords.toLocale('on'); // 'üzerinde'
  * ```
  */
 export const trKeywords: KeywordProvider = createKeywordProvider(tr, 'tr', {

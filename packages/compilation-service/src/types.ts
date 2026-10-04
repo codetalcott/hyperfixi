@@ -162,7 +162,7 @@ export interface TestRequest {
   executionMode?: 'runtime' | 'compiled';
   /** Override auto-generated test name */
   testName?: string;
-  /** Path to LokaScript bundle (runtime mode) */
+  /** Path to the hyperscript bundle (runtime mode; default: @hyperfixi/engine's hyperfixi-hs.js) */
   bundlePath?: string;
 }
 

@@ -31,26 +31,26 @@
  *
  * ### Using window.hyperfixi
  * ```typescript
- * // window.hyperfixi is now fully typed
- * const result = await window.hyperfixi.execute('toggle .active')
- * window.evalHyperScript('toggle .active')
+ * // window.hyperfixi (and window._hyperscript, the same object) is fully typed
+ * window.hyperfixi.evaluate('toggle .active on me', { me: button })
+ * window.hyperfixi.parse('on click toggle .active').errors // []
  * ```
  *
- * ### Using window.HyperFixiSemantic
+ * ### Using window.LokaScriptSemantic
  * ```typescript
- * if (window.HyperFixiSemantic) {
- *   const node = window.HyperFixiSemantic.parse('toggle .active', 'en')
- *   const japanese = window.HyperFixiSemantic.translate('toggle .active', 'en', 'ja')
+ * if (window.LokaScriptSemantic) {
+ *   const node = window.LokaScriptSemantic.parse('toggle .active', 'en')
+ *   const japanese = window.LokaScriptSemantic.translate('toggle .active', 'en', 'ja')
  * }
  * ```
  *
  * ### Using Type Guards
  * ```typescript
- * import { isHyperFixiCoreAvailable, getHyperFixiCore } from '@hyperfixi/types-browser'
+ * import { getHyperFixiCore } from '@hyperfixi/types-browser'
  *
  * const hyperfixi = getHyperFixiCore()
  * if (hyperfixi) {
- *   hyperfixi.execute('toggle .active')
+ *   hyperfixi.evaluate('toggle .active on me', { me: button })
  * }
  * ```
  */
