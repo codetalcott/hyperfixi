@@ -6,22 +6,19 @@
  * - LocaleManager for runtime locale switching
  * - Factory functions for custom providers
  *
- * Usage with UMD bundle:
+ * Usage with the browser bundle (`lokascript-i18n.min.js`, global `LokaScriptI18n`):
  * ```html
- * <script src="hyperfixi-core.min.js"></script>
- * <script src="hyperfixi-i18n.min.js"></script>
+ * <script src="lokascript-i18n.min.js"></script>
  * <script>
- *   // Configure HyperFixi with Spanish keywords
- *   HyperFixi.configure({ keywords: HyperFixiI18n.esKeywords });
+ *   LokaScriptI18n.esKeywords.resolve('alternar'); // 'toggle'
  * </script>
  * ```
  *
  * Usage with ES modules:
  * ```typescript
  * import { esKeywords } from '@lokascript/i18n';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser(tokens, { keywords: esKeywords });
+ * esKeywords.resolve('alternar'); // 'toggle'
  * ```
  */
 

@@ -5,8 +5,8 @@
  * child (or a `src` attribute), validates it, and executes it on the page's hyperscript
  * host according to a declarative trigger model. The host is `@hyperfixi/engine`
  * (`hyperfixi-hs.js`) or upstream `_hyperscript`, which run the node rendered to English
- * hyperscript by a `LokaScriptSemantic*` bundle; or `@hyperfixi/core`'s `evalLSENode`
- * when no renderer is loaded. Degrades gracefully when there is no host.
+ * hyperscript by a `LokaScriptSemantic*` bundle. Degrades gracefully when there is no host
+ * or no renderer.
  *
  * ## Trigger modes
  *
@@ -72,18 +72,17 @@ import { sandboxed } from './sandbox.js';
 // ---------------------------------------------------------------------------
 
 /**
- * How a prepared node runs. Two hosts are known:
+ * How a prepared node runs. The host is a hyperscript engine in upstream `_hyperscript`'s
+ * shape — `@hyperfixi/engine` (`hyperfixi-hs.js`, `window.hyperfixi` / `window._hyperscript`)
+ * or upstream itself — with `evaluate(source, context)`. The node is rendered to English
+ * hyperscript text (`toggle .active on #sidebar`) and evaluated with the element as `me`.
+ * The renderer is `@lokascript/semantic`'s `render(node, 'en')`, read from whichever
+ * `LokaScriptSemantic*` bundle the page loaded (or set on `LSEIntentElement.render`). This
+ * is the `lse_to_hyperscript` direction: text is the interchange.
  *
- * 1. A hyperscript host in upstream `_hyperscript`'s shape — `@hyperfixi/engine`
- *    (`hyperfixi-hs.js`, `window.hyperfixi` / `window._hyperscript`) or upstream itself —
- *    has `evaluate(source, context)`. The node is rendered to English hyperscript text
- *    (`toggle .active on #sidebar`) and evaluated with the element as `me`. The renderer
- *    is `@lokascript/semantic`'s `render(node, 'en')`, read from whichever
- *    `LokaScriptSemantic*` bundle the page loaded (or set on `LSEIntentElement.render`).
- *    This is the `lse_to_hyperscript` direction: text is the interchange.
- * 2. `@hyperfixi/core`'s `window.hyperfixi.evalLSENode(node, element)`, which runs the
- *    node through core's own AST. Used only when no renderer is loaded, so a page on
- *    `hyperfixi.js` alone keeps working.
+ * (`@hyperfixi/core` 3.x also offered `window.hyperfixi.evalLSENode(node, element)`, which ran
+ * the node through core's own AST. No shipped bundle has it since `hyperfixi.js` became the
+ * engine's file, so the element no longer looks for it.)
  */
 interface LSERuntime {
   run(node: SemanticNode, element: Element): Promise<unknown>;
@@ -93,7 +92,6 @@ type Renderer = (node: SemanticNode, language: string) => string;
 
 interface HostLike {
   evaluate?: (source: string, context?: Record<string, unknown>) => unknown;
-  evalLSENode?: (node: SemanticNode, element?: Element) => Promise<unknown>;
 }
 
 function findRenderer(): Renderer | null {
@@ -146,7 +144,7 @@ type RuntimeLookup =
 function getRuntime(): RuntimeLookup {
   const w = globalThis as Record<string, unknown>;
   const host = (w['hyperfixi'] ?? w['_hyperscript']) as HostLike | undefined;
-  if (!host || (typeof host.evaluate !== 'function' && typeof host.evalLSENode !== 'function')) {
+  if (!host || typeof host.evaluate !== 'function') {
     return {
       runtime: null,
       code: 'NO_RUNTIME',
@@ -155,17 +153,13 @@ function getRuntime(): RuntimeLookup {
     };
   }
   const render = findRenderer();
-  if (render && typeof host.evaluate === 'function') {
+  if (render) {
     const evaluate = host.evaluate;
     return {
       runtime: {
         run: (node, element) => Promise.resolve(evaluate(render(node, 'en'), { me: element })),
       },
     };
-  }
-  if (typeof host.evalLSENode === 'function') {
-    const evalLSENode = host.evalLSENode;
-    return { runtime: { run: (node, element) => evalLSENode(node, element) } };
   }
   return {
     runtime: null,

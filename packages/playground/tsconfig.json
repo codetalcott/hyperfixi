@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@hyperfixi/core/*": ["../core/src/*"],
+      "@hyperfixi/engine": ["../engine/src/index.ts"],
       "@lokascript/semantic": ["../semantic/src"]
     }
   },

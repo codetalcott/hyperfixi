@@ -39,11 +39,13 @@ export class PlaywrightRenderer implements TestRenderer {
         `  await page.addScriptTag({ content: \`${escapeTemplate(options.compiledJs)}\` });`
       );
     } else {
+      // The engine's script-tag bundle. (Until 4.0 this named core's `lokascript-browser.js`,
+      // an alias of `hyperfixi.js`, which is the engine's file since Phase C3.)
       const bundlePath =
-        options.bundlePath ?? './node_modules/@hyperfixi/core/dist/lokascript-browser.js';
+        options.bundlePath ?? './node_modules/@hyperfixi/engine/dist/hyperfixi-hs.js';
       lines.push(`  await page.addScriptTag({ path: '${escapeString(bundlePath)}' });`);
       lines.push("  await page.waitForFunction(() => document.querySelector('[_]') !== null);");
-      // Wait for LokaScript to process attributes
+      // Wait for the engine to process attributes
       lines.push('  await page.waitForTimeout(100);');
     }
     lines.push('');

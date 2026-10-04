@@ -5,8 +5,7 @@
  * page's hyperscript host. Zero-dependency validation via @lokascript/intent;
  * execution renders the intent to English hyperscript (a LokaScriptSemantic bundle's
  * `render`) and hands it to the host's `evaluate` — @hyperfixi/engine's hyperfixi-hs.js,
- * or upstream _hyperscript. (@hyperfixi/core's `evalLSENode` is used when no renderer
- * is loaded.)
+ * or upstream _hyperscript.
  *
  * Auto-registers <lse-intent> when loaded as a browser script.
  *

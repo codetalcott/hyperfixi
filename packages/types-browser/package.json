@@ -1,7 +1,7 @@
 {
   "name": "@hyperfixi/types-browser",
   "version": "3.3.0",
-  "description": "TypeScript type definitions for LokaScript browser globals",
+  "description": "TypeScript definitions for the hyperfixi browser globals: window.hyperfixi / window._hyperscript (the engine), LokaScriptSemantic, LokaScriptI18n",
   "type": "module",
   "types": "dist/index.d.ts",
   "exports": {
@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.check.json"
   },
   "keywords": [
     "hyperfixi",
@@ -30,6 +30,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "devDependencies": {
+    "@hyperfixi/engine": "^3.3.0",
     "typescript": "^5.8.3"
   },
   "publishConfig": {

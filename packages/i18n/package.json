@@ -64,7 +64,6 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/i18n#readme",
   "dependencies": {
-    "@hyperfixi/core": "^3.3.0",
     "@lokascript/semantic": "^3.3.0",
     "esbuild": "^0.25.12",
     "happy-dom": "^20.14.5",

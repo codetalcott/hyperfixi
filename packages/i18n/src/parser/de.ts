@@ -22,10 +22,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { deKeywords } from '@lokascript/i18n/parser/de';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: deKeywords });
- * parser.parse('bei klick umschalten .active');
+ * deKeywords.resolve('umschalten'); // 'toggle'
+ * deKeywords.toLocale('on'); // 'bei'
  * ```
  */
 export const deKeywords: KeywordProvider = createKeywordProvider(de, 'de', {

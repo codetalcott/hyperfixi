@@ -17,10 +17,9 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { frKeywords } from '@lokascript/i18n/parser/fr';
- * import { Parser } from '@hyperfixi/core';
  *
- * const parser = new Parser({ keywords: frKeywords });
- * parser.parse('sur clic basculer .active');
+ * frKeywords.resolve('basculer'); // 'toggle'
+ * frKeywords.toLocale('on'); // 'sur'
  * ```
  */
 export const frKeywords: KeywordProvider = createKeywordProvider(fr, 'fr', {

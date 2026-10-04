@@ -17,7 +17,6 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   external: [
-    '@hyperfixi/core',
     'esbuild',
     'rollup',
     'terser',

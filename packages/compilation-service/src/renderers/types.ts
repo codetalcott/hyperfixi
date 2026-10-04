@@ -30,7 +30,7 @@ export interface TestRenderOptions {
   testName?: string;
   /** How to load the hyperscript behavior in the test */
   executionMode?: 'runtime' | 'compiled';
-  /** Path to LokaScript bundle (runtime mode) */
+  /** Path to the hyperscript bundle (runtime mode; default: @hyperfixi/engine's hyperfixi-hs.js) */
   bundlePath?: string;
   /** Original hyperscript source (for embedding in fixture) */
   hyperscript?: string;
