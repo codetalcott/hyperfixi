@@ -117,8 +117,8 @@ Global: `window.LokaScriptI18n`
 <script src="lokascript-i18n.min.js"></script>
 <script>
   // Vocabulary and profiles. `LokaScriptI18n.translate` is GONE — for
-  // translation, pair hyperfixi-multilingual.js with a semantic bundle and call
-  // `hyperfixi.translate(code, from, to)`.
+  // translation, load a @lokascript/semantic bundle and call
+  // `LokaScriptSemantic.translate(code, from, to)`.
   const profile = LokaScriptI18n.getProfile('ja'); // { wordOrder: 'SOV', … }
 </script>
 ```

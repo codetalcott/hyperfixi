@@ -11,9 +11,6 @@
  * URL Parameters:
  *   ?bundle=browser   - Full bundle (default, unless the script tag has data-default)
  *   ?bundle=hs        - hyperfixi-hs.js: hyperscript only, on the new engine
- *   ?bundle=multilingual - Multilingual bundle
- *   ?bundle=dev       - Development bundle
- *   ?bundle=prod      - Production bundle
  */
 
 (function () {
@@ -25,11 +22,10 @@
   // scripts/create-bundle-aliases.mjs).
   const BUNDLES = {
     'browser': 'hyperfixi.js',
-    'hs': 'hyperfixi-hs.js',
-    'multilingual': 'hyperfixi-multilingual.js',
-    'semantic-complete': 'hyperfixi-semantic-complete.js',
-    'dev': 'hyperfixi-browser.dev.js',
-    'prod': 'hyperfixi-browser.prod.js'
+    'hs': 'hyperfixi-hs.js'
+    // multilingual, semantic-complete, dev and prod retired with their core
+    // bundles in Phase C3 (C-R3); a page runs non-English hyperscript on hs
+    // with @lokascript/hyperscript-adapter.
   };
 
   // Get bundle from URL or localStorage

@@ -1,272 +1,226 @@
 /**
- * Multilingual Bundle End-to-End Tests
+ * Multilingual end to end, on the engine.
  *
- * Tests the complete multilingual bundle path in a real browser environment:
- * semantic bundle + multilingual bundle → parse → execute → DOM effect
+ * The stack a page loads to run hyperscript written in another language: the
+ * engine's `hyperfixi-hs.js`, a `@lokascript/semantic` bundle, and the lite
+ * `@lokascript/hyperscript-adapter` (test-multilingual-e2e.html). Each test
+ * writes an `_` attribute the way an author would, under a `lang`, and clicks
+ * it; the adapter hands the engine the English as it reads the script.
  *
- * This is the ultimate integration test for the multilingual use case.
+ * Until Phase C3 (C-R3) this spec drove core's `hyperfixi-multilingual.js`
+ * through `hyperfixi.execute(code, lang)`. That bundle and its API retired; the
+ * commands and languages here are the ones it covered.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-test.describe('Multilingual Bundle E2E', () => {
+interface Setup {
+  lang?: string;
+  classes?: string[];
+  hidden?: boolean;
+  clicks?: number;
+}
+
+interface Outcome {
+  classes: string[];
+  display: string;
+  written: string | null;
+  parseErrors: number;
+}
+
+/** Add a button with `_` = code, let the engine read it, click it. */
+async function run(page: Page, code: string, setup: Setup = {}): Promise<Outcome> {
+  return page.evaluate(
+    ({ code, setup }) => {
+      const el = document.createElement('button');
+      if (setup.lang) el.lang = setup.lang;
+      for (const c of setup.classes ?? []) el.classList.add(c);
+      if (setup.hidden) el.style.display = 'none';
+      el.setAttribute('_', code);
+      let parseErrors = 0;
+      document.body.addEventListener('hyperscript:parse-error', () => parseErrors++);
+      document.body.appendChild(el);
+      (window as any)._hyperscript.processNode(el);
+      for (let i = 0; i < (setup.clicks ?? 1); i++) el.click();
+      return {
+        classes: [...el.classList],
+        display: el.style.display,
+        written: el.getAttribute('_'),
+        parseErrors,
+      };
+    },
+    { code, setup }
+  );
+}
+
+test.describe('Multilingual E2E (hyperfixi-hs.js + semantic + lite adapter)', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the test page that loads both bundles
-    // page.goto waits for 'load' event, so bundles should be ready after this
     await page.goto('/packages/core/test-multilingual-e2e.html');
   });
 
-  test('bundles load correctly @quick', async ({ page }) => {
-    const bundles = await page.evaluate(() => ({
-      semantic: typeof (window as any).LokaScriptSemantic !== 'undefined',
-      multilingual: typeof (window as any).hyperfixi !== 'undefined',
+  test('the three scripts load @quick', async ({ page }) => {
+    const loaded = await page.evaluate(() => ({
+      engine: typeof (window as any)._hyperscript?.processNode,
+      semantic: typeof (window as any).LokaScriptSemantic?.parse,
+      adapter: typeof (window as any).HyperscriptI18n,
     }));
-
-    expect(bundles.semantic).toBe(true);
-    expect(bundles.multilingual).toBe(true);
+    expect(loaded).toEqual({ engine: 'function', semantic: 'function', adapter: 'object' });
   });
 
-  test('execute function exists on hyperfixi', async ({ page }) => {
-    const hasExecute = await page.evaluate(() => {
-      return typeof (window as any).hyperfixi.execute === 'function';
-    });
-    expect(hasExecute).toBe(true);
-  });
+  // ===========================================================================
+  // English (the adapter leaves it as written)
+  // ===========================================================================
 
-  test('parse function exists on hyperfixi', async ({ page }) => {
-    const hasParse = await page.evaluate(() => {
-      return typeof (window as any).hyperfixi.parse === 'function';
-    });
-    expect(hasParse).toBe(true);
-  });
-
-  // =============================================================================
-  // English Execution Tests
-  // =============================================================================
-
-  test.describe('English Execution', () => {
-    test('toggle command adds class @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('toggle .active', 'en', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(true);
+  test.describe('English', () => {
+    test('toggle adds a class @quick', async ({ page }) => {
+      expect((await run(page, 'on click toggle .active')).classes).toContain('active');
     });
 
-    test('toggle command removes class on second call', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('toggle .active', 'en', { me: el });
-        await (window as any).hyperfixi.execute('toggle .active', 'en', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(false);
+    test('toggle removes it on the second click', async ({ page }) => {
+      const { classes } = await run(page, 'on click toggle .active', { clicks: 2 });
+      expect(classes).not.toContain('active');
     });
 
-    test('add command adds class @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('add .highlight', 'en', { me: el });
-        return el.classList.contains('highlight');
-      });
-
-      expect(result).toBe(true);
+    test('add adds a class @quick', async ({ page }) => {
+      expect((await run(page, 'on click add .highlight')).classes).toContain('highlight');
     });
 
-    test('remove command removes class', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        el.classList.add('existing');
-        await (window as any).hyperfixi.execute('remove .existing', 'en', { me: el });
-        return el.classList.contains('existing');
-      });
-
-      expect(result).toBe(false);
+    test('remove removes a class', async ({ page }) => {
+      const { classes } = await run(page, 'on click remove .existing', { classes: ['existing'] });
+      expect(classes).not.toContain('existing');
     });
 
-    test('hide command hides element', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('hide me', 'en', { me: el });
-        return el.style.display;
-      });
-
-      expect(result).toBe('none');
+    test('hide hides the element', async ({ page }) => {
+      expect((await run(page, 'on click hide me')).display).toBe('none');
     });
 
-    test('show command shows hidden element', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        el.style.display = 'none';
-        await (window as any).hyperfixi.execute('show me', 'en', { me: el });
-        return el.style.display !== 'none';
-      });
-
-      expect(result).toBe(true);
+    test('show shows a hidden element', async ({ page }) => {
+      expect((await run(page, 'on click show me', { hidden: true })).display).not.toBe('none');
     });
   });
 
-  // =============================================================================
-  // Japanese Execution Tests (SOV word order)
-  // =============================================================================
+  // ===========================================================================
+  // Japanese (SOV)
+  // ===========================================================================
 
-  test.describe('Japanese Execution', () => {
-    test('toggle in Japanese (SOV order) @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('.active を トグル', 'ja', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(true);
+  test.describe('Japanese', () => {
+    test('toggle (SOV order) @quick', async ({ page }) => {
+      const { classes } = await run(page, 'クリック で .active を トグル', { lang: 'ja' });
+      expect(classes).toContain('active');
     });
 
-    test('add in Japanese', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('.highlight を 追加', 'ja', { me: el });
-        return el.classList.contains('highlight');
-      });
-
-      expect(result).toBe(true);
+    test('add', async ({ page }) => {
+      const { classes } = await run(page, 'クリック で .highlight を 追加', { lang: 'ja' });
+      expect(classes).toContain('highlight');
     });
 
-    test('remove in Japanese', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        el.classList.add('existing');
-        await (window as any).hyperfixi.execute('.existing を 削除', 'ja', { me: el });
-        return el.classList.contains('existing');
+    test('remove', async ({ page }) => {
+      const outcome = await run(page, 'クリック で .existing を 削除', {
+        lang: 'ja',
+        classes: ['existing'],
       });
-
-      expect(result).toBe(false);
+      expect(outcome.classes).not.toContain('existing');
     });
   });
 
-  // =============================================================================
-  // Korean Execution Tests (SOV word order)
-  // =============================================================================
+  // ===========================================================================
+  // Korean (SOV)
+  // ===========================================================================
 
-  test.describe('Korean Execution', () => {
-    test('toggle in Korean (SOV order) @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('.active 를 토글', 'ko', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(true);
+  test.describe('Korean', () => {
+    test('toggle (SOV order) @quick', async ({ page }) => {
+      const { classes } = await run(page, '클릭 할 때 .active 를 토글', { lang: 'ko' });
+      expect(classes).toContain('active');
     });
 
-    test('add in Korean', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('.highlight 를 추가', 'ko', { me: el });
-        return el.classList.contains('highlight');
-      });
-
-      expect(result).toBe(true);
+    test('add', async ({ page }) => {
+      const { classes } = await run(page, '클릭 할 때 .highlight 를 추가', { lang: 'ko' });
+      expect(classes).toContain('highlight');
     });
   });
 
-  // =============================================================================
-  // Spanish Execution Tests (SVO word order)
-  // =============================================================================
+  // ===========================================================================
+  // Spanish (SVO)
+  // ===========================================================================
 
-  test.describe('Spanish Execution', () => {
-    test('toggle in Spanish @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('alternar .active', 'es', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(true);
+  test.describe('Spanish', () => {
+    test('toggle @quick', async ({ page }) => {
+      const { classes } = await run(page, 'al clic alternar .active', { lang: 'es' });
+      expect(classes).toContain('active');
     });
 
-    test('add in Spanish', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('añadir .highlight', 'es', { me: el });
-        return el.classList.contains('highlight');
-      });
-
-      expect(result).toBe(true);
+    test('add', async ({ page }) => {
+      const { classes } = await run(page, 'al clic añadir .highlight', { lang: 'es' });
+      expect(classes).toContain('highlight');
     });
   });
 
-  // =============================================================================
-  // Arabic Execution Tests (VSO word order)
-  // =============================================================================
+  // ===========================================================================
+  // Arabic (VSO)
+  // ===========================================================================
 
-  test.describe('Arabic Execution', () => {
-    test('toggle in Arabic @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const el = document.getElementById('test-element')!;
-        await (window as any).hyperfixi.execute('بدّل .active', 'ar', { me: el });
-        return el.classList.contains('active');
-      });
-
-      expect(result).toBe(true);
+  test.describe('Arabic', () => {
+    test('toggle @quick', async ({ page }) => {
+      const { classes } = await run(page, 'عند النقر بدّل .active', { lang: 'ar' });
+      expect(classes).toContain('active');
     });
   });
 
-  // =============================================================================
-  // Translation Tests
-  // =============================================================================
+  // ===========================================================================
+  // Where the language comes from, and what stays in the DOM
+  // ===========================================================================
+
+  test.describe('Language and the DOM', () => {
+    test('the page language applies to an element without its own', async ({ page }) => {
+      await page.evaluate(() => document.documentElement.setAttribute('lang', 'es'));
+      const { classes } = await run(page, 'al clic alternar .active');
+      expect(classes).toContain('active');
+    });
+
+    test('the attribute keeps what its author wrote @quick', async ({ page }) => {
+      const code = 'クリック で .active を トグル';
+      const { classes, written } = await run(page, code, { lang: 'ja' });
+      expect(classes).toContain('active');
+      expect(written).toBe(code);
+    });
+  });
+
+  // ===========================================================================
+  // Translation (the semantic bundle's API)
+  // ===========================================================================
 
   test.describe('Translation', () => {
-    test('translate from English to Japanese @quick', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        return await (window as any).hyperfixi.translate('toggle .active', 'en', 'ja');
-      });
-
-      // Either katakana トグル or native Japanese 切り替え are valid translations
+    test('English to Japanese @quick', async ({ page }) => {
+      const result = await page.evaluate(() =>
+        (window as any).LokaScriptSemantic.translate('toggle .active', 'en', 'ja')
+      );
       expect(result).toMatch(/トグル|切り替え/);
     });
 
-    test('translate from Japanese to English', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        return await (window as any).hyperfixi.translate('.active を トグル', 'ja', 'en');
-      });
-
+    test('Japanese to English', async ({ page }) => {
+      const result = await page.evaluate(() =>
+        (window as any).LokaScriptSemantic.translate('.active を トグル', 'ja', 'en')
+      );
       expect(result.toLowerCase()).toContain('toggle');
     });
   });
 
-  // =============================================================================
-  // Error Handling Tests
-  // =============================================================================
+  // ===========================================================================
+  // Failure: nothing runs, nothing is rewritten
+  // ===========================================================================
 
-  test.describe('Error Handling', () => {
-    test('throws on unsupported language', async ({ page }) => {
-      const error = await page.evaluate(async () => {
-        try {
-          await (window as any).hyperfixi.execute('toggle .active', 'xx', {});
-          return null;
-        } catch (e: any) {
-          return e.message;
-        }
-      });
-
-      expect(error).not.toBeNull();
+  test.describe('Failure', () => {
+    test('a language no bundle knows is read as written, and does not run', async ({ page }) => {
+      const code = 'クリック で .active を トグル';
+      const { classes, written } = await run(page, code, { lang: 'xx' });
+      expect(classes).not.toContain('active');
+      expect(written).toBe(code);
     });
 
-    test('throws on unparseable command', async ({ page }) => {
-      const error = await page.evaluate(async () => {
-        try {
-          await (window as any).hyperfixi.execute('foobar baz', 'en', {});
-          return null;
-        } catch (e: any) {
-          return e.message;
-        }
-      });
-
-      expect(error).not.toBeNull();
-      expect(error).toContain('Failed to parse');
+    test('a script that does not parse reports a parse error', async ({ page }) => {
+      const { classes, parseErrors } = await run(page, 'foobar baz');
+      expect(classes).toEqual([]);
+      expect(parseErrors).toBeGreaterThan(0);
     });
   });
 });

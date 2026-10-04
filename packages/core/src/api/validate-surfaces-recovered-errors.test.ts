@@ -108,34 +108,10 @@ describe('ParseResult.recovered marks a degraded AST', () => {
     // This asymmetry is the root cause, not an incidental detail: recovery
     // paths restore `this.error` but never unwind `this.errors`. Anything
     // reading only `error` therefore sees a clean parse — which is exactly the
-    // bug fixed in the classic compile shim below.
+    // bug classic-i18n's compile shim had (fixed there, and retired with that
+    // bundle in Phase C3).
     const result = parse(RECOVERED);
     expect(result.error).toBeUndefined();
     expect(result.errors?.length).toBeGreaterThan(0);
-  });
-});
-
-/**
- * The classic-i18n bundle ships its own `compile()` shim for _hyperscript API
- * compatibility. It read the singular `error` and dropped `errors`, so it
- * reported `{ success: true, errors: [] }` for genuinely malformed input —
- * #780's defect, surviving in a second surface. Demo pages consume it
- * (packages/core/test-pages/color-cycling-debug.html, examples/multilingual/test-classic-i18n.html).
- */
-describe('classic-i18n compile() shim reports recovered errors', () => {
-  it('does not claim a clean compile for a recovered parse', async () => {
-    const api = (await import('../compatibility/browser-bundle-classic-i18n')).default;
-    const result = api.compile(RECOVERED);
-    // `success` stays true — the shim mirrors ParseResult, and the AST is
-    // still what the runtime has always run. The diagnostics must be there.
-    expect(result.success).toBe(true);
-    expect(result.errors.length).toBeGreaterThan(0);
-  });
-
-  it('still reports no errors for a clean parse', async () => {
-    const api = (await import('../compatibility/browser-bundle-classic-i18n')).default;
-    const result = api.compile('toggle .active');
-    expect(result.success).toBe(true);
-    expect(result.errors).toEqual([]);
   });
 });

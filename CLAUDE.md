@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~352 KB** full browser bundle (gzipped); the script-tag bundle is the engine's `hyperfixi-hs.js`, **34.1 KB** (core's small prebuilts retired: lite/lite-plus/minimal/standard in the 4.0 cycle, `hyperfixi-hx.js`/-hybrid-complete/-hx-v4 in Phase C3) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~352 KB** full browser bundle (gzipped); the script-tag bundle is the engine's `hyperfixi-hs.js`, **34.1 KB** (core's small prebuilts retired: lite/lite-plus/minimal/standard in the 4.0 cycle, `hyperfixi-hx.js`/-hybrid-complete/-hx-v4 and `hyperfixi-multilingual.js`/classic-i18n/modular in Phase C3) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -1128,28 +1128,34 @@ generator, and semantic regional bundles — lives in
 Quick selection (sizes gzipped). **The engine's `hyperfixi-hs.js` is the target** (every
 tracked gallery page runs on it since 2026-10-03); core's bundles ship until the cutover:
 
-| Bundle                       | Size       | Use case                                                                                                                                                                                                                     |
-| ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hyperfixi-hs.js`            | ~34.1 KB   | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes |
-| via `@hyperfixi/vite-plugin` | 18–34 KB   | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                          |
-| `hyperfixi.js`               | ~352 KB    | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                            |
-| `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                                                                                                                                              |
-| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                |
+| Bundle                              | Size           | Use case                                                                                                                                                                                                                                   |
+| ----------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hyperfixi-hs.js`                   | ~34.1 KB       | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes               |
+| via `@hyperfixi/vite-plugin`        | 18–34 KB       | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                                        |
+| `hyperfixi.js`                      | ~352 KB        | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                                          |
+| + `@lokascript/hyperscript-adapter` | +1.7 / ~115 KB | Hyperscript in any of 24 languages on `hyperfixi-hs.js`: the lite adapter beside a semantic bundle, or a per-language adapter bundle; it translates each script as the engine reads it (replaced core's `hyperfixi-multilingual.js`, C-R3) |
+| semantic bundles                    | ~90–260 KB     | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                              |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
 with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes
 (the owner's B2 decision, 2026-10-03). `lite`, `lite-plus`, `minimal` and
 `standard` were retired as public names in the 4.0 cycle; Phase C3 (2026-10-04) retired
 `hyperfixi-hx-v4.js` (`hx-live` is the engine's `live` block, SSE/WebSocket are htmx 4's), then
-`hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js` with core's embedded htmx layer.
+`hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js` with core's embedded htmx layer, then
+`hyperfixi-multilingual.js`, `classic-i18n` and `modular` (C-R3): non-English hyperscript runs on
+`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`.
 
-Multilingual usage (execute/translate in any of 24 languages):
+Multilingual usage (run and translate in any of 24 languages):
 
 ```html
-<script src="lokascript-semantic.browser.global.js"></script>
-<script src="hyperfixi-multilingual.js"></script>
+<script src="hyperfixi-hs.js"></script>
+<script src="browser.global.js"></script>
+<!-- @lokascript/semantic -->
+<script src="hyperscript-i18n-lite.global.js"></script>
+<!-- @lokascript/hyperscript-adapter -->
+
+<button lang="ko" _="클릭 할 때 .active 를 토글">토글</button>
 <script>
-  await hyperfixi.execute('토글 .active', 'ko');
-  const korean = await hyperfixi.translate('toggle .active', 'en', 'ko');
+  const korean = LokaScriptSemantic.translate('toggle .active', 'en', 'ko');
 </script>
 ```

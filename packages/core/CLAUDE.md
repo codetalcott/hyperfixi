@@ -102,16 +102,12 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
 5. For custom-bundle coverage (`generate:bundle`, the `./bundle-generator` export), add cases to `src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template is generated (parser rules go in `src/parser/hybrid/parser-core.ts`, never in `parser-templates.ts`'s generated region)
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
-7. **No longer needed for the full-runtime counts** — `packageInfo.commands` and
-   the `commandCount` of `browser` is derived from the
-   manifest (`COMMAND_NAMES.length`) as of Arc A step 4.4, so adding a command
-   updates them automatically. What you DO still update is any bundle you added
-   the command to: each non-full bundle carries its own measured count, and
-   `verify:reference` re-derives every one of them from the bundle source via
-   `compatibility/bundle-sources.ts` (its `commands: [...]` array, its
-   `createTreeShakeableRuntime` factory list, or the bundle it re-exports).
-   Note `multilingual` is NOT a full-runtime bundle despite once claiming 59 —
-   it hand-picks 52.
+7. **No longer needed for the counts** — `packageInfo.commands` and the
+   `commandCount` of `browser` are derived from the manifest
+   (`COMMAND_NAMES.length`) as of Arc A step 4.4, so adding a command updates
+   them automatically. (The hand-picked bundles that carried their own measured
+   counts, which `verify:reference` re-derived from their sources, all retired in
+   Phase C3; `browser` is the one `bundleInfo` row left.)
 8. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
 9. If the command should be available multilingually, sync `packages/semantic/`:
    - Add the action to the `ActionType` union in `packages/semantic/src/types.ts`
@@ -151,15 +147,17 @@ See [docs/API.md](docs/API.md) for complete documentation.
 
 ## Browser Bundles
 
-| Bundle                      | Size (gzip) | Use Case                                                 |
-| --------------------------- | ----------- | -------------------------------------------------------- |
-| `hyperfixi.js`              | ~352 KB     | Everything + bundled reactivity/realtime plugins         |
-| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual; pairs with the semantic bundle |
+| Bundle         | Size (gzip) | Use Case                                         |
+| -------------- | ----------- | ------------------------------------------------ |
+| `hyperfixi.js` | ~352 KB     | Everything + bundled reactivity/realtime plugins |
 
 The script-tag bundle is the engine's `hyperfixi-hs.js` (`@hyperfixi/engine`), and Vite
-projects use `@hyperfixi/vite-plugin` and never pick. Phase C3 retired core's small
-prebuilts — `hyperfixi-hx-v4.js`, `hyperfixi-hx.js`, `hyperfixi-hybrid-complete.js` — and
-`lite`, `lite-plus`, `minimal` and `standard` went as public names in the 4.0 cycle.
+projects use `@hyperfixi/vite-plugin` and never pick. Phase C3 retired core's other
+prebuilts — `hyperfixi-hx-v4.js`, `hyperfixi-hx.js`, `hyperfixi-hybrid-complete.js`, then
+`hyperfixi-multilingual.js`, `classic-i18n` and `modular` (non-English hyperscript runs on
+`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`; `test-multilingual-e2e.html` is that
+stack) — and `lite`, `lite-plus`, `minimal` and `standard` went as public names in the 4.0
+cycle. `hyperfixi.js` becomes the engine's bundle under the same name in C-R4.
 
 ## Custom Bundle Generation
 

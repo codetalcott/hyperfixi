@@ -12,11 +12,12 @@ bundle is **`hyperfixi-hs.js`** (34.1 KB gzipped): hyperscript and nothing else,
 upstream-faithful, with upstream's reactive features (`live`, `when`, `bind`) built in. For
 hypermedia attributes it pairs with an upstream library instead of reimplementing one:
 
-| Stack                                                              | Gzipped | For                                                                                                   |
-| ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
-| `hyperfixi-hs.js`                                                  | ~34 KB  | Hyperscript, including reactive blocks (`_="live put $count into me"`)                                |
-| `hyperfixi-hs.js` + [fixi](https://github.com/bigskysoftware/fixi) | ~35 KB  | The minimal hypermedia stack: fixi's `fx-action` / `fx-target` / `fx-swap` beside hyperscript         |
-| `hyperfixi-hs.js` + htmx 4 (+ `@lokascript/htmx-adapter`)          | ~50 KB  | The full one: htmx's attributes, `hx-sse` / `hx-ws` extensions; the adapter localizes attribute names |
+| Stack                                                              | Gzipped   | For                                                                                                              |
+| ------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `hyperfixi-hs.js`                                                  | ~34 KB    | Hyperscript, including reactive blocks (`_="live put $count into me"`)                                           |
+| `hyperfixi-hs.js` + [fixi](https://github.com/bigskysoftware/fixi) | ~35 KB    | The minimal hypermedia stack: fixi's `fx-action` / `fx-target` / `fx-swap` beside hyperscript                    |
+| `hyperfixi-hs.js` + htmx 4 (+ `@lokascript/htmx-adapter`)          | ~50 KB    | The full one: htmx's attributes, `hx-sse` / `hx-ws` extensions; the adapter localizes attribute names            |
+| `hyperfixi-hs.js` + `@lokascript/hyperscript-adapter`              | see below | Hyperscript written in any of 24 languages ([Hyperscript in another language](#hyperscript-in-another-language)) |
 
 Hyperscript handles behavior, the hypermedia library handles requests and streams, and neither
 reimplements the other. `examples/hx-v4/` and `examples/hx-v4-i18n/` are the second and third
@@ -24,9 +25,10 @@ stacks running (htmx 4 is vendored for them under `examples/vendor/`). Localized
 on real htmx are the adapter's job ([packages/htmx-adapter](../packages/htmx-adapter/README.md));
 on fixi, loka-js's.
 
-**Core's bundles** (`hyperfixi.js`, `hyperfixi-multilingual.js`) are still built and published
-until the cutover; the rest of this document describes them. Phase C3 retired the small ones:
-`hyperfixi-hx-v4.js` first, then `hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js`. With
+**Core's bundle** (`hyperfixi.js`) is still built and published until the cutover, when the
+name passes to the engine's bundle (C-R4). Phase C3 retired the rest: `hyperfixi-hx-v4.js`
+first, then `hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js`, then the multilingual ones
+(`hyperfixi-multilingual.js`, `classic-i18n`, `modular`; C-R3). With
 `hyperfixi-hx.js` went core's embedded htmx layer (`hx-live` with a hyperscript body,
 `sse-connect`, `ws-connect`, fixi's `fx-*`, localized names), retired by owner decision on
 2026-10-03: it reimplemented htmx on core's runtime, and what it offered that users touched
@@ -46,12 +48,6 @@ or falls back to core's bundles.)
 | -------------- | ----------- | ------------------------------------------------------------------------------------------- |
 | `hyperfixi.js` | ~352 KB     | Everything. Full parser, reactivity and realtime plugins, 24 languages, `window.hyperfixi`. |
 
-Two further bundles are separate products, not sizes of the same thing:
-
-| Bundle                      | Size (gzip) | Product                                                                                               |
-| --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with the all-24 `@lokascript/semantic` browser bundle (below). |
-
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
 > `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
 > exported. The regex "lite" tier lived on inside the Vite plugin's generated
@@ -59,8 +55,13 @@ Two further bundles are separate products, not sizes of the same thing:
 > `minimal`/`standard` were the full parser with a hand-picked command subset.
 > **Retired in Phase C3:** `hyperfixi-hx-v4.js`, `hyperfixi-hx.js` (the hybrid
 > parser plus htmx v1/v2 attributes) and `hyperfixi-hybrid-complete.js` (the
-> hybrid parser alone), with their `@hyperfixi/core/browser/hybrid-*` exports.
-> Pages pinned to a 3.x release keep loading them from the CDN.
+> hybrid parser alone), with their `@hyperfixi/core/browser/hybrid-*` exports;
+> then (C-R3) `hyperfixi-multilingual.js` (`@hyperfixi/core/browser/multilingual`),
+> `hyperfixi-classic-i18n.js` (core's parser with localized keywords and
+> `setLocale`), `hyperfixi-classic.js`, the code-split `hyperfixi.mjs`
+> (`@hyperfixi/core/browser/modular`) and the unexported `semantic-complete`,
+> `textshelf`, `dev` / `prod` / `llm` builds. Pages pinned to a 3.x release keep
+> loading them from the CDN.
 
 ## Companion bundles
 
@@ -69,7 +70,7 @@ Two further bundles are separate products, not sizes of the same thing:
 | `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | The 11 standard behaviors, defined on `hyperfixi-hs.js` (or upstream) as it loads |
 | `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 38.5 KB     | Per-language vocabulary and profiles                                              |
 
-> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Deprecated `lokascript-*.js` copies of some of them (`lokascript-browser.js`, `lokascript-multilingual.js`, …) are still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); they were slated for removal in v3.0.0 but still ship in 3.x. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
+> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. A deprecated `lokascript-browser.js` copy of `hyperfixi.js` is still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); the other `lokascript-*.js` copies went with their bundles in Phase C3. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
 
 ## Core's htmx-compat layer (retired)
 
@@ -121,28 +122,41 @@ Every other language except Hebrew has its own `browser-<code>.<code>.global.js`
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 
-## Multilingual Bundle (Recommended for i18n)
+## Hyperscript in another language
 
-For developers writing hyperscript in their native language:
+The engine reads English. `@lokascript/hyperscript-adapter` translates each script to English as
+the engine reads it, in the language of its element: `data-lang` or `lang` on the element or an
+ancestor, then the page's `<html lang>`. The `_` attribute keeps the text its author wrote.
 
 ```html
-<!-- Load both bundles -->
-<script src="node_modules/@lokascript/semantic/dist/browser.global.js"></script>
-<script src="hyperfixi-multilingual.js"></script>
-<script>
-  // Execute in any of 24 supported languages
-  await hyperfixi.execute('토글 .active', 'ko');      // Korean
-  await hyperfixi.execute('トグル .active', 'ja');    // Japanese
-  await hyperfixi.execute('alternar .active', 'es');  // Spanish
+<script src="hyperfixi-hs.js"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n-ja.global.js"></script>
 
-  // Translate between languages
-  const korean = await hyperfixi.translate('toggle .active', 'en', 'ko');
-</script>
+<button lang="ja" _="クリック で .active を トグル">切り替え</button>
 ```
 
-`hyperfixi-multilingual.js` looks up the `LokaScriptSemantic` global, which only the all-24 `browser.global.js` defines; the regional and single-language bundles use other globals (`LokaScriptSemanticEs`, …).
+Two ways to load the adapter (gzipped, measured 2026-10-04 with `gzip -c`, macOS):
 
-**Total size:** ~353 KB gz (93 KB multilingual + ~260 KB all-24 semantic) vs ~352 KB gz full bundle
+| Adapter                                                 | Size    | With                                                                               |
+| ------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------- |
+| `hyperscript-i18n-<lang>.global.js` (or a regional one) | ~115 KB | Nothing else: it carries the semantic parser for its languages (all 24: ~247 KB)   |
+| `hyperscript-i18n-lite.global.js`                       | 1.7 KB  | A `@lokascript/semantic` bundle loaded before it (below: ~126 KB for one language) |
+
+The lite adapter takes whichever `LokaScriptSemantic*` global is on the page; every semantic
+bundle registers English, which is what the adapter renders to. Translation between languages
+is the semantic bundle's `translate`:
+
+```js
+LokaScriptSemantic.translate('toggle .active', 'en', 'ko');
+```
+
+`packages/core/test-multilingual-e2e.html` (driven by `multilingual-e2e.spec.ts`, @quick) runs
+this stack in Chromium: `hyperfixi-hs.js`, the all-24 semantic bundle and the lite adapter.
+
+**Before Phase C3** core shipped `hyperfixi-multilingual.js` (~93 KB), which ran the semantic
+parse straight on core's runtime (`hyperfixi.execute(code, lang)`), beside the all-24 semantic
+bundle: ~353 KB together. The engine and the lite adapter beside the same semantic bundle come to
+~300 KB, and one language to ~160 KB.
 
 ## Full Bundle Usage
 

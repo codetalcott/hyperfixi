@@ -1200,7 +1200,7 @@ function getAdapterBundle(languages: string[]): {
   return {
     bundle: 'hyperscript-i18n.global.js',
     size: '568 KB',
-    note: 'Full adapter bundle (all 24 languages). Consider lite adapter (~4 KB) + external semantic bundle for smaller total size.',
+    note: 'Full adapter bundle (all 24 languages). Consider the lite adapter (~1.8 KB gz) beside a @lokascript/semantic bundle for a smaller total.',
   };
 }
 
@@ -1219,14 +1219,12 @@ function getBundleConfig(
   // core's small prebuilt, hyperfixi-hx.js, retired in Phase C3 of the engine
   // cutover. A Vite project should not pick at all — the plugin does — which
   // the generated config below is for. `blocks` / `positional` do not change
-  // the answer: hyperfixi-hs.js carries both.
-  let bundle = 'hyperfixi-hs.js'; // 34.1 KB
-  let bundleSize = '34.1 KB';
-
-  if (needsMultilingual) {
-    bundle = 'hyperfixi-multilingual.js'; // 250 KB
-    bundleSize = '250 KB';
-  }
+  // the answer: hyperfixi-hs.js carries both. Nor does the language: hyperscript
+  // in another language runs on the same bundle through
+  // @lokascript/hyperscript-adapter (the `adapter` field below). core's
+  // parser-free hyperfixi-multilingual.js retired in Phase C3 (C-R3).
+  const bundle = 'hyperfixi-hs.js';
+  const bundleSize = '34.1 KB';
 
   // Generate vite config
   const viteConfig = {
@@ -1307,15 +1305,25 @@ export default {
     },
   };
 
-  // Include adapter alternative when multilingual and runtime is 'auto'
-  if (adapterRec && runtime !== 'lokascript') {
-    result.adapterAlternative = {
-      note: 'If using original _hyperscript (not LokaScript), use the adapter plugin instead',
+  if (adapterRec) {
+    // Non-English hyperscript: the adapter translates each script to English as
+    // the engine reads it, and the attribute keeps what its author wrote.
+    result.adapter = {
       package: '@lokascript/hyperscript-adapter',
       bundle: adapterRec.bundle,
       size: adapterRec.size,
       detail: adapterRec.note,
+      setup: `<script src="hyperfixi-hs.js"></script>\n<script src="${adapterRec.bundle}"></script>\n<!-- Set lang (or data-lang) on an element or an ancestor. -->`,
     };
+    if (runtime !== 'lokascript') {
+      result.adapterAlternative = {
+        note: 'The same adapter runs on original _hyperscript: load it after _hyperscript.js',
+        package: '@lokascript/hyperscript-adapter',
+        bundle: adapterRec.bundle,
+        size: adapterRec.size,
+        detail: adapterRec.note,
+      };
+    }
   }
 
   return {
