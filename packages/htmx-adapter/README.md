@@ -6,7 +6,7 @@ attributes in 24 languages against the stock htmx library.
 ```html
 <script src="htmx-i18n.global.js"></script>
 <!-- this adapter (2.3 KB gz) -->
-<script src="vocab/htmx/es.js"></script>
+<script src="vocab/es.js"></script>
 <!-- vocab module(s) -->
 <script src="htmx.js"></script>
 <!-- upstream htmx v4 -->
@@ -25,15 +25,18 @@ This package is the htmx analog of
 [`@lokascript/hyperscript-adapter`](../hyperscript-adapter) (which adapts
 upstream `_hyperscript`), built on the hook/vocab pattern from
 [loka-js](https://github.com/wmtalcott/loka-js) (which adapts the fixiproject
-family). It is **not** the same thing as hyperfixi's embedded htmx-compat layer
-(`packages/core/src/htmx/` — the `hyperfixi-hx*.js` bundles), which
-_reimplements_ htmx attributes on hyperfixi's own runtime. This adapter drives
+family). It replaces hyperfixi's embedded htmx-compat layer (the
+`hyperfixi-hx*.js` bundles of `@hyperfixi/core` 3.x, retired in 4.0), which
+_reimplemented_ htmx attributes on hyperfixi's own runtime. This adapter drives
 the **real htmx** library.
 
-All three consumers share one vocabulary source: the generated modules under
-[`packages/core/vocab/htmx/`](../core/vocab/htmx), derived from
-`@lokascript/semantic` profiles + `@lokascript/i18n` dictionaries. `click` is
-`clic` everywhere.
+The vocabulary is the generated modules in [`vocab/`](vocab), one
+self-registering script per language, derived from `@lokascript/semantic`
+profiles + `@lokascript/i18n` dictionaries (so `click` is `clic` here as in
+hyperscript) plus a hand-authored table for the attributes that are not
+hyperscript keywords. They ship in this package: from a CDN,
+`https://unpkg.com/@lokascript/htmx-adapter/vocab/es.js`. (Until 4.0 they
+shipped in `@hyperfixi/core`, as `vocab/htmx/{lang}.js`.)
 
 ## Mechanism
 
@@ -102,8 +105,8 @@ import {
 
 The browser IIFE does all the wiring automatically and installs
 `window.__hyperfixi_i18n.register` so the generated vocab modules
-self-register. If the page also runs hyperfixi's embedded layer, registrations
-fan out to both registries.
+self-register. If the page already has a registry (core 3.x's
+`hyperfixi-hx.js`), registrations fan out to both.
 
 ## Hyperscript `hx-on:` bodies (executor mode, opt-in)
 
@@ -122,7 +125,7 @@ wires itself:
 <script src="hyperscript-i18n-es.global.js"></script>
 <!-- translator: HyperscriptI18n.preprocess -->
 <script src="htmx-i18n.global.js"></script>
-<script src="vocab/htmx/es.js"></script>
+<script src="vocab/es.js"></script>
 <script src="htmx.js"></script>
 
 <section lang="es">
@@ -207,9 +210,11 @@ npm test --prefix packages/htmx-adapter                  # vitest, jsdom
 npm run test:browser --prefix packages/htmx-adapter      # Playwright e2e (build dist first)
 ```
 
-The unit suite includes a reuse guard that loads every generated
-`packages/core/vocab/htmx/{lang}.js` module against this adapter's registry, so
-generator drift fails here rather than in a browser.
+The unit suite loads every generated `vocab/{lang}.js` module against this
+adapter's registry, and its drift gate (`test/vocab-generator.test.ts`, also
+`npm run check:vocab`) fails when a committed module differs from what the
+generator emits — so a profile or dictionary change that moves a name fails
+here rather than in a browser.
 
 The Playwright suite drives **real vendored libraries** — htmx `4.0.0`,
 htmx `2.0.10`, `_hyperscript` `0.9.93` (`test/browser/vendor/`) — verifying the

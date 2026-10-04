@@ -1,13 +1,5 @@
 {
   "description": "The shipped sources `packages/core` compiles clean and `@hyperfixi/engine` rejects (packages/testing-framework/src/multilingual/shipped-sources-engine.test.ts). The engine is meant to replace core's, so this is what that would break in our own examples and docs. A NEW rejected source outside this list fails the gate, and so does a listed key the engine now reads: the list only shrinks, and it is empty when the replacement breaks no shipped page.",
-  "note": "The `key` is file::sha1(source)[0:10], so it changes when the source is edited. First measured 2026-10-01 at 78 sources. 62 went by rewriting the examples and docs in upstream's spelling where upstream has one (each rewrite run on core, upstream 0.9.93 and the engine, to the same DOM), 4 more of those turned up behind the first parse error, and the engine gained two forms it keeps from core (`new X()`, `toggle <element>`: packages/engine/src/additions.ts). The 11 history-command handlers (`push url` / `replace url`) went on 2026-10-03, rewritten as `call history.pushState(null, '', X)` / `replaceState` (owner decision: no engine addition). By form, and beside upstream's verdict: `npx tsx packages/engine/tools/shipped-sources.mts`.",
-  "rejected": [
-    {
-      "key": "docs/BROWSER_BUNDLES.md::e841656455",
-      "file": "docs/BROWSER_BUNDLES.md",
-      "error": "Expected 'IDENTIFIER' but found '300'",
-      "excerpt": "on click.debounce(300) if me has .loading return end then add .loading then fetch /api/data as json ",
-      "reason": "hybrid-bundle dialect: this is the `hyperfixi-hx.js` example, and that bundle's own parser reads `on click.debounce(300)` and `me has .loading`, not upstream's `debounced at 300ms` / `I match .loading`. It goes when that bundle is built on the engine."
-    }
-  ]
+  "note": "The `key` is file::sha1(source)[0:10], so it changes when the source is edited. First measured 2026-10-01 at 78 sources. 62 went by rewriting the examples and docs in upstream's spelling where upstream has one (each rewrite run on core, upstream 0.9.93 and the engine, to the same DOM), 4 more of those turned up behind the first parse error, and the engine gained two forms it keeps from core (`new X()`, `toggle <element>`: packages/engine/src/additions.ts). The 11 history-command handlers (`push url` / `replace url`) went on 2026-10-03, rewritten as `call history.pushState(null, '', X)` / `replaceState` (owner decision: no engine addition). By form, and beside upstream's verdict: `npx tsx packages/engine/tools/shipped-sources.mts`. The last one, the `hyperfixi-hx.js` example in docs/BROWSER_BUNDLES.md (that bundle's dialect: `on click.debounce(300)`, `me has .loading`), went with the bundle in Phase C3 (C-R2, 2026-10-04): the list is empty, so the replacement breaks no shipped page.",
+  "rejected": []
 }

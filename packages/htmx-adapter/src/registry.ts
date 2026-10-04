@@ -1,11 +1,10 @@
 /**
  * Vocab registry for the upstream-htmx adapter.
  *
- * Accepts the SAME payload shape as hyperfixi core's htmx-compat
- * orchestrator (`packages/core/src/htmx/i18n-orchestrator.ts`), so the
- * generated vocab modules under `packages/core/vocab/htmx/{lang}.js`
- * (which call `window.__hyperfixi_i18n.register(lang, payload)`) work
- * verbatim against this adapter — one generated artifact, two consumers.
+ * Accepts the payload shape of hyperfixi core's htmx-compat orchestrator
+ * (which retired with `hyperfixi-hx.js` in Phase C3), so the generated vocab
+ * modules in this package's `vocab/{lang}.js` (which call
+ * `window.__hyperfixi_i18n.register(lang, payload)`) work verbatim here.
  *
  *   register('es', {
  *     hyperfixi: {
@@ -19,7 +18,7 @@
  * direction the parse maps are published in. There is deliberately no
  * KEYS copy here either — the vocab data is self-describing (full
  * attribute names on both sides), so the canonical key set lives only in
- * core's generator (`packages/core/scripts/gen-htmx-vocab.mjs`).
+ * the generator (`scripts/gen-htmx-vocab.mjs`).
  */
 
 import { normLang } from './lang-resolver.js';
@@ -133,7 +132,7 @@ export function warnMissingLangOnce(lang: string): void {
       `[htmx-i18n] No vocab registered for lang="${lang}". ` +
         `Elements in this language scope keep their localized attribute names ` +
         `and htmx will not see them. Load the ${lang} vocab module ` +
-        `(packages/core/vocab/htmx/${lang}.js) before htmx processes the page.`
+        `(@lokascript/htmx-adapter/vocab/${lang}.js) before htmx processes the page.`
     );
   }
 }

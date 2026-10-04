@@ -86,7 +86,7 @@ export default defineConfig({
     },
     {
       name: 'bundles',
-      grep: /@bundle|@lite|@hybrid/,
+      grep: /@bundle/,
       timeout: 30000,
     },
     {

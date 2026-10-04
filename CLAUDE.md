@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~352 KB** full browser bundle (gzipped); the small prebuilt `hyperfixi-hx.js` is **22.0 KB** (the lite/lite-plus/hybrid-complete/minimal/standard names were retired in the 4.0 cycle; the plugin still emits regex-tier bundles) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~352 KB** full browser bundle (gzipped); the script-tag bundle is the engine's `hyperfixi-hs.js`, **34.1 KB** (core's small prebuilts retired: lite/lite-plus/minimal/standard in the 4.0 cycle, `hyperfixi-hx.js`/-hybrid-complete/-hx-v4 in Phase C3) — sizes from CI's bundle-size job on 2026-09-29 (PR 103). Post-dedupe: the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed. Growth from ~299 is semantic content — the July pick/vocab arcs and the 2.9.0 `markerLegacy` data (~310), the per-language render vocabulary (#931, ~330) and the value-matrix arc since (PRs 52–103) — with one semantic copy checked at #931 and at PR 56 (the ceiling notes in `ci.yml`). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -897,7 +897,7 @@ The bundle compatibility test suite automatically tests every built bundle again
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: hybrid-complete (11.4 KB), hybrid-hx (22.0 KB), browser (~352 KB) — hybrid-hx-v4 retired in Phase C3
+- Bundles: hs (the engine's `hyperfixi-hs.js`, ~34 KB), browser (~352 KB) — core's hybrid-hx-v4, hybrid-hx and hybrid-complete retired in Phase C3
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -946,7 +946,7 @@ resolver, and the behaviors bundle defines its eleven sources eagerly.)
 2. Register a factory export in `packages/core/src/commands/index.ts` and add the command name to the `COMMANDS` set in `packages/core/src/parser/parser-constants.ts`
 3. Register the factory in the runtime entry points that should include it (`packages/core/src/runtime/runtime.ts` and any relevant `packages/core/src/compatibility/browser-bundle-*.ts`)
 4. Add parser support in `packages/core/src/parser/command-parsers/` (only if the command needs a non-generic parser — simple commands use the default identifier-plus-args parser)
-5. For lite/hybrid bundle coverage, add cases to `packages/core/src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template and hybrid-complete's executor switches are generated (parser rules go in `packages/core/src/parser/hybrid/parser-core.ts`)
+5. For custom-bundle coverage (core's `generate:bundle`), add cases to `packages/core/src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template is generated (parser rules go in `packages/core/src/parser/hybrid/parser-core.ts`)
 6. Add reference/LSP entries in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
 7. Write tests in `packages/core/src/commands/{category}/__tests__/{name}.test.ts`
 
@@ -1132,19 +1132,16 @@ tracked gallery page runs on it since 2026-10-03); core's bundles ship until the
 | ---------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hyperfixi-hs.js`            | ~34.1 KB   | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes |
 | via `@hyperfixi/vite-plugin` | 18–34 KB   | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                          |
-| `hyperfixi-hx.js`            | ~22.0 KB   | Core's small prebuilt — hybrid AST parser (~85% coverage) + htmx v1/v2 attributes (the embedded htmx layer is retired with core)                                                                                             |
 | `hyperfixi.js`               | ~352 KB    | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                            |
 | `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                                                                                                                                              |
 | semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — the regional IIFEs currently lack `translate` and their language registrations (OPEN_ITEMS 2e)                                  |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
 with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes
-(the owner's B2 decision, 2026-10-03). On core, `hyperfixi-hx.js` → `hyperfixi.js` the first time
-the console says a command needs it. `lite`, `lite-plus`, `minimal` and
-`standard` were retired as public names in the 4.0 cycle, and
-`hyperfixi-hx-v4.js` in Phase C3 (2026-10-04: `hx-live` is the engine's `live`
-block, SSE/WebSocket are htmx 4's). `hyperfixi-hybrid-complete.js` is still
-built for the bundle matrix until C-R2 (the plugin stopped importing it in C1).
+(the owner's B2 decision, 2026-10-03). `lite`, `lite-plus`, `minimal` and
+`standard` were retired as public names in the 4.0 cycle; Phase C3 (2026-10-04) retired
+`hyperfixi-hx-v4.js` (`hx-live` is the engine's `live` block, SSE/WebSocket are htmx 4's), then
+`hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js` with core's embedded htmx layer.
 
 Multilingual usage (execute/translate in any of 24 languages):
 

@@ -280,5 +280,5 @@ Generated bundles always include the HybridParser (~500 lines). This is intentio
 
 For even smaller bundles, consider:
 
-- Pre-built lite bundles (hybrid-complete at 7.7 KB gzip)
+- The engine's `hyperfixi-hs.js` (~34 KB gzip; core's small prebuilts retired in Phase C3)
 - Vite plugin with automatic command detection (`@hyperfixi/vite-plugin`)

@@ -503,6 +503,48 @@ describe('every advertised command runs in a generated bundle', () => {
     expect(t(doc).hasAttribute('data-got-foo')).toBe(true);
     expect(me.hasAttribute('data-got-foo')).toBe(false);
   }, 20000);
+
+  it("`repeat N times` reads a count as upstream's `index < times` does", async () => {
+    // The template read a count that was not already a number with parseInt:
+    // "6.5" looped 6 times and "6abc" 6, where upstream (and core's full
+    // runtime, since PR 125) loop 7 and 0. A literal 6.5 was always a number,
+    // so a count from text is the case: a string, or an element's textContent.
+    // Each want is upstream's answer, measured on hyperscript.org. (Moved here
+    // from the shipped-bundle suite when hyperfixi-hybrid-complete.js retired.)
+    const cases: Array<[string, number]> = [
+      ['6.5', 7],
+      ['"6.5"', 7],
+      ['#a.textContent', 7],
+      ['"6abc"', 0],
+      ['true', 1],
+      ['"  3 "', 3],
+      ['""', 0],
+      ['null', 0],
+    ];
+    const gen = generateBundle({
+      name: 'CapRepeatCount',
+      commands: ['append'],
+      blocks: ['repeat'],
+      autoInit: false,
+      parserImportPath: '../../../parser/hybrid',
+    });
+    expect(gen.errors).toEqual([]);
+    const file = join(GEN_DIR, 'repeat_count.ts');
+    writeFileSync(file, gen.code);
+    const mod = await import(/* @vite-ignore */ file);
+
+    const wrong: string[] = [];
+    for (const [count, want] of cases) {
+      document.body.innerHTML = '<div id="host"></div><div id="t"></div><div id="a">6.5</div>';
+      await mod.api.execute(
+        `repeat ${count} times append "R" to #t end`,
+        document.getElementById('host')
+      );
+      const got = t(document).innerHTML.length;
+      if (got !== want) wrong.push(`repeat ${count} times: ${got}, want ${want}`);
+    }
+    expect(wrong).toEqual([]);
+  }, 20000);
 });
 
 // ===========================================================================

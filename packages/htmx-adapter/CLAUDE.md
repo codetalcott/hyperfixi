@@ -2,13 +2,14 @@
 
 ## What This Package Does
 
-Multilingual adapter for **upstream htmx v4** (not hyperfixi's embedded
-htmx-compat layer). Localized `hx-*`/`sse-*`/`ws-*` attribute names are
+Multilingual adapter for **upstream htmx v4** (the replacement for core 3.x's
+embedded htmx-compat layer, retired in Phase C3). Localized `hx-*`/`sse-*`/`ws-*` attribute names are
 canonicalized onto the element before stock htmx processes it, via an initial
 document sweep plus a registered htmx v4 extension
 (`htmx_before_process`; the executor-mode guard is the cancelable
-`htmx_before_on_init`). Vocab data is the same generated
-`packages/core/vocab/htmx/{lang}.js` modules the embedded layer consumes.
+`htmx_before_on_init`). Vocab data is the generated `vocab/{lang}.js` modules
+in this package (moved from `@hyperfixi/core` in Phase C3, when core's embedded
+layer retired with `hyperfixi-hx.js`).
 
 ## Structure
 
@@ -16,16 +17,22 @@ document sweep plus a registered htmx v4 extension
 src/
 ├── index.ts          # Library entry — re-exports the public API
 ├── browser.ts        # IIFE entry — installs window.__hyperfixi_i18n, auto-registers, sweeps
-├── registry.ts       # Vocab store; same payload shape as core's i18n-orchestrator
+├── registry.ts       # Vocab store; the payload shape of core's (retired) i18n-orchestrator
 ├── canonicalize.ts   # localized → canonical attribute copy + hx-trigger value translation
 ├── hx-on.ts          # executor mode: hyperscript hx-on: bodies (claim/translate/execute hooks)
 ├── extension.ts      # htmx v4 extension (+ v2 fallback) + installAutoSweep
-└── lang-resolver.ts  # langOf()/normLang() — byte-mirror of core's htmx/lang-resolver.ts
+└── lang-resolver.ts  # langOf()/normLang() — mirrors loka-js's lang-resolver
+scripts/
+├── gen-htmx-vocab.mjs      # the generator (semantic profiles + i18n dictionaries + the table)
+├── htmx-attr-vocab.mjs     # hand-authored names: htmx-only attributes, trigger heads
+└── htmx-vocab-legacy.json  # retired names kept as aliases (names are additive)
+vocab/                      # GENERATED, committed and published: one self-registering script per language
 test/
 ├── canonicalize.test.ts   # Core semantics: add-canonical, keep-authored, idempotency, mixed-lang
 ├── hx-on.test.ts          # Executor mode: claim/suppress/removal, lazy translation, dedup, auto-detect
 ├── extension.test.ts      # v4/v2 registration + hooks + auto-sweep lifecycle
-├── vocab-modules.test.ts  # REUSE GUARD: loads every real core vocab module against this registry
+├── vocab-modules.test.ts  # loads every generated vocab module against this registry
+├── vocab-generator.test.ts # what the generator emits, by source text + the DRIFT gate (--check)
 ├── vendor-mirror.test.ts  # DRIFT GUARD: TOP_LEVEL_COMMA_RE.source === the vendored htmx HCON.split literal
 ├── registry.test.ts
 ├── lang-resolver.test.ts
@@ -47,6 +54,8 @@ npm run typecheck          # TypeScript validation
 npm run test:run           # Vitest (jsdom environment)
 npm run test:browser       # Playwright e2e vs real htmx v4/v2 + _hyperscript (build dist first)
 npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
+npm run generate:vocab     # regenerate vocab/{lang}.js (semantic + i18n built first)
+npm run check:vocab        # exit 1 if a committed module is stale
 ```
 
 ## Key Design Decisions
@@ -59,11 +68,11 @@ npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
   canonicalizer table, and lang resolution are mechanism-agnostic.
 - **No KEYS copy**: the vocab attrs maps are fully-qualified on both sides
   (`'hx-obtener': 'hx-get'`), so the adapter is data-driven; the canonical key
-  set lives only in core's generator (`gen-htmx-vocab.mjs`). The
-  vocab-modules test is the drift guard.
+  set lives only in the generator (`scripts/gen-htmx-vocab.mjs`). The
+  vocab-generator test is the drift guard.
 - **Same `window.__hyperfixi_i18n` public API as core** so the generated vocab
-  modules work verbatim; if core's registry already exists on the page, the
-  browser entry fans registrations out to both.
+  modules work verbatim; if a registry already exists on the page (core 3.x's
+  `hyperfixi-hx.js`), the browser entry fans registrations out to both.
 - **`hx-on:` bodies are JS by default (upstream semantics), hyperscript by
   opt-in**: `setBodyExecutor()` (auto-detected from `window._hyperscript`)
   flips the hx-on family into executor mode — the adapter claims every
@@ -119,13 +128,15 @@ npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
   pt's 15 camelCase events came out `hx-on:teclabaixo` until this;
   `vocab-modules.test.ts` now drives every event of every language through an
   `hx-on` name parsed from markup, and the generator refuses two names of one
-  language that fold together. Core's embedded layer does the same through
-  `eventNameOf(…, { fromAttrName: true })`.
+  language that fold together. Core's embedded layer did the same through
+  `eventNameOf(…, { fromAttrName: true })` until it retired.
 - **`init(internalAPI)` takes ONE thing**: `HCON.split`. The rest of
   4.0.0's 14-member surface was evaluated and passed over — see the
   rationale on `createExtension` in extension.ts (notably `htmxProp`'s
   private `onInitialized` flag vs. the typed cancelable event).
 - **Zero workspace deps** — builds standalone anywhere in CI's build order.
+  The generator reads the built semantic and i18n `dist/` by path, so only
+  `generate:vocab`, `check:vocab` and the drift test need those two built.
 
 ## Load order (matters)
 
@@ -133,3 +144,66 @@ Adapter → vocab module(s) → htmx. The adapter's DOMContentLoaded sweep must
 register before htmx's own scan listener; late vocab registrations trigger a
 re-sweep, and htmx-swapped content is covered by the extension hook regardless
 of order.
+
+## The vocab (`vocab/`, `scripts/`)
+
+To regenerate the modules from the semantic profiles + i18n dictionaries
+(the generator reads both packages' built `dist/` by path):
+
+```bash
+npm run build --prefix packages/semantic && npm run build --prefix packages/i18n
+npm run generate:vocab                     # emits vocab/{lang}.js
+npm run sync-htmx-vocab --prefix packages/vite-plugin   # the scanner's copy
+```
+
+Attribute names resolve from two sources, in order: the hand-authored table
+`scripts/htmx-attr-vocab.mjs`, then the semantic profile. The table exists
+because most htmx attributes are not hyperscript keywords, and their natural
+words are often already a command's (ja `削除` / es `eliminar` are `remove`) —
+**do not add htmx-only names to a semantic profile.** It also _leads_ the
+profile where the profile's word suits a command but not an attribute name
+(ja `引き金` → `トリガー`, es `disparar` → `disparador`, following loka-js's
+terminology reviews). All 23 non-English languages are authored for the 12
+attributes the _Hypermedia Systems_ Contact.app uses plus the four more the
+book's code listings use (`hx-vals`, `hx-select`, `hx-swap-oob`, `hx-sync`),
+and for the `search` trigger head; only ja, es, pt, ko, tr, de, fr and zh
+were authored with any care — the other 15 (2026-09-22) are unreviewed
+drafts meant as hooks for readers, every one flagged `lowConfidence`. tl
+leaves `hx-target` as the English identity on purpose (so does loka-js). (de also authors a lowercase `target`:
+the profile's `Ziel` shipped as `hx-Ziel`, which no parsed attribute can match
+because HTML lowercases attribute names.) `hx-indicator` / `hx-include` / `hx-select` /
+`hx-swap-oob` / `hx-sync` are generator-only keys (`ADAPTER_ONLY_KEYS`): stock
+htmx implements them under this adapter; core's embedded layer never did,
+which is how they came to sit apart from `KEYS`. **An adapter-only key resolves
+from the table alone, never the profile** — 22 profiles carry a `select`
+keyword meaning mark/highlight text (de `markieren`), which would otherwise
+have shipped as `hx-select`, permanently. `hx-ext` has no name on purpose:
+htmx 4 removed it.
+
+The table also has an `events` block for trigger heads no i18n dictionary
+names (`search`, the DOM event the book's search box fires). A dictionary
+event must also exist in the semantic profile's lexicon
+(`lexicon-parity.test.ts`), so an htmx-only head lives in the table. htmx's
+own trigger words (`revealed`, `every`, `intersect`) are trigger syntax, like
+`delay:`, and stay English.
+
+**Names are additive — never delete a shipped name, demote it.** Several
+localized names may map to one canonical; the first is the primary (the form
+to teach) and the rest are parse aliases; this adapter canonicalizes every
+one of them. A name retired by
+a profile/dictionary change goes in `scripts/htmx-vocab-legacy.json`, which the
+generator appends after the current names.
+
+`npm run check:vocab` (also the drift test in `test/vocab-generator.test.ts`)
+fails when the committed modules differ from what the generator emits — so
+editing a profile keyword or a dictionary event word that feeds the vocab
+reddens this package's suite until you regenerate. **Read that diff**: a disappearing name breaks pages
+authored with it. The gate exists because the modules once sat months behind
+their inputs and a plain regeneration would have deleted 165 shipped event
+names.
+
+Two generator rules for multi-word words: an **event** name is skipped and
+reported (it is one `\S+` token of an `hx-trigger` value or an `hx-on:` suffix
+in both consumers, and a joined form would be an unreviewed coinage); an
+**attribute** name is hyphen-joined (vi `lấy giá trị` → `hx-lấy-giá-trị`, the
+convention the vi profile already uses for `trực-tiếp`).

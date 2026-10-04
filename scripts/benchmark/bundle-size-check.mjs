@@ -24,18 +24,6 @@ const rootDir = path.resolve(__dirname, '../..');
 
 const BUNDLE_CONFIGS = [
   {
-    name: 'hyperfixi-hybrid-complete.js',
-    path: 'packages/core/dist/hyperfixi-hybrid-complete.js',
-    maxGzip: 15000, // 15 KB
-    description: 'Recommended (~85% coverage)',
-  },
-  {
-    name: 'hyperfixi-hybrid-hx.js',
-    path: 'packages/core/dist/hyperfixi-hybrid-hx.js',
-    maxGzip: 18000, // 18 KB
-    description: 'Hybrid + htmx support',
-  },
-  {
     name: 'hyperfixi-multilingual.js',
     path: 'packages/core/dist/hyperfixi-multilingual.js',
     maxGzip: 100000, // 100 KB

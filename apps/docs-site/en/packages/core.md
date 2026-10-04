@@ -22,17 +22,18 @@ hyperscript.processNode(document.body);
 
 ## Browser Bundles
 
-| Bundle                          | Size (gzip) | Use Case                            |
-| ------------------------------- | ----------- | ----------------------------------- |
-| `lokascript-lite.js`            | 1.9 KB      | Basic: toggle, show/hide            |
-| `lokascript-lite-plus.js`       | 2.6 KB      | + form handling, i18n               |
-| `lokascript-hybrid-complete.js` | 7.3 KB      | Most projects (blocks, expressions) |
-| `lokascript-hybrid-hx.js`       | 9.5 KB      | + htmx compatibility                |
-| `lokascript-browser.js`         | 224 KB      | Full bundle                         |
+| Bundle                                 | Size (gzip) | Use Case                                                                      |
+| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use               |
+| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in |
+| **`hyperfixi.js`** (`@hyperfixi/core`) | ~352 KB     | Core's everything bundle, until the engine replaces it in 4.0                 |
+
+The 3.x small prebuilts (`lite`, `hybrid-complete`, `hyperfixi-hx.js`, …) are retired; see
+[Bundle Selection](/en/guide/bundles).
 
 ```html
 <!-- CDN usage -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-hybrid-complete.js"></script>
+<script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
 ```
 
 ## Features

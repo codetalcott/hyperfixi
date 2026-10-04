@@ -4,15 +4,15 @@
  * Recommended script order (loka-js convention: adapter before library):
  *
  *   <script src="htmx-i18n.global.js"></script>       <!-- this file -->
- *   <script src="vocab/htmx/es.js"></script>          <!-- one or more -->
+ *   <script src="vocab/es.js"></script>               <!-- one or more -->
  *   <script src="htmx.js"></script>                   <!-- upstream htmx v4 -->
  *
  * On load this entry:
  *   1. Installs `window.__hyperfixi_i18n.register` so the generated vocab
- *      modules (`packages/core/vocab/htmx/{lang}.js`) self-register here
- *      exactly as they do against hyperfixi core. If a registry already
- *      exists (page also runs the embedded htmx-compat layer), we fan out
- *      so BOTH registries receive every registration.
+ *      modules (`packages/htmx-adapter/vocab/{lang}.js`) self-register here.
+ *      If a registry already exists (a page still loading core 3.x's
+ *      `hyperfixi-hx.js`), we fan out so BOTH registries receive every
+ *      registration.
  *   2. Registers the htmx extension immediately if `window.htmx` exists,
  *      otherwise retries once on DOMContentLoaded (covering the
  *      recommended adapter-before-htmx order).
@@ -46,7 +46,7 @@ function installPublicAPI(): void {
   const w = window as unknown as Record<string, PublicRegistry | undefined>;
   const existing = w[WINDOW_KEY];
   if (existing) {
-    // Fan out: keep feeding the embedded layer's registry AND ours.
+    // Fan out: keep feeding the existing registry AND ours.
     const theirRegister = existing.register.bind(existing);
     w[WINDOW_KEY] = {
       register: (code, data) => {

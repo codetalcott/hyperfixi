@@ -28,7 +28,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import hybridComplete from './browser-bundle-hybrid-complete';
 import lite from './browser-bundle-lite';
 import { SHELL_CORE_KEYS, createProcessElements } from './bundle-shell';
 import { generateBundleCode } from '../bundle-generator/generator';
@@ -43,14 +42,6 @@ import { generateBundleCode } from '../bundle-generator/generator';
  * FAILS — that is the ratchet.
  */
 const SHIPPED_SHELLS = [
-  {
-    name: 'hybrid-complete',
-    api: hybridComplete as unknown as Record<string, unknown>,
-    hasBlocks: true,
-    // addAliases: pinned by browser-tests/hybrid-complete.spec.ts.
-    // tokenize/evaluate: mirror the full bundle's surface.
-    extras: ['addAliases', 'addEventAliases', 'tokenize', 'evaluate'],
-  },
   {
     name: 'lite',
     api: lite as unknown as Record<string, unknown>,
@@ -141,7 +132,7 @@ describe('shell surface', () => {
 
 describe('the _hyperscript global', () => {
   it('is not claimed by any shipped bundle', () => {
-    // All three shells have been imported (and auto-installed) by this point.
+    // The shipped shell has been imported (and auto-installed) by this point.
     expect((window as unknown as Record<string, unknown>).hyperfixi).toBeDefined();
     expect((window as unknown as Record<string, unknown>)._hyperscript).toBeUndefined();
   });
@@ -361,42 +352,5 @@ describe('createProcessElements (the shared scanner)', () => {
   });
 });
 
-// ===========================================================================
-// 4. What each EXTRA is for — the reason it survived the union decision
-// ===========================================================================
-
-describe('witnessed extras', () => {
-  it('hybrid-complete: addAliases makes the alias actually execute', async () => {
-    const api = hybridComplete as unknown as {
-      addAliases: (a: Record<string, string>) => void;
-      execute: (code: string, el?: Element) => Promise<unknown>;
-    };
-    const me = document.createElement('div');
-    container.appendChild(me);
-
-    api.addAliases({ basculer: 'toggle' });
-    await api.execute('basculer .fr on me', me);
-
-    expect(me.classList.contains('fr')).toBe(true);
-  });
-
-  it('hybrid-complete: tokenize returns tokens for real source', () => {
-    const api = hybridComplete as unknown as { tokenize: (code: string) => unknown[] };
-
-    const tokens = api.tokenize('toggle .active');
-
-    expect(Array.isArray(tokens)).toBe(true);
-    expect(tokens.length).toBeGreaterThan(1);
-  });
-
-  it('hybrid-complete: evaluate resolves a node against a context', async () => {
-    const api = hybridComplete as unknown as {
-      evaluate: (node: unknown, ctx: unknown) => Promise<unknown>;
-    };
-    const me = document.createElement('div');
-
-    const value = await api.evaluate({ type: 'literal', value: 42 }, { me, locals: new Map() });
-
-    expect(value).toBe(42);
-  });
-});
+// Section 4 ("witnessed extras") exercised hybrid-complete's addAliases,
+// tokenize and evaluate; it retired with that bundle in Phase C3 (C-R2).

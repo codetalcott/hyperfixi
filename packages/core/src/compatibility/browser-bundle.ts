@@ -352,8 +352,8 @@ if (typeof window !== 'undefined') {
   window.hyperfixi = hyperfixiAPI;
 
   // Deprecated alias for v1.x compatibility (remove in v3.0.0).
-  // Define with both getter and setter — the hybrid-hx bundle (and others)
-  // perform a plain `window.lokascript = api` on load, which would TypeError
+  // Define with both getter and setter — other bundles (hybrid-hx did, until
+  // Phase C3) perform a plain `window.lokascript = api` on load, which would TypeError
   // under a getter-only descriptor. The setter forwards to window.hyperfixi
   // so the alias keeps pointing at whichever API was assigned most recently.
   if (typeof window.lokascript === 'undefined') {

@@ -343,6 +343,9 @@ jobs:
   #   modular 4.8  multilingual 3.4  minimal 3.1  hybrid-hx 1.9
   #   hybrid-complete 1.8  lite-plus 1.6                    (total 47.2s)
   # → shard 1 ≈ 17.6s, shard 2 ≈ 16.9s, shard 3 ≈ 12.6s.
+  # Since Phase C3 retired hx-v4, hybrid-hx and hybrid-complete (and the 4.0
+  # cycle the lite/standard/minimal names): shard 1 ≈ 7.4s (classic-i18n),
+  # shard 2 ≈ 8.4s, shard 3 ≈ 4.8s.
   #
   # If you ADD a bundle to `BUNDLES` in build-browser-bundles.mjs, add it to a
   # shard here too. `scripts/check-bundle-shards.cjs` (run in lint-typecheck and
@@ -371,7 +374,7 @@ jobs:
       matrix:
         include:
           - shard: 1
-            only: classic-i18n,hybrid-complete,hybrid-hx
+            only: classic-i18n
           - shard: 2
             only: main,multilingual
           - shard: 3
@@ -839,11 +842,11 @@ jobs:
       # made any whole-file comparison fail on every run. Both are fixed, so this
       # check is exact too. Coverage of the generator's command table is a separate
       # gate — src/commands/__tests__/docs-coverage.test.ts, in the unit suite.
-      # `generate:bundles:check` joined in Arc E step 4. It regenerates the
-      # executor-core regions of the committed browser bundles from
-      # `bundle-generator/templates.ts` and fails if the result differs — the
-      # drift guard that lets hybrid-complete's `executeCommand` switch stop
-      # being a hand-maintained second copy of the templates. Same
+      # `generate:bundles:check` joined in Arc E step 4. It regenerated the
+      # executor-core regions of hybrid-complete from
+      # `bundle-generator/templates.ts` until that bundle retired (Phase C3);
+      # it still regenerates `parser-templates.ts`'s HYBRID_PARSER_TEMPLATE from
+      # the real `parser/hybrid/` modules and fails if the result differs. Same
       # prettier-idempotency requirement as the three above: the generator
       # formats with the pinned prettier before writing, so a fresh run is
       # byte-identical to the committed file.
@@ -1303,7 +1306,6 @@ jobs:
           echo "=== Core bundle check ==="
           ls -la packages/core/dist/hyperfixi.js || echo "MISSING: hyperfixi.js"
           ls -la packages/core/dist/hyperfixi-multilingual.js || echo "MISSING: hyperfixi-multilingual.js"
-          ls -la packages/core/dist/hyperfixi-hybrid-complete.js || echo "MISSING: hyperfixi-hybrid-complete.js"
           echo "=== i18n bundle check ==="
           ls -la packages/i18n/dist/lokascript-i18n.min.js || echo "MISSING: lokascript-i18n.min.js"
 
@@ -1607,16 +1609,8 @@ jobs:
           # (pre-dedupe "~203-208 KB" era) was being silently exceeded by the
           # real ~299 KB gz bundle. The browser/hx-v4 ceilings exist to catch
           # RE-duplication (the #616 double core+semantic class).
-          # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
-          # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
-          # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
-          # (measured, not estimated). 2057 of that is `morphlex`, pulled in by
-          # the `morph` case — 69% of the increase for 1 of 13 commands, kept
-          # deliberately so no advertised command is a no-op.
-          # hx measured 21960 B gz locally, so 22000 would have failed on the
-          # first run; 24000 restores roughly the ~2 KB of headroom the old
-          # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
-          MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
+          # MAX_HYBRID (hyperfixi-hx.js / -hybrid-complete.js) went with those
+          # bundles in Phase C3 (C-R2).
           # Raised 340000 -> 355000 / 350000 -> 368000 on 2026-08-26 (PR #931,
           # per-language render vocabulary). Both bundles expose translate /
           # getAllTranslations for 24 languages, so they carry the new
@@ -1643,21 +1637,6 @@ jobs:
           MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
 
           failed=0
-
-          # hyperfixi-hx.js shares the hybrid ceiling; it is listed explicitly
-          # because its filename matches no hyperfixi-hybrid-* glob (the same
-          # naming gap that once left hx-v4 unchecked in pre-publish-check).
-          for bundle in hyperfixi-hybrid-complete.js hyperfixi-hx.js; do
-            if [[ -f "packages/core/dist/$bundle" ]]; then
-              size=$(gzip -c "packages/core/dist/$bundle" | wc -c | tr -d ' ')
-              if [[ "$size" -gt "$MAX_HYBRID" ]]; then
-                echo "::error::$bundle ($size bytes gzip) exceeds limit ($MAX_HYBRID bytes)"
-                failed=1
-              else
-                echo "$bundle: $size bytes gzip (limit $MAX_HYBRID)"
-              fi
-            fi
-          done
 
           # Full bundles are NOT [[ -f ]]-skipped: the build job runs
           # build:browser, so a missing file means the bundle build silently

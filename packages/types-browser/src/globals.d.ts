@@ -17,7 +17,7 @@ declare global {
     /**
      * HyperFixi - Modern hyperscript engine with fixi/htmx integration
      *
-     * Loaded from: hyperfixi.js or hyperfixi-hx.js
+     * Loaded from: hyperfixi.js (the engine's hyperfixi-hs.js sets it too)
      *
      * @example
      * ```typescript

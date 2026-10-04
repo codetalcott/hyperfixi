@@ -115,10 +115,10 @@ npm run verify:engines:check --prefix packages/patterns-reference  # compare onl
   month stale (generated before #1026, when core still discarded input
   silently) and over-claimed 10 rows.
 - **Refuses stale builds** (exit 2) when core/reactivity/realtime/components
-  have `src/` newer than `dist/`, or `core/dist/hyperfixi-hx-v4.js` is older
-  than the source it bundles: a stale build verifies code that differs from
-  the checkout. `npm run check:fresh` rebuilds the packages;
-  `npm run build:browser:hybrid-hx-v4 --prefix packages/core` the bundle.
+  have `src/` newer than `dist/`: a stale build verifies code that differs
+  from the checkout. `npm run check:fresh` rebuilds them. (It also checked
+  `core/dist/hyperfixi-hx-v4.js` until that bundle and its leg retired in
+  Phase C3.)
 - **The JSON is the only source of the engine column.** Seeds carry no
   `engine` field; a pattern missing from the JSON is stored as NULL
   ("Unverified") and `init-db` warns. (The old heuristic

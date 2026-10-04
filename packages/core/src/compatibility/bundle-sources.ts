@@ -20,14 +20,6 @@
  */
 
 /**
- * Bundles that publish their own `commands: [...]` array. The array is the
- * fact; the metadata count mirrors it.
- */
-export const BUNDLES_WITH_COMMAND_LISTS: Readonly<Record<string, string>> = {
-  'hybrid-complete': 'browser-bundle-hybrid-complete.ts',
-};
-
-/**
  * Bundles that hand-pick commands through `createTreeShakeableRuntime([...])`
  * without publishing an array. The factory calls are the fact.
  *
@@ -41,10 +33,8 @@ export const BUNDLES_WITH_FACTORY_LISTS: Readonly<Record<string, string>> = {
   multilingual: 'browser-bundle-multilingual.ts',
 };
 
-/**
- * Bundles that re-export another bundle wholesale, so their count must equal
- * that bundle's rather than being stated again.
- */
-export const BUNDLES_INHERITING: Readonly<Record<string, string>> = {
-  'hybrid-hx': 'hybrid-complete',
-};
+// Two more pairings lived here until Phase C3 retired the bundles they
+// described: `BUNDLES_WITH_COMMAND_LISTS` (hybrid-complete published its own
+// `commands: [...]` array, which the metadata count mirrored) and
+// `BUNDLES_INHERITING` (hybrid-hx re-exported hybrid-complete, so its count
+// had to equal that bundle's). No shipped bundle is either today.

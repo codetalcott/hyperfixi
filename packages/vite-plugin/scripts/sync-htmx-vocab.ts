@@ -1,10 +1,10 @@
 /**
  * Regenerate `packages/vite-plugin/src/htmx-localized-attrs.ts` from
- * the canonical vocab files at `packages/core/vocab/htmx/*.js`.
+ * the canonical vocab files at `packages/htmx-adapter/vocab/*.js`.
  *
  * The scanner uses these maps at build time to route projects authored
  * in non-English languages to the correct bundle. Whenever the vocab
- * regenerates (via `npm run generate:htmx-vocab --prefix packages/core`),
+ * regenerates (via `npm run generate:vocab --prefix packages/htmx-adapter`),
  * re-run this script to keep the vite-plugin's static set in sync.
  *
  * Usage:
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const VOCAB_DIR = resolve(__dirname, '../../core/vocab/htmx');
+const VOCAB_DIR = resolve(__dirname, '../../htmx-adapter/vocab');
 const OUTPUT_FILE = resolve(__dirname, '../src/htmx-localized-attrs.ts');
 
 interface LiveEntry {
@@ -51,8 +51,8 @@ function renderFile(entries: LiveEntry[]): string {
   return `/**
  * Localized htmx-compat attribute name maps for the scanner.
  *
- * The vocab generator at \`packages/core/scripts/gen-htmx-vocab.mjs\`
- * emits per-language vocab modules under \`packages/core/vocab/htmx/\`.
+ * The vocab generator at \`packages/htmx-adapter/scripts/gen-htmx-vocab.mjs\`
+ * emits per-language vocab modules under \`packages/htmx-adapter/vocab/\`.
  * Those modules drive the runtime orchestrator. The scanner needs the
  * same information at build time so it can route projects authored in
  * non-English languages to the correct bundle.
@@ -62,7 +62,7 @@ function renderFile(entries: LiveEntry[]): string {
  *   npm run sync-htmx-vocab --prefix packages/vite-plugin
  *
  * Drift detection happens via a unit test that re-derives the maps from
- * \`packages/core/vocab/htmx/*.js\` and compares against this file's
+ * \`packages/htmx-adapter/vocab/*.js\` and compares against this file's
  * contents.
  */
 
@@ -70,7 +70,7 @@ function renderFile(entries: LiveEntry[]): string {
  * Localized names that mean \`hx-live\` (htmx v4 reactive expression).
  * Used to set \`needsHxLive\` + \`needsReactivity\` for non-English authors.
  *
- * Auto-derived from \`packages/core/vocab/htmx/*.js\`. Re-sync if vocab
+ * Auto-derived from \`packages/htmx-adapter/vocab/*.js\`. Re-sync if vocab
  * changes (see file-level comment).
  */
 export const HX_LIVE_LOCALIZED: ReadonlySet<string> = new Set([
@@ -107,7 +107,7 @@ function main(): void {
   const entries = extractLiveEntries();
   if (entries.length === 0) {
     console.error(`[sync-htmx-vocab] No hx-live entries found under ${VOCAB_DIR}`);
-    console.error('  Did you run `npm run generate:htmx-vocab --prefix packages/core` first?');
+    console.error('  Did you run `npm run generate:vocab --prefix packages/htmx-adapter` first?');
     process.exit(1);
   }
   const content = renderFile(entries);

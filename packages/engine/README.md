@@ -149,7 +149,8 @@ commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
 `dist/hyperfixi-hs.js` (minified, 34.1 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
-pairs with `hyperfixi-hx.js` (hyperscript plus htmx); `hyperfixi.js` is everything.
+paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3);
+`hyperfixi.js` is everything.
 
 Every tracked gallery page loads it instead of `packages/core/dist/hyperfixi.js`
 (2026-10-03: forty-seven pages; the error-path page for core's htmx layer was deleted with that
@@ -210,10 +211,11 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 distinct) to three parsers. Measured 2026-10-01:
 
 - upstream accepts 272, this engine 309, `packages/core` 320;
-- **12 sources that core accepts are rejected here**: the eleven handlers that use core's
-  history commands (`push url`, `replace url`), which wait for the htmx decision, and the
-  `hyperfixi-hx.js` example in `docs/BROWSER_BUNDLES.md`, which is written in the hybrid
-  parser's own dialect (`on click.debounce(300)`, `me has .loading`).
+- **12 sources that core accepted were rejected here**: the eleven handlers that used core's
+  history commands (`push url`, `replace url`), rewritten as `call history.pushState(…)` on
+  2026-10-03, and the `hyperfixi-hx.js` example in `docs/BROWSER_BUNDLES.md`, written in the
+  hybrid parser's own dialect (`on click.debounce(300)`, `me has .loading`), which went with
+  that bundle in Phase C3 (2026-10-04). None is left.
 
 It was 78 when first measured. The examples and docs were moved to upstream's spellings where
 upstream has one (`put … into` for core's `swap` strategies, `debounced at 300ms`,

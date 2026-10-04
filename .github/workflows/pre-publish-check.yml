@@ -346,16 +346,8 @@ jobs:
           # graph: hyperfixi.js measured ~299 KB gz, hx-v4 ~311 KB gz. These
           # ceilings exist specifically to catch RE-duplication (any change
           # that re-inlines a second core/semantic blows straight past them).
-          # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
-          # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
-          # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
-          # (measured, not estimated). 2057 of that is `morphlex`, pulled in by
-          # the `morph` case — 69% of the increase for 1 of 13 commands, kept
-          # deliberately so no advertised command is a no-op.
-          # hx measured 21960 B gz locally, so 22000 would have failed on the
-          # first run; 24000 restores roughly the ~2 KB of headroom the old
-          # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
-          MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
+          # MAX_HYBRID (hyperfixi-hx.js / -hybrid-complete.js) went with those
+          # bundles in Phase C3 (C-R2). Mirrored in ci.yml.
           # Raised 340000 -> 355000 / 350000 -> 368000 on 2026-08-26 (PR #931,
           # per-language render vocabulary). Both bundles expose translate /
           # getAllTranslations for 24 languages, so they carry the new
@@ -382,22 +374,6 @@ jobs:
           MAX_BROWSER=373000      # 373 KB (hyperfixi.js actual ~347 KB gz)
 
           failed=0
-
-          # Check hybrid bundles. hyperfixi-hx.js is listed explicitly: it
-          # shares the hybrid ceiling but matches no hyperfixi-hybrid-* glob
-          # (the same naming gap that once left hx-v4 unchecked below).
-          for bundle in packages/core/dist/hyperfixi-hybrid-*.js packages/core/dist/hyperfixi-hx.js; do
-            if [[ -f "$bundle" ]]; then
-              size=$(gzip -c "$bundle" | wc -c | tr -d ' ')
-              filename=$(basename "$bundle")
-              if [[ "$size" -gt "$MAX_HYBRID" ]]; then
-                echo "❌ $filename (${size} bytes gzip) exceeds limit (${MAX_HYBRID} bytes)" >> $GITHUB_STEP_SUMMARY
-                failed=1
-              else
-                echo "✅ $filename (${size} bytes gzip) within limit (${MAX_HYBRID} bytes)" >> $GITHUB_STEP_SUMMARY
-              fi
-            fi
-          done
 
           # Check full browser bundle. NOT [[ -f ]]-guarded: a missing
           # hyperfixi.js means the bundle build silently failed upstream —
@@ -458,32 +434,6 @@ jobs:
             echo "</details>" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: htmx i18n orchestrator public API
-        run: |
-          set -o pipefail
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## htmx i18n Orchestrator Public API" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          cd packages/core
-
-          # Guards the v2.5.0 terser regression class: vocab modules
-          # (vocab/htmx/{lang}.js) depend on window.__hyperfixi_i18n.register
-          # being reachable in the published bundles. Surfaced 2.5.0 → 2.5.1.
-          if npx playwright test src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts --reporter=list 2>&1 | tee /tmp/i18n-orchestrator-api.log; then
-            echo "✅ window.__hyperfixi_i18n.register reachable in hybrid-hx" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Orchestrator public API check failed — vocab modules will silently break" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "<details><summary>Test Failures</summary>" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            tail -60 /tmp/i18n-orchestrator-api.log >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "</details>" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
@@ -493,15 +443,15 @@ jobs:
           retention-days: 3
 
       - name: Final verdict
-        # always(): a hard-exit step (orchestrator/bundle build) must not
+        # always(): a hard-exit step (the bundle build) must not
         # prevent the recorded-failures report from reaching the summary.
         if: always()
         # A green job conclusion now MEANS the load-bearing checks passed:
         # typecheck, tests, builds, export validation, and the bundle
         # compatibility matrix record failures into $RUNNER_TEMP/
         # prepublish-failures.txt, and this step fails the job if any were
-        # recorded. (Bundle sizes, the browser-bundle build, and the i18n
-        # orchestrator spec already hard-fail their own steps.) The
+        # recorded. (Bundle sizes and the browser-bundle build already
+        # hard-fail their own steps.) The
         # required-files and package.json field TABLES stay advisory — many
         # packages ship without CHANGELOG/types by long-standing convention,
         # so those ❌ cells are review input, not gates.

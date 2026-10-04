@@ -69,10 +69,6 @@ fi
 echo "5️⃣  Verifying browser bundles..."
 BUNDLES=(
   "packages/core/dist/lokascript-browser.js"
-  "packages/core/dist/lokascript-lite.js"
-  "packages/core/dist/lokascript-lite-plus.js"
-  "packages/core/dist/lokascript-hybrid-complete.js"
-  "packages/core/dist/lokascript-hybrid-hx.js"
   "packages/i18n/dist/lokascript-i18n.min.js"
   "packages/semantic/dist/browser.global.js"
 )
