@@ -89,6 +89,9 @@ export function generateCacheKey(
   return `${canonical}|${optKey}`;
 }
 
+/** The SemanticNode fields that hold child nodes (semantic/src/types.ts). */
+const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch'] as const;
+
 /**
  * Canonicalize a SemanticNode to a deterministic string.
  */
@@ -111,9 +114,13 @@ function canonicalize(node: unknown): string {
     }
   }
 
-  // Body (for event handlers)
-  if (Array.isArray(n.body)) {
-    parts.push(`b:[${n.body.map(canonicalize).join(',')}]`);
+  // Child nodes: a handler's body, a compound's statements, a conditional's branches, a
+  // loop's body. Every list of them is part of the identity. (Only `body` was until
+  // 2026-10-04, so every `then` chain — a compound, whose children are `statements` —
+  // had the same key, and a service returned the first one's JS for all of them.)
+  for (const field of CHILD_FIELDS) {
+    const children = n[field];
+    if (Array.isArray(children)) parts.push(`${field}:[${children.map(canonicalize).join(',')}]`);
   }
 
   // Trigger/event modifiers

@@ -76,6 +76,23 @@ describe('SemanticCache', () => {
     const key2 = generateCacheKey(node, { optimization: 2 });
     expect(key1).toBe(key2);
   });
+
+  it('keys a compound by its statements (two `then` chains are two keys)', () => {
+    const command = (action: string, value: string) => ({
+      kind: 'command',
+      action,
+      roles: new Map([['patient', { type: 'selector', value }]]),
+    });
+    const chain = (...statements: unknown[]) => ({
+      kind: 'event-handler',
+      action: 'on',
+      roles: new Map([['event', { type: 'literal', value: 'click' }]]),
+      body: [{ kind: 'compound', action: 'compound', roles: new Map(), statements }],
+    });
+    const a = generateCacheKey(chain(command('add', '.x'), command('remove', '.x')), {});
+    const b = generateCacheKey(chain(command('toggle', '.a'), command('add', '.b')), {});
+    expect(a).not.toBe(b);
+  });
 });
 
 // =============================================================================
@@ -105,6 +122,17 @@ describe('CompilationService', () => {
       expect(result.js).toContain('function');
       expect(result.semantic).toBeDefined();
       expect(result.diagnostics.filter(d => d.severity === 'error')).toHaveLength(0);
+    });
+
+    it('compiles two different `then` chains to two different handlers (one service)', () => {
+      const first = service.compile({ code: 'on click add .x to me then wait 1s', language: 'en' });
+      const second = service.compile({
+        code: 'on click toggle .a then put "hi" into #out',
+        language: 'en',
+      });
+      expect(first.ok && second.ok).toBe(true);
+      expect(second.js).not.toBe(first.js);
+      expect(second.js).toContain("toggle('a')");
     });
 
     it('compiles Japanese hyperscript', () => {
