@@ -36,7 +36,8 @@ const CASES: Array<[string, string]> = [
   ['go to url "/x" in new window', 'go url "/x" in new window'],
   // Core-only syntax renders as written: upstream reads `"/x" in …` as its
   // `in` operator, and only `go url "/x" in new window` parses there.
-  ['on click go "/x" in new window', 'on click go "/x" in new window'],
+  // A string destination is a URL, which upstream reads only after `url`.
+  ['on click go "/x" in new window', 'on click go url "/x" in new window'],
   // The forms that already rendered.
   ['on click go to url "/x"', 'on click go url "/x"'],
   ['on click go back', 'on click go back'],

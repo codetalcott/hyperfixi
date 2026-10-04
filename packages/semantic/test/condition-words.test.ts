@@ -92,14 +92,21 @@ const GROUPS: Array<[string, string[], string[]]> = [
   ],
 ];
 
+/**
+ * The English a core-only condition is written as: the reader keeps `has`, and
+ * English writes upstream's `matches` (explicit/upstream-spelling.ts).
+ */
+const WRITTEN: Readonly<Record<string, string>> = { '#d1 has .x': '#d1 matches .x' };
+
 describe.each(GROUPS)('%s', (_word, conditions, languages) => {
   describe.each(conditions)('if %s', english => {
     const source = `on click if ${english} put "yes" into #out end`;
+    const written = `on click if ${WRITTEN[english] ?? english} put "yes" into #out end`;
 
     it.each(languages)('%s', language => {
       const foreign = render(parse(source, 'en')!, language);
       expect(condition(parse(foreign, language) as Node), foreign).toBe(english);
-      expect(render(parse(foreign, language)!, 'en'), foreign).toBe(source);
+      expect(render(parse(foreign, language)!, 'en'), foreign).toBe(written);
     });
   });
 });

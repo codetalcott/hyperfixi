@@ -1,12 +1,14 @@
 /**
- * A naked `${…}` URL, written as written.
+ * A naked `${…}` URL, written as a template literal in English.
  *
  * `fetch /search?q=${my value}` is core's (a spaced `${…}` is core-only; an
  * unspaced one upstream sends literally), and core builds it as a template.
  * Every render quoted it, and a quoted string interpolates on neither engine,
  * so a translated search box requested `${my value}` literally. The URL's
- * literal carries `interpolates`, renders naked, and reaches core as a
- * `templateLiteral`. A naked URL without `${` keeps its quotes, as before.
+ * literal carries `interpolates` and reaches core as a `templateLiteral`; a
+ * foreign render writes it naked, and English writes the backtick template
+ * both upstream and @hyperfixi/engine interpolate (explicit/upstream-
+ * spelling.ts). A naked URL without `${` keeps its quotes, as before.
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST } from '../src/index';
@@ -38,9 +40,9 @@ function fetchSource(node: Walked | null): { interpolates?: true } | undefined {
 const CASES: [string, string][] = [
   [
     'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
-    'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
+    'on input debounced at 300ms fetch `/api/search?q=${my value}` as json then put it into #results',
   ],
-  ['on click fetch /api/${id}/more as json', 'on click fetch /api/${id}/more as json'],
+  ['on click fetch /api/${id}/more as json', 'on click fetch `/api/${id}/more` as json'],
   // Nothing to interpolate: quoted, as before (the two are one on both engines).
   ['on click fetch /api/items then put it into #x', 'on click fetch "/api/items" then put it into #x'],
   // Written quoted or as a template: kept so.

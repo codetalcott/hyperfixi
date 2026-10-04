@@ -16,6 +16,7 @@ import type { SemanticNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { parenthesizeCollidingNames, readsAs } from '../name-collisions';
 import { semanticRenderer } from './renderer';
+import { toUpstreamSpelling } from './upstream-spelling';
 
 /**
  * Render a semantic node in the specified language: the plain render, unless
@@ -23,7 +24,8 @@ import { semanticRenderer } from './renderer';
  * variables in parentheses is not.
  */
 export function render(node: SemanticNode, language: string): string {
-  if (language === 'en' || !tryGetProfile(language)) return semanticRenderer.render(node, language);
+  if (language === 'en') return semanticRenderer.render(toUpstreamSpelling(node), language);
+  if (!tryGetProfile(language)) return semanticRenderer.render(node, language);
   let wrapped = false;
   const guarded = semanticRenderer.renderWith(node, language, raw => {
     const out = parenthesizeCollidingNames(raw, language);
