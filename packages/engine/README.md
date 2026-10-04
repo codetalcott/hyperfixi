@@ -39,6 +39,12 @@ feature, or an optional expression kind. A rule that is not registered does not 
 script that uses it fails with a parse error that names the token. `src/bundles/full.ts` is the
 list of every module.
 
+A module can live in another package. `@hyperfixi/speech` is one (upstream's `speak`): it imports
+`expr` and the `Grammar` / `Cmd` / `Expr` types from here, sets `g.commands.speak` to a rule that
+reads its operands off the `Parser` it is handed, and returns a node whose `run` may return a
+promise. `register(...everything, speak)` builds an engine with it. (The script-tag bundle is a
+fixed list; nothing adds a module to a page's `hyperfixi-hs.js` after it loads.)
+
 The public object is shaped like upstream's `_hyperscript` (`evaluate`, `parse`, `process`,
 `config`, `use(plugin)`, `addBeforeProcessHook`), so a plugin written for upstream's public API
 can be used on it; the multilingual adapter is. It adds one hook upstream lacks:

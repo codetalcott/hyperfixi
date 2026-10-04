@@ -86,7 +86,7 @@ export interface MarkupSnippets {
  *
  * Template components — `<script type="text/hyperscript-template"
  * component="x">` (upstream's form, which upstream's official `component`
- * extension implements and @hyperfixi/components also accepts) and
+ * extension implements, as core 3.x's @hyperfixi/components did) and
  * `<template component="x">` — are NOT hyperfixi-only. Their bodies are markup
  * the DOM walk cannot reach (script text; template content), so each is
  * extracted recursively and its `_` sources join `snippets`.

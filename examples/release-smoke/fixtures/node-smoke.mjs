@@ -8,10 +8,8 @@
  *
  * Prints one `PASS <desc>` / `FAIL <desc>` line per check; exits 1 if any fail.
  *
- * NOTE: @hyperfixi/components references browser globals (`Element`) at
- * module scope and cannot be imported in bare Node — it is verified by the
- * browser-bundle stage of run.mjs instead. @hyperfixi/core is Node-safe
- * since 2.7.2 (dom-globals shim ahead of morphlex) and is checked below.
+ * NOTE: @hyperfixi/core is Node-safe since 2.7.2 (dom-globals shim ahead of
+ * morphlex) and is checked below.
  */
 
 let failed = 0;
@@ -48,19 +46,16 @@ await check('@hyperfixi/engine — bare-Node import, parse', async () => {
   return `${m.everything.length} modules, parse ok`;
 });
 
-await check('@hyperfixi/speech — plugin + commands', async () => {
+// An engine module since 4.0 (a plugin for core's runtime before): registering it on
+// the INSTALLED engine is what proves the two packages fit.
+await check('@hyperfixi/speech — the speak module on the engine', async () => {
   const m = await import('@hyperfixi/speech');
-  assert(m.speechPlugin?.name === '@hyperfixi/speech', 'speechPlugin.name mismatch');
-  assert(typeof m.speechPlugin.install === 'function', 'speechPlugin.install missing');
-  assert(m.speakCommand && m.askCommand && m.answerCommand, 'command exports missing');
-  return 'speechPlugin + speak/ask/answer';
-});
-
-await check('@hyperfixi/reactivity — plugin', async () => {
-  const m = await import('@hyperfixi/reactivity');
-  assert(m.reactivityPlugin?.name === '@hyperfixi/reactivity', 'reactivityPlugin.name mismatch');
-  assert(typeof m.reactivityPlugin.install === 'function', 'reactivityPlugin.install missing');
-  return 'reactivityPlugin';
+  assert(typeof m.speak === 'function', 'speak missing');
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything, m.speak);
+  const parsed = engine.api.parse('speak "hi" with rate 2');
+  assert(parsed.errors.length === 0, `speak did not parse: ${parsed.errors[0]?.message}`);
+  return 'speak registered, parses';
 });
 
 await check('@hyperfixi/vite-plugin — plugin factory', async () => {

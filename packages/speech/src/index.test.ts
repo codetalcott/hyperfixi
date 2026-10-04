@@ -1,273 +1,106 @@
 /**
- * End-to-end tests for @hyperfixi/speech.
- *
- * Validates:
- *   1. The plugin installs cleanly via installPlugin()
- *   2. The parser accepts `speak`, `ask`, `answer` at command position
- *   3. Runtime execution dispatches to the right commands
- *   4. speak() uses the Web Speech API (with a mock)
- *   5. ask() reads from window.prompt (with a mock)
- *   6. answer sets context.result / context.it
+ * `speak` on @hyperfixi/engine: parsed by the module this package exports, run with the Web
+ * Speech API mocked (happy-dom has none).
  */
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { api, everything, register } from '@hyperfixi/engine';
+import { speak } from './index';
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { speechPlugin, speakCommand, askCommand, answerCommand } from './index';
+/** What the mocked `speechSynthesis.speak` received, in order. */
+const spoken: MockUtterance[] = [];
 
-// ---------------------------------------------------------------------------
-// Shared fixtures
-// ---------------------------------------------------------------------------
-
-interface MockEvaluator {
-  evaluate: (node: any, ctx: any) => Promise<unknown>;
+class MockUtterance {
+  rate = 1;
+  pitch = 1;
+  volume = 1;
+  voice: { name: string } | null = null;
+  onend: (() => void) | null = null;
+  constructor(readonly text: string) {}
 }
 
-/** Minimal evaluator that returns the literal value or identifier name. */
-const mockEvaluator: MockEvaluator = {
-  async evaluate(node: any) {
-    if (!node) return undefined;
-    if (node.type === 'literal') return node.value;
-    if (node.type === 'identifier') return node.name;
-    return node.value ?? node.name;
-  },
-};
+const voices = [{ name: 'Alice' }, { name: 'Bob' }];
 
-function literal<T>(value: T) {
-  return { type: 'literal', value };
+/** End the oldest utterance still speaking, as the browser does when it finishes. */
+function finish(): void {
+  const next = spoken.find(u => u.onend);
+  const end = next?.onend;
+  if (next) next.onend = null;
+  end?.();
 }
 
-function identifier(name: string) {
-  return { type: 'identifier', name };
-}
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
-// ---------------------------------------------------------------------------
-// Unit-level tests per command
-// ---------------------------------------------------------------------------
+const parseErrors = (source: string) => api.parse(source).errors.map(e => e.message);
 
-describe('speakCommand', () => {
-  let utterances: Array<{
-    text: string;
-    rate?: number;
-    pitch?: number;
-    voice?: SpeechSynthesisVoice | null;
-    volume?: number;
-  }>;
-  let originalSynth: unknown;
-  let originalUtterance: unknown;
-
-  beforeEach(() => {
-    utterances = [];
-    originalSynth = (globalThis as any).speechSynthesis;
-    originalUtterance = (globalThis as any).SpeechSynthesisUtterance;
-
-    (globalThis as any).SpeechSynthesisUtterance = class MockUtterance {
-      text: string;
-      rate = 1;
-      pitch = 1;
-      volume = 1;
-      voice: SpeechSynthesisVoice | null = null;
-      constructor(text: string) {
-        this.text = text;
-      }
-    };
-    (globalThis as any).speechSynthesis = {
-      speak: vi.fn((utter: any) => {
-        utterances.push({
-          text: utter.text,
-          rate: utter.rate,
-          pitch: utter.pitch,
-          voice: utter.voice,
-          volume: utter.volume,
-        });
-      }),
-      getVoices: () => [
-        { name: 'Google UK English Female', lang: 'en-GB' } as SpeechSynthesisVoice,
-      ],
-    };
+describe('speak', () => {
+  it('is not a command until the module is registered', () => {
+    register(...everything);
+    expect(parseErrors('speak "hi"').length).toBeGreaterThan(0);
   });
 
-  afterEach(() => {
-    (globalThis as any).speechSynthesis = originalSynth;
-    (globalThis as any).SpeechSynthesisUtterance = originalUtterance;
-  });
+  describe('registered', () => {
+    beforeAll(() => {
+      register(speak);
+      Object.assign(globalThis, {
+        SpeechSynthesisUtterance: MockUtterance,
+        speechSynthesis: {
+          getVoices: () => voices,
+          speak: (u: MockUtterance) => void spoken.push(u),
+        },
+      });
+    });
+    afterEach(() => {
+      while (spoken.some(u => u.onend)) finish();
+      spoken.length = 0;
+      document.body.innerHTML = '';
+    });
 
-  it('speaks the text argument via speechSynthesis.speak', async () => {
-    const input = await speakCommand.parseInput(
-      { args: [literal('hello')], modifiers: {} },
-      mockEvaluator,
-      {}
-    );
-    expect(input).toEqual({ text: 'hello' });
-    const ctx: Record<string, unknown> = {};
-    await speakCommand.execute(input, ctx);
-    expect(utterances).toEqual([{ text: 'hello', rate: 1, pitch: 1, voice: null, volume: 1 }]);
-    expect(ctx.result).toBe(true);
-  });
+    it('parses its options, each after its own `with`', () => {
+      expect(parseErrors('speak "hi"')).toEqual([]);
+      expect(parseErrors('speak "hi" with rate 1.5 with pitch 0.8')).toEqual([]);
+      expect(parseErrors('speak "hi" with voice "Alice" with volume 1')).toEqual([]);
+      expect(parseErrors('speak "a" + "b" with rate 2 then log 1')).toEqual([]);
+    });
 
-  it('applies `with rate`, `with pitch`, `with volume` options', async () => {
-    const input = await speakCommand.parseInput(
-      {
-        args: [
-          literal('hi'),
-          identifier('with'),
-          identifier('rate'),
-          literal(1.5),
-          identifier('with'),
-          identifier('pitch'),
-          literal(0.8),
-        ],
-        modifiers: {},
-      },
-      mockEvaluator,
-      {}
-    );
-    expect(input).toEqual({ text: 'hi', rate: 1.5, pitch: 0.8 });
-    await speakCommand.execute(input, {});
-    expect(utterances[0].rate).toBe(1.5);
-    expect(utterances[0].pitch).toBe(0.8);
-  });
+    it('names the options it knows when one is wrong', () => {
+      const [message] = parseErrors('speak "hi" with tone 2');
+      expect(message).toBeDefined();
+      for (const option of ['voice', 'rate', 'pitch', 'volume']) expect(message).toContain(option);
+    });
 
-  it('matches `with voice "<name>"` against available voices', async () => {
-    const input = await speakCommand.parseInput(
-      {
-        args: [
-          literal('hi'),
-          identifier('with'),
-          identifier('voice'),
-          literal('Google UK English Female'),
-        ],
-        modifiers: {},
-      },
-      mockEvaluator,
-      {}
-    );
-    await speakCommand.execute(input, {});
-    expect(utterances[0].voice).toMatchObject({ name: 'Google UK English Female' });
-  });
+    it('speaks the text with the options set on the utterance', async () => {
+      const done = api.evaluate(
+        'speak "Hello" with rate 1.5 with pitch 0.8 with volume 0.5 with voice "Bob"'
+      );
+      await settle();
+      expect(spoken).toHaveLength(1);
+      const [u] = spoken;
+      expect(u).toMatchObject({ text: 'Hello', rate: 1.5, pitch: 0.8, volume: 0.5 });
+      expect(u?.voice).toBe(voices[1]);
+      finish();
+      await done;
+    });
 
-  it('no-ops when SpeechSynthesis is unavailable (sets result=false)', async () => {
-    (globalThis as any).speechSynthesis = undefined;
-    const ctx: Record<string, unknown> = {};
-    await speakCommand.execute({ text: 'hi' }, ctx);
-    expect(ctx.result).toBe(false);
-  });
+    it('ignores a voice that is not installed', async () => {
+      const done = api.evaluate('speak "Hi" with voice "Nobody"');
+      await settle();
+      expect(spoken[0]?.voice).toBeNull();
+      finish();
+      await done;
+    });
 
-  it('throws when text argument is missing', async () => {
-    await expect(
-      speakCommand.parseInput({ args: [], modifiers: {} }, mockEvaluator, {})
-    ).rejects.toThrow(/requires a text argument/);
-  });
-});
-
-describe('askCommand', () => {
-  let originalPrompt: unknown;
-
-  beforeEach(() => {
-    originalPrompt = (globalThis as any).prompt;
-  });
-  afterEach(() => {
-    (globalThis as any).prompt = originalPrompt;
-  });
-
-  it('reads from window.prompt and stores result in context.result and context.it', async () => {
-    (globalThis as any).prompt = vi.fn(() => 'Alice');
-    const input = await askCommand.parseInput(
-      { args: [literal('Your name?')], modifiers: {} },
-      mockEvaluator,
-      {}
-    );
-    expect(input.prompt).toBe('Your name?');
-    const ctx: Record<string, unknown> = {};
-    const out = await askCommand.execute(input, ctx);
-    expect(out).toBe('Alice');
-    expect(ctx.result).toBe('Alice');
-    expect(ctx.it).toBe('Alice');
-  });
-
-  it('returns null when prompt is unavailable', async () => {
-    (globalThis as any).prompt = undefined;
-    const ctx: Record<string, unknown> = {};
-    const out = await askCommand.execute({}, ctx);
-    expect(out).toBeNull();
-  });
-
-  it('honors `with default "value"` syntax', async () => {
-    (globalThis as any).prompt = vi.fn((_p: string, d: string) => d);
-    const input = await askCommand.parseInput(
-      {
-        args: [literal('Your name?'), identifier('with'), identifier('default'), literal('Guest')],
-        modifiers: {},
-      },
-      mockEvaluator,
-      {}
-    );
-    expect(input.defaultValue).toBe('Guest');
-    const ctx: Record<string, unknown> = {};
-    await askCommand.execute(input, ctx);
-    expect(ctx.result).toBe('Guest');
-  });
-});
-
-describe('answerCommand', () => {
-  it('sets context.result and context.it to the given value', async () => {
-    const input = await answerCommand.parseInput(
-      { args: [identifier('with'), literal('programmatic')], modifiers: {} },
-      mockEvaluator,
-      {}
-    );
-    expect(input).toEqual({ value: 'programmatic' });
-    const ctx: Record<string, unknown> = {};
-    await answerCommand.execute(input, ctx);
-    expect(ctx.result).toBe('programmatic');
-    expect(ctx.it).toBe('programmatic');
-  });
-
-  it('accepts bare-value form without leading `with`', async () => {
-    const input = await answerCommand.parseInput(
-      { args: [literal('bare')], modifiers: {} },
-      mockEvaluator,
-      {}
-    );
-    expect(input).toEqual({ value: 'bare' });
-  });
-
-  it('throws without any value', async () => {
-    await expect(
-      answerCommand.parseInput({ args: [], modifiers: {} }, mockEvaluator, {})
-    ).rejects.toThrow(/requires a value/);
-  });
-
-  it('validate() accepts {value: ...} and rejects other shapes', () => {
-    expect(answerCommand.validate({ value: 'x' })).toBe(true);
-    expect(answerCommand.validate(null)).toBe(false);
-    expect(answerCommand.validate({})).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Plugin shape
-// ---------------------------------------------------------------------------
-
-describe('speechPlugin', () => {
-  it('has a valid HyperfixiPlugin shape', () => {
-    expect(speechPlugin.name).toBe('@hyperfixi/speech');
-    expect(typeof speechPlugin.install).toBe('function');
-  });
-
-  it('install() wires three commands into both registries', () => {
-    const commandCalls: Array<{ name: string }> = [];
-    const keywordCalls: string[] = [];
-    const ctx = {
-      commandRegistry: {
-        register: (cmd: any) => commandCalls.push({ name: cmd.name }),
-      },
-      parserExtensions: {
-        registerCommand: (name: string) => keywordCalls.push(name),
-      },
-    } as any;
-
-    speechPlugin.install(ctx);
-
-    expect(keywordCalls.sort()).toEqual(['answer', 'ask', 'speak']);
-    expect(commandCalls.map(c => c.name).sort()).toEqual(['answer', 'ask', 'speak']);
+    it('waits for the utterance to end before the next command', async () => {
+      document.body.innerHTML =
+        "<button _=\"on click speak 'first' then put 'spoken' into me\">go</button>";
+      const button = document.querySelector('button')!;
+      api.processNode(button);
+      button.click();
+      await settle();
+      expect(spoken.map(u => u.text)).toEqual(['first']);
+      expect(button.textContent).toBe('go');
+      finish();
+      await settle();
+      expect(button.textContent).toBe('spoken');
+    });
   });
 });

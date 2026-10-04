@@ -15,16 +15,16 @@ the in-repo test suites structurally cannot — because vitest aliases
    `@lokascript/htmx-adapter`'s tarball (24): they load by `<script>` tag, so no
    import would notice one missing.
 2. **Node import surface** — imports each Node-safe package and asserts its
-   `exports` map resolves and key symbols (`speechPlugin`, `reactivityPlugin`,
+   `exports` map resolves and key symbols (`speak` registered on the installed engine,
    `parseSemantic`, `translate`, i18n's `getProfile`, the vite plugin factory) are intact.
 3. **Browser bundles** — serves the published `hyperfixi.js` and
    `hyperfixi-hs.js` bundles and drives them with Playwright/chromium:
    a `toggle`/`put` round-trip on each, and a `live` block re-rendering on
    hs (core's `hx-live` on `hyperfixi-hx-v4.js` until that bundle retired).
 
-`@hyperfixi/core` and `@hyperfixi/components` reference browser globals at
-module scope and can't be imported in bare Node — they're covered by the
-browser stage, not the Node stage.
+`@hyperfixi/core`'s browser bundle is covered by the browser stage, not the Node
+stage. (`@hyperfixi/components`, which referenced browser globals at module
+scope, was deprecated with the other core-era plugins in 4.0.)
 
 ## Usage
 
