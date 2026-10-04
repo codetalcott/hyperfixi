@@ -21,11 +21,14 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../semantic ../i18n",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:run": "vitest run",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "test:browser": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:vocab": "node scripts/gen-htmx-vocab.mjs",
+    "check:vocab": "node scripts/gen-htmx-vocab.mjs --check"
   },
   "keywords": [
     "htmx",
@@ -49,6 +52,7 @@
   "files": [
     "dist",
     "src",
+    "vocab",
     "README.md",
     "CHANGELOG.md"
   ],

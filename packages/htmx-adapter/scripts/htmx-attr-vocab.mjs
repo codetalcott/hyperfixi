@@ -39,8 +39,8 @@
  *     real DOM events: htmx's own trigger words (`revealed`, `every`,
  *     `intersect`) are trigger syntax, like `delay:`, and stay English.
  *
- * Adding a language: add an entry, run `npm run generate:htmx-vocab --prefix
- * packages/core`, then `npm run sync-htmx-vocab --prefix packages/vite-plugin`.
+ * Adding a language: add an entry, run `npm run generate:vocab --prefix
+ * packages/htmx-adapter`, then `npm run sync-htmx-vocab --prefix packages/vite-plugin`.
  * The generator throws on an unknown key, a name that collides with another
  * attribute in the same language, or a name that is not a valid attribute name.
  */

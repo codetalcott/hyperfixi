@@ -4,8 +4,7 @@
  * Lets authors write `hx-*` / `sse-*` / `ws-*` attributes in 24 languages
  * against the stock htmx library. Localized names are canonicalized on
  * the element before htmx processes it (see canonicalize.ts); vocab data
- * is the same generated `packages/core/vocab/htmx/{lang}.js` modules the
- * embedded hyperfixi htmx-compat layer uses.
+ * is the generated `vocab/{lang}.js` modules this package ships.
  *
  * Programmatic use:
  *
