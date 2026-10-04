@@ -398,9 +398,10 @@ export class TestOrchestrator {
     await validator.initialize();
 
     // codeExampleId -> en effect signature (only clean, effectful references).
+    // The reference is upstream's: the oracle, not the engine under test.
     const reference = new Map<string, string[]>();
     for (const [id, code] of sources.get('en') ?? []) {
-      const res = await validator.execute(id, code, 'en');
+      const res = await validator.execute(id, code, 'en', 'upstream');
       if (!res.error && res.effects.length > 0) reference.set(id, res.effects);
     }
     if (reference.size === 0) return;

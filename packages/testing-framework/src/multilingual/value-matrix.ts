@@ -45,11 +45,10 @@
  *   - `en`     hyperfixi's English path (core's parser and runtime);
  *   - `en-rt`  semantic's English parse rendered back to English, on upstream:
  *              where it fails, every translation inherits the loss;
- *   - `<L>`    each of 23 languages on hyperfixi's direct path —
- *              `render(parse_en(src), L)`, compiled with `{ language: L }`;
- *   - `<L>/up` the same translation through `@lokascript/hyperscript-adapter`
- *              (`preprocess`, back to English) on upstream: the multilingual
- *              product for original _hyperscript users;
+ *   - `<L>/up` each of 23 languages — `render(parse_en(src), L)` — through
+ *              `@lokascript/hyperscript-adapter` (`preprocess`, back to
+ *              English) on upstream: the multilingual product for original
+ *              _hyperscript users;
  *   - `eng`    the English source on `@hyperfixi/engine`, the engine that
  *              replaces core's;
  *   - `<L>/eng` the adapter's English (the string the `/up` lane runs) on
@@ -57,6 +56,12 @@
  *              differ, since they were given the same text.
  *
  * A (cell, lane) pair FAILS when its result differs from the oracle's.
+ *
+ * A `<L>` lane ran each translation on core's direct path (compiled with
+ * `{ language: L }`) until Phase C2 of the engine cutover, which made text the
+ * multilingual interchange. It retired after the measurement the plan asked
+ * for: on the committed baseline no cell failed `<L>/eng` while passing `<L>`
+ * (the only foreign failures, three Italian `di` cells, failed all three).
  *
  * ## The ratchet
  * `baselines/value-matrix.json` lists every failing pair, per cell. The gate
@@ -741,8 +746,11 @@ export const LANES: readonly string[] = [
   'en',
   'en-rt',
   'eng',
-  ...FOREIGN_LANGUAGES.flatMap(language => [language, `${language}/up`, `${language}/eng`]),
+  ...FOREIGN_LANGUAGES.flatMap(language => [`${language}/up`, `${language}/eng`]),
 ];
+
+/** The lanes a cell runs per language it does not skip. */
+export const LANES_PER_LANGUAGE = 2;
 
 /**
  * Upstream evaluations allowed per run. A cell uses well under a hundred; a
@@ -941,17 +949,11 @@ export async function initMatrixEngines(): Promise<MatrixEngines> {
           code = null;
         }
         if (code === null) {
-          lanes[language] = '✗untranslatable';
           lanes[`${language}/up`] = '✗untranslatable';
           lanes[`${language}/eng`] = '✗untranslatable';
           continue;
         }
         const translated = code;
-        lanes[language] = await guard(async () => {
-          const compiled = await hyperscript.compile(translated, { language });
-          if (!compiled.ok || !compiled.ast) return '✗compile';
-          return onHyperfixi(compiled.ast);
-        });
         // The adapter's English, once, for both hosts.
         const adapted = await guard(() => preprocess(translated, language));
         const up = (lanes[`${language}/up`] = adapted.startsWith('✗')
@@ -992,9 +994,8 @@ export async function runValueMatrix(cells: readonly MatrixCell[]): Promise<Cell
 
 export interface BaselineEntry {
   /**
-   * The failing lanes, space-separated, in LANES order, with three shorthands:
-   * `*direct` for all 23 languages on hyperfixi, `*up` for all 23 on upstream,
-   * `*eng` for all 23 on the new engine.
+   * The failing lanes, space-separated, in LANES order, with two shorthands:
+   * `*up` for all 23 languages on upstream, `*eng` for all 23 on the new engine.
    */
   lanes: string;
   /** Where the loss sits, for reading the burn-down (see familyOf); not asserted. */
@@ -1014,7 +1015,6 @@ export interface ValueMatrixBaseline {
   entries: Record<string, BaselineEntry>;
 }
 
-const DIRECT_LANES: readonly string[] = FOREIGN_LANGUAGES;
 const ADAPTER_LANES: readonly string[] = FOREIGN_LANGUAGES.map(language => `${language}/up`);
 const ENGINE_LANES: readonly string[] = FOREIGN_LANGUAGES.map(language => `${language}/eng`);
 
@@ -1022,17 +1022,14 @@ const ENGINE_LANES: readonly string[] = FOREIGN_LANGUAGES.map(language => `${lan
 export function compressLanes(lanes: readonly string[]): string {
   const set = new Set(lanes);
   const out: string[] = [];
-  const direct = DIRECT_LANES.every(l => set.has(l));
   const adapter = ADAPTER_LANES.every(l => set.has(l));
   const engine = ENGINE_LANES.every(l => set.has(l));
   for (const lane of LANES) {
     if (!set.has(lane)) continue;
-    if (direct && DIRECT_LANES.includes(lane)) continue;
     if (adapter && ADAPTER_LANES.includes(lane)) continue;
     if (engine && ENGINE_LANES.includes(lane)) continue;
     out.push(lane);
   }
-  if (direct) out.push('*direct');
   if (adapter) out.push('*up');
   if (engine) out.push('*eng');
   return out.join(' ');
@@ -1042,8 +1039,7 @@ export function compressLanes(lanes: readonly string[]): string {
 export function expandLanes(text: string): string[] {
   const out: string[] = [];
   for (const token of text.split(' ').filter(Boolean)) {
-    if (token === '*direct') out.push(...DIRECT_LANES);
-    else if (token === '*up') out.push(...ADAPTER_LANES);
+    if (token === '*up') out.push(...ADAPTER_LANES);
     else if (token === '*eng') out.push(...ENGINE_LANES);
     else out.push(token);
   }
@@ -1061,9 +1057,8 @@ export function failingLanes(result: CellResult): string[] {
  *   - `core`         core's English run differs from upstream's;
  *   - `semantic-en`  semantic's English parse loses it (`en-rt`), so every
  *                    translation inherits the loss;
- *   - `translation`  some foreign lanes, on both engines;
- *   - `direct-path`  hyperfixi's foreign lanes only;
- *   - `adapter`      upstream's foreign lanes only;
+ *   - `translation`  some foreign lanes on upstream: the adapter's English
+ *                    for that language says something else;
  *   - `engine`       the new engine differs from upstream on the same text:
  *                    its English run, or a language's `/eng` lane without
  *                    its `/up` lane.
@@ -1075,14 +1070,7 @@ export function familyOf(lanes: readonly string[]): string {
   const parts: string[] = [];
   if (set.has('en')) parts.push('core');
   if (set.has('en-rt')) parts.push('semantic-en');
-  else {
-    const direct = FOREIGN_LANGUAGES.filter(l => set.has(l));
-    const adapter = FOREIGN_LANGUAGES.filter(l => set.has(`${l}/up`));
-    const both = direct.filter(l => adapter.includes(l));
-    if (both.length) parts.push('translation');
-    if (direct.length > both.length && !set.has('en')) parts.push('direct-path');
-    if (adapter.length > both.length) parts.push('adapter');
-  }
+  else if (FOREIGN_LANGUAGES.some(l => set.has(`${l}/up`))) parts.push('translation');
   if (set.has('eng') || FOREIGN_LANGUAGES.some(l => set.has(`${l}/eng`) !== set.has(`${l}/up`))) {
     parts.push('engine');
   }
@@ -1110,7 +1098,7 @@ export const ACCEPTED: ReadonlyArray<{
       // `window as Int` is null, and in a loop bound both read 0 iterations.
       ...['put', 'set', 'increment'].map(p => `${p}|the scrollY of window as Int`),
     ],
-    lanes: 'en *direct',
+    lanes: 'en',
     reason:
       'known difference: core converts the property, upstream the target (core/docs/UPSTREAM-KNOWN-DIFFS.md)',
   },
@@ -1120,7 +1108,7 @@ export const ACCEPTED: ReadonlyArray<{
       'increment|#a.textContent + 2',
       'increment|#a.textContent as Int',
     ],
-    lanes: 'it it/up it/eng',
+    lanes: 'it/up it/eng',
     reason:
       'ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`',
   },
