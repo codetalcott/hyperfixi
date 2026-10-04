@@ -67,7 +67,6 @@ packages/
 ├── language-server-hyperscript/ # LSP for original _hyperscript
 ├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
 ├── vscode-extension/            # VSCode extension for LokaScript
-├── vscode-extension-hyperscript/ # VSCode extension for original _hyperscript
 │
 └── [other packages: smart-bundling, developer-tools, testing-framework, ast-toolkit, etc.]
 

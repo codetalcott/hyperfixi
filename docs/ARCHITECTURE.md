@@ -45,8 +45,7 @@ packages/
 │
 ├── language-server-hyperscript/ # @hyperscript-tools/language-server — LSP for original _hyperscript
 ├── multilingual-hyperscript/    # @hyperscript-tools/multilingual — Plugin for original _hyperscript
-├── vscode-extension/            # VSCode extension for LokaScript
-└── vscode-extension-hyperscript/# VSCode extension for original _hyperscript
+└── vscode-extension/            # VSCode extension for LokaScript
 ```
 
 ## Bundle Tiers

@@ -82,7 +82,7 @@ docs-site decision), D5, D6, and README-example tests beyond the adapter.
 
 **Owner decisions:**
 
-- Publish the VS Code extensions, or drop them from the product story (S1)?
+- Publish the LokaScript VS Code extension, or drop it from the product story (S1)? (The standalone `_hyperscript` extension was retired 2026-10-04: upstream ships its own.)
 - Which repo owns the docs site (D2, D6)?
 
 ### M1: commands a translation silently drops

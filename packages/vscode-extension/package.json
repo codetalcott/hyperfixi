@@ -1,7 +1,7 @@
 {
   "name": "lokascript-vscode",
   "displayName": "Hyperscript Language Support",
-  "description": "Language support for _hyperscript and LokaScript — syntax highlighting, completions, hover docs, diagnostics, 24 language i18n, and interactive debugging",
+  "description": "Language support for _hyperscript and LokaScript — syntax highlighting, completions, hover docs, diagnostics, and 24 language i18n",
   "version": "3.3.0",
   "publisher": "lokascript",
   "engines": {
@@ -10,8 +10,7 @@
   "categories": [
     "Programming Languages",
     "Linters",
-    "Snippets",
-    "Debuggers"
+    "Snippets"
   ],
   "keywords": [
     "hyperscript",
@@ -19,12 +18,10 @@
     "lokascript",
     "htmx",
     "html",
-    "multilingual",
-    "debugger"
+    "multilingual"
   ],
   "activationEvents": [
-    "onLanguage:html",
-    "onDebugResolve:hyperfixi"
+    "onLanguage:html"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -82,41 +79,6 @@
         "title": "LokaScript: Restart Language Server"
       },
       {
-        "command": "lokascript.debug.connect",
-        "title": "HyperFixi: Connect Debugger",
-        "icon": "$(debug-start)"
-      },
-      {
-        "command": "lokascript.debug.disconnect",
-        "title": "HyperFixi: Disconnect Debugger",
-        "icon": "$(debug-stop)"
-      },
-      {
-        "command": "lokascript.debug.continue",
-        "title": "HyperFixi: Continue",
-        "icon": "$(debug-continue)"
-      },
-      {
-        "command": "lokascript.debug.pause",
-        "title": "HyperFixi: Pause",
-        "icon": "$(debug-pause)"
-      },
-      {
-        "command": "lokascript.debug.stepOver",
-        "title": "HyperFixi: Step Over",
-        "icon": "$(debug-step-over)"
-      },
-      {
-        "command": "lokascript.debug.stepInto",
-        "title": "HyperFixi: Step Into",
-        "icon": "$(debug-step-into)"
-      },
-      {
-        "command": "lokascript.debug.stepOut",
-        "title": "HyperFixi: Step Out",
-        "icon": "$(debug-step-out)"
-      },
-      {
         "command": "lokascript.inventory",
         "title": "HyperFixi: Open Template Inventory",
         "icon": "$(list-tree)"
@@ -168,21 +130,6 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server"
         },
-        "lokascript.debug.url": {
-          "type": "string",
-          "default": "ws://localhost:9229",
-          "description": "WebSocket URL for the HyperFixi debug server"
-        },
-        "lokascript.debug.autoConnect": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically connect to debug server on extension activation"
-        },
-        "lokascript.debug.verbose": {
-          "type": "boolean",
-          "default": false,
-          "description": "Log all execution snapshots to the output channel (verbose mode)"
-        },
         "lokascript.inventory.port": {
           "type": "number",
           "default": 4200,
@@ -194,65 +141,7 @@
           "description": "Language code for 'Show in My Language' (e.g. ko, ja, es). Empty = ask each time."
         }
       }
-    },
-    "debuggers": [
-      {
-        "type": "hyperfixi",
-        "label": "HyperFixi",
-        "languages": [
-          "html",
-          "hyperscript"
-        ],
-        "configurationAttributes": {
-          "launch": {
-            "properties": {
-              "url": {
-                "type": "string",
-                "description": "URL of the page with hyperscript",
-                "default": "http://localhost:3000"
-              },
-              "webSocketUrl": {
-                "type": "string",
-                "description": "WebSocket URL for the debug server",
-                "default": "ws://localhost:9229"
-              }
-            }
-          },
-          "attach": {
-            "properties": {
-              "webSocketUrl": {
-                "type": "string",
-                "description": "WebSocket URL for the debug server",
-                "default": "ws://localhost:9229"
-              }
-            }
-          }
-        },
-        "configurationSnippets": [
-          {
-            "label": "HyperFixi: Debug Page",
-            "description": "Launch a debug session connected to a HyperFixi debug server",
-            "body": {
-              "type": "hyperfixi",
-              "request": "launch",
-              "name": "Debug HyperFixi",
-              "url": "http://localhost:3000",
-              "webSocketUrl": "ws://localhost:9229"
-            }
-          },
-          {
-            "label": "HyperFixi: Attach",
-            "description": "Attach to a running HyperFixi debug session",
-            "body": {
-              "type": "hyperfixi",
-              "request": "attach",
-              "name": "Attach to HyperFixi",
-              "webSocketUrl": "ws://localhost:9229"
-            }
-          }
-        ]
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run generate:grammar && npm run compile && npm run bundle:server",
@@ -265,14 +154,12 @@
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
-    "ws": "^8.21.1"
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@lokascript/semantic": "^3.3.0",
     "@types/node": "^26.6.3",
     "@types/vscode": "^1.138.0",
-    "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.23.15",
     "typescript": "^5.0.0"

@@ -121,7 +121,7 @@ If code doesn't work:
 4. Check browser console for errors
 5. Verify selectors exist in DOM
 
-For deeper debugging with the debug overlay:
+With an execution state captured at a `breakpoint` command or from `log` output:
 
 - `debug_analyze_snapshot` -- understand current execution state at a breakpoint
 - `debug_suggest_fix` -- get fix suggestions from a failure snapshot

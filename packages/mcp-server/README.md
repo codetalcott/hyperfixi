@@ -193,7 +193,7 @@ The **103** tools below, plus the **5** GRAIL tools above, total **108** defined
 
 | Tool                     | Description                                                           |
 | ------------------------ | --------------------------------------------------------------------- |
-| `debug_analyze_snapshot` | Explain the current paused debugger state and predict the next step   |
+| `debug_analyze_snapshot` | Explain a captured execution state and predict the next step          |
 | `debug_explain_handler`  | Break down an event handler step-by-step; flag issues and breakpoints |
 | `debug_suggest_fix`      | Analyze a snapshot where something went wrong; suggest causes + fixes |
 | `debug_trace_variable`   | Trace how a variable changed across an execution-history snapshot set |

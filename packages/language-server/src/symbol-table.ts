@@ -5,7 +5,7 @@
  * lookup API for go-to-definition, find-references, and rename.
  *
  * Works with regex extraction (no core parser dependency) so it functions
- * in both the full LokaScript extension and the standalone _hyperscript extension.
+ * in every mode, including a build that shims out the semantic package.
  */
 
 import type { HyperscriptRegion, RegionPosition } from './types.js';
