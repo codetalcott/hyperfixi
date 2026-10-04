@@ -200,4 +200,4 @@ LokaScript includes 43 commands organized by category:
 
 - [Debugging](/en/guide/debugging) - Debug tools and techniques
 - [Bundles](/en/guide/bundles) - Bundle selection guide
-- [htmx Compatibility](/en/guide/htmx-compatibility) - htmx attribute support
+- [htmx Compatibility](/en/guide/htmx-compatibility) - htmx 4 beside the engine, and localized `hx-*` names

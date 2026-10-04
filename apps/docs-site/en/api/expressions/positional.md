@@ -3,7 +3,7 @@
 Navigate the DOM relative to elements.
 
 ::: info Bundle Requirement
-Positional expressions require the `hybrid-complete` bundle or larger, or enable `positional: true` in the Vite plugin.
+Positional expressions are in `hyperfixi-hs.js`. With the Vite plugin, set `positional: true` if the scanner cannot see them in your markup.
 :::
 
 ## Sibling Navigation

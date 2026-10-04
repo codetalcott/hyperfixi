@@ -1,137 +1,72 @@
 # Bundle Selection
 
-LokaScript offers multiple bundle sizes. Choose based on what features you need and how much you care about bundle size.
+Hyperscript runs on `@hyperfixi/engine`, the engine that follows upstream `_hyperscript`. A Vite
+project lets the plugin choose what to include; a page without a build step loads one script.
 
 ## Bundle Comparison
 
-| Bundle              | Size (gzip) | Commands   | Use Case                              |
-| ------------------- | ----------- | ---------- | ------------------------------------- |
-| **lite**            | 1.9 KB      | 8          | Toggle, show/hide, basic interactions |
-| **lite-plus**       | 2.6 KB      | 14         | Basic + form handling, i18n aliases   |
-| **hybrid-complete** | 7.3 KB      | 21+ blocks | Most projects (recommended)           |
-| **hybrid-hx**       | 9.7 KB      | 21+ blocks | hybrid-complete + htmx compatibility  |
-| **minimal**         | 58 KB       | 43         | Full commands, focused build          |
-| **standard**        | 63 KB       | 43         | Full command set                      |
-| **browser**         | 203 KB      | 43         | Full bundle with parser               |
+| Bundle                                 | Size (gzip) | Use Case                                                                      |
+| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use               |
+| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in |
+| **`hyperfixi.js`** (`@hyperfixi/core`) | ~352 KB     | Core's everything bundle, until the engine replaces it in 4.0                 |
+
+The small prebuilts of the 3.x line (`lite`, `lite-plus`, `hybrid-complete`, `hyperfixi-hx.js`,
+`minimal`, `standard`) are retired. Their place is taken by the plugin, which builds the small
+bundle from what you actually use, and by `hyperfixi-hs.js`.
 
 ## Which Bundle Should I Use?
 
-### Use `hybrid-complete` (Recommended)
+### In a Vite project: the plugin
 
-For most projects. It includes:
+```javascript
+// vite.config.js
+import { hyperfixi } from '@hyperfixi/vite-plugin';
 
-- Full expression parser with operator precedence
-- Block commands: `repeat`, `for each`, `if/else`, `fetch`, `while`
-- Event modifiers: `.once`, `.prevent`, `.stop`, `.debounce()`, `.throttle()`
-- Positional expressions: `first`, `last`, `next`, `previous`, `closest`
-- Function calls and method chaining
+export default {
+  plugins: [hyperfixi()],
+};
+```
+
+It scans your files for `_="..."` attributes and registers only the engine modules they need.
+
+```javascript
+hyperfixi({
+  extraCommands: ['fetch'], // Always register these commands' modules
+  extraBlocks: ['if'], // Always register these blocks' modules
+  positional: true, // Always register first, last, next, …
+  htmx: true, // Hand htmx-swapped content to the engine (htmx itself is not bundled)
+});
+```
+
+### With a script tag: `hyperfixi-hs.js`
 
 ```html
+<script src="https://unpkg.com/@hyperfixi/engine/dist/hyperfixi-hs.js"></script>
+
 <button
-  _="on click.debounce(300)
-  if me has .loading return end then
-  add .loading then
-  fetch /api/data as json then
-  for each item in result
-    append item.name to #results
-  end then
-  remove .loading"
+  _="on click
+  if I match .loading exit end
+  add .loading to me
+  fetch /api/data as json
+  for item in result
+    put item.name at end of #results
+  end
+  remove .loading from me"
 >
   Load Data
 </button>
 ```
 
-### Use `lite` or `lite-plus`
+### htmx-style attributes
 
-When bundle size is critical and you only need simple interactions:
-
-```html
-<!-- These work with lite bundle -->
-<button _="on click toggle .active on me">Toggle</button>
-<button _="on click show #modal">Show Modal</button>
-<button _="on click hide me">Close</button>
-```
-
-### Use `hybrid-hx`
-
-When you want htmx-style declarative AJAX attributes:
+Pair the engine with [fixi](https://github.com/bigskysoftware/fixi) (~1.3 KB) or htmx 4 (~13 KB).
+For `hx-*` attributes written in another language, add
+[`@lokascript/htmx-adapter`](/en/guide/htmx-compatibility).
 
 ```html
 <button hx-get="/api/users" hx-target="#users-list" hx-swap="innerHTML">Load Users</button>
 ```
-
-### Use `browser` (Full Bundle)
-
-When you need everything, including:
-
-- All 43 commands
-- Complete parser for complex expressions
-- Behavior definitions
-- Server-side compilation support
-
-## CDN URLs
-
-```html
-<!-- Lite (1.9 KB) -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-lite.js"></script>
-
-<!-- Lite Plus (2.6 KB) -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-lite-plus.js"></script>
-
-<!-- Hybrid Complete (7.3 KB) - Recommended -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-hybrid-complete.js"></script>
-
-<!-- Hybrid HX (9.5 KB) -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-hybrid-hx.js"></script>
-
-<!-- Full Browser Bundle (203 KB) -->
-<script src="https://unpkg.com/@lokascript/core/dist/lokascript-browser.js"></script>
-```
-
-## Vite Plugin (Auto-Selection)
-
-The Vite plugin automatically generates the smallest possible bundle:
-
-```javascript
-// vite.config.js
-import { lokascript } from '@lokascript/vite-plugin';
-
-export default {
-  plugins: [lokascript()],
-};
-```
-
-It scans your files for `_="..."` attributes and includes only the commands you use.
-
-### Force Specific Features
-
-```javascript
-lokascript({
-  extraCommands: ['fetch', 'put'], // Always include these
-  extraBlocks: ['for', 'if'], // Always include these blocks
-  positional: true, // Include first, last, next, etc.
-  htmx: true, // Include htmx compatibility
-});
-```
-
-## Feature Matrix
-
-| Feature                  | lite | lite-plus | hybrid-complete | hybrid-hx | browser |
-| ------------------------ | ---- | --------- | --------------- | --------- | ------- |
-| toggle, add, remove      | ✓    | ✓         | ✓               | ✓         | ✓       |
-| show, hide               | ✓    | ✓         | ✓               | ✓         | ✓       |
-| set, get, put            | ✓    | ✓         | ✓               | ✓         | ✓       |
-| increment, decrement     | ✓    | ✓         | ✓               | ✓         | ✓       |
-| wait                     | -    | ✓         | ✓               | ✓         | ✓       |
-| fetch                    | -    | -         | ✓               | ✓         | ✓       |
-| if/else blocks           | -    | -         | ✓               | ✓         | ✓       |
-| repeat, for each         | -    | -         | ✓               | ✓         | ✓       |
-| Event modifiers          | -    | -         | ✓               | ✓         | ✓       |
-| Positional (first, last) | -    | -         | ✓               | ✓         | ✓       |
-| Method chaining          | -    | -         | ✓               | ✓         | ✓       |
-| htmx attributes          | -    | -         | -               | ✓         | -       |
-| Behaviors                | -    | -         | -               | -         | ✓       |
-| Full parser              | -    | -         | -               | -         | ✓       |
 
 ## Next Steps
 

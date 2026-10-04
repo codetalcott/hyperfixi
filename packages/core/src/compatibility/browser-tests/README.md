@@ -37,7 +37,7 @@ Tests are organized using **tags** for flexible test selection. Tests can have m
 | **@logical**                | Logical operators         | `and`, `or`, `not`              |
 | **@call**                   | Function calls            | `foo()`, `str.toUpperCase()`    |
 | **@i18n / @multilingual**   | Internationalization      | Japanese, Spanish, Arabic, etc. |
-| **@bundle**                 | Bundle compatibility      | lite, hybrid, full              |
+| **@bundle**                 | Bundle compatibility      | hs (engine), full               |
 | **@gallery**                | Gallery examples          | Example pages from /examples/   |
 
 ## Running Tests
@@ -312,7 +312,6 @@ src/compatibility/browser-tests/
 ├── gallery-examples.spec.ts         # Gallery page tests (@gallery)
 ├── semantic-multilingual.spec.ts    # i18n tests (@i18n, @multilingual)
 ├── bundle-compatibility.spec.ts     # Bundle tests (@bundle)
-├── hybrid-complete.spec.ts          # Hybrid bundle tests (@hybrid)
 └── debug/                           # Debug tests (--project=debug)
     ├── debug-fetch.spec.ts
     └── ...

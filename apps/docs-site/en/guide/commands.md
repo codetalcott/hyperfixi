@@ -80,7 +80,7 @@ Pause execution.
 
 #### `fetch`
 
-Make HTTP requests. _(Requires hybrid-complete or larger bundle)_
+Make HTTP requests.
 
 ```html
 <button _="on click fetch /api/data then put result into #output">Load Data</button>
@@ -100,8 +100,6 @@ Modify numeric values.
 ```
 
 ## Control Flow Commands
-
-_Available in hybrid-complete and larger bundles._
 
 #### `if` / `else`
 

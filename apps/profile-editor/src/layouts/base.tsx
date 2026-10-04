@@ -1,7 +1,11 @@
 /**
  * Base HTML layout for the profile editor.
  *
- * Uses missing.css for styling and LokaScript hybrid-hx for interactivity.
+ * Uses missing.css for styling and hyperfixi-hx.js for interactivity — pinned to
+ * @hyperfixi/core 3.3.0, the last release that ships it. Its handlers are in
+ * the hybrid parser's dialect (`fetch … with a:1 and b:2`, `closest nav`), which
+ * neither the engine nor core's full parser reads; moving them to upstream's
+ * spelling (and hyperfixi-hs.js) is its own change.
  */
 
 import type { PropsWithChildren } from '@kitajs/html';
@@ -32,8 +36,8 @@ export function BaseLayout({ title, children }: PropsWithChildren<BaseLayoutProp
         {/* Custom theme */}
         <link rel="stylesheet" href="/public/theme.css" />
 
-        {/* LokaScript hybrid-hx bundle */}
-        <script src="/public/lokascript-hybrid-hx.js"></script>
+        {/* hyperfixi-hx.js, pinned (see the header) */}
+        <script src="https://unpkg.com/@hyperfixi/core@3.3.0/dist/hyperfixi-hx.js"></script>
 
         {/* Theme initialization */}
         <script>{`

@@ -99,11 +99,14 @@ import 'hyperfixi';
 
 ## Bundle Options
 
-| Bundle                          | Size   | Commands | Use Case             |
-| ------------------------------- | ------ | -------- | -------------------- |
-| `lokascript-lite.js`            | 1.9 KB | 8        | Minimal interactions |
-| `lokascript-hybrid-complete.js` | 6.7 KB | 21+      | Most projects        |
-| `lokascript-browser.js`         | 224 KB | 43       | Full features        |
+| Bundle                                 | Size (gzip) | Use Case                                                                      |
+| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| via **`@hyperfixi/vite-plugin`**       | 18–34 KB    | Vite projects: registers only the engine modules your pages use               |
+| **`hyperfixi-hs.js`** (engine)         | ~34 KB      | Script tag: hyperscript only, every module, `live` / `when` / `bind` built in |
+| **`hyperfixi.js`** (`@hyperfixi/core`) | ~352 KB     | Core's everything bundle, until the engine replaces it in 4.0                 |
+
+The 3.x small prebuilts (`lite`, `hybrid-complete`, `hyperfixi-hx.js`, …) are retired; see
+[Bundle Selection](/en/guide/bundles).
 
 ## Write in Your Language
 

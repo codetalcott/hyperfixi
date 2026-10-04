@@ -71,8 +71,6 @@ import {
   resolveCommandKey,
 } from '../../bundle-generator/template-capabilities';
 import { COMMAND_KEYWORDS, ALL_KEYWORDS, HOVER_DOCS } from '../../lsp-metadata';
-import { bundleInfo } from '../../metadata';
-import { BUNDLES_WITH_COMMAND_LISTS } from '../../compatibility/bundle-sources';
 import { commands as referenceCommands } from '../../reference/index';
 import { parse } from '../../parser/parser';
 
@@ -714,10 +712,6 @@ describe('COMMAND_KEYWORDS', () => {
 const BUNDLE_COMMAND_COUNTS: Record<string, number> = {
   'browser-bundle-classic-i18n.ts': 42,
   'browser-bundle-classic.ts': 51,
-  // 24 -> 38 in Arc E step 4: the array became the generation input, so it now
-  // carries every name the templates implement (Finding 17 — it advertised 35
-  // and executed 24). See scripts/generate-bundles.ts.
-  'browser-bundle-hybrid-complete.ts': 38,
   'browser-bundle-lite.ts': 8,
   'browser-bundle-textshelf-minimal.ts': 10,
   'browser-bundle-textshelf-profile.ts': 10,
@@ -748,28 +742,13 @@ describe('the per-bundle commands arrays', () => {
   });
 
   it('no bundle advertises a command the registry does not have', () => {
-    // A bundle's `commands` array and the registry are two vocabularies, and
-    // Arc E step 4 is where they stopped coinciding. hybrid-complete's array is
-    // now the INPUT to `scripts/generate-bundles.ts`, so it names things the
-    // generator resolves — which includes spellings the registry does not carry:
-    //
-    //   - `push-url` / `replace-url` are advertised ALIASES. The registry's
-    //     canonical names are `push`/`replace` (its own alias entries are the
-    //     unhyphenated `pushurl`/`replaceurl`), so these resolve rather than
-    //     being ghosts. Resolving through the same map generation uses is what
-    //     keeps this honest: a name resolving to an UNREGISTERED target still
-    //     fails.
-    //   - `removeClass` is a parser NODE name, never a keyword a user types —
-    //     `remove .x from #t` takes parseRemove's class branch and yields it.
-    //     It must appear in the array or generation emits no case for it and
-    //     class removal silently stops working, so the exception is named here
-    //     rather than the array being trimmed. Same exception, same reason, as
-    //     capability-emission.test.ts's DISPATCHED_UNDER_ANOTHER_KEYWORD.
-    const PARSER_NODE_NAMES = new Set(['removeClass']);
+    // Names resolve through the registry's alias map first, so an advertised
+    // alias is not a ghost but a name resolving to an UNREGISTERED target still
+    // fails. (hybrid-complete's array, the generation input until Phase C3,
+    // also carried `push-url`/`replace-url` aliases and the parser node name
+    // `removeClass`; no remaining array does.)
     for (const [file, names] of Object.entries(arrays)) {
-      const unresolved = names
-        .filter(name => !PARSER_NODE_NAMES.has(name))
-        .map(name => resolveCommandKey(name));
+      const unresolved = names.map(name => resolveCommandKey(name));
       expect(ghostsIn(unresolved), `${file} advertises unregistered commands`).toEqual([]);
     }
   });
@@ -779,29 +758,9 @@ describe('the per-bundle commands arrays', () => {
     expect(counts).toEqual(BUNDLE_COMMAND_COUNTS);
   });
 
-  /**
-   * The link whose ABSENCE was the bug. §6 pinned each array's size and
-   * `metadata.ts` advertised a `commandCount`, but the two were never compared,
-   * so `minimal` sat at 30 against an array of 10 and `standard` at 35 against
-   * 25 — both for as long as the entries have existed. Pinning one side and
-   * advertising the other is not a check; only the comparison is.
-   *
-   * Scoped to the array-publishing bundles: `verify:reference` covers the
-   * factory-list and re-export arms with the same `bundle-sources.ts` pairing.
-   */
-  it('metadata commandCount matches the array each bundle actually publishes', () => {
-    const mismatches: string[] = [];
-    for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_COMMAND_LISTS)) {
-      const advertised = bundleInfo.find(b => b.id === id)?.commandCount;
-      const actual = arrays[sourceFile]?.length;
-      if (advertised === undefined || actual === undefined) {
-        mismatches.push(`${id}: no metadata entry or no array in ${sourceFile}`);
-      } else if (advertised !== actual) {
-        mismatches.push(`${id}: metadata says ${advertised}, ${sourceFile} publishes ${actual}`);
-      }
-    }
-    expect(mismatches).toEqual([]);
-  });
+  // `metadata.ts`'s commandCount for an array-publishing bundle was compared
+  // with its array here until the last one it lists (hybrid-complete) retired
+  // in Phase C3; `verify:reference` compares the factory-list bundles.
 });
 
 // ===========================================================================

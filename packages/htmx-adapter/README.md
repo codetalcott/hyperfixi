@@ -25,9 +25,9 @@ This package is the htmx analog of
 [`@lokascript/hyperscript-adapter`](../hyperscript-adapter) (which adapts
 upstream `_hyperscript`), built on the hook/vocab pattern from
 [loka-js](https://github.com/wmtalcott/loka-js) (which adapts the fixiproject
-family). It is **not** the same thing as hyperfixi's embedded htmx-compat layer
-(`packages/core/src/htmx/` — the `hyperfixi-hx*.js` bundles), which
-_reimplements_ htmx attributes on hyperfixi's own runtime. This adapter drives
+family). It replaces hyperfixi's embedded htmx-compat layer (the
+`hyperfixi-hx*.js` bundles of `@hyperfixi/core` 3.x, retired in 4.0), which
+_reimplemented_ htmx attributes on hyperfixi's own runtime. This adapter drives
 the **real htmx** library.
 
 The vocabulary is the generated modules in [`vocab/`](vocab), one
@@ -105,8 +105,8 @@ import {
 
 The browser IIFE does all the wiring automatically and installs
 `window.__hyperfixi_i18n.register` so the generated vocab modules
-self-register. If the page also runs hyperfixi's embedded layer, registrations
-fan out to both registries.
+self-register. If the page already has a registry (core 3.x's
+`hyperfixi-hx.js`), registrations fan out to both.
 
 ## Hyperscript `hx-on:` bodies (executor mode, opt-in)
 

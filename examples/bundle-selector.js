@@ -7,7 +7,7 @@
  * Usage:
  *   <script src="../bundle-selector.js"></script>
  *
- * Or specify bundle via URL param: ?bundle=hybrid
+ * Or specify bundle via URL param: ?bundle=hs
  *
  * API:
  *   HyperFixiBundleSelector.show()   - Show the selector
@@ -36,22 +36,6 @@
       description: 'Hyperscript only, on the engine that follows upstream _hyperscript',
       features: ['every command', 'upstream syntax', 'no htmx attrs', 'English only'],
       color: '#ec4899'
-    },
-    'hybrid-complete': {
-      name: 'Hybrid Complete',
-      file: 'hyperfixi-hybrid-complete.js',
-      size: '7.3 KB',
-      description: 'Full AST parser with blocks, expressions, event modifiers',
-      features: ['21 commands', 'full parser', 'blocks', 'i18n aliases'],
-      color: '#10b981'
-    },
-    'hybrid-hx': {
-      name: 'Hybrid HX',
-      file: 'hyperfixi-hybrid-hx.js',
-      size: '9.5 KB',
-      description: 'Hybrid Complete + htmx attribute compatibility',
-      features: ['21 commands', 'htmx attrs', 'hx-on:*', 'lifecycle events'],
-      color: '#3b82f6'
     },
     'multilingual': {
       name: 'Multilingual Bundle',

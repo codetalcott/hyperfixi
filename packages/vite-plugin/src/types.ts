@@ -267,9 +267,9 @@ export interface HtmxUsage {
    * htmx v4) compatible. Scanner code always emits explicit `false`.
    */
   needsHxLive?: boolean;
-  /** sse-connect / sse-swap detected. Pulls in `@hyperfixi/core/htmx/sse`. */
+  /** sse-connect / sse-swap detected. Detection only: SSE is htmx 4's (core's htmx layer retired in C3). */
   needsSSE?: boolean;
-  /** ws-connect / ws-send detected. Pulls in `@hyperfixi/core/htmx/ws`. */
+  /** ws-connect / ws-send detected. Detection only: WebSockets are htmx 4's. */
   needsWS?: boolean;
   /**
    * `bind $x to <expr>.<prop>` detected inside an `_=` attribute. Implies

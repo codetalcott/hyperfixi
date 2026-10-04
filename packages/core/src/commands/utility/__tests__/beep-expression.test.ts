@@ -126,7 +126,7 @@ describe('runs', () => {
   });
 });
 
-describe('the hybrid parser (hyperfixi-hx.js)', () => {
+describe('the hybrid parser (the modular bundle, generated bundles)', () => {
   it.each(['on click log beep! 3', 'on click set $x to beep! 3'])(
     '`%s` fails loudly, naming the full parser',
     src => {
