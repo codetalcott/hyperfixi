@@ -361,6 +361,17 @@ describe('fromSemanticAST', () => {
       const result = fromSemanticAST(semNode('eventHandler', { commands: [] }));
       expect((result as any).event).toBe('click');
     });
+
+    it("splices a `then` chain into the handler's body (no nested event)", () => {
+      // buildAST hands the chain over as one CommandSequence command.
+      const built = buildAST(parse('on click add .x to me then wait 1s', 'en')).ast;
+      const result = fromSemanticAST(built as never) as any;
+      expect(result.type).toBe('event');
+      expect(result.body.map((n: any) => [n.type, n.name])).toEqual([
+        ['command', 'add'],
+        ['command', 'wait'],
+      ]);
+    });
   });
 
   describe('command nodes', () => {
