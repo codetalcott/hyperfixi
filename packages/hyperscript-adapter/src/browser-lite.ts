@@ -1,13 +1,14 @@
 /**
- * Lite Browser Bundle (~4 KB)
+ * Lite Browser Bundle (~1.3 KB gzipped)
  *
  * Lightweight adapter that expects @lokascript/semantic to be loaded
- * separately (any regional bundle). Pair with whichever semantic bundle
- * matches your target languages.
+ * separately (the full bundle, a regional one or a single language). Pair
+ * with whichever semantic bundle matches your target languages; each also
+ * registers English, which is what this adapter renders to.
  *
  * @example
- * <script src="_hyperscript.js"></script>
- * <script src="lokascript-semantic-es.global.js"></script>
+ * <script src="hyperfixi-hs.js"></script>  <!-- or _hyperscript.js -->
+ * <script src="browser-es.es.global.js"></script>  <!-- @lokascript/semantic -->
  * <script src="hyperscript-i18n-lite.global.js"></script>
  *
  * <button _="on click alternar .active" data-lang="es">Toggle</button>
@@ -38,15 +39,13 @@ function findSemanticGlobal(): SemanticGlobal | null {
   if (typeof globalThis === 'undefined') return null;
   const g = globalThis as Record<string, unknown>;
 
-  // Check known global names (full → regional → single-language)
+  // The full bundle's global first, then any other semantic browser bundle's:
+  // each defines one LokaScriptSemantic* global (…Priority, …Western, …Ja, …).
+  // A fixed list here once named seven of them, so the single-language
+  // bundles other than es/en were never found.
   const candidates = [
     'LokaScriptSemantic',
-    'LokaScriptSemanticPriority',
-    'LokaScriptSemanticWestern',
-    'LokaScriptSemanticEastAsian',
-    'LokaScriptSemanticEsEn',
-    'LokaScriptSemanticEn',
-    'LokaScriptSemanticEs',
+    ...Object.keys(g).filter(k => k.startsWith('LokaScriptSemantic')),
   ];
 
   for (const name of candidates) {

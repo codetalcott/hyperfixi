@@ -112,12 +112,12 @@ Files live in `@lokascript/semantic/dist/`; each is also exported as `@lokascrip
 | `browser.global.js`                       | `LokaScriptSemantic`          | ~260 KB     | All 24                                         |
 | `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~151 KB     | 11: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
 | `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~128 KB     | en, es, pt, fr, de, it                         |
-| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~106 KB     | ja, zh, ko                                     |
+| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~108 KB     | ja, zh, ko (+ en)                              |
 | `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~116 KB     | en, es                                         |
 | `browser-en.en.global.js`                 | `LokaScriptSemanticEn`        | ~111 KB     | en only                                        |
-| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | ~96 KB      | es only                                        |
+| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | ~98 KB      | es (+ en)                                      |
 
-Every other language except Hebrew has its own `browser-<code>.<code>.global.js` (~94–98 KB). Most of each bundle is the shared parser (`browser-core.core.global.js`, which registers no language, is ~90 KB), so a language costs only a few KB on top.
+Every other language except Hebrew has its own `browser-<code>.<code>.global.js` (~96–100 KB). Every bundle but `core` and `lazy` (which register no language) registers English as well (about 2 KB, since 2026-10-04): English is what the adapters render a parse to, for `hyperfixi-hs.js` or `_hyperscript` to read. Each also exports `translate`. Most of each bundle is the shared parser (`browser-core.core.global.js`, which registers no language, is ~90 KB), so a language costs only a few KB on top.
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 

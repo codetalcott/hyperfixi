@@ -100,7 +100,10 @@ Sizes are gzipped, measured on the 3.2.0 build; a page adds \_hyperscript itself
 
 ### Lite adapter (two `<script>` tags, smallest total)
 
-A ~1 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle loaded separately.
+A ~1.8 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle loaded separately:
+the full one, a regional one or a single language. It finds whichever `LokaScriptSemantic*`
+global the bundle defines. Each of those bundles registers English too, which is what this
+adapter renders to.
 
 ```html
 <script src="_hyperscript.js"></script>
@@ -110,6 +113,13 @@ A ~1 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle l
 ```
 
 Use this when you already load `@lokascript/semantic` for other purposes, or when you need a language set not listed above (e.g. `browser-priority.priority.global.js`: en, es, pt, fr, de, ja, zh, ko, ar, tr, id).
+`test/semantic-iife-lite.test.ts` loads every semantic bundle this way, on `hyperfixi-hs.js`.
+
+### On `@hyperfixi/engine`
+
+Every bundle above also runs on the engine's `hyperfixi-hs.js`, which defines `_hyperscript` as
+well. Load it where `_hyperscript.js` goes. On the engine the adapter translates each script as
+the engine reads it (`addSourceTransform`), so the `_` attribute keeps the text its author wrote.
 
 ## Language Resolution
 

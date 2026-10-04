@@ -23,14 +23,18 @@
 // Register East Asian Languages
 // =============================================================================
 
+// …and English, in every bundle: an adapter translates a parse with
+// render(node, 'en'), and English is what every host reads.
 import './languages/ja';
 import './languages/zh';
 import './languages/ko';
+import './languages/en';
 // Render vocabulary for the same set (separate modules so parse-only
 // consumers can drop them — see ./lexicon-registry.ts).
 import './lexicons/ja';
 import './lexicons/zh';
 import './lexicons/ko';
+import './lexicons/en';
 
 // =============================================================================
 // Version
@@ -131,7 +135,7 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 // Rendering
 // =============================================================================
 
-export { render, renderExplicit, toExplicit, fromExplicit } from './explicit';
+export { render, renderExplicit, translate, toExplicit, fromExplicit } from './explicit';
 
 // =============================================================================
 // AST Builder

@@ -113,7 +113,11 @@ function extractBundleLanguages(filePath: string): string[] | null {
 // Update bundle file's language imports
 // =============================================================================
 
-function updateBundleFile(filePath: string, expectedLangs: string[]): boolean {
+function updateBundleFile(
+  filePath: string,
+  importLangs: string[],
+  expectedLangs: string[]
+): boolean {
   const content = fs.readFileSync(filePath, 'utf-8');
 
   // Find the import block (all consecutive import './languages/xx' lines)
@@ -130,7 +134,7 @@ function updateBundleFile(filePath: string, expectedLangs: string[]): boolean {
   }
 
   // Generate new import block
-  const newImports = expectedLangs.map(l => `import './languages/${l}';`).join('\n') + '\n';
+  const newImports = importLangs.map(l => `import './languages/${l}';`).join('\n') + '\n';
 
   // Replace the first import block (which is the language registration section)
   // Preserve any comment lines before the imports
@@ -180,6 +184,10 @@ let mismatches = 0;
 
 for (const [region, expectedLangs] of regionMap) {
   const bundleFile = path.join(SRC_DIR, `browser-${region}.ts`);
+  // Every bundle also registers English, whatever its region: an adapter
+  // translates a parse with render(node, 'en'), and English is what every host
+  // reads. SUPPORTED_LANGUAGES stays the region's own list.
+  const importLangs = [...new Set([...expectedLangs, 'en'])].sort();
   const existingLangs = extractBundleLanguages(bundleFile);
 
   if (existingLangs === null) {
@@ -191,9 +199,9 @@ for (const [region, expectedLangs] of regionMap) {
   }
 
   const existingSet = new Set(existingLangs);
-  const expectedSet = new Set(expectedLangs);
+  const expectedSet = new Set(importLangs);
 
-  const missing = expectedLangs.filter(l => !existingSet.has(l));
+  const missing = importLangs.filter(l => !existingSet.has(l));
   const extra = existingLangs.filter(l => !expectedSet.has(l));
 
   if (missing.length === 0 && extra.length === 0) {
@@ -203,7 +211,7 @@ for (const [region, expectedLangs] of regionMap) {
     if (missing.length) console.log(`        Missing: ${missing.join(', ')}`);
     if (extra.length) console.log(`        Extra:   ${extra.join(', ')}`);
 
-    const changed = updateBundleFile(bundleFile, expectedLangs);
+    const changed = updateBundleFile(bundleFile, importLangs, expectedLangs);
     if (changed) {
       console.log(`        ${DRY_RUN ? 'Would update' : 'Updated'} imports and SUPPORTED_LANGUAGES`);
       updates++;

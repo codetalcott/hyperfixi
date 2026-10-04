@@ -1134,7 +1134,7 @@ tracked gallery page runs on it since 2026-10-03); core's bundles ship until the
 | via `@hyperfixi/vite-plugin` | 18–34 KB   | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                          |
 | `hyperfixi.js`               | ~352 KB    | Core's everything — full parser (`window.hyperfixi`), reactivity + realtime plugins, 24 languages                                                                                                                            |
 | `hyperfixi-multilingual.js`  | ~93 KB     | Separate product: parser-free multilingual (pair with the FULL semantic bundle)                                                                                                                                              |
-| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — the regional IIFEs currently lack `translate` and their language registrations (OPEN_ITEMS 2e)                                  |
+| semantic bundles             | ~90–260 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
 with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes

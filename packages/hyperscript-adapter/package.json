@@ -113,6 +113,7 @@
     "prebuild": "npm run generate:syntax",
     "build": "tsup",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../semantic ../engine .",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:run": "vitest run",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
