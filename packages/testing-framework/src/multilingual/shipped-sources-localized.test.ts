@@ -6,9 +6,10 @@
  * looked. On a page such a script runs through `@lokascript/hyperscript-
  * adapter`, which translates it under its element's `lang`. This gate does
  * the same and requires English that upstream `_hyperscript` and
- * `@hyperfixi/engine` both parse (Phase C2c; four attributes today: the
- * `live` blocks of examples/hx-v4-i18n/live-multilang.html, and the example in
- * docs/BROWSER_BUNDLES.md's "Hyperscript in another language").
+ * `@hyperfixi/engine` both parse (Phase C2c; fifteen attributes today: the
+ * `live` blocks of examples/hx-v4-i18n/live-multilang.html, the example in
+ * docs/BROWSER_BUNDLES.md's "Hyperscript in another language", and the
+ * multilingual section of packages/core/docs/EXAMPLES.md).
  *
  * @vitest-environment node
  * Required: the hosts and the collector need real jsdom documents.
@@ -47,6 +48,19 @@ describe('shipped sources written in another language', () => {
       'examples/hx-v4-i18n/live-multilang.html [ar]',
       // The engine + adapter example in "Hyperscript in another language" (C-R3).
       'docs/BROWSER_BUNDLES.md [ja]',
+      // "Multilingual Examples". Marked with `lang` in C4b: core's English parser had
+      // kept them out of the engine gate; the engine gate now reads everything else.
+      'packages/core/docs/EXAMPLES.md [es]',
+      'packages/core/docs/EXAMPLES.md [ja]',
+      'packages/core/docs/EXAMPLES.md [ar]',
+      'packages/core/docs/EXAMPLES.md [es]',
+      'packages/core/docs/EXAMPLES.md [ja]',
+      'packages/core/docs/EXAMPLES.md [ko]',
+      'packages/core/docs/EXAMPLES.md [es]',
+      'packages/core/docs/EXAMPLES.md [fr]',
+      'packages/core/docs/EXAMPLES.md [de]',
+      'packages/core/docs/EXAMPLES.md [es]',
+      'packages/core/docs/EXAMPLES.md [pt]',
     ]);
   });
 

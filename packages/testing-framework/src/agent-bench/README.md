@@ -153,6 +153,31 @@ parser-gap silent band is now zero.**
 Bands are computed by `harness.bandOf` — one function shared by the probe, the
 committed baseline, and the ratchet test, so they cannot drift apart.
 
+### Phase C4b: executed on the engine (2026-10-04)
+
+Execution moved from `@hyperfixi/core`'s runtime (fed semantic's parse through
+`buildAST`) to `@hyperfixi/engine`, the engine the product ships: the candidate
+is the button's `_` attribute, as on a page. Validation is unchanged
+(`CompilationService.validate`, semantic).
+
+|                                       | core runtime | engine         |
+| ------------------------------------- | ------------ | -------------- |
+| parse                                 | 36/37        | 36/37          |
+| behave correctly                      | 20/37        | **17/37**      |
+| wrong but **warned** (loop can react) | 14/37        | 12/37          |
+| wrong and **silent**                  | 2/37 (5%)    | **8/37 (22%)** |
+
+Four rows got better: core misbehaved on `add @aria-expanded="true" to`,
+`set the innerHTML of`, `set the style.backgroundColor of`, and `on "refresh"`
+(a quoted event name), all of which the engine runs as upstream does. Six got
+worse, and all six are the same kind: phrasings only core's lenient parser
+read — `and` between commands (two rows: `… and put …`, `remove … and add …`),
+`add .x on #item`, `put "x" in #el`, `toggle .active on this`, `toggle class
+.active` (and `, put …` warns). The engine rejects each, as upstream does, while
+the validator still says `ok`: they are silent because validation reads
+semantic's grammar, not the engine's. Phase C4d moves the diagnostics onto the
+engine's parse (owner decision 5), which should make all six visible.
+
 ## Adding a task
 
 Append to [`tasks.ts`](./tasks.ts): a prompt with no hyperscript in it, a

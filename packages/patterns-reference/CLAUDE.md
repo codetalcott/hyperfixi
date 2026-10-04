@@ -70,22 +70,24 @@ which runs every pattern's en `raw_code` against both engines:
 
 Each engine runs with its official extensions:
 
-- **lokascript** — `compileSync()` via `@hyperfixi/core` (the exact call the
-  browser `_=` attribute path makes) with `@hyperfixi/reactivity` and
-  `@hyperfixi/realtime` (both pre-installed in `hyperfixi.js`) and
-  `@hyperfixi/components` installed, plus a jsdom top-level install smoke
-  (synthesized `#id`/`.class` fixtures; no rejection within 500 ms and nothing
-  logged in the 50 ms after, when `live`/`when` first runs happen; then torn
-  down so no effect outlives its pattern).
+- **lokascript** — `@hyperfixi/engine` with every module registered (what
+  `hyperfixi-hs.js`, and so `hyperfixi.js`, runs): `parse()` with zero errors,
+  plus a jsdom install smoke (the source as an element's `_`, `processNode`,
+  synthesized `#id`/`.class` fixtures and the page functions `PAGE_FUNCTIONS`
+  names; nothing logged in the 50 ms after, when `init` and `live`/`when` first
+  runs happen; then `cleanup` so no effect outlives its pattern). Until Phase C4
+  this leg was `@hyperfixi/core` with `@hyperfixi/reactivity`, `/realtime` and
+  `/components` installed; the engine has no components, sockets, workers or
+  event sources, so those eight rows read `hyperscript` (or NULL) since.
 - **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
   devDependency) with its official socket/worker/eventsource/component
   extensions; parse-level for plain sources: zero recovered parse errors.
 - **HTML-markup patterns** — every `_=`/script-tag source,
   including those inside component template bodies, is verified on both
   legs. Template components are RENDERED on both legs and must show what
-  `COMPONENT_FIXTURES` declares (upstream reads `attrs.X` as an expression,
-  `@hyperfixi/components` as a raw string, so `component-with-attrs` parses on
-  both and renders on one). Core's `hx-live`/`sse-*`/`ws-*` markup earns no
+  `COMPONENT_FIXTURES` declares (`@hyperfixi/components`, core's leg until C4,
+  read `attrs.X` as a raw string where upstream reads an expression, so
+  `component-with-attrs` rendered on core's leg only; the engine renders none). Core's `hx-live`/`sse-*`/`ws-*` markup earns no
   credit on either leg: it ran only in `dist/hyperfixi-hx-v4.js`, which
   retired with core's htmx layer (Phase C3), and its five corpus rows went
   with it (`hx-live` → the engine's `live` block: `live-with-handler`). A row
@@ -94,11 +96,11 @@ Each engine runs with its official extensions:
   (2026-09-25); keep it that way when changing the harness.
 
 Results are written to `data/engine-verification.json` (committed;
-`init-db.ts` seeds the column from it, so `npm run populate` needs no core
+`init-db.ts` seeds the column from it, so `npm run populate` needs no engine
 build) and, with `--update-db`, stamped into `data/patterns.db` directly
 (this also refreshes `patterns.db.stamp`, since the JSON is a stamped DB
 input). The harness reads its rows from `SEED_EXAMPLES` (the source), not
-from the DB. Re-run after parser/plugin changes, and after adding or editing
+from the DB. Re-run after engine changes, and after adding or editing
 a pattern:
 
 ```bash

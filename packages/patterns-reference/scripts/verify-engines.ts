@@ -4,22 +4,19 @@
  * For every corpus pattern, verifies the en `raw_code` against both engines —
  * each with its official extensions — and records which accept it:
  *
- *   - `lokascript` — @hyperfixi/core (this repo) with its first-party plugins:
- *     @hyperfixi/reactivity and @hyperfixi/realtime (pre-installed in
- *     hyperfixi.js; they register `live`/`when`/`bind`/`$var`/caret-var and
- *     socket/eventsource/worker) and @hyperfixi/components. Bar:
- *     `compileSync(code).ok` with ZERO recovered errors (the exact call the
- *     browser `_=` attribute path makes), PLUS an install smoke: the compiled
- *     AST executes top-level in jsdom (event handlers register, init blocks
- *     run) without an error inside a short settle window; what it registered
- *     is then cleaned up, so no effect outlives its pattern.
+ *   - `lokascript` — @hyperfixi/engine (this repo's engine, every module
+ *     registered: what hyperfixi-hs.js and hyperfixi.js run). Bar: `parse(code)`
+ *     reports zero errors, PLUS an install smoke: the source is an element's
+ *     `_` attribute, `processNode` initialises it in jsdom (event handlers
+ *     register, init blocks run) without an error inside a short settle
+ *     window; what it registered is then cleaned up, so no effect outlives
+ *     its pattern. Template components render through `processNode` too.
  *
- *     The "zero recovered errors" half matters: the parser is resilient, so
- *     `ok` stays true for input it recovered from (that is deliberate — see
- *     ParseResult.success). Gating on `ok` alone therefore stamped
- *     `lokascript` on patterns hyperfixi does not cleanly accept either,
- *     which is how `set-color-variable` (`*--primary-color`, rejected by BOTH
- *     engines) carried a lokascript verdict. Both legs now use the same bar.
+ *     Until Phase C4 this leg was @hyperfixi/core with its first-party plugins
+ *     (@hyperfixi/reactivity, @hyperfixi/realtime and @hyperfixi/components),
+ *     which is why the rows of upstream's socket / worker / eventsource /
+ *     component extensions read `both` then: the engine has none of them (the
+ *     plugins were deprecated with core 3.x; htmx 4 carries SSE and WebSockets).
  *   - `hyperscript` — upstream _hyperscript (hyperscript.org, pinned in
  *     devDependencies) with its official socket/worker/eventsource/component
  *     extensions loaded. Bar: `_hyperscript.parse(code)` reports zero parse
@@ -33,11 +30,12 @@
  *     the `_` sources inside component template bodies — is verified on both
  *     legs as above;
  *   - template components are RENDERED on both legs, because a component's
- *     behavior is its render and no parse can check it (upstream reads
- *     `attrs.X` as an expression, @hyperfixi/components as a raw string — the
- *     same source parses on both and renders on one). Each defined tag is
- *     instantiated (COMPONENT_INSTANCES supplies attributes and slot content)
- *     and must render non-empty with nothing logged or thrown;
+ *     behavior is its render and no parse can check it (core's leg read
+ *     `attrs.X` as a raw string, upstream reads an expression — the same
+ *     source parsed on both and rendered on one). Each defined tag is
+ *     instantiated (COMPONENT_FIXTURES supplies attributes and slot content)
+ *     and must render non-empty with nothing logged or thrown. The engine
+ *     has no template components, so on its leg none renders;
  *   - core's htmx-compat attributes (hx-live / sse-* / ws-*) earn no credit on
  *     either leg: they ran only in dist/hyperfixi-hx-v4.js, which retired with
  *     core's htmx layer (Phase C3). Their corpus rows went with it;
@@ -45,7 +43,7 @@
  *
  * The engine column value is then:
  *   both        — verified on both engines
- *   lokascript  — verified on @hyperfixi/core only
+ *   lokascript  — verified on @hyperfixi/engine only
  *   hyperscript — verified on upstream only
  *   NULL        — verified on neither (renders "Unverified" in the docs)
  *
@@ -60,7 +58,7 @@
  * Output: data/engine-verification.json (committed). `scripts/init-db.ts`
  * reads it at seed time — it is the ONLY source of the engine column — so
  * `npm run populate` stamps the verified values into the DB without needing
- * @hyperfixi/core built. Re-run this script after parser/plugin changes:
+ * the engine built. Re-run this script after engine changes:
  *
  *   npm run verify:engines --prefix packages/patterns-reference
  *
@@ -93,20 +91,28 @@ const DB_PATH = join(PKG_ROOT, 'data', 'patterns.db');
 const OUT_PATH = join(PKG_ROOT, 'data', 'engine-verification.json');
 const require_ = createRequire(import.meta.url);
 
-/** Settle window for the lokascript install smoke (ms). */
-const INSTALL_SETTLE_MS = 500;
-
 /**
- * After an install resolves: how long its first effect runs (queued on a
- * microtask) get to finish, and log a failure, before judging (ms).
+ * After `processNode`: how long the install's first runs (an init body, a
+ * `live` effect) get to finish, and log a failure, before judging (ms).
  */
 const POST_INSTALL_MS = 50;
 
 /** Settle window for a component render (ms). */
 const RENDER_SETTLE_MS = 150;
 
+/**
+ * Functions a real page defines that a pattern calls by name. They are page
+ * dependencies, like the #id / .class fixtures the smoke synthesises, so each is
+ * a no-op global while its row is verified. (`on load` fires during the
+ * engine's install smoke; core's never ran it, which is how this row passed
+ * there without one.)
+ */
+const PAGE_FUNCTIONS: Record<string, string[]> = {
+  'document-ready': ['initializeApp'],
+};
+
 /** Workspace packages whose built dist/ this harness executes. */
-const EXECUTED_PACKAGES = ['core', 'reactivity', 'realtime', 'components'];
+const EXECUTED_PACKAGES = ['engine'];
 
 interface ComponentFixture {
   /** Instance markup, as the page using the component would write it. Default `<tag></tag>`. */
@@ -173,7 +179,7 @@ function findStaleDists(): string[] {
   const stale: string[] = [];
   for (const name of EXECUTED_PACKAGES) {
     const pkg = join(PACKAGES_ROOT, name);
-    // `.mjs` for core (its CJS twin is `.cjs`), `.js` for most; newest wins.
+    // `.js` for most, `.mjs` / `.cjs` for a dual build; newest wins.
     const marker = ['index.js', 'index.mjs', 'index.cjs']
       .map(f => join(pkg, 'dist', f))
       .filter(f => existsSync(f))
@@ -278,6 +284,13 @@ function installDomGlobals(): JSDOM {
     'HTMLSelectElement',
     'HTMLTemplateElement',
     'HTMLFormElement',
+    // The engine's value reads and `open`/`close` test these too.
+    'HTMLDialogElement',
+    'HTMLDetailsElement',
+    'FileList',
+    'ShadowRoot',
+    'SVGElement',
+    'Comment',
     'HTMLCollection',
     'Document',
     'DOMParser',
@@ -395,36 +408,12 @@ async function main(): Promise<void> {
   const dom = installDomGlobals();
   installErrorSink();
 
-  // --- lokascript engine (this repo) ---
-  const core = await import('@hyperfixi/core');
-  const { hyperscript, installPlugin, Runtime } = core as unknown as {
-    hyperscript: {
-      compileSync: (code: string) => {
-        ok: boolean;
-        ast?: unknown;
-        errors?: Array<{ message: string }>;
-      };
-      execute: (ast: unknown, ctx: unknown) => Promise<unknown>;
-      createContext: (el?: unknown) => unknown;
-      cleanup: (el: unknown) => number;
-    };
-    installPlugin: (runtime: unknown, plugin: unknown) => void;
-    Runtime: new () => unknown;
-  };
-  const reactivity = (await import('@hyperfixi/reactivity')) as unknown as {
-    default: { version?: string };
-    reactive: { stopElementEffects: (el: unknown) => void };
-  };
-  const realtimeModule = (await import('@hyperfixi/realtime')) as unknown as {
-    default: { version?: string };
-  };
-  const { componentsPlugin } = (await import('@hyperfixi/components')) as unknown as {
-    componentsPlugin: { scan: (root: unknown) => number };
-  };
-  const pluginRuntime = new Runtime();
-  installPlugin(pluginRuntime, reactivity.default);
-  installPlugin(pluginRuntime, realtimeModule.default);
-  installPlugin(pluginRuntime, componentsPlugin);
+  // --- lokascript engine (this repo): @hyperfixi/engine, every module ---
+  // Not booted: upstream installs itself as window._hyperscript below, and the
+  // two must not share that name. `api` is the engine's public object.
+  const engineModule = await import('@hyperfixi/engine');
+  engineModule.register(...engineModule.everything);
+  const engine = engineModule.api;
 
   // --- upstream engine ---
   await import('hyperscript.org');
@@ -447,15 +436,16 @@ async function main(): Promise<void> {
   )._hyperscript;
 
   const verifyLokascriptSnippet = async (code: string): Promise<string | null> => {
-    const compiled = hyperscript.compileSync(code);
-    // Symmetric with the upstream leg's `errors.length === 0`. `ok` alone is
-    // "is there a runnable AST?", which stays true for a recovered parse.
-    if (!compiled.ok || compiled.errors?.length) {
-      return compiled.errors?.[0]?.message ?? 'compile failed';
+    // Symmetric with the upstream leg's `errors.length === 0`.
+    try {
+      const error = engine.parse(code).errors[0];
+      if (error) return error.message.split('\n')[0] ?? 'parse error';
+    } catch (e) {
+      return errorText(e);
     }
-    // Install smoke: top-level execute must not fail synchronously or within
-    // the settle window. A still-pending install (e.g. an init block awaiting
-    // a timer) counts as installed.
+    // Install smoke: `processNode` must not log a failure, synchronously or
+    // within the settle window. A still-pending install (e.g. an init block
+    // awaiting a timer) counts as installed.
     //
     // Fixture synthesis: patterns reference page elements (#total, .tab, …)
     // that a real page provides. Create a bare element for every #id / .class
@@ -476,41 +466,26 @@ async function main(): Promise<void> {
       fixture.appendChild(target);
     }
     const el = dom.window.document.createElement('div');
+    el.setAttribute('_', code);
     fixture.appendChild(el);
     dom.window.document.body.appendChild(fixture);
     const logged: string[] = [];
     errorSink = logged;
     try {
-      const ctx = hyperscript.createContext(el);
-      const settled = await Promise.race([
-        hyperscript.execute(compiled.ast, ctx).then(
-          () => null,
-          (e: unknown) => (e instanceof Error ? e.message : String(e))
-        ),
-        new Promise<null>(resolve => setTimeout(() => resolve(null), INSTALL_SETTLE_MS)),
-      ]);
-      if (settled) return settled;
-      // `execute` resolves once the install is registered, but a live/when
-      // effect's first run starts on a microtask after that, and an init body
-      // may still be awaiting. Let those runs finish before judging — the
-      // engine LOGS their failures rather than rejecting — and before teardown
-      // (tearing down mid-run is what leaked "No elements" into later rows).
+      engine.processNode(el);
+      // The engine reports a failing install on the console rather than
+      // throwing; let the first runs finish before judging, and before
+      // teardown (tearing down mid-run leaked "No elements" into later rows).
       await sleep(POST_INSTALL_MS);
       return logged.length > 0 ? logged[0] : null;
     } catch (e) {
       return e instanceof Error ? e.message : String(e);
     } finally {
       errorSink = null;
-      // Dispose what the install registered. Without this a `live` effect
-      // outlives its fixture and fires during a LATER pattern's window,
-      // against elements that no longer exist. Effects created through an API
-      // context are owned by their element but reach no runtime cleanup
-      // registry, so they are stopped explicitly (reactivity's documented
-      // teardown for lifecycles managed outside the runtime).
-      hyperscript.cleanup(fixture);
-      for (const node of [fixture, ...Array.from(fixture.querySelectorAll('*'))]) {
-        reactivity.reactive.stopElementEffects(node);
-      }
+      // Dispose what the install registered (listeners, observers, timers,
+      // reactive effects), so nothing outlives its fixture and fires during a
+      // LATER pattern's window against elements that no longer exist.
+      engine.cleanup(el);
       fixture.remove();
     }
   };
@@ -545,7 +520,7 @@ async function main(): Promise<void> {
     const logged: string[] = [];
     errorSink = logged;
     try {
-      if (leg === 'lokascript') componentsPlugin.scan(fixture);
+      if (leg === 'lokascript') engine.processNode(fixture);
       else upstream.process(fixture);
       await sleep(RENDER_SETTLE_MS);
       if (logged.length > 0) return logged[0];
@@ -568,7 +543,7 @@ async function main(): Promise<void> {
       return errorText(e);
     } finally {
       errorSink = null;
-      if (leg === 'lokascript') hyperscript.cleanup(fixture);
+      if (leg === 'lokascript') engine.cleanup(fixture);
       fixture.remove();
     }
   };
@@ -611,10 +586,13 @@ async function main(): Promise<void> {
     let hyperscriptError: string | null =
       retired ?? (nothingToExercise ? 'no verifiable source' : null);
 
+    const pageFunctions = PAGE_FUNCTIONS[row.id] ?? [];
+    for (const name of pageFunctions) Reflect.set(globalThis, name, () => {});
     for (const snippet of snippets) {
       lokascriptError ??= await verifyLokascriptSnippet(snippet);
       hyperscriptError ??= verifyUpstreamSnippet(snippet);
     }
+    for (const name of pageFunctions) Reflect.deleteProperty(globalThis, name);
     if (componentTags.length > 0) {
       lokascriptError ??= await renderComponents('lokascript', row.id, row.raw_code, componentTags);
       hyperscriptError ??= await renderComponents('hyperscript', row.id, row.raw_code, componentTags);
@@ -657,7 +635,7 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  const corePkg = require_('@hyperfixi/core/package.json') as { version: string };
+  const enginePkg = require_('@hyperfixi/engine/package.json') as { version: string };
   // hyperscript.org's exports map blocks ./package.json — resolve its entry
   // file and read the sibling package.json directly.
   const upstreamEntry = require_.resolve('hyperscript.org');
@@ -669,13 +647,14 @@ async function main(): Promise<void> {
     meta: {
       bar: {
         lokascript:
-          'compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path) with its first-party plugins installed (@hyperfixi/reactivity and @hyperfixi/realtime, both pre-installed in hyperfixi.js, and @hyperfixi/components), plus a jsdom top-level install smoke (no error within a 500ms settle window; registrations cleaned up afterwards)',
+          '@hyperfixi/engine with every module registered (what hyperfixi-hs.js runs): parse(code) with zero errors, plus a jsdom install smoke (the source as an _ attribute, processNode, nothing logged within 50ms; cleaned up afterwards)',
         hyperscript: `upstream _hyperscript parse with zero recovered errors (extensions loaded: ${upstreamExtensions.join(', ') || 'none'}); parse-level for plain sources`,
         html: 'HTML-markup patterns: every _= / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); the retired core-only hx-live/sse-*/ws-* markup earns no credit on either leg; a row with no source earns no credit',
       },
       // The versions this file was last regenerated at — informational only;
       // `--check` compares verdicts, not versions.
-      lokascriptVersion: corePkg.version,
+      // The lokascript leg's package: @hyperfixi/engine since Phase C4.
+      lokascriptVersion: enginePkg.version,
       hyperscriptVersion: upstreamPkg.version,
     },
     engines: Object.fromEntries(

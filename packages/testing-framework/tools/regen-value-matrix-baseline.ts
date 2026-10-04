@@ -16,8 +16,8 @@
  *   --dry-run             print what would change; write nothing
  *   --results <file>      also write every lane's raw result there, for triage
  *
- * A full run takes about two minutes. Needs fresh dists of core, semantic and
- * hyperscript-adapter (`npm run check:fresh`).
+ * A full run takes a few minutes. Needs fresh dists of semantic,
+ * hyperscript-adapter and engine (`npm run check:fresh`).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -46,8 +46,8 @@ const target = path.resolve(
 
 const DESCRIPTION =
   'Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. ' +
-  'A cell is `<position>|<expression>`; a lane is `en` (hyperfixi English), `en-rt` (semantic ' +
-  'English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>/up` (the ' +
+  'A cell is `<position>|<expression>`; a lane is `en-rt` (semantic English round trip, on ' +
+  'upstream), `eng` (English on @hyperfixi/engine), `<lang>/up` (the ' +
   'adapter, on upstream) or `<lang>/eng` (the adapter, on @hyperfixi/engine); `*up` and `*eng` ' +
   'stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.';
 

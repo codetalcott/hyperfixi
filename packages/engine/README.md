@@ -120,14 +120,15 @@ after the upstream suite.
 
 **The shipped-sources gates**, also in `packages/testing-framework`:
 
-- `shipped-sources-engine.test.ts` lists the sources this repository ships (`examples/`, the doc
-  trees) that `packages/core` compiles and this engine rejects
-  (`baselines/shipped-sources-engine.json`). A new one fails; so does a listed one that now
-  parses. It is empty when replacing core's engine breaks no shipped page.
-- `shipped-examples-execution.test.ts` has an engine lane: every example handler upstream accepts
-  is run on upstream and on this engine, in jsdom, and the DOM effects must match. Measured
-  2026-10-01: 134 handlers, 89 matches with an effect, 44 with none on either, 1 difference
-  (upstream reads a stale `document` in that harness). `packages/core` differs on 31.
+- `shipped-sources-engine.test.ts` lists the English sources this repository ships (`examples/`,
+  the doc trees) that this engine rejects (`baselines/shipped-sources-engine.json`). A new one
+  fails; so does a listed one that now parses. It is empty. (Until Phase C4 it counted only the
+  sources `packages/core` compiled clean.) A source written in another language is
+  `shipped-sources-localized.test.ts`'s: it must translate to English both engines parse.
+- `shipped-examples-execution.test.ts`: every example handler upstream accepts is run on
+  upstream and on this engine, in jsdom, and the DOM effects must match. Measured 2026-10-04:
+  128 handlers, none different, 44 with no effect on either. (`packages/core`'s lane, which
+  differed on 31 at first, left with its engine in Phase C4.)
 
 ## Measured (2026-10-01, upstream 0.9.93)
 
@@ -190,8 +191,8 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 - **Value matrix.** 4,205 cells. English on this engine gives the oracle's value in every cell.
   Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs do, and the two
   hosts agree on every pair: the three that miss are the accepted Italian `di` ambiguity, and
-  they miss on upstream too. (`packages/core` misses 8 cells in English; its direct-path lanes
-  retired in Phase C2.)
+  they miss on upstream too. (`packages/core` missed 8 cells in English; its lanes retired in
+  Phases C2 and C4.)
 - **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
   upstream's parser, the two parsers disagree on none.
 - Of the 164 corpus rows, 152 parse on both engines and 12 on neither, measured on each
@@ -207,11 +208,15 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 
 ## Against what this repository ships
 
-`npx tsx packages/engine/tools/shipped-sources.mts` puts every hyperscript source in
-`examples/` and the doc trees (the shipped-sources gate's collection: 386 sources, 336
-distinct) to three parsers. Measured 2026-10-01:
+`npx tsx packages/engine/tools/shipped-sources.mts` puts every English hyperscript source in
+`examples/` and the doc trees (the shipped-sources gate's collection) to upstream's parser and
+this engine's. Measured 2026-10-04: 315 distinct, upstream accepts 281, this engine all 315;
+the 34 they disagree on are this engine's two additions (`new X()`, `toggle <element>`).
 
-- upstream accepts 272, this engine 309, `packages/core` 320;
+Until Phase C4 `packages/core` was a third parser, and the question was what replacing it would
+break. Measured 2026-10-01 (386 sources, 336 distinct): upstream accepted 272, this engine 309,
+`packages/core` 320;
+
 - **12 sources that core accepted were rejected here**: the eleven handlers that used core's
   history commands (`push url`, `replace url`), rewritten as `call history.pushState(…)` on
   2026-10-03, and the `hyperfixi-hx.js` example in `docs/BROWSER_BUNDLES.md`, written in the

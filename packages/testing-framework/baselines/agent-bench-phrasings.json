@@ -3,26 +3,26 @@
   "totals": {
     "phrasings": 37,
     "parse": 36,
-    "behaveCorrectly": 20,
-    "warnedWrong": 14,
-    "silentBand": 2,
-    "silentNoop": 1
+    "behaveCorrectly": 17,
+    "warnedWrong": 12,
+    "silentBand": 8,
+    "silentNoop": 7
   },
   "phrasings": [
     {
       "taskId": "custom-event",
       "code": "on \"refresh\" put \"Refreshed\" into #output",
-      "band": "rejected"
+      "band": "correct"
     },
     {
       "taskId": "two-commands",
       "code": "on click add .busy to me and put \"Loading\" into #output",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "two-commands",
       "code": "on click add .busy to me, put \"Loading\" into #output",
-      "band": "correct"
+      "band": "warned-wrong"
     },
     {
       "taskId": "add-class-multiple",
@@ -47,7 +47,7 @@
     {
       "taskId": "add-class-other",
       "code": "on click add .highlight on #item",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "add-to-body",
@@ -72,7 +72,7 @@
     {
       "taskId": "set-attribute",
       "code": "on click add @aria-expanded=\"true\" to #panel",
-      "band": "warned-wrong"
+      "band": "correct"
     },
     {
       "taskId": "hide-element",
@@ -92,7 +92,7 @@
     {
       "taskId": "put-text",
       "code": "on click put \"Saved\" in #output",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "put-text",
@@ -102,7 +102,7 @@
     {
       "taskId": "tabs-switch",
       "code": "on click remove .active from .tab and add .active to #tab2",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "remove-class-all",
@@ -142,12 +142,12 @@
     {
       "taskId": "set-inner-html",
       "code": "on click set the innerHTML of #output to \"Done\"",
-      "band": "warned-wrong"
+      "band": "correct"
     },
     {
       "taskId": "set-style",
       "code": "on click set the style.backgroundColor of #swatch to \"red\"",
-      "band": "warned-wrong"
+      "band": "correct"
     },
     {
       "taskId": "put-text",
@@ -167,7 +167,7 @@
     {
       "taskId": "toggle-self-class",
       "code": "on click toggle .active on this",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "toggle-other-class",
@@ -187,7 +187,7 @@
     {
       "taskId": "toggle-self-class",
       "code": "on click toggle class .active on me",
-      "band": "correct"
+      "band": "silent-noop"
     },
     {
       "taskId": "mouseenter-hover",

@@ -1,9 +1,10 @@
 /**
  * The value matrix runs every (cell, lane) pair in one process, so no run may
  * see another's writes. Two ways one did:
- *   - hyperfixi keeps global variables in a Map that every context shares, so
- *     one lane's `increment n` made every later run read `n` as 7, core's own
- *     English included;
+ *   - a run writes a window global (`increment n`); `@hyperfixi/core` also kept
+ *     global variables in a Map every context shared, so one lane's write made
+ *     every later run read `n` as 7 (that lane left with core's engine in C4,
+ *     and the reset still restores every global);
  *   - a lane can remove the body (tr read `increment i by 2 * 2` as
  *     `increment *`), and the next run's reset then threw.
  *
@@ -41,9 +42,9 @@ describe('value matrix: runs are isolated', () => {
       cell('writes', 'on click increment n then put n into #out')
     );
     const after = await engines.runCell(read);
-    expect(writes.lanes.en).toBe('7');
+    expect(writes.lanes.eng).toBe('7');
     expect(before.want).toBe('6');
-    expect(before.lanes.en).toBe('6');
+    expect(before.lanes.eng).toBe('6');
     expect(after.lanes).toEqual(before.lanes);
   }, 120_000);
 
@@ -51,7 +52,7 @@ describe('value matrix: runs are isolated', () => {
     const before = await engines.runCell(read);
     await engines.runCell(cell('removes', 'on click remove document.body'));
     const after = await engines.runCell(read);
-    expect(before.lanes.en).toBe('6');
+    expect(before.lanes.eng).toBe('6');
     expect(after.lanes).toEqual(before.lanes);
   }, 120_000);
 });

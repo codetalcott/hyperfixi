@@ -25,7 +25,9 @@ const DIST_GUARD_PACKAGES = [
   'semantic',
   'i18n',
   'patterns-reference',
-  'core',
+  'hyperscript-adapter',
+  // The R2 execution validator's host since Phase C2 (core's left in C4).
+  'engine',
 ];
 
 /** True if any .ts under dir is newer than builtAt (early-exit walk). */
@@ -54,8 +56,8 @@ function findStaleDists(): string[] {
   for (const name of DIST_GUARD_PACKAGES) {
     const pkg = path.join(packagesRoot, name);
     const srcDir = path.join(pkg, 'src');
-    // Whichever entry the build emits: `.js` for most packages, `.mjs` for core
-    // (its CJS twin is `.cjs` — see scripts/ensure-fresh.sh).
+    // Whichever entry the build emits: `.js` for most packages, `.mjs` / `.cjs`
+    // for a dual build (see scripts/ensure-fresh.sh).
     const marker = ['index.js', 'index.mjs', 'index.cjs']
       .map(f => path.join(pkg, 'dist', f))
       .filter(f => fs.existsSync(f))

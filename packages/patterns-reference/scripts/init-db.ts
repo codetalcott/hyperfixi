@@ -1514,8 +1514,8 @@ export const SEED_EXAMPLES: SeedExample[] = [
 
   // ==========================================================================
   // Reactivity — live, when X changes, bind, ^name, reactive arrays
-  // Runs in HyperFixi when @hyperfixi/reactivity plugin is installed.
-  // Upstream _hyperscript 0.9.90+ has its own live/when/bind; each row's
+  // Built into @hyperfixi/engine (core 3.x needed the @hyperfixi/reactivity
+  // plugin). Upstream _hyperscript 0.9.90+ has its own live/when/bind; each row's
   // verdict on both engines is in data/engine-verification.json.
   // ==========================================================================
   {

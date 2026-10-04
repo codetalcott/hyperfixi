@@ -15,7 +15,7 @@ A common challenge in web applications is keeping disparate parts of the UI in s
 ```html
 <form
   _="on submit fetch /user/profile with method: 'POST', body: formToJSON(me)
-         then send profileUpdated({user: it}) to body"
+         then send profileUpdated(user: it) to body"
 >
   <input name="name" type="text" />
   <button type="submit">Save</button>
@@ -72,7 +72,12 @@ You can chain these patterns to create complex workflows that remain readable an
 **Use Case:** A two-step "cart validation" process. Step 1 validates the items. If successful, it automatically triggers the loading of Step 2, the shipping options.
 
 ```html
-<div id="checkout-flow">
+<div
+  id="checkout-flow"
+  _="on loadStep(url)
+       fetch url as html
+       put it into me"
+>
   <div id="step-1">
     <button
       _="on click
@@ -83,15 +88,6 @@ You can chain these patterns to create complex workflows that remain readable an
     </button>
   </div>
 </div>
-
-<script type="text/hyperscript">
-  -- This is a behavior defined on the main container
-  behavior LoadStep on #checkout-flow
-    on loadStep(url) from me
-      fetch url and replace the content of me
-    end
-  end
-</script>
 ```
 
 **Why this is powerful:** The logic for the entire flow is not hard-coded.

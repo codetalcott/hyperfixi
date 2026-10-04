@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../engine ../patterns-reference ../core ../aot-compiler ../compilation-service",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../engine ../patterns-reference ../aot-compiler ../compilation-service",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -41,7 +41,7 @@
     "typecheck": "tsc --noEmit",
     "test:check": "VITEST_TIMEOUT=240 VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "test:canonical": "FOREIGN_CANONICAL_VALIDITY=1 VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/canonical-validity.test.ts src/multilingual/foreign-canonical-validity.test.ts src/multilingual/render-fidelity.test.ts src/multilingual/bare-render-fidelity.test.ts src/multilingual/en-reference-preservation.test.ts",
-    "test:shipped-sources": "VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/shipped-sources-validity.test.ts src/multilingual/shipped-sources-engine.test.ts src/multilingual/shipped-examples-execution.test.ts"
+    "test:shipped-sources": "VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/shipped-sources-engine.test.ts src/multilingual/shipped-sources-localized.test.ts src/multilingual/shipped-examples-execution.test.ts"
   },
   "keywords": [
     "hyperscript",
@@ -57,7 +57,6 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^3.3.0",
     "@hyperfixi/patterns-reference": "^3.3.0",
     "@lokascript/compilation-service": "^3.3.0",
     "@lokascript/i18n": "^3.3.0",

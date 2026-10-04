@@ -979,16 +979,15 @@ Handle errors gracefully:
 <button
   _="on click
      add .loading to me
-     try
-       fetch /api/data as json
-       put result.message into #output
-       remove .loading from me
-       add .success to #output
-     catch error
-       put 'Error loading data' into #output
-       remove .loading from me
-       add .error to #output
-     end"
+     fetch /api/data as json
+     put result.message into #output
+     remove .loading from me
+     add .success to #output
+   catch error
+     put 'Error loading data' into #output
+     remove .loading from me
+     add .error to #output
+   end"
 >
   Load Data
 </button>
@@ -1184,7 +1183,10 @@ Copy text to clipboard:
 
 ## Multilingual Examples
 
-LokaScript supports writing hyperscript in 23 languages. Here are common patterns in different languages:
+LokaScript supports writing hyperscript in 24 languages. Here are common patterns in different languages.
+Each runs on a page with `@lokascript/hyperscript-adapter` and a semantic bundle beside the engine,
+under its element's `lang` (or an ancestor's); see
+[BROWSER_BUNDLES.md](../../../docs/BROWSER_BUNDLES.md#hyperscript-in-another-language).
 
 ### Toggle Button
 
@@ -1197,19 +1199,19 @@ LokaScript supports writing hyperscript in 23 languages. Here are common pattern
 **Spanish:**
 
 ```html
-<button _="en clic alternar .active en yo">Alternar</button>
+<button lang="es" _="en clic alternar .active en yo">Alternar</button>
 ```
 
 **Japanese:**
 
 ```html
-<button _="クリック で 切り替え .active を 私">切り替え</button>
+<button lang="ja" _="クリック で 切り替え .active を 私">切り替え</button>
 ```
 
 **Arabic (RTL):**
 
 ```html
-<button _="عند النقر بدّل .active على أنا">تبديل</button>
+<button lang="ar" _="عند النقر بدّل .active على أنا">تبديل</button>
 ```
 
 ### Show/Hide Content
@@ -1224,21 +1226,21 @@ LokaScript supports writing hyperscript in 23 languages. Here are common pattern
 **Spanish:**
 
 ```html
-<button _="en clic alternar .hidden en #panel">Alternar Panel</button>
+<button lang="es" _="en clic alternar .hidden en #panel">Alternar Panel</button>
 <div id="panel">Contenido</div>
 ```
 
 **Japanese:**
 
 ```html
-<button _="#panel の .hidden を クリック で 切り替え">パネルを切り替え</button>
+<button lang="ja" _="#panel の .hidden を クリック で 切り替え">パネルを切り替え</button>
 <div id="panel">コンテンツ</div>
 ```
 
 **Korean:**
 
 ```html
-<button _="클릭 시 #panel 의 .hidden 을 토글">패널 토글</button>
+<button lang="ko" _="클릭 시 #panel 의 .hidden 을 토글">패널 토글</button>
 <div id="panel">내용</div>
 ```
 
@@ -1253,19 +1255,25 @@ LokaScript supports writing hyperscript in 23 languages. Here are common pattern
 **Spanish:**
 
 ```html
-<button _="en clic traer /api/data entonces poner result en #output">Cargar Datos</button>
+<button lang="es" _="en clic buscar /api/data entonces poner resultado en #output">
+  Cargar Datos
+</button>
 ```
 
 **French:**
 
 ```html
-<button _="sur clic récupérer /api/data puis mettre result dans #output">Charger Données</button>
+<button lang="fr" _="sur clic récupérer /api/data puis mettre result dans #output">
+  Charger Données
+</button>
 ```
 
 **German:**
 
 ```html
-<button _="bei klick hole /api/data dann setze result in #output">Daten Laden</button>
+<button lang="de" _="bei klick abrufen /api/data dann setzen Ergebnis in #output">
+  Daten Laden
+</button>
 ```
 
 ### Form Validation
@@ -1287,6 +1295,7 @@ LokaScript supports writing hyperscript in 23 languages. Here are common pattern
 
 ```html
 <input
+  lang="es"
   _="en desenfoque
      si mi value contiene '@'
        añadir .valid a yo
@@ -1300,11 +1309,12 @@ LokaScript supports writing hyperscript in 23 languages. Here are common pattern
 
 ```html
 <input
+  lang="pt"
   _="em blur
      se meu value contém '@'
-       adicionar .valid a mim
+       adicionar .valid
      senão
-       adicionar .error a mim
+       adicionar .error
      fim"
 />
 ```

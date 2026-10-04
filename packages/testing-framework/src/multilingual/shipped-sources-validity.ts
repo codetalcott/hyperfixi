@@ -1,30 +1,24 @@
 /**
- * Shipped-sources validity gate
- * -----------------------------
- * Every hyperscript source we ship in `examples/` and the doc trees, parsed
- * with hyperfixi, must not land in the *recovers-with-errors* state:
- * `ok === true` with a non-empty `errors`.
+ * Shipped sources: the hyperscript this repository ships to users
+ * ----------------------------------------------------------------
+ * Collects every hyperscript source in `examples/` and the doc trees, for the
+ * gates that read them:
  *
- * That state is the blind spot this gate exists for. The parser is
- * deliberately resilient — it recovers from some malformed input and returns a
- * usable-but-degraded AST plus diagnostics — so genuinely broken sources
- * neither throw nor report `ok: false`. Nothing in the existing suites looks at
- * the combination, which is how five malformed examples shipped undetected
- * (an `if` with no `end`, a `put` with no target, `{id}` where `${id}` was
- * meant, and a `*--css-var` neither engine supports). The same sweep is what
- * caught the `send`-vs-`trigger` divergence and the `parseTriggerCommand` hang
- * in #780, neither of which was reachable from the existing tests.
+ * - `shipped-sources-engine.test.ts`: every English source must parse on
+ *   `@hyperfixi/engine`, or be listed with a reason (`checkShippedSourcesOnEngine`);
+ * - `shipped-sources-localized.test.ts`: every source written in another
+ *   language must translate to English both engines parse (`collectLocalizedSources`);
+ * - the R4-style second opinion, upstream `hyperscript.org`, is
+ *   `loadCanonicalParser()` in canonical-validity.ts.
  *
- * Deliberately NOT gated: `ok === false`. That is a much larger and mostly
- * legitimate class — non-English sources (which need the multilingual path,
- * not `compileSync`), plugin syntax whose feature is not installed, and
- * intentionally-broken "this does not work" doc snippets. Gating it would
- * drown the signal. A source that fails outright is also loud; one that
- * silently recovers is not, and that asymmetry is the whole point.
+ * (The file is named for the gate it began with: core's "recovers with
+ * errors" ratchet, which flagged sources `@hyperfixi/core`'s resilient parser
+ * accepted with diagnostics — how five malformed examples were found, and the
+ * `send`-vs-`trigger` divergence and `parseTriggerCommand` hang of #780. It left
+ * with core's parser in Phase C4; the engine has no recovering mode, so a
+ * malformed source is simply rejected, and the engine gate sees it.)
  *
- * Node-only: the second-opinion path needs `loadCanonicalParser()`, which
- * imports the real `hyperscript.org` build off disk. Cannot run in a browser
- * suite.
+ * Node-only: walks the repo and reads git's index.
  */
 
 import fs from 'node:fs';
@@ -61,30 +55,6 @@ export interface ShippedSource {
   source: string;
 }
 
-export interface ShippedSourceFinding extends ShippedSource {
-  /** Stable allowlist key: file plus a hash of the source. */
-  key: string;
-  /** First hyperfixi diagnostic. */
-  error: string;
-  /** Single-line excerpt, for reading the baseline without opening the file. */
-  excerpt: string;
-}
-
-export interface ShippedSourcesResult {
-  /** Sources extracted and compiled. */
-  checked: number;
-  /** Sources that compiled with no diagnostics. */
-  clean: number;
-  /** Sources in the recovers-with-errors state. */
-  findings: ShippedSourceFinding[];
-}
-
-/** Minimal shape of `hyperscript.compileSync`, injected so this stays testable. */
-export type CompileForValidity = (code: string) => {
-  ok: boolean;
-  errors?: Array<{ message: string }>;
-};
-
 /**
  * A stable key for an individual snippet.
  *
@@ -100,7 +70,7 @@ function keyFor(file: string, source: string): string {
 /**
  * The files git actually tracks under `repoRoot`, as absolute paths.
  *
- * This gate walks the working TREE, and a working tree is not a clean checkout:
+ * These gates walk the working TREE, and a working tree is not a clean checkout:
  * `examples/vite-plugin-multilingual/` is GITIGNORED, so a local run saw a
  * source CI could never see. That is unfixable from the allowlist — with an
  * entry for it the gate failed in CI as a STALE entry, and without one it
@@ -246,45 +216,9 @@ export function collectLocalizedSources(opts?: {
   return out;
 }
 
-/**
- * Compile every shipped source and report the ones that recovered with errors.
- */
-export function checkShippedSourcesValidity(
-  compile: CompileForValidity,
-  doc: Parameters<typeof extractHyperscriptFromMarkup>[0],
-  opts?: { roots?: string[]; repoRoot?: string }
-): ShippedSourcesResult {
-  const sources = collectShippedSources(doc, opts);
-  const findings: ShippedSourceFinding[] = [];
-  let clean = 0;
-
-  for (const s of sources) {
-    let result: ReturnType<CompileForValidity>;
-    try {
-      result = compile(s.source);
-    } catch {
-      // A throw is the loud failure mode, not this gate's business.
-      continue;
-    }
-    const errors = result.errors ?? [];
-    if (result.ok && errors.length > 0) {
-      findings.push({
-        ...s,
-        key: keyFor(s.file, s.source),
-        error: errors[0]?.message ?? 'recovered with errors',
-        excerpt: s.source.replace(/\s+/g, ' ').trim().slice(0, 100),
-      });
-    } else if (result.ok) {
-      clean++;
-    }
-  }
-
-  return { checked: sources.length, clean, findings };
-}
-
-/** A shipped source `packages/core` compiles clean and `@hyperfixi/engine` rejects. */
+/** A shipped English source `@hyperfixi/engine` rejects. */
 export interface EngineRejection extends ShippedSource {
-  /** Stable key: file plus a hash of the source, as the validity gate's. */
+  /** Stable key: file plus a hash of the source. */
   key: string;
   /** The engine's first parse error, first line. */
   error: string;
@@ -292,46 +226,50 @@ export interface EngineRejection extends ShippedSource {
 }
 
 export interface ShippedSourcesOnEngineResult {
-  /** Distinct (file, source) pairs core compiles clean. */
-  coreClean: number;
+  /** Distinct (file, source) pairs written in English: the denominator. */
+  checked: number;
   /** Of those, the ones the engine parses. */
   engineAccepts: number;
+  /** Distinct sources skipped because they are written in another language. */
+  localized: number;
   rejections: EngineRejection[];
 }
 
 /**
- * What replacing core's engine with `@hyperfixi/engine` would break in the
- * material we ship: every source core compiles clean, put to the engine's
- * parser. `engineErrors` returns the engine's parse errors ([] = it parses).
+ * Every shipped source written in English, put to the engine's parser.
+ * `engineErrors` returns the engine's parse errors ([] = it parses).
  *
- * The denominator is core-clean sources on purpose. A source core itself
- * rejects or recovers from is already broken where it is shipped, and is the
- * validity gate's business; the question here is only what would STOP working.
+ * A source under a non-English `lang` is not English hyperscript: on a page it
+ * runs through the multilingual adapter, and `shipped-sources-localized.test.ts`
+ * checks it that way. Every other source must parse, or be listed.
+ *
+ * (Until Phase C4 the denominator was the sources `@hyperfixi/core` compiled
+ * clean, which also excluded non-English snippets that carried no `lang` and
+ * malformed doc examples. Moving off core surfaced fourteen: eleven examples in
+ * another language without a `lang`, now marked, and three malformed ones, now
+ * fixed.)
  */
 export function checkShippedSourcesOnEngine(
-  compile: CompileForValidity,
   engineErrors: (code: string) => string[],
   doc: Parameters<typeof extractHyperscriptFromMarkup>[0],
   opts?: { roots?: string[]; repoRoot?: string }
 ): ShippedSourcesOnEngineResult {
+  const foreign = new Set(collectLocalizedSources(opts).map(s => keyFor(s.file, s.source)));
   const seen = new Set<string>();
   const rejections: EngineRejection[] = [];
-  let coreClean = 0;
+  let checked = 0;
   let engineAccepts = 0;
+  let localized = 0;
 
   for (const s of collectShippedSources(doc, opts)) {
     const key = keyFor(s.file, s.source);
     if (seen.has(key)) continue;
     seen.add(key);
-    let clean = false;
-    try {
-      const result = compile(s.source);
-      clean = result.ok && (result.errors ?? []).length === 0;
-    } catch {
-      /* not core-clean */
+    if (foreign.has(key)) {
+      localized++;
+      continue;
     }
-    if (!clean) continue;
-    coreClean++;
+    checked++;
     const errors = engineErrors(s.source);
     if (errors.length === 0) {
       engineAccepts++;
@@ -344,5 +282,5 @@ export function checkShippedSourcesOnEngine(
       excerpt: s.source.replace(/\s+/g, ' ').trim().slice(0, 100),
     });
   }
-  return { coreClean, engineAccepts, rejections };
+  return { checked, engineAccepts, localized, rejections };
 }
