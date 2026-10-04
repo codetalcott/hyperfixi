@@ -2,11 +2,11 @@
   "note": "Deterministic parse-vs-behavior verdicts for plausible phrasings. Regenerate with: tsx src/agent-bench/cli.ts probe-variants --json",
   "totals": {
     "phrasings": 37,
-    "parse": 36,
+    "parse": 20,
     "behaveCorrectly": 17,
-    "warnedWrong": 12,
-    "silentBand": 8,
-    "silentNoop": 7
+    "warnedWrong": 1,
+    "silentBand": 3,
+    "silentNoop": 2
   },
   "phrasings": [
     {
@@ -17,22 +17,22 @@
     {
       "taskId": "two-commands",
       "code": "on click add .busy to me and put \"Loading\" into #output",
-      "band": "silent-noop"
+      "band": "rejected"
     },
     {
       "taskId": "two-commands",
       "code": "on click add .busy to me, put \"Loading\" into #output",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "add-class-multiple",
       "code": "on click add .done to all .todo",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "add-class-multiple",
       "code": "on click add .done to every .todo",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "hide-element",
@@ -42,12 +42,12 @@
     {
       "taskId": "add-class-other",
       "code": "on click add .highlight #item",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "add-class-other",
       "code": "on click add .highlight on #item",
-      "band": "silent-noop"
+      "band": "rejected"
     },
     {
       "taskId": "add-to-body",
@@ -82,7 +82,7 @@
     {
       "taskId": "conditional-class",
       "code": "on click if #box has class .danger add .warned to #box end",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "conditional-class",
@@ -92,7 +92,7 @@
     {
       "taskId": "put-text",
       "code": "on click put \"Saved\" in #output",
-      "band": "silent-noop"
+      "band": "rejected"
     },
     {
       "taskId": "put-text",
@@ -102,17 +102,17 @@
     {
       "taskId": "tabs-switch",
       "code": "on click remove .active from .tab and add .active to #tab2",
-      "band": "silent-noop"
+      "band": "rejected"
     },
     {
       "taskId": "remove-class-all",
       "code": "on click remove .active from all .row",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "remove-element",
       "code": "on click remove element #item",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "remove-element",
@@ -137,7 +137,7 @@
     {
       "taskId": "set-attribute",
       "code": "on click set @aria-expanded on #panel to \"true\"",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "set-inner-html",
@@ -172,22 +172,22 @@
     {
       "taskId": "toggle-other-class",
       "code": "on click toggle .open #panel",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "toggle-other-class",
       "code": "on click toggle .open in #panel",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "toggle-attribute",
       "code": "on click toggle @hidden of #message",
-      "band": "warned-wrong"
+      "band": "rejected"
     },
     {
       "taskId": "toggle-self-class",
       "code": "on click toggle class .active on me",
-      "band": "silent-noop"
+      "band": "rejected"
     },
     {
       "taskId": "mouseenter-hover",

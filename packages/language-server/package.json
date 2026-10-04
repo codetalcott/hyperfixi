@@ -14,7 +14,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "test:check": "npm run pretest --silent && VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
-    "pretest": "bash ../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../core && npm run build --silent"
+    "pretest": "bash ../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../core ../engine && npm run build --silent"
   },
   "keywords": [
     "lsp",
@@ -34,15 +34,20 @@
     "vscode-languageserver-textdocument": "^1.0.15"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^3.3.0"
+    "@hyperfixi/core": "^3.3.0",
+    "@hyperfixi/engine": "^3.3.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {
+      "optional": true
+    },
+    "@hyperfixi/engine": {
       "optional": true
     }
   },
   "devDependencies": {
     "@hyperfixi/core": "^3.3.0",
+    "@hyperfixi/engine": "^3.3.0",
     "@types/node": "^26.6.3",
     "@vitest/coverage-v8": "^5.0.0",
     "tsup": "^8.0.0",

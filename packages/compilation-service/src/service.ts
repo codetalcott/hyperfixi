@@ -23,6 +23,7 @@ import type {
   SemanticJSON,
   SemanticJSONValue,
   Diagnostic,
+  NormalizeResult,
 } from './types.js';
 import { diffBehaviors } from './diff/diff.js';
 import { scoreNodes, type ScoreRequest, type ScoreResponse } from './scoring/score.js';
@@ -68,6 +69,13 @@ export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
   private translationCollisionsFn: TranslationCollisionsFn | null = null;
+  /** semantic's `render`, for the English a translation runs as. */
+  private renderFn: ((node: unknown, language: string) => string) | null = null;
+  /**
+   * `@hyperfixi/engine`'s first parse error for a source (null: it parses). Set by create()
+   * when the engine is installed (an optional peer); without it there is no engine check.
+   */
+  private engineError: ((source: string) => string | null) | null = null;
   private testRenderers: Map<string, TestRenderer>;
   private componentRenderers: Map<string, ComponentRenderer>;
 
@@ -147,8 +155,62 @@ export class CompilationService {
     // Store translate function
     service.translateFn = semantic.translate;
     service.translationCollisionsFn = semantic.findTranslationCollisions;
+    service.renderFn = semantic.render as (node: unknown, language: string) => string;
+
+    // The engine the product runs (hyperfixi-hs.js), when it is installed. Natural-language
+    // input has to be English it reads: semantic's grammar is more permissive than the
+    // engine's, and a source only semantic accepts does nothing on a page.
+    try {
+      const engine = await import('@hyperfixi/engine');
+      engine.register(...engine.everything);
+      service.engineError = source => {
+        try {
+          return engine.api.parse(source).errors[0]?.message.split('\n')[0] ?? null;
+        } catch (e) {
+          return (e instanceof Error ? e.message : String(e)).split('\n')[0] ?? 'parse error';
+        }
+      };
+    } catch {
+      /* @hyperfixi/engine is not installed: validation is semantic's alone */
+    }
 
     return service;
+  }
+
+  /**
+   * The engine's verdict on natural-language input: its parse of the English the page would
+   * run — the source as written, or a translation's English render (what
+   * `@lokascript/hyperscript-adapter` hands the engine). Null when it parses, or when there is
+   * nothing to check (explicit / JSON input, or no engine installed).
+   */
+  private engineDiagnostic(
+    request: CompileRequest,
+    normalized: NormalizeResult
+  ): Diagnostic | null {
+    if (!this.engineError || normalized.format !== 'natural' || !request.code) return null;
+    const language = request.language ?? 'en';
+    const english = language === 'en' || language.startsWith('en-');
+    let source = request.code;
+    if (!english) {
+      if (!this.renderFn || !normalized.node) return null;
+      try {
+        source = this.renderFn(normalized.node, 'en');
+      } catch {
+        return null;
+      }
+    }
+    const error = this.engineError(source);
+    if (!error) return null;
+    return {
+      severity: 'error',
+      code: 'ENGINE_PARSE_ERROR',
+      message: english
+        ? `@hyperfixi/engine cannot read this: ${error}`
+        : `@hyperfixi/engine cannot read its English (${source}): ${error}`,
+      suggestion:
+        "The engine reads upstream _hyperscript's grammar: check the command's syntax " +
+        '(get_command_docs) and rewrite the part the error names.',
+    };
   }
 
   // ===========================================================================
@@ -187,6 +249,13 @@ export class CompilationService {
         confidence: gateResult.adjustedConfidence,
         diagnostics,
       };
+    }
+
+    // Step 2b: The engine must read it (before the cache: two sources can share a node)
+    const engineRejects = this.engineDiagnostic(request, normalized);
+    if (engineRejects) {
+      diagnostics.push(engineRejects);
+      return { ok: false, confidence: gateResult.adjustedConfidence, diagnostics };
     }
 
     // Step 3: Check cache
@@ -264,10 +333,14 @@ export class CompilationService {
     const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
     diagnostics.push(...gateResult.diagnostics);
 
-    const semanticJSON = gateResult.pass ? nodeToSemanticJSON(normalized.node) : undefined;
+    const engineRejects = gateResult.pass ? this.engineDiagnostic(request, normalized) : null;
+    if (engineRejects) diagnostics.push(engineRejects);
+    const ok = gateResult.pass && !engineRejects;
+
+    const semanticJSON = ok ? nodeToSemanticJSON(normalized.node) : undefined;
 
     return {
-      ok: gateResult.pass,
+      ok,
       semantic: semanticJSON,
       confidence: gateResult.adjustedConfidence,
       diagnostics,

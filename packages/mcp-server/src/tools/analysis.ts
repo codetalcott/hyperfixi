@@ -3,6 +3,11 @@
  *
  * Code analysis capabilities using @hyperfixi/core/ast-utils.
  * These tools help LLMs understand hyperscript code structure and quality.
+ *
+ * The trees come from @lokascript/semantic: its interchange nodes (cyclomatic and
+ * cognitive complexity, counted on `if` / `while` / `for each`) and its AST builder's
+ * tree (Halstead, patterns, smells). Until Phase C4 both came from @hyperfixi/core's
+ * parse, whose analyzer counted every comparison as a decision.
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
@@ -128,12 +133,11 @@ export async function handleAnalysisTool(
         if (!astToolkit) {
           return simpleAnalysis(code, 'complexity');
         }
-        // Parse code to AST first
-        const ast = await parseHyperscript(code);
-        if (!ast) {
+        const trees = await parseHyperscript(code);
+        if (!trees) {
           return simpleAnalysis(code, 'complexity');
         }
-        const complexity = astToolkit.calculateComplexity(ast);
+        const complexity = complexityOf(astToolkit, trees);
         return {
           content: [
             {
@@ -158,11 +162,14 @@ export async function handleAnalysisTool(
         if (!astToolkit) {
           return simpleAnalysis(code, 'metrics');
         }
-        const ast = await parseHyperscript(code);
-        if (!ast) {
+        const trees = await parseHyperscript(code);
+        if (!trees) {
           return simpleAnalysis(code, 'metrics');
         }
-        const metrics = astToolkit.analyzeMetrics(ast);
+        const metrics = {
+          ...astToolkit.analyzeMetrics(trees.ast),
+          complexity: complexityOf(astToolkit, trees),
+        };
         return {
           content: [
             {
@@ -189,11 +196,11 @@ export async function handleAnalysisTool(
         if (!astToolkit || typeof astToolkit.explainCode !== 'function') {
           return simpleExplanation(code, audience, detail);
         }
-        const ast = await parseHyperscript(code);
-        if (!ast) {
+        const trees = await parseHyperscript(code);
+        if (!trees) {
           return simpleExplanation(code, audience, detail);
         }
-        const explanation = astToolkit.explainCode(ast, { audience, detail });
+        const explanation = astToolkit.explainCode(trees.ast, { audience, detail });
         return {
           content: [{ type: 'text', text: JSON.stringify(explanation, null, 2) }],
         };
@@ -241,16 +248,40 @@ export async function handleAnalysisTool(
 // Helpers
 // =============================================================================
 
-async function parseHyperscript(code: string): Promise<any> {
+/** English hyperscript as semantic reads it: the AST builder's tree and its interchange nodes. */
+async function parseHyperscript(code: string): Promise<{ ast: any; nodes: any[] } | null> {
   try {
-    const core = await import('@hyperfixi/core');
-    if (core.parse) {
-      return await core.parse(code);
-    }
+    const semantic: any = await import('@lokascript/semantic');
+    const node = semantic.parseSemantic(code, 'en')?.node;
+    const ast = node ? semantic.buildAST(node)?.ast : null;
+    if (!ast) return null;
+    const converted = semantic.fromSemanticAST(ast);
+    const nodes = (Array.isArray(converted) ? converted : [converted]).filter(
+      (n: { type?: string }) => n?.type !== 'error'
+    );
+    return { ast, nodes };
   } catch {
-    // Core not available, fall back to simple analysis
+    // semantic not available, or it cannot read the code: fall back to simple analysis
+    return null;
   }
-  return null;
+}
+
+/**
+ * Cyclomatic and cognitive complexity of a program: one entry path plus each top-level
+ * feature's decision points, and the sum of their nesting-weighted decisions. Halstead from
+ * the AST builder's tree.
+ */
+function complexityOf(
+  astToolkit: any,
+  trees: { ast: any; nodes: any[] }
+): { cyclomatic: number; cognitive: number; halstead: unknown } {
+  let cyclomatic = 1;
+  let cognitive = 0;
+  for (const node of trees.nodes) {
+    cyclomatic += astToolkit.calculateCyclomatic(node) - 1;
+    cognitive += astToolkit.calculateCognitive(node);
+  }
+  return { cyclomatic, cognitive, halstead: astToolkit.calculateComplexity(trees.ast).halstead };
 }
 
 function simpleAnalysis(
@@ -270,7 +301,7 @@ function simpleAnalysis(
     conditionalCount: conditionals.length,
     loopCount: loops.length,
     estimatedComplexity: 1 + conditionals.length + loops.length,
-    note: 'Simple analysis (full AST analysis requires @hyperfixi/core)',
+    note: 'Simple analysis (@lokascript/semantic could not read the code)',
   };
 
   return {
@@ -446,7 +477,7 @@ function simpleIntentRecognition(code: string): { content: Array<{ type: string;
             allIntents: intents,
             confidence,
             code,
-            note: 'Pattern-based analysis (full intent recognition requires @hyperfixi/core)',
+            note: 'Pattern-based analysis',
           },
           null,
           2

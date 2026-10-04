@@ -209,10 +209,25 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
 // CONVERSION HELPERS
 // =============================================================================
 
+/**
+ * A body's commands, with sequences spliced in. The interchange has no sequence node, and
+ * the AST builder hands a handler's `then` chain over as one `CommandSequence` command:
+ * converted as a node, that became an `event` nested inside the handler (a second
+ * "on click" for hover, symbols and nesting depth). In a body it is that many commands.
+ * (A sequence converted on its own still becomes a synthetic event: convertCommandSequence.)
+ */
+function convertBody(commands: SemanticASTNode[]): InterchangeNode[] {
+  return commands.flatMap(cmd =>
+    cmd?.type === 'CommandSequence' || cmd?.type === 'block'
+      ? convertBody((cmd.commands ?? []) as SemanticASTNode[])
+      : [fromSemanticAST(cmd)]
+  );
+}
+
 function convertEventHandler(node: SemanticASTNode): EventNode {
   const event = (node.event ?? 'click') as string;
   const commands = (node.commands ?? node.body ?? []) as SemanticASTNode[];
-  const body = commands.map(cmd => fromSemanticAST(cmd));
+  const body = convertBody(commands);
 
   const modifiers = buildEventModifiers(node);
 
@@ -544,8 +559,5 @@ function buildEventModifiers(node: SemanticASTNode): EventModifiers {
 
 function extractBlockCommands(block: SemanticASTNode | undefined): InterchangeNode[] {
   if (!block) return [];
-  if (block.type === 'block') {
-    return ((block.commands ?? []) as SemanticASTNode[]).map(cmd => fromSemanticAST(cmd));
-  }
-  return [fromSemanticAST(block)];
+  return convertBody([block]);
 }

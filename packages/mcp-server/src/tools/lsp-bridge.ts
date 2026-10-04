@@ -17,13 +17,32 @@ try {
   );
 }
 
-// Try to import parse function from core
-let parseFunction: any = null;
+// The engine that runs hyperscript (hyperfixi-hs.js): its parse errors are the
+// diagnostics (owner decision 5, Phase C4). Until then this was @hyperfixi/core's
+// parse. Optional peer: absent, there are no parse errors to report.
+// `parse` returns the tree (it gives the interchange its positions) and throws a
+// ParseError, whose token is where the parse stopped.
+let engineParse: ((code: string) => unknown) | null = null;
 try {
-  const core = await import('@hyperfixi/core');
-  parseFunction = core.parse;
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything);
+  engineParse = engine.parse;
 } catch {
-  console.error('[mcp:lsp-bridge] @hyperfixi/core not available — parse-based analysis disabled');
+  console.error('[mcp:lsp-bridge] @hyperfixi/engine not available — parse errors disabled');
+}
+
+/**
+ * Where an engine parse error stopped: its token's line (1-based) and column, from the
+ * token's offset into `source` (the end-of-input token carries an offset and no line).
+ */
+function engineErrorPosition(e: unknown, source: string): { line?: number; column?: number } {
+  const token = typeof e === 'object' && e !== null ? Reflect.get(e, 'token') : undefined;
+  if (typeof token !== 'object' || token === null) return {};
+  const start = Reflect.get(token, 'start');
+  if (typeof start !== 'number') return {};
+  const before = source.slice(0, start);
+  const lineStart = before.lastIndexOf('\n') + 1;
+  return { line: before.split('\n').length, column: start - lineStart };
 }
 
 // Try to import semantic package for multilingual support
@@ -50,61 +69,53 @@ try {
   );
 }
 
-// Try to import the schema-driven role inferrer — the front-end half of
-// `fromCoreAST`. Without it the converter names roles for `set` and `go` only;
-// the other 41 role-bearing command names come from the command schemas.
-let roleInferrer: any = null;
-try {
-  ({ schemaRoleInferrer: roleInferrer } = await import('@hyperfixi/core/multilingual'));
-} catch {
-  console.error(
-    '[mcp:lsp-bridge] @hyperfixi/core/multilingual not available — hover role inference limited to `set` and `go`'
-  );
-}
-
 /**
- * Parse hyperscript to the interchange node list every AST-based tool reads.
+ * Parse hyperscript to the interchange node list every AST-based tool reads, with the
+ * engine's parse errors.
  *
- * `core.parse()` returns a ParseResult — the AST is its `.node`, and a failed
- * parse carries `.errors` rather than throwing. The four AST paths (hover,
- * diagnostics, completions, symbols) used to guard on `astToolkit.astToLSP*`,
- * names core never exported, so three of them silently took their token-based
- * fallback for the life of the package; hover reached `fromCoreAST` but
- * passed the whole ParseResult (#1114). All four go through here now.
+ * The nodes come from @lokascript/semantic (parseSemantic → buildAST → fromSemanticAST),
+ * which names each command's roles itself and reads every language. For English the
+ * engine parses it too: its errors are the diagnostics, and its tree gives the nodes their
+ * source positions (`withEnginePositions`; semantic's events and commands carry none). A
+ * translation runs as English the adapter renders, whose positions are not the source's.
+ * Until Phase C4 both came from @hyperfixi/core: its parse, and `fromCoreAST` with the
+ * schema role inferrer, which also left `live` / `when` / `bind` and the extension features
+ * without nodes.
  */
-function parseToInterchange(code: string): { nodes: any[]; errors: ParseErrorLike[] } | null {
-  if (!astToolkit?.fromCoreAST || !parseFunction) return null;
-  const result = parseFunction(code);
-  const errors: ParseErrorLike[] = Array.isArray(result?.errors) ? result.errors : [];
-  const ast = result?.node ?? null;
-  // Empty or unparseable input yields the parser's `__ERROR__` sentinel
-  // identifier; it is not a node to convert or complete against.
-  if (!ast || (ast.type === 'identifier' && ast.name === '__ERROR__')) return { nodes: [], errors };
-  // The converter has no arm for every statement kind (`def`, `behavior`
-  // throw "Unknown core AST node type"). That is a converter limit, not a
-  // parse error — the tool falls back to its token path, silently.
-  try {
-    const opts = roleInferrer ? { inferRoles: roleInferrer } : undefined;
-    // `fromCoreAST(Program)` converts the FIRST statement only (the
-    // interchange has no program node — a recorded, intentional gap), so a
-    // document with two `end`-terminated handlers would lose the second.
-    // Convert each top-level statement on its own.
-    const statements: any[] =
-      ast.type === 'Program' && Array.isArray(ast.statements) ? ast.statements : [ast];
-    const interchange = statements.flatMap((stmt: any) => {
-      const converted = astToolkit.fromCoreAST(stmt, opts);
-      return Array.isArray(converted) ? converted : [converted];
-    });
-    const nodes = interchange.filter(
-      // `fromCoreAST` emits an `error` node for a kind it cannot represent
-      // (`def`, `behavior`, …) rather than throwing. That is a converter limit,
-      // not a user error: it must not become a diagnostic or a hover.
-      (n: { type?: string }) => n?.type !== 'error'
-    );
-    return { nodes, errors };
-  } catch {
-    return { nodes: [], errors };
+function parseToInterchange(
+  code: string,
+  language: string
+): { nodes: any[]; errors: ParseErrorLike[] } | null {
+  if (!semanticPackage?.buildAST || !semanticPackage.fromSemanticAST) return null;
+  const errors: ParseErrorLike[] = [];
+  let engineTree: unknown = null;
+  if (engineParse && (language === 'en' || language.startsWith('en-'))) {
+    try {
+      engineTree = engineParse(code);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      errors.push({ message: message.split('\n')[0] ?? message, ...engineErrorPosition(e, code) });
+    }
   }
+  let nodes: any[] = [];
+  try {
+    const node = semanticPackage.parseSemantic(code, language)?.node;
+    const ast = node ? semanticPackage.buildAST(node)?.ast : null;
+    if (ast) {
+      const converted = semanticPackage.fromSemanticAST(ast);
+      // An `error` node is a converter limit, not a user error: it must not become a
+      // diagnostic or a hover.
+      nodes = (Array.isArray(converted) ? converted : [converted]).filter(
+        (n: { type?: string }) => n?.type !== 'error'
+      );
+      if (engineTree && astToolkit?.withEnginePositions) {
+        nodes = astToolkit.withEnginePositions(nodes, code, engineTree);
+      }
+    }
+  } catch {
+    nodes = [];
+  }
+  return { nodes, errors };
 }
 
 interface ParseErrorLike {
@@ -115,12 +126,12 @@ interface ParseErrorLike {
 
 // Log capability summary
 console.error(
-  `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, parse=${!!parseFunction}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}, roles=${!!roleInferrer}`
+  `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, engine=${!!engineParse}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}`
 );
 
 // Import error fixes registry
 import { getFixesForDiagnostic } from './error-fixes.js';
-import type { CodeFix } from '@hyperfixi/core';
+import type { CodeFix } from './error-fixes.js';
 
 // =============================================================================
 // Cached Semantic Analyzer (Phase 6 - Performance)
@@ -408,9 +419,9 @@ async function getDiagnostics(
 
   // AST-based analysis: the parser's own errors first (a failed parse does
   // not throw — it reports), then the interchange complexity diagnostics.
-  if (diagnostics.length === 0 && astToolkit?.interchangeToLSPDiagnostics && parseFunction) {
+  if (diagnostics.length === 0 && astToolkit?.interchangeToLSPDiagnostics) {
     try {
-      const parsed = parseToInterchange(code);
+      const parsed = parseToInterchange(code, language);
       for (const err of parsed?.errors ?? []) {
         const line = Math.max(0, (err.line ?? 1) - 1);
         const character = Math.max(0, err.column ?? 0);
@@ -744,9 +755,9 @@ async function getCompletions(
   const completions: CompletionItem[] = [];
 
   // Try AST-based completions first: the node at the cursor decides them
-  if (astToolkit?.interchangeToLSPCompletions && parseFunction) {
+  if (astToolkit?.interchangeToLSPCompletions) {
     try {
-      const parsed = parseToInterchange(code);
+      const parsed = parseToInterchange(code, language);
       if (parsed?.nodes.length) {
         completions.push(
           ...astToolkit.interchangeToLSPCompletions(parsed.nodes, { line, character })
@@ -897,6 +908,9 @@ function getContextualCompletions(
 
     case 'expression':
       completions.push(
+        { label: ':', kind: 6, detail: 'Element-scoped variable', insertText: ':${1:name}' },
+        { label: '$', kind: 6, detail: 'Global variable', insertText: '$${1:name}' },
+        { label: 'the', kind: 14, detail: 'Property access: the X of Y' },
         ref('me', 'Current element'),
         ref('you', 'Event target'),
         ref('it', 'Last result'),
@@ -945,9 +959,11 @@ function inferContext(beforeCursor: string): string {
   if (/\bon\s*$/.test(trimmed)) return 'event';
   if (/\bthen\s*$/.test(trimmed)) return 'command';
   if (/^(on\s+\w+\s*)$/.test(trimmed)) return 'command';
+  // A value, not a target: before the `to` → selector rule, which used to shadow it. (An
+  // unfinished `set x to` has no parse to complete from, on the engine or semantic.)
+  if (/\bset\s+\S+\s+to\s*$/.test(trimmed)) return 'expression';
   if (/(to|from|into|on)\s*$/.test(trimmed)) return 'selector';
   if (/\bif\s*$/.test(trimmed)) return 'expression';
-  if (/\bset\s+:\w+\s+to\s*$/.test(trimmed)) return 'expression';
 
   return 'default';
 }
@@ -963,9 +979,9 @@ async function getHoverInfo(
   language: string
 ): Promise<CallToolResult> {
   // Try AST-based hover first (interchange format with optional LSE bracket notation)
-  if (astToolkit && parseFunction && astToolkit.fromCoreAST && astToolkit.interchangeToLSPHover) {
+  if (astToolkit?.interchangeToLSPHover) {
     try {
-      const parsed = parseToInterchange(code);
+      const parsed = parseToInterchange(code, language);
       if (parsed?.nodes.length) {
         const nodes = parsed.nodes;
 
@@ -1153,9 +1169,9 @@ async function getDocumentSymbols(code: string, language: string): Promise<CallT
   const symbols: DocumentSymbol[] = [];
 
   // Try AST-based symbols first
-  if (astToolkit?.interchangeToLSPSymbols && parseFunction) {
+  if (astToolkit?.interchangeToLSPSymbols) {
     try {
-      const parsed = parseToInterchange(code);
+      const parsed = parseToInterchange(code, language);
       if (parsed?.nodes.length) {
         symbols.push(...astToolkit.interchangeToLSPSymbols(parsed.nodes));
       }

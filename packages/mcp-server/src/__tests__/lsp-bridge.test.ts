@@ -67,9 +67,9 @@ describe('get_diagnostics', () => {
 
     const parsed = JSON.parse(getTextContent(result));
     expect(parsed.diagnostics.length).toBeGreaterThan(0);
-    // The core parser's own error ("Unclosed string literal") now comes
+    // The engine's own error ("Unterminated string at [Line: 1, Column: 13]") comes
     // first; the token-based "Unmatched single quote" is the fallback.
-    expect(parsed.diagnostics.some((d: any) => /quote|string literal/i.test(d.message))).toBe(true);
+    expect(parsed.diagnostics.some((d: any) => /quote|string/i.test(d.message))).toBe(true);
   });
 
   it('detects unmatched double quote', async () => {
@@ -87,8 +87,11 @@ describe('get_diagnostics', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    // Parser first ("Expected ')' after arguments"); token check is the fallback.
-    expect(parsed.diagnostics.some((d: any) => /parenthes|\)/.test(d.message))).toBe(true);
+    // The engine reports where it ran out ("Unexpected value: <<<EOF>>>", upstream's
+    // wording, at the end of the line); the token check names the parenthesis when the
+    // engine is absent.
+    const error = parsed.diagnostics.find((d: any) => d.code === 'parse-error');
+    expect(error?.message ?? parsed.diagnostics[0]?.message).toMatch(/EOF|parenthes|\)/);
   });
 
   it('warns about deprecated setTimeout', async () => {
@@ -326,15 +329,23 @@ describe('AST paths: symbols, completions, diagnostics read the interchange', ()
     expect(labels).toEqual(expect.arrayContaining([':', '$', 'the']));
   });
 
-  it("diagnostics: the core parser's own error is reported, not a typo guess", async () => {
+  it("diagnostics: the engine's own error is reported, at its position", async () => {
     const result = await handleLspBridgeTool('get_diagnostics', {
-      code: 'behavior Foo on click add .x end',
+      code: 'on click put "Saved" in #output',
     });
     const { diagnostics } = JSON.parse(getTextContent(result));
     const parseErrors = diagnostics.filter((d: { code: string }) => d.code === 'parse-error');
-    expect(parseErrors.map((d: { message: string }) => d.message)).toContain(
-      "Expected 'end' to close behavior definition"
-    );
+    expect(parseErrors[0]?.message).toMatch(/Expected one of: 'into'/);
+    // `"Saved" in #output` reads as a membership test, so the engine stops at the end of
+    // the line still wanting `into`: column 31.
+    expect(parseErrors[0]?.range.start).toEqual({ line: 0, character: 31 });
+    // And on a later line, the position is that line's.
+    const second = JSON.parse(
+      getTextContent(
+        await handleLspBridgeTool('get_diagnostics', { code: 'on click\n  log 1\n  qqqq' })
+      )
+    ).diagnostics.find((d: { code: string }) => d.code === 'parse-error');
+    expect(second?.range.start).toEqual({ line: 2, character: 2 });
   });
 
   it('a statement kind the converter cannot represent is not a parse error', async () => {

@@ -7,7 +7,32 @@
  * Each fix follows the LSP CodeAction format for IDE integration.
  */
 
-import type { CodeFix } from '@hyperfixi/core';
+/**
+ * A fix in the LSP CodeAction shape. (The type lived in @hyperfixi/core, whose
+ * error catalog these fixes key on, until Phase C4; it is this registry's own now.)
+ */
+export interface CodeFix {
+  /** Unique fix identifier (e.g., 'add-exists-check', 'fix-typo') */
+  readonly code: string;
+  /** Short description shown in the quick-fix menu; may hold `${suggestion}`. */
+  readonly title: string;
+  /** LSP CodeActionKind */
+  readonly kind: 'quickfix' | 'refactor' | 'source';
+  /** What the fix does */
+  readonly description?: string;
+  /** The text edit to apply (character offsets) */
+  readonly edit?: {
+    readonly type: 'insert' | 'replace' | 'delete';
+    readonly range?: { readonly start: number; readonly end: number };
+    readonly text?: string;
+  };
+  /** A command to run instead of an edit */
+  readonly command?: { readonly name: string; readonly arguments: readonly unknown[] };
+  /** Higher sorts first (default 0) */
+  readonly priority?: number;
+  /** Shown prominently; at most one per diagnostic */
+  readonly isPreferred?: boolean;
+}
 
 /**
  * Registry of automated fixes for known error codes.
