@@ -41,7 +41,7 @@ export function MarkerRow({ code, role, marker, hasEdit }: MarkerRowProps) {
           value={primary}
           placeholder="marker..."
           _={`on change
-              fetch \`/profiles/${code}/markers/${role}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'primary',value:my value}) as html
+              fetch \`/profiles/${code}/markers/${role}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'primary',value:my value})} as html
               then put it into #marker-status-${role}
             end
             on input add .modified to me`}
@@ -54,7 +54,7 @@ export function MarkerRow({ code, role, marker, hasEdit }: MarkerRowProps) {
           value={alternatives}
           placeholder="alt1, alt2..."
           _={`on change
-              fetch \`/profiles/${code}/markers/${role}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'alternatives',value:my value}) as html
+              fetch \`/profiles/${code}/markers/${role}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'alternatives',value:my value})} as html
               then put it into #marker-status-${role}
             end
             on input add .modified to me`}
@@ -64,7 +64,7 @@ export function MarkerRow({ code, role, marker, hasEdit }: MarkerRowProps) {
         <select
           name="position"
           _={`on change
-              fetch \`/profiles/${code}/markers/${role}\` with method:'POST' and headers:{'Content-Type':'application/json'} and body:JSON.stringify({field:'position',value:my value}) as html
+              fetch \`/profiles/${code}/markers/${role}\` with {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({field:'position',value:my value})} as html
               then put it into #marker-status-${role}
             end`}
         >
