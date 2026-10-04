@@ -188,16 +188,16 @@ As a host for the multilingual text path (semantic renders a translation, the ad
 - **Value matrix.** 4,205 cells. English on this engine gives the oracle's value in every cell.
   Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs do, and the two
   hosts agree on every pair: the three that miss are the accepted Italian `di` ambiguity, and
-  they miss on upstream too. (`packages/core` misses 8 cells in English and 187 pairs on its
-  direct path.)
+  they miss on upstream too. (`packages/core` misses 8 cells in English; its direct-path lanes
+  retired in Phase C2.)
 - **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
   upstream's parser, the two parsers disagree on none.
-- Of the 168 corpus rows, 151 parse on both engines and 17 on neither; none parses on one
-  engine only. Fifteen of the 17 are markup or extension rows (components, `sse-*` / `ws-*` /
-  `hx-live`, sockets, workers, event sources, `intercept`) and one is valid nowhere. Two are
-  syntax only `packages/core` has: `as FormData` (fetch-formdata) and `swap … using view
-transition` (swap-view-transition). Nine more were, until the rows were rewritten in
-  upstream's spelling on 2026-10-01.
+- Of the 168 corpus rows, 152 parse on both engines and 16 on neither; none parses on one
+  engine only. Fifteen of the 16 are markup or extension rows (components, `sse-*` / `ws-*` /
+  `hx-live`, sockets, workers, event sources, `intercept`) and one is valid nowhere. One more
+  is syntax only `packages/core` has: `swap … using view transition` (swap-view-transition).
+  Ten more were, until the rows were rewritten in upstream's spelling on 2026-10-01 and
+  (fetch-formdata, `new FormData(…)` in a `js` block) on 2026-10-03.
 - **The adapter's plugin** in six languages: the script runs and the attribute stays as
   written. On upstream the plugin has to rewrite the attribute.
 

@@ -32,6 +32,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 import { extractHyperscriptFromMarkup } from '@hyperfixi/patterns-reference';
 
 /** Repo root, from `packages/testing-framework/src/multilingual/`. */
@@ -190,6 +191,55 @@ export function collectShippedSources(
             out.push({ file: rel, kind: 'markdown-html-block', source });
           }
         }
+      }
+    }
+  }
+  return out;
+}
+
+/** A shipped source written in another language: an `_` under a non-English `lang`. */
+export interface LocalizedSource extends ShippedSource {
+  /** The base language of the closest `lang` (`es` for `es-MX`). */
+  lang: string;
+}
+
+/**
+ * The shipped `_` attributes written in a language other than English. The
+ * other collectors hand every source to an English parser, which rejects
+ * these, so both shipped-sources gates skip them; on a page they run through
+ * the multilingual adapter, which translates a script under its element's
+ * `lang`. Pages are parsed as documents here, so a `lang` on `<html>` counts.
+ */
+export function collectLocalizedSources(opts?: {
+  roots?: string[];
+  repoRoot?: string;
+}): LocalizedSource[] {
+  const repoRoot = opts?.repoRoot ?? REPO_ROOT;
+  const roots = opts?.roots ?? DEFAULT_ROOTS;
+  const out: LocalizedSource[] = [];
+  const tracked = trackedFiles(repoRoot);
+  for (const root of roots) {
+    for (const full of walk(path.join(repoRoot, root), [], tracked)) {
+      const rel = path.relative(repoRoot, full);
+      if (EXCLUDED.some(e => e.match(rel))) continue;
+      const text = fs.readFileSync(full, 'utf8');
+      const kind: ShippedSource['kind'] = full.endsWith('.html')
+        ? 'html-attribute'
+        : 'markdown-html-block';
+      const parts =
+        kind === 'html-attribute'
+          ? [text]
+          : [...text.matchAll(/```html\n([\s\S]*?)```/g)].map(m => m[1] ?? '');
+      for (const html of parts) {
+        const { window } = new JSDOM(html);
+        const elements: Element[] = Array.from(window.document.querySelectorAll('[_]'));
+        for (const el of elements) {
+          const source = el.getAttribute('_') ?? '';
+          const lang = (el.closest('[lang]')?.getAttribute('lang') ?? '').split('-')[0];
+          if (!source.trim() || !lang || lang.toLowerCase() === 'en') continue;
+          out.push({ file: rel, kind, source, lang: lang.toLowerCase() });
+        }
+        window.close();
       }
     }
   }
