@@ -51,27 +51,6 @@ const BUNDLES = {
       fetch: true,
     },
   },
-  // hx-v4: full runtime + htmx-compat + reactivity (hx-live/bind/when)
-  // auto-installed. Larger than hybrid-hx because it carries the full
-  // runtime, but it's the bundle authors reach for when they need the
-  // htmx v4 reactive/streaming surface without manual plugin wiring.
-  'hybrid-hx-v4': {
-    file: 'hyperfixi-hx-v4.js',
-    size: '~322 KB',
-    features: {
-      toggle: true,
-      addClass: true,
-      put: true,
-      increment: true,
-      show: true,
-      hide: true,
-      blocks: true,
-      eventModifiers: true,
-      i18nAliases: true,
-      semanticParser: true,
-      fetch: true,
-    },
-  },
   // hyperfixi-hs.js: hyperscript only, on packages/engine (the engine meant to
   // replace core's). Built into packages/engine/dist; the loader knows the path.
   hs: {
@@ -549,7 +528,6 @@ test.describe('Bundle Summary', () => {
       ({
         'hybrid-complete': 'h-cmp',
         'hybrid-hx': 'h-hx',
-        'hybrid-hx-v4': 'hx-v4',
         browser: 'brow',
       })[k] ?? k.slice(0, 6);
     console.log(`║ Feature         │${bundleKeys.map(k => col(label(k))).join('│')}║`);

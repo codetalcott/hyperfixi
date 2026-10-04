@@ -103,7 +103,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template and hybrid-complete's executor switches are generated (parser rules go in `src/parser/hybrid/parser-core.ts`, never in `parser-templates.ts`'s generated region)
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
 7. **No longer needed for the full-runtime counts** — `packageInfo.commands` and
-   the `commandCount` of `browser` / `hybrid-hx-v4` are derived from the
+   the `commandCount` of `browser` is derived from the
    manifest (`COMMAND_NAMES.length`) as of Arc A step 4.4, so adding a command
    updates them automatically. What you DO still update is any bundle you added
    the command to: each non-full bundle carries its own measured count, and
@@ -155,7 +155,6 @@ See [docs/API.md](docs/API.md) for complete documentation.
 | ------------------------------ | ----------- | ----------------------------------------------------------------- |
 | `hyperfixi-hx.js`              | 21.5 KB     | The small prebuilt: hybrid parser (~85% coverage) + htmx/fixi     |
 | `hyperfixi.js`                 | ~310 KB     | Everything + bundled reactivity/realtime plugins                  |
-| `hyperfixi-hx-v4.js`           | ~342 KB     | Separate product: full runtime + htmx v4 reactivity (hx-live)     |
 | `hyperfixi-hybrid-complete.js` | 11.1 KB     | Plugin-internal (the vite plugin's generated fallback imports it) |
 
 Vite projects use `@hyperfixi/vite-plugin` and never pick. `lite`, `lite-plus`,
@@ -177,7 +176,7 @@ See [bundle-configs/README.md](bundle-configs/README.md) for full options.
 
 ## htmx-compat layer
 
-The `htmx/` subdirectory implements the htmx + fixi attribute layer used by the `hyperfixi-hx.js` (v1/v2) and `hyperfixi-hx-v4.js` (v4 reactive + streaming) bundles. Key files:
+The `htmx/` subdirectory implements the htmx + fixi attribute layer used by the `hyperfixi-hx.js` (v1/v2) bundle (and by `hyperfixi-hx-v4.js`, v4 reactive + streaming, until it retired in Phase C3). Key files:
 
 | File                                   | Purpose                                                                                                                    |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |

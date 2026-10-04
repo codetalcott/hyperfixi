@@ -8,7 +8,7 @@
  *   1. install resolution — every package + transitive dep resolves from npm
  *      (catches a published package depending on an unpublished/private one)
  *   2. Node import surface — `exports` maps resolve, plugin shapes are intact
- *   3. browser bundle — hyperfixi.js + hyperfixi-hx-v4.js drive a real DOM
+ *   3. browser bundle — hyperfixi.js + hyperfixi-hs.js drive a real DOM
  *
  * Why a temp dir: installing inside the monorepo would let npm resolve
  * @hyperfixi/* to the local `packages/*` workspaces — testing source, not the
@@ -362,7 +362,6 @@ async function main() {
     // ---- 3. browser bundles -------------------------------------------------
     console.log('\n3. Browser bundles (Playwright / chromium)');
     copyFileSync(join(FIXTURES, 'core.html'), join(tmp, 'core.html'));
-    copyFileSync(join(FIXTURES, 'hx-v4.html'), join(tmp, 'hx-v4.html'));
     copyFileSync(join(FIXTURES, 'hs.html'), join(tmp, 'hs.html'));
     server = await startServer(tmp);
 
@@ -384,7 +383,6 @@ async function main() {
         if (text.trim() !== 'clicked') throw new Error(`put expected "clicked", got "${text.trim()}"`);
       });
 
-      // hx-v4 bundle: hx-live reactive expression re-runs on $count change.
       await browserCase(chromium, server.port, 'hs.html', 'hyperfixi-hs.js (@hyperfixi/engine) — toggle + put', async (page) => {
         await page.click('#toggle-btn');
         const toggled = await page.locator('#toggle-btn').evaluate((el) => el.classList.contains('active'));
@@ -394,7 +392,8 @@ async function main() {
         if (text.trim() !== 'clicked') throw new Error(`put expected "clicked", got "${text.trim()}"`);
       });
 
-      await browserCase(chromium, server.port, 'hx-v4.html', 'hyperfixi-hx-v4.js — hx-live reactive', async (page) => {
+      // A live block re-runs when $count changes (core's retired hx-live, on the engine).
+      await browserCase(chromium, server.port, 'hs.html', 'hyperfixi-hs.js — live block re-renders', async (page) => {
         await page.click('#inc');
         await page.waitForFunction(
           () => document.getElementById('live')?.textContent.trim() === '1',

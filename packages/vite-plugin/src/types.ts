@@ -259,9 +259,9 @@ export interface HtmxUsage {
   needsSwapTiming?: boolean;
 
   /**
-   * htmx v4 reactive/streaming surface detected. Each flag pulls in the
-   * corresponding bundle module; collectively they're what makes
-   * `hyperfixi-hx-v4.js` the right premade choice when none would do.
+   * htmx v4 reactive/streaming surface detected. `needsHxLive` pulls in the
+   * engine's reactivity modules; htmx itself is not bundled (core's
+   * hyperfixi-hx-v4.js, the premade bundle for this surface, retired in C3).
    *
    * Optional to keep older fixture literals (and callers that ignore
    * htmx v4) compatible. Scanner code always emits explicit `false`.
@@ -277,8 +277,8 @@ export interface HtmxUsage {
    */
   needsBindToProperty?: boolean;
   /**
-   * Any hx-v4-class feature → vite-generated bundle should auto-install
-   * `@hyperfixi/reactivity`. Derived from needsHxLive || needsBindToProperty.
+   * Any reactive feature → the generated bundle registers the engine's
+   * reactivity modules. Derived from needsHxLive || needsBindToProperty.
    */
   needsReactivity?: boolean;
 }

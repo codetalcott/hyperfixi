@@ -963,8 +963,8 @@ export class HtmxAttributeProcessor {
         if (typeof console !== 'undefined') {
           console.error(
             `[${prefix}-compat] hx-live requires @hyperfixi/reactivity to be installed. ` +
-              `Install it via \`installPlugin(runtime, reactivityPlugin)\`, or use the ` +
-              `hyperfixi-hx-v4 bundle which auto-installs it. Element:`,
+              `Install it via \`installPlugin(runtime, reactivityPlugin)\`, or use ` +
+              `hyperfixi.js, which bundles it. Element:`,
             element
           );
         }

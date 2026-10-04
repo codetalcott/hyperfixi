@@ -372,9 +372,8 @@ export class Scanner {
 
     // Phase 8: localized v4 attribute names. Authors writing Spanish
     // (`hx-en-vivo`, `sse-conectar`, `ws-conectar`), Japanese
-    // (`hx-ライブ`, `sse-接続`), etc. need the same feature flags so
-    // the generator routes them to the hx-v4 bundle (which ships the
-    // orchestrator + vocab discovery path the slim bundles lack).
+    // (`hx-ライブ`, `sse-接続`), etc. need the same feature flags as the
+    // English names.
     //
     // SSE/WS use namespace-only matching: any `sse-*` or `ws-*` localized
     // form means the project needs that feature. The htmx-compat layer

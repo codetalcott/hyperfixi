@@ -25,8 +25,8 @@ stacks running (htmx 4 is vendored for them under `examples/vendor/`). Localized
 on real htmx are the adapter's job ([packages/htmx-adapter](../packages/htmx-adapter/README.md));
 on fixi, loka-js's.
 
-**Core's bundles** (`hyperfixi.js`, `hyperfixi-hx.js`, `hyperfixi-hx-v4.js`,
-`hyperfixi-multilingual.js`) are still built and published until the cutover; the rest of this
+**Core's bundles** (`hyperfixi.js`, `hyperfixi-hx.js`, `hyperfixi-multilingual.js`) are still
+built and published until the cutover (`hyperfixi-hx-v4.js` retired first, in Phase C3); the rest of this
 document describes them. The embedded htmx layer they carry (`hx-live` with a hyperscript body,
 `sse-connect`, `ws-connect`, fixi's `fx-*`, localized names) was retired by owner decision on
 2026-10-03 and goes with core: it reimplemented htmx on core's runtime, and what it offered that
@@ -53,10 +53,9 @@ the first time it is needed, not a table read in advance.
 
 Two further bundles are separate products, not sizes of the same thing:
 
-| Bundle                      | Size (gzip) | Product                                                                                                                       |
-| --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `hyperfixi-hx-v4.js`        | ~363 KB     | htmx v4 on the full runtime: `hx-live`, `bind`, `when`, SSE and WebSocket, auto-installed. The Vite plugin selects it itself. |
-| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with the all-24 `@lokascript/semantic` browser bundle (below).                         |
+| Bundle                      | Size (gzip) | Product                                                                                               |
+| --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `hyperfixi-multilingual.js` | ~93 KB      | Parser-free multilingual runtime; pair with the all-24 `@lokascript/semantic` browser bundle (below). |
 
 > **Retired in the 4.0 cycle:** `hyperfixi-lite.js`, `hyperfixi-lite-plus.js`,
 > `hyperfixi-minimal.js` and `hyperfixi-standard.js` are no longer built or
@@ -153,15 +152,17 @@ When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the 
 
 The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command.
 
-**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~363 KB vs 22.0 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
+`hyperfixi-hx-v4.js`, the bundle that shipped this with reactivity auto-installed, retired in
+Phase C3. On the engine the same thing is a `live` block in `_`, which `hyperfixi-hs.js` runs as
+is:
 
 ```html
-<script src="hyperfixi-hx-v4.js"></script>
-<div hx-live="put $count into me"></div>
+<script src="hyperfixi-hs.js"></script>
+<div _="live put $count into me end"></div>
 <button _="on click set $count to ($count or 0) + 1">+1</button>
 ```
 
-The pages in [`examples/hx-v4/`](../examples/hx-v4/) now show the same thing as the engine's `live` blocks.
+The pages in [`examples/hx-v4/`](../examples/hx-v4/) show it.
 
 ### `sse-connect` / `sse-swap` (htmx v4)
 
@@ -182,7 +183,7 @@ The htmx-compat processor recognizes `sse-connect="<url>"` to open a long-lived 
 
 The connection auto-reconnects on transient errors with exponential backoff (1s → 2s → 4s …, capped at 30s, 5 retries before giving up). On element removal from the DOM, the connection is closed automatically via MutationObserver — no leaks. Custom lifecycle events fire on the element: `htmx:sseOpen`, `htmx:sseMessage`, `htmx:sseError`, `htmx:sseClose`.
 
-The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't ship the SSE module (size budget).
+No core bundle ships this since `hyperfixi-hx-v4.js` retired (Phase C3); the slim `hyperfixi-hx.js` never did (size budget). On the engine, SSE is htmx 4's `hx-sse`.
 
 ### `ws-connect` / `ws-send` (htmx v4)
 
@@ -206,14 +207,14 @@ Reconnect on unclean close uses the same bounded exponential backoff as SSE (1s 
 
 > **When to use SSE vs WS:** prefer SSE for server-push streams (notifications, telemetry, live feeds) — it's HTTP-native, plays nice with proxies and HTTP/2, and the browser handles reconnect. Reach for WebSockets when you genuinely need a low-latency bidirectional channel (chat, collaborative editing, control planes). SSE is the documented default for that reason.
 
-The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't.
+No core bundle ships this since `hyperfixi-hx-v4.js` retired (Phase C3); the slim `hyperfixi-hx.js` never did. On the engine, WebSockets are htmx 4's `hx-ws`.
 
 ### Localized htmx attribute names (Phase 8)
 
-The htmx-compat layer in `hyperfixi-hx-v4.js` recognizes localized attribute names per-element based on the nearest `lang=` ancestor. Spanish authors can write `hx-obtener` / `hx-objetivo` / `sse-conectar`; Japanese authors `hx-取得` / `hx-ターゲット`; Arabic `hx-احصل` / `hx-هدف`. The orchestrator translates them to canonical English (`hx-get` / `hx-target` / `sse-connect`) before they hit the existing processor paths.
+The htmx-compat layer in `hyperfixi-hx.js` recognizes localized attribute names per-element based on the nearest `lang=` ancestor. Spanish authors can write `hx-obtener` / `hx-objetivo` / `sse-conectar`; Japanese authors `hx-取得` / `hx-ターゲット`; Arabic `hx-احصل` / `hx-هدف`. The orchestrator translates them to canonical English (`hx-get` / `hx-target` / `sse-connect`) before they hit the existing processor paths.
 
 ```html
-<script src="hyperfixi-hx-v4.js"></script>
+<script src="hyperfixi-hx.js"></script>
 <!-- Opt in to languages by loading their vocab modules. -->
 <script src="packages/core/vocab/htmx/es.js"></script>
 <script src="packages/core/vocab/htmx/ja.js"></script>
