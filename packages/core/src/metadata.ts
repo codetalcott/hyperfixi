@@ -16,25 +16,15 @@
  * ```
  */
 
-import { COMMAND_NAMES } from './commands/manifest';
 import { VERSION } from './version';
 
 /**
- * The number of commands the default runtime registers — derived, never typed.
- *
- * Sourced from `COMMAND_NAMES` and **not** `COMMAND_MANIFEST.map(...)`: a
- * `.map()` over the entries references the entries, dragging every command's
- * `category`/`tier`/`upstreamOrExtension`/`multiword` into any bundle that
- * reaches this module (Finding 11 in the arc brief — that shape cost
- * `hyperfixi-hx.js` +4.8 KB / +7.5% and failed the ±5% size gate in step 3).
- * `COMMAND_NAMES` is a flat string list, and the audit asserts the two are
- * equal as ordered lists, so this cannot drift from the manifest.
- *
- * Only bundles that register the WHOLE registry may use this. Bundles that
- * hand-pick commands carry their own measured count — see the note on
- * `commandCount` below.
+ * The number of commands the engine (`@hyperfixi/engine`) registers with every
+ * module: a measured literal that `verify:reference` re-derives from the
+ * engine's built grammar. (Until Phase C5 of the engine cutover it was derived
+ * from core's command manifest, 58 commands, which leaves with core's engine.)
  */
-const FULL_RUNTIME_COMMAND_COUNT = COMMAND_NAMES.length;
+const ENGINE_COMMAND_COUNT = 53;
 
 // =============================================================================
 // PACKAGE INFO
@@ -53,7 +43,7 @@ export const packageInfo = {
   description: 'Modern hyperscript engine with fixi/htmx integration',
   compatibility: '~85% official _hyperscript',
   languages: 24,
-  commands: FULL_RUNTIME_COMMAND_COUNT,
+  commands: ENGINE_COMMAND_COUNT,
   repository: 'https://github.com/codetalcott/hyperfixi',
   documentation: 'https://github.com/codetalcott/hyperfixi/tree/main/packages/core#readme',
 } as const;
@@ -78,8 +68,7 @@ export interface BundleInfo {
    *
    * Each is a measured literal that `verify:reference` re-derives rather than
    * trusts. `browser` counts the engine's command keywords since C-R4b (it was
-   * `FULL_RUNTIME_COMMAND_COUNT`, core's whole registry, while the file was
-   * core's bundle). The hand-picked bundles (lite, minimal, standard, the
+   * core's whole registry while the file was core's bundle). The hand-picked bundles (lite, minimal, standard, the
    * hybrids, multilingual) were re-derived from their sources; widening that
    * check in step 4.4 found three wrong, all where nothing had looked
    * (`minimal` 30→10, `standard` 35→25, `multilingual` 59→52). All of them
@@ -125,9 +114,8 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi.js',
     gzipSize: '33.3 KB',
     rawSize: '94 KB',
-    // The engine's command keywords, a measured literal: verify:reference
-    // re-derives it from the engine's built grammar.
-    commandCount: 52,
+    // The engine's command keywords: verify:reference re-derives it.
+    commandCount: ENGINE_COMMAND_COUNT,
     parser: 'engine',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -239,7 +227,7 @@ export function compareBundles(bundleIds: string[]): Record<string, BundleInfo> 
 export const ecosystem = {
   core: {
     name: '@hyperfixi/core',
-    description: `Main runtime, parser, ${FULL_RUNTIME_COMMAND_COUNT} commands`,
+    description: `Main runtime, parser, ${ENGINE_COMMAND_COUNT} commands`,
     npm: 'https://www.npmjs.com/package/@hyperfixi/core',
   },
   semantic: {

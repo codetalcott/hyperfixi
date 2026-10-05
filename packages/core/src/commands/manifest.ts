@@ -140,8 +140,9 @@
 import type { CommandCategory } from '../types/command-metadata';
 
 /**
- * Which prebuilt browser bundle first ships a command, mirroring
- * `reference/index.ts`'s `BundleAvailability`.
+ * Which prebuilt browser bundle first shipped a command (core's retired lite /
+ * lite-plus / hybrid / full tiers; `reference/index.ts` mirrored them until it
+ * moved to documenting the engine in Phase C5).
  *
  * NOTE this is **not** the same partition as
  * `bundle-generator/template-capabilities.ts`'s

@@ -15,33 +15,18 @@
 // =============================================================================
 
 /**
- * All command keywords in LokaScript
+ * The command keywords the engine (`@hyperfixi/engine`) registers, plus `else`
+ * and `while`, which continue an `if` and a `repeat` and are completed here
+ * like commands.
  *
- * ## The contract, and the oracle that checks it (Arc A step 4.3)
- *
- * Every entry is a token the **hyperfixi parser** accepts at command position.
- * That is a different question from "names a registered command", which is all
- * anything checked before 2026-07-29 — and the weaker one: `pseudo-command` is
- * registered yet is not a keyword anybody writes (see below). The audit,
- * `packages/core/src/runtime/__tests__/command-manifest-audit.test.ts` §5, now
- * probes the parser directly, using each entry's `HOVER_DOCS` example as the
- * snippet. That is deliberately the same text the LSP shows the user: the
- * defect this list has actually shipped (`pushUrl` / `replaceUrl`, #810) was
- * advertising a spelling the engine rejects, and an example that does not parse
- * is the same defect one level down.
- *
- * All 58 pre-existing entries were probed in step 4.3 and every one is live
- * syntax — unlike the sibling lists step 4.1 and 4.2 scored, which were wrong
- * on 5 of 7 and 14 of 38 rows respectively.
- *
- * `pseudo-command` is registered but deliberately **absent**. It is the name
- * the parser EMITS for the method-call-as-command form — `setAttribute('a','b')
- * on me` yields a node named `pseudo-command` — not a token a user ever types.
- * The bare token does reach a command node (`-` IS an identifier character, so
- * it tokenizes as one identifier; the step-3 note claiming it is "unreachable
- * as a token" was measured false in step 4.3), but only a degenerate one
- * carrying no `methodName`. Advertising it would offer a completion that parses
- * and then does nothing.
+ * `npm run verify:reference` (packages/core/scripts/verify-reference-data.ts)
+ * checks this list against the engine's grammar in both directions, requires a
+ * `HOVER_DOCS` entry for each keyword, and parses every hover example on the
+ * engine: the defect this list has shipped before (`pushUrl` / `replaceUrl`,
+ * #810) was advertising a spelling nothing accepts. Core's own commands that
+ * upstream _hyperscript and the engine both reject (`copy`, `prepend`,
+ * `push url`, `replace url`, `process partials`, a leading `unless`) left the
+ * list in Phase C5 of the engine cutover.
  */
 export const COMMAND_KEYWORDS = [
   // DOM Commands
@@ -62,13 +47,9 @@ export const COMMAND_KEYWORDS = [
   'swap',
   'morph',
   'append',
-  'prepend',
   'take',
   'render',
-  // Added in step 4.3. Probed: `scroll to #section` and `process partials in
-  // result` each reach a real command node.
   'scroll',
-  'process',
 
   // Async Commands
   'wait',
@@ -81,19 +62,10 @@ export const COMMAND_KEYWORDS = [
 
   // Navigation Commands
   'go',
-  // The registered command names are `push` and `replace` (one HistoryCommand,
-  // registered as 'push' with a 'replace' alias). The camelCase `pushUrl` /
-  // `replaceUrl` spellings that used to sit here were ghosts: the engine
-  // rejects them, only `push url <url>` / `replace url <url>` parse. This list
-  // feeds ALL_KEYWORDS, which the language server uses as its canonical keyword
-  // list, so the LSP was offering two completions nothing accepts.
-  'push',
-  'replace',
 
   // Control Flow Commands
   'if',
   'else',
-  'unless',
   'repeat',
   'for',
   'while',
@@ -112,17 +84,17 @@ export const COMMAND_KEYWORDS = [
   // Utility Commands
   'log',
   'tell',
-  'copy',
   'pick',
-  'beep',
+  'beep!',
   'breakpoint',
+  'ask',
+  'answer',
   'js',
 
   // Animation Commands
   'transition',
   'measure',
-  // Added in step 4.3. Probed: `start view transition end` reaches a real
-  // command node. The bare token does not — `start` always opens a block.
+  // `start` always opens a block: `start view transition … end`.
   'start',
 
   // Data Commands
@@ -130,9 +102,6 @@ export const COMMAND_KEYWORDS = [
   'decrement',
   'default',
   'clear',
-
-  // Behavior Commands
-  'install',
 ] as const;
 
 /**
@@ -152,13 +121,19 @@ export const REFERENCE_KEYWORDS = [
 ] as const;
 
 /**
- * Top-level feature keywords
+ * Top-level feature keywords: the engine's (`set` and `js` are features too, and
+ * listed with the commands), and three that upstream _hyperscript ships as
+ * extensions and the engine does not have (`worker`, `socket`, `eventsource`).
  */
 export const FEATURE_KEYWORDS = [
   'on',
   'behavior',
   'def',
   'init',
+  'install',
+  'when',
+  'live',
+  'bind',
   'worker',
   'socket',
   'eventsource',
@@ -225,7 +200,6 @@ export const LOGICAL_KEYWORDS = [
   'matches',
   'contains',
   'includes',
-  'has',
   'no',
   'true',
   'false',
@@ -316,9 +290,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   put: {
     title: 'put',
     description:
-      'Sets the content of an element. An array of elements is moved in order (an in-place reorder when they are already children of the target).',
-    example:
-      'put "Hello" into #message\nput response into #results\nput <tr/> in me sorted by its @data-price as Number at end of me',
+      'Puts a value into, before, after, or at the start or end of an element or variable.',
+    example: 'put "Hello" into #message\nput response at end of #results',
     category: 'command',
   },
   set: {
@@ -390,12 +363,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'append "<li>Item</li>" to #list',
     category: 'command',
   },
-  prepend: {
-    title: 'prepend',
-    description: 'Prepends content to an element (hyperfixi extension).',
-    example: 'prepend "<li>Item</li>" to #list',
-    category: 'command',
-  },
   take: {
     title: 'take',
     description: 'Takes/claims a class from sibling elements.',
@@ -405,19 +372,13 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   render: {
     title: 'render',
     description: 'Renders a template with data.',
-    example: 'render #template with {name: "World"}',
+    example: 'render #template with name: "World"',
     category: 'command',
   },
   scroll: {
     title: 'scroll',
     description: 'Scrolls an element into view, or by an offset.',
     example: 'scroll to #section\nscroll to the top of me\nscroll down by 200',
-    category: 'command',
-  },
-  process: {
-    title: 'process',
-    description: 'Processes hyperscript/partials in freshly-inserted content.',
-    example: 'process partials in result',
     category: 'command',
   },
 
@@ -466,18 +427,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   // but arrived without hover docs; added in step 4.3. The examples carry the
   // `url` keyword because that is the form that parses — `pushUrl "/x"` was
   // exactly the spelling the engine rejects.
-  push: {
-    title: 'push',
-    description: 'Pushes a URL onto the browser history stack.',
-    example: 'push url "/page/2"',
-    category: 'command',
-  },
-  replace: {
-    title: 'replace',
-    description: 'Replaces the current browser history entry.',
-    example: 'replace url "/page/2"',
-    category: 'command',
-  },
 
   // Control Flow Commands
   if: {
@@ -491,12 +440,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     description: 'Alternative branch in conditional.',
     example: 'if .active remove .active else add .active',
     category: 'block',
-  },
-  unless: {
-    title: 'unless',
-    description: 'Inverse conditional (if not).',
-    example: 'unless .disabled add .clicked',
-    category: 'command',
   },
   repeat: {
     title: 'repeat',
@@ -540,19 +483,19 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   call: {
     title: 'call',
     description: 'Calls a function or method.',
-    example: 'call myFunction()\ncall element.focus()',
+    example: 'call myFunction()\ncall me.focus()',
     category: 'command',
   },
   focus: {
     title: 'focus',
     description: 'Focuses an element (calls HTMLElement.focus()).',
-    example: 'focus #search\nfocus on <input/>',
+    example: 'focus #search\nfocus the first <input/>',
     category: 'command',
   },
   blur: {
     title: 'blur',
     description: 'Removes focus from an element (calls HTMLElement.blur()).',
-    example: 'blur #search\nblur on <input/>',
+    example: 'blur #search\nblur me',
     category: 'command',
   },
   return: {
@@ -589,32 +532,40 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   tell: {
     title: 'tell',
-    description: 'Sets context for subsequent commands.',
-    example: 'tell #modal to show',
-    category: 'command',
-  },
-  copy: {
-    title: 'copy',
-    description: 'Copies text to clipboard.',
-    example: 'copy "Hello" to clipboard\ncopy the value of #input',
+    description: 'Runs commands with another element as `you` (and the implicit target).',
+    example: 'tell #modal show end',
     category: 'command',
   },
   pick: {
     title: 'pick',
-    description: 'Opens a file picker dialog.',
-    example: 'pick file then log it',
+    description: 'Picks a range of items or characters, or a regex match, out of a value.',
+    example: 'pick items 0 to 2 from :list\npick characters 0 to 3 from "hello"',
     category: 'command',
   },
-  beep: {
-    title: 'beep',
-    description: 'Highlights element for debugging.',
-    example: 'beep! me\nbeep! #target',
+  'beep!': {
+    title: 'beep!',
+    description:
+      'Logs values to the console with their types, for debugging. Also an expression: `get beep! x` logs x and passes it on.',
+    example: 'beep! me\nbeep! :count, result',
+    category: 'command',
+  },
+  ask: {
+    title: 'ask',
+    description: 'Asks the user for text (`window.prompt`); the answer is in `it`.',
+    example: 'ask "Your name?" then put it into #name',
+    category: 'command',
+  },
+  answer: {
+    title: 'answer',
+    description:
+      'Shows a message (`window.alert`), or with `with a or b` asks to confirm and puts the chosen value in `it`.',
+    example: 'answer "Saved"\nanswer "Delete it?" with "yes" or "no"',
     category: 'command',
   },
   breakpoint: {
     title: 'breakpoint',
     description: 'Emits a `debugger;` statement — pauses in DevTools when attached.',
-    example: 'breakpoint\non click breakpoint',
+    example: 'breakpoint\nlog "after"',
     category: 'command',
   },
   js: {
@@ -675,7 +626,7 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'install',
     description: 'Installs a behavior on an element.',
     example: 'install Draggable',
-    category: 'command',
+    category: 'feature',
   },
 
   // Reference Keywords
@@ -753,6 +704,48 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'init\n  set :count to 0\nend',
     category: 'feature',
   },
+  when: {
+    title: 'when',
+    description:
+      'Runs commands whenever the value of an expression changes; the new value is in `it`.',
+    example: 'when $count changes\n  put it into me\nend',
+    category: 'feature',
+  },
+  live: {
+    title: 'live',
+    description: 'Runs commands now, and again whenever anything they read changes.',
+    example: 'live\n  put $count into me\nend',
+    category: 'feature',
+  },
+  // Upstream _hyperscript ships these three as extensions (ext/worker.js,
+  // ext/socket.js, ext/eventsource.js); @hyperfixi/engine does not have them.
+  worker: {
+    title: 'worker',
+    description:
+      'Defines functions that run in a Web Worker (upstream extension `ext/worker.js`; not in @hyperfixi/engine).',
+    example: 'worker Calculator\n  def add(a, b)\n    return a + b\n  end\nend',
+    category: 'feature',
+  },
+  socket: {
+    title: 'socket',
+    description:
+      'Opens a WebSocket and handles its messages (upstream extension `ext/socket.js`; not in @hyperfixi/engine).',
+    example: 'socket Chat ws://localhost:8080/chat\n  on message as json\n    log message\nend',
+    category: 'feature',
+  },
+  eventsource: {
+    title: 'eventsource',
+    description:
+      'Subscribes to server-sent events (upstream extension `ext/eventsource.js`; not in @hyperfixi/engine).',
+    example: 'eventsource Updates from /events\n  on update as json\n    log it\n  end\nend',
+    category: 'feature',
+  },
+  bind: {
+    title: 'bind',
+    description: 'Keeps two values in sync, in both directions.',
+    example: "bind $name and #input's value",
+    category: 'feature',
+  },
 
   // Block Keywords
   then: {
@@ -788,7 +781,7 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   with: {
     title: 'with',
     description: 'Specifies accompanying options or data.',
-    example: 'show me with *opacity\nrender #template with {name: "World"}',
+    example: 'show me with *opacity\nrender #template with name: "World"',
     category: 'block',
   },
   as: {
@@ -924,12 +917,6 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: "if name is 'Alice' ignoring case\nif str starts with 'hi' ignoring case",
     category: 'logical',
   },
-  has: {
-    title: 'has',
-    description: 'Checks if element has a class/attribute.',
-    example: 'if me has .active',
-    category: 'logical',
-  },
 
   // Collection operators (upstream _hyperscript 0.9.90) — infix on arrays/strings.
   // `where`/`sorted by`/`mapped to` evaluate their RHS per-element with `it` bound
@@ -938,14 +925,14 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'where',
     description:
       'Filter a collection by a per-element predicate. `it` is bound to each element during evaluation.',
-    example: 'set :actives to :items where it has .active\n:names where it starts with "A"',
+    example: 'set :actives to :items where it matches .active\n:names where it starts with "A"',
     category: 'logical',
   },
   'sorted by': {
     title: 'sorted by',
     description:
-      'Sort a collection by a per-element key expression. Optional trailing `asc` / `desc` / `ascending` / `descending`; default is ascending.',
-    example: 'set :byName to :users sorted by it.name\n:scores sorted by it desc',
+      'Sort a collection by a per-element key expression. Optional trailing `ascending` / `descending`; default is ascending.',
+    example: 'set :byName to :users sorted by it.name\n:scores sorted by it descending',
     category: 'logical',
   },
   'mapped to': {
@@ -963,7 +950,7 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   'joined by': {
     title: 'joined by',
     description: 'Join an array into a string with a separator.',
-    example: 'set :csv to :parts joined by ","\n(:names sorted by it) joined by " and "',
+    example: 'set :csv to :parts joined by ","\n:names joined by " and "',
     category: 'logical',
   },
 
@@ -1039,8 +1026,7 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: '^var',
     description:
       'Reactive prefix — `^name` reads from (or writes to) the nearest ancestor that has `name` set. `set ^name to value` writes through to the owner; if no owner is found, the write lands at the current `dom-scope` boundary. Tracked: any reactive effect that reads `^name` re-runs when it changes.',
-    example:
-      'set ^count to 0\nincrement ^count\nlog ^count\n-- target a specific element\nset ^user to attrs.data on closest .root',
+    example: 'set ^count to 0\nincrement ^count\nlog ^count',
     category: 'reactive',
     since: '2.0',
   },

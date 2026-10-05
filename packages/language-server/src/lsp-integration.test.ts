@@ -386,6 +386,21 @@ describe('LSP Integration', () => {
       expect(hover!.contents.value).toContain('destination:me');
     });
 
+    // The word under the cursor stops at `!`, so the lookup has to add it back.
+    it('documents `beep!` when hovering on `beep`', async () => {
+      const beepUri = 'file:///test/hover-beep.hs';
+      await client.open(beepUri, 'on click beep! me');
+      const response = await client.sendRequest('textDocument/hover', {
+        textDocument: { uri: beepUri },
+        position: { line: 0, character: 10 }, // "beep"
+      });
+      expect(response.error).toBeUndefined();
+      const hover = response.result as { contents: { value: string } } | null;
+      expect(hover).not.toBeNull();
+      expect(hover!.contents.value).toContain('beep!');
+      expect(hover!.contents.value).toContain('console');
+    });
+
     it('returns null past the end of the line', async () => {
       const response = await client.sendRequest('textDocument/hover', {
         textDocument: { uri: testUri },

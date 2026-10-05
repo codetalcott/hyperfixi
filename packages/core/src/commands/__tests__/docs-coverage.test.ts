@@ -24,11 +24,11 @@
  *
  * ## What is deliberately NOT duplicated here
  *
- * Arc A already gates the two lists the Arc B plan named as "cheap completeness
- * tests" — `reference/index.ts` in the manifest audit's §2 ("documents exactly the
- * registered set") and `lsp-metadata`'s `COMMAND_KEYWORDS`/`HOVER_DOCS` in §5,
- * both directions. Re-asserting them here would add a second place to maintain
- * without adding a check. Measured before writing, not assumed.
+ * The two lists the Arc B plan named as "cheap completeness tests" —
+ * `reference/index.ts` and `lsp-metadata`'s `COMMAND_KEYWORDS`/`HOVER_DOCS` —
+ * are gated by `npm run verify:reference`, against the engine
+ * (`@hyperfixi/engine`) since Phase C5 of the engine cutover. Re-asserting them
+ * here would add a second place to maintain without adding a check.
  */
 
 import { describe, it, expect } from 'vitest';

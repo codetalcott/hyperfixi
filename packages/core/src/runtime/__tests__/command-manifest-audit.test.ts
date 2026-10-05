@@ -25,9 +25,12 @@
  * headline counts are asserted at the bottom so a later step must flip rows in
  * the diff, which is the review artifact.
  *
- * This file absorbs `lsp-metadata.test.ts` (the Finding 5 ghost-fix gate): the
- * `COMMAND_KEYWORDS` section below carries its allowlists and its
- * history-command rename pin.
+ * It no longer scores `reference/index.ts` or `lsp-metadata.ts`: since Phase C5
+ * of the engine cutover they document `@hyperfixi/engine`, and
+ * `scripts/verify-reference-data.ts` (`npm run verify:reference`) checks them
+ * against the engine's grammar and parses their examples on it. The sections
+ * that compared them with this registry (§2's reference row, §5, and §7's
+ * category and tier rows) left then.
  *
  * ## Ordering constraint (Finding 6)
  *
@@ -70,9 +73,6 @@ import {
   FULL_RUNTIME_ONLY_COMMANDS,
   resolveCommandKey,
 } from '../../bundle-generator/template-capabilities';
-import { COMMAND_KEYWORDS, ALL_KEYWORDS, HOVER_DOCS } from '../../lsp-metadata';
-import { commands as referenceCommands } from '../../reference/index';
-import { parse } from '../../parser/parser';
 
 /** Finding 6: snapshot the static parser seed BEFORE any Runtime exists. */
 const STATIC_SEED = new Set<string>(COMMANDS);
@@ -266,12 +266,6 @@ describe('the four core lists agree with the registry', () => {
     );
     expect(aliases.length).toBe(58);
     expect([...aliases].sort()).toEqual(REGISTRY);
-  });
-
-  it('reference/index.ts documents exactly the registered set', () => {
-    const documented = Object.keys(referenceCommands).map(normalize);
-    expect(documented.length).toBe(58);
-    expect([...documented].sort()).toEqual(REGISTRY);
   });
 
   it('runtime.ts has exactly one registration site, and it loops the manifest', () => {
@@ -564,138 +558,6 @@ describe('the capability lists', () => {
 });
 
 // ===========================================================================
-// 5. COMMAND_KEYWORDS (lsp-metadata.ts) — absorbs lsp-metadata.test.ts
-// ===========================================================================
-
-/**
- * In COMMAND_KEYWORDS but not an executable command, legitimately. `else` is a
- * block keyword — it continues an `if`, it is never dispatched as a command;
- * `for` and `while` are loop keywords the LSP should still complete.
- */
-const KEYWORD_NOT_COMMANDS = new Set(['else', 'for', 'while']);
-
-/**
- * Registered commands COMMAND_KEYWORDS does not advertise, so the LSP offers
- * no completion for them. Was six before the Finding 5 ghost fix renamed
- * `pushUrl`/`replaceUrl` to `push`/`replace` (#810), then four, and step 4.3
- * closed the last three (`process`, `scroll`, `start` — each probed live
- * against the parser). **Now empty, and it stays empty**: a registered command
- * belongs here only while somebody is actively deciding, and the two settled
- * outcomes have their own homes — advertised (in the list) or permanently
- * excluded (`KEYWORD_NOT_ADVERTISED` below, which requires a reason).
- */
-const KEYWORD_GAPS = new Set<string>([]);
-
-/**
- * Registered commands deliberately kept OUT of COMMAND_KEYWORDS. Not debt —
- * each row is a decision, and the reason has to survive next to it.
- *
- * `pseudo-command` is the name the parser EMITS for the method-call-as-command
- * form: `setAttribute('a','b') on me` yields a node named `pseudo-command`. No
- * user writes that token. It is not unreachable — step 3's note said it was
- * ("`-` is not an identifier character"), and step 4.3 measured that FALSE: `-`
- * is an identifier character, `pseudo-command` tokenizes as one identifier and
- * reaches a command node. But the node it reaches carries no `methodName`, so
- * advertising the token would offer a completion that parses and then does
- * nothing — a subtler form of the `pushUrl` defect, not a fix for it.
- */
-const KEYWORD_NOT_ADVERTISED = new Set(['pseudo-command']);
-
-/**
- * The parse oracle for §5 — the question nothing asked before step 4.3.
- *
- * `ghostsIn` checks registry membership, which is only a PROXY for what this
- * list promises: that the token parses. The proxy is weaker in BOTH directions.
- * `pseudo-command` is registered yet is not a keyword anybody writes, and a
- * name could parse without being registered (`else`, `for`, `while` do exactly
- * that). So the entries are probed against the real parser here.
- *
- * The snippet is each keyword's own `HOVER_DOCS` example, deliberately — it is
- * the text the LSP puts in front of the user, so a dead example is the shipped
- * defect (`pushUrl`, #810) one level down. It also means there is no second
- * hand-maintained probe table to drift: documenting a keyword IS probing it.
- *
- * A keyword passes when its example reaches at least one real command node.
- * `success` alone is NOT sufficient and must never be substituted: an
- * unrecognized word makes the command-list parser stop cleanly and hand back an
- * EMPTY command list with `success: true` — `on click zzznotacommand .x` parses
- * "fine". This is the same trap step 4.1 hit on the upstream engine, and it is
- * live here too. It is what made three hover examples dead code in silence.
- */
-function commandNodesIn(source: string): string[] {
-  const result = parse(source);
-  const found: string[] = [];
-  const seen = new Set<unknown>();
-  const walk = (node: unknown, depth = 0): void => {
-    if (!node || typeof node !== 'object' || depth > 25 || seen.has(node)) return;
-    seen.add(node);
-    if (Array.isArray(node)) {
-      node.forEach(child => walk(child, depth + 1));
-      return;
-    }
-    const rec = node as Record<string, unknown>;
-    if (rec.type === 'command' && typeof rec.name === 'string') found.push(rec.name);
-    for (const key of Object.keys(rec)) if (key !== 'tokens') walk(rec[key], depth + 1);
-  };
-  walk((result as { node?: unknown }).node);
-  return found;
-}
-
-describe('COMMAND_KEYWORDS', () => {
-  it('every keyword names a registered command or an allowlisted block keyword', () => {
-    expect(ghostsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_COMMANDS].sort());
-  });
-
-  it('every registered command is advertised, or excluded with a reason (step 4.3)', () => {
-    expect(gapsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_ADVERTISED].sort());
-    expect([...KEYWORD_GAPS]).toEqual([]);
-  });
-
-  it('every keyword is documented — the probe corpus has no holes', () => {
-    // Guards the gate below from going vacuously green: an undocumented
-    // keyword has no example, so it would otherwise be silently unprobed.
-    // `push`/`replace` sat undocumented from #810 until step 4.3.
-    expect(COMMAND_KEYWORDS.filter(kw => !HOVER_DOCS[kw])).toEqual([]);
-  });
-
-  it('every keyword PARSES — its own hover example reaches a command node', () => {
-    // The check `ghostsIn` cannot make. Mutation-verified: restoring any of the
-    // three examples step 4.3 fixed (`repeat` without `end`, standalone
-    // `while`, `transition #box's opacity`) fails here, and all three were
-    // SILENT before this test existed.
-    const dead = COMMAND_KEYWORDS.filter(kw => {
-      const example = HOVER_DOCS[kw]?.example;
-      if (!example) return false; // covered by the test above
-      return commandNodesIn(`on click ${example.replace(/\n/g, '\n  ')}`).length === 0;
-    });
-    expect(dead).toEqual([]);
-  });
-
-  it('the excluded rows are excluded for the stated reason, not by accident', () => {
-    for (const name of KEYWORD_NOT_ADVERTISED) {
-      expect(REGISTERED.has(name)).toBe(true); // still registered
-      expect(COMMAND_KEYWORDS as readonly string[]).not.toContain(name);
-    }
-    // `pseudo-command` is reachable as a token — step 3's "unreachable"
-    // note was measured false — but only as a degenerate node. Both halves
-    // are pinned so a future reader re-checks rather than trusting either.
-    expect(commandNodesIn('on click pseudo-command')).toContain('pseudo-command');
-    expect(commandNodesIn('on click setAttribute("a","b") on me')).toContain('pseudo-command');
-  });
-
-  it('advertises the history command under its parsing names', () => {
-    // `push url "/x"` and `replace url "/x"` parse; `pushUrl` / `replaceUrl` do
-    // not — the ghost pair the LSP offered for months (fixed in #810).
-    expect(COMMAND_KEYWORDS).toContain('push');
-    expect(COMMAND_KEYWORDS).toContain('replace');
-    expect(COMMAND_KEYWORDS as readonly string[]).not.toContain('pushUrl');
-    expect(COMMAND_KEYWORDS as readonly string[]).not.toContain('replaceUrl');
-    expect(ALL_KEYWORDS as readonly string[]).not.toContain('pushUrl');
-    expect(ALL_KEYWORDS as readonly string[]).not.toContain('replaceUrl');
-  });
-});
-
-// ===========================================================================
 // 6. The per-bundle commands arrays (compatibility/browser-bundle-*.ts)
 // ===========================================================================
 
@@ -791,24 +653,6 @@ const ALLOWED_KEYS = new Set([
   'multiword',
 ]);
 
-/**
- * `send` and `trigger` are `'events'` in `reference/index.ts` and `'event'` in
- * the `@command` decorator — the only two of 58 where the two category sources
- * disagree, and not a typo: `reference/index.ts` and `types/command-metadata.ts`
- * declare two independent `CommandCategory` unions that differ in exactly two
- * members (`'events'` vs `'event'`, and `'storage'` present only in the latter).
- * Nothing compared them before this audit.
- *
- * The manifest follows the decorator/registry union (it mirrors what the engine
- * serves). Reconciling the two unions is a rename with LSP and docs reach, so
- * it is pinned here rather than resolved inside a data-only step — the same
- * treatment Finding 7's synonym aliases got.
- */
-const CATEGORY_DOC_DISAGREEMENTS: Record<string, { reference: string; decorator: string }> = {
-  send: { reference: 'events', decorator: 'event' },
-  trigger: { reference: 'events', decorator: 'event' },
-};
-
 describe('the command manifest', () => {
   it('names exactly the registered set, both directions', () => {
     const names = COMMAND_MANIFEST.map(e => e.name);
@@ -850,33 +694,6 @@ describe('the command manifest', () => {
     for (const name of REGISTRY) {
       const served = registered.getImplementation(name)?.metadata?.category;
       expect(MANIFEST_BY_NAME.get(name)!.category, `${name} category`).toBe(served);
-    }
-  });
-
-  it('pins the 2 rows where the reference and decorator categories disagree', () => {
-    const disagreeing: string[] = [];
-    for (const [key, ref] of Object.entries(referenceCommands)) {
-      const name = normalize(key);
-      const manifest = MANIFEST_BY_NAME.get(name);
-      if (manifest && manifest.category !== (ref as { category: string }).category) {
-        disagreeing.push(name);
-      }
-    }
-    expect(disagreeing.sort()).toEqual(Object.keys(CATEGORY_DOC_DISAGREEMENTS).sort());
-    // Keeps the allowlist honest about WHICH spellings diverge, so a partial
-    // fix (one side renamed) fails instead of silently re-pointing the row.
-    for (const [name, { reference, decorator }] of Object.entries(CATEGORY_DOC_DISAGREEMENTS)) {
-      const ref = Object.entries(referenceCommands).find(([k]) => normalize(k) === name)![1];
-      expect((ref as { category: string }).category, `${name} reference category`).toBe(reference);
-      expect(MANIFEST_BY_NAME.get(name)!.category, `${name} manifest category`).toBe(decorator);
-    }
-  });
-
-  it('tier mirrors reference/index.ts availability', () => {
-    for (const [key, ref] of Object.entries(referenceCommands)) {
-      const name = normalize(key);
-      const availability = (ref as { availability: string }).availability;
-      expect(MANIFEST_BY_NAME.get(name)!.tier, `${name} tier`).toBe(availability);
     }
   });
 
@@ -980,8 +797,7 @@ describe('the classification debt, counted', () => {
     expect(TIER_UNCLASSIFIED.size).toBe(0); // step 4.1 — DONE, was 23
     expect(CAPABILITY_UNCLASSIFIED.size).toBe(0); // step 4.2 — DONE, was 10
     expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — DECIDED: blocks classify
-    expect(KEYWORD_GAPS.size).toBe(0); // step 4.3 — DONE, was 4
-    expect(KEYWORD_NOT_ADVERTISED.size).toBe(1); // step 4.3 — DECIDED: pseudo-command
+    // (Step 4.3's two COMMAND_KEYWORDS counts left with §5 in Phase C5.)
   });
 });
 

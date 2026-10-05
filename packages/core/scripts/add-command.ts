@@ -89,8 +89,8 @@ function commandDir(category: string): string {
 function referenceCategory(category: string): string {
   return category === 'event' ? 'events' : category;
 }
-// Measured from `CommandTier` (commands/manifest.ts) and
-// `BundleAvailability` (reference/index.ts) — the two must agree.
+// Measured from `CommandTier` (commands/manifest.ts). (`reference/index.ts`
+// dropped its `availability` field in Phase C5: it documents the engine.)
 const VALID_TIERS = ['lite', 'lite-plus', 'hybrid', 'full'];
 
 function parseArgs(): CommandConfig {
@@ -433,7 +433,7 @@ planEdit(path.join(CORE_SRC, 'runtime/runtime.ts'), 'factory import', src =>
 planEdit(path.join(CORE_SRC, 'reference/index.ts'), 'CommandRef entry', src => {
   const anchor = 'export const commands: Record<string, CommandRef> = {';
   const at = src.indexOf(anchor) + anchor.length;
-  const entry = `\n  ${name}: {\n    name: '${name}',\n    description: '${description.replace(/'/g, "\\'")}',\n    syntax: '${syntax.replace(/'/g, "\\'")}',\n    category: '${referenceCategory(category)}',\n    availability: '${tier}',\n    examples: ['${syntax.replace(/'/g, "\\'")}'],\n  },`;
+  const entry = `\n  ${name}: {\n    name: '${name}',\n    description: '${description.replace(/'/g, "\\'")}',\n    syntax: '${syntax.replace(/'/g, "\\'")}',\n    category: '${referenceCategory(category)}',\n    examples: ['${syntax.replace(/'/g, "\\'")}'],\n  },`;
   return src.slice(0, at) + entry + src.slice(at);
 });
 

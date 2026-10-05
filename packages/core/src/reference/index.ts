@@ -29,8 +29,6 @@ export interface CommandRef {
   syntax: string;
   /** Category for grouping */
   category: CommandCategory;
-  /** Availability in lite bundles */
-  availability: BundleAvailability;
   /** Usage examples */
   examples: string[];
 }
@@ -50,10 +48,10 @@ export type CommandCategory =
   | 'behaviors'
   | 'templates';
 
-export type BundleAvailability = 'lite' | 'lite-plus' | 'hybrid' | 'full';
-
 /**
- * All 43 commands with syntax and descriptions
+ * Every command the engine (`@hyperfixi/engine`) registers, keyed by its keyword, with
+ * syntax and examples in upstream _hyperscript's spelling. `npm run verify:reference`
+ * checks the keys against the engine's grammar and parses every example on it.
  */
 export const commands: Record<string, CommandRef> = {
   // DOM Commands
@@ -62,7 +60,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Toggle CSS classes, attributes, or properties on elements',
     syntax: 'toggle .class [on target]',
     category: 'dom',
-    availability: 'lite',
     examples: ['toggle .active', 'toggle .hidden on #modal', 'toggle @disabled on <button/>'],
   },
   add: {
@@ -70,7 +67,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Add CSS classes, attributes, or styles to elements',
     syntax: 'add .class [to target]',
     category: 'dom',
-    availability: 'lite',
     examples: ['add .highlight', 'add .active to #nav', 'add @required to <input/>'],
   },
   remove: {
@@ -78,7 +74,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Remove CSS classes, attributes, styles, or elements',
     syntax: 'remove .class [from target]',
     category: 'dom',
-    availability: 'lite',
     examples: ['remove .loading', 'remove #temp-element', 'remove @disabled from me'],
   },
   hide: {
@@ -86,7 +81,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Hide elements by setting display:none',
     syntax: 'hide [target]',
     category: 'dom',
-    availability: 'lite',
     examples: ['hide', 'hide #modal', 'hide .dropdown'],
   },
   show: {
@@ -94,7 +88,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Show hidden elements',
     syntax: 'show [target]',
     category: 'dom',
-    availability: 'lite',
     examples: ['show', 'show #modal', 'show .dropdown'],
   },
   put: {
@@ -102,32 +95,25 @@ export const commands: Record<string, CommandRef> = {
     description: 'Set content or values',
     syntax: 'put value into|before|after|at start of|at end of target',
     category: 'dom',
-    availability: 'lite',
-    // The element-array form MOVES the live nodes in order (an in-place
-    // reorder when they are already the target's children) — deliberately the
-    // anti-morph: nothing is serialized, so focus and input state survive.
-    // Full-runtime bundles only (the hybrid parser has no collection ops).
     examples: [
       'put "Hello" into #output',
       'put it into me',
       "put '<p>New</p>' into #container",
-      'put <tr/> in me sorted by its @data-price as Number at end of me',
+      'put "x" at end of me',
     ],
   },
   make: {
     name: 'make',
     description: 'Create new DOM elements',
-    syntax: 'make <tag/> [put into target]',
+    syntax: 'make a <tag/> [called name]',
     category: 'dom',
-    availability: 'hybrid',
-    examples: ['make <div.card/>', 'make <button/> put into #toolbar'],
+    examples: ['make a <div.card/>', 'make a <button/> then put it into #toolbar'],
   },
   empty: {
     name: 'empty',
     description: 'Remove all children from an element (sets innerHTML to empty)',
     syntax: 'empty [target]',
     category: 'dom',
-    availability: 'lite-plus',
     examples: ['empty me', 'empty #list', 'empty .results'],
   },
   open: {
@@ -135,7 +121,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Open a dialog (showModal/show), details element, or popover',
     syntax: 'open [target] [as modal|non-modal]',
     category: 'dom',
-    availability: 'full',
     examples: ['open #myDialog', 'open #myDialog as non-modal', 'open #details', 'open #popup'],
   },
   close: {
@@ -143,7 +128,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Close a dialog, details element, or popover',
     syntax: 'close [target]',
     category: 'dom',
-    availability: 'full',
     examples: ['close', 'close #myDialog', 'close #details'],
   },
   select: {
@@ -152,7 +136,6 @@ export const commands: Record<string, CommandRef> = {
       'Select the text in an <input>/<textarea>, or select the contents of a DOM element',
     syntax: 'select [target]',
     category: 'dom',
-    availability: 'full',
     examples: ['select #search', 'select <textarea/>', 'select me'],
   },
   reset: {
@@ -160,7 +143,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Reset a <form> to its default values (HTMLFormElement.reset())',
     syntax: 'reset [target]',
     category: 'dom',
-    availability: 'full',
     examples: ['reset', 'reset #myForm', 'reset <form/>'],
   },
   clear: {
@@ -169,7 +151,6 @@ export const commands: Record<string, CommandRef> = {
       'Reset a variable to null, or clear the value of a form field (<input>, <textarea>, <select>)',
     syntax: 'clear <var|target>',
     category: 'data',
-    availability: 'full',
     examples: ['clear :count', 'clear myVar', 'clear #search', 'clear <textarea/>'],
   },
   breakpoint: {
@@ -177,7 +158,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Drop into the debugger (emits a debugger; statement)',
     syntax: 'breakpoint',
     category: 'utility',
-    availability: 'full',
     examples: ['breakpoint', 'on click breakpoint'],
   },
   focus: {
@@ -185,53 +165,28 @@ export const commands: Record<string, CommandRef> = {
     description: 'Focus an element (calls HTMLElement.focus())',
     syntax: 'focus [target]',
     category: 'execution',
-    availability: 'lite-plus',
-    examples: ['focus #search', 'focus on <input/>', 'focus me'],
+    examples: ['focus #search', 'focus the first <input/>', 'focus me'],
   },
   blur: {
     name: 'blur',
     description: 'Remove focus from an element (calls HTMLElement.blur())',
     syntax: 'blur [target]',
     category: 'execution',
-    availability: 'lite-plus',
-    examples: ['blur #search', 'blur on <input/>', 'blur me'],
+    examples: ['blur #search', 'blur me'],
   },
   swap: {
     name: 'swap',
-    description: 'Replace element content using various strategies',
-    syntax: 'swap content into target [strategy]',
+    description: 'Exchange two elements, or a writable value with another value',
+    syntax: 'swap target with value',
     category: 'dom',
-    availability: 'hybrid',
-    examples: [
-      'swap "<p>New</p>" into #container',
-      'swap result into #list innerHTML',
-      'swap content into #panel outerHTML',
-    ],
+    examples: ['swap #a with #b', 'swap innerHTML of #target with result'],
   },
   morph: {
     name: 'morph',
     description: 'Intelligently morph element content preserving state',
-    syntax: 'morph content into target',
+    syntax: 'morph target to content',
     category: 'dom',
-    availability: 'full',
-    examples: ['morph result into #content', 'morph "<div>New</div>" into me'],
-  },
-  // The key is the docs spelling (normalized by COMMAND_LIST_SPELLINGS, like
-  // pushUrl/replaceUrl above); everything else is the shipped surface. This
-  // entry used to document `processPartials content [into target]` — a syntax
-  // no parser has ever accepted — while the command has always been
-  // `process partials in <content>`.
-  processPartials: {
-    name: 'process partials',
-    description: 'Process <hx-partial> elements for multi-target swaps',
-    syntax: 'process partials in <content> [using view transition]',
-    category: 'dom',
-    availability: 'full',
-    examples: [
-      'process partials in it',
-      'process partials in fetchedHtml',
-      'process partials in it using view transition',
-    ],
+    examples: ['morph #content to result', 'morph me to "<div>New</div>"'],
   },
 
   // Async Commands
@@ -240,7 +195,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Pause execution for duration or until event',
     syntax: 'wait duration | wait for event',
     category: 'async',
-    availability: 'lite-plus',
     examples: ['wait 1s', 'wait 500ms', 'wait for transitionend'],
   },
   fetch: {
@@ -248,7 +202,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Make HTTP requests',
     syntax: 'fetch url [as type] [with options]',
     category: 'async',
-    availability: 'hybrid',
     examples: [
       'fetch /api/data as json',
       'fetch https://example.com/api as json',
@@ -264,23 +217,20 @@ export const commands: Record<string, CommandRef> = {
     description: 'Set variables or properties',
     syntax: 'set target to value',
     category: 'data',
-    availability: 'lite',
     examples: ['set :count to 0', "set #input's value to ''", 'set x to 10'],
   },
   get: {
     name: 'get',
     description: 'Get property values',
-    syntax: 'get property [from target]',
+    syntax: 'get expression',
     category: 'data',
-    availability: 'lite-plus',
-    examples: ['get value from #input', "get #element's textContent"],
+    examples: ["get #input's value", "get #element's textContent"],
   },
   increment: {
     name: 'increment',
     description: 'Increase numeric value',
     syntax: 'increment target [by amount]',
     category: 'data',
-    availability: 'lite-plus',
     examples: ['increment :count', 'increment :score by 10'],
   },
   decrement: {
@@ -288,7 +238,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Decrease numeric value',
     syntax: 'decrement target [by amount]',
     category: 'data',
-    availability: 'lite-plus',
     examples: ['decrement :count', 'decrement :lives by 1'],
   },
   default: {
@@ -296,7 +245,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Set default value if not already set',
     syntax: 'default target to value',
     category: 'data',
-    availability: 'full',
     examples: ['default :count to 0', 'default :theme to "light"'],
   },
 
@@ -306,40 +254,43 @@ export const commands: Record<string, CommandRef> = {
     description: 'Log values to console',
     syntax: 'log value',
     category: 'utility',
-    availability: 'lite-plus',
     examples: ['log "Debug info"', 'log :count', 'log event'],
   },
   tell: {
     name: 'tell',
     description: 'Execute commands on another element',
-    syntax: 'tell target to command',
+    syntax: 'tell target <commands> end',
     category: 'utility',
-    availability: 'full',
-    examples: ['tell #other to add .active', 'tell <form/> to reset()'],
-  },
-  copy: {
-    name: 'copy',
-    description: 'Copy text to clipboard',
-    syntax: 'copy value',
-    category: 'utility',
-    availability: 'full',
-    examples: ['copy "Text"', "copy #input's value"],
+    examples: ['tell #other add .active end', 'tell <form/> call it.reset() end'],
   },
   pick: {
     name: 'pick',
-    description: 'Pick random item from collection',
-    syntax: 'pick from collection',
+    description: 'Pick a range of items or characters, or a regex match, out of a value',
+    syntax: 'pick items|characters start to end from value | pick match of regex from text',
     category: 'utility',
-    availability: 'full',
-    examples: ['pick from <li/>', 'pick from ["a", "b", "c"]'],
+    examples: ['pick items 0 to 2 from :list', 'pick characters 0 to 3 from "hello"'],
   },
-  beep: {
-    name: 'beep',
-    description: 'Play a beep sound',
-    syntax: 'beep',
+  'beep!': {
+    name: 'beep!',
+    description: 'Log values to the console with their types (debugging)',
+    syntax: 'beep! value[, value]',
     category: 'utility',
-    availability: 'full',
-    examples: ['beep'],
+    examples: ['beep! me', 'beep! :count, result'],
+  },
+  ask: {
+    name: 'ask',
+    description: 'Ask the user for text (window.prompt); the answer is in it',
+    syntax: 'ask message',
+    category: 'utility',
+    examples: ['ask "Your name?" then put it into #name'],
+  },
+  answer: {
+    name: 'answer',
+    description:
+      'Show a message (window.alert), or ask to confirm (window.confirm) and put the chosen value in it',
+    syntax: 'answer message [with yesValue or noValue]',
+    category: 'utility',
+    examples: ['answer "Saved"', 'answer "Delete it?" with "yes" or "no"'],
   },
 
   // Event Commands
@@ -348,16 +299,14 @@ export const commands: Record<string, CommandRef> = {
     description: 'Dispatch custom events',
     syntax: 'trigger eventName [on target]',
     category: 'events',
-    availability: 'lite-plus',
     examples: ['trigger customEvent', 'trigger submit on <form/>', 'trigger click on #btn'],
   },
   send: {
     name: 'send',
     description: 'Send event with data to element',
-    syntax: 'send eventName [to target] [with data]',
+    syntax: 'send eventName[(detail)] [to target]',
     category: 'events',
-    availability: 'hybrid',
-    examples: ['send update to #dashboard', 'send notify with {message: "Done"}'],
+    examples: ['send update to #dashboard', 'send notify(message: "Done") to #out'],
   },
 
   // Navigation Commands
@@ -366,24 +315,7 @@ export const commands: Record<string, CommandRef> = {
     description: 'Navigate to URL',
     syntax: 'go to url',
     category: 'navigation',
-    availability: 'lite-plus',
-    examples: ['go to /dashboard', 'go to url in new window'],
-  },
-  pushUrl: {
-    name: 'push url',
-    description: 'Update URL without page reload',
-    syntax: 'push url path',
-    category: 'navigation',
-    availability: 'hybrid',
-    examples: ['push url /page/2', 'push url /users/:id'],
-  },
-  replaceUrl: {
-    name: 'replace url',
-    description: 'Replace current URL in history',
-    syntax: 'replace url path',
-    category: 'navigation',
-    availability: 'hybrid',
-    examples: ['replace url /new-path'],
+    examples: ['go to /dashboard', 'go to url /help in new window'],
   },
   scroll: {
     name: 'scroll',
@@ -392,7 +324,6 @@ export const commands: Record<string, CommandRef> = {
     syntax:
       'scroll to [top|middle|bottom|nearest] [left|center|right] [of] target [smoothly|instantly] | scroll [target] [up|down|left|right] by n [px]',
     category: 'navigation',
-    availability: 'full',
     examples: [
       'scroll to #top',
       'scroll to bottom of #chat',
@@ -407,31 +338,28 @@ export const commands: Record<string, CommandRef> = {
     description: 'Conditional execution',
     syntax: 'if condition ... [else ...] end',
     category: 'control-flow',
-    availability: 'hybrid',
-    examples: ['if :count > 0 add .active end', 'if me has .open hide else show end'],
-  },
-  unless: {
-    name: 'unless',
-    description: 'Negative conditional',
-    syntax: 'unless condition ... end',
-    category: 'control-flow',
-    availability: 'full',
-    examples: ['unless :loading show #content end'],
+    examples: ['if :count > 0 add .active end', 'if me matches .open hide me else show me end'],
   },
   repeat: {
     name: 'repeat',
     description: 'Loop execution',
-    syntax: 'repeat N times ... end | for each item in collection ... end',
+    syntax:
+      'repeat N times ... end | repeat while condition ... end | repeat for item in collection ... end',
     category: 'control-flow',
-    availability: 'hybrid',
-    examples: ['repeat 3 times add .pulse end', 'for each item in <li/> add .done to item end'],
+    examples: ['repeat 3 times add .pulse end', 'repeat while :count < 10 increment :count end'],
+  },
+  for: {
+    name: 'for',
+    description: 'Loop over a collection',
+    syntax: 'for item in collection ... end',
+    category: 'control-flow',
+    examples: ['for item in <li/> add .done to item end'],
   },
   break: {
     name: 'break',
     description: 'Exit current loop',
     syntax: 'break',
     category: 'control-flow',
-    availability: 'hybrid',
     examples: ['if :found break end'],
   },
   continue: {
@@ -439,15 +367,13 @@ export const commands: Record<string, CommandRef> = {
     description: 'Skip to next loop iteration',
     syntax: 'continue',
     category: 'control-flow',
-    availability: 'hybrid',
-    examples: ['if item has .skip continue end'],
+    examples: ['if item matches .skip continue end'],
   },
   halt: {
     name: 'halt',
     description: 'Stop all execution',
     syntax: 'halt',
     category: 'control-flow',
-    availability: 'full',
     examples: ['if :error halt end'],
   },
   return: {
@@ -455,7 +381,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Return value from function',
     syntax: 'return [value]',
     category: 'control-flow',
-    availability: 'full',
     examples: ['return :result', 'return'],
   },
   exit: {
@@ -463,7 +388,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Exit current handler',
     syntax: 'exit',
     category: 'control-flow',
-    availability: 'full',
     examples: ['if :done exit end'],
   },
   throw: {
@@ -471,7 +395,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Throw an error',
     syntax: 'throw message',
     category: 'control-flow',
-    availability: 'full',
     examples: ['throw "Invalid input"'],
   },
 
@@ -479,18 +402,9 @@ export const commands: Record<string, CommandRef> = {
   call: {
     name: 'call',
     description: 'Call a function or method',
-    syntax: 'call function() | call method on target',
+    syntax: 'call expression',
     category: 'execution',
-    availability: 'hybrid',
-    examples: ['call validate()', 'call reset() on <form/>'],
-  },
-  pseudo: {
-    name: 'pseudo',
-    description: 'Execute pseudo-command',
-    syntax: 'pseudo command',
-    category: 'execution',
-    availability: 'full',
-    examples: ['pseudo init'],
+    examples: ['call validate()', 'call #myForm.reset()'],
   },
 
   // Content Commands
@@ -499,28 +413,18 @@ export const commands: Record<string, CommandRef> = {
     description: 'Append content to element',
     syntax: 'append content to target',
     category: 'content',
-    availability: 'hybrid',
     examples: ['append "<li>New</li>" to #list', 'append result to #container'],
-  },
-  prepend: {
-    name: 'prepend',
-    description: 'Prepend content to element (hyperfixi extension)',
-    syntax: 'prepend content to target',
-    category: 'content',
-    availability: 'hybrid',
-    examples: ['prepend "<li>First</li>" to #list', 'prepend result to #container'],
   },
 
   // Animation Commands
   start: {
     name: 'start',
     description: 'Animate DOM mutations via document.startViewTransition (View Transitions API)',
-    syntax: 'start view transition [using type] <body> end',
+    syntax: 'start view transition [using name] <body> end',
     category: 'animation',
-    availability: 'full',
     examples: [
       'start view transition put result into #out end',
-      'start view transition using slide remove .open from #panel end',
+      'start view transition using "slide" remove .open from #panel end',
     ],
   },
   transition: {
@@ -528,7 +432,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Apply CSS transitions',
     syntax: 'transition [target] property to value [over duration]',
     category: 'animation',
-    availability: 'full',
     examples: [
       'transition opacity to 0 over 300ms',
       "transition #box's *opacity to 0 over 300ms",
@@ -540,7 +443,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Measure element dimensions',
     syntax: 'measure target',
     category: 'animation',
-    availability: 'full',
     examples: ['measure #element', 'measure me'],
   },
   settle: {
@@ -548,7 +450,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Wait for animations to complete',
     syntax: 'settle',
     category: 'animation',
-    availability: 'full',
     examples: ['add .animate then settle then remove .animate'],
   },
   take: {
@@ -556,7 +457,6 @@ export const commands: Record<string, CommandRef> = {
     description: 'Take class from siblings (radio-button pattern)',
     syntax: 'take .class [from <source>] [for <recipient>]',
     category: 'animation',
-    availability: 'full',
     examples: ['take .active from .tab for me', 'take .selected'],
   },
 
@@ -564,30 +464,18 @@ export const commands: Record<string, CommandRef> = {
   js: {
     name: 'js',
     description: 'Execute inline JavaScript',
-    syntax: 'js(code)',
+    syntax: 'js[(params)] <javascript> end',
     category: 'advanced',
-    availability: 'full',
-    examples: ['js(console.log("hi"))', 'js(return Date.now())'],
-  },
-
-  // Behavior Commands
-  install: {
-    name: 'install',
-    description: 'Install a behavior on element',
-    syntax: 'install BehaviorName',
-    category: 'behaviors',
-    availability: 'full',
-    examples: ['install Draggable', 'install Sortable'],
+    examples: ['js console.log("hi") end', 'js(x) return x * 2 end'],
   },
 
   // Template Commands
   render: {
     name: 'render',
     description: 'Render template with data',
-    syntax: 'render template with data',
+    syntax: 'render template [with name: value, ...]',
     category: 'templates',
-    availability: 'full',
-    examples: ['render #userTemplate with :user'],
+    examples: ['render #userTemplate with user: :user'],
   },
 };
 
@@ -596,17 +484,6 @@ export const commands: Record<string, CommandRef> = {
  */
 export function getCommandsByCategory(category: CommandCategory): CommandRef[] {
   return Object.values(commands).filter(cmd => cmd.category === category);
-}
-
-/**
- * Get commands available in a specific bundle
- */
-export function getCommandsByAvailability(availability: BundleAvailability): CommandRef[] {
-  const order: BundleAvailability[] = ['lite', 'lite-plus', 'hybrid', 'full'];
-  const availabilityIndex = order.indexOf(availability);
-  return Object.values(commands).filter(
-    cmd => order.indexOf(cmd.availability) <= availabilityIndex
-  );
 }
 
 /**
@@ -637,7 +514,7 @@ export interface BundleRef {
   commandCount: number;
   /** Whether block commands (if/repeat/for) are included */
   hasBlocks: boolean;
-  /** Whether event modifiers (.debounce, .throttle) are included */
+  /** Whether event modifiers (`debounced at`, `throttled at`) are included */
   hasEventModifiers: boolean;
   /** Whether positional expressions (first, last, next) are included */
   hasPositional: boolean;
@@ -659,7 +536,7 @@ export const bundles: BundleRef[] = [
     name: 'browser',
     file: 'hyperfixi.js',
     size: '33.3 KB',
-    commandCount: 52,
+    commandCount: 53,
     hasBlocks: true,
     hasEventModifiers: true,
     hasPositional: true,
@@ -688,20 +565,8 @@ export function findBundleForFeatures(options: {
     if (eventModifiers && !bundle.hasEventModifiers) continue;
     if (positional && !bundle.hasPositional) continue;
 
-    // Check commands
-    const available = getCommandsByAvailability(
-      bundle.name === 'lite'
-        ? 'lite'
-        : bundle.name === 'lite-plus'
-          ? 'lite-plus'
-          : bundle.name.includes('hybrid')
-            ? 'hybrid'
-            : 'full'
-    );
-    const availableNames = available.map(c => c.name);
-
-    const hasAllCommands = requiredCommands.every(cmd => availableNames.includes(cmd));
-    if (hasAllCommands) {
+    // The one bundle registers every module, so it has every documented command.
+    if (requiredCommands.every(cmd => cmd in commands)) {
       return bundle;
     }
   }
@@ -743,7 +608,7 @@ export const patterns: PatternRef[] = [
   {
     name: 'Form Submit',
     description: 'Submit form via fetch, show result',
-    code: 'on submit halt the event then fetch /api/submit with method:"POST" body:me then put result into #response',
+    code: 'on submit halt the event then fetch /api/submit with {method:"POST", body: me as FormData} then put result into #response',
     commands: ['fetch', 'put'],
   },
   {
@@ -755,7 +620,7 @@ export const patterns: PatternRef[] = [
   {
     name: 'Debounced Input',
     description: 'Search with debounce',
-    code: 'on input.debounce(300) fetch /search?q=${me.value} as html then put result into #results',
+    code: 'on input debounced at 300ms fetch `/search?q=${my value}` as html then put result into #results',
     commands: ['fetch', 'put'],
   },
   {
@@ -773,8 +638,8 @@ export const patterns: PatternRef[] = [
   {
     name: 'Copy to Clipboard',
     description: 'Copy text with feedback',
-    code: "on click copy #input's value then add .copied wait 1s remove .copied",
-    commands: ['copy', 'add', 'wait', 'remove'],
+    code: "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
+    commands: ['call', 'add', 'wait', 'remove'],
   },
 ];
 
