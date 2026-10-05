@@ -271,6 +271,54 @@
   },
   {
     "lang": "es",
+    "input": "al clic si yo coincide .x agregar .no a yo sino agregar .on a yo fin",
+    "full": "on click if me matches .x add .no to me else add .on to me end",
+    "slim": "on click if me matches .x add .no to me else add .on to me end"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で もし 私 一致する .x 自分 に .no を 追加 そうでなければ 自分 に .on を 追加 終わり",
+    "full": "on click if me matches .x add .no to me else add .on to me end",
+    "slim": "on click if me matches .x add .no to me else add .on to me end"
+  },
+  {
+    "lang": "es",
+    "input": "al clic repeat item en .items agregar .done a item fin",
+    "full": "on click repeat for item in .items add .done to item end",
+    "slim": "on click repeat for item in .items add .done to item end"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で repeat item の中 .items item に .done を 追加 終わり",
+    "full": "on click repeat for item in .items add .done to item end",
+    "slim": "on click repeat for item in .items add .done to item end"
+  },
+  {
+    "lang": "es",
+    "input": "al clic poner \"<p>x</p>\" antes de yo",
+    "full": "on click put \"<p>x</p>\" before me",
+    "slim": "on click put \"<p>x</p>\" before me"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で \"<p>x</p>\" 前に 自分 を 置く",
+    "full": "on click put \"<p>x</p>\" before me",
+    "slim": "on click put \"<p>x</p>\" before me"
+  },
+  {
+    "lang": "es",
+    "input": "al tecla abajo de ventana alternar .active",
+    "full": "on keydown from window toggle .active",
+    "slim": "on keydown from window toggle .active"
+  },
+  {
+    "lang": "ja",
+    "input": "ウィンドウ から キーダウン を で .active を 切り替え",
+    "full": "on keydown from window toggle .active",
+    "slim": "on keydown from window toggle .active"
+  },
+  {
+    "lang": "es",
     "input": "xyz abc 123",
     "full": "xyz abc 123",
     "slim": "xyz abc 123"

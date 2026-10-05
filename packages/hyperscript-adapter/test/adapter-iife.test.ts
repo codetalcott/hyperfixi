@@ -36,6 +36,12 @@ const SHAPES: { english: string; check: (b: HTMLElement, doc: Document) => boole
     check: (b, doc) => doc.getElementById(`target-${b.id}`)!.classList.contains('on'),
   },
   { english: "on click put 'done' into me", check: b => b.textContent === 'done' },
+  // A conditional keeps its branches (the bundles' old English writer dropped
+  // them, leaving a valid handler that did nothing).
+  {
+    english: 'on click if me matches .x add .no to me else add .on to me end',
+    check: b => b.classList.contains('on') && !b.classList.contains('no'),
+  },
   // Upstream's view-transition block, its head the same English words in every
   // language. jsdom has no document.startViewTransition, so the engine runs the
   // body directly; the command after the block's `end` stays after it.

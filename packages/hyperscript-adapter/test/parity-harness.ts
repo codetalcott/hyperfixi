@@ -123,6 +123,22 @@ export const PARITY_CORPUS: ParityRow[] = [
   { lang: 'es', input: 'on click from body alternar .active' },
   { lang: 'ja', input: 'on click .active を 切り替え' },
 
+  // ── Node kinds the bundles' old English writer broke (2026-10-05) ──
+  // A conditional lost its branches, a for-loop its binding, `before` became
+  // `into`, `from window` vanished: valid English that did something else.
+  { lang: 'es', input: 'al clic si yo coincide .x agregar .no a yo sino agregar .on a yo fin' },
+  {
+    lang: 'ja',
+    input:
+      'クリック を で もし 私 一致する .x 自分 に .no を 追加 そうでなければ 自分 に .on を 追加 終わり',
+  },
+  { lang: 'es', input: 'al clic repeat item en .items agregar .done a item fin' },
+  { lang: 'ja', input: 'クリック を で repeat item の中 .items item に .done を 追加 終わり' },
+  { lang: 'es', input: 'al clic poner "<p>x</p>" antes de yo' },
+  { lang: 'ja', input: 'クリック を で "<p>x</p>" 前に 自分 を 置く' },
+  { lang: 'es', input: 'al tecla abajo de ventana alternar .active' },
+  { lang: 'ja', input: 'ウィンドウ から キーダウン を で .active を 切り替え' },
+
   // ── Fallback / identity / unregistered ───────────────────────────
   { lang: 'es', input: 'xyz abc 123' },
   { lang: 'es', input: 'xyz abc 123', config: { confidenceThreshold: 1.0 } },
