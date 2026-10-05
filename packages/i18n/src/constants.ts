@@ -72,6 +72,7 @@ export const COMMAND_PRIMARY_ROLES: Readonly<Record<string, SemanticRole>> = {
   // element being morphed — aligned with the transformer's patient marking
   // in the session-9 role-layout swap), and patient is the default.
   bind: 'destination',
+  viewTransition: 'style', // `start view transition using "<type>"`
 } as const;
 
 /**

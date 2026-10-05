@@ -49,6 +49,9 @@ export const en: Dictionary = {
     catch: 'catch',
     measure: 'measure',
     transition: 'transition',
+    // Upstream's block opener: English in every language, as semantic writes it
+    // (patterns/view-transition.ts), so no other dictionary translates it.
+    viewTransition: 'start view transition',
 
     // Data Commands
     increment: 'increment',

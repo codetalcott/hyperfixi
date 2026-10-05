@@ -36,6 +36,13 @@ const SHAPES: { english: string; check: (b: HTMLElement, doc: Document) => boole
     check: (b, doc) => doc.getElementById(`target-${b.id}`)!.classList.contains('on'),
   },
   { english: "on click put 'done' into me", check: b => b.textContent === 'done' },
+  // Upstream's view-transition block, its head the same English words in every
+  // language. jsdom has no document.startViewTransition, so the engine runs the
+  // body directly; the command after the block's `end` stays after it.
+  {
+    english: "on click start view transition put 'vt' into me end then add .after to me",
+    check: b => b.textContent === 'vt' && b.classList.contains('after'),
+  },
 ];
 
 const bundles = readdirSync(ADAPTER_DIST)
@@ -113,7 +120,10 @@ describe('each self-contained adapter IIFE, on hyperfixi-hs.js', () => {
         button.id = id;
         button.lang = language;
         button.dataset.english = shape.english;
-        button.setAttribute('_', sourceIn(shape.english, language).replace('#target', `#target-${id}`));
+        button.setAttribute(
+          '_',
+          sourceIn(shape.english, language).replace('#target', `#target-${id}`)
+        );
         const target = document.createElement('div');
         target.id = `target-${id}`;
         document.body.append(button, target);
