@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/core",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "Hyperscript: @hyperfixi/engine, its script-tag bundle, and the multilingual and editor tooling around it",
   "type": "module",
   "main": "dist/index.mjs",
@@ -122,8 +122,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@hyperfixi/engine": "^3.3.0",
-    "@lokascript/semantic": "^3.3.0"
+    "@hyperfixi/engine": "^4.0.0",
+    "@lokascript/semantic": "^4.0.0"
   },
   "directories": {
     "doc": "docs"

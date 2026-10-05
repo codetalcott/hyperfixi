@@ -4,4 +4,4 @@
  * moved from the package's first release, and each browser bundle carried its
  * own `1.0.0-<lang>`. `test/version.test.ts` keeps this equal to package.json.
  */
-export const VERSION = '3.3.0';
+export const VERSION = '4.0.0';
