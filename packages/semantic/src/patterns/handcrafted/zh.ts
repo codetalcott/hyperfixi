@@ -18,7 +18,6 @@ import { getWaitPatternsZh } from '../wait';
 import { getFetchPatternsZh } from '../fetch';
 import { getTriggerPatternsZh } from '../trigger';
 import { getSendPatternsZh } from '../send';
-import { getViewTransitionPatternsZh } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['toggle', getTogglePatternsZh],
@@ -36,5 +35,4 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['fetch', getFetchPatternsZh],
   ['trigger', getTriggerPatternsZh],
   ['send', getSendPatternsZh],
-  ['viewTransition', getViewTransitionPatternsZh],
 ];

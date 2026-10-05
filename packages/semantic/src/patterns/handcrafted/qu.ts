@@ -13,7 +13,6 @@ import { getIncrementPatternsQu } from '../increment';
 import { getWaitPatternsQu } from '../wait';
 import { getFetchPatternsQu } from '../fetch';
 import { getTriggerPatternsQu } from '../trigger';
-import { getViewTransitionPatternsQu } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['toggle', getTogglePatternsQu],
@@ -26,5 +25,4 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['wait', getWaitPatternsQu],
   ['fetch', getFetchPatternsQu],
   ['trigger', getTriggerPatternsQu],
-  ['viewTransition', getViewTransitionPatternsQu],
 ];

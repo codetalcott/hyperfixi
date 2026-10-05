@@ -6,11 +6,9 @@ import type { HandcraftedPatterns } from '../handcrafted';
 import { getPutPatternsKo } from '../put';
 import { getEventHandlerPatternsKo } from '../event-handler';
 import { getFetchPatternsKo } from '../fetch';
-import { getViewTransitionPatternsKo } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['put', getPutPatternsKo],
   ['event-handler', getEventHandlerPatternsKo],
   ['fetch', getFetchPatternsKo],
-  ['viewTransition', getViewTransitionPatternsKo],
 ];
