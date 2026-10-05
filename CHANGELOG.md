@@ -47,6 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@lokascript/hyperscript-adapter` hands the host the English render, so a page written in
   another language with a view-transition swap failed to parse and ran nothing. Foreign renders
   keep the tail.
+- **`@lokascript/semantic`: a `swap` keeps both operands in every language.** Only a swap of two
+  selectors round-tripped. `swap #target with me`, `swap :x with :y` and a swap of properties
+  (`swap my textContent with #a`, `swap #a's textContent with #b's textContent`) lost an operand
+  or its property in up to 21 languages, so a translated page swapped the wrong thing or nothing.
+  Four causes: swap's roles took no reference or property path; a handler's repair re-parse was
+  vetoed when the swap's first operand moved to its real role; an optional slot that declined a
+  value by type still consumed it (any command's pattern could lose the next role that way); and
+  in pl/uk the with-word is also the of-word, so `swap el with #t` read as `#t's el`.
 - **`@lokascript/semantic`: a `tell` block keeps its extent.** Semantic kept `tell` flat, its body
   being every statement after it, so in English and every translation a command after the tell's
   `end` was lost (`tell #modal show end then log 2` lost the `log`) or pulled inside it

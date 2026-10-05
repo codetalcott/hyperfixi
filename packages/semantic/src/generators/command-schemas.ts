@@ -3319,7 +3319,9 @@ export const swapSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to swap content in/for',
       required: true,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      // What upstream swaps: an element, a variable, or a property of one
+      // (`swap #a's textContent with my textContent`).
+      expectedTypes: [...ELEMENT_TARGET_TYPES, 'property-path'],
       svoPosition: 2,
       sovPosition: 1,
       // The i18n transformer emits the element-swap shape `swap X with Y` with
@@ -3359,7 +3361,11 @@ export const swapSchema: CommandSchema = {
       role: 'patient',
       description: 'The content to swap in (optional for delete)',
       required: false,
-      expectedTypes: ['literal', 'expression', 'selector'],
+      // The other side of `swap X with Y`, which upstream reads as the same kind
+      // of target: `me` and a `:var` are references, `my textContent` a property
+      // path. Without them, every language but en/ja/ko dropped the operand
+      // (`intercambiar #target con yo` read back as `swap #target`).
+      expectedTypes: ['literal', 'expression', 'selector', 'reference', 'property-path'],
       svoPosition: 3,
       sovPosition: 2,
       // Patient takes each language's with-word (matching the i18n dicts'

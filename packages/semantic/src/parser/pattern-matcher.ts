@@ -670,8 +670,20 @@ export class PatternMatcher {
     nextPatternToken?: PatternToken
   ): boolean {
     const startIdx = tokens.position();
+    const mark = tokens.mark();
     const before = captured.get(patternToken.role);
     if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
+    // An optional role that captured nothing consumes nothing. Several readers
+    // (possessive, method call, positional, …) advance past a value and then,
+    // when its type is not one the slot takes, decline it as "optional": the
+    // tokens were gone and nothing held them. Swap's marker-less `[{method}]`
+    // slot (literal only) did that to `mi textContent` in `intercambiar mi
+    // textContent con #a`, so the destination saw `con`, the pattern failed, and
+    // the swap of a property was read as its first half in 14 languages.
+    if (captured.get(patternToken.role) === before) {
+      if (tokens.position() > startIdx) tokens.reset(mark);
+      return true;
+    }
     this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
     this.absorbTrailingConditionOperand(tokens, patternToken, captured, nextPatternToken, startIdx);
     this.absorbExpressionTail(tokens, patternToken, captured, nextPatternToken, startIdx);
@@ -2527,6 +2539,22 @@ export class PatternMatcher {
     if (!marker || !this.isOfPossessiveMarker(marker)) {
       tokens.reset(mark);
       return null;
+    }
+    // A swap's with-word, where it is also the of-word (pl/uk `z`/`з`): `zamień
+    // el z #t` is `swap el with #t`, not a one-operand swap of `#t's el`. Unless
+    // the with-word comes again after the owner (`zamień textContent z #a z
+    // #b`, swap #a's textContent with #b). Scoped to swap, which needs two
+    // operands: it's `incrementare textContent di #a` reads as #a's textContent,
+    // its `by` being `di` too.
+    if (
+      this.currentRoleCommand === 'swap' &&
+      this.patternTokenWouldMatch(nextPatternToken, marker)
+    ) {
+      const afterOwner = tokens.tokens[tokens.position() + 2] as LanguageToken | undefined;
+      if (!afterOwner || !this.patternTokenWouldMatch(nextPatternToken, afterOwner)) {
+        tokens.reset(mark);
+        return null;
+      }
     }
     tokens.advance();
 
