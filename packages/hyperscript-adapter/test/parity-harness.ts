@@ -137,44 +137,14 @@ export function loadFixture(): FixtureRow[] {
   );
 }
 
-/** The rows where the two paths are KNOWN to disagree today. Five of the
- *  original six (zh `切换` toggle, `set` in es/zh, bare and under event
- *  prefixes) were burned down by fixing the set/toggle schema marker data
- *  for es/zh — the generated patterns carried mandatory markers no real
- *  input has (`establecer en x a 5`, `设置 在 x 把 5`, `切换 把`-only).
- *
- *  The one left is the es `repeat` row: the slim SYNTAX render of repeat
- *  renders only `quantity`/`condition` (the count reads since PR 118; before
- *  it the event pattern took the count for the loop's form), so the slim
- *  output is `on click repeat 3 add "<p>Line</p>"` — engine-INVALID, which
- *  the host-validate gate (#900) safely converts to a fallback. That
- *  invalidity is currently a SAFETY property: a bare `repeat` is FOREVER,
- *  so partially repairing the render (e.g. mirroring semantic's
- *  string-content `to me` exception) without fixing quantity capture
- *  would commit a valid infinite loop (a loop with a body reads its count
- *  since PR 118). The slim parity test pins the
- *  row's output staying engine-invalid until the repeat surface is fixed
- *  whole (capture + SYNTAX render + me-suppression exception together). */
+/** The rows where the two paths are KNOWN to disagree: none. Both render with
+ *  semantic's renderer, and differ only in how they register languages (the
+ *  root package vs `/core` + `languages/*`), which is what this ratchet holds. */
 export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
-  // (The four authored-`from me` rows — es/ja/ko/fr `remove .hidden from me` —
-  // left this list in 4.0.1: the slim renderer now drops only an IMPLICIT `me`,
-  // as semantic's does, and keeps an authored one. The parse already tagged the
-  // difference; the renderer ignored it, which also turned an authored
-  // `put "x" into me` into the engine-invalid `put "x"` in every language.)
-  ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
-  // The full path closes a flattened loop/tell block header with `end`
-  // (@lokascript/semantic's renderer, 2026-08-28) — `tell #panel … end` is the
-  // canonical form and the only one whose extent survives a re-parse. The slim
-  // path deliberately does NOT mirror it: the SAME close applied to the es
-  // `repeat` row above would turn its output from engine-INVALID (host-validate
-  // rejects it, the author's text stays) into a VALID `repeat … end`, and while
-  // slim dropped the `3 times` quantity a bare `repeat` was FOREVER — the
-  // committed infinite loop the slim safety pin exists to prevent. (The count
-  // reads since PR 118; slim's render still drops `times`.) So slim gets
-  // the close only when the repeat surface is fixed whole; see the pin in
-  // preprocessor-parity.slim.test.ts.
-  [
-    'ja',
-    '#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加',
-  ],
+  // Empty since 2026-10-05: the slim path renders with semantic's renderer
+  // (slim-preprocessor.ts), so it differs from the full path only in how the
+  // languages are registered. The es `repeat` row and its safety pin (slim's
+  // own writer dropped `times`, and only that output's invalidity kept a bare
+  // FOREVER loop off the page) left with that writer; the row now renders
+  // `repeat 3 times … end` on both paths.
 ];

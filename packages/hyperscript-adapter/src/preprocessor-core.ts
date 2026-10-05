@@ -9,10 +9,10 @@
  * injected as hooks:
  *
  *   - HOW one statement is parsed and rendered to English
- *     (`translateSingle`): the full path uses semantic's parseSemantic +
- *     render + a translate() rescue for confident-but-nodeless parses;
- *     the slim path uses parseWithConfidence + the custom
- *     hyperscript-renderer (no English language data).
+ *     (`translateSingle`): both use semantic's parse + render('en') + a
+ *     translate() rescue for confident-but-nodeless parses, the slim path
+ *     on `/core` (its own English writer, hyperscript-renderer.ts, retired
+ *     2026-10-05).
  *   - WHERE the registry lookup comes from (`isLanguageRegistered`):
  *     `@lokascript/semantic` vs `…/core` — under tsup's split dist these
  *     are separate registry instances, so each path must bring its own.

@@ -11,14 +11,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 // `/core` installs its pattern generator (hand-crafted + generated) on import;
 // the per-language bundles keep it (src/bundles/shared.ts no longer replaces it).
 import '@lokascript/semantic/core';
 import { preprocessToEnglish } from '../src/slim-preprocessor';
-import { PARITY_CORPUS, KNOWN_DIVERGENCES, loadFixture } from './parity-harness';
+import { PARITY_CORPUS, loadFixture } from './parity-harness';
 
 // Side-effect language registrations, same as per-language bundle entries.
 // Keep in sync with SLIM_LANGS in parity-harness.ts.
@@ -41,53 +38,4 @@ describe('preprocessor parity — slim path', () => {
       );
     }
   );
-});
-
-/**
- * SAFETY PIN for the one remaining divergence (the es `repeat` row): its
- * slim output must stay engine-INVALID until the repeat surface is fixed
- * whole. The schema-generated event pattern took the count for the loop's
- * form, and slim's render dropped it — a bare `repeat` is FOREVER. The count
- * reads now (PR 118: a number where the form goes is the count), but slim's
- * SYNTAX render still drops `times`, so the output is `on click repeat 3 add
- * …`, which the engine rejects (a count needs `times`). Only that invalidity
- * makes it safe: the host-validate gate (#900) rejects it and the author's
- * original text stays. A partial repair that makes this render valid while still
- * dropping the quantity (measured: mirroring semantic's string-content
- * `to me` exception alone does exactly that) would commit an infinite
- * loop. If this test reddens, do NOT relax it — fix quantity capture, the
- * repeat SYNTAX render, and the me-suppression exception together, then
- * retire the divergence row and this pin in that change.
- */
-describe('remaining divergence stays behind the host-validate gate', () => {
-  it('es repeat row: slim output is rejected by the real engine (safe fallback)', () => {
-    const vendor = readFileSync(
-      path.join(
-        path.dirname(fileURLToPath(import.meta.url)),
-        'browser',
-        'vendor',
-        '_hyperscript-0.9.93.min.js'
-      ),
-      'utf8'
-    );
-    new Function(vendor).call(globalThis);
-    const hs = (globalThis as { _hyperscript?: { parse(s: string): { errors?: unknown[] } } })
-      ._hyperscript;
-    if (!hs?.parse) throw new Error('vendored _hyperscript did not expose parse()');
-
-    // Addressed by content, not index: KNOWN_DIVERGENCES is corpus-ordered and
-    // has since gained the authored-`from me` rows ahead of this one.
-    const repeatRow = KNOWN_DIVERGENCES.find(([, i]) => i.includes('repetir'));
-    if (!repeatRow) throw new Error('es repeat divergence row missing from KNOWN_DIVERGENCES');
-    const [lang, input] = repeatRow;
-    const slimOut = preprocessToEnglish(input, lang, {});
-    expect(slimOut).not.toBe(input); // the slim path DOES commit a translation…
-    let errors: unknown[];
-    try {
-      errors = hs.parse(slimOut)?.errors ?? [];
-    } catch (e) {
-      errors = [e];
-    }
-    expect(errors.length).toBeGreaterThan(0); // …and the engine rejects it → F8 falls back
-  });
 });
