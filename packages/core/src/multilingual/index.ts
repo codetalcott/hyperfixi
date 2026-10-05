@@ -1,20 +1,20 @@
 /**
  * `@hyperfixi/core/multilingual` — hyperscript in 24 languages, as text.
  *
- * Four functions over `@lokascript/semantic`:
+ * Three functions over `@lokascript/semantic`:
  * - `parse(code, lang)`: a semantic node, or null
  * - `render(node, lang)`: that node as hyperscript in a language
  * - `translate(code, from, to)`: the two together
- * - `schemaRoleInferrer`: schema-driven role inference for `fromCoreAST`,
- *   which takes it by injection so the AST tooling need not depend on the
- *   front end
  *
  * Text is the interchange: a translation is hyperscript a host reads, as
  * `@lokascript/hyperscript-adapter` hands it to `@hyperfixi/engine` or to
- * upstream _hyperscript. The `MultilingualHyperscript` class, whose
- * `parseToAST` built core's AST directly from a semantic parse, was removed in
- * Phase C2 of the engine cutover (4.0); the language list it carried is
- * semantic's `getSupportedLanguages()`.
+ * upstream _hyperscript. (Until 4.0 this entry also carried the
+ * `MultilingualHyperscript` class, removed in Phase C2 of the engine cutover,
+ * and `schemaRoleInferrer`, which fed core's own AST converter and left with
+ * core's engine in C6.) The language list is semantic's `getSupportedLanguages()`.
+ *
+ * `@lokascript/semantic` is loaded on first use, so importing this entry costs
+ * nothing until a function is called.
  *
  * @example
  * ```typescript
@@ -25,5 +25,42 @@
  * const english = await translate('alternar .active', 'es', 'en');
  * ```
  */
-export { parse, render, translate } from './bridge';
-export { schemaRoleInferrer } from './schema-roles';
+
+import type { SemanticNode } from '@lokascript/semantic';
+
+let semanticModule: typeof import('@lokascript/semantic') | null = null;
+
+async function semantic(): Promise<typeof import('@lokascript/semantic')> {
+  semanticModule ??= await import('@lokascript/semantic');
+  return semanticModule;
+}
+
+/**
+ * Parse hyperscript written in `lang` to a semantic node, or null when it does
+ * not parse. Confidence is not filtered: a caller that executes decides.
+ */
+export async function parse(input: string, lang = 'en'): Promise<SemanticNode | null> {
+  return (await semantic()).parseSemantic(input, lang).node ?? null;
+}
+
+/** Render a semantic node as hyperscript in `lang`. */
+export async function render(node: SemanticNode, lang: string): Promise<string> {
+  return (await semantic()).render(node, lang);
+}
+
+/**
+ * Translate hyperscript from one language to another. Returns the input
+ * unchanged when it cannot be translated (or when the languages match).
+ */
+export async function translate(
+  input: string,
+  sourceLang: string,
+  targetLang: string
+): Promise<string> {
+  if (sourceLang === targetLang) return input;
+  try {
+    return (await semantic()).translate(input, sourceLang, targetLang);
+  } catch {
+    return input;
+  }
+}

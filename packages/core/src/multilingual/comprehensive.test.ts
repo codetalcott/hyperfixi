@@ -7,14 +7,10 @@
  * - Complex command combinations
  * - Performance patterns
  * - Cross-language consistency validation
- *
- * The `parseToAST` cases exercise core's direct path, which lives on the
- * bridge until it retires with core's parser (Phase C6).
  */
 
 import { describe, it, expect } from 'vitest';
 import { parse, render, translate } from './index';
-import { SemanticGrammarBridge } from './bridge';
 
 describe('multilingual - Error Handling', () => {
   describe('invalid inputs', () => {
@@ -218,78 +214,6 @@ describe('multilingual - Cross-Language Features', () => {
       // All translations should contain .active
       for (const translation of translations) {
         expect(translation).toContain('.active');
-      }
-    });
-  });
-});
-
-describe('direct path (bridge) - parseToAST Variations', () => {
-  const bridge = new SemanticGrammarBridge();
-
-  describe('direct AST generation', () => {
-    it('should generate AST for simple English commands', async () => {
-      const commands = [
-        'toggle .active',
-        'add .highlight',
-        'remove .selected',
-        'show #modal',
-        'hide #sidebar',
-      ];
-
-      for (const cmd of commands) {
-        const ast = await bridge.parseToAST(cmd, 'en');
-        if (ast) {
-          expect(ast.type).toBeDefined();
-        }
-      }
-    });
-
-    it('should generate AST for Japanese commands', async () => {
-      const commands = ['.active を トグル', '.highlight を 追加', '.selected を 削除'];
-
-      for (const cmd of commands) {
-        const ast = await bridge.parseToAST(cmd, 'ja');
-        // Should either succeed or return null without crashing
-        expect(ast === null || typeof ast === 'object').toBe(true);
-      }
-    });
-
-    it('should generate AST for Spanish commands', async () => {
-      const commands = ['alternar .active', 'añadir .highlight', 'quitar .selected'];
-
-      for (const cmd of commands) {
-        const ast = await bridge.parseToAST(cmd, 'es');
-        if (ast) {
-          expect(ast.type).toBe('command');
-        }
-      }
-    });
-  });
-
-  describe('parseToASTWithDetails', () => {
-    it('should provide confidence scores', async () => {
-      const result = await bridge.parseToASTWithDetails('toggle .active', 'en');
-      expect(typeof result.confidence).toBe('number');
-      expect(result.confidence).toBeGreaterThanOrEqual(0);
-      expect(result.confidence).toBeLessThanOrEqual(1);
-    });
-
-    it('should indicate which path was used', async () => {
-      const result = await bridge.parseToASTWithDetails('toggle .active', 'en');
-      expect(typeof result.usedDirectPath).toBe('boolean');
-
-      if (result.usedDirectPath) {
-        expect(result.ast).not.toBeNull();
-      } else {
-        expect(result.fallbackText).not.toBeNull();
-      }
-    });
-
-    it('should preserve language information', async () => {
-      const languages = ['en', 'ja', 'es', 'ko', 'ar'];
-      for (const lang of languages) {
-        const result = await bridge.parseToASTWithDetails('toggle .active', lang);
-        expect(result.lang).toBe(lang);
       }
     });
   });

@@ -1,9 +1,9 @@
 {
   "name": "@hyperfixi/core",
   "version": "3.3.0",
-  "description": "Multilingual, tree-shakeable hyperscript",
+  "description": "Hyperscript: @hyperfixi/engine, its script-tag bundle, and the multilingual and editor tooling around it",
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "dist/index.mjs",
   "unpkg": "dist/hyperfixi.js",
   "jsdelivr": "dist/hyperfixi.js",
   "module": "dist/index.mjs",
@@ -11,92 +11,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs"
     },
-    "./browser": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi.js"
-    },
-    "./commands": {
-      "types": "./dist/commands/index.d.ts",
-      "import": "./dist/commands/index.mjs",
-      "require": "./dist/commands/index.cjs"
-    },
-    "./expressions": {
-      "types": "./dist/expressions/index.d.ts",
-      "import": "./dist/expressions/index.mjs",
-      "require": "./dist/expressions/index.cjs"
-    },
-    "./parser/full": {
-      "types": "./dist/parser/full-parser.d.ts",
-      "import": "./dist/parser/full-parser.mjs",
-      "require": "./dist/parser/full-parser.cjs"
-    },
-    "./parser/hybrid": {
-      "types": "./dist/parser/hybrid-parser.d.ts",
-      "import": "./dist/parser/hybrid-parser.mjs",
-      "require": "./dist/parser/hybrid-parser.cjs"
-    },
-    "./parser/hybrid/parser-core": {
-      "types": "./dist/parser/hybrid/parser-core.d.ts",
-      "import": "./dist/parser/hybrid/parser-core.mjs",
-      "require": "./dist/parser/hybrid/parser-core.cjs"
-    },
-    "./parser/hybrid/ast-types": {
-      "types": "./dist/parser/hybrid/ast-types.d.ts",
-      "import": "./dist/parser/hybrid/ast-types.mjs",
-      "require": "./dist/parser/hybrid/ast-types.cjs"
-    },
-    "./parser/hybrid/tokenizer": {
-      "types": "./dist/parser/hybrid/tokenizer.d.ts",
-      "import": "./dist/parser/hybrid/tokenizer.mjs",
-      "require": "./dist/parser/hybrid/tokenizer.cjs"
-    },
-    "./parser/hybrid/aliases": {
-      "types": "./dist/parser/hybrid/aliases.d.ts",
-      "import": "./dist/parser/hybrid/aliases.mjs",
-      "require": "./dist/parser/hybrid/aliases.cjs"
-    },
-    "./parser/regex": {
-      "types": "./dist/parser/regex-parser.d.ts",
-      "import": "./dist/parser/regex-parser.mjs",
-      "require": "./dist/parser/regex-parser.cjs"
-    },
-    "./behaviors": {
-      "types": "./dist/behaviors/index.d.ts",
-      "import": "./dist/behaviors/index.mjs",
-      "require": "./dist/behaviors/index.cjs"
-    },
+    "./browser": "./dist/hyperfixi.js",
     "./multilingual": {
       "types": "./dist/multilingual/index.d.ts",
       "import": "./dist/multilingual/index.mjs",
       "require": "./dist/multilingual/index.cjs"
-    },
-    "./bundle-generator": {
-      "types": "./dist/bundle-generator/index.d.ts",
-      "import": "./dist/bundle-generator/index.mjs",
-      "require": "./dist/bundle-generator/index.cjs"
-    },
-    "./registry": {
-      "types": "./dist/registry/index.d.ts",
-      "import": "./dist/registry/index.mjs",
-      "require": "./dist/registry/index.cjs"
-    },
-    "./registry/browser": {
-      "types": "./dist/registry/browser-types.d.ts",
-      "import": "./dist/registry/browser-types.mjs",
-      "require": "./dist/registry/browser-types.cjs"
-    },
-    "./registry/universal": {
-      "types": "./dist/registry/universal-types.d.ts",
-      "import": "./dist/registry/universal-types.mjs",
-      "require": "./dist/registry/universal-types.cjs"
-    },
-    "./registry/environment": {
-      "types": "./dist/registry/environment.d.ts",
-      "import": "./dist/registry/environment.mjs",
-      "require": "./dist/registry/environment.cjs"
     },
     "./package.json": "./package.json",
     "./reference": {
@@ -118,11 +39,6 @@
       "types": "./dist/ast-utils/index.d.ts",
       "import": "./dist/ast-utils/index.mjs",
       "require": "./dist/ast-utils/index.cjs"
-    },
-    "./lse": {
-      "types": "./dist/lse/index.d.ts",
-      "import": "./dist/lse/index.mjs",
-      "require": "./dist/lse/index.cjs"
     }
   },
   "files": [
@@ -130,39 +46,26 @@
     "dist/**/*.mjs",
     "dist/**/*.cjs",
     "dist/**/*.d.ts",
-    "dist/**/*.d.cts",
-    "dist/**/*.d.mts",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "rollup -c && rollup -c rollup.parser-modules.config.mjs && tsc -p tsconfig.build.json",
+    "build": "rollup -c && tsc -p tsconfig.build.json",
     "build:types": "tsc -p tsconfig.build.json",
-    "build:multilingual-dist": "rollup -c",
     "build:browser": "node scripts/build-browser-bundles.mjs",
     "build:browser:main-only": "node scripts/copy-engine-bundle.mjs",
-    "postbuild:browser": "node scripts/create-bundle-aliases.mjs",
-    "build:parser-modules": "rollup -c rollup.parser-modules.config.mjs",
     "snapshot:bundle-size": "node scripts/bundle-size-snapshot.mjs --check",
     "snapshot:bundle-size:update": "node scripts/bundle-size-snapshot.mjs --update",
-    "generate:bundle": "tsx scripts/generate-inline-bundle.ts",
-    "generate:bundle:textshelf": "tsx scripts/generate-inline-bundle.ts --config bundle-configs/textshelf.config.json",
     "dev": "rollup -c -w",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:watch": "vitest",
     "test:coverage": "bash ../../scripts/vitest-run.sh --coverage",
-    "bench": "vitest bench",
-    "bench:run": "vitest bench --run",
-    "bench:ci": "vitest bench --run --outputJson=benchmark-results/latest.json",
-    "bench:check": "node scripts/bench-baseline.mjs --check",
-    "bench:check:update": "node scripts/bench-baseline.mjs --update",
     "test:ui": "vitest --ui",
     "test:browser": "npm run build:browser && npx playwright test --project=full",
     "test:browser:smoke": "node scripts/check-dist-freshness.mjs && npx playwright test --project=smoke --reporter=list",
     "test:browser:quick": "npm run build:browser && npx playwright test --project=quick --reporter=list",
     "test:browser:integration": "node scripts/check-dist-freshness.mjs && npx playwright test --project=integration --reporter=list",
-    "test:browser:debug": "node scripts/check-dist-freshness.mjs && npx playwright test --project=debug --reporter=list",
     "test:browser:commands": "node scripts/check-dist-freshness.mjs && npx playwright test --project=commands --reporter=list",
     "test:browser:expressions": "node scripts/check-dist-freshness.mjs && npx playwright test --project=expressions --reporter=list",
     "test:browser:i18n": "node scripts/check-dist-freshness.mjs && npx playwright test --project=i18n --reporter=list",
@@ -173,56 +76,32 @@
     "test:comprehensive": "npm run build:browser && npx playwright test --grep '@comprehensive' --reporter=list",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "test:quick": "npm run build:browser && bash ../../scripts/vitest-run.sh --reporter=dot",
-    "test:prod": "NODE_ENV=production node production-test-runner.js --quiet",
-    "test:prod:verbose": "node production-test-runner.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit",
     "typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
     "clean": "rm -rf dist",
-    "analyze:usage": "node scripts/analyze-usage.mjs",
-    "size": "npm run size:analysis",
-    "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'",
     "verify:reference": "tsx scripts/verify-reference-data.ts",
-    "baseline:ast-equivalence": "tsx scripts/generate-ast-equivalence-baseline.ts",
-    "census:parse-input": "tsx scripts/generate-parse-input-census.ts",
-    "census:parse-input:update": "tsx scripts/generate-parse-input-census.ts --update",
-    "docs:commands": "tsx scripts/generate-command-docs.ts && tsx scripts/generate-command-docs.ts --format json",
-    "docs:commands:check": "tsx scripts/generate-command-docs.ts --check && tsx scripts/generate-command-docs.ts --format json --check",
-    "generate:bundles": "tsx scripts/generate-bundles.ts",
-    "generate:bundles:check": "tsx scripts/generate-bundles.ts --check",
     "update:sizes": "tsx scripts/update-bundle-sizes.ts",
     "update:sizes:auto": "tsx scripts/update-bundle-sizes.ts --update"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@rollup/plugin-alias": "^6.0.0",
-    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-replace": "^6.0.3",
-    "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.3.0",
     "@vitest/coverage-v8": "^5.0.0",
     "@vitest/ui": "^5.0.2",
-    "better-sqlite3": "^13.0.3",
-    "esbuild": "^0.25.12",
     "happy-dom": "^20.14.5",
     "http-server": "^14.1.1",
-    "jsdom": "^30.1.1",
-    "prettier": "^3.0.0",
     "rollup": "^4.63.5",
-    "rollup-plugin-visualizer": "^7.1.1",
     "tsx": "^4.23.15",
     "typescript": "^5.8.3",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.2",
-    "zod": "^4.6.5"
+    "vitest": "^5.0.2"
   },
   "keywords": [
     "hyperscript",
-    "parser",
-    "expressions",
+    "_hyperscript",
+    "multilingual",
     "dom",
-    "typescript",
-    "ast"
+    "typescript"
   ],
   "author": "LokaScript Contributors",
   "license": "MIT",
@@ -243,22 +122,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@lokascript/intent": "^3.3.0",
-    "@lokascript/semantic": "^3.3.0",
-    "morphlex": "^1.4.0",
-    "tslib": "^2.8.1"
-  },
-  "peerDependencies": {
-    "@hyperfixi/patterns-reference": "^3.3.0",
-    "@lokascript/framework": "^3.3.0"
-  },
-  "peerDependenciesMeta": {
-    "@hyperfixi/patterns-reference": {
-      "optional": true
-    },
-    "@lokascript/framework": {
-      "optional": true
-    }
+    "@hyperfixi/engine": "^3.3.0",
+    "@lokascript/semantic": "^3.3.0"
   },
   "directories": {
     "doc": "docs"

@@ -1,137 +1,26 @@
 /**
- * LokaScript - Multilingual Hyperscript Engine
- * Main entry point for the public API
+ * `@hyperfixi/core` — the engine, and the tooling around it.
+ *
+ * Since 4.0 the root is `@hyperfixi/engine`: every export of the engine's library
+ * entry (`api`, `register`, `everything` and each grammar module, `parse`,
+ * `evaluate`, `processNode`, `boot`, the AST types), re-exported. Core's own
+ * engine — its parser, runtime and command classes — left in Phase C6 of the
+ * engine cutover; `dist/hyperfixi.js` (`@hyperfixi/core/browser`) has been the
+ * engine's script-tag bundle since 3.x.
+ *
+ * The tooling stays on subpaths: `/multilingual` (parse, render and translate in
+ * 24 languages), `/ast-utils`, `/lsp-metadata`, `/reference`, `/metadata`.
+ *
+ * ESM only, like the engine: a CommonJS copy would bundle a second engine, with
+ * its own grammar, beside the one `@hyperfixi/engine` users register into.
+ *
+ * @example
+ * ```typescript
+ * import { register, on, toggle, processNode } from '@hyperfixi/core';
+ *
+ * register(on, toggle);
+ * processNode(document.body);
+ * ```
  */
-
-// Export the main API
-// Primary: lokascript (new name reflecting multilingual world/realm scope)
-export {
-  lokascript,
-  type LokascriptAPI,
-  type HyperscriptAPI, // Re-export for compatibility
-  // API types (v2)
-  type CompileResult,
-  type CompileError,
-  type NewCompileOptions,
-  type ValidateResult,
-  type HyperscriptConfig,
-} from './api/lokascript-api';
-
-// Compatibility: hyperscript (deprecated, use lokascript)
-export { hyperscript } from './api/hyperscript-api';
-export type { FrontEnd, FrontEndParseResult } from './parser/semantic-integration';
-
-// Export core types for advanced usage
-export type {
-  ASTNode,
-  ExecutionContext,
-  Scope,
-  ParseResult,
-  ParseError,
-  Token,
-  CommandNode,
-  ExpressionNode,
-  FeatureNode,
-  StatementNode,
-  ElementType,
-  ExpressionCategory,
-} from './types/core';
-
-// Export utilities for direct usage
-export { parse } from './parser/parser';
-export type { KeywordResolver, ParserOptions } from './parser/types';
-export { Runtime, type RuntimeOptions } from './runtime/runtime';
-export { RuntimeBase, type RuntimeBaseOptions } from './runtime/runtime-base';
-export {
-  createContext,
-  createChildContext,
-  getElementScopeMap,
-  resolveScopeOwner,
-  getElementVar,
-  setElementVar,
-} from './core/context';
-
-// Export enhanced context types
-export type {
-  TypedContextImplementation,
-  ContextMetadata,
-  EvaluationResult,
-} from './types/context-types';
-
-export type { ValidationResult, EvaluationType } from './types/base-types';
-
-export type { LLMDocumentation } from './types/command-types';
-
-// CodeFix types for LSP-compatible auto-fix suggestions (used by MCP server)
-export type {
-  CodeFix,
-  CodeActionKind,
-  TextRange,
-  TextEdit,
-  FixCommand,
-  FixableError,
-  DiagnosticWithFixes,
-  DiagnosticResponseWithFixes,
-} from './types/code-fix';
-
-// Partial template validation (development-time)
-export {
-  validatePartialContent,
-  configurePartialValidation,
-  getPartialValidationConfig,
-  resetPartialValidationConfig,
-} from './validation/partial-validator';
-export {
-  emitPartialValidationWarnings,
-  formatIssueAsString,
-  formatIssuesAsStrings,
-  formatResultSummary,
-} from './validation/partial-warning-formatter';
-export type {
-  PartialValidationSeverity,
-  LayoutElementCategory,
-  PartialValidationIssue,
-  PartialValidationResult,
-  PartialValidationConfig,
-  GlobalPartialValidationConfig,
-  TargetValidationOverride,
-  ValidatedPartialContent,
-} from './validation/partial-validation-types';
-
-// AST Interchange Format (for downstream tools like AOT compiler, language server)
-export { fromCoreAST, toCoreAST } from './ast-utils/interchange/index';
-export type {
-  InterchangeNode,
-  EventModifiers as InterchangeEventModifiers,
-} from './ast-utils/interchange/types';
-
-// Interactive step-through debugger
-export { DebugController, createDebugController } from './debug/index';
-export type {
-  StepMode,
-  BreakpointCondition,
-  DebugSnapshot,
-  DebugState,
-  DebugEventType as DebuggerEventType,
-  DebugEventListener as DebuggerEventListener,
-} from './debug/index';
-
-// ============================================================================
-// Plugin system (v0.9.90 Phase 5 + 5b)
-// ============================================================================
-// External packages (@hyperfixi/reactivity, @hyperfixi/speech, etc.) extend
-// hyperfixi at runtime through the plugin contract. See docs/API.md.
-export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
-export {
-  ParserExtensionRegistry,
-  getParserExtensionRegistry,
-  setGlobal,
-  type ParserExtensionSnapshot,
-  type FeatureParseFn,
-  type NodeEvaluatorFn,
-  type GlobalWriteHook,
-  type GlobalReadHook,
-} from './parser/extensions';
-
-// Note: Default export removed in favor of named exports for better tree-shaking
-// Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'
+export * from '@hyperfixi/engine';
+export { VERSION } from './version';

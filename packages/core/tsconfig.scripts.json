@@ -1,6 +1,5 @@
 {
-  // Typecheck the maintenance scripts in `scripts/` and the analysis tools in
-  // `tools/`.
+  // Typecheck the maintenance scripts in `scripts/`.
   //
   // The main tsconfig includes only `src/**/*`, so nothing ever typechecked
   // this directory. That is how `generate-command-docs.ts` and
@@ -24,7 +23,7 @@
     "types": ["node"]
   },
 
-  "include": ["scripts/**/*.ts", "tools/**/*.ts", "src/**/*"],
+  "include": ["scripts/**/*.ts", "src/**/*"],
 
-  "exclude": ["node_modules", "dist", "src/legacy/**/*", "src/test-helpers/**/*"]
+  "exclude": ["node_modules", "dist"]
 }

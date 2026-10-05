@@ -7,9 +7,6 @@
  * and bad `dist` paths that source-aliased unit tests can't see.
  *
  * Prints one `PASS <desc>` / `FAIL <desc>` line per check; exits 1 if any fail.
- *
- * NOTE: @hyperfixi/core is Node-safe since 2.7.2 (dom-globals shim ahead of
- * morphlex) and is checked below.
  */
 
 let failed = 0;
@@ -28,12 +25,16 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-await check('@hyperfixi/core — bare-Node import (dom-globals shim)', async () => {
+// Since 4.0 core's root is the engine, re-exported: the same objects, not a copy.
+await check('@hyperfixi/core — the engine, re-exported, + /multilingual', async () => {
   const m = await import('@hyperfixi/core');
-  assert(typeof m.getElementScopeMap === 'function', 'getElementScopeMap missing');
-  const commands = await import('@hyperfixi/core/commands');
-  assert(typeof commands.swap === 'function', 'commands.swap missing');
-  return `${Object.keys(m).length} exports + /commands`;
+  const engine = await import('@hyperfixi/engine');
+  assert(m.register === engine.register, "register is not @hyperfixi/engine's own");
+  assert(typeof m.VERSION === 'string', 'VERSION missing');
+  const ml = await import('@hyperfixi/core/multilingual');
+  const es = await ml.translate('toggle .active', 'en', 'es');
+  assert(es !== 'toggle .active', 'translate returned its input');
+  return `${Object.keys(m).length} exports, /multilingual translates`;
 });
 
 await check('@hyperfixi/engine — bare-Node import, parse', async () => {

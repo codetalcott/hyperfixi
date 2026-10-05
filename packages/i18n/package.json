@@ -78,7 +78,8 @@
     "rollup": "^4.63.5",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "zod": "^4.6.5"
   },
   "files": [
     "dist",

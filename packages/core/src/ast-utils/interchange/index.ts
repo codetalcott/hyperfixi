@@ -26,8 +26,6 @@ export type {
   EventModifiers,
 } from './types';
 
-export { fromCoreAST } from './from-core';
-export { toCoreAST } from './to-core';
 export { withEnginePositions } from './engine-positions';
 
 // LSP integration
