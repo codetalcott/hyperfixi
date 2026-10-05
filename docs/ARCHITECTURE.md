@@ -11,11 +11,12 @@ Use `@hyperfixi/*` packages by default. Add `@lokascript/*` packages only if you
 
 ```text
 packages/
-├── core/               # @hyperfixi/core — Hyperscript runtime, parser, 43 commands
-│   ├── parser/         # AST parser (~3800 lines)
-│   ├── runtime/        # Execution engine
-│   ├── commands/       # Command implementations
-│   └── commands-v2/    # Standalone command modules (tree-shakeable)
+├── engine/             # @hyperfixi/engine — the hyperscript engine (upstream's grammar, built from modules)
+│   ├── src/            # Grammar modules: a bundle is the list passed to register()
+│   └── upstream-suite/ # The gate: upstream _hyperscript's own tests
+│
+├── core/               # @hyperfixi/core — the engine re-exported, plus tooling (/multilingual,
+│                       # /ast-utils, /lsp-metadata, /reference, /metadata); dist/hyperfixi.js
 │
 ├── vite-plugin/        # @hyperfixi/vite-plugin — Zero-config Vite integration
 │   ├── scanner/        # Hyperscript detection in HTML/Vue/Svelte/JSX
@@ -73,8 +74,6 @@ packages/
 | browser-priority.priority.global.js     | ~151 KB | 11 priority            |
 | browser.global.js                       | ~260 KB | All 24 languages       |
 
-See [packages/core/bundle-configs/README.md](../packages/core/bundle-configs/README.md) for custom bundle generation.
-
 ## Language-Specific Bundles
 
 ```bash
@@ -110,14 +109,10 @@ export default { plugins: [hyperfixi()] };
 ### 3. Tree-Shakeable Imports
 
 ```typescript
-import { createRuntime } from '@hyperfixi/core/runtime';
-import { toggle, add, remove } from '@hyperfixi/core/commands';
-import { references, logical } from '@hyperfixi/core/expressions';
+import { register, boot, on, add, remove, toggle } from '@hyperfixi/engine'; // or '@hyperfixi/core'
 
-const hyperscript = createRuntime({
-  commands: [toggle, add, remove],
-  expressions: [references, logical],
-});
+register(on, add, remove, toggle); // an engine that knows these, and nothing else
+boot();
 ```
 
 ### 4. Multilingual (Optional)

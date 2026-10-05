@@ -7,6 +7,163 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+`@hyperfixi/core`'s own hyperscript engine is gone: its root re-exports `@hyperfixi/engine`, and
+its `hyperfixi.js` is the engine's 34 KB script-tag bundle where core's ~352 KB bundle used to be.
+The engine follows upstream `_hyperscript`'s grammar and is gated by upstream's own test suite, so
+scripts in core-only syntax need upstream's spelling (two additions stay: `new X()` and
+`toggle <element>`). Core's other bundles, its htmx layer, the core-era plugin packages and the
+AOT compiler retire: htmx 4 or fixi supply hypermedia attributes beside the engine, and
+`@lokascript/hyperscript-adapter` runs hyperscript written in other languages. Every package moves
+to 4.0.0 together. Everything under **Removed** is breaking, as is each **Changed** item marked ⚠;
+[MIGRATION.md](MIGRATION.md) names each replacement.
+
+### Removed
+
+- **Core's engine and its API** (#1368). These root exports had no engine counterpart:
+  `hyperscript` (`compile`, `compileSync`, `compileAsync`, `eval`, `validate`), `lokascript`,
+  `Runtime`, `RuntimeBase`, `createContext` and the element-scope helpers, `installPlugin`,
+  `getParserExtensionRegistry`, `setGlobal`, `DebugController`, `validatePartialContent` and its
+  helpers, `fromCoreAST` / `toCoreAST`. `parse` is now the engine's. The root is ESM-only, like the
+  engine: `dist/index.cjs` and the UMD `dist/index.min.js` (`LokaScriptCore`) are gone, though the
+  kept subpaths still ship CommonJS.
+- **21 of core's 29 entry points**: `/commands`, `/expressions`, `/parser/*`, `/behaviors`,
+  `/bundle-generator`, `/registry/*`, `/lse`, and `/browser/` `hybrid-complete`, `hybrid-hx`,
+  `hybrid-hx-v4`, `multilingual`, `modular` (#1343–#1368). Instead of `/commands`, import the
+  grammar modules from the root: `import { toggle } from '@hyperfixi/core'`.
+- **Core's browser bundles** (#1348, #1350, #1352, #1368): `hyperfixi-hx.js`,
+  `hyperfixi-hx-v4.js`, `hyperfixi-hybrid-complete.js`, `hyperfixi-multilingual.js`,
+  `hyperfixi-classic-i18n.js` and the code-split `hyperfixi.mjs`, plus every alias
+  (`hyperfixi-browser.js`, `hyperfixi-hybrid-hx.js`, each `lokascript-*.js`). Only
+  `hyperfixi.js` remains. CDN URLs pinned to 3.x keep working.
+- **Core's embedded htmx layer** (#1342, #1348, #1350): `hx-*` and fixi `fx-*` on core's runtime,
+  `hx-live`, `sse-connect` / `sse-swap`, `ws-connect` / `ws-send`. Load htmx 4 or fixi beside the
+  engine. `hx-live` becomes the engine's `live` block, and SSE and WebSockets are htmx 4's
+  `hx-sse` / `hx-ws`.
+- **Core-only members of `window.hyperfixi`**: `compile`, `compileSync`, `execute`, `setLocale`,
+  `evalLSENode`, `debugControl`, `semanticDebug`, the `hyperfixi:semantic-parse` event,
+  `hyperfixi:debug` logging, `_hyperscript.behaviors.resolve`, and the deprecated
+  `window.lokascript` (#1352, #1355).
+- **Core-only hyperscript syntax** (#1346, #1363, #1365). The engine rejects `has` / `have`,
+  `prepend`, `copy`, `push url` / `replace url`, `process partials`, the `pseudo` keyword, prefix
+  `unless`, bare `beep`, `a ? b : c`, core's `swap <strategy> of X with Y`, `set @a to v on X`,
+  `.debounce(n)` / `.throttle(n)`, `my?.x` and `tell X to …`. A few forms still parse but no longer
+  do what they did, such as `toggle .a on this` and `go forward`. MIGRATION.md gives each form's
+  upstream spelling. The multilingual reader still accepts them all.
+- **`@hyperfixi/core/multilingual`'s class API** (#1345, #1368): `MultilingualHyperscript` (with
+  `parseToAST`, `getAllTranslations`, …), `getMultilingual`, `multilingual`, `LanguageInfo`,
+  `schemaRoleInferrer`. The entry is three async functions: `parse`, `render`, `translate`.
+- **The AOT compiler** (#1364). Its output ran only on a runtime that was never published.
+  `@lokascript/compilation-service` loses `compile()`, `POST /compile`, `CompileResponse`, the
+  compile cache (`SemanticCache`, `getCacheStats`, `clearCache`, `/cache`), `generateTests`'
+  `executionMode` and `generate()`'s `'js'` target. `generate()` now requires `target`
+  (`react` | `vue` | `svelte` | `intent-element`). `@hyperfixi/mcp-server` loses
+  `compile_hyperscript`, `execute_lse`, `lse_to_hyperscript`'s `compile` option and
+  `generate_tests`' `executionMode`, leaving 106 tools. The loop is now `validate_and_compile`
+  (name kept), then repair, then the hyperscript as is in `_="…"`.
+- **`@hyperfixi/vite-plugin`'s compile mode** (#1360). `mode: 'compile'` warns and builds the
+  engine bundle. The exports `CompiledHandler`, `CompileOptions` and
+  `set/clear/hasSemanticParser` are removed.
+- **Smaller removals.** `@hyperfixi/core/reference` loses `availability`, `BundleAvailability`
+  and `getCommandsByAvailability` (#1363). `@hyperfixi/speech` loses `speechPlugin`,
+  `speakCommand`, `askCommand` and `answerCommand`; the engine has `ask` / `answer` (#1358).
+  `@hyperfixi/intent-element` loses its `evalLSENode` fallback (#1356).
+  `@hyperfixi/patterns-reference` loses four rows that held only retired htmx attributes, and
+  `hx-live-with-mutator` is renamed `live-with-handler` (#1348). Of the never-published VS Code
+  extensions, the LokaScript one loses its debugger and the standalone `_hyperscript` one is
+  retired (#1361).
+
+### Deprecated
+
+- **`@hyperfixi/reactivity`, `@hyperfixi/realtime`, `@hyperfixi/components`**: deprecated on npm,
+  last version 3.3.0 (#1358). Use the engine's built-in `live` / `when` / `bind`, htmx 4's
+  `hx-sse` / `hx-ws`, and upstream's component extension.
+- **`@hyperfixi/types-browser`'s `LokaScriptCoreAPI`**: a deprecated alias of `HyperfixiAPI`
+  (#1356).
+
+### Changed
+
+- ⚠ **`@hyperfixi/core` is the engine plus tooling** (#1368). The root is
+  `export * from '@hyperfixi/engine'` and `VERSION`: `register`, `everything` and each grammar
+  module, `api`, `parse`, `evaluate`, `processNode`, `boot`, and the AST types. The engine stays
+  external, so both packages share one grammar. Kept: `/multilingual`, `/ast-utils`,
+  `/reference`, `/metadata`, `/lsp-metadata`, `/browser`.
+- ⚠ **`hyperfixi.js` (`@hyperfixi/core/browser`) is the engine's `hyperfixi-hs.js`**, byte for
+  byte: 34 KB gzipped instead of ~352 KB (#1355). `window.hyperfixi` is `window._hyperscript`,
+  upstream-shaped (`evaluate`, `parse`, `process`, `use`, `config`, `addSourceTransform`). Parse
+  errors are a `hyperscript:parse-error` event on the element plus a `console.error` (#1354).
+- ⚠ **Runtime semantics follow upstream** wherever core's differed. `swap #a with #b` exchanges
+  the elements; `show` / `hide … with *opacity` honour the strategy; `tell` binds `you`, not `me`;
+  `set` on a selector sets every match; and `no ""` is true. MIGRATION.md has the full list.
+- ⚠ **`@hyperfixi/vite-plugin` emits a bundle on `@hyperfixi/engine`** (#1343). There is one
+  tier: the grammar modules the scan finds. It weighs 17.9 KB gzipped for three commands (3.x lite:
+  3.9 KB) and 34.4 KB for everything; 3.x fell back to 352 KB on `fetch`. htmx is not bundled.
+  Non-English scripts are translated as the engine reads them. `devFallback: 'everything'` is new,
+  and `'full'` / `'hybrid-complete'` mean the same. The plugin no longer depends on core.
+- ⚠ **`@hyperfixi/behaviors` runs on the engine** (peer `@hyperfixi/engine`; upstream works too).
+  Each behavior is defined with `host.evaluate(source)` and written in upstream's idioms.
+  Toggleable's `target` parameter is now `targetEl`. `LokaScriptInstance` / `LokaScriptWindow`
+  are now `HyperscriptHost` / `HyperscriptWindow` (#1338).
+- ⚠ **`@hyperfixi/speech` is an engine module** (#1358). Install it with
+  `register(...everything, speak)`. It is ESM-only and peers on the engine. `speak` takes
+  upstream's syntax (`speak <text> [with voice|rate|pitch|volume <x>]…`) and waits for the
+  utterance to end.
+- ⚠ **The localized htmx vocabulary moved** from `@hyperfixi/core/vocab/htmx/{lang}.js` to
+  `@lokascript/htmx-adapter/vocab/{lang}.js`; the data is unchanged (#1349).
+- **`@hyperfixi/intent-element`** renders an intent to English with the page's semantic bundle
+  and runs it through the host's `evaluate` (`NO_RENDERER` without one). It peers on
+  `@hyperfixi/engine` and `@lokascript/semantic` (#1339, #1356).
+- **`@lokascript/semantic` writes upstream's spelling in English** for core-only forms (#1346).
+  For example, `has` becomes `matches`, `prepend` becomes `put … at start of`, and swap strategies
+  become `put … into` / `before` / `after`. This reaches `translate(…, 'en')`,
+  `render(node, 'en')`, both adapters and MCP `translate_to_english`. In `fromSemanticAST`, a
+  handler's `then` chain is now its body (#1359).
+- **The language tools read the engine's parse** (#1356, #1359, #1365).
+  `@lokascript/language-server` and MCP `validate_hyperscript` report the engine's errors
+  (`source: 'engine'`). Hover and symbols come from `@lokascript/semantic`, and some long handlers
+  show fewer commands than in 3.x. Hyperscript mode flags exactly `new X()` and `toggle <element>`.
+  `@lokascript/compilation-service` rejects natural-language input the engine cannot read
+  (`ENGINE_PARSE_ERROR`), and its generated Playwright tests load `hyperfixi-hs.js`. The language
+  server, the MCP server and the compilation service now peer on `@hyperfixi/engine`.
+- **MCP**: `get_bundle_config` recommends `hyperfixi-hs.js`, plus an `adapter` field for
+  non-English. `analyze_complexity` / `analyze_metrics` no longer count every comparison as a
+  decision. The `debug_*` tools point to `log` and `breakpoint`. `UNSUPPORTED_QUERY_LITERAL` is
+  gone (#1350, #1352, #1359, #1361, #1364).
+- **`@hyperfixi/core/reference`, `/lsp-metadata`, `/metadata` describe the engine** (#1355,
+  #1363). They cover its 53 commands, adding `for`, `ask`, `answer` and `beep!`. Examples are in
+  upstream spelling and each is checked to parse; descriptions of core-only semantics (`pick`,
+  `beep`, `swap`) are fixed. `FEATURE_KEYWORDS` gains `install`, `when`, `live` and `bind`, and
+  `bundleInfo` holds one row.
+- **Dependencies.** `@lokascript/i18n`, `@hyperfixi/testing-framework`, `@hyperfixi/vite-plugin`,
+  `@hyperfixi/behaviors`, `@hyperfixi/speech` and `@hyperfixi/intent-element` no longer depend
+  on core. Core drops `@lokascript/intent`, morphlex, tslib and its optional peers. Versions are
+  lockstep, so upgrade `@hyperfixi/*` and `@lokascript/*` together.
+
+### Added
+
+- **`@hyperfixi/engine` exports `expr`**, so a grammar module can live in another package
+  (#1358).
+- **`@hyperfixi/core/ast-utils`'s `withEnginePositions`** gives interchange nodes the source
+  spans of the engine's parse (#1359).
+
+### Fixed
+
+- **`@hyperfixi/engine`** accepts upstream's `beep!` command (`beep! a, b`); 3.3.0 rejected it
+  (#1362).
+- **`@hyperfixi/types-browser`** types `window.hyperfixi` / `window._hyperscript` as the engine's
+  `HyperfixiAPI`. 3.3.0 re-exported a `./globals` it never emitted, so `window.hyperfixi` was
+  untyped (#1356).
+- **Semantic browser bundles** (#1351). Single-language and regional bundles (es, ja,
+  east-asian, …) registered no English, so the hyperscript adapter left scripts untranslated. They
+  now register it (+~2.2 KB gzipped) and export `translate`. The lite adapter finds any
+  `LokaScriptSemantic*` global.
+- **`@lokascript/semantic`** (#1338, #1343, #1347). `/core` plus a language module no longer
+  throws "No patterns registered". `on click from (x or me)` parses in th and zh. A `js … end`
+  block no longer ends its handler in ja / ko / hi / tr / qu / bn. An options object's `}` is no
+  longer read as an SOV event name.
+- **Language server and MCP** (#1359, #1363, #1365). `beep!` has hover docs. `set X to`
+  completions offer values. Hyperscript-mode errors land on the form, not line 0. Hover no longer
+  shows a second `on click`.
+
 ## [3.3.0] - 2026-10-02
 
 The first publication of `@hyperfixi/engine`, the hyperscript engine meant to replace the one

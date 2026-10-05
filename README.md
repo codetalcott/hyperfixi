@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@hyperfixi/core.svg)](https://www.npmjs.com/package/@hyperfixi/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readable UI behaviors from 1.9 KB — and a **verifiable target for LLM agents**: generated code that parses or fails with structured diagnostics, checked by a real parser, renderable into 24 human languages for review.
+A modular [\_hyperscript](https://hyperscript.org) engine, built against upstream's own test suite. Human-readable UI behaviors from 18 KB gzipped (34 KB with everything) — and a **verifiable target for LLM agents**: generated code that parses or fails with structured diagnostics, checked by a real parser, renderable into 24 human languages for review.
 
 ## Try It
 
@@ -47,7 +47,7 @@ No server, no npm, no build step. Just save and open.
 
 ## Install
 
-**Vite** — the default. One plugin, zero options: it scans your files for `_="..."` attributes and emits a bundle with only the commands you use, choosing the parser tier for you.
+**Vite** — the default. One plugin, zero options: it scans your files for `_="..."` attributes and emits a bundle with only the engine modules you use.
 
 ```bash
 npm install @hyperfixi/vite-plugin
@@ -111,7 +111,7 @@ translation preserved meaning rather than merely "parsed". Two writeups go deep:
 
 ## Learn More
 
-- [Choosing a bundle](https://hyperfixi.org/guide/bundles/) -- bundles from 1.9 KB (lite) to ~299 KB (full)
+- [Choosing a bundle](https://hyperfixi.org/guide/bundles/) -- one 34 KB script-tag bundle, or the Vite plugin's 18–34 KB
 - [Examples gallery](https://hyperfixi.org/examples/) -- 35+ interactive demos
 - [Playground](https://hyperfixi.org/playground/) -- live REPL
 - [Vite plugin guide](https://hyperfixi.org/guide/vite-plugin/) -- automatic tree-shaking

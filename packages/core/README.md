@@ -1,211 +1,89 @@
 # @hyperfixi/core
 
-An experimental hyperscript engine that provides fast parsing, command execution, and comprehensive error handling for web applications. Built with TypeScript-first design.
+Hyperscript for the browser, in any of 24 human languages, with the tooling around it.
 
-## Features
+Since 4.0 the engine is [`@hyperfixi/engine`](../engine/README.md): typed, built from modules,
+and written against upstream [\_hyperscript](https://hyperscript.org)'s source, with upstream's own
+test suite as its acceptance oracle. `@hyperfixi/core` re-exports it and adds the tooling on
+subpaths. (Core's own parser and runtime were retired in 4.0; see
+[MIGRATION.md](../../MIGRATION.md) for the move from 3.x.)
 
-- 🎯 **\_hyperscript Compatible** - Tested via gallery examples, bundle compatibility matrix, and command/expression browser tests
-- 🚀 **High Performance** - Optimized tokenizer and parser for large expressions
-- 🔧 **TypeScript First** - Complete type safety with comprehensive type definitions
-- 🧪 **Thoroughly Tested** - Vitest unit suites plus Playwright browser tests
-- 🌊 **Complete Command System** - All major commands implemented (PUT, SET, ADD, SHOW/HIDE, etc.)
-- ⚡ **HTML Integration** - Automatic `_=""` attribute processing and event binding
-- 🛡️ **Error Recovery** - Graceful handling of syntax errors with helpful guidance
+## Install
 
-## Installation
-
-```bash
-npm install @hyperfixi/core
-# or
-yarn add @hyperfixi/core
-```
-
-## Quick Start
-
-```typescript
-import { hyperscript } from '@hyperfixi/core';
-
-// Simple expression evaluation
-const result = await hyperscript.eval('5 + 3 * 2'); // Returns 11
-
-// DOM manipulation with commands
-const button = document.getElementById('myButton');
-const context = hyperscript.createContext(button);
-
-await hyperscript.eval('hide me', context); // Hides the button
-await hyperscript.eval('put "Hello World" into my innerHTML', context);
-await hyperscript.eval('set my className to "active"', context);
-```
-
-### HTML Integration (Automatic)
+The script-tag bundle (34 KB gzipped). It installs as `window._hyperscript` and
+`window.hyperfixi`, and reads the document when it is ready:
 
 ```html
-<!-- Automatic attribute processing - works out of the box -->
-<button _="on click put 'Hello!' into #output">Click me</button>
-<div id="output"></div>
-
-<!-- Complex interactions -->
-<button _="on click set my innerHTML to 'Clicked!' then wait 1s then hide me">
-  Temporary Button
-</button>
+<script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js"></script>
+<button _="on click toggle .active on me">Toggle</button>
 ```
 
-## Debugging
+`dist/hyperfixi.js` is the engine's `hyperfixi-hs.js`, the same file under core's name. For
+hypermedia attributes, add [fixi](https://github.com/bigskysoftware/fixi) or htmx 4 beside it.
 
-HyperFixi includes a built-in debug control API for troubleshooting compilation and execution issues.
+With a bundler, [`@hyperfixi/vite-plugin`](../vite-plugin/README.md) scans your templates and
+builds an engine from only the modules they use.
 
-### Enable Debug Logging
+## Use as a library
 
-```javascript
-// In browser console
-hyperfixi.debugControl.enable(); // Enable detailed logging
-// Reload page to see logs
-
-hyperfixi.debugControl.disable(); // Disable logging
-hyperfixi.debugControl.isEnabled(); // Check if enabled
-hyperfixi.debugControl.status(); // Get detailed status
+```sh
+npm install @hyperfixi/core
 ```
 
-Debug settings persist across page reloads via localStorage. Logs include:
+The root is `@hyperfixi/engine`, re-exported (ESM only):
 
-- Parser selection (semantic vs traditional)
-- Expression evaluation steps
-- Command execution flow
-- Event handling
+```ts
+import { register, boot, everything } from '@hyperfixi/core';
 
-### Compilation Metadata
-
-Every compilation returns metadata about parser usage and warnings:
-
-```javascript
-const result = hyperscript.compileSync('toggle .active');
-console.log(result.meta);
-// { parser: 'traditional', language: 'en', timeMs: 0.4 }
-
-const es = await hyperscript.compile('alternar .active', { language: 'es' });
-console.log(es.meta);
-// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs: 1.2 }
+register(...everything); // or only the modules a page needs: register(on, toggle)
+boot(); // install as window._hyperscript and initialise the document
 ```
 
-`meta.parser` is `'semantic'` only when the multilingual front-end PRODUCED the
-AST (a non-English program on the direct path). English is always parsed by the
-core parser; `'traditional'` is what an English compile — or a non-English one
-that fell back to its English rendering — reports.
+`api` is the object shaped like upstream's `_hyperscript` (`evaluate`, `parse`, `process`,
+`config`, `use(plugin)`), and `parse` / `evaluate` / `processNode` are also exported directly. See
+the [engine's README](../engine/README.md) for modules and the public API.
 
-## Runtime Hooks
+## Subpaths
 
-HyperFixi provides a hooks system for observing and intercepting command execution:
+| Import                         | What it is                                                                                                                                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@hyperfixi/core/browser`      | `dist/hyperfixi.js`, the script-tag bundle                                                                                                                                         |
+| `@hyperfixi/core/multilingual` | `parse(code, lang)`, `render(node, lang)`, `translate(code, from, to)` over [`@lokascript/semantic`](../semantic/README.md), loaded on first use                                   |
+| `@hyperfixi/core/ast-utils`    | Analysis (complexity, smells, metrics), the interchange AST, `withEnginePositions`, and LSP diagnostics / symbols / hover / completions; the language server and MCP server use it |
+| `@hyperfixi/core/lsp-metadata` | Keyword lists and hover docs for editors                                                                                                                                           |
+| `@hyperfixi/core/reference`    | The commands, with syntax and examples                                                                                                                                             |
+| `@hyperfixi/core/metadata`     | Package and bundle facts (version, size, command count)                                                                                                                            |
 
-```javascript
-import { hyperscript } from '@hyperfixi/core';
+The reference and LSP data document the engine and are checked against its grammar
+(`npm run verify:reference`): every keyword is an engine keyword, and every example parses on
+the engine.
 
-// Create hooks for logging, analytics, or debugging
-const hooks = {
-  beforeExecute: ctx => {
-    console.log(`Executing: ${ctx.commandName}`);
-  },
-  afterExecute: (ctx, result) => {
-    console.log(`Completed: ${ctx.commandName}`, result);
-  },
-  onError: (ctx, error) => {
-    console.error(`Error in ${ctx.commandName}:`, error);
-    return error; // Can transform or wrap the error
-  },
-  interceptCommand: (name, ctx) => {
-    // Return true to skip command execution
-    return name === 'disabled-command';
-  },
-};
+## Hyperscript in other languages
 
-// Register hooks with the runtime
-hyperscript.registerHooks('my-hooks', hooks);
+Hyperscript written in any of 24 languages runs on the engine through
+[`@lokascript/hyperscript-adapter`](../hyperscript-adapter/README.md), which translates each script
+as the engine reads it:
+
+```html
+<script src="hyperfixi.js"></script>
+<script src="browser.global.js"></script>
+<!-- @lokascript/semantic -->
+<script src="hyperscript-i18n-lite.global.js"></script>
+<!-- @lokascript/hyperscript-adapter -->
+
+<button lang="ko" _="클릭 할 때 .active 를 토글">토글</button>
 ```
 
-## Cleanup & Memory Management
-
-The runtime automatically tracks event listeners and observers for cleanup when elements are removed from the DOM. You can also manually trigger cleanup:
-
-```javascript
-// Clean up an element and all its descendants
-hyperscript.cleanup(containerElement);
-
-// Get cleanup statistics
-const stats = hyperscript.getDefaultRuntime().getCleanupStats();
-// { elementsTracked: 5, listeners: 12, observers: 2, ... }
-
-// Full runtime shutdown
-hyperscript.getDefaultRuntime().destroy();
-```
-
-## API Reference
-
-For complete API documentation, see [API.md](./docs/API.md).
-
-### Main Methods
-
-- `hyperscript.compile(code)` - Compile hyperscript to AST
-- `hyperscript.execute(ast, context)` - Execute compiled AST
-- `hyperscript.eval(code, context)` - Compile and execute in one step
-- `hyperscript.createContext(element)` - Create execution context
-- `evalHyperScript(code, context)` - \_hyperscript compatibility API (it was also a global in core's own `hyperfixi.js` browser bundle; since Phase C3 that file is the engine's `hyperfixi-hs.js`, whose `window._hyperscript` has upstream's `evaluate`)
-- `hyperscript.registerHooks(name, hooks)` - Register runtime hooks
-- `hyperscript.cleanup(element)` - Clean up an element and its descendants
-- `hyperscript.getDefaultRuntime().destroy()` - Full runtime shutdown
-
-## Supported Features
-
-### Commands (All Implemented)
-
-- **DOM Manipulation**: `hide me`, `show me`, `toggle me`
-- **Content Management**: `put "text" into me`, `set my innerHTML to "content"`
-- **CSS Classes**: `add .class to me`, `remove .class from me`
-- **Data Operations**: `increment x`, `decrement y`
-- **Control Flow**: `if condition`, `repeat N times`, `break`, `continue`
-- **Async Operations**: `wait 500ms`, `fetch "/api/data"`
-- **Events**: `send customEvent to me`
-
-### Expressions
-
-- **Arithmetic**: `5 + 3 * 2`, `value / 2`, `x mod 3`
-- **Logical**: `true and false`, `value > 10`, `x contains y`
-- **Property Access**: `my property`, `element.property`, `object's method()`
-- **Context Variables**: `me`, `it`, `you`, `result`
-- **Type Conversion**: `"123" as Int`, `form as Values`
-- **CSS Selectors**: `<button/>`, `closest <form/>`
-
-### HTML Integration
-
-- **Automatic Processing**: All `_=""` attributes processed automatically
-- **Event Binding**: `on click`, `on submit`, `on change` etc.
-- **DOM Context**: Automatic `me`, `you`, `it` context setup
-
-## Examples
-
-See [EXAMPLES.md](./docs/EXAMPLES.md) for comprehensive usage examples.
-
-## Compatibility Testing
-
-This package includes compatibility tests that validate HyperFixi against the official \_hyperscript library:
+## Development
 
 ```bash
-# Run compatibility tests with official hyperscript test suite
-npm run test:browser
-
-# Run only command compatibility tests
-npx playwright test --grep "Command Tests"
-
-# Run only expression compatibility tests
-npx playwright test --grep "Expression Tests"
+npm run build --prefix packages/core          # library entry + subpaths (build the engine first)
+npm run build:browser --prefix packages/core  # dist/hyperfixi.js, copied from the engine
+npm test --prefix packages/core               # unit tests (ast-utils, multilingual, dist charset)
+npm run verify:reference --prefix packages/core
+cd packages/core && npx playwright test browser-tests/   # the browser suite, on the engine's bundle
 ```
-
-Compatibility is validated via Playwright browser tests:
-
-- **Gallery examples** — real hyperscript patterns load and execute without errors
-- **Bundle compatibility matrix** — each bundle size correctly supports its documented features
-- **Command/expression tests** — individual commands and expressions verified in browser context
-
-Run `cd packages/core && npx playwright test` for the full browser test suite.
 
 ## License
 
-MIT - see [LICENSE](../../LICENSE) file for details.
+MIT

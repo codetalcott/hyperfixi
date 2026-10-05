@@ -5,9 +5,9 @@ upstream's own test suite as the acceptance oracle. It is typed (`tsc --strict`,
 synchronous until a script really waits on something, and built from modules, so a bundle
 contains the commands it registers and nothing else.
 
-It is meant to replace the engine in `packages/core`, and is published as its own package
-(since 2026-10-02). Nothing else in the repository depends on it at run time yet; the migration
-plan is `~/.claude/plans/engine-replaces-core.md`.
+It replaced the engine in `packages/core` in 4.0: `@hyperfixi/core`'s root re-exports it, and
+core's `dist/hyperfixi.js` is this package's `hyperfixi-hs.js`. It is also published on its own
+(since 2026-10-02).
 
 ## Install
 
