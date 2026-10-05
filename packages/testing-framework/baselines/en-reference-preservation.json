@@ -1,13 +1,19 @@
 {
   "description": "Allowlist for the en-reference preservation gate (src/multilingual/en-reference-preservation.test.ts). Each key is a corpus unit (a plain row id, or <id>#<n> for the n-th `_` body of a markup row) whose English re-render — render(parse_en(src), \"en\") — drops or changes content, so all 23 translations inherit the loss. A new lossy unit, a changed render of a listed unit, and a listed unit that now passes all fail the gate. Shrinks only: deleting an entry is how a fix is completed. Regenerate with tools/regen-en-reference-baseline.ts.",
-  "checked": 161,
-  "preserved": 160,
+  "checked": 163,
+  "preserved": 161,
   "allowedLosses": {
     "async-block": {
       "family": "BY DESIGN — the multilingual front-end strips `async` (engine-NULL row; core deleted `async` in #1102)",
       "rendered": "on click fetch \"/api/data\" then put it into me",
       "lost": ["async"],
       "added": []
+    },
+    "swap-view-transition": {
+      "family": "BY DESIGN — core-only source (engine-NULL row, OPEN_ITEMS D6); English writes upstream's `start view transition … end` for core's tail (semantic/src/explicit/upstream-spelling.ts). Prune when D6 moves the row to upstream's spelling",
+      "rendered": "on click start view transition swap #a with #b end",
+      "lost": ["using view transition"],
+      "added": ["start view transition"]
     }
   }
 }

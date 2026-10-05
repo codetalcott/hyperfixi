@@ -6,7 +6,7 @@
  * The reader keeps accepting the source; foreign renders keep their words.
  */
 import { describe, it, expect } from 'vitest';
-import { parse, render } from '../src/index';
+import { parse, render, getSupportedLanguages } from '../src/index';
 import { rewriteExpression } from '../src/explicit/upstream-spelling';
 
 const ROWS: [string, string][] = [
@@ -80,4 +80,59 @@ describe('rewriteExpression', () => {
 it('a core-only form with no upstream spelling is written as read', () => {
   expect(render(parse('on click clone #tpl', 'en')!, 'en')).toBe('on click clone #tpl');
   expect(render(parse('on click copy #code', 'en')!, 'en')).toBe('on click copy #code');
+  // `process partials` is core's in either spelling, so its tail stays too.
+  expect(render(parse('on click process partials in it using view transition', 'en')!, 'en')).toBe(
+    'on click process partials in it using view transition'
+  );
+});
+
+/**
+ * Core's view-transition tail (the `manner` role, view-transition-manner.test.ts)
+ * is upstream's `start view transition … end` block, parsed by upstream 0.9.93 and
+ * the engine alike, a `then` after its `end` included. Not in ROWS: the reader does
+ * not read the block back yet (OPEN_ITEMS D6), so English is not a fixed point here.
+ * What a page written in another language gets is the round trip below: its tail
+ * reads, and the adapter hands the host the block.
+ */
+describe('core’s view-transition tail is written as upstream’s block', () => {
+  const TAIL: [string, string][] = [
+    [
+      'on click swap #a with #b using view transition',
+      'on click start view transition swap #a with #b end',
+    ],
+    [
+      'on click swap #a with #b using view transition then add .x to me',
+      'on click start view transition swap #a with #b end then add .x to me',
+    ],
+    [
+      'on click morph #list to it using view transition',
+      'on click start view transition morph #list to it end',
+    ],
+    // The tail leaves the command first, so a strategy swap's `put` keeps it.
+    [
+      'on click swap innerHTML of #a with "<p/>" using view transition',
+      'on click start view transition put "<p/>" into #a end',
+    ],
+  ];
+
+  it.each(TAIL)('%s', (source, english) => {
+    expect(render(parse(source, 'en')!, 'en')).toBe(english);
+  });
+
+  const languages = getSupportedLanguages().filter(l => l !== 'en');
+
+  it.each(languages)('%s keeps the tail, and its English is the block', language => {
+    const [source, english] = TAIL[0];
+    const foreign = render(parse(source, 'en')!, language);
+    expect(foreign).not.toContain('start view transition');
+    expect(render(parse(foreign, language)!, 'en')).toBe(english);
+  });
+
+  it('morph round-trips in 22 of 23 (ms folds the destination: view-transition-manner.test.ts)', () => {
+    const [source, english] = TAIL[2];
+    const missed = languages.filter(
+      language => render(parse(render(parse(source, 'en')!, language), language)!, 'en') !== english
+    );
+    expect(missed).toEqual(['ms']);
+  });
 });

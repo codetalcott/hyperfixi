@@ -64,6 +64,7 @@ import { getOfPossessiveMarker, PROPERTY_NAME_LEXICON } from '../parser/utils/ex
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
+import { viewTransitionBody } from './upstream-spelling';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 /**
@@ -140,6 +141,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in the specified language.
    */
   render(node: SemanticNode, language: string): string {
+    // Only an English render meets this: the upstream-spelling rewrite marks a
+    // command whose view-transition tail upstream writes as a block.
+    const inViewTransition = viewTransitionBody(node);
+    if (inViewTransition) {
+      return `start view transition ${this.render(inViewTransition, language)} end`;
+    }
     // Handle compound nodes specially (e.g., "cmd1 then cmd2")
     if (node.kind === 'compound') {
       return this.renderCompound(node as CompoundSemanticNode, language);

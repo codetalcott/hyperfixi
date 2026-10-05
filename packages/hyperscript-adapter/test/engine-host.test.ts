@@ -46,6 +46,36 @@ describe('the plugin on @hyperfixi/engine', () => {
     }
   );
 
+  // Core's view-transition tail reads in every language; the host gets upstream's
+  // block (semantic's upstream-spelling). Until 4.0.1 it got the tail back, which
+  // the engine rejects, so the script did not run at all.
+  it.each(['es', 'ja'])('%s: a swap written with the view-transition tail runs in one', async language => {
+    const english = "on click swap #a's textContent with #b's textContent using view transition";
+    const written = render(parseSemantic(english, 'en').node!, language);
+    expect(written).toContain('using view transition');
+
+    let started = 0;
+    const transitions = (update: () => Promise<void>) => {
+      started++;
+      const done = Promise.resolve().then(update);
+      return { finished: done, updateCallbackDone: done, ready: done, skipTransition() {} };
+    };
+    Reflect.set(document, 'startViewTransition', transitions);
+    try {
+      document.body.innerHTML = `<p id="a">A</p><p id="b">B</p><button lang="${language}"></button>`;
+      const button = document.querySelector('button')!;
+      button.setAttribute('_', written);
+      api.processNode(document.body);
+      click(button);
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(started).toBe(1);
+      expect(document.getElementById('a')!.textContent).toBe('B');
+      expect(document.getElementById('b')!.textContent).toBe('A');
+    } finally {
+      Reflect.deleteProperty(document, 'startViewTransition');
+    }
+  });
+
   it('a parse error in a rewritten script names what was written', () => {
     api.addSourceTransform(source => (source === 'pulsar' ? 'on click toggle' : null));
     let written: unknown;
