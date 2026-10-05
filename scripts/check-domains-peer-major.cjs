@@ -32,9 +32,14 @@
  *
  * Fix when it fires: bump the `@lokascript/domains` range in the named
  * consumers to a release built against this line (`npm install` to relock),
- * or — on a framework major — cut that domains release first. Order for a
- * major: publish hyperfixi → domains' upstream Dependabot PR goes red →
- * domains `version:set` + publish → bump the range here → hyperfixi patch.
+ * or — on a framework major — cut that domains release first. This guard
+ * runs after the bump in publish.yml, so a major cannot go out until domains
+ * accepts it. Order for a major (4.0, 2026-10-04): pack this repo's
+ * framework/semantic/intent at the new version, prove domains against them
+ * (its pack-smoke takes UPSTREAM_TARBALLS) → domains patch peering
+ * `^old || ^new` → bump the range here + relock → publish hyperfixi. A major
+ * that changes the contract itself needs a real domains major instead, and
+ * that one has to wait for this repo's packages to be on the registry.
  */
 
 'use strict';
@@ -59,10 +64,22 @@ function cmp(a, b) {
 
 /**
  * Minimal semver-range check covering the shapes this repo actually writes:
- * `^x.y.z`, `~x.y.z`, `>=x.y.z`, exact `x.y.z`, and `*`. Returns null for an
- * unrecognized range so the caller can fail loudly rather than guess.
+ * `^x.y.z`, `~x.y.z`, `>=x.y.z`, exact `x.y.z`, and `*`, and a union of them
+ * with `||` (domains 3.0.1 peers `^3.1.0 || ^4.0.0`, a bridge across a major
+ * that renumbered the same contract). Returns null for an unrecognized range,
+ * or a union with an unrecognized part, so the caller can fail loudly rather
+ * than guess.
  */
 function satisfies(version, range) {
+  if (range.includes('||')) {
+    const parts = range.split('||').map(part => satisfiesOne(version, part));
+    if (parts.includes(null)) return null;
+    return parts.includes(true);
+  }
+  return satisfiesOne(version, range);
+}
+
+function satisfiesOne(version, range) {
   const v = parseVersion(version);
   if (!v) return null;
   const r = range.trim();
@@ -102,7 +119,7 @@ function check({ repoVersion, locked, consumers }) {
     const sat = satisfies(locked.version, c.range);
     if (sat === null)
       errors.push(
-        `${c.name}: unrecognized ${DOMAINS} range "${c.range}" (${c.field}) — this guard only understands ^, ~, >=, exact and *`
+        `${c.name}: unrecognized ${DOMAINS} range "${c.range}" (${c.field}) — this guard only understands ^, ~, >=, exact, * and || unions of them`
       );
     else if (!sat)
       errors.push(

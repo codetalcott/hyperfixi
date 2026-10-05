@@ -41,6 +41,15 @@ test('satisfies: caret, tilde, >=, exact, star', () => {
   assert.equal(satisfies('3.1.0', '3.x || 4.x'), null, 'unrecognized shapes return null');
 });
 
+test('satisfies: || unions (the domains 3.0.1 bridge)', () => {
+  assert.equal(satisfies('3.3.0', '^3.1.0 || ^4.0.0'), true);
+  assert.equal(satisfies('4.0.0', '^3.1.0 || ^4.0.0'), true);
+  assert.equal(satisfies('4.2.1', '^3.1.0 || ^4.0.0'), true);
+  assert.equal(satisfies('5.0.0', '^3.1.0 || ^4.0.0'), false);
+  assert.equal(satisfies('3.0.9', '^3.1.0 || ^4.0.0'), false);
+  assert.equal(satisfies('4.0.0', '^3.1.0 || 4.x'), null, 'one unrecognized part makes the union null');
+});
+
 test("passes: repo 3.1.0, domains 3.0.0 peering on ^3.1.0 (today's shape)", () => {
   const r = check({ repoVersion: '3.1.0', locked: peered('3.0.0', '^3.1.0'), consumers });
   assert.deepEqual(r.errors, []);
@@ -73,6 +82,16 @@ test('fails: a framework major published against a domains still peering on the 
   assert.equal(r.errors.length, 3);
   assert.match(r.errors[0], /publishes 4\.0\.0/);
   assert.match(r.errors[0], /Release lokascript-domains against 4\.x first/);
+});
+
+test('passes: a framework major against a domains that bridges to it', () => {
+  const r = check({
+    repoVersion: '4.0.0',
+    locked: peered('3.0.1', '^3.1.0 || ^4.0.0'),
+    consumers: [{ name: '@hyperfixi/mcp-server', field: 'dependencies', range: '^3.0.1' }],
+  });
+  assert.deepEqual(r.errors, []);
+  assert.match(r.summary, /satisfied by 4\.0\.0/);
 });
 
 test('fails: domains ran AHEAD of the repo (peer floor above the published version)', () => {
