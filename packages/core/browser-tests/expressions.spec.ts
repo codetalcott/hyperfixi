@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const HYPERSCRIPT_TEST_ROOT =
-  process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../../../_hyperscript/test');
+  process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../_hyperscript/test');
 
 // Minimum pass rate (% of runnable upstream cases) the suite must hold.
 // History (only ever ratchet UP — a drop means a regression):

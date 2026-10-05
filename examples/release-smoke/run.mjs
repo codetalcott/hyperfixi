@@ -260,12 +260,12 @@ async function runMatrixStage(tmp) {
           'playwright',
           'test',
           // The matrix: the remaining bundles × gallery examples + bundle-specific tests.
-          'src/compatibility/browser-tests/bundle-compatibility.spec.ts',
+          'browser-tests/bundle-compatibility.spec.ts',
           // hx-v4 distinctive features: hx-live, multi-dep tracking, two-way
           // bind, SSE / WS mock streaming, plus the no-reactivity diagnostic
           // (hx-on:click wiring in the slim bundle without reactivity installed).
-          'src/compatibility/browser-tests/hx-v4-features.spec.ts',
-          // NOTE: src/compatibility/browser-tests/i18n-htmx.spec.ts is NOT
+          'browser-tests/hx-v4-features.spec.ts',
+          // NOTE: browser-tests/i18n-htmx.spec.ts is NOT
           // wired here yet. Its `live-multilang` test hits a pre-existing
           // reactivity bug (localized hx-live counters don't re-render on
           // global writes — needs runtime/notify-hook investigation). Its

@@ -22,7 +22,7 @@ npm run build:browser --prefix packages/core        # Build browser bundle
 npm run typecheck --prefix packages/core            # TypeScript validation
 
 # Browser testing (Playwright)
-cd packages/core && npx playwright test src/compatibility/
+cd packages/core && npx playwright test browser-tests/
 ```
 
 ## Architecture
@@ -182,4 +182,4 @@ and `hyperfixi-hx-v4.js`. It retired with them in Phase C3 (owner decision 2026-
 fixi run beside the engine instead, `hx-live` is the engine's `live` block, and localized
 attribute names are `@lokascript/htmx-adapter`'s, whose package now holds the vocab modules and
 their generator (see `packages/htmx-adapter/CLAUDE.md`). `examples/hx-v4-i18n/` and
-`src/compatibility/browser-tests/i18n-htmx.spec.ts` cover that stack.
+`browser-tests/i18n-htmx.spec.ts` cover that stack.

@@ -3,8 +3,6 @@
  * These globals are injected by the test HTML pages
  */
 
-import type { ASTNode } from '../../types';
-
 declare global {
   /**
    * Global hyperfixi object available in browser context
@@ -15,9 +13,9 @@ declare global {
      */
     evalHyperScript: (code: string, context?: any) => Promise<any>;
     /**
-     * Parse hyperscript code into an AST
+     * Parse hyperscript code (the engine's `api.parse`)
      */
-    parse: (code: string) => ASTNode;
+    parse: (code: string) => unknown;
     /**
      * Other runtime methods
      */
@@ -52,8 +50,8 @@ declare global {
   interface Window {
     /**
      * The engine's API (the same object as window._hyperscript) plus
-     * compatibility-test.html's core-named helpers. Core's browser bundle
-     * (src/compatibility/browser-bundle.ts) declared this until C-R4b.
+     * compatibility-test.html's core-named helpers. Core's own browser bundle
+     * declared this until C-R4b.
      */
     hyperfixi: typeof hyperfixi;
   }

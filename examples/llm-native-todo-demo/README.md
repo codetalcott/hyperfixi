@@ -89,7 +89,7 @@ After both fixes, all three JSON forms work end-to-end in a real browser. The `v
 | `toggle-sidebar-verbose-form.html`    | Verbose: `{kind: "event-handler", body: [...]}`         | ✗ Silent no-op | ✓ Works  |
 | `toggle-sidebar-compact-trigger.html` | Compact with sugar: `{action, roles, trigger: {event}}` | ✗ Silent no-op | ✓ Works  |
 
-Run the tests by copying `verify.spec.ts` into `packages/core/src/compatibility/browser-tests/` (which uses the configured Playwright baseURL of `http://localhost:3000`) or run a local `http-server` on port 3000 from the repo root and point Playwright at this directory.
+Run the tests by copying `verify.spec.ts` into `packages/core/browser-tests/` (which uses the configured Playwright baseURL of `http://localhost:3000`) or run a local `http-server` on port 3000 from the repo root and point Playwright at this directory.
 
 ### Test suites updated
 

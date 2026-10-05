@@ -305,16 +305,13 @@ The full test suite runs in CI with:
 ## File Organization
 
 ```
-src/compatibility/browser-tests/
+browser-tests/
 ├── README.md (this file)
 ├── commands-comprehensive.spec.ts   # Command tests (@toggle, @add, etc.)
 ├── expressions-comprehensive.spec.ts # Expression tests (@math, @logical, etc.)
 ├── gallery-examples.spec.ts         # Gallery page tests (@gallery)
 ├── semantic-multilingual.spec.ts    # i18n tests (@i18n, @multilingual)
-├── bundle-compatibility.spec.ts     # Bundle tests (@bundle)
-└── debug/                           # Debug tests (--project=debug)
-    ├── debug-fetch.spec.ts
-    └── ...
+└── bundle-compatibility.spec.ts     # Bundle tests (@bundle)
 ```
 
 ## Contributing

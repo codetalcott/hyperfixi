@@ -7,7 +7,7 @@
 import { test, expect } from '@playwright/test';
 
 // NOTE (2026-08-28): no `playwright.config` in this package points at this
-// directory — core's config has `testDir: './src/compatibility/browser-tests'`,
+// directory — core's config has `testDir: './browser-tests'`,
 // which is core's own tree — so CI does not run this file. It is kept correct
 // rather than deleted, but do not read a green CI as evidence it passes.
 

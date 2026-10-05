@@ -282,10 +282,10 @@ npm test --prefix packages/semantic -- --run
 
 ### Browser Tests (Playwright)
 
-Browser tests are in `packages/core/src/compatibility/browser-tests/semantic-multilingual.spec.ts`
+Browser tests are in `packages/core/browser-tests/semantic-multilingual.spec.ts`
 
 ```bash
-npx playwright test packages/core/src/compatibility/browser-tests/semantic-multilingual.spec.ts
+npx playwright test packages/core/browser-tests/semantic-multilingual.spec.ts
 ```
 
 ### Live Demo

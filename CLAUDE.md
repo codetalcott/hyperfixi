@@ -123,7 +123,7 @@ npm run build:browser --prefix packages/core        # Build browser bundle
 npm run typecheck --prefix packages/core            # TypeScript validation
 
 # Browser testing (Playwright) - MUST run from packages/core directory
-cd packages/core && npx playwright test src/compatibility/
+cd packages/core && npx playwright test browser-tests/
 ```
 
 > **Known issue: esbuild daemon hang.** Core vitest tests complete successfully but the
@@ -889,14 +889,14 @@ npm test --prefix packages/core -- --run src/expressions/logical.test.ts
 cd packages/core && npx playwright test --grep "Command Compatibility"
 
 # Bundle compatibility matrix - tests all bundles against gallery examples
-cd packages/core && npx playwright test src/compatibility/browser-tests/bundle-compatibility.spec.ts
+cd packages/core && npx playwright test browser-tests/bundle-compatibility.spec.ts
 ```
 
 **Bundle Test Matrix:**
 
 The bundle compatibility test suite automatically tests every built bundle against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
 
-- Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
+- Location: `packages/core/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
 - Bundles: hs (the engine's `hyperfixi-hs.js`, ~34 KB) and browser (`hyperfixi.js`: the same file since C-R4b, under core's name; release-smoke's `--matrix` runs it from core's tarball) — core's own bundles retired in Phase C3
 - Prints ASCII compatibility matrix showing feature support across all bundles
