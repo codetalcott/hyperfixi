@@ -47,11 +47,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@lokascript/hyperscript-adapter` hands the host the English render, so a page written in
   another language with a view-transition swap failed to parse and ran nothing. Foreign renders
   keep the tail.
-- **`@lokascript/hyperscript-adapter`'s per-language bundles write upstream's `swap`.** Their
-  renderer (`hyperscript-i18n-<lang>.global.js` and the regional bundles) wrote every
-  `swap #a with #b` as `swap of #a with #b`, and core's view-transition tail as written; the
-  engine rejects both, so the script kept its author's text and did not run. They now write
-  `swap #a with #b`, the tail as `start view transition … end`, and upstream's block as read.
+- **`@lokascript/hyperscript-adapter`'s per-language and regional bundles render English with
+  semantic's renderer.** They rendered with their own English writer, which saved English's
+  language data and had drifted far from semantic's: over the corpus's 3,772 translations, 1,242
+  rendered to valid English that did something else, and 345 to English the engine rejects (the
+  script then kept its author's text and did not run). Every `if` lost its branches,
+  `put … before`/`after` became `put … into`, `from window`, `from elsewhere`, `debounced` and
+  `or <event>` vanished, `<button/> in me` widened to the whole page, `repeat for x in …` lost
+  its binding, and every `swap #a with #b` was written `swap of #a with #b`. They now give exactly
+  what the full `hyperscript-i18n.global.js` gives. English's own module builds through `@lokascript/semantic/core` (its pattern generator and
+  repeat heads, `getRepeatPatternsForLanguage` now exported there), so a bundle holds one copy.
+  Single-language bundles stay at about 4.0.1's size (`-de` 116 KB gzipped); regional bundles
+  are 8–16 KB larger.
 
 ## [4.0.1] - 2026-10-05
 

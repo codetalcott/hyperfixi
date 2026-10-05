@@ -6,8 +6,12 @@
  */
 
 import type { LanguagePattern } from '../types';
+// Through `../core`: `dist/languages/en.js` keeps `../core` external, so it uses
+// core's generator and repeat heads instead of inlining its own copies (and
+// with them the command schemas), which every bundle that also holds core
+// carried twice. In every other build this is core's own module.
+import { generatePatternsForLanguage, getRepeatPatternsForLanguage } from '../core';
 import { englishProfile } from '../generators/profiles/english';
-import { generatePatternsForLanguage } from '../generators/pattern-generator';
 
 // The fetch patterns live in their own leaf module, shared with
 // buildPatternsForLanguage(). This module used to carry a byte-identical copy of
@@ -37,7 +41,6 @@ import { setPossessiveEnglish } from './languages/en/set';
 import { getTogglePatternsEn } from './toggle';
 import { getPutPatternsEn } from './put';
 import { getEventHandlerPatternsEn } from './event-handler';
-import { getRepeatPatternsForLanguage } from './repeat';
 import { getWaitPatternsEn } from './wait';
 import { getViewTransitionPatterns } from './view-transition';
 

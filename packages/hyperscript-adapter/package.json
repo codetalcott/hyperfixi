@@ -109,8 +109,6 @@
     }
   },
   "scripts": {
-    "generate:syntax": "npx tsx scripts/generate-syntax.ts",
-    "prebuild": "npm run generate:syntax",
     "build": "tsup",
     "dev": "tsup --watch",
     "pretest": "../../scripts/ensure-fresh.sh ../semantic ../engine .",

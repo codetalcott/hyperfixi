@@ -188,26 +188,25 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
-#### ~~Three~~ FOUR classes of gate `test:check` does NOT cover
+#### Gates `test:check` does NOT cover
 
 These are required CI checks that no `test:check` invocation reaches, so a green
-local run can still fail CI. The first three cost a full CI round-trip during Arc
-F follow-ups round 2; the fourth cost one on #1034. Run 1–3 whenever a change
-touches `packages/semantic/src/generators/command-schemas.ts`, a language
-profile, or R2's curated execution subset — and run 4 whenever you touch
-**anything**, because it is a dozen cheap scripts that guard the whole repo:
+local run can still fail CI. They cost full CI round-trips during Arc F follow-ups
+round 2 and on #1034. (A fourth, the adapter's generated syntax table, retired with
+the per-language bundles' own English writer on 2026-10-05: the bundles render with
+semantic's renderer.) Run 1–2 whenever a change touches
+`packages/semantic/src/generators/command-schemas.ts`, a language profile, or R2's
+curated execution subset — and run 3 whenever you touch **anything**, because it is
+a dozen cheap scripts that guard the whole repo:
 
 ```bash
 # 1. Vocab consistency (V1–V4 cross-surface check)
 cd packages/testing-framework && npx tsx src/vocab/cli.ts validate
 
-# 2. Generated syntax-table drift (derives from the command schemas)
-npm run test:check --prefix packages/hyperscript-adapter
-
-# 3. The R2 curated-subset lock (part of the testing-framework suite)
+# 2. The R2 curated-subset lock (part of the testing-framework suite)
 npm run test:check --prefix packages/testing-framework
 
-# 4. Everything the `lint-typecheck` JOB runs that no test suite does.
+# 3. Everything the `lint-typecheck` JOB runs that no test suite does.
 #    Eight guard scripts + their two self-tests, then oxlint, then the
 #    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
 #    the FIRST failure hides the rest.
@@ -221,7 +220,8 @@ for t in check-semantic-boundary check-domains-peer-major; do
 done
 npm run lint
 npm run typecheck:scripts --prefix packages/core
-# …plus `npm run typecheck --prefix packages/<each>` for the 32 the job lists.
+# …plus `npm run typecheck --prefix packages/<each>` for the 28 the job lists
+# (grep -oE "npm run typecheck(:[a-z]+)? --prefix packages/[a-z0-9-]+" .github/workflows/ci.yml).
 ```
 
 1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
@@ -229,13 +229,7 @@ npm run typecheck:scripts --prefix packages/core
    `packages/testing-framework/vocab-waivers.json`, keyed `V4|<lang>|<marker>`,
    with a reason. The error aggregates its SITES, so a marker that has shipped
    for years can become newly reportable the moment a second schema uses it.
-2. **`syntax-table.ts`** is generated from the schemas and gated by
-   `derive-syntax.test.ts`. Any change to a role's `svoPosition` or marker
-   restages it: `npm run generate:syntax --prefix packages/hyperscript-adapter`.
-   Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
-   `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
-   needs `--no-verify`.
-3. **The `lint-typecheck` guards include a RATCHET, not lint.**
+2. **The `lint-typecheck` guards include a RATCHET, not lint.**
    `check-semantic-boundary` holds a committed baseline and fails on any increase:
    every place `packages/core/src` imports `@lokascript/*`, per file and per import
    kind. Reach for its `--update` only when the import is genuinely required, and
@@ -244,11 +238,11 @@ npm run typecheck:scripts --prefix packages/core
    `check-layering` guarded core's own engine — #1034 once added two avoidable
    `as unknown as` in `packages/core/src/parser` with every suite green — and
    retired with it in Phase C6.)
-4. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
-5. **`check-domains-peer-major`** is the cross-repo half of the version story.
+4. **`check-domains-peer-major`** is the cross-repo half of the version story.
    `@lokascript/domains` (repo `lokascript-domains`) PEERS on framework /
    semantic / intent, and mcp-server depends on it back — a cycle across two
    repos. The guard reads the lockfile's domains entry and fails unless the

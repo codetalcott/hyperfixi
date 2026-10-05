@@ -5,16 +5,14 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../../../types';
-import { setSchema } from '../../../generators/command-schemas';
+import { SET_VALUE_TYPES } from '../../../generators/role-types';
 
 /**
  * The value takes what the schema's does. The narrower copy matched only the
  * property word of `set x to the value of #d1` and left `of #d1` behind, so
  * the generated pattern, which reads the possessive, never ran.
  */
-const PATIENT_TYPES: ExpectedType[] = [
-  ...(setSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
-];
+const PATIENT_TYPES: ExpectedType[] = [...SET_VALUE_TYPES];
 
 /**
  * English: "set {target} to {value}"

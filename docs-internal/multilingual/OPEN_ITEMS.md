@@ -14,11 +14,11 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (92): parser 46 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (46)
+### 2a. Parser correctness, semantic front-end (45)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
@@ -63,7 +63,6 @@ non-English direct path are the exposed surfaces.
 36. **P36 · pt `para` / sw `kwa` read a bare for-loop's word as the destination marker**, so the loop's `end` closes its handler early · 4624–4625 · 09-26 (PR 8f) · yes (pinned in `behavior-block-openers.test.ts`) · parser · not probed.
 37. **P37 · qu and tr split a trailing number off an identifier**: `behavior Demo15` defines `Demo` · 4626–4627 · 09-26 · no (the test uses letter-only names) · parser (tokenizer) · not probed.
 38. **P38 · bn transformer-era verb-first wait keeps only its first event** · 4559–4561 · 09-26 · no · parser · input-only, low.
-39. **P39 · Slim adapter repeat surface**: the slim renderer drops `times`, so it closes no loop; its engine-INVALID output is deliberate (a safety property). Needs a fix "whole" · 397–403, 4419–4422, 6986–6988 · 08-28 → 09-30 · yes (slim safety pin / `KNOWN_DIVERGENCES`) · parser/adapter · open.
 40. **P40 · de `senden` normalizes to `submit`** (last-wins keyword collision with the send verb). Harmless only because literal matching is value-based · 8104–8106 · 07-12 · no · parser (latent) · open.
 41–44. **P41–P44 · pick grammar deferrals**, "still deferred (named, unchanged)" at the end of pick arc 3, with no later line:
     - **P41** `item`/`items` (loop-variable rename collision)

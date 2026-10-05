@@ -178,6 +178,10 @@ export { render, renderExplicit, translate, toExplicit, fromExplicit } from './e
 // =============================================================================
 
 export { generatePatternsForLanguage } from './generators/pattern-generator';
+// For `languages/en`, which builds English's list itself: through `../core`, its
+// dist file shares these instead of inlining a second copy (the schemas, the
+// generators and every language's repeat heads, ~250 KB unminified).
+export { getRepeatPatternsForLanguage } from './patterns/repeat';
 
 // =============================================================================
 // Cache

@@ -13,8 +13,8 @@
  *
  * This walks the static imports from `src/languages/<lang>.ts`, as the bundler
  * does, and fails on a module core owns that is heavy enough to matter. English
- * is exempt: it builds its patterns with the generator, so its module has always
- * held the schemas.
+ * included: it builds through `../core` (the generator, the repeat heads), which
+ * the per-language adapter bundles rely on, since each carries English to render.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'fs';
@@ -73,12 +73,11 @@ function reach(language: string): string[] {
 
 const LANGUAGES = readdirSync(join(SRC, 'languages'))
   .filter(name => /^[a-z]{2}\.ts$/.test(name))
-  .map(name => name.slice(0, 2))
-  .filter(language => language !== 'en');
+  .map(name => name.slice(0, 2));
 
 describe('a language module copies none of core’s heavy modules', () => {
   it('finds the language modules', () => {
-    expect(LANGUAGES.length).toBe(23);
+    expect(LANGUAGES.length).toBe(24);
   });
 
   it('follows the imports (its own hand-crafted patterns are reached)', () => {

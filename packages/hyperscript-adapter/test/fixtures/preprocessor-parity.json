@@ -219,13 +219,13 @@
     "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
     "full": "on click repeat 3 times add \"<p>Line</p>\" to me end",
-    "slim": "on click repeat 3 add \"<p>Line</p>\" to me"
+    "slim": "on click repeat 3 times add \"<p>Line</p>\" to me end"
   },
   {
     "lang": "ja",
     "input": "#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加",
     "full": "on click tell #panel add .open then wait 200ms then add .visible end",
-    "slim": "on click tell #panel add .open then wait 200ms then add .visible"
+    "slim": "on click tell #panel add .open then wait 200ms then add .visible end"
   },
   {
     "lang": "fr",
@@ -268,6 +268,54 @@
     "input": "on click .active を 切り替え",
     "full": "on click toggle .active",
     "slim": "on click toggle .active"
+  },
+  {
+    "lang": "es",
+    "input": "al clic si yo coincide .x agregar .no a yo sino agregar .on a yo fin",
+    "full": "on click if me matches .x add .no to me else add .on to me end",
+    "slim": "on click if me matches .x add .no to me else add .on to me end"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で もし 私 一致する .x 自分 に .no を 追加 そうでなければ 自分 に .on を 追加 終わり",
+    "full": "on click if me matches .x add .no to me else add .on to me end",
+    "slim": "on click if me matches .x add .no to me else add .on to me end"
+  },
+  {
+    "lang": "es",
+    "input": "al clic repeat item en .items agregar .done a item fin",
+    "full": "on click repeat for item in .items add .done to item end",
+    "slim": "on click repeat for item in .items add .done to item end"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で repeat item の中 .items item に .done を 追加 終わり",
+    "full": "on click repeat for item in .items add .done to item end",
+    "slim": "on click repeat for item in .items add .done to item end"
+  },
+  {
+    "lang": "es",
+    "input": "al clic poner \"<p>x</p>\" antes de yo",
+    "full": "on click put \"<p>x</p>\" before me",
+    "slim": "on click put \"<p>x</p>\" before me"
+  },
+  {
+    "lang": "ja",
+    "input": "クリック を で \"<p>x</p>\" 前に 自分 を 置く",
+    "full": "on click put \"<p>x</p>\" before me",
+    "slim": "on click put \"<p>x</p>\" before me"
+  },
+  {
+    "lang": "es",
+    "input": "al tecla abajo de ventana alternar .active",
+    "full": "on keydown from window toggle .active",
+    "slim": "on keydown from window toggle .active"
+  },
+  {
+    "lang": "ja",
+    "input": "ウィンドウ から キーダウン を で .active を 切り替え",
+    "full": "on keydown from window toggle .active",
+    "slim": "on keydown from window toggle .active"
   },
   {
     "lang": "es",
