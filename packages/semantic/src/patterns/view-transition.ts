@@ -61,30 +61,31 @@ function viewTransitionPatterns(language: string): () => LanguagePattern[] {
   ];
 }
 
-export const getViewTransitionPatternsAr = viewTransitionPatterns('ar');
-export const getViewTransitionPatternsBn = viewTransitionPatterns('bn');
-export const getViewTransitionPatternsDe = viewTransitionPatterns('de');
-export const getViewTransitionPatternsEn = viewTransitionPatterns('en');
-export const getViewTransitionPatternsEs = viewTransitionPatterns('es');
-export const getViewTransitionPatternsFr = viewTransitionPatterns('fr');
-export const getViewTransitionPatternsHe = viewTransitionPatterns('he');
-export const getViewTransitionPatternsHi = viewTransitionPatterns('hi');
-export const getViewTransitionPatternsId = viewTransitionPatterns('id');
-export const getViewTransitionPatternsIt = viewTransitionPatterns('it');
-export const getViewTransitionPatternsJa = viewTransitionPatterns('ja');
-export const getViewTransitionPatternsKo = viewTransitionPatterns('ko');
-export const getViewTransitionPatternsMs = viewTransitionPatterns('ms');
-export const getViewTransitionPatternsPl = viewTransitionPatterns('pl');
-export const getViewTransitionPatternsPt = viewTransitionPatterns('pt');
-export const getViewTransitionPatternsQu = viewTransitionPatterns('qu');
-export const getViewTransitionPatternsRu = viewTransitionPatterns('ru');
-export const getViewTransitionPatternsSw = viewTransitionPatterns('sw');
-export const getViewTransitionPatternsTh = viewTransitionPatterns('th');
-export const getViewTransitionPatternsTl = viewTransitionPatterns('tl');
-export const getViewTransitionPatternsTr = viewTransitionPatterns('tr');
-export const getViewTransitionPatternsUk = viewTransitionPatterns('uk');
-export const getViewTransitionPatternsVi = viewTransitionPatterns('vi');
-export const getViewTransitionPatternsZh = viewTransitionPatterns('zh');
+// Pure, so a language's bundle keeps only the one its manifest imports.
+export const getViewTransitionPatternsAr = /* @__PURE__ */ viewTransitionPatterns('ar');
+export const getViewTransitionPatternsBn = /* @__PURE__ */ viewTransitionPatterns('bn');
+export const getViewTransitionPatternsDe = /* @__PURE__ */ viewTransitionPatterns('de');
+export const getViewTransitionPatternsEn = /* @__PURE__ */ viewTransitionPatterns('en');
+export const getViewTransitionPatternsEs = /* @__PURE__ */ viewTransitionPatterns('es');
+export const getViewTransitionPatternsFr = /* @__PURE__ */ viewTransitionPatterns('fr');
+export const getViewTransitionPatternsHe = /* @__PURE__ */ viewTransitionPatterns('he');
+export const getViewTransitionPatternsHi = /* @__PURE__ */ viewTransitionPatterns('hi');
+export const getViewTransitionPatternsId = /* @__PURE__ */ viewTransitionPatterns('id');
+export const getViewTransitionPatternsIt = /* @__PURE__ */ viewTransitionPatterns('it');
+export const getViewTransitionPatternsJa = /* @__PURE__ */ viewTransitionPatterns('ja');
+export const getViewTransitionPatternsKo = /* @__PURE__ */ viewTransitionPatterns('ko');
+export const getViewTransitionPatternsMs = /* @__PURE__ */ viewTransitionPatterns('ms');
+export const getViewTransitionPatternsPl = /* @__PURE__ */ viewTransitionPatterns('pl');
+export const getViewTransitionPatternsPt = /* @__PURE__ */ viewTransitionPatterns('pt');
+export const getViewTransitionPatternsQu = /* @__PURE__ */ viewTransitionPatterns('qu');
+export const getViewTransitionPatternsRu = /* @__PURE__ */ viewTransitionPatterns('ru');
+export const getViewTransitionPatternsSw = /* @__PURE__ */ viewTransitionPatterns('sw');
+export const getViewTransitionPatternsTh = /* @__PURE__ */ viewTransitionPatterns('th');
+export const getViewTransitionPatternsTl = /* @__PURE__ */ viewTransitionPatterns('tl');
+export const getViewTransitionPatternsTr = /* @__PURE__ */ viewTransitionPatterns('tr');
+export const getViewTransitionPatternsUk = /* @__PURE__ */ viewTransitionPatterns('uk');
+export const getViewTransitionPatternsVi = /* @__PURE__ */ viewTransitionPatterns('vi');
+export const getViewTransitionPatternsZh = /* @__PURE__ */ viewTransitionPatterns('zh');
 
 /** The view-transition head for a language, as its module registered it. */
 export function getViewTransitionPatternsForLanguage(language: string): LanguagePattern[] {
