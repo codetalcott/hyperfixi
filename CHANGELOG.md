@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-10-05
+
+Fixes for 4.0.0: the per-language adapter bundles read every language again, and the MCP server's
+documentation and core's metadata describe the 4.0 engine.
+
 ### Fixed
 
 - **`@lokascript/hyperscript-adapter`: the self-contained per-language and regional bundles read
@@ -1090,7 +1095,9 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/codetalcott/hyperfixi/compare/v4.0.0...v4.0.1
+[4.0.0]: https://github.com/codetalcott/hyperfixi/compare/v3.3.0...v4.0.0
 [3.3.0]: https://github.com/codetalcott/hyperfixi/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/codetalcott/hyperfixi/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/codetalcott/hyperfixi/compare/v3.0.0...v3.1.0
