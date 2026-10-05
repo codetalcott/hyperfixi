@@ -14,18 +14,18 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (92): parser 46 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (45)
+### 2a. Parser correctness, semantic front-end (46)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
 goes through core's parser; `translate()`, MCP `translate_code`, the corpus writer and the
 non-English direct path are the exposed surfaces.
 
-1. **P1 · `tell … end` not modeled**: `tell #modal show end then log 2` loses `then log 2`, and `tell … end log 2` pulls the `log` into the body, in every language. Needs a real tell node, as loops got in PR 7 · 4765–4767 · 2026-09-26 (PR 16) · gate no · parser · **probe confirmed** (en and es).
+1. **P1 · `tell … end` not modeled**: `tell #modal show end then log 2` loses `then log 2`, and `tell … end log 2` pulls the `log` into the body, in every language. Needs a real tell node, as loops got in PR 7 (a view-transition block reuses the loop fold since 2026-10-05: `tell` could join the walker's `BLOCK_HEAD_ACTIONS` the same way) · 4765–4767 · 2026-09-26 (PR 16) · gate no · parser · **probe confirmed** (en and es).
 2. **P2 · Class names that begin with an event-modifier word are dropped**: `.stop*`, `.prevent*`, `.once*`, `.debounce*`, `.throttle*` do not parse. `on click toggle .stopped` renders `on click`, silently, in English and so in every language · 4449–4452 · 2026-09-26 (PR 7b) · no · parser · **probe confirmed**.
 3. **P3 · A bare `if … end` (no handler) parses as an event handler**: `if true add .yes to me end` → `on true add .yes to me`, and `if p then toggle .a end` → `on p toggle .a`, in every language including English · 4461–4462, 5429–5430 · 09-26 · no · parser · **probe confirmed**.
 4. **P4 · Bare `if #a and #b log "ok" end` loses its body**: English renders `if #a and #b`. The top-level and-conjunct drop, first logged in July · 4232–4233, 8273–8276 · 07-13 / 07-12 · no (input-coverage diagnostic only) · parser · **probe confirmed**.
@@ -73,6 +73,7 @@ non-English direct path are the exposed surfaces.
 
     All at 1675–1678 · 07-20 · no · parser · not probed. Out of corpus; English `pick items 1 to 3 from arr` renders `… of arr`.
 45. **P45 · `set element's x to …` is not read as an element-scoped set**: upstream's spelling for a behavior's state (its own tested idiom, and the one that defaults a parameter so the handlers see it — `set :x` writes a different scope on both engines). en→en keeps it; every other language renders `element` as a noun with an English `'s` (zh `元素's cls`, ru `элемент's cls`) and reads it back as a dropped set or an invalid render; `set element x to …` drops in en too. Found 2026-10-03 rewriting @hyperfixi/behaviors in upstream's idioms: seven of its sources use it (none a corpus row; Sortable, a corpus row, defaults in a handler local instead). Repro: `translate("on click set element's cls to 'a'", 'en', 'zh')` and back · — · 10-03 · no (out of corpus) · parser + render · **probe confirmed**.
+46. **P46 · `swap` with `me` or a property operand does not round-trip**: `on click swap #target with me` comes back as `swap #target` / `swap with #target` / `swap me` in 21 languages, and `swap #target's textContent with my textContent` loses an operand or its property in 18 (qu/tr write `swap #target with my textContent`, valid and wrong); `swap #a with #b` is fine. Both renderers (semantic's, and the adapter's slim one the per-language bundles use) · 2026-10-05 (found by the D6 reader) · no (no corpus row swaps `me` or a property) · parser (role binding) · probe confirmed.
 
 ### 2b. Render / naturalness (6)
 
@@ -175,7 +176,6 @@ words; the adapter's English is what changed. Still read and written AS WRITTEN:
 - ~~**D3 · `my?.a?.b`**~~ DONE C2c: English writes `my a.b`.: renders `my ?.a?.b`. A property chain is null-safe on both engines, so the render can drop the `?` · 10-01 · no · render · **probe confirmed**.
 - ~~**D4 · A bare URL with a spaced `${…}`**~~ DONE C2c: English writes a backtick template and `the value of previous <input/>`. (`fetch /search?q=${my value}`) and **`previous <input/>.value`**: both render as written; upstream wants a backtick string and `the value of previous <input/>` · 10-01 · no · render · **probe confirmed**.
 - **D5 · Commands semantic has a schema for and the engine has no keyword for** — PARTLY DONE C2c: English writes `call history.pushState/replaceState(null,'',X)`, `call navigator.clipboard.writeText(text)`, `put X at start of Y`, and the `swap` strategies as `put … into/before/after/at start of/at end of`, `put … into X's outerHTML`, `remove X`; `clone`, `process` and `copy <element>` are still written as read (no measured equivalent): `push`, `replace` (DECIDED 2026-10-03: dropped, no engine addition; the two pages write `call history.pushState(null, '', X)` / `replaceState`, which is what the renderer should write for a `push`/`replace` node — no corpus row has one), `copy`, `prepend`, `process`, `clone`, and core's `swap` strategies (`swap innerHTML of X with Y` reads on upstream as an exchange of two values). A translation that uses one renders English no engine but core runs · 10-01 · no · schema/owner · measured (`packages/engine/README.md`).
-- **D6 · ~~Two~~ One corpus row is still core-only**: ~~fetch-formdata~~ (DONE C2c: rewritten as `js(me) return new FormData(me.closest('form')) end then fetch … body:it`, which posts real FormData on both engines — core's `as FormData` had sent a string) and swap-view-transition (semantic has no schema for upstream's `start view transition … end`; its render is `transition put`) · 10-01 · engine-verification.json recorded it `lokascript` (core); since C4b, whose engine leg is `@hyperfixi/engine`, it is NULL: valid on neither engine · parser/owner · **probe confirmed**. **Narrowed 2026-10-05:** English now WRITES core's tail (`swap`/`morph` … `using view transition`) as upstream's `start view transition … end` (`semantic/src/explicit/upstream-spelling.ts`), so a page in another language that writes the tail runs on the engine; the row's en-reference allowlist entry says so. What stays open is READING the block: `start view transition swap #a with #b end` still parses as a `transition` whose patient is the body's verb (reported unconsumed). Measured: clauses are split at `then` before the clause parser sees them, so a clause-level rewrite cannot tell `… swap #a with #b end then add .x` from `… swap #a with #b then add .x end`; it needs the body walker to count `start view transition` as an opener, and, for bodies other than swap/morph, a block action (the `tell` model) with a keyword in 23 languages. Then the row moves to upstream's spelling.
 
 ### 2i. User-facing docs and surfaces (found by the 2026-09-30 product survey)
 

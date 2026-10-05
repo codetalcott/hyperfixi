@@ -401,9 +401,9 @@ export const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'swap-view-transition',
     title: 'Swap Content With View Transition',
-    raw_code: 'on click swap #a with #b using view transition',
+    raw_code: 'on click start view transition swap #a with #b end',
     description:
-      'Swap two elements inside a document.startViewTransition() so the browser animates the change',
+      'Swap two elements inside a view transition (document.startViewTransition) so the browser animates the change',
     feature: 'dom-manipulation',
   },
 

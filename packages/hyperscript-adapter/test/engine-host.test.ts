@@ -79,7 +79,7 @@ describe('the plugin on @hyperfixi/engine', () => {
     }
   );
 
-  // Upstream's own block, read in every language (OPEN_ITEMS D6): its head is
+  // Upstream's own block, read in every language (was OPEN_ITEMS D6): its head is
   // the same English words in all 24. Until the reader knew it, the block parsed
   // as a `transition` of the body's verb and the body was lost.
   it.each(['es', 'ja'])("%s: upstream's view transition block runs in one", async language => {

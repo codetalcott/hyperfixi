@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/semantic` reads upstream's `start view transition … end`, in all 24 languages.**
+  `on click start view transition swap #a with #b end` parsed as a `transition` command whose
+  patient was `swap`, so `translate`, MCP `translate_code` and the corpus lost the block and its
+  body (`on click transition swap`), and validation reported the rest as unconsumed input. The
+  block is now a `viewTransition` command with its `body` (`ViewTransitionSemanticNode`;
+  `isViewTransitionBlock` from the package root), nested the way a loop's body is: a command after
+  the block's `end` stays after it, and the `end` no longer closes the handler, behavior or `def`
+  around it. `start [a] view transition [using "<type>"]` is written in English in every language,
+  as core's `using view transition` tail already is (a browser API's name, which no profile
+  translates). The corpus row `swap-view-transition` is now written this way and parses on both
+  engines.
+
 ### Changed
 
 - **Single-language bundles hold only their own language's hand-crafted patterns.** Each
@@ -29,8 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   both parse; the tail itself is rejected by both. Every language reads the tail, and
   `@lokascript/hyperscript-adapter` hands the host the English render, so a page written in
   another language with a view-transition swap failed to parse and ran nothing. Foreign renders
-  keep the tail. Reading upstream's block back is still open: semantic reports it as unconsumed
-  input.
+  keep the tail.
+- **`@lokascript/hyperscript-adapter`'s per-language bundles write upstream's `swap`.** Their
+  renderer (`hyperscript-i18n-<lang>.global.js` and the regional bundles) wrote every
+  `swap #a with #b` as `swap of #a with #b`, and core's view-transition tail as written; the
+  engine rejects both, so the script kept its author's text and did not run. They now write
+  `swap #a with #b`, the tail as `start view transition … end`, and upstream's block as read.
 
 ## [4.0.1] - 2026-10-05
 

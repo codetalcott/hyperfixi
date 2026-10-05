@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource, component); parse-level for plain sources",
       "html": "HTML-markup patterns: every _= / script-tag source, including those inside component template bodies, verified on both legs; template components rendered on both legs (non-empty, nothing logged or thrown); the retired core-only hx-live/sse-*/ws-* markup earns no credit on either leg; a row with no source earns no credit"
     },
-    "lokascriptVersion": "3.3.0",
+    "lokascriptVersion": "4.0.1",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -145,7 +145,7 @@
     "socket-send": "both",
     "stagger-animation": "both",
     "swap-content": "both",
-    "swap-view-transition": null,
+    "swap-view-transition": "both",
     "tabs-aria": "both",
     "tabs-basic": "both",
     "tabs-content": "both",
@@ -732,10 +732,8 @@
       "hyperscript": true
     },
     "swap-view-transition": {
-      "lokascript": false,
-      "hyperscript": false,
-      "lokascriptError": "Unexpected Token : using",
-      "hyperscriptError": "Unexpected Token : using"
+      "lokascript": true,
+      "hyperscript": true
     },
     "tabs-aria": {
       "lokascript": true,

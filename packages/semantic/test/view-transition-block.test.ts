@@ -1,6 +1,6 @@
 /**
  * Upstream's `start [a] view transition [using "<type>"] <commands> end`
- * (OPEN_ITEMS D6). It used to parse as a `transition` command whose patient was
+ * (was OPEN_ITEMS D6). It used to parse as a `transition` command whose patient was
  * the body's verb (`on click transition swap`), in English and so in every
  * translation, with the block and its body lost.
  *
@@ -87,6 +87,12 @@ const CASES: [string, string][] = [
     'on click start view transition swap #a with #b end then add .x to me',
   ],
   ['start view transition add .x to me end', 'start view transition add .x to me end'],
+  // A `then` after the head is read, and not written: the engine rejects it
+  // ("Expected 'end' but found 'then'").
+  [
+    'on click start view transition using "slide" then put "x" into me end then log 1',
+    'on click start view transition using "slide" put "x" into me end then log 1',
+  ],
 ];
 
 // The `end` closes the block, not the handler, the behavior or the def: before

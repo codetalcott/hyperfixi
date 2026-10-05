@@ -213,8 +213,9 @@ describe('the keyword anchor: what the tail-less forms cost', () => {
 // pattern let the bare `[{method}]` slot eat the `sa` the pattern itself owes.
 // All 24 languages now round-trip the swap tail.
 // English writes the tail as upstream's `start view transition … end`
-// (src/explicit/upstream-spelling.ts), which the reader does not read back yet
-// (OPEN_ITEMS D6): every other language's render still carries the tail.
+// (src/explicit/upstream-spelling.ts), which reads back as a view-transition
+// block around the swap, not as the tail (view-transition-block.test.ts): every
+// other language's render still carries the tail.
 const SWAP_DEFERRED = new Set<string>(['en']);
 
 const PROCESS_DEFERRED = new Set([
