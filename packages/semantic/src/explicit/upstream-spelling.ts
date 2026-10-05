@@ -49,7 +49,9 @@ import type {
   SemanticNode,
   SemanticRole,
   SemanticValue,
+  ViewTransitionSemanticNode,
 } from '../types';
+import { isViewTransitionBlock } from '../types';
 
 type Roles = ReadonlyMap<SemanticRole, SemanticValue>;
 
@@ -139,8 +141,6 @@ const SWAP_PUT_MANNER: Readonly<Record<string, string>> = {
 /** The commands whose view-transition tail upstream spells as a block. */
 const VIEW_TRANSITION_COMMANDS: ReadonlySet<string> = new Set(['swap', 'morph']);
 
-const IN_VIEW_TRANSITION = Symbol('in view transition');
-
 /** The `manner` the reader gives `using view transition`: the word `transition`. */
 function isViewTransitionManner(value: SemanticValue | undefined): boolean {
   const word =
@@ -148,29 +148,31 @@ function isViewTransitionManner(value: SemanticValue | undefined): boolean {
   return typeof word === 'string' && word.toLowerCase() === 'transition';
 }
 
-/**
- * The command an English render writes inside `start view transition … end`,
- * when `node` is one this rewrite marked; otherwise undefined.
- */
-export function viewTransitionBody(node: SemanticNode): SemanticNode | undefined {
-  if (!(IN_VIEW_TRANSITION in node)) return undefined;
-  const { [IN_VIEW_TRANSITION]: _marked, ...body } = node as SemanticNode & {
-    [IN_VIEW_TRANSITION]?: true;
-  };
-  return body as SemanticNode;
-}
-
 function rewriteCommand(original: CommandSemanticNode): SemanticNode {
+  if (isViewTransitionBlock(original)) {
+    const block: ViewTransitionSemanticNode = {
+      ...original,
+      roles: rewriteRoles(original.roles),
+      body: rewriteAll(original.body),
+    };
+    return block;
+  }
   if (
     VIEW_TRANSITION_COMMANDS.has(original.action) &&
     isViewTransitionManner(original.roles.get('manner' as SemanticRole))
   ) {
-    // The tail leaves the command, so a strategy swap rewritten to a `put`
-    // below keeps its transition too.
+    // The tail leaves the command for a block around it, so a strategy swap
+    // rewritten to a `put` below keeps its transition too.
     const roles = new Map(original.roles);
     roles.delete('manner' as SemanticRole);
-    const marked = { ...rewriteCommand({ ...original, roles }), [IN_VIEW_TRANSITION]: true };
-    return marked;
+    const block: ViewTransitionSemanticNode = {
+      kind: 'command',
+      action: 'viewTransition',
+      roles: new Map(),
+      body: [rewriteCommand({ ...original, roles })],
+      ...(original.metadata ? { metadata: original.metadata } : {}),
+    };
+    return block;
   }
   const node: CommandSemanticNode = { ...original, roles: rewriteRoles(original.roles) };
   const roles = node.roles;

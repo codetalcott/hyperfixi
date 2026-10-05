@@ -11,6 +11,7 @@ import { getGetPatternsDe } from '../get';
 import { getIncrementPatternsDe } from '../increment';
 import { getDecrementPatternsDe } from '../decrement';
 import { getFetchPatternsDe } from '../fetch';
+import { getViewTransitionPatternsDe } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['event-handler', getEventHandlerPatternsDe],
@@ -21,4 +22,5 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['increment', getIncrementPatternsDe],
   ['decrement', getDecrementPatternsDe],
   ['fetch', getFetchPatternsDe],
+  ['viewTransition', getViewTransitionPatternsDe],
 ];

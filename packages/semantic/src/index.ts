@@ -68,6 +68,7 @@ export type {
   CompoundSemanticNode,
   LoopSemanticNode,
   LoopVariant,
+  ViewTransitionSemanticNode,
   SemanticMetadata,
   SourcePosition,
   EventModifiers,
@@ -111,6 +112,7 @@ export {
   createCompoundNode,
   createConditionalNode,
   createLoopNode,
+  isViewTransitionBlock,
 } from './types';
 
 // =============================================================================

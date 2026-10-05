@@ -127,6 +127,18 @@ function openerActionOf(
 }
 
 /**
+ * `start [a] view transition`, the head of a view-transition block, whose `end`
+ * closes it. Its words are English in every language (patterns/view-transition.ts),
+ * so they are matched as written.
+ */
+function opensViewTransition(tokens: readonly LanguageToken[], j: number): boolean {
+  const word = (k: number): string | undefined => tokens[k]?.value.toLowerCase();
+  if (word(j) !== 'start') return false;
+  const view = word(j + 1) === 'a' ? j + 2 : j + 1;
+  return word(view) === 'view' && word(view + 1) === 'transition';
+}
+
+/**
  * Whether `tokens[j]` opens a nested block for depth tracking. One word per
  * block does, though several opener words can head one: counting each gave a
  * behavior's handler an extra depth, so its `end` closed nothing and every
@@ -143,6 +155,7 @@ function openerActionOf(
  *   upstream reads it.
  */
 function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
+  if (opensViewTransition(tokens, j)) return true;
   const tok = tokens[j];
   const action = openerActionOf(tok, forms);
   if (!action || action === 'while') return false;

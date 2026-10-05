@@ -56,6 +56,7 @@ export type ActionType =
   | 'show'
   | 'hide'
   | 'transition'
+  | 'viewTransition'
   // Events
   | 'on'
   | 'trigger'
@@ -396,6 +397,27 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly loopVariable?: string;
   /** Index variable name if specified (e.g., 'i' in 'for item in list index i') */
   readonly indexVariable?: string;
+}
+
+/**
+ * Upstream's `start view transition [using "<type>"] <commands> end`: a command
+ * whose body runs as the update of `document.startViewTransition`. The clause
+ * walker nests the body under the head as it nests a loop's, so a command after
+ * the block's `end` stays after it. A head with no `body` is one whose extent the
+ * parse did not see; an empty `body` is a block its own `end` closed.
+ */
+export interface ViewTransitionSemanticNode extends CommandSemanticNode {
+  readonly action: 'viewTransition';
+  readonly body: SemanticNode[];
+}
+
+/** A `start view transition … end` block, its body attached. */
+export function isViewTransitionBlock(node: SemanticNode): node is ViewTransitionSemanticNode {
+  return (
+    node.kind === 'command' &&
+    node.action === 'viewTransition' &&
+    Array.isArray((node as { body?: unknown }).body)
+  );
 }
 
 /**

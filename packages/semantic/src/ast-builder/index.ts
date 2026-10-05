@@ -24,6 +24,7 @@ import type {
   SemanticRole,
   SemanticValue,
 } from '../types';
+import { isViewTransitionBlock } from '../types';
 
 import { convertValue, isImplicitValue } from './value-converters';
 import { resolveCommandMapper, type CommandMapperResult } from './command-mappers';
@@ -293,6 +294,21 @@ export class ASTBuilder {
    * Build a CommandNode from a CommandSemanticNode.
    */
   private buildCommand(node: CommandSemanticNode): CommandNode {
+    // `start view transition [using "<type>"] <body> end`: the body is the one
+    // block arg, as a loop's is (buildLoop), and the type the `using` modifier.
+    if (isViewTransitionBlock(node)) {
+      const body = {
+        type: 'block',
+        commands: this.buildStatements(node.body),
+      } as unknown as ExpressionNode;
+      const style = node.roles.get('style');
+      return {
+        type: 'command',
+        name: 'viewTransition',
+        args: [body],
+        ...(style ? { modifiers: { using: convertValue(style) } } : {}),
+      };
+    }
     // A registered mapper wins over the schema's declarative `ast` descriptor,
     // which in turn wins over the blanket generic mapping below.
     const mapper = resolveCommandMapper(node.action);

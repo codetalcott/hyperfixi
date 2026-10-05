@@ -22,6 +22,7 @@ import type {
   PatternMatchResult,
   Diagnostic,
   WaitAlternative,
+  ViewTransitionSemanticNode,
 } from '../types';
 import {
   createCommandNode,
@@ -33,6 +34,7 @@ import {
   createLiteral,
   createReference,
   isValidReference,
+  isViewTransitionBlock,
   withPosition,
 } from '../types';
 import {
@@ -80,12 +82,14 @@ import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
 
 /**
- * Loop heads whose body the clause walker nests into a {@link LoopSemanticNode}.
- * `while` is not one: a standalone `while` node is the SOV fronted while-phrase
- * that {@link SemanticParserImpl.foldFrontedWhileIntoRepeat} merges into its
- * `repeat`, never a loop of its own.
+ * Heads whose body the clause walker nests under them: the loop heads, folded
+ * into a {@link LoopSemanticNode}, and `start view transition`'s, which keeps its
+ * body as a {@link ViewTransitionSemanticNode}. `while` is not one: a standalone
+ * `while` node is the SOV fronted while-phrase that
+ * {@link SemanticParserImpl.foldFrontedWhileIntoRepeat} merges into its `repeat`,
+ * never a loop of its own.
  */
-const LOOP_HEAD_ACTIONS = new Set(['repeat', 'for']);
+const BLOCK_HEAD_ACTIONS = new Set(['repeat', 'for', 'viewTransition']);
 
 /**
  * Where the clause walker consumed a loop's closing `end`. It lives only in the
@@ -102,13 +106,23 @@ function isLoopClose(entry: WalkEntry): entry is LoopCloseMarker {
   return entry === LOOP_CLOSE;
 }
 
-/** A loop head the walker emitted flat: a `repeat`/`for` command with no body. */
+/**
+ * A block head the walker emitted flat: a `repeat`/`for` command with no body,
+ * or a view transition's head with none attached (an empty body is a block its
+ * own `end` closed: `start view transition end`).
+ */
 function isOpenLoopHead(entry: WalkEntry): entry is CommandSemanticNode {
-  if (isLoopClose(entry) || entry.kind !== 'command' || !LOOP_HEAD_ACTIONS.has(entry.action)) {
+  if (isLoopClose(entry) || entry.kind !== 'command' || !BLOCK_HEAD_ACTIONS.has(entry.action)) {
     return false;
   }
   const body = (entry as { body?: unknown }).body;
+  if (entry.action === 'viewTransition') return body === undefined;
   return !(Array.isArray(body) && body.length > 0);
+}
+
+/** A node the walker nested: a loop, or a view transition with its body. */
+function isNestedBlock(node: SemanticNode | undefined): boolean {
+  return !!node && (node.kind === 'loop' || isViewTransitionBlock(node));
 }
 
 /** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
@@ -1879,7 +1893,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // so a top-level `repeat …`/`for …` routes to tryTopLevelLoop instead.
       if (
         commandMatch.consumedTokens < tokens.tokens.length &&
-        LOOP_HEAD_ACTIONS.has(commandMatch.pattern.command)
+        BLOCK_HEAD_ACTIONS.has(commandMatch.pattern.command)
       ) {
         const loop = this.tryTopLevelLoop(tokens, commandPatterns, language);
         if (loop) {
@@ -3752,6 +3766,10 @@ export class SemanticParserImpl implements ISemanticParser {
     closed = false
   ): SemanticNode {
     if (body.length === 0 && !closed) return head;
+    if (head.action === 'viewTransition') {
+      const block: ViewTransitionSemanticNode = { ...head, action: 'viewTransition', body };
+      return block;
+    }
     const loopType = head.roles.get('loopType');
     // A number where the loop's form goes is its count: a pattern whose count
     // slot comes second took the count for the form, and the word after it —
@@ -3825,10 +3843,10 @@ export class SemanticParserImpl implements ISemanticParser {
       return null;
     }
     const [first] = body;
-    if (body.length === 1 && first.kind === 'loop') return first;
+    if (body.length === 1 && isNestedBlock(first)) return first;
     if (body.length === 1 && first.kind === 'compound') {
       const compound = first as CompoundSemanticNode;
-      if (compound.statements[0]?.kind === 'loop') {
+      if (isNestedBlock(compound.statements[0])) {
         // Mean statement confidence, as tryTopLevelCommandSequence does.
         const confidences = compound.statements.map(s => s.metadata?.confidence ?? 0.75);
         return createCompoundNode(compound.statements, compound.chainType, {

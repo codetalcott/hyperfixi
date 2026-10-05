@@ -2601,6 +2601,38 @@ export const transitionSchema: CommandSchema = {
 };
 
 /**
+ * `start [a] view transition [using "<type>"] <commands> end`: upstream's block,
+ * whose body runs as the update of `document.startViewTransition` (the engine's
+ * `commands/animation.ts`). The opener is written in English in all 24
+ * languages, as the `using view transition` tail already is
+ * (USING_VIEW_MARKER_ALL_LANGS: a hyperscript-specific phrase with no native
+ * translation), so no profile carries a keyword and nothing is generated:
+ * `patterns/view-transition.ts` is every language's pattern (`structuralOnly`).
+ * The clause walker nests the body under the head as it nests a loop's
+ * (ViewTransitionSemanticNode).
+ */
+export const viewTransitionSchema: CommandSchema = {
+  action: 'viewTransition',
+  description: 'Run the body inside a view transition',
+  category: 'dom-visibility',
+  primaryRole: 'style',
+  hasBody: true,
+  structuralOnly: true,
+  roles: [
+    {
+      role: 'style',
+      description: 'The transition type (`using "slide"`), passed as `types: [type]`',
+      required: false,
+      // The engine reads a STRING only (`p.matchType('STRING')`).
+      expectedTypes: ['literal'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: { en: 'using' },
+    },
+  ],
+};
+
+/**
  * Clone command: clones an element.
  */
 export const cloneSchema: CommandSchema = {
@@ -3843,6 +3875,7 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   replace: replaceSchema,
   process: processSchema,
   transition: transitionSchema,
+  viewTransition: viewTransitionSchema,
   clone: cloneSchema,
   focus: focusSchema,
   blur: blurSchema,

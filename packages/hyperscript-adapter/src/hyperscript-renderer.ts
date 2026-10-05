@@ -16,6 +16,7 @@ import type {
   EventHandlerSemanticNode,
   CompoundSemanticNode,
   LoopSemanticNode,
+  ViewTransitionSemanticNode,
 } from '@lokascript/semantic/core';
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,12 @@ const BLOCK_HEADER_ACTIONS = new Set(['repeat', 'for', 'while', 'tell']);
  * the following hyperscript into the JavaScript body.
  */
 const BLOCK_NEEDS_TRAILING_END = new Set(['js']);
+
+/**
+ * The commands whose `using view transition` tail upstream writes as a block
+ * around them (semantic's explicit/upstream-spelling.ts).
+ */
+const VIEW_TRANSITION_COMMANDS = new Set(['swap', 'morph']);
 
 // ---------------------------------------------------------------------------
 // Main entry point
@@ -130,7 +137,7 @@ function renderCompound(node: CompoundSemanticNode): string {
   for (let i = 1; i < rendered.length; i++) {
     const prev = node.statements[i - 1];
     const cur = node.statements[i];
-    const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+    const afterBlockHeader = prev.kind === 'command' && isFlatBlockHeader(prev);
     // Consecutive top-level `bind` features are separate reactive features, not
     // a then-chain: `bind $x to #a then bind $x to #b` is rejected ("Unexpected
     // Token : then" between features).
@@ -147,7 +154,53 @@ function renderCompound(node: CompoundSemanticNode): string {
   return out;
 }
 
+/** A block header whose body is the statements after it: a view transition's has its own. */
+function isFlatBlockHeader(node: SemanticNode): boolean {
+  if (node.action === 'viewTransition') return !Array.isArray((node as { body?: unknown }).body);
+  return BLOCK_HEADER_ACTIONS.has(node.action);
+}
+
+/**
+ * `start view transition [using "<type>"] <body> end`, closed where its body
+ * stops, as semantic's renderer writes it. A head with no body attached opens a
+ * block the statements after it fill.
+ */
+function renderViewTransition(node: SemanticNode): string {
+  const style = node.roles.get('style');
+  const head = style
+    ? `start view transition using ${renderValue(style)}`
+    : 'start view transition';
+  const body = (node as Partial<ViewTransitionSemanticNode>).body;
+  if (!body) return head;
+  const inner = renderCompound({
+    kind: 'compound',
+    action: 'compound',
+    roles: new Map(),
+    statements: body,
+    chainType: 'then',
+  });
+  return inner ? `${head} ${inner} end` : `${head} end`;
+}
+
+/** The `manner` the reader gives `using view transition`: the word `transition`. */
+function isViewTransitionManner(value: SemanticValue | undefined): boolean {
+  const word =
+    value?.type === 'literal' ? value.value : value?.type === 'expression' ? value.raw : undefined;
+  return typeof word === 'string' && word.toLowerCase() === 'transition';
+}
+
 function renderCommand(node: SemanticNode): string {
+  if (node.action === 'viewTransition') return renderViewTransition(node);
+  // Core's `swap … using view transition` tail: upstream runs the command
+  // inside a block, and rejects the tail.
+  if (
+    VIEW_TRANSITION_COMMANDS.has(node.action) &&
+    isViewTransitionManner(node.roles.get('manner' as SemanticRole))
+  ) {
+    const roles = new Map(node.roles);
+    roles.delete('manner' as SemanticRole);
+    return `start view transition ${renderCommand({ ...node, roles })} end`;
+  }
   const syntax = SYNTAX[node.action];
 
   // Known command: use syntax table
@@ -181,7 +234,10 @@ function renderCommand(node: SemanticNode): string {
         (value as { implicit?: unknown }).implicit === true
       )
         continue;
-      if (prep) parts.push(prep);
+      // swap's `of` belongs to its strategy (`swap innerHTML of #t with …`);
+      // with none written it is `swap #a with #b`, and the engine rejects an `of`.
+      const strategyOf = node.action === 'swap' && role === 'destination';
+      if (prep && !(strategyOf && !node.roles.get('method' as SemanticRole))) parts.push(prep);
       parts.push(renderValue(value));
     }
     return parts.join(' ');
