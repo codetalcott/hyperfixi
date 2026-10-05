@@ -10,15 +10,5 @@
     "incremental": false
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/**/__tests__/**",
-    "src/legacy/**/*",
-    "src/performance/benchmarks.ts",
-    "src/test-helpers/**/*",
-    "vitest.config.ts"
-  ]
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.spec.ts", "vitest.config.ts"]
 }

@@ -28,37 +28,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    // Path mapping for clean imports. `paths` is resolved relative to this
-    // tsconfig (baseUrl was dropped — deprecated in TS 6.0, removed in TS 7.0),
-    // so each mapping is prefixed with ./src to preserve the previous resolution.
-    "paths": {
-      "@/*": ["./src/*"],
-      "@test/*": ["./src/test/*"],
-      "@core/*": ["./src/core/*"],
-      "@commands/*": ["./src/commands/*"],
-      "@expressions/*": ["./src/expressions/*"],
-      "@types/*": ["./src/types/*"]
-    },
-
     // Advanced options
     "incremental": true,
     "composite": true
   },
 
-  // `baselines/` holds the engine-migration gate data
-  // (docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0). ast-equivalence.test.ts
-  // imports its baseline as a module, so tsc must know the file exists;
-  // tsconfig.build.json narrows `include` back to src/, so none of it is
-  // emitted or published.
-  "include": ["src/**/*", "browser-tests/**/*", "vitest.config.ts", "baselines/*.json"],
+  "include": ["src/**/*", "browser-tests/**/*", "vitest.config.ts"],
 
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/legacy/**/*",
-    "src/performance/benchmarks.ts",
-    "src/test-helpers/**/*"
-  ],
+  "exclude": ["node_modules", "dist"],
 
   "ts-node": {
     "esm": true

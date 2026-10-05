@@ -1,7 +1,0 @@
-{
-  "name": "TextShelf",
-  "commands": ["toggle", "add", "remove", "show", "hide", "set", "wait", "go", "transition", "call"],
-  "output": "src/compatibility/browser-bundle-textshelf-generated.ts",
-  "htmxIntegration": true,
-  "globalName": "hyperfixi"
-}

@@ -12,18 +12,17 @@
  * enabling exhaustive `switch` checking in TypeScript.
  *
  * ## Current consumers
- * - **AOT compiler**: uses `fromCoreAST` / `fromSemanticAST` to normalize
- *   both parser outputs before code generation.
- * - **Language server**: uses `interchangeToLSPDiagnostics` (from `lsp.ts`)
- *   for structural diagnostics (complexity, code smells) on interchange nodes.
- * - **Roundtrip**: `toCoreAST` converts interchange back to core AST format
- *   for runtime fallback execution.
+ * - **Language server and MCP server**: build nodes with `@lokascript/semantic`'s
+ *   `fromSemanticAST`, give them `@hyperfixi/engine`'s source positions with
+ *   `withEnginePositions`, and use `lsp.ts` for diagnostics, symbols and hover.
+ * - **developer-tools**: the analysis half (complexity, smells, metrics).
+ * (Core's own AST converters, `fromCoreAST` / `toCoreAST`, left with core's
+ * engine in 4.0.)
  *
  * ## Position Info
  * BaseNode includes optional position fields (`start`, `end`, `line`, `column`).
- * Converters (`fromCoreAST`, `fromSemanticAST`) preserve positions from source
- * nodes when available. Consumers that don't need positions simply ignore them.
- * The AOT compiler ignores positions; the language server uses them for LSP ranges.
+ * `withEnginePositions` fills them from the engine's parse; consumers that don't
+ * need positions simply ignore them.
  */
 
 // =============================================================================

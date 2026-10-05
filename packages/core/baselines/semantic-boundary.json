@@ -1,22 +1,18 @@
 {
-  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs. Since Arc 1 steps 2-3 every row is on the FRONT-END SIDE (compatibility/browser-bundle*.ts and multilingual/); a front-end import anywhere else fails outright and cannot be added here.",
+  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs. Since Phase C6 of the engine cutover core's root re-exports @hyperfixi/engine, and the only front-end import left is multilingual/ (the front-end side); a front-end import anywhere else fails outright and cannot be added here.",
   "generated": "2026-10-04",
   "totals": {
-    "static-value": 2,
+    "static-value": 0,
     "dynamic": 1,
     "static-type": 1,
-    "typeof-import": 1
+    "typeof-import": 2
   },
   "files": {
-    "multilingual/bridge.ts": {
-      "static-type": 1,
-      "typeof-import": 1,
+    "multilingual/index.ts": {
       "dynamic": 1,
-      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 — the engine now owns that policy."
-    },
-    "multilingual/schema-roles.ts": {
-      "static-value": 2,
-      "reason": "LEGITIMATE and target-state. The schema-driven role inferrer `fromCoreAST` takes by injection (Arc 1 step 4). These two imports are the SAME two that ast-utils/interchange/from-core.ts used to hold — the step moved them from a file that must not import the front-end onto the front-end side of the line, so the static-value TOTAL is unchanged at 7. Both `multilingual/` rows are target-state under the ratchet's endpoint (compatibility/browser-bundle*.ts + multilingual/ only)."
+      "static-type": 1,
+      "typeof-import": 2,
+      "reason": "The front-end entry (`@hyperfixi/core/multilingual`): parse, render and translate over @lokascript/semantic, loaded with one deferred import and typed with type-only queries. Its predecessors bridge.ts and schema-roles.ts (which held the last two static-value imports, for fromCoreAST's role inferrer) left with core's engine in C6."
     }
   }
 }

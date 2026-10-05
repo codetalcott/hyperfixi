@@ -6,7 +6,7 @@
  *
  * Usage:
  *   <script src="../bundle-loader.js"></script>
- *   <!-- No need to include hyperfixi-browser.js -->
+ *   <!-- No need to include hyperfixi.js -->
  *
  * URL Parameters:
  *   ?bundle=browser   - hyperfixi.js, core's name for hyperfixi-hs.js (default, unless the script tag has data-default)
@@ -111,7 +111,7 @@
       fallback.onerror = function () {
         console.error('[HyperFixi] CRITICAL: Failed to load fallback browser bundle!');
         console.error(`[HyperFixi] Attempted fallback path: ${browserPath}`);
-        console.error('[HyperFixi] Please check that packages/core/dist/hyperfixi-browser.js exists');
+        console.error('[HyperFixi] Please check that packages/core/dist/hyperfixi.js exists');
       };
 
       fallback.onload = function () {
@@ -126,7 +126,7 @@
       console.error('[HyperFixi] CRITICAL: Browser bundle failed to load - no fallback available!');
       console.error('[HyperFixi] Please verify:');
       console.error('  1. Server is running from project root');
-      console.error('  2. packages/core/dist/hyperfixi-browser.js exists');
+      console.error('  2. packages/core/dist/hyperfixi.js exists');
       console.error('  3. File permissions are correct');
     }
   };

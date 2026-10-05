@@ -1,12 +1,11 @@
 /**
  * Bare-Node import check for @hyperfixi/core.
  *
- * Guards the Node/SSR-safety of core's published entry points. morphlex does
- * module-scope DOM feature-detection (`"moveBefore" in Element.prototype`)
- * that threw `ReferenceError: Element is not defined` in bare Node until the
- * dom-globals shim (packages/core/src/lib/dom-globals-shim.ts) was added.
- * This check fails if that shim is dropped, reordered after morphlex, or a
- * dependency upgrade introduces a new module-scope DOM global.
+ * Guards the Node/SSR-safety of core's published entry points: each one is
+ * imported (or required) in bare Node, with no DOM, and must resolve to the
+ * names a consumer reaches for. Since 4.0 the root is `@hyperfixi/engine`
+ * re-exported (ESM only, the engine external: one engine, one grammar), and the
+ * tooling stays on subpaths.
  *
  * Runs from the repo root against built dist via workspace resolution
  * (CI: export-validation job, after build artifacts are restored).
@@ -29,36 +28,32 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
+const ENGINE_NAMES = ['api', 'register', 'everything', 'parse', 'evaluate', 'processNode', 'boot'];
+
 await check('@hyperfixi/core — bare-Node import (main index)', async () => {
   const m = await import('@hyperfixi/core');
-  // Name the entry points a Node consumer actually reaches for, rather than
-  // leaning on a raw export count: the count was `> 40` until Arc 6b deleted
-  // the 24 dead `features/` values (53 → 29), and a threshold that a
-  // deletion of dead code can trip is measuring the wrong thing. The floor
-  // below only catches an import that resolved to an empty or stub module.
-  for (const name of ['hyperscript', 'parse', 'Runtime', 'createContext', 'getElementScopeMap']) {
-    assert(name in m, `${name} missing`);
-  }
-  const exportCount = Object.keys(m).length;
-  assert(exportCount > 20, `only ${exportCount} exports (expected > 20)`);
-  return `${exportCount} exports`;
+  for (const name of [...ENGINE_NAMES, 'VERSION']) assert(name in m, `${name} missing`);
+  const engine = await import('@hyperfixi/engine');
+  // The SAME engine, not a copy: a second instance would have its own grammar.
+  assert(m.register === engine.register, "register is not @hyperfixi/engine's own");
+  assert(m.api === engine.api, "api is not @hyperfixi/engine's own");
+  return `${Object.keys(m).length} exports, the engine's own`;
 });
 
 // ---------------------------------------------------------------------------
 // The engine / front-end boundary, at the ARTIFACT level.
 //
-// `packages/core/src` reaches `@lokascript/semantic`, `/intent`, `/i18n` and
-// `@lokascript/framework` only through `await import(...)` (the source-level
-// ratchet, scripts/check-semantic-boundary.cjs, records every site). That
-// proves nothing about what ships: with `external: []` rollup followed the
-// workspace symlinks and `inlineDynamicImports` flattened every one of those
-// imports, so dist/index.mjs carried the three packages whole — 3.33 MB with
-// zero dynamic imports left, and a consumer that also imported semantic loaded
-// two copies. The sourcemap is the oracle: its `sources` names every inlined
-// file by path. ENGINE_MIGRATION_PLAN.md, Arc 1 step 2.
+// `packages/core/src` reaches `@lokascript/semantic` only through
+// `await import(...)` in `/multilingual` (the source-level ratchet,
+// scripts/check-semantic-boundary.cjs, records it). That proves nothing about
+// what ships: with `external: []` rollup followed the workspace symlinks and
+// `inlineDynamicImports` flattened the import, so a dist file carried semantic
+// whole — 3.33 MB once, and a consumer that also imported semantic loaded two
+// copies. The sourcemap is the oracle: its `sources` names every inlined file by
+// path. ENGINE_MIGRATION_PLAN.md, Arc 1 step 2.
 // ---------------------------------------------------------------------------
 
-const FRONT_END_DIRS = ['/semantic/', '/intent/', '/i18n/', '/framework/'];
+const INLINE_FORBIDDEN = ['/semantic/', '/intent/', '/i18n/', '/framework/', '/engine/'];
 
 async function sourcemapSources(relPath) {
   const { readFile } = await import('node:fs/promises');
@@ -70,76 +65,67 @@ async function sourcemapSources(relPath) {
   return { file, sources: map.sources };
 }
 
-for (const entry of ['dist/index.mjs', 'dist/index.cjs', 'dist/multilingual/index.mjs']) {
-  await check(`@hyperfixi/core — ${entry} inlines no front-end package`, async () => {
-    const { sources } = await sourcemapSources(entry);
-    // Workspace paths look like `../../semantic/dist/index.js`; a consumer's
-    // node_modules copy would be `node_modules/@lokascript/semantic/...`.
-    const inlined = sources.filter(
-      s => FRONT_END_DIRS.some(d => s.includes(d)) && !s.includes('/core/')
-    );
-    assert(inlined.length === 0, `inlined from the front-end: ${inlined.slice(0, 3).join(', ')}`);
-    return `${sources.length} sources, all engine`;
-  });
+for (const entry of [
+  'dist/index.mjs',
+  'dist/multilingual/index.mjs',
+  'dist/multilingual/index.cjs',
+]) {
+  await check(
+    `@hyperfixi/core — ${entry} inlines neither the engine nor the front-end`,
+    async () => {
+      const { sources } = await sourcemapSources(entry);
+      // Workspace paths look like `../../semantic/dist/index.js`; a consumer's
+      // node_modules copy would be `node_modules/@lokascript/semantic/...`.
+      const inlined = sources.filter(
+        s => INLINE_FORBIDDEN.some(d => s.includes(d)) && !s.includes('/core/')
+      );
+      assert(inlined.length === 0, `inlined: ${inlined.slice(0, 3).join(', ')}`);
+      return `${sources.length} sources, all core's`;
+    }
+  );
 }
 
 await check(
-  '@hyperfixi/core — dist/index.mjs defers the front-end with a real import()',
+  '@hyperfixi/core — dist/multilingual/index.mjs defers the front-end with a real import()',
   async () => {
     const { readFile } = await import('node:fs/promises');
-    const { file } = await sourcemapSources('dist/index.mjs');
+    const { file } = await sourcemapSources('dist/multilingual/index.mjs');
     const text = await readFile(file, 'utf8');
     const hits = text.match(/import\(['"]@lokascript\/semantic['"]\)/g) ?? [];
     assert(hits.length > 0, 'no import("@lokascript/semantic") left — the front-end was inlined');
     return `${hits.length} deferred import(s)`;
   }
 );
+
 // ---------------------------------------------------------------------------
-// The CJS surface. Every `exports.*.require` and `main` pointed at a `.js`
-// file built as CommonJS — but core's package.json says `"type": "module"`,
-// so Node read those files as ESM and `require('@hyperfixi/core')` returned
-// `{}` (the subpaths threw), on the published 3.0.0 too. Nothing above could
-// see it: this script only ever `import()`ed. The CJS outputs are `.cjs` now;
-// these checks `require()` them and assert the same named entry points.
+// The CJS surface of the subpaths. Core's package.json says `"type": "module"`,
+// so a CommonJS build must be a `.cjs` file — 3.0.0 shipped `.js` ones and
+// `require('@hyperfixi/core')` returned `{}`. The root is ESM only since 4.0
+// (the engine has no CommonJS entry to require); the subpaths keep theirs.
 // ---------------------------------------------------------------------------
 
 const { createRequire } = await import('node:module');
 const requireCjs = createRequire(import.meta.url);
 
-await check('@hyperfixi/core — bare-Node require() (CJS main)', async () => {
-  const m = requireCjs('@hyperfixi/core');
-  for (const name of ['hyperscript', 'parse', 'Runtime', 'createContext', 'getElementScopeMap']) {
-    assert(name in m, `${name} missing from require()`);
-  }
-  const exportCount = Object.keys(m).length;
-  assert(exportCount > 20, `only ${exportCount} exports from require() (expected > 20)`);
-  return `${exportCount} exports`;
-});
-
-await check('@hyperfixi/core/commands — bare-Node require()', async () => {
-  const m = requireCjs('@hyperfixi/core/commands');
-  assert(typeof m.swap === 'function', 'swap factory missing from require()');
-  return 'swap factory';
-});
-
 await check('@hyperfixi/core/multilingual — bare-Node require()', async () => {
   const m = requireCjs('@hyperfixi/core/multilingual');
-  const names = ['parse', 'render', 'translate', 'schemaRoleInferrer'];
+  const names = ['parse', 'render', 'translate'];
   for (const name of names) assert(typeof m[name] === 'function', `${name} missing from require()`);
   return names.join(' + ');
 });
 
-await check('@hyperfixi/core/commands — bare-Node import', async () => {
-  const m = await import('@hyperfixi/core/commands');
-  assert(typeof m.swap === 'function', 'swap factory missing');
-  assert(typeof m.morph === 'function', 'morph factory missing');
-  return 'swap + morph factories';
-});
-
-await check('@hyperfixi/core/behaviors — bare-Node import', async () => {
-  const m = await import('@hyperfixi/core/behaviors');
-  assert(typeof m.registerHistorySwap === 'function', 'registerHistorySwap missing');
-  return 'registerHistorySwap';
-});
+for (const [subpath, name] of [
+  ['@hyperfixi/core/reference', 'commands'],
+  ['@hyperfixi/core/metadata', 'packageInfo'],
+  ['@hyperfixi/core/lsp-metadata', 'HOVER_DOCS'],
+  ['@hyperfixi/core/ast-utils', 'withEnginePositions'],
+]) {
+  await check(`${subpath} — bare-Node import and require()`, async () => {
+    const esm = await import(subpath);
+    assert(name in esm, `${name} missing from import()`);
+    assert(name in requireCjs(subpath), `${name} missing from require()`);
+    return name;
+  });
+}
 
 process.exit(failed ? 1 : 0);
