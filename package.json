@@ -51,6 +51,7 @@
     "check:ci-job-lists:test": "node --test scripts/check-ci-job-lists.test.cjs",
     "check:domains-peer": "node scripts/check-domains-peer-major.cjs",
     "check:domains-peer:test": "node --test scripts/check-domains-peer-major.test.cjs",
+    "wait-for-registry:test": "node --test scripts/wait-for-registry.test.cjs",
     "check:semantic-boundary": "node scripts/check-semantic-boundary.cjs",
     "check:semantic-boundary:update": "node scripts/check-semantic-boundary.cjs --update",
     "check:semantic-boundary:test": "node --test scripts/check-semantic-boundary.test.cjs",
