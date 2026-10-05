@@ -73,7 +73,7 @@ or falls back to core's bundles.)
 | `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 5.7 KB      | The 11 standard behaviors, defined on `hyperfixi-hs.js` (or upstream) as it loads |
 | `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 38.5 KB     | Per-language vocabulary and profiles                                              |
 
-> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. A deprecated `lokascript-browser.js` copy of `hyperfixi.js` is still emitted by `build:browser` (`packages/core/scripts/create-bundle-aliases.mjs`); the other `lokascript-*.js` copies went with their bundles in Phase C3. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
+> **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. The `lokascript-*.js` / `hyperfixi-browser.js` copies went with their bundles in Phase C3 and, for `hyperfixi.js`'s own aliases, in 4.0. Use the `hyperfixi-*.js` names. See [MIGRATION.md](../MIGRATION.md).
 
 ## Core's htmx-compat layer (retired)
 
@@ -91,21 +91,20 @@ on core's runtime. It retired with them in Phase C3. What replaces each part:
 How the localized names are generated and authored (the semantic profiles, the hand-authored
 table for htmx-only attributes, the additive-names rule) is in `packages/htmx-adapter/CLAUDE.md`.
 
-## Custom Bundle Generator
+## Custom Bundles
 
-Generate minimal bundles with only the commands you need:
+A bundle on the engine is the list of modules passed to `register()`. With Vite,
+[`@hyperfixi/vite-plugin`](../packages/vite-plugin/README.md) scans your templates and emits that
+list for you; by hand:
 
-```bash
-cd packages/core
+```ts
+import { register, boot, on, add, remove, toggle } from '@hyperfixi/engine';
 
-# Generate from config file
-npm run generate:bundle -- --config bundle-configs/textshelf.config.json
-
-# Generate from command line with blocks and positional expressions
-npm run generate:bundle -- --commands toggle,add,set --blocks if,repeat --positional --output src/my-bundle.ts
+register(on, add, remove, toggle);
+boot();
 ```
 
-See [bundle-configs/README.md](../packages/core/bundle-configs/README.md) for full documentation.
+(Core's `generate:bundle` generator and its `bundle-configs/` left with core's engine in 4.0.)
 
 ## Semantic Bundles (Regional Options)
 

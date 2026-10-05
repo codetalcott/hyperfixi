@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
-- **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
+- **Tests** across all suites (semantic ~6500, i18n ~900, testing-framework's gates, plus per-package suites; core's own ~7000 left with its engine in 4.0), and the engine's acceptance oracle: upstream `_hyperscript`'s own test suite
 - **34.1 KB** browser bundle (gzipped): the engine's `hyperfixi-hs.js`, which `@hyperfixi/core` also ships as `hyperfixi.js` since Phase C3 (C-R4b, 2026-10-04: the same file under two names for one major, `hyperfixi-hs.js` canonical). Core's own bundles have all retired: lite/lite-plus/minimal/standard in the 4.0 cycle; in Phase C3 `hyperfixi-hx.js`/-hybrid-complete/-hx-v4, `hyperfixi-multilingual.js`/classic-i18n/modular, and core's full `hyperfixi.js` (~352 KB: core's parser and runtime, the reactivity/realtime plugins, 24 languages; CI's bundle-size job, 2026-09-29). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` read ~2 KB lower on core's 352 KB bundle (on the engine's file the two agree: 34,068 B gz in CI's log, the same locally, 2026-10-04). `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
@@ -14,15 +14,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 packages/
-├── core/           # Main hyperscript runtime, parser, commands (primary development)
+├── core/           # @hyperfixi/core: @hyperfixi/engine re-exported + tooling (4.0; its own engine retired)
 │   ├── src/
-│   │   ├── parser/           # Hyperscript parser with CommandNodeBuilder pattern
-│   │   ├── runtime/          # Runtime execution engine
-│   │   ├── commands/         # All command implementations (tree-shakeable factories)
-│   │   └── expressions/      # 6 expression categories (references, logical, etc.)
-│   └── dist/                 # Built bundles (hyperfixi.js)
+│   │   ├── multilingual/     # /multilingual: parse, render, translate over semantic
+│   │   ├── ast-utils/        # /ast-utils: analysis, interchange AST, engine positions, LSP helpers
+│   │   └── reference/, lsp-metadata.ts, metadata.ts  # data checked against the engine (verify:reference)
+│   ├── browser-tests/        # the Playwright suite (the engine's bundle, the gallery, other pages)
+│   └── dist/                 # hyperfixi.js = the engine's hyperfixi-hs.js
 │
-├── engine/         # The engine meant to replace core's: typed, modular, upstream-faithful (published 2026-10-02)
+├── engine/         # THE engine (primary development): typed, modular, upstream-faithful (published 2026-10-02)
 │   ├── src/                  # Grammar modules: a bundle is the list passed to register()
 │   └── upstream-suite/       # The gate: upstream _hyperscript's own tests (vendored 0.9.93) + known-failures.json
 │
@@ -107,30 +107,30 @@ npm install          # alias: npm run bootstrap — links workspaces + installs 
 > declaration step. A DTS error alone does not mean the build you need failed;
 > check whether the `dist/` artifact you actually consume exists.
 
-### Core Package (Primary Development)
+### Engine and Core
 
 ```bash
-# Quick validation (recommended after changes)
-npm run test:quick --prefix packages/core           # Build + test (<10 sec)
-npm run test:comprehensive --prefix packages/core   # Full browser suite
+# The engine (hyperscript behavior lives here)
+npm run build --prefix packages/engine              # library + dist/hyperfixi-hs.js
+npm run test:upstream --prefix packages/engine      # the gate: upstream's own suite vs known-failures.json
+npm run test:own --prefix packages/engine           # the engine's additions + regressions
+npm run typecheck --prefix packages/engine
 
-# Unit tests
-npm test --prefix packages/core                     # Run vitest (7000+ tests)
-npm test --prefix packages/core -- --run src/expressions/  # Test specific module
-
-# Build
-npm run build:browser --prefix packages/core        # Build browser bundle
-npm run typecheck --prefix packages/core            # TypeScript validation
+# Core (the engine re-exported + tooling)
+npm run build --prefix packages/core                # root + subpaths (build the engine first)
+npm run build:browser --prefix packages/core        # dist/hyperfixi.js, copied from the engine
+npm test --prefix packages/core                     # ast-utils, multilingual, dist charset, version
+npm run verify:reference --prefix packages/core     # reference + LSP data against the engine's grammar
 
 # Browser testing (Playwright) - MUST run from packages/core directory
-cd packages/core && npx playwright test browser-tests/
+cd packages/core && npx playwright test --project=quick --project=comprehensive
 ```
 
-> **Known issue: esbuild daemon hang.** Core vitest tests complete successfully but the
-> Node process hangs indefinitely because esbuild's daemon keeps the event loop alive.
-> The `test` and `test:quick` scripts wrap vitest with `timeout` and treat exit code 124
-> (killed by timeout) as success. CI uses the same pattern. If running vitest directly,
-> use: `timeout 120 vitest run || [ $? -eq 124 ]`
+> **Known issue: vitest hang on exit.** Some suites complete but the Node process stays
+> alive (an esbuild daemon keeps the event loop open). `scripts/vitest-run.sh` (behind every
+> package's `test` / `test:check`) wraps vitest with `timeout` and treats exit code 124 (killed
+> by timeout) as success; CI uses the same pattern. If running vitest directly, use:
+> `timeout 120 vitest run || [ $? -eq 124 ]`
 
 ### i18n Package
 
@@ -357,10 +357,10 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
-- **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` + `benchmarks` on a nightly `schedule` (also `workflow_dispatch`)
+- **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` on a nightly `schedule` (also `workflow_dispatch`)
 - **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient` / `docsources`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`).
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
-- **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
+- **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`). (The perf `benchmarks` job, the one `continue-on-error` trend job, timed core's runtime and left with it in 4.0.)
 
 **Jobs:**
 
@@ -372,7 +372,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: engine list, localized, execution; ungated          |
 | 4   | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                          |
 | 5   | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                           |
-| 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (the two heavyweight suites)      |
+| 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (semantic is the heavyweight)     |
 | 7   | `unit-tests-packages`     | ✓   | —                 | —       | Vitest on Node 24: every other package; split off #6 by #833         |
 | 8   | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)             |
 | 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
@@ -380,7 +380,6 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
 | 12  | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths                    |
 | 13  | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths                     |
-| 14  | `benchmarks`              | —   | —                 | ✓       | Perf trend tracking; nightly since 2026-07-29                        |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
 
 The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only the build tier (`changes`, `build`, `bundles`, and the `always()` `ci-gate`). For the reasoning see the job comments in `.github/workflows/ci.yml`.
@@ -405,7 +404,7 @@ this gate already covers.
 
 - Push to `main` or `develop` (`build` only — tree-skew detector)
 - Pull requests to `main` or `develop` (full job set)
-- `schedule` nightly at 06:00 UTC, plus `workflow_dispatch` (`coverage` + `benchmarks`). `changes` is skipped on these events — paths-filter has no diff base — so `build` carries an explicit `!cancelled()` status function; without it the implicit `success()` on a skipped `needs` would skip the whole nightly chain.
+- `schedule` nightly at 06:00 UTC, plus `workflow_dispatch` (`coverage`). `changes` is skipped on these events — paths-filter has no diff base — so `build` carries an explicit `!cancelled()` status function; without it the implicit `success()` on a skipped `needs` would skip the whole nightly chain.
 - Concurrency: Cancels in-progress runs on new push (per `${{ github.workflow }}-${{ github.ref }}`; pre-merge and post-merge runs are on different refs so the post-merge run is NOT cancelled)
 
 **Known Issues:**
@@ -741,69 +740,61 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 ## Architecture
 
-> **Known core-parser defects and their queue live in
-> `docs-internal/PARSER_NEXT_STEPS.md`** — the counterpart to
-> `MULTILINGUAL_NEXT_STEPS.md`, for the `packages/core/src/parser/` track. Check it
-> before triaging a parse bug; several are already diagnosed with a written brief.
-> One entry there is held by a gate that fails on its own (the `and` KNOWN GAP
-> tests; the shipped-sources allowlist ratchet that held a second left with core's
-> parser in Phase C4) — the rest have no gate and are why the doc exists. Docs for finished arcs are deleted under a tag and indexed in
-> `docs-internal/ARCHIVE.md` (2026-09-30).
->
-> **Structural work on the command layer** — registration, metadata, output
-> contracts, bundle executors — has its own queue in
-> `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`. Read it before adding,
-> removing, or restructuring a command surface. Its six arcs (D→C→A→B→E→F) are all
-> done (last 2026-07-31); it stays as the design-principles record.
->
-> **`packages/engine` is the engine that replaces `packages/core`'s** (owner decision
-> 2026-10-01; nothing depends on it yet). Its acceptance oracle is upstream
-> `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
+> **`packages/engine` is THE engine** (owner decision 2026-10-01; `@hyperfixi/core`'s root
+> re-exports it and core's own engine was deleted in Phase C6, 4.0). Its acceptance oracle is
+> upstream `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
 packages/engine` fails on a new failing test AND on a listed one that now passes
 > (`upstream-suite/known-failures.json`, prune with `test:upstream:update`). It has no
 > `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
 > so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
 > changing it; port from upstream's source, and measure before and after. It has two
 > forms upstream lacks (`new X()`, `toggle <element>`: `src/additions.ts`, tested by
-> `npm run test:own`); every other core-only form was dropped, and **examples and docs
-> are written in upstream's spelling**. Three gates in `packages/testing-framework` hold
-> that: `shipped-sources-engine.test.ts` (the English shipped sources the engine
-> rejects, a shrink-only list, empty since Phase B1), `shipped-sources-localized.test.ts`
-> (each source under a non-English `lang` must translate to English both engines
-> parse) and `shipped-examples-execution.test.ts` (the DOM each example handler leaves
-> on the engine, against upstream). Its script-tag bundle is
-> `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB; `?bundle=hs` in the
-> examples' loader); thirty-six example pages load it instead of `hyperfixi.js`.
+> `npm run test:own`, which also holds `tests/regressions.js`: places the engine differed
+> from upstream and upstream's own tests did not show it); every core-only form was dropped,
+> and **examples and docs are written in upstream's spelling**. Three gates in
+> `packages/testing-framework` hold that: `shipped-sources-engine.test.ts` (the English
+> shipped sources the engine rejects, a shrink-only list, empty since Phase B1),
+> `shipped-sources-localized.test.ts` (each source under a non-English `lang` must translate
+> to English both engines parse) and `shipped-examples-execution.test.ts` (the DOM each
+> example handler leaves on the engine, against upstream). Its script-tag bundle is
+> `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB), which core ships as
+> `hyperfixi.js`.
 >
-> **Cross-layer engine migration** — one typed AST, commands as grammar + op,
-> compile-to-closures, the engine/front-end boundary — is
-> `docs-internal/ENGINE_MIGRATION_PLAN.md`: every arc has closed (2026-09-03), and it
-> stays as the target-design doc the type/layering ratchets cite. Read it before moving a boundary between `parser/`, `runtime/`,
-> `commands/`, `expressions/`, or the semantic front-end.
+> **Historical design records** (core's engine, before 4.0): `docs-internal/PARSER_NEXT_STEPS.md`
+> (core's parser track), `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md` (core's command
+> layer) and `docs-internal/ENGINE_MIGRATION_PLAN.md` (one typed AST, the engine/front-end
+> boundary, which `scripts/check-semantic-boundary.cjs` still guards). Docs for finished arcs
+> are deleted under a tag and indexed in `docs-internal/ARCHIVE.md` (2026-09-30).
 
-### Command Pattern
+### Engine Modules
 
-All 58 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
-`@command` class decorator with a type-visible `commandMeta` static:
+A bundle on the engine is the list of grammar modules passed to `register()`; a module adds
+its rules to the grammar (a command, a feature, or an optional expression kind):
 
 ```typescript
-// packages/core/src/commands/data/increment.ts
-@command({ name: 'increment' })
-export class IncrementCommand implements DecoratedCommand {
-  static readonly metadata = commandMeta({ description: '...', syntax: [...], examples: [...] });
-  get metadata() { return IncrementCommand.metadata; }
-  declare readonly name: string;
-
-  async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
-  async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
+// packages/engine/src/commands/misc.ts
+export function log(g: Grammar): void {
+  g.commands.log = (p, _keyword, start) => {
+    const values = [expr(p)];
+    while (p.matchOp(',')) values.push(expr(p));
+    return {
+      type: 'logCommand',
+      values,
+      start,
+      end: p.endPos(),
+      run: ctx =>
+        all(
+          values.map(v => v.ev(ctx)),
+          vals => console.log(...vals)
+        ),
+    };
+  };
 }
-
-export const createIncrementCommand = createFactory(IncrementCommand);
 ```
 
-(The `CommandImplementation<TInput, TOutput, TContext>` interface this section
-used to name had **zero** implementers and was deleted 2026-08-30 with the rest
-of the dead type surface — see `docs-internal/ENGINE_MIGRATION_PLAN.md` Arc 6a.)
+A module can live in another package (`@hyperfixi/speech`'s `speak`): it imports `expr` and the
+`Grammar` / `Cmd` / `Expr` types from `@hyperfixi/engine`. `register(...everything)` is every
+module; the Vite plugin derives its keyword → module map from the engine itself.
 
 ### Native Word Order
 
@@ -829,10 +820,11 @@ Key files:
 
 ### Multilingual API
 
-`@hyperfixi/core/multilingual` (not the package root) is four functions over
-`@lokascript/semantic`, on text — `parse`, `render`, `translate` and
-`schemaRoleInferrer` (the owner's 4.0 shape; the `MultilingualHyperscript` class
-was removed in Phase C2):
+`@hyperfixi/core/multilingual` (not the package root) is three functions over
+`@lokascript/semantic`, on text — `parse`, `render`, `translate` (the owner's 4.0 shape; the
+`MultilingualHyperscript` class was removed in Phase C2, `schemaRoleInferrer` with core's engine
+in C6). Running non-English hyperscript on a page is `@lokascript/hyperscript-adapter`'s job: it
+translates each script as the engine reads it (`api.addSourceTransform`).
 
 ```typescript
 import { parse, render, translate } from '@hyperfixi/core/multilingual';
@@ -846,42 +838,22 @@ const arabic = await translate('toggle .active', 'en', 'ar');
 
 Key files:
 
-- `packages/core/src/multilingual/index.ts` - the four exports
-- `packages/core/src/multilingual/bridge.ts` - `SemanticGrammarBridge`: the functions, and core's
-  direct path (`compile(code, { language })` → `buildAST`), which retires with core's parser
+- `packages/core/src/multilingual/index.ts` - the three exports
 - `packages/semantic/src/tokenizers/` - 24 language tokenizers
 - `packages/semantic/src/parser/semantic-parser.ts` - Main semantic parser
 - `packages/semantic/CLAUDE.md` - Package-specific documentation
-
-### Expression System
-
-Six categories in `packages/core/src/expressions/`:
-
-- **references/** - `me`, `you`, `it`, CSS selectors
-- **logical/** - Comparisons, boolean logic
-- **conversion/** - `as` keyword, type conversion
-- **positional/** - `first`, `last`, array navigation
-- **properties/** - Possessive syntax (`element's property`)
-- **special/** - Literals, mathematical operations
-
-### Parser Context
-
-The parser uses dependency injection via `ParserContext` interface:
-
-- 48 methods exposed through `.bind(this)` delegation
-- Command parsers in `packages/core/src/parser/commands/` are pure functions
-- AST helpers in `packages/core/src/parser/ast-helpers.ts`
 
 ## Key Patterns
 
 ### Testing
 
 ```bash
-# Fast iteration cycle
-npm run test:quick --prefix packages/core  # Exit 0 = pass, 1 = fail
+# The engine against upstream's own suite (the gate), and its own tests
+npm run build --prefix packages/engine && npm run test:upstream --prefix packages/engine
+npm run test:own --prefix packages/engine
 
 # Run single test file
-npm test --prefix packages/core -- --run src/expressions/logical.test.ts
+npm test --prefix packages/semantic -- --run test/parser.test.ts
 
 # Playwright for browser tests - MUST run from packages/core directory
 cd packages/core && npx playwright test --grep "Command Compatibility"
@@ -941,13 +913,20 @@ resolver, and the behaviors bundle defines its eleven sources eagerly.)
 
 ### Adding a New Command
 
-1. Create implementation in `packages/core/src/commands/{category}/{name}.ts`
-2. Register a factory export in `packages/core/src/commands/index.ts` and add the command name to the `COMMANDS` set in `packages/core/src/parser/parser-constants.ts`
-3. Register the factory in the runtime entry points that should include it (`packages/core/src/runtime/runtime.ts` and any relevant `packages/core/src/compatibility/browser-bundle-*.ts`)
-4. Add parser support in `packages/core/src/parser/command-parsers/` (only if the command needs a non-generic parser — simple commands use the default identifier-plus-args parser)
-5. For custom-bundle coverage (core's `generate:bundle`), add cases to `packages/core/src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template is generated (parser rules go in `packages/core/src/parser/hybrid/parser-core.ts`)
-6. Add reference/LSP entries in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
-7. Write tests in `packages/core/src/commands/{category}/__tests__/{name}.test.ts`
+Hyperscript syntax follows upstream `_hyperscript`: a new command is normally upstream's,
+ported from upstream's source.
+
+1. Add the rule in a module in `packages/engine/src/commands/` (`g.commands.<keyword> = …`), or
+   beside a related module; export the module from `packages/engine/src/index.ts` and add it to
+   `src/everything.ts`
+2. Run `npm run test:upstream --prefix packages/engine`; for a form upstream's suite does not
+   test, add a test to `packages/engine/tests/regressions.js` that passes on upstream's bundle
+   too (`node upstream-suite/run.mjs --bundle <upstream> --own`)
+3. Document it in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
+   (keyword + `HOVER_DOCS`), then `npm run verify:reference --prefix packages/core` — it fails
+   until every engine keyword is documented and every example parses on the engine
+4. If it should be available multilingually, sync `packages/semantic/` (schema + 24 profiles; see
+   "Adding Semantic Language Support" for the profile conventions)
 
 ### Adding i18n Language Support
 
@@ -1018,73 +997,47 @@ registerCustomKeywords('my-lang', {
 
 ## Debugging Tools
 
-Quick reference — full detail in [packages/core/docs/API.md](packages/core/docs/API.md).
-
-> **Core's runtime only.** These are on `@hyperfixi/core`'s node entry (and were on
-> `window.hyperfixi` while `hyperfixi.js` was core's own bundle). Since Phase C3 (C-R4b)
-> `window.hyperfixi` in a browser is the engine's API, the same object as `window._hyperscript`:
-> upstream's `evaluate`, `parse`, `processNode`, and parse errors as `hyperscript:parse-error`
-> events plus a `console.error`.
+`window.hyperfixi` (and `window._hyperscript`) in a browser is the engine's `api`, shaped like
+upstream's: a script that fails to parse fires a `hyperscript:parse-error` event and logs a
+`console.error` naming the token where the engine stopped.
 
 ```javascript
-// Which parser produced a compile's AST (English is ALWAYS the core parser;
-// 'semantic' means the multilingual front-end built it, non-English only):
-hyperfixi.compileSync('toggle .active').meta; // { parser: 'traditional', language: 'en', timeMs }
-(await hyperfixi.compile('alternar .active', { language: 'es' })).meta;
-// { parser: 'semantic', confidence: 1, language: 'es', directPath: true, timeMs }
+// The engine's verdict on a source (no DOM needed):
+_hyperscript.parse('on click toggle .active on').errors[0]?.message;
 
-// Debug logging (persists via localStorage, works in production builds):
-hyperfixi.debugControl.enable(); // or: localStorage.setItem('hyperfixi:debug', '*') + reload
-// Log prefixes: ATTR:/SCRIPT:/SCAN: (attribute-processor) · PARSE: · CMD: · EXPR:
+// Run a snippet against a context:
+_hyperscript.evaluate('put "hi" into #out');
 
-// Front-end consultations (one per NON-English compile — the per-command
-// in-loop attempt on English was deleted by Arc 1 step 6) and running stats:
-window.addEventListener('hyperfixi:semantic-parse', e => console.log(e.detail));
-hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanticFallbacks, averageConfidence }
+// `breakpoint` pauses in DevTools; `beep! x` logs x with its type, and passes it on:
+// <button _="on click beep! me then breakpoint then toggle .active">
 ```
 
-### API v2 (Recommended)
-
-```javascript
-import { hyperscript } from '@hyperfixi/core';
-
-const result = hyperscript.compileSync('toggle .active'); // CompileResult { ok, errors, meta }
-await hyperscript.eval('add .clicked to me', element); // compile + execute
-await hyperscript.compileAsync(code, { language: 'ja' }); // async (language loading)
-await hyperscript.validate('toggle .active'); // { valid, errors }
-```
-
-Options: `language?`, `confidenceThreshold?` (0–1), `traditional?` (force traditional parser).
-Legacy methods (`compile()`, `run()`, `evaluate()`) still work but log deprecation warnings.
-
-## Type Safety: Environment-Specific Conditional Types
-
-Zero-cost conditional types keep browser and server code honest: browser code uses
-`BrowserEventPayload` (`@hyperfixi/core/registry/browser` — target must be Element,
-nativeEvent must be Event); code for both uses `UniversalEventPayload` (`@hyperfixi/core/registry/universal`)
-and narrows with `instanceof`. See
-[TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md).
+In Node or a test, `import { register, everything, parse } from '@hyperfixi/engine'` and
+`register(...everything)` give the same parser; `parse` throws a `ParseError` whose `token`
+carries the offset. (Core's 3.x debugging API — `compileSync(…).meta`, `debugControl`,
+`semanticDebug` — left with core's engine in 4.0.)
 
 ## Important Files
 
-| File                                                     | Purpose                                      |
-| -------------------------------------------------------- | -------------------------------------------- |
-| `packages/core/src/runtime/runtime.ts`                   | Main runtime (extends RuntimeBase)           |
-| `packages/core/src/parser/parser.ts`                     | Hyperscript parser (~3000 lines)             |
-| `packages/core/src/commands/`                            | All command implementations (by category)    |
-| `packages/core/src/registry/`                            | Registry system (commands, events, context)  |
-| `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
-| `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
-| `packages/core/docs/API.md`                              | API documentation                            |
-| `packages/semantic/src/explicit/renderer.ts`             | Renders a parse in any of the 24 languages   |
-| `packages/i18n/src/browser.ts`                           | Browser bundle exports                       |
-| `packages/semantic/src/parser/semantic-parser.ts`        | Semantic parser                              |
-| `packages/semantic/src/tokenizers/`                      | 24 language tokenizers                       |
-| `packages/framework/src/api/create-dsl.ts`               | `createMultilingualDSL()` factory            |
-| `packages/framework/src/api/domain-registry.ts`          | Domain registry + MCP tool generation        |
-| `packages/framework/src/api/dispatcher.ts`               | `CrossDomainDispatcher` (auto-detect domain) |
-| `packages/mcp-server/src/tools/domain-registry-setup.ts` | Domain registrations for MCP server          |
-| `packages/compilation-service/src/`                      | Component renderers (React, Vue, Svelte)     |
+| File                                                      | Purpose                                                         |
+| --------------------------------------------------------- | --------------------------------------------------------------- |
+| `packages/engine/src/index.ts`                            | The engine's library entry: functions, node types, every module |
+| `packages/engine/src/parser.ts`, `src/runtime.ts`         | Grammar registry + parse errors; contexts, scopes, execution    |
+| `packages/engine/src/commands/`                           | Command modules                                                 |
+| `packages/engine/upstream-suite/known-failures.json`      | The gate's expected failures (upstream's own suite)             |
+| `packages/core/src/index.ts`                              | `@hyperfixi/core`: the engine re-exported (+ VERSION)           |
+| `packages/core/src/reference/index.ts`, `lsp-metadata.ts` | Command reference + editor keywords, checked against the engine |
+| `packages/core/docs/API.md`                               | API documentation                                               |
+| `packages/semantic/src/explicit/renderer.ts`              | Renders a parse in any of the 24 languages                      |
+| `packages/semantic/src/parser/semantic-parser.ts`         | Semantic parser                                                 |
+| `packages/semantic/src/tokenizers/`                       | 24 language tokenizers                                          |
+| `packages/hyperscript-adapter/src/`                       | Non-English hyperscript on the engine (`addSourceTransform`)    |
+| `packages/i18n/src/browser.ts`                            | Browser bundle exports                                          |
+| `packages/framework/src/api/create-dsl.ts`                | `createMultilingualDSL()` factory                               |
+| `packages/framework/src/api/domain-registry.ts`           | Domain registry + MCP tool generation                           |
+| `packages/framework/src/api/dispatcher.ts`                | `CrossDomainDispatcher` (auto-detect domain)                    |
+| `packages/mcp-server/src/tools/domain-registry-setup.ts`  | Domain registrations for MCP server                             |
+| `packages/compilation-service/src/`                       | Validation + component renderers (React, Vue, Svelte)           |
 
 ## Vite Plugin (Recommended)
 
