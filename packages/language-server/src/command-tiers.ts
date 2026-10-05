@@ -1,62 +1,48 @@
 /**
- * Command and feature tiers for hyperscript vs LokaScript compatibility.
+ * Command and feature tiers: hyperscript (upstream _hyperscript) vs LokaScript.
  *
- * LokaScript is a superset of _hyperscript with 100% compatibility.
- * This module defines which features are:
- * - hyperscript: Available in original _hyperscript (and LokaScript)
- * - lokascript: LokaScript extensions (not compatible with original _hyperscript)
+ * Since 4.0 the LokaScript runtime is `@hyperfixi/engine`, which follows upstream
+ * _hyperscript's grammar, so the two modes share their keywords:
  *
- * ## These lists are a partition, and it is now complete (Arc A step 4.1)
+ * - `HYPERSCRIPT_COMMANDS` is the engine's command and feature keywords, plus `while`
+ *   (it continues a `repeat`) and the three features upstream ships as extensions and
+ *   the engine does not have (`worker`, `socket`, `eventsource`).
+ *   `command-tiers.test.ts` checks it against the engine's grammar in both directions.
+ * - `LOKASCRIPT_ONLY_COMMANDS` is empty. Core's extensions (`prepend`, `process
+ *   partials`, `copy`, `push url`, `replace url`, a bare `beep`, a leading `unless`)
+ *   are rejected by both engines, so the engine's parse error reports them in every
+ *   mode.
  *
- * Every registered command sits in exactly one of the two lists. Before
- * 2026-07-28 **23 of the engine's 59 commands were in neither**, which was not
- * a cosmetic gap: `detectLokascriptFeatures()` below scans only
- * `LOKASCRIPT_ONLY_COMMANDS`, and `server.ts` turns each hit into a
- * `DiagnosticSeverity.Error`. An unclassified extension therefore produced
- * **no diagnostic at all** — a user writing code that cannot run on original
- * _hyperscript was told nothing. The audit that pins the partition in both
- * directions is `packages/core/src/runtime/__tests__/command-manifest-audit.test.ts`;
- * the arc brief is `docs-internal/HANDOFF-command-arch-manifest.md`.
- *
- * ## The oracle, and how to re-run it
- *
- * Classification is measured, not remembered. The oracle is the **published**
- * original engine, `hyperscript.org` from this repo's own `node_modules` (the
- * same one `packages/testing-framework/src/multilingual/canonical-validity.ts`
- * loads for the R4 gate). Verified 2026-07-28 against **0.9.93**, and
- * cross-checked against a `bigskysoftware/_hyperscript` **0.9.91** checkout —
- * the two agree on every row below.
- *
- * The package blocks subpath imports, so resolve it and import the prebuilt
- * ESM sibling by file URL — the same dance `canonical-validity.ts` does:
- *
- * ```js
- * const dir = path.dirname(createRequire(import.meta.url).resolve('hyperscript.org'));
- * const hs = (await import(pathToFileURL(path.join(dir, '_hyperscript.esm.js')).href)).default;
- * const el = hs.parse(`on click ${snippet}`);
- * ```
- *
- * A command counts as upstream only when that parse yields a **real command
- * node** — walk `el.features[0].start` and require something other than
- * `EmptyCommandListCommand`/`ImplicitReturn`. Checking `el.errors` alone is not
- * enough and produces a false "upstream": a *feature* keyword makes the
- * command-list parser stop cleanly and hand back an EMPTY command list with no
- * error at all. `install` is exactly that case, and it is why its row below
- * carries the caveat it does.
+ * What the engine has that upstream does not is two forms of existing keywords (see
+ * `packages/engine/src/additions.ts`): `new X(...)` and `toggle <element>`.
+ * `detectLokascriptFeatures` finds them in the engine's parse tree, which marks each
+ * with its own node type.
  */
 
 /**
- * Commands available in original _hyperscript.
- * These work in both _hyperscript and LokaScript.
+ * Command and feature keywords of upstream _hyperscript, which the LokaScript runtime
+ * (the engine) shares.
  */
 export const HYPERSCRIPT_COMMANDS = [
-  // Core commands
+  // The engine's commands.
   'add',
+  'answer',
   'append',
+  'ask',
+  'beep!',
+  'blur',
+  'break',
+  'breakpoint',
   'call',
+  'clear',
+  'close',
+  'continue',
+  'decrement',
   'default',
+  'empty',
   'exit',
   'fetch',
+  'focus',
   'for',
   'get',
   'go',
@@ -64,16 +50,27 @@ export const HYPERSCRIPT_COMMANDS = [
   'hide',
   'if',
   'increment',
-  'decrement',
   'js',
   'log',
+  'make',
+  'measure',
+  'morph',
+  'open',
+  'pick',
   'put',
   'remove',
+  'render',
   'repeat',
+  'reset',
   'return',
+  'scroll',
+  'select',
   'send',
   'set',
+  'settle',
   'show',
+  'start',
+  'swap',
   'take',
   'tell',
   'throw',
@@ -81,101 +78,39 @@ export const HYPERSCRIPT_COMMANDS = [
   'transition',
   'trigger',
   'wait',
+
+  // Continues a `repeat`; completed like a command.
   'while',
 
-  // Upstream commands this list omitted until Arc A step 4.1. Each was probed
-  // on hyperscript.org@0.9.93 in the form shown and produced the command node
-  // named beside it; none of them is a LokaScript invention.
-  'blur', //           `blur #a`                        → BlurCommand
-  'break', //          `repeat 3 times break end`       → controlflow.js BreakCommand
-  'breakpoint', //     `breakpoint`                     → BreakpointCommand (core debug.js)
-  'clear', //          `clear #a`                       → EmptyCommand — upstream spells the
-  'empty', //          `empty #a`                         pair as ONE command with two keywords
-  'close', //          `close #a`                       → CloseCommand
-  'continue', //       `repeat 3 times continue end`    → controlflow.js ContinueCommand
-  'focus', //          `focus #a`                       → FocusCommand
-  'open', //           `open #a`                        → OpenCommand
-  'pick', //           `pick items 1 to 3 from "hello"` → PickCommand
-  'render', //         `render #tpl`                    → RenderCommand
-  'reset', //          `reset #a`                       → ResetCommand
-  'scroll', //         `scroll to #a`                   → ScrollCommand
-  'select', //         `select #a`                      → SelectCommand
-  'start', //          `start view transition end`      → ViewTransitionCommand
-  'swap', //           `swap $a with $b`                → SwapCommand. The htmx-style
-  //                     `swap <content> into <target>` form is an EXTENSION of this same
-  //                     command, not a different one — `commands/dom/swap.ts` implements the
-  //                     upstream value-swap variant explicitly, under a `variant` discriminator.
-
-  // Never written by a user: `pseudo-command` is the internal registry name for
-  // method-call-as-command (`foo() on #a`), and `-` is not an identifier
-  // character, so no source text can contain the token. Listed so the
-  // partition is total. The mechanism is upstream — the probe above yields
-  // PseudoCommand from `parsetree/commands/pseudoCommand.js`, which the core
-  // `_hyperscript.js` bundle registers.
-  'pseudo-command',
-
-  // Moved OUT of LOKASCRIPT_ONLY_COMMANDS by the same 4.1 oracle run. Each was
-  // asserted to be a LokaScript extension and each parses on stock
-  // hyperscript.org@0.9.93, so the LSP was raising a spurious *error*
-  // diagnostic on portable code — the same defect as the omissions above, with
-  // the sign flipped.
-  'make', //     `make a <div/>`             → MakeCommand      (basic.js)
-  'measure', //  `measure #a`                → MeasureCommand   (dom.js)
-  'morph', //    `morph #a to "<p>x</p>"`    → MorphCommand     (dom.js)
-  'settle', //   `settle`                    → SettleCommand    (animations.js)
-  // `install` is upstream at the position it is actually written — `_="install
-  // Foo"` parses as InstallFeature. It is a FEATURE upstream and a registered
-  // command here, so `on click install Foo` works only in LokaScript. The
-  // lists are keyed by name and cannot express "upstream in feature position
-  // only"; classified by the canonical usage, which is portable.
-  'install',
-
-  // Definitions
+  // The engine's features (`set` and `js` are features too, listed above).
   'behavior',
+  'bind',
   'def',
   'init',
+  'install',
+  'live',
   'on',
+  'when',
+
+  // Upstream extensions (ext/eventsource.js, ext/socket.js, ext/worker.js); not in the engine.
   'eventsource',
   'socket',
   'worker',
 ] as const;
 
 /**
- * Commands that are LokaScript extensions.
- * These do NOT work in original _hyperscript.
- *
- * Each row records the probe that placed it here: the snippet, and how
- * hyperscript.org@0.9.93 rejected it.
+ * Command keywords the LokaScript runtime has and upstream does not: none since 4.0
+ * (see the module comment).
  */
-export const LOKASCRIPT_ONLY_COMMANDS = [
-  // Upstream _hyperscript has no `prepend`; it offers only
-  // `put <content> at the start of <target>`.
-  'prepend', // `prepend "x" to #a`      → Unexpected Token : prepend
-  'process', // `process "<p>x</p>"`     → Unexpected Token : process
-
-  // Added by Arc A step 4.1 — the omissions that produced NO diagnostic.
-  'copy', //    `copy "x"`               → Unexpected Token : copy
-  'push', //    `push url "/x"`          → Unexpected Token : push
-  'replace', // `replace url "/x"`       → Unexpected Token : replace
-
-  // Upstream spells this command `beep!`, with the bang as part of the token:
-  // `beep! me` parses (BeepCommand), `beep me` does not. hyperfixi registers it
-  // as `beep` and accepts both spellings, so the portable spelling is `beep!`
-  // and the bare one is the extension. Classified by the registered name,
-  // which is what these lists key on.
-  'beep', //    `beep me`                → Unexpected Token : beep
-
-  // Upstream has `unless` only as a TRAILING statement modifier
-  // (`log "x" unless true` → UnlessStatementModifier, kernel.js
-  // parseIndirectStatement). The registered `unless` COMMAND — the leading
-  // block form, an alias of `if` — is the LokaScript addition.
-  'unless', //  `unless true log "x" end` → Unexpected Token : unless
-] as const;
+export const LOKASCRIPT_ONLY_COMMANDS: readonly string[] = [];
 
 /**
  * All commands (hyperscript + lokascript extensions).
  */
-export const ALL_COMMANDS = [...HYPERSCRIPT_COMMANDS, ...LOKASCRIPT_ONLY_COMMANDS] as const;
+export const ALL_COMMANDS: readonly string[] = [
+  ...HYPERSCRIPT_COMMANDS,
+  ...LOKASCRIPT_ONLY_COMMANDS,
+];
 
 /**
  * Type conversion targets available in original _hyperscript — the keys of
@@ -205,15 +140,15 @@ export const HYPERSCRIPT_AS_TARGETS = [
   'HTML',
   'Stream',
   'Fragment',
+  // A dynamic resolver upstream (`Values`, `Values:Form`, `Values:JSON`), not a key.
+  'Values',
 ] as const;
 
 /**
- * Extended type conversion targets (LokaScript only): the keys core's
- * `defaultConversions` registers that upstream does not. `Values` also
- * covers the qualified `Values:Form` / `Values:JSON` forms. (The former list
- * — Integer, FormData, URLSearchParams — named conversions NEITHER engine has.)
+ * Type conversion targets the LokaScript runtime has and upstream does not: none
+ * since 4.0. (Core registered `Math` as well; neither engine has it.)
  */
-export const LOKASCRIPT_ONLY_AS_TARGETS = ['Math', 'Values'] as const;
+export const LOKASCRIPT_ONLY_AS_TARGETS: readonly string[] = [];
 
 /**
  * Event modifiers available in original _hyperscript.
@@ -227,159 +162,81 @@ export const HYPERSCRIPT_EVENT_MODIFIERS = [
 ] as const;
 
 /**
- * Event modifiers that are LokaScript extensions.
+ * Event modifiers the LokaScript runtime has and upstream does not: none since 4.0.
+ * (Core's `.debounce(300)` / `.throttle(1s)` are rejected by both engines; upstream
+ * spells them `debounced at 300ms` / `throttled at 1s`.)
  */
-export const LOKASCRIPT_ONLY_EVENT_MODIFIERS = ['debounce', 'throttle'] as const;
+export const LOKASCRIPT_ONLY_EVENT_MODIFIERS: readonly string[] = [];
 
 /**
- * Syntax patterns that are LokaScript-only.
- * Used for detecting LokaScript features in hyperscript mode.
+ * The engine's additions over upstream, by the node type its parse gives each.
  */
-export const LOKASCRIPT_SYNTAX_PATTERNS = {
-  /**
-   * Possessive dot notation on `its`: its.value
-   * Upstream resolves `my.x` and `your.x` (they are plain symbols), so only
-   * `its.` is non-portable; write `its value` for _hyperscript compatibility.
-   */
-  dotNotation: /\bits\.\w+/,
-
-  /**
-   * Optional chaining: my?.value
-   */
-  optionalChaining: /\b(my|your|its)\?\.\w+/,
-
-  /**
-   * Extended 'as' conversions
-   */
-  extendedAsConversion: /\bas\s+(Math|Values)\b/i,
-
-  /**
-   * Debounce/throttle modifiers with duration: .debounce(300), .throttle(1s)
-   */
-  temporalModifiers: /\.(debounce|throttle)\s*\(\s*\d+/i,
-} as const;
+const ENGINE_ADDITIONS: Record<string, { pattern: string; description: string }> = {
+  newExpression: {
+    pattern: 'new-expression',
+    description:
+      "'new X()' is an @hyperfixi/engine addition; upstream reads `new` as a variable (use `make a X`)",
+  },
+  toggleElementCommand: {
+    pattern: 'toggle-element',
+    description:
+      "'toggle <element>' (open or close a dialog, details or popover) is an @hyperfixi/engine addition",
+  },
+};
 
 /**
  * Check if a command is hyperscript-compatible.
  */
 export function isHyperscriptCommand(cmd: string): boolean {
-  return HYPERSCRIPT_COMMANDS.includes(cmd.toLowerCase() as (typeof HYPERSCRIPT_COMMANDS)[number]);
+  return (HYPERSCRIPT_COMMANDS as readonly string[]).includes(cmd.toLowerCase());
 }
 
 /**
- * Check if a command is LokaScript-only.
+ * Check if a command is LokaScript-only (none since 4.0).
  */
 export function isLokascriptOnlyCommand(cmd: string): boolean {
-  return LOKASCRIPT_ONLY_COMMANDS.includes(
-    cmd.toLowerCase() as (typeof LOKASCRIPT_ONLY_COMMANDS)[number]
-  );
+  return LOKASCRIPT_ONLY_COMMANDS.includes(cmd.toLowerCase());
 }
 
 /**
- * Replace string literals and `--` line comments with spaces (same length, so
- * offsets survive). Single quotes open a string only at a token start, which
- * leaves possessives (`#el's value`) alone.
- */
-export function blankStringsAndComments(code: string): string {
-  let out = '';
-  let i = 0;
-  while (i < code.length) {
-    const ch = code[i];
-    if (ch === '-' && code[i + 1] === '-') {
-      const eol = code.indexOf('\n', i);
-      const end = eol === -1 ? code.length : eol;
-      out += ' '.repeat(end - i);
-      i = end;
-      continue;
-    }
-    const prev = i === 0 ? ' ' : code[i - 1];
-    const opensString = ch === '"' || ch === '`' || (ch === "'" && /[\s(,\[=]/.test(prev));
-    if (opensString) {
-      let j = i + 1;
-      while (j < code.length && code[j] !== ch) {
-        if (code[j] === '\\') j++;
-        if (code[j] === '\n' && ch !== '`') break;
-        j++;
-      }
-      const end = Math.min(j + 1, code.length);
-      out += ' '.repeat(end - i);
-      i = end;
-      continue;
-    }
-    out += ch;
-    i++;
-  }
-  return out;
-}
-
-/**
- * Detect LokaScript-only features in code.
- * Returns an array of detected features with their descriptions.
+ * Detect LokaScript-only syntax: the engine's additions over upstream, found in the
+ * tree `@hyperfixi/engine`'s `parse` returned for the code. Each carries the source
+ * offsets of the node that uses it.
  */
 export function detectLokascriptFeatures(
-  code: string
-): Array<{ feature: string; description: string; pattern: string }> {
-  const detected: Array<{ feature: string; description: string; pattern: string }> = [];
-
-  // Check for LokaScript-only commands. The scan runs over code with string
-  // literals and `--` comments blanked, and a name only counts when it is not
-  // part of a larger token (`y.replace(`, `arr.push(`, `:process`) and is not
-  // a method call. `unless` is special: upstream has the TRAILING form
-  // (`log "x" unless done`), so only the LEADING block form is an extension.
-  const scannable = blankStringsAndComments(code);
-  for (const cmd of LOKASCRIPT_ONLY_COMMANDS) {
-    const pattern =
-      cmd === 'unless'
-        ? /(?<=^[ \t]*|\bthen\s+|\bend\s+|\belse\s+)unless(?![\w-])/im
-        : new RegExp(`(?<![\\w.:$@^#-])${cmd}(?![\\w-])(?!\\s*\\()`, 'i');
-    if (pattern.test(scannable)) {
+  engineTree: unknown
+): Array<{ feature: string; description: string; pattern: string; start?: number; end?: number }> {
+  const detected: Array<{
+    feature: string;
+    description: string;
+    pattern: string;
+    start?: number;
+    end?: number;
+  }> = [];
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (typeof node !== 'object' || node === null) return;
+    const type = Reflect.get(node, 'type');
+    const addition = typeof type === 'string' ? ENGINE_ADDITIONS[type] : undefined;
+    if (addition) {
+      const start = Reflect.get(node, 'start');
+      const end = Reflect.get(node, 'end');
       detected.push({
-        feature: 'command',
-        description: `'${cmd}' command is a LokaScript extension`,
-        pattern: cmd,
+        feature: 'syntax',
+        description: addition.description,
+        pattern: addition.pattern,
+        ...(typeof start === 'number' && { start }),
+        ...(typeof end === 'number' && { end }),
       });
     }
-  }
-
-  // Check for dot notation
-  if (LOKASCRIPT_SYNTAX_PATTERNS.dotNotation.test(code)) {
-    detected.push({
-      feature: 'syntax',
-      description:
-        "Dot notation (my.property) is a LokaScript extension. Use 'my property' for _hyperscript compatibility",
-      pattern: 'dot-notation',
-    });
-  }
-
-  // Check for optional chaining
-  if (LOKASCRIPT_SYNTAX_PATTERNS.optionalChaining.test(code)) {
-    detected.push({
-      feature: 'syntax',
-      description: 'Optional chaining (my?.property) is a LokaScript extension',
-      pattern: 'optional-chaining',
-    });
-  }
-
-  // Check for extended as conversions
-  const asMatch = code.match(LOKASCRIPT_SYNTAX_PATTERNS.extendedAsConversion);
-  if (asMatch) {
-    detected.push({
-      feature: 'conversion',
-      description: `'as ${asMatch[1]}' is a LokaScript extension`,
-      pattern: `as-${asMatch[1].toLowerCase()}`,
-    });
-  }
-
-  // Check for temporal modifiers
-  const temporalMatch = code.match(LOKASCRIPT_SYNTAX_PATTERNS.temporalModifiers);
-  if (temporalMatch) {
-    detected.push({
-      feature: 'modifier',
-      description: `'.${temporalMatch[1]}()' modifier is a LokaScript extension`,
-      pattern: temporalMatch[1].toLowerCase(),
-    });
-  }
-
+    for (const value of Object.values(node)) {
+      if (typeof value === 'object' && value !== null) walk(value);
+    }
+  };
+  walk(engineTree);
   return detected;
 }
 

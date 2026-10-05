@@ -817,14 +817,20 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
   const diagnostics: Diagnostic[] = [];
   const brand = getBranding(resolvedMode);
 
-  // In hyperscript-compat modes: check for LokaScript-only features first
-  if (isHyperscriptCompatMode(resolvedMode)) {
-    const lokascriptFeatures = detectLokascriptFeatures(code);
-    for (const feature of lokascriptFeatures) {
+  // In hyperscript-compat modes: the engine's additions over upstream, found in its
+  // parse (code it cannot parse gets its parse error below, in every mode).
+  if (isHyperscriptCompatMode(resolvedMode) && engineParse) {
+    let tree: unknown = null;
+    try {
+      tree = engineParse(code);
+    } catch {
+      /* reported as a parse error below */
+    }
+    for (const feature of detectLokascriptFeatures(tree)) {
       diagnostics.push({
         range: {
-          start: { line: 0, character: 0 },
-          end: { line: 0, character: code.split('\n')[0]?.length || code.length },
+          start: offsetToPosition(code, feature.start ?? 0),
+          end: offsetToPosition(code, feature.end ?? code.split('\n')[0]?.length ?? 0),
         },
         severity: DiagnosticSeverity.Error,
         code: 'lokascript-only',

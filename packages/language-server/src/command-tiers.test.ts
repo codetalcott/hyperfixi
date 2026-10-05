@@ -1,96 +1,102 @@
 /**
- * Command tiers must name real commands.
+ * Command tiers must name the engine's keywords, and all of them.
  *
- * `LOKASCRIPT_ONLY_COMMANDS` advertised `persist` (deleted in c8cd050e),
+ * `LOKASCRIPT_ONLY_COMMANDS` once advertised `persist` (deleted in c8cd050e),
  * `transfer` (never existed anywhere in the repo), and `process-partials` (the
- * command is `process`). Nothing checked these lists against the engine, so the
+ * command was `process`). Nothing checked these lists against the engine, so the
  * LSP offered completions for commands the runtime rejects.
  *
- * Reads core's command set from source rather than importing it: the tier
- * lists are plain data and this keeps the check dependency-free (the same
- * approach as scripts/check-ci-build-order.cjs).
- *
- * The source is `commands/manifest.ts`, core's registry-of-record since Arc A.
- * It used to be `parser-constants.ts`'s `COMMANDS` literal, which Arc A step 3
- * turned into `new Set([...COMMAND_NAMES, 'for'])` — derived from the manifest,
- * and so no longer a list of quoted names for a regex to read. Reading the
- * manifest is the better anchor anyway: `COMMANDS` is the PARSER's set (it
- * carries `for`, which has no implementation) while the manifest is what the
- * engine registers and executes, which is what this file's title claims to
- * check.
+ * The oracle is `@hyperfixi/engine`'s grammar: every module in `everything` run
+ * against a fresh grammar, the way the Vite plugin and `verify:reference` read it.
+ * (Until Phase C5 of the engine cutover this read core's command manifest as
+ * source text; it leaves with core's engine in C6.)
  */
 
 import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { HYPERSCRIPT_COMMANDS, LOKASCRIPT_ONLY_COMMANDS } from './command-tiers';
+import { createGrammar, everything, parse, register } from '@hyperfixi/engine';
+import {
+  HYPERSCRIPT_COMMANDS,
+  LOKASCRIPT_ONLY_COMMANDS,
+  detectLokascriptFeatures,
+} from './command-tiers';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const MANIFEST = path.resolve(here, '../../core/src/commands/manifest.ts');
-const PARSER_CONSTANTS = path.resolve(here, '../../core/src/parser/parser-constants.ts');
-
-function namesIn(file: string, label: string, block: RegExp): string[] {
-  const source = fs.readFileSync(file, 'utf8');
-  const match = source.match(block);
-  if (!match) throw new Error(`Could not find ${label} in ${file}`);
-  return [...match[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
-}
-
-/**
- * Everything the engine will execute by name. CONTROL_FLOW_COMMANDS is unioned
- * in because loop forms like `while` are control-flow keywords rather than
- * registered commands, yet the tiers legitimately advertise them.
- */
-function coreCommands(): Set<string> {
-  return new Set([
-    ...namesIn(MANIFEST, 'COMMAND_NAMES', /export const COMMAND_NAMES[^=]*=\s*\[([\s\S]*?)\n\];/),
-    ...namesIn(
-      PARSER_CONSTANTS,
-      'CONTROL_FLOW_COMMANDS',
-      /export const CONTROL_FLOW_COMMANDS = new Set\(\[([\s\S]*?)\]\)/
-    ),
-  ]);
-}
-
-/**
- * Hyperscript FEATURES, not commands: they open a declaration block rather than
- * executing inside one, so they are absent from the parser's COMMANDS set by
- * design. The tier lists cover both, hence this allowlist.
- */
-const FEATURES = new Set(['behavior', 'def', 'init', 'on', 'eventsource', 'socket', 'worker']);
-
-describe('command tiers name real commands', () => {
-  const commands = coreCommands();
-
-  it('core COMMANDS parsed successfully (guards the regex)', () => {
-    expect(commands.size).toBeGreaterThan(40);
-    expect(commands.has('toggle')).toBe(true);
-    expect(commands.has('append')).toBe(true);
-  });
-
-  for (const [label, list] of [
-    ['HYPERSCRIPT_COMMANDS', HYPERSCRIPT_COMMANDS],
-    ['LOKASCRIPT_ONLY_COMMANDS', LOKASCRIPT_ONLY_COMMANDS],
-  ] as const) {
-    it(`every ${label} entry exists in the engine`, () => {
-      const ghosts = list.filter(name => !commands.has(name) && !FEATURES.has(name));
-      expect(ghosts, `named by ${label} but unknown to the engine: ${ghosts.join(', ')}`).toEqual(
-        []
-      );
-    });
+function engineKeywords(): Set<string> {
+  const keywords = new Set<string>();
+  for (const mod of everything) {
+    const grammar = createGrammar();
+    mod(grammar);
+    // The template text line registers under `#text`, which no script can spell.
+    for (const key of Object.keys(grammar.commands)) if (!key.startsWith('#')) keywords.add(key);
+    for (const key of Object.keys(grammar.features)) keywords.add(key);
   }
+  return keywords;
+}
 
-  it('the tiers are disjoint', () => {
-    const upstream = new Set<string>(HYPERSCRIPT_COMMANDS);
-    const overlap = LOKASCRIPT_ONLY_COMMANDS.filter(name => upstream.has(name));
-    expect(overlap, 'listed as both upstream and LokaScript-only').toEqual([]);
+/** In HYPERSCRIPT_COMMANDS without being engine keywords, each for its reason. */
+const NOT_ENGINE_KEYWORDS = new Set([
+  'while', // continues a `repeat`
+  'eventsource', // upstream extensions (ext/*.js) the engine does not have
+  'socket',
+  'worker',
+]);
+
+describe('command tiers name the engine keywords', () => {
+  const engine = engineKeywords();
+
+  it('read the engine grammar (guards the oracle)', () => {
+    expect(engine.size).toBeGreaterThan(55);
+    expect(engine.has('toggle')).toBe(true);
+    expect(engine.has('beep!')).toBe(true);
+    expect(engine.has('on')).toBe(true);
   });
 
-  it('prepend is a LokaScript extension, not upstream', () => {
-    // Upstream _hyperscript has no `prepend` keyword — only
-    // `put <content> at the start of <target>`.
-    expect(LOKASCRIPT_ONLY_COMMANDS).toContain('prepend');
-    expect(HYPERSCRIPT_COMMANDS as readonly string[]).not.toContain('prepend');
+  it('every HYPERSCRIPT_COMMANDS entry is an engine keyword or a listed exception', () => {
+    const ghosts = HYPERSCRIPT_COMMANDS.filter(
+      name => !engine.has(name) && !NOT_ENGINE_KEYWORDS.has(name)
+    );
+    expect(ghosts).toEqual([]);
+  });
+
+  it('every engine keyword is in HYPERSCRIPT_COMMANDS', () => {
+    const listed = new Set<string>(HYPERSCRIPT_COMMANDS);
+    expect([...engine].filter(name => !listed.has(name)).sort()).toEqual([]);
+  });
+
+  it('lists no keyword twice', () => {
+    expect(HYPERSCRIPT_COMMANDS.length).toBe(new Set(HYPERSCRIPT_COMMANDS).size);
+  });
+
+  it('has no LokaScript-only keyword: the engine follows upstream', () => {
+    expect(LOKASCRIPT_ONLY_COMMANDS).toEqual([]);
+  });
+});
+
+describe('detectLokascriptFeatures finds the engine additions in its parse', () => {
+  register(...everything);
+
+  it.each([
+    ['new X()', 'set t to new Date()', 'new-expression'],
+    ['toggle <element>', 'on click toggle #dialog', 'toggle-element'],
+  ])('flags %s, with its offsets', (_label, code, pattern) => {
+    const found = detectLokascriptFeatures(parse(code));
+    expect(found.map(f => f.pattern)).toEqual([pattern]);
+    const at = found[0];
+    expect(typeof at.start).toBe('number');
+    expect(code.slice(at.start, at.end)).toMatch(pattern === 'new-expression' ? /^new/ : /^toggle/);
+  });
+
+  it.each([
+    'on click toggle .active on me',
+    'on click toggle @disabled on #btn',
+    'on click toggle between .a and .b',
+    'set t to my value',
+    'make a Date then put it into #out',
+    'set new to 1',
+  ])('stays silent on upstream code: %s', code => {
+    expect(detectLokascriptFeatures(parse(code))).toEqual([]);
+  });
+
+  it('finds nothing in a tree it cannot read', () => {
+    expect(detectLokascriptFeatures(null)).toEqual([]);
   });
 });

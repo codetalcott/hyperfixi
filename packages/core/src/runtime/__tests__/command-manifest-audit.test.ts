@@ -51,12 +51,12 @@
  * and the per-command factory identity check in §2 (each factory builds a
  * command that calls itself what the manifest calls it).
  *
- * ## Cross-package reads
+ * ## No cross-package reads any more
  *
- * The LSP tier lists live in `packages/language-server/src/command-tiers.ts`,
- * which depends on core — importing it here would be a package cycle. They are
- * read from source text instead, the same approach `scripts/verify-reference-data.ts`
- * uses for `commands/index.ts`. Monorepo-only, by design.
+ * §3 used to read the LSP tier lists (`packages/language-server/src/command-tiers.ts`)
+ * as source text. Since Phase C5 of the engine cutover they list the engine's
+ * keywords, checked against its grammar by `command-tiers.test.ts`; core's own
+ * extension set (below) is what §3 and §9 still need.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -338,48 +338,11 @@ describe('the four core lists agree with the registry', () => {
 });
 
 // ===========================================================================
-// 3. The LSP tier lists (language-server/src/command-tiers.ts)
+// 3. Core's extension commands (the LSP tier lists' partition until C5)
 // ===========================================================================
 
-const tiersSource = readFileSync(
-  resolve(DIR, '../../../../language-server/src/command-tiers.ts'),
-  'utf-8'
-);
 /**
- * Anchored on the closing `] as const;` rather than the first `]`. The old
- * non-greedy `\]` stopped at whatever bracket came first, so a `]` inside one
- * of the annotation comments step 4.1 added would silently truncate the list
- * and turn every command below it into a phantom gap.
- */
-function tierList(name: string): string[] {
-  const block = tiersSource.match(new RegExp(`${name} = \\[([\\s\\S]*?)\\n\\] as const;`));
-  // Module scope, so a plain throw rather than expect(): a collection-time
-  // failure here must name the cause, not surface as "expect outside test".
-  if (!block) throw new Error(`${name} literal moved or changed shape in command-tiers.ts`);
-  return stringsIn(block[1]);
-}
-
-const HYPERSCRIPT_TIER = tierList('HYPERSCRIPT_COMMANDS');
-const LOKASCRIPT_TIER = tierList('LOKASCRIPT_ONLY_COMMANDS');
-
-/**
- * In the tier lists but not registered commands, legitimately: the seven
- * feature definitions and the two loop keywords. Same set the ghost test
- * (`command-tiers.test.ts`) allowlists as FEATURES.
- */
-const TIER_NOT_COMMANDS = new Set([
-  'behavior',
-  'def',
-  'init',
-  'on',
-  'eventsource',
-  'socket',
-  'worker',
-  'for',
-  'while',
-]);
-
-/**
+ * Registered commands in NEITHER tier list/**
  * Registered commands in NEITHER tier list — **empty since step 4.1**, and the
  * assertion below keeps it that way.
  *
@@ -423,37 +386,15 @@ const EXTENSIONS = new Set([
   'unless', // upstream has `unless` only as a TRAILING statement modifier
 ]);
 
-describe('the LSP tier lists', () => {
-  it('every tier entry is a registered command or an allowlisted feature', () => {
-    // Set equality, not filter-and-assert-empty: a TIER_NOT_COMMANDS entry that
-    // becomes a registered command (or leaves the lists) goes stale loudly.
-    expect(ghostsIn([...HYPERSCRIPT_TIER, ...LOKASCRIPT_TIER])).toEqual(
-      [...TIER_NOT_COMMANDS].sort()
-    );
-  });
-
-  it('classifies every registered command — the partition is total (step 4.1)', () => {
-    expect(gapsIn([...HYPERSCRIPT_TIER, ...LOKASCRIPT_TIER])).toEqual(
-      [...TIER_UNCLASSIFIED].sort()
-    );
-    expect(TIER_UNCLASSIFIED.size, 'a command lost its classification').toBe(0);
-  });
-
-  it('the two tiers split the registry 51 / 8', () => {
-    const upstream = HYPERSCRIPT_TIER.filter(name => REGISTERED.has(name));
-    const extension = LOKASCRIPT_TIER.filter(name => REGISTERED.has(name));
-    expect(extension.sort()).toEqual([...EXTENSIONS].sort());
-    expect({ upstream: upstream.length, extension: extension.length }).toEqual(TIER_COUNTS);
-    expect(upstream.length + extension.length).toBe(REGISTRY.length);
-  });
-
-  it('the tiers stay disjoint', () => {
-    // command-tiers.test.ts asserts this too, but from inside the
-    // language-server package. Repeated here because §7 derives the manifest's
-    // upstreamOrExtension from these lists with `HYPERSCRIPT_TIER` winning:
-    // a name in both would silently classify as upstream.
-    const upstream = new Set(HYPERSCRIPT_TIER);
-    expect(LOKASCRIPT_TIER.filter(name => upstream.has(name))).toEqual([]);
+describe("core's extension commands", () => {
+  it('are registered, and split the registry 51 / 7', () => {
+    // The LSP tiers held this partition until C5; core's registry still has it, and
+    // §7 and §9 read it from here.
+    expect([...EXTENSIONS].filter(name => !REGISTERED.has(name))).toEqual([]);
+    expect({
+      upstream: REGISTRY.length - EXTENSIONS.size,
+      extension: EXTENSIONS.size,
+    }).toEqual(TIER_COUNTS);
   });
 });
 
@@ -743,13 +684,9 @@ describe('the command manifest', () => {
     for (const target of Object.values(actual)) expect(MANIFEST_BY_NAME.has(target)).toBe(true);
   });
 
-  it('upstreamOrExtension agrees with the LSP tier lists', () => {
+  it("upstreamOrExtension marks exactly core's extensions (§3)", () => {
     for (const name of REGISTRY) {
-      const expected = HYPERSCRIPT_TIER.includes(name)
-        ? 'upstream'
-        : LOKASCRIPT_TIER.includes(name)
-          ? 'extension'
-          : 'unknown';
+      const expected = EXTENSIONS.has(name) ? 'extension' : 'upstream';
       expect(MANIFEST_BY_NAME.get(name)!.upstreamOrExtension, `${name} tier`).toBe(expected);
     }
   });
@@ -760,7 +697,7 @@ describe('the command manifest', () => {
     // the 23 required deleting each row HERE and in TIER_UNCLASSIFIED in one
     // diff. Both sides are now empty, so on its own this is a weak assertion —
     // the load is carried by the per-command equality test above and by §3's
-    // 51/8 split, which a re-classification cannot satisfy by accident.
+    // 51/7 split, which a re-classification cannot satisfy by accident.
     const unknown = COMMAND_MANIFEST.filter(e => e.upstreamOrExtension === 'unknown')
       .map(e => e.name)
       .sort();
