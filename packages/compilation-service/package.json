@@ -1,7 +1,7 @@
 {
   "name": "@lokascript/compilation-service",
   "version": "3.3.0",
-  "description": "Semantic compilation service for LokaScript - validates and compiles hyperscript from 24 languages, explicit syntax, or LLM JSON",
+  "description": "Semantic service for LokaScript - validates, translates, diffs and scores hyperscript from 24 languages, explicit syntax, or LLM JSON, and renders it as components and tests",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "pretest": "../../scripts/ensure-fresh.sh ../semantic ../engine ../aot-compiler",
+    "pretest": "../../scripts/ensure-fresh.sh ../semantic ../engine",
     "test": "vitest run",
     "test:watch": "vitest",
     "serve": "tsx src/serve.ts",
@@ -40,7 +40,6 @@
   },
   "devDependencies": {
     "@hono/node-server": "^2.1.1",
-    "@hyperfixi/aot-compiler": "^3.3.0",
     "@hyperfixi/engine": "^3.3.0",
     "@lokascript/semantic": "^3.3.0",
     "@types/node": "^26.6.3",

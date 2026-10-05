@@ -1,8 +1,8 @@
 /**
  * Validation pipeline.
  *
- * Sequential gates that validate a parsed SemanticNode before compilation.
- * Each gate can add diagnostics; errors block compilation.
+ * Sequential gates that validate a parsed SemanticNode.
+ * Each gate can add diagnostics; an error fails validation.
  */
 
 import type { Diagnostic } from '../types.js';

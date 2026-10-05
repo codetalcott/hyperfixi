@@ -20,7 +20,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/engine" \
   "$REPO_ROOT/packages/i18n" \
   "$REPO_ROOT/packages/patterns-reference" \
-  "$REPO_ROOT/packages/aot-compiler" \
   "$REPO_ROOT/packages/compilation-service" \
   "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent" \
@@ -39,7 +38,6 @@ PACKAGES=(
   "intent:Intent"
 
   # Compilation & tooling
-  "aot-compiler:AOT Compiler"
   "compilation-service:Compilation Service"
   "hyperscript-adapter:Hyperscript Adapter"
   "server-bridge:Server Bridge"

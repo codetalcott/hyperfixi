@@ -17,7 +17,7 @@ export { scoreNodes } from '@lokascript/semantic/fidelity';
 export type { FidelityReport, FidelityScores } from '@lokascript/semantic/fidelity';
 
 /** Score request — a candidate scored against a reference. Sides accept the
- * same input formats as diff/compile and may be in different languages. */
+ * same input formats as diff/validate and may be in different languages. */
 export interface ScoreRequest {
   reference: DiffInput;
   candidate: DiffInput;

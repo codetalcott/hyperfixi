@@ -2,12 +2,13 @@
  * CompilationService — the main orchestrator.
  *
  * Accepts hyperscript in three formats (natural language, explicit syntax, LLM JSON),
- * validates through semantic schemas, and compiles to optimized JavaScript.
+ * validates it through semantic schemas and the engine, and translates, diffs, scores, and
+ * renders it as components and tests. (It compiled to JavaScript through
+ * `@hyperfixi/aot-compiler` until 4.0, when the AOT compiler retired.)
  */
 
 import type {
   CompileRequest,
-  CompileResponse,
   ValidationResponse,
   TranslateRequest,
   TranslateResponse,
@@ -33,13 +34,6 @@ import {
   initValidation,
   type ValidationFunctions,
 } from './validation/gates.js';
-import {
-  compileSemanticNode,
-  initBridge,
-  type BridgeFunctions,
-  type AOTCompilerLike,
-} from './compile/bridge.js';
-import { SemanticCache, generateCacheKey } from './compile/cache.js';
 import { extractOperations } from './operations/extract.js';
 import { PlaywrightRenderer } from './renderers/playwright.js';
 import { ReactRenderer } from './renderers/react.js';
@@ -65,7 +59,6 @@ type TranslationCollisionsFn = (
 }>;
 
 export class CompilationService {
-  private cache: SemanticCache;
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
   private translationCollisionsFn: TranslationCollisionsFn | null = null;
@@ -81,7 +74,6 @@ export class CompilationService {
 
   private constructor(options: ServiceOptions = {}) {
     this.confidenceThreshold = options.confidenceThreshold ?? 0.7;
-    this.cache = new SemanticCache(options.cacheSize ?? 500);
 
     // Initialize renderer registries with defaults
     this.testRenderers = new Map<string, TestRenderer>(
@@ -115,8 +107,8 @@ export class CompilationService {
   /**
    * Create a CompilationService by dynamically importing dependencies.
    *
-   * This async factory resolves @lokascript/semantic and @hyperfixi/aot-compiler
-   * at runtime, following the same pattern as createMultilingualCompiler().
+   * This async factory resolves @lokascript/semantic (and, when it is installed,
+   * @hyperfixi/engine) at runtime.
    */
   static async create(options: ServiceOptions = {}): Promise<CompilationService> {
     const service = new CompilationService(options);
@@ -137,20 +129,6 @@ export class CompilationService {
       validateSemanticResult:
         semantic.validateSemanticResult as ValidationFunctions['validateSemanticResult'],
     });
-
-    // Import AOT compiler
-    const aot = await import('@hyperfixi/aot-compiler');
-    const compiler = aot.createCompiler();
-
-    // Initialize bridge with AST builder and compiler
-    // Cast needed: our interfaces use `unknown` to avoid direct type dependencies
-    initBridge(
-      {
-        ASTBuilder: semantic.ASTBuilder as unknown as BridgeFunctions['ASTBuilder'],
-        fromSemanticAST: semantic.fromSemanticAST as unknown as BridgeFunctions['fromSemanticAST'],
-      },
-      compiler as unknown as AOTCompilerLike
-    );
 
     // Store translate function
     service.translateFn = semantic.translate;
@@ -218,103 +196,8 @@ export class CompilationService {
   // ===========================================================================
 
   /**
-   * Compile hyperscript to JavaScript.
-   *
-   * Accepts any of three input formats:
-   * - `code` + `language`: Natural language hyperscript
-   * - `explicit`: Bracket syntax [command role:value ...]
-   * - `semantic`: LLM JSON { action, roles, trigger }
-   *
-   * Returns compiled JS, semantic representation, and diagnostics.
-   */
-  compile(request: CompileRequest): CompileResponse {
-    const diagnostics: Diagnostic[] = [];
-
-    // Step 1: Normalize input to SemanticNode
-    const normalized = normalize(request);
-    diagnostics.push(...normalized.diagnostics);
-
-    if (!normalized.node) {
-      return { ok: false, diagnostics };
-    }
-
-    // Step 2: Validate
-    const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
-    diagnostics.push(...gateResult.diagnostics);
-
-    if (!gateResult.pass) {
-      return {
-        ok: false,
-        confidence: gateResult.adjustedConfidence,
-        diagnostics,
-      };
-    }
-
-    // Step 2b: The engine must read it (before the cache: two sources can share a node)
-    const engineRejects = this.engineDiagnostic(request, normalized);
-    if (engineRejects) {
-      diagnostics.push(engineRejects);
-      return { ok: false, confidence: gateResult.adjustedConfidence, diagnostics };
-    }
-
-    // Step 3: Check cache
-    const cacheKey = generateCacheKey(normalized.node, {
-      optimization: request.optimization,
-      target: request.target,
-      minify: request.minify,
-    });
-
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      // Merge current diagnostics with cached (warnings may differ)
-      return {
-        ...cached,
-        confidence: gateResult.adjustedConfidence,
-        diagnostics: [...diagnostics, ...cached.diagnostics.filter(d => d.severity !== 'error')],
-      };
-    }
-
-    // Step 4: Compile
-    const result = compileSemanticNode(normalized.node, {
-      language: request.language,
-      optimization: request.optimization,
-      target: request.target,
-      minify: request.minify,
-    });
-
-    // Convert bridge warnings/errors to diagnostics
-    for (const warning of result.warnings) {
-      diagnostics.push({ severity: 'warning', code: 'COMPILE_WARNING', message: warning });
-    }
-    for (const error of result.errors) {
-      diagnostics.push({ severity: 'error', code: 'COMPILE_ERROR', message: error });
-    }
-
-    if (!result.success) {
-      return { ok: false, diagnostics };
-    }
-
-    // Step 5: Assemble response
-    const semanticJSON = nodeToSemanticJSON(normalized.node);
-    const response: CompileResponse = {
-      ok: true,
-      js: result.code,
-      helpers: result.helpers,
-      size: result.code ? new TextEncoder().encode(result.code).length : 0,
-      semantic: semanticJSON,
-      confidence: gateResult.adjustedConfidence,
-      diagnostics,
-    };
-
-    // Step 6: Cache
-    this.cache.set(cacheKey, response);
-
-    return response;
-  }
-
-  /**
-   * Validate input without compiling.
+   * Validate input: semantic's parse and schemas, and (for natural-language input) the
+   * engine's parse of the English the page would run.
    * Returns semantic representation and diagnostics.
    */
   validate(request: CompileRequest): ValidationResponse {
@@ -476,26 +359,10 @@ export class CompilationService {
       return { ok: false, tests: [], operations: [], diagnostics };
     }
 
-    // Optionally compile for 'compiled' execution mode
-    let compiledJs: string | undefined;
-    if (request.executionMode === 'compiled') {
-      const compileResult = this.compile({
-        code: request.code,
-        explicit: request.explicit,
-        semantic: request.semantic,
-        language: request.language,
-      });
-      if (compileResult.ok && compileResult.js) {
-        compiledJs = compileResult.js;
-      }
-    }
-
     const generated = renderer.render(spec, {
       testName: request.testName,
-      executionMode: request.executionMode,
       bundlePath: request.bundlePath,
       hyperscript: request.code ?? request.explicit,
-      compiledJs,
     });
 
     const semanticJSON = nodeToSemanticJSON(normalized.node);
@@ -749,15 +616,14 @@ export class CompilationService {
    * Accepts LSE produced by an LLM (via `lse_generate_with_correction` MCP tool),
    * validates it, and renders to the requested target format.
    *
-   * Targets:
-   * - 'js'             — compiled JavaScript (default)
+   * Targets (`target` is required):
    * - 'react'          — React component
    * - 'vue'            — Vue component
    * - 'svelte'         — Svelte component
    * - 'intent-element' — HTML snippet with embedded `<lse-intent>` JSON
    */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    const { lse, target = 'js', task } = request;
+    const { lse, target, task } = request;
     const diagnostics: Diagnostic[] = [];
 
     const isJSON = lse.trimStart().startsWith('{');
@@ -889,38 +755,16 @@ export class CompilationService {
       };
     }
 
-    // ── js (default): compile to JavaScript ────────────────────────────────
-
-    const compileRequest: CompileRequest = isJSON
-      ? { semantic: JSON.parse(lse) as SemanticJSON }
-      : { explicit: lse };
-    const result = this.compile(compileRequest);
     return {
-      ok: result.ok,
-      output: result.js,
-      protocol: result.semantic,
-      diagnostics: result.diagnostics,
+      ok: false,
+      diagnostics: [
+        {
+          severity: 'error',
+          code: 'UNKNOWN_TARGET',
+          message: `Unknown target '${String(target)}'. Available: react, vue, svelte, intent-element`,
+        },
+      ],
     };
-  }
-
-  /**
-   * Get cache statistics.
-   */
-  getCacheStats(): { size: number; hits: number; misses: number; hitRate: number } {
-    const total = this.cache.hits + this.cache.misses;
-    return {
-      size: this.cache.size,
-      hits: this.cache.hits,
-      misses: this.cache.misses,
-      hitRate: total > 0 ? this.cache.hits / total : 0,
-    };
-  }
-
-  /**
-   * Clear the compilation cache.
-   */
-  clearCache(): void {
-    this.cache.clear();
   }
 }
 

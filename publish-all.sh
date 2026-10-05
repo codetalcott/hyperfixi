@@ -47,7 +47,7 @@ publish_pkg "behaviors"
 publish_pkg "testing-framework"
 publish_pkg "language-server"
 
-# ── Tier 4: Compilation service (bundles aot-compiler) ──────────────────────
+# ── Tier 4: Compilation service ─────────────────────────────────────────────
 echo ""
 echo "--- Tier 4: Compilation service ---"
 publish_pkg "compilation-service"

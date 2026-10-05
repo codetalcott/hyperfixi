@@ -38,18 +38,6 @@ describe('API key authentication', () => {
     authedApp = createApp({ service, apiKey: 'test-secret-123' });
   });
 
-  it('rejects unauthenticated /compile', async () => {
-    const res = await authedApp.request('/compile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
-    });
-
-    expect(res.status).toBe(401);
-    const body = await res.json();
-    expect(body.ok).toBe(false);
-  });
-
   it('rejects unauthenticated /validate', async () => {
     const res = await authedApp.request('/validate', {
       method: 'POST',
@@ -58,6 +46,8 @@ describe('API key authentication', () => {
     });
 
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
   });
 
   it('rejects unauthenticated /translate', async () => {
@@ -103,16 +93,6 @@ describe('API key authentication', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects unauthenticated /cache/stats', async () => {
-    const res = await authedApp.request('/cache/stats');
-    expect(res.status).toBe(401);
-  });
-
-  it('rejects unauthenticated DELETE /cache', async () => {
-    const res = await authedApp.request('/cache', { method: 'DELETE' });
-    expect(res.status).toBe(401);
-  });
-
   it('allows /health without auth', async () => {
     const res = await authedApp.request('/health');
     expect(res.status).toBe(200);
@@ -121,7 +101,7 @@ describe('API key authentication', () => {
   });
 
   it('rejects wrong API key', async () => {
-    const res = await authedApp.request('/compile', {
+    const res = await authedApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,7 +114,7 @@ describe('API key authentication', () => {
   });
 
   it('allows correct API key', async () => {
-    const res = await authedApp.request('/compile', {
+    const res = await authedApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -167,7 +147,7 @@ describe('Body limit middleware', () => {
       language: 'en',
     });
 
-    const res = await limitedApp.request('/compile', {
+    const res = await limitedApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -185,7 +165,7 @@ describe('Body limit middleware', () => {
   it('allows normal-sized payload', async () => {
     const smallBody = JSON.stringify({ explicit: '[toggle patient:.active]' });
 
-    const res = await limitedApp.request('/compile', {
+    const res = await limitedApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -195,24 +175,6 @@ describe('Body limit middleware', () => {
     });
 
     expect(res.status).toBe(200);
-  });
-
-  it('body limit applies to /validate endpoint', async () => {
-    const largeBody = JSON.stringify({
-      code: 'x'.repeat(300),
-      language: 'en',
-    });
-
-    const res = await limitedApp.request('/validate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': String(Buffer.byteLength(largeBody)),
-      },
-      body: largeBody,
-    });
-
-    expect(res.status).toBe(413);
   });
 
   it('body limit applies to /diff endpoint', async () => {
@@ -294,7 +256,7 @@ describe('Structured logger middleware', () => {
     const prodApp = createApp({ service, production: true });
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    await prodApp.request('/compile', {
+    await prodApp.request('/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
@@ -303,7 +265,7 @@ describe('Structured logger middleware', () => {
     expect(spy).toHaveBeenCalled();
     const parsed = JSON.parse(spy.mock.calls[0][0]);
     expect(parsed.method).toBe('POST');
-    expect(parsed.path).toBe('/compile');
+    expect(parsed.path).toBe('/validate');
 
     spy.mockRestore();
   });
@@ -328,7 +290,7 @@ describe('Combined middleware (auth + production)', () => {
   it('auth check happens before body limit', async () => {
     const largeBody = JSON.stringify({ code: 'x'.repeat(300), language: 'en' });
 
-    const res = await fullApp.request('/compile', {
+    const res = await fullApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -346,7 +308,7 @@ describe('Combined middleware (auth + production)', () => {
   it('authenticated request with valid body succeeds', async () => {
     const smallBody = JSON.stringify({ explicit: '[toggle patient:.active]' });
 
-    const res = await fullApp.request('/compile', {
+    const res = await fullApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

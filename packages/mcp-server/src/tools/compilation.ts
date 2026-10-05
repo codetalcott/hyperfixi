@@ -2,7 +2,8 @@
  * Compilation Tools
  *
  * MCP tools for the LokaScript compilation service.
- * Compile, validate, translate, generate tests, and generate components.
+ * Validate, translate, generate tests, and generate components. (compile_hyperscript,
+ * which compiled to JavaScript through the AOT compiler, retired with it in 4.0.)
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
@@ -25,44 +26,9 @@ async function getService() {
 
 export const compilationTools: Tool[] = [
   {
-    name: 'compile_hyperscript',
-    description:
-      'Compile hyperscript to optimized JavaScript — the FINAL step of the agent loop (generate → validate_and_compile → repair → compile_hyperscript). Validate first: this tool reports the same failures but returns JavaScript only on success. Accepts natural language (code + language), explicit syntax (explicit), or LLM JSON (semantic). Common roles: patient (what to act on), destination (where to), source (where from). Use get_command_docs for per-command roles. Examples: explicit="[toggle patient:.active destination:#btn]", semantic={ action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: {
-          type: 'string',
-          description: 'Natural language hyperscript (requires language)',
-        },
-        explicit: {
-          type: 'string',
-          description: 'Explicit syntax: [command role:value ...]',
-        },
-        semantic: {
-          type: 'object',
-          description: 'LLM JSON: { action, roles, trigger }',
-          properties: {
-            action: { type: 'string' },
-            roles: { type: 'object' },
-            trigger: { type: 'object' },
-          },
-        },
-        language: {
-          type: 'string',
-          description: 'ISO 639-1 language code (required for code input)',
-        },
-        confidence: {
-          type: 'number',
-          description: 'Minimum confidence threshold (default 0.7)',
-        },
-      },
-    },
-  },
-  {
     name: 'validate_and_compile',
     description:
-      'START HERE when generating hyperscript: parse into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript. On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, call compile_hyperscript for JavaScript. This validate → repair → compile loop is deterministic — no LLM in the checker.',
+      'START HERE when generating hyperscript: parse into semantic IR with diagnostics. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language (code + language), explicit bracket syntax (explicit, e.g. "[toggle patient:.active destination:#btn]"), or LLM JSON (semantic: { action, roles, trigger }). Natural-language input must also parse on @hyperfixi/engine, the engine that runs it (ENGINE_PARSE_ERROR when it does not). On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, the hyperscript goes in an _="..." attribute as is. This validate → repair loop is deterministic — no LLM in the checker. (The name predates 4.0, when compiling to JavaScript retired with the AOT compiler.)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -100,11 +66,6 @@ export const compilationTools: Tool[] = [
         semantic: { type: 'object', description: 'LLM JSON' },
         language: { type: 'string', description: 'Language code' },
         testName: { type: 'string', description: 'Custom test name' },
-        executionMode: {
-          type: 'string',
-          enum: ['runtime', 'compiled'],
-          description: 'How to load hyperscript in test (default runtime)',
-        },
         framework: {
           type: 'string',
           description: 'Test framework to target (default "playwright")',
@@ -224,7 +185,7 @@ const REVIEW_HINT =
   'UNCONSUMED_INPUT means tokens were parsed but bound to no role, so a role may have ' +
   'fallen back to a default (often `me`) — the result can look valid while doing something ' +
   'other than you intended. Compare the returned action/roles/trigger against your intent ' +
-  'before compiling; score_fidelity can prove a rewrite kept the original meaning.';
+  'before using it; score_fidelity can prove a rewrite kept the original meaning.';
 
 function compileResult(result: { ok: boolean; diagnostics?: Array<{ severity?: string }> }): {
   content: Array<{ type: string; text: string }>;
@@ -249,17 +210,6 @@ export async function handleCompilationTool(
     const service = await getService();
 
     switch (name) {
-      case 'compile_hyperscript': {
-        const result = service.compile({
-          code: args.code as string | undefined,
-          explicit: args.explicit as string | undefined,
-          semantic: args.semantic as any,
-          language: args.language as string | undefined,
-          confidence: args.confidence as number | undefined,
-        });
-        return compileResult(result);
-      }
-
       case 'validate_and_compile': {
         const result = service.validate({
           code: args.code as string | undefined,
@@ -290,7 +240,6 @@ export async function handleCompilationTool(
           semantic: args.semantic as any,
           language: args.language as string | undefined,
           testName: args.testName as string | undefined,
-          executionMode: args.executionMode as 'runtime' | 'compiled' | undefined,
           framework: args.framework as string | undefined,
         });
         return {

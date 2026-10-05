@@ -22,7 +22,7 @@ beforeAll(async () => {
 // =============================================================================
 
 describe('GET /health', () => {
-  it('returns ok, version, ready, uptime, and cache stats', async () => {
+  it('returns ok, version, ready, and uptime', async () => {
     const res = await app.request('/health');
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -30,53 +30,6 @@ describe('GET /health', () => {
     expect(body.version).toBeDefined();
     expect(body.ready).toBe(true);
     expect(body.uptime).toBeGreaterThan(0);
-    expect(body.cache).toHaveProperty('size');
-    expect(body.cache).toHaveProperty('hits');
-  });
-});
-
-// =============================================================================
-// Compile
-// =============================================================================
-
-describe('POST /compile', () => {
-  it('compiles explicit syntax', async () => {
-    const res = await app.request('/compile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active destination:#btn]' }),
-    });
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-    expect(body.semantic).toBeDefined();
-  });
-
-  it('compiles natural language', async () => {
-    const res = await app.request('/compile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: 'on click toggle .active', language: 'en' }),
-    });
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('returns 422 for invalid input', async () => {
-    const res = await app.request('/compile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: 'xyzzy blorp', language: 'en', confidence: 0.9 }),
-    });
-
-    expect(res.status).toBe(422);
-    const body = await res.json();
-    expect(body.ok).toBe(false);
   });
 });
 
@@ -96,6 +49,45 @@ describe('POST /validate', () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.semantic).toBeDefined();
+  });
+
+  it('validates explicit syntax with multiple roles', async () => {
+    const res = await app.request('/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ explicit: '[toggle patient:.active destination:#btn]' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.semantic).toBeDefined();
+    expect(body.semantic.action).toBe('toggle');
+  });
+
+  it('validates natural language', async () => {
+    const res = await app.request('/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'on click toggle .active', language: 'en' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.semantic).toBeDefined();
+  });
+
+  it('returns 422 for invalid input', async () => {
+    const res = await app.request('/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'xyzzy blorp', language: 'en', confidence: 0.9 }),
+    });
+
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
   });
 });
 
@@ -214,34 +206,12 @@ describe('POST /diff', () => {
 });
 
 // =============================================================================
-// Cache
-// =============================================================================
-
-describe('Cache endpoints', () => {
-  it('GET /cache/stats returns stats', async () => {
-    const res = await app.request('/cache/stats');
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toHaveProperty('size');
-    expect(body).toHaveProperty('hits');
-    expect(body).toHaveProperty('misses');
-  });
-
-  it('DELETE /cache clears the cache', async () => {
-    const res = await app.request('/cache', { method: 'DELETE' });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-  });
-});
-
-// =============================================================================
 // Error Handling
 // =============================================================================
 
 describe('Error handling', () => {
   it('returns 500 for malformed JSON', async () => {
-    const res = await app.request('/compile', {
+    const res = await app.request('/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{invalid json}',
@@ -272,7 +242,7 @@ describe('Production middleware', () => {
 
   it('rejects oversized payloads with 413', async () => {
     const largeBody = JSON.stringify({ code: 'x'.repeat(200), language: 'en' });
-    const res = await prodApp.request('/compile', {
+    const res = await prodApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -289,7 +259,7 @@ describe('Production middleware', () => {
 
   it('allows normal-sized payloads', async () => {
     const smallBody = JSON.stringify({ explicit: '[toggle patient:.active]' });
-    const res = await prodApp.request('/compile', {
+    const res = await prodApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -315,7 +285,7 @@ describe('API key authentication', () => {
   }, 30000);
 
   it('rejects unauthenticated requests', async () => {
-    const res = await authedApp.request('/compile', {
+    const res = await authedApp.request('/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
@@ -325,7 +295,7 @@ describe('API key authentication', () => {
   });
 
   it('allows authenticated requests', async () => {
-    const res = await authedApp.request('/compile', {
+    const res = await authedApp.request('/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

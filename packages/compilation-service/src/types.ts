@@ -1,7 +1,8 @@
 /**
  * Types for the Compilation Service.
  *
- * Three input formats converge to a single compilation pipeline:
+ * Three input formats converge to one semantic node, which the service validates,
+ * translates, diffs, scores, and renders as components and tests:
  * - Natural language hyperscript (24 languages)
  * - Explicit syntax: [toggle patient:.active destination:#btn]
  * - LLM JSON: { action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }
@@ -12,7 +13,10 @@
 // =============================================================================
 
 /**
- * Compilation request — provide exactly one of: code, explicit, or semantic.
+ * Hyperscript input — provide exactly one of: code, explicit, or semantic.
+ *
+ * (The name is from when the service also compiled hyperscript to JavaScript,
+ * through `@hyperfixi/aot-compiler`; that retired with the AOT compiler in 4.0.)
  */
 export interface CompileRequest {
   /** Natural language hyperscript (requires `language`) */
@@ -26,12 +30,6 @@ export interface CompileRequest {
   language?: string;
   /** Minimum confidence for natural language parsing (default 0.7) */
   confidence?: number;
-  /** Optimization level: 0=none, 1=basic, 2=full (default 2) */
-  optimization?: 0 | 1 | 2;
-  /** Output module format (default 'esm') */
-  target?: 'esm' | 'iife';
-  /** Minify output (default false) */
-  minify?: boolean;
 }
 
 /**
@@ -64,30 +62,7 @@ export type SemanticJSONValue = _SemanticJSONValue;
 // =============================================================================
 
 /**
- * Compilation response.
- */
-export interface CompileResponse {
-  /** Whether compilation succeeded */
-  ok: boolean;
-
-  /** Compiled JavaScript (on success) */
-  js?: string;
-  /** Runtime helpers needed by the compiled code */
-  helpers?: string[];
-  /** Output size in bytes */
-  size?: number;
-
-  /** Normalized semantic representation (always present on success) */
-  semantic?: SemanticJSON;
-  /** Parse confidence (natural language input only) */
-  confidence?: number;
-
-  /** Errors, warnings, and info messages */
-  diagnostics: Diagnostic[];
-}
-
-/**
- * Validation-only response (no compilation).
+ * Validation response.
  */
 export interface ValidationResponse {
   /** Whether validation passed */
@@ -158,11 +133,9 @@ export interface TestRequest {
 
   /** Test framework to target (default 'playwright') */
   framework?: string;
-  /** How to load hyperscript in the test (default 'runtime') */
-  executionMode?: 'runtime' | 'compiled';
   /** Override auto-generated test name */
   testName?: string;
-  /** Path to the hyperscript bundle (runtime mode; default: @hyperfixi/engine's hyperfixi-hs.js) */
+  /** Path to the hyperscript bundle (default: @hyperfixi/engine's hyperfixi-hs.js) */
   bundlePath?: string;
 }
 
@@ -264,14 +237,14 @@ export interface GenerateRequest {
   /** LSE attempt — bracket syntax `[command role:value ...]` or protocol JSON string */
   lse: string;
   /**
-   * Output target (default 'js'):
-   * - 'js'             — compiled JavaScript
+   * Output target (required since 4.0, when the default, 'js', retired with the
+   * AOT compiler):
    * - 'react'          — React component
    * - 'vue'            — Vue component
    * - 'svelte'         — Svelte component
    * - 'intent-element' — HTML snippet with `<lse-intent>` and embedded JSON
    */
-  target?: 'js' | 'react' | 'vue' | 'svelte' | 'intent-element';
+  target: 'react' | 'vue' | 'svelte' | 'intent-element';
   /** Optional task description — included as a comment in intent-element output */
   task?: string;
 }
@@ -282,7 +255,7 @@ export interface GenerateRequest {
 export interface GenerateResponse {
   /** Whether generation succeeded */
   ok: boolean;
-  /** Rendered output (JS, JSX, Vue SFC, Svelte, or HTML snippet) */
+  /** Rendered output (JSX, Vue SFC, Svelte, or HTML snippet) */
   output?: string;
   /** Normalized protocol JSON (always present on success) */
   protocol?: SemanticJSON;
@@ -313,8 +286,6 @@ export type {
 export interface ServiceOptions {
   /** Default confidence threshold (default 0.7) */
   confidenceThreshold?: number;
-  /** Maximum cache entries (default 500, 0 to disable) */
-  cacheSize?: number;
   /** Custom test renderers keyed by framework name (default: { playwright: PlaywrightRenderer }) */
   testRenderers?: Record<string, import('./renderers/types.js').TestRenderer>;
   /** Custom component renderers keyed by framework name (default: { react: ReactRenderer }) */

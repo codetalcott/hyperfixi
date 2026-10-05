@@ -1,14 +1,14 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **103 tools** by default (**108** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **101 tools** by default (**106** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
-The headline use case: an LLM agent emitting hyperscript instead of free-form JavaScript, with every check done by a real parser/compiler — deterministic, instant, no LLM in the checker. The server advertises this loop via MCP `instructions`, so a connected agent gets it without reading docs:
+The headline use case: an LLM agent emitting hyperscript instead of free-form JavaScript, with every check done by a real parser, including the engine that runs the code — deterministic, instant, no LLM in the checker. The server advertises this loop via MCP `instructions`, so a connected agent gets it without reading docs:
 
 1. **`validate_and_compile`** — parse the candidate into semantic IR with diagnostics; check the returned action/roles/trigger against intent.
 2. **Repair** — apply the diagnostics and re-validate. `get_code_fixes` maps coded errors to concrete fixes; `get_command_docs` / `search_patterns` show correct usage. Failed results carry a next-step hint block.
-3. **`compile_hyperscript`** — once valid, emit JavaScript (or stop at valid hyperscript for an `_="..."` attribute).
+3. **Use it** — once valid, the hyperscript goes in an `_="..."` attribute as is. (`compile_hyperscript`, which emitted JavaScript through the AOT compiler, retired with it in 4.0.)
 
 To present code to a human, `translate_code` renders it in any of 24 languages via deterministic grammar transformation, `diff_behaviors` proves two snippets behaviorally equivalent, and `score_fidelity` scores a candidate against a reference — including across languages — naming exactly what is missing or hallucinated. See the repo-root [AGENTS.md](../../AGENTS.md) for a worked end-to-end example.
 
@@ -80,7 +80,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **103** tools below, plus the **5** GRAIL tools above, total **108** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **103**.
+The **101** tools below, plus the **5** GRAIL tools above, total **106** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **101**.
 
 ### Validation & Semantic Tools (8)
 
@@ -95,17 +95,16 @@ The **103** tools below, plus the **5** GRAIL tools above, total **108** defined
 | `explain_in_language`  | Explain code with grammar rules, roles, and translations         |
 | `get_code_fixes`       | Get auto-fixes for specific error codes                          |
 
-### Compilation & Code Generation (7)
+### Compilation & Code Generation (6)
 
-| Tool                   | Description                                                                 |
-| ---------------------- | --------------------------------------------------------------------------- |
-| `compile_hyperscript`  | Compile to optimized JavaScript (natural language, explicit, or JSON input) |
-| `validate_and_compile` | Parse to semantic IR with diagnostics (no JS output)                        |
-| `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation           |
-| `generate_tests`       | Generate Playwright behavior tests from hyperscript                         |
-| `generate_component`   | Generate React, Vue, or Svelte component from hyperscript                   |
-| `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals  |
-| `diff_behaviors`       | Compare two inputs for semantic equivalence                                 |
+| Tool                   | Description                                                                |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `validate_and_compile` | Parse to semantic IR with diagnostics; natural language also on the engine |
+| `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation          |
+| `generate_tests`       | Generate Playwright behavior tests from hyperscript                        |
+| `generate_component`   | Generate React, Vue, or Svelte component from hyperscript                  |
+| `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals |
+| `diff_behaviors`       | Compare two inputs for semantic equivalence                                |
 
 ### Analysis (4)
 
@@ -218,13 +217,12 @@ The **103** tools below, plus the **5** GRAIL tools above, total **108** defined
 | `lse_validate_and_feedback` | Validate LSE and return machine-actionable correction hints       |
 | `lse_pattern_stats`         | Pattern hit-rate stats: success by command/language, top failures |
 
-### LSE Pipeline (5)
+### LSE Pipeline (4)
 
 | Tool                   | Description                                                     |
 | ---------------------- | --------------------------------------------------------------- |
 | `lse_from_hyperscript` | Parse hyperscript (24 languages) to LSE bracket + protocol JSON |
-| `lse_to_hyperscript`   | Validate/compile LSE or protocol JSON returned by an LLM        |
-| `execute_lse`          | Parse LSE, compile to JS, and return the execution result       |
+| `lse_to_hyperscript`   | Validate and normalize LSE or protocol JSON returned by an LLM  |
 | `validate_lse`         | Validate LSE or protocol JSON without executing (pre-flight)    |
 | `translate_lse`        | Translate LSE bracket syntax to natural language (24 languages) |
 

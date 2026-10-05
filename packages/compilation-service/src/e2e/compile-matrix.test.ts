@@ -1,12 +1,14 @@
 /**
  * Compile Matrix E2E Tests
  *
- * Tests the full compilation pipeline across:
+ * Tests the full validation pipeline (POST /validate) across:
  * - 3 input formats (natural language, explicit syntax, LLM JSON)
- * - Compilation options (optimization, target, minify)
  * - Multi-language support (SVO, SOV, VSO)
- * - Cache semantics (same semantics from different inputs → cache hit)
- * - Cross-format diff equivalence
+ * - Confidence thresholds
+ * - Cross-format diff equivalence, test and component generation
+ *
+ * (The file name is from when the service compiled to JavaScript through
+ * `@hyperfixi/aot-compiler`; the compile options and cache retired with it in 4.0.)
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -19,10 +21,9 @@ import type { Hono } from 'hono';
 // =============================================================================
 
 let app: Hono;
-let service: CompilationService;
 
 beforeAll(async () => {
-  service = await CompilationService.create();
+  const service = await CompilationService.create();
   app = createApp({ service });
 }, 30000);
 
@@ -37,25 +38,24 @@ async function post(path: string, body: unknown) {
 }
 
 // =============================================================================
-// Input Format Matrix — all 3 formats through /compile
+// Input Format Matrix — all 3 formats through /validate
 // =============================================================================
 
 describe('Input format matrix', () => {
-  it('compiles explicit syntax with multiple roles', async () => {
-    const { status, body } = await post('/compile', {
+  it('validates explicit syntax with multiple roles', async () => {
+    const { status, body } = await post('/validate', {
       explicit: '[toggle patient:.active destination:#btn]',
     });
 
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
     expect(body.semantic).toBeDefined();
     expect(body.semantic.action).toBe('toggle');
-    expect(body.size).toBeGreaterThan(0);
+    expect(body.confidence).toBe(1);
   });
 
-  it('compiles LLM JSON format', async () => {
-    const { status, body } = await post('/compile', {
+  it('validates LLM JSON format', async () => {
+    const { status, body } = await post('/validate', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'selector', value: '.active' } },
@@ -65,26 +65,13 @@ describe('Input format matrix', () => {
 
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
     expect(body.semantic.action).toBe('toggle');
     expect(body.semantic.trigger).toBeDefined();
     expect(body.semantic.trigger.event).toBe('click');
   });
 
-  it('compiles natural language English', async () => {
-    const { status, body } = await post('/compile', {
-      code: 'on click toggle .active',
-      language: 'en',
-    });
-
-    expect(status).toBe(200);
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-    expect(body.confidence).toBeGreaterThan(0);
-  });
-
   it('auto-detects JSON in code field', async () => {
-    const { status, body } = await post('/compile', {
+    const { status, body } = await post('/validate', {
       code: JSON.stringify({
         action: 'add',
         roles: { patient: { type: 'selector', value: '.highlight' } },
@@ -93,86 +80,25 @@ describe('Input format matrix', () => {
 
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
+    expect(body.semantic.action).toBe('add');
   });
 
   it('auto-detects explicit syntax in code field', async () => {
-    const { status, body } = await post('/compile', {
+    const { status, body } = await post('/validate', {
       code: '[add patient:.highlight destination:#panel]',
     });
 
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
+    expect(body.semantic.action).toBe('add');
   });
 });
 
 // =============================================================================
-// Compilation Options
+// Multi-Language Pipeline (via /validate)
 // =============================================================================
 
-describe('Compilation options', () => {
-  const input = { explicit: '[toggle patient:.active]' };
-
-  it('compiles with default options (opt=2, esm, no minify)', async () => {
-    const { body } = await post('/compile', input);
-
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-    expect(body.size).toBeGreaterThan(0);
-  });
-
-  it('compiles with optimization level 0', async () => {
-    const { body } = await post('/compile', { ...input, optimization: 0 });
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('compiles with optimization level 1', async () => {
-    const { body } = await post('/compile', { ...input, optimization: 1 });
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('compiles with target iife', async () => {
-    const { body } = await post('/compile', { ...input, target: 'iife' });
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('compiles with target esm', async () => {
-    const { body } = await post('/compile', { ...input, target: 'esm' });
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('compiles with minify enabled', async () => {
-    const { body } = await post('/compile', { ...input, minify: true });
-    expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-
-  it('produces different cache keys for different options', async () => {
-    // Clear cache first
-    service.clearCache();
-
-    // Compile with default options
-    await post('/compile', input);
-    const stats1 = service.getCacheStats();
-    expect(stats1.size).toBe(1);
-
-    // Compile with different target — should be a new cache entry
-    await post('/compile', { ...input, target: 'iife' });
-    const stats2 = service.getCacheStats();
-    expect(stats2.size).toBe(2);
-  });
-});
-
-// =============================================================================
-// Multi-Language Pipeline (via /compile)
-// =============================================================================
-
-describe('Multi-language compilation', () => {
+describe('Multi-language validation', () => {
   // SVO languages (Subject-Verb-Object)
   const svoLanguages = [
     { code: 'en', input: 'on click toggle .active', name: 'English' },
@@ -194,15 +120,15 @@ describe('Multi-language compilation', () => {
   const vsoLanguages = [{ code: 'ar', input: 'بدّل .active عند النقر', name: 'Arabic' }];
 
   for (const lang of svoLanguages) {
-    it(`compiles ${lang.name} (SVO) through full pipeline`, async () => {
-      const { body } = await post('/compile', {
+    it(`validates ${lang.name} (SVO) through full pipeline`, async () => {
+      const { body } = await post('/validate', {
         code: lang.input,
         language: lang.code,
       });
 
       // We check ok OR low-confidence diagnostics — some languages may parse below threshold
       if (body.ok) {
-        expect(body.js).toBeDefined();
+        expect(body.semantic).toBeDefined();
         expect(body.confidence).toBeGreaterThan(0);
       } else {
         // If it failed, should have diagnostics explaining why
@@ -212,14 +138,14 @@ describe('Multi-language compilation', () => {
   }
 
   for (const lang of sovLanguages) {
-    it(`compiles ${lang.name} (SOV) through full pipeline`, async () => {
-      const { body } = await post('/compile', {
+    it(`validates ${lang.name} (SOV) through full pipeline`, async () => {
+      const { body } = await post('/validate', {
         code: lang.input,
         language: lang.code,
       });
 
       if (body.ok) {
-        expect(body.js).toBeDefined();
+        expect(body.semantic).toBeDefined();
       } else {
         expect(body.diagnostics.length).toBeGreaterThan(0);
       }
@@ -227,14 +153,14 @@ describe('Multi-language compilation', () => {
   }
 
   for (const lang of vsoLanguages) {
-    it(`compiles ${lang.name} (VSO) through full pipeline`, async () => {
-      const { body } = await post('/compile', {
+    it(`validates ${lang.name} (VSO) through full pipeline`, async () => {
+      const { body } = await post('/validate', {
         code: lang.input,
         language: lang.code,
       });
 
       if (body.ok) {
-        expect(body.js).toBeDefined();
+        expect(body.semantic).toBeDefined();
       } else {
         expect(body.diagnostics.length).toBeGreaterThan(0);
       }
@@ -248,7 +174,7 @@ describe('Multi-language compilation', () => {
 
 describe('Confidence threshold', () => {
   it('rejects low-confidence parse with default threshold', async () => {
-    const { body } = await post('/compile', {
+    const { body } = await post('/validate', {
       code: 'xyzzy blorp wibble',
       language: 'en',
     });
@@ -258,7 +184,7 @@ describe('Confidence threshold', () => {
   });
 
   it('strict threshold rejects borderline parse', async () => {
-    const { body } = await post('/compile', {
+    const { body } = await post('/validate', {
       code: 'toggle active',
       language: 'en',
       confidence: 0.99,
@@ -274,58 +200,14 @@ describe('Confidence threshold', () => {
   });
 
   it('lenient threshold accepts weaker parse', async () => {
-    const { body } = await post('/compile', {
+    const { body } = await post('/validate', {
       code: 'toggle .active',
       language: 'en',
       confidence: 0.1,
     });
 
     expect(body.ok).toBe(true);
-    expect(body.js).toBeDefined();
-  });
-});
-
-// =============================================================================
-// Cache Semantics
-// =============================================================================
-
-describe('Cache semantics', () => {
-  it('same input → cache hit on second call', async () => {
-    service.clearCache();
-
-    const input = { explicit: '[toggle patient:.active]' };
-
-    // First call — miss
-    await post('/compile', input);
-    const stats1 = service.getCacheStats();
-    expect(stats1.misses).toBeGreaterThan(0);
-
-    // Second call — hit
-    await post('/compile', input);
-    const stats2 = service.getCacheStats();
-    expect(stats2.hits).toBeGreaterThan(stats1.hits);
-  });
-
-  it('cache clear resets stats', async () => {
-    await post('/compile', { explicit: '[toggle patient:.active]' });
-
-    const app2 = createApp({ service });
-    const res = await app2.request('/cache', { method: 'DELETE' });
-    expect(res.status).toBe(200);
-
-    const stats = service.getCacheStats();
-    expect(stats.size).toBe(0);
-  });
-
-  it('/cache/stats returns correct shape', async () => {
-    const res = await app.request('/cache/stats');
-    const body = await res.json();
-
-    expect(body).toHaveProperty('size');
-    expect(body).toHaveProperty('hits');
-    expect(body).toHaveProperty('misses');
-    expect(body).toHaveProperty('hitRate');
-    expect(typeof body.hitRate).toBe('number');
+    expect(body.semantic).toBeDefined();
   });
 });
 
@@ -529,18 +411,6 @@ describe('Generate tests — options', () => {
     expect(body.tests).toHaveLength(1);
     expect(body.tests[0].name).toBe('My Custom Toggle Test');
     expect(body.tests[0].code).toContain('My Custom Toggle Test');
-  });
-
-  it('generates test with compiled execution mode', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[toggle patient:.active]',
-      executionMode: 'compiled',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.tests).toHaveLength(1);
-    // Compiled mode should embed JS directly
-    expect(body.tests[0].code).toBeDefined();
   });
 
   it('generates test from LLM JSON', async () => {

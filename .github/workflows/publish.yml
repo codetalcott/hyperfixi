@@ -161,7 +161,6 @@ jobs:
           npm run build --prefix packages/patterns-reference
           npm run build --prefix packages/i18n
           npm run build --prefix packages/hyperscript-adapter
-          npm run build --prefix packages/aot-compiler
           npm run build --prefix packages/compilation-service
           npm run build --prefix packages/planner
           npm run build --prefix packages/mcp-server
@@ -229,7 +228,7 @@ jobs:
       # unpiped so their exit codes gate directly.
       - name: Validate exports + bare-Node import
         run: |
-          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict
+          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference compilation-service language-server --strict
           node scripts/check-node-import.mjs
 
       - name: Stage CHANGELOG into each package
@@ -268,7 +267,7 @@ jobs:
           # intent-element depends on intent + core, so it follows them.
           # (The domain-* family moved to lokascript-domains in #909.)
           ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
-                        framework server-bridge types-browser aot-compiler \
+                        framework server-bridge types-browser \
                         compilation-service planner mcp-server vite-plugin \
                         behaviors speech intent-element testing-framework language-server \
                         language-server-hyperscript multilingual-hyperscript \

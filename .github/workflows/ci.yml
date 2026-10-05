@@ -189,12 +189,11 @@ jobs:
       # 4. core (depends on semantic)
       # 5. patterns-reference (depends on semantic)
       # 6. i18n (depends on semantic; its core dependency was doc-only, dropped in C4a)
-      # 7. aot-compiler (depends on core, semantic)
-      # 8. compilation-service (depends on aot-compiler, semantic)
-      # 9. mcp-server (depends on semantic, patterns-reference, compilation-service)
-      # 10. developer-tools
-      # 11. vite-plugin (depends on core)
-      # 12. language-server (depends on semantic, core)
+      # 7. compilation-service (depends on semantic; aot-compiler retired in 4.0)
+      # 8. mcp-server (depends on semantic, patterns-reference, compilation-service)
+      # 9. developer-tools
+      # 10. vite-plugin (depends on core)
+      # 11. language-server (depends on semantic, core)
       # NOTE: `intent-element` has no downstream build consumers — skipped
       # here to keep the CI footprint small. Add it if you want CI to
       # verify its build.
@@ -234,9 +233,6 @@ jobs:
 
       - name: Build htmx-adapter package
         run: npm run build --prefix packages/htmx-adapter
-
-      - name: Build aot-compiler package
-        run: npm run build --prefix packages/aot-compiler
 
       - name: Build compilation-service package
         run: npm run build --prefix packages/compilation-service
@@ -302,7 +298,6 @@ jobs:
             packages/hyperscript-adapter/dist/
             packages/engine/dist/
             packages/htmx-adapter/dist/
-            packages/aot-compiler/dist/
             packages/compilation-service/dist/
             packages/planner/dist/
             packages/mcp-server/dist/
@@ -773,7 +768,6 @@ jobs:
           npm run typecheck --prefix packages/htmx-adapter
           npm run typecheck --prefix packages/vite-plugin
           npm run typecheck --prefix packages/patterns-reference
-          npm run typecheck --prefix packages/aot-compiler
           npm run typecheck --prefix packages/compilation-service
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
@@ -1011,9 +1005,6 @@ jobs:
 
       - name: Test patterns-reference
         run: npm test --prefix packages/patterns-reference
-
-      - name: Test aot-compiler
-        run: npm test --prefix packages/aot-compiler
 
       - name: Test compilation-service
         run: npm test --prefix packages/compilation-service

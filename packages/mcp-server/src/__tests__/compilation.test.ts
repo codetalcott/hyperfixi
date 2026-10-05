@@ -12,14 +12,12 @@ import { compilationTools, handleCompilationTool } from '../tools/compilation.js
 // =============================================================================
 
 describe('compilationTools', () => {
-  it('exports 7 tools', () => {
-    expect(compilationTools).toHaveLength(7);
+  it('exports 6 tools', () => {
+    expect(compilationTools).toHaveLength(6);
   });
 
-  it('has compile_hyperscript tool', () => {
-    const tool = compilationTools.find(t => t.name === 'compile_hyperscript');
-    expect(tool).toBeDefined();
-    expect(tool?.description).toContain('Compile');
+  it('compile_hyperscript retired with the AOT compiler', () => {
+    expect(compilationTools.find(t => t.name === 'compile_hyperscript')).toBeUndefined();
   });
 
   it('has validate_and_compile tool', () => {
@@ -63,43 +61,6 @@ describe('compilationTools', () => {
 // =============================================================================
 // Handler Tests
 // =============================================================================
-
-describe('compile_hyperscript', () => {
-  it('compiles explicit syntax', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
-      explicit: '[toggle patient:.active destination:#btn]',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.js).toBeDefined();
-    expect(parsed.semantic).toBeDefined();
-    expect(result.isError).toBeFalsy();
-  }, 30000);
-
-  it('compiles natural language', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
-      code: 'on click toggle .active',
-      language: 'en',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.js).toBeDefined();
-  }, 30000);
-
-  it('returns error for invalid input', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
-      code: 'xyzzy blorp',
-      language: 'en',
-      confidence: 0.9,
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(false);
-    expect(result.isError).toBe(true);
-  }, 30000);
-});
 
 describe('validate_and_compile', () => {
   it('validates explicit syntax', async () => {
@@ -222,7 +183,7 @@ describe('error handling', () => {
   });
 
   it('handles empty input', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {});
+    const result = await handleCompilationTool('validate_and_compile', {});
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.ok).toBe(false);
   }, 30000);

@@ -56,7 +56,6 @@ packages/
 ├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 ├── compilation-service/  # Multi-target codegen (React, Vue, Svelte components; Playwright tests)
 ├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
-├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
 ├── patterns-reference/  # Queryable patterns database with multilingual translations

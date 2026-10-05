@@ -1,13 +1,13 @@
 /**
  * CompilationService end-to-end tests.
  *
- * Tests the full pipeline: input detection → normalization → validation → compilation.
+ * Tests the full pipeline: input detection → normalization → validation (semantic's schemas
+ * and the engine's parse), and the operations built on it.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { CompilationService } from './service.js';
 import { detectFormat } from './input/detect.js';
-import { SemanticCache, generateCacheKey } from './compile/cache.js';
 
 // =============================================================================
 // Input Detection (unit tests — no service needed)
@@ -37,65 +37,6 @@ describe('detectFormat', () => {
 });
 
 // =============================================================================
-// Cache (unit tests)
-// =============================================================================
-
-describe('SemanticCache', () => {
-  it('stores and retrieves entries', () => {
-    const cache = new SemanticCache(10);
-    const response = { ok: true, diagnostics: [] };
-    cache.set('key1', response as never);
-    expect(cache.get('key1')).toBe(response);
-    expect(cache.hits).toBe(1);
-  });
-
-  it('returns undefined for missing entries', () => {
-    const cache = new SemanticCache(10);
-    expect(cache.get('missing')).toBeUndefined();
-    expect(cache.misses).toBe(1);
-  });
-
-  it('evicts oldest entries when full', () => {
-    const cache = new SemanticCache(2);
-    cache.set('a', { ok: true, diagnostics: [] } as never);
-    cache.set('b', { ok: true, diagnostics: [] } as never);
-    cache.set('c', { ok: true, diagnostics: [] } as never);
-    expect(cache.get('a')).toBeUndefined(); // Evicted
-    expect(cache.get('b')).toBeDefined();
-    expect(cache.get('c')).toBeDefined();
-    expect(cache.size).toBe(2);
-  });
-
-  it('generates deterministic cache keys', () => {
-    const node = {
-      kind: 'command',
-      action: 'toggle',
-      roles: new Map([['patient', { type: 'selector', value: '.active' }]]),
-    };
-    const key1 = generateCacheKey(node, { optimization: 2 });
-    const key2 = generateCacheKey(node, { optimization: 2 });
-    expect(key1).toBe(key2);
-  });
-
-  it('keys a compound by its statements (two `then` chains are two keys)', () => {
-    const command = (action: string, value: string) => ({
-      kind: 'command',
-      action,
-      roles: new Map([['patient', { type: 'selector', value }]]),
-    });
-    const chain = (...statements: unknown[]) => ({
-      kind: 'event-handler',
-      action: 'on',
-      roles: new Map([['event', { type: 'literal', value: 'click' }]]),
-      body: [{ kind: 'compound', action: 'compound', roles: new Map(), statements }],
-    });
-    const a = generateCacheKey(chain(command('add', '.x'), command('remove', '.x')), {});
-    const b = generateCacheKey(chain(command('toggle', '.a'), command('add', '.b')), {});
-    expect(a).not.toBe(b);
-  });
-});
-
-// =============================================================================
 // Full Service Integration Tests
 // =============================================================================
 
@@ -107,57 +48,44 @@ describe('CompilationService', () => {
   }, 30000);
 
   // ---------------------------------------------------------------------------
-  // Natural Language Compilation
+  // Natural Language Validation
   // ---------------------------------------------------------------------------
 
   describe('natural language', () => {
-    it('compiles English hyperscript', () => {
-      const result = service.compile({
+    it('validates English hyperscript', () => {
+      const result = service.validate({
         code: 'on click toggle .active',
         language: 'en',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
-      expect(result.js).toContain('function');
       expect(result.semantic).toBeDefined();
+      expect(result.semantic?.action).toBe('toggle');
       expect(result.diagnostics.filter(d => d.severity === 'error')).toHaveLength(0);
     });
 
-    it('compiles two different `then` chains to two different handlers (one service)', () => {
-      const first = service.compile({ code: 'on click add .x to me then wait 1s', language: 'en' });
-      const second = service.compile({
-        code: 'on click toggle .a then put "hi" into #out',
-        language: 'en',
-      });
-      expect(first.ok && second.ok).toBe(true);
-      expect(second.js).not.toBe(first.js);
-      expect(second.js).toContain("toggle('a')");
-    });
-
-    it('compiles Japanese hyperscript', () => {
-      const result = service.compile({
+    it('validates Japanese hyperscript', () => {
+      const result = service.validate({
         code: 'クリック で .active を 切り替え',
         language: 'ja',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
       expect(result.semantic).toBeDefined();
     });
 
-    it('compiles Spanish hyperscript', () => {
-      const result = service.compile({
+    it('validates Spanish hyperscript', () => {
+      const result = service.validate({
         code: 'al hacer clic alternar .active',
         language: 'es',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic).toBeDefined();
     });
 
     it('serializes property-path destination for set command', () => {
-      const result = service.compile({
+      const result = service.validate({
         code: 'on click set #output.innerHTML to "Hello!"',
         language: 'en',
       });
@@ -174,20 +102,20 @@ describe('CompilationService', () => {
       });
     });
 
-    it('compiles set with dotted me property (me.style.color)', () => {
+    it('validates set with dotted me property (me.style.color)', () => {
       // The semantic parser may not resolve bare `me.prop` chains to property-path,
-      // but compilation via the AST pipeline should still succeed.
-      const result = service.compile({
+      // but validation (semantic's schemas and the engine's parse) should still succeed.
+      const result = service.validate({
         code: 'on click set me.style.color to "red"',
         language: 'en',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic?.action).toBe('set');
     });
 
     it('rejects low-confidence parses', () => {
-      const result = service.compile({
+      const result = service.validate({
         code: 'xyzzy blorp grunk',
         language: 'en',
         confidence: 0.9,
@@ -203,32 +131,31 @@ describe('CompilationService', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Explicit Syntax Compilation
+  // Explicit Syntax Validation
   // ---------------------------------------------------------------------------
 
   describe('explicit syntax', () => {
-    it('compiles explicit toggle', () => {
-      const result = service.compile({
+    it('validates explicit toggle', () => {
+      const result = service.validate({
         explicit: '[toggle patient:.active]',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
       expect(result.confidence).toBe(1.0);
       expect(result.semantic?.action).toBe('toggle');
     });
 
-    it('compiles explicit with destination', () => {
-      const result = service.compile({
+    it('validates explicit with destination', () => {
+      const result = service.validate({
         explicit: '[add patient:.highlight destination:#button]',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic?.action).toBe('add');
     });
 
     it('rejects malformed explicit syntax', () => {
-      const result = service.compile({
+      const result = service.validate({
         explicit: '[not valid explicit',
       });
 
@@ -238,12 +165,12 @@ describe('CompilationService', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // LLM JSON Compilation
+  // LLM JSON Validation
   // ---------------------------------------------------------------------------
 
   describe('LLM JSON', () => {
-    it('compiles semantic JSON', () => {
-      const result = service.compile({
+    it('validates semantic JSON', () => {
+      const result = service.validate({
         semantic: {
           action: 'toggle',
           roles: {
@@ -253,12 +180,12 @@ describe('CompilationService', () => {
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic?.action).toBe('toggle');
       expect(result.confidence).toBe(1.0);
     });
 
-    it('compiles JSON with event trigger', () => {
-      const result = service.compile({
+    it('validates JSON with event trigger', () => {
+      const result = service.validate({
         semantic: {
           action: 'toggle',
           roles: {
@@ -270,12 +197,11 @@ describe('CompilationService', () => {
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
       expect(result.semantic?.trigger?.event).toBe('click');
     });
 
     it('rejects invalid JSON structure', () => {
-      const result = service.compile({
+      const result = service.validate({
         semantic: {
           action: '',
           roles: {},
@@ -292,21 +218,23 @@ describe('CompilationService', () => {
 
   describe('auto-detection', () => {
     it('detects JSON in code field', () => {
-      const result = service.compile({
+      const result = service.validate({
         code: '{"action":"toggle","roles":{"patient":{"type":"selector","value":".active"}}}',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic?.action).toBe('toggle');
+      expect(result.confidence).toBe(1.0);
     });
 
     it('detects explicit syntax in code field', () => {
-      const result = service.compile({
+      const result = service.validate({
         code: '[toggle patient:.active]',
       });
 
       expect(result.ok).toBe(true);
-      expect(result.js).toBeDefined();
+      expect(result.semantic?.action).toBe('toggle');
+      expect(result.confidence).toBe(1.0);
     });
   });
 
@@ -417,7 +345,7 @@ describe('CompilationService', () => {
   });
 
   describe('validate()', () => {
-    it('validates without compiling', () => {
+    it('validates explicit syntax', () => {
       const result = service.validate({
         explicit: '[toggle patient:.active]',
       });
@@ -483,9 +411,14 @@ describe('CompilationService', () => {
         'HALF_PARSED_CONDITION',
         false
       );
-      // The engine reads a query literal (upstream's syntax); the warning is for the
-      // compiled path, where `<body/>` reaches querySelector verbatim.
-      expectWarning('on click add .modal-open to <body/>', 'UNSUPPORTED_QUERY_LITERAL', true);
+    });
+
+    it('does not warn on a query literal: the engine reads `<body/>`', () => {
+      // UNSUPPORTED_QUERY_LITERAL described the AOT-compiled path (retired in 4.0), where
+      // `<body/>` reached querySelector verbatim. agent-bench scores this phrasing correct.
+      const r = service.validate({ code: 'on click add .modal-open to <body/>', language: 'en' });
+      expect(r.ok).toBe(true);
+      expect(r.diagnostics.filter(d => d.severity !== 'info')).toEqual([]);
     });
 
     it('rejects English the engine cannot read, and a translation whose English it cannot', () => {
@@ -504,10 +437,6 @@ describe('CompilationService', () => {
       const spanish = service.validate({ code: 'al clic alternar .active en yo', language: 'es' });
       expect(spanish.ok).toBe(true);
       expect(spanish.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(false);
-      // compile() applies the same check before it compiles.
-      expect(service.compile({ code: 'on click put "Saved" in #output', language: 'en' }).ok).toBe(
-        false
-      );
     });
 
     it('inert-shape gate stays quiet on correct phrasings', () => {
@@ -586,42 +515,12 @@ describe('CompilationService', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Caching
-  // ---------------------------------------------------------------------------
-
-  describe('caching', () => {
-    it('caches compilation results', () => {
-      // First call
-      const result1 = service.compile({
-        explicit: '[remove patient:.loading]',
-      });
-      expect(result1.ok).toBe(true);
-
-      // Second call — should be cached
-      const result2 = service.compile({
-        explicit: '[remove patient:.loading]',
-      });
-      expect(result2.ok).toBe(true);
-      expect(result2.js).toBe(result1.js);
-
-      const stats = service.getCacheStats();
-      expect(stats.hits).toBeGreaterThan(0);
-    });
-
-    it('cache can be cleared', () => {
-      service.clearCache();
-      const stats = service.getCacheStats();
-      expect(stats.size).toBe(0);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
   // Error Cases
   // ---------------------------------------------------------------------------
 
   describe('error handling', () => {
     it('handles no input', () => {
-      const result = service.compile({});
+      const result = service.validate({});
       expect(result.ok).toBe(false);
       expect(result.diagnostics.some(d => d.code === 'NO_INPUT')).toBe(true);
     });
@@ -869,5 +768,28 @@ describe('CompilationService — intent-element target', () => {
     expect(result.ok).toBe(true);
     expect(result.output).toContain('<script type="application/lse+json">');
     expect(result.output).toContain('"action": "toggle"');
+  });
+});
+
+// =============================================================================
+// generate() targets
+// =============================================================================
+
+describe('CompilationService — generate() targets', () => {
+  let service: CompilationService;
+
+  beforeAll(async () => {
+    service = await CompilationService.create();
+  }, 30000);
+
+  // 'js' was the default target until the AOT compiler retired (4.0).
+  it("rejects the retired 'js' target with UNKNOWN_TARGET", async () => {
+    const result = await service.generate({
+      lse: '[toggle patient:.active]',
+      target: 'js' as never,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.output).toBeUndefined();
+    expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
   });
 });
