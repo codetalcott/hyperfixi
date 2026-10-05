@@ -204,7 +204,9 @@ function signature(node: unknown): string {
  * (bn `থেকে`, ru `на`, uk `з`, es fetch `como json`), an operator word as the
  * value's head (bn `আছে`), a `.class` across a space read as a member
  * (`.active .active`, `null .error`), a word the English expression parser
- * cannot read. Each must still re-render to the English it did before.
+ * cannot read. Each must still re-render to the English it did before (the two
+ * swap-view-transition rows read as before, and English now writes their tail
+ * as upstream's block: src/explicit/upstream-spelling.ts).
  */
 const PINNED: Array<[string, string, string, string, string]> = [
   [
@@ -666,14 +668,14 @@ const PINNED: Array<[string, string, string, string, string]> = [
     'swap-view-transition',
     'ru',
     'при click поменять #a с #b using view transition',
-    'on click swap #a with #b using view transition',
+    'on click start view transition swap #a with #b end',
     'on(event:literal) swap(destination:selector,manner:literal,patient:selector)',
   ],
   [
     'swap-view-transition',
     'uk',
     'при click поміняти #a з #b using view transition',
-    'on click swap #a with #b using view transition',
+    'on click start view transition swap #a with #b end',
     'on(event:literal) swap(destination:selector,manner:literal,patient:selector)',
   ],
   [

@@ -212,7 +212,10 @@ describe('the keyword anchor: what the tail-less forms cost', () => {
 // verb-first `palitan_pwesto [{method}] sa {destination} [nang {patient}]`
 // pattern let the bare `[{method}]` slot eat the `sa` the pattern itself owes.
 // All 24 languages now round-trip the swap tail.
-const SWAP_DEFERRED = new Set<string>([]);
+// English writes the tail as upstream's `start view transition … end`
+// (src/explicit/upstream-spelling.ts), which the reader does not read back yet
+// (OPEN_ITEMS D6): every other language's render still carries the tail.
+const SWAP_DEFERRED = new Set<string>(['en']);
 
 const PROCESS_DEFERRED = new Set([
   // ms mis-binds the patient to a property-path on the tail form; the plain form
@@ -269,9 +272,11 @@ const MORPH_DEFERRED = new Set([
   // form binds destination=it cleanly. The exact defect family as ms's process
   // deferral above — the tail's own bug, not a pre-existing one.
   'ms',
+  // English writes the block: see SWAP_DEFERRED.
+  'en',
 ]);
 
-describe('the morph tail round-trips in 23 of 24 languages', () => {
+describe('the morph tail round-trips in 22 of 24 languages', () => {
   const enNode = parse('morph #list to it using view transition', 'en') as CommandSemanticNode;
 
   it.each(LANGS.filter(l => !MORPH_DEFERRED.has(l)))('%s', lang => {
@@ -397,12 +402,11 @@ describe('the stored corpus surfaces capture the tail in all 24 languages', () =
     expect(sig(surface, lang)).toEqual(sig(EN, 'en'));
   });
 
-  it.each(STORED.filter(([l]) => l !== 'en'))(
-    '[%s] renders back to byte-identical English (R4)',
-    (lang, surface) => {
-      const node = parseSemantic(surface, lang).node;
-      expect(node, `${lang} did not parse`).not.toBeNull();
-      expect(render(node as never, 'en')).toBe(EN);
-    }
-  );
+  // English writes upstream's spelling of the tail, the block both hosts read
+  // (src/explicit/upstream-spelling.ts); en's own render is the same block.
+  it.each(STORED)('[%s] renders back to upstream’s block in English (R4)', (lang, surface) => {
+    const node = parseSemantic(surface, lang).node;
+    expect(node, `${lang} did not parse`).not.toBeNull();
+    expect(render(node as never, 'en')).toBe('on click start view transition swap #a with #b end');
+  });
 });

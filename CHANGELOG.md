@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@lokascript/semantic`: English writes core's view-transition tail as upstream's block.**
+  `swap #a with #b using view transition` (and `morph`'s tail) renders to English as
+  `start view transition swap #a with #b end`, which upstream _hyperscript and `@hyperfixi/engine`
+  both parse; the tail itself is rejected by both. Every language reads the tail, and
+  `@lokascript/hyperscript-adapter` hands the host the English render, so a page written in
+  another language with a view-transition swap failed to parse and ran nothing. Foreign renders
+  keep the tail. Reading upstream's block back is still open: semantic reports it as unconsumed
+  input.
+
 ## [4.0.1] - 2026-10-05
 
 Fixes for 4.0.0: the per-language adapter bundles read every language again, and the MCP server's

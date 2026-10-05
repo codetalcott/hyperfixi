@@ -28,8 +28,13 @@
  *   previous <input/>.value           → the value of previous <input/>
  *   fetch /q?x=${my value}            → fetch `/q?x=${my value}`  (upstream interpolates a
  *                                       template literal, never a naked URL)
+ *   swap #a with #b using view        → start view transition swap #a with #b end
+ *     transition (and morph's tail)     (core ran the command inside
+ *                                       document.startViewTransition; upstream's block
+ *                                       runs its body there)
  *
- * Read and written as written, with no upstream spelling: `clone`, `process`.
+ * Read and written as written, with no upstream spelling: `clone`, `process` (its
+ * view-transition tail included: `process partials` is core's in either spelling).
  */
 
 import type {
@@ -131,7 +136,42 @@ const SWAP_PUT_MANNER: Readonly<Record<string, string>> = {
   beforeend: 'at end of',
 };
 
+/** The commands whose view-transition tail upstream spells as a block. */
+const VIEW_TRANSITION_COMMANDS: ReadonlySet<string> = new Set(['swap', 'morph']);
+
+const IN_VIEW_TRANSITION = Symbol('in view transition');
+
+/** The `manner` the reader gives `using view transition`: the word `transition`. */
+function isViewTransitionManner(value: SemanticValue | undefined): boolean {
+  const word =
+    value?.type === 'literal' ? value.value : value?.type === 'expression' ? value.raw : undefined;
+  return typeof word === 'string' && word.toLowerCase() === 'transition';
+}
+
+/**
+ * The command an English render writes inside `start view transition … end`,
+ * when `node` is one this rewrite marked; otherwise undefined.
+ */
+export function viewTransitionBody(node: SemanticNode): SemanticNode | undefined {
+  if (!(IN_VIEW_TRANSITION in node)) return undefined;
+  const { [IN_VIEW_TRANSITION]: _marked, ...body } = node as SemanticNode & {
+    [IN_VIEW_TRANSITION]?: true;
+  };
+  return body as SemanticNode;
+}
+
 function rewriteCommand(original: CommandSemanticNode): SemanticNode {
+  if (
+    VIEW_TRANSITION_COMMANDS.has(original.action) &&
+    isViewTransitionManner(original.roles.get('manner' as SemanticRole))
+  ) {
+    // The tail leaves the command, so a strategy swap rewritten to a `put`
+    // below keeps its transition too.
+    const roles = new Map(original.roles);
+    roles.delete('manner' as SemanticRole);
+    const marked = { ...rewriteCommand({ ...original, roles }), [IN_VIEW_TRANSITION]: true };
+    return marked;
+  }
   const node: CommandSemanticNode = { ...original, roles: rewriteRoles(original.roles) };
   const roles = node.roles;
   const role = (name: string): SemanticValue | undefined => roles.get(name as SemanticRole);
