@@ -111,6 +111,23 @@ describe('the plugin on @hyperfixi/engine', () => {
     }
   });
 
+  // A behavior's handlers need no `end` of their own: upstream ends a handler's
+  // commands at the next feature. Until the behavior parser split them there, the
+  // handlers merged and English wrote `behavior F then add .a then …`, which the
+  // engine rejects, so the behavior was never defined.
+  it.each([
+    ['es', 'comportamiento F al clic agregar .a al tecla arriba agregar .b fin'],
+    ['ja', '振る舞い F クリック を で .a を 追加 キーアップ を で .b を 追加 終わり'],
+  ])('%s: a behavior whose handlers have no end runs both', (language, written) => {
+    document.body.innerHTML = `<div lang="${language}"></div><button _="install F"></button>`;
+    document.body.firstElementChild!.setAttribute('_', written);
+    api.processNode(document.body);
+    const button = document.querySelector('button')!;
+    click(button);
+    button.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+    expect([...button.classList]).toEqual(['a', 'b']);
+  });
+
   it('a parse error in a rewritten script names what was written', () => {
     api.addSourceTransform(source => (source === 'pulsar' ? 'on click toggle' : null));
     let written: unknown;
