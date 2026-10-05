@@ -735,13 +735,15 @@ describe('Multilingual Auto-Detection', () => {
 // Configuration: push model, pull model, initializationOptions, env default
 // =============================================================================
 
+// `toggle #dialog` (toggle <element>) is an @hyperfixi/engine addition upstream rejects,
+// so hyperscript mode flags it `lokascript-only` and lokascript mode does not.
 describe('Configuration and modes', () => {
   it('applies a pushed `lokascript` section and re-validates open documents', async () => {
     const client = new LSPTestClient();
     await client.start();
     await client.initialize();
     const uri = 'file:///test/config-push.hs';
-    const before = await client.open(uri, 'on click prepend "x" to #list');
+    const before = await client.open(uri, 'on click toggle #dialog');
     expect(codes(before)).not.toContain('lokascript-only');
 
     const flagged = client.nextDiagnostics(uri);
@@ -766,7 +768,7 @@ describe('Configuration and modes', () => {
     await client.start();
     await client.initialize();
     const uri = 'file:///test/config-hs.hs';
-    await client.open(uri, 'on click prepend "x" to #list');
+    await client.open(uri, 'on click toggle #dialog');
     const flagged = client.nextDiagnostics(uri);
     client.sendNotification('workspace/didChangeConfiguration', {
       settings: { hyperscript: { mode: 'hyperscript' } },
@@ -787,7 +789,7 @@ describe('Configuration and modes', () => {
     await new Promise(resolve => setTimeout(resolve, 150));
     expect(client.serverRequests).toContain('workspace/configuration');
     const uri = 'file:///test/config-pull.hs';
-    const diags = await client.open(uri, 'on click prepend "x" to #list');
+    const diags = await client.open(uri, 'on click toggle #dialog');
     expect(codes(diags)).toContain('lokascript-only');
     await client.stop();
   });
@@ -814,7 +816,7 @@ describe('Configuration and modes', () => {
     const client = new LSPTestClient();
     await client.start({ HYPERSCRIPT_LS_DEFAULT_MODE: 'hyperscript' });
     await client.initialize();
-    const diags = await client.open('file:///test/env-mode.hs', 'on click prepend "x" to #list');
+    const diags = await client.open('file:///test/env-mode.hs', 'on click toggle #dialog');
     expect(codes(diags)).toContain('lokascript-only');
     expect(diags.find(d => d.code === 'lokascript-only')?.source).toBe('hyperscript');
     await client.stop();

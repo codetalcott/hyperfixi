@@ -984,303 +984,68 @@ end`;
 // =============================================================================
 
 import {
-  detectLokascriptFeatures,
   getCommandsForMode,
   getEventModifiersForMode,
   isHyperscriptCommand,
   isLokascriptOnlyCommand,
   HYPERSCRIPT_COMMANDS,
-  LOKASCRIPT_ONLY_COMMANDS,
   ALL_COMMANDS,
 } from './command-tiers.js';
 
+// The tiers against the engine's grammar, and detectLokascriptFeatures on its parse,
+// are in command-tiers.test.ts.
 describe('Command Tiers', () => {
   describe('Command Classification', () => {
     it('classifies core commands as hyperscript', () => {
-      expect(isHyperscriptCommand('toggle')).toBe(true);
-      expect(isHyperscriptCommand('add')).toBe(true);
-      expect(isHyperscriptCommand('remove')).toBe(true);
-      expect(isHyperscriptCommand('put')).toBe(true);
-      expect(isHyperscriptCommand('set')).toBe(true);
-      expect(isHyperscriptCommand('fetch')).toBe(true);
-      expect(isHyperscriptCommand('on')).toBe(true);
-      expect(isHyperscriptCommand('behavior')).toBe(true);
+      for (const cmd of ['toggle', 'add', 'remove', 'put', 'set', 'fetch', 'on', 'behavior']) {
+        expect(isHyperscriptCommand(cmd), cmd).toBe(true);
+      }
     });
 
-    it('classifies lokascript extensions as lokascript-only', () => {
-      // Every name here was rejected by hyperscript.org@0.9.93 — the probe is
-      // recorded per-row in command-tiers.ts. `make`/`settle`/`measure`/
-      // `morph`/`install` used to be asserted here and are NOT extensions; Arc
-      // A step 4.1 measured them and moved them (see the test below).
-      expect(isLokascriptOnlyCommand('prepend')).toBe(true);
-      expect(isLokascriptOnlyCommand('process')).toBe(true);
-      expect(isLokascriptOnlyCommand('copy')).toBe(true);
-      expect(isLokascriptOnlyCommand('push')).toBe(true);
-      expect(isLokascriptOnlyCommand('replace')).toBe(true);
-      expect(isLokascriptOnlyCommand('beep')).toBe(true);
-      expect(isLokascriptOnlyCommand('unless')).toBe(true);
-    });
-
-    it('classifies upstream commands this list once called extensions', () => {
-      // The false-POSITIVE half of step 4.1. These five sat in
-      // LOKASCRIPT_ONLY_COMMANDS, so the LSP raised a DiagnosticSeverity.Error
-      // on portable code. All five parse on stock hyperscript.org@0.9.93.
-      for (const cmd of ['make', 'settle', 'measure', 'morph', 'install']) {
+    it('classifies the upstream commands core once called extensions', () => {
+      // Arc A step 4.1 measured these on stock hyperscript.org@0.9.93.
+      for (const cmd of ['make', 'settle', 'measure', 'morph', 'install', 'beep!']) {
         expect(isHyperscriptCommand(cmd), `${cmd} is upstream`).toBe(true);
         expect(isLokascriptOnlyCommand(cmd), `${cmd} is not an extension`).toBe(false);
       }
     });
 
-    it('classifies the commands step 4.1 added to the upstream tier', () => {
-      // The false-NEGATIVE half: these were in NEITHER list, so nothing
-      // classified them at all.
-      for (const cmd of [
-        'blur',
-        'clear',
-        'empty',
-        'focus',
-        'open',
-        'close',
-        'pick',
-        'render',
-        'reset',
-        'scroll',
-        'select',
-        'start',
-        'swap',
-        'breakpoint',
-      ]) {
-        expect(isHyperscriptCommand(cmd), `${cmd} is upstream`).toBe(true);
+    it("leaves core's own commands in neither tier: no runtime has them since 4.0", () => {
+      // Both upstream and @hyperfixi/engine reject each; the engine's parse error reports
+      // them in every mode.
+      for (const cmd of ['prepend', 'process', 'copy', 'push', 'replace', 'beep', 'unless']) {
+        expect(isHyperscriptCommand(cmd), cmd).toBe(false);
+        expect(isLokascriptOnlyCommand(cmd), cmd).toBe(false);
       }
-    });
-
-    it('does not classify hyperscript commands as lokascript-only', () => {
-      expect(isLokascriptOnlyCommand('toggle')).toBe(false);
-      expect(isLokascriptOnlyCommand('add')).toBe(false);
-      expect(isLokascriptOnlyCommand('fetch')).toBe(false);
-    });
-
-    it('does not classify lokascript commands as hyperscript', () => {
-      expect(isHyperscriptCommand('prepend')).toBe(false);
-      expect(isHyperscriptCommand('persist')).toBe(false);
-      expect(isHyperscriptCommand('process')).toBe(false);
     });
 
     it('handles case insensitivity', () => {
       expect(isHyperscriptCommand('Toggle')).toBe(true);
       expect(isHyperscriptCommand('TOGGLE')).toBe(true);
-      expect(isLokascriptOnlyCommand('Prepend')).toBe(true);
-      expect(isLokascriptOnlyCommand('PREPEND')).toBe(true);
     });
   });
 
   describe('getCommandsForMode', () => {
-    it('returns only hyperscript commands in hyperscript mode', () => {
-      const commands = getCommandsForMode('hyperscript');
-      expect(commands).toEqual(HYPERSCRIPT_COMMANDS);
-      expect(commands).not.toContain('prepend');
-      expect(commands).not.toContain('unless');
+    it('returns the hyperscript commands in hyperscript mode', () => {
+      expect(getCommandsForMode('hyperscript')).toEqual(HYPERSCRIPT_COMMANDS);
     });
 
-    it('returns all commands in lokascript mode', () => {
-      const commands = getCommandsForMode('lokascript');
-      expect(commands).toEqual(ALL_COMMANDS);
-      expect(commands).toContain('toggle');
-      expect(commands).toContain('prepend');
-      expect(commands).toContain('unless');
-    });
-
-    it('lokascript mode includes all hyperscript commands', () => {
-      const hyperscriptCommands = getCommandsForMode('hyperscript');
-      const lokascriptCommands = getCommandsForMode('lokascript');
-
-      for (const cmd of hyperscriptCommands) {
-        expect(lokascriptCommands).toContain(cmd);
-      }
+    it('returns the same commands in lokascript mode: the engine follows upstream', () => {
+      expect(getCommandsForMode('lokascript')).toEqual(ALL_COMMANDS);
+      expect([...getCommandsForMode('lokascript')].sort()).toEqual(
+        [...getCommandsForMode('hyperscript')].sort()
+      );
     });
   });
 
   describe('getEventModifiersForMode', () => {
-    it('returns core modifiers in hyperscript mode', () => {
-      const modifiers = getEventModifiersForMode('hyperscript');
-      expect(modifiers).toContain('once');
-      expect(modifiers).toContain('prevent');
-      expect(modifiers).toContain('stop');
-      expect(modifiers).not.toContain('debounce');
-      expect(modifiers).not.toContain('throttle');
-    });
-
-    it('returns all modifiers in lokascript mode', () => {
-      const modifiers = getEventModifiersForMode('lokascript');
-      expect(modifiers).toContain('once');
-      expect(modifiers).toContain('prevent');
-      expect(modifiers).toContain('debounce');
-      expect(modifiers).toContain('throttle');
-    });
-  });
-});
-
-describe('LokaScript Feature Detection', () => {
-  describe('detectLokascriptFeatures', () => {
-    it('detects lokascript-only commands', () => {
-      const features = detectLokascriptFeatures('prepend "<li>x</li>" to #list');
-      expect(features).toHaveLength(1);
-      expect(features[0].feature).toBe('command');
-      expect(features[0].description).toContain("'prepend'");
-      expect(features[0].description).toContain('LokaScript extension');
-    });
-
-    it('detects multiple lokascript-only commands', () => {
-      const features = detectLokascriptFeatures('prepend "x" to #a then copy it then beep');
-      const commandFeatures = features.filter(f => f.feature === 'command');
-      expect(commandFeatures.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it('stays silent on upstream commands it used to flag (step 4.1)', () => {
-      // The regression this half of step 4.1 fixes: every one of these parses
-      // on stock hyperscript.org, and each produced an editor ERROR reading
-      // "'X' command is a LokaScript extension (not compatible with
-      // _hyperscript)". Measured, not assumed — see command-tiers.ts.
-      const portable = 'make a <div/> then settle then morph #a to "<p>x</p>" then measure #b';
-      expect(detectLokascriptFeatures(portable).filter(f => f.feature === 'command')).toEqual([]);
-      expect(detectLokascriptFeatures('install Draggable')).toEqual([]);
-    });
-
-    it('now warns on the extensions that were classified nowhere (step 4.1)', () => {
-      // The other half: these were in NEITHER tier list, so detection returned
-      // nothing at all and non-portable code shipped unflagged.
-      for (const [code, cmd] of [
-        ['copy "text"', 'copy'],
-        ['push url "/next"', 'push'],
-        ['replace url "/next"', 'replace'],
-        ['unless $x is empty log "y" end', 'unless'],
-      ] as const) {
-        const commands = detectLokascriptFeatures(code).filter(f => f.feature === 'command');
-        expect(
-          commands.map(f => f.pattern),
-          code
-        ).toContain(cmd);
+    it("has upstream's modifiers in both modes, and not core's dot forms", () => {
+      for (const mode of ['hyperscript', 'lokascript'] as const) {
+        const modifiers = getEventModifiersForMode(mode);
+        expect(modifiers).toContain('once');
+        expect(modifiers).not.toContain('debounce');
+        expect(modifiers).not.toContain('throttle');
       }
-    });
-
-    it('does not flag my.property — upstream resolves `my` as a plain symbol', () => {
-      // Measured on hyperscript.org 0.9.93: `my.tagName` evaluates to "DIV".
-      const features = detectLokascriptFeatures('set x to my.textContent');
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(false);
-    });
-
-    it('detects "its" dot notation', () => {
-      const features = detectLokascriptFeatures('put its.value into #output');
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
-    });
-
-    it('does not flag your.property either', () => {
-      const features = detectLokascriptFeatures('log your.classList');
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(false);
-    });
-
-    it('detects optional chaining', () => {
-      const features = detectLokascriptFeatures('set x to my?.value');
-      expect(features.some(f => f.pattern === 'optional-chaining')).toBe(true);
-    });
-
-    it('detects the extended as conversions core registers and upstream lacks', () => {
-      expect(
-        detectLokascriptFeatures('set x to y as Math').some(f => f.description.includes('as Math'))
-      ).toBe(true);
-      expect(
-        detectLokascriptFeatures('set x to #f as Values:Form').some(f => f.pattern === 'as-values')
-      ).toBe(true);
-    });
-
-    it('does not flag the upstream conversions that used to be listed as extensions', () => {
-      // Int, Float, JSON, Date, Set, Map are keys of upstream config.conversions.
-      for (const target of ['Int', 'Float', 'JSON', 'Date', 'Set', 'Map', 'String']) {
-        const features = detectLokascriptFeatures(`set x to y as ${target}`);
-        expect(
-          features.filter(f => f.feature === 'conversion'),
-          target
-        ).toHaveLength(0);
-      }
-    });
-
-    it('detects debounce modifier', () => {
-      const features = detectLokascriptFeatures(
-        'on input.debounce(300) put my.value into #preview'
-      );
-      expect(features.some(f => f.pattern === 'debounce')).toBe(true);
-    });
-
-    it('detects throttle modifier', () => {
-      const features = detectLokascriptFeatures('on scroll.throttle(100) log "scrolling"');
-      expect(features.some(f => f.pattern === 'throttle')).toBe(true);
-    });
-
-    it('returns empty array for hyperscript-compatible code', () => {
-      const features = detectLokascriptFeatures('on click toggle .active');
-      expect(features).toHaveLength(0);
-    });
-
-    it('returns empty array for valid hyperscript with space syntax', () => {
-      const features = detectLokascriptFeatures('set x to my textContent');
-      expect(features).toHaveLength(0);
-    });
-
-    it('does not flag standard as conversions', () => {
-      const features = detectLokascriptFeatures('set x to y as String');
-      expect(features.filter(f => f.feature === 'conversion')).toHaveLength(0);
-    });
-
-    it('detects multiple feature types in one code block', () => {
-      const code = `on input.debounce(300)
-        set val to its.value as Math
-        prepend val to #preview`;
-      const features = detectLokascriptFeatures(code);
-
-      expect(features.some(f => f.pattern === 'debounce')).toBe(true);
-      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
-      expect(features.some(f => f.feature === 'conversion')).toBe(true);
-      expect(features.some(f => f.feature === 'command')).toBe(true);
-    });
-  });
-});
-
-describe('Mode-Specific Behavior', () => {
-  describe('hyperscript mode constraints', () => {
-    it('should flag prepend command in hyperscript mode', () => {
-      // Was `morph`, which step 4.1 measured to be upstream (it parses on
-      // stock hyperscript.org) and moved to HYPERSCRIPT_COMMANDS. `prepend` is
-      // a real extension: upstream offers only `put <x> at the start of <y>`.
-      const features = detectLokascriptFeatures('prepend "<li>x</li>" to #list');
-      expect(features.length).toBeGreaterThan(0);
-      // detectLokascriptFeatures returns the base description
-      // The server adds "(not compatible with _hyperscript)" when reporting
-      expect(features[0].description).toContain('LokaScript extension');
-    });
-
-    it('should allow toggle in hyperscript mode', () => {
-      const features = detectLokascriptFeatures('toggle .active on me');
-      expect(features).toHaveLength(0);
-    });
-
-    it('should flag its.property dot notation as incompatible', () => {
-      const features = detectLokascriptFeatures('its.textContent');
-      expect(features.some(f => f.description.includes('_hyperscript compatibility'))).toBe(true);
-    });
-  });
-
-  describe('command availability by mode', () => {
-    it('hyperscript mode has fewer commands than lokascript', () => {
-      const hyperscriptCommands = getCommandsForMode('hyperscript');
-      const lokascriptCommands = getCommandsForMode('lokascript');
-      expect(hyperscriptCommands.length).toBeLessThan(lokascriptCommands.length);
-    });
-
-    it('lokascript mode adds exactly the lokascript-only commands', () => {
-      const hyperscriptCommands = getCommandsForMode('hyperscript');
-      const lokascriptCommands = getCommandsForMode('lokascript');
-      const difference = lokascriptCommands.length - hyperscriptCommands.length;
-      expect(difference).toBe(LOKASCRIPT_ONLY_COMMANDS.length);
     });
   });
 });
@@ -1399,29 +1164,6 @@ describe('Audit regressions', () => {
       expect(runSimpleDiagnostics("on click put 'x into me").map(d => d.code)).toEqual([
         'unmatched-quote',
       ]);
-    });
-  });
-
-  describe('command-tiers scan scoping', () => {
-    it.each([
-      ['method call', 'set x to y.replace("a","b")'],
-      ['method call on array', 'call arr.push(1)'],
-      ['string literal', 'put "copy" into me'],
-      ['variable name', 'set :process to 1'],
-      ['comment', 'toggle .x -- process later'],
-      ['string with a command word', 'log "beep boop"'],
-      ['trailing unless modifier (upstream)', 'log "x" unless me matches .foo'],
-    ])('does not flag %s', (_label, code) => {
-      expect(detectLokascriptFeatures(code).filter(f => f.feature === 'command')).toHaveLength(0);
-    });
-
-    it.each([
-      ['prepend', 'on click prepend "x" to #a'],
-      ['copy', 'on click copy "x"'],
-      ['leading unless block', 'unless me matches .foo log "x" end'],
-      ['unless after then', 'on click log 1 then unless :done log 2 end'],
-    ])('still flags the real %s extension', (_label, code) => {
-      expect(detectLokascriptFeatures(code).some(f => f.feature === 'command')).toBe(true);
     });
   });
 
