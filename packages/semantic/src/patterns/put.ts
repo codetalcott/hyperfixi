@@ -8,7 +8,10 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { putSchema } from '../generators/command-schemas';
+import {
+  PUT_DESTINATION_TYPES as SCHEMA_PUT_DESTINATION_TYPES,
+  PUT_VALUE_TYPES,
+} from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -17,9 +20,7 @@ import { handcrafted } from './handcrafted';
  * narrower list, so a variable destination matched nothing in id and zh and
  * the put was dropped.
  */
-const PUT_DESTINATION_TYPES: ExpectedType[] = [
-  ...(putSchema.roles.find(role => role.role === 'destination')?.expectedTypes ?? []),
-];
+const PUT_DESTINATION_TYPES: ExpectedType[] = [...SCHEMA_PUT_DESTINATION_TYPES];
 
 /**
  * A handcrafted put's value takes what the schema's does, a possessive
@@ -27,9 +28,7 @@ const PUT_DESTINATION_TYPES: ExpectedType[] = [
  * ke dalam #b`). id's patterns copied the narrower list and decided the parse,
  * so that put was lost. (zh keeps its copies: they never decide it.)
  */
-const PUT_PATIENT_TYPES: ExpectedType[] = [
-  ...(putSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
-];
+const PUT_PATIENT_TYPES: ExpectedType[] = [...PUT_VALUE_TYPES];
 
 export function getPutPatternsBn(): LanguagePattern[] {
   return [

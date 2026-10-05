@@ -24,7 +24,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { getCommandSchema } from '../generators/command-schemas';
+import { GET_SOURCE_TYPES as SCHEMA_GET_SOURCE_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -34,9 +34,7 @@ import { handcrafted } from './handcrafted';
  * list; de's pattern is the one its render writes, so every de `get` of a
  * literal lost its command (PR 130).
  */
-const GET_SOURCE_TYPES: ExpectedType[] = [
-  ...(getCommandSchema.roles.find(role => role.role === 'source')?.expectedTypes ?? []),
-];
+const GET_SOURCE_TYPES: ExpectedType[] = [...SCHEMA_GET_SOURCE_TYPES];
 
 export function getGetPatternsBn(): LanguagePattern[] {
   return [

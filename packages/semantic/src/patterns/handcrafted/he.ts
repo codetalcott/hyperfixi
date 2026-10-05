@@ -9,7 +9,6 @@ import { getWaitPatternsHe } from '../wait';
 import { getFetchPatternsHe } from '../fetch';
 import { getTriggerPatternsHe } from '../trigger';
 import { getSendPatternsHe } from '../send';
-import { getViewTransitionPatternsHe } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['event-handler', getEventHandlerPatternsHe],
@@ -18,5 +17,4 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['fetch', getFetchPatternsHe],
   ['trigger', getTriggerPatternsHe],
   ['send', getSendPatternsHe],
-  ['viewTransition', getViewTransitionPatternsHe],
 ];

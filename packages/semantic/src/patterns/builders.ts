@@ -29,7 +29,7 @@ import { getPrependPatternsForLanguage } from './prepend';
 import { getTriggerPatternsForLanguage } from './trigger';
 import { getSendPatternsForLanguage } from './send';
 import { getPickPatternsForLanguage } from './pick';
-import { getViewTransitionPatternsForLanguage } from './view-transition';
+import { getViewTransitionPatterns } from './view-transition';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';
@@ -51,6 +51,14 @@ import { tryGetProfile } from '../registry';
  * Each loader returns patterns for a specific command/category for a given language.
  */
 type PatternLoader = (language: string) => LanguagePattern[];
+
+/**
+ * The view-transition head: the same words in every language, so core builds it
+ * for each registered language instead of each language module carrying a copy.
+ */
+function getViewTransitionPatternsForLanguage(language: string): LanguagePattern[] {
+  return tryGetProfile(language) ? getViewTransitionPatterns(language) : [];
+}
 
 /**
  * Registry of all pattern loaders.

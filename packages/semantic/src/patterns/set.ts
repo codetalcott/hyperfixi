@@ -8,7 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { setSchema } from '../generators/command-schemas';
+import { SET_VALUE_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -19,9 +19,7 @@ import { handcrafted } from './handcrafted';
  * lost. (es/qu/zh keep their copies: where they reject a value, the generated
  * patterns read it, so the copies never decide.)
  */
-const SET_PATIENT_TYPES: ExpectedType[] = [
-  ...(setSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
-];
+const SET_PATIENT_TYPES: ExpectedType[] = [...SET_VALUE_TYPES];
 
 export function getSetPatternsBn(): LanguagePattern[] {
   return [

@@ -8,7 +8,6 @@ import { getPutPatternsEs } from '../put';
 import { getEventHandlerPatternsEs } from '../event-handler';
 import { getSetPatternsEs } from '../set';
 import { getFetchPatternsEs } from '../fetch';
-import { getViewTransitionPatternsEs } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['toggle', getTogglePatternsEs],
@@ -16,5 +15,4 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['event-handler', getEventHandlerPatternsEs],
   ['set', getSetPatternsEs],
   ['fetch', getFetchPatternsEs],
-  ['viewTransition', getViewTransitionPatternsEs],
 ];

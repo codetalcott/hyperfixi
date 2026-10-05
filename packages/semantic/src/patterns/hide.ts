@@ -8,7 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { hideSchema } from '../generators/command-schemas';
+import { ELEMENT_TARGET_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -16,9 +16,7 @@ import { handcrafted } from './handcrafted';
  * included (`hide el`). de's pattern once copied the narrower list, and a
  * variable target was dropped.
  */
-const HIDE_PATIENT_TYPES: ExpectedType[] = [
-  ...(hideSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
-];
+const HIDE_PATIENT_TYPES: ExpectedType[] = [...ELEMENT_TARGET_TYPES];
 
 export function getHidePatternsBn(): LanguagePattern[] {
   return [

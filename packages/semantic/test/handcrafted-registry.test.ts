@@ -30,7 +30,6 @@ import * as show from '../src/patterns/show';
 import * as toggle from '../src/patterns/toggle';
 import * as trigger from '../src/patterns/trigger';
 import * as wait from '../src/patterns/wait';
-import * as viewTransition from '../src/patterns/view-transition';
 
 const COMMAND_FILES: Record<string, Record<string, unknown>> = {
   add,
@@ -50,7 +49,6 @@ const COMMAND_FILES: Record<string, Record<string, unknown>> = {
   toggle,
   trigger,
   wait,
-  viewTransition,
 };
 
 /** `getTogglePatternsEs` → ['toggle', 'es', fn]: every per-language function exported. */
@@ -69,7 +67,9 @@ describe('hand-crafted patterns, registered per language', () => {
   });
 
   it('registers every exported per-language function, and nothing else', () => {
-    const registered = registeredHandcrafted().map(([command, language]) => `${command}:${language}`);
+    const registered = registeredHandcrafted().map(
+      ([command, language]) => `${command}:${language}`
+    );
     const functions = exported.map(([command, language]) => `${command}:${language}`);
     expect(functions.filter(key => !registered.includes(key))).toEqual([]);
     expect(registered.filter(key => !functions.includes(key))).toEqual([]);
