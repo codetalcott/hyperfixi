@@ -24,6 +24,11 @@ function ref(value: string): SemanticValue {
   return { type: 'reference', value } as SemanticValue;
 }
 
+/** The `me` the matcher injects as a role's default (parses tag it `implicit`). */
+function implicitMe(): SemanticValue {
+  return { type: 'reference', value: 'me', implicit: true } as SemanticValue;
+}
+
 function lit(value: string | number, dataType?: string): SemanticValue {
   return { type: 'literal', value, dataType } as SemanticValue;
 }
@@ -56,8 +61,19 @@ describe('renderToHyperscript', () => {
 
     it('skips implicit me destination', () => {
       expect(
-        renderToHyperscript(cmd('toggle', [['patient', sel('.active')], ['destination', ref('me')]])),
+        renderToHyperscript(
+          cmd('toggle', [['patient', sel('.active')], ['destination', implicitMe()]])
+        ),
       ).toBe('toggle .active');
+    });
+
+    it('keeps an AUTHORED me destination (put "x" without it is engine-invalid)', () => {
+      expect(
+        renderToHyperscript(cmd('put', [['patient', lit('done', 'string')], ['destination', ref('me')]])),
+      ).toBe('put "done" into me');
+      expect(
+        renderToHyperscript(cmd('toggle', [['patient', sel('.active')], ['destination', ref('me')]])),
+      ).toBe('toggle .active on me');
     });
 
     it('renders add with destination', () => {
@@ -74,8 +90,14 @@ describe('renderToHyperscript', () => {
 
     it('suppresses an implicit "me" source (remove .hidden, not remove .hidden from me)', () => {
       expect(
-        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', ref('me')]])),
+        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', implicitMe()]])),
       ).toBe('remove .hidden');
+    });
+
+    it('keeps an AUTHORED me source, as semantic renders it', () => {
+      expect(
+        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', ref('me')]])),
+      ).toBe('remove .hidden from me');
     });
   });
 
@@ -235,10 +257,10 @@ describe('renderToHyperscript', () => {
     // mirrored yet — see the KNOWN GAP comment at the suppression site in
     // hyperscript-renderer.ts: alone, it converts the es repeat parity row
     // from a safe host-validate fallback into a committed infinite loop.
-    it('still suppresses `to me` for a class patient', () => {
+    it('still suppresses an implicit `to me` for a class patient', () => {
       const node = cmd('add', [
         ['patient', sel('.active')],
-        ['destination', { type: 'reference', value: 'me' } as SemanticValue],
+        ['destination', implicitMe()],
       ]);
       expect(renderToHyperscript(node)).toBe('add .active');
     });

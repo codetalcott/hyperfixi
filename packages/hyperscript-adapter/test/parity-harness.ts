@@ -156,15 +156,11 @@ export function loadFixture(): FixtureRow[] {
  *  row's output staying engine-invalid until the repeat surface is fixed
  *  whole (capture + SYNTAX render + me-suppression exception together). */
 export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
-  // The full path keeps an AUTHORED `from me` (implicit-default tagging in
-  // @lokascript/semantic: only matcher-injected defaults are suppressed on
-  // render); the slim path has no parse-side authored/implicit distinction and
-  // still drops the phrase. Runtime-equivalent — upstream `remove .hidden`
-  // defaults its source to `me` — so slim's shorter form stays valid.
-  ['es', 'quitar .hidden de yo'],
-  ['ja', '自分 から .hidden を 削除'],
-  ['ko', '나 에서 .hidden 을 제거'],
-  ['fr', 'supprimer .hidden de moi'],
+  // (The four authored-`from me` rows — es/ja/ko/fr `remove .hidden from me` —
+  // left this list in 4.0.1: the slim renderer now drops only an IMPLICIT `me`,
+  // as semantic's does, and keeps an authored one. The parse already tagged the
+  // difference; the renderer ignored it, which also turned an authored
+  // `put "x" into me` into the engine-invalid `put "x"` in every language.)
   ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
   // The full path closes a flattened loop/tell block header with `end`
   // (@lokascript/semantic's renderer, 2026-08-28) — `tell #panel … end` is the

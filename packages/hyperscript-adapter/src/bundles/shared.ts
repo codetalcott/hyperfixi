@@ -1,23 +1,18 @@
 /**
  * Shared bundle boilerplate.
- * Each per-language entry imports languages, then calls setup().
+ * Each per-language entry imports languages, then calls autoRegister().
  *
- * Also wires up the pattern generator so that registered languages
- * can have their patterns generated on demand from their profiles.
- * Without this, getPatternsForLanguage() throws for non-English
- * languages that only register a tokenizer + profile.
+ * The pattern generator comes from `@lokascript/semantic/core` itself (since
+ * 4.0 it installs the full builder: hand-crafted + generated patterns). This
+ * file used to install its own GENERATE-ONLY generator over it, which threw the
+ * hand-crafted patterns away: de, fr, qu and zh could not read even
+ * `on click toggle .active` in these bundles, and 1106 of the corpus's 3772
+ * translations read differently from the full package. test/adapter-iife.test.ts
+ * runs every built bundle on the engine.
  */
 
-import {
-  setPatternGenerator,
-  generatePatternsForLanguage,
-  type LanguageProfile,
-} from '@lokascript/semantic/core';
 import { hyperscriptI18n, preprocess } from '../slim-plugin';
 import { resolveLanguage } from '../language-resolver';
-
-// Enable on-demand pattern generation for registered languages.
-setPatternGenerator((profile: LanguageProfile) => generatePatternsForLanguage(profile));
 
 export { hyperscriptI18n as plugin, preprocess, resolveLanguage };
 
