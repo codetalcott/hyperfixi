@@ -2,15 +2,17 @@
  * The less common expression kinds, as one optional module: positional
  * (`first`, `last`, `random`), relative (`next`, `previous`), `closest`,
  * collection operators (`where`, `sorted by`, `mapped to`, `split by`,
- * `joined by`), `some`, block literals, type checks and `beep!`.
+ * `joined by`), `some`, block literals, type checks and `beep!` (the expression
+ * and, as upstream has it, the command `beep! a, b`).
  *
- * Follows upstream `parsetree/expressions/{positional,existentials,postfix}.js`
- * and the collection half of `expressions.js`.
+ * Follows upstream `parsetree/expressions/{positional,existentials,postfix}.js`,
+ * the collection half of `expressions.js`, and `BeepCommand`.
  */
 import type {
   BlockLiteralNode,
   ClosestNode,
   CollectionNode,
+  Cmd,
   Ctx,
   Expr,
   PositionalNode,
@@ -281,6 +283,25 @@ function typeCheckPostfix(p: Parser, root: Expr): Expr | undefined {
   return node;
 }
 
+/** Upstream's `beepValueToConsole`: unless a `hyperscript:beep` listener cancels, log the value. */
+function beepValue(ctx: Ctx, expression: Expr, source: string, value: unknown): void {
+  if (triggerEvent(ctx.me, 'hyperscript:beep', { element: ctx.me, expression, value })) {
+    const typeName =
+      value == null ? 'object (null)' : (get(get(value, 'constructor'), 'name') ?? 'unknown');
+    const shown =
+      typeof value === 'string'
+        ? `"${value}"`
+        : shouldAutoIterate(value)
+          ? Array.from(value)
+          : value;
+    console.log(
+      `///_ BEEP! The expression (${source}) evaluates to:`,
+      shown,
+      'of type ' + typeName
+    );
+  }
+}
+
 /** `beep! <expr>`: log the value and pass it through. */
 function beep(p: Parser): Expr | undefined {
   const start = p.pos();
@@ -293,30 +314,40 @@ function beep(p: Parser): Expr | undefined {
     start,
     root,
     (value, ctx) => {
-      if (triggerEvent(ctx.me, 'hyperscript:beep', { element: ctx.me, expression: root, value })) {
-        const typeName =
-          value == null ? 'object (null)' : (get(get(value, 'constructor'), 'name') ?? 'unknown');
-        const shown =
-          typeof value === 'string'
-            ? `"${value}"`
-            : shouldAutoIterate(value)
-              ? Array.from(value)
-              : value;
-        console.log(
-          `///_ BEEP! The expression (${source}) evaluates to:`,
-          shown,
-          'of type ' + typeName
-        );
-      }
+      beepValue(ctx, root, source, value);
       return value;
     },
     false
   );
 }
 
+export interface BeepNode extends Cmd {
+  type: 'beepCommand';
+  values: Expr[];
+}
+
+/** `beep! <expr>, <expr>…` as a command: log each value (upstream's `BeepCommand`). */
+function beepCommand(p: Parser, _keyword: string, start: number): BeepNode {
+  const values = [expr(p)];
+  while (p.matchOp(',')) values.push(expr(p));
+  const sources = values.map(v => p.text(v));
+  return {
+    type: 'beepCommand',
+    values,
+    start,
+    end: p.endPos(),
+    run: ctx =>
+      all(
+        values.map(v => v.ev(ctx)),
+        vals => vals.forEach((value, i) => beepValue(ctx, values[i], sources[i], value))
+      ),
+  };
+}
+
 export function expressionsExtra(g: Grammar): void {
   g.leaves.push(closest, some, blockLiteral);
   g.unaries.push(beep, relative, positional);
+  g.commands['beep!'] = beepCommand;
   g.postfixes.push(typeCheckPostfix);
   g.collections.push(collectionOp);
 }

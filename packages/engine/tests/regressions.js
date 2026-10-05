@@ -35,3 +35,34 @@ test.describe('an attribute after `my`, `its`, `your`', () => {
     await expect(find('div')).toHaveText('42');
   });
 });
+
+test.describe('`beep!` as a command', () => {
+  // Upstream has `beep!` twice: an expression (`get beep! 10`, which its suite tests) and a
+  // command, `beep! a, b`, which logs each value. This engine had only the expression.
+  const beeps = page => {
+    const logs = [];
+    page.on('console', async msg => {
+      if (msg.type() === 'log') logs.push(await Promise.all(msg.args().map(a => a.jsonValue())));
+    });
+    return logs;
+  };
+
+  test('logs each value it is given', async ({ page, html, find }) => {
+    const logs = beeps(page);
+    await html(`<div _='on click beep! 10, "foo"'></div>`);
+    await find('div').dispatchEvent('click');
+    await expect.poll(() => logs.length).toBe(2);
+    expect(logs[0]).toEqual(['///_ BEEP! The expression (10) evaluates to:', 10, 'of type Number']);
+    expect(logs[1]).toEqual([
+      '///_ BEEP! The expression ("foo") evaluates to:',
+      '"foo"',
+      'of type String',
+    ]);
+  });
+
+  test('the handler goes on after it', async ({ html, find }) => {
+    await html(`<div _='on click beep! me then put "done" into me'></div>`);
+    await find('div').dispatchEvent('click');
+    await expect(find('div')).toHaveText('done');
+  });
+});
