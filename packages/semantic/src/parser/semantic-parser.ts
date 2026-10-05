@@ -22,7 +22,7 @@ import type {
   PatternMatchResult,
   Diagnostic,
   WaitAlternative,
-  ViewTransitionSemanticNode,
+  BlockCommandSemanticNode,
 } from '../types';
 import {
   createCommandNode,
@@ -34,7 +34,8 @@ import {
   createLiteral,
   createReference,
   isValidReference,
-  isViewTransitionBlock,
+  BLOCK_COMMAND_ACTIONS,
+  isBlockCommand,
   withPosition,
 } from '../types';
 import {
@@ -83,13 +84,13 @@ const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
 
 /**
  * Heads whose body the clause walker nests under them: the loop heads, folded
- * into a {@link LoopSemanticNode}, and `start view transition`'s, which keeps its
- * body as a {@link ViewTransitionSemanticNode}. `while` is not one: a standalone
+ * into a {@link LoopSemanticNode}, and `tell`'s and `start view transition`'s,
+ * which keep theirs as a {@link BlockCommandSemanticNode}. `while` is not one: a standalone
  * `while` node is the SOV fronted while-phrase that
  * {@link SemanticParserImpl.foldFrontedWhileIntoRepeat} merges into its `repeat`,
  * never a loop of its own.
  */
-const BLOCK_HEAD_ACTIONS = new Set(['repeat', 'for', 'viewTransition']);
+const BLOCK_HEAD_ACTIONS = new Set(['repeat', 'for', ...BLOCK_COMMAND_ACTIONS]);
 
 /**
  * Where the clause walker consumed a loop's closing `end`. It lives only in the
@@ -108,21 +109,21 @@ function isLoopClose(entry: WalkEntry): entry is LoopCloseMarker {
 
 /**
  * A block head the walker emitted flat: a `repeat`/`for` command with no body,
- * or a view transition's head with none attached (an empty body is a block its
- * own `end` closed: `start view transition end`).
+ * or a `tell`'s or view transition's head with none attached (an empty body is a
+ * block its own `end` closed: `tell #x end`).
  */
 function isOpenLoopHead(entry: WalkEntry): entry is CommandSemanticNode {
   if (isLoopClose(entry) || entry.kind !== 'command' || !BLOCK_HEAD_ACTIONS.has(entry.action)) {
     return false;
   }
   const body = (entry as { body?: unknown }).body;
-  if (entry.action === 'viewTransition') return body === undefined;
+  if (BLOCK_COMMAND_ACTIONS.has(entry.action)) return body === undefined;
   return !(Array.isArray(body) && body.length > 0);
 }
 
-/** A node the walker nested: a loop, or a view transition with its body. */
+/** A node the walker nested: a loop, or a block command with its body. */
 function isNestedBlock(node: SemanticNode | undefined): boolean {
-  return !!node && (node.kind === 'loop' || isViewTransitionBlock(node));
+  return !!node && (node.kind === 'loop' || isBlockCommand(node));
 }
 
 /** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
@@ -3766,8 +3767,8 @@ export class SemanticParserImpl implements ISemanticParser {
     closed = false
   ): SemanticNode {
     if (body.length === 0 && !closed) return head;
-    if (head.action === 'viewTransition') {
-      const block: ViewTransitionSemanticNode = { ...head, action: 'viewTransition', body };
+    if (BLOCK_COMMAND_ACTIONS.has(head.action)) {
+      const block = { ...head, body } as BlockCommandSemanticNode;
       return block;
     }
     const loopType = head.roles.get('loopType');

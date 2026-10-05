@@ -14,18 +14,17 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (90): parser 44 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (45)
+### 2a. Parser correctness, semantic front-end (44)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
 goes through core's parser; `translate()`, MCP `translate_code`, the corpus writer and the
 non-English direct path are the exposed surfaces.
 
-1. **P1 · `tell … end` not modeled**: `tell #modal show end then log 2` loses `then log 2`, and `tell … end log 2` pulls the `log` into the body, in every language. Needs a real tell node, as loops got in PR 7 (a view-transition block reuses the loop fold since 2026-10-05: `tell` could join the walker's `BLOCK_HEAD_ACTIONS` the same way) · 4765–4767 · 2026-09-26 (PR 16) · gate no · parser · **probe confirmed** (en and es).
 2. **P2 · Class names that begin with an event-modifier word are dropped**: `.stop*`, `.prevent*`, `.once*`, `.debounce*`, `.throttle*` do not parse. `on click toggle .stopped` renders `on click`, silently, in English and so in every language · 4449–4452 · 2026-09-26 (PR 7b) · no · parser · **probe confirmed**.
 3. **P3 · A bare `if … end` (no handler) parses as an event handler**: `if true add .yes to me end` → `on true add .yes to me`, and `if p then toggle .a end` → `on p toggle .a`, in every language including English · 4461–4462, 5429–5430 · 09-26 · no · parser · **probe confirmed**.
 4. **P4 · Bare `if #a and #b log "ok" end` loses its body**: English renders `if #a and #b`. The top-level and-conjunct drop, first logged in July · 4232–4233, 8273–8276 · 07-13 / 07-12 · no (input-coverage diagnostic only) · parser · **probe confirmed**.

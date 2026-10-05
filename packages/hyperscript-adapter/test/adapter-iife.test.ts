@@ -49,6 +49,14 @@ const SHAPES: { english: string; check: (b: HTMLElement, doc: Document) => boole
     english: "on click start view transition put 'vt' into me end then add .after to me",
     check: b => b.textContent === 'vt' && b.classList.contains('after'),
   },
+  // A tell's body runs on the told element, and what follows its `end` on me.
+  {
+    english: 'on click tell #target add .on end then add .after to me',
+    check: (b, doc) =>
+      doc.getElementById(`target-${b.id}`)!.classList.contains('on') &&
+      b.classList.contains('after') &&
+      !b.classList.contains('on'),
+  },
 ];
 
 const bundles = readdirSync(ADAPTER_DIST)

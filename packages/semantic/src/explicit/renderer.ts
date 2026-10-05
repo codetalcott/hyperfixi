@@ -14,7 +14,7 @@ import type {
   CommandSemanticNode,
   ConditionalSemanticNode,
   LoopSemanticNode,
-  ViewTransitionSemanticNode,
+  BlockCommandSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
   FeatureSemanticNode,
@@ -26,7 +26,7 @@ import type {
   PropertyPathValue,
   ExtractionRule,
 } from '../types';
-import { createCommandNode, createSelector, isViewTransitionBlock } from '../types';
+import { createCommandNode, createSelector, isBlockCommand } from '../types';
 
 /**
  * Loop/tell/view-transition block-header commands: their body follows the header
@@ -45,13 +45,11 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
 
 /**
  * A block header still FLAT in its statement list: its body is the statements
- * after it. A view transition the parser nested is a command too, with its
- * body attached, and renders and closes itself (renderViewTransition).
+ * after it. A `tell` or view transition the parser nested is a command too, with
+ * its body attached, and renders and closes itself (renderBlockCommand).
  */
 function isFlatBlockHeader(node: SemanticNode): boolean {
-  return (
-    node.kind === 'command' && BLOCK_HEADER_ACTIONS.has(node.action) && !isViewTransitionBlock(node)
-  );
+  return node.kind === 'command' && BLOCK_HEADER_ACTIONS.has(node.action) && !isBlockCommand(node);
 }
 
 /**
@@ -192,9 +190,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.kind === 'loop') {
       return this.renderLoop(node as LoopSemanticNode, language);
     }
-    // So does a view transition, which closes the same way.
-    if (isViewTransitionBlock(node)) {
-      return this.renderViewTransition(node, language);
+    // So do a `tell` and a view transition, which close the same way.
+    if (isBlockCommand(node)) {
+      return this.renderBlockCommand(node, language);
     }
 
     // `js` renders VERB-INITIAL in the SOV six, against their own word order.
@@ -345,13 +343,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
-   * Render a view transition: `start view transition [using "<type>"] <body> end`.
-   * The head renders through its pattern, the same English words in every
-   * language (patterns/view-transition.ts), and the body follows it directly,
-   * as a loop's does.
+   * Render a block command: `tell <target> <body> end`, `start view transition
+   * [using "<type>"] <body> end`. The head renders through its pattern (a view
+   * transition's is the same English words in every language) and the body
+   * follows it directly, as a loop's does.
    */
-  private renderViewTransition(node: ViewTransitionSemanticNode, language: string): string {
-    const head = createCommandNode('viewTransition', Object.fromEntries(node.roles), node.metadata);
+  private renderBlockCommand(node: BlockCommandSemanticNode, language: string): string {
+    const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);

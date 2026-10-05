@@ -49,9 +49,10 @@ import type {
   SemanticNode,
   SemanticRole,
   SemanticValue,
+  BlockCommandSemanticNode,
   ViewTransitionSemanticNode,
 } from '../types';
-import { isViewTransitionBlock } from '../types';
+import { isBlockCommand } from '../types';
 
 type Roles = ReadonlyMap<SemanticRole, SemanticValue>;
 
@@ -149,8 +150,8 @@ function isViewTransitionManner(value: SemanticValue | undefined): boolean {
 }
 
 function rewriteCommand(original: CommandSemanticNode): SemanticNode {
-  if (isViewTransitionBlock(original)) {
-    const block: ViewTransitionSemanticNode = {
+  if (isBlockCommand(original)) {
+    const block: BlockCommandSemanticNode = {
       ...original,
       roles: rewriteRoles(original.roles),
       body: rewriteAll(original.body),

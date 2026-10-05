@@ -24,7 +24,7 @@ import type {
   SemanticRole,
   SemanticValue,
 } from '../types';
-import { isViewTransitionBlock } from '../types';
+import { isBlockCommand, isViewTransitionBlock } from '../types';
 
 import { convertValue, isImplicitValue } from './value-converters';
 import { resolveCommandMapper, type CommandMapperResult } from './command-mappers';
@@ -308,6 +308,13 @@ export class ASTBuilder {
         args: [body],
         ...(style ? { modifiers: { using: convertValue(style) } } : {}),
       };
+    }
+    // `tell <target> <body> end`: core's tell takes its body as its own args,
+    // after the target (buildStatements gives a FLAT tell the statements after it).
+    if (isBlockCommand(node)) {
+      const { body, ...head } = node;
+      const tell = this.buildCommand(head as CommandSemanticNode);
+      return { ...tell, args: [...tell.args, ...this.buildStatements(body)] };
     }
     // A registered mapper wins over the schema's declarative `ast` descriptor,
     // which in turn wins over the blanket generic mapping below.
@@ -721,9 +728,9 @@ export class ASTBuilder {
   }
 
   /**
-   * Build a statement list, giving each `tell` its body. Semantic keeps a tell
-   * FLAT: the header, then its body as every statement after it in the list
-   * (the renderer's closeBlockHeaders closes it at the list's end). Core's tell
+   * Build a statement list, giving each FLAT `tell` its body: every statement
+   * after it in the list (the renderer's closeBlockHeaders closes it at the
+   * list's end). A tell the walker nested carries its own (buildCommand). Core's tell
    * takes its body as its own args, `[target, ...commands]`, and throws without
    * one, so every translated tell threw on the direct path and its commands
    * never ran.
@@ -733,7 +740,12 @@ export class ASTBuilder {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const built = this.build(node);
-      if (node.kind === 'command' && node.action === 'tell' && i + 1 < nodes.length) {
+      if (
+        node.kind === 'command' &&
+        node.action === 'tell' &&
+        !isBlockCommand(node) &&
+        i + 1 < nodes.length
+      ) {
         const body = this.buildStatements(nodes.slice(i + 1));
         const tell = built as CommandNode;
         out.push({ ...tell, args: [...tell.args, ...body] });
