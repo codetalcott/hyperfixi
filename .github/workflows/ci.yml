@@ -668,31 +668,9 @@ jobs:
       - name: Domains peer-major guard self-test
         run: node --test scripts/check-domains-peer-major.test.cjs
 
-      # Shrink-only ratchet for the engine migration (Arc 0 of
-      # docs-internal/ENGINE_MIGRATION_PLAN.md). Fails when a packages/core/src
-      # directory gains `any` / `as any` / `as Record<string, unknown>` /
-      # `as unknown as` / `<..., any>` above its committed baseline. Arcs 2-4
-      # drive the count down and regenerate the baseline as they go; without
-      # this, they read as finished while the tree quietly refills.
-      - name: Verify type-escape ratchet
-        run: node scripts/check-type-escapes.cjs
-
-      # The guard's own tests — the stripping rules are what make the number
-      # trustworthy, so they are checked rather than assumed.
-      - name: Test the type-escape ratchet
-        run: node --test scripts/check-type-escapes.test.cjs
-
-      # Import-direction ratchet, the type-escape ratchet's sibling (Arc 0 of
-      # ENGINE_MIGRATION_PLAN.md). Every packages/core/src unit has a layer;
-      # a module importing a HIGHER layer than itself is upward debt. Today's
-      # 14 upward edges are allowlisted with a reason each and the list can
-      # only shrink: a new edge, a grown edge, a type-only edge that hardens
-      # into a value one, and a STALE row all fail.
-      - name: Verify layering ratchet
-        run: node scripts/check-layering.cjs
-
-      - name: Test the layering ratchet
-        run: node --test scripts/check-layering.test.cjs
+      # (The type-escape and layering ratchets, Arc 0 of ENGINE_MIGRATION_PLAN.md,
+      # guarded core's own engine — parser, runtime, commands — and retired with it
+      # in Phase C6 of the engine cutover. The boundary ratchet below stays.)
 
       # Engine/front-end boundary ratchet (Arc 1 of ENGINE_MIGRATION_PLAN.md).
       # @hyperfixi/core is the engine; @lokascript/semantic is a front-end that
