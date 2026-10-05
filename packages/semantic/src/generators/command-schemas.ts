@@ -7,6 +7,13 @@
 
 import type { SemanticRole, ActionType, SemanticValue, ExpectedType, PatternToken } from '../types';
 import type { RoleMarker } from './profiles/types';
+import {
+  ELEMENT_TARGET_TYPES,
+  GET_SOURCE_TYPES,
+  PUT_DESTINATION_TYPES,
+  PUT_VALUE_TYPES,
+  SET_VALUE_TYPES,
+} from './role-types';
 
 // =============================================================================
 // Command Schema Types
@@ -465,23 +472,6 @@ export type CommandCategory =
 // =============================================================================
 
 /**
- * The types of a role that names the ELEMENT a command acts on: a selector
- * (`hide #panel`), a reference (`hide me`), or a variable holding the element
- * (`repeat for el in .item hide el end`). A bare variable arrives as an
- * `expression`, so a role typed selector|reference matched no pattern for it.
- * English dropped the variable and the command acted on `me` (`remove el` lost
- * the command), so every translation did too; toggle's destination, which
- * English's handcrafted pattern leaves untyped, dropped it in 14 languages.
- * Both engines read a variable there, each form run on both.
- *
- * Not fetch's destination or repeat's source: the response-type recovery and
- * the fused-role junk check read an expression there as a mis-capture. Nor the
- * `on` target of set, transition or install, or clone's: neither engine reads
- * those forms (core takes `set … on el`'s `on el` for a new handler).
- */
-const ELEMENT_TARGET_TYPES: ExpectedType[] = ['selector', 'reference', 'expression'];
-
-/**
  * Toggle command: adds class/attribute if absent, removes if present.
  *
  * Patterns:
@@ -772,7 +762,7 @@ export const putSchema: CommandSchema = {
       role: 'patient',
       description: 'The content to put',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
+      expectedTypes: PUT_VALUE_TYPES,
       svoPosition: 1,
       sovPosition: 1, // SOV: patient comes first (を marker)
     },
@@ -780,10 +770,8 @@ export const putSchema: CommandSchema = {
       role: 'destination',
       description: 'Where to put the content',
       required: true,
-      // A variable too (`into item`, a loop's element; `into my.textContent`
-      // arrives as an expression): without it a generated pattern matched
-      // nothing and the put dropped in ar/de/fr/id/zh.
-      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
+      // A variable too: see PUT_DESTINATION_TYPES.
+      expectedTypes: PUT_DESTINATION_TYPES,
       svoPosition: 2,
       sovPosition: 2, // SOV: destination comes second (に/에/a marker)
       // "put 'hello' into #output" — directional, so the same locative-default
@@ -946,11 +934,8 @@ export const setSchema: CommandSchema = {
       role: 'patient',
       description: 'The value to set',
       required: true,
-      // A variable takes any value, an element (`set el to #panel`, `to <li/>`)
-      // and an array (`to [1, 2]`, which tokenizes as one selector) included.
-      // Without `selector`, those matched no pattern and the whole `set` was
-      // lost, in English and so in every translation.
-      expectedTypes: ['literal', 'selector', 'expression', 'reference', 'property-path'],
+      // A variable takes any value: see SET_VALUE_TYPES.
+      expectedTypes: SET_VALUE_TYPES,
       svoPosition: 2,
       sovPosition: 2,
       // Override patient marker for SVO languages with their native prepositions
@@ -1811,7 +1796,7 @@ export const getCommandSchema: CommandSchema = {
       role: 'source',
       description: 'The source to get from',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
+      expectedTypes: GET_SOURCE_TYPES,
       svoPosition: 1,
       sovPosition: 2,
       // Marker overrides for GET pattern

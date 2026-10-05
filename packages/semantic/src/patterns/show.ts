@@ -8,7 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { showSchema } from '../generators/command-schemas';
+import { ELEMENT_TARGET_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -17,9 +17,7 @@ import { handcrafted } from './handcrafted';
  * variable target was dropped. (fr's keeps its copy: where it rejects a
  * variable, fr's generated pattern reads it, so the copy never decides.)
  */
-const SHOW_PATIENT_TYPES: ExpectedType[] = [
-  ...(showSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
-];
+const SHOW_PATIENT_TYPES: ExpectedType[] = [...ELEMENT_TARGET_TYPES];
 
 export function getShowPatternsBn(): LanguagePattern[] {
   return [
