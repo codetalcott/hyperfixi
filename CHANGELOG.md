@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: a behavior's handlers need no `end` of their own.** Upstream ends a
+  handler's commands at the next feature, so `behavior F on click add .a on keyup log 1 end end`
+  is two handlers. The behavior parser split its body only at `end`, read both handlers as one,
+  and English wrote `behavior F then add .a then log 1`, which the engine rejects: `translate`,
+  MCP `translate_code` and the adapter broke such a behavior in every language. Each piece now goes
+  through the splitter a top-level chain of handlers already used, and parses to the same node as
+  the form with every `end` written. A behavior written this way in another language reads in 14
+  of the 23; the other 9 fail as their top-level chains do (OPEN_ITEMS P47). No corpus row changes
+  (every one writes its `end`s).
 - **`@lokascript/semantic`: English writes core's view-transition tail as upstream's block.**
   `swap #a with #b using view transition` (and `morph`'s tail) renders to English as
   `start view transition swap #a with #b end`, which upstream _hyperscript and `@hyperfixi/engine`

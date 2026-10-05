@@ -21,6 +21,7 @@ import type {
   PatternToken,
   SemanticNode,
   SemanticValue,
+  CompoundSemanticNode,
   EventHandlerSemanticNode,
   DefSemanticNode,
   FeatureAction,
@@ -887,8 +888,23 @@ function parseBehaviorBlock(
       }
       if (tokenMatches(tokens[segStart], initForms)) {
         takeInit(j);
+        segStart = j + 1;
+        continue;
+      }
+      const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+      // A handler's own `end` is optional, as upstream's is: its command list
+      // ends at the next feature. So `on click add .a on keyup log 1 end` is two
+      // handlers this split reads as one segment, and parsing it as one handler
+      // failed the whole behavior (English wrote `behavior F then add .a then
+      // log 1`). The top-level splitter finds the boundary, and declines unless
+      // every piece is a handler with a body.
+      const chain = tryParseProgram(handlerText, language, parsers) as CompoundSemanticNode | null;
+      if (chain) {
+        for (const handler of chain.statements as EventHandlerSemanticNode[]) {
+          eventHandlers.push(handler);
+          confidences.push(handler.metadata?.confidence ?? 0.75);
+        }
       } else {
-        const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
         try {
           const parsed = parsers.statement(handlerText, language);
           if (parsed && parsed.kind === 'event-handler') {

@@ -14,11 +14,11 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (89): parser 43 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (90): parser 44 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (43)
+### 2a. Parser correctness, semantic front-end (44)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
@@ -71,6 +71,7 @@ non-English direct path are the exposed surfaces.
 
     All at 1675–1678 · 07-20 · no · parser · not probed. Out of corpus; English `pick items 1 to 3 from arr` renders `… of arr`.
 45. **P45 · `set element's x to …` is not read as an element-scoped set**: upstream's spelling for a behavior's state (its own tested idiom, and the one that defaults a parameter so the handlers see it — `set :x` writes a different scope on both engines). en→en keeps it; every other language renders `element` as a noun with an English `'s` (zh `元素's cls`, ru `элемент's cls`) and reads it back as a dropped set or an invalid render; `set element x to …` drops in en too. Found 2026-10-03 rewriting @hyperfixi/behaviors in upstream's idioms: seven of its sources use it (none a corpus row; Sortable, a corpus row, defaults in a handler local instead). Repro: `translate("on click set element's cls to 'a'", 'en', 'zh')` and back · — · 10-03 · no (out of corpus) · parser + render · **probe confirmed**.
+47. **P47 · A chain of handlers written natively without their `end`s merges in 9 languages**: `on click add .a on keyup log 1` (top level, or inside a behavior), in each language's own spelling with the handlers' `end`s left out. de/fr/id/zh/ko/qu/tr drop the second handler's event and run its commands in the first (`on click add .a then log 1`); hi/bn read the event as a destination (`add .a to keyup then log 1`). Both are valid English the engine runs, so it is silent. The splitter (`tryParseProgram`) knows only `keywords.on`, not the handler words the renderer writes (de `wenn`, fr `quand`, id `ketika`, zh `一 … 就`; widening it to the `on` patterns' trigger words fixed these four in a probe, but fr `quand` is also `when`); the trigger split is off for SOV, where the trigger follows the event (ko `할 때`, tr `i üzerinde`; ko's signature split keys on `을 에`, which the renderer no longer writes; qu's `maykama` leads but is gated with SOV); hi `पर` / bn `তে` are also the destination marker, so those two may only be made to fail loudly. Same family: an `init` with no `end` ahead of a handler (`behavior F init add .a on click add .b end end`) is SVO-only, failing in bn/hi/ja/ko/qu/tr. English and the en→L direction are fine (the renderer writes every `end`) · 2026-10-05 (found sizing the behavior handler-chain fix) · partial (`behavior-handler-chain.test.ts` lists the 9 as shrink-only; no corpus row has the form) · parser · probe confirmed.
 
 ### 2b. Render / naturalness (6)
 
