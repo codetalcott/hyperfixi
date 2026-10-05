@@ -9,6 +9,7 @@
 
 import type { ExpectedType, LanguagePattern } from '../types';
 import { setSchema } from '../generators/command-schemas';
+import { handcrafted } from './handcrafted';
 
 /**
  * A handcrafted set's value takes what the schema's does, an element or an
@@ -22,7 +23,7 @@ const SET_PATIENT_TYPES: ExpectedType[] = [
   ...(setSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
 ];
 
-function getSetPatternsBn(): LanguagePattern[] {
+export function getSetPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: :x কে 5 এ সেট করুন
     {
@@ -68,7 +69,7 @@ function getSetPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsDe(): LanguagePattern[] {
+export function getSetPatternsDe(): LanguagePattern[] {
   return [
     {
       id: 'set-de-full',
@@ -145,7 +146,7 @@ function getSetPatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsEs(): LanguagePattern[] {
+export function getSetPatternsEs(): LanguagePattern[] {
   return [
     {
       id: 'set-es-full',
@@ -226,7 +227,7 @@ function getSetPatternsEs(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsFr(): LanguagePattern[] {
+export function getSetPatternsFr(): LanguagePattern[] {
   return [
     {
       id: 'set-fr-full',
@@ -305,7 +306,7 @@ function getSetPatternsFr(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsHi(): LanguagePattern[] {
+export function getSetPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: :x को 5 सेट करें
     {
@@ -354,7 +355,7 @@ function getSetPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsId(): LanguagePattern[] {
+export function getSetPatternsId(): LanguagePattern[] {
   return [
     {
       id: 'set-id-full',
@@ -427,7 +428,7 @@ function getSetPatternsId(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsMs(): LanguagePattern[] {
+export function getSetPatternsMs(): LanguagePattern[] {
   return [
     {
       // Malay set mirrors Indonesian: the transformer emits `tetapkan {destination}
@@ -460,7 +461,7 @@ function getSetPatternsMs(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsIt(): LanguagePattern[] {
+export function getSetPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'set-it-full',
@@ -513,7 +514,7 @@ function getSetPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsPl(): LanguagePattern[] {
+export function getSetPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'set-pl-full',
@@ -564,7 +565,7 @@ function getSetPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsPt(): LanguagePattern[] {
+export function getSetPatternsPt(): LanguagePattern[] {
   return [
     {
       id: 'set-pt-full',
@@ -640,7 +641,7 @@ function getSetPatternsPt(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsRu(): LanguagePattern[] {
+export function getSetPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'set-ru-full',
@@ -691,7 +692,7 @@ function getSetPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsSw(): LanguagePattern[] {
+export function getSetPatternsSw(): LanguagePattern[] {
   return [
     {
       // After the i18n dict realign (set → `seti`, was the put verb `weka`), the
@@ -729,7 +730,7 @@ function getSetPatternsSw(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsTh(): LanguagePattern[] {
+export function getSetPatternsTh(): LanguagePattern[] {
   return [
     // Marker pattern: ตั้ง X ใน "val" — every th corpus emission marks the
     // value with ใน (en 'to'); positional patient mis-captured multi-token
@@ -767,7 +768,7 @@ function getSetPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsUk(): LanguagePattern[] {
+export function getSetPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'set-uk-full',
@@ -818,7 +819,7 @@ function getSetPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsHe(): LanguagePattern[] {
+export function getSetPatternsHe(): LanguagePattern[] {
   return [
     {
       // Hebrew set. The i18n grammar transformer emits the accusative-fronted form
@@ -861,7 +862,7 @@ function getSetPatternsHe(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsVi(): LanguagePattern[] {
+export function getSetPatternsVi(): LanguagePattern[] {
   return [
     {
       // The i18n grammar transformer emits `gán {destination} vào {patient}` for
@@ -939,7 +940,7 @@ function getSetPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getSetPatternsZh(): LanguagePattern[] {
+export function getSetPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'set-zh-full',
@@ -1103,7 +1104,7 @@ function getSetPatternsZh(): LanguagePattern[] {
  * deliberately absent from the verb list — it is qu's PUT verb (the de
  * setzen-collision precedent).
  */
-function getSetPatternsQu(): LanguagePattern[] {
+export function getSetPatternsQu(): LanguagePattern[] {
   return [
     {
       id: 'set-qu-oblique-source',
@@ -1179,44 +1180,6 @@ function withTrailingScope(patterns: LanguagePattern[]): LanguagePattern[] {
 }
 
 export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return withTrailingScope(getSetPatternsBn());
-    case 'de':
-      return withTrailingScope(getSetPatternsDe());
-    case 'es':
-      return withTrailingScope(getSetPatternsEs());
-    case 'fr':
-      return withTrailingScope(getSetPatternsFr());
-    case 'he':
-      return withTrailingScope(getSetPatternsHe());
-    case 'hi':
-      return withTrailingScope(getSetPatternsHi());
-    case 'id':
-      return withTrailingScope(getSetPatternsId());
-    case 'ms':
-      return withTrailingScope(getSetPatternsMs());
-    case 'it':
-      return withTrailingScope(getSetPatternsIt());
-    case 'pl':
-      return withTrailingScope(getSetPatternsPl());
-    case 'pt':
-      return withTrailingScope(getSetPatternsPt());
-    case 'qu':
-      return withTrailingScope(getSetPatternsQu());
-    case 'ru':
-      return withTrailingScope(getSetPatternsRu());
-    case 'sw':
-      return withTrailingScope(getSetPatternsSw());
-    case 'th':
-      return withTrailingScope(getSetPatternsTh());
-    case 'uk':
-      return withTrailingScope(getSetPatternsUk());
-    case 'vi':
-      return withTrailingScope(getSetPatternsVi());
-    case 'zh':
-      return withTrailingScope(getSetPatternsZh());
-    default:
-      return [];
-  }
+  const own = handcrafted('set', language);
+  return own ? withTrailingScope(own) : [];
 }

@@ -9,6 +9,7 @@
 
 import type { ExpectedType, LanguagePattern } from '../types';
 import { showSchema } from '../generators/command-schemas';
+import { handcrafted } from './handcrafted';
 
 /**
  * A handcrafted show's target takes what the schema's does, a variable
@@ -20,7 +21,7 @@ const SHOW_PATIENT_TYPES: ExpectedType[] = [
   ...(showSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
 ];
 
-function getShowPatternsBn(): LanguagePattern[] {
+export function getShowPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: #element কে দেখান
     {
@@ -60,7 +61,7 @@ function getShowPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsDe(): LanguagePattern[] {
+export function getShowPatternsDe(): LanguagePattern[] {
   return [
     {
       id: 'show-de-full',
@@ -92,7 +93,7 @@ function getShowPatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsFr(): LanguagePattern[] {
+export function getShowPatternsFr(): LanguagePattern[] {
   return [
     {
       id: 'show-fr-full',
@@ -124,7 +125,7 @@ function getShowPatternsFr(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsHi(): LanguagePattern[] {
+export function getShowPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: #element को दिखाएं
     {
@@ -178,7 +179,7 @@ function getShowPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsIt(): LanguagePattern[] {
+export function getShowPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'show-it-full',
@@ -224,7 +225,7 @@ function getShowPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsPl(): LanguagePattern[] {
+export function getShowPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'show-pl-full',
@@ -270,7 +271,7 @@ function getShowPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsRu(): LanguagePattern[] {
+export function getShowPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'show-ru-full',
@@ -316,7 +317,7 @@ function getShowPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsTh(): LanguagePattern[] {
+export function getShowPatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: แสดง #element
     {
@@ -349,7 +350,7 @@ function getShowPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsUk(): LanguagePattern[] {
+export function getShowPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'show-uk-full',
@@ -395,7 +396,7 @@ function getShowPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsVi(): LanguagePattern[] {
+export function getShowPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'show-vi-full',
@@ -441,7 +442,7 @@ function getShowPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getShowPatternsZh(): LanguagePattern[] {
+export function getShowPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'show-zh-full',
@@ -502,30 +503,5 @@ function getShowPatternsZh(): LanguagePattern[] {
  * Get show patterns for a specific language.
  */
 export function getShowPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getShowPatternsBn();
-    case 'de':
-      return getShowPatternsDe();
-    case 'fr':
-      return getShowPatternsFr();
-    case 'hi':
-      return getShowPatternsHi();
-    case 'it':
-      return getShowPatternsIt();
-    case 'pl':
-      return getShowPatternsPl();
-    case 'ru':
-      return getShowPatternsRu();
-    case 'th':
-      return getShowPatternsTh();
-    case 'uk':
-      return getShowPatternsUk();
-    case 'vi':
-      return getShowPatternsVi();
-    case 'zh':
-      return getShowPatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('show', language) ?? [];
 }

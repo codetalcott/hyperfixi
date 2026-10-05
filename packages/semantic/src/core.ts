@@ -100,6 +100,12 @@ export {
   mergeProfiles,
 } from './registry';
 
+// Each language module registers its hand-crafted patterns here, through this
+// entry: dist/languages/<lang>.js shares core's copy of the registry only via
+// `../core` (src/patterns/handcrafted.ts).
+export { registerHandcrafted } from './patterns/handcrafted';
+export type { HandcraftedPatterns, HandcraftedSource } from './patterns/handcrafted';
+
 // Re-export profile types from registry
 export type {
   LanguageProfile,

@@ -9,8 +9,9 @@
 
 import type { LanguagePattern } from '../types';
 import { COUNTER_TYPES } from './increment';
+import { handcrafted } from './handcrafted';
 
-function getDecrementPatternsBn(): LanguagePattern[] {
+export function getDecrementPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: :counter কে হ্রাস করুন
     {
@@ -73,7 +74,7 @@ function getDecrementPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsDe(): LanguagePattern[] {
+export function getDecrementPatternsDe(): LanguagePattern[] {
   const verbAlternatives = [
     'verringern',
     'dekrementiere',
@@ -123,7 +124,7 @@ function getDecrementPatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsHi(): LanguagePattern[] {
+export function getDecrementPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: :counter को घटाएं
     {
@@ -184,7 +185,7 @@ function getDecrementPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsIt(): LanguagePattern[] {
+export function getDecrementPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'decrement-it-full',
@@ -243,7 +244,7 @@ function getDecrementPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsPl(): LanguagePattern[] {
+export function getDecrementPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'decrement-pl-full',
@@ -290,7 +291,7 @@ function getDecrementPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsRu(): LanguagePattern[] {
+export function getDecrementPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'decrement-ru-full',
@@ -337,7 +338,7 @@ function getDecrementPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsTh(): LanguagePattern[] {
+export function getDecrementPatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: ลดค่า :counter
     {
@@ -382,7 +383,7 @@ function getDecrementPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsUk(): LanguagePattern[] {
+export function getDecrementPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'decrement-uk-full',
@@ -429,7 +430,7 @@ function getDecrementPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsVi(): LanguagePattern[] {
+export function getDecrementPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'decrement-vi-full',
@@ -480,7 +481,7 @@ function getDecrementPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getDecrementPatternsZh(): LanguagePattern[] {
+export function getDecrementPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'decrement-zh-full',
@@ -505,28 +506,5 @@ function getDecrementPatternsZh(): LanguagePattern[] {
  * Get decrement patterns for a specific language.
  */
 export function getDecrementPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getDecrementPatternsBn();
-    case 'de':
-      return getDecrementPatternsDe();
-    case 'hi':
-      return getDecrementPatternsHi();
-    case 'it':
-      return getDecrementPatternsIt();
-    case 'pl':
-      return getDecrementPatternsPl();
-    case 'ru':
-      return getDecrementPatternsRu();
-    case 'th':
-      return getDecrementPatternsTh();
-    case 'uk':
-      return getDecrementPatternsUk();
-    case 'vi':
-      return getDecrementPatternsVi();
-    case 'zh':
-      return getDecrementPatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('decrement', language) ?? [];
 }

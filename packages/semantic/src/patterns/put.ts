@@ -9,6 +9,7 @@
 
 import type { ExpectedType, LanguagePattern } from '../types';
 import { putSchema } from '../generators/command-schemas';
+import { handcrafted } from './handcrafted';
 
 /**
  * A handcrafted put's destination takes what the schema's does: a selector, a
@@ -30,7 +31,7 @@ const PUT_PATIENT_TYPES: ExpectedType[] = [
   ...(putSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
 ];
 
-function getPutPatternsBn(): LanguagePattern[] {
+export function getPutPatternsBn(): LanguagePattern[] {
   return [
     // SOV verb-final positional put: `{patient} <posWord> {destination} কে রাখুন`
     // (put X before/after me). আগে→before / পরে→after; position word → `manner`,
@@ -124,7 +125,7 @@ function getPutPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsEn(): LanguagePattern[] {
+export function getPutPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'put-en-into',
@@ -237,7 +238,7 @@ function getPutPatternsEn(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsEs(): LanguagePattern[] {
+export function getPutPatternsEs(): LanguagePattern[] {
   return [
     {
       id: 'put-es-full',
@@ -301,7 +302,7 @@ function getPutPatternsEs(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsHi(): LanguagePattern[] {
+export function getPutPatternsHi(): LanguagePattern[] {
   return [
     // SOV verb-final positional put: `{patient} <posWord> {destination} को रखें`
     // (put X before/after me). से पहले→before / के बाद→after normalize to
@@ -443,7 +444,7 @@ function getPutPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsId(): LanguagePattern[] {
+export function getPutPatternsId(): LanguagePattern[] {
   return [
     {
       id: 'put-id-full',
@@ -525,7 +526,7 @@ function getPutPatternsId(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsIt(): LanguagePattern[] {
+export function getPutPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'put-it-full',
@@ -614,7 +615,7 @@ function getPutPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsPl(): LanguagePattern[] {
+export function getPutPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'put-pl-full',
@@ -686,7 +687,7 @@ function getPutPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsRu(): LanguagePattern[] {
+export function getPutPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'put-ru-full',
@@ -761,7 +762,7 @@ function getPutPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsTh(): LanguagePattern[] {
+export function getPutPatternsTh(): LanguagePattern[] {
   return [
     // Pattern: ใส่ 'hello' ใน #output
     {
@@ -831,7 +832,7 @@ function getPutPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsUk(): LanguagePattern[] {
+export function getPutPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'put-uk-full',
@@ -915,7 +916,7 @@ function getPutPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsVi(): LanguagePattern[] {
+export function getPutPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'put-vi-into',
@@ -983,7 +984,7 @@ function getPutPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsQu(): LanguagePattern[] {
+export function getPutPatternsQu(): LanguagePattern[] {
   return [
     // SOV verb-final positional put: `{patient} <posWord> {destination} ta churay`
     // (put X before/after me). ñawpaqpi→before / qhepapi→after (single keyword
@@ -1043,7 +1044,7 @@ function getPutPatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getPutPatternsZh(): LanguagePattern[] {
+export function getPutPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'put-zh-full',
@@ -1385,7 +1386,7 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
 // the target (me) is the destination. Priority 105 makes matchBest succeed so the
 // SOV verb-anchoring fallback — which would mis-read the position word as a bogus
 // `before`/`after` COMMAND — is never reached. Mirrors put-en/it/vi-before/after.
-function getPutPatternsJa(): LanguagePattern[] {
+export function getPutPatternsJa(): LanguagePattern[] {
   return (['before', 'after'] as const).map(manner => {
     const posWord = manner === 'before' ? '前に' : '後に';
     const posAlt = manner === 'before' ? '前' : '後';
@@ -1413,7 +1414,7 @@ function getPutPatternsJa(): LanguagePattern[] {
   });
 }
 
-function getPutPatternsKo(): LanguagePattern[] {
+export function getPutPatternsKo(): LanguagePattern[] {
   return (['before', 'after'] as const).map(manner => {
     const posWord = manner === 'before' ? '전에' : '후에';
     return {
@@ -1440,7 +1441,7 @@ function getPutPatternsKo(): LanguagePattern[] {
   });
 }
 
-function getPutPatternsTr(): LanguagePattern[] {
+export function getPutPatternsTr(): LanguagePattern[] {
   // önce → before, sonra → after (after the turkish tokenizer drops the stale
   // `sonra`→then EXTRA). The accusative `i` (+vowel-harmony alts) on the target
   // is optional.
@@ -1532,40 +1533,9 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
   // The at-end-of positional put (make-toast-element); en carries its own
   // handcrafted variant, every other language is generated from PUT_AT_END.
   const atEnd = buildAtEndPutPatterns(language);
-  switch (language) {
-    case 'bn':
-      return [...getPutPatternsBn(), ...atEnd];
-    case 'en':
-      return getPutPatternsEn();
-    case 'es':
-      return [...getPutPatternsEs(), ...atEnd];
-    case 'hi':
-      return [...getPutPatternsHi(), ...atEnd];
-    case 'id':
-      return [...getPutPatternsId(), ...positional, ...atEnd];
-    case 'it':
-      return [...getPutPatternsIt(), ...atEnd];
-    case 'ja':
-      return [...getPutPatternsJa(), ...atEnd];
-    case 'ko':
-      return [...getPutPatternsKo(), ...atEnd];
-    case 'tr':
-      return [...getPutPatternsTr(), ...atEnd];
-    case 'pl':
-      return [...getPutPatternsPl(), ...atEnd];
-    case 'ru':
-      return [...getPutPatternsRu(), ...atEnd];
-    case 'qu':
-      return [...getPutPatternsQu(), ...atEnd];
-    case 'th':
-      return [...getPutPatternsTh(), ...atEnd];
-    case 'uk':
-      return [...getPutPatternsUk(), ...atEnd];
-    case 'vi':
-      return [...getPutPatternsVi(), ...atEnd];
-    case 'zh':
-      return [...getPutPatternsZh(), ...positional, ...atEnd];
-    default:
-      return [...positional, ...atEnd];
-  }
+  const own = handcrafted('put', language);
+  if (language === 'en') return own ?? [];
+  if (!own) return [...positional, ...atEnd];
+  // id and zh keep the shared positional shapes beside their own.
+  return [...own, ...(language === 'id' || language === 'zh' ? positional : []), ...atEnd];
 }

@@ -9,6 +9,7 @@
 
 import type { ExpectedType, LanguagePattern } from '../types';
 import { hideSchema } from '../generators/command-schemas';
+import { handcrafted } from './handcrafted';
 
 /**
  * A handcrafted hide's target takes what the schema's does, a variable
@@ -19,7 +20,7 @@ const HIDE_PATIENT_TYPES: ExpectedType[] = [
   ...(hideSchema.roles.find(role => role.role === 'patient')?.expectedTypes ?? []),
 ];
 
-function getHidePatternsBn(): LanguagePattern[] {
+export function getHidePatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: #element কে লুকান
     {
@@ -59,7 +60,7 @@ function getHidePatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsDe(): LanguagePattern[] {
+export function getHidePatternsDe(): LanguagePattern[] {
   return [
     {
       id: 'hide-de-full',
@@ -95,7 +96,7 @@ function getHidePatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsHi(): LanguagePattern[] {
+export function getHidePatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: #element को छिपाएं
     {
@@ -149,7 +150,7 @@ function getHidePatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsIt(): LanguagePattern[] {
+export function getHidePatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'hide-it-full',
@@ -195,7 +196,7 @@ function getHidePatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsPl(): LanguagePattern[] {
+export function getHidePatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'hide-pl-full',
@@ -248,7 +249,7 @@ function getHidePatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsRu(): LanguagePattern[] {
+export function getHidePatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'hide-ru-full',
@@ -294,7 +295,7 @@ function getHidePatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsTh(): LanguagePattern[] {
+export function getHidePatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: ซ่อน #element
     {
@@ -327,7 +328,7 @@ function getHidePatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsUk(): LanguagePattern[] {
+export function getHidePatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'hide-uk-full',
@@ -378,7 +379,7 @@ function getHidePatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsVi(): LanguagePattern[] {
+export function getHidePatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'hide-vi-full',
@@ -424,7 +425,7 @@ function getHidePatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getHidePatternsZh(): LanguagePattern[] {
+export function getHidePatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'hide-zh-full',
@@ -485,28 +486,5 @@ function getHidePatternsZh(): LanguagePattern[] {
  * Get hide patterns for a specific language.
  */
 export function getHidePatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getHidePatternsBn();
-    case 'de':
-      return getHidePatternsDe();
-    case 'hi':
-      return getHidePatternsHi();
-    case 'it':
-      return getHidePatternsIt();
-    case 'pl':
-      return getHidePatternsPl();
-    case 'ru':
-      return getHidePatternsRu();
-    case 'th':
-      return getHidePatternsTh();
-    case 'uk':
-      return getHidePatternsUk();
-    case 'vi':
-      return getHidePatternsVi();
-    case 'zh':
-      return getHidePatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('hide', language) ?? [];
 }

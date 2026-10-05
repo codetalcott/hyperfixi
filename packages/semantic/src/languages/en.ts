@@ -13,7 +13,8 @@
  * ```
  */
 
-import { registerLanguage, registerPatterns } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/en';
+import { registerLanguage, registerPatterns, registerHandcrafted } from '../core';
 import { englishTokenizer } from '../tokenizers/english';
 import { englishProfile } from '../generators/profiles/english';
 import { buildEnglishPatterns } from '../patterns/en';
@@ -21,6 +22,9 @@ import { buildEnglishPatterns } from '../patterns/en';
 // Re-export for direct access
 export { englishTokenizer } from '../tokenizers/english';
 export { englishProfile } from '../generators/profiles/english';
+
+// First: buildEnglishPatterns and every pattern build read these.
+registerHandcrafted('en', handcraftedPatterns);
 
 // Auto-register when this module is imported
 registerLanguage('en', englishTokenizer, englishProfile);

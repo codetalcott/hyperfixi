@@ -25,7 +25,8 @@ import type {
   LiteralPatternToken,
   RolePatternToken,
 } from '../types';
-import { tryGetProfile } from '../registry';
+import type { LanguageProfile } from '../generators/language-profiles';
+import { handcrafted } from './handcrafted';
 
 /**
  * The optional `with {options}` group, built from the profile's own `style`
@@ -40,12 +41,15 @@ import { tryGetProfile } from '../registry';
  * rode along with it.
  *
  * The marker comes from `profile.roleMarkers.style`, which every one of the 23
- * profiles defines — so this stays one source of truth rather than a 23-entry
+ * profiles defines (the dispatcher passes the registered profile: a language
+ * module's inlined copy of the registry would hold none) — so this stays one source of truth rather than a 23-entry
  * table, and its `position` decides the order: SVO marks before the value
  * (es `con {…}`), SOV after it (ja `{…} で`).
  */
-function styleGroup(language: string): { token: PatternToken; extraction: ExtractionRule } | null {
-  const marker = tryGetProfile(language)?.roleMarkers?.style;
+function styleGroup(
+  profile: LanguageProfile | undefined
+): { token: PatternToken; extraction: ExtractionRule } | null {
+  const marker = profile?.roleMarkers?.style;
   if (!marker?.primary) return null;
   const literal: LiteralPatternToken = {
     type: 'literal',
@@ -69,8 +73,8 @@ function styleGroup(language: string): { token: PatternToken; extraction: Extrac
   };
 }
 
-function getFetchPatternsZh(): LanguagePattern[] {
-  const zhStyle = styleGroup('zh');
+export function getFetchPatternsZh(profile?: LanguageProfile): LanguagePattern[] {
+  const zhStyle = styleGroup(profile);
   return [
     {
       id: 'fetch-zh-ba',
@@ -113,8 +117,8 @@ function getFetchPatternsZh(): LanguagePattern[] {
   ];
 }
 
-function getFetchPatternsMs(): LanguagePattern[] {
-  const msStyle = styleGroup('ms');
+export function getFetchPatternsMs(profile?: LanguageProfile): LanguagePattern[] {
+  const msStyle = styleGroup(profile);
   return [
     {
       // Malay fetch. The transformer emits `ambil_dari {source}` for `fetch <url>`
@@ -157,8 +161,8 @@ function getFetchPatternsMs(): LanguagePattern[] {
   ];
 }
 
-function getFetchPatternsFr(): LanguagePattern[] {
-  const frStyle = styleGroup('fr');
+export function getFetchPatternsFr(profile?: LanguageProfile): LanguagePattern[] {
+  const frStyle = styleGroup(profile);
   return [
     {
       // French fetch. For `fetch <url>` (no `from`) the i18n transformer emits a
@@ -203,8 +207,8 @@ function getFetchPatternsFr(): LanguagePattern[] {
   ];
 }
 
-function getFetchPatternsPt(): LanguagePattern[] {
-  const ptStyle = styleGroup('pt');
+export function getFetchPatternsPt(profile?: LanguageProfile): LanguagePattern[] {
+  const ptStyle = styleGroup(profile);
   return [
     {
       // Portuguese fetch — same marker-less-transform shape as French (above).
@@ -251,6 +255,7 @@ function getFetchPatternsPt(): LanguagePattern[] {
 // generated pattern requires the source marker — so `fetch` dropped (the body kept
 // {on, put}, fid ~0.67: a faithful-but-incomplete pass that silently lost `fetch`).
 function markerlessFetch(
+  profile: LanguageProfile | undefined,
   id: string,
   language: string,
   verb: string,
@@ -260,7 +265,7 @@ function markerlessFetch(
   fromMarkerAlternatives?: string[],
   asMarkerAlternatives?: string[]
 ): LanguagePattern {
-  const style = styleGroup(language);
+  const style = styleGroup(profile);
   return {
     id,
     language,
@@ -329,6 +334,7 @@ function markerlessFetch(
 // varies per language (ja none, ko 로, tr olarak, hi के रूप में) and is not in the
 // R1 drop cluster — the trailing tokens are left unconsumed (source still captured).
 function sovFetch(
+  profile: LanguageProfile | undefined,
   id: string,
   language: string,
   verb: string,
@@ -338,7 +344,7 @@ function sovFetch(
   asMarker?: string,
   asMarkerAlternatives?: string[]
 ): LanguagePattern {
-  const style = styleGroup(language);
+  const style = styleGroup(profile);
   // Trailing `as {responseType}`, which the six SOV languages put AFTER the
   // verb-final verb — the one thing that made this a group of its own rather
   // than another pre-verb slot. bn and ja emit no marker at all, so the slot is
@@ -407,105 +413,142 @@ function sovFetch(
 /**
  * Get fetch patterns for a specific language.
  */
+// Marker-less fetch recovery for languages whose generated pattern requires a
+// source marker the transformer doesn't emit for `fetch <url>` (no `from`).
+
+export function getFetchPatternsEs(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-es', 'es', 'buscar', 'de', 'como')];
+}
+
+export function getFetchPatternsPl(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-pl', 'pl', 'pobierz', 'z', 'jako')];
+}
+
+export function getFetchPatternsId(profile?: LanguageProfile): LanguagePattern[] {
+  // dict emits `ambil`, profile primary is `muat` — accept both.
+  return [markerlessFetch(profile, 'fetch-id', 'id', 'muat', 'dari', 'sebagai', ['ambil'])];
+}
+
+export function getFetchPatternsSw(profile?: LanguageProfile): LanguagePattern[] {
+  // `kuwa` is what the transformer now emits for `as` (sw `kama` is the IF
+  // keyword — the phantom-if homonym; see dictionaries/sw.ts). Hand-written
+  // `kama` stays tolerated in as-marker position.
+  return [
+    markerlessFetch(profile, 'fetch-sw', 'sw', 'leta', 'kutoka', 'kuwa', undefined, undefined, [
+      'kama',
+    ]),
+  ];
+}
+
+export function getFetchPatternsHe(profile?: LanguageProfile): LanguagePattern[] {
+  // transformer inserts the `את` accusative particle (`הבא את /url`) where the
+  // generated pattern expects `מ` (from); accept either. Verb alt `טען`.
+  return [markerlessFetch(profile, 'fetch-he', 'he', 'הבא', 'מ', 'כ', ['טען'], ['את'])];
+}
+
+// fetch-loading-state / event-debounce cluster (9 langs): same marker-less
+// shape — the dict verb matches the profile, but `fetch <url>` emits no
+// source marker so the generated pattern never anchors mid then-chain.
+
+export function getFetchPatternsDe(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-de', 'de', 'abrufen', 'von', 'als', ['laden'])];
+}
+
+export function getFetchPatternsRu(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-ru', 'ru', 'загрузить', 'из', 'как', ['загрузи'])];
+}
+
+export function getFetchPatternsUk(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-uk', 'uk', 'завантажити', 'з', 'як', ['завантаж'])];
+}
+
+export function getFetchPatternsIt(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-it', 'it', 'recuperare', 'da', 'come')];
+}
+
+export function getFetchPatternsVi(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-vi', 'vi', 'tải', 'từ', 'như')];
+}
+
+export function getFetchPatternsTh(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-th', 'th', 'ดึงข้อมูล', 'จาก', 'เป็น')];
+}
+
+export function getFetchPatternsAr(profile?: LanguageProfile): LanguagePattern[] {
+  return [markerlessFetch(profile, 'fetch-ar', 'ar', 'احضر', 'من', 'كـ', ['جلب'])];
+}
+
+export function getFetchPatternsTl(profile?: LanguageProfile): LanguagePattern[] {
+  return [
+    markerlessFetch(profile, 'fetch-tl', 'tl', 'kuhanin_mula', 'mula_sa', 'bilang', ['kunin_mula']),
+  ];
+}
+
+// Verb-final SOV `fetch <url>` — patient-marked URL → source (see sovFetch).
+// Verbs/markers from each profile (the transformer may emit a keyword
+// *alternative*, e.g. ko 가져오기, so both primary + alternatives are listed).
+
+export function getFetchPatternsJa(profile?: LanguageProfile): LanguagePattern[] {
+  // ja emits `フェッチ json` with NO as-marker — the schema's `として`
+  // markerOverride is not what the transformer produces here — so the slot
+  // is bare and positional.
+  // `取得` removed from the alternatives: it is ja's GET verb (profile get
+  // primary; the ja i18n dict's fetch word is フェッチ), so listing it here
+  // made `#input.value を 取得` mis-parse as fetch at priority 105 — the
+  // exact zh `获得` bug above (get-value ja, both render allowlists).
+  return [sovFetch(profile, 'fetch-ja-sov', 'ja', 'フェッチ', 'を')];
+}
+
+export function getFetchPatternsKo(profile?: LanguageProfile): LanguagePattern[] {
+  // ko emits `가져오기 json 로`. NOTE `로` is ALSO ko's style marker, so the
+  // two groups are told apart by position (style precedes the verb, this
+  // trails it) rather than by the marker itself.
+  return [
+    sovFetch(profile, 'fetch-ko-sov', 'ko', '패치', '을', ['가져오기'], ['를'], '로', ['으로']),
+  ];
+}
+
+export function getFetchPatternsTr(profile?: LanguageProfile): LanguagePattern[] {
+  return [
+    // tr emits `getir json olarak`.
+    sovFetch(
+      profile,
+      'fetch-tr-sov',
+      'tr',
+      'getir',
+      'i',
+      undefined,
+      ['ı', 'u', 'ü', 'yi', 'yı', 'yu', 'yü'],
+      'olarak'
+    ),
+  ];
+}
+
+export function getFetchPatternsHi(profile?: LanguageProfile): LanguagePattern[] {
+  // hi emits `लाएं json के रूप में`, but the marker is deliberately OMITTED
+  // here: a multi-token literal does not match in this trailing position
+  // (`के रूप में`, `रूप में` and `के रूप` were each measured — all three
+  // leave the group unmatched, so the optional group is skipped and the role
+  // never binds). A bare slot captures `json` and leaves the postposition as
+  // trailing unconsumed tokens, which means it parses BOTH the rendered
+  // surface and the i18n corpus surface. The cost is that the rendered hi
+  // reads `लाएं json` rather than the fuller `लाएं json के रूप में` — less
+  // idiomatic, but the role survives, and a lost role is the worse outcome.
+  return [sovFetch(profile, 'fetch-hi-sov', 'hi', 'लाएं', 'को')];
+}
+
+export function getFetchPatternsQu(profile?: LanguageProfile): LanguagePattern[] {
+  // qu emits `apamuy json hina`.
+  return [
+    sovFetch(profile, 'fetch-qu-sov', 'qu', 'apamuy', 'ta', ['taripakaramuy'], undefined, 'hina'),
+  ];
+}
+
+export function getFetchPatternsBn(profile?: LanguageProfile): LanguagePattern[] {
+  // bn emits `আনুন json` — like ja, no as-marker.
+  return [sovFetch(profile, 'fetch-bn-sov', 'bn', 'আনুন', 'কে')];
+}
+
 export function getFetchPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'zh':
-      return getFetchPatternsZh();
-    case 'ms':
-      return getFetchPatternsMs();
-    case 'fr':
-      return getFetchPatternsFr();
-    case 'pt':
-      return getFetchPatternsPt();
-    // Marker-less fetch recovery for languages whose generated pattern requires a
-    // source marker the transformer doesn't emit for `fetch <url>` (no `from`).
-    case 'es':
-      return [markerlessFetch('fetch-es', 'es', 'buscar', 'de', 'como')];
-    case 'pl':
-      return [markerlessFetch('fetch-pl', 'pl', 'pobierz', 'z', 'jako')];
-    case 'id':
-      // dict emits `ambil`, profile primary is `muat` — accept both.
-      return [markerlessFetch('fetch-id', 'id', 'muat', 'dari', 'sebagai', ['ambil'])];
-    case 'sw':
-      // `kuwa` is what the transformer now emits for `as` (sw `kama` is the IF
-      // keyword — the phantom-if homonym; see dictionaries/sw.ts). Hand-written
-      // `kama` stays tolerated in as-marker position.
-      return [
-        markerlessFetch('fetch-sw', 'sw', 'leta', 'kutoka', 'kuwa', undefined, undefined, ['kama']),
-      ];
-    case 'he':
-      // transformer inserts the `את` accusative particle (`הבא את /url`) where the
-      // generated pattern expects `מ` (from); accept either. Verb alt `טען`.
-      return [markerlessFetch('fetch-he', 'he', 'הבא', 'מ', 'כ', ['טען'], ['את'])];
-    // fetch-loading-state / event-debounce cluster (9 langs): same marker-less
-    // shape — the dict verb matches the profile, but `fetch <url>` emits no
-    // source marker so the generated pattern never anchors mid then-chain.
-    case 'de':
-      return [markerlessFetch('fetch-de', 'de', 'abrufen', 'von', 'als', ['laden'])];
-    case 'ru':
-      return [markerlessFetch('fetch-ru', 'ru', 'загрузить', 'из', 'как', ['загрузи'])];
-    case 'uk':
-      return [markerlessFetch('fetch-uk', 'uk', 'завантажити', 'з', 'як', ['завантаж'])];
-    case 'it':
-      return [markerlessFetch('fetch-it', 'it', 'recuperare', 'da', 'come')];
-    case 'vi':
-      return [markerlessFetch('fetch-vi', 'vi', 'tải', 'từ', 'như')];
-    case 'th':
-      return [markerlessFetch('fetch-th', 'th', 'ดึงข้อมูล', 'จาก', 'เป็น')];
-    case 'ar':
-      return [markerlessFetch('fetch-ar', 'ar', 'احضر', 'من', 'كـ', ['جلب'])];
-    case 'tl':
-      return [
-        markerlessFetch('fetch-tl', 'tl', 'kuhanin_mula', 'mula_sa', 'bilang', ['kunin_mula']),
-      ];
-    // Verb-final SOV `fetch <url>` — patient-marked URL → source (see sovFetch).
-    // Verbs/markers from each profile (the transformer may emit a keyword
-    // *alternative*, e.g. ko 가져오기, so both primary + alternatives are listed).
-    case 'ja':
-      // ja emits `フェッチ json` with NO as-marker — the schema's `として`
-      // markerOverride is not what the transformer produces here — so the slot
-      // is bare and positional.
-      // `取得` removed from the alternatives: it is ja's GET verb (profile get
-      // primary; the ja i18n dict's fetch word is フェッチ), so listing it here
-      // made `#input.value を 取得` mis-parse as fetch at priority 105 — the
-      // exact zh `获得` bug above (get-value ja, both render allowlists).
-      return [sovFetch('fetch-ja-sov', 'ja', 'フェッチ', 'を')];
-    case 'ko':
-      // ko emits `가져오기 json 로`. NOTE `로` is ALSO ko's style marker, so the
-      // two groups are told apart by position (style precedes the verb, this
-      // trails it) rather than by the marker itself.
-      return [sovFetch('fetch-ko-sov', 'ko', '패치', '을', ['가져오기'], ['를'], '로', ['으로'])];
-    case 'tr':
-      return [
-        // tr emits `getir json olarak`.
-        sovFetch(
-          'fetch-tr-sov',
-          'tr',
-          'getir',
-          'i',
-          undefined,
-          ['ı', 'u', 'ü', 'yi', 'yı', 'yu', 'yü'],
-          'olarak'
-        ),
-      ];
-    case 'hi':
-      // hi emits `लाएं json के रूप में`, but the marker is deliberately OMITTED
-      // here: a multi-token literal does not match in this trailing position
-      // (`के रूप में`, `रूप में` and `के रूप` were each measured — all three
-      // leave the group unmatched, so the optional group is skipped and the role
-      // never binds). A bare slot captures `json` and leaves the postposition as
-      // trailing unconsumed tokens, which means it parses BOTH the rendered
-      // surface and the i18n corpus surface. The cost is that the rendered hi
-      // reads `लाएं json` rather than the fuller `लाएं json के रूप में` — less
-      // idiomatic, but the role survives, and a lost role is the worse outcome.
-      return [sovFetch('fetch-hi-sov', 'hi', 'लाएं', 'को')];
-    case 'qu':
-      // qu emits `apamuy json hina`.
-      return [sovFetch('fetch-qu-sov', 'qu', 'apamuy', 'ta', ['taripakaramuy'], undefined, 'hina')];
-    case 'bn':
-      // bn emits `আনুন json` — like ja, no as-marker.
-      return [sovFetch('fetch-bn-sov', 'bn', 'আনুন', 'কে')];
-    default:
-      return [];
-  }
+  return handcrafted('fetch', language) ?? [];
 }

@@ -19,7 +19,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import { JSDOM } from 'jsdom';
-import { parseSemantic, render } from '@lokascript/semantic';
+import { parseSemantic, render, getSupportedLanguages } from '@lokascript/semantic';
+// Semantic's own registry (this config resolves @lokascript/semantic to its source, so
+// the registry is the one the import above filled with all 24 languages).
+import { handcrafted, registeredHandcrafted } from '../../semantic/src/patterns/handcrafted';
 
 const ADAPTER_DIST = resolve(__dirname, '../dist');
 const ENGINE = resolve(__dirname, '../../engine/dist/hyperfixi-hs.js');
@@ -68,11 +71,34 @@ function load(file: string) {
   return { window, languages: adapter?.supportedLanguages ?? [], messages };
 }
 
+/** The literal ids of `language`'s hand-crafted patterns: what a bundle holding them contains. */
+function handcraftedIds(language: string): string[] {
+  return registeredHandcrafted()
+    .filter(([, registered]) => registered === language)
+    .flatMap(([command]) => (handcrafted(command, language) ?? []).map(pattern => pattern.id));
+}
+
 describe('each self-contained adapter IIFE, on hyperfixi-hs.js', () => {
   it('finds the bundles (a glob that matched nothing would pass everything below)', () => {
     expect(bundles.length).toBeGreaterThanOrEqual(29);
     expect(bundles).toContain('hyperscript-i18n-de.global.js');
     expect(bundles).toContain('hyperscript-i18n-western.global.js');
+  });
+
+  // Until 4.0.1 every one of these held all 24 languages' hand-crafted patterns
+  // (~200 KB minified): the dispatchers named each language's function. Each
+  // language now registers its own (semantic's src/patterns/handcrafted.ts).
+  it.each(bundles)('%s: holds no other language’s hand-crafted patterns', file => {
+    const source = readFileSync(resolve(ADAPTER_DIST, file), 'utf8');
+    const { languages } = load(file);
+    const others = getSupportedLanguages().filter(l => l !== 'en' && !languages.includes(l));
+    const found = others.flatMap(language =>
+      handcraftedIds(language)
+        .filter(id => new RegExp(`["'\`]${id}["'\`]`).test(source))
+        .map(id => `${language}: ${id}`)
+    );
+    expect(others.length).toBeGreaterThan(0);
+    expect(found).toEqual([]);
   });
 
   it.each(bundles)('%s: handlers in each of its languages run', file => {

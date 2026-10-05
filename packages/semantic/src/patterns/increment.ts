@@ -8,6 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
 /**
  * The counter slot's value types. `property-path` opts it into the
@@ -21,7 +22,7 @@ export const COUNTER_TYPES: ExpectedType[] = [
   'property-path',
 ];
 
-function getIncrementPatternsBn(): LanguagePattern[] {
+export function getIncrementPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: :counter কে বৃদ্ধি করুন
     {
@@ -84,7 +85,7 @@ function getIncrementPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsDe(): LanguagePattern[] {
+export function getIncrementPatternsDe(): LanguagePattern[] {
   const verbAlternatives = ['erhoehe', 'erhöhen', 'inkrementiere', 'inkrementieren', 'increment'];
   return [
     // With quantity: erhöhe :counter um 5 — the by-marker langs need an explicit
@@ -129,7 +130,7 @@ function getIncrementPatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsHi(): LanguagePattern[] {
+export function getIncrementPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: :counter को बढ़ाएं
     {
@@ -190,7 +191,7 @@ function getIncrementPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsIt(): LanguagePattern[] {
+export function getIncrementPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'increment-it-full',
@@ -249,7 +250,7 @@ function getIncrementPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsPl(): LanguagePattern[] {
+export function getIncrementPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'increment-pl-full',
@@ -296,7 +297,7 @@ function getIncrementPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsRu(): LanguagePattern[] {
+export function getIncrementPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'increment-ru-full',
@@ -343,7 +344,7 @@ function getIncrementPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsTh(): LanguagePattern[] {
+export function getIncrementPatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: เพิ่มค่า :counter
     {
@@ -390,7 +391,7 @@ function getIncrementPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsUk(): LanguagePattern[] {
+export function getIncrementPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'increment-uk-full',
@@ -437,7 +438,7 @@ function getIncrementPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsVi(): LanguagePattern[] {
+export function getIncrementPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'increment-vi-full',
@@ -488,7 +489,7 @@ function getIncrementPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsQu(): LanguagePattern[] {
+export function getIncrementPatternsQu(): LanguagePattern[] {
   // Quechua is SOV: the i18n transformer emits `#counter ta yapachiy`
   // (patient + accusative marker + verb). The generated SOV pattern doesn't
   // anchor this order (the `add` command relies on a handcrafted `add-qu-sov`
@@ -536,7 +537,7 @@ function getIncrementPatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getIncrementPatternsZh(): LanguagePattern[] {
+export function getIncrementPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'increment-zh-full',
@@ -561,30 +562,5 @@ function getIncrementPatternsZh(): LanguagePattern[] {
  * Get increment patterns for a specific language.
  */
 export function getIncrementPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getIncrementPatternsBn();
-    case 'de':
-      return getIncrementPatternsDe();
-    case 'hi':
-      return getIncrementPatternsHi();
-    case 'it':
-      return getIncrementPatternsIt();
-    case 'pl':
-      return getIncrementPatternsPl();
-    case 'ru':
-      return getIncrementPatternsRu();
-    case 'th':
-      return getIncrementPatternsTh();
-    case 'uk':
-      return getIncrementPatternsUk();
-    case 'qu':
-      return getIncrementPatternsQu();
-    case 'vi':
-      return getIncrementPatternsVi();
-    case 'zh':
-      return getIncrementPatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('increment', language) ?? [];
 }

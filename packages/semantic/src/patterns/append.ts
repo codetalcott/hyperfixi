@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getAppendPatternsEn(): LanguagePattern[] {
+export function getAppendPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'append-en-full',
@@ -37,10 +38,5 @@ function getAppendPatternsEn(): LanguagePattern[] {
  * Get append patterns for a specific language.
  */
 export function getAppendPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'en':
-      return getAppendPatternsEn();
-    default:
-      return [];
-  }
+  return handcrafted('append', language) ?? [];
 }

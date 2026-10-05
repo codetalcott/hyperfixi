@@ -239,20 +239,21 @@ Available templates:
 
 ## Important Files
 
-| File                                          | Purpose                                                                                                 |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/types.ts`                                | ActionType union (45 actions), SemanticNode types (command, event-handler, conditional, compound, loop) |
-| `src/generators/command-schemas.ts`           | Schema definitions for all commands                                                                     |
-| `src/generators/language-profiles.ts`         | Keyword translations (per language)                                                                     |
-| `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates — **DEAD CODE: zero importers, drifted**        |
-| `src/patterns/builders.ts`                    | Pattern registry and `buildPatternsForLanguage()`                                                       |
-| `src/parser/semantic-parser.ts`               | Main parsing logic                                                                                      |
-| `src/parser/pattern-matcher.ts`               | Pattern matching engine                                                                                 |
-| `src/tokenizers/base.ts`                      | BaseTokenizer class with `initializeKeywordsFromProfile()`                                              |
-| `src/core-bridge.ts`                          | SemanticIntegrationAdapter for core package                                                             |
-| `src/ast-builder/index.ts`                    | ASTBuilder class, buildAST(), node type interfaces                                                      |
-| `src/ast-builder/value-converters.ts`         | SemanticValue → ExpressionNode conversion                                                               |
-| `src/ast-builder/command-mappers.ts`          | 46 command-specific AST mappers                                                                         |
+| File                                          | Purpose                                                                                                                                                                                                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types.ts`                                | ActionType union (45 actions), SemanticNode types (command, event-handler, conditional, compound, loop)                                                                                                                                                                    |
+| `src/generators/command-schemas.ts`           | Schema definitions for all commands                                                                                                                                                                                                                                        |
+| `src/generators/language-profiles.ts`         | Keyword translations (per language)                                                                                                                                                                                                                                        |
+| `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates — **DEAD CODE: zero importers, drifted**                                                                                                                                                                           |
+| `src/patterns/builders.ts`                    | Pattern registry and `buildPatternsForLanguage()`                                                                                                                                                                                                                          |
+| `src/patterns/handcrafted.ts`                 | Per-language hand-crafted patterns: each `languages/<lang>.ts` registers its `patterns/handcrafted/<lang>.ts` list through `/core`, so a single-language bundle holds only its own. A new `get<Cmd>Patterns<Lang>` goes in that list (`test/handcrafted-registry.test.ts`) |
+| `src/parser/semantic-parser.ts`               | Main parsing logic                                                                                                                                                                                                                                                         |
+| `src/parser/pattern-matcher.ts`               | Pattern matching engine                                                                                                                                                                                                                                                    |
+| `src/tokenizers/base.ts`                      | BaseTokenizer class with `initializeKeywordsFromProfile()`                                                                                                                                                                                                                 |
+| `src/core-bridge.ts`                          | SemanticIntegrationAdapter for core package                                                                                                                                                                                                                                |
+| `src/ast-builder/index.ts`                    | ASTBuilder class, buildAST(), node type interfaces                                                                                                                                                                                                                         |
+| `src/ast-builder/value-converters.ts`         | SemanticValue → ExpressionNode conversion                                                                                                                                                                                                                                  |
+| `src/ast-builder/command-mappers.ts`          | 46 command-specific AST mappers                                                                                                                                                                                                                                            |
 
 ## Browser Usage
 

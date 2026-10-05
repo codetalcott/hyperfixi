@@ -22,8 +22,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getWaitPatternsZh(): LanguagePattern[] {
+export function getWaitPatternsZh(): LanguagePattern[] {
   return [
     // BA-marked duration: 等待 把 1s (transformer output). The generated
     // `等待 {duration}` already covers the unmarked `等待 1s` form.
@@ -50,7 +51,7 @@ function getWaitPatternsZh(): LanguagePattern[] {
 /**
  * Get wait patterns for a specific language.
  */
-function getWaitPatternsHe(): LanguagePattern[] {
+export function getWaitPatternsHe(): LanguagePattern[] {
   return [
     {
       // Accusative-marked wait (`חכה את 2s`) — see send-he-et / wait-zh-ba.
@@ -88,7 +89,7 @@ function getWaitPatternsHe(): LanguagePattern[] {
  * source-last order (`انتظر … من وثيقة`) is already covered by the generated
  * pattern, so this only adds the fronted form.
  */
-function getWaitPatternsAr(): LanguagePattern[] {
+export function getWaitPatternsAr(): LanguagePattern[] {
   return [
     {
       id: 'wait-ar-from-first',
@@ -125,7 +126,7 @@ function getWaitPatternsAr(): LanguagePattern[] {
  * verb-final translations (ja `待つ transitionend`) via the trailing
  * event-name reclaim in buildEventHandler.
  */
-function getWaitPatternsEn(): LanguagePattern[] {
+export function getWaitPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'wait-en-for-event',
@@ -159,7 +160,7 @@ function getWaitPatternsEn(): LanguagePattern[] {
  * relabel in normalizeCommandRoles then types it event:literal, matching the
  * en reference); the `o <event>` tail stays harmless trailing tokens.
  */
-function getWaitPatternsTl(): LanguagePattern[] {
+export function getWaitPatternsTl(): LanguagePattern[] {
   return [
     {
       id: 'wait-tl-from-first',
@@ -347,14 +348,14 @@ function verbFirstOrRunWait(
   } as LanguagePattern;
 }
 
-function getWaitPatternsBn(): LanguagePattern[] {
+export function getWaitPatternsBn(): LanguagePattern[] {
   return [
     verbFirstOrRunWait('wait-bn-or-run', 'bn', 'অপেক্ষা', 'অথবা', 'জন্য', 'থেকে', 1),
     verbFirstOrRunWait('wait-bn-or-run-2arg', 'bn', 'অপেক্ষা', 'অথবা', 'জন্য', 'থেকে', 2),
   ];
 }
 
-function getWaitPatternsTr(): LanguagePattern[] {
+export function getWaitPatternsTr(): LanguagePattern[] {
   return [
     verbFinalOrRunWait('wait-tr-or-run', 'tr', 'bekle', 'den', 'veya', 1, ['dan', 'ten', 'tan']),
     verbFinalOrRunWait('wait-tr-or-run-2arg', 'tr', 'bekle', 'den', 'veya', 2, [
@@ -365,7 +366,7 @@ function getWaitPatternsTr(): LanguagePattern[] {
   ];
 }
 
-function getWaitPatternsQu(): LanguagePattern[] {
+export function getWaitPatternsQu(): LanguagePattern[] {
   return [
     verbFinalOrRunWait('wait-qu-or-run', 'qu', 'suyay', 'manta', 'utaq', 1),
     verbFinalOrRunWait('wait-qu-or-run-2arg', 'qu', 'suyay', 'manta', 'utaq', 2),
@@ -373,24 +374,5 @@ function getWaitPatternsQu(): LanguagePattern[] {
 }
 
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'en':
-      return getWaitPatternsEn();
-    case 'zh':
-      return getWaitPatternsZh();
-    case 'he':
-      return getWaitPatternsHe();
-    case 'ar':
-      return getWaitPatternsAr();
-    case 'bn':
-      return getWaitPatternsBn();
-    case 'tl':
-      return getWaitPatternsTl();
-    case 'tr':
-      return getWaitPatternsTr();
-    case 'qu':
-      return getWaitPatternsQu();
-    default:
-      return [];
-  }
+  return handcrafted('wait', language) ?? [];
 }

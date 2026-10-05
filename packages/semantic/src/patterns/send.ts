@@ -12,8 +12,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getSendPatternsZh(): LanguagePattern[] {
+export function getSendPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'send-zh-ba',
@@ -55,7 +56,7 @@ function getSendPatternsZh(): LanguagePattern[] {
 /**
  * Get send patterns for a specific language.
  */
-function getSendPatternsHe(): LanguagePattern[] {
+export function getSendPatternsHe(): LanguagePattern[] {
   return [
     {
       // The transformer marks send's object with the accusative את
@@ -100,12 +101,5 @@ function getSendPatternsHe(): LanguagePattern[] {
 }
 
 export function getSendPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'zh':
-      return getSendPatternsZh();
-    case 'he':
-      return getSendPatternsHe();
-    default:
-      return [];
-  }
+  return handcrafted('send', language) ?? [];
 }

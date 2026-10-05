@@ -14,7 +14,8 @@
  * ```
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/hi';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { hindiTokenizer } from '../tokenizers/hindi';
 import { hindiProfile } from '../generators/profiles/hindi';
 
@@ -23,4 +24,5 @@ export { hindiTokenizer } from '../tokenizers/hindi';
 export { hindiProfile } from '../generators/profiles/hindi';
 
 // Self-register on import
+registerHandcrafted('hi', handcraftedPatterns);
 registerLanguage('hi', hindiTokenizer, hindiProfile);

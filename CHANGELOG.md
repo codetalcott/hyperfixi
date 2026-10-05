@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Single-language bundles hold only their own language's hand-crafted patterns.** Each
+  command's pattern dispatcher in `@lokascript/semantic` named all 24 languages' hand-crafted
+  patterns, so every bundle that could build patterns held all of them (~200 KB minified). Each
+  language module now registers its own (`src/patterns/handcrafted/<lang>.ts`, through
+  `@lokascript/semantic/core`'s new `registerHandcrafted`), and bundlers drop the rest:
+  `@lokascript/hyperscript-adapter`'s `hyperscript-i18n-de.global.js` is 99 KB gzipped instead of
+  116 KB (376 KB raw instead of 530), semantic's `browser-de` 114 KB instead of 130, and the other
+  single-language and regional bundles shrink alike; a Vite or Rollup build that imports
+  `@lokascript/semantic/core` and one `languages/<lang>` gets the same saving. The patterns each
+  language builds are unchanged (hashed for all 24 before and after, from source and from the
+  split `dist/`).
+
 ### Fixed
 
 - **`@lokascript/semantic`: English writes core's view-transition tail as upstream's block.**

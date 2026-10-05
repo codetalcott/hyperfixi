@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getRemovePatternsBn(): LanguagePattern[] {
+export function getRemovePatternsBn(): LanguagePattern[] {
   return [
     // `remove-bn-full` (`{patient} কে সরান`, priority 100) lived here. It was
     // redundant with `remove-bn-generated-simple`, which carries the same tokens
@@ -60,7 +61,7 @@ function getRemovePatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsHi(): LanguagePattern[] {
+export function getRemovePatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: .class को #element से हटाएं
     {
@@ -122,7 +123,7 @@ function getRemovePatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsIt(): LanguagePattern[] {
+export function getRemovePatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'remove-it-full',
@@ -186,7 +187,7 @@ function getRemovePatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsPl(): LanguagePattern[] {
+export function getRemovePatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'remove-pl-full',
@@ -237,7 +238,7 @@ function getRemovePatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsQu(): LanguagePattern[] {
+export function getRemovePatternsQu(): LanguagePattern[] {
   return [
     // SOV pattern: .active ta qichuy (patient + verb)
     {
@@ -323,7 +324,7 @@ function getRemovePatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsRu(): LanguagePattern[] {
+export function getRemovePatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'remove-ru-full',
@@ -374,7 +375,7 @@ function getRemovePatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsTh(): LanguagePattern[] {
+export function getRemovePatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: ลบ .active
     {
@@ -421,7 +422,7 @@ function getRemovePatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsUk(): LanguagePattern[] {
+export function getRemovePatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'remove-uk-full',
@@ -472,7 +473,7 @@ function getRemovePatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsVi(): LanguagePattern[] {
+export function getRemovePatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'remove-vi-full',
@@ -523,7 +524,7 @@ function getRemovePatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getRemovePatternsZh(): LanguagePattern[] {
+export function getRemovePatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'remove-zh-full',
@@ -588,28 +589,5 @@ function getRemovePatternsZh(): LanguagePattern[] {
  * Get remove patterns for a specific language.
  */
 export function getRemovePatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getRemovePatternsBn();
-    case 'hi':
-      return getRemovePatternsHi();
-    case 'it':
-      return getRemovePatternsIt();
-    case 'pl':
-      return getRemovePatternsPl();
-    case 'qu':
-      return getRemovePatternsQu();
-    case 'ru':
-      return getRemovePatternsRu();
-    case 'th':
-      return getRemovePatternsTh();
-    case 'uk':
-      return getRemovePatternsUk();
-    case 'vi':
-      return getRemovePatternsVi();
-    case 'zh':
-      return getRemovePatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('remove', language) ?? [];
 }

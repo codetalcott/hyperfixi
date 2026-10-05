@@ -25,6 +25,7 @@
 
 import type { ExpectedType, LanguagePattern } from '../types';
 import { getCommandSchema } from '../generators/command-schemas';
+import { handcrafted } from './handcrafted';
 
 /**
  * A handcrafted get's source takes what the schema's does: a literal (`get
@@ -37,7 +38,7 @@ const GET_SOURCE_TYPES: ExpectedType[] = [
   ...(getCommandSchema.roles.find(role => role.role === 'source')?.expectedTypes ?? []),
 ];
 
-function getGetPatternsBn(): LanguagePattern[] {
+export function getGetPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: :x থেকে পান
     {
@@ -77,7 +78,7 @@ function getGetPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsDe(): LanguagePattern[] {
+export function getGetPatternsDe(): LanguagePattern[] {
   return [
     {
       id: 'get-de-full',
@@ -98,7 +99,7 @@ function getGetPatternsDe(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsHi(): LanguagePattern[] {
+export function getGetPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: #element से प्राप्त करें
     {
@@ -143,7 +144,7 @@ function getGetPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsIt(): LanguagePattern[] {
+export function getGetPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'get-it-full',
@@ -189,7 +190,7 @@ function getGetPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsPl(): LanguagePattern[] {
+export function getGetPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'get-pl-full',
@@ -235,7 +236,7 @@ function getGetPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsRu(): LanguagePattern[] {
+export function getGetPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'get-ru-full',
@@ -281,7 +282,7 @@ function getGetPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsTh(): LanguagePattern[] {
+export function getGetPatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: รับค่า :x
     {
@@ -303,7 +304,7 @@ function getGetPatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsUk(): LanguagePattern[] {
+export function getGetPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'get-uk-full',
@@ -349,7 +350,7 @@ function getGetPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getGetPatternsVi(): LanguagePattern[] {
+export function getGetPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'get-vi-full',
@@ -400,7 +401,7 @@ function getGetPatternsVi(): LanguagePattern[] {
 /**
  * Get get patterns for a specific language.
  */
-function getGetPatternsZh(): LanguagePattern[] {
+export function getGetPatternsZh(): LanguagePattern[] {
   return [
     // `get #x.value` → zh `获取 把 #x.value` (BA object marker). The generated zh get
     // pattern doesn't tolerate 把, so the corpus form fell through to `fetch-zh-ba`
@@ -431,28 +432,5 @@ function getGetPatternsZh(): LanguagePattern[] {
 }
 
 export function getGetPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getGetPatternsBn();
-    case 'de':
-      return getGetPatternsDe();
-    case 'zh':
-      return getGetPatternsZh();
-    case 'hi':
-      return getGetPatternsHi();
-    case 'it':
-      return getGetPatternsIt();
-    case 'pl':
-      return getGetPatternsPl();
-    case 'ru':
-      return getGetPatternsRu();
-    case 'th':
-      return getGetPatternsTh();
-    case 'uk':
-      return getGetPatternsUk();
-    case 'vi':
-      return getGetPatternsVi();
-    default:
-      return [];
-  }
+  return handcrafted('get', language) ?? [];
 }

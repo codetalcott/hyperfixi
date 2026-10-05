@@ -8,11 +8,13 @@
  * for commands in software UI (not infinitive like most other languages).
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/pl';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { polishTokenizer } from '../tokenizers/polish';
 import { polishProfile } from '../generators/profiles/polish';
 
 export { polishTokenizer } from '../tokenizers/polish';
 export { polishProfile } from '../generators/profiles/polish';
 
+registerHandcrafted('pl', handcraftedPatterns);
 registerLanguage('pl', polishTokenizer, polishProfile);

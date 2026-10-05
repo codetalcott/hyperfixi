@@ -8,6 +8,7 @@
  */
 
 import type { LanguagePattern, PatternToken, ExtractionRules } from '../types';
+import { handcrafted } from './handcrafted';
 
 // =============================================================================
 // Shared Event Name Translations
@@ -572,7 +573,7 @@ export function localizeEventName(englishEvent: string, language: string): strin
 // Per-Language Event Handler Patterns
 // =============================================================================
 
-function getEventHandlerPatternsKo(): LanguagePattern[] {
+export function getEventHandlerPatternsKo(): LanguagePattern[] {
   return [
     // ko's handler head is `<event> 할 때`. Its GENERATED trigger patterns are
     // `[{source} 에서] {event} 을 에` — the event-role marker `을` (also the
@@ -635,7 +636,7 @@ function getEventHandlerPatternsKo(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsBn(): LanguagePattern[] {
+export function getEventHandlerPatternsBn(): LanguagePattern[] {
   return [
     // SOV pattern: ক্লিক তে .active কে টগল করুন
     {
@@ -700,7 +701,7 @@ function getEventHandlerPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsDe(): LanguagePattern[] {
+export function getEventHandlerPatternsDe(): LanguagePattern[] {
   return [
     {
       id: 'event-de-wenn-source',
@@ -827,7 +828,7 @@ function getEventHandlerPatternsDe(): LanguagePattern[] {
  * languages whose natural handler opener IS their when-word. They make claims
  * about our translation layer, not about English syntax, and stay.
  */
-function getEventHandlerPatternsEn(): LanguagePattern[] {
+export function getEventHandlerPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'event-en-source',
@@ -899,7 +900,7 @@ function getEventHandlerPatternsEn(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsEs(): LanguagePattern[] {
+export function getEventHandlerPatternsEs(): LanguagePattern[] {
   return [
     {
       id: 'event-es-native-al-source',
@@ -1025,7 +1026,7 @@ function getEventHandlerPatternsEs(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsFr(): LanguagePattern[] {
+export function getEventHandlerPatternsFr(): LanguagePattern[] {
   return [
     {
       id: 'event-fr-quand-source',
@@ -1132,7 +1133,7 @@ function getEventHandlerPatternsFr(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsHi(): LanguagePattern[] {
+export function getEventHandlerPatternsHi(): LanguagePattern[] {
   return [
     // Standard event: क्लिक पर ...
     {
@@ -1211,7 +1212,7 @@ function getEventHandlerPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsId(): LanguagePattern[] {
+export function getEventHandlerPatternsId(): LanguagePattern[] {
   return [
     {
       id: 'event-id-ketika-source',
@@ -1318,7 +1319,7 @@ function getEventHandlerPatternsId(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsIt(): LanguagePattern[] {
+export function getEventHandlerPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'event-handler-it-full',
@@ -1362,7 +1363,7 @@ function getEventHandlerPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsMs(): LanguagePattern[] {
+export function getEventHandlerPatternsMs(): LanguagePattern[] {
   return [
     // Pattern: apabila {event} {body} - simple event handler
     {
@@ -1404,7 +1405,7 @@ function getEventHandlerPatternsMs(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsPl(): LanguagePattern[] {
+export function getEventHandlerPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'event-handler-pl-full',
@@ -1455,7 +1456,7 @@ function getEventHandlerPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsPt(): LanguagePattern[] {
+export function getEventHandlerPatternsPt(): LanguagePattern[] {
   return [
     {
       id: 'event-pt-ao-source',
@@ -1562,7 +1563,7 @@ function getEventHandlerPatternsPt(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsQu(): LanguagePattern[] {
+export function getEventHandlerPatternsQu(): LanguagePattern[] {
   return [
     {
       // Prefix `when` reactive block: the grammar transformer emits `maykama`
@@ -1646,7 +1647,7 @@ function getEventHandlerPatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsRu(): LanguagePattern[] {
+export function getEventHandlerPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'event-handler-ru-full',
@@ -1697,7 +1698,7 @@ function getEventHandlerPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsSw(): LanguagePattern[] {
+export function getEventHandlerPatternsSw(): LanguagePattern[] {
   return [
     {
       id: 'event-sw-unapo-source',
@@ -1804,7 +1805,7 @@ function getEventHandlerPatternsSw(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsTh(): LanguagePattern[] {
+export function getEventHandlerPatternsTh(): LanguagePattern[] {
   return [
     // SVO pattern: เมื่อ คลิก สลับ .active
     {
@@ -1929,7 +1930,7 @@ function vsoPositionalPutPatterns(spec: {
   });
 }
 
-function getEventHandlerPatternsTl(): LanguagePattern[] {
+export function getEventHandlerPatternsTl(): LanguagePattern[] {
   return [
     ...vsoPositionalPutPatterns({
       lang: 'tl',
@@ -1986,7 +1987,7 @@ function getEventHandlerPatternsTl(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsUk(): LanguagePattern[] {
+export function getEventHandlerPatternsUk(): LanguagePattern[] {
   return [
     ...vsoPositionalPutPatterns({
       lang: 'uk',
@@ -2047,7 +2048,7 @@ function getEventHandlerPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsVi(): LanguagePattern[] {
+export function getEventHandlerPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'event-handler-vi-full',
@@ -2098,7 +2099,7 @@ function getEventHandlerPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsZh(): LanguagePattern[] {
+export function getEventHandlerPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'event-zh-temporal-source',
@@ -2306,7 +2307,7 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
  * English reference did. The reactive head is parsed structurally now
  * (block-parser `locateReactiveWhenHead`) and never reaches them.
  */
-function getEventHandlerPatternsJa(): LanguagePattern[] {
+export function getEventHandlerPatternsJa(): LanguagePattern[] {
   return [
     {
       id: 'event-ja-when',
@@ -2325,7 +2326,7 @@ function getEventHandlerPatternsJa(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsTr(): LanguagePattern[] {
+export function getEventHandlerPatternsTr(): LanguagePattern[] {
   return [
     {
       id: 'event-tr-when',
@@ -2344,7 +2345,7 @@ function getEventHandlerPatternsTr(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsAr(): LanguagePattern[] {
+export function getEventHandlerPatternsAr(): LanguagePattern[] {
   return [
     ...vsoPositionalPutPatterns({
       lang: 'ar',
@@ -2373,7 +2374,7 @@ function getEventHandlerPatternsAr(): LanguagePattern[] {
   ];
 }
 
-function getEventHandlerPatternsHe(): LanguagePattern[] {
+export function getEventHandlerPatternsHe(): LanguagePattern[] {
   return [
     {
       id: 'event-he-when',
@@ -2398,56 +2399,5 @@ function getEventHandlerPatternsHe(): LanguagePattern[] {
  * Get event handler patterns for a specific language.
  */
 export function getEventHandlerPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getEventHandlerPatternsBn();
-    case 'ko':
-      return getEventHandlerPatternsKo();
-    case 'de':
-      return getEventHandlerPatternsDe();
-    case 'en':
-      return getEventHandlerPatternsEn();
-    case 'es':
-      return getEventHandlerPatternsEs();
-    case 'fr':
-      return getEventHandlerPatternsFr();
-    case 'hi':
-      return getEventHandlerPatternsHi();
-    case 'id':
-      return getEventHandlerPatternsId();
-    case 'it':
-      return getEventHandlerPatternsIt();
-    case 'ms':
-      return getEventHandlerPatternsMs();
-    case 'pl':
-      return getEventHandlerPatternsPl();
-    case 'pt':
-      return getEventHandlerPatternsPt();
-    case 'qu':
-      return getEventHandlerPatternsQu();
-    case 'ru':
-      return getEventHandlerPatternsRu();
-    case 'sw':
-      return getEventHandlerPatternsSw();
-    case 'th':
-      return getEventHandlerPatternsTh();
-    case 'tl':
-      return getEventHandlerPatternsTl();
-    case 'uk':
-      return getEventHandlerPatternsUk();
-    case 'vi':
-      return getEventHandlerPatternsVi();
-    case 'zh':
-      return getEventHandlerPatternsZh();
-    case 'ja':
-      return getEventHandlerPatternsJa();
-    case 'tr':
-      return getEventHandlerPatternsTr();
-    case 'ar':
-      return getEventHandlerPatternsAr();
-    case 'he':
-      return getEventHandlerPatternsHe();
-    default:
-      return [];
-  }
+  return handcrafted('event-handler', language) ?? [];
 }

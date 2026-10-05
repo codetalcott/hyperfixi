@@ -454,7 +454,10 @@ function generateAllPatternIndexes(): void {
   const patternsDir = path.join(SEMANTIC_SRC, 'patterns');
   const commands = fs.readdirSync(patternsDir)
     .filter(f => fs.statSync(path.join(patternsDir, f)).isDirectory())
-    .filter(f => f !== 'index.ts');
+    .filter(f => f !== 'index.ts')
+    // Not a per-command directory: each language's registration of its own
+    // hand-crafted patterns (src/patterns/handcrafted.ts), with no index.
+    .filter(f => f !== 'handcrafted');
 
   commands.forEach(generatePatternIndex);
 }

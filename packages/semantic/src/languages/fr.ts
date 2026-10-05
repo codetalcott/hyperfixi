@@ -5,11 +5,13 @@
  * Importing this module registers French tokenizer and profile.
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/fr';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { frenchTokenizer } from '../tokenizers/french';
 import { frenchProfile } from '../generators/profiles/french';
 
 export { frenchTokenizer } from '../tokenizers/french';
 export { frenchProfile } from '../generators/profiles/french';
 
+registerHandcrafted('fr', handcraftedPatterns);
 registerLanguage('fr', frenchTokenizer, frenchProfile);

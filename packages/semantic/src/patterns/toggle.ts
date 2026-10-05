@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getTogglePatternsBn(): LanguagePattern[] {
+export function getTogglePatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: .active কে টগল করুন
     {
@@ -72,7 +73,7 @@ function getTogglePatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsEn(): LanguagePattern[] {
+export function getTogglePatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'toggle-en-full',
@@ -123,7 +124,7 @@ function getTogglePatternsEn(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsEs(): LanguagePattern[] {
+export function getTogglePatternsEs(): LanguagePattern[] {
   return [
     {
       id: 'toggle-es-full',
@@ -174,7 +175,7 @@ function getTogglePatternsEs(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsHi(): LanguagePattern[] {
+export function getTogglePatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: .active को #button पर टॉगल करें
     {
@@ -246,7 +247,7 @@ function getTogglePatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsIt(): LanguagePattern[] {
+export function getTogglePatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'toggle-it-full',
@@ -305,7 +306,7 @@ function getTogglePatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsPl(): LanguagePattern[] {
+export function getTogglePatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'toggle-pl-full',
@@ -356,7 +357,7 @@ function getTogglePatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsQu(): LanguagePattern[] {
+export function getTogglePatternsQu(): LanguagePattern[] {
   return [
     // SOV pattern: .active ta t'ikray (patient + verb)
     {
@@ -465,7 +466,7 @@ function getTogglePatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsRu(): LanguagePattern[] {
+export function getTogglePatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'toggle-ru-full',
@@ -516,7 +517,7 @@ function getTogglePatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsTh(): LanguagePattern[] {
+export function getTogglePatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: สลับ .active
     {
@@ -563,7 +564,7 @@ function getTogglePatternsTh(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsUk(): LanguagePattern[] {
+export function getTogglePatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'toggle-uk-full',
@@ -614,7 +615,7 @@ function getTogglePatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsVi(): LanguagePattern[] {
+export function getTogglePatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'toggle-vi-full',
@@ -665,7 +666,7 @@ function getTogglePatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getTogglePatternsZh(): LanguagePattern[] {
+export function getTogglePatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'toggle-zh-full',
@@ -758,32 +759,5 @@ function getTogglePatternsZh(): LanguagePattern[] {
  * Get toggle patterns for a specific language.
  */
 export function getTogglePatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getTogglePatternsBn();
-    case 'en':
-      return getTogglePatternsEn();
-    case 'es':
-      return getTogglePatternsEs();
-    case 'hi':
-      return getTogglePatternsHi();
-    case 'it':
-      return getTogglePatternsIt();
-    case 'pl':
-      return getTogglePatternsPl();
-    case 'qu':
-      return getTogglePatternsQu();
-    case 'ru':
-      return getTogglePatternsRu();
-    case 'th':
-      return getTogglePatternsTh();
-    case 'uk':
-      return getTogglePatternsUk();
-    case 'vi':
-      return getTogglePatternsVi();
-    case 'zh':
-      return getTogglePatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('toggle', language) ?? [];
 }
