@@ -254,7 +254,6 @@ const FALLBACK_KEYWORDS = [
   'is',
   'exists',
   'empty',
-  'has',
 ] as const;
 
 const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; example: string }> =
@@ -365,11 +364,6 @@ const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; 
       description: 'Appends content to an element.',
       example: 'append "<li>item</li>" to #list',
     },
-    prepend: {
-      title: 'prepend',
-      description: 'Prepends content to an element.',
-      example: 'prepend "<li>first</li>" to #list',
-    },
     take: {
       title: 'take',
       description: 'Takes a class from sibling elements (exclusive toggle).',
@@ -422,13 +416,8 @@ const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; 
     },
     tell: {
       title: 'tell',
-      description: 'Sets the default target for subsequent commands.',
-      example: 'tell #modal then add .visible',
-    },
-    copy: {
-      title: 'copy',
-      description: 'Copies text to the clipboard.',
-      example: 'copy "Hello" to the clipboard',
+      description: 'Runs commands with another element as `you` (and the implicit target).',
+      example: 'tell #modal add .visible end',
     },
   };
 
@@ -1533,15 +1522,18 @@ function tryGetLSE(code: string): string | null {
 
 /**
  * Expand the word at a cursor position to include a `^` or `#` sigil sitting
- * directly to its left. Returns null if the character isn't a known sigil.
+ * directly to its left, or the `!` of `beep!` to its right. Returns null if
+ * there is neither.
  *
- * Used so that hovering on `count` in `^count` resolves to the `^` doc, and
- * hovering on `if` in `#if` resolves to the `#if` doc.
+ * Used so that hovering on `count` in `^count` resolves to the `^` doc,
+ * hovering on `if` in `#if` resolves to the `#if` doc, and hovering on `beep`
+ * in `beep!` resolves to the `beep!` doc.
  */
 function expandSigilPrefix(
   line: string,
   word: { text: string; start: number; end: number }
 ): { text: string; start: number } | null {
+  if (line[word.end] === '!') return { text: word.text + '!', start: word.start };
   if (word.start === 0) return null;
   const prev = line[word.start - 1];
   if (prev !== '^' && prev !== '#') return null;

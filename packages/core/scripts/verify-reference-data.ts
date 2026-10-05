@@ -2,114 +2,122 @@
 /**
  * Verify Reference Data Script
  *
- * Validates that reference/index.ts and metadata.ts match the actual codebase:
- * - Command count matches exports from commands/index.ts
- * - Bundle files exist at stated paths
- * - Command availability follows proper subset chain (lite ⊂ lite-plus ⊂ hybrid ⊂ full)
- * - All commands in reference have matching exports
+ * Checks the hand-written data core keeps at 4.0 — `src/reference/index.ts`,
+ * `src/lsp-metadata.ts` and the command counts in `src/metadata.ts` — against
+ * the engine it documents, `@hyperfixi/engine`:
  *
- * ## The manifest is the spine (Arc A step 3)
+ * - the reference documents exactly the engine's commands;
+ * - the LSP's command and feature keywords cover the engine's, and name nothing
+ *   else but the exceptions listed below, each with its reason;
+ * - every command and feature keyword has hover docs;
+ * - every example — reference, pattern, hover — parses on the engine;
+ * - the advertised command counts are the engine's.
  *
- * This script used to compare two hand-maintained lists against EACH OTHER —
- * `commands/index.ts`'s factory aliases and `reference/index.ts`'s command
- * entries — plus a count in `metadata.ts`. Two lists agreeing tells you they
- * agree; it does not tell you either is right, and an identical omission in
- * both passed clean.
+ * ## Why the engine, and not a list
  *
- * All three are now scored against `commands/manifest.ts`, which is itself
- * gated against the live registry in both directions by
- * `runtime/__tests__/command-manifest-audit.test.ts`. So the chain terminates
- * at what the engine actually executes instead of closing on itself.
+ * Until Phase C5 of the engine cutover these were scored against core's command
+ * manifest (`commands/manifest.ts`), gated against core's registry. That chain
+ * terminated at what core's engine executed; core's engine is no longer what
+ * ships (`hyperfixi.js` has been the engine's bundle since C-R4b), and the
+ * manifest leaves with it in C6. The oracle is now the engine's own grammar —
+ * every module in `everything` run against a fresh grammar, the way the Vite
+ * plugin derives its keyword map — and its parser, which is strict: a leftover
+ * token is an error, so an unknown word cannot pass as an empty command list.
  *
- * Importing the manifest is safe here despite the "parse source text to avoid
- * DOM dependency issues" rule the rest of this file follows: every import in
- * `manifest.ts` is `import type`, so it pulls in no runtime code at all.
+ * Reads the engine's BUILT dist (CI's lint-typecheck job downloads it; locally,
+ * `npm run build --prefix packages/engine`).
  *
  * Run: npm run verify:reference
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { COMMAND_MANIFEST, toRegisteredName } from '../src/commands/manifest';
-// Imported rather than text-scraped for the same reason as the manifest above:
-// `metadata.ts` is pure data with no DOM reach. It has to be imported now —
-// step 4.4 made the full-runtime counts DERIVED expressions
-// (`FULL_RUNTIME_COMMAND_COUNT`), and the regexes this file used to scrape them
-// with (`commandCount:\s*(\d+)`) match only literal digits, so they silently
-// skipped exactly the entries the gate most needs to see.
+import { COMMAND_KEYWORDS, FEATURE_KEYWORDS, HOVER_DOCS } from '../src/lsp-metadata';
 import { bundleInfo, packageInfo } from '../src/metadata';
-// The bundle→source pairing lives in one place so this gate and the audit test
-// cannot disagree about which file backs which bundle.
+import { bundles, commands, patterns } from '../src/reference/index';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(__dirname, '..');
 
 // =============================================================================
-// PARSE EXPORTS FROM SOURCE (avoids DOM dependency issues)
+// THE ENGINE
 // =============================================================================
 
-function parseCommandFactories(): string[] {
-  const indexPath = resolve(CORE_ROOT, 'src/commands/index.ts');
-  const content = readFileSync(indexPath, 'utf-8');
+if (!existsSync(resolve(CORE_ROOT, '../engine/dist/index.js'))) {
+  console.log('❌ The engine is not built: npm run build --prefix packages/engine');
+  process.exit(1);
+}
+const engine = await import('../../engine/dist/index.js');
 
-  const factories = new Set<string>();
-
-  // Only process the TREE-SHAKEABLE section (before BACKWARD-COMPATIBLE)
-  const treeshakeableEnd = content.indexOf('// BACKWARD-COMPATIBLE');
-  const treeshakeableSection =
-    treeshakeableEnd > 0 ? content.substring(0, treeshakeableEnd) : content;
-
-  // Match all: createXxxCommand as yyy patterns (handles multiple exports per line)
-  const aliasPattern = /create(\w+)Command\s+as\s+(\w+)/g;
-
-  let match;
-  while ((match = aliasPattern.exec(treeshakeableSection)) !== null) {
-    // Normalize the export alias to the name the registry dispatches on:
-    // if_ -> if, defaultCmd -> default, pushUrl -> push, pseudo -> pseudo-command.
-    // Shared with the audit test so the two cannot normalize differently.
-    factories.add(toRegisteredName(match[2]));
+/** The keywords each module adds, read back from a fresh grammar per module. */
+function engineKeywords(): { commands: string[]; features: string[] } {
+  const commandSet = new Set<string>();
+  const featureSet = new Set<string>();
+  for (const mod of engine.everything) {
+    const grammar = engine.createGrammar();
+    mod(grammar);
+    // The template text line registers under `#text`, which no script can spell.
+    for (const key of Object.keys(grammar.commands)) if (!key.startsWith('#')) commandSet.add(key);
+    for (const key of Object.keys(grammar.features)) featureSet.add(key);
   }
-
-  return Array.from(factories);
+  return { commands: [...commandSet].sort(), features: [...featureSet].sort() };
 }
 
-function parseReferenceCommands(): Record<string, { category: string; availability: string }> {
-  const refPath = resolve(CORE_ROOT, 'src/reference/index.ts');
-  const content = readFileSync(refPath, 'utf-8');
+const engineSets = engineKeywords();
+const engineCommands = new Set(engineSets.commands);
+const engineFeatures = new Set(engineSets.features);
 
-  // Find the commands object - look for lines like: commandName: {
-  const commands: Record<string, { category: string; availability: string }> = {};
+engine.register(...engine.everything);
 
-  // Match command entries: name: { ... category: 'xxx', ... availability: 'yyy' ... }
-  const commandBlockRegex =
-    /^\s+(\w+):\s*\{[^}]*category:\s*'([^']+)'[^}]*availability:\s*'([^']+)'/gm;
-
-  let match;
-  while ((match = commandBlockRegex.exec(content)) !== null) {
-    commands[match[1]] = {
-      category: match[2],
-      availability: match[3],
-    };
+/** The engine's error for `source`, or null when it parses. */
+function parseError(source: string, requireStatement: boolean): string | null {
+  try {
+    const parsed = engine.parse(source);
+    // An unknown first word parses as an expression; a command example must not.
+    if (requireStatement && parsed.kind === 'expression') return 'parses only as an expression';
+    return null;
+  } catch (e) {
+    return String((e as Error).message).split('\n')[0];
   }
-
-  return commands;
 }
 
-// `parseBundleInfo` / `parsePackageInfo` were deleted in step 4.4 — see the
-// `metadata` import above. The values now come from the module itself.
+/**
+ * An example is one snippet, or several written one per line (`closest <form/>`
+ * then `closest .container`): it passes when the whole parses, or each line does.
+ */
+function exampleError(example: string, requireStatement: boolean): string | null {
+  const whole = parseError(example, requireStatement);
+  if (!whole) return null;
+  const lines = example.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return whole;
+  for (const line of lines) {
+    const error = parseError(line.trim(), requireStatement);
+    if (error) return `${JSON.stringify(line.trim())}: ${error}`;
+  }
+  return null;
+}
 
 // =============================================================================
-// PARSE DATA
+// EXCEPTIONS, EACH WITH ITS REASON
 // =============================================================================
 
-const factoryNames = parseCommandFactories();
-const refCommands = parseReferenceCommands();
+/** In COMMAND_KEYWORDS without being engine commands: they continue `if` and `repeat`. */
+const LSP_SUB_KEYWORDS = new Set(['else', 'while']);
 
-/** The registry-of-record every list below is scored against. */
-const manifestNames = COMMAND_MANIFEST.map(entry => entry.name);
-const manifestCommands = new Set(manifestNames);
+/**
+ * In FEATURE_KEYWORDS without being engine features: upstream _hyperscript ships
+ * them as extensions (`ext/worker.js`, `ext/socket.js`, `ext/eventsource.js`), and
+ * the LSP's hyperscript mode serves upstream's users. The engine does not have them.
+ */
+const UPSTREAM_EXTENSION_FEATURES = new Set(['worker', 'socket', 'eventsource']);
+
+/**
+ * Hover categories whose examples are not scripts: template bodies (`#if`, `#for`)
+ * and HTML attributes (`dom-scope`, `attrs` in a component's markup).
+ */
+const NOT_SCRIPT_CATEGORIES = new Set(['directive', 'component']);
 
 // =============================================================================
 // VERIFICATION FUNCTIONS
@@ -135,162 +143,166 @@ function verify(
   results.push({ name, passed, message, details, isWarning });
 }
 
-// =============================================================================
-// 1. VERIFY COMMAND COUNT
-// =============================================================================
+const difference = (a: Iterable<string>, b: Set<string>) => [...a].filter(x => !b.has(x)).sort();
 
-/** Score `list` against the manifest in both directions. */
-function diffAgainstManifest(list: string[]): { missing: string[]; extra: string[] } {
-  const present = new Set(list);
-  return {
-    missing: manifestNames.filter(n => !present.has(n)),
-    extra: [...new Set(list)].filter(n => !manifestCommands.has(n)).sort(),
-  };
-}
-
-function verifyCommandCount() {
-  const refCommandNames = Object.keys(refCommands);
-  const refNormalized = refCommandNames.map(toRegisteredName);
-
+// 1. The reference documents exactly the engine's commands.
+function verifyReferenceCommands() {
+  const documented = new Set(Object.keys(commands));
   const details: string[] = [];
-
-  // The manifest is the spine: every list is scored against IT, not against
-  // whichever other list happens to sit next to it. An omission shared by two
-  // hand-maintained lists used to pass this check clean.
-  if (packageInfo.commands !== manifestNames.length) {
-    details.push(
-      `  packageInfo.commands: ${packageInfo.commands}, manifest: ${manifestNames.length}`
-    );
-  }
-
-  const factories = diffAgainstManifest(factoryNames);
-  if (factories.missing.length > 0) {
-    details.push(`  Manifest commands with no factory export: ${factories.missing.join(', ')}`);
-  }
-  if (factories.extra.length > 0) {
-    details.push(`  Factory exports the manifest does not name: ${factories.extra.join(', ')}`);
-  }
-
-  const reference = diffAgainstManifest(refNormalized);
-  if (reference.missing.length > 0) {
-    details.push(`  Manifest commands missing from reference: ${reference.missing.join(', ')}`);
-  }
-  if (reference.extra.length > 0) {
-    details.push(`  Reference entries the manifest does not name: ${reference.extra.join(', ')}`);
-  }
-
-  const passed = details.length === 0;
+  const missing = difference(engineCommands, documented);
+  const extra = difference(documented, engineCommands);
+  if (missing.length)
+    details.push(`  Engine commands the reference does not document: ${missing.join(', ')}`);
+  if (extra.length)
+    details.push(`  Reference entries the engine does not have: ${extra.join(', ')}`);
+  const misnamed = Object.entries(commands)
+    .filter(([key, ref]) => ref.name !== key)
+    .map(([key, ref]) => `${key} (name: ${ref.name})`);
+  if (misnamed.length)
+    details.push(`  Entries whose name is not their key: ${misnamed.join(', ')}`);
   verify(
-    'Command Count',
-    passed,
-    passed
-      ? `✓ ${manifestNames.length} manifest commands match ${factoryNames.length} factory exports and ${refCommandNames.length} reference entries`
-      : `✗ Command set mismatch against commands/manifest.ts`,
-    details.length > 0 ? details : undefined
+    'Reference Commands',
+    details.length === 0,
+    details.length === 0
+      ? `✓ The reference documents the engine's ${engineCommands.size} commands`
+      : `✗ The reference and the engine's commands differ`,
+    details.length ? details : undefined
   );
 }
 
-// =============================================================================
-// 2. VERIFY BUNDLE FILES EXIST (Warning only if dist/ exists)
-// =============================================================================
+// 2. The LSP's keywords cover the engine's, and name nothing else but the exceptions.
+function verifyLspKeywords() {
+  const details: string[] = [];
+  const commandKeywords = new Set<string>(COMMAND_KEYWORDS);
+  const featureKeywords = new Set<string>(FEATURE_KEYWORDS);
+  const known = new Set([...commandKeywords, ...featureKeywords]);
 
+  const commandGaps = difference(engineCommands, commandKeywords);
+  const commandGhosts = difference(
+    commandKeywords,
+    new Set([...engineCommands, ...LSP_SUB_KEYWORDS])
+  );
+  // `set` and `js` are features too; listed with the commands, they are known.
+  const featureGaps = difference(engineFeatures, known);
+  const featureGhosts = difference(
+    featureKeywords,
+    new Set([...engineFeatures, ...UPSTREAM_EXTENSION_FEATURES])
+  );
+  if (commandGaps.length)
+    details.push(`  Engine commands COMMAND_KEYWORDS lacks: ${commandGaps.join(', ')}`);
+  if (commandGhosts.length)
+    details.push(`  COMMAND_KEYWORDS the engine does not have: ${commandGhosts.join(', ')}`);
+  if (featureGaps.length)
+    details.push(`  Engine features the LSP does not list: ${featureGaps.join(', ')}`);
+  if (featureGhosts.length)
+    details.push(`  FEATURE_KEYWORDS the engine does not have: ${featureGhosts.join(', ')}`);
+
+  const undocumented = [...known].filter(keyword => !HOVER_DOCS[keyword]).sort();
+  if (undocumented.length)
+    details.push(`  Keywords without HOVER_DOCS: ${undocumented.join(', ')}`);
+
+  verify(
+    'LSP Keywords',
+    details.length === 0,
+    details.length === 0
+      ? `✓ ${commandKeywords.size} command and ${featureKeywords.size} feature keywords match the engine, each documented`
+      : `✗ The LSP's keywords and the engine's differ`,
+    details.length ? details : undefined
+  );
+}
+
+// 3. Every example parses on the engine.
+function verifyExamples() {
+  const failures: string[] = [];
+  let count = 0;
+  for (const [key, ref] of Object.entries(commands)) {
+    for (const example of ref.examples) {
+      count++;
+      const error = exampleError(example, true);
+      if (error) failures.push(`  reference ${key}: ${JSON.stringify(example)} → ${error}`);
+    }
+  }
+  for (const pattern of patterns) {
+    count++;
+    const error = exampleError(pattern.code, true);
+    if (error) failures.push(`  pattern "${pattern.name}": ${error}`);
+  }
+  for (const [key, doc] of Object.entries(HOVER_DOCS)) {
+    if (NOT_SCRIPT_CATEGORIES.has(doc.category)) continue;
+    // Upstream's extensions: the engine cannot parse what it does not have.
+    if (UPSTREAM_EXTENSION_FEATURES.has(key)) continue;
+    count++;
+    const statement = doc.category === 'command' || doc.category === 'feature';
+    const error = exampleError(doc.example, statement);
+    if (error) failures.push(`  hover ${key}: ${JSON.stringify(doc.example)} → ${error}`);
+  }
+  verify(
+    'Examples Parse',
+    failures.length === 0,
+    failures.length === 0
+      ? `✓ All ${count} reference, pattern and hover examples parse on the engine`
+      : `✗ ${failures.length} of ${count} examples do not parse on the engine`,
+    failures.length ? failures : undefined
+  );
+}
+
+// 4. The advertised command counts are the engine's.
+function verifyCommandCounts() {
+  const errors: string[] = [];
+  const count = engineCommands.size;
+  if (packageInfo.commands !== count) {
+    errors.push(
+      `  metadata packageInfo.commands is ${packageInfo.commands}; the engine registers ${count}`
+    );
+  }
+  for (const bundle of bundleInfo) {
+    if (bundle.commandCount !== count) {
+      errors.push(
+        `  metadata bundleInfo ${bundle.id} advertises ${bundle.commandCount}; the engine registers ${count}`
+      );
+    }
+  }
+  for (const bundle of bundles) {
+    if (bundle.commandCount !== count) {
+      errors.push(
+        `  reference bundles ${bundle.name} advertises ${bundle.commandCount}; the engine registers ${count}`
+      );
+    }
+  }
+  verify(
+    'Command Counts',
+    errors.length === 0,
+    errors.length === 0
+      ? `✓ Every advertised command count is the engine's ${count}`
+      : `✗ Command counts differ from the engine's`,
+    errors.length ? errors : undefined
+  );
+}
+
+// 5. Bundle files exist (a warning: dist/ is a build product).
 function verifyBundleFiles() {
   const distPath = resolve(CORE_ROOT, 'dist');
-
-  // If dist/ doesn't exist, skip this check with a note
   if (!existsSync(distPath)) {
-    verify(
-      'Bundle Files',
-      true, // Don't fail - just note it
-      `⚠ Skipped - dist/ not found (run npm run build:browser first)`
-    );
+    verify('Bundle Files', true, `⚠ Skipped - dist/ not found (run npm run build:browser first)`);
     return;
   }
-
-  const missingBundles: string[] = [];
-  const foundBundles: string[] = [];
-
-  for (const bundle of bundleInfo) {
-    const bundlePath = resolve(CORE_ROOT, 'dist', bundle.filename);
-    if (!existsSync(bundlePath)) {
-      missingBundles.push(`${bundle.id}: ${bundle.filename}`);
-    } else {
-      foundBundles.push(bundle.id);
-    }
-  }
-
-  // Pass if at least some bundles exist, warn about missing ones
-  const passed = missingBundles.length === 0;
+  const missing = bundleInfo
+    .filter(bundle => !existsSync(resolve(distPath, bundle.filename)))
+    .map(bundle => `  ${bundle.id}: ${bundle.filename}`);
   verify(
     'Bundle Files',
-    passed,
-    passed
+    missing.length === 0,
+    missing.length === 0
       ? `✓ All ${bundleInfo.length} bundle files exist in dist/`
-      : `⚠ ${missingBundles.length} bundle files missing (${foundBundles.length} found)`,
-    missingBundles.length > 0 ? missingBundles.map(b => `  ${b}`) : undefined,
-    true // Mark as warning - don't fail CI for missing bundles
+      : `⚠ ${missing.length} bundle files missing`,
+    missing.length ? missing : undefined,
+    true
   );
 }
 
-// =============================================================================
-// 3. VERIFY AVAILABILITY CHAIN
-// =============================================================================
-
-function verifyAvailabilityChain() {
-  // Commands should follow: lite ⊂ lite-plus ⊂ hybrid ⊂ full
-
-  const byAvailability: Record<string, string[]> = {
-    lite: [],
-    'lite-plus': [],
-    hybrid: [],
-    full: [],
-  };
-
-  for (const [name, cmd] of Object.entries(refCommands)) {
-    if (byAvailability[cmd.availability]) {
-      byAvailability[cmd.availability].push(name);
-    }
-  }
-
-  const errors: string[] = [];
-
-  // lite commands must be in all bundles (no checking needed, they're the base)
-  // lite-plus commands can't have lite-only commands that aren't also lite-plus
-  // etc.
-
-  // Check that lite is smallest set
-  const liteCount = byAvailability['lite'].length;
-  const litePlusCount = byAvailability['lite'].length + byAvailability['lite-plus'].length;
-  const hybridCount = litePlusCount + byAvailability['hybrid'].length;
-  const fullCount = hybridCount + byAvailability['full'].length;
-
-  if (liteCount > litePlusCount) {
-    errors.push(`lite (${liteCount}) has more commands than lite-plus (${litePlusCount})`);
-  }
-  if (litePlusCount > hybridCount) {
-    errors.push(`lite-plus (${litePlusCount}) has more commands than hybrid (${hybridCount})`);
-  }
-  if (hybridCount > fullCount) {
-    errors.push(`hybrid (${hybridCount}) has more commands than full (${fullCount})`);
-  }
-
-  const passed = errors.length === 0;
-  verify(
-    'Availability Chain',
-    passed,
-    passed
-      ? `✓ Availability chain valid: lite(${liteCount}) ⊂ lite-plus(${litePlusCount}) ⊂ hybrid(${hybridCount}) ⊂ full(${fullCount})`
-      : `✗ Availability chain broken`,
-    errors.length > 0 ? errors : undefined
-  );
-}
-
-// =============================================================================
-// 4. VERIFY CATEGORIES ARE VALID
-// =============================================================================
-
+// 6. Categories come from the CommandCategory union.
 function verifyCategories() {
-  const validCategories = [
+  const validCategories = new Set([
     'dom',
     'async',
     'data',
@@ -304,118 +316,15 @@ function verifyCategories() {
     'advanced',
     'behaviors',
     'templates',
-  ];
-
-  const invalidCategories: string[] = [];
-
-  for (const [name, cmd] of Object.entries(refCommands)) {
-    if (!validCategories.includes(cmd.category)) {
-      invalidCategories.push(`${name}: "${cmd.category}"`);
-    }
-  }
-
-  const passed = invalidCategories.length === 0;
+  ]);
+  const invalid = Object.entries(commands)
+    .filter(([, ref]) => !validCategories.has(ref.category))
+    .map(([key, ref]) => `  ${key}: "${ref.category}"`);
   verify(
     'Valid Categories',
-    passed,
-    passed ? `✓ All commands have valid categories` : `✗ Invalid categories found`,
-    invalidCategories.length > 0 ? invalidCategories.map(c => `  ${c}`) : undefined
-  );
-}
-
-// =============================================================================
-// 4b. VERIFY AVAILABILITIES ARE VALID
-// =============================================================================
-
-function verifyAvailabilities() {
-  const validAvailabilities = ['lite', 'lite-plus', 'hybrid', 'full'];
-
-  const invalidAvailabilities: string[] = [];
-
-  for (const [name, cmd] of Object.entries(refCommands)) {
-    if (!validAvailabilities.includes(cmd.availability)) {
-      invalidAvailabilities.push(`${name}: "${cmd.availability}"`);
-    }
-  }
-
-  const passed = invalidAvailabilities.length === 0;
-  verify(
-    'Valid Availabilities',
-    passed,
-    passed ? `✓ All commands have valid availabilities` : `✗ Invalid availabilities found`,
-    invalidAvailabilities.length > 0 ? invalidAvailabilities.map(a => `  ${a}`) : undefined
-  );
-}
-
-// =============================================================================
-// 5. VERIFY BUNDLE COMMAND COUNTS ARE REASONABLE
-// =============================================================================
-
-/**
- * Every bundle's advertised commandCount used to be re-derived from its own
- * source here (`compatibility/bundle-sources.ts` paired each with its file):
- * lite-plus and the two hybrids were stale by 4-5 commands each for months, and
- * widening the check caught three more. Those bundles all retired in Phase C3.
- *
- * Since C-R4b dist/hyperfixi.js IS the engine's hyperfixi-hs.js, so the one row
- * left (`browser`) counts the engine's command keywords, re-derived here the way
- * the vite-plugin derives its keyword map: every module in `everything` run
- * against a fresh grammar. Read from the engine's BUILT dist, which the bundle
- * is built from too (CI's lint-typecheck job downloads it; locally,
- * `npm run build --prefix packages/engine`).
- */
-async function engineCommandKeywords(): Promise<string[] | null> {
-  if (!existsSync(resolve(CORE_ROOT, '../engine/dist/index.js'))) return null;
-  const engine = await import('../../engine/dist/index.js');
-  const keywords = new Set<string>();
-  for (const mod of engine.everything) {
-    const grammar = engine.createGrammar();
-    mod(grammar);
-    // The template text line registers under `#text`, which no script can spell.
-    for (const key of Object.keys(grammar.commands)) if (/^[a-z]+$/.test(key)) keywords.add(key);
-  }
-  return [...keywords].sort();
-}
-
-const engineCommands = await engineCommandKeywords();
-
-function verifyBundleCommandCounts() {
-  const errors: string[] = [];
-
-  // Sort bundles by command count
-  const sorted = [...bundleInfo].sort((a, b) => a.commandCount - b.commandCount);
-
-  // Verify progression makes sense
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i].commandCount < sorted[i - 1].commandCount) {
-      errors.push(
-        `${sorted[i].id} (${sorted[i].commandCount}) should have >= commands than ${sorted[i - 1].id} (${sorted[i - 1].commandCount})`
-      );
-    }
-  }
-
-  // hyperfixi.js is the engine's hyperfixi-hs.js: its row counts the engine.
-  const browserBundle = bundleInfo.find(b => b.id === 'browser');
-  if (browserBundle) {
-    if (engineCommands === null) {
-      errors.push(
-        'browser: the engine is not built (npm run build --prefix packages/engine); ' +
-          "its row counts the engine's commands"
-      );
-    } else if (browserBundle.commandCount !== engineCommands.length) {
-      errors.push(
-        `browser (hyperfixi.js = the engine's hyperfixi-hs.js) advertises ` +
-          `${browserBundle.commandCount} commands; the engine registers ${engineCommands.length}`
-      );
-    }
-  }
-
-  const passed = errors.length === 0;
-  verify(
-    'Bundle Command Counts',
-    passed,
-    passed ? `✓ Bundle command counts are reasonable` : `✗ Bundle command count issues`,
-    errors.length > 0 ? errors : undefined
+    invalid.length === 0,
+    invalid.length === 0 ? `✓ All commands have valid categories` : `✗ Invalid categories found`,
+    invalid.length ? invalid : undefined
   );
 }
 
@@ -423,14 +332,14 @@ function verifyBundleCommandCounts() {
 // RUN ALL VERIFICATIONS
 // =============================================================================
 
-console.log('🔍 Verifying reference data...\n');
+console.log('🔍 Verifying reference data against the engine...\n');
 
-verifyCommandCount();
+verifyReferenceCommands();
+verifyLspKeywords();
+verifyExamples();
+verifyCommandCounts();
 verifyBundleFiles();
-verifyAvailabilityChain();
 verifyCategories();
-verifyAvailabilities();
-verifyBundleCommandCounts();
 
 // =============================================================================
 // REPORT RESULTS

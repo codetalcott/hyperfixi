@@ -86,7 +86,6 @@ const FALLBACK_KEYWORDS = [
   'is',
   'exists',
   'empty',
-  'has',
 ] as const;
 
 const FALLBACK_HOVER_KEYWORDS = [
