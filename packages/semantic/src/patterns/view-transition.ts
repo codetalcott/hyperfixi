@@ -29,7 +29,7 @@ function viewTransitionPatterns(language: string): () => LanguagePattern[] {
   // Both sit above the `transition` command's patterns: in en and fr
   // `transition` is that command's keyword, which read the block's verb as
   // its patient.
-  return () => [
+  return (): LanguagePattern[] => [
     {
       id: `viewTransition-${language}-using`,
       language,
