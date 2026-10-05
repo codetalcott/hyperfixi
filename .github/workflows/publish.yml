@@ -44,6 +44,9 @@ jobs:
     timeout-minutes: 45
     outputs:
       version: ${{ steps.version.outputs.version }}
+      # npm names of the public packages this run published (or found already
+      # published): what release-smoke waits for the registry to serve.
+      packages: ${{ steps.publish.outputs.names }}
     permissions:
       contents: write
       id-token: write # Required for npm trusted publishing (OIDC provenance)
@@ -282,6 +285,7 @@ jobs:
           # a full cycle. MATCHED counts what survives the filter; the guard after
           # the loop turns "matched nothing" into a hard failure.
           MATCHED=0
+          NAMES=""
 
           for pkg in $ALL_PACKAGES; do
             [ ! -f "packages/$pkg/package.json" ] && continue
@@ -300,6 +304,7 @@ jobs:
             PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
             IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
             [ "$IS_PRIVATE" = "true" ] && continue
+            NAMES="$NAMES $PKG_NAME"
 
             echo "→ $PKG_NAME@$PKG_VER"
 
@@ -334,6 +339,7 @@ jobs:
             exit 1
           fi
           echo "published=$MATCHED" >> $GITHUB_OUTPUT
+          echo "names=$(echo $NAMES | tr -s '[:space:]' ' ')" >> $GITHUB_OUTPUT
           echo "✓ $MATCHED package(s) processed"
 
           # Export the canonical list so the Summary step cannot drift from it.
@@ -585,7 +591,8 @@ jobs:
     needs: publish
     if: ${{ github.event.inputs.dry-run == 'false' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Up to 30 min waiting for the registry, then the install + harness.
+    timeout-minutes: 55
 
     steps:
       - name: Checkout
@@ -596,6 +603,17 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+
+      # npm accepts a publish minutes before an install can resolve it ("Your
+      # package is being processed"): 8 min for @hyperfixi/speech on 3.1.0, ~13
+      # for @lokascript/semantic on 4.0.0. Both times the harness's retries ran
+      # out inside that window and a good release went red until someone re-ran
+      # this job by hand. Poll the document npm install reads until every
+      # published package lists the version (zero-dep script, so before npm ci).
+      - name: Wait for the registry to serve every published package
+        run: |
+          node scripts/wait-for-registry.cjs "${{ needs.publish.outputs.version }}" \
+            ${{ needs.publish.outputs.packages }} --timeout-min 30
 
       - name: Install dependencies
         # npm ci for the same reproducibility reason as the publish job: the
@@ -609,8 +627,8 @@ jobs:
       - name: Run release smoke test
         run: |
           VERSION="${{ needs.publish.outputs.version }}"
-          # A fresh publish can take a few minutes to propagate across the npm
-          # CDN. Retry the harness up to 3 times with a 90s backoff.
+          # The wait above covers npm's processing lag; these retries are for
+          # CDN edges that lag the document it polled. Up to 3 attempts, 90s apart.
           for attempt in 1 2 3; do
             echo "::group::release-smoke attempt $attempt (v$VERSION)"
             if node examples/release-smoke/run.mjs "$VERSION"; then

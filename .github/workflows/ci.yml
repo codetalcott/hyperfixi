@@ -667,6 +667,10 @@ jobs:
         run: node scripts/check-domains-peer-major.cjs
       - name: Domains peer-major guard self-test
         run: node --test scripts/check-domains-peer-major.test.cjs
+      # publish.yml's release-smoke waits on this before installing; it runs
+      # only at a release, so test it here.
+      - name: Registry-wait self-test
+        run: node --test scripts/wait-for-registry.test.cjs
 
       # (The type-escape and layering ratchets, Arc 0 of ENGINE_MIGRATION_PLAN.md,
       # guarded core's own engine — parser, runtime, commands — and retired with it
