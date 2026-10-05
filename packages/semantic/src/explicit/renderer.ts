@@ -14,6 +14,7 @@ import type {
   CommandSemanticNode,
   ConditionalSemanticNode,
   LoopSemanticNode,
+  ViewTransitionSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
   FeatureSemanticNode,
@@ -25,16 +26,33 @@ import type {
   PropertyPathValue,
   ExtractionRule,
 } from '../types';
-import { createCommandNode, createSelector } from '../types';
+import { createCommandNode, createSelector, isViewTransitionBlock } from '../types';
 
 /**
- * Loop/tell block-header commands: their body follows the header directly, with no
- * chain word between the header and its first body command. The explicit loop/tell
- * subset of the schema `hasBody` flag — `hasBody` also covers if/on/async/js/
+ * Loop/tell/view-transition block-header commands: their body follows the header
+ * directly, with no chain word between the header and its first body command. The
+ * explicit loop/tell/view-transition subset of the schema `hasBody` flag — `hasBody` also covers if/on/async/js/
  * behavior/… which render through their own node kinds/paths and keep their chain
  * word. Shared by renderCompound and joinStatements.
  */
-const BLOCK_HEADER_ACTIONS = new Set<ActionType>(['repeat', 'for', 'while', 'tell']);
+const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
+  'repeat',
+  'for',
+  'while',
+  'tell',
+  'viewTransition',
+]);
+
+/**
+ * A block header still FLAT in its statement list: its body is the statements
+ * after it. A view transition the parser nested is a command too, with its
+ * body attached, and renders and closes itself (renderViewTransition).
+ */
+function isFlatBlockHeader(node: SemanticNode): boolean {
+  return (
+    node.kind === 'command' && BLOCK_HEADER_ACTIONS.has(node.action) && !isViewTransitionBlock(node)
+  );
+}
 
 /**
  * Commands whose captured body is an open-ended block that must be closed by an
@@ -64,7 +82,6 @@ import { getOfPossessiveMarker, PROPERTY_NAME_LEXICON } from '../parser/utils/ex
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
-import { viewTransitionBody } from './upstream-spelling';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 /**
@@ -141,12 +158,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in the specified language.
    */
   render(node: SemanticNode, language: string): string {
-    // Only an English render meets this: the upstream-spelling rewrite marks a
-    // command whose view-transition tail upstream writes as a block.
-    const inViewTransition = viewTransitionBody(node);
-    if (inViewTransition) {
-      return `start view transition ${this.render(inViewTransition, language)} end`;
-    }
     // Handle compound nodes specially (e.g., "cmd1 then cmd2")
     if (node.kind === 'compound') {
       return this.renderCompound(node as CompoundSemanticNode, language);
@@ -180,6 +191,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // stops, so a command after the loop stays after it.
     if (node.kind === 'loop') {
       return this.renderLoop(node as LoopSemanticNode, language);
+    }
+    // So does a view transition, which closes the same way.
+    if (isViewTransitionBlock(node)) {
+      return this.renderViewTransition(node, language);
     }
 
     // `js` renders VERB-INITIAL in the SOV six, against their own word order.
@@ -266,7 +281,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     for (let i = 1; i < renderedStatements.length; i++) {
       const prev = node.statements[i - 1];
       const cur = node.statements[i];
-      const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      const afterBlockHeader = isFlatBlockHeader(prev);
       // Consecutive top-level `bind` features are separate reactive features, not a
       // then-chain — `bind $x to #a then bind $x to #b` is rejected (`Unexpected
       // Token : then` between features). Space-join them (a bind clause is
@@ -330,6 +345,21 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * Render a view transition: `start view transition [using "<type>"] <body> end`.
+   * The head renders through its pattern, the same English words in every
+   * language (patterns/view-transition.ts), and the body follows it directly,
+   * as a loop's does.
+   */
+  private renderViewTransition(node: ViewTransitionSemanticNode, language: string): string {
+    const head = createCommandNode('viewTransition', Object.fromEntries(node.roles), node.metadata);
+    const parts = [this.render(head, language)];
+    const body = this.joinStatements(node.body, language);
+    if (body) parts.push(body);
+    parts.push(this.keyword(language, 'end'));
+    return parts.join(' ');
+  }
+
+  /**
    * Join a statement list the way a block body reads: the target language's `then`
    * between siblings, but a single space immediately after a loop/tell block header
    * (whose body follows directly). Used by renderConditional's branches;
@@ -347,7 +377,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     let out = rendered[0] ?? '';
     for (let i = 1; i < rendered.length; i++) {
       const prev = statements[i - 1];
-      const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      const afterBlockHeader = isFlatBlockHeader(prev);
       out += (afterBlockHeader ? ' ' : ` ${thenKw} `) + rendered[i];
     }
     return this.closeBlockHeaders(out, statements, language);
@@ -382,9 +412,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     statements: readonly SemanticNode[],
     language: string
   ): string {
-    const headers = statements.filter(
-      s => s.kind === 'command' && BLOCK_HEADER_ACTIONS.has((s as CommandSemanticNode).action)
-    ).length;
+    const headers = statements.filter(isFlatBlockHeader).length;
     if (headers === 0) return rendered;
     const endKw = this.keyword(language, 'end');
     return `${rendered}${` ${endKw}`.repeat(headers)}`;

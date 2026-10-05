@@ -10,6 +10,7 @@ import { getWaitPatternsEn } from '../wait';
 import { getAppendPatternsEn } from '../append';
 import { getPrependPatternsEn } from '../prepend';
 import { getTriggerPatternsEn } from '../trigger';
+import { getViewTransitionPatternsEn } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['toggle', getTogglePatternsEn],
@@ -19,4 +20,5 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['append', getAppendPatternsEn],
   ['prepend', getPrependPatternsEn],
   ['trigger', getTriggerPatternsEn],
+  ['viewTransition', getViewTransitionPatternsEn],
 ];

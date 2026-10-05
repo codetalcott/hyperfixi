@@ -49,54 +49,92 @@ describe('renderToHyperscript', () => {
   describe('class/attribute commands', () => {
     it('renders toggle with patient', () => {
       expect(renderToHyperscript(cmd('toggle', [['patient', sel('.active')]]))).toBe(
-        'toggle .active',
+        'toggle .active'
       );
     });
 
     it('renders toggle with destination', () => {
       expect(
-        renderToHyperscript(cmd('toggle', [['patient', sel('.active')], ['destination', sel('#btn')]])),
+        renderToHyperscript(
+          cmd('toggle', [
+            ['patient', sel('.active')],
+            ['destination', sel('#btn')],
+          ])
+        )
       ).toBe('toggle .active on #btn');
     });
 
     it('skips implicit me destination', () => {
       expect(
         renderToHyperscript(
-          cmd('toggle', [['patient', sel('.active')], ['destination', implicitMe()]])
-        ),
+          cmd('toggle', [
+            ['patient', sel('.active')],
+            ['destination', implicitMe()],
+          ])
+        )
       ).toBe('toggle .active');
     });
 
     it('keeps an AUTHORED me destination (put "x" without it is engine-invalid)', () => {
       expect(
-        renderToHyperscript(cmd('put', [['patient', lit('done', 'string')], ['destination', ref('me')]])),
+        renderToHyperscript(
+          cmd('put', [
+            ['patient', lit('done', 'string')],
+            ['destination', ref('me')],
+          ])
+        )
       ).toBe('put "done" into me');
       expect(
-        renderToHyperscript(cmd('toggle', [['patient', sel('.active')], ['destination', ref('me')]])),
+        renderToHyperscript(
+          cmd('toggle', [
+            ['patient', sel('.active')],
+            ['destination', ref('me')],
+          ])
+        )
       ).toBe('toggle .active on me');
     });
 
     it('renders add with destination', () => {
       expect(
-        renderToHyperscript(cmd('add', [['patient', sel('.highlight')], ['destination', sel('#box')]])),
+        renderToHyperscript(
+          cmd('add', [
+            ['patient', sel('.highlight')],
+            ['destination', sel('#box')],
+          ])
+        )
       ).toBe('add .highlight to #box');
     });
 
     it('renders remove with an explicit source', () => {
       expect(
-        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', sel('#panel')]])),
+        renderToHyperscript(
+          cmd('remove', [
+            ['patient', sel('.hidden')],
+            ['source', sel('#panel')],
+          ])
+        )
       ).toBe('remove .hidden from #panel');
     });
 
     it('suppresses an implicit "me" source (remove .hidden, not remove .hidden from me)', () => {
       expect(
-        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', implicitMe()]])),
+        renderToHyperscript(
+          cmd('remove', [
+            ['patient', sel('.hidden')],
+            ['source', implicitMe()],
+          ])
+        )
       ).toBe('remove .hidden');
     });
 
     it('keeps an AUTHORED me source, as semantic renders it', () => {
       expect(
-        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', ref('me')]])),
+        renderToHyperscript(
+          cmd('remove', [
+            ['patient', sel('.hidden')],
+            ['source', ref('me')],
+          ])
+        )
       ).toBe('remove .hidden from me');
     });
   });
@@ -105,23 +143,81 @@ describe('renderToHyperscript', () => {
     it('renders put into', () => {
       expect(
         renderToHyperscript(
-          cmd('put', [['patient', lit('hello', 'string')], ['destination', sel('#output')]]),
-        ),
+          cmd('put', [
+            ['patient', lit('hello', 'string')],
+            ['destination', sel('#output')],
+          ])
+        )
       ).toBe('put "hello" into #output');
     });
 
     it('renders set to', () => {
       expect(
-        renderToHyperscript(cmd('set', [['destination', expr(':count')], ['patient', lit(10)]])),
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', expr(':count')],
+            ['patient', lit(10)],
+          ])
+        )
       ).toBe('set :count to 10');
     });
 
     it('renders append to', () => {
       expect(
         renderToHyperscript(
-          cmd('append', [['patient', lit('text', 'string')], ['destination', sel('#list')]]),
-        ),
+          cmd('append', [
+            ['patient', lit('text', 'string')],
+            ['destination', sel('#list')],
+          ])
+        )
       ).toBe('append "text" to #list');
+    });
+  });
+
+  // The per-language bundles render through here, so these must be upstream's
+  // spelling: the engine rejects `swap of #a with #b` and core's tail, and the
+  // host-validate gate then keeps the author's text, which does not run.
+  describe('swap and view transitions', () => {
+    const swap = (extra: [string, SemanticValue][] = []) =>
+      cmd('swap', [['destination', sel('#a')], ['patient', sel('#b')], ...extra]);
+
+    it('writes `of` only after a strategy', () => {
+      expect(renderToHyperscript(swap())).toBe('swap #a with #b');
+      expect(renderToHyperscript(swap([['method', lit('innerHTML')]]))).toBe(
+        'swap innerHTML of #a with #b'
+      );
+    });
+
+    it("writes core's `using view transition` tail as upstream's block", () => {
+      expect(renderToHyperscript(swap([['manner', lit('transition')]]))).toBe(
+        'start view transition swap #a with #b end'
+      );
+    });
+
+    it('writes a view transition block, closed where its body stops', () => {
+      const block = (roles: [string, SemanticValue][], body: SemanticNode[]) =>
+        ({ ...cmd('viewTransition', roles), body }) as SemanticNode;
+      const handler = {
+        kind: 'event-handler',
+        action: 'on',
+        roles: new Map([['event', lit('click')]]),
+        body: [
+          {
+            kind: 'compound',
+            action: 'compound',
+            roles: new Map(),
+            chainType: 'then',
+            statements: [
+              block([['style', lit('slide', 'string')]], [swap()]),
+              cmd('log', [['patient', lit(1)]]),
+            ],
+          },
+        ],
+      } as unknown as EventHandlerSemanticNode;
+      expect(renderToHyperscript(handler)).toBe(
+        'on click start view transition using "slide" swap #a with #b end then log 1'
+      );
+      expect(renderToHyperscript(block([], []))).toBe('start view transition end');
     });
   });
 
@@ -132,25 +228,30 @@ describe('renderToHyperscript', () => {
 
     it('renders increment', () => {
       expect(renderToHyperscript(cmd('increment', [['patient', sel('#count')]]))).toBe(
-        'increment #count',
+        'increment #count'
       );
     });
 
     it('renders increment with quantity', () => {
       expect(
-        renderToHyperscript(cmd('increment', [['patient', sel('#count')], ['quantity', lit(5)]])),
+        renderToHyperscript(
+          cmd('increment', [
+            ['patient', sel('#count')],
+            ['quantity', lit(5)],
+          ])
+        )
       ).toBe('increment #count by 5');
     });
 
     it('renders decrement', () => {
       expect(renderToHyperscript(cmd('decrement', [['patient', sel('#count')]]))).toBe(
-        'decrement #count',
+        'decrement #count'
       );
     });
 
     it('renders log', () => {
       expect(renderToHyperscript(cmd('log', [['patient', lit('debug', 'string')]]))).toBe(
-        'log "debug"',
+        'log "debug"'
       );
     });
   });
@@ -162,7 +263,12 @@ describe('renderToHyperscript', () => {
 
     it('renders hide with style', () => {
       expect(
-        renderToHyperscript(cmd('hide', [['patient', sel('#tooltip')], ['style', lit('fade')]])),
+        renderToHyperscript(
+          cmd('hide', [
+            ['patient', sel('#tooltip')],
+            ['style', lit('fade')],
+          ])
+        )
       ).toBe('hide #tooltip with fade');
     });
   });
@@ -170,13 +276,23 @@ describe('renderToHyperscript', () => {
   describe('event commands', () => {
     it('renders trigger', () => {
       expect(
-        renderToHyperscript(cmd('trigger', [['event', lit('click')], ['destination', sel('#btn')]])),
+        renderToHyperscript(
+          cmd('trigger', [
+            ['event', lit('click')],
+            ['destination', sel('#btn')],
+          ])
+        )
       ).toBe('trigger click on #btn');
     });
 
     it('renders send', () => {
       expect(
-        renderToHyperscript(cmd('send', [['event', lit('myEvent')], ['destination', sel('#target')]])),
+        renderToHyperscript(
+          cmd('send', [
+            ['event', lit('myEvent')],
+            ['destination', sel('#target')],
+          ])
+        )
       ).toBe('send myEvent to #target');
     });
   });
@@ -188,7 +304,12 @@ describe('renderToHyperscript', () => {
 
     it('renders fetch with response type', () => {
       expect(
-        renderToHyperscript(cmd('fetch', [['source', lit('/api/data')], ['responseType', lit('json')]])),
+        renderToHyperscript(
+          cmd('fetch', [
+            ['source', lit('/api/data')],
+            ['responseType', lit('json')],
+          ])
+        )
       ).toBe('fetch /api/data as json');
     });
   });
@@ -204,7 +325,7 @@ describe('renderToHyperscript', () => {
 
     it('renders call', () => {
       expect(renderToHyperscript(cmd('call', [['patient', expr('doSomething()')]]))).toBe(
-        'call doSomething()',
+        'call doSomething()'
       );
     });
   });
@@ -356,8 +477,14 @@ describe('renderToHyperscript', () => {
         action: 'compound' as any,
         roles: new Map() as any,
         statements: [
-          cmd('bind', [['destination', expr('$name')], ['source', sel('#input-a')]]),
-          cmd('bind', [['destination', expr('$name')], ['source', sel('#input-b')]]),
+          cmd('bind', [
+            ['destination', expr('$name')],
+            ['source', sel('#input-a')],
+          ]),
+          cmd('bind', [
+            ['destination', expr('$name')],
+            ['source', sel('#input-b')],
+          ]),
         ],
         chainType: 'then',
       } as CompoundSemanticNode;
@@ -396,20 +523,35 @@ describe('renderToHyperscript', () => {
 
     it('renders string literals with quotes', () => {
       expect(
-        renderToHyperscript(cmd('put', [['patient', lit('hello', 'string')], ['destination', sel('#out')]])),
+        renderToHyperscript(
+          cmd('put', [
+            ['patient', lit('hello', 'string')],
+            ['destination', sel('#out')],
+          ])
+        )
       ).toBe('put "hello" into #out');
     });
 
     it('renders numeric literals', () => {
       expect(
-        renderToHyperscript(cmd('set', [['destination', expr(':x')], ['patient', lit(42)]])),
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', expr(':x')],
+            ['patient', lit(42)],
+          ])
+        )
       ).toBe('set :x to 42');
     });
 
     it('renders expressions', () => {
-      expect(renderToHyperscript(cmd('set', [['destination', expr(':x')], ['patient', expr(':y + 1')]]))).toBe(
-        'set :x to :y + 1',
-      );
+      expect(
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', expr(':x')],
+            ['patient', expr(':y + 1')],
+          ])
+        )
+      ).toBe('set :x to :y + 1');
     });
   });
 
@@ -419,27 +561,47 @@ describe('renderToHyperscript', () => {
 
   describe('property paths', () => {
     it('renders my (me possessive)', () => {
-      expect(renderToHyperscript(cmd('set', [['destination', prop(ref('me'), 'textContent')], ['patient', lit('hi', 'string')]]))).toBe(
-        'set my textContent to "hi"',
-      );
+      expect(
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', prop(ref('me'), 'textContent')],
+            ['patient', lit('hi', 'string')],
+          ])
+        )
+      ).toBe('set my textContent to "hi"');
     });
 
     it('renders its (it possessive)', () => {
-      expect(renderToHyperscript(cmd('set', [['destination', prop(ref('it'), 'opacity')], ['patient', lit(0)]]))).toBe(
-        'set its opacity to 0',
-      );
+      expect(
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', prop(ref('it'), 'opacity')],
+            ['patient', lit(0)],
+          ])
+        )
+      ).toBe('set its opacity to 0');
     });
 
     it('renders your (you possessive)', () => {
-      expect(renderToHyperscript(cmd('set', [['destination', prop(ref('you'), 'value')], ['patient', lit('x', 'string')]]))).toBe(
-        'set your value to "x"',
-      );
+      expect(
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', prop(ref('you'), 'value')],
+            ['patient', lit('x', 'string')],
+          ])
+        )
+      ).toBe('set your value to "x"');
     });
 
     it("renders element's (generic possessive)", () => {
       expect(
-        renderToHyperscript(cmd('set', [['destination', prop(sel('#el'), 'innerHTML')], ['patient', lit('ok', 'string')]])),
-      ).toBe("set #el's innerHTML to \"ok\"");
+        renderToHyperscript(
+          cmd('set', [
+            ['destination', prop(sel('#el'), 'innerHTML')],
+            ['patient', lit('ok', 'string')],
+          ])
+        )
+      ).toBe('set #el\'s innerHTML to "ok"');
     });
   });
 
@@ -449,7 +611,9 @@ describe('renderToHyperscript', () => {
 
   describe('newly added commands', () => {
     it('renders tell with destination', () => {
-      expect(renderToHyperscript(cmd('tell', [['destination', sel('#dialog')]]))).toBe('tell #dialog');
+      expect(renderToHyperscript(cmd('tell', [['destination', sel('#dialog')]]))).toBe(
+        'tell #dialog'
+      );
     });
 
     it('renders else with no roles', () => {
@@ -462,7 +626,7 @@ describe('renderToHyperscript', () => {
 
     it('renders behavior with patient', () => {
       expect(renderToHyperscript(cmd('behavior', [['patient', expr('Draggable')]]))).toBe(
-        'behavior Draggable',
+        'behavior Draggable'
       );
     });
 
@@ -479,14 +643,58 @@ describe('renderToHyperscript', () => {
     // Commands that must have SYNTAX entries (from semantic command-schemas).
     // 'on' is handled by renderEventHandler, 'compound' is handled by renderCompound.
     const expectedCommands = [
-      'toggle', 'add', 'remove', 'put', 'set', 'show', 'hide',
-      'trigger', 'wait', 'fetch', 'increment', 'decrement',
-      'append', 'prepend', 'log', 'get', 'take', 'make', 'halt',
-      'settle', 'throw', 'send', 'if', 'unless', 'else', 'repeat',
-      'for', 'while', 'continue', 'go', 'transition', 'clone',
-      'focus', 'blur', 'call', 'return', 'js', 'async', 'tell',
-      'default', 'init', 'behavior', 'install', 'measure', 'swap', 'morph',
-      'beep', 'break', 'copy', 'exit', 'pick', 'render',
+      'toggle',
+      'add',
+      'remove',
+      'put',
+      'set',
+      'show',
+      'hide',
+      'trigger',
+      'wait',
+      'fetch',
+      'increment',
+      'decrement',
+      'append',
+      'prepend',
+      'log',
+      'get',
+      'take',
+      'make',
+      'halt',
+      'settle',
+      'throw',
+      'send',
+      'if',
+      'unless',
+      'else',
+      'repeat',
+      'for',
+      'while',
+      'continue',
+      'go',
+      'transition',
+      'clone',
+      'focus',
+      'blur',
+      'call',
+      'return',
+      'js',
+      'async',
+      'tell',
+      'default',
+      'init',
+      'behavior',
+      'install',
+      'measure',
+      'swap',
+      'morph',
+      'beep',
+      'break',
+      'copy',
+      'exit',
+      'pick',
+      'render',
     ];
 
     for (const action of expectedCommands) {

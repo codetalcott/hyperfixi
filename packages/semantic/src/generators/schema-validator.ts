@@ -90,6 +90,7 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'clear',
   'reset',
   'breakpoint', // Zero-arg debug command
+  'viewTransition', // `start view transition <body> end`: the type is optional
   // Feature blocks. Their meaning lives in the BODY, not in a head role: `live`
   // and `intercept` have no head at all, and eventsource/socket/worker's name and
   // url are structural, not semantic arguments. Giving them roles purely to make

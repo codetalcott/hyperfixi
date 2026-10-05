@@ -71,6 +71,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   transition: [['patient', ''], ['goal', 'to'], ['destination', 'on'], ['duration', 'over'], ['style', 'with']],
   trigger: [['event', ''], ['destination', 'on']],
   unless: [['condition', '']],
+  viewTransition: [['style', 'using']],
   wait: [['duration', '']],
   when: [['condition', '']],
   while: [['condition', '']],

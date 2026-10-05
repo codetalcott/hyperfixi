@@ -15,6 +15,7 @@ import { getGetPatternsPl } from '../get';
 import { getIncrementPatternsPl } from '../increment';
 import { getDecrementPatternsPl } from '../decrement';
 import { getFetchPatternsPl } from '../fetch';
+import { getViewTransitionPatternsPl } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['toggle', getTogglePatternsPl],
@@ -29,4 +30,5 @@ export const handcraftedPatterns: HandcraftedPatterns = [
   ['increment', getIncrementPatternsPl],
   ['decrement', getDecrementPatternsPl],
   ['fetch', getFetchPatternsPl],
+  ['viewTransition', getViewTransitionPatternsPl],
 ];

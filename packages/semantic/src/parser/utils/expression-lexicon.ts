@@ -1472,6 +1472,12 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
   if (markerFinal && next?.kind === 'particle' && afterNext?.kind !== 'particle') return true;
   if (!prev) return false;
   if (BINARY_OPERATORS.has(prev.value)) return true;
+  // The last word of a view transition's head, `start [a] view transition`, which
+  // is not the `transition` command's verb and owes no value: the end word
+  // closes an empty block.
+  if (prev.value.toLowerCase() === 'transition' && beforePrev?.value.toLowerCase() === 'view') {
+    return false;
+  }
   const word = wordOf(prev, languageCode);
   if (word === 'not' || word === 'no') return true;
   // A word that is `not` only before an operand (qu `mana`).

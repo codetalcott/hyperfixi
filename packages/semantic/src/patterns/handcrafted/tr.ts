@@ -7,10 +7,12 @@ import { getPutPatternsTr } from '../put';
 import { getEventHandlerPatternsTr } from '../event-handler';
 import { getWaitPatternsTr } from '../wait';
 import { getFetchPatternsTr } from '../fetch';
+import { getViewTransitionPatternsTr } from '../view-transition';
 
 export const handcraftedPatterns: HandcraftedPatterns = [
   ['put', getPutPatternsTr],
   ['event-handler', getEventHandlerPatternsTr],
   ['wait', getWaitPatternsTr],
   ['fetch', getFetchPatternsTr],
+  ['viewTransition', getViewTransitionPatternsTr],
 ];

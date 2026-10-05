@@ -89,8 +89,9 @@ it('a core-only form with no upstream spelling is written as read', () => {
 /**
  * Core's view-transition tail (the `manner` role, view-transition-manner.test.ts)
  * is upstream's `start view transition … end` block, parsed by upstream 0.9.93 and
- * the engine alike, a `then` after its `end` included. Not in ROWS: the reader does
- * not read the block back yet (OPEN_ITEMS D6), so English is not a fixed point here.
+ * the engine alike, a `then` after its `end` included. Not in ROWS: the reader reads
+ * the block back as a view-transition node around the command, not as the tail, so
+ * the two nodes differ though both write this English (view-transition-block.test.ts).
  * What a page written in another language gets is the round trip below: its tail
  * reads, and the adapter hands the host the block.
  */

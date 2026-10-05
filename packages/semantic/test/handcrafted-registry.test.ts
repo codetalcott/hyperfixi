@@ -30,6 +30,7 @@ import * as show from '../src/patterns/show';
 import * as toggle from '../src/patterns/toggle';
 import * as trigger from '../src/patterns/trigger';
 import * as wait from '../src/patterns/wait';
+import * as viewTransition from '../src/patterns/view-transition';
 
 const COMMAND_FILES: Record<string, Record<string, unknown>> = {
   add,
@@ -49,6 +50,7 @@ const COMMAND_FILES: Record<string, Record<string, unknown>> = {
   toggle,
   trigger,
   wait,
+  viewTransition,
 };
 
 /** `getTogglePatternsEs` → ['toggle', 'es', fn]: every per-language function exported. */

@@ -39,6 +39,7 @@ import { getPutPatternsEn } from './put';
 import { getEventHandlerPatternsEn } from './event-handler';
 import { getRepeatPatternsForLanguage } from './repeat';
 import { getWaitPatternsEn } from './wait';
+import { getViewTransitionPatternsEn } from './view-transition';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -282,6 +283,8 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   // `wait {duration}` captured the KEYWORD as the duration and dropped the
   // event name + everything after it.
   patterns.push(...getWaitPatternsEn());
+  // `start view transition [using "<type>"]`, the head of upstream's block.
+  patterns.push(...getViewTransitionPatternsEn());
 
   // 2. English-only hand-crafted patterns
   patterns.push(

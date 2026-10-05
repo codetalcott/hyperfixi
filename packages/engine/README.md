@@ -201,14 +201,15 @@ As a host for the multilingual text path (semantic renders a translation, the ad
   Phases C2 and C4.)
 - **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
   upstream's parser, the two parsers disagree on none.
-- Of the 164 corpus rows, 152 parse on both engines and 12 on neither, measured on each
-  row's raw source (2026-10-04); none parses on one engine only. Ten of the 12 are markup or
-  extension rows (five components; `live-with-handler`, markup whose `_` sources parse on
-  both; sockets, workers, event sources, `intercept`), one is valid nowhere (`async-block`),
-  and one is syntax only `packages/core` has: `swap … using view transition`
-  (swap-view-transition). Ten more were core-only until the rows were rewritten in upstream's
-  spelling on 2026-10-01 and (fetch-formdata, `new FormData(…)` in a `js` block) on
-  2026-10-03; five rows of core's htmx v4 attributes left with `hyperfixi-hx-v4.js` (Phase C3).
+- Of the 164 corpus rows, 153 parse on both engines and 11 on neither, measured on each
+  row's raw source (2026-10-04, and swap-view-transition 2026-10-05); none parses on one
+  engine only. Ten of the 11 are markup or extension rows (five components;
+  `live-with-handler`, markup whose `_` sources parse on both; sockets, workers, event
+  sources, `intercept`), and one is valid nowhere (`async-block`). Twelve more were core-only
+  until the rows were rewritten in upstream's spelling: ten on 2026-10-01, fetch-formdata
+  (`new FormData(…)` in a `js` block) on 2026-10-03, and swap-view-transition
+  (`start view transition … end`, which semantic now reads) on 2026-10-05; five rows of
+  core's htmx v4 attributes left with `hyperfixi-hx-v4.js` (Phase C3).
 - **The adapter's plugin** in six languages: the script runs and the attribute stays as
   written. On upstream the plugin has to rewrite the attribute.
 
