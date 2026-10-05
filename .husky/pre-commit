@@ -43,12 +43,10 @@ if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|pack
   node scripts/check-domains-peer-major.cjs || exit 1
 fi
 
-# Engine-migration type-escape ratchet (Arc 0 of ENGINE_MIGRATION_PLAN.md).
-# Fires only when core engine source is staged, so unrelated commits pay
-# nothing. Shrink-only: a commit that LOWERS a count should also run
-# `npm run check:type-escapes:update` and stage the baseline.
+# Engine/front-end boundary ratchet (Arc 1 of ENGINE_MIGRATION_PLAN.md). Fires
+# only when core source is staged, so unrelated commits pay nothing. (Its
+# siblings, the type-escape and layering ratchets, retired with core's engine
+# in Phase C6.)
 if git diff --cached --name-only | grep -qE '^packages/core/src/.*\.ts$'; then
-  node scripts/check-type-escapes.cjs || exit 1
-  node scripts/check-layering.cjs || exit 1
   node scripts/check-semantic-boundary.cjs || exit 1
 fi

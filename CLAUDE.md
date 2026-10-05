@@ -208,16 +208,15 @@ npm run test:check --prefix packages/hyperscript-adapter
 npm run test:check --prefix packages/testing-framework
 
 # 4. Everything the `lint-typecheck` JOB runs that no test suite does.
-#    Ten guard scripts + their four self-tests, then oxlint, then the 32
+#    Eight guard scripts + their two self-tests, then oxlint, then the
 #    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
 #    the FIRST failure hides the rest.
 for s in check-ci-build-order check-bundle-shards check-test-check-list \
          check-ci-test-list check-ci-job-lists validate-versions \
-         check-domains-peer-major \
-         check-type-escapes check-layering check-semantic-boundary; do
+         check-domains-peer-major check-semantic-boundary; do
   node scripts/$s.cjs || echo "FAILED: $s"
 done
-for t in check-type-escapes check-layering check-semantic-boundary check-domains-peer-major; do
+for t in check-semantic-boundary check-domains-peer-major; do
   node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
 done
 npm run lint
@@ -236,16 +235,15 @@ npm run typecheck:scripts --prefix packages/core
    Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
    `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
    needs `--no-verify`.
-3. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
-   committed baseline and fail on any increase: `check-type-escapes`
-   (`any` / `as any` / `as Record<string, unknown>` / `as unknown as`, per
-   directory), `check-layering` (upward imports), and `check-semantic-boundary`.
-   #1034 added exactly **two** `as unknown as` in `packages/core/src/parser`
-   while every test suite stayed green — both were avoidable, and the right
-   answer was to type the values, not to run `check:type-escapes:update`. Reach
-   for `:update` only when the hatch is genuinely required, and say why in the
-   PR. Note these run BEFORE `npm ci` in the job, which is why they are cheap
-   enough to run on every change.
+3. **The `lint-typecheck` guards include a RATCHET, not lint.**
+   `check-semantic-boundary` holds a committed baseline and fails on any increase:
+   every place `packages/core/src` imports `@lokascript/*`, per file and per import
+   kind. Reach for its `--update` only when the import is genuinely required, and
+   say why in the PR. It runs BEFORE `npm ci` in the job, which is why it is cheap
+   enough to run on every change. (Its siblings `check-type-escapes` and
+   `check-layering` guarded core's own engine — #1034 once added two avoidable
+   `as unknown as` in `packages/core/src/parser` with every suite green — and
+   retired with it in Phase C6.)
 4. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
