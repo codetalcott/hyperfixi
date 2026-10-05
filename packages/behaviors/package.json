@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/behaviors",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Reusable hyperscript behaviors for @hyperfixi/engine (hyperfixi-hs.js) and upstream _hyperscript",
   "type": "module",
   "main": "./dist/index.js",
@@ -114,10 +114,10 @@
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "peerDependencies": {
-    "@hyperfixi/engine": "^4.0.0"
+    "@hyperfixi/engine": "^4.0.1"
   },
   "devDependencies": {
-    "@hyperfixi/engine": "^4.0.0",
+    "@hyperfixi/engine": "^4.0.1",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.2"
