@@ -45,11 +45,11 @@ bundle; toggle/put and a `live` block on hs). With `--matrix`, it additionally s
 `/packages/core/dist/*` to the registry-installed `node_modules/@hyperfixi/core/dist/`.
 That points two in-repo specs at the published tarball:
 
-- [`bundle-compatibility.spec.ts`](../../packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts) — the full bundle and hs × gallery examples + bundle-specific tests
-- [`hx-v4-features.spec.ts`](../../packages/core/src/compatibility/browser-tests/hx-v4-features.spec.ts) — hx-v4 distinctive surface: `hx-live`, multi-dep reactivity, two-way `bind`, SSE mock streaming, WS mock round-trip, hx-on:click in slim bundle without reactivity (~6 tests)
+- [`bundle-compatibility.spec.ts`](../../packages/core/browser-tests/bundle-compatibility.spec.ts) — the full bundle and hs × gallery examples + bundle-specific tests
+- [`hx-v4-features.spec.ts`](../../packages/core/browser-tests/hx-v4-features.spec.ts) — hx-v4 distinctive surface: `hx-live`, multi-dep reactivity, two-way `bind`, SSE mock streaming, WS mock round-trip, hx-on:click in slim bundle without reactivity (~6 tests)
 
 The webroot also exposes `packages/htmx-adapter/{dist,vocab}/` (from the registry tarball) so
-[`i18n-htmx.spec.ts`](../../packages/core/src/compatibility/browser-tests/i18n-htmx.spec.ts) can be wired in once two underlying bugs are resolved: localized `hx-live` counters don't re-render on global writes (reactivity / notify-hook), and `fetch ... as html` → `put it into target` stringifies the parsed `DocumentFragment` instead of inserting it (swap pipeline). Both are pre-existing and separate from the vocab-packaging check in stage 1. (`i18n-orchestrator-api.spec.ts`, which guarded `window.__hyperfixi_i18n.register` in the minified `hyperfixi-hx.js`, retired with that bundle in Phase C3.)
+[`i18n-htmx.spec.ts`](../../packages/core/browser-tests/i18n-htmx.spec.ts) can be wired in once two underlying bugs are resolved: localized `hx-live` counters don't re-render on global writes (reactivity / notify-hook), and `fetch ... as html` → `put it into target` stringifies the parsed `DocumentFragment` instead of inserting it (swap pipeline). Both are pre-existing and separate from the vocab-packaging check in stage 1. (`i18n-orchestrator-api.spec.ts`, which guarded `window.__hyperfixi_i18n.register` in the minified `hyperfixi-hx.js`, retired with that bundle in Phase C3.)
 
 Slower (~minutes) and noisier (Playwright's line reporter streams), but it's
 the most comprehensive browser-level signal we have against actual npm

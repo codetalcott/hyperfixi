@@ -12,9 +12,9 @@
  * each click cycle independently re-initializes the element, so a failure in
  * any cycle indicates a real regression in the pipeline.
  *
- * To run: copy this file into packages/core/src/compatibility/browser-tests/
+ * To run: copy this file into packages/core/browser-tests/
  * (which has the right Playwright baseURL configured) and run:
- *   cd packages/core && npx playwright test src/compatibility/browser-tests/llm-multilingual-demo.spec.ts
+ *   cd packages/core && npx playwright test browser-tests/llm-multilingual-demo.spec.ts
  */
 import { test, expect } from '@playwright/test';
 

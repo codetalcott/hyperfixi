@@ -6,15 +6,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   globalSetup: './global-setup.ts',
-  testDir: './src/compatibility/browser-tests',
+  testDir: './browser-tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [['html'], ['list']],
-
-  // Exclude debug tests from normal runs (use --project=debug to run them)
-  testIgnore: ['**/debug/**'],
 
   use: {
     baseURL: 'http://localhost:3000',
@@ -73,13 +70,6 @@ export default defineConfig({
           })),
         },
       },
-    },
-    {
-      // Debug/diagnostic tests - only run explicitly
-      name: 'debug',
-      testDir: './src/compatibility/browser-tests/debug',
-      testIgnore: [],
-      timeout: 120000,
     },
 
     // Feature-based projects for targeted testing

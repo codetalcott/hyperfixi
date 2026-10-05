@@ -20,7 +20,7 @@
  *
  * Run from the repo root via `npx http-server -p 3000` + `npx playwright test`
  * with the baseURL set to `http://localhost:3000`, OR copy this file into
- * `packages/core/src/compatibility/browser-tests/` which uses that config.
+ * `packages/core/browser-tests/` which uses that config.
  */
 import { test, expect } from '@playwright/test';
 

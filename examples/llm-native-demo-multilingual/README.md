@@ -134,9 +134,9 @@ npx http-server . -p 3000 -c-1
 # In another terminal, copy the spec into the core Playwright test tree
 # (which has the right baseURL) and run it:
 cp examples/llm-native-demo-multilingual/verify.spec.ts \
-   packages/core/src/compatibility/browser-tests/llm-multilingual-demo.spec.ts
+   packages/core/browser-tests/llm-multilingual-demo.spec.ts
 cd packages/core
-npx playwright test src/compatibility/browser-tests/llm-multilingual-demo.spec.ts
+npx playwright test browser-tests/llm-multilingual-demo.spec.ts
 ```
 
 The spec loops over all 5 languages, clicks each picker button, clicks the "Run the intent" button, and asserts that `#button.active` toggles correctly.

@@ -4,11 +4,11 @@ This records the places where HyperFixi **intentionally** diverges from upstream
 `_hyperscript`, plus the structural reasons some upstream expression tests can't
 pass through our browser-parity harness. None of these are bugs; they are
 deliberate semantics choices or harness artifacts. They show up as failures in
-`src/compatibility/browser-tests/expressions.spec.ts` and should **not** be
+`browser-tests/expressions.spec.ts` and should **not** be
 "fixed" by contorting the engine — change this document if a decision changes.
 
 The harness pass-rate floor is `EXPRESSION_PASS_RATE_FLOOR` in
-[`expressions.spec.ts`](../src/compatibility/browser-tests/expressions.spec.ts).
+[`expressions.spec.ts`](../browser-tests/expressions.spec.ts).
 It only ratchets up; the gap between it and 100% is mostly the items below.
 
 ## Intentional semantic divergences

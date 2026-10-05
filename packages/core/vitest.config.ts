@@ -59,8 +59,6 @@ export default defineConfig({
       // doubling the suite with stale duplicates that crash forks. Glob both.
       '**/dist/**',
       '**/.rollup.cache/**',
-      // Playwright browser tests - require real browser
-      'src/compatibility/browser-tests/**/*.spec.ts',
       'src/multilingual/browser-e2e.spec.ts',
       // Performance benchmarks - flaky/slow (timing-based, verified flaky 2026-07-20)
       'src/parser/tokenizer-comparison.test.ts',
@@ -89,10 +87,9 @@ export default defineConfig({
         // --- Non-unit-testable / non-executable surface (excluded so the coverage
         // number reflects unit-tested runtime, not integration glue or data). ---
         // Browser bundle entry points: assembled + exercised by the Playwright
-        // bundle-compatibility suite (src/compatibility/browser-tests/), never by
-        // vitest. Keeping them counted dragged core ~8pts on ~2,900 lines at ~2%.
+        // bundle-compatibility suite (browser-tests/), never by vitest. Keeping
+        // them counted dragged core ~8pts on ~2,900 lines at ~2%.
         'src/compatibility/browser-bundle-*.ts',
-        'src/compatibility/browser-tests/**', // Playwright specs + helpers
         // Test-only infrastructure (not shipped runtime):
         'src/__test-utils__/**',
         'src/test-helpers/**',

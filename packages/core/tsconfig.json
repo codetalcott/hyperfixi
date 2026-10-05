@@ -50,7 +50,7 @@
   // imports its baseline as a module, so tsc must know the file exists;
   // tsconfig.build.json narrows `include` back to src/, so none of it is
   // emitted or published.
-  "include": ["src/**/*", "vitest.config.ts", "baselines/*.json"],
+  "include": ["src/**/*", "browser-tests/**/*", "vitest.config.ts", "baselines/*.json"],
 
   "exclude": [
     "node_modules",

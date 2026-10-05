@@ -413,7 +413,7 @@ jobs:
 
           cd packages/core
 
-          if npx playwright test src/compatibility/browser-tests/bundle-compatibility.spec.ts --reporter=list 2>&1 | tee /tmp/bundle-compat.log; then
+          if npx playwright test browser-tests/bundle-compatibility.spec.ts --reporter=list 2>&1 | tee /tmp/bundle-compat.log; then
             echo "✅ All bundle compatibility tests passed" >> $GITHUB_STEP_SUMMARY
 
             # Extract and display the ASCII matrix from test output
