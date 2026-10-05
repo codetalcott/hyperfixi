@@ -258,9 +258,13 @@ npm run typecheck:scripts --prefix packages/core
    one installed copy of each contract package. It exists because 3.1.0
    shipped mcp-server pinning domains `^2.11.1` (framework a hard 2.x dep):
    every clean install got two framework copies and forked singletons, and
-   nothing on either side could see it. Release order for a framework MAJOR:
-   publish hyperfixi → the domains upstream Dependabot PR goes red → domains
-   `version:set` + publish → bump the range here → hyperfixi patch.
+   nothing on either side could see it. The guard runs AFTER the bump, so a
+   framework MAJOR cannot publish until domains accepts it. For a major that
+   only renumbers the contract (4.0): pack framework/semantic/intent here at the
+   new version, prove domains against them (its `pack-smoke.sh` takes
+   `UPSTREAM_TARBALLS`), release a domains patch peering `^old || ^new`, bump the
+   range here and relock, then publish hyperfixi. A major that changes the
+   contract needs a real domains major, cut after hyperfixi's is on npm.
 
 #### Stale-dist auto-rebuild
 

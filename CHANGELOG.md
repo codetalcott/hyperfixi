@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-04
+
 `@hyperfixi/core`'s own hyperscript engine is gone: its root re-exports `@hyperfixi/engine`, and
 its `hyperfixi.js` is the engine's 34 KB script-tag bundle where core's ~352 KB bundle used to be.
 The engine follows upstream `_hyperscript`'s grammar and is gated by upstream's own test suite, so
@@ -136,7 +138,10 @@ to 4.0.0 together. Everything under **Removed** is breaking, as is each **Change
 - **Dependencies.** `@lokascript/i18n`, `@hyperfixi/testing-framework`, `@hyperfixi/vite-plugin`,
   `@hyperfixi/behaviors`, `@hyperfixi/speech` and `@hyperfixi/intent-element` no longer depend
   on core. Core drops `@lokascript/intent`, morphlex, tslib and its optional peers. Versions are
-  lockstep, so upgrade `@hyperfixi/*` and `@lokascript/*` together.
+  lockstep, so upgrade `@hyperfixi/*` and `@lokascript/*` together. `@hyperfixi/mcp-server`,
+  `@lokascript/framework` (tests) and `@hyperfixi/server-bridge` (tests) range on
+  `@lokascript/domains ^3.0.1`, the first domains release whose peers accept framework,
+  semantic and intent 4.x (`^3.1.0 || ^4.0.0`).
 
 ### Added
 
