@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/mcp-server",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Model Context Protocol server for HyperFixi hyperscript development",
   "type": "module",
   "main": "dist/index.js",
@@ -37,23 +37,23 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/patterns-reference": "^4.0.0",
-    "@lokascript/compilation-service": "^4.0.0",
+    "@hyperfixi/patterns-reference": "^4.0.1",
+    "@lokascript/compilation-service": "^4.0.1",
     "@lokascript/domains": "^3.0.1",
-    "@lokascript/framework": "^4.0.0",
-    "@lokascript/planner": "^4.0.0",
-    "@lokascript/semantic": "^4.0.0",
+    "@lokascript/framework": "^4.0.1",
+    "@lokascript/planner": "^4.0.1",
+    "@lokascript/semantic": "^4.0.1",
     "@modelcontextprotocol/server": "^2.1.0",
     "yaml": "^2.9.1"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^4.0.0",
-    "@hyperfixi/engine": "^4.0.0",
-    "@hyperfixi/patterns-reference": "^4.0.0",
-    "@hyperfixi/server-bridge": "^4.0.0",
-    "@lokascript/compilation-service": "^4.0.0",
-    "@lokascript/framework": "^4.0.0",
-    "@lokascript/semantic": "^4.0.0"
+    "@hyperfixi/core": "^4.0.1",
+    "@hyperfixi/engine": "^4.0.1",
+    "@hyperfixi/patterns-reference": "^4.0.1",
+    "@hyperfixi/server-bridge": "^4.0.1",
+    "@lokascript/compilation-service": "^4.0.1",
+    "@lokascript/framework": "^4.0.1",
+    "@lokascript/semantic": "^4.0.1"
   },
   "peerDependenciesMeta": {
     "@lokascript/compilation-service": {
@@ -79,13 +79,13 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "^4.0.0",
-    "@hyperfixi/engine": "^4.0.0",
-    "@hyperfixi/patterns-reference": "^4.0.0",
-    "@hyperfixi/server-bridge": "^4.0.0",
-    "@lokascript/compilation-service": "^4.0.0",
-    "@lokascript/framework": "^4.0.0",
-    "@lokascript/semantic": "^4.0.0",
+    "@hyperfixi/core": "^4.0.1",
+    "@hyperfixi/engine": "^4.0.1",
+    "@hyperfixi/patterns-reference": "^4.0.1",
+    "@hyperfixi/server-bridge": "^4.0.1",
+    "@lokascript/compilation-service": "^4.0.1",
+    "@lokascript/framework": "^4.0.1",
+    "@lokascript/semantic": "^4.0.1",
     "@types/node": "^26.6.3",
     "tsup": "^8.0.0",
     "tsx": "^4.23.15",
