@@ -25,11 +25,9 @@ import { writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import {
-  setPatternGenerator,
-  generatePatternsForLanguage,
-  type LanguageProfile,
-} from '@lokascript/semantic/core';
+// `/core` installs its pattern generator (hand-crafted + generated) on import;
+// the per-language bundles keep it (src/bundles/shared.ts no longer replaces it).
+import '@lokascript/semantic/core';
 
 // Side-effect language registrations for the slim chain — same as the
 // per-language bundle entries. Keep in sync with SLIM_LANGS.
@@ -46,8 +44,6 @@ import { PARITY_CORPUS } from '../test/parity-harness';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Same wiring as src/bundles/shared.ts.
-setPatternGenerator((profile: LanguageProfile) => generatePatternsForLanguage(profile));
 
 const rows = PARITY_CORPUS.map(({ lang, input, config }) => ({
   lang,

@@ -69,25 +69,25 @@
     "lang": "es",
     "input": "quitar .hidden de yo",
     "full": "remove .hidden from me",
-    "slim": "remove .hidden"
+    "slim": "remove .hidden from me"
   },
   {
     "lang": "ja",
     "input": "自分 から .hidden を 削除",
     "full": "remove .hidden from me",
-    "slim": "remove .hidden"
+    "slim": "remove .hidden from me"
   },
   {
     "lang": "ko",
     "input": "나 에서 .hidden 을 제거",
     "full": "remove .hidden from me",
-    "slim": "remove .hidden"
+    "slim": "remove .hidden from me"
   },
   {
     "lang": "fr",
     "input": "supprimer .hidden de moi",
     "full": "remove .hidden from me",
-    "slim": "remove .hidden"
+    "slim": "remove .hidden from me"
   },
   {
     "lang": "es",
@@ -219,7 +219,7 @@
     "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
     "full": "on click repeat 3 times add \"<p>Line</p>\" to me end",
-    "slim": "on click repeat 3 add \"<p>Line</p>\""
+    "slim": "on click repeat 3 add \"<p>Line</p>\" to me"
   },
   {
     "lang": "ja",

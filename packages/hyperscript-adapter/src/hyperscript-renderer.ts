@@ -156,10 +156,12 @@ function renderCommand(node: SemanticNode): string {
     for (const [role, prep] of syntax) {
       const value = node.roles.get(role as SemanticRole);
       if (!value) continue;
-      // Skip an implicit "me" destination/source (the default in _hyperscript) —
-      // `add .active` not `add .active to me`; `remove .hidden` not `remove .hidden
-      // from me`. Mirrors the semantic renderer's implicit-me suppression so the
-      // full and slim (custom-renderer) paths agree.
+      // Skip an IMPLICIT "me" destination/source (one the matcher injected as
+      // the default) — `add .active` not `add .active to me`. An AUTHORED `me`
+      // stays (`put "x" into me`: without it the engine rejects `put "x"`).
+      // Mirrors the semantic renderer's implicit-me suppression so the full and
+      // slim (custom-renderer) paths agree. (Until 4.0.1 this dropped every `me`,
+      // authored or not.)
       //
       // KNOWN GAP, deliberately unfixed here: semantic's renderer EXCEPTS a
       // string-content patient (`add "<p>Line</p>" to me` keeps the
@@ -175,7 +177,8 @@ function renderCommand(node: SemanticNode): string {
       if (
         (role === 'destination' || role === 'source') &&
         value.type === 'reference' &&
-        value.value === 'me'
+        value.value === 'me' &&
+        (value as { implicit?: unknown }).implicit === true
       )
         continue;
       if (prep) parts.push(prep);

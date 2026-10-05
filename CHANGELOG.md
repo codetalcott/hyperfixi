@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/hyperscript-adapter`: the self-contained per-language and regional bundles read
+  German, French, Quechua and Chinese again.** `hyperscript-i18n-<lang>.global.js` and the regional
+  bundles installed a generate-only pattern generator over the one `@lokascript/semantic/core`
+  provides, discarding its hand-crafted patterns: in de, fr, qu and zh even
+  `on click toggle .active` stayed untranslated (the host then rejected it), and other languages
+  lost shapes such as `toggle … on #target`; 1106 of the corpus's 3772 translations read
+  differently from the full package. Published 3.x and 4.0.0 bundles alike; the all-languages
+  `hyperscript-i18n.global.js` was unaffected. The bundles now keep `/core`'s generator (sizes
+  unchanged: the ~23 KB 4.0.0 added was this generator, unused until now). Their English renderer
+  also drops only an implicit `me` now, so `put "x" into me` no longer renders as the
+  engine-invalid `put "x"` in every language. New gate: every built bundle runs translated
+  handlers on the engine (`test/adapter-iife.test.ts`).
 - **`@hyperfixi/core/metadata` describes 4.0.** `packageInfo.description` still said "Modern
   hyperscript engine with fixi/htmx integration" and `compatibility` "~85% official _hyperscript",
   both 3.x claims. `packageInfo.upstreamSuite` (`{ version, passed, total }`) now publishes the

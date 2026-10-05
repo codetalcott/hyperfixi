@@ -1,25 +1,21 @@
 /**
  * Integration test for the slim preprocessor path.
  *
- * This verifies the bug fix: per-language bundles import from
- * @lokascript/semantic/core (not the full package) and must wire up
- * the pattern generator themselves. Without that wiring,
- * getPatternsForLanguage() throws for non-English languages and
- * translation silently fails.
+ * Per-language bundles import from @lokascript/semantic/core (not the full
+ * package). `/core` installs the pattern generator (hand-crafted + generated)
+ * on import; without one, getPatternsForLanguage() throws for a language that
+ * registered only its tokenizer and profile. (Until 4.0.1 the bundles replaced
+ * it with a generate-only one, which lost the hand-crafted patterns: see
+ * adapter-iife.test.ts.)
  *
  * We replicate the same import chain as a per-language bundle entry:
- *   1. Import setPatternGenerator + generatePatternsForLanguage from core
- *   2. Wire up the pattern generator
- *   3. Register a single language via side-effect import
- *   4. Use preprocessToEnglish from slim-preprocessor
+ *   1. Import `/core` (installs the generator)
+ *   2. Register a single language via side-effect import
+ *   3. Use preprocessToEnglish from slim-preprocessor
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import {
-  setPatternGenerator,
-  generatePatternsForLanguage,
-  type LanguageProfile,
-} from '@lokascript/semantic/core';
+import { describe, it, expect } from 'vitest';
+import '@lokascript/semantic/core';
 
 // Register languages (side-effect imports, same as per-language bundle entries)
 // Spanish (SVO), Japanese (SOV), Arabic (VSO) — one per word order type
@@ -29,11 +25,6 @@ import '@lokascript/semantic/languages/ar';
 
 // Import from the slim preprocessor — NOT the full preprocessor
 import { preprocessToEnglish } from '../src/slim-preprocessor';
-
-beforeAll(() => {
-  // Wire up pattern generator — same as shared.ts does
-  setPatternGenerator((profile: LanguageProfile) => generatePatternsForLanguage(profile));
-});
 
 describe('slim-preprocessor (per-language bundle path)', () => {
   describe('Spanish translation', () => {
@@ -48,8 +39,9 @@ describe('slim-preprocessor (per-language bundle path)', () => {
     });
 
     it('translates remove command', () => {
-      const result = preprocessToEnglish('quitar .hidden de yo', 'es');
-      expect(result).toBe('remove .hidden'); // implicit "me" source suppressed
+      expect(preprocessToEnglish('quitar .hidden', 'es')).toBe('remove .hidden'); // implicit me
+      // An authored `de yo` stays, as the full path renders it.
+      expect(preprocessToEnglish('quitar .hidden de yo', 'es')).toBe('remove .hidden from me');
     });
 
     it('translates put command', () => {

@@ -10,15 +10,13 @@
  * path's real (schema-only) behavior.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  setPatternGenerator,
-  generatePatternsForLanguage,
-  type LanguageProfile,
-} from '@lokascript/semantic/core';
+// `/core` installs its pattern generator (hand-crafted + generated) on import;
+// the per-language bundles keep it (src/bundles/shared.ts no longer replaces it).
+import '@lokascript/semantic/core';
 import { preprocessToEnglish } from '../src/slim-preprocessor';
 import { PARITY_CORPUS, KNOWN_DIVERGENCES, loadFixture } from './parity-harness';
 
@@ -32,11 +30,6 @@ import '@lokascript/semantic/languages/fr';
 import '@lokascript/semantic/languages/ar';
 
 const fixture = loadFixture();
-
-beforeAll(() => {
-  // Same wiring as src/bundles/shared.ts.
-  setPatternGenerator((profile: LanguageProfile) => generatePatternsForLanguage(profile));
-});
 
 describe('preprocessor parity — slim path', () => {
   it.each(fixture.map((row, i) => [row.lang, row.input, i] as const))(
