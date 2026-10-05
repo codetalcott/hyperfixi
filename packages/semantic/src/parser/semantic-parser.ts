@@ -126,6 +126,15 @@ function isNestedBlock(node: SemanticNode | undefined): boolean {
   return !!node && (node.kind === 'loop' || isBlockCommand(node));
 }
 
+/** Two role values that read the same: the same type and the same surface. */
+function sameSemanticValue(a: SemanticValue, b: SemanticValue): boolean {
+  const surface = (v: SemanticValue): unknown => {
+    const { position: _position, ...rest } = v as SemanticValue & { position?: unknown };
+    return JSON.stringify(rest);
+  };
+  return a.type === b.type && surface(a) === surface(b);
+}
+
 /** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
 function loopVariableName(value: SemanticValue): string | undefined {
   switch (value.type) {
@@ -2796,6 +2805,18 @@ export class SemanticParserImpl implements ISemanticParser {
                 if (isIgnorableFusedRole(role, val) || isMarkerConceptJunk(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 if (rv !== undefined && valType(rv) === valType(val)) return true;
+                // The fused slot holds the command's PRIMARY arg under `patient`
+                // even where the schema has a real patient: swap's primary is its
+                // destination, so `al clic intercambiar #target con yo` fuses
+                // `patient:#target`, and the canonical parse moves #target to
+                // `destination` and reads `con yo` as the patient. The same value
+                // under the primary role is preservation; compared by type, a
+                // reference patient vetoed its own repair and `con yo` was lost in
+                // 12 languages (`con #b`, a selector, passed by coincidence).
+                if (role === 'patient' && primary && primary !== 'patient') {
+                  const pv = (first as CommandSemanticNode).roles.get(primary);
+                  if (pv !== undefined && sameSemanticValue(pv, val as SemanticValue)) return true;
+                }
                 // Pick's fused patterns bind the unit/variant word under the
                 // generic `patient` (`pick-event-es-vso` → patient:literal=
                 // "characters"), while the canonical pick variant pattern
