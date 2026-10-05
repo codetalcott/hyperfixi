@@ -26,6 +26,15 @@ import { VERSION } from './version';
  */
 const ENGINE_COMMAND_COUNT = 53;
 
+/**
+ * The engine's acceptance gate: upstream _hyperscript's own test suite, vendored
+ * at `version`, and how much of it the engine passes. A measured literal that
+ * `verify:reference` holds to `packages/engine/upstream-suite/known-failures.json`
+ * (which `test:upstream:update` rewrites), so a change there fails until this
+ * follows. It replaced 3.x's hand-typed "~85% official _hyperscript".
+ */
+const UPSTREAM_SUITE = { version: '0.9.93', passed: 1401, total: 1467 } as const;
+
 // =============================================================================
 // PACKAGE INFO
 // =============================================================================
@@ -40,8 +49,10 @@ export const packageInfo = {
   // three minors (2.7.2 vs a published 2.10.0); nothing read it, so nothing
   // caught it.
   version: VERSION,
-  description: 'Modern hyperscript engine with fixi/htmx integration',
-  compatibility: '~85% official _hyperscript',
+  description:
+    "The hyperscript engine (@hyperfixi/engine: upstream _hyperscript's grammar), with multilingual and editor tooling",
+  compatibility: `passes ${UPSTREAM_SUITE.passed} of ${UPSTREAM_SUITE.total} tests in upstream _hyperscript ${UPSTREAM_SUITE.version}'s own suite`,
+  upstreamSuite: UPSTREAM_SUITE,
   languages: 24,
   commands: ENGINE_COMMAND_COUNT,
   repository: 'https://github.com/codetalcott/hyperfixi',
@@ -227,7 +238,7 @@ export function compareBundles(bundleIds: string[]): Record<string, BundleInfo> 
 export const ecosystem = {
   core: {
     name: '@hyperfixi/core',
-    description: `Main runtime, parser, ${ENGINE_COMMAND_COUNT} commands`,
+    description: `@hyperfixi/engine re-exported (${ENGINE_COMMAND_COUNT} commands), plus multilingual and editor tooling`,
     npm: 'https://www.npmjs.com/package/@hyperfixi/core',
   },
   semantic: {
@@ -247,7 +258,7 @@ export const ecosystem = {
   },
   patternsReference: {
     name: '@hyperfixi/patterns-reference',
-    description: 'Pattern database with 212 LLM examples',
+    description: 'Queryable hyperscript patterns, translated into 24 languages',
     npm: 'https://www.npmjs.com/package/@hyperfixi/patterns-reference',
   },
   mcpServer: {

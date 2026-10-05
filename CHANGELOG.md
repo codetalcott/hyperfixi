@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@hyperfixi/core/metadata` describes 4.0.** `packageInfo.description` still said "Modern
+  hyperscript engine with fixi/htmx integration" and `compatibility` "~85% official _hyperscript",
+  both 3.x claims. `packageInfo.upstreamSuite` (`{ version, passed, total }`) now publishes the
+  engine's result on upstream _hyperscript's own test suite (1401 of 1467 in 0.9.93), and
+  `compatibility` is derived from it; `verify:reference` fails when it disagrees with
+  `packages/engine/upstream-suite/known-failures.json`. `ecosystem` drops "212 LLM examples".
+
 ## [4.0.0] - 2026-10-04
 
 `@hyperfixi/core`'s own hyperscript engine is gone: its root re-exports `@hyperfixi/engine`, and

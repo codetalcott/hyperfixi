@@ -11,7 +11,9 @@
  *   else but the exceptions listed below, each with its reason;
  * - every command and feature keyword has hover docs;
  * - every example — reference, pattern, hover — parses on the engine;
- * - the advertised command counts are the engine's.
+ * - the advertised command counts are the engine's;
+ * - `packageInfo.upstreamSuite` is the engine's upstream-suite result
+ *   (`packages/engine/upstream-suite/known-failures.json`).
  *
  * ## Why the engine, and not a list
  *
@@ -30,7 +32,7 @@
  * Run: npm run verify:reference
  */
 
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -279,6 +281,34 @@ function verifyCommandCounts() {
   );
 }
 
+// 4b. The advertised upstream-suite result is the engine's gate's.
+function verifyUpstreamSuite() {
+  const file = resolve(CORE_ROOT, '../engine/upstream-suite/known-failures.json');
+  const gate = JSON.parse(readFileSync(file, 'utf8')) as {
+    upstream: string;
+    passed: number;
+    total: number;
+  };
+  const advertised = packageInfo.upstreamSuite;
+  const errors: string[] = [];
+  if (advertised.version !== gate.upstream)
+    errors.push(
+      `  metadata upstreamSuite.version is ${advertised.version}; the gate vendors ${gate.upstream}`
+    );
+  if (advertised.passed !== gate.passed || advertised.total !== gate.total)
+    errors.push(
+      `  metadata upstreamSuite is ${advertised.passed}/${advertised.total}; known-failures.json records ${gate.passed}/${gate.total}`
+    );
+  verify(
+    'Upstream Suite',
+    errors.length === 0,
+    errors.length === 0
+      ? `✓ upstreamSuite matches the gate: ${gate.passed}/${gate.total} of upstream ${gate.upstream}`
+      : `✗ upstreamSuite differs from packages/engine/upstream-suite/known-failures.json`,
+    errors.length ? errors : undefined
+  );
+}
+
 // 5. Bundle files exist (a warning: dist/ is a build product).
 function verifyBundleFiles() {
   const distPath = resolve(CORE_ROOT, 'dist');
@@ -338,6 +368,7 @@ verifyReferenceCommands();
 verifyLspKeywords();
 verifyExamples();
 verifyCommandCounts();
+verifyUpstreamSuite();
 verifyBundleFiles();
 verifyCategories();
 

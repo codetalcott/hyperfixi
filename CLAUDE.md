@@ -748,7 +748,9 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > re-exports it and core's own engine was deleted in Phase C6, 4.0). Its acceptance oracle is
 > upstream `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
 packages/engine` fails on a new failing test AND on a listed one that now passes
-> (`upstream-suite/known-failures.json`, prune with `test:upstream:update`). It has no
+> (`upstream-suite/known-failures.json`, prune with `test:upstream:update`, then update
+> `UPSTREAM_SUITE` in `packages/core/src/metadata.ts`: `verify:reference` holds the published
+> `packageInfo.upstreamSuite` to that file). It has no
 > `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
 > so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
 > changing it; port from upstream's source, and measure before and after. It has two
