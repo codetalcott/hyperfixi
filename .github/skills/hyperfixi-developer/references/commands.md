@@ -5,25 +5,26 @@
 
 ## DOM Manipulation
 
-| Command  | Usage                          | Example                      |
-| -------- | ------------------------------ | ---------------------------- |
-| `toggle` | Toggle class/attribute         | `toggle .active on #menu`    |
-| `add`    | Add class/attribute/style      | `add .highlight to me`       |
-| `remove` | Remove class/attribute/element | `remove .error from #form`   |
-| `show`   | Show element                   | `show #modal with *opacity`  |
-| `hide`   | Hide element                   | `hide me with *opacity`      |
-| `put`    | Set element content            | `put "Hello" into #greeting` |
-| `append` | Add to end                     | `append "<li/>" to #list`    |
-| `swap`   | Replace content                | `swap #target innerHTML`     |
+| Command                                  | Usage                          | Example                                       |
+| ---------------------------------------- | ------------------------------ | --------------------------------------------- |
+| `toggle`                                 | Toggle class/attribute         | `toggle .active on #menu`                     |
+| `add`                                    | Add class/attribute/style      | `add .highlight to me`                        |
+| `remove`                                 | Remove class/attribute/element | `remove .error from #form`                    |
+| `show`                                   | Show element                   | `show #modal with *opacity`                   |
+| `hide`                                   | Hide element                   | `hide me with *opacity`                       |
+| `put`                                    | Set element content            | `put "Hello" into #greeting`                  |
+| `append`                                 | Add to end                     | `append "<li/>" to #list`                     |
+| `put … at start of` / `before` / `after` | Insert content                 | `put "<li/>" at start of #list`               |
+| `swap`                                   | Exchange two values            | `swap #a's textContent with #b's textContent` |
 
 ## Data Commands
 
-| Command     | Usage                 | Example            |
-| ----------- | --------------------- | ------------------ |
-| `set`       | Set variable/property | `set :count to 0`  |
-| `get`       | Get value             | `get #input.value` |
-| `increment` | Add 1                 | `increment :count` |
-| `decrement` | Subtract 1            | `decrement :count` |
+| Command     | Usage                 | Example              |
+| ----------- | --------------------- | -------------------- |
+| `set`       | Set variable/property | `set :count to 0`    |
+| `get`       | Get value             | `get #input's value` |
+| `increment` | Add 1                 | `increment :count`   |
+| `decrement` | Subtract 1            | `decrement :count`   |
 
 ## Events
 
@@ -41,12 +42,12 @@
 
 ## Control Flow
 
-| Command    | Usage        | Example                                  |
-| ---------- | ------------ | ---------------------------------------- |
-| `if/else`  | Conditional  | `if me matches .active ... else ... end` |
-| `repeat`   | Loop N times | `repeat 5 times ...`                     |
-| `for each` | Iterate      | `for item in items ...`                  |
-| `while`    | While loop   | `while :loading wait 100ms`              |
+| Command        | Usage        | Example                                  |
+| -------------- | ------------ | ---------------------------------------- |
+| `if/else`      | Conditional  | `if me matches .active ... else ... end` |
+| `repeat`       | Loop N times | `repeat 5 times ...`                     |
+| `for each`     | Iterate      | `for item in items ...`                  |
+| `repeat while` | While loop   | `repeat while :loading wait 100ms end`   |
 
 ## Navigation
 

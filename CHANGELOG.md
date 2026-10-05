@@ -21,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   also drops only an implicit `me` now, so `put "x" into me` no longer renders as the
   engine-invalid `put "x"` in every language. New gate: every built bundle runs translated
   handlers on the engine (`test/adapter-iife.test.ts`).
+- **`@hyperfixi/mcp-server`'s documentation resources teach upstream's spelling.**
+  `hyperscript://docs/commands`, `/expressions`, `/events` and `hyperscript://examples/common` still
+  taught core 3.x: `on submit.prevent`, `on input.debounce(300ms)`, `on keydown.enter`,
+  `swap #t innerHTML`, `while …`, a bare `[attr]` selector, a `parent` keyword, `you` as the event
+  target. The engine rejects those, or reads them as something else (`on click.prevent` listens for
+  an event named `click.prevent`). A test now parses every example on the engine. The repo's
+  `hyperfixi-developer` skill, generated from them, follows (`generate:skills` had been writing to
+  the wrong directory).
 - **`@hyperfixi/core/metadata` describes 4.0.** `packageInfo.description` still said "Modern
   hyperscript engine with fixi/htmx integration" and `compatibility` "~85% official _hyperscript",
   both 3.x claims. `packageInfo.upstreamSuite` (`{ version, passed, total }`) now publishes the

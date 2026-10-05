@@ -24,7 +24,11 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SKILL_DIR = join(ROOT, '.github/skills/hyperscript/references');
+// The hyperfixi-developer skill's references. (This pointed at
+// .github/skills/hyperscript/ until 4.0.1 — the adapter skill, which keeps only
+// adapter-setup.md — so regenerating wrote orphan copies beside it and the files
+// the developer skill links to were never refreshed.)
+const SKILL_DIR = join(ROOT, '.github/skills/hyperfixi-developer/references');
 
 const HEADER = `<!-- AUTO-GENERATED from packages/mcp-server/src/resources/content.ts -->
 <!-- Do not edit directly. Run: npm run generate:skills -->
@@ -53,7 +57,7 @@ if (!existsSync(SKILL_DIR)) {
 for (const { name, content } of files) {
   const filePath = join(SKILL_DIR, name);
   writeFileSync(filePath, HEADER + content);
-  console.log(`Generated: .github/skills/hyperscript/references/${name}`);
+  console.log(`Generated: .github/skills/hyperfixi-developer/references/${name}`);
 }
 
 console.log(`\nGenerated ${files.length} skill reference files`);

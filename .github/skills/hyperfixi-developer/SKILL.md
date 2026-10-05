@@ -1,11 +1,11 @@
 ---
 name: hyperfixi-developer
-description: 'Writes HyperFixi code for interactive web UIs using the LokaScript semantic engine. Use when user asks for toggles, modals, form validation, loading states, or other DOM interactions via HyperFixi.'
+description: "Writes HyperFixi code (upstream _hyperscript's grammar, run by @hyperfixi/engine) for interactive web UIs. Use when user asks for toggles, modals, form validation, loading states, or other DOM interactions via HyperFixi."
 ---
 
 # HyperFixi Developer
 
-Write HyperFixi code for interactive web interfaces -- a declarative, English-like language for adding interactivity to HTML elements, powered by the LokaScript semantic engine.
+Write HyperFixi code for interactive web interfaces -- a declarative, English-like language for adding interactivity to HTML elements. Since 4.0 the engine (`@hyperfixi/engine`) runs upstream \_hyperscript's grammar and is gated by upstream's own test suite: write upstream's spelling, and the code runs on hyperscript.org too (hyperfixi adds only `new X()` and `toggle <element>`).
 
 ## When to Use
 
@@ -54,7 +54,7 @@ HyperFixi code goes in `_="..."` attributes:
 ```html
 <button _="on click toggle .active on #menu">Menu</button>
 <input _="on input put my value into #preview" />
-<form _="on submit.prevent fetch /api/save put 'Saved!' into #status"></form>
+<form _="on submit halt the event then fetch /api/save then put 'Saved!' into #status"></form>
 ```
 
 **Key syntax:**
@@ -62,7 +62,8 @@ HyperFixi code goes in `_="..."` attributes:
 - `on <event>` -- Event handler
 - `me` -- Current element
 - `it` / `result` -- Last result
-- `:var` -- Local variable
+- `target` -- The element the event happened on
+- `x` -- Local variable; `:x` -- element-scoped; `$x` -- global
 - `#id` / `.class` -- Selectors
 
 ### 4. Validate Before Returning
@@ -88,25 +89,24 @@ If validation fails, use `get_diagnostics` for detailed error locations.
 | Loop             | `repeat 5 times ... end`               |
 | Conditional      | `if :x > 0 ... else ... end`           |
 
-## Event Modifiers
+## Event Options
+
+Upstream's forms. (3.x's dotted modifiers — `.prevent`, `.once`, `.debounce(300ms)` — were
+core-only; `on click.prevent` now listens for an event named `click.prevent`.)
 
 ```html
-<form _="on submit.prevent ...">
-  <!-- Prevent default -->
-  <button _="on click.once ...">
-    <!-- Run once -->
-    <input _="on input.debounce(300ms) ..." />
-    <!-- Debounce -->
-    <input _="on keydown.enter submit closest form" />
-    <input _="on keydown.ctrl.s.prevent call save()" />
-  </button>
-</form>
+<form _="on submit halt the event then fetch /api/save"></form>
+<!-- preventDefault + stopPropagation -->
+<button _="on click 1 add .seen to me">Run on the first click only</button>
+<input _="on input debounced at 300ms put my value into #preview" />
+<input _="on keydown[key is 'Enter'] send submit to the closest <form/>" />
+<input _="on keydown[ctrlKey and key is 's'] halt the event then call save()" />
 ```
 
 ## Common Mistakes
 
 1. **Using `click` on forms** -- use `submit` event instead
-2. **Forgetting `.prevent`** -- form submissions navigate away by default
+2. **Forgetting `halt the event`** -- form submissions navigate away by default
 3. **Complex logic in attributes** -- if code exceeds 5 lines, consider JavaScript
 4. **Not validating code** -- always use `validate_hyperscript` before returning
 5. **Missing selectors** -- verify `#id` and `.class` exist in DOM
@@ -117,7 +117,7 @@ If code doesn't work:
 
 1. Use `validate_hyperscript` to check syntax
 2. Use `debug_explain_handler` to get a step-by-step breakdown
-3. Add `log` command: `on click log me then toggle .active`
+3. Add `log` (`on click log me then toggle .active`) or `beep! x` (logs a value with its type), or `breakpoint`
 4. Check browser console for errors
 5. Verify selectors exist in DOM
 

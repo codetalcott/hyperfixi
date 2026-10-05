@@ -23,14 +23,15 @@ export function getCommandsReference(): string {
 | \`hide\` | Hide element | \`hide me with *opacity\` |
 | \`put\` | Set element content | \`put "Hello" into #greeting\` |
 | \`append\` | Add to end | \`append "<li/>" to #list\` |
-| \`swap\` | Replace content | \`swap #target innerHTML\` |
+| \`put … at start of\` / \`before\` / \`after\` | Insert content | \`put "<li/>" at start of #list\` |
+| \`swap\` | Exchange two values | \`swap #a's textContent with #b's textContent\` |
 
 ## Data Commands
 
 | Command | Usage | Example |
 |---------|-------|---------|
 | \`set\` | Set variable/property | \`set :count to 0\` |
-| \`get\` | Get value | \`get #input.value\` |
+| \`get\` | Get value | \`get #input's value\` |
 | \`increment\` | Add 1 | \`increment :count\` |
 | \`decrement\` | Subtract 1 | \`decrement :count\` |
 
@@ -55,7 +56,7 @@ export function getCommandsReference(): string {
 | \`if/else\` | Conditional | \`if me matches .active ... else ... end\` |
 | \`repeat\` | Loop N times | \`repeat 5 times ...\` |
 | \`for each\` | Iterate | \`for item in items ...\` |
-| \`while\` | While loop | \`while :loading wait 100ms\` |
+| \`repeat while\` | While loop | \`repeat while :loading wait 100ms end\` |
 
 ## Navigation
 
@@ -81,12 +82,14 @@ export function getExpressionsGuide(): string {
 ## Element References
 
 - \`me\` / \`myself\` - Current element
-- \`you\` - Event target
+- \`target\` - The element the event happened on (\`event.target\`)
+- \`you\` - The element a \`tell\` block talks to (unset in an ordinary handler)
 - \`it\` / \`result\` - Last expression result
 
 ## Variables
 
-- \`:name\` - Local variable
+- \`name\` - Local variable (this handler)
+- \`:name\` - Element-scoped variable (shared by the element's handlers)
 - \`$name\` - Global variable
 
 ## Selectors
@@ -94,14 +97,14 @@ export function getExpressionsGuide(): string {
 - \`#id\` - ID selector
 - \`.class\` - Class selector
 - \`<tag/>\` - Tag selector
-- \`[attr]\` - Attribute selector
+- \`<[attr='v']/>\` - Attribute query (a bare \`[attr]\` is not a selector)
 
 ## Positional
 
 - \`first\` / \`last\` - First/last in collection
 - \`next\` / \`previous\` - Relative navigation
-- \`closest\` - Nearest ancestor
-- \`parent\` - Direct parent
+- \`closest\` - Nearest ancestor (\`closest <form/>\`)
+- \`my parentElement\` - Direct parent (there is no \`parent\` keyword)
 
 ## Property Access
 
@@ -125,8 +128,9 @@ export function getExpressionsGuide(): string {
 
 - \`as Int\` - To integer
 - \`as String\` - To string
-- \`as json\` - Parse JSON
-- \`as FormData\` - Form to FormData
+- \`as JSON\` - Parse a JSON string
+- \`as Values\` - A form's (or element's) input values, as an object
+- (\`fetch … as json\` / \`as text\` / \`as html\` choose fetch's response format)
 `;
 }
 
@@ -136,7 +140,7 @@ export function getEventsReference(): string {
 ## Event Syntax
 
 \`\`\`text
-on <event>[.<modifier>...] [from <source>] <commands>
+on <event>[<filter>] [<count>] [from <source>] [debounced at <time> | throttled at <time>] <commands>
 \`\`\`
 
 ## Common Events
@@ -157,40 +161,42 @@ on <event>[.<modifier>...] [from <source>] <commands>
 | \`scroll\` | Element scrolled |
 | \`load\` | Element loaded |
 
-## Event Modifiers
+## Event Options
 
-| Modifier | Description |
-|----------|-------------|
-| \`.once\` | Handle only once |
-| \`.prevent\` | Prevent default |
-| \`.stop\` | Stop propagation |
-| \`.debounce(Nms)\` | Debounce handler |
-| \`.throttle(Nms)\` | Throttle handler |
-| \`.ctrl\` | Require Ctrl key |
-| \`.shift\` | Require Shift key |
-| \`.alt\` | Require Alt key |
-| \`.meta\` | Require Meta key |
+Upstream _hyperscript's forms (3.x's dotted \`.once\` / \`.prevent\` / \`.debounce(N)\` modifiers were
+core-only: \`on click.prevent\` is an event literally named \`click.prevent\`).
 
-## Key Modifiers
+| Option | Meaning |
+|--------|---------|
+| \`on click[shiftKey]\` | Filter: run only when the expression holds (event properties are in scope) |
+| \`on click 1\` | Count: only the first click (\`on click 2 to 4\`, \`on click 3 and on\`) |
+| \`on input debounced at 300ms\` | Debounce |
+| \`on scroll throttled at 100ms\` | Throttle |
+| \`on click from #other\` | Listen on another element |
+| \`halt the event\` | (a command) preventDefault + stopPropagation; \`halt the event's default\` for one |
+
+## Key Filters
 
 \`\`\`html
-<input _="on keydown.enter submit closest form">
-<div _="on keydown.escape hide me">
-<input _="on keydown.ctrl.s.prevent call save()">
+<input _="on keydown[key is 'Enter'] send submit to the closest <form/>">
+<div _="on keydown[key is 'Escape'] from window hide me">
+<input _="on keydown[ctrlKey and key is 's'] halt the event then call save()">
 \`\`\`
 
 ## Delegated Events
 
+\`target\` is the element the event happened on.
+
 \`\`\`html
-<ul _="on click from li toggle .selected on you">
-<form _="on input from input validate(you)">
+<ul _="on click toggle .selected on the closest <li/> to target">
+<form _="on input call validate(target)">
 \`\`\`
 
 ## Custom Events
 
 \`\`\`html
 <button _="on click send refresh to #list">
-<div _="on refresh fetch /api/items put it into me">
+<div _="on refresh fetch /api/items as html then put it into me">
 \`\`\`
 `;
 }
@@ -217,7 +223,7 @@ export function getCommonPatterns(): string {
 
 \`\`\`html
 <input _="on blur if my value is empty add .error else remove .error">
-<form _="on submit prevent default if .error exists return else fetch /api">
+<form _="on submit halt the event then if <.error/> in me exists exit end then fetch /api">
 \`\`\`
 
 ## Loading State
@@ -231,10 +237,11 @@ export function getCommonPatterns(): string {
 ## Infinite Scroll
 
 \`\`\`html
-<div _="on intersection(intersecting) from .sentinel
+<!-- the sentinel sits at the end of the list and loads more as it scrolls into view -->
+<div class="sentinel" _="on intersection(intersecting)
         if intersecting
-          fetch /more
-          append it to me
+          fetch /more as html
+          put it before me
         end">
 </div>
 \`\`\`
@@ -242,8 +249,8 @@ export function getCommonPatterns(): string {
 ## Debounced Search
 
 \`\`\`html
-<input _="on input.debounce(300ms)
-          fetch /search?q={my value} as json
+<input _="on input debounced at 300ms
+          fetch \`/search?q=\${my value}\` as html
           put it into #results">
 \`\`\`
 
