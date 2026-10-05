@@ -22,7 +22,7 @@
 
 ```html
 <input _="on blur if my value is empty add .error else remove .error" />
-<form _="on submit prevent default if .error exists return else fetch /api"></form>
+<form _="on submit halt the event then if <.error/> in me exists exit end then fetch /api"></form>
 ```
 
 ## Loading State
@@ -34,11 +34,13 @@
 ## Infinite Scroll
 
 ```html
+<!-- the sentinel sits at the end of the list and loads more as it scrolls into view -->
 <div
-  _="on intersection(intersecting) from .sentinel
+  class="sentinel"
+  _="on intersection(intersecting)
         if intersecting
-          fetch /more
-          append it to me
+          fetch /more as html
+          put it before me
         end"
 ></div>
 ```
@@ -47,8 +49,8 @@
 
 ```html
 <input
-  _="on input.debounce(300ms)
-          fetch /search?q={my value} as json
+  _="on input debounced at 300ms
+          fetch `/search?q=${my value}` as html
           put it into #results"
 />
 ```

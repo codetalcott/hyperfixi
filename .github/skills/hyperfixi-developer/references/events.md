@@ -6,7 +6,7 @@
 ## Event Syntax
 
 ```text
-on <event>[.<modifier>...] [from <source>] <commands>
+on <event>[<filter>] [<count>] [from <source>] [debounced at <time> | throttled at <time>] <commands>
 ```
 
 ## Common Events
@@ -27,34 +27,36 @@ on <event>[.<modifier>...] [from <source>] <commands>
 | `scroll`     | Element scrolled       |
 | `load`       | Element loaded         |
 
-## Event Modifiers
+## Event Options
 
-| Modifier         | Description       |
-| ---------------- | ----------------- |
-| `.once`          | Handle only once  |
-| `.prevent`       | Prevent default   |
-| `.stop`          | Stop propagation  |
-| `.debounce(Nms)` | Debounce handler  |
-| `.throttle(Nms)` | Throttle handler  |
-| `.ctrl`          | Require Ctrl key  |
-| `.shift`         | Require Shift key |
-| `.alt`           | Require Alt key   |
-| `.meta`          | Require Meta key  |
+Upstream _hyperscript's forms (3.x's dotted `.once` / `.prevent` / `.debounce(N)` modifiers were
+core-only: `on click.prevent` is an event literally named `click.prevent`).
 
-## Key Modifiers
+| Option                         | Meaning                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `on click[shiftKey]`           | Filter: run only when the expression holds (event properties are in scope)       |
+| `on click 1`                   | Count: only the first click (`on click 2 to 4`, `on click 3 and on`)             |
+| `on input debounced at 300ms`  | Debounce                                                                         |
+| `on scroll throttled at 100ms` | Throttle                                                                         |
+| `on click from #other`         | Listen on another element                                                        |
+| `halt the event`               | (a command) preventDefault + stopPropagation; `halt the event's default` for one |
+
+## Key Filters
 
 ```html
-<input _="on keydown.enter submit closest form" />
-<div _="on keydown.escape hide me">
-  <input _="on keydown.ctrl.s.prevent call save()" />
+<input _="on keydown[key is 'Enter'] send submit to the closest <form/>" />
+<div _="on keydown[key is 'Escape'] from window hide me">
+  <input _="on keydown[ctrlKey and key is 's'] halt the event then call save()" />
 </div>
 ```
 
 ## Delegated Events
 
+`target` is the element the event happened on.
+
 ```html
-<ul _="on click from li toggle .selected on you">
-  <form _="on input from input validate(you)"></form>
+<ul _="on click toggle .selected on the closest <li/> to target">
+  <form _="on input call validate(target)"></form>
 </ul>
 ```
 
@@ -62,6 +64,6 @@ on <event>[.<modifier>...] [from <source>] <commands>
 
 ```html
 <button _="on click send refresh to #list">
-  <div _="on refresh fetch /api/items put it into me"></div>
+  <div _="on refresh fetch /api/items as html then put it into me"></div>
 </button>
 ```
