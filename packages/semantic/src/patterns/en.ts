@@ -31,12 +31,14 @@ import { swapPatternsEn } from './languages/en/swap';
 // types) had no effect on the registered `en` module.
 import { setPossessiveEnglish } from './languages/en/set';
 
-// Import from consolidated pattern files (Phase 3.2)
-import { getTogglePatternsForLanguage } from './toggle';
-import { getPutPatternsForLanguage } from './put';
-import { getEventHandlerPatternsForLanguage } from './event-handler';
+// English's own functions, not the dispatchers: dist/languages/en.js inlines this
+// module, and an inlined dispatcher reads an inlined copy of the hand-crafted
+// registry that nothing registers into (see ./handcrafted.ts).
+import { getTogglePatternsEn } from './toggle';
+import { getPutPatternsEn } from './put';
+import { getEventHandlerPatternsEn } from './event-handler';
 import { getRepeatPatternsForLanguage } from './repeat';
-import { getWaitPatternsForLanguage } from './wait';
+import { getWaitPatternsEn } from './wait';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -267,9 +269,9 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   const patterns: LanguagePattern[] = [];
 
   // 1. Hand-crafted patterns
-  patterns.push(...getTogglePatternsForLanguage('en'));
-  patterns.push(...getPutPatternsForLanguage('en'));
-  patterns.push(...getEventHandlerPatternsForLanguage('en'));
+  patterns.push(...getTogglePatternsEn());
+  patterns.push(...getPutPatternsEn());
+  patterns.push(...getEventHandlerPatternsEn());
   // Repeat loop-HEAD patterns (`for-in` / `while` — R1 cluster D): kill the
   // generated repeat's en-reference noise (`repeat for item in .items` →
   // quantity:expression="item" + event:literal="in", `.items` dropped) by
@@ -279,7 +281,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   // Wait `for {event}` head (wait-for-event R1 arc): the generated
   // `wait {duration}` captured the KEYWORD as the duration and dropped the
   // event name + everything after it.
-  patterns.push(...getWaitPatternsForLanguage('en'));
+  patterns.push(...getWaitPatternsEn());
 
   // 2. English-only hand-crafted patterns
   patterns.push(

@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getAddPatternsBn(): LanguagePattern[] {
+export function getAddPatternsBn(): LanguagePattern[] {
   return [
     // Full pattern: .active কে যোগ করুন
     {
@@ -72,7 +73,7 @@ function getAddPatternsBn(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsHi(): LanguagePattern[] {
+export function getAddPatternsHi(): LanguagePattern[] {
   return [
     // Full pattern: .class को #element में जोड़ें
     {
@@ -134,7 +135,7 @@ function getAddPatternsHi(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsIt(): LanguagePattern[] {
+export function getAddPatternsIt(): LanguagePattern[] {
   return [
     {
       id: 'add-it-full',
@@ -185,7 +186,7 @@ function getAddPatternsIt(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsPl(): LanguagePattern[] {
+export function getAddPatternsPl(): LanguagePattern[] {
   return [
     {
       id: 'add-pl-full',
@@ -241,7 +242,7 @@ function getAddPatternsPl(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsQu(): LanguagePattern[] {
+export function getAddPatternsQu(): LanguagePattern[] {
   return [
     // SOV pattern: .active ta yapay (patient + verb)
     {
@@ -326,7 +327,7 @@ function getAddPatternsQu(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsRu(): LanguagePattern[] {
+export function getAddPatternsRu(): LanguagePattern[] {
   return [
     {
       id: 'add-ru-full',
@@ -377,7 +378,7 @@ function getAddPatternsRu(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsTh(): LanguagePattern[] {
+export function getAddPatternsTh(): LanguagePattern[] {
   // No hand-crafted Thai add patterns: the generated patterns
   // (add-th-generated `เพิ่ม {patient} [ใน {destination}]` + add-th-generated-simple)
   // cover both the bare and with-destination forms, exactly like English (which
@@ -392,7 +393,7 @@ function getAddPatternsTh(): LanguagePattern[] {
   return [];
 }
 
-function getAddPatternsUk(): LanguagePattern[] {
+export function getAddPatternsUk(): LanguagePattern[] {
   return [
     {
       id: 'add-uk-full',
@@ -443,7 +444,7 @@ function getAddPatternsUk(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsVi(): LanguagePattern[] {
+export function getAddPatternsVi(): LanguagePattern[] {
   return [
     {
       id: 'add-vi-full',
@@ -494,7 +495,7 @@ function getAddPatternsVi(): LanguagePattern[] {
   ];
 }
 
-function getAddPatternsZh(): LanguagePattern[] {
+export function getAddPatternsZh(): LanguagePattern[] {
   return [
     {
       id: 'add-zh-full',
@@ -558,28 +559,5 @@ function getAddPatternsZh(): LanguagePattern[] {
  * Get add patterns for a specific language.
  */
 export function getAddPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'bn':
-      return getAddPatternsBn();
-    case 'hi':
-      return getAddPatternsHi();
-    case 'it':
-      return getAddPatternsIt();
-    case 'pl':
-      return getAddPatternsPl();
-    case 'qu':
-      return getAddPatternsQu();
-    case 'ru':
-      return getAddPatternsRu();
-    case 'th':
-      return getAddPatternsTh();
-    case 'uk':
-      return getAddPatternsUk();
-    case 'vi':
-      return getAddPatternsVi();
-    case 'zh':
-      return getAddPatternsZh();
-    default:
-      return [];
-  }
+  return handcrafted('add', language) ?? [];
 }

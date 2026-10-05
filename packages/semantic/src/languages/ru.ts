@@ -14,7 +14,8 @@
  * ```
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/ru';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { russianTokenizer } from '../tokenizers/russian';
 import { russianProfile } from '../generators/profiles/russian';
 
@@ -23,4 +24,5 @@ export { russianTokenizer } from '../tokenizers/russian';
 export { russianProfile } from '../generators/profiles/russian';
 
 // Self-register on import
+registerHandcrafted('ru', handcraftedPatterns);
 registerLanguage('ru', russianTokenizer, russianProfile);

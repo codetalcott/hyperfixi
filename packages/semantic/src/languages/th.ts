@@ -5,11 +5,13 @@
  * Import this module to enable Thai language support.
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/th';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { thaiTokenizer } from '../tokenizers/thai';
 import { thaiProfile } from '../generators/profiles/thai';
 
 // Register Thai with the tokenizer and profile
+registerHandcrafted('th', handcraftedPatterns);
 registerLanguage('th', thaiTokenizer, thaiProfile);
 
 // Re-export for direct access

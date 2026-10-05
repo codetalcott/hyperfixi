@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getTriggerPatternsEn(): LanguagePattern[] {
+export function getTriggerPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'trigger-en-full',
@@ -59,7 +60,7 @@ function getTriggerPatternsEn(): LanguagePattern[] {
   ];
 }
 
-function getTriggerPatternsZh(): LanguagePattern[] {
+export function getTriggerPatternsZh(): LanguagePattern[] {
   return [
     {
       // Verb-first BA: 触发 把 {event} 在 {destination}. The i18n transformer
@@ -113,7 +114,7 @@ function getTriggerPatternsZh(): LanguagePattern[] {
 /**
  * Get trigger patterns for a specific language.
  */
-function getTriggerPatternsHe(): LanguagePattern[] {
+export function getTriggerPatternsHe(): LanguagePattern[] {
   return [
     {
       // Accusative-marked trigger (`הפעל את init`) — see send-he-et.
@@ -153,7 +154,7 @@ function getTriggerPatternsHe(): LanguagePattern[] {
   ];
 }
 
-function getTriggerPatternsQu(): LanguagePattern[] {
+export function getTriggerPatternsQu(): LanguagePattern[] {
   return [
     {
       // The i18n corpus shape: `sortable:start ta noqa man kichay` — event
@@ -197,16 +198,5 @@ function getTriggerPatternsQu(): LanguagePattern[] {
 }
 
 export function getTriggerPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'en':
-      return getTriggerPatternsEn();
-    case 'zh':
-      return getTriggerPatternsZh();
-    case 'he':
-      return getTriggerPatternsHe();
-    case 'qu':
-      return getTriggerPatternsQu();
-    default:
-      return [];
-  }
+  return handcrafted('trigger', language) ?? [];
 }

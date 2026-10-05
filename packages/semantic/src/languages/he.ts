@@ -5,11 +5,13 @@
  * Importing this module registers Hebrew tokenizer and profile.
  */
 
-import { registerLanguage } from '../core';
+import { handcraftedPatterns } from '../patterns/handcrafted/he';
+import { registerLanguage, registerHandcrafted } from '../core';
 import { hebrewTokenizer } from '../tokenizers/he';
 import { hebrewProfile } from '../generators/profiles/he';
 
 export { hebrewTokenizer } from '../tokenizers/he';
 export { hebrewProfile } from '../generators/profiles/he';
 
+registerHandcrafted('he', handcraftedPatterns);
 registerLanguage('he', hebrewTokenizer, hebrewProfile);

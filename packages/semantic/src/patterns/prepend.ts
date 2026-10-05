@@ -8,8 +8,9 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { handcrafted } from './handcrafted';
 
-function getPrependPatternsEn(): LanguagePattern[] {
+export function getPrependPatternsEn(): LanguagePattern[] {
   return [
     {
       id: 'prepend-en-full',
@@ -37,10 +38,5 @@ function getPrependPatternsEn(): LanguagePattern[] {
  * Get prepend patterns for a specific language.
  */
 export function getPrependPatternsForLanguage(language: string): LanguagePattern[] {
-  switch (language) {
-    case 'en':
-      return getPrependPatternsEn();
-    default:
-      return [];
-  }
+  return handcrafted('prepend', language) ?? [];
 }
