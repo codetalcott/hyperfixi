@@ -66,9 +66,10 @@ destination:#btn]`), or semantic JSON.
    `get_code_fixes` maps coded errors to concrete fixes, `get_command_docs`
    lists each command's roles, `search_patterns` finds working examples.
    Re-validate.
-4. **`compile_hyperscript`** — once valid, emit JavaScript. Or stop: valid
-   hyperscript in a `_="..."` attribute is a complete deliverable (the runtime
-   compiles it in the browser).
+4. **Use it** — once valid, hyperscript in a `_="..."` attribute is a complete
+   deliverable: the engine (`@hyperfixi/engine`) runs it in the browser.
+   Natural-language input has already been parsed by that engine during
+   validation (`ENGINE_PARSE_ERROR` when it cannot read it).
 5. **Present** — `translate_code` renders your result in the user's language
    for review, and every result carries a `verification` report scored against
    the source: show the user `verification.faithful` alongside the translation
@@ -113,10 +114,9 @@ the roles say `me`. Repair and re-validate:
       "roles": { "patient":     { "type": "selector", "value": ".active" },
                  "destination": { "type": "selector", "value": "#panel" } },
       "trigger": { "event": "click" } }, "confidence": 1 }
-
-→ compile_hyperscript { "code": "on click toggle .active on #panel", "language": "en" }
-← { "ok": true, "js": "function _handler_click_toggle_…(_event) { … }", "helpers": …, "size": … }
 ```
+
+That attribute, `_="on click toggle .active on #panel"`, is the deliverable.
 
 ### Beyond single commands
 
@@ -126,8 +126,6 @@ the roles say `me`. Repair and re-validate:
   [`@lokascript/framework`](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md).
 - **Test generation** — `generate_tests` emits Playwright assertions from the
   same IR; `generate_component` emits React/Vue/Svelte components.
-- **Ahead-of-time** — `packages/aot-compiler` compiles hyperscript to plain JS
-  at build time if you don't want the runtime at all.
 
 ## Known silent traps
 
@@ -140,8 +138,8 @@ probe of 37 plausible phrasings found 97% parsed but only 49% behaved correctly
 **Wrong phrasings now warn.** A parse that drops tokens carries
 `UNCONSUMED_INPUT`; a parse that consumes everything into a provably inert
 shape carries one of `INERT_QUANTIFIER_TARGET` (`add .x to all .y`),
-`HALF_PARSED_CONDITION` (`if #el has class .x`), `UNSUPPORTED_QUERY_LITERAL`
-(`add .x to <body/>`), or `INERT_PROPERTY_WRITE` (`set the text of #el`). All
+`HALF_PARSED_CONDITION` (`if #el has class .x`), or `INERT_PROPERTY_WRITE`
+(`set the text of #el`). All
 are `warning` severity with a concrete suggestion — **treat any warning as a
 failure and repair**, exactly like an error. In the probe, 16 of the 19 wrong
 phrasings now warn and 1 is rejected outright.

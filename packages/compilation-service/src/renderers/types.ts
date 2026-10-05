@@ -28,14 +28,10 @@ export interface TestRenderer {
 export interface TestRenderOptions {
   /** Override auto-generated test name */
   testName?: string;
-  /** How to load the hyperscript behavior in the test */
-  executionMode?: 'runtime' | 'compiled';
-  /** Path to the hyperscript bundle (runtime mode; default: @hyperfixi/engine's hyperfixi-hs.js) */
+  /** Path to the hyperscript bundle (default: @hyperfixi/engine's hyperfixi-hs.js) */
   bundlePath?: string;
   /** Original hyperscript source (for embedding in fixture) */
   hyperscript?: string;
-  /** Compiled JS code (for compiled mode) */
-  compiledJs?: string;
 }
 
 // =============================================================================

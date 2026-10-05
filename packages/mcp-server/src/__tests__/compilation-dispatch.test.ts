@@ -18,7 +18,6 @@ import { compilationTools, handleCompilationTool } from '../tools/compilation.js
 
 describe('Tool definition contracts', () => {
   const expectedTools = [
-    'compile_hyperscript',
     'validate_and_compile',
     'translate_code',
     'generate_tests',
@@ -54,18 +53,6 @@ describe('Tool definition contracts', () => {
 // =============================================================================
 
 describe('Schema-handler parameter parity', () => {
-  it('compile_hyperscript schema matches handler expectations', () => {
-    const tool = compilationTools.find(t => t.name === 'compile_hyperscript')!;
-    const props = Object.keys(tool.inputSchema.properties!);
-
-    // Handler reads: code, explicit, semantic, language, confidence
-    expect(props).toContain('code');
-    expect(props).toContain('explicit');
-    expect(props).toContain('semantic');
-    expect(props).toContain('language');
-    expect(props).toContain('confidence');
-  });
-
   it('validate_and_compile schema matches handler expectations', () => {
     const tool = compilationTools.find(t => t.name === 'validate_and_compile')!;
     const props = Object.keys(tool.inputSchema.properties!);
@@ -98,7 +85,8 @@ describe('Schema-handler parameter parity', () => {
     expect(props).toContain('semantic');
     expect(props).toContain('language');
     expect(props).toContain('testName');
-    expect(props).toContain('executionMode');
+    // 'compiled' was the only other execution mode; it retired with the AOT compiler.
+    expect(props).not.toContain('executionMode');
   });
 
   it('generate_component schema matches handler expectations', () => {
@@ -145,7 +133,7 @@ describe('Schema-handler parameter parity', () => {
 
 describe('MCP response shape contract', () => {
   it('successful response has content array with text type', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
+    const result = await handleCompilationTool('validate_and_compile', {
       explicit: '[toggle patient:.active]',
     });
 
@@ -157,7 +145,7 @@ describe('MCP response shape contract', () => {
   }, 30000);
 
   it('successful response has isError=false or undefined', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
+    const result = await handleCompilationTool('validate_and_compile', {
       explicit: '[toggle patient:.active]',
     });
 
@@ -165,7 +153,7 @@ describe('MCP response shape contract', () => {
   }, 30000);
 
   it('failure response has isError=true', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
+    const result = await handleCompilationTool('validate_and_compile', {
       code: 'xyzzy blorp',
       language: 'en',
       confidence: 0.9,
@@ -175,7 +163,7 @@ describe('MCP response shape contract', () => {
   }, 30000);
 
   it('response text is valid JSON', async () => {
-    const result = await handleCompilationTool('compile_hyperscript', {
+    const result = await handleCompilationTool('validate_and_compile', {
       explicit: '[toggle patient:.active]',
     });
 
@@ -270,12 +258,7 @@ describe('diff_behaviors via MCP', () => {
 // =============================================================================
 
 describe('All tools accept explicit syntax', () => {
-  const toolsWithExplicit = [
-    'compile_hyperscript',
-    'validate_and_compile',
-    'generate_tests',
-    'generate_component',
-  ];
+  const toolsWithExplicit = ['validate_and_compile', 'generate_tests', 'generate_component'];
 
   for (const toolName of toolsWithExplicit) {
     it(`${toolName} accepts explicit syntax input`, async () => {
@@ -291,12 +274,7 @@ describe('All tools accept explicit syntax', () => {
 });
 
 describe('All tools accept LLM JSON', () => {
-  const toolsWithSemantic = [
-    'compile_hyperscript',
-    'validate_and_compile',
-    'generate_tests',
-    'generate_component',
-  ];
+  const toolsWithSemantic = ['validate_and_compile', 'generate_tests', 'generate_component'];
 
   for (const toolName of toolsWithSemantic) {
     it(`${toolName} accepts LLM JSON input`, async () => {
@@ -321,8 +299,8 @@ describe('All tools accept LLM JSON', () => {
 describe('Error wrapping consistency', () => {
   it('handler catches exceptions and returns isError', async () => {
     // Pass a value that will cause a type error inside the handler
-    const result = await handleCompilationTool('compile_hyperscript', {
-      // Empty args — service.compile({}) should produce diagnostics, not crash
+    const result = await handleCompilationTool('validate_and_compile', {
+      // Empty args — service.validate({}) should produce diagnostics, not crash
     });
 
     // Whether it fails or succeeds, the response should be well-formed:

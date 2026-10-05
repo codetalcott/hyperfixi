@@ -1,8 +1,8 @@
 /**
  * @lokascript/compilation-service
  *
- * Semantic compilation service for LokaScript.
- * Validates and compiles hyperscript from 24 languages, explicit syntax, or LLM JSON.
+ * Semantic service for LokaScript.
+ * Validates and translates hyperscript from 24 languages, explicit syntax, or LLM JSON.
  * Generates behavior-level tests from semantic analysis.
  * Generates framework components (React, Vue, Svelte) from abstract operations.
  */
@@ -13,7 +13,6 @@ export { CompilationService } from './service.js';
 // Types
 export type {
   CompileRequest,
-  CompileResponse,
   ValidationResponse,
   TranslateRequest,
   TranslateResponse,
@@ -38,9 +37,6 @@ export type {
 // Input utilities (for custom pipelines)
 export { detectFormat } from './input/detect.js';
 export { validateSemanticJSON, jsonToSemanticNode } from './input/json-schema.js';
-
-// Cache (for custom configurations)
-export { SemanticCache, generateCacheKey } from './compile/cache.js';
 
 // Abstract operations (for custom renderers / Phase 3 codegen targets)
 export type {

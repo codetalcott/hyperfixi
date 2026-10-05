@@ -197,7 +197,7 @@ exists (policy 13).
 
 ## 4. Parked, and decisions waiting on the owner
 
-- **AOT** is parked (owner, 2026-09-27): no AOT work, and no AOT lane in the value matrix.
+- **AOT** retired (owner, 2026-10-04): `packages/aot-compiler` and MCP `compile_hyperscript` were removed for 4.0 (it was parked from 2026-09-27).
 - **`hx-query`** (htmx 4's new verb, V4): adopt its semantics in core's htmx-compat layer, or treat it
   as vocabulary only?
 - **Community-review badges and ledgers** (PR1) wait for real reviewer inflow.

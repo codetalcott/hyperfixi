@@ -6,6 +6,6 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  // Bundle aot-compiler (private, not on npm) — keep semantic/hono as peer deps
+  // Keep semantic/hono as peer deps
   external: ['@lokascript/semantic', 'hono', '@hono/node-server'],
 });

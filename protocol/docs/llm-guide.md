@@ -392,8 +392,8 @@ The following are not part of the protocol layer — they live in the hyperfixi 
 
 The hyperfixi MCP server exposes tools that accept LSE:
 
-- **`execute_lse`** — execute LSE directly via the hyperfixi runtime
-- **`validate_lse`** — validate LSE without executing, return diagnostics
+- **`lse_to_hyperscript`** — validate and normalize LSE returned by an LLM
+- **`validate_lse`** — validate LSE, return diagnostics
 - **`translate_lse`** — translate LSE bracket syntax to natural language in any of 24 supported languages
 
 All three accept bracket syntax input. See the hyperfixi docs for invocation details.

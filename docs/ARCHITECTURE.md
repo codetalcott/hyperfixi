@@ -40,7 +40,6 @@ packages/
 ├── compilation-service/# @lokascript/compilation-service — Multi-target codegen
 ├── hyperscript-adapter/# @lokascript/hyperscript-adapter — Plugin for original _hyperscript
 ├── language-server/    # @lokascript/language-server — LSP implementation (24 languages)
-├── aot-compiler/       # @hyperfixi/aot-compiler — Ahead-of-time compiler
 ├── server-bridge/      # @hyperfixi/server-bridge — Server-side route extraction
 │
 ├── language-server-hyperscript/ # @hyperscript-tools/language-server — LSP for original _hyperscript

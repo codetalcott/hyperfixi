@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../engine ../patterns-reference ../aot-compiler ../compilation-service",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../hyperscript-adapter ../engine ../patterns-reference ../compilation-service",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

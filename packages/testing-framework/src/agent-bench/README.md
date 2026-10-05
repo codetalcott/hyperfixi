@@ -138,7 +138,9 @@ class selector (`#box .has class .danger`) so the condition is always falsy;
 compilation-service validation pipeline (`validation/inert-shapes.ts`) matches
 those fingerprints and warns (`INERT_QUANTIFIER_TARGET`,
 `HALF_PARSED_CONDITION`, `UNSUPPORTED_QUERY_LITERAL`, `INERT_PROPERTY_WRITE`)
-— warnings only, still no parser change.
+— warnings only, still no parser change. (`UNSUPPORTED_QUERY_LITERAL` retired with
+the AOT compiler in 4.0: the engine reads query literals, and this benchmark,
+which executes on it since C4, scores `<body/>` correct.)
 
 |                                       | pre-3b      | after slice 1 | after slice 2          |
 | ------------------------------------- | ----------- | ------------- | ---------------------- |

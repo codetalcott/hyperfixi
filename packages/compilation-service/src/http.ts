@@ -105,18 +105,7 @@ export function createApp(options: HttpOptions = {}): Hono {
 
   app.get('/health', async c => {
     const ready = service !== null;
-    const base = { ok: true, version: '1.4.0', ready, uptime: process.uptime() };
-    if (ready) {
-      return c.json({ ...base, cache: service!.getCacheStats() });
-    }
-    return c.json(base);
-  });
-
-  app.post('/compile', async c => {
-    const svc = await getService();
-    const body = await c.req.json<CompileRequest>();
-    const result = svc.compile(body);
-    return c.json(result, result.ok ? 200 : 422);
+    return c.json({ ok: true, version: '1.4.0', ready, uptime: process.uptime() });
   });
 
   app.post('/validate', async c => {
@@ -161,7 +150,7 @@ export function createApp(options: HttpOptions = {}): Hono {
    * (e.g. via the `lse_generate_with_correction` MCP tool) and renders
    * it to the requested target format.
    *
-   * Body: { lse: string, target?: 'js'|'react'|'vue'|'svelte'|'intent-element', task?: string }
+   * Body: { lse: string, target: 'react'|'vue'|'svelte'|'intent-element', task?: string }
    */
   app.post('/generate', async c => {
     const svc = await getService();
@@ -183,17 +172,6 @@ export function createApp(options: HttpOptions = {}): Hono {
     }
     const result = await svc.generate(body);
     return c.json(result, result.ok ? 200 : 422);
-  });
-
-  app.get('/cache/stats', async c => {
-    const svc = await getService();
-    return c.json(svc.getCacheStats());
-  });
-
-  app.delete('/cache', async c => {
-    const svc = await getService();
-    svc.clearCache();
-    return c.json({ ok: true });
   });
 
   // --- Error handler ---

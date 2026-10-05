@@ -40,7 +40,7 @@ jobs:
         run: |
           PACKAGES="${{ github.event.inputs.packages }}"
           if [ "$PACKAGES" = "all" ]; then
-            PACKAGES="intent,engine,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,aot-compiler,compilation-service,planner,mcp-server,vite-plugin,behaviors,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
+            PACKAGES="intent,engine,framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,compilation-service,planner,mcp-server,vite-plugin,behaviors,speech,intent-element,testing-framework,language-server,language-server-hyperscript,multilingual-hyperscript,htmx-adapter"
           fi
           echo "Checking packages: $PACKAGES"
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
@@ -114,7 +114,7 @@ jobs:
           # missing asset). The domain-* family + mcp-multilingual-intent
           # moved to lokascript-domains in #909 — mirror such deletions here
           # by hand; nothing guards this list.
-          BUILD_ORDER="intent framework semantic behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server developer-tools server-bridge types-browser vite-plugin language-server speech intent-element htmx-adapter"
+          BUILD_ORDER="intent framework semantic behaviors core patterns-reference i18n hyperscript-adapter compilation-service planner mcp-server developer-tools server-bridge types-browser vite-plugin language-server speech intent-element htmx-adapter"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then

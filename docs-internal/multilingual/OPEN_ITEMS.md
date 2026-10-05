@@ -14,7 +14,7 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (97): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 18 (12 core runtime, 6 AOT parked)
+## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
@@ -143,17 +143,6 @@ non-English direct path are the exposed surfaces.
 87. **C10 · Core's `empty #in1` leaves an input's value**; upstream clears it. `measure` has no oracle yet · 5142–5144 · 09-26 · no · core runtime.
 88. **C11 · Core refuses `put (.item in #list).length into #out`** (`put requires arguments`) · 5159–5160 · 09-26 · no · core runtime.
 89. **C12 · Core's `put my.tagName` writes `button`**; upstream (and the DOM) writes `BUTTON` · 5070 · 09-26 · no · core runtime.
-
-### 2g. Other: AOT filings, PARKED by owner decision (2026-09-27, 5532–5533) (6)
-
-- **A1**: no event-wait codegen, so `wait for keyup` compiles to `wait(null)` (4528–4531).
-- **A2**: `measure width of #d1` loses its source and measures `me` (4941, 5134, 5143–5144).
-- **A3**: `scroll … by` direction and amount are not read (5007–5008).
-- **A4**: cannot compile an object literal from core's parser (5463).
-- **A5**: a never-set variable compiles to a bare JS name that throws (5484–5485).
-- **A6**: the older binary `is a` `typeof` case is dead and wrong (5486–5487).
-
-Treat these six as parked, not queued.
 
 ---
 

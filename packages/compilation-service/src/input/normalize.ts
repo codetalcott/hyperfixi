@@ -2,7 +2,7 @@
  * Input normalization.
  *
  * Converts any input format (natural language, explicit syntax, LLM JSON)
- * to a SemanticNode for downstream validation and compilation.
+ * to a SemanticNode for downstream validation, translation and rendering.
  */
 
 import type { CompileRequest, NormalizeResult, SemanticJSON, Diagnostic } from '../types.js';

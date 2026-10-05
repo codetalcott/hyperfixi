@@ -1,18 +1,17 @@
 ---
 name: hyperfixi-codegen
-description: 'Compiles HyperFixi/LokaScript to JavaScript, generates React/Vue/Svelte components, and produces Playwright tests. Use when user wants compiled output, framework components, test generation, or behavioral comparison.'
+description: 'Validates HyperFixi/LokaScript, generates React/Vue/Svelte components, and produces Playwright tests. Use when user wants framework components, test generation, a validation dry-run, or behavioral comparison.'
 ---
 
 # HyperFixi Code Generation
 
-Compile HyperFixi/LokaScript code to JavaScript, generate framework components, and produce Playwright tests.
+Validate HyperFixi/LokaScript code, generate framework components, and produce Playwright tests. (Compiling to JavaScript, `compile_hyperscript`, retired with the AOT compiler in 4.0: hyperscript runs as written, in an `_="..."` attribute, on `@hyperfixi/engine`.)
 
 ## When to Use
 
-- Compile HyperFixi code to optimized JavaScript
 - Generate React, Vue, or Svelte components from HyperFixi behavior
 - Generate Playwright tests from HyperFixi code
-- Validate semantics without compiling (dry-run)
+- Validate semantics (dry-run)
 - Compare two inputs for behavioral equivalence
 
 ## Workflow
@@ -21,20 +20,19 @@ Compile HyperFixi/LokaScript code to JavaScript, generate framework components, 
 
 | Goal                       | Tool                   |
 | -------------------------- | ---------------------- |
-| Compile to JS              | `compile_hyperscript`  |
 | Dry-run (semantic IR only) | `validate_and_compile` |
 | Generate component         | `generate_component`   |
 | Generate tests             | `generate_tests`       |
 | Compare behaviors          | `diff_behaviors`       |
 
-### 2. Compile or Generate
+### 2. Generate
 
-**Compile to JavaScript** -- accepts 3 input formats:
+Every tool accepts 3 input formats:
 
 ```
-compile_hyperscript({ code: "on click toggle .active", language: "en" })
-compile_hyperscript({ explicit: "[toggle patient:.active destination:#btn]" })
-compile_hyperscript({ semantic: { action: "toggle", roles: { patient: { type: "selector", value: ".active" } } } })
+validate_and_compile({ code: "on click toggle .active", language: "en" })
+validate_and_compile({ explicit: "[toggle patient:.active destination:#btn]" })
+validate_and_compile({ semantic: { action: "toggle", roles: { patient: { type: "selector", value: ".active" } } } })
 ```
 
 **Generate a component:**
@@ -55,7 +53,7 @@ generate_tests({ code: "on click toggle .active", testName: "toggle active class
 
 ### 3. Validate the Output
 
-Use `validate_and_compile` for a dry-run that returns semantic IR without generating JavaScript:
+Use `validate_and_compile` for a dry-run that returns semantic IR and diagnostics:
 
 ```
 validate_and_compile({ code: "on click toggle .active" })
@@ -86,7 +84,7 @@ The language-agnostic IR format `[command role:value ...]`:
 
 ## Common Mistakes
 
-1. **Wrong input format** -- `compile_hyperscript` accepts `code`, `explicit`, or `semantic`; don't mix them in one call
+1. **Wrong input format** -- every tool accepts `code`, `explicit`, or `semantic`; don't mix them in one call
 2. **Missing `language` for non-English** -- pass `language: "ja"` etc. when input is not English
 3. **Expecting runtime behavior from dry-run** -- `validate_and_compile` returns IR, not executable code
 4. **Ignoring framework differences** -- React uses hooks, Vue uses SFC, Svelte uses runes; generated code is idiomatic per framework
@@ -97,8 +95,7 @@ The language-agnostic IR format `[command role:value ...]`:
 
 | Tool                   | Description                                      |
 | ---------------------- | ------------------------------------------------ |
-| `compile_hyperscript`  | Compile to optimized JavaScript                  |
-| `validate_and_compile` | Parse to semantic IR without generating JS       |
+| `validate_and_compile` | Parse to semantic IR with diagnostics            |
 | `generate_component`   | Generate React/Vue/Svelte component              |
 | `generate_tests`       | Generate Playwright behavior tests               |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence      |

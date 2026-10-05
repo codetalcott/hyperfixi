@@ -96,7 +96,7 @@ const { version: pkgVersion } = createRequire(import.meta.url)('../package.json'
 // translate_content, execute_llm) are generic LLM calls, not hyperscript
 // tooling: a connected agent can already do all of them itself, they depend on
 // a protocol feature deprecated in revision 2026-07-28, and listing them
-// dilutes the server's actual offer (deterministic validate/compile/translate).
+// dilutes the server's actual offer (deterministic validate/translate/compare).
 // Opt back in with LOKASCRIPT_MCP_LLM_TOOLS=1. Read once at module scope: the
 // surface must not differ between the discover-probe and legacy instances
 // serveStdio builds for one connection.
@@ -113,12 +113,12 @@ const SAMPLING_TOOL_NAMES = new Set(samplingTools.map(t => t.name));
 
 // Served as MCP `instructions` so every connected agent gets the loop without
 // reading any docs. Keep in sync with AGENTS.md at the repo root.
-const SERVER_INSTRUCTIONS = `Deterministic tooling for hyperscript (a compact DOM-behavior DSL) in 24 human languages. No tool here calls an LLM — every check is a real parser/compiler you can trust.
+const SERVER_INSTRUCTIONS = `Deterministic tooling for hyperscript (a compact DOM-behavior DSL) in 24 human languages. No tool here calls an LLM — every check is a real parser you can trust, including the engine that runs the code (@hyperfixi/engine).
 
 The core loop for GENERATING hyperscript:
 1. validate_and_compile — parse your candidate into semantic IR with diagnostics; check the returned action/roles/trigger against your intent.
 2. On failure: apply the diagnostics and re-validate. get_code_fixes maps error codes to concrete fixes; get_command_docs and search_patterns show correct usage.
-3. compile_hyperscript — once valid, emit JavaScript. Or stop at valid hyperscript for an _="..." attribute.
+3. Once valid, the hyperscript goes in an _="..." attribute as is.
 
 To PRESENT code to a user, translate_code renders it in any of 24 languages via deterministic grammar transformation (word-order faithful, not LLM translation); translate_to_english normalizes foreign input. diff_behaviors checks two snippets for behavioral equivalence, and score_fidelity scores a candidate against a reference (how faithful, what exactly is missing or hallucinated) — use it to prove an edit or translation preserved meaning.
 
@@ -270,7 +270,6 @@ function buildServer(): Server {
 
     // Compilation service tools
     if (
-      name === 'compile_hyperscript' ||
       name === 'validate_and_compile' ||
       name === 'translate_code' ||
       name === 'generate_tests' ||
@@ -339,7 +338,7 @@ function buildServer(): Server {
               text:
                 `${name} is disabled: the MCP-sampling tools are opt-in (set LOKASCRIPT_MCP_LLM_TOOLS=1 ` +
                 `in the server's environment and restart). They invoke a generic LLM, which a connected ` +
-                `agent can do itself. For hyperscript work use validate_and_compile / compile_hyperscript; ` +
+                `agent can do itself. For hyperscript work use validate_and_compile; ` +
                 `for natural-language translation of CODE, use translate_code (deterministic, not an LLM).`,
             },
           ],
@@ -370,12 +369,11 @@ function buildServer(): Server {
     }
 
     // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE, plus the LSE 2.0
-    // LLM-native tools — all five are defined in lsePipelineTools and handled by
-    // handleLsePipelineTool; the last three were advertised but unrouted here.)
+    // LLM-native tools — all four are defined in lsePipelineTools and handled by
+    // handleLsePipelineTool. execute_lse retired with the AOT compiler in 4.0.)
     if (
       name === 'lse_from_hyperscript' ||
       name === 'lse_to_hyperscript' ||
-      name === 'execute_lse' ||
       name === 'validate_lse' ||
       name === 'translate_lse'
     ) {

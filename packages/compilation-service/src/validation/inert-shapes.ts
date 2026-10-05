@@ -110,18 +110,9 @@ function walk(node: unknown, out: Diagnostic[]): void {
         continue;
       }
 
-      // `add .modal-open to <body/>` → selector "<body/>": query-literal
-      // syntax is the traditional parser's; on this path it reaches
-      // querySelector verbatim, which throws (swallowed) — a silent no-op.
-      if (v.type === 'selector' && s.startsWith('<')) {
-        out.push({
-          severity: 'warning',
-          code: 'UNSUPPORTED_QUERY_LITERAL',
-          message: `${role} selector "${s}" uses query-literal syntax, which this parser does not support — at runtime it is an invalid CSS selector and matches nothing.`,
-          suggestion: `Use a plain CSS selector instead (e.g. "${s.replace(/^<|\/?>$/g, '')}").`,
-        });
-        continue;
-      }
+      // (`UNSUPPORTED_QUERY_LITERAL`, for `add .x to <body/>`, retired with the AOT
+      // compiler in 4.0: on its path `<body/>` reached querySelector verbatim, but the
+      // engine reads query literals, as upstream does.)
 
       // `set the text of #output to "…"` → property-path `#output.text`:
       // `.text` is not a DOM-visible property on ordinary elements, so the

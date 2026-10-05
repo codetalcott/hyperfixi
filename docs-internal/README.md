@@ -22,7 +22,7 @@ package's README. Finished work is not kept here: its docs are deleted under a t
 | [`ENGINE_MIGRATION_PLAN.md`](ENGINE_MIGRATION_PLAN.md)                                 | Every arc closed (2026-09-03); the target design the type-escape and layering ratchets cite |
 | [`COMMAND_ARCHITECTURE_NEXT_STEPS.md`](COMMAND_ARCHITECTURE_NEXT_STEPS.md)             | All six arcs done; the command layer's design principles                                 |
 | [`analysis/TYPE_SAFETY_DESIGN.md`](analysis/TYPE_SAFETY_DESIGN.md)                     | Environment-specific conditional types (root CLAUDE.md links it)                         |
-| [`proposals/aot-compiler-design.md`](proposals/aot-compiler-design.md)                 | The AOT compiler's design (AOT is parked, owner 2026-09-27)                              |
+| [`proposals/aot-compiler-design.md`](proposals/aot-compiler-design.md)                 | The AOT compiler's design (historical: AOT retired in 4.0, owner 2026-10-04)              |
 | [`build/CHANGELOG_GUIDELINES.md`](build/CHANGELOG_GUIDELINES.md), [`build/CHANGELOG_PROTECTION.md`](build/CHANGELOG_PROTECTION.md) | `scripts/validate-changelog.cjs` and `bump-version.cjs` print their paths               |
 
 ## Open briefs (work not started)

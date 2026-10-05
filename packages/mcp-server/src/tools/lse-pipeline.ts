@@ -2,11 +2,14 @@
  * LSE Pipeline Tools
  *
  * End-to-end LLM round-trip pipeline:
- *   hyperscript → parse → SemanticNode → LSE bracket/JSON → LLM → LSE back → validate → compile
+ *   hyperscript → parse → SemanticNode → LSE bracket/JSON → LLM → LSE back → validate
  *
  * Two tools:
  *   - lse_from_hyperscript: parse hyperscript (any of 24 languages) → LSE
- *   - lse_to_hyperscript: validate/compile LSE from an LLM response → JS
+ *   - lse_to_hyperscript: validate and normalize LSE from an LLM response
+ *
+ * (`execute_lse`, and `lse_to_hyperscript`'s `compile` option, compiled LSE to JavaScript
+ * through the AOT compiler; both retired with it in 4.0.)
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
@@ -24,22 +27,6 @@ type ToolResponse = { content: Array<{ type: string; text: string }>; isError?: 
 
 export const lsePipelineTools: Tool[] = [
   // ── Phase 7.5: LLM-Native LSE tools ──────────────────────────────────────
-  {
-    name: 'execute_lse',
-    description:
-      'Execute LSE bracket syntax directly. Parses the LSE, compiles to JavaScript, and returns ' +
-      'the execution result. Use this when an LLM has generated LSE and you want to run it.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        lse: {
-          type: 'string',
-          description: 'LSE bracket syntax: [command role:value ...]',
-        },
-      },
-      required: ['lse'],
-    },
-  },
   {
     name: 'validate_lse',
     description:
@@ -108,8 +95,8 @@ export const lsePipelineTools: Tool[] = [
   {
     name: 'lse_to_hyperscript',
     description:
-      'Validate and optionally compile LSE bracket syntax or protocol JSON returned by an LLM. ' +
-      'Returns validation diagnostics, the normalized LSE, and optionally compiled JavaScript. ' +
+      'Validate LSE bracket syntax or protocol JSON returned by an LLM. ' +
+      'Returns validation diagnostics, the normalized LSE, and its protocol JSON. ' +
       'Use lse_validate_and_feedback for richer error feedback with correction hints.',
     inputSchema: {
       type: 'object',
@@ -121,10 +108,6 @@ export const lsePipelineTools: Tool[] = [
         protocol: {
           type: 'object',
           description: 'Protocol JSON (alternative to lse). Must have `kind` field.',
-        },
-        compile: {
-          type: 'boolean',
-          description: 'Also compile to JavaScript (default: true)',
         },
       },
     },
@@ -141,8 +124,6 @@ export async function handleLsePipelineTool(
 ): Promise<ToolResponse> {
   try {
     switch (name) {
-      case 'execute_lse':
-        return await handleExecuteLse(args);
       case 'validate_lse':
         return await handleValidateLse(args);
       case 'translate_lse':
@@ -224,7 +205,6 @@ async function handleToHyperscript(args: Record<string, unknown>): Promise<ToolR
   const lseInput = typeof args.lse === 'string' ? args.lse : undefined;
   const protocolInput =
     typeof args.protocol === 'object' && args.protocol ? args.protocol : undefined;
-  const shouldCompile = args.compile !== false; // default true
 
   if (!lseInput && !protocolInput) {
     return errorResponse('Provide `lse` (bracket syntax) or `protocol` (JSON).');
@@ -315,78 +295,7 @@ async function handleToHyperscript(args: Record<string, unknown>): Promise<ToolR
     diagnostics,
   };
 
-  // Optional: compile to JavaScript via the compilation service
-  if (shouldCompile) {
-    try {
-      const { CompilationService } = await import('@lokascript/compilation-service');
-      const service = await CompilationService.create();
-      const compileResult = service.compile({ explicit: normalizedLse });
-      result.js = compileResult.ok ? compileResult.js : undefined;
-      if (!compileResult.ok && compileResult.diagnostics) {
-        for (const d of compileResult.diagnostics) {
-          if (d.severity === 'error') {
-            diagnostics.push({
-              severity: 'error',
-              code: 'COMPILE_ERROR',
-              message: d.message,
-            });
-          }
-        }
-      }
-    } catch (e) {
-      // Compilation service not available — not a fatal error
-      result.js = undefined;
-      result.compileNote = 'Compilation service unavailable';
-    }
-  }
-
   return jsonResponse(result);
-}
-
-// =============================================================================
-// execute_lse (Phase 7.5)
-// =============================================================================
-
-async function handleExecuteLse(args: Record<string, unknown>): Promise<ToolResponse> {
-  const lseInput = args.lse as string;
-  if (!lseInput || typeof lseInput !== 'string') {
-    return errorResponse('Missing required parameter: lse');
-  }
-
-  const { parseExplicit, renderExplicit, toProtocolJSON } = await import('@lokascript/framework');
-
-  // Parse
-  let node;
-  try {
-    node = parseExplicit(lseInput);
-  } catch (e) {
-    return errorResponse(`LSE parse error: ${e instanceof Error ? e.message : String(e)}`);
-  }
-
-  // Normalize
-  const normalizedLse = renderExplicit(node);
-  const protocol = toProtocolJSON(node);
-
-  // Compile to JavaScript
-  let js: string | undefined;
-  try {
-    const { CompilationService } = await import('@lokascript/compilation-service');
-    const service = await CompilationService.create();
-    const compileResult = service.compile({ explicit: normalizedLse });
-    js = compileResult.ok ? compileResult.js : undefined;
-  } catch {
-    // Compilation service not available
-  }
-
-  return jsonResponse({
-    ok: true,
-    lse: normalizedLse,
-    protocol,
-    js,
-    note: js
-      ? 'Compiled successfully'
-      : 'Compilation service unavailable — parsed and validated only',
-  });
 }
 
 // =============================================================================
