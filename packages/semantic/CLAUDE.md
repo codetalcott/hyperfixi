@@ -398,11 +398,12 @@ const loop = createLoopNode(
 );
 ```
 
-A view transition (`start [a] view transition [using "<type>"] … end`) nests the same way: its
-head is a `viewTransition` command in the walker's `BLOCK_HEAD_ACTIONS`, and the fold attaches
-its body to it (`ViewTransitionSemanticNode`, a `command` with `body`; an empty `body` is a
-block its own `end` closed). The head is English in every language
-(`src/patterns/view-transition.ts`), and `block-parser.ts` counts it as an opener.
+A `tell` and a view transition (`start [a] view transition [using "<type>"] … end`) nest the
+same way: their heads are in the walker's `BLOCK_HEAD_ACTIONS`, and the fold attaches the body
+(`BlockCommandSemanticNode`, a `command` with `body`; an empty `body` is a block its own `end`
+closed, and no `body` is a flat head whose body is the statements after it). `block-parser.ts`
+counts both as openers, a `tell` only when an `end` closes it before a new feature (the engine's
+rule). The view-transition head is English in every language (`src/patterns/view-transition.ts`).
 
 Loop variants: `'forever'` | `'times'` | `'for'` | `'while'` | `'until'`. An
 `until event X` loop is an `until` loop; its `loopType` role keeps the exact

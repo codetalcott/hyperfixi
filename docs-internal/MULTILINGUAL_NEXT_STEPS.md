@@ -92,7 +92,7 @@ docs-site decision), D5, D6, and README-example tests beyond the adapter.
 - `on click toggle .stopped` loses its toggle (P2);
 - a bare `if … end` becomes a handler (P3);
 - `break`/`continue` vanish (P5);
-- `tell … end then log 2` loses the log (P1);
+- `tell … end then log 2` lost the log (P1, fixed 2026-10-05);
 - `scroll down by 100` is lost (P8).
 
 `translate()`, MCP `translate_code`, the corpus writer and the non-English runtime all inherit the loss.

@@ -138,6 +138,7 @@ export type {
   ConditionalSemanticNode,
   CompoundSemanticNode,
   LoopSemanticNode,
+  BlockCommandSemanticNode,
   ViewTransitionSemanticNode,
   SemanticMetadata,
   // Pattern types

@@ -400,24 +400,38 @@ export interface LoopSemanticNode extends SemanticNode {
 }
 
 /**
- * Upstream's `start view transition [using "<type>"] <commands> end`: a command
- * whose body runs as the update of `document.startViewTransition`. The clause
- * walker nests the body under the head as it nests a loop's, so a command after
- * the block's `end` stays after it. A head with no `body` is one whose extent the
- * parse did not see; an empty `body` is a block its own `end` closed.
+ * A command that carries its block: upstream's `tell <target> <commands> end` and
+ * `start view transition [using "<type>"] <commands> end`. The clause walker nests
+ * the body under the head as it nests a loop's, so a command after the block's
+ * `end` stays after it. A head with no `body` is one whose extent the parse did
+ * not see (its body is the statements after it, as the flat model always read
+ * it); an empty `body` is a block its own `end` closed.
  */
-export interface ViewTransitionSemanticNode extends CommandSemanticNode {
-  readonly action: 'viewTransition';
+export interface BlockCommandSemanticNode extends CommandSemanticNode {
+  readonly action: 'tell' | 'viewTransition';
   readonly body: SemanticNode[];
+}
+
+/** `start view transition [using "<type>"] <commands> end`, its body attached. */
+export interface ViewTransitionSemanticNode extends BlockCommandSemanticNode {
+  readonly action: 'viewTransition';
+}
+
+/** The commands whose body the clause walker nests (BlockCommandSemanticNode). */
+export const BLOCK_COMMAND_ACTIONS: ReadonlySet<string> = new Set(['tell', 'viewTransition']);
+
+/** A `tell` or `start view transition` block, its body attached. */
+export function isBlockCommand(node: SemanticNode): node is BlockCommandSemanticNode {
+  return (
+    node.kind === 'command' &&
+    BLOCK_COMMAND_ACTIONS.has(node.action) &&
+    Array.isArray((node as { body?: unknown }).body)
+  );
 }
 
 /** A `start view transition … end` block, its body attached. */
 export function isViewTransitionBlock(node: SemanticNode): node is ViewTransitionSemanticNode {
-  return (
-    node.kind === 'command' &&
-    node.action === 'viewTransition' &&
-    Array.isArray((node as { body?: unknown }).body)
-  );
+  return isBlockCommand(node) && node.action === 'viewTransition';
 }
 
 /**

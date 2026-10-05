@@ -47,6 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@lokascript/hyperscript-adapter` hands the host the English render, so a page written in
   another language with a view-transition swap failed to parse and ran nothing. Foreign renders
   keep the tail.
+- **`@lokascript/semantic`: a `tell` block keeps its extent.** Semantic kept `tell` flat, its body
+  being every statement after it, so in English and every translation a command after the tell's
+  `end` was lost (`tell #modal show end then log 2` lost the `log`) or pulled inside it
+  (`… end log 2`), a nested tell took its parent's remaining commands, and in a behavior or `def`
+  the tell's `end` closed the enclosing block, dropping the next handler or command. The parser
+  now nests a tell's body as it nests a loop's (`BlockCommandSemanticNode`, `isBlockCommand`), and
+  reads an `end` as the tell's exactly when the engine does: before a new `on <event>`, `def`,
+  `init` or `behavior`, a tell needs none.
 - **`@lokascript/hyperscript-adapter`'s per-language and regional bundles render English with
   semantic's renderer.** They rendered with their own English writer, which saved English's
   language data and had drifted far from semantic's: over the corpus's 3,772 translations, 1,242

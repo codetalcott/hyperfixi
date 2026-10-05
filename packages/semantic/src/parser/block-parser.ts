@@ -92,6 +92,13 @@ interface OpenerForms {
   readonly byAction: ReadonlyArray<readonly [OpenerAction, Set<string>]>;
   readonly elseForms: Set<string>;
   readonly inForms: Set<string>;
+  readonly tellForms: Set<string>;
+  readonly endForms: Set<string>;
+  readonly onForms: Set<string>;
+  /** `def`, `init`, `behavior`: words that start a feature, which closes an open `tell`. */
+  readonly featureForms: Set<string>;
+  /** The `on` marker precedes its event (SVO/VSO/V2), so `on <event>` can be read forward. */
+  readonly onLeads: boolean;
 }
 
 function openerForms(language: string): OpenerForms {
@@ -99,6 +106,13 @@ function openerForms(language: string): OpenerForms {
     byAction: OPENER_ACTIONS.map(a => [a, keywordForms(language, a)] as const),
     elseForms: keywordForms(language, 'else'),
     inForms: keywordForms(language, 'in'),
+    tellForms: keywordForms(language, 'tell'),
+    endForms: keywordForms(language, 'end'),
+    onForms: keywordForms(language, 'on'),
+    featureForms: new Set(
+      ['def', 'init', 'behavior'].flatMap(action => [...keywordForms(language, action)])
+    ),
+    onLeads: tryGetProfile(language)?.wordOrder !== 'SOV',
   };
 }
 
@@ -138,6 +152,42 @@ function opensViewTransition(tokens: readonly LanguageToken[], j: number): boole
   return word(view) === 'view' && word(view + 1) === 'transition';
 }
 
+/** A `tell` keyword: the tokenizer's normalized form, or the language's own word. */
+function isTellWord(tok: LanguageToken | undefined, forms: OpenerForms): boolean {
+  if (!tok) return false;
+  const norm = tok.normalized?.toLowerCase();
+  return norm ? norm === 'tell' : tokenMatches(tok, forms.tellForms);
+}
+
+/**
+ * Whether the `tell` at `j` is closed by an `end`, as the engine reads it: the
+ * body runs to an `end`, a new feature (`on <event>`, `def`, `init`, `behavior`)
+ * or the end of input, and only an `end` is the tell's own. So a tell opens a
+ * block for depth tracking only when an `end` comes first; counted always, a tell
+ * written without one (`on click tell #x add .a on keyup …`) would take the next
+ * handler's `end` and merge the two handlers. A forward `on <event>` is read only
+ * where the marker leads its event (the program split's own rule).
+ */
+function tellTakesAnEnd(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
+  let depth = 0;
+  for (let k = j + 1; k < tokens.length; k++) {
+    const tok = tokens[k];
+    if (tokenMatches(tok, forms.endForms)) {
+      if (depth === 0) return true;
+      depth--;
+      continue;
+    }
+    if (depth === 0) {
+      if (tokenMatches(tok, forms.featureForms)) return false;
+      if (forms.onLeads && tokenMatches(tok, forms.onForms) && looksLikeEvent(tokens[k + 1])) {
+        return false;
+      }
+    }
+    if (opensBlock(tokens, k, forms)) depth++;
+  }
+  return false;
+}
+
 /**
  * Whether `tokens[j]` opens a nested block for depth tracking. One word per
  * block does, though several opener words can head one: counting each gave a
@@ -156,6 +206,7 @@ function opensViewTransition(tokens: readonly LanguageToken[], j: number): boole
  */
 function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
   if (opensViewTransition(tokens, j)) return true;
+  if (isTellWord(tokens[j], forms)) return tellTakesAnEnd(tokens, j, forms);
   const tok = tokens[j];
   const action = openerActionOf(tok, forms);
   if (!action || action === 'while') return false;
