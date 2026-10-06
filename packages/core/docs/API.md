@@ -66,8 +66,12 @@ import { parse, render, translate } from '@hyperfixi/core/multilingual';
 
 const node = await parse('#button の .active を 切り替え', 'ja'); // a semantic node, or null
 const arabic = node && (await render(node, 'ar'));
-const english = await translate('alternar .active', 'es', 'en'); // the input, if it cannot translate
+const english = await translate('alternar .active', 'es', 'en'); // the input, if it does not parse
 ```
+
+A translation that would lose part of the script is refused: `translate` throws semantic's
+`LossyTranslationError`, which carries the partial output (`partial`) and what it drops
+(`loss.lost`). Pass `{ lossy: 'allow' }` as a fourth argument for the partial output instead.
 
 Three functions over `@lokascript/semantic`, which is loaded on first use. Text is the
 interchange: a translation is hyperscript the engine (or upstream \_hyperscript) reads. To run

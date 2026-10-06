@@ -41,6 +41,21 @@ describe('@hyperfixi/core/multilingual', () => {
       const result = await translate('toggle .active', 'en', 'en');
       expect(result).toBe('toggle .active');
     });
+
+    // semantic refuses a translation that would drop part of the script; core
+    // does not swallow that as "cannot be translated" (M1 fail-loud).
+    it('refuses a translation that would drop part of the script', async () => {
+      await expect(translate('on click toggle .a .b', 'en', 'es')).rejects.toMatchObject({
+        name: 'LossyTranslationError',
+        loss: { kind: 'truncation', lost: ['.b'] },
+      });
+      const partial = await translate('on click toggle .a .b', 'en', 'es', { lossy: 'allow' });
+      expect(partial).not.toContain('.b');
+    });
+
+    it('returns the input unchanged when it does not parse', async () => {
+      expect(await translate('))) ((( ', 'en', 'es')).toBe('))) ((( ');
+    });
   });
 
   describe('render', () => {

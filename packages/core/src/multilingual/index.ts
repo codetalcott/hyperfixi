@@ -26,7 +26,7 @@
  * ```
  */
 
-import type { SemanticNode } from '@lokascript/semantic';
+import type { SemanticNode, TranslateOptions } from '@lokascript/semantic';
 
 let semanticModule: typeof import('@lokascript/semantic') | null = null;
 
@@ -50,17 +50,24 @@ export async function render(node: SemanticNode, lang: string): Promise<string> 
 
 /**
  * Translate hyperscript from one language to another. Returns the input
- * unchanged when it cannot be translated (or when the languages match).
+ * unchanged when it does not parse (or when the languages match).
+ *
+ * A translation that would lose part of the script is refused, as semantic's
+ * `translate()` refuses it: it throws a `LossyTranslationError` carrying the
+ * partial output and what it loses. `{ lossy: 'allow' }` returns the partial
+ * output instead.
  */
 export async function translate(
   input: string,
   sourceLang: string,
-  targetLang: string
+  targetLang: string,
+  options?: TranslateOptions
 ): Promise<string> {
   if (sourceLang === targetLang) return input;
   try {
-    return (await semantic()).translate(input, sourceLang, targetLang);
-  } catch {
+    return (await semantic()).translate(input, sourceLang, targetLang, options);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'LossyTranslationError') throw error;
     return input;
   }
 }
