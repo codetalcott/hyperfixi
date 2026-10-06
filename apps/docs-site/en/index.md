@@ -54,7 +54,7 @@ Experience hyperscript in your native language:
 ### Japanese
 
 <HyperscriptPlayground
-  initial-code="クリック で 切り替え .active を 私"
+  initial-code="クリック で 自分 に .active を 切り替え"
   initial-html='<button class="demo-button">アクティブを切り替え</button>'
   initial-language="ja"
 />
