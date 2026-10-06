@@ -53,6 +53,7 @@ import {
   type EndWordPlace,
 } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
+import { DOM_EVENT_NAMES } from './utils/dom-events';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -285,80 +286,9 @@ function commandWordsFor(language: string): ReadonlySet<string> {
  * the marker-less translations (`esperar transitionend`) both put the event
  * name where a duration would sit; a bare identifier is otherwise ambiguous
  * with a time-variable wait (`wait delay`), so the relabel/reclaim fires ONLY
- * on names in this set. Event names are untranslated loanwords in every corpus
- * language (the RESPONSE_TYPE_WORDS precedent), so a value-set gate is
- * language-invariant. Superset of the handler-side KNOWN_EVENTS plus the
- * transition/animation/pointer/touch/drag families that waits actually target.
+ * on names in this set (see utils/dom-events.ts).
  */
-const WAITABLE_EVENT_WORDS = new Set([
-  // handler-side KNOWN_EVENTS
-  'click',
-  'dblclick',
-  'input',
-  'change',
-  'submit',
-  'keydown',
-  'keyup',
-  'keypress',
-  'mouseover',
-  'mouseout',
-  'mousedown',
-  'mouseup',
-  'focus',
-  'blur',
-  'load',
-  'scroll',
-  'resize',
-  'contextmenu',
-  // transition / animation
-  'transitionend',
-  'transitionstart',
-  'transitionrun',
-  'transitioncancel',
-  'animationend',
-  'animationstart',
-  'animationiteration',
-  'animationcancel',
-  // pointer / touch / mouse movement
-  'pointerdown',
-  'pointerup',
-  'pointermove',
-  'pointerenter',
-  'pointerleave',
-  'pointercancel',
-  'pointerover',
-  'pointerout',
-  'touchstart',
-  'touchend',
-  'touchmove',
-  'touchcancel',
-  'mousemove',
-  'mouseenter',
-  'mouseleave',
-  'wheel',
-  // drag & drop
-  'dragstart',
-  'dragend',
-  'dragover',
-  'dragenter',
-  'dragleave',
-  'drop',
-  'drag',
-  // lifecycle / misc
-  'loadend',
-  'loadstart',
-  'error',
-  'abort',
-  'close',
-  'open',
-  'message',
-  'popstate',
-  'hashchange',
-  'storage',
-  'online',
-  'offline',
-  'visibilitychange',
-]);
+const WAITABLE_EVENT_WORDS = DOM_EVENT_NAMES;
 
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
