@@ -8255,8 +8255,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // the existing per-clause path can try (e.g. a stray `if` token). Unless the
     // block is empty as written, `if x then end`: read flat, it lost its `end`,
     // and the commands after it fell into its body.
-    const writtenEmpty =
-      closed && sawThen && thenTokens.length === 0 && elseTokens.length === 0;
+    const writtenEmpty = closed && sawThen && thenTokens.length === 0 && elseTokens.length === 0;
     if (thenBranch.length === 0 && (!elseBranch || elseBranch.length === 0) && !writtenEmpty) {
       tokens.reset(startMark);
       this.coverageRollback(foldCoverageMark);

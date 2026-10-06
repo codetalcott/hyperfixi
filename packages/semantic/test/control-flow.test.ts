@@ -66,7 +66,8 @@ describe('else, then if on the next line', () => {
   });
 
   it.each(['es', 'ja', 'ar', 'zh', 'ko', 'tr'])('round-trips in %s', language => {
-    const code = 'on click\nif window.tmp then\nelse\n  if window.tmp then end\n  put "foo" into me\nend';
+    const code =
+      'on click\nif window.tmp then\nelse\n  if window.tmp then end\n  put "foo" into me\nend';
     const english = en(code);
     expect(english).toBe(
       'on click if window.tmp else\nif window.tmp then end then put "foo" into me end'
@@ -131,9 +132,9 @@ describe('a bottom-tested loop (P30)', () => {
   });
 
   it("an until after a toggle is the toggle's, never the loop's", () => {
-    expect(() => translate('on click repeat forever toggle .x until transitionend end', 'en', 'en')).toThrow(
-      /lose/
-    );
+    expect(() =>
+      translate('on click repeat forever toggle .x until transitionend end', 'en', 'en')
+    ).toThrow(/lose/);
   });
 
   it('an until that ends no loop stays unread', () => {
@@ -147,10 +148,13 @@ describe('a bottom-tested loop (P30)', () => {
 
   // An SOV while-phrase comes before its own `repeat` (`… の間 x < 3 繰り返し …`):
   // inside a forever loop, it is the inner loop's head, not the outer's test.
-  it.each(['ja', 'ko', 'hi', 'tr', 'bn', 'qu'])('a nested while loop stays nested in %s', language => {
-    const code = 'on click repeat forever log 1 then repeat while x < 3 log 2 end end';
-    expect(translate(translate(code, 'en', language), language, 'en')).toBe(en(code));
-  });
+  it.each(['ja', 'ko', 'hi', 'tr', 'bn', 'qu'])(
+    'a nested while loop stays nested in %s',
+    language => {
+      const code = 'on click repeat forever log 1 then repeat while x < 3 log 2 end end';
+      expect(translate(translate(code, 'en', language), language, 'en')).toBe(en(code));
+    }
+  );
 
   it.each(['es', 'ja', 'ar', 'zh', 'tr', 'hi', 'qu'])('round-trips in %s', language => {
     const code = 'on click repeat forever log 1 until x is 3 end';
