@@ -877,22 +877,6 @@ export function getEventHandlerPatternsEn(): LanguagePattern[] {
         event: { position: 1 },
       },
     },
-    {
-      id: 'event-en-if',
-      language: 'en',
-      command: 'on',
-      priority: 95,
-      template: {
-        format: 'if {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'if' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
   ];
 }
 

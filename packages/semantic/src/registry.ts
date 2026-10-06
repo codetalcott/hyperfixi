@@ -505,8 +505,29 @@ export function isLanguageSupported(code: string): boolean {
  */
 export function tokenize(input: string, language: string): TokenStream {
   const tokenizer = getTokenizer(language);
-  const stream = tokenizer.tokenize(input);
+  const stream = markLineStarts(tokenizer.tokenize(input), input, language);
   return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+}
+
+/**
+ * A token that begins a line carries `metadata.lineStart`. Upstream reads one
+ * thing by lines: an `if` on the same line as the `else` before it continues
+ * the chain, and an `if` on the next line opens a block of its own in the
+ * else branch (`isElseIfChain` in the parser). Only those tokens are copied;
+ * a one-line input comes back as it was.
+ */
+function markLineStarts(stream: TokenStream, input: string, language: string): TokenStream {
+  if (!input.includes('\n')) return stream;
+  const tokens = stream.tokens;
+  let out: LanguageToken[] | null = null;
+  for (let i = 1; i < tokens.length; i++) {
+    const t = tokens[i]!;
+    const gap = input.slice(tokens[i - 1]!.position.end, t.position.start);
+    if (!gap.includes('\n')) continue;
+    out ??= tokens.slice();
+    out[i] = { ...t, metadata: { ...t.metadata, lineStart: true } };
+  }
+  return out ? new TokenStreamImpl(out, language) : stream;
 }
 
 /**

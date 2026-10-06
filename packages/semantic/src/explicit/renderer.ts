@@ -395,13 +395,23 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const parts = [`${this.keyword(language, 'if')} ${condStr}`.trim()];
     const thenBody = this.joinStatements(node.thenBranch, language);
     if (thenBody) parts.push(thenBody);
-    if (node.elseBranch && node.elseBranch.length > 0) {
-      parts.push(this.keyword(language, 'else'), this.joinStatements(node.elseBranch, language));
-    }
+    // An empty block keeps its `then` (`if x then end`): that is how the reader
+    // tells it from a stray `if`.
+    else if (!node.elseBranch?.length) parts.push(this.keyword(language, 'then'));
     // An else branch that is one conditional is an `else if` chain, and its
     // last `if` writes the chain's one `end`: upstream reads `else if` as a
     // chain, so an `end` per `if` closed the handler, or a behavior, early.
     const chained = node.elseBranch?.length === 1 && node.elseBranch[0].kind === 'conditional';
+    if (node.elseBranch && node.elseBranch.length > 0) {
+      // A branch that opens with a conditional and runs on after it puts the
+      // `if` on a line of its own: on the `else`'s line upstream reads a chain,
+      // and the commands after the inner `end` would leave the else branch.
+      const ownLine = !chained && node.elseBranch[0]?.kind === 'conditional';
+      const elseBody = this.joinStatements(node.elseBranch, language);
+      const elseWord = this.keyword(language, 'else');
+      if (ownLine) parts.push(`${elseWord}\n${elseBody}`);
+      else parts.push(elseWord, elseBody);
+    }
     if (!chained) parts.push(this.keyword(language, 'end'));
     return parts.join(' ');
   }
@@ -848,12 +858,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         if (pattern.id.includes('standard') || pattern.id.includes('en-source')) {
           score += 20; // Boost standard patterns for English rendering
         }
-        // Penalize English "when", "if", "upon" variants (good for parsing, not output)
-        if (
-          pattern.id.includes('-when') ||
-          pattern.id.includes('-if') ||
-          pattern.id.includes('-upon')
-        ) {
+        // Penalize English "when" and "upon" variants (good for parsing, not output)
+        if (pattern.id.includes('-when') || pattern.id.includes('-upon')) {
           score -= 15;
         }
       }

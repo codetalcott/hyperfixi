@@ -1988,7 +1988,12 @@ export class SemanticParserImpl implements ISemanticParser {
         commandMatch.consumedTokens < tokens.tokens.length &&
         (commandMatch.pattern.command === 'if' || commandMatch.pattern.command === 'unless')
       ) {
-        const compound = this.tryCompoundCommandParsing(tokens, commandPatterns, language);
+        const compound = this.tryCompoundCommandParsing(
+          tokens,
+          commandPatterns,
+          language,
+          commandMatch.pattern.command === 'if'
+        );
         if (compound) {
           diagnostics.push(
             parseDiagnostic('conditional with a trailing body', 'info', 'stage-compound')
@@ -2067,8 +2072,16 @@ export class SemanticParserImpl implements ISemanticParser {
       parseDiagnostic('SOV event extraction: no event keyword found', 'info', 'stage-sov')
     );
 
-    // Stage 4: Fallback compound command parsing
-    const compoundResult = this.tryCompoundCommandParsing(tokens, commandPatterns, language);
+    // Stage 4: Fallback compound command parsing. A leading `if` whose condition
+    // no pattern matched (`if true …`) is a conditional block all the same, with
+    // or without a `then`. (A leading `unless` is core's, not upstream's, and its
+    // clause reading runs the body unconditionally: it stays unread.)
+    const compoundResult = this.tryCompoundCommandParsing(
+      tokens,
+      commandPatterns,
+      language,
+      this.isIfKeyword(tokens.tokens[0]?.value ?? '', language)
+    );
     if (compoundResult) {
       diagnostics.push(
         parseDiagnostic('compound command parsing succeeded', 'info', 'stage-compound')
@@ -2728,7 +2741,7 @@ export class SemanticParserImpl implements ISemanticParser {
             if (
               loopHeadAction &&
               this.isIfKeyword((t.normalized ?? t.value).toLowerCase(), language) &&
-              !(before && this.isElseKeyword(before.value, language))
+              !this.isElseIfChain(t, before, language)
             ) {
               nested++;
             } else if (nested > 0) {
@@ -3701,7 +3714,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const prev = wordBefore(currentClauseTokens, currentClauseTokens.length);
         if ((cv === 'for' || cv === 'while') && prev && isRepeatToken(prev)) {
           // the form word of `repeat for …` / `repeat while …`
-        } else if (isIf && prev && this.isElseKeyword(prev.value, language)) {
+        } else if (isIf && this.isElseIfChain(current, prev, language)) {
           // `else if` continues its chain, which one `end` closes (opensNestedBlock)
         } else if (isRepeatWord && pendingOpenerKinds[pendingOpenerKinds.length - 1] === 'while') {
           pendingOpenerKinds[pendingOpenerKinds.length - 1] = 'loop';
@@ -5958,21 +5971,23 @@ export class SemanticParserImpl implements ISemanticParser {
   private tryCompoundCommandParsing(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
-    language: string
+    language: string,
+    conditionalHead = false
   ): SemanticNode | null {
     // Only try if the input has a clause-joining keyword (otherwise single-command
     // already tried). A then-keyword joins sequential commands; an else-keyword
     // joins an `if … else …` block whose branches carry no `then` between them
     // (the if/else block-mask transform emits `<thenBranch> else <elseBranch>`),
     // which would otherwise leave the whole handler unparsed when the event itself
-    // isn't recognized.
+    // isn't recognized. An `if` head needs neither: `if :x halt end` is one block,
+    // whose body the clause parser folds into the conditional.
     const allTokens = tokens.tokens;
     const hasThenKeyword = allTokens.some(
       t =>
         t.kind === 'conjunction' || (t.kind === 'keyword' && this.isThenKeyword(t.value, language))
     );
     const hasElseKeyword = allTokens.some(t => this.isElseKeyword(t.value, language));
-    if (!hasThenKeyword && !hasElseKeyword) return null;
+    if (!conditionalHead && !hasThenKeyword && !hasElseKeyword) return null;
 
     // Reset token stream and parse using clause-based parsing
     const freshStream = new TokenStreamImpl(allTokens as LanguageToken[], language);
@@ -7823,6 +7838,20 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * Does this `if` continue an `else if` chain? Only on the `else`'s line, as
+   * upstream reads it: an `if` on the next line opens a block of its own, with
+   * its own `end`, and the else branch runs on after it. Read as a chain, the
+   * commands after that block left the else branch and ran either way.
+   */
+  private isElseIfChain(
+    t: LanguageToken,
+    prev: LanguageToken | undefined,
+    language: string
+  ): boolean {
+    return !!prev && this.isElseKeyword(prev.value, language) && !t.metadata?.lineStart;
+  }
+
+  /**
    * A token opening a block whose own `end` the conditional fold must skip: a
    * nested `if`/`unless`, or a loop head (`repeat`, `for`). Counting only the
    * conditionals let a loop's `end` close the `if` around it, and the `if`'s
@@ -7833,7 +7862,7 @@ export class SemanticParserImpl implements ISemanticParser {
    * counted-loop head keeps it untranslated (ja/ko/tr `3 times を repeat`),
    * where it tokenizes as an identifier.
    *
-   * An `if` right after `else` opens nothing: it continues the chain, which one
+   * An `if` right after `else`, on its line, opens nothing: it continues the chain, which one
    * `end` closes, as upstream reads it. Counted as a nested `if`, the chain
    * wanted a second `end`, and `if a … else if b … end then c` put `c` in the
    * else branch, running only when `a` was false.
@@ -7844,9 +7873,7 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): boolean {
     const tv = (t.normalized ?? t.value).toLowerCase();
-    if (this.isIfKeyword(tv, language)) {
-      return !(prev && this.isElseKeyword(prev.value, language));
-    }
+    if (this.isIfKeyword(tv, language)) return !this.isElseIfChain(t, prev, language);
     if (this.isUnlessKeyword(tv, language)) return true;
     if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
     if (tv !== 'for' || t.kind !== 'keyword') return false;
@@ -7894,6 +7921,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // conditional's or loop's `end` never terminates the outer block.
     const blockTokens: LanguageToken[] = [];
     let depth = 0;
+    let closed = false;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
@@ -7911,6 +7939,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (this.isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
         if (depth === 0) {
           tokens.advance(); // consume the terminating `end`
+          closed = true;
           break;
         }
         depth--;
@@ -7952,6 +7981,9 @@ export class SemanticParserImpl implements ISemanticParser {
         i++; // skip the `then`
         break;
       }
+      // An empty then-branch: the condition ends at its `else` (`if x else …`).
+      // Read on, the condition took in the else branch whole.
+      if (bodyDepth === 0 && condTokens.length > 0 && this.isElseKeyword(t.value, language)) break;
       if (bodyDepth === 0 && condTokens.length > 0) {
         const cur = (t.normalized ?? t.value).toLowerCase();
         // Does a copula before this word keep it in the condition (S2, S3)?
@@ -8023,7 +8055,6 @@ export class SemanticParserImpl implements ISemanticParser {
       this.coverageRollback(foldCoverageMark);
       return null;
     }
-    void sawThen;
 
     // Partition the remaining tokens into then- / else-branch at the depth-0 else.
     const thenTokens: LanguageToken[] = [];
@@ -8051,8 +8082,12 @@ export class SemanticParserImpl implements ISemanticParser {
       elseTokens.length > 0 ? this.parseBranch(elseTokens, commandPatterns, language) : undefined;
 
     // Nothing parsed in either branch — not a usable conditional; fall through so
-    // the existing per-clause path can try (e.g. a stray `if` token).
-    if (thenBranch.length === 0 && (!elseBranch || elseBranch.length === 0)) {
+    // the existing per-clause path can try (e.g. a stray `if` token). Unless the
+    // block is empty as written, `if x then end`: read flat, it lost its `end`,
+    // and the commands after it fell into its body.
+    const writtenEmpty =
+      closed && sawThen && thenTokens.length === 0 && elseTokens.length === 0;
+    if (thenBranch.length === 0 && (!elseBranch || elseBranch.length === 0) && !writtenEmpty) {
       tokens.reset(startMark);
       this.coverageRollback(foldCoverageMark);
       return null;
