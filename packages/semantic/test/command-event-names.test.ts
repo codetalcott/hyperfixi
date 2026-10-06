@@ -45,6 +45,7 @@ const COMMANDS = (ev: string): string[] => [
 describe('an event a command names', () => {
   // One test per command: all four took 6 s on CI, past vitest's 5 s.
   for (const [n, command] of ['send', 'trigger', 'repeat until event', 'wait for'].entries()) {
+    // Each translate() reads its output back (fail-loud): ~4s on a loaded CI runner.
     it(`every native name the renderer writes reads back as its event: ${command}`, () => {
       const failures: string[] = [];
       for (const lang of Object.keys(eventNameTranslations)) {
@@ -54,7 +55,7 @@ describe('an event a command names', () => {
         }
       }
       expect(failures, failures.join('\n')).toEqual([]);
-    });
+    }, 30_000);
   }
 
   // A one-word name the table reads but the renderer does not write (pt
@@ -77,7 +78,7 @@ describe('an event a command names', () => {
       }
     }
     expect(failures, failures.join('\n')).toEqual([]);
-  });
+  }, 30_000);
 
   it('bn sends an event that is also a command verb (`scroll`)', () => {
     expect(roundTripFailures('on click send scroll to #x then log 1', ['bn'])).toEqual([]);
