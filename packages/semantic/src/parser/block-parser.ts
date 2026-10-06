@@ -1044,6 +1044,29 @@ function flattenStatements(stmts: SemanticNode[]): SemanticNode[] {
 }
 
 /**
+ * A dotted name the tokenizer split (`utils.foo`, `App.Widgets.Clickable`: a
+ * `.word` written right after a word reads as a class ref), joined back: the
+ * name, and the index of its last token. Only parts written with no space
+ * between them join.
+ */
+function qualifiedName(
+  tokens: readonly LanguageToken[],
+  nameIdx: number
+): { name: string; lastIdx: number } {
+  let name = tokens[nameIdx]!.value;
+  let lastIdx = nameIdx;
+  while (
+    tokens[lastIdx + 1] &&
+    tokens[lastIdx + 1]!.position.start === tokens[lastIdx]!.position.end &&
+    /^\.[A-Za-z_$][\w$]*$/.test(tokens[lastIdx + 1]!.value)
+  ) {
+    lastIdx++;
+    name += tokens[lastIdx]!.value;
+  }
+  return { name, lastIdx };
+}
+
+/**
  * Parse a `behavior Name(params) … end` block into a BehaviorSemanticNode.
  *
  * `keywordIdx` is the token index of the `behavior` keyword: 0 for the normal
@@ -1064,16 +1087,17 @@ function parseBehaviorBlock(
   // `behavior 把 Foo`).
   const nameIdx = sovFinal ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return null;
-  const nameToken = tokens[nameIdx];
-  const name = nameToken.value;
-  if (!PASCAL_CASE_NAME.test(name)) return null;
+  // A namespaced name (`App.Widgets.Clickable`) is one name.
+  const { name, lastIdx } = qualifiedName(tokens, nameIdx);
+  if (!name.split('.').every(part => PASCAL_CASE_NAME.test(part))) return null;
+  const nameToken = tokens[lastIdx]!;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
   // Body begins after the header for the keyword-led form. For the SOV verb-final
   // form the keyword (and its preceding object marker) sit between the header and
   // the body, so start past the keyword token instead.
   let bodyStart = sovFinal ? keywordIdx + 1 : tokens.findIndex(t => t.position.start >= headerEnd);
-  if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
+  if (bodyStart <= lastIdx) bodyStart = lastIdx + 1;
 
   const initForms = keywordForms(language, 'init');
   const endForms = keywordForms(language, 'end');
@@ -1088,12 +1112,51 @@ function parseBehaviorBlock(
 
   /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
   const takeInit = (stop: number): void => {
-    const initText = input.slice(tokens[segStart].position.end, tokens[stop].position.start).trim();
+    const stopAt = stop < tokens.length ? tokens[stop]!.position.start : input.length;
+    const initText = input.slice(tokens[segStart]!.position.end, stopAt).trim();
     if (!initText) return;
     try {
       const stmts = flattenStatements(parsers.body(initText, language));
       initCommands.push(...stmts);
       confidences.push(meanConfidence(stmts.map(s => s.metadata?.confidence ?? 0.75)));
+    } catch {
+      confidences.push(0);
+    }
+  };
+
+  /**
+   * Parse a handler segment. A handler's own `end` is optional, as upstream's
+   * is: its command list ends at the next feature. So `on click add .a on keyup
+   * log 1 end` is two handlers this split reads as one segment, and parsing it
+   * as one handler failed the whole behavior (English wrote `behavior F then add
+   * .a then log 1`). The top-level splitter finds the boundary.
+   */
+  const takeHandlers = (handlerText: string): void => {
+    const chain = splitProgram(handlerText, language, parsers);
+    if (chain) {
+      if (chain.unsure) unsure = true;
+      for (const part of chain.node.statements) {
+        if (part.kind === 'event-handler') {
+          eventHandlers.push(part as EventHandlerSemanticNode);
+          confidences.push(part.metadata?.confidence ?? 0.75);
+        } else {
+          confidences.push(0); // not a handler (the split returns features) — structural miss
+        }
+      }
+      return;
+    }
+    try {
+      const parsed = parsers.statement(handlerText, language);
+      if (parsed && parsed.kind === 'event-handler') {
+        const handler = parsed as EventHandlerSemanticNode;
+        eventHandlers.push(handler);
+        // An empty handler body means the sub-parse silently dropped the
+        // commands. Don't inherit its (often misleadingly high) confidence.
+        const bodyEmpty = !handler.body || handler.body.length === 0;
+        confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
+      } else {
+        confidences.push(0); // parsed, but not a handler — structural miss
+      }
     } catch {
       confidences.push(0);
     }
@@ -1129,37 +1192,7 @@ function parseBehaviorBlock(
         segStart = j + 1;
         continue;
       }
-      const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
-      // A handler's own `end` is optional, as upstream's is: its command list
-      // ends at the next feature. So `on click add .a on keyup log 1 end` is two
-      // handlers this split reads as one segment, and parsing it as one handler
-      // failed the whole behavior (English wrote `behavior F then add .a then
-      // log 1`). The top-level splitter finds the boundary, and declines unless
-      // every piece is a handler with a body.
-      const chain = splitProgram(handlerText, language, parsers);
-      if (chain) {
-        if (chain.unsure) unsure = true;
-        for (const handler of chain.node.statements as EventHandlerSemanticNode[]) {
-          eventHandlers.push(handler);
-          confidences.push(handler.metadata?.confidence ?? 0.75);
-        }
-      } else {
-        try {
-          const parsed = parsers.statement(handlerText, language);
-          if (parsed && parsed.kind === 'event-handler') {
-            const handler = parsed as EventHandlerSemanticNode;
-            eventHandlers.push(handler);
-            // An empty handler body means the sub-parse silently dropped the
-            // commands. Don't inherit its (often misleadingly high) confidence.
-            const bodyEmpty = !handler.body || handler.body.length === 0;
-            confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
-          } else {
-            confidences.push(0); // parsed, but not a handler — structural miss
-          }
-        } catch {
-          confidences.push(0);
-        }
-      }
+      takeHandlers(input.slice(tokens[segStart].position.start, tok.position.start).trim());
       segStart = j + 1;
     } else if (isOpener(j)) {
       depth++;
@@ -1175,6 +1208,14 @@ function parseBehaviorBlock(
       takeInit(start.at);
       segStart = start.at;
     }
+  }
+
+  // The behavior's own `end` is optional at the end of input too: what follows
+  // the last `end` (or the whole body, when nothing was closed) is its last
+  // handler (`behavior B(x) on click set @out to x`).
+  if (!sawClosingEnd && segStart < tokens.length) {
+    if (tokenMatches(tokens[segStart]!, initForms)) takeInit(tokens.length);
+    else takeHandlers(input.slice(tokens[segStart]!.position.start).trim());
   }
 
   if (eventHandlers.length === 0 && initCommands.length === 0) return null;
@@ -1210,16 +1251,18 @@ function parseDefBlock(
   // skipping a leading object marker (he `def את foo`, zh `def 把 foo`).
   const nameIdx = sovFinal ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return null;
-  const nameToken = tokens[nameIdx];
-  const name = nameToken.value;
+  // A namespaced name (`utils.foo`): `.foo` reads as a class ref and was left
+  // unread, the function defined as `utils`.
+  const { name, lastIdx } = qualifiedName(tokens, nameIdx);
   if (!DEF_NAME.test(name)) return null;
+  const nameToken = tokens[lastIdx]!;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
   // Body begins after the header for the keyword-led form. For the SOV verb-final
   // form the keyword (and its preceding object marker) sit between the header and
   // the body, so start past the keyword token instead.
   let bodyStart = sovFinal ? keywordIdx + 1 : tokens.findIndex(t => t.position.start >= headerEnd);
-  if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
+  if (bodyStart <= lastIdx) bodyStart = lastIdx + 1;
 
   const endForms = keywordForms(language, 'end');
   const forms = openerForms(language);

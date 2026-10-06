@@ -91,3 +91,35 @@ describe('init', () => {
     expect(translate(bn, 'bn', 'en')).toBe('on load trigger init');
   });
 });
+
+describe('block names and bodies', () => {
+  it('a namespaced def is one name', () => {
+    expect(render(parse('def utils.foo() add .called to #d1 end', 'en'), 'en')).toBe(
+      'def utils.foo\n  add .called to #d1\nend'
+    );
+  });
+
+  it('a namespaced behavior is one name', () => {
+    expect(kinds('behavior App.Widgets.Clickable on click add .clicked end end')).toEqual([
+      'behavior:behavior',
+    ]);
+  });
+
+  it('a behavior whose handler has no `end`, and no `end` of its own', () => {
+    expect(render(parse('behavior Behave(foo) on click set @out to foo', 'en'), 'en')).toBe(
+      'behavior Behave(foo)\n  on click set @out to foo\n  end\nend'
+    );
+  });
+
+  it('a behavior that ends in an init block with no `end`', () => {
+    expect(render(parse('behavior B init set x to 1', 'en'), 'en')).toBe(
+      'behavior B\n  init\n    set x to 1\n  end\nend'
+    );
+  });
+
+  it('an init block written before a behavior handler with no `end`', () => {
+    expect(render(parse('behavior B init set x to 1 on click log x end end', 'en'), 'en')).toBe(
+      'behavior B\n  init\n    set x to 1\n  end\n  on click log x\n  end\nend'
+    );
+  });
+});
