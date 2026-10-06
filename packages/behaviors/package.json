@@ -108,7 +108,7 @@
     "build:watch": "tsup --watch",
     "pretypecheck": "npm run generate",
     "typecheck": "tsc --noEmit",
-    "pretest": "npm run generate && bash ../../scripts/ensure-fresh.sh engine",
+    "pretest": "npm run generate && bash ../../scripts/ensure-fresh.sh ../engine",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"

@@ -12,7 +12,13 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { check, loadWorkflowBuildOrder, loadWorkspaces } = require('./check-ci-build-order.cjs');
+const {
+  check,
+  checkEnsureFresh,
+  loadEnsureFreshCalls,
+  loadWorkflowBuildOrder,
+  loadWorkspaces,
+} = require('./check-ci-build-order.cjs');
 
 /** Build a minimal workspaces object matching the shape `check()` expects. */
 function workspaces(defs) {
@@ -76,9 +82,7 @@ test('check: ignores packages not in the workflow (they may be private/unpublish
 
 test('check: ignores non-workspace lookalike deps', () => {
   // '@x/not-a-workspace' is NOT in nameToDir, so the dep is skipped cleanly.
-  const ws = workspaces([
-    { name: '@x/a', dir: 'a', deps: ['@x/not-a-workspace'] },
-  ]);
+  const ws = workspaces([{ name: '@x/a', dir: 'a', deps: ['@x/not-a-workspace'] }]);
   const order = ['a'];
   assert.deepEqual(check(ws, order), []);
 });
@@ -117,4 +121,51 @@ test('integration: real repository state passes the guard', () => {
   const ws = loadWorkspaces();
   const order = loadWorkflowBuildOrder();
   assert.deepEqual(check(ws, order), []);
+});
+
+// ensure-fresh calls refresh their arguments in order: a dependency listed
+// after its dependent is rebuilt too late, and an argument that names no
+// package is skipped silently.
+test('checkEnsureFresh: passes a dependency-first call, and one that leaves a dep out', () => {
+  const ws = workspaces([
+    { name: '@x/a', dir: 'a', deps: [] },
+    { name: '@x/b', dir: 'b', deps: ['@x/a'] },
+  ]);
+  assert.deepEqual(checkEnsureFresh(ws, [{ where: 'w', dirs: ['a', 'b'] }]), []);
+  assert.deepEqual(checkEnsureFresh(ws, [{ where: 'w', dirs: ['b'] }]), []);
+});
+
+test('checkEnsureFresh: fails a dependency listed after its dependent', () => {
+  const ws = workspaces([
+    { name: '@x/a', dir: 'a', deps: [] },
+    { name: '@x/b', dir: 'b', deps: ['@x/a'] },
+  ]);
+  const failures = checkEnsureFresh(ws, [{ where: 'w', dirs: ['b', 'a'] }]);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /a is refreshed after b/);
+});
+
+test('checkEnsureFresh: fails an argument that names no package', () => {
+  const ws = workspaces([{ name: '@x/a', dir: 'a', deps: [] }]);
+  const failures = checkEnsureFresh(ws, [{ where: 'w', dirs: ['?engine'] }]);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /"engine" names no workspace package/);
+});
+
+test('loadEnsureFreshCalls: reads package.json hooks, check:fresh and test-check-all.sh', () => {
+  const calls = new Map(loadEnsureFreshCalls().map(c => [c.where, c.dirs]));
+  const gate = calls.get('scripts/test-check-all.sh');
+  assert.ok(gate && gate.length > 10, 'every line of the test-check-all.sh call');
+  assert.ok(!gate.some(dir => dir.startsWith('?')));
+  assert.ok(calls.get('package.json "check:fresh"')?.includes('hyperscript-adapter'));
+  // `.` is the package itself.
+  assert.ok(
+    calls
+      .get('packages/hyperscript-adapter/package.json "pretest"')
+      ?.includes('hyperscript-adapter')
+  );
+});
+
+test('integration: every real ensure-fresh call passes', () => {
+  assert.deepEqual(checkEnsureFresh(loadWorkspaces(), loadEnsureFreshCalls()), []);
 });
