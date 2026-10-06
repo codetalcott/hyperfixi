@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-10-06
+
+Translations keep what the source says. `tell` blocks, swaps, view transitions, chains of
+handlers without their `end`s, events with names of several words, and variables named like
+events or keywords now survive `translate`, MCP `translate_code` and the adapter in every
+language. The adapter's per-language bundles render English with semantic's renderer, and
+`@lokascript/semantic/core` gains `registerHandcrafted`.
+
 ### Added
 
 - **`@lokascript/semantic` reads upstream's `start view transition … end`, in all 24 languages.**
@@ -27,16 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command's pattern dispatcher in `@lokascript/semantic` named all 24 languages' hand-crafted
   patterns, so every bundle that could build patterns held all of them (~200 KB minified). Each
   language module now registers its own (`src/patterns/handcrafted/<lang>.ts`, through
-  `@lokascript/semantic/core`'s new `registerHandcrafted`), and bundlers drop the rest.
-  `@lokascript/hyperscript-adapter`'s single-language bundles are 12–14 KB gzipped smaller
-  (`hyperscript-i18n-de.global.js` 103 KB instead of 116, 388 KB raw instead of 532; `-en`
-  123 instead of 148), and semantic's `browser-de` is 115 KB instead of 130. The adapter's
-  regional bundles move by −6 to +3 KB gzipped (`south-asian` 114 instead of 120, `western` 128
-  instead of 125): each language's patterns now sit in their own module, which compresses less
-  well than all 24 side by side. A Vite or Rollup build that imports
-  `@lokascript/semantic/core` and one `languages/<lang>` gets the single-language saving. The
-  patterns each language builds are unchanged (hashed for all 24 before and after, from source
-  and from the split `dist/`).
+  `@lokascript/semantic/core`'s new `registerHandcrafted`), and bundlers drop the rest:
+  semantic's single-language bundles are 14–15 KB gzipped smaller (`browser-de` 116 KB instead
+  of 130), and a Vite or Rollup build that imports `@lokascript/semantic/core` and one
+  `languages/<lang>` gets the same saving. The patterns each language builds are unchanged
+  (hashed for all 24 before and after, from source and from the split `dist/`). The adapter's
+  bundles, which also changed renderer in this release, are measured in its entry under Fixed.
 
 ### Fixed
 
@@ -143,10 +147,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `put … before`/`after` became `put … into`, `from window`, `from elsewhere`, `debounced` and
   `or <event>` vanished, `<button/> in me` widened to the whole page, `repeat for x in …` lost
   its binding, and every `swap #a with #b` was written `swap of #a with #b`. They now give exactly
-  what the full `hyperscript-i18n.global.js` gives. English's own module builds through `@lokascript/semantic/core` (its pattern generator and
-  repeat heads, `getRepeatPatternsForLanguage` now exported there), so a bundle holds one copy.
-  Single-language bundles stay at about 4.0.1's size (`-de` 116 KB gzipped); regional bundles
-  are 8–16 KB larger.
+  what the full `hyperscript-i18n.global.js` gives. English's own module builds through
+  `@lokascript/semantic/core` (its pattern generator and repeat heads,
+  `getRepeatPatternsForLanguage` now exported there), so a bundle holds one copy. Against 4.0.1,
+  the single-language bundles are the same size (`-de` 116 KB gzipped) and `-en` is 109 KB
+  instead of 148; the regional bundles are 8–16 KB larger (`western` 141 KB instead of 125).
 
 ## [4.0.1] - 2026-10-05
 
@@ -1236,7 +1241,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/codetalcott/hyperfixi/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/codetalcott/hyperfixi/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/codetalcott/hyperfixi/compare/v3.3.0...v4.0.0
 [3.3.0]: https://github.com/codetalcott/hyperfixi/compare/v3.2.0...v3.3.0
