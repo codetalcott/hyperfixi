@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/intent-element",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "<lse-intent> custom element — validates LSE protocol JSON and runs it on the page's hyperscript host (@hyperfixi/engine or upstream _hyperscript, via a LokaScriptSemantic render).",
   "type": "module",
   "main": "dist/index.cjs",
@@ -44,11 +44,11 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "^4.0.1"
+    "@lokascript/intent": "^4.1.0"
   },
   "peerDependencies": {
-    "@hyperfixi/engine": "^4.0.1",
-    "@lokascript/semantic": "^4.0.1"
+    "@hyperfixi/engine": "^4.1.0",
+    "@lokascript/semantic": "^4.1.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/engine": {

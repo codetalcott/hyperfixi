@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/multilingual",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "Write original _hyperscript in 24 languages — Japanese, Korean, Spanish, Arabic, Chinese, Turkish, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -126,7 +126,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/hyperscript-adapter": "^4.0.1"
+    "@lokascript/hyperscript-adapter": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

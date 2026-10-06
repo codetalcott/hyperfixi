@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/speech",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "The speak command (Web Speech API) for @hyperfixi/engine, as an engine module (upstream _hyperscript 0.9.90).",
   "type": "module",
   "sideEffects": false,
@@ -22,10 +22,10 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@hyperfixi/engine": "^4.0.1"
+    "@hyperfixi/engine": "^4.1.0"
   },
   "devDependencies": {
-    "@hyperfixi/engine": "^4.0.1",
+    "@hyperfixi/engine": "^4.1.0",
     "@types/node": "^26.6.3",
     "happy-dom": "^20.14.5",
     "tsup": "^8.0.0",
