@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: the event a command names reads back in every language, and a
+  `wait` keeps its source for any event.** The handler head read a native event name through the
+  event table, but `send`, `trigger` and `repeat until event` read it only when the language's
+  tokenizer knew the word: es `enviar dobleclic a #x` read back `send dobleclic to #x`, so the
+  event fired as `dobleclic` (55 of the 170 localized names per command: es, pt, fr, de, ko and zh
+  coinages, and id and sw `unload`). They now read it as its English name, as the head does. A `wait` kept the source of an
+  event only from a fixed list, in English first: `wait for myEvent from #b`,
+  `wait for unload from #b` and `wait for focusin from window` lost the source in every language, and
+  `wait for click or myEvent from #b` everything after `click`. Upstream reads every leg of
+  `wait for` that is not a number as an event, so English now does, and a name followed by a
+  source is an event in every language (a time wait has none); tr and tl no longer read `focusin`
+  as `focus`. bn writes the event `send` sends with `কে`, as `trigger`'s, since
+  `#x তে স্ক্রোল তে পাঠান` read as `scroll to #x`; the old `তে` still reads. And fr's `change`
+  event, `changement`, no longer reads as the reactive `when … changes` word, which turned
+  `repeat until event change` into a `when` feature. Four corpus rows change, the bn renders of
+  `send` (`কে` for `তে`).
 - **`@lokascript/semantic`: a hand-written event name of several words is read whole.** The event
   table reads 20 names of several words that the renderer never writes (ar `تمرير الماوس`, de
   `taste runter`, id `lepas tombol`, pt `pressionar tecla`, qu `mana q'away`, sw `bonyeza chini`,

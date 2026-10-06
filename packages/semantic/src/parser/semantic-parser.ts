@@ -50,6 +50,7 @@ import {
   endWordIsValue,
   endWordPlace,
   joinExpressionTokens,
+  loneKeywordKind,
   type EndWordPlace,
 } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
@@ -734,10 +735,14 @@ function normalizeCommandRoles(
           dur?.type === 'expression' ? dur.raw : dur?.type === 'literal' ? dur.value : undefined;
         const native =
           typeof word === 'string' && language ? normalizeEventName(word, language) : '';
+        // A word the event table reads is an event under any name it maps to,
+        // waitable or not: es `esperar descargar` waits for unload (P50).
+        const tableHit =
+          typeof word === 'string' && !!language && !!eventNameTranslations[language]?.[word];
         if (typeof word === 'string' && WAITABLE_EVENT_WORDS.has(word.toLowerCase())) {
           roles.delete('duration');
           roles.set('event', { type: 'literal', value: word, dataType: 'string' });
-        } else if (WAITABLE_EVENT_WORDS.has(native)) {
+        } else if (tableHit || WAITABLE_EVENT_WORDS.has(native)) {
           roles.delete('duration');
           roles.set('event', { type: 'literal', value: native, dataType: 'string' });
         }
@@ -756,6 +761,19 @@ function normalizeCommandRoles(
     // `event:literal` everywhere. Command nodes only (`kind: 'command'`):
     // handler nodes keep their own event typing, and a parenthesized/dotted/
     // spaced raw stays `expression` (a real evaluable, e.g. `click(x)`).
+    // A native name the handler head reads (es `dobleclic`, ko `리사이즈`) is
+    // that event under its English name in a command or a loop too: a
+    // tokenizer that does not know the name left it a word, and `send
+    // dobleclic` sent an event named `dobleclic` (was OPEN_ITEMS P50).
+    if ((node.kind === 'command' || node.kind === 'loop') && node.action !== 'on' && language) {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const ev = roles.get('event');
+      const word =
+        ev?.type === 'expression' ? ev.raw : ev?.type === 'literal' ? ev.value : undefined;
+      const english =
+        typeof word === 'string' ? eventNameTranslations[language]?.[word] : undefined;
+      if (english) roles.set('event', { type: 'literal', value: english, dataType: 'string' });
+    }
     if (node.kind === 'command' && node.action !== 'on') {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       const ev = roles.get('event');
@@ -6481,11 +6499,15 @@ export class SemanticParserImpl implements ISemanticParser {
       if (!t) return undefined;
       const known = (e: string) =>
         SemanticParserImpl.KNOWN_EVENTS.has(e) || WAITABLE_EVENT_WORDS.has(e);
-      if (known(norm(t))) return norm(t);
+      // An identifier's normalized form is a stem, not an English word: tr and
+      // tl strip `-in` from `focusin`, which is not `focus`.
+      const word = t.kind === 'identifier' ? t.value.toLowerCase() : norm(t);
+      if (known(word)) return word;
+      const english = eventNameTranslations[language]?.[t.value];
+      if (english) return english;
       const native = normalizeEventName(t.value, language);
       return known(native) ? native : undefined;
     };
-    const isEvent = (t: LanguageToken | undefined): boolean => eventOf(t) !== undefined;
     const isDuration = (t: LanguageToken | undefined): boolean =>
       !!t && /^\d+(?:\.\d+)?(?:ms|s)$/.test(t.value);
     const marker = tryGetProfile(language)?.roleMarkers?.source;
@@ -6509,26 +6531,58 @@ export class SemanticParserImpl implements ISemanticParser {
         ? isWait(arr[end]) || (arr[end]?.kind === 'particle' && isWait(arr[end + 1]))
         : isWait(arr[start - 1]) || isWait(arr[start - 2]);
 
+    /** A source phrase starts at `k`: `from X`, or `X から` where the marker follows. */
+    const sourceAt = (k: number): boolean =>
+      prepositional
+        ? isSourceMarker(arr[k]) && !!arr[k + 1]
+        : !!arr[k] && isSourceMarker(arr[k + 1]);
+    /** A token spelled as a name: an identifier, or a keyword that is no structure word or verb. */
+    const isPlainName = (t: LanguageToken | undefined): boolean =>
+      !!t &&
+      (t.kind === 'identifier' || (t.kind === 'keyword' && !loneKeywordKind(t))) &&
+      /^[\p{L}_$][\p{L}\p{M}\p{N}_$:-]*$/u.test(t.value);
+    /** A source phrase starts at `k`, or after an `or` run that starts there. */
+    const sourceAfterLegs = (k: number): boolean => {
+      while (isOrWordToken(arr[k] ?? { value: '' }, language) && arr[k + 1]) k += 2;
+      return sourceAt(k);
+    };
+    /**
+     * The event the token at `i` names. Upstream reads every leg of `wait for`
+     * that is not a number as an event's name, so a name directly after
+     * English's `wait for` is one, and so is any name with a source after its
+     * legs, since a time wait has none. English dropped what followed every
+     * other name (`wait for myEvent from #b`, `wait for unload from #b`), so
+     * every translation did (P50).
+     */
+    const eventAt = (i: number): string | undefined => {
+      const known = eventOf(arr[i]);
+      if (known) return known;
+      if (!isPlainName(arr[i])) return undefined;
+      const afterFor = arr[i - 1]?.value.toLowerCase() === 'for' && isWait(arr[i - 2]);
+      return afterFor || sourceAfterLegs(i + 1) ? arr[i].value : undefined;
+    };
+
     for (let i = 0; i < arr.length; i++) {
-      if (!isEvent(arr[i])) continue;
+      const eventName = eventAt(i);
+      if (!eventName) continue;
       const alternatives: WaitAlternative[] = [];
       const eventEnd = i + 1; // exclusive
       const first = this.matchEventParamPhrase(arr, eventEnd);
       alternatives.push(
-        first.names.length > 0
-          ? { event: eventOf(arr[i])!, params: first.names }
-          : { event: eventOf(arr[i])! }
+        first.names.length > 0 ? { event: eventName, params: first.names } : { event: eventName }
       );
       let k = eventEnd + first.len;
       while (isOrWordToken(arr[k] ?? { value: '' }, language)) {
         const next = arr[k + 1];
-        if (isEvent(next)) {
+        // A leg of an event wait that is a name is an event, as upstream reads it.
+        const legEvent = eventOf(next) ?? (isPlainName(next) ? next!.value : undefined);
+        if (legEvent) {
           const legEnd = k + 2;
           const phrase = this.matchEventParamPhrase(arr, legEnd);
           alternatives.push(
             phrase.names.length > 0
-              ? { event: eventOf(next)!, params: phrase.names }
-              : { event: eventOf(next)! }
+              ? { event: legEvent, params: phrase.names }
+              : { event: legEvent }
           );
           k = legEnd + phrase.len;
         } else if (isDuration(next)) {
@@ -6572,23 +6626,27 @@ export class SemanticParserImpl implements ISemanticParser {
 
       // Which wait with this event is ours: count the ones before it.
       const event = alternatives[0] as { event: string };
+      const wanted = event.event.toLowerCase();
       let before = 0;
       for (let j = 0; j < i; j++) {
-        if (eventOf(arr[j]) === event.event && nearWait(j, j + 1)) before++;
+        if (eventAt(j)?.toLowerCase() === wanted && nearWait(j, j + 1)) before++;
       }
       try {
         const reparsed = this.parse(reduced, language);
         const waits: SemanticNode[] = [];
         const collect = (n: SemanticNode | undefined): void => {
           if (!n) return;
-          const eventValue = n.roles?.get('event' as SemanticRole);
+          // A name no event list knows reads as a time wait once its source is
+          // cut (`esperar myEvent`): its duration is the event.
+          const eventValue =
+            n.roles?.get('event' as SemanticRole) ?? n.roles?.get('duration' as SemanticRole);
           const name =
             eventValue?.type === 'expression'
               ? eventValue.raw
               : eventValue && 'value' in eventValue
                 ? String(eventValue.value)
                 : undefined;
-          if (n.kind === 'command' && n.action === 'wait' && name?.toLowerCase() === event.event) {
+          if (n.kind === 'command' && n.action === 'wait' && name?.toLowerCase() === wanted) {
             waits.push(n);
           }
           const children = n as NodeChildren;
@@ -6600,6 +6658,11 @@ export class SemanticParserImpl implements ISemanticParser {
         collect(reparsed ?? undefined);
         const target = waits[before];
         if (!reparsed || !target) continue;
+        const targetRoles = target.roles as Map<SemanticRole, SemanticValue>;
+        if (!targetRoles.has('event')) {
+          targetRoles.delete('duration');
+          targetRoles.set('event', { type: 'literal', value: event.event, dataType: 'string' });
+        }
         (target as { waitAlternatives?: WaitAlternative[] }).waitAlternatives = alternatives;
         if (sourceToken) {
           (target as { waitSource?: SemanticValue }).waitSource = waitSourceValue(sourceToken);

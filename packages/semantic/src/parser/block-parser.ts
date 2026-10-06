@@ -1726,19 +1726,25 @@ function reactiveWhenHeadForms(language: string): Set<string> {
  * String literals never count as the word (`put "changes" into me`), nor does
  * anything after an `end`. Matched by SURFACE as well as by normalized form,
  * because in several languages the dictionary's changes-word also reads as the
- * `change` event (id/ms `berubah`, vi `thay đổi`, fr `change`).
+ * `change` event (id/ms `berubah`, vi `thay đổi`, fr `change`). A normalized
+ * form counts only when it is `changes` itself: fr's `change` event is
+ * `changement`, normalized `change`, which is fr's spelling of `changes`, so
+ * `quand clic repeat jusquà événement changement …` read as a reactive head
+ * (was OPEN_ITEMS P50).
  */
 function locateReactiveWhenHead(tokens: readonly LanguageToken[], language: string): number {
   if (tokens.length < 3) return -1;
   if (!tokenMatches(tokens[0], reactiveWhenHeadForms(language))) return -1;
   const changesForms = keywordForms(language, 'changes');
+  const isChangesWord = (tok: LanguageToken): boolean =>
+    changesForms.has(tok.value.toLowerCase()) || tok.normalized?.toLowerCase() === 'changes';
   const endForms = keywordForms(language, 'end');
   // From index 2: the watched expression is never empty (`when changes …` is
   // not a reactive head).
   for (let j = 2; j < tokens.length; j++) {
     const tok = tokens[j];
     if (tok.kind === 'literal') continue;
-    if (tokenMatches(tok, changesForms)) return j;
+    if (isChangesWord(tok)) return j;
     if (tokenMatches(tok, endForms)) return -1;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
     if (tok.kind === 'keyword' && WATCHED_EXPRESSION_STOP_WORDS.has(norm)) return -1;
