@@ -2868,6 +2868,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   জেএস: ['bn'],
   ঝাপসা: ['bn'],
   টগল: ['bn'],
+  'টগল করুন': ['bn'],
   ট্রিগার: ['bn'],
   ঠেলুন: ['bn'],
   ডাকুন: ['bn'],
@@ -2921,6 +2922,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   'বার বার': ['bn'],
   বীপ: ['bn'],
   বৃদ্ধি: ['bn'],
+  'বৃদ্ধি করুন': ['bn'],
   বের: ['bn'],
   ব্রেকপয়েন্ট: ['bn'],
   ভাঙুন: ['bn'],
@@ -2966,6 +2968,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   হয়: ['bn'],
   হোভার: ['bn'],
   হ্রাস: ['bn'],
+  'হ্রাস করুন': ['bn'],
   กรอก: ['th'],
   กระแส: ['th'],
   กลับ: ['th'],
@@ -3532,7 +3535,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3329
+ * Total keywords: 3332
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 197
  */

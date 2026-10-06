@@ -874,6 +874,7 @@ export const HINDI_KEYWORDS = new Set([
  */
 export const BENGALI_KEYWORDS = new Set([
   'টগল',
+  'টগল করুন',
   'যোগ',
   'যোগ করুন',
   'সরান',
@@ -887,8 +888,10 @@ export const BENGALI_KEYWORDS = new Set([
   'নির্ধারণ',
   'বৃদ্ধি',
   'বাড়ান',
+  'বৃদ্ধি করুন',
   'হ্রাস',
   'কমান',
+  'হ্রাস করুন',
   'ট্রিগার',
   'পাঠান',
   'পাঠাও',
