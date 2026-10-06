@@ -40,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: an event name of several words keeps what is written after it.** ar
+  writes keydown, keyup and resize as `ضغط المفتاح`, `رفع المفتاح` and `تغيير حجم`, id writes
+  keydown as `tekan tombol`, and vi writes resize as `đổi kích thước`, but each tokenizer read only
+  the first word as the event. So `on keyup from #b log 1` read back `on keyup log 1` in ar,
+  `on resize from window` read back `on change` in ar and vi, and `send keyup to #x`,
+  `trigger keydown on #x`, `repeat until event keyup from #b` and `wait for resize` lost their
+  `to`, `on` or `from`, or waited for `change`. `translate`, MCP `translate_code` and the adapter
+  carried the loss. The three tokenizers now read each name whole, as es, fr, pt and qu already
+  did. The corpus's ar and vi `window-resize` rows, which the parser's compound repair already
+  read right, now parse at full confidence (1.0, was 0.82); no other corpus row changes.
 - **`@lokascript/semantic`: a behavior's handlers need no `end` of their own.** Upstream ends a
   handler's commands at the next feature, so `behavior F on click add .a on keyup log 1 end end`
   is two handlers. The behavior parser split its body only at `end`, read both handlers as one,

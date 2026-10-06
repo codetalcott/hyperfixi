@@ -14,11 +14,11 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (90): parser 44 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (44)
+### 2a. Parser correctness, semantic front-end (45)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
@@ -42,7 +42,6 @@ non-English direct path are the exposed surfaces.
 16. **P16 · `settle for <timeout>` has no duration role**: `settle for 3000` → `settle` in every language · 8610–8619 · 09-02 · yes (the `settle` row of core `grammar-schema-parity.test.ts`) · parser (schema) · **probe confirmed**.
 17. **P17 · Command-name pseudo heads, semantic half**: `reset() the closest <form/>` → `on click reset (`, and `focus() on #x` the same. Core's half is done (hxi18n Arc 4) · 8688–8694 · 09-23 · no · parser · **probe confirmed**.
 18. **P18 · A custom `or` leg fails**: `on click or myEvent …` throws on read-back in bn/ja/tr/zh (the render leaves `or` English in the frame: `クリック or myEvent を で`) and is dropped in it/ko/th · 5266 · 09-26 (PR 39) · no · parser/render · **probe confirmed** (ja and bn throw).
-19. **P19 · ar/vi `wait for resize` reads the first word, `change`**: only a handler head joins a split event name · 4595–4596 · 09-26 (PR 8e) · yes (pinned in `event-dictionary-names.test.ts`) · parser · **probe confirmed**. Wrong event at runtime.
 20. **P20 · ar reads a keyword after toggle's `على` as its duration**: `toggle .a on keyup` → `toggle .a for keyup` · 4881 · 09-26 (PR 22) · no · parser · **probe confirmed**.
 21. **P21 · `put … at end of …` is lost in it/th**: it reads back `put "a" into fine`, th `put into` · 4813 · 09-26 (PR 19) · no · parser · **probe confirmed**.
 22. **P22 · On the direct path, `put … at end of` replaces instead of appending**: buildAST writes `modifiers.into` and drops the manner · 4435–4436 · 09-25 · no · parser (buildAST) · not probed.
@@ -71,7 +70,9 @@ non-English direct path are the exposed surfaces.
 
     All at 1675–1678 · 07-20 · no · parser · not probed. Out of corpus; English `pick items 1 to 3 from arr` renders `… of arr`.
 45. **P45 · `set element's x to …` is not read as an element-scoped set**: upstream's spelling for a behavior's state (its own tested idiom, and the one that defaults a parameter so the handlers see it — `set :x` writes a different scope on both engines). en→en keeps it; every other language renders `element` as a noun with an English `'s` (zh `元素's cls`, ru `элемент's cls`) and reads it back as a dropped set or an invalid render; `set element x to …` drops in en too. Found 2026-10-03 rewriting @hyperfixi/behaviors in upstream's idioms: seven of its sources use it (none a corpus row; Sortable, a corpus row, defaults in a handler local instead). Repro: `translate("on click set element's cls to 'a'", 'en', 'zh')` and back · — · 10-03 · no (out of corpus) · parser + render · **probe confirmed**.
-48. **P48 · `from` after a two-word event name is lost in ar (and id for `keydown`)**: `on keyup from #b log 1` reads back `on keyup log 1` in ar (`رفع المفتاح من #b`), and `on keydown from window log 1` in ar and id; `on click from #b` is fine. With or without the handler's `end`. · 2026-10-05 (found by P47's tests) · partial (`native-handler-chain.test.ts` lists the ar pair shrink-only; no corpus row has it) · parser · probe confirmed.
+49. **P49 · A variable named like an event or a keyword is lost or renamed**: upstream and the engine run each as a variable. English's semantic parse drops `set input to "a"` from a handler (also `keyup`, `change`, `click`; bare, it does not parse), so every language loses it; `put "a" into input then log 1` (and `put 2 into keyup`) is lost in ar/de/fr/id/zh, `toggle .a on input` (or `on change`) in ar/de/fr/he/ja/tr. The verified render never wraps them, since `isEnglishKeyword` counts an event name as vocabulary (yet `(input)` reads right in de/fr/zh), and the value matrix's colliding names are one or two letters. `set when to 1` writes the variable as the keyword (es `establecer cuando a 1`): it reads back renamed in all 23, and runs differently from upstream in 10 (ar bn he hi ja ko ru th uk zh) · 2026-10-05 (found by P47's probes) · no · parser · probe confirmed.
+50. **P50 · An event that `send`, `trigger` or `repeat until event` names stays native when the tokenizer has no keyword for it**: es `enviar dobleclic a #x` reads back `send dobleclic to #x`, so the event fires as `dobleclic`; de `mauseintreten`, ko `리사이즈`, zh `鼠标移动` the same. About 55 (language, event) pairs per command, the one-word coinages of es/pt/fr/de/ko/zh plus `unload` in id/sw; the handler head reads them all. Also: `wait for unload from #b` renders no source in es/pt/zh/fr/de/id/sw (`esperar descargar entonces …`), fr `repeat until event change from #b` reads back broken, and bn `send scroll to #x` reads `স্ক্রোল` as the scroll command · 2026-10-05 (P48's probes) · no · parser · probe confirmed.
+51. **P51 · The multi-word native event names the renderer does not write are still split**: `eventNameTranslations` lists 18 of them as input forms (ar/de/id/pt/qu/sw/tr), and only a handler head joins one back, when its first word is itself an event: ar `على تمرير الماوس سجل 1` reads `on mouseover`, but with `من #b` after it `on scroll`, and in a wait `wait for scroll`; id `lepas tombol`, pt `pressionar tecla`, de `taste runter` read `on lepas`/`on pressionar`/`on taste`, sw `bonyeza chini` `on click`. The names the renderer writes are one token since P48, which `event-name-translation.test.ts` holds · 2026-10-05 (P48's probes) · no · parser · probe confirmed.
 
 ### 2b. Render / naturalness (6)
 

@@ -162,6 +162,13 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   { native: 'فأرة تحرك', normalized: 'mousemove' },
   { native: 'مفتاح أسفل', normalized: 'keydown' },
   { native: 'مفتاح أعلى', normalized: 'keyup' },
+  // The names the renderer writes (eventNameTranslations' first entries). Split,
+  // the head read only the first word, and a `من <source>` after the second was
+  // lost: `on keyup from #b` came back `on keyup`, `on resize from window` as
+  // `on change` (was OPEN_ITEMS P48).
+  { native: 'ضغط المفتاح', normalized: 'keydown' },
+  { native: 'رفع المفتاح', normalized: 'keyup' },
+  { native: 'تغيير حجم', normalized: 'resize' },
 
   // References (feminine "it" not in profile)
   { native: 'هي', normalized: 'it' },
