@@ -135,7 +135,9 @@ describe('event-name translation (Phase 1b)', () => {
             got = undefined; // unparseable native (not registered by the tokenizer)
           }
           if (got !== ev) {
-            failures.push(`${lang}: ${ev}→${native} re-parsed as ${got ?? 'NONE'} ("${translated}")`);
+            failures.push(
+              `${lang}: ${ev}→${native} re-parsed as ${got ?? 'NONE'} ("${translated}")`
+            );
           }
         }
       }
@@ -145,12 +147,13 @@ describe('event-name translation (Phase 1b)', () => {
     // A name of several words has to be one token. Split, its first word read
     // as the event (ar `تغيير`, vi `đổi`: change, not resize), and whatever was
     // written after the name was lost: `on keyup from #b` read back
-    // `on keyup` in ar (was OPEN_ITEMS P48).
-    it('every native of several words it emits is one token', () => {
+    // `on keyup` in ar (was OPEN_ITEMS P48). The same holds for a name the
+    // table reads and the renderer never writes: id `lepas tombol` read
+    // `on lepas` (was OPEN_ITEMS P51).
+    it('every native of several words it reads is one token', () => {
       const failures: string[] = [];
-      for (const lang of Object.keys(eventNameTranslations)) {
-        for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
-          const native = localizeEventName(ev, lang);
+      for (const [lang, table] of Object.entries(eventNameTranslations)) {
+        for (const [native, ev] of Object.entries(table)) {
           if (!/\s/.test(native)) continue;
           const tokens = tokenize(native, lang).tokens;
           if (tokens.length !== 1 || tokens[0].normalized !== ev) {
@@ -191,6 +194,31 @@ describe('event-name translation (Phase 1b)', () => {
             const translated = translate(src, 'en', lang);
             const back = translate(translated, lang, 'en');
             if (back !== src) failures.push(`${lang}: "${translated}" → "${back}"`);
+          }
+        }
+      }
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+
+    // A hand-written name of several words, in the render's place: ar
+    // `على تمرير الماوس من #b سجل 1` read `on scroll` (was OPEN_ITEMS P51).
+    it('a native of several words it only reads keeps what follows it', () => {
+      const failures: string[] = [];
+      for (const [lang, table] of Object.entries(eventNameTranslations)) {
+        for (const [native, ev] of Object.entries(table)) {
+          const rendered = localizeEventName(ev, lang);
+          if (!/\s/.test(native) || native === rendered) continue;
+          for (const src of [
+            `on ${ev} log 1`,
+            `on ${ev} from #b log 1`,
+            `on click wait for ${ev} from #b then log 1`,
+            `on click send ${ev} to #x then log 1`,
+            `on click trigger ${ev} on #x then log 1`,
+            `on click repeat until event ${ev} from #b add .a end`,
+          ]) {
+            const handWritten = translate(src, 'en', lang).split(rendered).join(native);
+            const back = translate(handWritten, lang, 'en');
+            if (back !== src) failures.push(`${lang}: "${handWritten}" → "${back}"`);
           }
         }
       }

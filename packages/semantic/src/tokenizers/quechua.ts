@@ -208,6 +208,9 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'rathuqariy', normalized: 'mouseup' },
   { native: 'qhaway', normalized: 'focus' },
   { native: 'mana qhaway', normalized: 'blur' },
+  // The spelling eventNameTranslations reads (the renderer writes `paqariy`).
+  // Split, `mana` read as `false` (was OPEN_ITEMS P51).
+  { native: "mana q'away", normalized: 'blur' },
   { native: 'kargay', normalized: 'load' },
   { native: 'muyuy', normalized: 'scroll' },
 

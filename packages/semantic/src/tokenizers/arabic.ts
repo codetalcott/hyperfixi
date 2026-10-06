@@ -169,6 +169,9 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   { native: 'ضغط المفتاح', normalized: 'keydown' },
   { native: 'رفع المفتاح', normalized: 'keyup' },
   { native: 'تغيير حجم', normalized: 'resize' },
+  // A name eventNameTranslations reads (the renderer writes mouseover in
+  // English). Split, `تمرير` read as scroll (was OPEN_ITEMS P51).
+  { native: 'تمرير الماوس', normalized: 'mouseover' },
 
   // References (feminine "it" not in profile)
   { native: 'هي', normalized: 'it' },

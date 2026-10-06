@@ -40,6 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: a hand-written event name of several words is read whole.** The event
+  table reads 15 two-word names that the renderer never writes (ar `تمرير الماوس`, de `taste runter`,
+  id `lepas tombol`, pt `pressionar tecla`, qu `mana q'away`, sw `bonyeza chini`, and nine more in de,
+  id, pt and sw), but their tokenizers split them, and the reader took the first word for the event:
+  de `wenn taste runter protokollieren 1` read `on taste log 1`, id `ketika lepas tombol …`
+  `on lepas`, sw `unapo bonyeza chini …` `on click`, qu `maykama mana q'away …` `on false`, and ar
+  `على تمرير الماوس من #b …` `on scroll`. A `wait for`, `send`, `trigger` or `repeat until event`
+  lost the event the same way. The six tokenizers now read each name whole. No corpus row changes.
 - **`@lokascript/semantic`: an event name of several words keeps what is written after it.** ar
   writes keydown, keyup and resize as `ضغط المفتاح`, `رفع المفتاح` and `تغيير حجم`, id writes
   keydown as `tekan tombol`, and vi writes resize as `đổi kích thước`, but each tokenizer read only
