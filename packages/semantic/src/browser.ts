@@ -119,7 +119,13 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 // Translation
 // =============================================================================
 
-export { translate, getAllTranslations, roundTrip, validateTranslation } from './explicit';
+export {
+  translate,
+  LossyTranslationError,
+  getAllTranslations,
+  roundTrip,
+  validateTranslation,
+} from './explicit';
 
 // =============================================================================
 // Rendering

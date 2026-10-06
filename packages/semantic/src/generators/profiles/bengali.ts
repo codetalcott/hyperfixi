@@ -54,7 +54,9 @@ export const bengaliProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: 'টগল', normalized: 'toggle' },
+    // `টগল করুন` (toggle, polite): the hand-crafted pattern's own form, which a
+    // handler body read as `টগল` and an unread `করুন`. Read-only (an alternative).
+    toggle: { primary: 'টগল', alternatives: ['টগল করুন'], normalized: 'toggle' },
     add: { primary: 'যোগ', alternatives: ['যোগ করুন'], normalized: 'add' },
     remove: { primary: 'সরান', alternatives: ['সরিয়ে ফেলুন', 'মুছুন'], normalized: 'remove' },
     // Content operations
@@ -72,8 +74,14 @@ export const bengaliProfile: LanguageProfile = {
     // Variable operations
     set: { primary: 'সেট', alternatives: ['নির্ধারণ'], normalized: 'set' },
     get: { primary: 'পান', normalized: 'get' },
-    increment: { primary: 'বৃদ্ধি', alternatives: ['বাড়ান'], normalized: 'increment' },
-    decrement: { primary: 'হ্রাস', alternatives: ['কমান'], normalized: 'decrement' },
+    // `বৃদ্ধি করুন` / `হ্রাস করুন`: the hand-crafted patterns' polite forms, read
+    // whole (a handler body took `করুন` for the patient). Read-only alternatives.
+    increment: {
+      primary: 'বৃদ্ধি',
+      alternatives: ['বাড়ান', 'বৃদ্ধি করুন'],
+      normalized: 'increment',
+    },
+    decrement: { primary: 'হ্রাস', alternatives: ['কমান', 'হ্রাস করুন'], normalized: 'decrement' },
     log: { primary: 'লগ', alternatives: ['রেকর্ড'], normalized: 'log' },
     // Visibility
     show: { primary: 'দেখান', alternatives: ['দেখাও'], normalized: 'show' },

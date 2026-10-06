@@ -53,6 +53,18 @@ export class BengaliKeywordExtractor implements ContextAwareExtractor {
 
     if (!word) return null;
 
+    // A hyphenated keyword is one word: empty's `খালি-করুন`, which the renderer
+    // writes, split at its hyphen and left `- করুন` unread.
+    if (input[pos] === '-' && isBengali(input[pos + 1])) {
+      let end = pos + 1;
+      while (end < input.length && isBengali(input[end])) end++;
+      const joined = word + input.slice(pos, end);
+      if (this.context.lookupKeyword(joined)) {
+        word = joined;
+        pos = end;
+      }
+    }
+
     // Look up keyword entry
     const keywordEntry = this.context.lookupKeyword(word);
     const normalized =

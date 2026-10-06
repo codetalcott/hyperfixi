@@ -13,6 +13,7 @@ import {
   NumberExtractor,
   OperatorExtractor,
   PunctuationExtractor,
+  SpacedDurationExtractor,
 } from './generic-extractors';
 import { getHyperscriptExtractors } from './extractor-helpers';
 import { createEnglishExtractors } from './extractors/english-keyword';
@@ -158,6 +159,7 @@ export class EnglishTokenizer extends BaseTokenizer {
     // Order matters: more specific extractors first
     this.registerExtractors(getHyperscriptExtractors()); // CSS, events, URLs
     this.registerExtractor(new StringLiteralExtractor()); // Strings
+    this.registerExtractor(new SpacedDurationExtractor()); // `10 ms`, `2 seconds`
     this.registerExtractor(new NumberExtractor()); // Numbers
     this.registerExtractors(createEnglishExtractors()); // English keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators

@@ -22,6 +22,34 @@ import {
 export { StringLiteralExtractor, NumberExtractor, IdentifierExtractor };
 
 // =============================================================================
+// Spaced Duration Extractor (English)
+// =============================================================================
+
+/**
+ * A number and the time unit after it, apart: `10 ms`, `2 seconds`. The engine
+ * reads a unit word after a value whether or not a space comes first (`s`,
+ * `seconds`, `ms`, `milliseconds`), so `wait 2 seconds` is two seconds; read as
+ * the number alone it was two milliseconds, and the unit was left unread. The
+ * value is the attached form (`2s`) that NumberExtractor gives `2s`.
+ */
+export class SpacedDurationExtractor implements ValueExtractor {
+  readonly name = 'spaced-duration';
+
+  private static readonly PATTERN = /^(\d+(?:\.\d+)?)[ \t]+(ms|milliseconds?|s|seconds?)(?![\w-])/;
+
+  canExtract(input: string, position: number): boolean {
+    return /\d/.test(input[position] ?? '') && !/[\w.]/.test(input[position - 1] ?? '');
+  }
+
+  extract(input: string, position: number): ExtractionResult | null {
+    const match = SpacedDurationExtractor.PATTERN.exec(input.slice(position));
+    if (!match) return null;
+    const unit = match[2]!.startsWith('m') ? 'ms' : 's';
+    return { value: match[1] + unit, length: match[0].length, metadata: { hasTimeUnit: true } };
+  }
+}
+
+// =============================================================================
 // Operator Extractor (semantic-specific)
 // =============================================================================
 

@@ -87,8 +87,18 @@ describe.each(SOURCES)('%s', source => {
 });
 
 describe('the default amount', () => {
-  it('is not written out', () => {
+  it('is not written out when the parse supplied it', () => {
     expect(render(parse('on click increment x', 'en')!, 'en')).toBe('on click increment x');
-    expect(render(parse('on click increment x by 1', 'en')!, 'en')).toBe('on click increment x');
+    for (const language of LANGUAGES) {
+      expect(render(parse('on click increment x', 'en')!, language)).not.toMatch(/\b1\b/);
+    }
+  });
+
+  // An authored `by 1` is the author's: a translation keeps it (de wrote `um 1`
+  // for every increment, en dropped every `by 1`, and each read as a lost value).
+  it('is written out when the author wrote it', () => {
+    expect(render(parse('on click increment x by 1', 'en')!, 'en')).toBe(
+      'on click increment x by 1'
+    );
   });
 });
