@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1136,
   "pairs": 27264,
-  "pass": 20896,
-  "refused": 5787,
+  "pass": 20939,
+  "refused": 5744,
   "silent": 581,
   "entries": {
     "3480154525": {
@@ -1670,40 +1670,15 @@
       "family": "scroll",
       "refused": "en *"
     },
-    "14ad24cc1a": {
-      "src": "if :count > 0 add .active end",
-      "family": "if",
-      "refused": "de es fr id pt sw zh"
-    },
     "eeb30e2d38": {
       "src": "for item in <li/> add .done to item end",
       "family": "for",
       "refused": "bn hi sw"
     },
-    "dfc312611f": {
-      "src": "if :found break end",
-      "family": "break",
-      "refused": "de es fr id pt sw zh"
-    },
-    "471a470db5": {
-      "src": "if item matches .skip continue end",
-      "family": "continue",
-      "refused": "de es fr id pt sw zh"
-    },
-    "da0128056b": {
-      "src": "if :error halt end",
-      "family": "halt",
-      "refused": "de es fr id pt sw zh"
-    },
     "63143b6f80": {
       "src": "return",
       "family": "return",
       "refused": "hi"
-    },
-    "905b93d180": {
-      "src": "if :done exit end",
-      "family": "exit",
-      "refused": "de es fr id pt sw zh"
     },
     "7bc08adb98": {
       "src": "transition #box's *opacity to 0 over 300ms",
@@ -1808,11 +1783,6 @@
       "src": "halt halt the event",
       "family": "halt",
       "refused": "hi"
-    },
-    "7409f3b9d8": {
-      "src": "if not valid exit",
-      "family": "exit",
-      "refused": "de es fr id ko pt sw zh"
     },
     "32bbb02918": {
       "src": "pick items 0 to 2 from :list pick characters 0 to 3 from \"hello\"",
