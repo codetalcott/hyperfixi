@@ -218,10 +218,13 @@ export function findTranslationLoss(
   }
   const misread = unconsumedSpans(back);
   if (misread.length) return { kind: 'read-back', lost: misread };
-  // English is written in upstream's spelling, which can add a node (a
-  // view-transition tail becomes `start view transition … end`): compare
+  // English is written in upstream's spelling (explicit/upstream-spelling.ts:
+  // the owner's 2026-10-01 rule, each rewrite measured on both engines), which
+  // can wrap a command (a view-transition tail becomes `start view transition
+  // … end`) or respell one (`prepend` becomes `put … at start of`): compare
   // with what was rendered.
-  const commands = actionDifference(to === 'en' ? toUpstreamSpelling(node) : node, back);
+  const rendered = to === 'en' ? toUpstreamSpelling(node) : node;
+  const commands = actionDifference(rendered, back);
   if (commands.length) return { kind: 'read-back', lost: commands };
 
   const values = missingInvariants(input, output);

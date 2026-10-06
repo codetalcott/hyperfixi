@@ -376,8 +376,15 @@ export async function initDirectPathHosts(): Promise<DirectPathHosts> {
     for (const steps of scriptOf(c)) parts.push(await run(host, c, code, lang, steps));
     return parts.join(' ‖ ');
   };
-  const rejects = (host: ScriptHost, code: string): string | undefined =>
-    host.parse(code)?.errors?.[0]?.message.split('\n')[0];
+  // Two failure channels: parse errors, and the tokenizer THROWING on a
+  // character it does not know (the text a refused translation leaves as written).
+  const rejects = (host: ScriptHost, code: string): string | undefined => {
+    try {
+      return host.parse(code)?.errors?.[0]?.message.split('\n')[0];
+    } catch (e) {
+      return (e as Error).message.split('\n')[0] ?? 'threw';
+    }
+  };
 
   return {
     async runCase(c) {

@@ -138,3 +138,21 @@ describe('invariantValues', () => {
     expect(missingInvariants("put 'x' into #o", 'put "x" into #o')).toEqual([]);
   });
 });
+
+describe('read-back against what English writes (upstream spelling)', () => {
+  it('a spelling that wraps a command is the same program', () => {
+    expect(
+      translate(
+        "on click swap #a's textContent with #b's textContent using view transition",
+        'en',
+        'en'
+      )
+    ).toContain('start view transition');
+  });
+
+  it('a spelling that respells a command is the same program', () => {
+    expect(translate("on click prepend #d1's value to #out", 'en', 'en')).toBe(
+      "on click put #d1's value at start of #out"
+    );
+  });
+});
