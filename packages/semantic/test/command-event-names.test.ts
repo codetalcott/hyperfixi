@@ -43,16 +43,19 @@ const COMMANDS = (ev: string): string[] => [
 ];
 
 describe('an event a command names', () => {
-  it('every native name the renderer writes reads back as its event', () => {
-    const failures: string[] = [];
-    for (const lang of Object.keys(eventNameTranslations)) {
-      for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
-        if (localizeEventName(ev, lang) === ev) continue;
-        for (const src of COMMANDS(ev)) failures.push(...roundTripFailures(src, [lang]));
+  // One test per command: all four took 6 s on CI, past vitest's 5 s.
+  for (const [n, command] of ['send', 'trigger', 'repeat until event', 'wait for'].entries()) {
+    it(`every native name the renderer writes reads back as its event: ${command}`, () => {
+      const failures: string[] = [];
+      for (const lang of Object.keys(eventNameTranslations)) {
+        for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
+          if (localizeEventName(ev, lang) === ev) continue;
+          failures.push(...roundTripFailures(COMMANDS(ev)[n], [lang]));
+        }
       }
-    }
-    expect(failures, failures.join('\n')).toEqual([]);
-  });
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+  }
 
   // A one-word name the table reads but the renderer does not write (pt
   // `inserir` beside `entrada`), hand-written into the render's place. Not a
