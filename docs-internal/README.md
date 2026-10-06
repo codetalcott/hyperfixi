@@ -34,8 +34,8 @@ queue.
 
 ## Open briefs (work not started)
 
-- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, never sent (written
-  before 4.0; OPEN_ITEMS PR8).
+- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, not sent (refreshed
+  against 4.1.0 on 2026-10-06, #1400; OPEN_ITEMS PR8).
 - [`proposals/community-review-system.md`](proposals/community-review-system.md): the community review
   design (OPEN_ITEMS PR1).
 - [`proposals/lse-syntax-new-directions.md`](proposals/lse-syntax-new-directions.md): partly shipped,
