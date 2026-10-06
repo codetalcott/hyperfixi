@@ -482,7 +482,14 @@ export interface DefSemanticNode extends SemanticNode {
 }
 
 /** Block-structured feature actions — see {@link FeatureSemanticNode}. */
-export type FeatureAction = 'live' | 'when' | 'eventsource' | 'socket' | 'worker' | 'intercept';
+export type FeatureAction =
+  | 'live'
+  | 'when'
+  | 'init'
+  | 'eventsource'
+  | 'socket'
+  | 'worker'
+  | 'intercept';
 
 // (kept in the union above so `FeatureSemanticNode.action` covers every feature
 // the fold handles; `worker`'s body is `def` sub-blocks rather than handlers.)

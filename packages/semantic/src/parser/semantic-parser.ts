@@ -1114,6 +1114,16 @@ export class SemanticParserImpl implements ISemanticParser {
     // into its handlers (each parsed by the single-statement path below) and
     // re-assembled — otherwise the leading keyword matches and the whole body is
     // dropped at a false confidence 1.0. Returns null (fast) for non-block input.
+    // Stage −1: a PROGRAM of features (`def a … end def b … end`, `init … end
+    // on click …`, `bind … end live …`): split before the block layers below,
+    // each of which reads its own feature and dropped whatever came after it.
+    // Returns null (fast) unless every top-level segment reads as a feature.
+    const programFirst = tryParseProgram(input, language, {
+      statement: (text, lang) => this.parse(text, lang),
+      body: (text, lang) => this.parseStatements(text, lang),
+    });
+    if (programFirst) return programFirst;
+
     const blockNode = tryParseBlock(input, language, {
       statement: (text, lang) => this.parse(text, lang),
       body: (text, lang) => this.parseStatements(text, lang),

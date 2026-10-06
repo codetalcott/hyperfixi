@@ -266,6 +266,9 @@ const ROLE_CONCEPTS = new Set(['destination', 'source', 'style', 'patient', 'on'
 function looksLikeEvent(tok: LanguageToken | undefined): boolean {
   if (!tok) return false;
   if (tok.kind === 'selector') return false;
+  // A number is a value, never an event: de `setze :foo auf 42` (`auf` is both
+  // `on` and set's `to`) is a set, not a set and a handler for `42`.
+  if (tok.kind === 'literal' && /^\d/.test(tok.value)) return false;
   const norm = (tok.normalized ?? tok.value).toLowerCase();
   const val = tok.value.toLowerCase();
   if (TARGET_REFERENCES.has(norm) || TARGET_REFERENCES.has(val)) return false;
@@ -879,11 +882,14 @@ function splitProgram(
   const thenForms = keywordForms(language, 'then');
   const lower = input.toLowerCase();
   const hasEnd = [...endForms].some(f => lower.includes(f));
+  // A script that opens with another feature (`set :x to 1 on click …`, `init …
+  // on click …`) needs only the one head.
+  const opensWithHead = heads.anchors.some(f => lower.trimStart().startsWith(f));
   const hasMultiTrigger = (() => {
     let hits = 0;
     for (const f of heads.anchors) {
       for (let i = lower.indexOf(f); i >= 0; i = lower.indexOf(f, i + f.length)) {
-        if (++hits >= 2) return true;
+        if (++hits >= (opensWithHead ? 2 : 1)) return true;
       }
     }
     return false;
@@ -892,6 +898,18 @@ function splitProgram(
 
   const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
   if (tokens.length < 2) return null;
+  // A block whose body holds handlers or features of its own (`behavior`,
+  // `eventsource`, `socket`, `worker`, `intercept`) is read by its own layer:
+  // split at its handlers' `end`s, it would become a program of its parts. Its
+  // keyword leads, or in SOV follows the head (ko `Foo(p) 를 behavior …`).
+  const head = tokens.slice(0, SOV_KEYWORD_SEARCH_LIMIT);
+  if (
+    HANDLER_BLOCK_HEADS.some(action =>
+      head.some(t => tokenMatches(t, keywordForms(language, action)))
+    )
+  ) {
+    return null;
+  }
 
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
@@ -943,10 +961,15 @@ function splitProgram(
 
   if (segments.length < 2) return null;
 
-  // Every segment must parse as an event handler; otherwise this isn't a
-  // multi-handler program (it may be a single conditional, a command sequence, a
-  // mixed init/def program) and we defer to the existing single-statement path.
-  const handlers: SemanticNode[] = [];
+  // Every segment must parse as a top-level FEATURE (an event handler, a `def`,
+  // a feature block such as `init` / `live` / `when … changes`, or a `bind` /
+  // `set` / `install` / `js` written at the top of the script), and at least one
+  // must be more than such a command; otherwise this isn't a program (it may be
+  // a single conditional or a command sequence) and we defer to the existing
+  // single-statement path. Upstream reads each top-level feature on its own:
+  // `def a … end def b … end` is two functions, and the single-statement path
+  // kept the first feature and dropped the rest without a word.
+  const features: SemanticNode[] = [];
   const confidences: number[] = [];
   for (const seg of segments) {
     let parsed: SemanticNode;
@@ -955,26 +978,49 @@ function splitProgram(
     } catch {
       return null;
     }
-    if (!parsed || parsed.kind !== 'event-handler') return null;
-    const handler = parsed as EventHandlerSemanticNode;
-    handlers.push(handler);
+    if (!parsed || !isTopLevelFeature(parsed)) return null;
     // A handler with NO commands is not a handler in a chain — it is the tell of
     // a mis-split. ko renders `transition opacity to 0` as `opacity 을 에 0`,
     // which carries the same `<x> <event-marker> <on-marker>` signature the SOV
     // split keys on, and splitting there leaves a bodiless `클릭 을 에` ahead of
     // it. Reject rather than merely distrust: the single-statement path parses
     // the line correctly, so a low-confidence compound is strictly worse.
-    if (!handler.body || handler.body.length === 0) return null;
-    confidences.push(handler.metadata?.confidence ?? 0.75);
+    if (parsed.kind === 'event-handler') {
+      const handler = parsed as EventHandlerSemanticNode;
+      if (!handler.body || handler.body.length === 0) return null;
+    }
+    features.push(parsed);
+    confidences.push(parsed.metadata?.confidence ?? 0.75);
   }
 
   const confidence = meanConfidence(confidences);
-  const node = createCompoundNode(handlers, 'then', {
+  const node = createCompoundNode(features, 'then', {
     sourceLanguage: language,
     confidence: unsure ? Math.min(confidence, UNSURE_SPLIT_CONFIDENCE) : confidence,
     sourceText: input,
   });
   return { node, unsure };
+}
+
+/** Blocks whose body is handlers or features: never split as a program (see splitProgram). */
+const HANDLER_BLOCK_HEADS = ['behavior', 'eventsource', 'socket', 'worker', 'intercept'] as const;
+
+/** Commands that are features when written at the top of a script. */
+const TOP_LEVEL_FEATURE_COMMANDS: ReadonlySet<string> = new Set(['bind', 'set', 'install', 'js']);
+
+/** Is `node` something a script can hold at its top level, beside other features? */
+function isTopLevelFeature(node: SemanticNode): boolean {
+  switch (node.kind) {
+    case 'event-handler':
+    case 'def':
+    case 'behavior':
+    case 'feature':
+      return true;
+    case 'command':
+      return TOP_LEVEL_FEATURE_COMMANDS.has(node.action);
+    default:
+      return false;
+  }
 }
 
 /** Mean of a confidence list (0 when empty). */
@@ -1234,7 +1280,7 @@ function parseDefBlock(
  *
  * Each body family is handled differently — see {@link parseFeatureBlock}.
  */
-const FEATURE_ACTIONS = ['live', 'eventsource', 'socket', 'worker', 'intercept'] as const;
+const FEATURE_ACTIONS = ['live', 'init', 'eventsource', 'socket', 'worker', 'intercept'] as const;
 
 /** Features whose body is a configuration DSL rather than hyperscript commands. */
 const OPAQUE_BODY_FEATURES: ReadonlySet<string> = new Set(['intercept']);
@@ -1275,6 +1321,9 @@ function locateFeatureKeyword(
 ): { action: FeatureAction; keywordIdx: number } | null {
   for (const action of FEATURE_ACTIONS) {
     if (tokenMatches(tokens[0], keywordForms(language, action))) {
+      // A feature head is never an object: bn `শুরু কে লোড এ ট্রিগার` (`on load
+      // trigger init`) writes the event `init` first, marked by `কে`.
+      if (action === 'init' && tokens[1]?.kind === 'particle') continue;
       return { action, keywordIdx: 0 };
     }
   }
@@ -1284,9 +1333,9 @@ function locateFeatureKeyword(
   const limit = Math.min(tokens.length, SOV_KEYWORD_SEARCH_LIMIT);
   for (let i = 1; i < limit; i++) {
     for (const action of FEATURE_ACTIONS) {
-      // `live` leads its block in every language (ja ライブ, ko 라이브, tr canlı):
-      // it has no head to reorder around, so it never goes verb-final.
-      if (action === 'live') continue;
+      // `live` and `init` lead their block in every language (ja ライブ, ko
+      // 라이브, tr canlı): no head to reorder around, so never verb-final.
+      if (action === 'live' || action === 'init') continue;
       if (!tokenMatches(tokens[i], keywordForms(language, action))) continue;
       if (NAMED_FEATURES.has(action) && !PASCAL_CASE_NAME.test(tokens[0].value)) continue;
       if (action === 'intercept' && i > INTERCEPT_SOV_KEYWORD_LIMIT) continue;
@@ -1402,7 +1451,7 @@ function featureBodyStart(
   language: string,
   blockEnd: number
 ): number {
-  if (action === 'live') return keywordIdx + 1;
+  if (action === 'live' || action === 'init') return keywordIdx + 1;
 
   if (keywordIdx > 0) {
     // SOV verb-final.
