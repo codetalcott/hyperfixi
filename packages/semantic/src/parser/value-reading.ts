@@ -324,7 +324,8 @@ export function particleIsValue(slot: SlotContext): boolean {
  * type), or one that takes no expression. The matchers before it have taken
  * the keyword-led values (`not flag`, `no .w`). An event name alone is a
  * variable too (`set input to "a"`, de `setzen "a" in input`), except in a
- * command that names an event, or a wait (`wait for click`) — P49.
+ * command that names an event, a wait (`wait for click`), or a condition
+ * (ar `إذا نقر`, a handler head) — P49.
  */
 export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | undefined): boolean {
   const pt = slot.patternToken;
@@ -334,9 +335,15 @@ export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | und
   const kind = loneKeywordKind(slot.token);
   if (kind === 'structure') return true;
   // An event name, except in a command that names an event (a fused handler
-  // pattern captures `send`'s under another role) or where a wait reads one.
+  // pattern captures `send`'s under another role), where a wait reads one, or
+  // in a condition, where it is what a handler head looks like (ar `إذا نقر`,
+  // when click, reads `if click`).
   if (kind === 'event') {
-    return !schema?.roles.some(r => r.role === 'event') && schema?.action !== 'wait';
+    return (
+      !schema?.roles.some(r => r.role === 'event') &&
+      schema?.action !== 'wait' &&
+      pt.role !== 'condition'
+    );
   }
   if (kind !== 'verb') return false;
   if ((slot.token.normalized ?? slot.token.value).toLowerCase() === 'empty') return false;
