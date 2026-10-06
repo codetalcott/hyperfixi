@@ -23,7 +23,7 @@
  * | ------ | ------------------------------------------------------- | -------------------------------------------- |
  * | C1, C2 | `a`/`an` before an operator or a marker is a variable   | the role capture, before it reads the slot   |
  * | C7     | a particle is the value where no marker can stand       | the role capture, after its expressions      |
- * | C8     | a structure keyword or verb alone is a variable         | the role capture, after C7                   |
+ * | C8     | a structure keyword, verb or event alone is a variable  | the role capture, after C7                   |
  * | C9     | a lone article is a variable, `empty` is `null`         | the role capture's last reading of a token   |
  * | C10    | a particle beside an operator is its operand            | an operator run, for each operand            |
  * | C15    | a particle after `of` is the owner                      | a value's extent, for each token             |
@@ -322,7 +322,10 @@ export function particleIsValue(slot: SlotContext): boolean {
  * init`); and `empty`, which alone is `null` (C9). Never the event's or the
  * action's slot, one that holds a keyword (`using view transition`, a loop's
  * type), or one that takes no expression. The matchers before it have taken
- * the keyword-led values (`not flag`, `no .w`).
+ * the keyword-led values (`not flag`, `no .w`). An event name alone is a
+ * variable too (`set input to "a"`, de `setzen "a" in input`), except in a
+ * command that names an event, a wait (`wait for click`), or a condition
+ * (ar `إذا نقر`, a handler head) — P49.
  */
 export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | undefined): boolean {
   const pt = slot.patternToken;
@@ -331,6 +334,17 @@ export function keywordIsVariable(slot: SlotContext, schema: CommandSchema | und
   if (types?.length && !types.some(t => t === 'expression' || t === 'reference')) return false;
   const kind = loneKeywordKind(slot.token);
   if (kind === 'structure') return true;
+  // An event name, except in a command that names an event (a fused handler
+  // pattern captures `send`'s under another role), where a wait reads one, or
+  // in a condition, where it is what a handler head looks like (ar `إذا نقر`,
+  // when click, reads `if click`).
+  if (kind === 'event') {
+    return (
+      !schema?.roles.some(r => r.role === 'event') &&
+      schema?.action !== 'wait' &&
+      pt.role !== 'condition'
+    );
+  }
   if (kind !== 'verb') return false;
   if ((slot.token.normalized ?? slot.token.value).toLowerCase() === 'empty') return false;
   return !schema?.hasBody && !schema?.roles.some(r => r.role === 'event');

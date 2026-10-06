@@ -4,7 +4,7 @@
  * leaves out; the matrix shards run the names themselves.
  */
 import { describe, it, expect } from 'vitest';
-import { collidingNames, generateCells } from './value-matrix';
+import { KEYWORD_NAMES, collidingNames, generateCells } from './value-matrix';
 
 const names = new Map(collidingNames().map(entry => [entry.name, entry]));
 
@@ -27,6 +27,16 @@ describe('value matrix: colliding names', () => {
     expect(names.has('in')).toBe(false);
     expect(names.has('on')).toBe(false);
     expect(names.has('an')).toBe(true);
+  });
+
+  // Upstream runs each as a variable; English's own parse dropped `set input
+  // to "a"`, and every language wrote `when` as its keyword (P49).
+  it('takes the English words upstream runs as variables (KEYWORD_NAMES)', () => {
+    for (const name of KEYWORD_NAMES) expect(names.has(name), name).toBe(true);
+    expect(KEYWORD_NAMES).toContain('input'); // an event name
+    expect(KEYWORD_NAMES).toContain('when'); // a structure word
+    expect(KEYWORD_NAMES).toContain('index'); // a value-lexicon word (P28)
+    expect(names.has('if')).toBe(false); // P53
   });
 
   it("leaves out upstream's `no` and the templates' variables", () => {

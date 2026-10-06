@@ -46,6 +46,7 @@ import { isCuratedEndKeyword } from '../end-keywords';
 import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 import { NATIVE_COUNT_WORDS } from '../../patterns/count-words';
+import { EVENT_NAMES } from './event-names';
 
 // prettier-ignore
 export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
@@ -1529,21 +1530,24 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
 
 /**
  * What a keyword spells when it stands alone where a value must: `structure`
- * (above) or `verb` (a command verb); undefined for any other keyword (a
- * reference, a constant, an event name). A translation writes a variable
+ * (above), `verb` (a command verb) or `event` (an event name); undefined for
+ * any other keyword (a reference, a constant). A translation writes a variable
  * verbatim, so a keyword alone there names a variable the language spells like
  * it: es `si` is `if`, tr `al` is `get`, and joined as English they read `if
- * if`, `if get`. The one classifier the join (J1, below) and the role capture
- * (C8, `keywordIsVariable` in value-reading.ts) share: a whole joined value is
- * never what a dropped command leaves, so the join counts a verb; the role
- * capture only where no dropped command can have left it.
+ * if`, `if get`. An event name is one too: upstream and the engine run `set
+ * input to "a"` on a variable named `input`, which English's own parse dropped
+ * (was OPEN_ITEMS P49). The one classifier the join (J1, below) and the role
+ * capture (C8, `keywordIsVariable` in value-reading.ts) share: a whole joined
+ * value is never what a dropped command leaves, so the join counts a verb; the
+ * role capture only where no dropped command can have left it, and an event
+ * name only where no event stands.
  */
-export function loneKeywordKind(token: LanguageToken): 'structure' | 'verb' | undefined {
+export function loneKeywordKind(token: LanguageToken): 'structure' | 'verb' | 'event' | undefined {
   if (token.kind !== 'keyword') return undefined;
   if (isStructureKeyword(token)) return 'structure';
-  return COMMAND_ACTION_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
-    ? 'verb'
-    : undefined;
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  if (COMMAND_ACTION_KEYWORDS.has(norm)) return 'verb';
+  return EVENT_NAMES.has(norm) ? 'event' : undefined;
 }
 
 /**

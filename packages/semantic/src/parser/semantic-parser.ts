@@ -6536,10 +6536,14 @@ export class SemanticParserImpl implements ISemanticParser {
       prepositional
         ? isSourceMarker(arr[k]) && !!arr[k + 1]
         : !!arr[k] && isSourceMarker(arr[k + 1]);
-    /** A token spelled as a name: an identifier, or a keyword that is no structure word or verb. */
+    /**
+     * A token spelled as a name: an identifier, or a keyword that is no
+     * structure word or verb (an event name is one: `unload`).
+     */
     const isPlainName = (t: LanguageToken | undefined): boolean =>
       !!t &&
-      (t.kind === 'identifier' || (t.kind === 'keyword' && !loneKeywordKind(t))) &&
+      (t.kind === 'identifier' ||
+        (t.kind === 'keyword' && (loneKeywordKind(t) ?? 'event') === 'event')) &&
       /^[\p{L}_$][\p{L}\p{M}\p{N}_$:-]*$/u.test(t.value);
     /** A source phrase starts at `k`, or after an `or` run that starts there. */
     const sourceAfterLegs = (k: number): boolean => {

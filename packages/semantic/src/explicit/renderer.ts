@@ -74,12 +74,17 @@ function isFlatBlockHeader(node: SemanticNode): boolean {
 const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
-import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
+import { getSupportedLanguages as getTokenizerLanguages, tokenize } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
-import { getOfPossessiveMarker, PROPERTY_NAME_LEXICON } from '../parser/utils/expression-lexicon';
+import {
+  getOfPossessiveMarker,
+  loneKeywordKind,
+  PROPERTY_NAME_LEXICON,
+} from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
+import { expressionVariables, isVariableName } from './expression-variables';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 /**
@@ -136,6 +141,42 @@ const EN_PROPERTY_WORDS: ReadonlySet<string> = new Set(
 export class SemanticRendererImpl implements ISemanticRenderer {
   /** Rewrites each expression value's English before it is localized (renderWith). */
   private valueGuard: ((raw: string) => string) | undefined;
+
+  /** Write every variable as spelled (renderSpellingVariables). */
+  private spellVariables = false;
+
+  /** A variable was written in the language's own word during this render. */
+  private localizedVariable = false;
+
+  /**
+   * Render, and say whether a variable was written in the language's own word
+   * (`localizedName`): read alone, that word is the same value, but beside its
+   * neighbours it can fuse into another (vi `đặt` + `giá trị` is `set`), so the
+   * verified render re-reads such a render.
+   */
+  renderNoting(
+    node: SemanticNode,
+    language: string,
+    guard?: (raw: string) => string
+  ): { text: string; localizedVariable: boolean } {
+    this.localizedVariable = false;
+    const text = guard ? this.renderWith(node, language, guard) : this.render(node, language);
+    return { text, localizedVariable: this.localizedVariable };
+  }
+
+  /** Render with every variable written as spelled (the verified render's fallback). */
+  renderSpellingVariables(
+    node: SemanticNode,
+    language: string,
+    guard?: (raw: string) => string
+  ): string {
+    this.spellVariables = true;
+    try {
+      return guard ? this.renderWith(node, language, guard) : this.render(node, language);
+    } finally {
+      this.spellVariables = false;
+    }
+  }
 
   /**
    * Render a node with each expression value's English rewritten by `guard`
@@ -1245,9 +1286,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // A POSSESSIVE inside the expression is localized first, structurally:
         // `'s` is English syntax, not vocabulary, and the word-level localizer
         // cannot touch it.
+        // A variable keeps its spelling where its localized word would read
+        // back as another variable (`localizedName`).
+        if (/^[A-Za-z_$][\w$]*$/.test(value.raw)) return this.renderLoneName(value.raw, language);
         return this.localizeValue(
           this.localizeInteriorPossessives(this.valueGuard?.(value.raw) ?? value.raw, language),
-          language
+          language,
+          this.variablesKeptAsSpelled(value.raw, language)
         );
 
       case 'flag':
@@ -1256,13 +1301,52 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * A variable's localized word, where the reader takes that word alone for
+   * the same value (es `ello` is `it`); undefined where it reads as a variable
+   * instead — a structure word, a verb or an event name (`set when to 1` wrote
+   * es `cuando`), or a word it does not know (`valor`, bn `সূচক`). There a
+   * translation writes the variable as spelled (was OPEN_ITEMS P49, P28).
+   */
+  private localizedName(name: string, language: string): string | undefined {
+    const localized = this.localizeValue(name, language);
+    if (localized === name) return name;
+    if (this.spellVariables) return undefined;
+    const [only, ...rest] = tokenize(localized, language).tokens;
+    const readsAsValue =
+      rest.length === 0 &&
+      only?.kind === 'keyword' &&
+      (only.normalized ?? only.value).toLowerCase() === name.toLowerCase() &&
+      !loneKeywordKind(only);
+    if (!readsAsValue) return undefined;
+    this.localizedVariable = true;
+    return localized;
+  }
+
+  /** A value that is one name: vocabulary is localized, a variable as {@link localizedName} says. */
+  private renderLoneName(name: string, language: string): string {
+    const guarded = this.valueGuard?.(name) ?? name;
+    if (guarded !== name) return guarded;
+    if (!isVariableName(name)) return this.localizeValue(name, language);
+    return this.localizedName(name, language) ?? name;
+  }
+
+  /** The variables of an expression the localizer must leave as spelled (`value + 1`). */
+  private variablesKeptAsSpelled(raw: string, language: string): ReadonlySet<string> | undefined {
+    if (language === 'en') return undefined;
+    const kept = [...expressionVariables(raw)].filter(
+      name => this.localizedName(name, language) === undefined
+    );
+    return kept.length ? new Set(kept) : undefined;
+  }
+
+  /**
    * Localize the vocabulary inside a value, when the target profile carries a
    * lexicon. English is a no-op, and a profile without a lexicon degrades to
    * the previous behaviour (English interior) rather than failing.
    */
-  private localizeValue(raw: string, language: string): string {
+  private localizeValue(raw: string, language: string, keep?: ReadonlySet<string>): string {
     if (language === 'en') return raw;
-    return localizeValueInterior(raw, language, tryGetProfile(language));
+    return localizeValueInterior(raw, language, tryGetProfile(language), keep);
   }
 
   /**
