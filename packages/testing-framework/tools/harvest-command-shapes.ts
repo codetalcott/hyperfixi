@@ -9,13 +9,15 @@
  *      vendored upstream suite (packages/engine/upstream-suite/vendor/<v>/test):
  *      each test file is parsed as JavaScript, every concatenation of string
  *      literals is folded, and each folded string that holds markup is read by
- *      jsdom, as the browser would read it;
+ *      jsdom, as the browser would read it; plus each script a test writes
+ *      with `setAttribute('_', '…')`;
  *   2. core's reference examples and patterns (packages/core/src/reference);
  *   3. core's hover examples for commands and features
  *      (packages/core/src/lsp-metadata.ts).
  *
- * A source the engine does not parse is left out: upstream's parse-error
- * tests, and markup a test builds at run time. The gate reads the committed
+ * A source the engine does not read is left out: upstream's parse-error
+ * tests. A page's script is read as the host reads it (a program of
+ * features); a documented example as statements (see Reader). The gate reads the committed
  * file, never this tool, so a case only changes when someone re-harvests.
  *
  * Usage: npx tsx tools/harvest-command-shapes.ts [--dry-run]
@@ -31,19 +33,18 @@ import { HOVER_DOCS } from '../../core/src/lsp-metadata';
 import {
   CASES_PATH,
   collapse,
+  loadEngineReaders,
+  readerOf,
   vendoredUpstreamVersion,
   type CommandShapeCase,
   type CommandShapeCases,
+  type EngineParser,
+  type Reader,
 } from '../src/multilingual/command-shapes';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SUITE = path.resolve(here, '../../engine/upstream-suite');
 const DIRS = ['commands', 'core', 'expressions', 'features', 'templates'];
-
-// The engine is ESM-only, and tsx runs this file as CommonJS: imported in main().
-let engineParse: (source: string) => { kind: string } = () => {
-  throw new Error('engine not loaded');
-};
 
 /** Every `.js` file under a directory, sorted, as paths relative to `root`. */
 function jsFiles(root: string, dir: string): string[] {
@@ -77,8 +78,12 @@ function operands(node: ts.Expression): ts.Expression[] {
   return isConcatenation(node) ? [...operands(node.left), ...operands(node.right)] : [node];
 }
 
-/** The largest constant strings of a JavaScript file. */
-function constantStrings(file: string): string[] {
+/**
+ * What a JavaScript file holds that may be hyperscript: its largest constant
+ * strings (markup, read for scripts later), and the scripts it writes with
+ * `setAttribute('_', '…')`.
+ */
+function constantStrings(file: string): { markup: string[]; scripts: string[] } {
   const source = ts.createSourceFile(
     file,
     readFileSync(file, 'utf8'),
@@ -86,11 +91,25 @@ function constantStrings(file: string): string[] {
     true,
     ts.ScriptKind.JS
   );
-  const out: string[] = [];
+  const markup: string[] = [];
+  const scripts: string[] = [];
   const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === 'setAttribute' &&
+      node.arguments.length === 2 &&
+      fold(node.arguments[0] as ts.Expression) === '_'
+    ) {
+      const script = fold(node.arguments[1] as ts.Expression);
+      if (script !== undefined) {
+        scripts.push(script);
+        return;
+      }
+    }
     const value = fold(node);
     if (value !== undefined) {
-      out.push(value);
+      markup.push(value);
       return;
     }
     // A concatenation with a run-time part: its constant pieces are fragments
@@ -102,7 +121,7 @@ function constantStrings(file: string): string[] {
     ts.forEachChild(node, visit);
   };
   visit(source);
-  return out;
+  return { markup, scripts };
 }
 
 const dom = new JSDOM('');
@@ -138,19 +157,19 @@ function dedent(text: string): string {
 const idOf = (source: string): string =>
   createHash('sha1').update(collapse(source)).digest('hex').slice(0, 10);
 
-/** Statements only: an expression is not a script. */
-function engineReads(source: string): boolean {
+/** Does the engine read the source, the way the case will be read? */
+function engineReads(readers: Record<Reader, EngineParser>, shape: CommandShapeCase): boolean {
   try {
-    return engineParse(source).kind !== 'expression';
+    readers[readerOf(shape)].parse(shape.source);
+    return true;
   } catch {
     return false;
   }
 }
 
 async function main(): Promise<void> {
-  const engine = await import('@hyperfixi/engine');
-  engine.register(...engine.everything);
-  engineParse = engine.parse;
+  // The engine is ESM-only, and tsx runs this file as CommonJS: loaded here.
+  const readers = await loadEngineReaders();
   const version = vendoredUpstreamVersion();
   const testRoot = path.join(SUITE, 'vendor', version, 'test');
   const found: Array<{ source: string; origin: string; family: string }> = [];
@@ -159,10 +178,9 @@ async function main(): Promise<void> {
     for (const rel of jsFiles(testRoot, dir)) {
       const stem = path.basename(rel, '.js');
       const family = dir === 'commands' || dir === 'features' ? stem : `${dir}/${stem}`;
-      for (const text of constantStrings(path.join(testRoot, rel))) {
-        for (const script of scriptsIn(text)) {
-          found.push({ source: dedent(script), origin: `upstream:${rel}`, family });
-        }
+      const { markup, scripts } = constantStrings(path.join(testRoot, rel));
+      for (const script of [...markup.flatMap(scriptsIn), ...scripts]) {
+        found.push({ source: dedent(script), origin: `upstream:${rel}`, family });
       }
     }
   }
@@ -190,11 +208,12 @@ async function main(): Promise<void> {
     const key = collapse(f.source);
     if (!key || seen.has(key)) continue;
     seen.add(key);
-    if (!engineReads(f.source)) {
+    const shape = { id: idOf(f.source), source: f.source, origin: f.origin, family: f.family };
+    if (!engineReads(readers, shape)) {
       rejected++;
       continue;
     }
-    cases.push({ id: idOf(f.source), source: f.source, origin: f.origin, family: f.family });
+    cases.push(shape);
   }
   const ids = new Set(cases.map(c => c.id));
   if (ids.size !== cases.length) throw new Error('two sources share an id: lengthen idOf');

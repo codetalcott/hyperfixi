@@ -2631,6 +2631,12 @@
       "family": "transition"
     },
     {
+      "id": "35274bd534",
+      "source": "on click transition the next <div/>'s *width from 0px to 100px",
+      "origin": "upstream:commands/transition.js",
+      "family": "transition"
+    },
+    {
       "id": "9d62c36696",
       "source": "on click trigger foo end                          on foo add .foo-set end",
       "origin": "upstream:commands/trigger.js",
@@ -2805,6 +2811,12 @@
       "family": "core/bootstrap"
     },
     {
+      "id": "6d2f8a0f51",
+      "source": "on click add .bar",
+      "origin": "upstream:core/bootstrap.js",
+      "family": "core/bootstrap"
+    },
+    {
       "id": "e2f502373e",
       "source": "init set ^color to 'red'",
       "origin": "upstream:core/dom-scope.js",
@@ -2915,6 +2927,12 @@
     {
       "id": "9be849de9c",
       "source": "on click put \"clicked\" into my.innerHTML // put some content into the div...",
+      "origin": "upstream:core/parser.js",
+      "family": "core/parser"
+    },
+    {
+      "id": "394a7bfb45",
+      "source": "(on click (log me) (trigger foo))                (on foo (put \"clicked\" into my.innerHTML))",
       "origin": "upstream:core/parser.js",
       "family": "core/parser"
     },
@@ -3627,6 +3645,12 @@
       "family": "expressions/closest"
     },
     {
+      "id": "35f188d961",
+      "source": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
+      "origin": "upstream:expressions/closest.js",
+      "family": "expressions/closest"
+    },
+    {
       "id": "da24c9d768",
       "source": "on click add .doh to closest .bar to .foo",
       "origin": "upstream:expressions/closest.js",
@@ -3647,6 +3671,24 @@
     {
       "id": "9a110b248d",
       "source": "on click set result to <span/> in #box where it matches .a then put result.length into me",
+      "origin": "upstream:expressions/collectionExpressions.js",
+      "family": "expressions/collectionExpressions"
+    },
+    {
+      "id": "998cfdeacf",
+      "source": "set :items to <span/> in #box where it matches .a on click put :items.length into me",
+      "origin": "upstream:expressions/collectionExpressions.js",
+      "family": "expressions/collectionExpressions"
+    },
+    {
+      "id": "162e3e0582",
+      "source": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me\non change set checked of the :checkboxes to my checked",
+      "origin": "upstream:expressions/collectionExpressions.js",
+      "family": "expressions/collectionExpressions"
+    },
+    {
+      "id": "55c3d28c9e",
+      "source": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me\non change\n  set checked of the :checkboxes to my checked\non change from the closest <table/>\n  if no :checkboxes where it is checked\n    set my indeterminate to false\n    set my checked to false\n  else if no :checkboxes where it is not checked\n    set my indeterminate to false\n    set my checked to true\n  else\n    set my indeterminate to true\n  end",
       "origin": "upstream:expressions/collectionExpressions.js",
       "family": "expressions/collectionExpressions"
     },
@@ -4043,6 +4085,12 @@
     {
       "id": "a668c70f10",
       "source": "on click add .foo to previous <div.c1/>",
+      "origin": "upstream:expressions/relativePositionalExpression.js",
+      "family": "expressions/relativePositionalExpression"
+    },
+    {
+      "id": "08702e835c",
+      "source": "on click put 'updated' into the next <div/>'s textContent",
       "origin": "upstream:expressions/relativePositionalExpression.js",
       "family": "expressions/relativePositionalExpression"
     },
@@ -5295,8 +5343,14 @@
       "family": "resize"
     },
     {
-      "id": "64fd84443f",
-      "source": "set localAtFeature to 42",
+      "id": "cda77ba4b6",
+      "source": "set :foo to 42 on click put :foo into my innerHTML",
+      "origin": "upstream:features/set.js",
+      "family": "set"
+    },
+    {
+      "id": "991b086b82",
+      "source": "set ^foo to 42 on click put ^foo into me",
       "origin": "upstream:features/set.js",
       "family": "set"
     },

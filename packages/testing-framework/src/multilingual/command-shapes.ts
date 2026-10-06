@@ -12,6 +12,8 @@
  * hyperscript script body in the vendored upstream suite, core's reference
  * examples and its hover examples, that the engine parses
  * (`command-shapes.cases.json`, harvested by tools/harvest-command-shapes.ts).
+ * A page's script is read as the host reads it, as a program of features; a
+ * documented example as free-standing statements (see Reader).
  *
  * ## Lanes
  *   - `en`   `translate(src, 'en', 'en')`;
@@ -140,6 +142,33 @@ const POSITION_KEYS: ReadonlySet<string> = new Set([
 /** The engine's parse surface this uses. */
 export interface EngineParser {
   parse(source: string): unknown;
+}
+
+/**
+ * How the engine reads a case, and so its lanes' English: a page's script (an
+ * `_` attribute, a script tag's body) as a program of features, as the host
+ * does; a documented example as free-standing statements (`toggle .active`).
+ * A leading `set` is a feature in a program and a command in statements.
+ */
+export type Reader = 'program' | 'statements';
+
+export const readerOf = (shape: Pick<CommandShapeCase, 'origin'>): Reader =>
+  shape.origin.startsWith('upstream:') ? 'program' : 'statements';
+
+/** The engine's two readers. Statements exclude a lone expression: it is not a script. */
+export async function loadEngineReaders(): Promise<Record<Reader, EngineParser>> {
+  const engine = await import('@hyperfixi/engine');
+  engine.register(...engine.everything);
+  return {
+    program: { parse: engine.parseProgram },
+    statements: {
+      parse(source) {
+        const parsed = engine.parse(source);
+        if (parsed.kind === 'expression') throw new Error('an expression, not a script');
+        return parsed;
+      },
+    },
+  };
 }
 
 /** A parse as plain data: positions and functions stripped, cycles cut. */
@@ -442,9 +471,7 @@ export interface CommandShapeRunner {
  * runs the tools as CommonJS) and semantic, and return a case runner.
  */
 export async function initCommandShapes(): Promise<CommandShapeRunner> {
-  const engineModule = await import('@hyperfixi/engine');
-  engineModule.register(...engineModule.everything);
-  const engine: EngineParser = { parse: engineModule.parse };
+  const readers = await loadEngineReaders();
   const { translate } = (await import('@lokascript/semantic')) as { translate: Translate };
 
   const lane = (source: string, language: string): string =>
@@ -454,6 +481,7 @@ export async function initCommandShapes(): Promise<CommandShapeRunner> {
 
   return {
     runCase(shape, lanes = LANES) {
+      const engine = readers[readerOf(shape)];
       const plain = plainParse(engine.parse(shape.source));
       const wantPlain = normalize(plain);
       const want = JSON.stringify(wantPlain);
@@ -541,11 +569,6 @@ export const LOUD: readonly LoudFamily[] = [
         node =>
           node.type === 'symbol' && node.scope === 'inherited' && !String(node.name).startsWith('^')
       ),
-  },
-  {
-    name: 'set-feature',
-    reason: 'a `set` feature (run once, at install) has one source; revisit if a user asks',
-    matches: (_source, types) => types.has('setFeature'),
   },
 ];
 

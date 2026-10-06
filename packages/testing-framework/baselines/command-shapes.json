@@ -1,11 +1,11 @@
 {
   "description": "Command-shape gate (src/multilingual/command-shapes.ts): per case, the lanes whose translation is refused (`refused`) and the lanes whose translation is silently lossy (`silent`). A lane is `en` (translate en → en) or a language (en → L → en); `*` stands for all 23 languages. A case in a LOUD family carries its reason (`loud`). Shrink-only: regenerate with tools/regen-command-shapes-baseline.ts.",
   "upstream": "0.9.93",
-  "cases": 1127,
-  "pairs": 27048,
+  "cases": 1136,
+  "pairs": 27264,
   "pass": 18171,
-  "refused": 1455,
-  "silent": 7422,
+  "refused": 1479,
+  "silent": 7614,
   "entries": {
     "3480154525": {
       "src": "bind $theme and @data-theme",
@@ -916,6 +916,11 @@
       "family": "transition",
       "silent": "en *"
     },
+    "35274bd534": {
+      "src": "on click transition the next <div/>'s *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
     "ef499d89c4": {
       "src": "on click trigger foo(x:42) end on foo(x) put x into my.innerHTML",
       "family": "trigger",
@@ -1053,6 +1058,11 @@
     },
     "452278f4ef": {
       "src": "// this is a comment def foo() // this is another comment return \"foo\" end // end with a comment",
+      "family": "core/parser",
+      "refused": "en *"
+    },
+    "394a7bfb45": {
+      "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
       "family": "core/parser",
       "refused": "en *"
     },
@@ -1323,6 +1333,11 @@
       "family": "expressions/closest",
       "silent": "pl sw"
     },
+    "35f188d961": {
+      "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
+      "family": "expressions/closest",
+      "silent": "en *"
+    },
     "da24c9d768": {
       "src": "on click add .doh to closest .bar to .foo",
       "family": "expressions/closest",
@@ -1340,6 +1355,21 @@
     },
     "9a110b248d": {
       "src": "on click set result to <span/> in #box where it matches .a then put result.length into me",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "998cfdeacf": {
+      "src": "set :items to <span/> in #box where it matches .a on click put :items.length into me",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "162e3e0582": {
+      "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "55c3d28c9e": {
+      "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
       "family": "expressions/collectionExpressions",
       "silent": "en *"
     },
@@ -1485,6 +1515,11 @@
       "src": "on click if no <span/> in #box where it matches .c then put 'none' into #out else put 'found' into #out",
       "family": "expressions/no",
       "silent": "qu vi"
+    },
+    "08702e835c": {
+      "src": "on click put 'updated' into the next <div/>'s textContent",
+      "family": "expressions/relativePositionalExpression",
+      "silent": "en *"
     },
     "ab10f94541": {
       "src": "install Behave(foo: 1, bar: 1)",
@@ -1942,11 +1977,20 @@
       "family": "reactive-properties",
       "silent": "qu"
     },
+    "cda77ba4b6": {
+      "src": "set :foo to 42 on click put :foo into my innerHTML",
+      "family": "set",
+      "silent": "en *"
+    },
+    "991b086b82": {
+      "src": "set ^foo to 42 on click put ^foo into me",
+      "family": "set",
+      "silent": "en *"
+    },
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
       "family": "set",
-      "silent": "en *",
-      "loud": "set-feature: a `set` feature (run once, at install) has one source; revisit if a user asks"
+      "silent": "en *"
     },
     "ec97ae1115": {
       "src": "init set :count to 0 end when :count changes put it into me end on click increment :count",

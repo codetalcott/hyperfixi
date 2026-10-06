@@ -11,8 +11,12 @@ import {
   collapse,
   expandLanes,
   loadCommandShapeCases,
+  loadEngineReaders,
   orphanedEntries,
+  readerOf,
   vendoredUpstreamVersion,
+  type EngineParser,
+  type Reader,
 } from './command-shapes';
 import { loadCommandShapesBaseline } from './command-shapes-gate';
 
@@ -20,12 +24,10 @@ const { cases, upstream } = loadCommandShapeCases();
 const baseline = loadCommandShapesBaseline();
 
 describe('command-shape cases', () => {
-  let parse: (source: string) => { kind: string };
+  let readers: Record<Reader, EngineParser>;
 
   beforeAll(async () => {
-    const engine = await import('@hyperfixi/engine');
-    engine.register(...engine.everything);
-    parse = engine.parse;
+    readers = await loadEngineReaders();
   });
 
   it('were harvested from the upstream version the suite vendors (re-harvest when it moves)', () => {
@@ -34,14 +36,14 @@ describe('command-shape cases', () => {
 
   // A re-harvest that changes the count is a change to the gate's input:
   // update this pin in the same PR, and say what moved.
-  it('are the 1127 the harvest found', () => {
-    expect(cases.length).toBe(1127);
+  it('are the 1136 the harvest found', () => {
+    expect(cases.length).toBe(1136);
     const byOrigin = cases.reduce<Record<string, number>>((m, c) => {
       const kind = c.origin.split(':')[0] ?? '';
       m[kind] = (m[kind] ?? 0) + 1;
       return m;
     }, {});
-    expect(byOrigin).toEqual({ upstream: 938, reference: 123, 'reference-pattern': 8, hover: 58 });
+    expect(byOrigin).toEqual({ upstream: 947, reference: 123, 'reference-pattern': 8, hover: 58 });
   });
 
   it('are not edited by hand: each id is the hash of its source', () => {
@@ -52,11 +54,11 @@ describe('command-shape cases', () => {
     expect(new Set(cases.map(c => c.id)).size).toBe(cases.length);
   });
 
-  it('are all scripts the engine parses', () => {
+  it('are all scripts the engine reads, as the case is read', () => {
     const bad: string[] = [];
     for (const c of cases) {
       try {
-        if (parse(c.source).kind === 'expression') bad.push(`${c.id}: an expression`);
+        readers[readerOf(c)].parse(c.source);
       } catch (e) {
         bad.push(`${c.id}: ${(e as Error).message.split('\n')[0]}`);
       }

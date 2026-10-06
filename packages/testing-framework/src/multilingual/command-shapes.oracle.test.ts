@@ -24,9 +24,12 @@ import {
   EQUIVALENCES,
   judge,
   loadCommandShapeCases,
+  loadEngineReaders,
   normalize,
   plainParse,
+  readerOf,
   type EngineParser,
+  type Reader,
 } from './command-shapes';
 import { installGlobals } from './shipped-examples-execution';
 
@@ -46,7 +49,7 @@ const { cases } = loadCommandShapeCases();
 
 let dom: JSDOM;
 let hosts: Record<'upstream' | 'engine', Host>;
-let engine: EngineParser;
+let readers: Record<Reader, EngineParser>;
 let tokenize: (source: string) => Token[];
 
 beforeAll(async () => {
@@ -58,7 +61,7 @@ beforeAll(async () => {
   const engineModule = await import('@hyperfixi/engine');
   engineModule.register(...engineModule.everything);
   hosts = { upstream, engine: engineModule.api as unknown as Host };
-  engine = { parse: engineModule.parse };
+  readers = await loadEngineReaders();
   tokenize = engineModule.tokenize as (source: string) => Token[];
 });
 
@@ -101,8 +104,9 @@ async function observe(host: Host, source: string): Promise<string> {
 
 const EMPTY = JSON.stringify({ o: '', color: '', hash: '', fetches: [] });
 
+/** A pin is a handler: read as a page's script. */
 const shape = (source: string, equivalences = EQUIVALENCES): string =>
-  JSON.stringify(normalize(plainParse(engine.parse(source)), equivalences));
+  JSON.stringify(normalize(plainParse(readers.program.parse(source)), equivalences));
 
 describe('command-shape equivalences', () => {
   it('have distinct names', () => {
@@ -135,7 +139,7 @@ describe('command-shape equivalences', () => {
 
 describe('the oracle sees a loss', () => {
   /** Does `judge` flag the mutated source against the original? */
-  const caught = (source: string, mutated: string): boolean => {
+  const caught = (engine: EngineParser, source: string, mutated: string): boolean => {
     const plain = normalize(plainParse(engine.parse(source)));
     return judge(engine, JSON.stringify(plain), plain, mutated).outcome !== 'pass';
   };
@@ -144,6 +148,7 @@ describe('the oracle sees a loss', () => {
     const blind: string[] = [];
     let checked = 0;
     for (const c of cases) {
+      const engine = readers[readerOf(c)];
       const base = JSON.stringify(plainParse(engine.parse(c.source)));
       for (const t of tokenize(c.source)) {
         const text = c.source.slice(t.start, t.end);
@@ -191,7 +196,7 @@ describe('the oracle sees a loss', () => {
       const mutated = mutant.mutate(c.source);
       if (mutated === c.source) continue;
       changed++;
-      if (!caught(c.source, mutated)) missed.push(`${c.source} ⇒ ${mutated}`);
+      if (!caught(readers[readerOf(c)], c.source, mutated)) missed.push(`${c.source} ⇒ ${mutated}`);
     }
     expect(changed).toBeGreaterThan(0);
     expect(missed).toEqual([]);
