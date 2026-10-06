@@ -1012,10 +1012,10 @@ export interface ErrorClauseText {
 }
 
 /**
- * Cut a handler's or a function's text at its depth-0 `catch <name>` and
- * `finally` (the language's words, and the English ones, which a render writes
- * where a language has none). Null when it has neither. A `catch` followed by
- * `(` is JavaScript's, inside a `js` body.
+ * Cut a handler's or a function's text at its `catch <name>` and `finally`
+ * (the language's words, and the English ones, which a render writes where a
+ * language has none): upstream reads them only at the feature's level. Null
+ * when it has neither.
  */
 export function splitErrorClauses(text: string, language: string): ErrorClauseText | null {
   const catchForms = keywordForms(language, 'catch');
@@ -1024,27 +1024,13 @@ export function splitErrorClauses(text: string, language: string): ErrorClauseTe
   if (![...catchForms, ...finallyForms].some(form => lower.includes(form))) return null;
 
   const tokens = tokenize(text, language).tokens as readonly LanguageToken[];
-  const forms = openerForms(language);
-  const endForms = keywordForms(language, 'end');
-  let depth = 0;
   let catchAt = -1;
   let finallyAt = -1;
   for (let j = 0; j < tokens.length; j++) {
     const tok = tokens[j]!;
-    if (tokenMatches(tok, endForms)) {
-      if (depth > 0) depth--;
-      continue;
-    }
-    if (opensBlock(tokens, j, forms)) {
-      depth++;
-      continue;
-    }
-    if (depth > 0) continue;
     if (catchAt < 0 && finallyAt < 0 && tokenMatches(tok, catchForms)) {
-      const name = tokens[j + 1];
-      if (name && /^[A-Za-z_$][\w$]*$/.test(name.value) && tokens[j + 2]?.value !== '(') {
-        catchAt = j;
-      }
+      // JavaScript's `catch(e)` in a js body has no name after it.
+      if (/^[A-Za-z_$][\w$]*$/.test(tokens[j + 1]?.value ?? '')) catchAt = j;
     } else if (finallyAt < 0 && tokenMatches(tok, finallyForms)) {
       finallyAt = j;
     }

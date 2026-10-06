@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
 import { parse, render, translate } from '../src/index';
 import { splitErrorClauses } from '../src/parser/block-parser';
+import { collectActionsMultiset } from '../src/fidelity';
 
 const en = (code: string) => render(parse(code, 'en'), 'en');
 
@@ -54,7 +55,7 @@ describe('a def', () => {
 });
 
 describe('splitErrorClauses', () => {
-  it('reads only depth-0 clauses', () => {
+  it('splits after the commands, blocks included', () => {
     expect(splitErrorClauses('if x log 1 end catch e log e', 'en')).toEqual({
       main: 'if x log 1 end',
       catchName: 'e',
@@ -64,6 +65,14 @@ describe('splitErrorClauses', () => {
 
   it('leaves a JavaScript catch alone', () => {
     expect(splitErrorClauses('js try { a() } catch(e) { b() } end', 'en')).toBeNull();
+  });
+});
+
+describe('the read-back sees the clauses', () => {
+  it('their commands count with the body', () => {
+    expect(
+      collectActionsMultiset(parse('on click throw 1 catch e log e finally put 1 into me', 'en'))
+    ).toEqual(['log', 'on', 'put', 'throw']);
   });
 });
 
