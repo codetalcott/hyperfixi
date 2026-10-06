@@ -82,6 +82,13 @@ describe('command-shape baseline', () => {
     expect(both.map(([id]) => id)).toEqual([]);
   });
 
+  // A shape semantic does not carry yet is refused, never silently lossy (M1
+  // phase 2). Each pair is still judged by the gate; this holds the list to it.
+  it('no LOUD case is listed silent', () => {
+    const silent = Object.entries(baseline.entries).filter(([, e]) => e.loud && e.silent);
+    expect(silent.map(([id, e]) => `${id} [${e.silent}] ${e.src}`)).toEqual([]);
+  });
+
   // A LOUD family with no failing case is carried now: drop it from LOUD.
   it('every LOUD family still has a case that does not pass', () => {
     const listed = new Set(Object.values(baseline.entries).map(e => e.loud?.split(':')[0] ?? ''));
