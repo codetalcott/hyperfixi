@@ -574,10 +574,7 @@ function handlerStartAt(
       !(tokens[j + 2] && tokenMatches(tokens[j + 2], thenForms)) &&
       !isPrecedingCommandMarker(tokens, segStart, j, language, endsClause)) ||
       heads.circumfix.some(
-        ([lead, trail]) =>
-          lead.has(word) &&
-          tokens[j + 2] !== undefined &&
-          trail.has(tokens[j + 2].value.toLowerCase())
+        ([lead, trail]) => lead.has(word) && closesCircumfix(tokens, j, trail, heads)
       ));
   if (leads) return withFrontedSource(tokens, j, segStart, heads, true);
 
@@ -602,6 +599,24 @@ function handlerStartAt(
     return withFrontedSource(tokens, eventAt, segStart, heads, known);
   }
   return null;
+}
+
+/**
+ * Does the circumfix led at `j` close after its event, or after the event's
+ * source (zh `一 keyup 从 #b 就`)?
+ */
+function closesCircumfix(
+  tokens: readonly LanguageToken[],
+  j: number,
+  trail: Set<string>,
+  heads: HandlerHeads
+): boolean {
+  const at = (k: number): string | undefined => tokens[k]?.value.toLowerCase();
+  const closes = (k: number): boolean => trail.has(at(k) ?? '');
+  return (
+    closes(j + 2) ||
+    (tokens[j + 2] !== undefined && tokenMatches(tokens[j + 2], heads.source) && closes(j + 4))
+  );
 }
 
 /**

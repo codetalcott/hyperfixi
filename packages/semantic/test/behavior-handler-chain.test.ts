@@ -130,12 +130,9 @@ describe('every language writes the behavior and reads it back', () => {
 /**
  * Each language's own spelling, with the handlers' `end`s left out (the renderer
  * always writes them, so no corpus row has this form). The boundary is the
- * top-level splitter's, so these languages fail exactly as a top-level chain
- * does (OPEN_ITEMS P47). Shrink-only: a language that starts passing fails here
- * until it is removed.
+ * top-level splitter's (handlerStartAt); `native-handler-chain.test.ts` covers
+ * it at top level and after `init`.
  */
-const SPLITTER_GAP = new Set(['bn', 'de', 'fr', 'hi', 'id', 'ko', 'qu', 'tr', 'zh']);
-
 const NATIVE: string[] = [
   'behavior F on click add .a end on keyup log 1 end end',
   'behavior F on click add .a then log 1 end on keyup log 2 end on focus log 3 end end',
@@ -154,9 +151,7 @@ describe('a behavior written natively without handler ends', () => {
     '%s: %s',
     (lang, src) => {
       const native = withoutHandlerEnds(render(parse(src, 'en')!, lang));
-      const read = render(parse(native, lang)!, 'en');
-      if (SPLITTER_GAP.has(lang)) expect(read).not.toBe(en(src));
-      else expect(read).toBe(en(src));
+      expect(render(parse(native, lang)!, 'en')).toBe(en(src));
     }
   );
 });
