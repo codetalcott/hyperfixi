@@ -14,6 +14,7 @@ import {
   OperatorExtractor,
   PunctuationExtractor,
   SpacedDurationExtractor,
+  ATickExtractor,
 } from './generic-extractors';
 import { getHyperscriptExtractors } from './extractor-helpers';
 import { createEnglishExtractors } from './extractors/english-keyword';
@@ -160,6 +161,7 @@ export class EnglishTokenizer extends BaseTokenizer {
     this.registerExtractors(getHyperscriptExtractors()); // CSS, events, URLs
     this.registerExtractor(new StringLiteralExtractor()); // Strings
     this.registerExtractor(new SpacedDurationExtractor()); // `10 ms`, `2 seconds`
+    this.registerExtractor(new ATickExtractor()); // `a tick` is `0ms`
     this.registerExtractor(new NumberExtractor()); // Numbers
     this.registerExtractors(createEnglishExtractors()); // English keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators

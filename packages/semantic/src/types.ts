@@ -331,7 +331,21 @@ export type WaitAlternative =
 /**
  * An event handler semantic node - represents "on [event] [commands]".
  */
-export interface EventHandlerSemanticNode extends SemanticNode {
+/**
+ * A handler's or a function's error clauses: `catch <name>` and what runs when
+ * the body throws, and `finally` and what runs after it, thrown or not. Dropped,
+ * a handler's error handling ran unconditionally after its body.
+ */
+export interface ErrorClauses {
+  /** The name `catch` binds the error to. */
+  readonly catchName?: string;
+  /** What runs when the body throws. */
+  readonly catchBody?: SemanticNode[];
+  /** What runs after the body, thrown or not. */
+  readonly finallyBody?: SemanticNode[];
+}
+
+export interface EventHandlerSemanticNode extends SemanticNode, ErrorClauses {
   readonly kind: 'event-handler';
   readonly action: 'on';
   readonly body: SemanticNode[];
@@ -468,7 +482,7 @@ export interface BehaviorSemanticNode extends SemanticNode {
  * the structural layer, but its body is a flat sequence of commands rather than
  * event handlers.
  */
-export interface DefSemanticNode extends SemanticNode {
+export interface DefSemanticNode extends SemanticNode, ErrorClauses {
   readonly kind: 'def';
   // `action` stays the inherited ActionType (set to 'def' via the factory) — `def`
   // is a node KIND, not a command action, so it's kept out of the ActionType union

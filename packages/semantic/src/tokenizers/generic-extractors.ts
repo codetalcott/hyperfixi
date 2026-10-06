@@ -49,6 +49,30 @@ export class SpacedDurationExtractor implements ValueExtractor {
   }
 }
 
+/**
+ * `a tick` (`wait a tick`): one turn of the event loop, which the engine runs
+ * as `setTimeout(…, 0)`, the duration `0ms`. Read as the article and a word,
+ * every render wrote `wait tick`, which the engine reads as a wait on a
+ * variable named `tick`.
+ */
+export class ATickExtractor implements ValueExtractor {
+  readonly name = 'a-tick';
+
+  canExtract(input: string, position: number): boolean {
+    return (
+      (input[position] === 'a' || input[position] === 'A') &&
+      !/[\w$]/.test(input[position - 1] ?? '')
+    );
+  }
+
+  extract(input: string, position: number): ExtractionResult | null {
+    const match = /^a[ \t]+tick(?![\w-])/i.exec(input.slice(position));
+    return match
+      ? { value: '0ms', length: match[0].length, metadata: { hasTimeUnit: true } }
+      : null;
+  }
+}
+
 // =============================================================================
 // Operator Extractor (semantic-specific)
 // =============================================================================

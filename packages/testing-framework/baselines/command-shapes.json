@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1136,
   "pairs": 27264,
-  "pass": 19714,
-  "refused": 6658,
-  "silent": 892,
+  "pass": 20304,
+  "refused": 6332,
+  "silent": 628,
   "entries": {
     "3480154525": {
       "src": "bind $theme and @data-theme",
@@ -133,16 +133,6 @@
       "family": "fetch",
       "refused": "en *"
     },
-    "5d9dc806eb": {
-      "src": "on click fetch /test catch e log e put \"yay\" into me",
-      "family": "fetch",
-      "refused": "en *"
-    },
-    "1bb73ff359": {
-      "src": "on click fetch /test catch e put \"caught\" into me",
-      "family": "fetch",
-      "refused": "en *"
-    },
     "83186964ec": {
       "src": "on click fetch /test don't throw then put it into me",
       "family": "fetch",
@@ -239,11 +229,6 @@
       "family": "if",
       "refused": "en *"
     },
-    "c182ea389a": {
-      "src": "on click if window.tmp then put \"foo\" into me else if not window.tmp then // do nothing end catch e // just here for th…",
-      "family": "if",
-      "refused": "en *"
-    },
     "ee27038f99": {
       "src": "on click if window.tmp then else if window.tmp then end put \"foo\" into me end",
       "family": "if",
@@ -278,7 +263,7 @@
     "23f2b7dd1b": {
       "src": "on click js return Promise.reject(\"boom\") end catch e put e into my.innerHTML",
       "family": "js",
-      "refused": "en *"
+      "refused": "bn hi"
     },
     "2f7af96b02": {
       "src": "on click log me, my",
@@ -968,11 +953,6 @@
       "refused": "he",
       "silent": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
-    "18ccf896af": {
-      "src": "on click call failAsync() put 'unreachable' into #out catch e put e.message into #out",
-      "family": "core/asyncError",
-      "refused": "en *"
-    },
     "a30e7d6174": {
       "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
@@ -1422,61 +1402,6 @@
       "family": "bind",
       "refused": "en *"
     },
-    "bab6996783": {
-      "src": "def foo() throw \"bar\" catch e set window.bar to e end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "dfcc529af3": {
-      "src": "def foo() throw \"bar\" catch e throw e end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "d6dcac54c6": {
-      "src": "def foo() throw \"bar\" catch e return 42 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "ac5672f21a": {
-      "src": "def doh() wait 10ms throw \"bar\" end def foo() call doh() catch e set window.bar to e end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "c01496df40": {
-      "src": "def foo() throw \"bar\" catch e wait 10ms throw e end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "13eda1e752": {
-      "src": "def foo() throw \"bar\" catch e wait 10ms return 42 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "c50a798ff9": {
-      "src": "def foo() set window.bar to 10 finally set window.bar to 20 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "f46f631254": {
-      "src": "def foo() set window.bar to 10 throw \"foo\" finally set window.bar to 20 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "d94fe8f146": {
-      "src": "def foo() set window.bar to 10 call throwsAsyncException() finally set window.bar to 20 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "abe943ade0": {
-      "src": "def foo() wait a tick then set window.bar to 10 finally set window.bar to 20 end",
-      "family": "def",
-      "silent": "en *"
-    },
-    "4790691b18": {
-      "src": "def foo() wait a tick then set window.bar to 10 throw \"foo\" finally set window.bar to 20 end",
-      "family": "def",
-      "silent": "en *"
-    },
     "c6183ad650": {
       "src": "init immediately set window.bar to 42 end",
       "family": "init",
@@ -1627,21 +1552,6 @@
       "family": "on",
       "refused": "en *"
     },
-    "d1f91ab5ac": {
-      "src": "on click throwBar() catch e put e into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "82d551ac58": {
-      "src": "on click throw \"bar\" catch e put e into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "6aa4945f87": {
-      "src": "on click wait 1ms then throw \"bar\" catch e put e into me",
-      "family": "on",
-      "refused": "en *"
-    },
     "f8db6d2073": {
       "src": "on click increment :x if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end catch e put e into me",
       "family": "on",
@@ -1660,32 +1570,12 @@
     "829e32df04": {
       "src": "on click put \"foo\" into me then throw \"bar\" catch e log e on exception(error) put error into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "ja ko pl tr"
     },
     "ee008e0a98": {
       "src": "on click put \"foo\" into me then throw \"bar\" catch e throw e on exception(error) put error into me",
       "family": "on",
-      "refused": "en *"
-    },
-    "a6b880e963": {
-      "src": "on click throw \"bar\" finally put \"bar\" into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "8656f0257d": {
-      "src": "on click throw \"bar\" catch e throw e finally put \"bar\" into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "7e80abc1a6": {
-      "src": "on click wait a tick then throw \"bar\" finally put \"bar\" into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "7740b3f40e": {
-      "src": "on click wait a tick then throw \"bar\" catch e set :foo to \"foo\" then throw e finally put :foo + \"bar\" into me",
-      "family": "on",
-      "refused": "en *"
+      "refused": "ja ko pl tr"
     },
     "8c714e3b3d": {
       "src": "on click increment :x finally if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end",
