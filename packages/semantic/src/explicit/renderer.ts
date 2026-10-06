@@ -1242,6 +1242,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       return this.valueToNaturalString(value, language);
     }
     const raw = value.value;
+    // Written in quotes, written back in quotes, untranslated (see LiteralValue.quoted).
+    if (value.quoted) return raw.includes('"') ? `'${raw}'` : `"${raw}"`;
     const localizeOne = (name: string): string =>
       name.includes(':') ? name : localizeEventName(name, language);
     if (raw.includes(' or ')) {

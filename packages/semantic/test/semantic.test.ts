@@ -74,6 +74,8 @@ describe('English Parsing', () => {
         type: 'literal',
         value: 'hello',
         dataType: 'string',
+        // Written in quotes: an event name keeps them (LiteralValue.quoted).
+        quoted: true,
         // The span covers the QUOTES the value no longer carries — it is where
         // the author wrote the literal, not where its stripped value lives.
         position: { start: 4, end: 11 },

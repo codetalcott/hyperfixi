@@ -158,7 +158,7 @@ import { parse } from '@lokascript/semantic';
 ## Usage
 
 ```typescript
-import { parse, translate, canParse } from '@lokascript/semantic';
+import { parse, translate, canParse, LossyTranslationError } from '@lokascript/semantic';
 
 // Parse from any language
 const node = parse('toggle .active on #button', 'en');
@@ -167,6 +167,15 @@ const nodeJa = parse('.active を 切り替え', 'ja');
 // Translate between languages
 const arabic = translate('toggle .active', 'en', 'ar');
 // → 'بدّل .active'
+
+// A translation that would lose part of the script is refused, not truncated:
+// it throws a LossyTranslationError (`partial`: what it would have returned;
+// `loss.lost`: what it drops). `{ lossy: 'allow' }` returns the partial output.
+try {
+  translate('toggle .a .b', 'en', 'es'); // the parse reads `toggle .a` only
+} catch (e) {
+  if (e instanceof LossyTranslationError) console.log(e.loss.lost); // ['.b']
+}
 
 // Check if input can be parsed
 const result = canParse('クリックしたら 増加', 'ja');
@@ -631,7 +640,7 @@ registerCommandMapper({
 
 - `parse(input, language)` - Parse input to semantic node
 - `canParse(input, language)` - Check if input can be parsed with confidence
-- `translate(input, fromLang, toLang)` - Translate between languages
+- `translate(input, fromLang, toLang, options?)` - Translate between languages; throws `LossyTranslationError` when the translation would lose part of the script (`{ lossy: 'allow' }` returns it anyway)
 - `tokenize(input, language)` - Get token stream for input
 - `render(node, language)` - Render semantic node to language
 - `buildAST(node)` - Build AST directly from semantic node

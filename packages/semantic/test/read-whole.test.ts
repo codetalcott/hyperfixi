@@ -69,3 +69,18 @@ describe('bn reads its own polite verb forms whole', () => {
     expect(reads(bn, 'bn')).toEqual({ unread: [], english: code });
   });
 });
+
+describe('an event name written in quotes keeps them (P12)', () => {
+  const LANGUAGES = ['ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms'];
+  const MORE = ['pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+
+  it.each([...LANGUAGES, ...MORE])('%s', language => {
+    // Bare, `my event` read as two words and `trigger my` lost the rest.
+    const code = 'on click trigger "my event" on #x then send "hello" to #y';
+    expect(translate(translate(code, 'en', language), language, 'en')).toBe(code);
+  });
+
+  it('a bare name stays bare', () => {
+    expect(translate('on click send hello to #x', 'en', 'en')).toBe('on click send hello to #x');
+  });
+});

@@ -84,7 +84,7 @@ export function literalValue(value: string): SemanticValue {
     value.startsWith('「')
   ) {
     const inner = value.slice(1, -1);
-    return createLiteral(inner, 'string');
+    return { ...createLiteral(inner, 'string'), quoted: true };
   }
 
   // Boolean

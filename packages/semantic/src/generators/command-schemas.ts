@@ -3184,9 +3184,13 @@ export const measureSchema: CommandSchema = {
   roles: [
     {
       role: 'patient',
-      description: 'Property to measure (x, y, width, height, top, left, etc.)',
+      // The engine reads one expression after `measure`: a measurement name
+      // (`measure width`), a property of an element (`measure #el's top`), or
+      // the element itself (`measure #el`, `measure me`). Typed for names only,
+      // the element was left unread: `measure #other` became `measure`.
+      description: 'Property to measure (x, y, width, …), or the element itself',
       required: false, // Plain "measure" is valid, defaults to bounds
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: ['literal', 'expression', 'selector', 'reference'],
       svoPosition: 1,
       sovPosition: 1,
     },
