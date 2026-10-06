@@ -830,20 +830,15 @@ export function tryParseBlock(
  *    AGNOSTIC, so it works however a language surfaces the trigger (`on`, de
  *    `wenn`, zh idiom, SOV mid-clause marker). This is the common, unambiguous
  *    form (`on click … end on keyup … end`).
- *  - **trigger-delimited** (Phase B) — a depth-0 `on`-marker that begins a NEW
- *    handler starts a segment, for the no-`end` feature chain (`on click … on
- *    keyup …`). The `on` marker is matched by its surface form (en `on`, es `al`,
- *    …) and disambiguated from a destination `on` (`toggle .x on me`) by event-
- *    name lookahead: the next token must look like an EVENT, not a target
- *    reference/selector. This forward lookahead assumes a PREPOSITIONAL `on`
- *    (SVO/VSO/V2); SOV is postpositional, so it is gated off there.
- *  - **signature-delimited** (Phase B, SOV) — for the no-`end` chain in ja/ko
- *    ({@link TRIGGER_SIGNATURE_LANGS}), a depth-0 trigger SIGNATURE — the event-
- *    marker immediately followed by the on-marker (ja `を で`, ko `을 에`) — starts
- *    a new handler at the event token that precedes it. Their patient marker is
- *    the same particle (`を`/`을`) but is followed by a verb, never the on-marker,
- *    so the adjacent pair is an unambiguous trigger anchor. SOV languages without
- *    a distinct two-token signature (hi/bn) still rely on the end-delimited form.
+ *  - **head-delimited** — a depth-0 handler head starts a new segment, for the
+ *    no-`end` chain (`on click … on keyup …`, which upstream reads as two). The
+ *    head is the language's own ({@link handlerHeads}): a word ahead of the event
+ *    (en `on`, es `al`, de `wenn`, qu `maykama`), a circumfix (zh `一 … 就`), or
+ *    words after it (ja `を で`, ko `할 때`, tr `i üzerinde`); a destination `on`
+ *    (`toggle .x on me`) is told apart by event-name lookahead and by the command
+ *    before it ({@link isPrecedingCommandMarker}). hi `पर` and bn `তে` are also
+ *    the destination marker, so a chain split there is never trusted: its
+ *    confidence is capped below the adapter's threshold.
  *
  * Each segment is parsed by the ordinary single-statement engine and re-assembled
  * into a `compound` (which buildAST maps to a core `Program`, so the runtime
