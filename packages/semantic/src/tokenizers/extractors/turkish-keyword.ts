@@ -109,6 +109,27 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
 
     const startPos = position;
 
+    // An `_`-joined run that is a registered keyword is one token (`tuş_bas`,
+    // `fare_bas`: keydown, mousedown), as Swahili's extractor reads one. Any
+    // other run splits at `_` exactly as before (was OPEN_ITEMS P51).
+    let runEnd = startPos;
+    while (runEnd < input.length && (isTurkishLetter(input[runEnd]) || input[runEnd] === '_')) {
+      runEnd++;
+    }
+    const run = input.slice(startPos, runEnd);
+    if (run.includes('_')) {
+      const runEntry = this.context.lookupKeyword(run.toLowerCase());
+      if (runEntry) {
+        return {
+          value: run,
+          length: run.length,
+          metadata: {
+            normalized: runEntry.normalized !== runEntry.native ? runEntry.normalized : undefined,
+          },
+        };
+      }
+    }
+
     // First, try to find the longest matching keyword starting at this position
     // This ensures compound words are recognized whole
     const maxKeywordLen = 12; // Longest Turkish keyword

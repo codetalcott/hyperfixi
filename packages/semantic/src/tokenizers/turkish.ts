@@ -153,6 +153,10 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'tus_bas', normalized: 'keydown' },
   { native: 'tuş_bırak', normalized: 'keyup' },
   { native: 'tus_birak', normalized: 'keyup' },
+  // Names eventNameTranslations reads but the renderer never writes. Split at
+  // `_`, `fare` read as nothing and the event was lost (was OPEN_ITEMS P51).
+  { native: 'fare_bas', normalized: 'mousedown' },
+  { native: 'fare_bırak', normalized: 'mouseup' },
 
   // Time units
   { native: 'saniye', normalized: 's' },

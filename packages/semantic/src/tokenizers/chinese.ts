@@ -102,6 +102,11 @@ const CHINESE_EXTRAS: KeywordEntry[] = [
   { native: '释放键', normalized: 'keyup' },
   { native: '鼠标移入', normalized: 'mouseover' },
   { native: '鼠标移出', normalized: 'mouseout' },
+  // Names eventNameTranslations reads but the renderer never writes. Split,
+  // `鼠标进入` read `进入` as `into`, and what followed `按键按下` was lost
+  // (was OPEN_ITEMS P51).
+  { native: '鼠标进入', normalized: 'mouseover' },
+  { native: '按键按下', normalized: 'keydown' },
   { native: '获得焦点', normalized: 'focus' },
   { native: '失去焦点', normalized: 'blur' },
   { native: '加载', normalized: 'load' },

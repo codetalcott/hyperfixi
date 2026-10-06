@@ -14,11 +14,11 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (91): parser 45 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (90): parser 44 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (45)
+### 2a. Parser correctness, semantic front-end (44)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
@@ -72,7 +72,6 @@ non-English direct path are the exposed surfaces.
 45. **P45 · `set element's x to …` is not read as an element-scoped set**: upstream's spelling for a behavior's state (its own tested idiom, and the one that defaults a parameter so the handlers see it — `set :x` writes a different scope on both engines). en→en keeps it; every other language renders `element` as a noun with an English `'s` (zh `元素's cls`, ru `элемент's cls`) and reads it back as a dropped set or an invalid render; `set element x to …` drops in en too. Found 2026-10-03 rewriting @hyperfixi/behaviors in upstream's idioms: seven of its sources use it (none a corpus row; Sortable, a corpus row, defaults in a handler local instead). Repro: `translate("on click set element's cls to 'a'", 'en', 'zh')` and back · — · 10-03 · no (out of corpus) · parser + render · **probe confirmed**.
 49. **P49 · A variable named like an event or a keyword is lost or renamed**: upstream and the engine run each as a variable. English's semantic parse drops `set input to "a"` from a handler (also `keyup`, `change`, `click`; bare, it does not parse), so every language loses it; `put "a" into input then log 1` (and `put 2 into keyup`) is lost in ar/de/fr/id/zh, `toggle .a on input` (or `on change`) in ar/de/fr/he/ja/tr. The verified render never wraps them, since `isEnglishKeyword` counts an event name as vocabulary (yet `(input)` reads right in de/fr/zh), and the value matrix's colliding names are one or two letters. `set when to 1` writes the variable as the keyword (es `establecer cuando a 1`): it reads back renamed in all 23, and runs differently from upstream in 10 (ar bn he hi ja ko ru th uk zh) · 2026-10-05 (found by P47's probes) · no · parser · probe confirmed.
 50. **P50 · An event that `send`, `trigger` or `repeat until event` names stays native when the tokenizer has no keyword for it**: es `enviar dobleclic a #x` reads back `send dobleclic to #x`, so the event fires as `dobleclic`; de `mauseintreten`, ko `리사이즈`, zh `鼠标移动` the same. About 55 (language, event) pairs per command, the one-word coinages of es/pt/fr/de/ko/zh plus `unload` in id/sw; the handler head reads them all. Also: `wait for unload from #b` renders no source in es/pt/zh/fr/de/id/sw (`esperar descargar entonces …`), fr `repeat until event change from #b` reads back broken, and bn `send scroll to #x` reads `স্ক্রোল` as the scroll command · 2026-10-05 (P48's probes) · no · parser · probe confirmed.
-51. **P51 · The multi-word native event names the renderer does not write are still split**: `eventNameTranslations` lists 18 of them as input forms (ar/de/id/pt/qu/sw/tr), and only a handler head joins one back, when its first word is itself an event: ar `على تمرير الماوس سجل 1` reads `on mouseover`, but with `من #b` after it `on scroll`, and in a wait `wait for scroll`; id `lepas tombol`, pt `pressionar tecla`, de `taste runter` read `on lepas`/`on pressionar`/`on taste`, sw `bonyeza chini` `on click`. The names the renderer writes are one token since P48, which `event-name-translation.test.ts` holds · 2026-10-05 (P48's probes) · no · parser · probe confirmed.
 
 ### 2b. Render / naturalness (6)
 

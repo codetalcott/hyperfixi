@@ -94,6 +94,10 @@ const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   { native: 'tecla cima', normalized: 'keyup' },
   { native: 'mouse sobre', normalized: 'mouseover' },
   { native: 'mouse fora', normalized: 'mouseout' },
+  // Names eventNameTranslations reads but the renderer never writes. Split,
+  // `on pressionar tecla` read nothing as its event (was OPEN_ITEMS P51).
+  { native: 'pressionar tecla', normalized: 'keydown' },
+  { native: 'soltar tecla', normalized: 'keyup' },
   { native: 'foco', normalized: 'focus' },
   { native: 'desfoque', normalized: 'blur' },
   { native: 'carregar', normalized: 'load' },

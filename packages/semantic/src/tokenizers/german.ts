@@ -78,6 +78,12 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'maus drüber', normalized: 'mouseover' },
   { native: 'maus druber', normalized: 'mouseover' },
   { native: 'maus weg', normalized: 'mouseout' },
+  // Names eventNameTranslations reads (the renderer writes these events in
+  // English). Split, `bei taste runter` read `on taste` (was OPEN_ITEMS P51).
+  { native: 'taste runter', normalized: 'keydown' },
+  { native: 'taste hoch', normalized: 'keyup' },
+  { native: 'maus über', normalized: 'mouseover' },
+  { native: 'maus raus', normalized: 'mouseout' },
   { native: 'fokus', normalized: 'focus' },
   { native: 'unschärfe', normalized: 'blur' },
   { native: 'unscharfe', normalized: 'blur' },

@@ -107,6 +107,12 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'bonyeza kitufe', normalized: 'keydown' },
   { native: 'sogeza juu', normalized: 'mouseover' },
   { native: 'sogeza nje', normalized: 'mouseout' },
+  // Names eventNameTranslations reads (the renderer writes these events in
+  // English). Split, `bonyeza chini` read `on click` (was OPEN_ITEMS P51).
+  { native: 'bonyeza chini', normalized: 'keydown' },
+  { native: 'bonyeza juu', normalized: 'keyup' },
+  { native: 'panya juu', normalized: 'mouseover' },
+  { native: 'panya nje', normalized: 'mouseout' },
   // Underscore-joined mouse/key event names AS THE i18n DICT EMITS THEM
   // (dictionaries/sw.ts `events`). The tokenizer's identifier reader now keeps `_`
   // inside a word (swahili-keyword.ts), so these resolve as one keyword token —

@@ -107,6 +107,12 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   // The name the renderer writes, whole: split, `dari <source>` after `tombol`
   // was lost (was OPEN_ITEMS P48).
   { native: 'tekan tombol', normalized: 'keydown' },
+  // Names eventNameTranslations reads but the renderer never writes. Split,
+  // `ketika lepas tombol` read `on lepas` (was OPEN_ITEMS P51).
+  { native: 'lepas tombol', normalized: 'keyup' },
+  { native: 'mouse masuk', normalized: 'mouseover' },
+  { native: 'mouse keluar', normalized: 'mouseout' },
+  { native: 'tekan_tombol', normalized: 'keydown' },
   { native: 'arahkan', normalized: 'mouseover' },
   { native: 'tinggalkan', normalized: 'mouseout' },
   { native: 'kabur', normalized: 'blur' },
