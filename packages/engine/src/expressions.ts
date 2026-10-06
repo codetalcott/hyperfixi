@@ -703,6 +703,7 @@ export function symbol(p: Parser): SymbolNode | undefined {
     type: 'symbol',
     name,
     scope,
+    ...(on ? { on } : {}),
     start,
     end: p.endPos(),
     ev: ctx => resolveSymbol(name, ctx, scope, on?.ev(ctx)),
