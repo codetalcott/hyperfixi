@@ -61,7 +61,7 @@ describe('the checks, one at a time', () => {
   });
 
   it('read-back: an output that does not read', () => {
-    const loss = findTranslationLoss('x', node, 'out', () => {
+    const loss = findTranslationLoss('x', node, 'out', 'en', () => {
       throw new Error('no parse');
     });
     expect(loss?.kind).toBe('read-back');
@@ -69,7 +69,7 @@ describe('the checks, one at a time', () => {
 
   it('read-back: an output that reads back with other commands, counted', () => {
     const fewer = parse('on click toggle .a', 'en');
-    expect(findTranslationLoss('x', node, 'out', () => fewer)).toEqual({
+    expect(findTranslationLoss('x', node, 'out', 'en', () => fewer)).toEqual({
       kind: 'read-back',
       lost: ['-add'],
     });
@@ -79,14 +79,20 @@ describe('the checks, one at a time', () => {
 
   it('read-back: an output its own reader leaves partly unread', () => {
     const unread = parse('on click toggle .foo .bar', 'en');
-    expect(findTranslationLoss('x', node, 'out', () => unread)).toEqual({
+    expect(findTranslationLoss('x', node, 'out', 'en', () => unread)).toEqual({
       kind: 'read-back',
       lost: ['.bar'],
     });
   });
 
   it('invariant: a verbatim value the output lacks', () => {
-    const loss = findTranslationLoss('on click toggle .a then add .b', node, 'add .b', () => node);
+    const loss = findTranslationLoss(
+      'on click toggle .a then add .b',
+      node,
+      'add .b',
+      'en',
+      () => node
+    );
     expect(loss).toEqual({ kind: 'invariant', lost: ['.a'] });
   });
 });
