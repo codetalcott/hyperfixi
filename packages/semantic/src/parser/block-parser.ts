@@ -276,17 +276,6 @@ function looksLikeEvent(tok: LanguageToken | undefined): boolean {
 const isAction = (word: string): word is ActionType =>
   Object.prototype.hasOwnProperty.call(commandSchemas, word);
 
-/** Every literal a pattern writes, its optional groups' included, lowercased. */
-function patternLiterals(tokens: readonly PatternToken[]): string[] {
-  return tokens.flatMap(t =>
-    t.type === 'literal'
-      ? [t.value, ...(t.alternatives ?? [])].map(w => w.toLowerCase())
-      : t.type === 'group'
-        ? patternLiterals(t.tokens)
-        : []
-  );
-}
-
 /**
  * The commands that take an `on` target (`toggle .a on el`, `trigger foo on
  * el`). Both engines consume the phrase after their `on`: in `on click toggle
@@ -373,10 +362,20 @@ function isPrecedingCommandMarker(
     const t = tokens[k];
     if (endsClause(t) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
-    if (!isAction(action)) continue;
+    // Not `on`: a handler is not the command before its own marker, and vi's
+    // toggle target `trên` normalizes to `on` (`chuyển đổi .a trên #x khi keyup`).
+    if (!isAction(action) || action === 'on') continue;
     const patterns = getPatternsForLanguage(language).filter(p => p.command === action);
     if (TAKES_ON_TARGET.has(action)) {
-      return patterns.some(p => patternLiterals(p.template.tokens).includes(surface));
+      // Its own only while the slot that marker writes is empty: he's toggle
+      // writes its target with `על` or `ב`, and once `על #x` is written the `ב`
+      // of `ב keyup` opens a handler.
+      const since = tokens.slice(k + 1, j).map(u => u.value.toLowerCase());
+      return patterns.some(p =>
+        literalSlots(p.template.tokens).some(
+          slot => slot.words.includes(surface) && !since.some(w => slot.words.includes(w))
+        )
+      );
     }
     const required = new Set(
       (commandSchemas[action]?.roles ?? []).filter(r => r.required).map(r => r.role as string)
@@ -394,21 +393,6 @@ function isPrecedingCommandMarker(
   return false;
 }
 
-/**
- * SOV languages whose no-`end` handler chain (`click を で … keyup を で …`) can be
- * split by the trigger SIGNATURE — the event-marker immediately followed by the
- * on-marker (ja `を で`, ko `을 에`). The forward `<on> <event>` lookahead used for
- * SVO/VSO does NOT work here (SOV is postpositional and the `on` marker is
- * homonymous with the locative), but these two languages have a DISTINCT,
- * separable event-marker and on-marker, so the adjacent pair uniquely identifies
- * a trigger: the patient marker (also `を`/`을`) is followed by a verb/value, never
- * by the on-marker. hi/bn are excluded — their event-marker and on-marker are the
- * SAME surface form (`पर`/`তে`), so no two-token signature exists; tr (agglutinative
- * suffixes) and qu (non-priority, unverified) are deferred. Such chains keep using
- * the word-order-agnostic end-delimited form there.
- */
-const TRIGGER_SIGNATURE_LANGS = new Set(['ja', 'ko']);
-
 /** Lowercased native surface forms (primary + alternatives) of a marker spec. */
 function markerSurfaceForms(
   spec: { primary?: string; alternatives?: readonly string[] } | undefined
@@ -417,6 +401,269 @@ function markerSurfaceForms(
   if (spec?.primary) set.add(spec.primary.toLowerCase());
   for (const alt of spec?.alternatives ?? []) set.add(alt.toLowerCase());
   return set;
+}
+
+// =============================================================================
+// Handler heads: where the next handler of a chain starts
+// =============================================================================
+
+/**
+ * How a language writes a handler's head, for finding where the next handler of
+ * a chain starts when the handlers have no `end` of their own: upstream ends a
+ * handler's commands at the next feature, so `on click add .a on keyup log 1` is
+ * two. Read from the profile and the language's `on` patterns, once per language.
+ */
+interface HandlerHeads {
+  readonly sov: boolean;
+  /**
+   * Words that open a handler AHEAD of its event, read with a forward event
+   * lookahead. Outside SOV: `on`'s forms and the `when` word, which is what the
+   * renderer writes in de/fr/id (`wenn`, `quand`, `ketika`). Not every word an
+   * `on` pattern leads with: those include `if` words (fr `si`, id `jika`, de
+   * `falls`) and a destination marker (fr `à`). In SOV only the `when` word, and
+   * only where it leads (qu `maykama`); the postpositional `on` (hi `पर`, ja `で`)
+   * is also the locative marker.
+   */
+  readonly leading: Set<string>;
+  /** `<lead> <event> <trail>` heads: zh `一 点击 就`, `当 点击 时`. */
+  readonly circumfix: ReadonlyArray<readonly [Set<string>, Set<string>]>;
+  /**
+   * SOV: two or more words after the event (ja `を で`, ko `할 때` and `을 에`, tr
+   * `i üzerinde`), distinctive enough to open a handler wherever they appear.
+   */
+  readonly trailing: ReadonlyArray<readonly string[]>;
+  /**
+   * SOV: a one-word `on` after the event (hi `पर`, bn `তে`). It is also the
+   * destination marker, which nearly every hi/bn command may write first, so
+   * after a command written without `then` (`… जोड़ें input पर .b को टॉगल`) it
+   * may open a handler or a command on `input`, even when the name is a DOM
+   * event's. It splits only where the previous command has ended
+   * (afterCommand), and never for certain.
+   */
+  readonly afterClause: Set<string>;
+  /** The patient marker (hi `को`): a value it marks still owes its verb. */
+  readonly patient: Set<string>;
+  /** A fronted event source (`#btn から keyup を で …`) belongs to its handler. */
+  readonly source: Set<string>;
+  /** Words a chain writes once per handler: two of them gate the tokenize. */
+  readonly anchors: readonly string[];
+}
+
+const handlerHeadsCache = new Map<string, HandlerHeads>();
+
+/** The literal's spellings, each split into its words (ko `할 때`). */
+function spellings(token: PatternToken): string[][] {
+  if (token.type !== 'literal') return [];
+  return [token.value, ...(token.alternatives ?? [])].map(w => w.toLowerCase().split(/\s+/));
+}
+
+/**
+ * The word sequences an `on` pattern writes right after its event, an optional
+ * group of literals both taken and skipped (tr `(i|ı|u|ü)? üzerinde`). Stops at a
+ * literal that introduces a role.
+ */
+function wordsAfterEvent(tokens: readonly PatternToken[], eventAt: number): string[][] {
+  let sequences: string[][] = [[]];
+  for (let i = eventAt + 1; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.type === 'literal') {
+      if (tokens[i + 1]?.type === 'role') break;
+      sequences = sequences.flatMap(seq => spellings(t).map(words => [...seq, ...words]));
+    } else if (t.type === 'group' && t.optional && t.tokens.every(g => g.type === 'literal')) {
+      const taken = t.tokens.reduce<string[][]>(
+        (acc, g) => acc.flatMap(seq => spellings(g).map(words => [...seq, ...words])),
+        [[]]
+      );
+      sequences = sequences.flatMap(seq => [seq, ...taken.map(words => [...seq, ...words])]);
+    } else {
+      break;
+    }
+  }
+  return sequences.filter(seq => seq.length > 0);
+}
+
+function handlerHeads(language: string): HandlerHeads {
+  const cached = handlerHeadsCache.get(language);
+  if (cached) return cached;
+  const profile = tryGetProfile(language);
+  const sov = profile?.wordOrder === 'SOV';
+
+  const circumfix: Array<readonly [Set<string>, Set<string>]> = [];
+  const trailing = new Map<string, string[]>();
+  const oneWordAfter = new Set<string>();
+  for (const pattern of getPatternsForLanguage(language)) {
+    // The fused `<command>-event-*` patterns lead with a command verb (ar `اضبط`).
+    if (pattern.command !== 'on' || /-event-/i.test(pattern.id)) continue;
+    const tokens = pattern.template.tokens;
+    const eventAt = tokens.findIndex(t => t.type === 'role' && t.role === 'event');
+    if (eventAt < 0) continue;
+    // A circumfix leads the pattern: hi `{source} से {event} पर` is a source
+    // phrase, not a head word.
+    const after = tokens[eventAt + 1];
+    if (eventAt === 1 && after?.type === 'literal' && tokens[eventAt + 2]?.type !== 'role') {
+      circumfix.push([new Set(spellings(tokens[0]).flat()), new Set(spellings(after).flat())]);
+    }
+    if (!sov || eventAt > 0) continue;
+    for (const words of wordsAfterEvent(tokens, eventAt)) {
+      if (words.length > 1) trailing.set(words.join(' '), words);
+      else oneWordAfter.add(words[0]);
+    }
+  }
+
+  const afterWords = new Set([...oneWordAfter, ...[...trailing.values()].flat()]);
+  const whenWords = markerSurfaceForms(profile?.keywords?.when);
+  const leading = sov
+    ? new Set([...whenWords].filter(w => !afterWords.has(w)))
+    : new Set([...keywordForms(language, 'on'), ...whenWords]);
+  const afterClause = sov
+    ? new Set([...markerSurfaceForms(profile?.keywords?.on)].filter(w => oneWordAfter.has(w)))
+    : new Set<string>();
+
+  const heads: HandlerHeads = {
+    sov,
+    leading,
+    circumfix,
+    trailing: [...trailing.values()],
+    afterClause,
+    patient: markerSurfaceForms(profile?.roleMarkers?.patient),
+    source: markerSurfaceForms(profile?.roleMarkers?.source),
+    anchors: [
+      ...leading,
+      ...circumfix.flatMap(([lead]) => [...lead]),
+      ...[...trailing.values()].map(words => words[words.length - 1]),
+      ...afterClause,
+    ].filter(w => w.length > 0),
+  };
+  handlerHeadsCache.set(language, heads);
+  return heads;
+}
+
+/** Do `words` appear in order from token `at`? */
+function wordsAt(tokens: readonly LanguageToken[], at: number, words: readonly string[]): boolean {
+  return words.every((word, k) => tokens[at + k]?.value.toLowerCase() === word);
+}
+
+/** Where a new handler starts, and whether its head is unambiguous. */
+interface HandlerStart {
+  readonly at: number;
+  readonly certain: boolean;
+}
+
+/**
+ * Does a new handler start at token `j` of the handler that began at `segStart`
+ * (both at depth 0)? At `j` for a head that leads with its word; at the event,
+ * or its fronted source, for one written after it.
+ */
+function handlerStartAt(
+  tokens: readonly LanguageToken[],
+  j: number,
+  segStart: number,
+  language: string,
+  heads: HandlerHeads,
+  thenForms: Set<string>,
+  endsClause: (tok: LanguageToken) => boolean
+): HandlerStart | null {
+  const tok = tokens[j];
+  const word = tok.value.toLowerCase();
+
+  const leads =
+    j > segStart &&
+    looksLikeEvent(tokens[j + 1]) &&
+    ((tokenMatches(tok, heads.leading) &&
+      // A handler's event is never followed by `then` (both engines reject
+      // `on click then …`): es/pt/he `poner 2 en item entonces …`, whose
+      // `en` is put's `into` and also es's `on`, stays one handler.
+      !(tokens[j + 2] && tokenMatches(tokens[j + 2], thenForms)) &&
+      !isPrecedingCommandMarker(tokens, segStart, j, language, endsClause)) ||
+      heads.circumfix.some(
+        ([lead, trail]) => lead.has(word) && closesCircumfix(tokens, j, trail, heads)
+      ));
+  if (leads) return withFrontedSource(tokens, j, segStart, heads, true);
+
+  // Written after the event: the event is at j - 1, and the handler that began
+  // at segStart has its own head before it.
+  const eventAt = j - 1;
+  const event = tokens[eventAt];
+  if (eventAt <= segStart || !looksLikeEvent(event)) return null;
+  if (heads.trailing.some(words => wordsAt(tokens, j, words))) {
+    return withFrontedSource(tokens, eventAt, segStart, heads, true);
+  }
+  if (
+    heads.afterClause.has(word) &&
+    (event.kind === 'keyword' || event.kind === 'identifier') &&
+    afterCommand(tokens, eventAt, heads)
+  ) {
+    // The likely reading, but not a certain one: the caller says so, and the
+    // adapter will not run it.
+    return withFrontedSource(tokens, eventAt, segStart, heads, false);
+  }
+  return null;
+}
+
+/**
+ * Does the circumfix led at `j` close after its event, or after the event's
+ * source (zh `一 keyup 从 #b 就`)?
+ */
+function closesCircumfix(
+  tokens: readonly LanguageToken[],
+  j: number,
+  trail: Set<string>,
+  heads: HandlerHeads
+): boolean {
+  const at = (k: number): string | undefined => tokens[k]?.value.toLowerCase();
+  const closes = (k: number): boolean => trail.has(at(k) ?? '');
+  return (
+    closes(j + 2) ||
+    (tokens[j + 2] !== undefined && tokenMatches(tokens[j + 2], heads.source) && closes(j + 4))
+  );
+}
+
+/**
+ * A handler that starts at `at` with a fronted source (`#btn から keyup を で`,
+ * qu `#b manta maykama click`) starts at the source; and when that source is
+ * where the current handler began, it is that handler's own head (null).
+ */
+function withFrontedSource(
+  tokens: readonly LanguageToken[],
+  at: number,
+  segStart: number,
+  heads: HandlerHeads,
+  certain: boolean
+): HandlerStart | null {
+  if (heads.sov && at - 2 >= segStart && tokenMatches(tokens[at - 1], heads.source)) {
+    return at - 2 === segStart ? null : { at: at - 2, certain };
+  }
+  return { at, certain };
+}
+
+/**
+ * The confidence a chain gets when one of its handlers starts at a head that may
+ * be a destination instead (hi `पर`, bn `তে`): below the
+ * adapter's default threshold (0.5), so the adapter leaves the script as written
+ * and the engine reports it, rather than running a reading that may be wrong.
+ */
+const UNSURE_SPLIT_CONFIDENCE = 0.4;
+
+/**
+ * Has the SOV command before token `at` ended? Its verb (a command keyword) or
+ * an `end` comes right before, or a role it writes after its verb (hi `1 को
+ * रखें #out में`, put's destination); not a patient (`.a को input पर टॉगल`), which
+ * still owes its verb.
+ */
+function afterCommand(tokens: readonly LanguageToken[], at: number, heads: HandlerHeads): boolean {
+  const ends = (tok: LanguageToken | undefined): boolean => {
+    if (!tok || tok.kind !== 'keyword') return false;
+    const norm = (tok.normalized ?? tok.value).toLowerCase();
+    return norm === 'end' || isAction(norm);
+  };
+  const before = tokens[at - 1];
+  if (ends(before)) return true;
+  return (
+    before !== undefined &&
+    before.kind === 'particle' &&
+    !tokenMatches(before, heads.patient) &&
+    ends(tokens[at - 3])
+  );
 }
 
 /**
@@ -583,20 +830,15 @@ export function tryParseBlock(
  *    AGNOSTIC, so it works however a language surfaces the trigger (`on`, de
  *    `wenn`, zh idiom, SOV mid-clause marker). This is the common, unambiguous
  *    form (`on click … end on keyup … end`).
- *  - **trigger-delimited** (Phase B) — a depth-0 `on`-marker that begins a NEW
- *    handler starts a segment, for the no-`end` feature chain (`on click … on
- *    keyup …`). The `on` marker is matched by its surface form (en `on`, es `al`,
- *    …) and disambiguated from a destination `on` (`toggle .x on me`) by event-
- *    name lookahead: the next token must look like an EVENT, not a target
- *    reference/selector. This forward lookahead assumes a PREPOSITIONAL `on`
- *    (SVO/VSO/V2); SOV is postpositional, so it is gated off there.
- *  - **signature-delimited** (Phase B, SOV) — for the no-`end` chain in ja/ko
- *    ({@link TRIGGER_SIGNATURE_LANGS}), a depth-0 trigger SIGNATURE — the event-
- *    marker immediately followed by the on-marker (ja `を で`, ko `을 에`) — starts
- *    a new handler at the event token that precedes it. Their patient marker is
- *    the same particle (`を`/`을`) but is followed by a verb, never the on-marker,
- *    so the adjacent pair is an unambiguous trigger anchor. SOV languages without
- *    a distinct two-token signature (hi/bn) still rely on the end-delimited form.
+ *  - **head-delimited** — a depth-0 handler head starts a new segment, for the
+ *    no-`end` chain (`on click … on keyup …`, which upstream reads as two). The
+ *    head is the language's own ({@link handlerHeads}): a word ahead of the event
+ *    (en `on`, es `al`, de `wenn`, qu `maykama`), a circumfix (zh `一 … 就`), or
+ *    words after it (ja `を で`, ko `할 때`, tr `i üzerinde`); a destination `on`
+ *    (`toggle .x on me`) is told apart by event-name lookahead and by the command
+ *    before it ({@link isPrecedingCommandMarker}). hi `पर` and bn `তে` are also
+ *    the destination marker, so a chain split there is never trusted: its
+ *    confidence is capped below the adapter's threshold.
  *
  * Each segment is parsed by the ordinary single-statement engine and re-assembled
  * into a `compound` (which buildAST maps to a core `Program`, so the runtime
@@ -611,60 +853,41 @@ export function tryParseProgram(
   language: string,
   parsers: BlockParsers
 ): SemanticNode | null {
+  return splitProgram(input, language, parsers)?.node ?? null;
+}
+
+/**
+ * {@link tryParseProgram}, saying also whether a handler started at a head that
+ * may be a destination instead (the chain's confidence is capped then).
+ */
+function splitProgram(
+  input: string,
+  language: string,
+  parsers: BlockParsers
+): { node: CompoundSemanticNode; unsure: boolean } | null {
   const profile = tryGetProfile(language);
   if (!profile) return null;
-
-  // The no-`end` trigger split uses FORWARD event-name lookahead (`<on> <event>`),
-  // which only holds where the `on` marker PRECEDES the event — SVO/VSO/V2 (en
-  // `on click`, es `al click`, ar `على click`, de `bei click`). SOV languages are
-  // POSTPOSITIONAL: the marker follows the event (`click पर`, `click を で`) and
-  // is typically homonymous with the locative/destination marker (hi `पर`, ja
-  // `で`), so a forward lookahead both misses the real boundary and mis-fires on
-  // `<target> <marker> <verb>`. SOV no-`end` chains are therefore NOT trigger-
-  // split; they rely on the end-delimited form (Phase A), which is word-order
-  // agnostic. (The end split below still runs for SOV.)
-  const triggerSplit = profile.wordOrder !== 'SOV';
-
-  // ja/ko no-`end` chains are split by the trigger SIGNATURE (event-marker
-  // immediately followed by on-marker) instead — see TRIGGER_SIGNATURE_LANGS.
-  const eventMarkerForms = TRIGGER_SIGNATURE_LANGS.has(language)
-    ? markerSurfaceForms(profile.roleMarkers?.event)
-    : new Set<string>();
-  const onMarkerForms = TRIGGER_SIGNATURE_LANGS.has(language)
-    ? markerSurfaceForms(profile.keywords?.on)
-    : new Set<string>();
-  const signatureSplit = eventMarkerForms.size > 0 && onMarkerForms.size > 0;
-  // A handler's event SOURCE is fronted in these languages (`#btn から keyup を
-  // で …`, `#btn 에서 keyup 을 에 …` — spliceEventModifiers), so the two tokens
-  // before a signature's event may be that phrase, which belongs to the SAME
-  // handler and must not be cut off as a bodiless segment of its own.
-  const sourceMarkerForms = signatureSplit
-    ? markerSurfaceForms(profile.roleMarkers?.source)
-    : new Set<string>();
+  const heads = handlerHeads(language);
 
   // Cheap pre-guard: a multi-handler program needs either ≥1 `end` keyword (the
-  // end-delimited form) or — for trigger/signature-split languages — ≥2 `on`-marker
-  // surface forms (the no-`end` chain has one per handler). Skip the tokenize for
-  // the overwhelming majority of single-statement inputs that have neither. Over-
-  // counting only costs a tokenize that then yields <2 segments → null; under-
-  // counting would miss a real program, so this errs toward proceeding.
+  // end-delimited form) or ≥2 handler-head words (the no-`end` chain writes one
+  // per handler). Skip the tokenize for the overwhelming majority of
+  // single-statement inputs that have neither. Over-counting only costs a
+  // tokenize that then yields <2 segments → null; under-counting would miss a
+  // real program, so this errs toward proceeding.
   const endForms = keywordForms(language, 'end');
-  const onForms = keywordForms(language, 'on');
   const thenForms = keywordForms(language, 'then');
   const lower = input.toLowerCase();
   const hasEnd = [...endForms].some(f => lower.includes(f));
-  const hasMultiTrigger =
-    (triggerSplit || signatureSplit) &&
-    (() => {
-      let hits = 0;
-      for (const f of onForms) {
-        if (!f) continue;
-        for (let i = lower.indexOf(f); i >= 0; i = lower.indexOf(f, i + f.length)) {
-          if (++hits >= 2) return true;
-        }
+  const hasMultiTrigger = (() => {
+    let hits = 0;
+    for (const f of heads.anchors) {
+      for (let i = lower.indexOf(f); i >= 0; i = lower.indexOf(f, i + f.length)) {
+        if (++hits >= 2) return true;
       }
-      return false;
-    })();
+    }
+    return false;
+  })();
   if (!hasEnd && !hasMultiTrigger) return null;
 
   const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
@@ -673,14 +896,14 @@ export function tryParseProgram(
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
 
-  // Split into top-level handler segments. At depth 0: a `end` closes the current
-  // handler (end-delimited form); a prepositional `on`-marker that BEGINS a new
-  // handler (its lookahead is an event, not a target) starts a new segment (no-`end`
-  // chain, SVO/VSO); or a ja/ko trigger signature (event-marker + on-marker) starts
-  // a new segment at the event token before it. A `end` at depth > 0 closes a NESTED
+  // Split into top-level handler segments. At depth 0, a `end` closes the current
+  // handler (end-delimited form), and a handler head starts a new one
+  // (handlerStartAt: the no-`end` chain). A `end` at depth > 0 closes a NESTED
   // if/repeat (decrement only). A final handler with no trailing `end` is the tail.
   const segments: string[] = [];
+  let unsure = false;
   let depth = 0;
   let segStart = 0;
   for (let j = 0; j < tokens.length; j++) {
@@ -702,49 +925,15 @@ export function tryParseProgram(
       segStart = j + 1;
     } else if (isOpener(j)) {
       depth++;
-    } else if (
-      triggerSplit &&
-      depth === 0 &&
-      j > segStart &&
-      tokenMatches(tok, onForms) &&
-      looksLikeEvent(tokens[j + 1]) &&
-      // A handler's event is never followed by `then` (both engines reject
-      // `on click then …`): es/pt/he `poner 2 en item entonces …`, whose
-      // `en` is put's `into` and also es's `on`, stays one handler.
-      !(tokens[j + 2] && tokenMatches(tokens[j + 2], thenForms)) &&
-      !isPrecedingCommandMarker(
-        tokens,
-        segStart,
-        j,
-        language,
-        t => isEnd(t) || tokenMatches(t, thenForms)
-      )
-    ) {
-      // A new handler trigger at top level ends the previous (un-`end`ed) handler.
-      const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+    } else if (depth === 0) {
+      const start = handlerStartAt(tokens, j, segStart, language, heads, thenForms, endsClause);
+      if (!start) continue;
+      if (!start.certain) unsure = true;
+      const text = input
+        .slice(tokens[segStart].position.start, tokens[start.at].position.start)
+        .trim();
       if (text) segments.push(text);
-      segStart = j;
-    } else if (
-      signatureSplit &&
-      depth === 0 &&
-      j - 1 > segStart &&
-      tokenMatches(tok, eventMarkerForms) &&
-      tokens[j + 1] !== undefined &&
-      tokenMatches(tokens[j + 1], onMarkerForms)
-    ) {
-      // ja/ko trigger signature `<event> <event-marker> <on-marker>` (`keyup を で`,
-      // `keyup 을 에`): the marker pair at j / j+1 means the token at j-1 is the new
-      // handler's event. The previous handler ends just before it. The patient
-      // marker is the same particle but is followed by a verb (not the on-marker),
-      // so this pair only matches a real trigger.
-      const eventTok = tokens[j - 1];
-      const before = tokens.slice(segStart, j - 1);
-      const frontedSource = before.length === 2 && tokenMatches(before[1], sourceMarkerForms);
-      if (!frontedSource) {
-        const text = input.slice(tokens[segStart].position.start, eventTok.position.start).trim();
-        if (text) segments.push(text);
-        segStart = j - 1;
-      }
+      segStart = start.at;
     }
   }
   if (segStart < tokens.length) {
@@ -779,11 +968,13 @@ export function tryParseProgram(
     confidences.push(handler.metadata?.confidence ?? 0.75);
   }
 
-  return createCompoundNode(handlers, 'then', {
+  const confidence = meanConfidence(confidences);
+  const node = createCompoundNode(handlers, 'then', {
     sourceLanguage: language,
-    confidence: meanConfidence(confidences),
+    confidence: unsure ? Math.min(confidence, UNSURE_SPLIT_CONFIDENCE) : confidence,
     sourceText: input,
   });
+  return { node, unsure };
 }
 
 /** Mean of a confidence list (0 when empty). */
@@ -843,12 +1034,11 @@ function parseBehaviorBlock(
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
-  // Forward `<trigger> <event>` lookahead only holds where the trigger precedes
-  // the event (see tryParseProgram's triggerSplit). The trigger words are the
-  // ones that open a handler, not every form of `on`: de's `auf` is also the
-  // `on`/`to` preposition (`setze cls auf "a"`).
-  const triggerSplit = tryGetProfile(language)?.wordOrder !== 'SOV';
-  const triggers = triggerSplit ? handlerTriggerWords(language) : new Set<string>();
+  // Where the handler after an `init` with no `end` starts: the same heads the
+  // top-level split reads (handlerStartAt), in every word order.
+  const heads = handlerHeads(language);
+  const thenForms = keywordForms(language, 'then');
+  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
 
   /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
   const takeInit = (stop: number): void => {
@@ -872,6 +1062,8 @@ function parseBehaviorBlock(
   const initCommands: SemanticNode[] = [];
   const confidences: number[] = [];
   let sawClosingEnd = false;
+  // A handler started at a head that may be a destination (handlerStartAt).
+  let unsure = false;
 
   let depth = 0;
   let segStart = bodyStart;
@@ -898,9 +1090,10 @@ function parseBehaviorBlock(
       // failed the whole behavior (English wrote `behavior F then add .a then
       // log 1`). The top-level splitter finds the boundary, and declines unless
       // every piece is a handler with a body.
-      const chain = tryParseProgram(handlerText, language, parsers) as CompoundSemanticNode | null;
+      const chain = splitProgram(handlerText, language, parsers);
       if (chain) {
-        for (const handler of chain.statements as EventHandlerSemanticNode[]) {
+        if (chain.unsure) unsure = true;
+        for (const handler of chain.node.statements as EventHandlerSemanticNode[]) {
           eventHandlers.push(handler);
           confidences.push(handler.metadata?.confidence ?? 0.75);
         }
@@ -924,28 +1117,24 @@ function parseBehaviorBlock(
       segStart = j + 1;
     } else if (isOpener(j)) {
       depth++;
-    } else if (
-      triggerSplit &&
-      depth === 0 &&
-      j > segStart &&
-      tokenMatches(tokens[segStart], initForms) &&
-      triggers.has(tok.value.toLowerCase()) &&
-      (tokens[j + 1]?.kind === 'identifier' || tokens[j + 1]?.kind === 'keyword') &&
-      looksLikeEvent(tokens[j + 1])
-    ) {
+    } else if (depth === 0 && tokenMatches(tokens[segStart], initForms)) {
       // `init`'s command list ends at the next feature, as upstream's does: its
       // own `end` is optional. So in `init if no h set h to me end on pointerdown
       // … end`, the `end` belongs to the one-line `if`, and the end split read
       // it as init's: the handler's header and body became init commands
       // (behavior-draggable lost its whole `on pointerdown(…) from dragHandle`).
-      takeInit(j);
-      segStart = j;
+      const start = handlerStartAt(tokens, j, segStart, language, heads, thenForms, endsClause);
+      if (!start) continue;
+      if (!start.certain) unsure = true;
+      takeInit(start.at);
+      segStart = start.at;
     }
   }
 
   if (eventHandlers.length === 0 && initCommands.length === 0) return null;
 
-  const confidence = (sawClosingEnd ? 1 : 0.8) * meanConfidence(confidences);
+  const mean = (sawClosingEnd ? 1 : 0.8) * meanConfidence(confidences);
+  const confidence = unsure ? Math.min(mean, UNSURE_SPLIT_CONFIDENCE) : mean;
   return createBehaviorNode(
     name,
     parameters,
@@ -953,27 +1142,6 @@ function parseBehaviorBlock(
     initCommands.length > 0 ? initCommands : undefined,
     { sourceLanguage: language, confidence, sourceText: input }
   );
-}
-
-/**
- * The words that open a handler, ahead of its event (en `on`, de `wenn`, es
- * `al`): each pure trigger pattern's literals before its `{event}` slot. Not
- * the fused `<command>-event-*` patterns, whose leading literal is a command
- * verb (ar `اضبط`, set) — the same exclusion the renderer makes.
- */
-function handlerTriggerWords(language: string): Set<string> {
-  const words = new Set<string>();
-  for (const pattern of getPatternsForLanguage(language)) {
-    if (pattern.command !== 'on' || /-event-/i.test(pattern.id)) continue;
-    for (const token of pattern.template.tokens) {
-      if (token.type === 'role' && token.role === 'event') break;
-      if (token.type !== 'literal') continue;
-      for (const word of [token.value, ...(token.alternatives ?? [])]) {
-        words.add(word.toLowerCase());
-      }
-    }
-  }
-  return words;
 }
 
 /**

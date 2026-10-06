@@ -46,9 +46,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and English wrote `behavior F then add .a then log 1`, which the engine rejects: `translate`,
   MCP `translate_code` and the adapter broke such a behavior in every language. Each piece now goes
   through the splitter a top-level chain of handlers already used, and parses to the same node as
-  the form with every `end` written. A behavior written this way in another language reads in 14
-  of the 23; the other 9 fail as their top-level chains do (OPEN_ITEMS P47). No corpus row changes
-  (every one writes its `end`s).
+  the form with every `end` written. No corpus row changes (every one writes its `end`s).
+- **`@lokascript/semantic`: a chain of handlers written natively without their `end`s reads as
+  written, in every language.** In 9 languages such a chain merged into one handler, at top level
+  and inside a behavior, and the result was valid English that ran wrong: de, fr, id, zh, ko, qu
+  and tr dropped the second event and ran its commands on the first (`on click add .a then log
+1`), and hi and bn read it as a destination (`add .a to keyup`). The split knew a handler head
+  only as `on`'s forms and ja/ko's `を で` / `을 에`; it now reads each language's own: the `when`
+  word the renderer writes (de `wenn`, fr `quand`, id `ketika`, qu `maykama`), zh's `一 … 就`, and
+  the words after the event (ko `할 때`, tr `i üzerinde`). The same rule ends an `init` with no
+  `end` in SOV languages too, and he and vi no longer read a handler after `toggle .a on #x` as the
+  toggle's. hi `पर` and bn `তে` are also the destination marker, which almost every command there
+  may write first, so a split at one is never trusted: it reads as written, at a confidence below
+  the adapter's threshold, so the adapter leaves the script as written and the engine reports it.
+  No corpus row changes.
 - **`@lokascript/semantic`: English writes core's view-transition tail as upstream's block.**
   `swap #a with #b using view transition` (and `morph`'s tail) renders to English as
   `start view transition swap #a with #b end`, which upstream _hyperscript and `@hyperfixi/engine`
