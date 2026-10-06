@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, translate, eventNameTranslations, localizeEventName } from '../src';
+import { parse, translate, tokenize, eventNameTranslations, localizeEventName } from '../src';
 
 /** The normalized (English) event name from a parsed event-handler node. */
 function eventOf(node: unknown): string | undefined {
@@ -136,6 +136,61 @@ describe('event-name translation (Phase 1b)', () => {
           }
           if (got !== ev) {
             failures.push(`${lang}: ${ev}→${native} re-parsed as ${got ?? 'NONE'} ("${translated}")`);
+          }
+        }
+      }
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+
+    // A name of several words has to be one token. Split, its first word read
+    // as the event (ar `تغيير`, vi `đổi`: change, not resize), and whatever was
+    // written after the name was lost: `on keyup from #b` read back
+    // `on keyup` in ar (was OPEN_ITEMS P48).
+    it('every native of several words it emits is one token', () => {
+      const failures: string[] = [];
+      for (const lang of Object.keys(eventNameTranslations)) {
+        for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
+          const native = localizeEventName(ev, lang);
+          if (!/\s/.test(native)) continue;
+          const tokens = tokenize(native, lang).tokens;
+          if (tokens.length !== 1 || tokens[0].normalized !== ev) {
+            failures.push(`${lang}: "${native}" → ${tokens.map(t => t.value).join(' | ')}`);
+          }
+        }
+      }
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+
+    it('every native it emits keeps a handler source written after it', () => {
+      const failures: string[] = [];
+      for (const lang of Object.keys(eventNameTranslations)) {
+        for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
+          if (localizeEventName(ev, lang) === ev) continue;
+          for (const source of ['#b', 'window', 'elsewhere']) {
+            const src = `on ${ev} from ${source} log 1`;
+            const translated = translate(src, 'en', lang);
+            const back = translate(translated, lang, 'en');
+            if (back !== src) failures.push(`${lang}: "${translated}" → "${back}"`);
+          }
+        }
+      }
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+
+    it('a native of several words keeps what a command writes after it', () => {
+      const failures: string[] = [];
+      for (const lang of Object.keys(eventNameTranslations)) {
+        for (const ev of new Set(Object.values(eventNameTranslations[lang]))) {
+          if (!/\s/.test(localizeEventName(ev, lang))) continue;
+          for (const src of [
+            `on click send ${ev} to #x then log 1`,
+            `on click trigger ${ev} on #x then log 1`,
+            `on click wait for ${ev} from #b then log 1`,
+            `on click repeat until event ${ev} from #b add .a end`,
+          ]) {
+            const translated = translate(src, 'en', lang);
+            const back = translate(translated, lang, 'en');
+            if (back !== src) failures.push(`${lang}: "${translated}" → "${back}"`);
           }
         }
       }

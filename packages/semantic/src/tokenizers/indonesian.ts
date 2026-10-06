@@ -104,6 +104,9 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   { native: 'ubah', normalized: 'change' },
   { native: 'kirim', normalized: 'submit' },
   { native: 'tekan', normalized: 'keydown' },
+  // The name the renderer writes, whole: split, `dari <source>` after `tombol`
+  // was lost (was OPEN_ITEMS P48).
+  { native: 'tekan tombol', normalized: 'keydown' },
   { native: 'arahkan', normalized: 'mouseover' },
   { native: 'tinggalkan', normalized: 'mouseout' },
   { native: 'kabur', normalized: 'blur' },

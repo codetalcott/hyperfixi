@@ -63,7 +63,6 @@ import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import {
   eventNameTranslations,
-  localizeEventName,
   nativeEventNames,
   normalizeEventName,
 } from '../patterns/event-handler';
@@ -907,15 +906,16 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
           // The event-compound rebind alone is NOT family-gated: any handler
-          // whose multi-word event name shattered deserves the join (the
-          // localizer round-trips resize → ar `تغيير حجم` / vi `đổi kích
-          // thước` with no modifier in sight — event-name-translation.test).
-          // It only fires on an exact compound-key hit adjacent to the very
-          // word the current event was canonicalized from. Runs AFTER the
-          // family loop so the from-tail reclaim keeps first claim on its
-          // span (vi window-resize: from-tail must excise `từ window` before
-          // the compound retires `kích thước`, or its improvement check —
-          // fewer dropped tokens after re-parse — can no longer pass).
+          // whose multi-word event name shattered deserves the join, with no
+          // modifier in sight (a hand-written name the tokenizer splits: ar
+          // `تمرير الماوس` is mouseover, not its first word's `scroll`; every
+          // name the renderer writes is read whole, which
+          // event-name-translation.test holds). It only fires on an exact
+          // compound-key hit adjacent to the very word the current event was
+          // canonicalized from. Runs AFTER the family loop so the from-tail
+          // reclaim keeps first claim on its span: once the compound has
+          // retired its words, the from-tail's improvement check (fewer
+          // dropped tokens after re-parse) can no longer pass.
           const compound = this.reclaimEventCompoundTail(cur.node, cur.input, language);
           if (compound) cur = compound;
           node = cur.node;
@@ -1415,8 +1415,8 @@ export class SemanticParserImpl implements ISemanticParser {
         try {
           let reparsed = this.parse(reduced, language);
           // The outermost parse joins an event the tokenizer split into words
-          // (ar `تغيير حجم` is resize, not its first word's `change`). This
-          // re-parse is nested, so join it here.
+          // (ar `تمرير الماوس` is mouseover, not its first word's `scroll`).
+          // This re-parse is nested, so join it here.
           if (reparsed?.kind === 'event-handler') {
             const joined = this.reclaimEventCompoundTail(
               hoistUnconsumedDiagnostics(reparsed) as EventHandlerSemanticNode,
@@ -6509,20 +6509,10 @@ export class SemanticParserImpl implements ISemanticParser {
         ? isWait(arr[end]) || (arr[end]?.kind === 'particle' && isWait(arr[end + 1]))
         : isWait(arr[start - 1]) || isWait(arr[start - 2]);
 
-    /**
-     * Tokens an event word spans: a localized name can be two words (ar
-     * `رفع المفتاح`, keyup) whose tail the tokenizer keeps as its own token.
-     */
-    const eventSpan = (at: number): number => {
-      const words = localizeEventName(eventOf(arr[at])!, language).split(/\s+/);
-      if (words.length < 2 || arr[at].value !== words[0]) return 1;
-      return words.every((w, n) => n === 0 || arr[at + n]?.value === w) ? words.length : 1;
-    };
-
     for (let i = 0; i < arr.length; i++) {
       if (!isEvent(arr[i])) continue;
       const alternatives: WaitAlternative[] = [];
-      const eventEnd = i + eventSpan(i); // exclusive
+      const eventEnd = i + 1; // exclusive
       const first = this.matchEventParamPhrase(arr, eventEnd);
       alternatives.push(
         first.names.length > 0
@@ -6533,7 +6523,7 @@ export class SemanticParserImpl implements ISemanticParser {
       while (isOrWordToken(arr[k] ?? { value: '' }, language)) {
         const next = arr[k + 1];
         if (isEvent(next)) {
-          const legEnd = k + 1 + eventSpan(k + 1);
+          const legEnd = k + 2;
           const phrase = this.matchEventParamPhrase(arr, legEnd);
           alternatives.push(
             phrase.names.length > 0
@@ -8371,13 +8361,14 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Rebind a tokenizer-split compound event name (Arc F). Some renders write
-   * the event as a multi-word compound the tokenizer cannot emit whole (ar
-   * `تغيير حجم`, vi `đổi kích thước`): the event slot captures only the first
-   * word (canonicalized to the WRONG event — `change`) and the rest drops
-   * unconsumed. When a dangling span, joined offset-exactly with the token
-   * immediately before it, hits a compound key in eventNameTranslations —
-   * and that preceding token is the very word the current event was
+   * Rebind a tokenizer-split compound event name (Arc F). A hand-written name
+   * can be several words the tokenizer does not emit whole (ar `تمرير الماوس`,
+   * mouseover): the event slot captures only the first word (canonicalized to
+   * the WRONG event — `scroll`) and the rest drops unconsumed. (The names the
+   * renderer writes are all read whole, so a render never needs this.) When a
+   * dangling span, joined offset-exactly with the token immediately before
+   * it, hits a compound key in eventNameTranslations — and that preceding
+   * token is the very word the current event was
    * canonicalized from — rebind the event to the compound's English name and
    * retire the span's diagnostic: the fragment is consumed by attribution.
    */

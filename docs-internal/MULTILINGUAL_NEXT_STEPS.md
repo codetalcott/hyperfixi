@@ -187,7 +187,7 @@ exists (policy 13).
 
 ### M4: the small queue (take items opportunistically)
 
-- **Parser items not in M1:** P6, P7, P13, P16, P19–P29, P31–P44.
+- **Parser items not in M1:** P6, P7, P13, P16, P20–P29, P31–P44.
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.

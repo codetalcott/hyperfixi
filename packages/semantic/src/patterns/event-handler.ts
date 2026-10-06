@@ -93,10 +93,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     'مفتاح أسفل': 'keydown',
     'مفتاح أعلى': 'keyup',
     'فأرة فوق': 'mouseover',
-    // Arc F: the dict renders resize as the two-word تغيير حجم; the event
-    // slot captures only تغيير (→change) and حجم drops. The compound key is
-    // matched by the parser's event-compound reclaim (offset-exact join of
-    // the captured event word + the dangling fragment).
+    // resize is two words, which the ar tokenizer reads whole: read alone,
+    // تغيير is change (P48).
     'تغيير حجم': 'resize',
   },
   // Spanish event names → English
@@ -448,11 +446,9 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
     shuka: 'unload',
   },
-  // Vietnamese event names → English. Minimal section: the dict renders
-  // resize as the three-word đổi kích thước; the event slot captures only
-  // đổi (tokenizer-normalized → change) and `kích thước` drops. The compound
-  // key is matched by the parser's event-compound reclaim (Arc F,
-  // offset-exact join of the captured event word + the dangling fragment).
+  // Vietnamese event names → English. Minimal section: resize is the
+  // three-word đổi kích thước, which the vi tokenizer reads whole: read alone,
+  // đổi is change (P48).
   vi: {
     'đổi kích thước': 'resize',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —

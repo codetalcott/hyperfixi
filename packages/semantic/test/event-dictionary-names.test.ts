@@ -36,22 +36,18 @@ describe.each(EVENTS)('`on %s(x)` keeps its params', event => {
   });
 });
 
-// The params re-parse is nested, where the outermost parse's join of a split
-// event (ar `تغيير حجم`: resize, not its first word's `change`) does not run.
-// It joins the words itself, and retires their unconsumed-input record, which
-// otherwise reported them dropped.
-it.each(['ar', 'vi'])('%s: a split event keeps its params and reports no dropped words', language => {
+// ar `تغيير حجم` and vi `đổi kích thước` (resize) open with a word that reads
+// `change` alone. The tokenizer reads each whole (P48); before, the params
+// re-parse joined the words, and their unconsumed-input record reported them
+// dropped until it retired it.
+it.each(['ar', 'vi'])('%s: a two-word event keeps its params and reports no dropped words', language => {
   const node = parse(render(parse('on resize(x) log x', 'en')!, language), language)!;
   expect(render(node, 'en')).toBe('on resize(x) log x');
   expect((node.diagnostics ?? []).filter(d => d.code === 'unconsumed-input')).toEqual([]);
 });
 
-// ar `تغيير حجم` and vi `đổi kích thước` (resize) open with a word that reads
-// `change`, and only a handler head joins the words (filed).
-const WAIT_GAPS = new Set(['ar/resize', 'vi/resize']);
-
 describe.each(EVENTS)('`wait for %s` waits for it, alone and with a timeout', event => {
-  it.each(FOREIGN.filter(language => !WAIT_GAPS.has(`${language}/${event}`)))('%s', language => {
+  it.each(FOREIGN)('%s', language => {
     for (const src of [
       `on click wait for ${event} then log 1`,
       `on click wait for ${event} or 1s then log 1`,
@@ -60,12 +56,4 @@ describe.each(EVENTS)('`wait for %s` waits for it, alone and with a timeout', ev
       expect(back, foreign).toBe(src);
     }
   });
-});
-
-it('ar and vi `wait for resize` still read the first word (known gap)', () => {
-  for (const language of ['ar', 'vi']) {
-    expect(roundTrip('on click wait for resize then log 1', language).back).toBe(
-      'on click wait for change then log 1'
-    );
-  }
 });

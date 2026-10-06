@@ -78,6 +78,9 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'chuột ra', normalized: 'mouseout' },
   { native: 'tải trang', normalized: 'load' },
   { native: 'cuộn', normalized: 'scroll' },
+  // The name the renderer writes, whole: split, `đổi` read as `change` and a
+  // `từ <source>` after it was lost (was OPEN_ITEMS P48).
+  { native: 'đổi kích thước', normalized: 'resize' },
 
   // References - possessive forms
   { native: 'của tôi', normalized: 'my' },

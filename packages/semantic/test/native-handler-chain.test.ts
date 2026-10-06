@@ -78,21 +78,11 @@ const AFTER_INIT = [
   'behavior F init add .a end on click add .b end on keyup log 1 end end',
 ];
 
-/**
- * Pairs that read wrongly for another reason, with or without the `end`s.
- * Shrink-only: a pair that starts reading as written fails here until removed.
- * ar loses `from` after its two-word `keyup` (`رفع المفتاح من #b`), even in a
- * handler of its own (OPEN_ITEMS P48).
- */
-const OTHER_CAUSE = new Set(['ar|on click add .a end on keyup from #b log 1 end']);
-
 describe('a chain written natively without handler ends reads as written', () => {
   it.each(FOREIGN.flatMap(lang => TOP_LEVEL.map(src => [lang, src] as const)))(
     '%s: %s',
     (lang, src) => {
-      const read = render(parse(native(src, lang), lang)!, 'en');
-      if (OTHER_CAUSE.has(`${lang}|${src}`)) expect(read).not.toBe(en(src));
-      else expect(read).toBe(en(src));
+      expect(render(parse(native(src, lang), lang)!, 'en')).toBe(en(src));
     }
   );
 
