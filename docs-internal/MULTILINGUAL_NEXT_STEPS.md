@@ -276,7 +276,8 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
 | Gate                             | Sees                                                         | Blind to                                              |
 | -------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
 | Multilingual `--regression` (11) | corpus parses: actions, roles, values, execution (R2 subset) | shapes not in the corpus; naturalness; confidence     |
-| Value matrix                     | value shapes in 9 positions, executed on both engines        | command/structure shapes (M1's gate)                  |
+| Value matrix                     | value shapes in 9 positions, executed on both engines        | command/structure shapes (the command-shape gate)     |
+| Command shapes                   | authors' scripts (upstream's tests, core's docs), round trip | values the scripts lack (value matrix); naturalness   |
 | Canonical validity (R4 + en)     | renders upstream rejects                                     | renders upstream accepts but that mean something else |
 | en-reference-preservation        | English parses that lose source content (corpus)             | shapes not in the corpus                              |
 | Bare / wrapped render fidelity   | the handler-free form of each corpus row                     | same                                                  |

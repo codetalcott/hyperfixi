@@ -1,0 +1,2325 @@
+{
+  "description": "Command-shape gate (src/multilingual/command-shapes.ts): per case, the lanes whose translation is refused (`refused`) and the lanes whose translation is silently lossy (`silent`). A lane is `en` (translate en → en) or a language (en → L → en); `*` stands for all 23 languages. A case in a LOUD family carries its reason (`loud`). Shrink-only: regenerate with tools/regen-command-shapes-baseline.ts.",
+  "upstream": "0.9.93",
+  "cases": 1136,
+  "pairs": 27264,
+  "pass": 18171,
+  "refused": 1479,
+  "silent": 7614,
+  "entries": {
+    "3480154525": {
+      "src": "bind $theme and @data-theme",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "a1ca7a74a0": {
+      "src": "on click add .foo to my children",
+      "family": "add",
+      "silent": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "d779d2d4ee": {
+      "src": "on click add {color: red; font-family: monospace}",
+      "family": "add",
+      "silent": "en *"
+    },
+    "52176aeb50": {
+      "src": "on click add .foo .bar",
+      "family": "add",
+      "silent": "en *"
+    },
+    "725196f20e": {
+      "src": "on click add .rey to .bar when it matches .doh",
+      "family": "add",
+      "silent": "en *"
+    },
+    "87a851fb52": {
+      "src": "on click add @rey to .bar when it matches .doh",
+      "family": "add",
+      "silent": "en *"
+    },
+    "f6a83b738c": {
+      "src": "on click add .foo to #d2 when asyncCheck()",
+      "family": "add",
+      "silent": "en *"
+    },
+    "e172bd73af": {
+      "src": "on click add .foo to the children of #bar",
+      "family": "add",
+      "silent": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "6f60177037": {
+      "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
+      "family": "add",
+      "silent": "en *"
+    },
+    "dc8881fc7d": {
+      "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
+      "family": "add",
+      "silent": "en *"
+    },
+    "87250fbc5e": {
+      "src": "on click set result to [1,2,3] append 4 put it as String into me",
+      "family": "append",
+      "silent": "ms qu"
+    },
+    "ddd8e60406": {
+      "src": "on click ask \"What is your name?\" then put it into #out",
+      "family": "askAnswer",
+      "silent": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "39f0561a3a": {
+      "src": "on click ask \"Name?\" then put it into #out",
+      "family": "askAnswer",
+      "silent": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "15f8c54697": {
+      "src": "on click answer \"Hello!\" then put \"done\" into #out",
+      "family": "askAnswer",
+      "silent": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "3ca4288cf4": {
+      "src": "on click answer \"Save?\" with \"Yes\" or \"No\" then put it into #out",
+      "family": "askAnswer",
+      "silent": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "f1bc20c608": {
+      "src": "on click call global_function()",
+      "family": "call",
+      "silent": "de es fr id it pl pt qu sw tr vi"
+    },
+    "5761791c05": {
+      "src": "on click fetch /test as json then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "qu"
+    },
+    "7371a42494": {
+      "src": "on click fetch /test as JSON then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "qu"
+    },
+    "b9502de444": {
+      "src": "on click fetch /test as Object then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "bn hi ko qu"
+    },
+    "7835c70e58": {
+      "src": "on click fetch /test as an Object then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "bn hi ko qu"
+    },
+    "bd56aad55e": {
+      "src": "on click fetch /test as Number then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "bn hi ko"
+    },
+    "1ba900c09e": {
+      "src": "on click fetch /test {method:\"POST\"} then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "c9cd8a23c1": {
+      "src": "on click fetch /test as text with {method:\"POST\"} then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "66a3e903a3": {
+      "src": "on click fetch \"/test\" {headers: {\"X-CustomHeader\": \"foo\"}} then put it into my.innerHTML end",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "5d9dc806eb": {
+      "src": "on click fetch /test catch e log e put \"yay\" into me",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "1bb73ff359": {
+      "src": "on click fetch /test catch e put \"caught\" into me",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "83186964ec": {
+      "src": "on click fetch /test don't throw then put it into me",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "ce4506efd5": {
+      "src": "on click fetch /test as Response then put (it as JSON).name into me",
+      "family": "fetch",
+      "silent": "ms qu"
+    },
+    "eff1f1e59f": {
+      "src": "on click fetch `/test?bar=${1}` as JSON then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "qu"
+    },
+    "280d64d892": {
+      "src": "on click fetch \"/test\" as JSON then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "qu"
+    },
+    "4ac868eb40": {
+      "src": "on click set $u to \"/test\" then fetch $u as JSON then get result as JSONString then put it into my.innerHTML",
+      "family": "fetch",
+      "silent": "*"
+    },
+    "b975ae8d7a": {
+      "src": "init halt",
+      "family": "halt",
+      "refused": "en *"
+    },
+    "ae5ed6eb80": {
+      "src": "on click halt default",
+      "family": "halt",
+      "silent": "en *"
+    },
+    "599215db33": {
+      "src": "on click 1 hide on click 2 show",
+      "family": "hide",
+      "silent": "en *"
+    },
+    "563fb2db1f": {
+      "src": "on click hide add .foo",
+      "family": "hide",
+      "silent": "en *"
+    },
+    "e71ea44d67": {
+      "src": "on click hide <div/> in me when it matches .hideable",
+      "family": "hide",
+      "silent": "en *"
+    },
+    "914b546f34": {
+      "src": "on click if false else put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "zh"
+    },
+    "df2ee54ee8": {
+      "src": "on click if false else put \"foo\" into me.innerHTML end",
+      "family": "if",
+      "silent": "zh"
+    },
+    "558ab062bd": {
+      "src": "on click if false else if true put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "en *"
+    },
+    "794323a650": {
+      "src": "on click if false else if true put \"foo\" into me.innerHTML end",
+      "family": "if",
+      "silent": "en *"
+    },
+    "e60afa928a": {
+      "src": "on click if false otherwise put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "de es fr hi id ko pt qu ru tl tr uk zh"
+    },
+    "3ac5aec65a": {
+      "src": "on click if false else if false else put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "en *"
+    },
+    "db83784f60": {
+      "src": "on click if false else if false else put \"foo\" into me.innerHTML end",
+      "family": "if",
+      "silent": "en *"
+    },
+    "de4311b9f1": {
+      "src": "on click if false else wait 10 ms then put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "zh"
+    },
+    "a893804c5f": {
+      "src": "on click if false end put \"foo\" into me.innerHTML",
+      "family": "if",
+      "silent": "en *"
+    },
+    "c182ea389a": {
+      "src": "on click if window.tmp then put \"foo\" into me else if not window.tmp then // do nothing end catch e // just here for th…",
+      "family": "if",
+      "silent": "en *"
+    },
+    "ee27038f99": {
+      "src": "on click if window.tmp then else if window.tmp then end put \"foo\" into me end",
+      "family": "if",
+      "silent": "en *"
+    },
+    "8e5fb7d3a8": {
+      "src": "on click set arr to [10, 20, 30] then increment arr[1] then put arr[1] into me",
+      "family": "increment",
+      "silent": "ar he id it ms pl ru sw th tl uk vi zh"
+    },
+    "a7073f5941": {
+      "src": "on click set arr to [10, 20, 30] then decrement arr[1] then put arr[1] into me",
+      "family": "increment",
+      "silent": "ar he id it ms pl ru sw th tl uk vi zh"
+    },
+    "5df4aec673": {
+      "src": "on click increment innerHTML of #d1",
+      "family": "increment",
+      "silent": "en *"
+    },
+    "540540cc5a": {
+      "src": "on click set t to true then js(t) window.testSuccess = t end",
+      "family": "js",
+      "silent": "bn es it ko pl ru th tl uk"
+    },
+    "1d2b7f9432": {
+      "src": "on click set a to 1 then js(a) return a + 1 end then put it into my.innerHTML",
+      "family": "js",
+      "silent": "bn es it ko pl ru th tl uk"
+    },
+    "23f2b7dd1b": {
+      "src": "on click js return Promise.reject(\"boom\") end catch e put e into my.innerHTML",
+      "family": "js",
+      "silent": "en *"
+    },
+    "2f7af96b02": {
+      "src": "on click log me, my",
+      "family": "log",
+      "silent": "en *"
+    },
+    "056a1e4975": {
+      "src": "on click measure #other then set window.measurement to it",
+      "family": "measure",
+      "silent": "en *"
+    },
+    "2204b224b3": {
+      "src": "on click measure my x,y,left,top,right,bottom set window.measurement to {left:left,top:top,right:right,bottom:bottom}",
+      "family": "measure",
+      "silent": "en *"
+    },
+    "61bc69c358": {
+      "src": "on click measure x,y,left,top,right,bottom,width,height,bounds,scrollLeft,scrollTop,scrollLeftMax,scrollTopMax,scrollWi…",
+      "family": "measure",
+      "silent": "en *"
+    },
+    "8f0d0f2a7d": {
+      "src": "on click morph #target to '<div id=target><p id=inner _=\"on click put `clicked` into me\">new</p></div>'",
+      "family": "morph",
+      "silent": "en *"
+    },
+    "7f9dd756b8": {
+      "src": "def foo() return \"foo\" end on click foo() then put result into my bar",
+      "family": "pseudoCommand",
+      "silent": "en *"
+    },
+    "b2ec75a2bf": {
+      "src": "on click bar().foo() then put the result into my bar",
+      "family": "pseudoCommand",
+      "silent": "en *"
+    },
+    "1c37112e5a": {
+      "src": "on click window.bar().foo() then put the result into my bar",
+      "family": "pseudoCommand",
+      "silent": "en *"
+    },
+    "b2fe1705ef": {
+      "src": "on click put \"foo\" at start of #d1",
+      "family": "put",
+      "silent": "*"
+    },
+    "07108f5fc0": {
+      "src": "on click put \"foo\" at end of #d1",
+      "family": "put",
+      "silent": "es id it pt th tl uk"
+    },
+    "7896ec4b23": {
+      "src": "on click put 'foo' into #div2's @bar",
+      "family": "put",
+      "silent": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
+    },
+    "dc9ce23e31": {
+      "src": "on click put \"red\" into my style[\"color\"]",
+      "family": "put",
+      "silent": "ar bn de es hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "ddb498424a": {
+      "src": "on click set foo to \"color\" then put \"red\" into my style[foo]",
+      "family": "put",
+      "silent": "ar bn de es hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "6959984db6": {
+      "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
+      "family": "put",
+      "silent": "en *"
+    },
+    "2d9422b3af": {
+      "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
+      "family": "put",
+      "silent": "en *"
+    },
+    "f460465218": {
+      "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
+      "family": "put",
+      "silent": "*"
+    },
+    "f74ce980ff": {
+      "src": "on click remove .foo .bar",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "9a5c1482e6": {
+      "src": "on click remove .highlight from .item when it matches .old",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "60770598a3": {
+      "src": "on click remove {color} from me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "6916cdcfb9": {
+      "src": "on click remove {color; font-weight} from me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "052e807746": {
+      "src": "on click set :arr to [1,2,3,4] remove 3 from :arr put :arr as String into me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "18b09f2381": {
+      "src": "on click set :s to ['a','b','c'] as Set remove 'b' from :s put :s.size into me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "4ce5e6a0df": {
+      "src": "on click set :arr to [1,2,3,4] remove :arr[1] put :arr as String into me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "ea053893cb": {
+      "src": "on click set :arr to [1,2,3,4] remove :arr[-1] put :arr as String into me",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "a4c56acf1e": {
+      "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
+      "family": "remove",
+      "silent": "ms pl"
+    },
+    "54a65f4602": {
+      "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove b of :obj put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into…",
+      "family": "remove",
+      "silent": "en *"
+    },
+    "db7fef03e9": {
+      "src": "on click repeat for x in [1, 2, 3] put x at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "38fd7baa12": {
+      "src": "on click repeat for x in null put x at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "05f81357fb": {
+      "src": "on click repeat for x in [1, 2, 3] log me put x at end of me wait 1ms end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "12ff2cf365": {
+      "src": "on click for x in [1, 2, 3] put x at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "bcf30473e0": {
+      "src": "on click for x in null put x at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "32502101bd": {
+      "src": "on click for x in [1, 2, 3] put x at end of me wait 1ms end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "ae7e10324c": {
+      "src": "def repeatForeverWithReturn() set retVal to 0 repeat forever set retVal to retVal + 1 if retVal == 5 then return retVal…",
+      "family": "repeat",
+      "silent": "de"
+    },
+    "616e84f3b6": {
+      "src": "def repeatForeverWithReturn() set retVal to 0 repeat set retVal to retVal + 1 if retVal == 5 then return retVal end end…",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "deac58c100": {
+      "src": "on click repeat in [1, 2, 3] put it at end of me end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "5763f61aac": {
+      "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] index i put x + i at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "73c2ff9c12": {
+      "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] indexed by i put x + i at end of me end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "eaa5a2fba1": {
+      "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "2d6fa6cf27": {
+      "src": "on click call sprayInto(me)",
+      "family": "repeat",
+      "silent": "*"
+    },
+    "c48b233ac7": {
+      "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
+      "family": "repeat",
+      "silent": "pt sw"
+    },
+    "4da1d2fe85": {
+      "src": "on click repeat 3 times put \"a\" at end of me end",
+      "family": "repeat",
+      "silent": "ms th vi"
+    },
+    "897b7048f1": {
+      "src": "on click repeat 3 + 3 times put \"a\" at end of me end",
+      "family": "repeat",
+      "silent": "ms th vi"
+    },
+    "09f435f419": {
+      "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if (x != 'D') then put 'success ' + x + '. ' at end of me continu…",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "dd8bfb1190": {
+      "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if x is 'C' break end put x at end of me end end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "798cb5bb41": {
+      "src": "on click set x to {foo:1, bar:2, baz:3} for prop in x put x[prop] at end of me end",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "e51cb64feb": {
+      "src": "on click set x to 0 repeat set x to x + 1 until x is 3 end put x into me",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "47a37edc5b": {
+      "src": "on click set x to 0 repeat set x to x + 1 while x < 3 end put x into me",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "a5867275db": {
+      "src": "on click set x to 0 repeat set x to x + 1 until true end put x into me",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "5eb5632e72": {
+      "src": "on click set x to 0 repeat 10 times set x to x + 1 if x is 3 break end end put x into me",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "dee03cd129": {
+      "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 3 continue end put x at end of me end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "c8992c103b": {
+      "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 4 break end put x at end of me end",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "dc092ffd38": {
+      "src": "on click set x to 0 repeat while x < 100 set x to x + 1 if x is 5 break end end put x into me",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "4293df22ee": {
+      "src": "on click repeat for x in doesNotExist put x at end of me end then put \"done\" into me",
+      "family": "repeat",
+      "silent": "vi"
+    },
+    "af53446a0a": {
+      "src": "on click set :items to [{name:'a', val:5}, {name:'b', val:15}, {name:'c', val:25}] repeat for x in :items where x.val >…",
+      "family": "repeat",
+      "silent": "en *"
+    },
+    "6d7856da91": {
+      "src": "on click scroll down by 300px",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "786ba16f59": {
+      "src": "on click scroll up by 100px",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "5a7e7e17d2": {
+      "src": "on click scroll by 200px",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "65aa7d4176": {
+      "src": "on click scroll #box down by 200px",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "20161acab0": {
+      "src": "on click scroll to #item in #box",
+      "family": "scroll",
+      "silent": "de it tr"
+    },
+    "5c5c4838dc": {
+      "src": "on click scroll #box right by 300px",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "7ef504c57f": {
+      "src": "on foo add .foo-sent to sender log 1, me, sender",
+      "family": "send",
+      "silent": "en *"
+    },
+    "aae16fda89": {
+      "src": "on foo.bar add .foo-sent",
+      "family": "send",
+      "silent": "qu"
+    },
+    "b0492a08fb": {
+      "src": "on click send foo:bar(x:42) to #bar",
+      "family": "send",
+      "silent": "en *"
+    },
+    "d9ec1b5498": {
+      "src": "def bar return #bar on click send foo to bar()",
+      "family": "send",
+      "silent": "en *"
+    },
+    "5bc47fcae3": {
+      "src": "on click set innerHTML of #d1 to \"foo\"",
+      "family": "set",
+      "silent": "en *"
+    },
+    "5c62479568": {
+      "src": "on click set parentNode.innerHTML of #d1 to \"foo\"",
+      "family": "set",
+      "silent": "en *"
+    },
+    "580655e71a": {
+      "src": "on click set innerHTML of #d1.parentNode to \"foo\"",
+      "family": "set",
+      "silent": "en *"
+    },
+    "4eee0ddc5e": {
+      "src": "on click set the innerHTML of the parentNode of #d1 to \"foo\"",
+      "family": "set",
+      "silent": "en *"
+    },
+    "094982a419": {
+      "src": "on click set .divs.innerHTML to \"foo\"",
+      "family": "set",
+      "silent": "it pl ru uk"
+    },
+    "24725909ec": {
+      "src": "on click set #div2's @bar to 'foo'",
+      "family": "set",
+      "silent": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
+    },
+    "c839f2f99f": {
+      "src": "on click set {bar: 2, baz: 3} on obj",
+      "family": "set",
+      "silent": "en *"
+    },
+    "bf3ceac332": {
+      "src": "on click set my style[\"color\"] to \"red\"",
+      "family": "set",
+      "silent": "ar bn de es hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "8ecf869842": {
+      "src": "on click set foo to \"color\" then set my style[foo] to \"red\"",
+      "family": "set",
+      "silent": "ar bn de es hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+    },
+    "769eede266": {
+      "src": "on click set arr to [1, 2, 3] set arr[0] to \"red\" set my *color to arr[0]",
+      "family": "set",
+      "silent": "it pl ru uk"
+    },
+    "c5ca44049d": {
+      "src": "on click set arr to [1, 2, 3] set idx to 0 set arr[idx] to \"red\" set my *color to arr[0]",
+      "family": "set",
+      "silent": "it pl ru uk"
+    },
+    "2b181df899": {
+      "src": "on click show me with display: flex",
+      "family": "show",
+      "silent": "en *"
+    },
+    "59e26285f5": {
+      "src": "on click show me with display: inline-block",
+      "family": "show",
+      "silent": "en *"
+    },
+    "a9677f770b": {
+      "src": "on click show <#d1, #d2/> with display: inline-block",
+      "family": "show",
+      "silent": "en *"
+    },
+    "b80e4f0edf": {
+      "src": "on click show .c1 with display:inline-block",
+      "family": "show",
+      "silent": "en *"
+    },
+    "d9ecdbc854": {
+      "src": "on click toggle .foo show when I match .foo",
+      "family": "show",
+      "silent": "en *"
+    },
+    "cc4909b0a6": {
+      "src": "on click toggle .foo show with opacity when I match .foo",
+      "family": "show",
+      "silent": "en *"
+    },
+    "84c8655749": {
+      "src": "on click show <p/> in me when its innerText contains \"foo\"",
+      "family": "show",
+      "silent": "en *"
+    },
+    "216845203a": {
+      "src": "on click get 'found' show <span/> in me when the result is 'found'",
+      "family": "show",
+      "silent": "en *"
+    },
+    "fc1f6f6ab5": {
+      "src": "on click show <p/> in me when its textContent is 'yes' if the result is empty put 'none' into #out else put 'some' into…",
+      "family": "show",
+      "silent": "en *"
+    },
+    "17039d15e3": {
+      "src": "on click set arr to [1,2,3] then swap arr[0] with arr[2] then put arr as String into me",
+      "family": "swap",
+      "silent": "en ar bn he hi ja ko qu tr zh"
+    },
+    "7190d033fa": {
+      "src": "on click take .foo from .div for #d3",
+      "family": "take",
+      "silent": "en *"
+    },
+    "03a84c939d": {
+      "src": "on click take .foo from .div for event.target",
+      "family": "take",
+      "silent": "en *"
+    },
+    "93ce107f93": {
+      "src": "on click take @data-foo=baz from .div",
+      "family": "take",
+      "silent": "en *"
+    },
+    "083aedbcb6": {
+      "src": "on click take @data-foo=baz with \"qux\" from .div",
+      "family": "take",
+      "silent": "en *"
+    },
+    "edd578621b": {
+      "src": "on click take @data-foo=baz with my @data-foo from .div",
+      "family": "take",
+      "silent": "en *"
+    },
+    "4f2c353324": {
+      "src": "on click take .selected with .unselected from .item",
+      "family": "take",
+      "silent": "en *"
+    },
+    "42ab540e4f": {
+      "src": "on click take .selected from .item giving .unselected",
+      "family": "take",
+      "silent": "en *"
+    },
+    "2e5e71153b": {
+      "src": "on click take @data-foo=baz from .div giving \"qux\"",
+      "family": "take",
+      "silent": "en *"
+    },
+    "29d848f705": {
+      "src": "on click take @data-foo from .div for #d3",
+      "family": "take",
+      "silent": "en *"
+    },
+    "834d9defce": {
+      "src": "on click take @data-foo from .div for event.target",
+      "family": "take",
+      "silent": "en *"
+    },
+    "d39b280138": {
+      "src": "on click take .foo .bar",
+      "family": "take",
+      "silent": "en *"
+    },
+    "ab7d8dc462": {
+      "src": "on click take .foo .bar from .div1",
+      "family": "take",
+      "silent": "en *"
+    },
+    "49dbf3593a": {
+      "src": "def foo() wait 2ms throw \"foo\" end def bar() call foo() end",
+      "family": "throw",
+      "silent": "en *"
+    },
+    "8353b546d7": {
+      "src": "on click throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML end",
+      "family": "throw",
+      "silent": "ja ko tr"
+    },
+    "8e7118ac3b": {
+      "src": "on click wait 2ms then throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML…",
+      "family": "throw",
+      "silent": "ja ko tr"
+    },
+    "6428d2ac2e": {
+      "src": "on click toggle between .a and .b for x in [1, 2] put x into #out end",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "a279e35963": {
+      "src": "on click toggle .foo until foo from #d1",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "f886098f71": {
+      "src": "on click toggle between .foo and .bar",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "237fd5ee40": {
+      "src": "on click toggle between [@data-state='active'] and [@data-state='inactive']",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "1f173a2d64": {
+      "src": "on click toggle between [@enabled='true'] and [@disabled='true']",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "817dc01fa4": {
+      "src": "on click toggle .foo .bar",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "df922f3370": {
+      "src": "on click toggle my *display",
+      "family": "toggle",
+      "silent": "ar de fr he"
+    },
+    "4fa7c5a9f9": {
+      "src": "on click toggle my *opacity",
+      "family": "toggle",
+      "silent": "ar de fr he"
+    },
+    "092699feee": {
+      "src": "on click toggle my *visibility",
+      "family": "toggle",
+      "silent": "ar de fr he"
+    },
+    "72fd7ecd0f": {
+      "src": "on click toggle the *display of #d2",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "e5a600a136": {
+      "src": "on click toggle the *opacity of #d2",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "1d2b350bfa": {
+      "src": "on click toggle the *visibility of #d2",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "3ba1aed452": {
+      "src": "on click toggle .group-\\[:nth-of-type\\(3\\)_\\&\\]:block",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "24c32ea0f9": {
+      "src": "on click toggle *display of me between 'none' and 'flex'",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "cce78169bd": {
+      "src": "on click toggle *opacity of me between '0', '0.5' and '1'",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "47902e382e": {
+      "src": "on click toggle $mode between 'edit' and 'preview'",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "862ede02e6": {
+      "src": "on click toggle $state between 'a', 'b' and 'c'",
+      "family": "toggle",
+      "silent": "en *"
+    },
+    "e8a298b630": {
+      "src": "on click transition *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "757da52773": {
+      "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "f9d6cb3b20": {
+      "src": "on click transition my *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "be37dedb54": {
+      "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "7fe8bdc214": {
+      "src": "on click transition #foo's *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "b81ed8569d": {
+      "src": "on click transition *width of #foo from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "5ded6059c0": {
+      "src": "on click get #foo then transition its *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "b6d4332c89": {
+      "src": "on click transition #foo's *width from 0px to 100px using \"width 2s ease-in\"",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "c934b95f51": {
+      "src": "on click transition #foo's *width from 0px to 100px over 2s",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "3608d60b77": {
+      "src": "on click transition *width of the next <span/> from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "446cb475ce": {
+      "src": "on click 1 transition my *width to 100px on click 2 transition my *width to initial",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "35274bd534": {
+      "src": "on click transition the next <div/>'s *width from 0px to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "ef499d89c4": {
+      "src": "on click trigger foo(x:42) end on foo(x) put x into my.innerHTML",
+      "family": "trigger",
+      "silent": "ja ko tr"
+    },
+    "3d6f0303b4": {
+      "src": "on click trigger foo.bar end on foo.bar add .foo-set end",
+      "family": "trigger",
+      "silent": "qu"
+    },
+    "e9e92774e7": {
+      "src": "on click trigger foo.bar(x:42) end on foo.bar(x) put x into my.innerHTML",
+      "family": "trigger",
+      "silent": "ja ko tr"
+    },
+    "7dee91f428": {
+      "src": "on click trigger foo:bar(x:42) end on foo:bar(x) put x into my.innerHTML",
+      "family": "trigger",
+      "silent": "en *"
+    },
+    "76829fafba": {
+      "src": "on click toggle .foo unless I match .bar",
+      "family": "unlessModifier",
+      "silent": "en *"
+    },
+    "b0d0618a0f": {
+      "src": "on click start view transition repeat 3 times add .in-loop to me break end add .after-loop to me end",
+      "family": "viewTransition",
+      "silent": "en *"
+    },
+    "32ce88b2e0": {
+      "src": "on click add .foo then wait for foo then add .bar",
+      "family": "wait",
+      "silent": "*"
+    },
+    "8c8e27625d": {
+      "src": "on click wait for foo then put its.detail into me",
+      "family": "wait",
+      "silent": "*"
+    },
+    "2965af0447": {
+      "src": "on click wait for foo(bar) then put bar into me",
+      "family": "wait",
+      "silent": "*"
+    },
+    "a76cd09b5c": {
+      "src": "on click add .foo then wait for foo or 0ms then add .bar",
+      "family": "wait",
+      "silent": "*"
+    },
+    "18ccf896af": {
+      "src": "on click call failAsync() put 'unreachable' into #out catch e put e.message into #out",
+      "family": "core/asyncError",
+      "silent": "en *"
+    },
+    "e2f502373e": {
+      "src": "init set ^color to 'red'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "a30e7d6174": {
+      "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
+      "family": "core/dom-scope",
+      "silent": "en *"
+    },
+    "679ecf655f": {
+      "src": "init set ^val to 'from-outer'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "8204932114": {
+      "src": "init set ^val to 'from-inner'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "28527260ec": {
+      "src": "init put ^val into me",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "8c24c90784": {
+      "src": "init set ^val to 'found'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "69537d01ae": {
+      "src": "init if ^val is not undefined put 'leaked' into me else put 'blocked' into me",
+      "family": "core/dom-scope",
+      "silent": "en *"
+    },
+    "d996916cf7": {
+      "src": "init set ^val to 'from-middle'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "269d3a7044": {
+      "src": "init set ^outer to 'leaked'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "8e36a39de9": {
+      "src": "init set ^inner to 'contained'",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "5876d812cf": {
+      "src": "init put ^inner into me",
+      "family": "core/dom-scope",
+      "refused": "en *"
+    },
+    "7d06494c1c": {
+      "src": "init set ^val to 0",
+      "family": "core/liveTemplate",
+      "refused": "en *"
+    },
+    "5aa3baddc9": {
+      "src": "init set ^show to true",
+      "family": "core/liveTemplate",
+      "refused": "en *"
+    },
+    "ee910bdffb": {
+      "src": "-- this is a comment def foo() -- this is another comment return \"foo\" end -- end with a comment--- this is a comment -…",
+      "family": "core/parser",
+      "refused": "en *"
+    },
+    "a930a68c92": {
+      "src": "on click put \"clicked\" into my.innerHTML -- put some content into the div...",
+      "family": "core/parser",
+      "silent": "en *"
+    },
+    "6c899a4847": {
+      "src": "on click put \"clicked\" into my.innerHTML ---put some content into the div...",
+      "family": "core/parser",
+      "silent": "en *"
+    },
+    "452278f4ef": {
+      "src": "// this is a comment def foo() // this is another comment return \"foo\" end // end with a comment",
+      "family": "core/parser",
+      "refused": "en *"
+    },
+    "394a7bfb45": {
+      "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
+      "family": "core/parser",
+      "refused": "en *"
+    },
+    "6637424a5a": {
+      "src": "bind $selectedCount to the length of <:checked/> in the next <tbody/> when $selectedCount changes put it into me",
+      "family": "core/reactive-queries",
+      "silent": "en *"
+    },
+    "9c2d74510e": {
+      "src": "when (the length of <:checked/> in #container) changes put it into me",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "348175b219": {
+      "src": "live put the length of <:checked/> in #box into me end",
+      "family": "core/reactive-queries",
+      "silent": "en *"
+    },
+    "b854e91693": {
+      "src": "when (the length of <:checked/> in #scope) changes put it into me then increment $scopeRuns",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "7d534a111c": {
+      "src": "when (the length of <:checked/> in #dynamic-scope) changes put it into me",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "32f8f63295": {
+      "src": "when (the length of <:checked/> in #remove-scope) changes put it into me",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "73325ff027": {
+      "src": "when (the length of <.picked/> in #list-scope) changes set result to it put the textContent of last <.picked/> in #list…",
+      "family": "core/reactive-queries",
+      "silent": "bn zh"
+    },
+    "e0fca05a2f": {
+      "src": "when (the length of <:checked/> in #multi-scope) changes put it into me",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "8fe4616a43": {
+      "src": "when (the length of <:checked/> in #dedup-scope) changes put it into me then increment $dedupRuns",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "1a2a9cbb2e": {
+      "src": "when (the length of <:checked/> in #cleanup-scope) changes put it into me then increment $cleanupRuns",
+      "family": "core/reactive-queries",
+      "silent": "*"
+    },
+    "50e8f568f6": {
+      "src": "init set :count to 0 on click increment :count when :count changes put :count into me",
+      "family": "core/reactivity",
+      "refused": "en *"
+    },
+    "7add8d99d2": {
+      "src": "init set :count to 0 when :count changes put :count into me",
+      "family": "core/reactivity",
+      "refused": "en *"
+    },
+    "3614477c6c": {
+      "src": "on click elsewhere remove me",
+      "family": "core/regressions",
+      "silent": "en *"
+    },
+    "a0bcf49227": {
+      "src": "on click from closest parent <div/> put \"Foo\" into me",
+      "family": "core/regressions",
+      "refused": "ja qu tr",
+      "silent": "en ar bn de es fr he hi id it ko ms pl pt ru sw th tl uk vi zh"
+    },
+    "7d4c3172d4": {
+      "src": "init call foo() end def foo() put \"here\" into #d1's innerHTML end",
+      "family": "core/regressions",
+      "refused": "en *"
+    },
+    "ce4872a43b": {
+      "src": "on click get the <button/> in me then set it @disabled to true",
+      "family": "core/regressions",
+      "silent": "en *"
+    },
+    "b19c6cad07": {
+      "src": "on click put select2() into me",
+      "family": "core/regressions",
+      "silent": "qu tr"
+    },
+    "9dc8b1b423": {
+      "src": "def foo() return bar() end def bar() return meta.caller end",
+      "family": "core/runtime",
+      "silent": "en *"
+    },
+    "29dd3464a4": {
+      "src": "def bar() call baz('nope') end def baz(str) throw str end",
+      "family": "core/runtime",
+      "silent": "en *"
+    },
+    "6fe313d841": {
+      "src": "def bar() call baz('nope') end def baz(str) wait 20ms throw str end",
+      "family": "core/runtime",
+      "silent": "en *"
+    },
+    "e4a02b8344": {
+      "src": "def invokesArrayPromise() return { foo: stringPromise(), bar: stringPromise(), baz: stringPromise() }end def stringProm…",
+      "family": "core/runtime",
+      "silent": "en *"
+    },
+    "d568dbd737": {
+      "src": "def invokesScalarPromise() return stringPromise()end def stringPromise() wait 20ms return 'foo' end",
+      "family": "core/runtime",
+      "silent": "en *"
+    },
+    "82b8bc8836": {
+      "src": "on click 1 set x to 10 on click 2 set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "465ed43e73": {
+      "src": "on click set element x to 10 then set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "5251dc43ae": {
+      "src": "on click set the element's x to 10 then set @out to the element's x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "4b9dd078a2": {
+      "src": "on click 1 set element x to 10 on click 2 set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "d6ac459628": {
+      "src": "on click 1 set :x to 10 on click 2 set @out to :x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "2b95e6630c": {
+      "src": "on click set element x to 10",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "390543ee1c": {
+      "src": "on click set global x to 10 then set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "9bd61daeaf": {
+      "src": "on click 1 default element x to 0 on click 2 set element x to 10 on click 3 set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "961a12b7b7": {
+      "src": "on click 1 default global x to 0 on click 2 set global x to 10 on click 3 set @out to x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "132b5fb425": {
+      "src": "install Behave(foo:10)",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "cd8f52b108": {
+      "src": "behavior Behave(foo) on click set @out to foo",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "6d61cf7bfb": {
+      "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 2 set @out to foo",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "b8c084be2a": {
+      "src": "install Behave(foo:10) on click 2 set element foo to 1 on click 4 set @out2 to foo",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "4d988893a9": {
+      "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "dac24417e3": {
+      "src": "install Behave(foo:10) install BehaveTwo(foo:42)",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "240935231f": {
+      "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo behavior BehaveTwo(foo) on click 2 set e…",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "0fba0cde11": {
+      "src": "on click 1 set $x to 10 on click 2 set @out to $x",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "4ad324c57b": {
+      "src": "on click 1 set foo to 20 then set @out to foo",
+      "family": "core/scoping",
+      "silent": "en *"
+    },
+    "b4fbe37d69": {
+      "src": "on click set var to [0,1,2,3,4,5] then put var[..3] as String into #d1",
+      "family": "expressions/arrayIndex",
+      "silent": "en *"
+    },
+    "0886e961b7": {
+      "src": "on click set var to [0,1,2,3,4,5] then put var[2 .. 3] as String into #d1",
+      "family": "expressions/arrayIndex",
+      "silent": "en *"
+    },
+    "15d981be2d": {
+      "src": "on click set index to 3 then set var to [0,1,2,3,4,5] then put var[(index-1)..(index+1)] as String into #d1",
+      "family": "expressions/arrayIndex",
+      "silent": "en *"
+    },
+    "11324f6854": {
+      "src": "on click set var to [0,1,2,3,4,5] then put var[3 ..] as String into #d1",
+      "family": "expressions/arrayIndex",
+      "silent": "en *"
+    },
+    "1c0539c39f": {
+      "src": "on click set #target to '<div id=target _=\"on click put `clicked` into me\">new</div>'",
+      "family": "expressions/assignableElements",
+      "silent": "en *"
+    },
+    "8a13ec8232": {
+      "src": "on click set my [@data-foo] to \"blue\"",
+      "family": "expressions/attributeRef",
+      "silent": "en *"
+    },
+    "8f02a24c06": {
+      "src": "on click add @data-foo=blue",
+      "family": "expressions/attributeRef",
+      "silent": "en *"
+    },
+    "47b04cd69b": {
+      "src": "on click add @data-foo=\"blue\"",
+      "family": "expressions/attributeRef",
+      "silent": "en *"
+    },
+    "1dc00d5d74": {
+      "src": "on click add @data-foo=\"blue green\"",
+      "family": "expressions/attributeRef",
+      "silent": "en *"
+    },
+    "db3346f209": {
+      "src": "on hyperscript:beep(value) set my @data-value to the value on click get beep! \"foo\"",
+      "family": "expressions/beep!",
+      "refused": "ja tr",
+      "silent": "ko"
+    },
+    "e2d9334fb6": {
+      "src": "on click put closest @foo into me",
+      "family": "expressions/closest",
+      "silent": "en *"
+    },
+    "1d1fa04268": {
+      "src": "on click set closest @foo to \"doh\"",
+      "family": "expressions/closest",
+      "silent": "en *"
+    },
+    "d74a86f3a0": {
+      "src": "on click set (closest @foo to #d1) to \"doh\"",
+      "family": "expressions/closest",
+      "silent": "pl sw"
+    },
+    "35f188d961": {
+      "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
+      "family": "expressions/closest",
+      "silent": "en *"
+    },
+    "da24c9d768": {
+      "src": "on click add .doh to closest .bar to .foo",
+      "family": "expressions/closest",
+      "silent": "pl"
+    },
+    "f76ff620e1": {
+      "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "0cee637bb9": {
+      "src": "on click set result to (<span/> in #box) where it matches .a then put result.length into me",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "9a110b248d": {
+      "src": "on click set result to <span/> in #box where it matches .a then put result.length into me",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "998cfdeacf": {
+      "src": "set :items to <span/> in #box where it matches .a on click put :items.length into me",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "162e3e0582": {
+      "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "55c3d28c9e": {
+      "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
+      "family": "expressions/collectionExpressions",
+      "silent": "en *"
+    },
+    "76bf595d21": {
+      "src": "on click if I am a Element put \"yes\" into me",
+      "family": "expressions/comparisonOperator",
+      "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh"
+    },
+    "87deed585b": {
+      "src": "init set ^count to 42",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "2d00200e49": {
+      "src": "init set ^count to 0",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "08dd2a0a43": {
+      "src": "init set ^name to 'alice'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "a5c88b667f": {
+      "src": "init set ^color to 'blue'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "5032c47fed": {
+      "src": "init set ^val to 'A'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "999742bbf7": {
+      "src": "init set ^val to 'B'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "945a7f7444": {
+      "src": "init set ^shared to 0",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "1d75e16839": {
+      "src": "init set dom count to 42",
+      "family": "expressions/dom-scope",
+      "refused": "en *",
+      "loud": "dom-scope-word: a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one"
+    },
+    "26fa66d19d": {
+      "src": "on click put dom count into me",
+      "family": "expressions/dom-scope",
+      "silent": "en *",
+      "loud": "dom-scope-word: a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one"
+    },
+    "9bb9b09088": {
+      "src": "on click set ^data on closest .store to 'hello'",
+      "family": "expressions/dom-scope",
+      "silent": "en *",
+      "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
+    },
+    "85d0684e94": {
+      "src": "on click put ^data on closest .store into me",
+      "family": "expressions/dom-scope",
+      "silent": "en *",
+      "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
+    },
+    "7a09f40bfc": {
+      "src": "init set ^outerVal to 'outer'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "6f16034320": {
+      "src": "init set ^innerVal to 'inner'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "a3b6981b27": {
+      "src": "on click put ^outerVal on closest .outer into me",
+      "family": "expressions/dom-scope",
+      "silent": "en *",
+      "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
+    },
+    "b93c6c2cfd": {
+      "src": "init set ^search to ''",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "8a0905548a": {
+      "src": "bind ^search and my value",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "4b841b38b6": {
+      "src": "init set ^price to 10 then set ^qty to 2 then set ^total to 20",
+      "family": "expressions/dom-scope",
+      "silent": "en *"
+    },
+    "39c0906c09": {
+      "src": "init set ^msg to 'hello'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "725210f295": {
+      "src": "init set ^val to 'same'",
+      "family": "expressions/dom-scope",
+      "refused": "en *"
+    },
+    "d7b35fefe6": {
+      "src": "on click get #p1 in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "de it tr"
+    },
+    "c44765f7b0": {
+      "src": "on click get #{\"p1\"} in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "en *",
+      "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
+    },
+    "2159462e64": {
+      "src": "on click get the first .p1 in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "it tr"
+    },
+    "7ab4a541ee": {
+      "src": "on click get the first .{\"p1\"} in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "en *",
+      "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
+    },
+    "0ff2f70080": {
+      "src": "on click get the first <p/> in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "it tr"
+    },
+    "15c22f6ecd": {
+      "src": "on click get the first <${\"p\"}/> in me then put its id into @result",
+      "family": "expressions/in",
+      "silent": "en *",
+      "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
+    },
+    "b948ed872b": {
+      "src": "on click if no <span/> in #box where it matches .c then put 'none' into #out else put 'found' into #out",
+      "family": "expressions/no",
+      "silent": "qu vi"
+    },
+    "08702e835c": {
+      "src": "on click put 'updated' into the next <div/>'s textContent",
+      "family": "expressions/relativePositionalExpression",
+      "silent": "en *"
+    },
+    "ab10f94541": {
+      "src": "install Behave(foo: 1, bar: 1)",
+      "family": "behavior",
+      "silent": "en *"
+    },
+    "801e211f5c": {
+      "src": "install Behave(elt: #b1)",
+      "family": "behavior",
+      "silent": "en *"
+    },
+    "433228d9f9": {
+      "src": "install Behave(elt: #d1)",
+      "family": "behavior",
+      "silent": "en *"
+    },
+    "66878bf2ed": {
+      "src": "behavior Behave init set element's foo to 1 set element's bar to {} end on click increment element's foo set element's …",
+      "family": "behavior",
+      "silent": "it pl ru uk"
+    },
+    "a3810d939d": {
+      "src": "behavior App.Widgets.Clickable on click add .clicked end end",
+      "family": "behavior",
+      "silent": "en *"
+    },
+    "fd5f27f62d": {
+      "src": "bind $name and #name-input.value end when $name changes put it into me",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "2bcb47a006": {
+      "src": "bind $color and @data-color",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "fef0cd8bed": {
+      "src": "bind $city to #city-input.value end when $city changes put it into me",
+      "family": "bind",
+      "silent": "en *"
+    },
+    "f18d740a54": {
+      "src": "bind $greeting to me end when $greeting changes put it into next <span/>",
+      "family": "bind",
+      "silent": "en *"
+    },
+    "a808d48445": {
+      "src": "bind $isEnabled and @data-active",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "4624a9f39a": {
+      "src": "bind $isHidden and @aria-hidden",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "2c9a180e87": {
+      "src": "bind $opacity and *opacity",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "506b388c23": {
+      "src": "bind .dark and $darkMode",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "2a175fa3e2": {
+      "src": "bind .highlight to $highlighted",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "533247c884": {
+      "src": "bind .dark to $isDark",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "f2adb04532": {
+      "src": "bind $label and my @data-label",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "d438ab49b4": {
+      "src": "bind .dark and #dark-toggle's checked",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "283e759e4b": {
+      "src": "bind @data-title and #title-input's value",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "4ab926d199": {
+      "src": "bind my value and #slider's value",
+      "family": "bind",
+      "refused": "en *"
+    },
+    "1fd5e18c79": {
+      "src": "def utils.foo() add .called to #d1 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "bab6996783": {
+      "src": "def foo() throw \"bar\" catch e set window.bar to e end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "dfcc529af3": {
+      "src": "def foo() throw \"bar\" catch e throw e end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "d6dcac54c6": {
+      "src": "def foo() throw \"bar\" catch e return 42 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "ac5672f21a": {
+      "src": "def doh() wait 10ms throw \"bar\" end def foo() call doh() catch e set window.bar to e end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "c01496df40": {
+      "src": "def foo() throw \"bar\" catch e wait 10ms throw e end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "13eda1e752": {
+      "src": "def foo() throw \"bar\" catch e wait 10ms return 42 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "c50a798ff9": {
+      "src": "def foo() set window.bar to 10 finally set window.bar to 20 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "f46f631254": {
+      "src": "def foo() set window.bar to 10 throw \"foo\" finally set window.bar to 20 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "d94fe8f146": {
+      "src": "def foo() set window.bar to 10 call throwsAsyncException() finally set window.bar to 20 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "abe943ade0": {
+      "src": "def foo() wait a tick then set window.bar to 10 finally set window.bar to 20 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "4790691b18": {
+      "src": "def foo() wait a tick then set window.bar to 10 throw \"foo\" finally set window.bar to 20 end",
+      "family": "def",
+      "silent": "en *"
+    },
+    "667ef374a3": {
+      "src": "init set my.foo to 42 end on click put my.foo into my.innerHTML",
+      "family": "init",
+      "refused": "en *"
+    },
+    "7ff84f9087": {
+      "src": "init set window.foo to 42 end",
+      "family": "init",
+      "refused": "en *"
+    },
+    "c6183ad650": {
+      "src": "init immediately set window.bar to 42 end",
+      "family": "init",
+      "refused": "en *"
+    },
+    "7b70b33883": {
+      "src": "live set $total to ($price * $qty) end when $total changes put it into me",
+      "family": "live",
+      "silent": "en *"
+    },
+    "6a898f0e9d": {
+      "src": "live set $doubleWidth to ($width * 2) end live set $doubleHeight to ($height * 2)",
+      "family": "live",
+      "silent": "en *"
+    },
+    "5b70a6f411": {
+      "src": "live set $subtotal to ($price * $qty) set $total to ($subtotal + $tax) end when $total changes put it into me",
+      "family": "live",
+      "silent": "en *"
+    },
+    "85c5ff2427": {
+      "src": "live set my @data-name to $firstName end live set my @data-age to $age",
+      "family": "live",
+      "silent": "en *"
+    },
+    "820f7baba0": {
+      "src": "live set my @data-status to $status end when $status changes put 'Status: ' + it into me",
+      "family": "live",
+      "silent": "en *"
+    },
+    "92a68c1e3c": {
+      "src": "bind $username to me end live set my @data-mirror to $username",
+      "family": "live",
+      "silent": "en *"
+    },
+    "d66d670d34": {
+      "src": "on example.event add .called",
+      "family": "on",
+      "silent": "qu"
+    },
+    "f80f138a60": {
+      "src": "on click send \"a-b\" to #d1",
+      "family": "on",
+      "silent": "en *"
+    },
+    "ca8adcde99": {
+      "src": "on \"a-b\" add .called",
+      "family": "on",
+      "refused": "en *"
+    },
+    "7cf4fa3af7": {
+      "src": "on click elsewhere add .clicked",
+      "family": "on",
+      "silent": "en *"
+    },
+    "567ce21730": {
+      "src": "on example[foo] increment @count then put it into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "a8613168a4": {
+      "src": "on foo(bar)[bar] put \"triggered\" into my.innerHTML",
+      "family": "on",
+      "silent": "en *"
+    },
+    "d9c92a211d": {
+      "src": "on every click put increment() into my.innerHTML then wait for a customEvent",
+      "family": "on",
+      "silent": "en *"
+    },
+    "239cba8b61": {
+      "src": "on foo put increment() into my.innerHTML end on bar put increment() into my.innerHTML",
+      "family": "on",
+      "silent": "pt"
+    },
+    "f1554089dd": {
+      "src": "on foo put increment() into my.innerHTML on bar put increment() into my.innerHTML",
+      "family": "on",
+      "silent": "pt"
+    },
+    "cd6bf33ac9": {
+      "src": "on foo wait for bar then call increment()",
+      "family": "on",
+      "silent": "*"
+    },
+    "9beb7b2c68": {
+      "src": "on foo queue first wait for bar then call increment()",
+      "family": "on",
+      "silent": "en *"
+    },
+    "49a761fabb": {
+      "src": "on foo queue last wait for bar then call increment()",
+      "family": "on",
+      "silent": "*"
+    },
+    "78bd8bf920": {
+      "src": "on foo queue all wait for bar then call increment()",
+      "family": "on",
+      "silent": "en *"
+    },
+    "ba54beb9d5": {
+      "src": "on click queue none put increment() into my.innerHTML then wait for a customEvent",
+      "family": "on",
+      "silent": "en *"
+    },
+    "16fb80c097": {
+      "src": "on click or foo call increment()",
+      "family": "on",
+      "refused": "bn ja tr zh",
+      "silent": "it ko th"
+    },
+    "dd2ca23457": {
+      "src": "on click in #d1 put it into window.tmp",
+      "family": "on",
+      "silent": "en *"
+    },
+    "20024e932d": {
+      "src": "on click 1 put 1 + my.innerHTML as Int into my.innerHTML",
+      "family": "on",
+      "silent": "en *"
+    },
+    "3f9872bcd4": {
+      "src": "on click 1 to 2 put 1 + my.innerHTML as Int into my.innerHTML",
+      "family": "on",
+      "silent": "en *"
+    },
+    "bd7175dd23": {
+      "src": "on click 2 and on put 1 + my.innerHTML as Int into my.innerHTML",
+      "family": "on",
+      "silent": "en *"
+    },
+    "2f027486b4": {
+      "src": "on click 1 put \"one\" into my.innerHTML on click 3 put \"three\" into my.innerHTML on click 2 put \"two\" into my.innerHTML",
+      "family": "on",
+      "silent": "en *"
+    },
+    "558a1f8b25": {
+      "src": "on mutation put \"Mutated\" into me then wait for hyperscript:mutation",
+      "family": "on",
+      "silent": "*"
+    },
+    "13cff46824": {
+      "src": "on mutation of attributes put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "62bab43e17": {
+      "src": "on mutation of @foo put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "85f412f92a": {
+      "src": "on mutation of @bar put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "7e4f56fe1b": {
+      "src": "on mutation of childList put \"Mutated\" into me then wait for hyperscript:mutation",
+      "family": "on",
+      "silent": "en *"
+    },
+    "611ee442a1": {
+      "src": "on mutation of childList put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "bb2c2ab053": {
+      "src": "on mutation of characterData put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "df1d461f99": {
+      "src": "on mutation of @foo or @bar put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "ae9fb9c316": {
+      "src": "on mutation of attributes from #d1 put \"Mutated\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "8da39cdc9a": {
+      "src": "behavior DemoBehavior on foo wait 10ms then set my innerHTML to 'behavior'",
+      "family": "on",
+      "silent": "en *"
+    },
+    "d1f91ab5ac": {
+      "src": "on click throwBar() catch e put e into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "82d551ac58": {
+      "src": "on click throw \"bar\" catch e put e into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "6aa4945f87": {
+      "src": "on click wait 1ms then throw \"bar\" catch e put e into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "f8db6d2073": {
+      "src": "on click increment :x if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end catch e put e into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "352263a923": {
+      "src": "on click increment :x if :x is 1 throw \"bar\" otherwise put \"success\" into me end catch e put e into me then throw e",
+      "family": "on",
+      "silent": "en *"
+    },
+    "3030e3cc43": {
+      "src": "on click put \"foo\" into me then throw \"bar\" on exception(error) put error into me",
+      "family": "on",
+      "silent": "ja ko pl tr"
+    },
+    "829e32df04": {
+      "src": "on click put \"foo\" into me then throw \"bar\" catch e log e on exception(error) put error into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "ee008e0a98": {
+      "src": "on click put \"foo\" into me then throw \"bar\" catch e throw e on exception(error) put error into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "a6b880e963": {
+      "src": "on click throw \"bar\" finally put \"bar\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "8656f0257d": {
+      "src": "on click throw \"bar\" catch e throw e finally put \"bar\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "7e80abc1a6": {
+      "src": "on click wait a tick then throw \"bar\" finally put \"bar\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "7740b3f40e": {
+      "src": "on click wait a tick then throw \"bar\" catch e set :foo to \"foo\" then throw e finally put :foo + \"bar\" into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "8c714e3b3d": {
+      "src": "on click increment :x finally if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end",
+      "family": "on",
+      "silent": "en *"
+    },
+    "3304ff1362": {
+      "src": "on click increment :x finally if :x is 1 throw \"bar\" otherwise put \"success\" into me end",
+      "family": "on",
+      "silent": "en *"
+    },
+    "e856eb7927": {
+      "src": "on click from #d1 or click from #d2 increment @count then put @count into me",
+      "family": "on",
+      "silent": "en *"
+    },
+    "7f192fcdec": {
+      "src": "on intersection(intersecting) having threshold 0.1 if intersecting put \"seen\" into me end",
+      "family": "on",
+      "silent": "en *"
+    },
+    "6b508f9f6a": {
+      "src": "on intersection(intersecting) having margin \"10px\" if intersecting put \"seen\" into me end",
+      "family": "on",
+      "silent": "en *"
+    },
+    "5fc5e421fe": {
+      "src": "on click halt the event's bubbling",
+      "family": "on",
+      "silent": "en *"
+    },
+    "26e0df8d83": {
+      "src": "when ($obj's x + $obj's y) changes put it into me",
+      "family": "reactive-properties",
+      "silent": "qu"
+    },
+    "76130fbf7d": {
+      "src": "when $data's inner's val changes put it into me",
+      "family": "reactive-properties",
+      "silent": "qu"
+    },
+    "36e2294330": {
+      "src": "live put $config's label into me",
+      "family": "reactive-properties",
+      "silent": "qu"
+    },
+    "cda77ba4b6": {
+      "src": "set :foo to 42 on click put :foo into my innerHTML",
+      "family": "set",
+      "silent": "en *"
+    },
+    "991b086b82": {
+      "src": "set ^foo to 42 on click put ^foo into me",
+      "family": "set",
+      "silent": "en *"
+    },
+    "a71fce2e79": {
+      "src": "behavior MarkIt set @data-marked to 'yes' end",
+      "family": "set",
+      "silent": "en *"
+    },
+    "ec97ae1115": {
+      "src": "init set :count to 0 end when :count changes put it into me end on click increment :count",
+      "family": "when",
+      "refused": "en *"
+    },
+    "bf9d889f42": {
+      "src": "when $left changes put it into my @data-left end when $right changes put it into my @data-right",
+      "family": "when",
+      "refused": "en *"
+    },
+    "6dd0088239": {
+      "src": "init set :label to 'initial' end when :label changes put it into me end on click set :label to 'clicked'",
+      "family": "when",
+      "refused": "en *"
+    },
+    "ee4d586d20": {
+      "src": "init set :value to 'A' end when :value changes put it into me end on click set :value to 'A-clicked'",
+      "family": "when",
+      "refused": "en *"
+    },
+    "190d9ca9e9": {
+      "src": "init set :value to 'B' end when :value changes put it into me end on click set :value to 'B-clicked'",
+      "family": "when",
+      "refused": "en *"
+    },
+    "b839394853": {
+      "src": "when my @data-x changes put it into me",
+      "family": "when",
+      "silent": "id"
+    },
+    "a9c2c0024a": {
+      "src": "on click render #tmpl into #target",
+      "family": "templates/templates",
+      "silent": "en *"
+    },
+    "f793d435aa": {
+      "src": "on click render #tmpl with x: 'world' into #target",
+      "family": "templates/templates",
+      "silent": "en *"
+    },
+    "a0c1f32954": {
+      "src": "on click render #tmpl here",
+      "family": "templates/templates",
+      "silent": "en *"
+    },
+    "801604b875": {
+      "src": "on click render #tmpl with x: 'world' here",
+      "family": "templates/templates",
+      "silent": "en *"
+    },
+    "93c8c96b46": {
+      "src": "hide",
+      "family": "hide",
+      "silent": "hi"
+    },
+    "9fb29051f2": {
+      "src": "show",
+      "family": "show",
+      "silent": "hi"
+    },
+    "bbf040ee1a": {
+      "src": "put \"x\" at end of me",
+      "family": "put",
+      "refused": "vi"
+    },
+    "f45aab7819": {
+      "src": "open #myDialog as non-modal",
+      "family": "open",
+      "silent": "en *"
+    },
+    "da38860cb8": {
+      "src": "close",
+      "family": "close",
+      "silent": "hi"
+    },
+    "91ef0c1608": {
+      "src": "reset",
+      "family": "reset",
+      "silent": "hi"
+    },
+    "315f1121a3": {
+      "src": "swap innerHTML of #target with result",
+      "family": "swap",
+      "refused": "ar bn he hi ja qu tr zh",
+      "silent": "en de es fr id it ko ms pl pt ru sw th tl uk vi"
+    },
+    "dbb9beca52": {
+      "src": "fetch /api/${id} as json",
+      "family": "fetch",
+      "silent": "en *"
+    },
+    "62d0c2127b": {
+      "src": "pick characters 0 to 3 from \"hello\"",
+      "family": "pick",
+      "silent": "en *"
+    },
+    "a7ccab261d": {
+      "src": "beep! me",
+      "family": "beep!",
+      "silent": "en *"
+    },
+    "c55282fb85": {
+      "src": "beep! :count, result",
+      "family": "beep!",
+      "silent": "en *"
+    },
+    "ff19750b7a": {
+      "src": "ask \"Your name?\" then put it into #name",
+      "family": "ask",
+      "silent": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "461a675696": {
+      "src": "answer \"Saved\"",
+      "family": "answer",
+      "refused": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "9ba514eef4": {
+      "src": "answer \"Delete it?\" with \"yes\" or \"no\"",
+      "family": "answer",
+      "refused": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "451b518289": {
+      "src": "scroll down by 200",
+      "family": "scroll",
+      "refused": "en *"
+    },
+    "14ad24cc1a": {
+      "src": "if :count > 0 add .active end",
+      "family": "if",
+      "refused": "ar he ja tr",
+      "silent": "en bn de es fr hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+    },
+    "b2bf92e6f0": {
+      "src": "if me matches .open hide me else show me end",
+      "family": "if",
+      "silent": "en *"
+    },
+    "eeb30e2d38": {
+      "src": "for item in <li/> add .done to item end",
+      "family": "for",
+      "silent": "bn hi sw"
+    },
+    "dfc312611f": {
+      "src": "if :found break end",
+      "family": "break",
+      "refused": "ar bn he it ja ko th tr",
+      "silent": "en de es fr hi id ms pl pt qu ru sw tl uk vi zh"
+    },
+    "471a470db5": {
+      "src": "if item matches .skip continue end",
+      "family": "continue",
+      "silent": "en *"
+    },
+    "da0128056b": {
+      "src": "if :error halt end",
+      "family": "halt",
+      "refused": "ar he ja tr",
+      "silent": "en bn de es fr hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+    },
+    "63143b6f80": {
+      "src": "return",
+      "family": "return",
+      "silent": "hi"
+    },
+    "905b93d180": {
+      "src": "if :done exit end",
+      "family": "exit",
+      "refused": "ar he ja ko tr",
+      "silent": "en bn de es fr hi id it ms pl pt qu ru sw th tl uk vi zh"
+    },
+    "7bc08adb98": {
+      "src": "transition #box's *opacity to 0 over 300ms",
+      "family": "transition",
+      "silent": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
+    },
+    "8d9b240962": {
+      "src": "transition height to 100px",
+      "family": "transition",
+      "silent": "en *"
+    },
+    "a082a01a52": {
+      "src": "measure #element",
+      "family": "measure",
+      "silent": "en *"
+    },
+    "779366f4b2": {
+      "src": "measure me",
+      "family": "measure",
+      "silent": "hi"
+    },
+    "7beb55b4c4": {
+      "src": "on scroll if me.scrollTop + me.clientHeight >= me.scrollHeight - 100 fetch /api/more then append result to #list end",
+      "family": "reference/patterns",
+      "silent": "tr"
+    },
+    "2218bab0ca": {
+      "src": "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
+      "family": "reference/patterns",
+      "silent": "en *"
+    },
+    "8712ddea5b": {
+      "src": "put \"Hello\" into #message put response at end of #results",
+      "family": "put",
+      "silent": "bn hi ja qu tr"
+    },
+    "3fddf88602": {
+      "src": "open #myDialog open #myDialog as non-modal open #details",
+      "family": "open",
+      "silent": "en *"
+    },
+    "dfea5b51b5": {
+      "src": "close #myDialog close #details close #popup",
+      "family": "close",
+      "silent": "ko"
+    },
+    "951b2209ca": {
+      "src": "swap #a with #b swap innerHTML of #target with response",
+      "family": "swap",
+      "silent": "en *"
+    },
+    "4d698f4f27": {
+      "src": "scroll to #section scroll to the top of me scroll down by 200",
+      "family": "scroll",
+      "silent": "en *"
+    },
+    "2c6143ba00": {
+      "src": "wait 1s wait 500ms then remove .loading wait for htmx:afterSwap",
+      "family": "wait",
+      "silent": "*"
+    },
+    "129c41c03b": {
+      "src": "send myEvent to #target send refresh to <body/>",
+      "family": "send",
+      "silent": "hi qu"
+    },
+    "1aa9c955fa": {
+      "src": "trigger click on #btn trigger submit on closest <form/>",
+      "family": "trigger",
+      "silent": "ko"
+    },
+    "a68f0afa94": {
+      "src": "go to url /home go to #section go back",
+      "family": "go",
+      "silent": "hi"
+    },
+    "6835085279": {
+      "src": "if .active toggle .active if :count > 10 log \"high\"",
+      "family": "if",
+      "silent": "en *"
+    },
+    "6f6d57c10a": {
+      "src": "repeat 5 times log \"hello\" end repeat for item in items log item end",
+      "family": "repeat",
+      "silent": "bn"
+    },
+    "be1d3cc50d": {
+      "src": "for item in items log item end",
+      "family": "for",
+      "silent": "bn hi ko sw"
+    },
+    "461f84cebf": {
+      "src": "repeat for x in items if x is empty break end",
+      "family": "break",
+      "silent": "en *"
+    },
+    "4c2f167281": {
+      "src": "repeat for x in items if x < 0 continue log x end",
+      "family": "continue",
+      "silent": "bn ko"
+    },
+    "92546b4cad": {
+      "src": "focus #search focus the first <input/>",
+      "family": "focus",
+      "silent": "ko"
+    },
+    "e8446a57e2": {
+      "src": "blur #search blur me",
+      "family": "blur",
+      "silent": "ko"
+    },
+    "391f640b6b": {
+      "src": "halt halt the event",
+      "family": "halt",
+      "silent": "hi"
+    },
+    "7409f3b9d8": {
+      "src": "if not valid exit",
+      "family": "exit",
+      "silent": "en *"
+    },
+    "32bbb02918": {
+      "src": "pick items 0 to 2 from :list pick characters 0 to 3 from \"hello\"",
+      "family": "pick",
+      "silent": "en *"
+    },
+    "69b9b4ca2b": {
+      "src": "beep! me beep! :count, result",
+      "family": "beep!",
+      "silent": "en *"
+    },
+    "36bd970993": {
+      "src": "answer \"Saved\" answer \"Delete it?\" with \"yes\" or \"no\"",
+      "family": "answer",
+      "refused": "en *",
+      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
+    },
+    "483d2f33fc": {
+      "src": "measure #box then log result.width",
+      "family": "measure",
+      "silent": "en *"
+    },
+    "6a6afed6dc": {
+      "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",
+      "family": "on",
+      "silent": "ar de es fr he id it ms pl pt ru sw th tl uk"
+    },
+    "c2b5deed07": {
+      "src": "init set :count to 0 end",
+      "family": "init",
+      "refused": "en *"
+    },
+    "90d44b4675": {
+      "src": "bind $name and #input's value",
+      "family": "bind",
+      "refused": "en *"
+    }
+  }
+}

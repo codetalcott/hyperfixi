@@ -298,6 +298,8 @@ export interface GoNode extends Cmd {
   type: 'goCommand';
   back: boolean;
   target?: Expr;
+  /** The address of `go to url <address>`, as written. */
+  url?: string;
   scroll?: ScrollSpec;
   newWindow: boolean;
 }
@@ -333,7 +335,7 @@ export function go(g: Grammar): void {
     } else {
       p.match('to');
       if (p.match('url')) {
-        const address = stringLike(p);
+        const address = (node.url = stringLike(p));
         node.newWindow = newWindow();
         node.run = () => navigate(address);
       } else if (

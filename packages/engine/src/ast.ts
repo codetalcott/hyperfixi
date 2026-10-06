@@ -93,6 +93,8 @@ export interface SymbolNode extends Expr {
   type: 'symbol';
   name: string;
   scope: Scope;
+  /** The element a `^name on <element>` reads and writes. */
+  on?: Expr;
 }
 export interface LiteralNode extends Expr {
   type: 'boolean' | 'null' | 'number';
