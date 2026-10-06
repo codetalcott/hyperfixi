@@ -423,6 +423,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * (`repeat 3 times add …`, never `… times then add …`).
    */
   private renderLoop(node: LoopSemanticNode, language: string): string {
+    if (node.bottomTested) return this.renderBottomTestedLoop(node, language);
     const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
     // `index i`, in English in every language: the parser reads it right
@@ -433,6 +434,27 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);
+    parts.push(this.keyword(language, 'end'));
+    return parts.join(' ');
+  }
+
+  /**
+   * `repeat forever <body> until|while <condition> end`: upstream reads a test
+   * after the body of a `repeat` (bare or `forever`) as the loop's, read after
+   * each pass. The head is written `forever`, the form every language reads.
+   */
+  private renderBottomTestedLoop(node: LoopSemanticNode, language: string): string {
+    const head = createCommandNode(
+      'repeat',
+      { loopType: { type: 'literal', value: 'forever' } },
+      node.metadata
+    );
+    const parts = [this.render(head, language)];
+    const body = this.joinStatements(node.body, language);
+    if (body) parts.push(body);
+    const cond = node.roles.get('condition' as SemanticRole);
+    const word = this.keyword(language, node.loopVariant === 'until' ? 'until' : 'while');
+    parts.push(`${word} ${cond ? this.valueToNaturalString(cond, language) : ''}`.trim());
     parts.push(this.keyword(language, 'end'));
     return parts.join(' ');
   }

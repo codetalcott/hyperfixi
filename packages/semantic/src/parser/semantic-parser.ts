@@ -3546,7 +3546,15 @@ export class SemanticParserImpl implements ISemanticParser {
         isEnd ||
         (!isPositionalEndNoun &&
           this.isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
-      if (closesBlock && pendingOpenerKinds.every(kind => kind === 'loop')) {
+      // A `while` no `repeat` claimed, last in a loop, is that loop's bottom
+      // test (`repeat … while x < 3 end`): the `end` is the loop's. An SOV
+      // while-phrase is claimed by the `repeat` verb after it before any `end`.
+      const kinds = pendingOpenerKinds;
+      const bottomWhile =
+        kinds.length >= 2 &&
+        kinds[kinds.length - 1] === 'while' &&
+        kinds.slice(0, -1).every(kind => kind === 'loop');
+      if (closesBlock && (kinds.every(kind => kind === 'loop') || bottomWhile)) {
         if (this.closeLoopAtEnd(tokens, currentClauseTokens, clauses, commandPatterns, language)) {
           currentClauseTokens.length = 0;
           resetDebt();
@@ -3839,19 +3847,29 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private foldLoopBlocks(entries: readonly WalkEntry[]): SemanticNode[] {
     const out: SemanticNode[] = [];
-    const open: Array<{ head: CommandSemanticNode; body: SemanticNode[] }> = [];
+    const open: Array<{
+      head: CommandSemanticNode;
+      body: SemanticNode[];
+      bottom?: CommandSemanticNode;
+    }> = [];
     const append = (node: SemanticNode): void => {
       (open.length > 0 ? open[open.length - 1].body : out).push(node);
     };
     const close = (closed: boolean): void => {
       const frame = open.pop();
-      if (frame) append(this.buildLoopNode(frame.head, frame.body, closed));
+      if (frame) append(this.buildLoopNode(frame.head, frame.body, closed, frame.bottom));
     };
-    for (const entry of entries) {
+    entries.forEach((entry, i) => {
+      const frame = open[open.length - 1];
       if (isLoopClose(entry)) close(true);
       else if (isOpenLoopHead(entry)) open.push({ head: entry, body: [] });
-      else append(entry);
-    }
+      else if (this.isBottomTest(entry, frame, entries[i + 1])) frame!.bottom = entry;
+      else if (this.bottomTestTokens.has(entry)) {
+        // An `until` that ends no loop: its words are unread, as they were.
+        const language = entry.metadata?.sourceLanguage ?? 'en';
+        this.recordDroppedTokens(this.bottomTestTokens.get(entry)!, language, 'body clause');
+      } else append(entry);
+    });
     while (open.length > 0) close(false);
     return out;
   }
@@ -3870,8 +3888,24 @@ export class SemanticParserImpl implements ISemanticParser {
   private buildLoopNode(
     head: CommandSemanticNode,
     body: SemanticNode[],
-    closed = false
+    closed = false,
+    bottom?: CommandSemanticNode
   ): SemanticNode {
+    if (bottom) {
+      // `repeat <body> until|while <condition> end`: the test follows the body.
+      const variant = (bottom.action as string) === 'until' ? 'until' : 'while';
+      const condition = bottom.roles.get('condition');
+      return createLoopNode(
+        'repeat',
+        variant,
+        {
+          loopType: { type: 'literal', value: variant },
+          ...(condition ? { condition } : {}),
+        },
+        body,
+        { ...(head.metadata ? { metadata: head.metadata } : {}), bottomTested: true }
+      );
+    }
     if (body.length === 0 && !closed) return head;
     if (BLOCK_COMMAND_ACTIONS.has(head.action)) {
       const block = { ...head, body } as BlockCommandSemanticNode;
@@ -4184,6 +4218,100 @@ export class SemanticParserImpl implements ISemanticParser {
     );
   }
 
+  /**
+   * A bare `repeat` before its body (`repeat set x to x + 1 until x is 3 end`,
+   * upstream's bottom-tested loop): the loop pattern took the body's first
+   * command for the loop's form, and its words for the count (`repeat set x`
+   * read `repeat x times`). A form that is no loop form, where a command
+   * begins, is the body's; SOV is loopHeadReadsBody's.
+   */
+  private repeatOpensOnItsBody(
+    match: PatternMatchResult,
+    after: readonly LanguageToken[],
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): boolean {
+    if (tryGetProfile(language)?.wordOrder === 'SOV') return false;
+    const form = match.captured.get('loopType' as SemanticRole);
+    return (
+      form?.type === 'literal' &&
+      typeof form.value !== 'number' &&
+      !LOOP_FORMS.has(String(form.value)) &&
+      this.tokensBeginCommand([...after], commandPatterns, language)
+    );
+  }
+
+  /**
+   * The words of each `until` test taken by {@link takeBottomUntil}: one that
+   * closes no loop gives them back as unread (foldLoopBlocks).
+   */
+  private readonly bottomTestTokens = new WeakMap<SemanticNode, LanguageToken[]>();
+
+  /**
+   * A loop's bottom test, `until <condition>` after its body (`repeat set x to
+   * x + 1 until x is 3 end`): the rest of the clause is the condition, up to
+   * the loop's `end`. No pattern reads a bare `until`, so its words were
+   * dropped and the loop ran forever. foldLoopBlocks attaches the test to the
+   * loop it ends. (`while` has a pattern of its own.) After a `toggle`, the
+   * `until` is the toggle's (`toggle .x until transitionend`).
+   */
+  private takeBottomUntil(
+    stream: TokenStreamImpl | ReturnType<typeof tokenizeInternal>,
+    before: readonly WalkEntry[],
+    language: string
+  ): SemanticNode | null {
+    const tok = stream.peek();
+    if (!tok || (tok.kind !== 'keyword' && tok.kind !== 'particle')) return null;
+    // The word, or a particle marking the role (ja `まで`).
+    const word = (tok.normalized ?? tok.value).toLowerCase();
+    if (word !== 'until' && tok.metadata?.role !== 'until') return null;
+    if ((before[before.length - 1] as { action?: string } | undefined)?.action === 'toggle') {
+      return null;
+    }
+    // The condition runs to the loop's `end` (or a `then`): the clause walker
+    // hands over one clause, the fused walker the rest of the stream.
+    const all = stream.tokens;
+    const rest: LanguageToken[] = [];
+    for (let k = stream.position() + 1; k < all.length; k++) {
+      const t = all[k]!;
+      const place = endWordPlace(all, k);
+      if (this.isBlockEndToken(t, place, language) || this.isThenAt(t, place, language)) break;
+      rest.push(t);
+    }
+    if (rest.length === 0) return null;
+    const words = [tok, ...rest];
+    for (let k = 0; k < words.length; k++) stream.advance();
+    const node = createCommandNode(
+      'until' as ActionType,
+      { condition: { type: 'expression', raw: this.joinTokenText(rest, language) } },
+      { sourceLanguage: language }
+    );
+    this.bottomTestTokens.set(node, words);
+    return node;
+  }
+
+  /**
+   * Is `entry` the bottom test of the loop open in `frame`: a `while`/`until`
+   * after the body of a `repeat` with no test of its own, right before that
+   * loop's `end` (or the end of the input)? An SOV while-phrase comes before
+   * its `repeat` (foldFrontedWhileIntoRepeat), never before an `end`.
+   */
+  private isBottomTest(
+    entry: WalkEntry,
+    frame: { head: CommandSemanticNode; body: SemanticNode[]; bottom?: SemanticNode } | undefined,
+    next: WalkEntry | undefined
+  ): entry is CommandSemanticNode {
+    if (isLoopClose(entry) || entry.kind !== 'command') return false;
+    if ((entry.action as string) !== 'until' && entry.action !== 'while') return false;
+    if (!frame || frame.bottom || frame.body.length === 0 || frame.head.action !== 'repeat') {
+      return false;
+    }
+    const form = frame.head.roles.get('loopType');
+    if (form && !(form.type === 'literal' && form.value === 'forever')) return false;
+    if (frame.head.roles.has('quantity')) return false;
+    return next === undefined || isLoopClose(next);
+  }
+
   /** A loop head for a repeat verb no loop pattern matched: counted, or bare (`forever`). */
   private bareRepeatHead(count: LanguageToken | undefined, language: string): SemanticNode {
     const quantity = count ? tokenValue(count) : null;
@@ -4340,8 +4468,13 @@ export class SemanticParserImpl implements ISemanticParser {
     while (!clauseStream.isAtEnd()) {
       // Try to match as a command
       const startTok = clauseStream.peek();
-      const startIsRepeatKw = !!startTok && startTok.normalized?.toLowerCase() === 'repeat';
+      // English keywords carry no `normalized`: the word is its own.
+      const startIsRepeatKw =
+        !!startTok &&
+        startTok.kind === 'keyword' &&
+        (startTok.normalized ?? startTok.value).toLowerCase() === 'repeat';
       const startMark = clauseStream.mark();
+      const startPos = clauseStream.position();
       const commandMatch = patternMatcher.matchBest(clauseStream, commandPatterns);
 
       // A verb-final command (qu `… suyay` = wait, verb-LAST) can greedily span
@@ -4360,7 +4493,13 @@ export class SemanticParserImpl implements ISemanticParser {
         startIsRepeatKw &&
         commandMatch &&
         ((commandMatch.pattern.command as string) !== 'repeat' ||
-          this.loopHeadReadsBody(commandMatch, skipped, language))
+          this.loopHeadReadsBody(commandMatch, skipped, language) ||
+          this.repeatOpensOnItsBody(
+            commandMatch,
+            clauseStream.tokens.slice(startPos + 1),
+            commandPatterns,
+            language
+          ))
       ) {
         clauseStream.reset(startMark);
         clauseStream.advance(); // consume only the repeat keyword (and a count by it)
@@ -4449,6 +4588,13 @@ export class SemanticParserImpl implements ISemanticParser {
         if (pseudo) {
           flushSkipped();
           commands.push(pseudo);
+          directHits++;
+          continue;
+        }
+        const bottom =
+          skipped.length === 0 ? this.takeBottomUntil(clauseStream, commands, language) : null;
+        if (bottom) {
+          commands.push(bottom);
           directHits++;
           continue;
         }
@@ -5828,6 +5974,15 @@ export class SemanticParserImpl implements ISemanticParser {
           clauseHadMatch = true;
           continue;
         }
+      }
+
+      // A loop's bottom test (`… hasta x es 3 fin`), as parseClause reads it.
+      const bottom =
+        skippedClauseTokens.length === 0 ? this.takeBottomUntil(tokens, commands, language) : null;
+      if (bottom) {
+        commands.push(bottom);
+        clauseHadMatch = true;
+        continue;
       }
 
       let matched = false;
@@ -7833,8 +7988,14 @@ export class SemanticParserImpl implements ISemanticParser {
         (tok.normalized ?? '').toLowerCase() === 'end' &&
         !(next && next.kind === 'selector'));
     // An end word where a value stands is a variable spelled like it (C3): tr
-    // `eğer son ve flag` (if son and flag) ended its block at `son`.
-    return endWord && !endWordIsValue(place, language);
+    // `eğer son ve flag` (if son and flag) ended its block at `son`. The noun
+    // of `at end of` is a position (`if x put 'a' at end of me end`): taken for
+    // the block's `end`, it ended the conditional early, its own `end` closed
+    // the loop or handler around it, and the commands after it ran inside it.
+    const positional =
+      (place.prev?.value.toLowerCase() === 'at' && place.next?.value.toLowerCase() === 'of') ||
+      isAtEndPositionNoun(language, tok.value, place.prev?.value, place.next?.value);
+    return endWord && !endWordIsValue(place, language) && !positional;
   }
 
   /**
