@@ -32,7 +32,6 @@ import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
-import { DOM_EVENT_NAMES } from './utils/dom-events';
 
 /**
  * NESTED block-opening keywords balanced by a matching `end`. Deliberately
@@ -434,9 +433,12 @@ interface HandlerHeads {
    */
   readonly trailing: ReadonlyArray<readonly string[]>;
   /**
-   * SOV: a one-word `on` after the event (hi `पर`, bn `তে`). It is also a role's
-   * marker (hi's destination), so it opens a handler only where the previous
-   * command has ended (afterCommand), and for certain only after a DOM event name.
+   * SOV: a one-word `on` after the event (hi `पर`, bn `তে`). It is also the
+   * destination marker, which nearly every hi/bn command may write first, so
+   * after a command written without `then` (`… जोड़ें input पर .b को टॉगल`) it
+   * may open a handler or a command on `input`, even when the name is a DOM
+   * event's. It splits only where the previous command has ended
+   * (afterCommand), and never for certain.
    */
   readonly afterClause: Set<string>;
   /** The patient marker (hi `को`): a value it marks still owes its verb. */
@@ -591,12 +593,9 @@ function handlerStartAt(
     (event.kind === 'keyword' || event.kind === 'identifier') &&
     afterCommand(tokens, eventAt, heads)
   ) {
-    // A DOM event name is never a destination. Another name may be either:
-    // `… जोड़ें myevent पर …` opens a handler for `myevent`, or is a destination
-    // the renderer never writes there. The split stands, and the caller says it
-    // is unsure (a translation the adapter will not run).
-    const known = DOM_EVENT_NAMES.has((event.normalized ?? event.value).toLowerCase());
-    return withFrontedSource(tokens, eventAt, segStart, heads, known);
+    // The likely reading, but not a certain one: the caller says so, and the
+    // adapter will not run it.
+    return withFrontedSource(tokens, eventAt, segStart, heads, false);
   }
   return null;
 }
@@ -639,7 +638,7 @@ function withFrontedSource(
 
 /**
  * The confidence a chain gets when one of its handlers starts at a head that may
- * be a destination instead (hi/bn, a name that is not a DOM event): below the
+ * be a destination instead (hi `पर`, bn `তে`): below the
  * adapter's default threshold (0.5), so the adapter leaves the script as written
  * and the engine reports it, rather than running a reading that may be wrong.
  */

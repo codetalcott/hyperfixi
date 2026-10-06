@@ -5,7 +5,7 @@
  * author wrote; on _hyperscript.org the attribute has to be rewritten instead
  * (test/browser/adapter.spec.ts covers that host).
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { api, everything, register } from '@hyperfixi/engine';
 import { parseSemantic, render } from '@lokascript/semantic';
 import { hyperscriptI18n } from '../src/plugin';
@@ -126,6 +126,46 @@ describe('the plugin on @hyperfixi/engine', () => {
     click(button);
     button.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
     expect([...button.classList]).toEqual(['a', 'b']);
+  });
+
+  // The same at top level, in each language's own head (was OPEN_ITEMS P47):
+  // the `when` word (de, fr, qu), a circumfix (zh), words after the event (ko, tr).
+  it.each([
+    ['de', 'wenn klick hinzufügen .a wenn keyup hinzufügen .b'],
+    ['fr', 'quand clic ajouter .a quand touche haut ajouter .b'],
+    ['zh', '一 点击 就 添加 把 .a 一 keyup 就 添加 把 .b'],
+    ['ko', '클릭 할 때 .a 을 추가 키업 할 때 .b 을 추가'],
+    ['qu', 'maykama click .a ta yapay maykama llave hawa .b ta yapay'],
+    ['tr', 'tıklama i üzerinde .a i ekle keyup i üzerinde .b i ekle'],
+  ])('%s: two handlers written without their ends both run', (language, written) => {
+    document.body.innerHTML = `<button lang="${language}"></button>`;
+    const button = document.querySelector('button')!;
+    button.setAttribute('_', written);
+    api.processNode(document.body);
+    click(button);
+    expect([...button.classList]).toEqual(['a']);
+    button.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+    expect([...button.classList]).toEqual(['a', 'b']);
+  });
+
+  // hi `पर` also marks a destination, so the second head may be one: the adapter
+  // does not run that reading (it ran `add .a to keyup` before P47), and the
+  // engine reports the script as written.
+  it('hi: two handlers written without their ends are reported, not run', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      document.body.innerHTML = '<button lang="hi"></button>';
+      const button = document.querySelector('button')!;
+      button.setAttribute('_', 'click पर .a को जोड़ें keyup पर .b को जोड़ें');
+      api.processNode(document.body);
+      click(button);
+      button.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+      expect([...button.classList]).toEqual([]);
+      // The engine's verdict on the Hindi text, not a runtime error in a translation.
+      expect(errors.mock.calls.flat().map(String).join(' ')).toMatch(/Unknown token/);
+    } finally {
+      errors.mockRestore();
+    }
   });
 
   it('a parse error in a rewritten script names what was written', () => {

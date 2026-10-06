@@ -105,21 +105,24 @@ describe('a chain written natively without handler ends reads as written', () =>
 });
 
 /**
- * hi `पर` and bn `তে` also mark a destination. After a finished command a DOM
- * event name before them opens a handler for certain; another name may be a
- * custom event or a destination, so the split stands but its confidence falls
- * below the adapter's threshold (0.5): the adapter leaves the script as written
- * and the engine reports it, rather than running a reading that may be wrong.
+ * hi `पर` and bn `তে` are also the destination marker, which nearly every hi/bn
+ * command may write first. After a command written without `then`, `input पर .b
+ * को टॉगल` is a handler for `input` or a toggle on `input`, even though `input`
+ * names a DOM event. So a chain split there reads as written but is never
+ * trusted: its confidence falls below the adapter's threshold (0.5), the adapter
+ * leaves the script as written, and the engine reports it, rather than running a
+ * reading that may be wrong. (Until P47, these chains read as one handler, with
+ * the second event as a destination, at full confidence.)
  */
 describe('hi/bn: a handler head that may be a destination is not trusted', () => {
-  const UNSURE = [
-    ['on click add .a end on myevent log 1 end', false],
+  const CHAINS = [
+    ['on click add .a end on keyup log 1 end', false],
     ['on click put 1 into #out end on myevent log 2 end', false],
-    ['behavior F on click add .a end on myevent log 1 end end', true],
-    ['behavior F init add .a end on myevent add .b end end', true],
+    ['behavior F on click add .a end on keyup log 1 end end', true],
+    ['behavior F init add .a end on keyup add .b end end', true],
   ] as const;
 
-  it.each(['hi', 'bn'].flatMap(lang => UNSURE.map(([src, keep]) => [lang, src, keep] as const)))(
+  it.each(['hi', 'bn'].flatMap(lang => CHAINS.map(([src, keep]) => [lang, src, keep] as const)))(
     '%s: %s',
     (lang, src, keep) => {
       const result = parseWithConfidence(native(src, lang, keep), lang);
@@ -128,23 +131,26 @@ describe('hi/bn: a handler head that may be a destination is not trusted', () =>
     }
   );
 
-  it.each(['hi', 'bn'])('%s: a DOM event name opens a handler for certain', lang => {
-    for (const src of [
-      'on click add .a end on keyup log 1 end',
-      'on myevent add .a end on keyup log 1 end',
-    ]) {
-      expect(parseWithConfidence(native(src, lang), lang).confidence).toBeGreaterThan(0.8);
-    }
+  // bn writes toggle's target first, so this is also a toggle on `input`.
+  it('bn: a command written without `then` after another is not trusted either', () => {
+    const result = parseWithConfidence('ক্লিক তে .a কে যোগ করুন\ninput তে .b কে টগল', 'bn');
+    expect(result.confidence).toBeLessThan(0.5);
   });
 
-  // A patient still owes its verb: `.a को input पर टॉगल` toggles .a on `input`.
-  it.each(['hi', 'bn'])('%s: an event-named target before its verb stays a target', lang => {
+  // A patient still owes its verb: `.b को input पर टॉगल` toggles .b on `input`.
+  it.each(['hi', 'bn'])('%s: a target after a patient stays a target', lang => {
     for (const src of [
       'on click toggle .a on input then log 1',
       'on click put 1 into keyup then log 2',
     ]) {
       expect(render(parse(render(parse(src, 'en')!, lang), lang)!, 'en')).toBe(en(src));
     }
+  });
+
+  it('hi: commands written without `then` stay one handler', () => {
+    const result = parseWithConfidence('click पर .a को जोड़ें\n.b को input पर टॉगल', 'hi');
+    expect(render(result.node!, 'en')).toBe('on click add .a then toggle .b on input');
+    expect(result.confidence).toBeGreaterThan(0.8);
   });
 });
 
