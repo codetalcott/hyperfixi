@@ -3936,7 +3936,15 @@ export class SemanticParserImpl implements ISemanticParser {
             : head.roles.has('quantity')
               ? 'times'
               : 'forever';
-    const binding = variant === 'for' ? head.roles.get('patient') : undefined;
+    let binding = variant === 'for' ? head.roles.get('patient') : undefined;
+    // `repeat in <collection>` binds `it` (repeat-en-in): a binding the loop
+    // writes (`repeat for it in …`), not an implicit role a render leaves out.
+    if (binding && (binding as { implicit?: boolean }).implicit) {
+      binding = { type: 'reference', value: 'it' };
+      const roles = new Map(head.roles);
+      roles.set('patient', binding);
+      return this.buildLoopNode({ ...head, roles }, body, closed);
+    }
     const loopVariable = binding ? loopVariableName(binding) : undefined;
     // A while or until loop's one operand is its condition. The generated SOV
     // repeat pattern names its operand slot `quantity`, and a fronted
@@ -6642,13 +6650,16 @@ export class SemanticParserImpl implements ISemanticParser {
       word(t) === 'with' || (!!withWord && word(t) === withWord);
     for (let at = 0; at + 1 < arr.length; at++) {
       const withIndex = isWith(arr[at]) && word(arr[at + 1]) === 'index';
-      const named = word(arr[at]) === 'index';
+      // Upstream's other spelling, `indexed by i`: the same binding.
+      const indexedBy = word(arr[at]) === 'indexed' && word(arr[at + 1]) === 'by' && !!arr[at + 2];
+      const named = word(arr[at]) === 'index' || indexedBy;
       if (!withIndex && !named) continue;
+      const nameTok = arr[indexedBy ? at + 2 : at + 1]!;
       const phraseStart = arr[at].position.start;
       const reduced = (
         input.slice(0, phraseStart).trimEnd() +
         ' ' +
-        input.slice(arr[at + 1].position.end).trimStart()
+        input.slice(nameTok.position.end).trimStart()
       ).trim();
       try {
         const reparsed = this.parse(reduced, language);
@@ -6697,9 +6708,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const timesWord =
           countEnd === undefined ? undefined : arr.find(t => t.position.start >= countEnd);
         if (!gap.every(t => t === timesWord || isLoopWord(t))) continue;
-        (loop as { indexVariable?: string }).indexVariable = withIndex
-          ? 'index'
-          : arr[at + 1].value;
+        (loop as { indexVariable?: string }).indexVariable = withIndex ? 'index' : nameTok.value;
         return reparsed;
       } catch {
         continue;

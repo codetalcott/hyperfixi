@@ -794,6 +794,28 @@ for (const [lang, spec] of VERB_FIRST_UNTIL_HEADS) {
   addPattern(lang, repeatUntilConditionHead(lang, spec));
 }
 addPattern('en', repeatUntilConditionHead('en', { untilWord: 'until' }));
+// Upstream's `repeat in <collection>`: the loop binds `it`, as `repeat for it in
+// <collection>` does (the engine reads both as one loop), which is how it is
+// written back. Read, the generic head took `in` for the loop's form and the
+// collection was lost.
+addPattern('en', {
+  id: 'repeat-en-in',
+  language: 'en',
+  command: 'repeat',
+  priority: 108, // below the for-in head, which writes the loop
+  template: {
+    format: 'repeat in {source}',
+    tokens: [
+      { type: 'literal', value: 'repeat' },
+      { type: 'literal', value: 'in' },
+      { type: 'role', role: 'source', expectedTypes: ['selector', 'expression', 'reference'] },
+    ],
+  },
+  extraction: {
+    loopType: { default: { type: 'literal', value: 'for' } },
+    patient: { default: { type: 'reference', value: 'it' } },
+  },
+});
 for (const [lang, spec] of SOV_UNTIL_CONDITION_HEADS) {
   addPattern(lang, repeatUntilConditionHeadSOV(lang, spec));
 }
