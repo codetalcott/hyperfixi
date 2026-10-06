@@ -7160,6 +7160,10 @@ export class SemanticParserImpl implements ISemanticParser {
 
     const tokens = tokenizeInternal(input, language);
     const allTokens = tokens.tokens;
+    // An input that opens with the language's `if` is a conditional block: its
+    // last verb is a command, never a handler's event (ko `만약 … 을 포커스 …`,
+    // focus, read as `on focus`). The renderer writes a handler's event first.
+    if (this.isIfKeyword(allTokens[0]?.value ?? '', language)) return null;
 
     // Build a set of native event names for this language (from eventNameTranslations)
     const langEvents = eventNameTranslations[language];

@@ -707,7 +707,7 @@ export function getEventHandlerPatternsDe(): LanguagePattern[] {
       template: {
         format: 'wenn {event} von {source} {body}',
         tokens: [
-          { type: 'literal', value: 'wenn', alternatives: ['falls', 'sobald'] },
+          { type: 'literal', value: 'wenn', alternatives: ['sobald'] },
           { type: 'role', role: 'event' },
           { type: 'literal', value: 'von', alternatives: ['aus'] },
           { type: 'role', role: 'source' },
@@ -726,7 +726,7 @@ export function getEventHandlerPatternsDe(): LanguagePattern[] {
       template: {
         format: 'wenn {event} {body}',
         tokens: [
-          { type: 'literal', value: 'wenn', alternatives: ['falls', 'sobald'] },
+          { type: 'literal', value: 'wenn', alternatives: ['sobald'] },
           { type: 'role', role: 'event' },
         ],
       },
@@ -987,22 +987,6 @@ export function getEventHandlerPatternsEs(): LanguagePattern[] {
         event: { position: 1 },
       },
     },
-    {
-      id: 'event-es-conditional-si',
-      language: 'es',
-      command: 'on',
-      priority: 85,
-      template: {
-        format: 'si {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'si' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
   ];
 }
 
@@ -1071,22 +1055,6 @@ export function getEventHandlerPatternsFr(): LanguagePattern[] {
         format: 'sur {event} {body}',
         tokens: [
           { type: 'literal', value: 'sur', alternatives: ['lors de'] },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
-    {
-      id: 'event-fr-si',
-      language: 'fr',
-      command: 'on',
-      priority: 95,
-      template: {
-        format: 'si {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'si' },
           { type: 'role', role: 'event' },
         ],
       },
@@ -1265,30 +1233,17 @@ export function getEventHandlerPatternsId(): LanguagePattern[] {
       },
     },
     {
-      id: 'event-id-jika',
+      // `jika`/`kalau`/`bila` are the language's `if`: a handler head keyed
+      // on them read every conditional as a handler (`jika x … selesai` was
+      // `on x`). `apabila` (when) stays.
+      id: 'event-id-apabila',
       language: 'id',
       command: 'on',
       priority: 95,
       template: {
-        format: 'jika {event} {body}',
+        format: 'apabila {event} {body}',
         tokens: [
-          { type: 'literal', value: 'jika', alternatives: ['kalau', 'apabila'] },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
-    {
-      id: 'event-id-bila',
-      language: 'id',
-      command: 'on',
-      priority: 90,
-      template: {
-        format: 'bila {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'bila' },
+          { type: 'literal', value: 'apabila' },
           { type: 'role', role: 'event' },
         ],
       },
@@ -1524,22 +1479,6 @@ export function getEventHandlerPatternsPt(): LanguagePattern[] {
         event: { position: 1 },
       },
     },
-    {
-      id: 'event-pt-se',
-      language: 'pt',
-      command: 'on',
-      priority: 90,
-      template: {
-        format: 'se {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'se' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
   ];
 }
 
@@ -1743,22 +1682,6 @@ export function getEventHandlerPatternsSw(): LanguagePattern[] {
         format: 'kwa {event} {body}',
         tokens: [
           { type: 'literal', value: 'kwa' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
-    {
-      id: 'event-sw-ikiwa',
-      language: 'sw',
-      command: 'on',
-      priority: 95,
-      template: {
-        format: 'ikiwa {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'ikiwa', alternatives: ['kama'] },
           { type: 'role', role: 'event' },
         ],
       },
@@ -2252,22 +2175,6 @@ export function getEventHandlerPatternsZh(): LanguagePattern[] {
       },
       extraction: {
         event: { position: 0 },
-      },
-    },
-    {
-      id: 'event-zh-conditional',
-      language: 'zh',
-      command: 'on',
-      priority: 90,
-      template: {
-        format: '如果 {event} {body}',
-        tokens: [
-          { type: 'literal', value: '如果', alternatives: ['若', '假如'] },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
       },
     },
   ];

@@ -41,6 +41,28 @@ describe('a bare if block', () => {
   });
 });
 
+describe("a language's own `if` never heads a handler", () => {
+  // es/fr `si`, pt `se`, zh `如果`, sw `kama`, id `jika`, de `falls` each headed
+  // an "if <event>" handler idiom, so every conditional rendered there read
+  // back as a handler for an event named like its condition.
+  it.each(['es', 'fr', 'pt', 'zh', 'sw', 'id', 'de'])(
+    'a bare conditional round-trips in %s',
+    language => {
+      const code = 'if target matches .modal-backdrop hide .modal-backdrop end';
+      const foreign = translate(code, 'en', language);
+      expect(parse(foreign, language).kind).toBe('conditional');
+      expect(translate(foreign, language, 'en')).toBe(en(code));
+    }
+  );
+
+  it('nor does its last verb become the event (ko 포커스, focus)', () => {
+    const code =
+      'if target matches last <button/> in .modal focus first <button/> in .modal halt end';
+    const ko = translate(code, 'en', 'ko');
+    expect(parse(ko, 'ko').kind).toBe('conditional');
+  });
+});
+
 describe('else, then if on the next line', () => {
   const nested = 'if a log 1 else\n  if b log 2 end\n  log 3\nend';
 
