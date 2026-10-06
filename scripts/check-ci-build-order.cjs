@@ -6,6 +6,13 @@
  * workspace dependency that is either (a) missing from the workflow or
  * (b) appears *after* it in the workflow's build sequence.
  *
+ * The same order holds for every `scripts/ensure-fresh.sh` call (a package's
+ * pretest/prebuild hook, the root `check:fresh`, `scripts/test-check-all.sh`):
+ * it refreshes its arguments in order, so a dependency listed after its
+ * dependent is rebuilt too late to help, and an argument that names no
+ * workspace package is skipped without a word (behaviors' `ensure-fresh.sh
+ * engine` never refreshed the engine).
+ *
  * Why this exists: when `@lokascript/intent` was extracted as a new
  * workspace package in 2026-04-09, nothing updated ci.yml. The CI
  * pipeline stayed red on `main` for 11 days before anyone noticed — the
@@ -170,10 +177,92 @@ function check({ nameToDir, nameToDeps }, workflowOrder) {
   return failures;
 }
 
+/**
+ * Every ensure-fresh.sh call: the root and package package.json scripts, and
+ * scripts/test-check-all.sh. Returns [{ where, dirs }], each argument resolved
+ * to a packages/ directory name (or kept as written when it resolves to none).
+ */
+function loadEnsureFreshCalls() {
+  const calls = [];
+  const argsOf = (text, baseDir) =>
+    text
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(arg => {
+        const bare = arg.replace(/^"|"$/g, '').replace(/^\$REPO_ROOT\//, '');
+        const abs = path.resolve(baseDir, bare);
+        const rel = path.relative(PACKAGES_DIR, abs);
+        // An argument that resolves to no packages/<dir> is kept as written, marked.
+        return !rel.startsWith('..') && !rel.includes(path.sep) && rel !== '' ? rel : `?${arg}`;
+      });
+  const fromPackageJson = (file, baseDir) => {
+    const scripts = JSON.parse(fs.readFileSync(file, 'utf8')).scripts || {};
+    for (const [name, cmd] of Object.entries(scripts)) {
+      const m = /ensure-fresh\.sh([^&;|]*)/.exec(cmd);
+      if (m)
+        calls.push({
+          where: `${path.relative(REPO_ROOT, file)} "${name}"`,
+          dirs: argsOf(m[1], baseDir),
+        });
+    }
+  };
+  fromPackageJson(path.join(REPO_ROOT, 'package.json'), REPO_ROOT);
+  for (const dirent of fs.readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    const file = path.join(PACKAGES_DIR, dirent.name, 'package.json');
+    if (dirent.isDirectory() && fs.existsSync(file)) fromPackageJson(file, path.dirname(file));
+  }
+  const gate = path.join(REPO_ROOT, 'scripts', 'test-check-all.sh');
+  const m = /ensure-fresh\.sh"?((?:[^\n]*\\\n)*[^\n]*)/.exec(fs.readFileSync(gate, 'utf8'));
+  if (m) {
+    calls.push({
+      where: 'scripts/test-check-all.sh',
+      dirs: argsOf(m[1].replace(/\\\n/g, ' '), REPO_ROOT),
+    });
+  }
+  return calls;
+}
+
+/**
+ * Order check for ensure-fresh calls: every argument is a workspace package,
+ * and none comes after a package that depends on it. A dependency the call
+ * leaves out is fine (a hook lists what its tests read).
+ */
+function checkEnsureFresh({ nameToDir, nameToDeps }, calls) {
+  const failures = [];
+  const dirToName = new Map();
+  for (const [name, dir] of nameToDir) dirToName.set(dir, name);
+  for (const { where, dirs } of calls) {
+    const pos = new Map();
+    dirs.forEach((dir, i) => {
+      if (!dirToName.has(dir)) {
+        failures.push(
+          `${where}: ensure-fresh argument "${dir.replace(/^\?/, '')}" names no workspace package (it is skipped).`
+        );
+      } else if (!pos.has(dir)) {
+        pos.set(dir, i);
+      }
+    });
+    for (const [dir, i] of pos) {
+      for (const dep of nameToDeps.get(dirToName.get(dir)) || []) {
+        const depDir = nameToDir.get(dep);
+        if (pos.has(depDir) && pos.get(depDir) > i) {
+          failures.push(
+            `${where}: ${depDir} is refreshed after ${dir}, which depends on it. List ${depDir} first.`
+          );
+        }
+      }
+    }
+  }
+  return failures;
+}
+
 function main() {
   const workspaces = loadWorkspaces();
   const workflowOrder = loadWorkflowBuildOrder();
-  const failures = check(workspaces, workflowOrder);
+  const failures = [
+    ...check(workspaces, workflowOrder),
+    ...checkEnsureFresh(workspaces, loadEnsureFreshCalls()),
+  ];
 
   if (failures.length === 0) {
     // Keep success output minimal so the pre-commit hook feels invisible.
@@ -186,7 +275,7 @@ function main() {
     process.stderr.write(`  • ${msg}\n\n`);
   }
   process.stderr.write(
-    `Fix the workflow at ${path.relative(REPO_ROOT, CI_WORKFLOW)} and re-run.\n`
+    `Fix the workflow at ${path.relative(REPO_ROOT, CI_WORKFLOW)} or the ensure-fresh call, and re-run.\n`
   );
   process.exit(1);
 }
@@ -196,4 +285,10 @@ if (require.main === module) {
 }
 
 // Export for tests.
-module.exports = { loadWorkspaces, loadWorkflowBuildOrder, check };
+module.exports = {
+  loadWorkspaces,
+  loadWorkflowBuildOrder,
+  check,
+  loadEnsureFreshCalls,
+  checkEnsureFresh,
+};

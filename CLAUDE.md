@@ -264,7 +264,9 @@ npm run typecheck:scripts --prefix packages/core
 
 Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any workspace dependency whose `src/` is newer than its `dist/` (via [scripts/ensure-fresh.sh](scripts/ensure-fresh.sh)). Per-package `pretest` hooks cover the first path; [scripts/test-check-all.sh](scripts/test-check-all.sh) runs `ensure-fresh` upfront for the second (npm pre/post hooks don't fire for `:check` variants). Manual escape hatch: `npm run check:fresh`.
 
-When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests.
+A file a build bakes another package into is rebuilt when that package was built after it, even with its own `src/` unchanged: the adapter's `*.global.js` (semantic), semantic's `browser.global.js` (framework), core's `hyperfixi.js` (the engine's bundle, via `build:browser`). The list is `baked_files` in `ensure-fresh.sh`; add a line when a build starts inlining or copying a workspace package (`grep` the built `dist/` for a string unique to that package to find them).
+
+When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests. Every `ensure-fresh` call lists packages **dependency-first** (each is checked after the ones before it were rebuilt), and its arguments must name packages: `npm run check:ci-order` fails on either (`behaviors` once passed a bare `engine`, which named nothing and refreshed nothing).
 
 ##### Keeping the gate's package list honest
 

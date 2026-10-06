@@ -13,17 +13,17 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Order is dep-before-dependent: ensure-fresh rebuilds in argument order, so a
 # dep listed after its consumer gets rebuilt too late to help.
 "$REPO_ROOT/scripts/ensure-fresh.sh" \
-  "$REPO_ROOT/packages/core" \
+  "$REPO_ROOT/packages/intent" \
   "$REPO_ROOT/packages/framework" \
   "$REPO_ROOT/packages/semantic" \
-  "$REPO_ROOT/packages/hyperscript-adapter" \
-  "$REPO_ROOT/packages/engine" \
   "$REPO_ROOT/packages/i18n" \
+  "$REPO_ROOT/packages/engine" \
   "$REPO_ROOT/packages/patterns-reference" \
+  "$REPO_ROOT/packages/hyperscript-adapter" \
+  "$REPO_ROOT/packages/core" \
   "$REPO_ROOT/packages/compilation-service" \
-  "$REPO_ROOT/packages/mcp-server" \
-  "$REPO_ROOT/packages/intent" \
   "$REPO_ROOT/packages/planner" \
+  "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent-element" \
   "$REPO_ROOT/packages/hyperscript-tools-i18n" \
   "$REPO_ROOT/packages/htmx-adapter" \
