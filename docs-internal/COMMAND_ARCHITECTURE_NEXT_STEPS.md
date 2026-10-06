@@ -1,5 +1,9 @@
 # Command architecture — next steps
 
+> **Historical (2026-10-06).** This describes `@hyperfixi/core`'s own engine, which was deleted in
+> 4.0 (#1368, 2026-10-04): `packages/engine` is the engine now, and upstream's own test suite is its
+> gate. Kept as a design record; nothing below is a live queue.
+
 > **Entry point, written 2026-07-28.** The standing queue for structural work on
 > the command layer: how commands are registered, described, executed, and
 > propagated into `it`/`result`. Counterpart to

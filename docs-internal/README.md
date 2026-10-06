@@ -6,36 +6,40 @@ package's README. Finished work is not kept here: its docs are deleted under a t
 
 ## Live queues
 
-| Doc                                                                    | What it holds                                                                                                               |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| [`MULTILINGUAL_NEXT_STEPS.md`](MULTILINGUAL_NEXT_STEPS.md)             | The multilingual roadmap: where the gates stand, what no gate measures, the arcs, and the policies in force                  |
-| [`multilingual/OPEN_ITEMS.md`](multilingual/OPEN_ITEMS.md)             | Every open multilingual item, one line each, with the IDs the roadmap uses                                                  |
-| [`multilingual/VALUE_READING.md`](multilingual/VALUE_READING.md)       | The rules that tell a variable from a structure word, and the name-collision policy (a PR that moves a rule updates its row) |
-| [`PARSER_NEXT_STEPS.md`](PARSER_NEXT_STEPS.md)                         | Core parser defects (`packages/core/src/parser/`), diagnosed and queued                                                     |
-| [`AGENT_ERA_ROADMAP.md`](AGENT_ERA_ROADMAP.md)                         | Arcs 1–5 landed; Arc 6 and the deferrals are open                                                                          |
-| [`HYPERSCRIPT_TOOLS_NEXT_STEPS.md`](HYPERSCRIPT_TOOLS_NEXT_STEPS.md)   | The `@hyperscript-tools/*` queue (parts are stale; re-check before acting)                                                  |
+| Doc                                                              | What it holds                                                                                                                |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`MULTILINGUAL_NEXT_STEPS.md`](MULTILINGUAL_NEXT_STEPS.md)       | The multilingual roadmap: where the gates stand, what no gate measures, the arcs, and the policies in force                  |
+| [`multilingual/OPEN_ITEMS.md`](multilingual/OPEN_ITEMS.md)       | Every open multilingual item, one line each, with the IDs the roadmap uses (also the product and agent-surface deferrals)    |
+| [`multilingual/VALUE_READING.md`](multilingual/VALUE_READING.md) | The rules that tell a variable from a structure word, and the name-collision policy (a PR that moves a rule updates its row) |
 
-## Design records (current, not queues)
+The engine's own queue is executable: `packages/engine/upstream-suite/known-failures.json` (see
+`packages/engine/README.md`).
 
-| Doc                                                                                    | Why it stays                                                                             |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [`ENGINE_MIGRATION_PLAN.md`](ENGINE_MIGRATION_PLAN.md)                                 | Every arc closed (2026-09-03); the target design the type-escape and layering ratchets cite |
-| [`COMMAND_ARCHITECTURE_NEXT_STEPS.md`](COMMAND_ARCHITECTURE_NEXT_STEPS.md)             | All six arcs done; the command layer's design principles                                 |
-| [`analysis/TYPE_SAFETY_DESIGN.md`](analysis/TYPE_SAFETY_DESIGN.md)                     | Environment-specific conditional types (root CLAUDE.md links it)                         |
-| [`proposals/aot-compiler-design.md`](proposals/aot-compiler-design.md)                 | The AOT compiler's design (historical: AOT retired in 4.0, owner 2026-10-04)              |
-| [`build/CHANGELOG_GUIDELINES.md`](build/CHANGELOG_GUIDELINES.md), [`build/CHANGELOG_PROTECTION.md`](build/CHANGELOG_PROTECTION.md) | `scripts/validate-changelog.cjs` and `bump-version.cjs` print their paths               |
+## Design records of core's engine (historical since 4.0)
+
+Core's own engine was deleted in 4.0 (#1368, 2026-10-04). These stay as records of its design; none is a
+queue.
+
+| Doc                                                                        | Why it stays                                                                               |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`ENGINE_MIGRATION_PLAN.md`](ENGINE_MIGRATION_PLAN.md)                     | The engine/front-end boundary that `scripts/check-semantic-boundary.cjs` and `ci.yml` cite |
+| [`PARSER_NEXT_STEPS.md`](PARSER_NEXT_STEPS.md)                             | Core's parser track; OPEN_ITEMS and a semantic test cite its line numbers                  |
+| [`COMMAND_ARCHITECTURE_NEXT_STEPS.md`](COMMAND_ARCHITECTURE_NEXT_STEPS.md) | Core's command layer; OPEN_ITEMS cites its line numbers                                    |
+
+## Process
+
+- [`build/CHANGELOG_GUIDELINES.md`](build/CHANGELOG_GUIDELINES.md): `scripts/bump-version.cjs` and
+  `scripts/validate-changelog.cjs` print its path. Its package list predates 4.0; re-check before
+  relying on it.
 
 ## Open briefs (work not started)
 
-- [`HANDOFF-imperative-forms.md`](HANDOFF-imperative-forms.md): the de residual; re-check it is still open.
-- [`HANDOFF_ts6-migration.md`](HANDOFF_ts6-migration.md): TypeScript 6.
-- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, never sent.
-- [`multilingual/plan.md`](multilingual/plan.md): de-duplicating semantic against the framework (Phase 3,
-  the PatternMatcher fork, is the roadmap's M3 (e)).
-- [`proposals/community-review-system.md`](proposals/community-review-system.md),
-  [`proposals/lse-syntax-new-directions.md`](proposals/lse-syntax-new-directions.md),
-  [`proposals/PLAN-siren.md`](proposals/PLAN-siren.md),
-  [`sessions/DOMAIN_VOICE_STRUCTURAL_REVIEW.md`](sessions/DOMAIN_VOICE_STRUCTURAL_REVIEW.md).
+- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, never sent (written
+  before 4.0; OPEN_ITEMS PR8).
+- [`proposals/community-review-system.md`](proposals/community-review-system.md): the community review
+  design (OPEN_ITEMS PR1).
+- [`proposals/lse-syntax-new-directions.md`](proposals/lse-syntax-new-directions.md): partly shipped,
+  dormant.
 
 ## Reference
 

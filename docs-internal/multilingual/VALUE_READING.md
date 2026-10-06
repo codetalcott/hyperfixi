@@ -56,7 +56,7 @@ word by word:
 | #   | Reads                                                                                                                                                                                         | Where            | PR                           | Pinned by                                                                                          |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
 | S1  | a condition's first `if` word opens no nested block (es `si si …`)                                                                                                                            | block collection | 84                           | `colliding-names.test.ts`                                                                          |
-| S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | `copulaHoldsCondition` (`value-reading.ts`) | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, core `condition-copula-direct-path.test.ts` |
+| S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | `copulaHoldsCondition` (`value-reading.ts`) | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, `direct-path-shapes` (core's `condition-copula-direct-path` cases, carried over in C2) |
 | S3  | a copula that is the condition's first word is a variable (es `si es poner …`); ~~a leading negation keeps its operand unless a command verb follows~~ (dropped by PR 104: tr `if yok`)       | `copulaHoldsCondition` (`value-reading.ts`) | 84; negation half 84–104     | `colliding-names.test.ts`                                                                          |
 
 **What they share.** Four sub-predicates recur. Since PR 87 each has one definition, on the
@@ -118,7 +118,7 @@ parentheses only where the plain render would be misread. A stays (frozen), C st
 what A cannot in rendered text, with no visible cost where A already reads:
 
 - **The verified render** (`explicit/verified-render.ts`) is the public `render` (and so
-  `translate`, the corpus writer, MCP `translate_code`, core's `MultilingualHyperscript`). It
+  `translate`, the corpus writer, MCP `translate_code`, `@hyperfixi/core/multilingual`). It
   renders with each colliding variable in parentheses (`parenthesizeCollidingNames`, over every
   expression value: a variable, not a property, a method, a conversion's type or English
   vocabulary); if nothing was wrapped, that is the plain render. Otherwise it keeps the plain
