@@ -18,7 +18,14 @@ import { resolveLanguage } from './language-resolver';
 import type { PluginOptions } from './plugin';
 import type { PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
-import { acceptedByHost, warnRejectedOnce, type HyperscriptParseHost } from './host-validate';
+import {
+  acceptedByHost,
+  lossyRefusalOf,
+  warnLossyOnce,
+  warnRejectedOnce,
+  type HyperscriptParseHost,
+  type LossyRefusal,
+} from './host-validate';
 
 // ---------------------------------------------------------------------------
 // Detect semantic global
@@ -65,10 +72,11 @@ function preprocessToEnglish(
   src: string,
   lang: string,
   semantic: SemanticGlobal,
-  _config: Partial<PreprocessorConfig>
+  config: Partial<PreprocessorConfig>
 ): string {
   try {
-    // Prefer translate() if available (combines parse+render)
+    // Prefer translate() if available (combines parse+render, and refuses a
+    // translation that would lose part of the script)
     if (semantic.translate) {
       return semantic.translate(src, lang, 'en');
     }
@@ -78,8 +86,9 @@ function preprocessToEnglish(
     if (node) {
       return semantic.render(node, 'en');
     }
-  } catch {
-    // Fall through
+  } catch (error) {
+    const refusal = lossyRefusalOf(error);
+    if (refusal) config.onLossy?.(refusal);
   }
 
   return src;
@@ -106,7 +115,23 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       const lang = resolveLanguageWithOptions(elt, options);
       if (!lang || lang === 'en') return src;
 
-      const english = preprocessToEnglish(src, lang, semantic, options);
+      let refusal: LossyRefusal | undefined;
+      const english = preprocessToEnglish(src, lang, semantic, {
+        ...options,
+        onLossy: r => void (refusal = r),
+      });
+
+      // Refused: keep the author's text (see plugin.ts).
+      if (refusal) {
+        if (options.debug) {
+          console.log(
+            `[hyperscript-i18n] ${lang}: refused, would lose ${refusal.lost.join(', ')} — keeping "${src}"`
+          );
+        } else {
+          warnLossyOnce(lang, src, refusal);
+        }
+        return src;
+      }
 
       if (english !== src) {
         // Host-parser validity gate — see plugin.ts / host-validate.ts.

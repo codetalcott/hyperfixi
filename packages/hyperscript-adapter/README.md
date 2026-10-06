@@ -169,6 +169,16 @@ _hyperscript.use(
 
 The plugin registers an `addBeforeProcessHook` callback — \_hyperscript's supported public extension point, which fires before the runtime reads `_="..."` attributes (or `<script type="text/hyperscript">` bodies). Non-English input is rewritten to English in place via the `@lokascript/semantic` parser before the runtime's own scan reaches it, and the rendered English is checked on the host's own parser before it is committed (see `validateWithHost`). No \_hyperscript internals are patched. Requires a \_hyperscript build that exposes `addBeforeProcessHook` (0.9.9x era).
 
+### A translation that would lose part of the script is refused
+
+If the parse of a script leaves part of it unread, or its English reads back with
+other commands or without one of its values, the plugin does not run the partial
+English (`alternar .a .b` used to run as `toggle .a`). It keeps the author's text,
+which the host then reports as a parse error naming code the author wrote, and
+warns once per language with what the translation would have dropped. The same
+checks back `@lokascript/semantic`'s `translate()`, which throws a
+`LossyTranslationError` for such a script.
+
 ## Limitations
 
 - **Expressions** (`is`, `contains`, `matches`, `has`, etc.): expression operators embedded in commands are preserved as raw text and work fine. Standalone non-English boolean expressions outside a command context do not translate.

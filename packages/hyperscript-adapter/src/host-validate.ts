@@ -79,6 +79,7 @@ const warnedRejectedLang = new Set<string>();
 /** Reset the warn-once state. Mainly for tests. */
 export function resetHostValidationWarnings(): void {
   warnedRejectedLang.clear();
+  warnedLossyLang.clear();
 }
 
 export function warnRejectedOnce(lang: string, src: string, english: string): void {
@@ -90,6 +91,42 @@ export function warnRejectedOnce(lang: string, src: string, english: string): vo
       `original text. ` +
       `Source: "${src.length > 60 ? src.slice(0, 60) + '…' : src}" → ` +
       `"${english.length > 60 ? english.slice(0, 60) + '…' : english}". ` +
+      'Further elements in this language stay quiet — enable { debug: true } for per-element detail.'
+  );
+}
+
+/**
+ * A translation semantic refused because it would lose part of the script
+ * (`LossyTranslationError`, read by name: the slim and lite plugins must not
+ * import semantic's class). Keeping the author's text is the refusal at run
+ * time: the engine then reports a parse error naming code the author wrote,
+ * where the partial English would have run as though it were the whole.
+ */
+export interface LossyRefusal {
+  /** What the translation would drop. */
+  lost: readonly string[];
+  /** The English it would have produced: NOT the whole script. */
+  partial: string;
+}
+
+/** The refusal an error carries, when it is semantic's `LossyTranslationError`. */
+export function lossyRefusalOf(error: unknown): LossyRefusal | undefined {
+  if (!(error instanceof Error) || error.name !== 'LossyTranslationError') return undefined;
+  const e = error as Error & { partial?: unknown; loss?: { lost?: unknown } };
+  if (typeof e.partial !== 'string') return undefined;
+  return { partial: e.partial, lost: Array.isArray(e.loss?.lost) ? e.loss.lost.map(String) : [] };
+}
+
+/** Languages already warned about a refused (lossy) translation this page load. */
+const warnedLossyLang = new Set<string>();
+
+export function warnLossyOnce(lang: string, src: string, refusal: LossyRefusal): void {
+  if (warnedLossyLang.has(lang)) return;
+  warnedLossyLang.add(lang);
+  console.warn(
+    `[hyperscript-i18n] Translation for lang="${lang}" would lose part of the script ` +
+      `(${refusal.lost.join(', ')}) — keeping the original text, which the host will report. ` +
+      `Source: "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
       'Further elements in this language stay quiet — enable { debug: true } for per-element detail.'
   );
 }

@@ -39,8 +39,9 @@ beforeAll(() => {
   );
   // The vendored build is a browser IIFE that assigns window._hyperscript.
   new Function(vendor).call(globalThis);
-  const hs = (globalThis as { _hyperscript?: { parse(s: string): { errors?: { message: string }[] } } })
-    ._hyperscript;
+  const hs = (
+    globalThis as { _hyperscript?: { parse(s: string): { errors?: { message: string }[] } } }
+  )._hyperscript;
   if (!hs?.parse) throw new Error('vendored _hyperscript did not expose parse()');
   parseErrors = (src: string) => {
     // The engine has two failure channels: parse().errors collects grammar
@@ -59,18 +60,55 @@ beforeAll(() => {
  */
 const REPAIRED: Array<{ family: string; lang: string; input: string }> = [
   // repeat <n> times — the split rejoin put `then` between header and body
-  { family: 'repeat-times', lang: 'es', input: 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo' },
-  { family: 'repeat-times', lang: 'ja', input: '3 times を クリック で 繰り返し それから "<p>Line</p>" を 追加 私 に' },
+  {
+    family: 'repeat-times',
+    lang: 'es',
+    input: 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo',
+  },
+  // The 2026-08-07 row was the retired transformer's `… を 追加 私 に`: a destination
+  // after the verb, which the reader leaves unread, so the translation is refused
+  // now (M1 fail-loud). This is what the corpus writer writes today.
+  {
+    family: 'repeat-times',
+    lang: 'ja',
+    input: 'クリック を で 3 回 を 繰り返し 自分 に "<p>Line</p>" を 追加 終わり',
+  },
   { family: 'repeat-times', lang: 'ar', input: 'كرر 3 times عند نقر ثم أضف "<p>Line</p>" إلى أنا' },
   // repeat for … in … — same seam, different loop variant
-  { family: 'repeat-for-each', lang: 'fr', input: 'sur clic répéter item en .items alors ajouter .processed à item' },
-  { family: 'repeat-for-each', lang: 'ko', input: '클릭 할 때 반복 item 안에 .items 그러면 .processed 를 추가 item 에' },
+  {
+    family: 'repeat-for-each',
+    lang: 'fr',
+    input: 'sur clic répéter item en .items alors ajouter .processed à item',
+  },
+  {
+    family: 'repeat-for-each',
+    lang: 'ko',
+    input: '클릭 할 때 반복 item 안에 .items 그러면 .processed 를 추가 item 에',
+  },
   // tell <target> — block header whose body also follows directly
-  { family: 'tell-other-element', lang: 'es', input: 'en clic decir #panel entonces agregar .open entonces esperar 200ms entonces agregar .visible' },
-  { family: 'tell-other-element', lang: 'ja', input: '#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加' },
+  {
+    family: 'tell-other-element',
+    lang: 'es',
+    input:
+      'en clic decir #panel entonces agregar .open entonces esperar 200ms entonces agregar .visible',
+  },
+  {
+    family: 'tell-other-element',
+    lang: 'ja',
+    input:
+      '#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加',
+  },
   // consecutive bind features — `bind … then bind …` is rejected between features
-  { family: 'bind-two-way', lang: 'fr', input: 'bind $name à #input-a alors bind $name à #input-b' },
-  { family: 'bind-two-way', lang: 'ar', input: 'اربط $name إلى #input-a ثم اربط $name إلى #input-b' },
+  {
+    family: 'bind-two-way',
+    lang: 'fr',
+    input: 'bind $name à #input-a alors bind $name à #input-b',
+  },
+  {
+    family: 'bind-two-way',
+    lang: 'ar',
+    input: 'اربط $name إلى #input-a ثم اربط $name إلى #input-b',
+  },
 ];
 
 describe('whole-string-first translation', () => {
@@ -95,7 +133,9 @@ describe('whole-string-first translation', () => {
       // rows to a shape English does not produce. Their engine-validity is still
       // asserted by the `translates to English the real engine accepts` row above,
       // which is the property this regex was standing in for.
-      expect(english).not.toMatch(/\b(?:repeat|for|while)\b[^\n]*?\bthen\s+(?:add|put|wait|bind)\b/);
+      expect(english).not.toMatch(
+        /\b(?:repeat|for|while)\b[^\n]*?\bthen\s+(?:add|put|wait|bind)\b/
+      );
     }
   });
 

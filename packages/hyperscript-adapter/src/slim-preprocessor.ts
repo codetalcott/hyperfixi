@@ -20,6 +20,8 @@ import {
   isLanguageRegistered,
   render,
   translate,
+  findTranslationLoss,
+  LossyTranslationError,
 } from '@lokascript/semantic/core';
 
 import { createPreprocessToEnglish, type PreprocessorConfig } from './preprocessor-core';
@@ -46,6 +48,10 @@ export const preprocessToEnglish = createPreprocessToEnglish({
       if (result.confidence >= threshold) return translate(src, lang, 'en');
       return null;
     }
-    return render(result.node, 'en');
+    // Refused when it would lose part of the script, as on the full path.
+    const english = render(result.node, 'en');
+    const loss = findTranslationLoss(src, result.node, english, 'en');
+    if (loss) throw new LossyTranslationError(english, loss, lang, 'en');
+    return english;
   },
 });
