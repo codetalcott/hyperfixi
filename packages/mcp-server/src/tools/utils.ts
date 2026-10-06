@@ -178,3 +178,37 @@ export function errorResponse(error: string, details?: Record<string, unknown>):
     ],
   };
 }
+
+// =============================================================================
+// Refused translations
+// =============================================================================
+
+/**
+ * What `@lokascript/semantic`'s `translate()` throws for a translation that
+ * would lose part of the script (`LossyTranslationError`), as a tool reports
+ * it: never under the key that carries a translation.
+ */
+export interface TranslationRefusal {
+  refused: true;
+  error: string;
+  /** Which check saw the loss: truncation, read-back or invariant. */
+  kind: string;
+  /** What the translation would lose. */
+  lost: string[];
+  /** The output it would have returned: NOT the whole script. */
+  partial: string;
+}
+
+/** The refusal an error carries, when it is semantic's `LossyTranslationError`. */
+export function translationRefusal(error: unknown): TranslationRefusal | null {
+  if (!(error instanceof Error) || error.name !== 'LossyTranslationError') return null;
+  const e = error as Error & { partial?: unknown; loss?: { kind?: unknown; lost?: unknown } };
+  if (typeof e.partial !== 'string') return null;
+  return {
+    refused: true,
+    error: e.message,
+    kind: String(e.loss?.kind ?? ''),
+    lost: Array.isArray(e.loss?.lost) ? e.loss.lost.map(String) : [],
+    partial: e.partial,
+  };
+}

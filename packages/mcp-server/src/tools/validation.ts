@@ -14,6 +14,7 @@ import {
   getFixableErrorCodes,
   hasFixesForError,
 } from './error-fixes.js';
+import { translationRefusal } from './utils.js';
 
 // Try to import semantic package for multilingual support
 let semanticPackage: any = null;
@@ -233,7 +234,7 @@ export const validationTools: Tool[] = [
   {
     name: 'translate_to_english',
     description:
-      'Normalize non-English hyperscript to English. Returns English code plus explicit bracket syntax. Set getAllLanguages=true to get all 24 translations at once. Use when you receive code in Japanese, Korean, Arabic, etc.',
+      'Normalize non-English hyperscript to English. Returns English code plus explicit bracket syntax. Set getAllLanguages=true to get all 24 translations at once. Use when you receive code in Japanese, Korean, Arabic, etc. Code the parse cannot carry whole is refused (refused: true, with `lost` and the `partial` English), never returned as `english`.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1657,6 +1658,10 @@ function translateToEnglish(
   }
 
   try {
+    // Translate to English first: it refuses a script the parse cannot carry
+    // whole, which every other language's render would lose the same way.
+    const english = semanticPackage.translate(code, sourceLanguage, 'en');
+
     if (getAllLanguages) {
       // Get translations for all supported languages
       const translations = semanticPackage.getAllTranslations(code, sourceLanguage);
@@ -1678,9 +1683,6 @@ function translateToEnglish(
         ],
       };
     }
-
-    // Translate to English only
-    const english = semanticPackage.translate(code, sourceLanguage, 'en');
 
     // Also get explicit syntax for debugging/learning
     let explicit: string | null = null;
@@ -1708,6 +1710,20 @@ function translateToEnglish(
       ],
     };
   } catch (error) {
+    // A translation that would lose part of the script is refused, with what it
+    // loses; its partial English is never reported as `english`.
+    const refusal = translationRefusal(error);
+    if (refusal) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ ...refusal, original: code, sourceLanguage }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
     return {
       content: [
         {

@@ -58,6 +58,22 @@ type TranslationCollisionsFn = (
   readonly message: string;
 }>;
 
+/** `@lokascript/semantic`'s refusal, by name (the service loads semantic dynamically). */
+interface LossyTranslation {
+  name: 'LossyTranslationError';
+  message: string;
+  partial: string;
+  loss: { kind: string; lost: readonly string[] };
+}
+
+function isLossyTranslation(error: unknown): error is LossyTranslation {
+  return (
+    error instanceof Error &&
+    error.name === 'LossyTranslationError' &&
+    typeof (error as Partial<LossyTranslation>).partial === 'string'
+  );
+}
+
 export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
@@ -268,6 +284,25 @@ export class CompilationService {
         diagnostics: this.translationCollisions(request),
       };
     } catch (error) {
+      // A translation that would lose part of the script is refused: say what
+      // it loses, and keep the partial text out of `code`.
+      if (isLossyTranslation(error)) {
+        return {
+          ok: false,
+          partial: error.partial,
+          loss: { kind: error.loss.kind, lost: [...error.loss.lost] },
+          diagnostics: [
+            {
+              severity: 'error',
+              code: 'LOSSY_TRANSLATION',
+              message: error.message,
+              suggestion:
+                'The translation would drop the part listed in `loss.lost`. ' +
+                'Rewrite that part of the source, or translate the rest without it.',
+            },
+          ],
+        };
+      }
       return {
         ok: false,
         diagnostics: [

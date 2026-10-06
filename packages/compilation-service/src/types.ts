@@ -93,6 +93,13 @@ export interface TranslateResponse {
    * translation itself failed.
    */
   verification?: import('./scoring/score.js').ScoreResponse;
+  /**
+   * A refused translation (`LOSSY_TRANSLATION`): the output the translation
+   * would have produced, which is NOT the whole script. Never under `code`.
+   */
+  partial?: string;
+  /** What a refused translation loses, and which check saw it (truncation, read-back, invariant). */
+  loss?: { kind: string; lost: string[] };
   /** Diagnostics */
   diagnostics: Diagnostic[];
 }
