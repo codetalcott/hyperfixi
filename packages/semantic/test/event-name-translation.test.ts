@@ -148,15 +148,17 @@ describe('event-name translation (Phase 1b)', () => {
     // as the event (ar `تغيير`, vi `đổi`: change, not resize), and whatever was
     // written after the name was lost: `on keyup from #b` read back
     // `on keyup` in ar (was OPEN_ITEMS P48). The same holds for a name the
-    // table reads and the renderer never writes: id `lepas tombol` read
-    // `on lepas` (was OPEN_ITEMS P51).
-    it('every native of several words it reads is one token', () => {
+    // table reads and the renderer never writes, spaced, joined with `_` or
+    // unspaced: id `lepas tombol` read `on lepas`, zh `鼠标进入` read `进入` as
+    // `into` (was OPEN_ITEMS P51). One word the table resolves may stay an
+    // identifier.
+    it('every native it reads is one token', () => {
       const failures: string[] = [];
       for (const [lang, table] of Object.entries(eventNameTranslations)) {
         for (const [native, ev] of Object.entries(table)) {
-          if (!/\s/.test(native)) continue;
           const tokens = tokenize(native, lang).tokens;
-          if (tokens.length !== 1 || tokens[0].normalized !== ev) {
+          const severalWords = /[\s_]/.test(native);
+          if (tokens.length !== 1 || (severalWords && tokens[0].normalized !== ev)) {
             failures.push(`${lang}: "${native}" → ${tokens.map(t => t.value).join(' | ')}`);
           }
         }
@@ -207,7 +209,7 @@ describe('event-name translation (Phase 1b)', () => {
       for (const [lang, table] of Object.entries(eventNameTranslations)) {
         for (const [native, ev] of Object.entries(table)) {
           const rendered = localizeEventName(ev, lang);
-          if (!/\s/.test(native) || native === rendered) continue;
+          if (!/[\s_]/.test(native) || native === rendered) continue;
           for (const src of [
             `on ${ev} log 1`,
             `on ${ev} from #b log 1`,

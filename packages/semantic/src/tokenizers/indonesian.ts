@@ -112,6 +112,7 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   { native: 'lepas tombol', normalized: 'keyup' },
   { native: 'mouse masuk', normalized: 'mouseover' },
   { native: 'mouse keluar', normalized: 'mouseout' },
+  { native: 'tekan_tombol', normalized: 'keydown' },
   { native: 'arahkan', normalized: 'mouseover' },
   { native: 'tinggalkan', normalized: 'mouseout' },
   { native: 'kabur', normalized: 'blur' },
