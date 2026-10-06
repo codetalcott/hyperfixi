@@ -10,6 +10,7 @@ import type {
   SemanticNode,
   SemanticRole,
   EventHandlerSemanticNode,
+  ErrorClauses,
   CompoundSemanticNode,
   CommandSemanticNode,
   ConditionalSemanticNode,
@@ -213,6 +214,21 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in the specified language.
    */
   render(node: SemanticNode, language: string): string {
+    // A handler's error clauses follow its commands (the patterns know neither).
+    if (node.kind === 'event-handler') {
+      const {
+        catchName: _n,
+        catchBody,
+        finallyBody,
+        ...handler
+      } = node as EventHandlerSemanticNode;
+      if (catchBody || finallyBody) {
+        return (
+          this.render(handler as SemanticNode, language) +
+          this.renderErrorClauses(node as EventHandlerSemanticNode, language)
+        );
+      }
+    }
     // Handle compound nodes specially (e.g., "cmd1 then cmd2")
     if (node.kind === 'compound') {
       return this.renderCompound(node as CompoundSemanticNode, language);
@@ -536,8 +552,37 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       this.renderBlockHeader(this.keyword(language, 'def'), node.name, node.parameters),
     ];
     for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
+    if (node.catchBody) {
+      lines.push(`${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`);
+      for (const cmd of node.catchBody) lines.push(`  ${this.render(cmd, language)}`);
+    }
+    if (node.finallyBody) {
+      lines.push(this.keyword(language, 'finally'));
+      for (const cmd of node.finallyBody) lines.push(`  ${this.render(cmd, language)}`);
+    }
     lines.push(this.keyword(language, 'end'));
     return lines.join('\n');
+  }
+
+  /**
+   * A handler's error clauses after its commands: ` catch e <commands>` and
+   * ` finally <commands>`, the commands chained as a body's are. The words are
+   * the language's, or English's where it has none (keyword falls back).
+   */
+  private renderErrorClauses(node: ErrorClauses, language: string): string {
+    const chain = this.getChainWord('then', language);
+    const statements = (body: readonly SemanticNode[]): string =>
+      body.map(cmd => this.render(cmd, language)).join(` ${chain} `);
+    let out = '';
+    if (node.catchBody) {
+      out += ` ${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`;
+      if (node.catchBody.length) out += ` ${statements(node.catchBody)}`;
+    }
+    if (node.finallyBody) {
+      out += ` ${this.keyword(language, 'finally')}`;
+      if (node.finallyBody.length) out += ` ${statements(node.finallyBody)}`;
+    }
+    return out;
   }
 
   /**

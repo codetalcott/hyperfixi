@@ -57,7 +57,7 @@ const PASCAL_CASE_NAME = /^[A-Z][A-Za-z0-9_]*$/;
  *   behavior `init` blocks) — the path that splits then-chains / newlines / nested
  *   blocks, which `statement` alone does not for a bare command sequence.
  */
-interface BlockParsers {
+export interface BlockParsers {
   statement: (text: string, lang: string) => SemanticNode;
   body: (text: string, lang: string) => SemanticNode[];
 }
@@ -1002,6 +1002,85 @@ function splitProgram(
   return { node, unsure };
 }
 
+/** A body's error clauses, as text: what `splitErrorClauses` cuts a body into. */
+export interface ErrorClauseText {
+  /** The body before the clauses. */
+  main: string;
+  catchName?: string;
+  catchText?: string;
+  finallyText?: string;
+}
+
+/**
+ * Cut a handler's or a function's text at its depth-0 `catch <name>` and
+ * `finally` (the language's words, and the English ones, which a render writes
+ * where a language has none). Null when it has neither. A `catch` followed by
+ * `(` is JavaScript's, inside a `js` body.
+ */
+export function splitErrorClauses(text: string, language: string): ErrorClauseText | null {
+  const catchForms = keywordForms(language, 'catch');
+  const finallyForms = keywordForms(language, 'finally');
+  const lower = text.toLowerCase();
+  if (![...catchForms, ...finallyForms].some(form => lower.includes(form))) return null;
+
+  const tokens = tokenize(text, language).tokens as readonly LanguageToken[];
+  const forms = openerForms(language);
+  const endForms = keywordForms(language, 'end');
+  let depth = 0;
+  let catchAt = -1;
+  let finallyAt = -1;
+  for (let j = 0; j < tokens.length; j++) {
+    const tok = tokens[j]!;
+    if (tokenMatches(tok, endForms)) {
+      if (depth > 0) depth--;
+      continue;
+    }
+    if (opensBlock(tokens, j, forms)) {
+      depth++;
+      continue;
+    }
+    if (depth > 0) continue;
+    if (catchAt < 0 && finallyAt < 0 && tokenMatches(tok, catchForms)) {
+      const name = tokens[j + 1];
+      if (name && /^[A-Za-z_$][\w$]*$/.test(name.value) && tokens[j + 2]?.value !== '(') {
+        catchAt = j;
+      }
+    } else if (finallyAt < 0 && tokenMatches(tok, finallyForms)) {
+      finallyAt = j;
+    }
+  }
+  if (catchAt < 0 && finallyAt < 0) return null;
+
+  const startOf = (j: number): number =>
+    j < tokens.length ? tokens[j]!.position.start : text.length;
+  const firstClause = catchAt >= 0 ? catchAt : finallyAt;
+  const out: ErrorClauseText = { main: text.slice(0, startOf(firstClause)).trim() };
+  if (catchAt >= 0) {
+    out.catchName = tokens[catchAt + 1]!.value;
+    out.catchText = text
+      .slice(startOf(catchAt + 2), finallyAt >= 0 ? startOf(finallyAt) : text.length)
+      .trim();
+  }
+  if (finallyAt >= 0) out.finallyText = text.slice(startOf(finallyAt + 1)).trim();
+  return out;
+}
+
+/** Parse the clauses `splitErrorClauses` found into a node's fields. */
+export function parseErrorClauses(
+  clauses: ErrorClauseText,
+  language: string,
+  parsers: BlockParsers
+): { catchName?: string; catchBody?: SemanticNode[]; finallyBody?: SemanticNode[] } {
+  const body = (text: string | undefined): SemanticNode[] =>
+    text ? flattenStatements(parsers.body(text, language)) : [];
+  return {
+    ...(clauses.catchName !== undefined
+      ? { catchName: clauses.catchName, catchBody: body(clauses.catchText) }
+      : {}),
+    ...(clauses.finallyText !== undefined ? { finallyBody: body(clauses.finallyText) } : {}),
+  };
+}
+
 /** Blocks whose body is handlers or features: never split as a program (see splitProgram). */
 const HANDLER_BLOCK_HEADS = ['behavior', 'eventsource', 'socket', 'worker', 'intercept'] as const;
 
@@ -1288,12 +1367,18 @@ function parseDefBlock(
 
   const bodyStartPos = tokens[bodyStart]?.position.start ?? headerEnd;
   const bodyEndPos = endIdx >= 0 ? tokens[endIdx].position.start : input.length;
-  const bodyText = input.slice(bodyStartPos, bodyEndPos).trim();
+  const wholeBody = input.slice(bodyStartPos, bodyEndPos).trim();
+  // `catch e …` / `finally …` close the function's commands (they ran as its
+  // body, unconditionally, and the def lost its error handling in silence).
+  const clauses = splitErrorClauses(wholeBody, language);
+  const bodyText = clauses ? clauses.main : wholeBody;
   if (!bodyText) return null;
 
   let body: SemanticNode[];
+  let errorClauses: ReturnType<typeof parseErrorClauses> = {};
   try {
     body = flattenStatements(parsers.body(bodyText, language));
+    if (clauses) errorClauses = parseErrorClauses(clauses, language, parsers);
   } catch {
     return null;
   }
@@ -1301,11 +1386,12 @@ function parseDefBlock(
   let confidence = meanConfidence(body.map(s => s.metadata?.confidence ?? 0.75));
   if (endIdx < 0) confidence *= 0.8; // missing closing `end`
 
-  return createDefNode(name, parameters, body, {
+  const def = createDefNode(name, parameters, body, {
     sourceLanguage: language,
     confidence,
     sourceText: input,
   });
+  return Object.keys(errorClauses).length > 0 ? { ...def, ...errorClauses } : def;
 }
 
 // =============================================================================

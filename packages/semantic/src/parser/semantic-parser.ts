@@ -62,7 +62,13 @@ import { tokenValue } from './token-value';
 import { NATIVE_COUNT_WORDS } from '../patterns/count-words';
 import { readsAsOneExpression } from './utils/value-extent';
 import { curatedEndKeywordSet } from './end-keywords';
-import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
+import {
+  parseErrorClauses,
+  splitErrorClauses,
+  tryParseBlock,
+  tryParseFeatureBlock,
+  tryParseProgram,
+} from './block-parser';
 import {
   eventNameTranslations,
   nativeEventNames,
@@ -251,6 +257,8 @@ const NODE_CHILD_FIELDS = [
   'elseBranch',
   'eventHandlers',
   'initBlock',
+  'catchBody',
+  'finallyBody',
 ] as const;
 type NodeChildren = Partial<Record<(typeof NODE_CHILD_FIELDS)[number], unknown>>;
 
@@ -564,6 +572,8 @@ const NORMALIZE_CHILD_FIELDS = [
   'elseBranch',
   'eventHandlers',
   'initBlock',
+  'catchBody',
+  'finallyBody',
 ] as const;
 
 function normalizeCommandRoles(
@@ -1123,6 +1133,12 @@ export class SemanticParserImpl implements ISemanticParser {
       body: (text, lang) => this.parseStatements(text, lang),
     });
     if (programFirst) return programFirst;
+
+    // Stage −0.5: a handler's error clauses (`on click … catch e … finally …`).
+    // The handler patterns read its commands and left `catch e …` unread, or
+    // ran the clauses as more commands. A def reads its own (parseDefBlock).
+    const withClauses = this.tryParseErrorClauses(input, language);
+    if (withClauses) return withClauses;
 
     const blockNode = tryParseBlock(input, language, {
       statement: (text, lang) => this.parse(text, lang),
@@ -2089,6 +2105,28 @@ export class SemanticParserImpl implements ISemanticParser {
       parseInput,
       diagnostics
     );
+  }
+
+  /**
+   * A handler with `catch <name> …` / `finally …` after its commands: the
+   * handler parsed without them, the clauses parsed as statement lists. Null
+   * when the input has no such clause, or what precedes it is not a handler.
+   */
+  private tryParseErrorClauses(input: string, language: string): SemanticNode | null {
+    const clauses = splitErrorClauses(input, language);
+    if (!clauses || !clauses.main) return null;
+    let handler: SemanticNode;
+    try {
+      handler = this.parse(clauses.main, language);
+    } catch {
+      return null;
+    }
+    if (handler.kind !== 'event-handler') return null;
+    const parsers = {
+      statement: (text: string, lang: string) => this.parse(text, lang),
+      body: (text: string, lang: string) => this.parseStatements(text, lang),
+    };
+    return { ...handler, ...parseErrorClauses(clauses, language, parsers) };
   }
 
   /**

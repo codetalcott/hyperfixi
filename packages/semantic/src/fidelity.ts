@@ -38,6 +38,8 @@ const CHILD_FIELDS = [
   'branches',
   'eventHandlers',
   'initBlock',
+  'catchBody',
+  'finallyBody',
 ] as const;
 
 /**

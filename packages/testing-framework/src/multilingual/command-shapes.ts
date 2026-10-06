@@ -406,6 +406,29 @@ export const EQUIVALENCES: readonly Equivalence[] = [
       isNode(node, 'timeExpression') && node.suffix === 1 ? (node.root as PlainNode) : node,
   },
   {
+    name: 'a-tick',
+    description: '`wait a tick` is `wait 0ms`: both engines wait one setTimeout of 0',
+    pins: [['on click wait a tick then put "x" into #o', 'on click wait 0ms then put "x" into #o']],
+    rewrite: node =>
+      isNode(node, 'waitCommand') && !('time' in node) && !('events' in node)
+        ? { ...node, time: { type: 'number', value: 0 } }
+        : node,
+  },
+  {
+    name: 'parenthesized-name',
+    description:
+      'a name in parentheses is the name: `(e).message` is `e.message` (the verified render ' +
+      'parenthesizes a variable spelled like a word of the target language)',
+    pins: [
+      [
+        "on click set e to {a: 'Q'} then put (e).a into #o",
+        "on click set e to {a: 'Q'} then put e.a into #o",
+      ],
+    ],
+    rewrite: node =>
+      isNode(node, 'parenthesized') && isNode(node.expr, 'symbol') ? node.expr : node,
+  },
+  {
     name: 'by-one',
     description: '`increment x by 1` is `increment x`, and so for `decrement`',
     pins: [
