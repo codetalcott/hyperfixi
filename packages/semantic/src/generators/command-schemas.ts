@@ -2025,6 +2025,11 @@ export const sendSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'], // identifiers tokenize as expression
       svoPosition: 1,
       sovPosition: 2,
+      // bn marks the event sent accusatively, as trigger's: with the
+      // profile-wide event marker, `#x তে স্ক্রোল তে পাঠান` read `scroll to #x`
+      // and lost the send (was OPEN_ITEMS P50). The old marker still reads.
+      markerOverride: { bn: 'কে' },
+      markerLegacy: { bn: ['তে'] },
     },
     {
       role: 'destination',
