@@ -10,9 +10,11 @@ import { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
 import {
   acceptedByHost,
+  warnLossyOnce,
   warnRejectedOnce,
   resetHostValidationWarnings,
   type HyperscriptParseHost,
+  type LossyRefusal,
 } from './host-validate';
 
 export interface PluginOptions extends Partial<PreprocessorConfig> {
@@ -82,7 +84,24 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       if (!lang || lang === 'en') return src;
 
       // Preprocess to English
-      const english = preprocessToEnglish(src, lang, options);
+      let refusal: LossyRefusal | undefined;
+      const english = preprocessToEnglish(src, lang, {
+        ...options,
+        onLossy: r => void (refusal = r),
+      });
+
+      // Refused: the translation would lose part of the script. Keep the
+      // author's text, which the host then reports as a parse error.
+      if (refusal) {
+        if (options.debug) {
+          console.log(
+            `[hyperscript-i18n] ${lang}: refused, would lose ${refusal.lost.join(', ')} — keeping "${src}"`
+          );
+        } else {
+          warnLossyOnce(lang, src, refusal);
+        }
+        return src;
+      }
 
       if (english !== src) {
         // Validity gate: the host parser is the consumer of this rewrite —

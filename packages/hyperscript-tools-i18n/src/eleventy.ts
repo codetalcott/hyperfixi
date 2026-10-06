@@ -32,6 +32,7 @@ import { translateHtml, translateHtmlToManyLangs } from './html.js';
 import type { LangCode, TranslateHtmlOptions } from './html.js';
 import { loadValidator, warnInvalidOnce, formatParseCheckReport } from './validate.js';
 import type { CanonicalValidate, ParseCheckReport } from './validate.js';
+import { dispatchRefusal, refusalOf } from './refused.js';
 
 export interface EleventyPluginOptions {
   /** Default source locale for filters. Defaults to 'en'. */
@@ -46,6 +47,13 @@ export interface EleventyPluginOptions {
    *   'error' — throw, failing the build
    */
   parseCheck?: 'off' | 'warn' | 'error';
+  /**
+   * A translation refused because it would lose part of the script:
+   *   'warn'  — print a deduped warning naming what it would drop (default)
+   *   'error' — throw, failing the build
+   * The snippet keeps its source text (with `lenient`) either way.
+   */
+  onRefused?: 'warn' | 'error';
   /** Override filter names (in case of collisions in your config). */
   filterNames?: {
     snippet?: string;
@@ -65,6 +73,7 @@ export default async function hyperscriptI18nPlugin(
   const defaultFrom = options.defaultFrom ?? 'en';
   const lenient = options.lenient ?? true;
   const parseCheck = options.parseCheck ?? 'warn';
+  const onRefused = options.onRefused ?? 'warn';
   const names = {
     snippet: options.filterNames?.snippet ?? 'translateHs',
     snippetMany: options.filterNames?.snippetMany ?? 'translateHsAll',
@@ -92,7 +101,9 @@ export default async function hyperscriptI18nPlugin(
     let out: string;
     try {
       out = translate(input, source, to);
-    } catch {
+    } catch (err) {
+      const refusal = refusalOf(err, input, source, to);
+      if (refusal) dispatchRefusal(refusal, onRefused);
       return lenient ? input : '';
     }
     if (to === 'en') check(out, 'output', source, to); // after the try — same reason
@@ -112,7 +123,9 @@ export default async function hyperscriptI18nPlugin(
       }
       try {
         out[lang] = translate(input, source, lang);
-      } catch {
+      } catch (err) {
+        const refusal = refusalOf(err, input, source, lang);
+        if (refusal) dispatchRefusal(refusal, onRefused);
         out[lang] = lenient ? input : '';
         continue;
       }
@@ -129,6 +142,7 @@ export default async function hyperscriptI18nPlugin(
       validate: parseCheck === 'off' ? undefined : validate,
       checkInput: true,
       onInvalid: parseCheck === 'error' ? 'error' : 'warn',
+      onRefused,
     };
     return translateHtml(html, to, opts);
   });

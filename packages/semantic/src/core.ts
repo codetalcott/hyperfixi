@@ -172,7 +172,18 @@ export {
   type ConfidenceResult,
   calculateTranslationConfidence,
 } from './utils/confidence-calculator';
-export { render, renderExplicit, translate, toExplicit, fromExplicit } from './explicit';
+export {
+  render,
+  renderExplicit,
+  translate,
+  toExplicit,
+  fromExplicit,
+  LossyTranslationError,
+  findTranslationLoss,
+  type TranslateOptions,
+  type TranslationLoss,
+  type TranslationLossKind,
+} from './explicit';
 
 // =============================================================================
 // Pattern Generation (for per-language bundles that need on-demand patterns)

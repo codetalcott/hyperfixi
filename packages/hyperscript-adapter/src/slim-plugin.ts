@@ -10,7 +10,13 @@ import { preprocessToEnglish } from './slim-preprocessor';
 import type { PreprocessorConfig } from './preprocessor';
 import type { PluginOptions } from './plugin';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
-import { acceptedByHost, warnRejectedOnce, type HyperscriptParseHost } from './host-validate';
+import {
+  acceptedByHost,
+  warnLossyOnce,
+  warnRejectedOnce,
+  type HyperscriptParseHost,
+  type LossyRefusal,
+} from './host-validate';
 
 export type { PluginOptions };
 
@@ -21,7 +27,24 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       const lang = resolveLanguageWithOptions(elt, options);
       if (!lang || lang === 'en') return src;
 
-      const english = preprocessToEnglish(src, lang, options);
+      let refusal: LossyRefusal | undefined;
+      const english = preprocessToEnglish(src, lang, {
+        ...options,
+        onLossy: r => void (refusal = r),
+      });
+
+      // Refused: the translation would lose part of the script. Keep the
+      // author's text, which the host then reports as a parse error.
+      if (refusal) {
+        if (options.debug) {
+          console.log(
+            `[hyperscript-i18n] ${lang}: refused, would lose ${refusal.lost.join(', ')} — keeping "${src}"`
+          );
+        } else {
+          warnLossyOnce(lang, src, refusal);
+        }
+        return src;
+      }
 
       if (english !== src) {
         // Host-parser validity gate — see plugin.ts / host-validate.ts.

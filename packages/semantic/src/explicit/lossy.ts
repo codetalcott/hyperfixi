@@ -26,6 +26,8 @@
 
 import type { SemanticNode } from '../types';
 import { collectActionsMultiset } from '../fidelity';
+import { parse } from '../parser';
+import { toUpstreamSpelling } from './upstream-spelling';
 
 export type TranslationLossKind = 'truncation' | 'read-back' | 'invariant';
 
@@ -194,15 +196,16 @@ export function missingInvariants(input: string, output: string): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * How a translation of `input` (parsed as `node`) into `output` loses part of
- * it, or undefined. `readBack` parses the output in the target language; it
- * throws when the output does not read.
+ * How a translation of `input` (parsed as `node`) into `output`, in language
+ * `to`, loses part of it, or undefined. `readBack` parses the output (by
+ * default in `to`); it throws when the output does not read.
  */
 export function findTranslationLoss(
   input: string,
   node: SemanticNode,
   output: string,
-  readBack: (output: string) => SemanticNode
+  to: string,
+  readBack: (output: string) => SemanticNode = text => parse(text, to)
 ): TranslationLoss | undefined {
   const unread = unconsumedSpans(node);
   if (unread.length) return { kind: 'truncation', lost: unread };
@@ -215,7 +218,13 @@ export function findTranslationLoss(
   }
   const misread = unconsumedSpans(back);
   if (misread.length) return { kind: 'read-back', lost: misread };
-  const commands = actionDifference(node, back);
+  // English is written in upstream's spelling (explicit/upstream-spelling.ts:
+  // the owner's 2026-10-01 rule, each rewrite measured on both engines), which
+  // can wrap a command (a view-transition tail becomes `start view transition
+  // … end`) or respell one (`prepend` becomes `put … at start of`): compare
+  // with what was rendered.
+  const rendered = to === 'en' ? toUpstreamSpelling(node) : node;
+  const commands = actionDifference(rendered, back);
   if (commands.length) return { kind: 'read-back', lost: commands };
 
   const values = missingInvariants(input, output);

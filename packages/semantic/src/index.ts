@@ -223,6 +223,7 @@ export {
   fromExplicit,
   translate,
   LossyTranslationError,
+  findTranslationLoss,
   type TranslateOptions,
   type TranslationLoss,
   type TranslationLossKind,

@@ -105,18 +105,19 @@ test('parseCheck warn: invalid English input warns but still returns a result', 
   await hyperscriptI18nPlugin(cfg); // default parseCheck: 'warn'
   const fn = cfg._filters.get('translateHs');
   const original = console.warn;
-  let warned = 0;
-  console.warn = () => {
-    warned++;
-  };
+  const warnings = [];
+  console.warn = m => warnings.push(String(m));
   let out;
   try {
     out = fn(INVALID, 'es');
   } finally {
     console.warn = original;
   }
-  assert.equal(warned, 1);
-  assert.notEqual(out, undefined);
+  // The parse-check's warning, and (since M1 fail-loud) the refusal's: the
+  // translation would drop `qqqq zzzz`, so the snippet is kept as written.
+  assert.equal(warnings.filter(w => /invalid hyperscript/.test(w)).length, 1);
+  assert.equal(warnings.filter(w => /refused, it would lose/.test(w)).length, 1);
+  assert.equal(out, INVALID);
 });
 
 test('parseCheck error: filter throws on invalid, not on valid', async () => {

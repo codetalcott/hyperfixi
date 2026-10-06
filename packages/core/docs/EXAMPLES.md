@@ -1205,7 +1205,7 @@ under its element's `lang` (or an ancestor's); see
 **Japanese:**
 
 ```html
-<button lang="ja" _="クリック で 切り替え .active を 私">切り替え</button>
+<button lang="ja" _="クリック で 自分 に .active を 切り替え">切り替え</button>
 ```
 
 **Arabic (RTL):**

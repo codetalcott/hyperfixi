@@ -32,6 +32,17 @@ HTML structure is preserved.
 Inputs may be individual files or directories — every `.html` in a directory
 is processed.
 
+## Refused translations
+
+`@lokascript/semantic` refuses a translation that would lose part of the script
+(the parse left part of it unread, or the output reads back without one of its
+commands or values). An attribute whose translation is refused keeps its source
+text, and the run prints a warning naming the file and what would have been
+dropped. In code, `translateHtml(html, lang, { onRefused })` takes `'warn'` (the
+default), `'error'` (throw) or a callback receiving the report; the Eleventy
+plugin takes `onRefused: 'warn' | 'error'`. With `--strict` / `lenient: false`
+the refusal fails the run.
+
 ## Canonical parse-check
 
 Every `_="..."` attribute this tool touches on the **English side** can be

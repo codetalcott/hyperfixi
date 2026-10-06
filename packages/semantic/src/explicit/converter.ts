@@ -97,7 +97,7 @@ export function translate(
   // Render in target language
   const output = render(node, targetLanguage);
   if (options.lossy === 'allow') return output;
-  const loss = findTranslationLoss(input, node, output, text => parse(text, targetLanguage));
+  const loss = findTranslationLoss(input, node, output, targetLanguage);
   if (loss) throw new LossyTranslationError(output, loss, sourceLanguage, targetLanguage);
   return output;
 }

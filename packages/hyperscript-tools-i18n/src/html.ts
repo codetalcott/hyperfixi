@@ -15,6 +15,7 @@
 import { translate } from './translate.js';
 import { formatParseCheckReport, warnInvalidOnce } from './validate.js';
 import type { CanonicalValidate, ParseCheckReport } from './validate.js';
+import { dispatchRefusal, refusalOf, type OnRefused } from './refused.js';
 
 export type LangCode = string;
 
@@ -42,6 +43,12 @@ export interface TranslateHtmlOptions {
    * `translateHtmlToManyLangs` and the CLI do). Default true.
    */
   checkInput?: boolean;
+  /**
+   * What to do when a translation is refused because it would lose part of the
+   * script: 'warn' (default, deduped), 'error' (throw), or a callback. With
+   * `lenient`, the attribute keeps its source text either way.
+   */
+  onRefused?: OnRefused;
 }
 
 const ATTR_PATTERNS: ReadonlyArray<RegExp> = [
@@ -114,6 +121,9 @@ export function translateHtml(
       try {
         translated = translate(body, from, to);
       } catch (err) {
+        // Refused, not failed: say what it would drop ('error' throws from here).
+        const refusal = refusalOf(err, body, from, to);
+        if (refusal) dispatchRefusal(refusal, options.onRefused);
         if (lenient) return `${before}${body}${after}`;
         throw err;
       }

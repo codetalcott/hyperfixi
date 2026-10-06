@@ -10,7 +10,14 @@
  * translate() rescue when the parse is confident but yields no node.
  */
 
-import { translate, render, parseSemantic, isLanguageRegistered } from '@lokascript/semantic';
+import {
+  translate,
+  render,
+  parseSemantic,
+  isLanguageRegistered,
+  findTranslationLoss,
+  LossyTranslationError,
+} from '@lokascript/semantic';
 
 import { createPreprocessToEnglish, type PreprocessorConfig } from './preprocessor-core';
 
@@ -34,7 +41,11 @@ export const preprocessToEnglish = createPreprocessToEnglish({
       return null;
     }
 
-    // Render the semantic node to English
-    return render(result.node, 'en');
+    // Render the semantic node to English, refused when it would lose part of
+    // the script (semantic's translate() checks, applied to this path too).
+    const english = render(result.node, 'en');
+    const loss = findTranslationLoss(src, result.node, english, 'en');
+    if (loss) throw new LossyTranslationError(english, loss, lang, 'en');
+    return english;
   },
 });

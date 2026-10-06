@@ -61,7 +61,7 @@ describe('the checks, one at a time', () => {
   });
 
   it('read-back: an output that does not read', () => {
-    const loss = findTranslationLoss('x', node, 'out', () => {
+    const loss = findTranslationLoss('x', node, 'out', 'en', () => {
       throw new Error('no parse');
     });
     expect(loss?.kind).toBe('read-back');
@@ -69,7 +69,7 @@ describe('the checks, one at a time', () => {
 
   it('read-back: an output that reads back with other commands, counted', () => {
     const fewer = parse('on click toggle .a', 'en');
-    expect(findTranslationLoss('x', node, 'out', () => fewer)).toEqual({
+    expect(findTranslationLoss('x', node, 'out', 'en', () => fewer)).toEqual({
       kind: 'read-back',
       lost: ['-add'],
     });
@@ -79,14 +79,20 @@ describe('the checks, one at a time', () => {
 
   it('read-back: an output its own reader leaves partly unread', () => {
     const unread = parse('on click toggle .foo .bar', 'en');
-    expect(findTranslationLoss('x', node, 'out', () => unread)).toEqual({
+    expect(findTranslationLoss('x', node, 'out', 'en', () => unread)).toEqual({
       kind: 'read-back',
       lost: ['.bar'],
     });
   });
 
   it('invariant: a verbatim value the output lacks', () => {
-    const loss = findTranslationLoss('on click toggle .a then add .b', node, 'add .b', () => node);
+    const loss = findTranslationLoss(
+      'on click toggle .a then add .b',
+      node,
+      'add .b',
+      'en',
+      () => node
+    );
     expect(loss).toEqual({ kind: 'invariant', lost: ['.a'] });
   });
 });
@@ -130,5 +136,23 @@ describe('invariantValues', () => {
   it('counts repeats', () => {
     expect(missingInvariants('add .a then add .a', 'add .a')).toEqual(['.a']);
     expect(missingInvariants("put 'x' into #o", 'put "x" into #o')).toEqual([]);
+  });
+});
+
+describe('read-back against what English writes (upstream spelling)', () => {
+  it('a spelling that wraps a command is the same program', () => {
+    expect(
+      translate(
+        "on click swap #a's textContent with #b's textContent using view transition",
+        'en',
+        'en'
+      )
+    ).toContain('start view transition');
+  });
+
+  it('a spelling that respells a command is the same program', () => {
+    expect(translate("on click prepend #d1's value to #out", 'en', 'en')).toBe(
+      "on click put #d1's value at start of #out"
+    );
   });
 });

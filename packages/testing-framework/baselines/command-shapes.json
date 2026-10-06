@@ -4,8 +4,8 @@
   "cases": 1136,
   "pairs": 27264,
   "pass": 18311,
-  "refused": 7931,
-  "silent": 1022,
+  "refused": 7929,
+  "silent": 1024,
   "entries": {
     "3480154525": {
       "src": "bind $theme and @data-theme",
@@ -2067,7 +2067,8 @@
     "315f1121a3": {
       "src": "swap innerHTML of #target with result",
       "family": "swap",
-      "refused": "en *"
+      "refused": "*",
+      "silent": "en"
     },
     "dbb9beca52": {
       "src": "fetch /api/${id} as json",
@@ -2194,8 +2195,8 @@
     "951b2209ca": {
       "src": "swap #a with #b swap innerHTML of #target with response",
       "family": "swap",
-      "refused": "en ar de es fr he id it ko ms pl pt ru sw th tl tr uk vi zh",
-      "silent": "bn hi ja qu"
+      "refused": "ar de es fr he id it ko ms pl pt ru sw th tl tr uk vi zh",
+      "silent": "en bn hi ja qu"
     },
     "4d698f4f27": {
       "src": "scroll to #section scroll to the top of me scroll down by 200",
