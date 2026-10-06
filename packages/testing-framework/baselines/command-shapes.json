@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1136,
   "pairs": 27264,
-  "pass": 18311,
-  "refused": 7929,
-  "silent": 1024,
+  "pass": 19618,
+  "refused": 6754,
+  "silent": 892,
   "entries": {
     "3480154525": {
       "src": "bind $theme and @data-theme",
@@ -174,11 +174,6 @@
       "refused": "en *",
       "loud": "dangling-possessive: a possessive with nothing after it (`halt the event's then …`), which the engine reads as the bare reference; one upstream test source"
     },
-    "b975ae8d7a": {
-      "src": "init halt",
-      "family": "halt",
-      "refused": "en *"
-    },
     "ae5ed6eb80": {
       "src": "on click halt default",
       "family": "halt",
@@ -304,11 +299,6 @@
       "src": "on click morph #target to '<div id=target><p id=inner _=\"on click put `clicked` into me\">new</p></div>'",
       "family": "morph",
       "refused": "en *"
-    },
-    "7f9dd756b8": {
-      "src": "def foo() return \"foo\" end on click foo() then put result into my bar",
-      "family": "pseudoCommand",
-      "silent": "en *"
     },
     "b2ec75a2bf": {
       "src": "on click bar().foo() then put the result into my bar",
@@ -771,11 +761,6 @@
       "family": "take",
       "refused": "en *"
     },
-    "49dbf3593a": {
-      "src": "def foo() wait 2ms throw \"foo\" end def bar() call foo() end",
-      "family": "throw",
-      "silent": "en *"
-    },
     "8353b546d7": {
       "src": "on click throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML end",
       "family": "throw",
@@ -988,75 +973,15 @@
       "family": "core/asyncError",
       "refused": "en *"
     },
-    "e2f502373e": {
-      "src": "init set ^color to 'red'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
     "a30e7d6174": {
       "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "679ecf655f": {
-      "src": "init set ^val to 'from-outer'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "8204932114": {
-      "src": "init set ^val to 'from-inner'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "28527260ec": {
-      "src": "init put ^val into me",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "8c24c90784": {
-      "src": "init set ^val to 'found'",
-      "family": "core/dom-scope",
-      "refused": "en *"
+      "silent": "ar hi ms pl th"
     },
     "69537d01ae": {
       "src": "init if ^val is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "d996916cf7": {
-      "src": "init set ^val to 'from-middle'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "269d3a7044": {
-      "src": "init set ^outer to 'leaked'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "8e36a39de9": {
-      "src": "init set ^inner to 'contained'",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "5876d812cf": {
-      "src": "init put ^inner into me",
-      "family": "core/dom-scope",
-      "refused": "en *"
-    },
-    "7d06494c1c": {
-      "src": "init set ^val to 0",
-      "family": "core/liveTemplate",
-      "refused": "en *"
-    },
-    "5aa3baddc9": {
-      "src": "init set ^show to true",
-      "family": "core/liveTemplate",
-      "refused": "en *"
-    },
-    "ee910bdffb": {
-      "src": "-- this is a comment def foo() -- this is another comment return \"foo\" end -- end with a comment--- this is a comment -…",
-      "family": "core/parser",
-      "refused": "en *"
+      "silent": "ar hi ms pl th"
     },
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
@@ -1113,16 +1038,6 @@
       "family": "core/reactive-queries",
       "refused": "*"
     },
-    "50e8f568f6": {
-      "src": "init set :count to 0 on click increment :count when :count changes put :count into me",
-      "family": "core/reactivity",
-      "refused": "en *"
-    },
-    "7add8d99d2": {
-      "src": "init set :count to 0 when :count changes put :count into me",
-      "family": "core/reactivity",
-      "refused": "en *"
-    },
     "3614477c6c": {
       "src": "on click elsewhere remove me",
       "family": "core/regressions",
@@ -1130,11 +1045,6 @@
     },
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",
-      "family": "core/regressions",
-      "refused": "en *"
-    },
-    "7d4c3172d4": {
-      "src": "init call foo() end def foo() put \"here\" into #d1's innerHTML end",
       "family": "core/regressions",
       "refused": "en *"
     },
@@ -1147,31 +1057,6 @@
       "src": "on click put select2() into me",
       "family": "core/regressions",
       "refused": "qu tr"
-    },
-    "9dc8b1b423": {
-      "src": "def foo() return bar() end def bar() return meta.caller end",
-      "family": "core/runtime",
-      "silent": "en *"
-    },
-    "29dd3464a4": {
-      "src": "def bar() call baz('nope') end def baz(str) throw str end",
-      "family": "core/runtime",
-      "silent": "en *"
-    },
-    "6fe313d841": {
-      "src": "def bar() call baz('nope') end def baz(str) wait 20ms throw str end",
-      "family": "core/runtime",
-      "refused": "en *"
-    },
-    "e4a02b8344": {
-      "src": "def invokesArrayPromise() return { foo: stringPromise(), bar: stringPromise(), baz: stringPromise() }end def stringProm…",
-      "family": "core/runtime",
-      "refused": "en *"
-    },
-    "d568dbd737": {
-      "src": "def invokesScalarPromise() return stringPromise()end def stringPromise() wait 20ms return 'foo' end",
-      "family": "core/runtime",
-      "refused": "en *"
     },
     "82b8bc8836": {
       "src": "on click 1 set x to 10 on click 2 set @out to x",
@@ -1373,41 +1258,6 @@
       "family": "expressions/comparisonOperator",
       "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh"
     },
-    "87deed585b": {
-      "src": "init set ^count to 42",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "2d00200e49": {
-      "src": "init set ^count to 0",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "08dd2a0a43": {
-      "src": "init set ^name to 'alice'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "a5c88b667f": {
-      "src": "init set ^color to 'blue'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "5032c47fed": {
-      "src": "init set ^val to 'A'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "999742bbf7": {
-      "src": "init set ^val to 'B'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "945a7f7444": {
-      "src": "init set ^shared to 0",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
     "1d75e16839": {
       "src": "init set dom count to 42",
       "family": "expressions/dom-scope",
@@ -1432,44 +1282,14 @@
       "refused": "en *",
       "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
     },
-    "7a09f40bfc": {
-      "src": "init set ^outerVal to 'outer'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "6f16034320": {
-      "src": "init set ^innerVal to 'inner'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
     "a3b6981b27": {
       "src": "on click put ^outerVal on closest .outer into me",
       "family": "expressions/dom-scope",
       "refused": "en *",
       "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
     },
-    "b93c6c2cfd": {
-      "src": "init set ^search to ''",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
     "8a0905548a": {
       "src": "bind ^search and my value",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "4b841b38b6": {
-      "src": "init set ^price to 10 then set ^qty to 2 then set ^total to 20",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "39c0906c09": {
-      "src": "init set ^msg to 'hello'",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
-    "725210f295": {
-      "src": "init set ^val to 'same'",
       "family": "expressions/dom-scope",
       "refused": "en *"
     },
@@ -1555,12 +1375,12 @@
     "fef0cd8bed": {
       "src": "bind $city to #city-input.value end when $city changes put it into me",
       "family": "bind",
-      "refused": "en *"
+      "refused": "hi ko"
     },
     "f18d740a54": {
       "src": "bind $greeting to me end when $greeting changes put it into next <span/>",
       "family": "bind",
-      "refused": "en *"
+      "refused": "hi ko"
     },
     "a808d48445": {
       "src": "bind $isEnabled and @data-active",
@@ -1672,50 +1492,15 @@
       "family": "def",
       "silent": "en *"
     },
-    "667ef374a3": {
-      "src": "init set my.foo to 42 end on click put my.foo into my.innerHTML",
-      "family": "init",
-      "refused": "en *"
-    },
-    "7ff84f9087": {
-      "src": "init set window.foo to 42 end",
-      "family": "init",
-      "refused": "en *"
-    },
     "c6183ad650": {
       "src": "init immediately set window.bar to 42 end",
       "family": "init",
       "refused": "en *"
     },
-    "7b70b33883": {
-      "src": "live set $total to ($price * $qty) end when $total changes put it into me",
-      "family": "live",
-      "refused": "en *"
-    },
-    "6a898f0e9d": {
-      "src": "live set $doubleWidth to ($width * 2) end live set $doubleHeight to ($height * 2)",
-      "family": "live",
-      "refused": "en *"
-    },
-    "5b70a6f411": {
-      "src": "live set $subtotal to ($price * $qty) set $total to ($subtotal + $tax) end when $total changes put it into me",
-      "family": "live",
-      "refused": "en *"
-    },
-    "85c5ff2427": {
-      "src": "live set my @data-name to $firstName end live set my @data-age to $age",
-      "family": "live",
-      "refused": "en *"
-    },
-    "820f7baba0": {
-      "src": "live set my @data-status to $status end when $status changes put 'Status: ' + it into me",
-      "family": "live",
-      "refused": "en *"
-    },
     "92a68c1e3c": {
       "src": "bind $username to me end live set my @data-mirror to $username",
       "family": "live",
-      "silent": "en *"
+      "silent": "*"
     },
     "d66d670d34": {
       "src": "on example.event add .called",
@@ -1967,47 +1752,10 @@
       "family": "reactive-properties",
       "silent": "qu"
     },
-    "cda77ba4b6": {
-      "src": "set :foo to 42 on click put :foo into my innerHTML",
-      "family": "set",
-      "refused": "bn ko",
-      "silent": "en ar de es fr he hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
-    },
-    "991b086b82": {
-      "src": "set ^foo to 42 on click put ^foo into me",
-      "family": "set",
-      "refused": "ko",
-      "silent": "en ar bn de es fr he hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
-    },
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
       "family": "set",
       "silent": "en *"
-    },
-    "ec97ae1115": {
-      "src": "init set :count to 0 end when :count changes put it into me end on click increment :count",
-      "family": "when",
-      "refused": "en *"
-    },
-    "bf9d889f42": {
-      "src": "when $left changes put it into my @data-left end when $right changes put it into my @data-right",
-      "family": "when",
-      "refused": "en *"
-    },
-    "6dd0088239": {
-      "src": "init set :label to 'initial' end when :label changes put it into me end on click set :label to 'clicked'",
-      "family": "when",
-      "refused": "en *"
-    },
-    "ee4d586d20": {
-      "src": "init set :value to 'A' end when :value changes put it into me end on click set :value to 'A-clicked'",
-      "family": "when",
-      "refused": "en *"
-    },
-    "190d9ca9e9": {
-      "src": "init set :value to 'B' end when :value changes put it into me end on click set :value to 'B-clicked'",
-      "family": "when",
-      "refused": "en *"
     },
     "b839394853": {
       "src": "when my @data-x changes put it into me",
@@ -2289,11 +2037,6 @@
       "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",
       "family": "on",
       "refused": "ar de es fr he id it ms pl pt ru sw th tl uk"
-    },
-    "c2b5deed07": {
-      "src": "init set :count to 0 end",
-      "family": "init",
-      "refused": "en *"
     },
     "90d44b4675": {
       "src": "bind $name and #input's value",

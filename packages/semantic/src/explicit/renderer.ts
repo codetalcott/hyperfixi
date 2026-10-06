@@ -43,6 +43,22 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
   'viewTransition',
 ]);
 
+/** Commands that are features when written at the top of a script (see tryParseProgram). */
+const TOP_LEVEL_FEATURE_COMMANDS: ReadonlySet<string> = new Set(['bind', 'set', 'install', 'js']);
+
+/**
+ * A compound tryParseProgram made: two or more top-level features (handlers,
+ * defs, behaviors, feature blocks, top-level `bind`/`set`/`install`/`js`), at
+ * least one of them more than such a command.
+ */
+function isProgram(node: CompoundSemanticNode): boolean {
+  if (node.statements.length < 2) return false;
+  const feature = (s: SemanticNode): boolean =>
+    ['event-handler', 'def', 'behavior', 'feature'].includes(s.kind) ||
+    (s.kind === 'command' && TOP_LEVEL_FEATURE_COMMANDS.has(s.action));
+  return node.statements.every(feature) && node.statements.some(s => s.kind !== 'command');
+}
+
 /**
  * A block header still FLAT in its statement list: its body is the statements
  * after it. A `tell` or view transition the parser nested is a command too, with
@@ -301,6 +317,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const lines: string[] = [];
       for (const handler of node.statements) {
         lines.push(this.render(handler, language), endKw);
+      }
+      return lines.join('\n');
+    }
+    // A PROGRAM of features (tryParseProgram): each on its own line, a handler
+    // closed by `end` (a def or feature block closes itself). Joined by the chain
+    // word, `def a … end then on click …` is no script either engine reads.
+    if (isProgram(node)) {
+      const endKw = this.keyword(language, 'end');
+      const lines: string[] = [];
+      for (const feature of node.statements) {
+        lines.push(this.render(feature, language));
+        if (feature.kind === 'event-handler') lines.push(endKw);
       }
       return lines.join('\n');
     }
