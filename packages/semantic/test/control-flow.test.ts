@@ -130,6 +130,18 @@ describe('a bottom-tested loop (P30)', () => {
 
   it('an until that ends no loop stays unread', () => {
     expect(() => translate('on click log 1 until x', 'en', 'es')).toThrow(/lose/);
+    const node = parse('on click log 1 until x', 'en') as unknown as Node & {
+      diagnostics?: Array<{ code?: string; message: string }>;
+    };
+    expect(node.body!.map(n => n.action)).toEqual(['log']);
+    expect(node.diagnostics?.some(d => d.message.includes('"until x"'))).toBe(true);
+  });
+
+  // An SOV while-phrase comes before its own `repeat` (`… の間 x < 3 繰り返し …`):
+  // inside a forever loop, it is the inner loop's head, not the outer's test.
+  it.each(['ja', 'ko', 'hi', 'tr', 'bn', 'qu'])('a nested while loop stays nested in %s', language => {
+    const code = 'on click repeat forever log 1 then repeat while x < 3 log 2 end end';
+    expect(translate(translate(code, 'en', language), language, 'en')).toBe(en(code));
   });
 
   it.each(['es', 'ja', 'ar', 'zh', 'tr', 'hi', 'qu'])('round-trips in %s', language => {
