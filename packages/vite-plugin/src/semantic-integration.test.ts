@@ -368,7 +368,11 @@ describe('generateSemanticIntegrationCode', () => {
     };
     const code = generateSemanticIntegrationCode(config);
     expect(code).toMatch(/function translateHyperscript\(code, fromLang, toLang\) \{\s*try \{/);
-    expect(code).toMatch(/\} catch \{\s*return code;/);
+    // A refusal (the translation would lose part of the script) is not a
+    // degradation: it is thrown (M1 fail-loud). Anything else returns the source.
+    expect(code).toMatch(
+      /\} catch \(error\) \{\s*if \(error && error\.name === 'LossyTranslationError'\) throw error;\s*return code;/
+    );
   });
 });
 

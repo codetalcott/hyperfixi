@@ -23,4 +23,6 @@ export {
 export type { LangCode, TranslateHtmlOptions, OnInvalid } from './html.js';
 
 export { loadValidator, validateHyperscript, formatParseCheckReport } from './validate.js';
+export { formatRefusalReport } from './refused.js';
+export type { OnRefused, RefusalReport } from './refused.js';
 export type { CanonicalValidate, ParseCheckReport } from './validate.js';

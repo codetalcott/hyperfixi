@@ -620,7 +620,12 @@ export function generateSemanticIntegrationCode(config: SemanticConfig): string 
 // =============================================================================
 
 // Core infrastructure (no language data bundled)
-import { parseWithConfidence, render, isLanguageRegistered } from '@lokascript/semantic/core';
+import {
+  parseWithConfidence,
+  render,
+  isLanguageRegistered,
+  findTranslationLoss,
+} from '@lokascript/semantic/core';
 
 // Register required languages (self-registering side-effect imports)
 `;
@@ -647,10 +652,16 @@ function resolveLanguage(elt) {
   return code ? code.toLowerCase().split(/[-_]/)[0] : null;
 }
 
+/** Languages already warned about a refused translation this page load. */
+const WARNED_LOSSY = new Set();
+
 /**
  * The engine's source transform: the English for a non-English script, or null
  * to leave the script as written (English, an unregistered language, a parse
- * below the confidence threshold, or a render that changed nothing).
+ * below the confidence threshold, or a render that changed nothing). A
+ * translation that would lose part of the script is refused the same way: the
+ * script stays as written, so the engine reports it, and the page warns once
+ * per language with what the translation would drop.
  */
 function translateSource(src, elt) {
   const lang = elt ? resolveLanguage(elt) : null;
@@ -659,6 +670,17 @@ function translateSource(src, elt) {
     const result = parseWithConfidence(src, lang);
     if (!result || !result.node || result.confidence < SEMANTIC_CONFIDENCE_THRESHOLD) return null;
     const english = render(result.node, 'en');
+    const loss = findTranslationLoss(src, result.node, english, 'en');
+    if (loss) {
+      if (!WARNED_LOSSY.has(lang)) {
+        WARNED_LOSSY.add(lang);
+        console.warn(
+          '[hyperfixi] translation for lang="' + lang + '" would lose part of the script (' +
+            loss.lost.join(', ') + '); keeping it as written: "' + src.slice(0, 60) + '"'
+        );
+      }
+      return null;
+    }
     return english && english !== src ? english : null;
   } catch {
     return null;
@@ -674,11 +696,14 @@ function translateSource(src, elt) {
  * Returns the input UNCHANGED when it cannot be parsed in \`fromLang\`, or when
  * \`toLang\` is not one of the languages this bundle registered. The semantic
  * translator throws in both cases; returning the source is the honest degradation.
+ * A translation that would lose part of the script is refused: semantic's
+ * LossyTranslationError is thrown, not swallowed.
  */
 function translateHyperscript(code, fromLang, toLang) {
   try {
     return translate(code, fromLang, toLang);
-  } catch {
+  } catch (error) {
+    if (error && error.name === 'LossyTranslationError') throw error;
     return code;
   }
 }

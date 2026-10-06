@@ -15,6 +15,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, statSync, readdirSy
 import { dirname, join, basename, extname, resolve } from 'node:path';
 import { translateHtml, checkHtmlInput } from './html.js';
 import { loadValidator, formatParseCheckReport } from './validate.js';
+import { formatRefusalReport, type RefusalReport } from './refused.js';
 import type { CanonicalValidate, ParseCheckReport } from './validate.js';
 
 interface Args {
@@ -176,11 +177,22 @@ export async function run(argv: string[]): Promise<number> {
       }
     };
 
+  // A refused translation keeps the attribute as written; the build says which
+  // file, and what the translation would have dropped.
+  let refused = 0;
+  const refusalFor =
+    (file: string) =>
+    (report: RefusalReport): void => {
+      refused++;
+      console.warn(`${file}: ${formatRefusalReport(report)}`);
+    };
+
   let written = 0;
   for (const file of files) {
     const html = readFileSync(file, 'utf8');
     const stem = basename(file, extname(file));
     const onInvalid = recorderFor(file);
+    const onRefused = refusalFor(file);
 
     // Input check runs ONCE per file (not per lang).
     if (validate && args.from === 'en') {
@@ -194,6 +206,7 @@ export async function run(argv: string[]): Promise<number> {
         validate, // still drives the OUTPUT check when lang === 'en'
         checkInput: false, // input already checked once above
         onInvalid,
+        onRefused,
       });
       const outPath = join(args.out, `${stem}.${lang}.html`);
       mkdirSync(dirname(outPath), { recursive: true });
@@ -205,6 +218,9 @@ export async function run(argv: string[]): Promise<number> {
   console.log(
     `Wrote ${written} files (${files.length} input × ${args.langs.length} langs) to ${args.out}`
   );
+  if (refused > 0) {
+    console.warn(`${refused} translation(s) refused (kept as written): see the warnings above.`);
+  }
 
   if (args.check && failures.length > 0) {
     const fileCount = new Set(failures.map(f => f.file)).size;
