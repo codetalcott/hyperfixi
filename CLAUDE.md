@@ -659,6 +659,32 @@ passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (
 refuses to add pairs without `--allow-new`). It is the queue for value work: the
 family and lane tables it prints say what to fix next.
 
+The value matrix generates VALUE shapes; the **command-shape gate**
+(`testing-framework/src/multilingual/command-shapes.ts`) reads the shapes around them
+— a second class ref, a `when` filter, `else if`, `break`, `catch`, a second feature
+after the first `end` — from what authors write: every `_` attribute and script body in
+the vendored upstream suite, and core's reference and hover examples, that the engine
+reads (`command-shapes.cases.json`, harvested by `tools/harvest-command-shapes.ts`; a
+test pins the count and the vendored version, so re-harvest when the suite moves). A
+page's script is read as the host reads it (`parseProgram`), an example as statements.
+Each case runs 24 lanes: `en` is `translate(src, 'en', 'en')`, each language
+`translate(translate(src, 'en', L), L, 'en')`. The oracle is the engine's parse of the
+lane's English against its parse of the source, positions stripped, after named
+EQUIVALENCES (`my.x` is `my x`, `the X of Y` is `Y's X`, `hide` is `hide me`, …), each
+pinned by runs on both engines in `command-shapes.oracle.test.ts`. That file also
+changes every value token of every case and requires the parse to change: an engine
+node that keeps a value only in a closure (as `go to url` and `^x on #el` did) hides a
+loss from the oracle. A pair is `pass`, `refused` (`translate` threw: the caller was
+told) or `silent` (it returned English that parses differently, or that the engine
+rejects). The baseline (`baselines/command-shapes.json`) lists the refused and the
+silent lanes per case, both shrink-only; a case in a LOUD family (a shape semantic does
+not carry yet: `ask`/`answer`, templated selectors, `^x on <el>`, `dom x`) carries its
+reason. The gate (`command-shapes.<n>.test.ts`, three shards) fails on a pair worse than
+listed (pass → refused or silent, refused → silent) and on one better than listed;
+regenerate with `npx tsx tools/regen-command-shapes-baseline.ts` (it refuses to write a
+worse pair without `--allow-new`). Its tables — by family, by node type, by lane — are
+M1's queue (`docs-internal/MULTILINGUAL_NEXT_STEPS.md`).
+
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
 baseline generated against a stale/transitional DB will read as drifted.
