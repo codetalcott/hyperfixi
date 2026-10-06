@@ -17,7 +17,7 @@
 import { tokenize } from './tokenizers';
 import { setStructureNamePredicate, tryGetProfile } from './registry';
 import { commandSchemas } from './generators/command-schemas';
-import { translateConnective } from './parser/utils/expression-lexicon';
+import { loneKeywordKind, translateConnective } from './parser/utils/expression-lexicon';
 import { parseExpression } from './ast-builder/expression-parser/parser';
 import { parseWithConfidence } from './utils/confidence-calculator';
 import { render } from './explicit/renderer';
@@ -196,11 +196,17 @@ export interface NameCollisionFinding {
   readonly message: string;
 }
 
-/** Is `word` English vocabulary (a keyword or a reference), not a name? The articles are names. */
+/**
+ * Is `word` English vocabulary (a keyword or a reference), not a name? The
+ * articles are names, and so is a keyword the reader takes for a variable when
+ * it stands alone as a value: a structure word, a verb or an event name (`set
+ * if to 1`, `put "a" into input`, which upstream runs on variables; was
+ * OPEN_ITEMS P49).
+ */
 function isEnglishKeyword(word: string): boolean {
   if (word === 'a' || word === 'an') return false;
   const tokens = tokenize(word, 'en').tokens;
-  return tokens.length === 1 && tokens[0]?.kind !== 'identifier';
+  return tokens.length === 1 && tokens[0]?.kind !== 'identifier' && !loneKeywordKind(tokens[0]);
 }
 
 /**

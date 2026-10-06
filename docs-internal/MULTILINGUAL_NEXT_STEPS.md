@@ -17,7 +17,7 @@ What the gates measure. Each claim carries its re-check command:
 | Signal                                  | Value                                                 | Re-check                                                                                                                           |
 | --------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)       | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
-| Value matrix (4,205 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-04)          | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                       |
+| Value matrix (4,325 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-06)          | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                       |
 | Canonical validity (upstream parses it) | foreign 3105/3105, en 134/134                         | `npm run test:canonical --prefix packages/testing-framework`                                                                       |
 | English reference preserved             | 159/161 units (2 allowlisted: async-block, draggable) | same                                                                                                                               |
 | Bare-form render fidelity               | 3024/3036 (12 allowlisted pairs)                      | `baselines/bare-render-fidelity.json`                                                                                              |
@@ -187,7 +187,7 @@ exists (policy 13).
 
 ### M4: the small queue (take items opportunistically)
 
-- **Parser items not in M1:** P6, P7, P13, P16, P20–P29, P31–P44.
+- **Parser items not in M1:** P6, P7, P13, P16, P20–P27, P29, P31–P44.
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.

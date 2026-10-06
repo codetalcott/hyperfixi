@@ -184,7 +184,9 @@ function restoreSpans(text: string, spans: readonly string[]): string {
 export function localizeValueInterior(
   raw: string,
   language: string,
-  profile?: LanguageProfile
+  profile?: LanguageProfile,
+  /** Words to leave as written: the expression's variables the renderer keeps (P49). */
+  keep?: ReadonlySet<string>
 ): string {
   if (!raw) return raw;
   // No registered lexicon means the language's `lexicons/{code}` module was not
@@ -208,6 +210,7 @@ export function localizeValueInterior(
   );
 
   const localized = masked.replace(WORD, (whole, lead: string, word: string) => {
+    if (keep?.has(word)) return whole;
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;
   });

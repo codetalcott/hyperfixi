@@ -40,6 +40,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: a variable named like an event or a keyword keeps its name.** Upstream
+  and the engine run `set input to "a"` on a variable named `input`, but semantic's English parse
+  dropped the whole command (an event name alone took the value as the text "input", which a
+  `set` cannot write), so `translate`, MCP `translate_code` and the adapter lost it in every
+  language; `put "a" into input` was lost in ar, de, fr, id and zh, whose tokenizers read `input`
+  as the event, and `toggle .a on input` in six. An event name alone where a value stands is now
+  the variable it spells, as a structure word or a verb already was, except where an event stands
+  (`send`, `trigger`, `repeat until event`, `wait`). And the renderer no longer writes a variable
+  in the language's own word where that word reads back as another variable: `set when to 1`
+  wrote es `establecer cuando a 1`, read back as a variable named `cuando`, in all 23 languages,
+  and bn, ms, th and tl wrote `increment i by index` with their word for `index`. A variable keeps
+  its localized word only where that word alone is the same value (es `ello` for `it`), and the
+  verified render spells one whose neighbours change it (vi `đặt giá trị`, `set`, for `put value`).
+  The value matrix now runs ten such names (`input`, `click`, `when`, `index`, …) in every
+  position: all pass on both engines. No corpus row changes.
 - **`@lokascript/semantic`: the event a command names reads back in every language, and a
   `wait` keeps its source for any event.** The handler head read a native event name through the
   event table, but `send`, `trigger` and `repeat until event` read it only when the language's

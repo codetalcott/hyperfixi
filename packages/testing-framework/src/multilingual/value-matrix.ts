@@ -551,6 +551,30 @@ let collidingNamesMemo: readonly CollidingName[] | undefined;
 const CODE_NAMES: readonly string[] = ['userData'];
 
 /**
+ * Names spelled like English vocabulary that upstream and the engine run as
+ * variables where a value stands: event names, which every tokenizer reads as
+ * an event (`set input to "a"` dropped from English's own parse), structure
+ * words (`when`, which every language wrote as its keyword), and words of the
+ * value lexicon (`index`, which bn and four others wrote natively) — P49, P28.
+ * Not a name the window already holds (`focus`, `length`), nor `then`: the
+ * fixture sets each name there, and a `then` on the window makes upstream
+ * take it for a promise. Not yet `if` or `end`, which open and close a block
+ * in every language's reader (OPEN_ITEMS P53: 93 and 505 failing pairs).
+ */
+export const KEYWORD_NAMES: readonly string[] = [
+  'click',
+  'input',
+  'change',
+  'keyup',
+  'submit',
+  'load',
+  'drop',
+  'when',
+  'index',
+  'value',
+];
+
+/**
  * Variables spelled like a structure word of a language the matrix translates
  * into: every one- or two-letter name semantic's `nameCollision` finds
  * colliding with one — a particle, a connective, a copula, a verb, a role
@@ -580,14 +604,15 @@ export function collidingNames(): readonly CollidingName[] {
     const tokens = tokenize(word, 'en').tokens;
     return tokens.length === 1 && tokens[0]?.kind !== 'identifier';
   };
-  collidingNamesMemo = candidates
-    .filter(word => !reserved.has(word) && !englishKeyword(word))
+  collidingNamesMemo = [...new Set([...candidates, ...KEYWORD_NAMES])]
+    .filter(word => !reserved.has(word) && (KEYWORD_NAMES.includes(word) || !englishKeyword(word)))
     .flatMap(name => {
       const readings = FOREIGN_LANGUAGES.map(language => ({
         language,
         collision: nameCollision(name, language),
       }));
-      if (!readings.some(reading => reading.collision === 'structure')) return [];
+      const structure = readings.some(reading => reading.collision === 'structure');
+      if (!structure && !KEYWORD_NAMES.includes(name)) return [];
       const pronounIn = readings.filter(r => r.collision === 'pronoun').map(r => r.language);
       return [{ name, pronounIn }];
     });

@@ -14,11 +14,11 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (90): parser 44 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
+## 2. Open items (89): parser 43 · render 6 · vocab/owner 7 · gate 14 · product 7 · other 12 (core runtime)
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (44)
+### 2a. Parser correctness, semantic front-end (43)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on hyperfixi's own runtime is unaffected because it
@@ -50,7 +50,6 @@ non-English direct path are the exposed surfaces.
 25. **P25 · vi loses toggle's `trên` target when a command follows without `rồi`** (hand-written; the renderer writes `rồi`, so rendered text round-trips) · 4880 · 09-26 · no · parser · rendered form OK, hand-written not probed.
 26. **P26 · The trigger split reads the NEAREST command before an `on`**: `send toggle to #x on keyup log 1` → `send toggle to #x then log 1`, so the second handler merges into the first · 4882–4883 · 09-26 · no · parser · **probe confirmed**.
 27. **P27 · A bare `set *opacity to 0.5` writes `1` on the direct path** (the corpus form `set my *opacity` works) · 4916–4917 · 09-26 · no · parser (buildAST) · not probed.
-28. **P28 · A bare lexicon word used as a value is localized one way**: `index` and `length` in bn/ms/th/tl render native and read back native (`increment i by সূচক`). PR 58 fixed only `length of X` · 4783–4784 · 09-26 (PR 17) · no · parser/render · **probe confirmed**.
 29. **P29 · ms `ada` (has/exists) not read in a condition**: `unless me has .off` → ms `saya ada .off` reads back `unless my ada.off`. The rest of the 08-28d residual (de, ja) now reads right · 247–251 · 08-28 · no · parser · **probe confirmed (ms only)**.
 30. **P30 · A bottom-tested loop does not parse**: `repeat append "x" to me until true end` → `repeat append "x" to end`, in English and so everywhere (core's side was fixed per PARSER_NEXT_STEPS) · 4459–4460 · 09-26 (PR 7b) · no · parser · **probe confirmed**.
 31. **P31 · hi verb-first with English `times` loses its count** (`click पर दोहराएं 3 times …`, a code-switched order; needs a reclaim like increment's amount) · 7085–7088 · 09-30 (PR 127) · no · parser · open, low value.
@@ -70,8 +69,8 @@ non-English direct path are the exposed surfaces.
 
     All at 1675–1678 · 07-20 · no · parser · not probed. Out of corpus; English `pick items 1 to 3 from arr` renders `… of arr`.
 45. **P45 · `set element's x to …` is not read as an element-scoped set**: upstream's spelling for a behavior's state (its own tested idiom, and the one that defaults a parameter so the handlers see it — `set :x` writes a different scope on both engines). en→en keeps it; every other language renders `element` as a noun with an English `'s` (zh `元素's cls`, ru `элемент's cls`) and reads it back as a dropped set or an invalid render; `set element x to …` drops in en too. Found 2026-10-03 rewriting @hyperfixi/behaviors in upstream's idioms: seven of its sources use it (none a corpus row; Sortable, a corpus row, defaults in a handler local instead). Repro: `translate("on click set element's cls to 'a'", 'en', 'zh')` and back · — · 10-03 · no (out of corpus) · parser + render · **probe confirmed**.
-49. **P49 · A variable named like an event or a keyword is lost or renamed**: upstream and the engine run each as a variable. English's semantic parse drops `set input to "a"` from a handler (also `keyup`, `change`, `click`; bare, it does not parse), so every language loses it; `put "a" into input then log 1` (and `put 2 into keyup`) is lost in ar/de/fr/id/zh, `toggle .a on input` (or `on change`) in ar/de/fr/he/ja/tr. The verified render never wraps them, since `isEnglishKeyword` counts an event name as vocabulary (yet `(input)` reads right in de/fr/zh), and the value matrix's colliding names are one or two letters. `set when to 1` writes the variable as the keyword (es `establecer cuando a 1`): it reads back renamed in all 23, and runs differently from upstream in 10 (ar bn he hi ja ko ru th uk zh) · 2026-10-05 (found by P47's probes) · no · parser · probe confirmed.
 52. **P52 · A custom event in a foreign `wait` with no source reads as a time wait**: the renderer writes no `for`, so es `esperar myEvent o 2s` reads back `wait myEvent or 2s` (a time expression) where English keeps `wait for myEvent or 2s`; with a source the event is read (P50). Upstream reads every non-number leg after `wait for` as an event. Repro: `translate("on click wait for myEvent then log 1", 'en', 'es')` and back · 2026-10-06 (P50's probes) · no · parser/render · probe confirmed.
+53. **P53 · A variable named `if` or `end` breaks the block it stands in**: upstream and the engine run each as a variable (`set if to 1`, `put end into #out`), but the block readers match the English spelling of `if`/`end` in every language, so ja `if を 1 に 設定` reads `if … end`. Measured by the value matrix with both names added: `if` fails 6 of its 12 cells (93 pairs: ja/qu/tr/hi/bn/ko, and `not if` in English's own round trip), `end` all 12 (505 pairs, every language); both are left out of its `KEYWORD_NAMES`. Repro: `translate("on click set if to 1", 'en', 'ja')` and back · 2026-10-06 (P49's matrix run) · no · parser · probe confirmed.
 
 ### 2b. Render / naturalness (6)
 
