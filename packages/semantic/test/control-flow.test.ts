@@ -116,6 +116,14 @@ describe('a bottom-tested loop (P30)', () => {
     );
   });
 
+  it('a test is the last thing before the end, or it is no test', () => {
+    // Upstream rejects `repeat log 1 while x < 3 log 2 end`: after the test
+    // comes the loop's `end`. Taken for the test, the `log 2` after it ran in
+    // the body, before it.
+    const [loop] = handlerBody('on click repeat log 1 while x < 3 log 2 end');
+    expect(loop!.bottomTested).toBeUndefined();
+  });
+
   it('a bare repeat before a command is a forever head, not a count', () => {
     const [loop] = handlerBody('on click repeat log 1 end');
     expect(loop!.loopVariant).toBe('forever');
