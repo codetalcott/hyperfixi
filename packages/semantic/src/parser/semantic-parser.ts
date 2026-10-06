@@ -53,6 +53,7 @@ import {
   loneKeywordKind,
   type EndWordPlace,
 } from './utils/expression-lexicon';
+import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
@@ -879,7 +880,12 @@ export class SemanticParserImpl implements ISemanticParser {
   parse(input: string, language: string): SemanticNode {
     // Locally-bound identifiers are scoped to one top-level parse; recursive
     // sub-parses (behavior handlers, block bodies) inherit the outer scope.
-    if (this.parseDepth === 0) this.boundIdentifiers.clear();
+    // A comment is read as the engine reads it: not at all (blanked, so every
+    // offset into the input holds).
+    if (this.parseDepth === 0) {
+      this.boundIdentifiers.clear();
+      input = blankComments(input);
+    }
     this.parseDepth++;
     this.coverageFrames.push([]);
     try {

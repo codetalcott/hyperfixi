@@ -561,6 +561,13 @@ export const LOUD: readonly LoudFamily[] = [
       someNode(plain, node => node.type === 'symbol' && 'on' in node),
   },
   {
+    name: 'dangling-possessive',
+    reason:
+      "a possessive with nothing after it (`halt the event's then …`), which the engine " +
+      'reads as the bare reference; one upstream test source',
+    matches: source => /'s(?=\s+(then|end)\b|\s*$)/.test(source),
+  },
+  {
     name: 'dom-scope-word',
     reason: 'a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one',
     matches: (_source, _types, plain) =>

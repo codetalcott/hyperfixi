@@ -11,6 +11,7 @@ import { getRegisteredLanguages } from '../registry';
 import { renderExplicit } from './renderer';
 import { render } from './verified-render';
 import { parseExplicit, isExplicitSyntax } from './parser';
+import { findTranslationLoss, LossyTranslationError, type TranslateOptions } from './lossy';
 
 // =============================================================================
 // Bidirectional Conversion
@@ -62,9 +63,14 @@ export function fromExplicit(explicit: string, targetLanguage: string): string {
 /**
  * Translate hyperscript from one language to another.
  *
+ * A translation that would lose part of the script is refused: it throws a
+ * {@link LossyTranslationError} carrying the partial output and what it loses
+ * (see `./lossy`). Pass `{ lossy: 'allow' }` to get the partial output instead.
+ *
  * @param input Natural language hyperscript
  * @param sourceLanguage Source language code
  * @param targetLanguage Target language code
+ * @param options `lossy: 'allow'` returns a lossy translation instead of throwing
  * @returns Translated hyperscript
  *
  * @example
@@ -74,7 +80,12 @@ export function fromExplicit(explicit: string, targetLanguage: string): string {
  * translate('#button の .active を 切り替え', 'ja', 'ar')
  * // → 'بدّل .active على #button'
  */
-export function translate(input: string, sourceLanguage: string, targetLanguage: string): string {
+export function translate(
+  input: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+  options: TranslateOptions = {}
+): string {
   // Handle explicit syntax
   if (isExplicitSyntax(input)) {
     return fromExplicit(input, targetLanguage);
@@ -84,7 +95,11 @@ export function translate(input: string, sourceLanguage: string, targetLanguage:
   const node = parse(input, sourceLanguage);
 
   // Render in target language
-  return render(node, targetLanguage);
+  const output = render(node, targetLanguage);
+  if (options.lossy === 'allow') return output;
+  const loss = findTranslationLoss(input, node, output, text => parse(text, targetLanguage));
+  if (loss) throw new LossyTranslationError(output, loss, sourceLanguage, targetLanguage);
+  return output;
 }
 
 /**

@@ -176,6 +176,14 @@ export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
    * written, naked, and reaches core as the template core's parser builds.
    */
   readonly interpolates?: true;
+  /**
+   * A string the author wrote in quotes. An event name renders bare
+   * (`send hello`), unless it was quoted: then it is written back as written
+   * (`send "hello"`, `trigger "my event"`). Bare, a name with a space or a
+   * colon reads as something else (P12), and a translation keeps what the
+   * author wrote.
+   */
+  readonly quoted?: true;
 }
 
 export interface SelectorValue extends ImplicitTaggable, SourceSpanned {

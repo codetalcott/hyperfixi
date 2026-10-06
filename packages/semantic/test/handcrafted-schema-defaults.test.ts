@@ -72,7 +72,9 @@ describe('a hand-crafted pattern materializes the implicit role', () => {
   // Each surface is what `render(parse_en(<english>), <lang>)` emits, and each
   // is matched by a hand-crafted pattern whose extraction had no default.
   it.each([
-    ['bn', '.active কে টগল করুন', 'destination', 'me', 'toggle-bn-full'],
+    // `টগল করুন` now reads as one keyword (toggle-bn-generated); the pattern's
+    // other verb keeps the hand-crafted pattern in reach.
+    ['bn', '.active কে পরিবর্তন করুন', 'destination', 'me', 'toggle-bn-full'],
     ['de', 'verringern #counter', 'quantity', 1, 'decrement-de-full'],
     ['hi', '#c को बढ़ाएं', 'quantity', 1, 'increment-hi-full'],
     ['qu', ".active ta t'ikray", 'destination', 'me', 'toggle-qu-sov'],

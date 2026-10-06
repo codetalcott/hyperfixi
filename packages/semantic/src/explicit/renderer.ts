@@ -676,10 +676,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // `loopType:"forever"`) is structural — the loop variant the surface
       // means — and discounting it un-selects every pattern that renders the
       // loop word (measured: repeat-forever went unparseable in 22 languages).
+      // An implicit `quantity` (increment's default 1) is absent too: scored as
+      // present, it picked de's `erhöhe {patient} um {quantity}` and wrote a
+      // `um 1` the author never did.
       const hasRealRole = (role: string): boolean => {
         const val = node.roles.get(role as SemanticRole) as
           { implicit?: unknown; type?: string } | undefined;
-        return val !== undefined && !(val.implicit === true && val.type === 'reference');
+        return (
+          val !== undefined &&
+          !(val.implicit === true && (val.type === 'reference' || role === 'quantity'))
+        );
       };
       const scoreTokens = (tokens: readonly PatternToken[], inGroup: boolean): void => {
         for (const token of tokens) {
@@ -1170,24 +1176,22 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           }
         }
 
-        // For optional groups with a `quantity` role, skip when it equals the
-        // schema default (1). The parser injects `quantity: 1` for
-        // increment/decrement even when unspecified, so rendering it produces a
-        // redundant "by 1" — harmless in most languages but a real bug in vi,
-        // where the quantity marker `thêm` is also the `add` keyword, so
-        // `tăng :count thêm 1` re-parses as increment + a phantom `add`. Omitting
-        // the default-1 quantity is recall-neutral (the action set is unchanged)
-        // and renders increment/decrement naturally everywhere.
-        // The default itself, not whatever coerces to 1: `by true` is NaN
-        // upstream, and `Number(true)` made it read as the default and vanish.
+        // For optional groups with a `quantity` role, skip the default the
+        // parser injected (`quantity: 1, implicit`) for increment/decrement when
+        // none was written: rendering it produces a "by 1" the author never wrote
+        // — harmless in most languages but a real bug in vi, where the quantity
+        // marker `thêm` is also the `add` keyword, so `tăng :count thêm 1`
+        // re-parses as increment + a phantom `add`. A WRITTEN `by 1` stays: a
+        // translation keeps what the author wrote, and a value it drops reads as
+        // lost (explicit/lossy.ts).
         if (token.optional) {
           const qtyToken = token.tokens.find(
             (t: any) => t.type === 'role' && t.role === 'quantity'
           );
           if (qtyToken) {
-            const qtyValue = node.roles.get('quantity');
-            if (qtyValue?.type === 'literal' && (qtyValue.value === 1 || qtyValue.value === '1')) {
-              return null; // Skip rendering default quantity of 1
+            const qtyValue = node.roles.get('quantity') as { implicit?: unknown } | undefined;
+            if (qtyValue?.implicit === true) {
+              return null; // Skip rendering the default quantity of 1
             }
           }
         }
@@ -1238,6 +1242,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       return this.valueToNaturalString(value, language);
     }
     const raw = value.value;
+    // Written in quotes, written back in quotes, untranslated (see LiteralValue.quoted).
+    if (value.quoted) return raw.includes('"') ? `'${raw}'` : `"${raw}"`;
     const localizeOne = (name: string): string =>
       name.includes(':') ? name : localizeEventName(name, language);
     if (raw.includes(' or ')) {

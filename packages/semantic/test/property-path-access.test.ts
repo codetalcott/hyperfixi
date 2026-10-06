@@ -25,7 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, translate } from '../src/index';
+import { LossyTranslationError, parse, translate } from '../src/index';
 import type { CommandSemanticNode, PropertyPathValue } from '../src/types';
 
 const LANGUAGES = [
@@ -145,7 +145,10 @@ describe('the base of a dot is chosen so it can be read back', () => {
   it.each(LANGUAGES)('%s never emits the bare localized pronoun before a dot', language => {
     // The failure mode, stated directly: `ello.name` / `ele.name` / `nó.data`.
     // Every one of those parses to null, so this guards the specific regression.
-    const rendered = translate('put it.name into #r', 'en', language);
+    // `lossy: 'allow'`: this pins the render's dot base, not the round trip.
+    // hi writes `it.name को रखें #r में` and reads it back as a handler
+    // (`on its.name put #r into me`), which translate() refuses (M1 queue).
+    const rendered = translate('put it.name into #r', 'en', language, { lossy: 'allow' });
     const node = parse(rendered, language);
     expect(node, `${language}: emitted an unparseable dot base in ${rendered}`).not.toBeNull();
   });
@@ -162,7 +165,7 @@ describe('the base of a dot is chosen so it can be read back', () => {
     // `event` has no possessive form in ANY language, so it stays English.
     // Rendering `घटना.detail` / `ঘটনা.detail` was measured to lose the role.
     for (const language of ['hi', 'bn', 'qu', 'zh', 'ja']) {
-      const rendered = translate('put event.detail into #r', 'en', language);
+      const rendered = translate('put event.detail into #r', 'en', language, { lossy: 'allow' });
       expect(rendered, `${language} localized a dot base with no possessive form`).toContain(
         'event.detail'
       );
@@ -174,11 +177,14 @@ describe('the possessive surface is left alone', () => {
   // The whole point of recording `access` is that the two surfaces diverge.
   // If the dot branch ever widened to swallow possessives, `my value` would
   // start rendering `me.value` and this would fail.
-  it.each(['es', 'ja', 'zh', 'de'] as const)('%s still renders `my value` possessively', language => {
-    const rendered = translate('put my value into #out', 'en', language);
-    expect(rendered).not.toContain('me.value');
-    expect(rendered).not.toContain('my.value');
-  });
+  it.each(['es', 'ja', 'zh', 'de'] as const)(
+    '%s still renders `my value` possessively',
+    language => {
+      const rendered = translate('put my value into #out', 'en', language);
+      expect(rendered).not.toContain('me.value');
+      expect(rendered).not.toContain('my.value');
+    }
+  );
 
   it('English is unchanged in both directions', () => {
     expect(translate('on click set #output.innerText to "Hi"', 'en', 'en')).toContain(
@@ -192,8 +198,19 @@ describe('an optional chain keeps its own connector', () => {
   // `my?.dataset?.customValue` already carries `?.`; adding a dot would produce
   // `mi.?.dataset`. The property is glued instead.
   it.each(['es', 'de', 'zh'] as const)('%s does not inject a second connector', language => {
-    const rendered = translate('log it?.dataset?.customValue', 'en', language);
+    const rendered = translate('put my?.dataset?.customValue into #o', 'en', language, {
+      lossy: 'allow',
+    });
     expect(rendered).not.toContain('.?.');
+  });
+
+  // `log it?.dataset?.customValue` read only `it` and dropped the chain, and the
+  // connector check above passed on the truncated text (`registrar ello`). An
+  // optional chain after `it` is not carried yet: refused, never truncated.
+  it.each(['es', 'de', 'zh'] as const)('%s refuses what it does not read', language => {
+    expect(() => translate('log it?.dataset?.customValue', 'en', language)).toThrow(
+      LossyTranslationError
+    );
   });
 });
 

@@ -679,7 +679,7 @@ told) or `silent` (it returned English that parses differently, or that the engi
 rejects). The baseline (`baselines/command-shapes.json`) lists the refused and the
 silent lanes per case, both shrink-only; a case in a LOUD family (a shape semantic does
 not carry yet: `ask`/`answer`, templated selectors, `^x on <el>`, `dom x`) carries its
-reason. The gate (`command-shapes.<n>.test.ts`, three shards) fails on a pair worse than
+reason, and must be refused, never silent (a test holds it). The gate (`command-shapes.<n>.test.ts`, three shards) fails on a pair worse than
 listed (pass → refused or silent, refused → silent) and on one better than listed;
 regenerate with `npx tsx tools/regen-command-shapes-baseline.ts` (it refuses to write a
 worse pair without `--allow-new`). Its tables — by family, by node type, by lane — are
@@ -864,6 +864,14 @@ const node = await parse('#button の .active を 切り替え', 'ja');
 // Translate between any languages
 const arabic = await translate('toggle .active', 'en', 'ar');
 ```
+
+A translation that would lose part of the script is REFUSED, never truncated:
+`translate()` throws a `LossyTranslationError` (the partial output, and what it drops), and
+`{ lossy: 'allow' }` opts out. Three checks, in `semantic/src/explicit/lossy.ts`: the parse left
+input unread (`unconsumed-input`), the output reads back with other commands or leaves its own
+reader input unread, or a verbatim value (string, number, selector, sigil name) is missing. MCP
+`translate_code` reports a refusal as `ok: false` + `LOSSY_TRANSLATION` with the partial text under
+`partial`, never `code`. The command-shape gate (above) counts what the checks still miss.
 
 Key files:
 

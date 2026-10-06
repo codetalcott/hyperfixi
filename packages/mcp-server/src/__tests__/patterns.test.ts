@@ -224,6 +224,23 @@ describe('translate_hyperscript', () => {
     expect(parsed.toLanguage).toBe('ja');
   });
 
+  // A translation that would drop part of the script is refused, with what it
+  // drops; the partial text never comes back as `translated` (M1 fail-loud).
+  it('refuses a translation that would drop part of the script', async () => {
+    const result = await handlePatternTool('translate_hyperscript', {
+      code: 'on click toggle .foo .bar',
+      fromLanguage: 'en',
+      toLanguage: 'ja',
+    });
+
+    expect(result.isError).toBe(true);
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.refused).toBe(true);
+    expect(parsed.lost).toContain('.bar');
+    expect(parsed.translated).toBeUndefined();
+    expect(typeof parsed.partial).toBe('string');
+  });
+
   it('handles missing semantic package gracefully', async () => {
     const result = await handlePatternTool('translate_hyperscript', {
       code: 'toggle .active',

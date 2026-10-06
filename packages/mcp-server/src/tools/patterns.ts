@@ -7,6 +7,7 @@
 
 import type { Tool } from '@modelcontextprotocol/server';
 import type { Pattern } from '@hyperfixi/patterns-reference';
+import { translationRefusal } from './utils.js';
 
 // =============================================================================
 // Tool Definitions
@@ -65,7 +66,7 @@ export const patternTools: Tool[] = [
   {
     name: 'translate_hyperscript',
     description:
-      "Translate hyperscript between any of 24 languages with @lokascript/semantic (parse, then render in the target language's word order); selectors and values are preserved. Same engine as translate_code, which also returns a fidelity verification and name-collision warnings.",
+      "Translate hyperscript between any of 24 languages with @lokascript/semantic (parse, then render in the target language's word order); selectors and values are preserved. Same engine as translate_code, which also returns a fidelity verification and name-collision warnings. A translation that would lose part of the script is refused (refused: true, with `lost` and the `partial` text), never returned as `translated`.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -205,9 +206,14 @@ export async function handlePatternTool(
       const toLanguage = args.toLanguage as string;
 
       // Try semantic package for translation
+      let semantic: typeof import('@lokascript/semantic');
       try {
-        const semantic = await import('@lokascript/semantic');
-        const translated = await semantic.translate(code, fromLanguage, toLanguage);
+        semantic = await import('@lokascript/semantic');
+      } catch {
+        return handleWithBuiltinExamples(name, args);
+      }
+      try {
+        const translated = semantic.translate(code, fromLanguage, toLanguage);
         return {
           content: [
             {
@@ -225,8 +231,30 @@ export async function handlePatternTool(
             },
           ],
         };
-      } catch {
-        return handleWithBuiltinExamples(name, args);
+      } catch (error) {
+        // A translation that would lose part of the script is refused, with
+        // what it loses; the partial text is never reported as `translated`.
+        const refusal = translationRefusal(error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                refusal
+                  ? { ...refusal, original: code, fromLanguage, toLanguage }
+                  : {
+                      error: error instanceof Error ? error.message : String(error),
+                      original: code,
+                      fromLanguage,
+                      toLanguage,
+                    },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
       }
     }
 

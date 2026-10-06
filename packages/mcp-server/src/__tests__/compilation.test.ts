@@ -87,6 +87,24 @@ describe('translate_code', () => {
     expect(parsed.code).toBeDefined();
   }, 30000);
 
+  // M1 fail-loud: `ok: false`, what it would drop, and the partial text under
+  // `partial` — never `code`.
+  it('refuses a translation that would drop part of the script', async () => {
+    const result = await handleCompilationTool('translate_code', {
+      code: 'on click toggle .foo .bar',
+      from: 'en',
+      to: 'es',
+    });
+
+    expect(result.isError).toBe(true);
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.code).toBeUndefined();
+    expect(parsed.loss.lost).toContain('.bar');
+    expect(typeof parsed.partial).toBe('string');
+    expect(parsed.diagnostics.map((d: { code: string }) => d.code)).toEqual(['LOSSY_TRANSLATION']);
+  }, 30000);
+
   it('warns about a variable the target language reads as a pronoun', async () => {
     // tl `ako` is `me`: the translation reads the pronoun, and says so.
     const result = await handleCompilationTool('translate_code', {

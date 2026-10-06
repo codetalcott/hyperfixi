@@ -24,14 +24,17 @@ beforeAll(async () => {
 // reads both (see the last describe). An unclosed call stands in for "a body
 // the parser cannot read" — it will never parse.
 describe('faithful requires both parses to be complete', () => {
-  it('a reference that left tokens unconsumed is never faithful', () => {
+  // A source the parse cannot read whole is not translated at all now: the
+  // render was an empty handler, and `ok: true` with `faithful: false` beside
+  // it was the only trace. The partial text is reported, never as `code`.
+  it('a reference that left tokens unconsumed is refused', () => {
     const r = service.translate({ code: 'on load frob(1 me', from: 'en', to: 'ja' });
-    expect(r.ok).toBe(true);
-    expect(r.verification?.ok).toBe(true);
-    expect(r.verification?.referenceComplete).toBe(false);
-    expect(r.verification?.faithful).toBe(false);
-    // The render is an empty handler; the diagnostic is what says so.
-    expect(r.verification?.diagnostics.some(d => d.code === 'INCOMPLETE_PARSE')).toBe(true);
+    expect(r.ok).toBe(false);
+    expect(r.code).toBeUndefined();
+    expect(r.loss?.kind).toBe('truncation');
+    expect(r.loss?.lost.join(' ')).toContain('frob');
+    expect(typeof r.partial).toBe('string');
+    expect(r.diagnostics.some(d => d.code === 'LOSSY_TRANSLATION')).toBe(true);
   });
 
   it('scoreFidelity says which side was truncated', () => {

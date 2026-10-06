@@ -123,19 +123,26 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 import {
   translate as translateInternal,
   getAllTranslations as getAllTranslationsInternal,
+  type TranslateOptions,
 } from './explicit';
+export { LossyTranslationError } from './explicit';
 
 /**
  * Translate hyperscript between Spanish and English.
  */
-export function translate(input: string, sourceLang: string, targetLang: string): string {
+export function translate(
+  input: string,
+  sourceLang: string,
+  targetLang: string,
+  options?: TranslateOptions
+): string {
   if (
     (sourceLang !== 'en' && sourceLang !== 'es') ||
     (targetLang !== 'en' && targetLang !== 'es')
   ) {
     throw new Error('This bundle only supports translation between en and es');
   }
-  return translateInternal(input, sourceLang, targetLang);
+  return translateInternal(input, sourceLang, targetLang, options);
 }
 
 /**

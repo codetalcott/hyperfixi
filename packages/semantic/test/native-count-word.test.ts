@@ -29,7 +29,7 @@ describe("a variable count before the language's own word", () => {
     ['es', 'al clic repetir n veces incrementar x fin'],
     ['pt', 'ao clique repetir n vezes incrementar x fim'],
     ['fr', 'quand clic répéter n fois incrémenter x fin'],
-    ['de', 'wenn klick wiederholen n mal erhöhe x um 1 ende'],
+    ['de', 'wenn klick wiederholen n mal erhöhe x ende'],
     ['it', 'su click ripetere n volte incrementare x fine'],
     ['id', 'ketika klik ulangi n kali tingkatkan x selesai'],
     ['sw', 'unapo click rudia n mara ongezeko x mwisho'],

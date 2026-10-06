@@ -135,7 +135,14 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 // Rendering
 // =============================================================================
 
-export { render, renderExplicit, translate, toExplicit, fromExplicit } from './explicit';
+export {
+  render,
+  renderExplicit,
+  translate,
+  LossyTranslationError,
+  toExplicit,
+  fromExplicit,
+} from './explicit';
 
 // =============================================================================
 // AST Builder

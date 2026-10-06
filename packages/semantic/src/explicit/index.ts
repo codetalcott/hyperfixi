@@ -9,6 +9,14 @@ export { parseExplicit, isExplicitSyntax } from './parser';
 export { SemanticRendererImpl, semanticRenderer, renderExplicit } from './renderer';
 export { render } from './verified-render';
 export {
+  LossyTranslationError,
+  findTranslationLoss,
+  invariantValues,
+  type TranslateOptions,
+  type TranslationLoss,
+  type TranslationLossKind,
+} from './lossy';
+export {
   toExplicit,
   fromExplicit,
   translate,
