@@ -146,6 +146,17 @@ describe('a bottom-tested loop (P30)', () => {
     expect(node.diagnostics?.some(d => d.message.includes('"until x"'))).toBe(true);
   });
 
+  // An SOV until-phrase comes before its own `repeat` too (bn `পর্যন্ত n > 3
+  // পুনরাবৃত্তি …`, until n > 3 repeat): it heads the loop, never ends one.
+  it.each(['bn', 'ja', 'ko', 'tr', 'hi', 'qu'])(
+    'a top-tested until loop stays one in %s',
+    language => {
+      const code =
+        'on click set n to 0 then repeat until n > 3 increment n then wait 1ms end then put n into #out';
+      expect(translate(translate(code, 'en', language), language, 'en')).toBe(en(code));
+    }
+  );
+
   // An SOV while-phrase comes before its own `repeat` (`… の間 x < 3 繰り返し …`):
   // inside a forever loop, it is the inner loop's head, not the outer's test.
   it.each(['ja', 'ko', 'hi', 'tr', 'bn', 'qu'])(

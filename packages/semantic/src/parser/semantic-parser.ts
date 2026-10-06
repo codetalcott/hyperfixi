@@ -4284,6 +4284,9 @@ export class SemanticParserImpl implements ISemanticParser {
       const t = all[k]!;
       const place = endWordPlace(all, k);
       if (this.isBlockEndToken(t, place, language) || this.isThenAt(t, place, language)) break;
+      // A loop's own word: the until-phrase heads a loop, fronted where an SOV
+      // render writes it (bn `পর্যন্ত n > 3 পুনরাবৃত্তি …`, until n > 3 repeat).
+      if (isRepeatToken(t)) return null;
       rest.push(t);
     }
     if (rest.length === 0) return null;
