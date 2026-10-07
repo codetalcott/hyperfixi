@@ -322,6 +322,12 @@ export interface CommandSemanticNode extends SemanticNode {
   readonly scrollPosition?: string;
   /** `smoothly` / `instantly` after a `go` or `scroll` (core's `modifiers.behavior`). */
   readonly scrollBehavior?: 'smoothly' | 'instantly';
+  /**
+   * A clause after the command that its pattern does not model (`when it
+   * matches .doh`, `between .a and .b`), kept as written and written back as
+   * written, in place of dropping it.
+   */
+  readonly verbatimClause?: string;
 }
 
 /** One alternative a `wait for` races: an event, or a timeout. */

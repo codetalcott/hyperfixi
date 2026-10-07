@@ -129,7 +129,7 @@ describe('the emitted bundle runs', () => {
 
   // M1 fail-loud: a translation that would lose part of the script is refused.
   // The script stays as written (so the engine reports it) instead of running a
-  // partial English (`toggle .on` for `toggle .on .off`), and the page warns
+  // partial English (`toggle .on` for es `alternar .on cuando .off`), and the page warns
   // once per language with what it would drop.
   it('keeps a script whose translation would lose part of it', async () => {
     const code = generator.generate(usage(['toggle'], [], { detectedLanguages: new Set(['es']) }), {
@@ -147,12 +147,12 @@ describe('the emitted bundle runs', () => {
     const original = console.warn;
     console.warn = (...args: unknown[]) => void warnings.push(args.join(' '));
     try {
-      expect(api.translateSource!('al clic alternar .on .off', el)).toBeNull();
-      expect(api.translateSource!('al clic alternar .on .other', el)).toBeNull();
+      expect(api.translateSource!('al clic alternar .on cuando .off', el)).toBeNull();
+      expect(api.translateSource!('al clic alternar .on cuando .other', el)).toBeNull();
     } finally {
       console.warn = original;
     }
     expect(warnings.filter(w => w.includes('would lose'))).toHaveLength(1);
-    expect(warnings[0]).toContain('.off');
+    expect(warnings[0]).toContain('cuando .off');
   });
 });

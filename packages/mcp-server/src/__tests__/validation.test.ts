@@ -421,7 +421,8 @@ describe('error handling', () => {
 describe('translate_to_english refuses what it would drop (M1 fail-loud)', () => {
   it.each([false, true])('getAllLanguages=%s', async getAllLanguages => {
     const result = await handleValidationTool('translate_to_english', {
-      code: 'on click toggle .foo .bar',
+      // `ask` has no schema yet (an owner vocabulary decision): it is dropped.
+      code: 'on click ask "Name?" then put it into me',
       sourceLanguage: 'en',
       getAllLanguages,
     });
@@ -429,7 +430,7 @@ describe('translate_to_english refuses what it would drop (M1 fail-loud)', () =>
     expect(result.isError).toBe(true);
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.refused).toBe(true);
-    expect(parsed.lost).toContain('.bar');
+    expect(parsed.lost).toContain('ask "Name?"');
     expect(parsed.english).toBeUndefined();
     expect(parsed.translations).toBeUndefined();
   });

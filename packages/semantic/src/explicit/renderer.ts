@@ -214,6 +214,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in the specified language.
    */
   render(node: SemanticNode, language: string): string {
+    // A clause the command's pattern does not model, written back as written.
+    const clause = (node as CommandSemanticNode).verbatimClause;
+    if (clause) {
+      const { verbatimClause: _c, ...rest } = node as CommandSemanticNode;
+      const space = clause.startsWith(',') ? '' : ' ';
+      return `${this.render(rest as SemanticNode, language)}${space}${clause}`;
+    }
     // Upstream's statement modifier, after its command (`toggle .foo unless I
     // match .bar`): set by toUpstreamSpelling, for an English render.
     const postfix = (node as { postfixUnless?: SemanticValue }).postfixUnless;

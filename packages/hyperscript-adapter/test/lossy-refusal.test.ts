@@ -3,8 +3,8 @@
  * (M1 fail-loud, owner decision F2): the plugin keeps the author's text, which
  * the host then reports as a parse error naming code the author wrote, and
  * warns once per language with what the translation would drop. Before, the
- * partial English ran as though it were the whole: `alternar .foo .bar`
- * toggled `.foo` only.
+ * partial English ran as though it were the whole: `alternar .foo cuando .bar`
+ * toggled `.foo` always.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { hyperscriptI18n, preprocess, resetTranslationWarnings } from '../src/plugin';
@@ -14,7 +14,9 @@ import { lossyRefusalOf, warnLossyOnce, type LossyRefusal } from '../src/host-va
 
 beforeEach(() => resetTranslationWarnings());
 
-const LOSSY = 'al clic alternar .foo .bar'; // es: the parse reads `toggle .foo` only
+// es `cuando` (when): the parse reads `toggle .foo` only, and a clause in the
+// language's own words is never kept as written.
+const LOSSY = 'al clic alternar .foo cuando .bar';
 
 describe.each([
   ['full', fullPreprocess],
@@ -24,7 +26,7 @@ describe.each([
     let refusal: LossyRefusal | undefined;
     const out = preprocessToEnglish(LOSSY, 'es', { onLossy: r => void (refusal = r) });
     expect(out).toBe(LOSSY);
-    expect(refusal?.lost).toEqual(['.bar']);
+    expect(refusal?.lost).toEqual(['cuando .bar']);
     expect(refusal?.partial).toBe('on click toggle .foo');
   });
 
@@ -66,7 +68,7 @@ describe('the plugin', () => {
     expect(b.getAttribute('_')).toBe(LOSSY);
     const lossy = warn.mock.calls.filter(([m]) => String(m).includes('would lose'));
     expect(lossy).toHaveLength(1);
-    expect(String(lossy[0]?.[0])).toContain('.bar');
+    expect(String(lossy[0]?.[0])).toContain('cuando .bar');
     warn.mockRestore();
     a.remove();
     b.remove();

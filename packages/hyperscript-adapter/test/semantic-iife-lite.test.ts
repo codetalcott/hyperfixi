@@ -109,19 +109,19 @@ describe('the lite adapter on each semantic browser IIFE, on hyperfixi-hs.js', (
 
   // M1 fail-loud: semantic refuses a translation that would lose part of the
   // script, and the lite adapter keeps the author's text rather than running a
-  // partial English (`toggle .on` for `toggle .on .off`), and says what it drops.
+  // partial English (`toggle .on` for es `alternar .on cuando .off`), and says what it drops.
   it('keeps the text of a script whose translation would lose part of it', () => {
     const { window, messages } = load('browser.global.js');
     const { document } = window;
     const button = document.createElement('button');
     button.lang = 'es';
-    button.setAttribute('_', 'al clic alternar .on .off');
+    button.setAttribute('_', 'al clic alternar .on cuando .off');
     document.body.appendChild(button);
     (Reflect.get(window, '_hyperscript') as { processNode(n: Node): void }).processNode(
       document.body
     );
     button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     expect(button.classList.contains('on')).toBe(false);
-    expect(messages.some(m => m.includes('would lose') && m.includes('.off'))).toBe(true);
+    expect(messages.some(m => m.includes('would lose') && m.includes('cuando .off'))).toBe(true);
   });
 });

@@ -86,7 +86,10 @@ function getSemanticAnalyzer(): typeof cachedAnalyzer {
           const unconsumed = (
             (result.node.diagnostics ?? []) as Array<{ code?: string; message?: string }>
           )
-            .filter(d => d.code === 'unconsumed-input' && d.message)
+            // A clause kept as written is read by no role either.
+            .filter(
+              d => (d.code === 'unconsumed-input' || d.code === 'verbatim-clause') && d.message
+            )
             .map(d => d.message as string);
           if (unconsumed.length > 0) out.unconsumed = unconsumed;
         }

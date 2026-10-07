@@ -154,9 +154,15 @@ describe('a bottom-tested loop (P30)', () => {
   });
 
   it("an until after a toggle is the toggle's, never the loop's", () => {
-    expect(() =>
-      translate('on click repeat forever toggle .x until transitionend end', 'en', 'en')
-    ).toThrow(/lose/);
+    const code = 'on click repeat forever toggle .x until transitionend end';
+    expect(translate(code, 'en', 'en')).toBe(code);
+    const loop = (parse(code, 'en') as unknown as Node).body![0] as Node & {
+      roles: Map<string, { value?: unknown }>;
+    };
+    expect(loop.roles.get('loopType')?.value).toBe('forever');
+    expect((loop.body![0] as { verbatimClause?: string }).verbatimClause).toBe(
+      'until transitionend'
+    );
   });
 
   it('an until that ends no loop stays unread', () => {
