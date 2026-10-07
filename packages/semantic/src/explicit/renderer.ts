@@ -700,6 +700,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const expr = watched ? this.valueToNaturalString(watched, language) : '';
       return [keyword, expr, this.keyword(language, 'changes')].filter(Boolean).join(' ');
     }
+    if (node.immediately) return `${keyword} immediately`;
     const head = node.name ? `${keyword} ${node.name}` : keyword;
     // The header's URL, verbatim (it is code): `socket Name <url>`, and
     // `eventsource Name <from> <url>` with the language's source marker on the
@@ -1019,6 +1020,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const em = node.eventModifiers ?? {};
     if (!node.eventModifiers && !node.headClause) return;
     if (eventPart >= 0 && em.queue) parts[eventPart] += `.queue(${em.queue})`;
+    if (em.every) {
+      if (language === 'en' && eventPart >= 0) parts[eventPart] = `every ${parts[eventPart]}`;
+      else parts.unshift('every');
+    }
     if (em.once && em.onceAsFirst) {
       // `on first click`, the form both engines run once; every other
       // language a leading `first`, as its leading `once` below.

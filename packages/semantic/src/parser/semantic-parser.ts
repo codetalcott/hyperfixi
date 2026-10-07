@@ -3680,9 +3680,13 @@ export class SemanticParserImpl implements ISemanticParser {
       // between literal `at`/`of` tokens.
       const prevClauseToken = currentClauseTokens[currentClauseTokens.length - 1];
       const followingToken = tokens.peek(1);
+      const beforePrevClauseToken = currentClauseTokens[currentClauseTokens.length - 2];
       const isPositionalEndNoun =
-        (prevClauseToken?.value.toLowerCase() === 'at' &&
-          followingToken?.value.toLowerCase() === 'of') ||
+        (followingToken?.value.toLowerCase() === 'of' &&
+          (prevClauseToken?.value.toLowerCase() === 'at' ||
+            // `at the end of`, which upstream reads too.
+            (prevClauseToken?.value.toLowerCase() === 'the' &&
+              beforePrevClauseToken?.value.toLowerCase() === 'at'))) ||
         // Per-language `at end of` phrase (zh `在 结束 的`, id `di akhir dari`, …):
         // the `end` noun tokenizes as a keyword in some languages and would
         // otherwise chop make-toast's trailing `put it at end of body` clause.
@@ -7800,7 +7804,8 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private isElseKeyword(value: string, language: string): boolean {
     const v = value.toLowerCase();
-    if (v === 'else') return true;
+    // Upstream reads `otherwise` as `else`; English is written with `else`.
+    if (v === 'else' || v === 'otherwise') return true;
     return this.profileKeywordMatches(language, 'else', v);
   }
 
@@ -8229,8 +8234,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // of `at end of` is a position (`if x put 'a' at end of me end`): taken for
     // the block's `end`, it ended the conditional early, its own `end` closed
     // the loop or handler around it, and the commands after it ran inside it.
+    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
     const positional =
-      (place.prev?.value.toLowerCase() === 'at' && place.next?.value.toLowerCase() === 'of') ||
+      (word(place.next) === 'of' &&
+        (word(place.prev) === 'at' ||
+          (word(place.prev) === 'the' && word(place.beforePrev) === 'at'))) ||
       isAtEndPositionNoun(language, tok.value, place.prev?.value, place.next?.value);
     return endWord && !endWordIsValue(place, language) && !positional;
   }
@@ -8616,6 +8624,7 @@ export class SemanticParserImpl implements ISemanticParser {
     modifiers: {
       once?: boolean;
       onceAsFirst?: boolean;
+      every?: boolean;
       debounce?: number;
       throttle?: number;
     } | null;
@@ -8649,6 +8658,21 @@ export class SemanticParserImpl implements ISemanticParser {
         remainingInput: input.slice(allTokens[1].position.start),
       };
     }
+    // `on every click …`, and every other language's leading `every`, read as
+    // `first` is: semantic had no reading, and the head was lost.
+    if (firstLower === 'on' && word(1) === 'every' && allTokens.length > 2) {
+      return {
+        modifiers: { every: true },
+        remainingInput:
+          input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
+      };
+    }
+    if (firstLower === 'every' && notQuery(1) && allTokens.length > 2) {
+      return {
+        modifiers: { every: true },
+        remainingInput: input.slice(allTokens[1].position.start),
+      };
+    }
 
     const modType = SemanticParserImpl.STANDALONE_MODIFIERS[firstLower];
 
@@ -8657,6 +8681,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const modifiers: {
       once?: boolean;
       onceAsFirst?: boolean;
+      every?: boolean;
       debounce?: number;
       throttle?: number;
     } = {};
@@ -9100,7 +9125,13 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private applyModifiers(
     node: EventHandlerSemanticNode,
-    modifiers: { once?: boolean; onceAsFirst?: boolean; debounce?: number; throttle?: number }
+    modifiers: {
+      once?: boolean;
+      onceAsFirst?: boolean;
+      every?: boolean;
+      debounce?: number;
+      throttle?: number;
+    }
   ): EventHandlerSemanticNode {
     return {
       ...node,

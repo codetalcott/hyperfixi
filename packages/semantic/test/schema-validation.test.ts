@@ -16,10 +16,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { commandSchemas } from '../src/generators/command-schemas';
-import {
-  validateAllSchemas,
-  formatValidationResults,
-} from '../src/generators/schema-validator';
+import { validateAllSchemas, formatValidationResults } from '../src/generators/schema-validator';
 
 /**
  * Warnings that exist today and are accepted. Each is a deliberate schema
@@ -44,6 +41,9 @@ const ALLOWED_WARNINGS: Record<string, string[]> = {
   get: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   increment: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   morph: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
+  // remove: an element or a class, and a value from a collection (`remove 3
+  // from :arr`) or a style block (`remove {color} from me`), as upstream reads.
+  remove: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
   // set: a variable takes any value, a literal or an element (`set el to
   // #panel`) or an array (`to [1, 2]`, one selector token).
   set: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
@@ -83,9 +83,7 @@ describe('command schema validation', () => {
   it('has no stale allowlist entries', () => {
     const actual = new Map<string, Set<string>>();
     for (const [action, result] of validations) {
-      const codes = new Set(
-        result.items.filter(i => i.severity === 'warning').map(i => i.code)
-      );
+      const codes = new Set(result.items.filter(i => i.severity === 'warning').map(i => i.code));
       if (codes.size > 0) actual.set(action, codes);
     }
 
@@ -95,9 +93,10 @@ describe('command schema validation', () => {
         if (!actual.get(action)?.has(code)) stale.push(`${action}: ${code}`);
       }
     }
-    expect(stale, 'Allowlisted warning(s) no longer fire — remove them from ALLOWED_WARNINGS.').toEqual(
-      []
-    );
+    expect(
+      stale,
+      'Allowlisted warning(s) no longer fire — remove them from ALLOWED_WARNINGS.'
+    ).toEqual([]);
   });
 });
 

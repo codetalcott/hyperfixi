@@ -383,6 +383,12 @@ export interface EventModifiers {
    * click never fires).
    */
   readonly onceAsFirst?: boolean;
+  /**
+   * `on every <event>`: each event runs its own copy of the handler, none
+   * queued (upstream's `every`). Written `every` before the event in English
+   * and leading in every other language, as `first` is.
+   */
+  readonly every?: boolean;
   readonly debounce?: number;
   readonly throttle?: number;
   readonly queue?: 'first' | 'last' | 'all' | 'none';
@@ -555,6 +561,11 @@ export interface FeatureSemanticNode extends SemanticNode {
   readonly name?: string;
   /** Parsed body statements. Always empty for `intercept` (opaque body). */
   readonly body: SemanticNode[];
+  /**
+   * `init immediately`: upstream runs the block as the element is read, not
+   * after the page loads. The English word in every language, as `every`.
+   */
+  readonly immediately?: true;
 }
 
 // =============================================================================

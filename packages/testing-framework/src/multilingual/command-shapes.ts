@@ -624,13 +624,6 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     ],
   },
   {
-    name: 'else-word',
-    reason:
-      "an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and " +
-      'stays a word in the condition',
-    ids: ['e60afa928a'],
-  },
-  {
     name: 'it-locative',
     reason: 'it `in me` (a query scope) reads back as `on me`',
     ids: ['2159462e64', '0ff2f70080', 'd7b35fefe6'],
