@@ -366,6 +366,13 @@ export interface EventHandlerSemanticNode extends SemanticNode, ErrorClauses {
    * E.g., for "on click(clientX, clientY)", this would be ['clientX', 'clientY']
    */
   readonly parameterNames?: readonly string[];
+  /**
+   * What upstream's `on` reads between the event and the body that the event
+   * patterns do not model (`elsewhere`, a count `1 to 2`, `of attributes`,
+   * `queue first`, `having threshold 0.1`), kept as written and written after
+   * the event, in place of dropping it.
+   */
+  readonly headClause?: string;
 }
 
 export interface EventModifiers {

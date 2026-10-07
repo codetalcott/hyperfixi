@@ -1252,10 +1252,25 @@ function parseBehaviorBlock(
   // A handler started at a head that may be a destination (handlerStartAt).
   let unsure = false;
 
+  const behaviorForms = keywordForms(language, 'behavior');
   let depth = 0;
   let segStart = bodyStart;
   for (let j = bodyStart; j < tokens.length; j++) {
     const tok = tokens[j];
+    // A behavior inside a behavior (upstream reads a behavior's members as a
+    // whole program, so one without `end` holds the next): this node does not
+    // model it, so it and what follows it are reported unread.
+    if (depth === 0 && j > bodyStart && tokenMatches(tok, behaviorForms)) {
+      if (segStart < j) {
+        const before = input.slice(tokens[segStart]!.position.start, tok.position.start).trim();
+        if (tokenMatches(tokens[segStart]!, initForms)) takeInit(j);
+        else if (before) takeHandlers(before);
+      }
+      unread.push(input.slice(tok.position.start).trim());
+      sawClosingEnd = true;
+      segStart = tokens.length;
+      break;
+    }
     if (isEnd(tok)) {
       if (depth > 0) {
         depth--; // closes a NESTED block (if/repeat/…) inside the current handler

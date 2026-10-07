@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 23110,
-  "refused": 3936,
+  "pass": 23397,
+  "refused": 3649,
   "silent": 194,
   "entries": {
     "a1ca7a74a0": {
@@ -140,7 +140,7 @@
     "599215db33": {
       "src": "on click 1 hide on click 2 show",
       "family": "hide",
-      "refused": "en *"
+      "refused": "*"
     },
     "e71ea44d67": {
       "src": "on click hide <div/> in me when it matches .hideable",
@@ -811,7 +811,7 @@
     "3614477c6c": {
       "src": "on click elsewhere remove me",
       "family": "core/regressions",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",
@@ -831,7 +831,7 @@
     "82b8bc8836": {
       "src": "on click 1 set x to 10 on click 2 set @out to x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "5251dc43ae": {
       "src": "on click set the element's x to 10 then set @out to the element's x",
@@ -841,37 +841,37 @@
     "4b9dd078a2": {
       "src": "on click 1 set element x to 10 on click 2 set @out to x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "d6ac459628": {
       "src": "on click 1 set :x to 10 on click 2 set @out to :x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "9bd61daeaf": {
       "src": "on click 1 default element x to 0 on click 2 set element x to 10 on click 3 set @out to x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "961a12b7b7": {
       "src": "on click 1 default global x to 0 on click 2 set global x to 10 on click 3 set @out to x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "6d61cf7bfb": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 2 set @out to foo",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "b8c084be2a": {
       "src": "install Behave(foo:10) on click 2 set element foo to 1 on click 4 set @out2 to foo",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "4d988893a9": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "240935231f": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo behavior BehaveTwo(foo) on click 2 set e…",
@@ -881,12 +881,12 @@
     "0fba0cde11": {
       "src": "on click 1 set $x to 10 on click 2 set @out to $x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "4ad324c57b": {
       "src": "on click 1 set foo to 20 then set @out to foo",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "*"
     },
     "b4fbe37d69": {
       "src": "on click set var to [0,1,2,3,4,5] then put var[..3] as String into #d1",
@@ -1085,7 +1085,7 @@
     "7cf4fa3af7": {
       "src": "on click elsewhere add .clicked",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "567ce21730": {
       "src": "on example[foo] increment @count then put it into me",
@@ -1120,22 +1120,22 @@
     "9beb7b2c68": {
       "src": "on foo queue first wait for bar then call increment()",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "49a761fabb": {
       "src": "on foo queue last wait for bar then call increment()",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "78bd8bf920": {
       "src": "on foo queue all wait for bar then call increment()",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "ba54beb9d5": {
       "src": "on click queue none put increment() into my.innerHTML then wait for a customEvent",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "16fb80c097": {
       "src": "on click or foo call increment()",
@@ -1145,17 +1145,17 @@
     "dd2ca23457": {
       "src": "on click in #d1 put it into window.tmp",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn de it th tr"
     },
     "20024e932d": {
       "src": "on click 1 put 1 + my.innerHTML as Int into my.innerHTML",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "3f9872bcd4": {
       "src": "on click 1 to 2 put 1 + my.innerHTML as Int into my.innerHTML",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it pl th"
     },
     "bd7175dd23": {
       "src": "on click 2 and on put 1 + my.innerHTML as Int into my.innerHTML",
@@ -1165,7 +1165,7 @@
     "2f027486b4": {
       "src": "on click 1 put \"one\" into my.innerHTML on click 3 put \"three\" into my.innerHTML on click 2 put \"two\" into my.innerHTML",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "558a1f8b25": {
       "src": "on mutation put \"Mutated\" into me then wait for hyperscript:mutation",
@@ -1175,42 +1175,42 @@
     "13cff46824": {
       "src": "on mutation of attributes put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "62bab43e17": {
       "src": "on mutation of @foo put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "85f412f92a": {
       "src": "on mutation of @bar put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "7e4f56fe1b": {
       "src": "on mutation of childList put \"Mutated\" into me then wait for hyperscript:mutation",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "611ee442a1": {
       "src": "on mutation of childList put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "bb2c2ab053": {
       "src": "on mutation of characterData put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it qu th"
     },
     "df1d461f99": {
       "src": "on mutation of @foo or @bar put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "ae9fb9c316": {
       "src": "on mutation of attributes from #d1 put \"Mutated\" into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "f8db6d2073": {
       "src": "on click increment :x if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end catch e put e into me",
@@ -1255,12 +1255,12 @@
     "7f192fcdec": {
       "src": "on intersection(intersecting) having threshold 0.1 if intersecting put \"seen\" into me end",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "6b508f9f6a": {
       "src": "on intersection(intersecting) having margin \"10px\" if intersecting put \"seen\" into me end",
       "family": "on",
-      "refused": "en *"
+      "refused": "bn it th"
     },
     "5fc5e421fe": {
       "src": "on click halt the event's bubbling",
