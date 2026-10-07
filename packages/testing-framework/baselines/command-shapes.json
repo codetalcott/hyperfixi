@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 21669,
-  "refused": 5379,
-  "silent": 192,
+  "pass": 22967,
+  "refused": 4079,
+  "silent": 194,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
@@ -13,26 +13,6 @@
       "refused": "ar bn hi id ko ru th tr uk zh",
       "silent": "de es fr it ja ms pl pt qu sw tl vi",
       "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "52176aeb50": {
-      "src": "on click add .foo .bar",
-      "family": "add",
-      "refused": "en *"
-    },
-    "725196f20e": {
-      "src": "on click add .rey to .bar when it matches .doh",
-      "family": "add",
-      "refused": "en *"
-    },
-    "87a851fb52": {
-      "src": "on click add @rey to .bar when it matches .doh",
-      "family": "add",
-      "refused": "en *"
-    },
-    "f6a83b738c": {
-      "src": "on click add .foo to #d2 when asyncCheck()",
-      "family": "add",
-      "refused": "en *"
     },
     "e172bd73af": {
       "src": "on click add .foo to the children of #bar",
@@ -44,18 +24,18 @@
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
       "family": "add",
-      "refused": "en *"
+      "refused": "qu"
     },
     "dc8881fc7d": {
       "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
       "family": "add",
-      "refused": "en *"
+      "refused": "qu"
     },
     "87250fbc5e": {
       "src": "on click set result to [1,2,3] append 4 put it as String into me",
       "family": "append",
       "silent": "ms qu",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "ddd8e60406": {
       "src": "on click ask \"What is your name?\" then put it into #out",
@@ -114,17 +94,12 @@
     "1ba900c09e": {
       "src": "on click fetch /test {method:\"POST\"} then put it into my.innerHTML",
       "family": "fetch",
-      "refused": "en *"
-    },
-    "c9cd8a23c1": {
-      "src": "on click fetch /test as text with {method:\"POST\"} then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "en *"
+      "refused": "ja"
     },
     "66a3e903a3": {
       "src": "on click fetch \"/test\" {headers: {\"X-CustomHeader\": \"foo\"}} then put it into my.innerHTML end",
       "family": "fetch",
-      "refused": "en *"
+      "refused": "ja"
     },
     "83186964ec": {
       "src": "on click fetch /test don't throw then put it into me",
@@ -167,15 +142,10 @@
       "family": "hide",
       "refused": "en *"
     },
-    "563fb2db1f": {
-      "src": "on click hide add .foo",
-      "family": "hide",
-      "refused": "en *"
-    },
     "e71ea44d67": {
       "src": "on click hide <div/> in me when it matches .hideable",
       "family": "hide",
-      "refused": "en *"
+      "refused": "id ms"
     },
     "e60afa928a": {
       "src": "on click if false otherwise put \"foo\" into me.innerHTML",
@@ -223,12 +193,12 @@
     "2f7af96b02": {
       "src": "on click log me, my",
       "family": "log",
-      "refused": "en *"
+      "refused": "id ms vi"
     },
     "2204b224b3": {
       "src": "on click measure my x,y,left,top,right,bottom set window.measurement to {left:left,top:top,right:right,bottom:bottom}",
       "family": "measure",
-      "refused": "en *"
+      "refused": "es"
     },
     "61bc69c358": {
       "src": "on click measure x,y,left,top,right,bottom,width,height,bounds,scrollLeft,scrollTop,scrollLeftMax,scrollTopMax,scrollWi…",
@@ -294,16 +264,6 @@
       "family": "put",
       "refused": "*"
     },
-    "f74ce980ff": {
-      "src": "on click remove .foo .bar",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "9a5c1482e6": {
-      "src": "on click remove .highlight from .item when it matches .old",
-      "family": "remove",
-      "refused": "en *"
-    },
     "60770598a3": {
       "src": "on click remove {color} from me",
       "family": "remove",
@@ -338,12 +298,13 @@
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
       "family": "remove",
       "silent": "ms pl",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "54a65f4602": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove b of :obj put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into…",
       "family": "remove",
-      "refused": "en *"
+      "silent": "ms pl",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "db7fef03e9": {
       "src": "on click repeat for x in [1, 2, 3] put x at end of me end",
@@ -398,7 +359,7 @@
     "eaa5a2fba1": {
       "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "it pl ru uk"
     },
     "2d6fa6cf27": {
       "src": "on click call sprayInto(me)",
@@ -501,11 +462,6 @@
       "family": "scroll",
       "refused": "en *"
     },
-    "7ef504c57f": {
-      "src": "on foo add .foo-sent to sender log 1, me, sender",
-      "family": "send",
-      "refused": "en *"
-    },
     "aae16fda89": {
       "src": "on foo.bar add .foo-sent",
       "family": "send",
@@ -513,11 +469,6 @@
     },
     "b0492a08fb": {
       "src": "on click send foo:bar(x:42) to #bar",
-      "family": "send",
-      "refused": "en *"
-    },
-    "d9ec1b5498": {
-      "src": "def bar return #bar on click send foo to bar()",
       "family": "send",
       "refused": "en *"
     },
@@ -588,37 +539,27 @@
     "d9ecdbc854": {
       "src": "on click toggle .foo show when I match .foo",
       "family": "show",
-      "refused": "en *"
+      "refused": "pl tr"
     },
     "cc4909b0a6": {
       "src": "on click toggle .foo show with opacity when I match .foo",
       "family": "show",
-      "refused": "en *"
+      "refused": "pl tr"
     },
     "84c8655749": {
       "src": "on click show <p/> in me when its innerText contains \"foo\"",
       "family": "show",
-      "refused": "en *"
+      "refused": "id ms"
     },
     "216845203a": {
       "src": "on click get 'found' show <span/> in me when the result is 'found'",
       "family": "show",
-      "refused": "en *"
+      "refused": "id ms"
     },
     "fc1f6f6ab5": {
       "src": "on click show <p/> in me when its textContent is 'yes' if the result is empty put 'none' into #out else put 'some' into…",
       "family": "show",
-      "refused": "en *"
-    },
-    "7190d033fa": {
-      "src": "on click take .foo from .div for #d3",
-      "family": "take",
-      "refused": "en *"
-    },
-    "03a84c939d": {
-      "src": "on click take .foo from .div for event.target",
-      "family": "take",
-      "refused": "en *"
+      "refused": "id ms qu"
     },
     "93ce107f93": {
       "src": "on click take @data-foo=baz from .div",
@@ -635,38 +576,8 @@
       "family": "take",
       "refused": "en *"
     },
-    "4f2c353324": {
-      "src": "on click take .selected with .unselected from .item",
-      "family": "take",
-      "refused": "en *"
-    },
-    "42ab540e4f": {
-      "src": "on click take .selected from .item giving .unselected",
-      "family": "take",
-      "refused": "en *"
-    },
     "2e5e71153b": {
       "src": "on click take @data-foo=baz from .div giving \"qux\"",
-      "family": "take",
-      "refused": "en *"
-    },
-    "29d848f705": {
-      "src": "on click take @data-foo from .div for #d3",
-      "family": "take",
-      "refused": "en *"
-    },
-    "834d9defce": {
-      "src": "on click take @data-foo from .div for event.target",
-      "family": "take",
-      "refused": "en *"
-    },
-    "d39b280138": {
-      "src": "on click take .foo .bar",
-      "family": "take",
-      "refused": "en *"
-    },
-    "ab7d8dc462": {
-      "src": "on click take .foo .bar from .div1",
       "family": "take",
       "refused": "en *"
     },
@@ -683,32 +594,22 @@
     "6428d2ac2e": {
       "src": "on click toggle between .a and .b for x in [1, 2] put x into #out end",
       "family": "toggle",
-      "refused": "en *"
-    },
-    "a279e35963": {
-      "src": "on click toggle .foo until foo from #d1",
-      "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "f886098f71": {
       "src": "on click toggle between .foo and .bar",
       "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "237fd5ee40": {
       "src": "on click toggle between [@data-state='active'] and [@data-state='inactive']",
       "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "1f173a2d64": {
       "src": "on click toggle between [@enabled='true'] and [@disabled='true']",
       "family": "toggle",
-      "refused": "en *"
-    },
-    "817dc01fa4": {
-      "src": "on click toggle .foo .bar",
-      "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "df922f3370": {
       "src": "on click toggle my *display",
@@ -725,50 +626,25 @@
       "family": "toggle",
       "refused": "ar de fr he ja tr"
     },
-    "72fd7ecd0f": {
-      "src": "on click toggle the *display of #d2",
-      "family": "toggle",
-      "refused": "en *"
-    },
-    "e5a600a136": {
-      "src": "on click toggle the *opacity of #d2",
-      "family": "toggle",
-      "refused": "en *"
-    },
-    "1d2b350bfa": {
-      "src": "on click toggle the *visibility of #d2",
-      "family": "toggle",
-      "refused": "en *"
-    },
     "3ba1aed452": {
       "src": "on click toggle .group-\\[:nth-of-type\\(3\\)_\\&\\]:block",
-      "family": "toggle",
-      "refused": "en *"
-    },
-    "24c32ea0f9": {
-      "src": "on click toggle *display of me between 'none' and 'flex'",
-      "family": "toggle",
-      "refused": "en *"
-    },
-    "cce78169bd": {
-      "src": "on click toggle *opacity of me between '0', '0.5' and '1'",
       "family": "toggle",
       "refused": "en *"
     },
     "47902e382e": {
       "src": "on click toggle $mode between 'edit' and 'preview'",
       "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "862ede02e6": {
       "src": "on click toggle $state between 'a', 'b' and 'c'",
       "family": "toggle",
-      "refused": "en *"
+      "refused": "ar de fr he ja tr"
     },
     "e8a298b630": {
       "src": "on click transition *width from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "757da52773": {
       "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
@@ -778,42 +654,42 @@
     "f9d6cb3b20": {
       "src": "on click transition my *width from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "be37dedb54": {
       "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "7fe8bdc214": {
       "src": "on click transition #foo's *width from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
     },
     "b81ed8569d": {
       "src": "on click transition *width of #foo from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "5ded6059c0": {
       "src": "on click get #foo then transition its *width from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "b6d4332c89": {
       "src": "on click transition #foo's *width from 0px to 100px using \"width 2s ease-in\"",
       "family": "transition",
-      "refused": "en *"
+      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
     },
     "c934b95f51": {
       "src": "on click transition #foo's *width from 0px to 100px over 2s",
       "family": "transition",
-      "refused": "en *"
+      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
     },
     "3608d60b77": {
       "src": "on click transition *width of the next <span/> from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "bn hi ja ko pl qu tr"
     },
     "446cb475ce": {
       "src": "on click 1 transition my *width to 100px on click 2 transition my *width to initial",
@@ -869,13 +745,13 @@
       "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
       "silent": "ar hi ms pl th",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "69537d01ae": {
       "src": "init if ^val is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
       "silent": "ar hi ms pl th",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
@@ -1091,7 +967,7 @@
       "src": "on click set (closest @foo to #d1) to \"doh\"",
       "family": "expressions/closest",
       "silent": "pl sw",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "35f188d961": {
       "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
@@ -1102,20 +978,10 @@
       "src": "on click add .doh to closest .bar to .foo",
       "family": "expressions/closest",
       "silent": "pl",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "f76ff620e1": {
       "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
-      "family": "expressions/collectionExpressions",
-      "refused": "en *"
-    },
-    "0cee637bb9": {
-      "src": "on click set result to (<span/> in #box) where it matches .a then put result.length into me",
-      "family": "expressions/collectionExpressions",
-      "refused": "en *"
-    },
-    "9a110b248d": {
-      "src": "on click set result to <span/> in #box where it matches .a then put result.length into me",
       "family": "expressions/collectionExpressions",
       "refused": "en *"
     },
@@ -1211,7 +1077,7 @@
       "src": "on click if no <span/> in #box where it matches .c then put 'none' into #out else put 'found' into #out",
       "family": "expressions/no",
       "silent": "qu vi",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "08702e835c": {
       "src": "on click put 'updated' into the next <div/>'s textContent",
@@ -1456,26 +1322,6 @@
       "silent": "id",
       "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
-    "a9c2c0024a": {
-      "src": "on click render #tmpl into #target",
-      "family": "templates/templates",
-      "refused": "en *"
-    },
-    "f793d435aa": {
-      "src": "on click render #tmpl with x: 'world' into #target",
-      "family": "templates/templates",
-      "refused": "en *"
-    },
-    "a0c1f32954": {
-      "src": "on click render #tmpl here",
-      "family": "templates/templates",
-      "refused": "en *"
-    },
-    "801604b875": {
-      "src": "on click render #tmpl with x: 'world' here",
-      "family": "templates/templates",
-      "refused": "en *"
-    },
     "93c8c96b46": {
       "src": "hide",
       "family": "hide",
@@ -1650,7 +1496,7 @@
     "32bbb02918": {
       "src": "pick items 0 to 2 from :list pick characters 0 to 3 from \"hello\"",
       "family": "pick",
-      "refused": "en *"
+      "refused": "pl"
     },
     "69b9b4ca2b": {
       "src": "beep! me beep! :count, result",
