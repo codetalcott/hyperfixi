@@ -5973,8 +5973,8 @@
       "family": "swap"
     },
     {
-      "id": "315f1121a3",
-      "source": "swap innerHTML of #target with result",
+      "id": "9620da1cf2",
+      "source": "swap #a's value with #b's value",
       "origin": "reference:swap",
       "family": "swap"
     },
@@ -6021,8 +6021,8 @@
       "family": "fetch"
     },
     {
-      "id": "dbb9beca52",
-      "source": "fetch /api/${id} as json",
+      "id": "8f4df5f328",
+      "source": "fetch `/api/${id}` as json",
       "origin": "reference:fetch",
       "family": "fetch"
     },
@@ -6549,8 +6549,8 @@
       "family": "clear"
     },
     {
-      "id": "951b2209ca",
-      "source": "swap #a with #b\nswap innerHTML of #target with response",
+      "id": "4525690ff4",
+      "source": "swap #a with #b\nswap #a's value with #b's value",
       "origin": "hover:swap",
       "family": "swap"
     },
