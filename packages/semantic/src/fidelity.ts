@@ -96,6 +96,9 @@ function walkMultiset(node: unknown, acc: string[], depth: number): void {
   if (typeof action === 'string' && !STRUCTURAL_ACTIONS.has(action)) {
     acc.push(action);
   }
+  // A guard written after its command (toUpstreamSpelling's `X unless C`) is
+  // the `unless` the parse reads as a command of its own.
+  if (rec.postfixUnless) acc.push('unless');
 
   for (const field of CHILD_FIELDS) {
     const child = rec[field];

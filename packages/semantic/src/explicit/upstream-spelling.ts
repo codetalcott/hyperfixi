@@ -24,6 +24,7 @@
  *   fetch "X" do not throw            → fetch "X" as text do not throw  (upstream reads
  *                                       a quoted URL followed by `do not` as a comparison)
  *   X has .c / I have .c              → X matches .c / I match .c
+ *   unless C X                        → X unless C  (a statement modifier, after its command)
  *   my?.a?.b                          → my.a.b  (a property chain is null-safe on both)
  *   previous <input/>.value           → the value of previous <input/>
  *   fetch /q?x=${my value}            → fetch `/q?x=${my value}`  (upstream interpolates a
@@ -125,7 +126,23 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
 }
 
 function rewriteAll(nodes: readonly SemanticNode[]): SemanticNode[] {
-  return nodes.map(toUpstreamSpelling);
+  const out: SemanticNode[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
+    const next = nodes[i + 1];
+    // unless C X → X unless C: upstream's guard is a statement modifier written
+    // after the command (`toggle .foo unless I match .bar`); the flat guard
+    // ahead of its command is core's prefix form, which upstream rejects.
+    const condition =
+      node.kind === 'command' && node.action === 'unless' ? node.roles.get('condition') : undefined;
+    if (condition && next && !(next as { postfixUnless?: unknown }).postfixUnless) {
+      out.push({ ...toUpstreamSpelling(next), postfixUnless: condition } as SemanticNode);
+      i++;
+      continue;
+    }
+    out.push(toUpstreamSpelling(node));
+  }
+  return out;
 }
 
 function rewriteRoles(roles: Roles): Map<SemanticRole, SemanticValue> {

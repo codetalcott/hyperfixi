@@ -214,6 +214,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in the specified language.
    */
   render(node: SemanticNode, language: string): string {
+    // Upstream's statement modifier, after its command (`toggle .foo unless I
+    // match .bar`): set by toUpstreamSpelling, for an English render.
+    const postfix = (node as { postfixUnless?: SemanticValue }).postfixUnless;
+    if (postfix) {
+      const { postfixUnless: _p, ...rest } = node as SemanticNode & {
+        postfixUnless?: SemanticValue;
+      };
+      const cond = this.valueToNaturalString(postfix, language);
+      return `${this.render(rest as SemanticNode, language)} ${this.keyword(language, 'unless')} ${cond}`;
+    }
     // A handler's error clauses follow its commands (the patterns know neither).
     if (node.kind === 'event-handler') {
       const {

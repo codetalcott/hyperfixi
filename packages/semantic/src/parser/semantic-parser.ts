@@ -175,6 +175,29 @@ function isRepeatToken(token: LanguageToken): boolean {
   return (token.normalized ?? token.value).toLowerCase() === 'repeat';
 }
 
+/**
+ * Upstream's statement modifier, `<command> unless <condition>`: the guard
+ * follows the command it guards, in the same clause. The flat model reads a
+ * guard AHEAD of its command (core's prefix `unless <cond> <command>`, the SOV
+ * trailing guard), so a guard read after a command moves there; an English
+ * render writes it back after (toUpstreamSpelling). Read in place, `toggle .foo
+ * unless I match .bar` was written `toggle .foo then unless I match .bar`, which
+ * upstream rejects. Only within one clause: after a `then`, an `unless` is the
+ * prefix guard of what follows it.
+ */
+function frontPostfixGuards(commands: SemanticNode[]): SemanticNode[] {
+  const isGuard = (n: SemanticNode | undefined): boolean =>
+    !!n && n.kind === 'command' && n.action === 'unless' && n.roles.has('condition');
+  const out = [...commands];
+  for (let i = 1; i < out.length; i++) {
+    if (isGuard(out[i]) && !isGuard(out[i - 1])) {
+      [out[i - 1], out[i]] = [out[i]!, out[i - 1]!];
+      i++;
+    }
+  }
+  return out;
+}
+
 /** Loop heads in the walker's list still waiting for their `end`. */
 function openLoopCount(entries: readonly WalkEntry[]): number {
   let open = 0;
@@ -4702,7 +4725,7 @@ export class SemanticParserImpl implements ISemanticParser {
       ];
     }
 
-    return bodyCommands;
+    return frontPostfixGuards(bodyCommands);
   }
 
   /**

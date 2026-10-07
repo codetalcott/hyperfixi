@@ -61,14 +61,17 @@ describe.each(['bn', 'vi'])('%s', language => {
 
   it('unless is still unless', () => {
     expect(roundTrip('on click unless flag put "Y" into #out end', language)).toBe(
-      'on click unless flag then put "Y" into #out'
+      'on click put "Y" into #out unless flag'
     );
   });
 });
 
 it('vi `nếu không` before a verb is still `else`', () => {
   expect(
-    render(parse('khi click nếu flag đặt "Y" vào #out nếu không đặt "N" vào #out kết thúc', 'vi')!, 'en')
+    render(
+      parse('khi click nếu flag đặt "Y" vào #out nếu không đặt "N" vào #out kết thúc', 'vi')!,
+      'en'
+    )
   ).toBe('on click if flag put "Y" into #out else put "N" into #out end');
 });
 
@@ -84,7 +87,7 @@ describe('bn `যদি না` after its condition is still `unless`', () => {
     // An operand after it too: what precedes the pair decides.
     'ক্লিক তে flag যদি না "Y" কে #out এ রাখুন',
   ])('%s', code => {
-    expect(render(parse(code, 'bn')!, 'en')).toBe('on click unless flag then put "Y" into #out');
+    expect(render(parse(code, 'bn')!, 'en')).toBe('on click put "Y" into #out unless flag');
   });
 });
 
