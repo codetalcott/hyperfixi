@@ -81,13 +81,16 @@ its reader brings it back (#1419), and three losses no gate held (step 2): tr re
 value matrix's `branch` position now holds the shape), core's `swap into`/`over` were written as an
 exchange with a property, and a strategy upstream cannot spell is refused (`core-only`, S6).
 `it.value` written `its.value` (P14) was measured as no loss: both engines read `its` as `it`, and
-upstream's own suite writes `its.ok`.
+upstream's own suite writes `its.ok`. Step 3 (English refusals) began with values: a CSS length
+(`100px`, `50%`) is one value, `innerHTML of #d1` names a property, a string holding a quote keeps
+closing, and `don't throw` reads (82 → 73 refused).
 
 | Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
 | ---------------------- | ------ | ------- | ------ | --------------------------------- |
 | first run (2026-10-06) | 18,171 | 1,479   | 7,614  | 793 / 60 / 283                    |
 | 4.2.0 (2026-10-07)     | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
 | main (2026-10-07)      | 23,954 | 3,242   | 44     | 1,053 / 82 / 0                    |
+| step 3, values         | 24,139 | 3,057   | 44     | 1,062 / 73 / 0                    |
 
 **Left.** English refusals: `scroll … by` (P8), `.stop*` classes (P2), `default … in` (P10),
 `make a Set` (P11), a second `on` after `send` (P26), `halt default`, `don't throw`, `send` arguments,
