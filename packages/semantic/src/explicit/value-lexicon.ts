@@ -31,6 +31,16 @@
  *     localized source would have evaluated an undefined identifier at runtime.
  *     A BARE `true` is unaffected: it round-trips, because the parse side does
  *     de-localize a standalone literal.
+ *   - anything inside a BRACKET GROUP: an array literal (`[1, me]`), an
+ *     attribute selector (`<[aria-pressed=true]/>`), an index or a range
+ *     (`arr[idx]`, `var[(index-1)..(index+1)]`). Every tokenizer reads a bracket
+ *     group whole, and no reader de-localizes inside one, so a word localized
+ *     there stayed in the read-back, in all 23 languages: `2 is in [true, n]`
+ *     came back from es as `2 is in [verdadero, n]`, an array holding a
+ *     variable named `verdadero`, and `I match <[aria-pressed=true]/>` lost its
+ *     selector, so its translation was refused. A WHOLE value that is a bracket
+ *     group was already written as written; this is the same group inside a
+ *     larger expression.
  *   - selectors, urls, numbers, and sigil-attached tokens (`@attr`, `#id`, `$var`)
  *   - identifiers the lexicon has no entry for (they pass through unchanged)
  * A word is rewritten only when the profile vouches for it, so an unknown token
@@ -125,38 +135,25 @@ export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProf
 }
 
 /**
- * Mask every balanced `{...}` group, outermost first, so a brace group's
- * interior survives verbatim.
+ * Mask every balanced `{...}` group, then every balanced `[...]` group,
+ * outermost first, so each group's interior survives verbatim.
  *
  * Runs AFTER string masking, so a brace group containing a string
  * (`headers:{Authorization:\`Bearer \${$token}\`}`) holds that string's mask
  * token, and the restore pass below unwraps both layers. A scanner rather than
- * a regex because brace groups nest; an unbalanced `{` is left alone.
+ * a regex because groups nest; an unbalanced `{` or `[` is left alone.
  */
-function maskBraceGroups(text: string, spans: string[]): string {
-  return maskGroups(maskGroups(text, spans, '{', '}'), spans, '[', ']', true);
+function maskLiteralGroups(text: string, spans: string[]): string {
+  return maskGroups(maskGroups(text, spans, '{', '}'), spans, '[', ']');
 }
 
-/**
- * Mask every balanced `open … close` group. With `indexOnly`, only a group that
- * touches the name before it: an index or a range (`var[(index-1)..(index+1)]`,
- * `arr[idx]`), the script's own expression, never an array literal.
- */
-function maskGroups(
-  text: string,
-  spans: string[],
-  openChar: string,
-  closeChar: string,
-  indexOnly = false
-): string {
+/** Mask every balanced `open … close` group. */
+function maskGroups(text: string, spans: string[], openChar: string, closeChar: string): string {
   let out = '';
   let index = 0;
   while (index < text.length) {
-    let open = text.indexOf(openChar, index);
-    while (indexOnly && open > 0 && !/[\w)\]]/.test(text[open - 1] as string)) {
-      open = text.indexOf(openChar, open + 1);
-    }
-    if (open === -1 || (indexOnly && open === 0)) {
+    const open = text.indexOf(openChar, index);
+    if (open === -1) {
       out += text.slice(index);
       break;
     }
@@ -219,7 +216,7 @@ export function localizeValueInterior(
     spans.push(match);
     return `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
   });
-  const masked = maskBraceGroups(stringsMasked, spans).replace(
+  const masked = maskLiteralGroups(stringsMasked, spans).replace(
     TYPE_NAME,
     (_, lead: string, type: string) => {
       spans.push(type);

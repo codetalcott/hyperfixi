@@ -638,7 +638,7 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), and English words upstream runs as variables (`input`, `when`, `index`:
 `KEYWORD_NAMES`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 4,325 cells. It EXECUTES each one: the English source on upstream
+…) — 4,350 cells. It EXECUTES each one: the English source on upstream
 `hyperscript.org` is the oracle, and 48 lanes must match it — semantic's English
 round trip, each language through the adapter on upstream, and (since 2026-10-01)
 the English source and each language's adapter output on `@hyperfixi/engine`
