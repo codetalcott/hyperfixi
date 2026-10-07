@@ -1407,7 +1407,7 @@ export class PatternMatcher {
     //    dangling `( )` that breaks the following destination group — en
     //    truncated the event to `literal="update"` AND dropped `to #target`
     //    (send-with-detail ×21; translations captured both and were penalized).
-    //  - DECLARATION commands (`behavior`/`def`/`install`): `Draggable(dragHandle)`
+    //  - DECLARATION commands (`behavior`/`def`): `Draggable(dragHandle)`
     //    is a declaration SIGNATURE, not a call. Folding it lets the single-command
     //    declaration pattern (e.g. SOV `{name} কে আচরণ`) consume the first line of a
     //    multi-line `behavior … end` block and return a degenerate match, shadowing
@@ -3927,13 +3927,18 @@ export class PatternMatcher {
    * a call expression — the bare-call fold must not consume the `(params)` for
    * these (see the fold call site in matchRoleToken).
    */
-  private static readonly DECLARATION_COMMANDS = new Set(['behavior', 'def', 'install']);
+  // `install` is not one: its parentheses are arguments (`install Draggable(dragHandle:
+  // .titlebar)`), which the fold keeps. Unfolded, they were left unread.
+  private static readonly DECLARATION_COMMANDS = new Set(['behavior', 'def']);
 
   /** The role each command writes: a counter's patient, `set`'s destination. */
   private static readonly WRITTEN_ROLE: Readonly<Record<string, string>> = {
     increment: 'patient',
     decrement: 'patient',
     set: 'destination',
+    // The side a binding writes: `bind $theme and @data-theme` read `$theme and
+    // @data-theme` as one logical run, and the binding did not parse.
+    bind: 'destination',
   };
 
   /**

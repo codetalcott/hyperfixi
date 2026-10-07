@@ -25,6 +25,7 @@ import type {
   EventHandlerSemanticNode,
   DefSemanticNode,
   FeatureAction,
+  Diagnostic,
 } from '../types';
 import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNode } from '../types';
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
@@ -219,7 +220,11 @@ function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerFo
       return !!after && (tokenMatches(after, forms.inForms) || after.normalized === 'in');
     }
   }
-  if (action === 'if' && prev && tokenMatches(prev, forms.elseForms)) return false;
+  // `else if` continues the chain on the else's line only; an `if` on the next
+  // line opens a block of its own, with its own `end` (isElseIfChain).
+  if (action === 'if' && prev && tokenMatches(prev, forms.elseForms) && !tok.metadata?.lineStart) {
+    return false;
+  }
   return true;
 }
 
@@ -1206,6 +1211,7 @@ function parseBehaviorBlock(
           confidences.push(part.metadata?.confidence ?? 0.75);
         } else {
           confidences.push(0); // not a handler (the split returns features) — structural miss
+          unread.push(part.metadata?.sourceText ?? handlerText);
         }
       }
       return;
@@ -1221,9 +1227,11 @@ function parseBehaviorBlock(
         confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
       } else {
         confidences.push(0); // parsed, but not a handler — structural miss
+        unread.push(handlerText);
       }
     } catch {
       confidences.push(0);
+      unread.push(handlerText);
     }
   };
 
@@ -1235,6 +1243,11 @@ function parseBehaviorBlock(
   const eventHandlers: EventHandlerSemanticNode[] = [];
   const initCommands: SemanticNode[] = [];
   const confidences: number[] = [];
+  // Members that are neither a handler nor `init`: upstream's behavior also
+  // holds other features (`set @data-marked to 'yes'`), which this node does
+  // not model. Read as a flat sequence, the behavior became `behavior MarkIt
+  // then set …`, which every check passed; now their text is reported unread.
+  const unread: string[] = [];
   let sawClosingEnd = false;
   // A handler started at a head that may be a destination (handlerStartAt).
   let unsure = false;
@@ -1283,17 +1296,25 @@ function parseBehaviorBlock(
     else takeHandlers(input.slice(tokens[segStart]!.position.start).trim());
   }
 
-  if (eventHandlers.length === 0 && initCommands.length === 0) return null;
+  if (eventHandlers.length === 0 && initCommands.length === 0 && unread.length === 0) return null;
 
   const mean = (sawClosingEnd ? 1 : 0.8) * meanConfidence(confidences);
   const confidence = unsure ? Math.min(mean, UNSURE_SPLIT_CONFIDENCE) : mean;
-  return createBehaviorNode(
+  const node = createBehaviorNode(
     name,
     parameters,
     eventHandlers,
     initCommands.length > 0 ? initCommands : undefined,
     { sourceLanguage: language, confidence, sourceText: input }
   );
+  if (unread.length === 0) return node;
+  const diagnostics: Diagnostic[] = unread.map(text => ({
+    message: `behavior member left unconsumed (not a handler or init): "${text}"`,
+    severity: 'warning',
+    source: 'semantic-parser',
+    code: 'unconsumed-input',
+  }));
+  return { ...node, diagnostics: [...(node.diagnostics ?? []), ...diagnostics] };
 }
 
 /**

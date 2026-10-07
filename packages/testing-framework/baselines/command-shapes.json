@@ -3,15 +3,10 @@
   "upstream": "0.9.93",
   "cases": 1136,
   "pairs": 27264,
-  "pass": 20939,
-  "refused": 5744,
-  "silent": 581,
+  "pass": 21443,
+  "refused": 5287,
+  "silent": 534,
   "entries": {
-    "3480154525": {
-      "src": "bind $theme and @data-theme",
-      "family": "bind",
-      "refused": "en *"
-    },
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
       "family": "add",
@@ -1022,11 +1017,6 @@
       "family": "core/scoping",
       "refused": "en *"
     },
-    "132b5fb425": {
-      "src": "install Behave(foo:10)",
-      "family": "core/scoping",
-      "refused": "en *"
-    },
     "6d61cf7bfb": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 2 set @out to foo",
       "family": "core/scoping",
@@ -1039,11 +1029,6 @@
     },
     "4d988893a9": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo",
-      "family": "core/scoping",
-      "refused": "en *"
-    },
-    "dac24417e3": {
-      "src": "install Behave(foo:10) install BehaveTwo(foo:42)",
       "family": "core/scoping",
       "refused": "en *"
     },
@@ -1202,11 +1187,6 @@
       "refused": "en *",
       "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
     },
-    "8a0905548a": {
-      "src": "bind ^search and my value",
-      "family": "expressions/dom-scope",
-      "refused": "en *"
-    },
     "d7b35fefe6": {
       "src": "on click get #p1 in me then put its id into @result",
       "family": "expressions/in",
@@ -1251,105 +1231,20 @@
       "family": "expressions/relativePositionalExpression",
       "refused": "en *"
     },
-    "ab10f94541": {
-      "src": "install Behave(foo: 1, bar: 1)",
-      "family": "behavior",
-      "refused": "en *"
-    },
-    "801e211f5c": {
-      "src": "install Behave(elt: #b1)",
-      "family": "behavior",
-      "refused": "en *"
-    },
-    "433228d9f9": {
-      "src": "install Behave(elt: #d1)",
-      "family": "behavior",
-      "refused": "en *"
-    },
     "66878bf2ed": {
       "src": "behavior Behave init set element's foo to 1 set element's bar to {} end on click increment element's foo set element's …",
       "family": "behavior",
       "refused": "it pl ru uk"
     },
-    "fd5f27f62d": {
-      "src": "bind $name and #name-input.value end when $name changes put it into me",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "2bcb47a006": {
-      "src": "bind $color and @data-color",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "fef0cd8bed": {
-      "src": "bind $city to #city-input.value end when $city changes put it into me",
-      "family": "bind",
-      "refused": "hi ko"
-    },
-    "f18d740a54": {
-      "src": "bind $greeting to me end when $greeting changes put it into next <span/>",
-      "family": "bind",
-      "refused": "hi ko"
-    },
-    "a808d48445": {
-      "src": "bind $isEnabled and @data-active",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "4624a9f39a": {
-      "src": "bind $isHidden and @aria-hidden",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "2c9a180e87": {
-      "src": "bind $opacity and *opacity",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "506b388c23": {
-      "src": "bind .dark and $darkMode",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "2a175fa3e2": {
-      "src": "bind .highlight to $highlighted",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "533247c884": {
-      "src": "bind .dark to $isDark",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "f2adb04532": {
-      "src": "bind $label and my @data-label",
-      "family": "bind",
-      "refused": "en *"
-    },
     "d438ab49b4": {
       "src": "bind .dark and #dark-toggle's checked",
       "family": "bind",
-      "refused": "en *"
-    },
-    "283e759e4b": {
-      "src": "bind @data-title and #title-input's value",
-      "family": "bind",
-      "refused": "en *"
-    },
-    "4ab926d199": {
-      "src": "bind my value and #slider's value",
-      "family": "bind",
-      "refused": "en *"
+      "refused": "bn th vi"
     },
     "c6183ad650": {
       "src": "init immediately set window.bar to 42 end",
       "family": "init",
       "refused": "en *"
-    },
-    "92a68c1e3c": {
-      "src": "bind $username to me end live set my @data-mirror to $username",
-      "family": "live",
-      "silent": "*"
     },
     "d66d670d34": {
       "src": "on example.event add .called",
@@ -1564,7 +1459,7 @@
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
       "family": "set",
-      "silent": "en *"
+      "refused": "en *"
     },
     "b839394853": {
       "src": "when my @data-x changes put it into me",
@@ -1804,11 +1699,6 @@
       "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",
       "family": "on",
       "refused": "ar de es fr he id it ms pl pt ru sw th tl uk"
-    },
-    "90d44b4675": {
-      "src": "bind $name and #input's value",
-      "family": "bind",
-      "refused": "en *"
     }
   }
 }

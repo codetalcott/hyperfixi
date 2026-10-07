@@ -342,10 +342,19 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (isProgram(node)) {
       const endKw = this.keyword(language, 'end');
       const lines: string[] = [];
-      for (const feature of node.statements) {
+      node.statements.forEach((feature, i) => {
         lines.push(this.render(feature, language));
         if (feature.kind === 'event-handler') lines.push(endKw);
-      }
+        // A command feature (`bind`, `set`, `install`) closed by an `end`, as
+        // upstream allows, where the next feature has no head word a reader
+        // splits at (`bind $x to me end` then `live …`). Read back without one,
+        // the two ran together as one command sequence; before a handler, its
+        // head word does the work.
+        const next = node.statements[i + 1];
+        if (feature.kind === 'command' && next && next.kind !== 'event-handler') {
+          lines.push(endKw);
+        }
+      });
       return lines.join('\n');
     }
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
@@ -365,15 +374,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const prev = node.statements[i - 1];
       const cur = node.statements[i];
       const afterBlockHeader = isFlatBlockHeader(prev);
-      // Consecutive top-level `bind` features are separate reactive features, not a
-      // then-chain — `bind $x to #a then bind $x to #b` is rejected (`Unexpected
-      // Token : then` between features). Space-join them (a bind clause is
-      // self-delimiting; canonical accepts both space and newline separation).
-      const betweenBindFeatures =
-        prev.kind === 'command' &&
-        prev.action === 'bind' &&
-        cur.kind === 'command' &&
-        cur.action === 'bind';
+      // Consecutive top-level `bind` / `install` features are separate features,
+      // not a then-chain — `bind $x to #a then bind $x to #b` is rejected
+      // (`Unexpected Token : then` between features), as is `install A then
+      // install B`. Space-join them (each clause is self-delimiting; canonical
+      // accepts both space and newline separation). Neither is ever a command
+      // in a body.
+      const featureOnly = (n: SemanticNode): boolean =>
+        n.kind === 'command' && (n.action === 'bind' || n.action === 'install');
+      const betweenBindFeatures = featureOnly(prev) && featureOnly(cur);
       // A `js` (or other open-body) block that is FOLLOWED by a command must close
       // with `end` first, so its body doesn't swallow the sibling.
       const sep = afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `;

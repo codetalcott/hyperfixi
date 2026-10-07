@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
 import { parse, render, translate } from '../src/index';
+import { LossyTranslationError } from '../src/explicit/lossy';
 
 const kinds = (code: string) => {
   const node = parse(code, 'en') as {
@@ -121,5 +122,31 @@ describe('block names and bodies', () => {
     expect(render(parse('behavior B init set x to 1 on click log x end end', 'en'), 'en')).toBe(
       'behavior B\n  init\n    set x to 1\n  end\n  on click log x\n  end\nend'
     );
+  });
+});
+
+describe('else, then if on the next line, in a program', () => {
+  it('opens a block the splitter counts: the next handler stays its own', () => {
+    const code =
+      'on click if a log 1 else\n  if b log 2 end\n  log 3\nend\nlog 5\nend\non keyup log 4';
+    expect(kinds(code)).toEqual(['event-handler:on', 'event-handler:on']);
+    // The handler runs on after its conditional: counted as a chain, the inner
+    // `if`'s `end` closed the outer one, the outer `end` the handler, and `log 5`
+    // was left outside it.
+    expect(render(parse(code, 'en'), 'en')).toBe(
+      'on click if a log 1 else\nif b log 2 end then log 3 end then log 5\nend\non keyup log 4\nend'
+    );
+  });
+});
+
+describe('a behavior member that is neither a handler nor init', () => {
+  // Upstream's behavior also holds features such as `set`; this node does not
+  // model them. Read as a flat sequence, the behavior was written `behavior
+  // MarkIt then set …` with every check green. Now the member is unread, so
+  // the translation is refused.
+  it('is reported unread, and refused', () => {
+    const code = "behavior MarkIt set @data-marked to 'yes' end";
+    expect(parse(code, 'en').kind).toBe('behavior');
+    expect(() => translate(code, 'en', 'es')).toThrow(LossyTranslationError);
   });
 });
