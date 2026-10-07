@@ -3369,23 +3369,27 @@ export class PatternMatcher {
   }
 
   /**
-   * Consume a balanced `(…)` run at the stream position and return its text
-   * joined without spaces (`(1,2)`), or null — consuming nothing — when the
-   * parens do not balance. The paren tokens are plain identifiers in the
-   * multilingual tokenizers, so this balances by VALUE, mirroring
-   * tryConsumeRunOperand's group logic.
+   * Consume a balanced `(…)` run at the stream position and return its text as
+   * written: a token glues to the one before it where it abuts it in the
+   * source, else one space separates them (`(1, 2)`, `(#input's value)`). Joined
+   * with no space, `#input's value` became `#input'svalue`, a different
+   * expression. Null, consuming nothing, when the parens do not balance. The
+   * paren tokens are plain identifiers in the multilingual tokenizers, so this
+   * balances by VALUE, mirroring tryConsumeRunOperand's group logic.
    */
   private consumeCallParens(tokens: TokenStream): string | null {
     const callMark = tokens.mark();
-    const callParts: string[] = [];
+    let text = '';
+    let prev: LanguageToken | undefined;
     let parenDepth = 0;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      callParts.push(t.value);
+      text += (prev && !PatternMatcher.abuts(prev, t) ? ' ' : '') + t.value;
+      prev = t;
       tokens.advance();
       if (t.value === '(') parenDepth++;
-      else if (t.value === ')' && --parenDepth === 0) return callParts.join('');
+      else if (t.value === ')' && --parenDepth === 0) return text;
     }
     tokens.reset(callMark); // unbalanced — leave the parens unconsumed
     return null;
