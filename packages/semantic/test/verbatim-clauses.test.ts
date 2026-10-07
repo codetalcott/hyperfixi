@@ -107,8 +107,9 @@ describe('a group that reads its marker and binds nothing gives the marker back'
 
 describe('what is not a clause stays unread, and the translation is refused', () => {
   it.each([
-    // A command the reader does not read is no clause of the one before it.
-    ['on click log 1 set element x to 10', /set element x to 10/],
+    // A command the reader does not read is no clause of the one before it
+    // (a `set` with nothing to set, which upstream does not read either).
+    ['on click log 1 set to 5', /set to 5/],
     // An else word ends the branch.
     ['on click increment :x if :x is 1 throw "bar" otherwise put "ok" into me end', /otherwise/],
     // Glued to the command, the run splits a value the pattern read part of.

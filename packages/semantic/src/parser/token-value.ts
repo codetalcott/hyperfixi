@@ -18,6 +18,9 @@ import {
 } from '../types';
 import { loneKeywordValue } from './value-reading';
 
+/** A variable with its scope, as the tokenizer fuses it (`global x`, `the element's x`). */
+const SCOPED_NAME = /^(?:the )?(?:global|element|local|dom)(?:'s)? [A-Za-z_]\w*$/i;
+
 /** A lone token's value, or null for a token that is none (a particle, an operator). */
 export function tokenValue(token: LanguageToken): SemanticValue | null {
   switch (token.kind) {
@@ -52,6 +55,11 @@ export function tokenValue(token: LanguageToken): SemanticValue | null {
       // Note: these don't match the ReferenceValue union but are used as a
       // reference token downstream — this cast preserves existing behavior
       if (token.value.startsWith(':') || token.value.startsWith('$')) {
+        return createReference(token.value as ReferenceValue['value']);
+      }
+      // So is a name with its scope (`global x`, `the element's x`: one token,
+      // registry.ts fuseScopedNames), and every language writes it as written.
+      if (SCOPED_NAME.test(token.value)) {
         return createReference(token.value as ReferenceValue['value']);
       }
       // Check if it's a built-in reference

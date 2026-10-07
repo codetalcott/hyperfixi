@@ -590,16 +590,6 @@ export const LOUD: readonly LoudFamily[] = [
       'reads as the bare reference; one upstream test source',
     matches: source => /'s(?=\s+(then|end)\b|\s*$)/.test(source),
   },
-  {
-    name: 'dom-scope-word',
-    reason: 'a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one',
-    matches: (_source, _types, plain) =>
-      someNode(
-        plain,
-        node =>
-          node.type === 'symbol' && node.scope === 'inherited' && !String(node.name).startsWith('^')
-      ),
-  },
 ];
 
 /**
