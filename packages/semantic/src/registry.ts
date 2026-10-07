@@ -22,6 +22,7 @@
 import type { LanguageTokenizer, LanguagePattern, LanguageToken, TokenStream } from './types';
 import { TokenStreamImpl } from './tokenizers/token-utils';
 import { VALUE_WORDS } from './value-words';
+import { CSS_UNITS } from './css-units';
 
 // Re-export profile types from generators for convenience
 export type {
@@ -515,10 +516,11 @@ export function tokenize(input: string, language: string): TokenStream {
 /**
  * A value upstream reads whole that a tokenizer splits where nothing spaces it:
  * an attribute with its value (`@data-foo=baz`, `@data-foo="a b"`: `@name`,
- * `=`, the value) and a name with its index or range (`:arr[1]`, `var[..3]`,
- * `var[2 .. 3]`: the name, then its bracket). Each part was read on its own,
- * and the reader kept the first and dropped the rest. Fused, every reader takes
- * it as one value, and every language writes it as written.
+ * `=`, the value), a name with its index or range (`:arr[1]`, `var[..3]`,
+ * `var[2 .. 3]`: the name, then its bracket), and a number with its CSS unit
+ * (`100px`, `1.5rem`, `50%`). Each part was read on its own, and the reader
+ * kept the first and dropped the rest. Fused, every reader takes it as one
+ * value, and every language writes it as written.
  */
 function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
   const tokens = stream.tokens;
@@ -560,6 +562,25 @@ function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
       out.push({
         value: `${t.value}${next.value}`,
         kind: 'identifier',
+        position: { ...t.position, end: next.position.end },
+      } as LanguageToken);
+      i += 1;
+      changed = true;
+      continue;
+    }
+    // `100px`: a number and the unit touching it, as a time is (`500ms`). Not
+    // `5%2`, where `%` is the operator: the unit ends the value.
+    if (
+      t.kind === 'literal' &&
+      /^\d+(\.\d+)?$/.test(t.value) &&
+      next &&
+      touches(t, next) &&
+      CSS_UNITS.has(next.value) &&
+      !(value && touches(next, value) && /^[\w.]/.test(value.value))
+    ) {
+      out.push({
+        value: `${t.value}${next.value}`,
+        kind: 'literal',
         position: { ...t.position, end: next.position.end },
       } as LanguageToken);
       i += 1;

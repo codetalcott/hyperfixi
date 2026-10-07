@@ -151,6 +151,19 @@ const EN_PROPERTY_WORDS: ReadonlySet<string> = new Set(
   Object.values(PROPERTY_NAME_LEXICON).flatMap(map => Object.values(map))
 );
 
+/**
+ * A quoted string, written back. Double quotes, as the reader takes either
+ * kind; but a text holding an unescaped `"` (the author wrote `'<div
+ * _="…">'`) is written in single quotes, or with its `"` escaped when it holds
+ * an unescaped `'` too. Wrapped in double quotes as it was, the inner quote
+ * closed the string.
+ */
+function quoteText(text: string): string {
+  if (!/(?<!\\)"/.test(text)) return `"${text}"`;
+  if (!/(?<!\\)'/.test(text)) return `'${text}'`;
+  return `"${text.replace(/(?<!\\)"/g, '\\"')}"`;
+}
+
 // =============================================================================
 // Semantic Renderer Implementation
 // =============================================================================
@@ -1397,7 +1410,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         if (typeof value.value === 'string' && value.dataType === 'string') {
           // A naked `${…}` URL stays naked: quoted, it interpolates on neither
           // engine (see LiteralValue.interpolates).
-          return value.interpolates ? value.value : `"${value.value}"`;
+          return value.interpolates ? value.value : quoteText(value.value);
         }
         return this.localizeValue(String(value.value), language);
 

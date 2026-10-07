@@ -116,10 +116,10 @@ const ENGLISH_EXTRAS: KeywordEntry[] = [
   { native: 'a', normalized: 'a' },
   { native: 'an', normalized: 'an' },
 
-  // Swap strategies
+  // Swap strategies. Not `innerHTML` / `outerHTML`: they are DOM properties a
+  // value names (`set innerHTML of #d1 to …`), and a keyword there read as no
+  // property; swap's method slot takes them as words (SWAP_STRATEGIES).
   { native: 'delete', normalized: 'delete' },
-  { native: 'innerHTML', normalized: 'innerHTML' },
-  { native: 'outerHTML', normalized: 'outerHTML' },
   { native: 'beforebegin', normalized: 'beforebegin' },
   { native: 'afterend', normalized: 'afterend' },
   { native: 'beforeend', normalized: 'beforeend' },

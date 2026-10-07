@@ -9678,7 +9678,9 @@ describe('en element-swap reference: `swap {destination} with {patient}` (swap-c
   // The method form (no `with`) is UNCHANGED — still the 110 handcrafted pattern.
   it('[en] `swap innerHTML #target` still parses as method + destination (unchanged)', () => {
     const roles = swapRoles(parse('swap innerHTML #target', 'en'));
-    expect(roles!.get('method')?.type).toBe('literal');
+    // A word, read as a literal or (not a keyword since `set innerHTML of #d1`) an expression.
+    const method = roles!.get('method') as { value?: unknown; raw?: unknown } | undefined;
+    expect(String(method?.value ?? method?.raw)).toBe('innerHTML');
     expect(roles!.get('destination')?.type).toBe('selector');
   });
 });

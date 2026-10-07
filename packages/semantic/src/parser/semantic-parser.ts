@@ -6684,7 +6684,7 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * `fetch … do not throw`. No fetch pattern reads the phrase, so it dropped,
+   * `fetch … do not throw` (or `don't throw`). No fetch pattern reads the phrase, so it dropped,
    * in English and so in every translation: a translated fetch then threw on a
    * 404 its author told it to tolerate. Worse, other languages' patterns read
    * its words: pl's `do` is its own "to" (a destination `not`), and ja took
@@ -6703,15 +6703,27 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): SemanticNode | null {
     const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-    const at = arr.findIndex(
-      (t, k) => word(t) === 'do' && word(arr[k + 1]) === 'not' && word(arr[k + 2]) === 'throw'
-    );
+    // `do not throw`, or upstream's contraction `don't throw` (`don`, `'`, `t`).
+    const phraseEnd = (k: number): number => {
+      if (word(arr[k]) === 'do' && word(arr[k + 1]) === 'not' && word(arr[k + 2]) === 'throw') {
+        return k + 2;
+      }
+      const contracted =
+        word(arr[k]) === 'don' &&
+        word(arr[k + 1]) === "'" &&
+        word(arr[k + 2]) === 't' &&
+        arr[k]!.position.end === arr[k + 1]!.position.start &&
+        arr[k + 1]!.position.end === arr[k + 2]!.position.start;
+      return contracted && word(arr[k + 3]) === 'throw' ? k + 3 : -1;
+    };
+    const at = arr.findIndex((_t, k) => phraseEnd(k) >= 0);
     if (at < 0) return null;
+    const end = phraseEnd(at);
     const phraseStart = arr[at].position.start;
     const reduced = (
       input.slice(0, arr[at].position.start).trimEnd() +
       ' ' +
-      input.slice(arr[at + 2].position.end).trimStart()
+      input.slice(arr[end].position.end).trimStart()
     ).trim();
     try {
       const reparsed = this.parse(reduced, language);

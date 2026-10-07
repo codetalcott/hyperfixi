@@ -627,8 +627,8 @@ core-only forms (`semantic/src/explicit/upstream-spelling.ts`, C2c).
 
 Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
-generates them instead: eleven operand kinds (a reference's property among them:
-`event's type`, `the type of event`; and a sigil variable, `$n`) × the operators ×
+generates them instead: twelve operand kinds (a reference's property among them:
+`event's type`, `the type of event`; a sigil variable, `$n`; and a CSS length, `100px`) × the operators ×
 nine value positions (`put` and `set` values, a `set` in the second command of a
 chain, `if` and `repeat while` conditions, an `if` with no `then` before a command
 that names no target, a loop's count, `increment … by`, what a `get` reads), plus
@@ -638,7 +638,7 @@ variables spelled like some language's marker, particle or connective (es `a`, p
 `w`, de `um`), and English words upstream runs as variables (`input`, `when`, `index`:
 `KEYWORD_NAMES`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 5,296 cells. It EXECUTES each one: the English source on upstream
+…) — 5,396 cells. It EXECUTES each one: the English source on upstream
 `hyperscript.org` is the oracle, and 48 lanes must match it — semantic's English
 round trip, each language through the adapter on upstream, and (since 2026-10-01)
 the English source and each language's adapter output on `@hyperfixi/engine`

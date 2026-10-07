@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 23954,
-  "refused": 3242,
+  "pass": 24139,
+  "refused": 3057,
   "silent": 44,
   "entries": {
     "6f60177037": {
@@ -87,11 +87,6 @@
       "family": "fetch",
       "refused": "ja"
     },
-    "83186964ec": {
-      "src": "on click fetch /test don't throw then put it into me",
-      "family": "fetch",
-      "refused": "en *"
-    },
     "ce4506efd5": {
       "src": "on click fetch /test as Response then put (it as JSON).name into me",
       "family": "fetch",
@@ -144,11 +139,6 @@
       "family": "if",
       "refused": "en *"
     },
-    "5df4aec673": {
-      "src": "on click increment innerHTML of #d1",
-      "family": "increment",
-      "refused": "en *"
-    },
     "540540cc5a": {
       "src": "on click set t to true then js(t) window.testSuccess = t end",
       "family": "js",
@@ -177,11 +167,6 @@
     "61bc69c358": {
       "src": "on click measure x,y,left,top,right,bottom,width,height,bounds,scrollLeft,scrollTop,scrollLeftMax,scrollTopMax,scrollWi…",
       "family": "measure",
-      "refused": "en *"
-    },
-    "8f0d0f2a7d": {
-      "src": "on click morph #target to '<div id=target><p id=inner _=\"on click put `clicked` into me\">new</p></div>'",
-      "family": "morph",
       "refused": "en *"
     },
     "b2ec75a2bf": {
@@ -416,11 +401,6 @@
       "family": "send",
       "refused": "en *"
     },
-    "5bc47fcae3": {
-      "src": "on click set innerHTML of #d1 to \"foo\"",
-      "family": "set",
-      "refused": "en *"
-    },
     "5c62479568": {
       "src": "on click set parentNode.innerHTML of #d1 to \"foo\"",
       "family": "set",
@@ -429,12 +409,12 @@
     "580655e71a": {
       "src": "on click set innerHTML of #d1.parentNode to \"foo\"",
       "family": "set",
-      "refused": "en *"
+      "refused": "it pl ru uk"
     },
     "4eee0ddc5e": {
       "src": "on click set the innerHTML of the parentNode of #d1 to \"foo\"",
       "family": "set",
-      "refused": "en *"
+      "refused": "it pl ru uk"
     },
     "094982a419": {
       "src": "on click set .divs.innerHTML to \"foo\"",
@@ -599,7 +579,7 @@
     "446cb475ce": {
       "src": "on click 1 transition my *width to 100px on click 2 transition my *width to initial",
       "family": "transition",
-      "refused": "en *"
+      "refused": "*"
     },
     "35274bd534": {
       "src": "on click transition the next <div/>'s *width from 0px to 100px",
@@ -792,11 +772,6 @@
       "src": "on click 1 set foo to 20 then set @out to foo",
       "family": "core/scoping",
       "refused": "*"
-    },
-    "1c0539c39f": {
-      "src": "on click set #target to '<div id=target _=\"on click put `clicked` into me\">new</div>'",
-      "family": "expressions/assignableElements",
-      "refused": "en *"
     },
     "8a13ec8232": {
       "src": "on click set my [@data-foo] to \"blue\"",
@@ -1233,11 +1208,6 @@
       "refused": "ar de es fr he id it ms pl pt ru sw th uk",
       "silent": "qu tr",
       "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
-    },
-    "8d9b240962": {
-      "src": "transition height to 100px",
-      "family": "transition",
-      "refused": "en *"
     },
     "7beb55b4c4": {
       "src": "on scroll if me.scrollTop + me.clientHeight >= me.scrollHeight - 100 fetch /api/more then append result to #list end",

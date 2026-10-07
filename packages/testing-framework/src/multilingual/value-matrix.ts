@@ -9,10 +9,10 @@
  *
  * This does. A CELL is one value expression in one position:
  *
- *   - OPERANDS: eleven kinds (literal, variable, selector, possessive, `of`,
+ *   - OPERANDS: twelve kinds (literal, variable, selector, possessive, `of`,
  *     dotted, call, array, parens, a reference's property: `event's type`,
- *     `the id of target`, and a sigil variable: `$n`), each with instances
- *     of the value types it produces;
+ *     `the id of target`, a sigil variable: `$n`, and a CSS length: `100px`),
+ *     each with instances of the value types it produces;
  *   - OPERATORS: arithmetic, comparison, equality, logic, membership, and the
  *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
  *     `exists`, `as`), and core's operator PHRASES (`is greater than or equal
@@ -113,7 +113,8 @@ export type OperandKind =
   | 'array'
   | 'parens'
   | 'reference'
-  | 'sigil';
+  | 'sigil'
+  | 'length';
 
 export type Position =
   | 'put'
@@ -258,6 +259,10 @@ export const OPERANDS: readonly Operand[] = [
   // a variable, but no cell had one: semantic's English dropped a whole loop
   // counted by one (`repeat $n times`), and every translation with it.
   { kind: 'sigil', type: 'num', text: '$n' },
+  // A number with a CSS unit is one string upstream (`100px`): every reader
+  // split it, so `set my *width to 100px` was refused in all 24 languages.
+  { kind: 'length', type: 'str', text: '100px' },
+  { kind: 'length', type: 'str', text: '50%' },
 ];
 
 /** An operator slot, and the value types that fill it. */
