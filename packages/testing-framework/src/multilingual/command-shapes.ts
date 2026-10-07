@@ -602,6 +602,89 @@ export const LOUD: readonly LoudFamily[] = [
   },
 ];
 
+/**
+ * A family of foreign lanes a translation still loses SILENTLY, with why (the
+ * M1 plan's Phase 2 exit: the English lane has no silent pair, and every
+ * foreign silent entry carries a reason). Each is queued for the foreign-lane
+ * group (M1 phase 3, group 6). Listed by case id: a case that stops being
+ * silent must leave its family (command-shapes.cases.test.ts holds both ways).
+ */
+export interface SilentFamily {
+  name: string;
+  reason: string;
+  ids: readonly string[];
+}
+
+export const SILENT_FAMILIES: readonly SilentFamily[] = [
+  {
+    name: 'localized-call-arguments',
+    reason:
+      "a call's arguments are written in the target language (`sprayInto(أنا)`, " +
+      '`writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words',
+    ids: ['2d6fa6cf27', '2218bab0ca'],
+  },
+  {
+    name: 'localized-dom-names',
+    reason:
+      'a DOM property or type name is translated as a word (`my children` → de `my kinder`, ' +
+      '`my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back',
+    ids: [
+      '76bf595d21',
+      'a1ca7a74a0',
+      'e172bd73af',
+      'ddb498424a',
+      'dc9ce23e31',
+      'bf3ceac332',
+      '8ecf869842',
+    ],
+  },
+  {
+    name: 'value-words',
+    reason:
+      "a language's word inside a value reads back as another English word: `is not` → " +
+      '`it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ' +
+      'ms `it` → `its`',
+    ids: [
+      'a30e7d6174',
+      '69537d01ae',
+      'd74a86f3a0',
+      'da24c9d768',
+      'b948ed872b',
+      'a4c56acf1e',
+      '87250fbc5e',
+    ],
+  },
+  {
+    name: 'index-as-amount',
+    reason: '`increment arr[1]` reads its index as the amount (`increment arr by [1]`)',
+    ids: ['a7073f5941', '8e5fb7d3a8'],
+  },
+  {
+    name: 'else-word',
+    reason:
+      "an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and " +
+      'stays a word in the condition',
+    ids: ['e60afa928a'],
+  },
+  {
+    name: 'it-locative',
+    reason: 'it `in me` (a query scope) reads back as `on me`',
+    ids: ['2159462e64', '0ff2f70080', 'd7b35fefe6'],
+  },
+  {
+    name: 'possessive-split',
+    reason:
+      "a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → " +
+      "`me punya`, qu `#box's *opacity` → `#box … on *opacity`",
+    ids: ['76130fbf7d', '36e2294330', 'b839394853', '7bc08adb98'],
+  },
+];
+
+/** The silent family a case belongs to, if any. */
+export function silentFamilyOf(id: string): SilentFamily | undefined {
+  return SILENT_FAMILIES.find(family => family.ids.includes(id));
+}
+
 /** The LOUD family a case belongs to, if any. */
 export function loudFamilyOf(source: string, plain: unknown): LoudFamily | undefined {
   const types = nodeTypes(plain);
@@ -623,6 +706,8 @@ export interface BaselineEntry {
   silent?: string;
   /** For a case in a LOUD family: why it is not carried yet. */
   loud?: string;
+  /** For a case with silent lanes: its silent family and why (SILENT_FAMILIES). */
+  why?: string;
 }
 
 export interface CommandShapesBaseline {
@@ -696,6 +781,9 @@ export function baselineFrom(
       ...(refused.length ? { refused: compressLanes(refused) } : {}),
       ...(silent.length ? { silent: compressLanes(silent) } : {}),
       ...(r.loud ? { loud: `${r.loud}: ${reasons.get(r.loud) ?? ''}` } : {}),
+      ...(silent.length && silentFamilyOf(r.id)
+        ? { why: `${silentFamilyOf(r.id)!.name}: ${silentFamilyOf(r.id)!.reason}` }
+        : {}),
     };
   }
   return doc;

@@ -25,7 +25,11 @@
  */
 
 import type { SemanticNode } from '../types';
-import { collectActionsMultiset } from '../fidelity';
+import {
+  collectActionsMultiset,
+  collectRoleSignature,
+  collectRoleSignatureStrict,
+} from '../fidelity';
 import { parse } from '../parser';
 import { toUpstreamSpelling } from './upstream-spelling';
 
@@ -101,6 +105,48 @@ export function actionDifference(reference: SemanticNode, candidate: SemanticNod
     for (let i = got.get(action) ?? 0; i < n; i++) out.push(`-${action}`);
   for (const [action, n] of got)
     for (let i = want.get(action) ?? 0; i < n; i++) out.push(`+${action}`);
+  return out;
+}
+
+/**
+ * The roles a command written in the source has and its read-back lacks
+ * (`-wait.event`), and the position a `put` names (`-put.manner=at start of`).
+ * A role read back that the source left implicit is not a loss: a render may
+ * write a default out (`hide me`). Measured on the command-shape gate before it
+ * was enforced: it refuses no translation that passes, and it caught the
+ * foreign `wait for <event>` renders, which read back as `wait <duration>`.
+ */
+export function lostRoles(reference: SemanticNode, candidate: SemanticNode): string[] {
+  // The reference counts the roles its source wrote; the read-back counts every
+  // role it holds, a default included (a pattern may fill `repeat forever`'s
+  // form as a default): only a role it lacks outright is lost.
+  const features = (node: SemanticNode, collect: (n: unknown) => string[]): Set<string> => {
+    const out = new Set(collect(node).map(s => s.replace(/:.*$/, '')));
+    for (const manner of putPositions(node)) out.add(`put.manner=${manner}`);
+    return out;
+  };
+  const have = features(candidate, collectRoleSignature);
+  return [...features(reference, collectRoleSignatureStrict)]
+    .filter(f => !have.has(f))
+    .map(f => `-${f}`);
+}
+
+/** The positions (`at start of`, `before`, …) every `put` in a tree names. */
+function putPositions(node: unknown, out: string[] = [], depth = 0): string[] {
+  if (depth > 64 || !node || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const n of node) putPositions(n, out, depth + 1);
+    return out;
+  }
+  const rec = node as { action?: unknown; roles?: unknown } & Record<string, unknown>;
+  if (rec.action === 'put' && rec.roles instanceof Map) {
+    const manner = (rec.roles as Map<string, { type?: string; value?: unknown }>).get('manner');
+    if (manner?.type === 'literal') out.push(String(manner.value).trim().toLowerCase());
+  }
+  for (const [key, child] of Object.entries(rec)) {
+    if (key === 'roles' || key === 'metadata' || key === 'diagnostics') continue;
+    if (child && typeof child === 'object') putPositions(child, out, depth + 1);
+  }
   return out;
 }
 
@@ -226,6 +272,8 @@ export function findTranslationLoss(
   const rendered = to === 'en' ? toUpstreamSpelling(node) : node;
   const commands = actionDifference(rendered, back);
   if (commands.length) return { kind: 'read-back', lost: commands };
+  const roles = lostRoles(rendered, back);
+  if (roles.length) return { kind: 'read-back', lost: roles };
 
   const values = missingInvariants(input, output);
   if (values.length) return { kind: 'invariant', lost: values };
