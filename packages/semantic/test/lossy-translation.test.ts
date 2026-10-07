@@ -10,6 +10,7 @@ import {
   actionDifference,
   findTranslationLoss,
   invariantValues,
+  lostRoles,
   missingInvariants,
   unconsumedSpans,
 } from '../src/explicit/lossy';
@@ -153,6 +154,40 @@ describe('read-back against what English writes (upstream spelling)', () => {
   it('a spelling that respells a command is the same program', () => {
     expect(translate("on click prepend #d1's value to #out", 'en', 'en')).toBe(
       "on click put #d1's value at start of #out"
+    );
+  });
+});
+// A command can read back with its roles changed and its count unchanged: the
+// foreign `wait for <event>` renders read back as `wait <duration>` (`wait bar`
+// waits a variable's time), and `put … at start of` was written with the
+// language's `at end of`. Measured on the command-shape gate before it was
+// enforced: no translation that passed is refused.
+describe('the read-back sees a lost role', () => {
+  it('a role the source wrote that the read-back lacks', () => {
+    expect(lostRoles(parse('on foo wait for bar', 'en'), parse('on foo wait bar', 'en'))).toEqual([
+      '-wait.event',
+    ]);
+  });
+
+  it("a put's position", () => {
+    expect(
+      lostRoles(
+        parse('on click put 1 at start of #a', 'en'),
+        parse('on click put 1 at end of #a', 'en')
+      )
+    ).toEqual(['-put.manner=at start of']);
+  });
+
+  it('not a default the read-back writes out, nor one it fills in', () => {
+    expect(lostRoles(parse('on click hide', 'en'), parse('on click hide me', 'en'))).toEqual([]);
+    expect(
+      lostRoles(parse('repeat forever log 1 end', 'en'), parse('repeat forever log 1 end', 'en'))
+    ).toEqual([]);
+  });
+
+  it.each(['es', 'ja', 'de'])('refuses a dropped wait-for in %s', language => {
+    expect(() => translate('on foo wait for bar then log 1', 'en', language)).toThrow(
+      LossyTranslationError
     );
   });
 });
