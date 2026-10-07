@@ -1,10 +1,38 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en-rt` (semantic English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>/up` (the adapter, on upstream) or `<lang>/eng` (the adapter, on @hyperfixi/engine); `*up` and `*eng` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 4537,
-  "pairs": 217632,
-  "failing": 6,
+  "cells": 5296,
+  "pairs": 254064,
+  "failing": 616,
   "accepted": 6,
   "entries": {
+    "branch|#a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|#a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|#w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|@title of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
     "increment|#a.textContent": {
       "lanes": "it/up it/eng",
       "family": "translation",
@@ -14,6 +42,326 @@
       "lanes": "it/up it/eng",
       "family": "translation",
       "accepted": "ambiguity: it `di` is both `by` and `of`, so `incrementare i di #a.textContent` also says `increment i of #a.textContent`"
+    },
+    "branch|1 < #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 < obj.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|1 < arr.length": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|1 < obj.w.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|6 is #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is #a.textContent": {
+      "lanes": "hi/up hi/eng",
+      "family": "translation"
+    },
+    "branch|\"ab\" is @title of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains my id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains @title of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains me.id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" contains event.type": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains obj.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains arr.length": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] contains obj.w.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to obj.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to arr.length": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|6 is equal to obj.w.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"ab\" is equal to my id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"ab\" is equal to @title of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"ab\" is equal to me.id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"ab\" is equal to event.type": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to obj.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to arr.length": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|1 is greater than or equal to obj.w.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes my id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes @title of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes me.id": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|\"xab6\" includes event.type": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes #a's textContent": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes #a's textContent's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes #w's children's length": {
+      "lanes": "qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes the textContent of #a": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes the length of the children of #w": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes #a.textContent": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes obj.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes arr.length": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|[1, 2, 6] includes obj.w.v": {
+      "lanes": "qu/up qu/eng",
+      "family": "translation"
+    },
+    "branch|#a precedes #b": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
+    },
+    "branch|#a follows #b": {
+      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "family": "translation"
     },
     "increment|#a.textContent as Int": {
       "lanes": "it/up it/eng",
