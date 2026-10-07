@@ -129,12 +129,11 @@ describe('else, then if on the next line, in a program', () => {
     const code =
       'on click if a log 1 else\n  if b log 2 end\n  log 3\nend\nlog 5\nend\non keyup log 4';
     expect(kinds(code)).toEqual(['event-handler:on', 'event-handler:on']);
-    const [click] = (
-      parse(code, 'en') as unknown as { statements: Array<{ body: Array<{ action: string }> }> }
-    ).statements;
     // The handler runs on after its conditional: counted as a chain, the inner
     // `if`'s `end` closed the outer one, the outer `end` the handler, and `log 5`
     // was left outside it.
-    expect(click!.body.map(n => n.action)).toEqual(['if', 'log']);
+    expect(render(parse(code, 'en'), 'en')).toBe(
+      'on click if a log 1 else\nif b log 2 end then log 3 end then log 5\nend\non keyup log 4\nend'
+    );
   });
 });
