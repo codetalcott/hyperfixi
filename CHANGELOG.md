@@ -7,6 +7,188 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-10-07
+
+A translation that would lose part of a script is now refused instead of returned short.
+`@lokascript/semantic`'s `translate()` throws a `LossyTranslationError` unless the caller passes
+`{ lossy: 'allow' }`, and the adapter, the Vite plugin's bundle and `@hyperscript-tools/i18n` keep
+the author's text and warn. Upstream forms that translations used to drop now read whole in every
+language: scripts of several features, `catch` / `finally`, conditionals and loops, `bind … and`,
+scoped names such as `element x`, what `on` reads after its event, and clauses a command's
+pattern does not model. On the new command-shape gate, round trips that came back silently
+different fell from 7,614 at its first run to 174 (none in English); 23,763 of 27,240 now read as
+their source does, and 3,303 are refused.
+
+### Added
+
+- **`@lokascript/semantic` keeps a clause its pattern does not model, as written.** A command's
+  pattern read the start of the command and dropped the rest:
+  `add .foo to .bar when it matches .doh`, `toggle between .a and .b`,
+  `take .foo from .div for #d3`, `render #tmpl into #target`, `log me, my`. The rest is now
+  kept on the node as `verbatimClause` and written back after the command in every language, in
+  SOV and VSO word order too (ja `クリック を で .bar に .rey を 追加 when it matches .doh` reads
+  back as `on click add .rey to .bar when it matches .doh`). So a foreign render can now hold a
+  clause in English. A run that holds a command verb, a structure word (`else`, `catch`, `on`, …)
+  or a word of the source language (es `cuando`) is not a clause, and its translation is
+  refused. The parser records a `verbatim-clause` warning for each kept clause, since no role
+  reads it: `@lokascript/compilation-service` reports it as `UNCONSUMED_INPUT` with its repair
+  hint, and MCP `validate_hyperscript` lists it with the unconsumed tokens. A pattern group that
+  reads its marker and binds no role now gives the marker back, so
+  `take .foo from .div for #d3` keeps its `for` and `transition *width from 0px to 100px` its
+  `from`.
+- **`@lokascript/semantic` keeps what upstream's `on` reads between the event and the body.**
+  `on click elsewhere`, a count (`on click 1`, `on click 1 to 2`), `on mutation of attributes`,
+  `on click in #d1`, `on foo queue first` and `on x having threshold 0.1` lost everything after
+  the event, so the handler ran on every event, or with a count, on the wrong ones. The run is now
+  kept as `EventHandlerSemanticNode.headClause`, written after the whole head in every language
+  (ja `クリック を で elsewhere .clicked を 追加`) and reported with the same `verbatim-clause`
+  warning. Outside English a count is read only in the `1 to 2` form, since a body there can open
+  with a number: a bare count in another language (`on click 1`) is refused.
+- **`@lokascript/semantic` reads `catch` and `finally` in handlers and functions.** In a `def`, the
+  clauses ran as more of the function's body, so its error handling ran every time, in silence. In
+  a handler, `catch e …` was left unread. `EventHandlerSemanticNode` and `DefSemanticNode` now
+  carry `catchName`, `catchBody` and `finallyBody`. A `def` writes its clauses before its `end`,
+  and a handler writes them after its commands. No language has its own words for them yet, so
+  every language writes English's `catch` and `finally`. `wait a tick` now reads as `wait 0ms`, as
+  the engine runs it; every render wrote `wait tick`, a wait on a variable named `tick`.
+- **`@hyperfixi/testing-framework`: the command-shape gate.** It takes the 1,135 scripts in
+  upstream _hyperscript's own test suite (0.9.93) and in core's reference and hover examples that
+  the engine reads, translates each into the other 23 languages and back (and English to English),
+  and has the engine parse the result and the source. A pair passes when the two parses match,
+  after a short list of named equivalences that are each checked on both engines. Otherwise it is
+  refused (`translate` threw) or silent. The baseline lists the refused and silent pairs and only
+  shrinks: the gate fails on a pair worse than listed and on one better. Every silent pair left
+  belongs to a named family with a reason (`SILENT_FAMILIES`), and none is in English.
+- **`@hyperfixi/engine`'s parse keeps two values it held only in a closure.** `GoNode.url` holds
+  the address of `go to url <address>`, and `SymbolNode.on` the element of `^name on <element>`.
+  Two scripts that differed only there parsed to the same tree. Nothing reads them at run time.
+
+### Changed
+
+- **`@lokascript/semantic`'s `translate()` refuses a translation that would lose part of the
+  script.** This is a change in behavior. It used to return what it could render:
+  `log it?.dataset?.customValue` came back in Spanish as `registrar ello`, and Hindi wrote
+  `put it.name into #r` in a form that reads back as `on its.name put #r into me`. It now throws a
+  `LossyTranslationError` carrying `partial` (what it would have returned, not the whole script),
+  `loss.kind` and `loss.lost` (what it drops). It refuses when the parse leaves input unread
+  (`truncation`); when the output does not read back with the input's commands, roles and `put`
+  positions (`read-back`), as when a foreign `wait for <event>` reads back as a time wait; and when
+  a string, number, selector, attribute, style or `$` / `:` / `^` name of the input is missing from
+  the output (`invariant`). For example,
+  `translate('on click ask "Name?" then put it into me', 'en', 'es')` throws with `loss.lost`
+  `['ask "Name?"']`, since `ask` has no schema yet. Pass `{ lossy: 'allow' }` as the fourth
+  argument to get the partial output instead. The root and
+  `@lokascript/semantic/core` export `LossyTranslationError`, `findTranslationLoss` (the same
+  checks on a parse and its render) and the types `TranslateOptions`, `TranslationLoss` and
+  `TranslationLossKind`. Comments (`--`, `//`) and Bengali's polite verb forms (`টগল করুন`) are now
+  read whole, so a correct translation that holds them is not refused.
+  `@hyperfixi/core/multilingual`'s `translate` takes the same options and rethrows the refusal. It
+  used to return the input unchanged on any error; input that does not parse still comes back
+  unchanged.
+- **`@lokascript/hyperscript-adapter`, `@hyperfixi/vite-plugin`'s bundle and
+  `@hyperscript-tools/i18n` keep the author's text when a translation would lose part of it.**
+  This is a change in behavior. The adapter's full, slim and lite plugins ran the partial English:
+  `al clic alternar .foo cuando .bar` ran as `on click toggle .foo`. They now leave the script as
+  written, so the host reports a parse error naming code the author wrote, and warn once per
+  language with what would be dropped (`cuando .bar`). `preprocess()`'s config takes `onLossy`,
+  which is called with the refusal. The Vite plugin's source transform does the same, and its
+  `translateHyperscript` rethrows the refusal, where it returned the code unchanged on any error.
+  `@hyperscript-tools/i18n`'s lenient mode kept the source text in silence. Now `translateHtml`
+  reports a refusal through `onRefused` (`'warn'`, the default, `'error'`, or a callback), the
+  Eleventy filters take `'warn'` or `'error'`, and the CLI names the file.
+- **`@hyperfixi/mcp-server`'s translate tools report a refusal.** `translate_code` returns
+  `ok: false` with a `LOSSY_TRANSLATION` diagnostic and `loss.lost`, and the partial text under
+  `partial`, never `code`. `translate_hyperscript` and `translate_to_english` return
+  `refused: true` with `lost` and `partial`. `translate_hyperscript` used to report every error as
+  a missing package.
+
+### Fixed
+
+- **`@lokascript/semantic`: a script of several features reads as one program.** Upstream reads
+  each top-level feature on its own. Semantic kept only the first and dropped the rest, or chained
+  them with `then`, which neither engine reads: `def a … end def b … end` became one function,
+  `def … end on click …` lost its handler, and `bind … end live …` and `set :x to 1 on click …`
+  came out joined by `then`. A handler, a `def`, a `behavior`, a feature block, or a top-level
+  `bind`, `set`, `install` or `js` now starts a new part of the program, and a top-level `init`
+  parses, as a feature block (`FeatureAction` gains `'init'`). English writes one feature per
+  line and closes each handler with `end`. It writes a `bind`, `set` or `install` with the `end`
+  upstream allows when the next feature has no head word to split at, and joins consecutive
+  `install` and `bind` features with a space, never `then`, which the engine rejects.
+- **`@lokascript/semantic`: a dotted name is one name, and a behavior's `end`s are optional.**
+  A dotted name is one name: `def utils.foo()` defined `utils` and left `.foo ( )` unread, and
+  `behavior App.Widgets.Clickable` did not parse as a behavior. A behavior's last handler needs no
+  `end`, nor does the behavior at the end of input: `behavior B(x) on click set @out to x` read as
+  a `behavior` command chained to a `set`. A trailing `init` block in such a behavior is its init.
+  A behavior member that is neither a handler nor `init`
+  (`behavior MarkIt set @data-marked to 'yes' end`) came out as `behavior MarkIt then set …`,
+  which the engine rejects; semantic does not model such members yet, so the translation is now
+  refused. So is `behavior A … behavior B …` with no `end` between them: upstream reads B as part
+  of A, and semantic read it as a `behavior` command in A's last handler.
+- **`@lokascript/semantic`: `bind … and` / `with` and `install`'s arguments read.** Upstream reads
+  `bind <left> and|with|to <right>` as the same binding. Only `to` had a pattern, and its left
+  side took only a variable, so twelve of upstream's test scripts did not parse, among them
+  `bind .dark and $darkMode` and `bind my value and #slider's value`. The left side now takes
+  selectors and property paths too. `install Toggleable(cls: 'highlighted')`, the documented
+  behaviors usage, lost its arguments: an install's parentheses are arguments, not a signature.
+- **`@lokascript/semantic`: conditionals and loops read whole.** An English pattern read every
+  top-level `if X …` as a handler for an event named `X`, so `if x log 1 else log 2 end` became
+  `on x log 1 then log 2`. Seven languages read their own `if` the same way (es and fr `si`, pt
+  `se`, zh `如果`, sw `kama` / `ikiwa`, id `jika` / `kalau` / `bila`, de `falls`), so every
+  conditional rendered in them read back as a handler. A bare `if … end` is now a conditional; de
+  `wenn` and `sobald` and id `apabila` still head a handler. An `if` on the line after `else`
+  opens its own block, as upstream reads it. Semantic chained the two, so the commands after the
+  inner `end` ran whether or not the condition held. Tokens that open a line now carry
+  `metadata.lineStart`, and English writes such an `if` on its own line. The `end` of
+  `at end of` no longer closes a conditional: in
+  `if x put 'a' at end of me end put 'b' at end of me`, the second `put` ran inside the branch. An
+  empty block (`if x then end`) stays a conditional, and a condition ends at `else`. `break` and
+  `continue` read. A loop whose test follows its body (`repeat … until x end`,
+  `repeat … while x end`) is read as one (`LoopSemanticNode.bottomTested`) and written
+  `repeat forever … until x end`, which the engine reads as the same loop; before, `repeat set x`
+  read as `repeat x times`. `repeat in X` keeps its collection, and `indexed by i` reads as
+  `index i`.
+- **`@lokascript/semantic`: a name with its scope is one value, in every language.** Upstream reads
+  `global x`, `element x`, `element's x` (and `the element's x`), `local x` and `dom x` as one
+  variable, its idiom for a behavior's state; seven of `@hyperfixi/behaviors`' sources use it.
+  Semantic read the scope word alone, so the command around it was dropped, in English and in
+  every language: `set element x to 10`, `set global x to 10`, `init set dom count to 42`. The
+  tokenizers now read the scope word and the name as one token, and every language writes it as
+  written, as it writes `$` and `:` names (es `establecer element x a 10`). A scope word alone
+  (`set element to 5`) is still a word.
+- **`@lokascript/semantic`: English writes upstream's postfix `unless` and drops `open`'s mode.**
+  `toggle .foo unless I match .bar` was written `toggle .foo then unless I match .bar`, and core's
+  prefix `unless C X` as it is; upstream rejects both. English now writes the guard after its
+  command, and other languages keep their own form. Upstream's `open` is modal, and the engine
+  reads `open #d as non-modal` as an expression, `(#d as non) - modal`. English now writes it
+  `call #d.show()`, and `open #d as modal` as `open #d`. The reader still accepts core's mode.
+- **`@lokascript/semantic`: a value keeps its spelling.** A call's arguments keep their spacing:
+  `call navigator.clipboard.writeText(#input's value)` became `…(#input'svalue)`. A style block
+  kept a space between every token, so `font-family` became `font - family`, a subtraction.
+  `show`'s strategy argument is read raw, as upstream reads it: `display:inline-block` became
+  `display:inline - block`. A swap's strategy slot takes only core's strategy words (`into`,
+  `over`, `innerHTML`, …, `morph`), so `swap arr[0] with arr[2]` exchanges two values, as
+  upstream reads it; it was written `swap arr of [0] …`. An attribute with its value and a name
+  with its index are one value when nothing spaces them: `add @data-foo=baz` and
+  `remove :arr[1]` kept only their first part, and `increment arr[1]` read as
+  `increment arr by [1]`. Every language writes them as written. The words inside an index are
+  the script's: bn wrote the variable `index` in `var[(index-1)..(index+1)]` as `সূচক`.
+- **`@lokascript/semantic`: events, waits and amounts keep what was written.** A quoted event name
+  stays quoted (`LiteralValue.quoted`): `trigger "my event"` now round-trips in all 23 languages,
+  and `send "hello" to ChatSocket` keeps its quotes. A spaced time unit is read with its number:
+  `wait 2 seconds` translated as `wait 2`, which is two milliseconds. A written `by 1` stays and
+  an implicit one is never shown: German wrote `um 1` for every increment, and English dropped
+  every written `by 1`. `measure` reads its element: `measure #other` became `measure`.
+- **`@hyperfixi/core`'s reference and hover docs teach what the 4.x engine does.** `open`'s
+  `as modal` / `as non-modal` mode does nothing on the engine, so the docs drop it and give
+  `call #myDialog.show()` for a non-modal dialog. The `swap` example
+  `swap innerHTML of #target with result` was core's `put`, but upstream and the engine exchange
+  the two values: it is now `swap #a's value with #b's value`, and the hover text reads "Exchanges
+  two elements, or two writable values." The `fetch` example is now a template literal,
+  ``fetch `/api/${id}` as json``, since upstream sends a naked URL's `${id}` as written.
+  Translation keeps core's meaning for both old forms: English writes `put result into #target`
+  and a template literal. The Japanese example in `docs/EXAMPLES.md` is written as semantic writes
+  it, `クリック で 自分 に .active を 切り替え`; the old one left `を 私` unread.
+
 ## [4.1.0] - 2026-10-06
 
 Translations keep what the source says. `tell` blocks, swaps, view transitions, chains of
@@ -1241,7 +1423,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/codetalcott/hyperfixi/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/codetalcott/hyperfixi/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/codetalcott/hyperfixi/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/codetalcott/hyperfixi/compare/v3.3.0...v4.0.0
