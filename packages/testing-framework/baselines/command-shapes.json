@@ -1,22 +1,17 @@
 {
   "description": "Command-shape gate (src/multilingual/command-shapes.ts): per case, the lanes whose translation is refused (`refused`) and the lanes whose translation is silently lossy (`silent`). A lane is `en` (translate en → en) or a language (en → L → en); `*` stands for all 23 languages. A case in a LOUD family carries its reason (`loud`). Shrink-only: regenerate with tools/regen-command-shapes-baseline.ts.",
   "upstream": "0.9.93",
-  "cases": 1136,
-  "pairs": 27264,
-  "pass": 21443,
-  "refused": 5287,
-  "silent": 534,
+  "cases": 1135,
+  "pairs": 27240,
+  "pass": 21597,
+  "refused": 5232,
+  "silent": 411,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
       "family": "add",
       "refused": "ar bn hi id ko ru th tr uk zh",
       "silent": "de es fr it ja ms pl pt qu sw tl vi"
-    },
-    "d779d2d4ee": {
-      "src": "on click add {color: red; font-family: monospace}",
-      "family": "add",
-      "silent": "en *"
     },
     "52176aeb50": {
       "src": "on click add .foo .bar",
@@ -574,25 +569,10 @@
       "family": "set",
       "refused": "it pl ru uk"
     },
-    "2b181df899": {
-      "src": "on click show me with display: flex",
-      "family": "show",
-      "refused": "en *"
-    },
-    "59e26285f5": {
-      "src": "on click show me with display: inline-block",
-      "family": "show",
-      "refused": "en *"
-    },
     "a9677f770b": {
       "src": "on click show <#d1, #d2/> with display: inline-block",
       "family": "show",
       "refused": "en *"
-    },
-    "b80e4f0edf": {
-      "src": "on click show .c1 with display:inline-block",
-      "family": "show",
-      "silent": "en *"
     },
     "d9ecdbc854": {
       "src": "on click toggle .foo show when I match .foo",
@@ -618,12 +598,6 @@
       "src": "on click show <p/> in me when its textContent is 'yes' if the result is empty put 'none' into #out else put 'some' into…",
       "family": "show",
       "refused": "en *"
-    },
-    "17039d15e3": {
-      "src": "on click set arr to [1,2,3] then swap arr[0] with arr[2] then put arr as String into me",
-      "family": "swap",
-      "refused": "ar bn he hi qu tr zh",
-      "silent": "en ja ko"
     },
     "7190d033fa": {
       "src": "on click take .foo from .div for #d3",
@@ -859,11 +833,6 @@
       "src": "on click trigger foo:bar(x:42) end on foo:bar(x) put x into my.innerHTML",
       "family": "trigger",
       "refused": "en *"
-    },
-    "76829fafba": {
-      "src": "on click toggle .foo unless I match .bar",
-      "family": "unlessModifier",
-      "silent": "en *"
     },
     "32ce88b2e0": {
       "src": "on click add .foo then wait for foo then add .bar",
@@ -1501,11 +1470,6 @@
       "family": "put",
       "refused": "vi"
     },
-    "f45aab7819": {
-      "src": "open #myDialog as non-modal",
-      "family": "open",
-      "silent": "en *"
-    },
     "da38860cb8": {
       "src": "close",
       "family": "close",
@@ -1594,18 +1558,17 @@
     "2218bab0ca": {
       "src": "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
       "family": "reference/patterns",
-      "silent": "en *"
+      "silent": "*"
     },
     "8712ddea5b": {
       "src": "put \"Hello\" into #message put response at end of #results",
       "family": "put",
       "refused": "bn hi ja qu tr"
     },
-    "3fddf88602": {
-      "src": "open #myDialog open #myDialog as non-modal open #details",
+    "b5bb616a88": {
+      "src": "open #myDialog open #details",
       "family": "open",
-      "refused": "ko",
-      "silent": "en ar bn de es fr he hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
+      "refused": "ko"
     },
     "dfea5b51b5": {
       "src": "close #myDialog close #details close #popup",

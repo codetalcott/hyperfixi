@@ -17,6 +17,7 @@
  *   set @a to v on X                  → set @a of X to v
  *   go to /x                          → go to url "/x"  (a string destination)
  *   prepend X to Y                    → put X at start of Y
+ *   open X as non-modal / as modal    → call X.show() / open X  (upstream's open is modal)
  *   push url X / replace url X        → call history.pushState(null,'',X) / replaceState
  *   copy "text"                       → call navigator.clipboard.writeText("text")
  *   swap <strategy> of X with Y       → put Y into / before / after / at start of /
@@ -24,6 +25,7 @@
  *   fetch "X" do not throw            → fetch "X" as text do not throw  (upstream reads
  *                                       a quoted URL followed by `do not` as a comparison)
  *   X has .c / I have .c              → X matches .c / I match .c
+ *   unless C X                        → X unless C  (a statement modifier, after its command)
  *   my?.a?.b                          → my.a.b  (a property chain is null-safe on both)
  *   previous <input/>.value           → the value of previous <input/>
  *   fetch /q?x=${my value}            → fetch `/q?x=${my value}`  (upstream interpolates a
@@ -125,7 +127,23 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
 }
 
 function rewriteAll(nodes: readonly SemanticNode[]): SemanticNode[] {
-  return nodes.map(toUpstreamSpelling);
+  const out: SemanticNode[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
+    const next = nodes[i + 1];
+    // unless C X → X unless C: upstream's guard is a statement modifier written
+    // after the command (`toggle .foo unless I match .bar`); the flat guard
+    // ahead of its command is core's prefix form, which upstream rejects.
+    const condition =
+      node.kind === 'command' && node.action === 'unless' ? node.roles.get('condition') : undefined;
+    if (condition && next && !(next as { postfixUnless?: unknown }).postfixUnless) {
+      out.push({ ...toUpstreamSpelling(next), postfixUnless: condition } as SemanticNode);
+      i++;
+      continue;
+    }
+    out.push(toUpstreamSpelling(node));
+  }
+  return out;
 }
 
 function rewriteRoles(roles: Roles): Map<SemanticRole, SemanticValue> {
@@ -217,6 +235,20 @@ function rewriteCommand(original: CommandSemanticNode): SemanticNode {
         return node;
       }
       return command('go', [...roles, ['method', { type: 'literal', value: 'url' }]]);
+    }
+    case 'open': {
+      // Core's dialog mode: upstream's `open` is modal (showModal), and it reads
+      // `as non-modal` as an expression, `(#d as non) - modal`. The non-modal
+      // open of a dialog is its `show()` (core's `as non-modal`, documented for
+      // dialogs only).
+      const style = role('style');
+      const mode = style ? sourceText(style)?.replace(/^"|"$/g, '').toLowerCase() : undefined;
+      if (mode === 'modal') return command('open', [['patient', role('patient')]]);
+      if (mode !== 'non-modal') return node;
+      const target = role('patient') ? sourceText(role('patient')!) : 'me';
+      if (!target) return node;
+      const receiver = /^[#.@$:^\w-]+$/.test(target) ? target : `(${target})`;
+      return command('call', [['patient', { type: 'expression', raw: `${receiver}.show()` }]]);
     }
     case 'prepend':
       return command('put', [

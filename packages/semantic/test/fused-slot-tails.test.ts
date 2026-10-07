@@ -26,8 +26,28 @@ import { describe, it, expect } from 'vitest';
 import { parseSemantic, render } from '../src/index';
 
 const LANGUAGES = [
-  'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
-  'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ] as const;
 
 function roundTrip(source: string, language: string): string | null {
@@ -56,14 +76,12 @@ describe('a condition slot keeps its operator and operand', () => {
   it('leaves a command verb after a bare operator to the body', () => {
     // `exists` takes no operand, so the fold must not swallow the next token.
     expect(referenceEnglish('on click unless #x exists toggle .y')).toBe(
-      'on click unless #x exists then toggle .y'
+      'on click toggle .y unless #x exists'
     );
   });
 
   it('does not fire when the next token is not a condition operator', () => {
-    expect(referenceEnglish('on click unless #x toggle .y')).toBe(
-      'on click unless #x then toggle .y'
-    );
+    expect(referenceEnglish('on click unless #x toggle .y')).toBe('on click toggle .y unless #x');
   });
 });
 

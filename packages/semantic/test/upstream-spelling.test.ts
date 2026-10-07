@@ -42,6 +42,13 @@ const ROWS: [string, string][] = [
     'on input fetch /search?q=${my value} then put it into #r',
     'on input fetch `/search?q=${my value}` then put it into #r',
   ],
+  // Core's dialog mode: upstream's open is modal, and it reads `as non-modal`
+  // as an expression, `(#d as non) - modal`.
+  ['on click open #d as non-modal', 'on click call #d.show()'],
+  ['on click open #d as modal', 'on click open #d'],
+  ['on click open as non-modal', 'on click call me.show()'],
+  // Upstream's statement modifier follows its command.
+  ['on click unless I match .off toggle .on', 'on click toggle .on unless I match .off'],
 ];
 
 describe('English writes upstream’s spelling', () => {

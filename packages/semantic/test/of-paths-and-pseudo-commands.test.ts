@@ -20,8 +20,29 @@ import { parse, translate } from '../src';
 import type { EventHandlerSemanticNode, SemanticNode, SemanticValue } from '../src/types';
 
 const LANGS = [
-  'ar', 'bn', 'de', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms',
-  'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ] as const;
 
 function bodyCommand(src: string, lang: string): SemanticNode {
@@ -153,13 +174,13 @@ const PSEUDO_ROWS: PseudoRow[] = [
   { en: 'on load click() me', reference: 'on load call me.click()', raw: 'me.click()' },
   {
     en: 'on click foo(1, 2) on #x',
-    reference: 'on click call #x.foo(1,2)',
-    raw: '#x.foo(1,2)',
+    reference: 'on click call #x.foo(1, 2)',
+    raw: '#x.foo(1, 2)',
   },
   {
     en: "on click setAttribute('a', 'b') on me",
-    reference: "on click call me.setAttribute('a','b')",
-    raw: "me.setAttribute('a','b')",
+    reference: "on click call me.setAttribute('a', 'b')",
+    raw: "me.setAttribute('a', 'b')",
   },
   {
     // `the` is one of the engine's pseudo-command prepositions; a query target
@@ -215,7 +236,7 @@ describe('pseudo-commands are the `call` they denote, in every language', () => 
 
   it('`call #x.foo(1, 2)` keeps its arguments', () => {
     const cmd = parse('call #x.foo(1, 2)', 'en') as SemanticNode;
-    expect((cmd.roles.get('patient') as { raw?: string })?.raw).toBe('#x.foo(1,2)');
+    expect((cmd.roles.get('patient') as { raw?: string })?.raw).toBe('#x.foo(1, 2)');
   });
 });
 
@@ -243,7 +264,7 @@ describe('what is not a pseudo-command', () => {
     expect((cmd.roles.get('patient') as { raw?: string })?.raw).toMatch(/^\( .* as Number \)$/);
   });
 
-  it('a following handler is not the pseudo-command\'s `on <target>`', () => {
+  it("a following handler is not the pseudo-command's `on <target>`", () => {
     const node = parse('on click foo() on keyup bar()', 'en') as unknown as {
       statements: EventHandlerSemanticNode[];
     };

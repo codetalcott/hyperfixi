@@ -118,10 +118,12 @@ export const commands: Record<string, CommandRef> = {
   },
   open: {
     name: 'open',
-    description: 'Open a dialog (showModal/show), details element, or popover',
-    syntax: 'open [target] [as modal|non-modal]',
+    // Upstream's open is modal; core's `as non-modal` reads on the engine as an
+    // expression, `(#d as non) - modal`. A non-modal dialog is `call #d.show()`.
+    description: 'Open a dialog (showModal), details element, or popover',
+    syntax: 'open [target]',
     category: 'dom',
-    examples: ['open #myDialog', 'open #myDialog as non-modal', 'open #details', 'open #popup'],
+    examples: ['open #myDialog', 'open #details', 'open #popup'],
   },
   close: {
     name: 'close',

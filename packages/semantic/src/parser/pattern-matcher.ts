@@ -673,6 +673,28 @@ export class PatternMatcher {
     const mark = tokens.mark();
     const before = captured.get(patternToken.role);
     if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
+    // A swap STRATEGY is one of core's words (`swap innerHTML of #t with x`).
+    // Any other value there is the first of two values the swap exchanges:
+    // `swap arr[0] with arr[2]` took `arr` for a strategy and wrote `swap arr
+    // of [0] …`, a property of an array literal.
+    if (
+      this.currentRoleCommand === 'swap' &&
+      patternToken.role === 'method' &&
+      !patternToken.optional &&
+      captured.get(patternToken.role) !== before &&
+      !PatternMatcher.SWAP_STRATEGIES.has(
+        String(
+          (captured.get(patternToken.role) as { value?: unknown; raw?: unknown }).value ??
+            (captured.get(patternToken.role) as { raw?: unknown }).raw ??
+            ''
+        ).toLowerCase()
+      )
+    ) {
+      tokens.reset(mark);
+      if (before) captured.set(patternToken.role, before);
+      else captured.delete(patternToken.role);
+      return false;
+    }
     // An optional role that captured nothing consumes nothing. Several readers
     // (possessive, method call, positional, …) advance past a value and then,
     // when its type is not one the slot takes, decline it as "optional": the
@@ -1080,6 +1102,18 @@ export class PatternMatcher {
       return patternToken.optional || false;
     }
     const slot = this.slotAt(tokens, patternToken, nextPatternToken);
+
+    // `show … with <strategy>:<arg>`: upstream reads the argument raw, up to
+    // the next space (`display:inline-block`, also `display: inline-block`).
+    // Read as an operator run it was `display:inline - block`, a subtraction
+    // upstream rejects.
+    if (patternToken.role === 'style' && this.currentRoleCommand === 'show') {
+      const strategy = this.tryMatchStrategyArgument(tokens);
+      if (strategy) {
+        captured.set(patternToken.role, strategy);
+        return true;
+      }
+    }
 
     // Action-role hyphen-compound fold (same family as the matchLiteralToken
     // fold): a fused event pattern's {action} slot captures ONE token, but a
@@ -3075,6 +3109,53 @@ export class PatternMatcher {
   }
 
   /**
+   * A show strategy with its argument, `<name>:<arg>`, as upstream reads it:
+   * the name, a `:`, then everything up to the next space (one space after the
+   * `:` is skipped, as upstream skips it). Null, consuming nothing, unless a
+   * `:` and an argument follow the name.
+   */
+  private tryMatchStrategyArgument(tokens: TokenStream): SemanticValue | null {
+    const mark = tokens.mark();
+    const first = tokens.peek();
+    if (!first || !/^\*?[A-Za-z][\w-]*(:[\w-]*)?$/.test(first.value)) return null;
+    let text = first.value;
+    let prev = first;
+    tokens.advance();
+    // `display: inline-block`: the argument after one space.
+    if (text.endsWith(':') || tokens.peek()?.value === ':') {
+      if (!text.endsWith(':')) {
+        const colon = tokens.advance()!;
+        if (!PatternMatcher.abuts(prev, colon)) {
+          tokens.reset(mark);
+          return null;
+        }
+        text += ':';
+        prev = colon;
+      }
+      const arg = tokens.peek();
+      if (arg && arg.position.start > prev.position.end) {
+        text += arg.value;
+        prev = arg;
+        tokens.advance();
+      }
+    }
+    if (!text.includes(':')) {
+      tokens.reset(mark);
+      return null;
+    }
+    for (let t = tokens.peek(); t && PatternMatcher.abuts(prev, t); t = tokens.peek()) {
+      text += t.value;
+      prev = t;
+      tokens.advance();
+    }
+    if (text.endsWith(':')) {
+      tokens.reset(mark);
+      return null;
+    }
+    return { type: 'expression', raw: text } as SemanticValue;
+  }
+
+  /**
    * Fold a depth-balanced `{ … }` token run into ONE literal value (see the
    * call site in matchRoleToken). The tokenizers emit `{`, `}`, `:`, `;`, `$`
    * as bare identifier tokens, so a CSS style-object argument is otherwise
@@ -3090,21 +3171,24 @@ export class PatternMatcher {
 
     const mark = tokens.mark();
     tokens.advance(); // {
-    const parts: string[] = ['{'];
+    // As written: a gap in the source is a space, and no gap is none. Joined
+    // with a space between every token, `font-family` became `font - family`,
+    // a subtraction (`add {color: red; font-family: monospace}`).
+    let text = '{';
+    let prevEnd = open.position.end;
     let depth = 1;
     let guard = 0;
     while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_BRACE_RUN_TOKENS) {
       const t = tokens.advance();
       if (!t) break;
+      if (t.position.start > prevEnd) text += ' ';
+      text += t.value;
+      prevEnd = t.position.end;
       if (t.value === '{') depth++;
       else if (t.value === '}') {
         depth--;
-        if (depth === 0) {
-          parts.push('}');
-          return createLiteral(parts.join(' '));
-        }
+        if (depth === 0) return createLiteral(text);
       }
-      parts.push(t.value);
     }
 
     tokens.reset(mark);
@@ -3369,23 +3453,27 @@ export class PatternMatcher {
   }
 
   /**
-   * Consume a balanced `(…)` run at the stream position and return its text
-   * joined without spaces (`(1,2)`), or null — consuming nothing — when the
-   * parens do not balance. The paren tokens are plain identifiers in the
-   * multilingual tokenizers, so this balances by VALUE, mirroring
-   * tryConsumeRunOperand's group logic.
+   * Consume a balanced `(…)` run at the stream position and return its text as
+   * written: a token glues to the one before it where it abuts it in the
+   * source, else one space separates them (`(1, 2)`, `(#input's value)`). Joined
+   * with no space, `#input's value` became `#input'svalue`, a different
+   * expression. Null, consuming nothing, when the parens do not balance. The
+   * paren tokens are plain identifiers in the multilingual tokenizers, so this
+   * balances by VALUE, mirroring tryConsumeRunOperand's group logic.
    */
   private consumeCallParens(tokens: TokenStream): string | null {
     const callMark = tokens.mark();
-    const callParts: string[] = [];
+    let text = '';
+    let prev: LanguageToken | undefined;
     let parenDepth = 0;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      callParts.push(t.value);
+      text += (prev && !PatternMatcher.abuts(prev, t) ? ' ' : '') + t.value;
+      prev = t;
       tokens.advance();
       if (t.value === '(') parenDepth++;
-      else if (t.value === ')' && --parenDepth === 0) return callParts.join('');
+      else if (t.value === ')' && --parenDepth === 0) return text;
     }
     tokens.reset(callMark); // unbalanced — leave the parens unconsumed
     return null;
@@ -3929,6 +4017,23 @@ export class PatternMatcher {
    */
   // `install` is not one: its parentheses are arguments (`install Draggable(dragHandle:
   // .titlebar)`), which the fold keeps. Unfolded, they were left unread.
+  /** Core's swap strategies: its STRATEGY_KEYWORDS (lib/swap-executor.ts, before 4.0). */
+  private static readonly SWAP_STRATEGIES: ReadonlySet<string> = new Set([
+    'into',
+    'over',
+    'innerhtml',
+    'outerhtml',
+    'beforebegin',
+    'afterbegin',
+    'beforeend',
+    'afterend',
+    'delete',
+    'none',
+    'morph',
+    'innermorph',
+    'outermorph',
+  ]);
+
   private static readonly DECLARATION_COMMANDS = new Set(['behavior', 'def']);
 
   /** The role each command writes: a counter's patient, `set`'s destination. */
