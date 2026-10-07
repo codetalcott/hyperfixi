@@ -17,6 +17,7 @@ import {
   isValidReference,
 } from '../types';
 import { loneKeywordValue } from './value-reading';
+import { isCssLength } from '../css-units';
 
 /** A variable with its scope, as the tokenizer fuses it (`global x`, `the element's x`). */
 const SCOPED_NAME = /^(?:the )?(?:global|element|local|dom)(?:'s)? [A-Za-z_]\w*$/i;
@@ -109,6 +110,10 @@ export function literalValue(value: string): SemanticValue {
     }
     return createLiteral(num, 'number');
   }
+
+  // A CSS length (`100px`, `50%`; registry.ts fuses it): a string upstream
+  // builds from the number, written as written in every language.
+  if (isCssLength(value)) return { type: 'expression', raw: value };
 
   // Plain number
   const num = parseFloat(value);

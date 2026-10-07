@@ -6,6 +6,7 @@
  */
 
 import { BINARY_PHRASES } from './phrases';
+import { CSS_UNITS } from '../../css-units';
 
 // =============================================================================
 // Token Types
@@ -128,6 +129,11 @@ const TIME_UNITS = new Set([
 // =============================================================================
 // Tokenizer
 // =============================================================================
+
+/** A `%` right after a number is its unit unless an operand touches it (`5%2`). */
+function isPercentUnit(input: string, pos: number): boolean {
+  return input[pos] === '%' && !/[\w.(]/.test(input[pos + 1] ?? '');
+}
 
 export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -360,6 +366,11 @@ export function tokenize(input: string): Token[] {
 
       if (TIME_UNITS.has(unit)) {
         tokens.push(makeToken(TokenType.TIME_EXPRESSION, num + unit, start));
+      } else if (CSS_UNITS.has(unit) || (!unit && isPercentUnit(input, pos))) {
+        // A CSS length is one string upstream (`100px` is "100px"), so its `%`
+        // is no operator: `50% x` is a length and a word, not `50 % x`.
+        if (!unit) advance();
+        tokens.push(makeToken(TokenType.STRING, `"${num}${unit || '%'}"`, start));
       } else {
         // Put back the unit if it's not a time unit
         pos = unitStart;
