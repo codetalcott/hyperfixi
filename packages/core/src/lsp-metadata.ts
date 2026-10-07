@@ -315,8 +315,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   open: {
     title: 'open',
     description:
-      'Opens a dialog (showModal/show), details element, or popover. Accepts `as modal` / `as non-modal` for dialogs.',
-    example: 'open #myDialog\nopen #myDialog as non-modal\nopen #details',
+      'Opens a dialog (modally, with showModal), details element, or popover. For a non-modal dialog, call its `show()`: `call #myDialog.show()`.',
+    example: 'open #myDialog\nopen #details',
     category: 'command',
   },
   close: {

@@ -36,14 +36,14 @@ describe('command-shape cases', () => {
 
   // A re-harvest that changes the count is a change to the gate's input:
   // update this pin in the same PR, and say what moved.
-  it('are the 1136 the harvest found', () => {
-    expect(cases.length).toBe(1136);
+  it('are the 1135 the harvest found', () => {
+    expect(cases.length).toBe(1135);
     const byOrigin = cases.reduce<Record<string, number>>((m, c) => {
       const kind = c.origin.split(':')[0] ?? '';
       m[kind] = (m[kind] ?? 0) + 1;
       return m;
     }, {});
-    expect(byOrigin).toEqual({ upstream: 947, reference: 123, 'reference-pattern': 8, hover: 58 });
+    expect(byOrigin).toEqual({ upstream: 947, reference: 122, 'reference-pattern': 8, hover: 58 });
   });
 
   it('are not edited by hand: each id is the hash of its source', () => {

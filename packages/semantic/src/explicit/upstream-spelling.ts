@@ -17,6 +17,7 @@
  *   set @a to v on X                  → set @a of X to v
  *   go to /x                          → go to url "/x"  (a string destination)
  *   prepend X to Y                    → put X at start of Y
+ *   open X as non-modal / as modal    → call X.show() / open X  (upstream's open is modal)
  *   push url X / replace url X        → call history.pushState(null,'',X) / replaceState
  *   copy "text"                       → call navigator.clipboard.writeText("text")
  *   swap <strategy> of X with Y       → put Y into / before / after / at start of /
@@ -234,6 +235,20 @@ function rewriteCommand(original: CommandSemanticNode): SemanticNode {
         return node;
       }
       return command('go', [...roles, ['method', { type: 'literal', value: 'url' }]]);
+    }
+    case 'open': {
+      // Core's dialog mode: upstream's `open` is modal (showModal), and it reads
+      // `as non-modal` as an expression, `(#d as non) - modal`. The non-modal
+      // open of a dialog is its `show()` (core's `as non-modal`, documented for
+      // dialogs only).
+      const style = role('style');
+      const mode = style ? sourceText(style)?.replace(/^"|"$/g, '').toLowerCase() : undefined;
+      if (mode === 'modal') return command('open', [['patient', role('patient')]]);
+      if (mode !== 'non-modal') return node;
+      const target = role('patient') ? sourceText(role('patient')!) : 'me';
+      if (!target) return node;
+      const receiver = /^[#.@$:^\w-]+$/.test(target) ? target : `(${target})`;
+      return command('call', [['patient', { type: 'expression', raw: `${receiver}.show()` }]]);
     }
     case 'prepend':
       return command('put', [

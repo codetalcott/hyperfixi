@@ -5835,12 +5835,6 @@
       "family": "open"
     },
     {
-      "id": "f45aab7819",
-      "source": "open #myDialog as non-modal",
-      "origin": "reference:open",
-      "family": "open"
-    },
-    {
       "id": "57cff16446",
       "source": "open #details",
       "origin": "reference:open",
@@ -6525,8 +6519,8 @@
       "family": "make"
     },
     {
-      "id": "3fddf88602",
-      "source": "open #myDialog\nopen #myDialog as non-modal\nopen #details",
+      "id": "b5bb616a88",
+      "source": "open #myDialog\nopen #details",
       "origin": "hover:open",
       "family": "open"
     },
