@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/semantic",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Semantic multilingual parser for hyperscript (24 languages)",
   "type": "module",
   "main": "dist/index.cjs",
@@ -355,7 +355,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/framework": "^4.1.0",
+    "@lokascript/framework": "^4.2.0",
     "nearley": "^2.20.1"
   },
   "devDependencies": {
