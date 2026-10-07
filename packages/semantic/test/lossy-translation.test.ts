@@ -185,6 +185,13 @@ describe('the read-back sees a lost role', () => {
     ).toEqual([]);
   });
 
+  // ar writes `repeat forever`'s form as a word it reads back; English reads it
+  // as a pattern default (implicit): the form is not lost.
+  it('a role the read-back holds as a default is not lost (ar → en, repeat forever)', () => {
+    const code = 'def f() repeat forever set x to x + 1 end end';
+    expect(() => translate(translate(code, 'en', 'ar'), 'ar', 'en')).not.toThrow();
+  });
+
   it.each(['es', 'ja', 'de'])('refuses a dropped wait-for in %s', language => {
     expect(() => translate('on foo wait for bar then log 1', 'en', language)).toThrow(
       LossyTranslationError
