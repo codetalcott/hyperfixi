@@ -197,12 +197,16 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'possessive', type: 'num', text: "obj's v" },
   { kind: 'possessive', type: 'num', text: "arr's length" },
   { kind: 'possessive', type: 'num', text: "#a's textContent's length" },
+  // A property name a lexicon translates and no reader brings back: es wrote
+  // `hijos`, which read back as a property named `hijos`.
+  { kind: 'possessive', type: 'num', text: "#w's children's length" },
   { kind: 'of', type: 'nstr', text: 'textContent of #a' },
   { kind: 'of', type: 'nstr', text: 'the textContent of #a' },
   { kind: 'of', type: 'num', text: 'v of obj' },
   { kind: 'of', type: 'num', text: 'length of arr' },
   { kind: 'of', type: 'str', text: '@title of #a' },
   { kind: 'of', type: 'num', text: 'v of w of obj' },
+  { kind: 'of', type: 'num', text: 'the length of the children of #w' },
   { kind: 'of', type: 'arr', text: 'textContent of .w' },
   { kind: 'dotted', type: 'nstr', text: '#a.textContent' },
   { kind: 'dotted', type: 'str', text: 'me.id' },
@@ -213,6 +217,9 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'call', type: 'nstr', text: 'String(n)' },
   { kind: 'call', type: 'str', text: 's.toUpperCase()' },
   { kind: 'call', type: 'bool', text: 'Array.isArray(arr)' },
+  // A word a lexicon translates, inside a call's arguments, which every reader
+  // takes as written: es `Math.max(n, verdadero)`.
+  { kind: 'call', type: 'num', text: 'Math.max(n, true)' },
   { kind: 'array', type: 'arr', text: '[1, 2]' },
   { kind: 'array', type: 'arr', text: '[n, 2]' },
   // A word some language's lexicon translates, inside an array in a larger
