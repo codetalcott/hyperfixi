@@ -126,7 +126,15 @@ describe('block names and bodies', () => {
 
 describe('else, then if on the next line, in a program', () => {
   it('opens a block the splitter counts: the next handler stays its own', () => {
-    const code = 'on click if a log 1 else\n  if b log 2 end\n  log 3\nend\nend\non keyup log 4';
+    const code =
+      'on click if a log 1 else\n  if b log 2 end\n  log 3\nend\nlog 5\nend\non keyup log 4';
     expect(kinds(code)).toEqual(['event-handler:on', 'event-handler:on']);
+    const [click] = (
+      parse(code, 'en') as unknown as { statements: Array<{ body: Array<{ action: string }> }> }
+    ).statements;
+    // The handler runs on after its conditional: counted as a chain, the inner
+    // `if`'s `end` closed the outer one, the outer `end` the handler, and `log 5`
+    // was left outside it.
+    expect(click!.body.map(n => n.action)).toEqual(['if', 'log']);
   });
 });
