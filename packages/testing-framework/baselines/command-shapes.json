@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 22967,
-  "refused": 4079,
+  "pass": 23110,
+  "refused": 3936,
   "silent": 194,
   "entries": {
     "a1ca7a74a0": {
@@ -833,15 +833,10 @@
       "family": "core/scoping",
       "refused": "en *"
     },
-    "465ed43e73": {
-      "src": "on click set element x to 10 then set @out to x",
-      "family": "core/scoping",
-      "refused": "en *"
-    },
     "5251dc43ae": {
       "src": "on click set the element's x to 10 then set @out to the element's x",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "uk"
     },
     "4b9dd078a2": {
       "src": "on click 1 set element x to 10 on click 2 set @out to x",
@@ -850,16 +845,6 @@
     },
     "d6ac459628": {
       "src": "on click 1 set :x to 10 on click 2 set @out to :x",
-      "family": "core/scoping",
-      "refused": "en *"
-    },
-    "2b95e6630c": {
-      "src": "on click set element x to 10",
-      "family": "core/scoping",
-      "refused": "en *"
-    },
-    "390543ee1c": {
-      "src": "on click set global x to 10 then set @out to x",
       "family": "core/scoping",
       "refused": "en *"
     },
@@ -1005,18 +990,6 @@
       "family": "expressions/comparisonOperator",
       "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh",
       "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "1d75e16839": {
-      "src": "init set dom count to 42",
-      "family": "expressions/dom-scope",
-      "refused": "en *",
-      "loud": "dom-scope-word: a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one"
-    },
-    "26fa66d19d": {
-      "src": "on click put dom count into me",
-      "family": "expressions/dom-scope",
-      "refused": "en *",
-      "loud": "dom-scope-word: a `dom` scope word (`dom count`) is a one-off leaf; file it when a user meets one"
     },
     "9bb9b09088": {
       "src": "on click set ^data on closest .store to 'hello'",

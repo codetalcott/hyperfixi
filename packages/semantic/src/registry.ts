@@ -505,8 +505,73 @@ export function isLanguageSupported(code: string): boolean {
  */
 export function tokenize(input: string, language: string): TokenStream {
   const tokenizer = getTokenizer(language);
-  const stream = markLineStarts(tokenizer.tokenize(input), input, language);
+  const stream = fuseScopedNames(
+    markLineStarts(tokenizer.tokenize(input), input, language),
+    language
+  );
   return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+}
+
+/** The words that name a variable's scope before it, as upstream reads them. */
+const SCOPE_WORDS: ReadonlySet<string> = new Set(['global', 'element', 'local', 'dom']);
+
+/**
+ * A plain name: an identifier (a language's own words are its keywords and
+ * particles), in ASCII as upstream's own scoped names are.
+ */
+function isPlainName(t: LanguageToken | undefined): t is LanguageToken {
+  return !!t && t.kind === 'identifier' && /^[A-Za-z_][\w]*$/.test(t.value);
+}
+
+/**
+ * `global x`, `element x`, `the element's x`, `local x`, `dom x`: a variable
+ * with its scope, which upstream reads as one name (its `symbol` rule). Fused
+ * into one token, every reader takes it as the value it is, as it does `$x`,
+ * and every language writes it as written (P45). Before, the scope word stood
+ * alone and the command around it was dropped. The scope words are English in
+ * every language, as the `$` and `:` sigils are.
+ */
+function fuseScopedNames(stream: TokenStream, language: string): TokenStream {
+  const tokens = stream.tokens;
+  const out: LanguageToken[] = [];
+  let changed = false;
+  const touches = (a: LanguageToken | undefined, b: LanguageToken | undefined): boolean =>
+    !!a && !!b && a.position.end === b.position.start;
+  for (let i = 0; i < tokens.length; i++) {
+    const scope = tokens[i]!;
+    const word = scope.value.toLowerCase();
+    if (!isPlainName(scope) || !SCOPE_WORDS.has(word)) {
+      out.push(scope);
+      continue;
+    }
+    // `element's x`: the possessive spelling, after an optional `the`.
+    const apostrophe = tokens[i + 1];
+    const s = tokens[i + 2];
+    const possessive =
+      word === 'element' &&
+      apostrophe?.value === "'" &&
+      s?.value.toLowerCase() === 's' &&
+      touches(scope, apostrophe) &&
+      touches(apostrophe, s);
+    const name = tokens[possessive ? i + 3 : i + 1];
+    if (!isPlainName(name) || SCOPE_WORDS.has(name.value.toLowerCase())) {
+      out.push(scope);
+      continue;
+    }
+    const article = out[out.length - 1];
+    const the = possessive && article?.value.toLowerCase() === 'the';
+    if (the) out.pop();
+    const start = (the ? article! : scope).position.start;
+    const head = possessive ? `${scope.value}'s` : scope.value;
+    out.push({
+      value: `${the ? `${article!.value} ` : ''}${head} ${name.value}`,
+      kind: 'identifier',
+      position: { ...scope.position, start, end: name.position.end },
+    } as LanguageToken);
+    i = possessive ? i + 3 : i + 1;
+    changed = true;
+  }
+  return changed ? new TokenStreamImpl(out, language) : stream;
 }
 
 /**
