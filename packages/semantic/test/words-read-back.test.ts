@@ -46,10 +46,16 @@ describe('a property name the reader cannot bring back is written as spelled', (
     expect(back).toContain(kept);
   });
 
-  it.each(LANGUAGES)('%s still writes `value` in its own word, which its reader brings back', language => {
-    const { foreign, back } = roundTrip('on click put my value into #out', language);
+  it.each(
+    LANGUAGES.flatMap(language =>
+      ['on click put my value into #out', 'on click put my value + 1 into #out'].map(
+        source => [language, source] as const
+      )
+    )
+  )('%s still writes `value` in its own word, which its reader brings back: %s', (language, source) => {
+    const { foreign, back } = roundTrip(source, language);
     expect(foreign).not.toMatch(/\bvalue\b/);
-    expect(back).toBe('on click put my value into #out');
+    expect(back).toBe(source);
   });
 
   it('a word the reader takes as a keyword is still written in the language (es `primero`)', () => {
