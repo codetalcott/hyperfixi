@@ -1,5 +1,10 @@
 # Engine migration plan — one typed AST, commands as grammar + op, closures at compile
 
+> **Historical (2026-10-06).** This describes `@hyperfixi/core`'s own engine, which was deleted in
+> 4.0 (#1368, 2026-10-04): `packages/engine` is the engine now, and upstream's own test suite is its
+> gate. Kept as a design record because `scripts/check-semantic-boundary.cjs` and `ci.yml` cite its
+> engine/front-end boundary; nothing below is a live queue.
+
 > **Entry point, written 2026-08-30 on `e3b3e34a` (the 3.0.0 tree).** The
 > standing plan for migrating the hyperscript engine in `packages/core` — the
 > parser, AST, runtime, command and expression layers — toward the design a

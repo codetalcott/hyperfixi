@@ -1,7 +1,8 @@
 # docs-internal archive
 
-Deleted from `main` on 2026-09-30, kept at the tag `archived/docs-internal-2026-09-30`. A code comment or
-an old doc that names one of these files is resolved here. To read one:
+Deleted from `main` in two batches, each kept at a tag: 165 files on 2026-09-30
+(`archived/docs-internal-2026-09-30`) and ten on 2026-10-06 (`archived/docs-internal-2026-10-06`). A code
+comment or an old doc that names one of these files is resolved here. To read one, use its batch's tag:
 
 ```bash
 git show archived/docs-internal-2026-09-30:docs-internal/<path>
@@ -18,6 +19,24 @@ files and was closed. Deleting under a tag needs no reference edits, so it lands
 experiments, protocol python/rust), `archived/python-surfaces`, `moved/domain-family` (the domain
 packages, now `codetalcott/lokascript-domains`), `parked/sortable-fixes`. The unmerged cleanup branches
 `chore/docs-internal-triage` and `chore/sharpen-focus` hold their per-file verdicts of August.
+
+## The ten files of 2026-10-06
+
+At the tag `archived/docs-internal-2026-10-06`, after 4.1.0. The open items they still held moved to
+[`multilingual/OPEN_ITEMS.md`](multilingual/OPEN_ITEMS.md) first (V8, PR8–PR11).
+
+| File (under `docs-internal/`) | Class | Last | Note |
+| --- | --- | --- | --- |
+| `AGENT_ERA_ROADMAP.md` | CLOSED-RECORD | 2026-08-25 | Arcs 1–5 landed; Arc 6 and the two standing deferrals are OPEN_ITEMS PR9–PR11. Cited by comments in compilation-service `normalize.ts`, testing-framework `fidelity.ts` and the agent-bench README |
+| `HANDOFF-imperative-forms.md` | CLOSED-RECORD | 2026-07-25 | Done for es/pt/fr/ko and ar (2026-07-25); the de separable-verb residual is OPEN_ITEMS V8; tr's ASCII-folded forms are domain-learn's (lokascript-learn) |
+| `HANDOFF_ts6-migration.md` | STALE | 2026-07-20 | Its target, Dependabot #698, closed unmerged 2026-09-03; the repo is on TypeScript ^5.9.3, and core's engine, where most of its errors were, is gone. A TS 6 migration starts from a fresh measurement |
+| `HYPERSCRIPT_TOOLS_NEXT_STEPS.md` | STALE | 2026-08-27 | Its roadmap shipped (`@hyperscript-tools/i18n` on semantic, #999; the adapter's `_hyperscript.use()` plugin); the open decision on approaching upstream is OPEN_ITEMS PR8 |
+| `multilingual/plan.md` | STALE | 2026-02-14 | De-duplicating semantic against the framework: Phase 2 done (semantic's tokenizer base re-exports framework's); Phase 3, the PatternMatcher fork, is the roadmap's M3 (e); Phase 5 depended on the retired transformer |
+| `proposals/aot-compiler-design.md` | CLOSED-RECORD | 2026-02-06 | The AOT compiler retired in 4.0 (#1364, owner 2026-10-04) |
+| `proposals/PLAN-siren.md` | STALE | 2026-02-09 | `@lokascript/siren` moved to `experiments/` the next day (5744354cf) and later left the repo; Siren/GRAIL lives in `siren-grail` and its siblings |
+| `sessions/DOMAIN_VOICE_STRUCTURAL_REVIEW.md` | STALE | 2026-07-09 | domain-voice left the repo in #909 |
+| `analysis/TYPE_SAFETY_DESIGN.md` | STALE | 2026-01-30 | Described `packages/core/src/registry`, deleted with core's engine (#1368) |
+| `build/CHANGELOG_PROTECTION.md` | STALE | 2026-02-10 | No script prints or reads it; `build/CHANGELOG_GUIDELINES.md` is the live one |
 
 ## The 165 files
 

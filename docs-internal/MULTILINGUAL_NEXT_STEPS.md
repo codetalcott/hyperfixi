@@ -14,24 +14,24 @@
 
 What the gates measure. Each claim carries its re-check command:
 
-| Signal                                  | Value                                                 | Re-check                                                                                                                           |
-| --------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)       | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
-| Value matrix (4,325 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-06)          | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                       |
-| Canonical validity (upstream parses it) | foreign 3105/3105, en 134/134                         | `npm run test:canonical --prefix packages/testing-framework`                                                                       |
-| English reference preserved             | 159/161 units (2 allowlisted: async-block, draggable) | same                                                                                                                               |
-| Bare-form render fidelity               | 3024/3036 (12 allowlisted pairs)                      | `baselines/bare-render-fidelity.json`                                                                                              |
+| Signal                                  | Value                                                               | Re-check                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
+| Value matrix (4,325 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-06)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
+| Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
+| English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
+| Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
 
-What **no** gate measures (all measured 2026-09-30):
+What **no** gate measures (measured 2026-09-30 unless a row is dated):
 
-| Gap                                          | Size                                                                                             | Items  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------ |
-| English words left in renders                | 769/3542 corpus renders (21.7%), from ~12 constructions that leak identically in all 23 languages | N1, V1 |
-| English DOM event names                      | 1912/3496 handler events; 94–98% in he hi it ms pl ru th tl uk vi                                | N2     |
-| Ungrammatical `me` after a preposition       | 13 languages, 80–92% of such renders (es `a yo`, de `zu ich`, ru `к я`)                          | N3     |
-| Commands dropped outside the corpus's shapes | ~44 filed parser items, most in semantic's **English** parse, so every translation inherits them | P1–P44 |
-| User docs that match the product             | lokascript.org pins 2.10.0; a README quickstart is a dead button; stale translator docs and sizes | D1–D7  |
-| Shipping                                     | last publish 3.1.1 (2026-09-04); 168 commits unreleased                                          | —      |
+| Gap                                          | Size                                                                                                                               | Items  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| English words left in renders                | 769/3542 corpus renders (21.7%), from ~12 constructions that leak identically in all 23 languages                                  | N1, V1 |
+| English DOM event names                      | 1912/3496 handler events; 94–98% in he hi it ms pl ru th tl uk vi                                                                  | N2     |
+| Ungrammatical `me` after a preposition       | 13 languages, 80–92% of such renders (es `a yo`, de `zu ich`, ru `к я`)                                                            | N3     |
+| Commands dropped outside the corpus's shapes | 41 filed parser items (2026-10-06), most in semantic's **English** parse, so every translation inherits them                       | P2–P53 |
+| User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
+| Shipping                                     | 4.1.0 on npm 2026-10-06 (`npm view @hyperfixi/core version`; unreleased: `git log v4.1.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -56,35 +56,6 @@ The product's gaps are now in what no gate reads. From here:
 
 ## 3. Arcs, in order
 
-### M0: ship what is done (3.2.0)
-
-**Status (2026-09-30):** 3.2.0 is on npm (25 packages; release smoke green). Shipped with it: D1 and the
-adapter's reference-event guard, D3, D4 (in the package READMEs and `docs/`), S2, CDN entries for five
-packages, and README examples executed for the adapter. Left: D2 (the sites, pending the owner's
-docs-site decision), D5, D6, and README-example tests beyond the adapter.
-
-**Why.** 168 commits of fixes no npm user has, and the docs site shows 2.10.0.
-
-**Work:**
-
-- Release notes grouped by what a user notices, not by PR.
-- Fix the docs that would mislead on release day:
-  - D1: the adapter README's `on me` example is a dead button. Also guard the host gate against a
-    handler for an event named `me`, `it` or `you`.
-  - D3: the i18n README still claims i18n translates.
-  - D4: stale sizes and language counts; semantic exports `VERSION = '0.1.0'`.
-  - S2: the `translate_hyperscript` tool description.
-  - D5: the five example pages pinned to i18n@2.3.0.
-- Execute every README example in a test, so the docs cannot rot silently again.
-- Redeploy lokascript.org on 3.2.0 (D2). Its source lives in `_hyper_min`.
-
-**Exit.** npm is at 3.2.0; `examples/release-smoke/run.mjs` passes; README examples run in CI.
-
-**Owner decisions:**
-
-- Publish the LokaScript VS Code extension, or drop it from the product story (S1)? (The standalone `_hyperscript` extension was retired 2026-10-04: upstream ships its own.)
-- Which repo owns the docs site (D2, D6)?
-
 ### M1: commands a translation silently drops
 
 **Why.** For shapes no corpus row has, semantic's English parse drops whole commands. Examples:
@@ -92,21 +63,22 @@ docs-site decision), D5, D6, and README-example tests beyond the adapter.
 - `on click toggle .stopped` loses its toggle (P2);
 - a bare `if … end` becomes a handler (P3);
 - `break`/`continue` vanish (P5);
-- `tell … end then log 2` lost the log (P1, fixed 2026-10-05);
 - `scroll down by 100` is lost (P8).
 
-`translate()`, MCP `translate_code`, the corpus writer and the non-English runtime all inherit the loss.
-English on core's own parser is unaffected, which is why nobody running English noticed.
+`translate()`, MCP `translate_code`, the corpus writer and the adapter (non-English on a page) all
+inherit the loss. English on a page is unaffected, because `@hyperfixi/engine` reads it directly, which
+is why nobody running English noticed.
 
 **Step 1 — the gate.** A command-shape gate, the value matrix's structural twin:
 
-- **Input:** every syntax form core documents (`commandMeta` syntax and examples, the reference docs)
-  and upstream's documented forms.
+- **Input:** every syntax form the reference documents (syntax and examples in
+  `packages/core/src/reference/index.ts` and `lsp-metadata.ts`, which `verify:reference` checks against
+  the engine) and upstream's documented forms.
 - **Check:** each form goes through semantic English and is executed against upstream.
 - **Baseline:** shrink-only, like the value matrix.
 
-**Step 2 — fix by reach.** First the English-parse items (P1–P5, P8, P10–P12, P14, P17, P30), then
-the translation-side ones (P9, P15, P18–P21, P26).
+**Step 2 — fix by reach.** First the English-parse items (P2–P5, P8, P10–P12, P14, P17, P30), then
+the translation-side ones (P9, P15, P18, P20, P21, P26).
 
 **Exit.** Every documented command form round-trips through semantic English, or is allowlisted with a
 reason.
@@ -161,7 +133,7 @@ exists (policy 13).
 
 **Why.**
 
-- `semantic-parser.ts` is 8,755 lines, and grew 19% in the week of 2026-09-23.
+- `semantic-parser.ts` is 8,871 lines (2026-10-06, `wc -l`), and grew 19% in the week of 2026-09-23.
 - The handcrafted patterns hold 158 hand-written `expectedTypes` lists; only 5 files derive theirs from
   a schema. A copied list that drifted is why German lost every `get` of a literal (PR 130).
 - An end word has nine readers.
@@ -176,8 +148,8 @@ exists (policy 13).
   stages 0 and 0.5.
 - (d) Split `semantic-parser.ts` by responsibility, behavior-preserving and checked against a parity
   oracle.
-- (e) Decide the semantic/framework `PatternMatcher` fork (4,219 vs 1,630 lines; the old
-  `multilingual/plan.md` Phase 3).
+- (e) Decide the semantic/framework `PatternMatcher` fork (4,247 vs 1,630 lines on 2026-10-06; Phase 3
+  of the old `multilingual/plan.md`, archived 2026-10-06).
 
 **Exit metrics** (stamp them when the arc starts):
 
@@ -187,26 +159,32 @@ exists (policy 13).
 
 ### M4: the small queue (take items opportunistically)
 
-- **Parser items not in M1:** P6, P7, P13, P16, P20–P27, P29, P31–P44.
+- **Parser items not in M1:** P6, P7, P13, P16, P23–P25, P29, P31–P45, P52, P53.
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
 - **G11** is a one-line win: widen `ARGS_FORM_OK` to 23 languages.
-- **C1–C12** are core runtime differences from upstream. They belong in `PARSER_NEXT_STEPS.md`: move
-  them there when that file is next touched.
 
 ## 4. Parked, and decisions waiting on the owner
 
 - **AOT** retired (owner, 2026-10-04): `packages/aot-compiler` and MCP `compile_hyperscript` were removed for 4.0 (it was parked from 2026-09-27).
-- **`hx-query`** (htmx 4's new verb, V4): adopt its semantics in core's htmx-compat layer, or treat it
-  as vocabulary only?
+- **`hx-query`** (htmx 4's new verb, V4): core's htmx-compat layer retired in Phase C3, so this is
+  vocabulary only now. Give it a localized name in the htmx adapter's vocabulary, or leave it English?
 - **Community-review badges and ledgers** (PR1) wait for real reviewer inflow.
 - **The behavior boundary validator** (PR2) waits for third-party behavior authoring.
-- **htmx v4 attribute names** `hx-sse`/`hx-ws` (PR5) are not reconciled.
+- **htmx v4 attribute names** (PR5): the htmx adapter's vocabulary localizes htmx 2's
+  `sse-connect`/`ws-connect`, where htmx 4 ships `hx-sse`/`hx-ws`.
 - **The Arc B dictionary flip** (derive the dictionaries from the profiles, PR6). The V1 vocabulary
   gate holds the two consistent today.
-- **Weight (S4):** is a lighter, render-free, parse-only single-language bundle worth more to users
-  than further correctness work?
+- **Weight (S4):** a single-language page loads ~150 KB gz (the engine and a per-language adapter
+  bundle, 4.1.0). Is a lighter, render-free, parse-only single-language bundle worth more to users than
+  further correctness work?
+- **The LokaScript VS Code extension** (S1): publish it, or drop it from the product story? (The
+  standalone `_hyperscript` extension was retired 2026-10-04: upstream ships its own.)
+- **The docs site** (D6): lokascript.org and hyperfixi.org build from `_hyper_min` (on 4.x since
+  2026-10-05); this repo's `apps/docs-site` was never deployed. Delete it, or make it the site?
+- **Approaching upstream** (PR8): when to offer the multilingual tools and the MCP server to
+  hyperscript.org, and in what order.
 
 ## 5. Policies in force
 
@@ -225,7 +203,8 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    engine-invalid row is fixed at its source. What is not yet written back: `OPEN_ITEMS.md` section 2j.
 3. **Canonical hyperscript first.** Showcase behaviors don't drive the queue.
 4. **The value matrix is shrink-only.**
-   - ACCEPTED pairs stay in the baseline: core's `the X of Y as T` binding, and it `di`.
+   - ACCEPTED pairs stay in the baseline: it `di` (6 pairs on 2026-10-06; core's `the X of Y as T`
+     left with core's lanes in Phase C4).
    - Recorded keep-or-match calls: `as Boolean`, and `[@name="value"]` as a value.
 5. **The render lexicon is locked to the i18n dictionary**, so changing a rendered word is an owner
    vocabulary decision.
@@ -268,21 +247,19 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
     - intake is GitHub-native;
     - issue-form field ids are a public API;
     - reviewer incentives stay unstated until the owner says otherwise.
-14. **The slim adapter's engine-invalid repeat output is a safety property.** Fix the repeat surface
-    whole or not at all.
 
 ## 6. What the gates cover
 
 | Gate                             | Sees                                                         | Blind to                                              |
 | -------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
 | Multilingual `--regression` (11) | corpus parses: actions, roles, values, execution (R2 subset) | shapes not in the corpus; naturalness; confidence     |
-| Value matrix                     | value shapes in 9 positions, executed on both engines        | command/structure shapes (the command-shape gate)     |
+| Value matrix                     | value shapes in 10 positions, executed on both engines       | command/structure shapes (the command-shape gate)     |
 | Command shapes                   | authors' scripts (upstream's tests, core's docs), round trip | values the scripts lack (value matrix); naturalness   |
 | Canonical validity (R4 + en)     | renders upstream rejects                                     | renders upstream accepts but that mean something else |
 | en-reference-preservation        | English parses that lose source content (corpus)             | shapes not in the corpus                              |
 | Bare / wrapped render fidelity   | the handler-free form of each corpus row                     | same                                                  |
 | Vocab V1–V4, lexicon parity      | dictionary ↔ profile ↔ tokenizer agreement                   | whether a word is right, or natural                   |
-| _(none yet)_                     | English leaks, pronoun case, README examples                 | → M2 Step 1, M0                                       |
+| _(none yet)_                     | English leaks, pronoun case, README examples                 | → M2 Step 1, D8                                       |
 
 ## 7. Keeping this file honest
 
