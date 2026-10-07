@@ -8,6 +8,8 @@ import { createHash } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   LOUD,
+  SILENT_FAMILIES,
+  silentFamilyOf,
   collapse,
   expandLanes,
   loadCommandShapeCases,
@@ -87,6 +89,29 @@ describe('command-shape baseline', () => {
   it('no LOUD case is listed silent', () => {
     const silent = Object.entries(baseline.entries).filter(([, e]) => e.loud && e.silent);
     expect(silent.map(([id, e]) => `${id} [${e.silent}] ${e.src}`)).toEqual([]);
+  });
+
+  // The M1 plan's Phase 2 exit: the English lane has no silent pair, and every
+  // foreign silent entry carries a reason.
+  it('no case is silent in the English lane', () => {
+    const silent = Object.entries(baseline.entries).filter(([, e]) =>
+      (e.silent ?? '').split(' ').includes('en')
+    );
+    expect(silent.map(([id, e]) => `${id}: ${e.src}`)).toEqual([]);
+  });
+
+  it('every silent entry carries a reason (SILENT_FAMILIES)', () => {
+    const bare = Object.entries(baseline.entries).filter(
+      ([id, e]) => e.silent && (!silentFamilyOf(id) || !e.why)
+    );
+    expect(bare.map(([id, e]) => `${id} [${e.silent}]: ${e.src}`)).toEqual([]);
+  });
+
+  it('every SILENT_FAMILIES id is a case still silent somewhere (drop it once fixed)', () => {
+    const stale = SILENT_FAMILIES.flatMap(f =>
+      f.ids.filter(id => !baseline.entries[id]?.silent).map(id => `${f.name}: ${id}`)
+    );
+    expect(stale).toEqual([]);
   });
 
   // A LOUD family with no failing case is carried now: drop it from LOUD.

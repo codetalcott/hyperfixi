@@ -4,14 +4,15 @@
   "cases": 1135,
   "pairs": 27240,
   "pass": 21669,
-  "refused": 5190,
-  "silent": 381,
+  "refused": 5379,
+  "silent": 192,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
       "family": "add",
       "refused": "ar bn hi id ko ru th tr uk zh",
-      "silent": "de es fr it ja ms pl pt qu sw tl vi"
+      "silent": "de es fr it ja ms pl pt qu sw tl vi",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "52176aeb50": {
       "src": "on click add .foo .bar",
@@ -37,7 +38,8 @@
       "src": "on click add .foo to the children of #bar",
       "family": "add",
       "refused": "ar bn hi id ja ko ru th tr uk zh",
-      "silent": "de es fr it ms pl pt qu sw tl vi"
+      "silent": "de es fr it ms pl pt qu sw tl vi",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -52,7 +54,8 @@
     "87250fbc5e": {
       "src": "on click set result to [1,2,3] append 4 put it as String into me",
       "family": "append",
-      "silent": "ms qu"
+      "silent": "ms qu",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "ddd8e60406": {
       "src": "on click ask \"What is your name?\" then put it into #out",
@@ -177,7 +180,8 @@
     "e60afa928a": {
       "src": "on click if false otherwise put \"foo\" into me.innerHTML",
       "family": "if",
-      "silent": "de es fr hi id ko pt qu ru tl tr uk zh"
+      "silent": "de es fr hi id ko pt qu ru tl tr uk zh",
+      "why": "else-word: an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and stays a word in the condition"
     },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
@@ -187,12 +191,14 @@
     "8e5fb7d3a8": {
       "src": "on click set arr to [10, 20, 30] then increment arr[1] then put arr[1] into me",
       "family": "increment",
-      "silent": "ar he id it ms pl ru sw th tl uk vi"
+      "silent": "ar he id it ms pl ru sw th tl uk vi",
+      "why": "index-as-amount: `increment arr[1]` reads its index as the amount (`increment arr by [1]`)"
     },
     "a7073f5941": {
       "src": "on click set arr to [10, 20, 30] then decrement arr[1] then put arr[1] into me",
       "family": "increment",
-      "silent": "ar he id it ms pl ru sw th tl uk vi"
+      "silent": "ar he id it ms pl ru sw th tl uk vi",
+      "why": "index-as-amount: `increment arr[1]` reads its index as the amount (`increment arr by [1]`)"
     },
     "5df4aec673": {
       "src": "on click increment innerHTML of #d1",
@@ -247,8 +253,7 @@
     "b2fe1705ef": {
       "src": "on click put \"foo\" at start of #d1",
       "family": "put",
-      "refused": "es id it pt th tl uk",
-      "silent": "ar bn de fr he hi ja ko ms pl qu ru sw tr vi zh"
+      "refused": "*"
     },
     "07108f5fc0": {
       "src": "on click put \"foo\" at end of #d1",
@@ -264,13 +269,15 @@
       "src": "on click put \"red\" into my style[\"color\"]",
       "family": "put",
       "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr"
+      "silent": "de es id it ms pl pt qu sw tl tr",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "ddb498424a": {
       "src": "on click set foo to \"color\" then put \"red\" into my style[foo]",
       "family": "put",
       "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr"
+      "silent": "de es id it ms pl pt qu sw tl tr",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "6959984db6": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
@@ -285,7 +292,7 @@
     "f460465218": {
       "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
       "family": "put",
-      "silent": "*"
+      "refused": "*"
     },
     "f74ce980ff": {
       "src": "on click remove .foo .bar",
@@ -330,7 +337,8 @@
     "a4c56acf1e": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
       "family": "remove",
-      "silent": "ms pl"
+      "silent": "ms pl",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "54a65f4602": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove b of :obj put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into…",
@@ -395,7 +403,8 @@
     "2d6fa6cf27": {
       "src": "on click call sprayInto(me)",
       "family": "repeat",
-      "silent": "*"
+      "silent": "*",
+      "why": "localized-call-arguments: a call's arguments are written in the target language (`sprayInto(أنا)`, `writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words"
     },
     "c48b233ac7": {
       "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
@@ -551,13 +560,15 @@
       "src": "on click set my style[\"color\"] to \"red\"",
       "family": "set",
       "refused": "ar bn hi it ja ko pl ru th uk vi zh",
-      "silent": "de es id ms pt qu sw tl tr"
+      "silent": "de es id ms pt qu sw tl tr",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "8ecf869842": {
       "src": "on click set foo to \"color\" then set my style[foo] to \"red\"",
       "family": "set",
       "refused": "ar bn hi it ja ko pl ru th uk vi zh",
-      "silent": "de es id ms pt qu sw tl tr"
+      "silent": "de es id ms pt qu sw tl tr",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "769eede266": {
       "src": "on click set arr to [1, 2, 3] set arr[0] to \"red\" set my *color to arr[0]",
@@ -837,34 +848,34 @@
     "32ce88b2e0": {
       "src": "on click add .foo then wait for foo then add .bar",
       "family": "wait",
-      "silent": "*"
+      "refused": "*"
     },
     "8c8e27625d": {
       "src": "on click wait for foo then put its.detail into me",
       "family": "wait",
-      "refused": "ar fr hi ja ko pl ru uk zh",
-      "silent": "bn de es he id it ms pt qu sw th tl tr vi"
+      "refused": "*"
     },
     "2965af0447": {
       "src": "on click wait for foo(bar) then put bar into me",
       "family": "wait",
-      "silent": "*"
+      "refused": "*"
     },
     "a76cd09b5c": {
       "src": "on click add .foo then wait for foo or 0ms then add .bar",
       "family": "wait",
-      "refused": "he",
-      "silent": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "refused": "*"
     },
     "a30e7d6174": {
       "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "silent": "ar hi ms pl th"
+      "silent": "ar hi ms pl th",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "69537d01ae": {
       "src": "init if ^val is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "silent": "ar hi ms pl th"
+      "silent": "ar hi ms pl th",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
@@ -1079,7 +1090,8 @@
     "d74a86f3a0": {
       "src": "on click set (closest @foo to #d1) to \"doh\"",
       "family": "expressions/closest",
-      "silent": "pl sw"
+      "silent": "pl sw",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "35f188d961": {
       "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
@@ -1089,7 +1101,8 @@
     "da24c9d768": {
       "src": "on click add .doh to closest .bar to .foo",
       "family": "expressions/closest",
-      "silent": "pl"
+      "silent": "pl",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "f76ff620e1": {
       "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
@@ -1124,7 +1137,8 @@
     "76bf595d21": {
       "src": "on click if I am a Element put \"yes\" into me",
       "family": "expressions/comparisonOperator",
-      "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh"
+      "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh",
+      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "1d75e16839": {
       "src": "init set dom count to 42",
@@ -1160,7 +1174,8 @@
       "src": "on click get #p1 in me then put its id into @result",
       "family": "expressions/in",
       "refused": "de tr",
-      "silent": "it"
+      "silent": "it",
+      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "c44765f7b0": {
       "src": "on click get #{\"p1\"} in me then put its id into @result",
@@ -1171,7 +1186,8 @@
     "2159462e64": {
       "src": "on click get the first .p1 in me then put its id into @result",
       "family": "expressions/in",
-      "silent": "it tr"
+      "silent": "it tr",
+      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "7ab4a541ee": {
       "src": "on click get the first .{\"p1\"} in me then put its id into @result",
@@ -1182,7 +1198,8 @@
     "0ff2f70080": {
       "src": "on click get the first <p/> in me then put its id into @result",
       "family": "expressions/in",
-      "silent": "it tr"
+      "silent": "it tr",
+      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "15c22f6ecd": {
       "src": "on click get the first <${\"p\"}/> in me then put its id into @result",
@@ -1193,7 +1210,8 @@
     "b948ed872b": {
       "src": "on click if no <span/> in #box where it matches .c then put 'none' into #out else put 'found' into #out",
       "family": "expressions/no",
-      "silent": "qu vi"
+      "silent": "qu vi",
+      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms `undefined`, ms `it` → `its`"
     },
     "08702e835c": {
       "src": "on click put 'updated' into the next <div/>'s textContent",
@@ -1258,7 +1276,7 @@
     "cd6bf33ac9": {
       "src": "on foo wait for bar then call increment()",
       "family": "on",
-      "silent": "*"
+      "refused": "*"
     },
     "9beb7b2c68": {
       "src": "on foo queue first wait for bar then call increment()",
@@ -1313,7 +1331,7 @@
     "558a1f8b25": {
       "src": "on mutation put \"Mutated\" into me then wait for hyperscript:mutation",
       "family": "on",
-      "silent": "*"
+      "refused": "*"
     },
     "13cff46824": {
       "src": "on mutation of attributes put \"Mutated\" into me",
@@ -1418,12 +1436,14 @@
     "76130fbf7d": {
       "src": "when $data's inner's val changes put it into me",
       "family": "reactive-properties",
-      "silent": "qu"
+      "silent": "qu",
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
     "36e2294330": {
       "src": "live put $config's label into me",
       "family": "reactive-properties",
-      "silent": "qu"
+      "silent": "qu",
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
@@ -1433,7 +1453,8 @@
     "b839394853": {
       "src": "when my @data-x changes put it into me",
       "family": "when",
-      "silent": "id"
+      "silent": "id",
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
     "a9c2c0024a": {
       "src": "on click render #tmpl into #target",
@@ -1532,7 +1553,8 @@
       "src": "transition #box's *opacity to 0 over 300ms",
       "family": "transition",
       "refused": "ar de es fr he id it ms pl pt ru sw th uk",
-      "silent": "qu tr"
+      "silent": "qu tr",
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
     "8d9b240962": {
       "src": "transition height to 100px",
@@ -1547,7 +1569,8 @@
     "2218bab0ca": {
       "src": "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
       "family": "reference/patterns",
-      "silent": "*"
+      "silent": "*",
+      "why": "localized-call-arguments: a call's arguments are written in the target language (`sprayInto(أنا)`, `writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words"
     },
     "8712ddea5b": {
       "src": "put \"Hello\" into #message put response at end of #results",
@@ -1572,8 +1595,7 @@
     "2c6143ba00": {
       "src": "wait 1s wait 500ms then remove .loading wait for htmx:afterSwap",
       "family": "wait",
-      "refused": "ko",
-      "silent": "ar bn de es fr he hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
+      "refused": "*"
     },
     "129c41c03b": {
       "src": "send myEvent to #target send refresh to <body/>",
