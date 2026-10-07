@@ -411,8 +411,8 @@ this gate already covers.
 
 - None tracked here. Every behavior (curated, optional and experimental) compiles from its hyperscript
   `source`; every multilingual ratchet signal is at 1.000 in all 24 languages. What the gates do NOT
-  measure (English words left in renders, pronoun case, command shapes outside the corpus, stale user
-  docs) is the multilingual roadmap: `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+  measure (English words left in renders, pronoun case, command shapes outside the command-shape
+  gate's scripts, stale user docs) is the multilingual roadmap: `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
