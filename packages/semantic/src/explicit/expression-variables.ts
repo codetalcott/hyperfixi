@@ -1,7 +1,9 @@
 /**
- * The variables an English expression reads. The renderer writes one as
+ * The names an English expression reads. The renderer writes a variable as
  * spelled where its localized word would read back as another variable
- * (`value + 1`, es `valor + 1`; was OPEN_ITEMS P49).
+ * (`value + 1`, es `valor + 1`; was OPEN_ITEMS P49), and a property name where
+ * the reader would not bring its localized word back (`my children`, es
+ * `mi hijos`).
  */
 import { parseExpression } from '../ast-builder/expression-parser/parser';
 import { tokenize } from '../tokenizers';
@@ -27,14 +29,16 @@ export function isVariableName(name: string): boolean {
 }
 
 /**
- * The variables an English expression reads: each identifier of its parse
+ * An English expression's names: its VARIABLES, each identifier of its parse
  * that is not a property, a method or a conversion's type, and that is a
- * variable name (above).
+ * variable name (above); and its PROPERTIES, the names it reads off a value
+ * (`children` in `my children`, `#a's children`, `the children of #a`).
  */
-export function expressionVariables(raw: string): Set<string> {
-  const names = new Set<string>();
+export function expressionNames(raw: string): { variables: Set<string>; properties: Set<string> } {
+  const variables = new Set<string>();
+  const properties = new Set<string>();
   const parsed = parseExpression(raw);
-  if (!parsed.success || !parsed.node) return names;
+  if (!parsed.success || !parsed.node) return { variables, properties };
   const walk = (expr: unknown, key: string | undefined): void => {
     if (Array.isArray(expr)) {
       for (const item of expr) walk(item, key);
@@ -42,17 +46,12 @@ export function expressionVariables(raw: string): Set<string> {
     }
     if (!expr || typeof expr !== 'object') return;
     const n = expr as { type?: string; name?: string };
-    if (
-      n.type === 'identifier' &&
-      key !== 'property' &&
-      key !== 'targetType' &&
-      typeof n.name === 'string' &&
-      isVariableName(n.name)
-    ) {
-      names.add(n.name);
+    if (n.type === 'identifier' && typeof n.name === 'string') {
+      if (key === 'property') properties.add(n.name);
+      else if (key !== 'targetType' && isVariableName(n.name)) variables.add(n.name);
     }
     for (const [k, v] of Object.entries(expr)) if (v && typeof v === 'object') walk(v, k);
   };
   walk(parsed.node, undefined);
-  return names;
+  return { variables, properties };
 }

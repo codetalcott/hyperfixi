@@ -3,24 +3,10 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 23763,
-  "refused": 3303,
-  "silent": 174,
+  "pass": 23954,
+  "refused": 3242,
+  "silent": 44,
   "entries": {
-    "a1ca7a74a0": {
-      "src": "on click add .foo to my children",
-      "family": "add",
-      "refused": "ar bn hi id ko ru th tr uk zh",
-      "silent": "de es fr it ja ms pl pt qu sw tl vi",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "e172bd73af": {
-      "src": "on click add .foo to the children of #bar",
-      "family": "add",
-      "refused": "ar bn hi id ja ko ru th tr uk zh",
-      "silent": "de es fr it ms pl pt qu sw tl vi",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
       "family": "add",
@@ -223,20 +209,6 @@
       "family": "put",
       "refused": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
     },
-    "dc9ce23e31": {
-      "src": "on click put \"red\" into my style[\"color\"]",
-      "family": "put",
-      "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "ddb498424a": {
-      "src": "on click set foo to \"color\" then put \"red\" into my style[foo]",
-      "family": "put",
-      "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
     "6959984db6": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
       "family": "put",
@@ -338,12 +310,6 @@
       "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
       "family": "repeat",
       "refused": "it pl ru uk"
-    },
-    "2d6fa6cf27": {
-      "src": "on click call sprayInto(me)",
-      "family": "repeat",
-      "silent": "*",
-      "why": "localized-call-arguments: a call's arguments are written in the target language (`sprayInto(أنا)`, `writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words"
     },
     "c48b233ac7": {
       "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
@@ -484,20 +450,6 @@
       "src": "on click set {bar: 2, baz: 3} on obj",
       "family": "set",
       "refused": "en *"
-    },
-    "bf3ceac332": {
-      "src": "on click set my style[\"color\"] to \"red\"",
-      "family": "set",
-      "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "8ecf869842": {
-      "src": "on click set foo to \"color\" then set my style[foo] to \"red\"",
-      "family": "set",
-      "refused": "ar bn hi ja ko ru th uk vi zh",
-      "silent": "de es id it ms pl pt qu sw tl tr",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "a9677f770b": {
       "src": "on click show <#d1, #d2/> with display: inline-block",
@@ -903,12 +855,6 @@
       "family": "expressions/collectionExpressions",
       "refused": "en *"
     },
-    "76bf595d21": {
-      "src": "on click if I am a Element put \"yes\" into me",
-      "family": "expressions/comparisonOperator",
-      "silent": "ar es fr hi id it ja ko ms pt qu ru sw tl tr uk zh",
-      "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
     "9bb9b09088": {
       "src": "on click set ^data on closest .store to 'hello'",
       "family": "expressions/dom-scope",
@@ -1297,12 +1243,6 @@
       "src": "on scroll if me.scrollTop + me.clientHeight >= me.scrollHeight - 100 fetch /api/more then append result to #list end",
       "family": "reference/patterns",
       "refused": "tr"
-    },
-    "2218bab0ca": {
-      "src": "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
-      "family": "reference/patterns",
-      "silent": "*",
-      "why": "localized-call-arguments: a call's arguments are written in the target language (`sprayInto(أنا)`, `writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words"
     },
     "8712ddea5b": {
       "src": "put \"Hello\" into #message put response at end of #results",

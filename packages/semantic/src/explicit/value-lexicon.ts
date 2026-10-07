@@ -41,6 +41,9 @@
  *     selector, so its translation was refused. A WHOLE value that is a bracket
  *     group was already written as written; this is the same group inside a
  *     larger expression.
+ *   - a CALL's arguments (`f(…)`, a `(` touching the name before it): every
+ *     reader takes them as written, so es `sprayInto(yo)` called `sprayInto`
+ *     with a variable named `yo`, in all 23 languages.
  *   - selectors, urls, numbers, and sigil-attached tokens (`@attr`, `#id`, `$var`)
  *   - identifiers the lexicon has no entry for (they pass through unchanged)
  * A word is rewritten only when the profile vouches for it, so an unknown token
@@ -84,9 +87,12 @@ const WORD = /(^|[^\w$.#@*:-])([A-Za-z][A-Za-z-]+)(?![\w$.:-])/g;
  * x to 7 as Element` lost its conversion (es) or became the string
  * `"7as要素"` (ja). `Number` survived only because no lexicon names it. A
  * capitalized name after `as`, or after `is a`/`is an`/`is not a`/`is not an`,
- * stays as written, with a `:` suffix (`Fixed:2`, `Values:Form`). PR 95.
+ * stays as written, with a `:` suffix (`Fixed:2`, `Values:Form`). PR 95. So
+ * does one after `am a`, upstream's spelling for `I`: `if I am a Element` was
+ * es `I am a elemento`.
  */
-const TYPE_NAME = /(\bas\s+|\bis\s+(?:not\s+)?an?\s+)([A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?)\b/g;
+const TYPE_NAME =
+  /(\bas\s+|\b(?:is|am)\s+(?:not\s+)?an?\s+)([A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?)\b/g;
 
 export interface ValueLexicon {
   /** English word (lowercased) → the form to render in this language. */
@@ -135,8 +141,9 @@ export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProf
 }
 
 /**
- * Mask every balanced `{...}` group, then every balanced `[...]` group,
- * outermost first, so each group's interior survives verbatim.
+ * Mask every balanced `{...}` group, then every balanced `[...]` group, then
+ * every call's arguments, outermost first, so each group's interior survives
+ * verbatim.
  *
  * Runs AFTER string masking, so a brace group containing a string
  * (`headers:{Authorization:\`Bearer \${$token}\`}`) holds that string's mask
@@ -144,15 +151,38 @@ export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProf
  * a regex because groups nest; an unbalanced `{` or `[` is left alone.
  */
 function maskLiteralGroups(text: string, spans: string[]): string {
-  return maskGroups(maskGroups(text, spans, '{', '}'), spans, '[', ']');
+  const braces = maskGroups(text, spans, '{', '}');
+  return maskCallArguments(maskGroups(braces, spans, '[', ']'), spans);
 }
 
-/** Mask every balanced `open … close` group. */
-function maskGroups(text: string, spans: string[], openChar: string, closeChar: string): string {
+/** Mask every call's arguments: a `(` group touching the name before it. */
+function maskCallArguments(text: string, spans: string[]): string {
+  return maskGroups(text, spans, '(', ')', at => /[\w$]/.test(text[at - 1] ?? ''));
+}
+
+/**
+ * Apply `rewrite` to the text outside every call's arguments, which every
+ * reader takes as written (see {@link localizeValueInterior}).
+ */
+export function outsideCallArguments(raw: string, rewrite: (text: string) => string): string {
+  if (!raw.includes('(')) return rewrite(raw);
+  const spans: string[] = [];
+  return restoreSpans(rewrite(maskCallArguments(raw, spans)), spans);
+}
+
+/** Mask every balanced `open … close` group, or each one `opens` accepts. */
+function maskGroups(
+  text: string,
+  spans: string[],
+  openChar: string,
+  closeChar: string,
+  opens: (at: number) => boolean = () => true
+): string {
   let out = '';
   let index = 0;
   while (index < text.length) {
-    const open = text.indexOf(openChar, index);
+    let open = text.indexOf(openChar, index);
+    while (open !== -1 && !opens(open)) open = text.indexOf(openChar, open + 1);
     if (open === -1) {
       out += text.slice(index);
       break;

@@ -17,8 +17,8 @@ What the gates measure. Each claim carries its re-check command:
 | Signal                                  | Value                                                               | Re-check                                                                                                                            |
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
-| Value matrix (4,350 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 23,763 pass, 3,303 refused, 174 silent; en 1,053 / 82 / 0 (10-07)   | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
+| Command shapes (1,135 scripts × 24)     | 23,954 pass, 3,242 refused, 44 silent; en 1,053 / 82 / 0 (10-07)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
 | Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
@@ -80,7 +80,8 @@ names (P45); values as one token (`@a=v`, `arr[1]`) and bracket interiors as wri
 | Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
 | ---------------------- | ------ | ------- | ------ | --------------------------------- |
 | first run (2026-10-06) | 18,171 | 1,479   | 7,614  | 793 / 60 / 283                    |
-| 4.2.0 + #1417 (10-07)  | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
+| 4.2.0 (2026-10-07)     | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
+| main (2026-10-07)      | 23,954 | 3,242   | 44     | 1,053 / 82 / 0                    |
 
 **Left.** English refusals: `scroll … by` (P8), `.stop*` classes (P2), `default … in` (P10),
 `make a Set` (P11), a second `on` after `send` (P26), `halt default`, `don't throw`, `send` arguments,
@@ -233,7 +234,8 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    - query-scope `in`;
    - `equal to`;
    - `using view transition`;
-   - brace and bracket interiors (array literals, attribute selectors, indexes);
+   - brace and bracket interiors (array literals, attribute selectors, indexes), and a call's arguments;
+   - a property name its language's reader cannot bring back (`my children`, `my style[…]`);
    - a clause no pattern models, and upstream's `on` head forms, kept as written (M1);
    - scope words (`element x`, `global x`), and `catch` / `finally` until they have words;
    - unsafe event names;
