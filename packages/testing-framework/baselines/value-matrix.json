@@ -1,7 +1,7 @@
 {
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en-rt` (semantic English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>/up` (the adapter, on upstream) or `<lang>/eng` (the adapter, on @hyperfixi/engine); `*up` and `*eng` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
-  "cells": 4325,
-  "pairs": 207456,
+  "cells": 4350,
+  "pairs": 208656,
   "failing": 6,
   "accepted": 6,
   "entries": {
