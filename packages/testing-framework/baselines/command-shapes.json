@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1136,
   "pairs": 27264,
-  "pass": 20304,
-  "refused": 6332,
-  "silent": 628,
+  "pass": 20939,
+  "refused": 5744,
+  "silent": 581,
   "entries": {
     "3480154525": {
       "src": "bind $theme and @data-theme",
@@ -184,56 +184,15 @@
       "family": "hide",
       "refused": "en *"
     },
-    "914b546f34": {
-      "src": "on click if false else put \"foo\" into me.innerHTML",
-      "family": "if",
-      "silent": "zh"
-    },
-    "df2ee54ee8": {
-      "src": "on click if false else put \"foo\" into me.innerHTML end",
-      "family": "if",
-      "silent": "zh"
-    },
-    "558ab062bd": {
-      "src": "on click if false else if true put \"foo\" into me.innerHTML",
-      "family": "if",
-      "refused": "en *"
-    },
-    "794323a650": {
-      "src": "on click if false else if true put \"foo\" into me.innerHTML end",
-      "family": "if",
-      "refused": "en *"
-    },
     "e60afa928a": {
       "src": "on click if false otherwise put \"foo\" into me.innerHTML",
       "family": "if",
       "silent": "de es fr hi id ko pt qu ru tl tr uk zh"
     },
-    "3ac5aec65a": {
-      "src": "on click if false else if false else put \"foo\" into me.innerHTML",
-      "family": "if",
-      "refused": "en *"
-    },
-    "db83784f60": {
-      "src": "on click if false else if false else put \"foo\" into me.innerHTML end",
-      "family": "if",
-      "refused": "en *"
-    },
-    "de4311b9f1": {
-      "src": "on click if false else wait 10 ms then put \"foo\" into me.innerHTML",
-      "family": "if",
-      "silent": "zh"
-    },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
       "family": "if",
       "refused": "en *"
-    },
-    "ee27038f99": {
-      "src": "on click if window.tmp then else if window.tmp then end put \"foo\" into me end",
-      "family": "if",
-      "refused": "bn es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi",
-      "silent": "en ar de fr zh"
     },
     "8e5fb7d3a8": {
       "src": "on click set arr to [10, 20, 30] then increment arr[1] then put arr[1] into me",
@@ -423,15 +382,10 @@
       "family": "repeat",
       "refused": "de"
     },
-    "616e84f3b6": {
-      "src": "def repeatForeverWithReturn() set retVal to 0 repeat set retVal to retVal + 1 if retVal == 5 then return retVal end end…",
-      "family": "repeat",
-      "refused": "en *"
-    },
     "deac58c100": {
       "src": "on click repeat in [1, 2, 3] put it at end of me end",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "ms vi"
     },
     "5763f61aac": {
       "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] index i put x + i at end of me end",
@@ -441,7 +395,7 @@
     "73c2ff9c12": {
       "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] indexed by i put x + i at end of me end",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "vi"
     },
     "eaa5a2fba1": {
       "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
@@ -471,12 +425,12 @@
     "09f435f419": {
       "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if (x != 'D') then put 'success ' + x + '. ' at end of me continu…",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "vi"
     },
     "dd8bfb1190": {
       "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if x is 'C' break end put x at end of me end end",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "vi"
     },
     "798cb5bb41": {
       "src": "on click set x to {foo:1, bar:2, baz:3} for prop in x put x[prop] at end of me end",
@@ -486,37 +440,27 @@
     "e51cb64feb": {
       "src": "on click set x to 0 repeat set x to x + 1 until x is 3 end put x into me",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "de fr ko"
     },
     "47a37edc5b": {
       "src": "on click set x to 0 repeat set x to x + 1 while x < 3 end put x into me",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "de"
     },
     "a5867275db": {
       "src": "on click set x to 0 repeat set x to x + 1 until true end put x into me",
       "family": "repeat",
-      "refused": "en *"
-    },
-    "5eb5632e72": {
-      "src": "on click set x to 0 repeat 10 times set x to x + 1 if x is 3 break end end put x into me",
-      "family": "repeat",
-      "refused": "en *"
+      "refused": "de fr ko"
     },
     "dee03cd129": {
       "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 3 continue end put x at end of me end",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "vi"
     },
     "c8992c103b": {
       "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 4 break end put x at end of me end",
       "family": "repeat",
-      "refused": "en *"
-    },
-    "dc092ffd38": {
-      "src": "on click set x to 0 repeat while x < 100 set x to x + 1 if x is 5 break end end put x into me",
-      "family": "repeat",
-      "refused": "en *"
+      "refused": "vi"
     },
     "4293df22ee": {
       "src": "on click repeat for x in doesNotExist put x at end of me end then put \"done\" into me",
@@ -925,11 +869,6 @@
       "src": "on click toggle .foo unless I match .bar",
       "family": "unlessModifier",
       "silent": "en *"
-    },
-    "b0d0618a0f": {
-      "src": "on click start view transition repeat 3 times add .in-loop to me break end add .after-loop to me end",
-      "family": "viewTransition",
-      "refused": "en *"
     },
     "32ce88b2e0": {
       "src": "on click add .foo then wait for foo then add .bar",
@@ -1731,47 +1670,15 @@
       "family": "scroll",
       "refused": "en *"
     },
-    "14ad24cc1a": {
-      "src": "if :count > 0 add .active end",
-      "family": "if",
-      "refused": "en *"
-    },
-    "b2bf92e6f0": {
-      "src": "if me matches .open hide me else show me end",
-      "family": "if",
-      "refused": "en *"
-    },
     "eeb30e2d38": {
       "src": "for item in <li/> add .done to item end",
       "family": "for",
       "refused": "bn hi sw"
     },
-    "dfc312611f": {
-      "src": "if :found break end",
-      "family": "break",
-      "refused": "en *"
-    },
-    "471a470db5": {
-      "src": "if item matches .skip continue end",
-      "family": "continue",
-      "refused": "en *"
-    },
-    "da0128056b": {
-      "src": "if :error halt end",
-      "family": "halt",
-      "refused": "ar he ja tr",
-      "silent": "en bn de es fr hi id it ko ms pl pt qu ru sw th tl uk vi zh"
-    },
     "63143b6f80": {
       "src": "return",
       "family": "return",
       "refused": "hi"
-    },
-    "905b93d180": {
-      "src": "if :done exit end",
-      "family": "exit",
-      "refused": "ar he ja ko tr",
-      "silent": "en bn de es fr hi id it ms pl pt qu ru sw th tl uk vi zh"
     },
     "7bc08adb98": {
       "src": "transition #box's *opacity to 0 over 300ms",
@@ -1842,11 +1749,6 @@
       "family": "go",
       "refused": "hi"
     },
-    "6835085279": {
-      "src": "if .active toggle .active if :count > 10 log \"high\"",
-      "family": "if",
-      "refused": "en *"
-    },
     "6f6d57c10a": {
       "src": "repeat 5 times log \"hello\" end repeat for item in items log item end",
       "family": "repeat",
@@ -1860,7 +1762,7 @@
     "461f84cebf": {
       "src": "repeat for x in items if x is empty break end",
       "family": "break",
-      "refused": "en *"
+      "refused": "bn ko"
     },
     "4c2f167281": {
       "src": "repeat for x in items if x < 0 continue log x end",
@@ -1881,11 +1783,6 @@
       "src": "halt halt the event",
       "family": "halt",
       "refused": "hi"
-    },
-    "7409f3b9d8": {
-      "src": "if not valid exit",
-      "family": "exit",
-      "refused": "en *"
     },
     "32bbb02918": {
       "src": "pick items 0 to 2 from :list pick characters 0 to 3 from \"hello\"",

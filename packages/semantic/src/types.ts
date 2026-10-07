@@ -419,6 +419,11 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly loopVariable?: string;
   /** Index variable name if specified (e.g., 'i' in 'for item in list index i') */
   readonly indexVariable?: string;
+  /**
+   * A `while`/`until` loop whose test follows its body (`repeat … until x end`):
+   * the body runs once before the condition is read.
+   */
+  readonly bottomTested?: boolean;
 }
 
 /**
@@ -1146,6 +1151,7 @@ export function createLoopNode(
     loopVariable?: string;
     indexVariable?: string;
     metadata?: SemanticMetadata;
+    bottomTested?: boolean;
   }
 ): LoopSemanticNode {
   const node: LoopSemanticNode = {
@@ -1164,6 +1170,9 @@ export function createLoopNode(
   }
   if (options?.metadata) {
     (node as { metadata?: SemanticMetadata }).metadata = options.metadata;
+  }
+  if (options?.bottomTested) {
+    (node as { bottomTested?: boolean }).bottomTested = true;
   }
 
   return node;

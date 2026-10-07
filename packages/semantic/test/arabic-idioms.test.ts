@@ -322,11 +322,14 @@ describe('Arabic Event Handler Patterns', () => {
   });
 
   describe('Conditional: إذا {event}', () => {
-    it('should parse "إذا نقر بدّل .active"', () => {
+    // إذا is the language's `if`, which every conditional renders with: read as
+    // a handler, `إذا x … نهاية` (if x … end) became `on x`. As in English,
+    // where the `if clicked` idiom went for the same reason.
+    it('reads "إذا نقر بدّل .active" as a conditional', () => {
       const result = canParse('إذا نقر بدّل .active', 'ar');
       if (result) {
         const node = parse('إذا نقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
+        expect(node.action).toBe('if');
       } else {
         const tokens = getTokens('إذا نقر بدّل .active', 'ar');
         expect(tokens.length).toBeGreaterThan(0);

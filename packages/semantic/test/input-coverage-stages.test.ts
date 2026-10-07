@@ -23,23 +23,25 @@ function unconsumedMessages(node: SemanticNode): string[] {
 
 describe('per-segment input coverage (Arc C)', () => {
   describe('event-handler body path (Stage 1 → parseBodyWithClauses)', () => {
-    it('fires for a break dropped from a loop body inside a handler', () => {
-      const node = parse('on click repeat 3 times break end end', 'en');
+    // `break` and `continue` were the dropped words here until they read
+    // (M1 phase 3); a word no pattern knows stands in for them.
+    it('fires for a word dropped from a loop body inside a handler', () => {
+      const node = parse('on click repeat 3 times xyzzy end end', 'en');
       const messages = unconsumedMessages(node);
       expect(messages).toHaveLength(1);
-      expect(messages[0]).toContain('break');
-      // Parse outcome unchanged from the red side: the loop head survives,
-      // break is still dropped (the diagnostic is the only delta).
+      expect(messages[0]).toContain('xyzzy');
+      // The loop head survives; the word is dropped (the diagnostic is the
+      // only delta).
       const handler = node as EventHandlerSemanticNode;
       expect(handler.kind).toBe('event-handler');
       expect(handler.body.map(c => (c as CommandSemanticNode).action)).toEqual(['repeat']);
     });
 
-    it('fires for a continue dropped from a loop body inside a handler', () => {
-      const node = parse('on click repeat 3 times continue end end', 'en');
-      const messages = unconsumedMessages(node);
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toContain('continue');
+    it('stays silent for break and continue in a loop body', () => {
+      for (const word of ['break', 'continue']) {
+        const node = parse(`on click repeat 3 times ${word} end end`, 'en');
+        expect(unconsumedMessages(node)).toHaveLength(0);
+      }
     });
 
     it('stays silent for a fully-consumed handler', () => {
@@ -81,18 +83,17 @@ describe('per-segment input coverage (Arc C)', () => {
     // The loop its `end` closes is a loop (PR 126), so the top-level loop
     // path keeps the body walk's reading, and its record of the dropped
     // `break`, where Stage 2 reported the same run.
-    it('top-level break-in-loop fires exactly once (the top-level loop path)', () => {
-      const node = parse('repeat 3 times break end', 'en');
+    it('a top-level word dropped in a loop fires exactly once (the top-level loop path)', () => {
+      const node = parse('repeat 3 times xyzzy end', 'en');
       const messages = unconsumedMessages(node);
       expect(messages).toHaveLength(1);
-      expect(messages[0]).toMatch(/^body clause left 1 token\(s\) unconsumed: "break"/);
+      expect(messages[0]).toMatch(/^body clause left 1 token\(s\) unconsumed: "xyzzy"/);
     });
 
-    it('top-level and-conjunct fires exactly once (the Stage-2 path)', () => {
+    it('a top-level if with an and-conjunct reads whole (it fired once, at Stage 2)', () => {
       const node = parse('if #a and #b log "ok"', 'en');
-      const messages = unconsumedMessages(node);
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toMatch(/^pattern if-en-basic/);
+      expect(unconsumedMessages(node)).toHaveLength(0);
+      expect(node.kind).toBe('conditional');
     });
   });
 

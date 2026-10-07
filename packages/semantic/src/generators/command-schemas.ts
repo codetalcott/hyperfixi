@@ -2275,6 +2275,9 @@ export const continueSchema: CommandSchema = {
   // Roleless keyword: emits a bare command node.
   ast: {},
   roles: [], // No roles
+  // Stands alone in a loop body (`repeat … if x continue end … end`). With no
+  // pattern the body left it unread. Takes no arguments, like `exit`.
+  bareKeyword: true,
 };
 
 // =============================================================================
@@ -3524,6 +3527,8 @@ export const breakSchema: CommandSchema = {
   category: 'control-flow',
   primaryRole: 'patient',
   roles: [],
+  // Stands alone in a loop body, as `continue` does.
+  bareKeyword: true,
 };
 
 /**
