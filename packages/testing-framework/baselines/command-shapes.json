@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24139,
-  "refused": 3057,
-  "silent": 44,
+  "pass": 24386,
+  "refused": 2823,
+  "silent": 31,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -128,12 +128,6 @@
       "family": "hide",
       "refused": "id ms"
     },
-    "e60afa928a": {
-      "src": "on click if false otherwise put \"foo\" into me.innerHTML",
-      "family": "if",
-      "silent": "de es fr hi id ko pt qu ru tl tr uk zh",
-      "why": "else-word: an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and stays a word in the condition"
-    },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
       "family": "if",
@@ -197,37 +191,17 @@
     "6959984db6": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
       "family": "put",
-      "refused": "en *"
+      "refused": "*"
     },
     "2d9422b3af": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
       "family": "put",
-      "refused": "en *"
+      "refused": "es id it pt th tl uk vi"
     },
     "f460465218": {
       "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
       "family": "put",
       "refused": "*"
-    },
-    "60770598a3": {
-      "src": "on click remove {color} from me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "6916cdcfb9": {
-      "src": "on click remove {color; font-weight} from me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "052e807746": {
-      "src": "on click set :arr to [1,2,3,4] remove 3 from :arr put :arr as String into me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "18b09f2381": {
-      "src": "on click set :s to ['a','b','c'] as Set remove 'b' from :s put :s.size into me",
-      "family": "remove",
-      "refused": "en *"
     },
     "a4c56acf1e": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
@@ -906,11 +880,6 @@
       "family": "bind",
       "refused": "bn th vi"
     },
-    "c6183ad650": {
-      "src": "init immediately set window.bar to 42 end",
-      "family": "init",
-      "refused": "en *"
-    },
     "d66d670d34": {
       "src": "on example.event add .called",
       "family": "on",
@@ -934,7 +903,7 @@
     "d9c92a211d": {
       "src": "on every click put increment() into my.innerHTML then wait for a customEvent",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "239cba8b61": {
       "src": "on foo put increment() into my.innerHTML end on bar put increment() into my.innerHTML",
@@ -1046,16 +1015,6 @@
       "family": "on",
       "refused": "bn it th"
     },
-    "f8db6d2073": {
-      "src": "on click increment :x if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end catch e put e into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "352263a923": {
-      "src": "on click increment :x if :x is 1 throw \"bar\" otherwise put \"success\" into me end catch e put e into me then throw e",
-      "family": "on",
-      "refused": "en *"
-    },
     "3030e3cc43": {
       "src": "on click put \"foo\" into me then throw \"bar\" on exception(error) put error into me",
       "family": "on",
@@ -1070,16 +1029,6 @@
       "src": "on click put \"foo\" into me then throw \"bar\" catch e throw e on exception(error) put error into me",
       "family": "on",
       "refused": "ja ko pl tr"
-    },
-    "8c714e3b3d": {
-      "src": "on click increment :x finally if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end",
-      "family": "on",
-      "refused": "en *"
-    },
-    "3304ff1362": {
-      "src": "on click increment :x finally if :x is 1 throw \"bar\" otherwise put \"success\" into me end",
-      "family": "on",
-      "refused": "en *"
     },
     "e856eb7927": {
       "src": "on click from #d1 or click from #d2 increment @count then put @count into me",
