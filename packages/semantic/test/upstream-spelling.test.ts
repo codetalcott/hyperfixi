@@ -24,6 +24,15 @@ const ROWS: [string, string][] = [
   ['on click swap afterBegin of #a with "<p/>"', 'on click put "<p/>" at start of #a'],
   ['on click swap beforeEnd of #a with "<p/>"', 'on click put "<p/>" at end of #a'],
   ['on click swap delete of #a', 'on click remove #a'],
+  // Core's two words for a strategy: `into` is innerHTML, `over` outerHTML. Left
+  // as a swap, English wrote `swap into of #a with …`, an exchange upstream runs
+  // with a property named `into` (S6).
+  ['on click swap into #a with "<p/>"', 'on click put "<p/>" into #a'],
+  ['on click swap into of #a with "<p/>"', 'on click put "<p/>" into #a'],
+  ['on click swap over #a with "<p/>"', `on click put "<p/>" into #a's outerHTML`],
+  // A handler's catch and finally run as its body does.
+  ['on click log 1 catch e prepend "x" to #out', 'on click log 1 catch e put "x" at start of #out'],
+  ['on click log 1 finally swap into #a with "x"', 'on click log 1 finally put "x" into #a'],
   [
     'on click fetch "/missing" do not throw then put it into me',
     'on click fetch "/missing" as text do not throw then put it into me',

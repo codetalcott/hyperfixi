@@ -30,7 +30,7 @@ export const FIDELITY_THRESHOLD = 0.5;
 const STRUCTURAL_ACTIONS = new Set(['compound']);
 
 /** Node-array fields the walk recurses into (event/loop/conditional/behavior bodies). */
-const CHILD_FIELDS = [
+export const CHILD_FIELDS = [
   'body',
   'statements',
   'thenBranch',
