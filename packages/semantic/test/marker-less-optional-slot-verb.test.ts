@@ -44,8 +44,7 @@ function find(node: SemanticNode | null, action: string): CommandSemanticNode | 
 
 function role(node: CommandSemanticNode | null, name: string) {
   return node?.roles.get(name as never) as
-    | { type?: string; raw?: string; value?: unknown; implicit?: boolean }
-    | undefined;
+    { type?: string; raw?: string; value?: unknown; implicit?: boolean } | undefined;
 }
 
 describe('the BARE two-role toggle parses in a marker-less language', () => {
@@ -120,6 +119,47 @@ describe('the postpositional destination group requires its own marker', () => {
     expect(role(node, 'destination')?.value).toBe('#panel');
     expect(role(node, 'patient')?.value).toBe('.loading');
     expect(role(node, 'duration')?.value).toBe('2s');
+  });
+});
+
+describe('the marker is the group’s last token, not a word inside its value (P54)', () => {
+  // The rule above counted a marker word ANYWHERE in what the group consumed.
+  // tr's destination markers include `in` (also the operator), `a` (also the
+  // article) and `nin` (also the possessive), so the unmarked destination took
+  // a run that held one: at the seam of an `if` with no `then`, the condition's
+  // tail became the branch command's destination. `if 2 is in arr add .a end`
+  // read `if 2 add .a to is in arr end`, silently, with any operand.
+  // [source, the branch's command, its English read-back when it is spelled otherwise]
+  const BRANCHES: [string, string, string?][] = [
+    ['if 2 is in arr add .a end', 'add'],
+    ["if obj's v is in [1, 2, 6] add .a end", 'add'],
+    ['if Math.max(n, 1) is in [1, 2, 6] add .a end', 'add'],
+    ['if my id is a Number add .a end', 'add'],
+    ['if {} is a Number add .a end', 'add'],
+    [
+      "if #a's textContent's length < 4 add .a end",
+      'add',
+      'if length of textContent of #a < 4 add .a end',
+    ],
+    ['if n is in arr toggle .a end', 'toggle'],
+    ['if not (n is in arr) add .a end', 'add'],
+    ['if 2 is in arr add .a else remove .a end', 'add'],
+  ];
+
+  it.each(BRANCHES)('tr: `%s` keeps its condition whole', (source, action, english) => {
+    const rendered = translate(source, 'en', 'tr');
+    const back = parse(rendered, 'tr');
+    const branch = find(back, action);
+    expect(branch, rendered).not.toBeNull();
+    // The command's target is implied: it takes no destination from the condition.
+    expect(role(branch, 'destination')?.value ?? 'me', rendered).toBe('me');
+    expect(translate(rendered, 'tr', 'en')).toBe(english ?? translate(source, 'en', 'en'));
+  });
+
+  it('a marked destination after the condition still binds', () => {
+    const node = find(parse('eğer 2 dir in arr #b e .a i ekle son', 'tr'), 'add');
+    expect(role(node, 'destination')?.value).toBe('#b');
+    expect(role(node, 'patient')?.value).toBe('.a');
   });
 });
 
