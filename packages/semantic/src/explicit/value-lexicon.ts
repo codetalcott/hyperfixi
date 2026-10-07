@@ -134,19 +134,37 @@ export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProf
  * a regex because brace groups nest; an unbalanced `{` is left alone.
  */
 function maskBraceGroups(text: string, spans: string[]): string {
+  return maskGroups(maskGroups(text, spans, '{', '}'), spans, '[', ']', true);
+}
+
+/**
+ * Mask every balanced `open … close` group. With `indexOnly`, only a group that
+ * touches the name before it: an index or a range (`var[(index-1)..(index+1)]`,
+ * `arr[idx]`), the script's own expression, never an array literal.
+ */
+function maskGroups(
+  text: string,
+  spans: string[],
+  openChar: string,
+  closeChar: string,
+  indexOnly = false
+): string {
   let out = '';
   let index = 0;
   while (index < text.length) {
-    const open = text.indexOf('{', index);
-    if (open === -1) {
+    let open = text.indexOf(openChar, index);
+    while (indexOnly && open > 0 && !/[\w)\]]/.test(text[open - 1] as string)) {
+      open = text.indexOf(openChar, open + 1);
+    }
+    if (open === -1 || (indexOnly && open === 0)) {
       out += text.slice(index);
       break;
     }
     let depth = 0;
     let close = -1;
     for (let i = open; i < text.length; i++) {
-      if (text[i] === '{') depth++;
-      else if (text[i] === '}' && --depth === 0) {
+      if (text[i] === openChar) depth++;
+      else if (text[i] === closeChar && --depth === 0) {
         close = i;
         break;
       }

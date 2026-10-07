@@ -48,7 +48,7 @@ describe("a swap's strategy is one of core's words", () => {
       body: Array<{ roles: Map<string, unknown> }>;
     };
     expect(node.body[0]!.roles.has('method')).toBe(false);
-    expect(en('on click swap arr[0] with arr[2]')).toBe('on click swap arr [0] with arr [2]');
+    expect(en('on click swap arr[0] with arr[2]')).toBe('on click swap arr[0] with arr[2]');
   });
 
   it.each(['swap into #t with it', 'swap over #modal with c', 'swap innerHTML of #t with x'])(

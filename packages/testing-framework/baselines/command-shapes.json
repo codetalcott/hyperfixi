@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 23397,
-  "refused": 3649,
-  "silent": 194,
+  "pass": 23763,
+  "refused": 3303,
+  "silent": 174,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
@@ -158,18 +158,6 @@
       "family": "if",
       "refused": "en *"
     },
-    "8e5fb7d3a8": {
-      "src": "on click set arr to [10, 20, 30] then increment arr[1] then put arr[1] into me",
-      "family": "increment",
-      "silent": "ar he id it ms pl ru sw th tl uk vi",
-      "why": "index-as-amount: `increment arr[1]` reads its index as the amount (`increment arr by [1]`)"
-    },
-    "a7073f5941": {
-      "src": "on click set arr to [10, 20, 30] then decrement arr[1] then put arr[1] into me",
-      "family": "increment",
-      "silent": "ar he id it ms pl ru sw th tl uk vi",
-      "why": "index-as-amount: `increment arr[1]` reads its index as the amount (`increment arr by [1]`)"
-    },
     "5df4aec673": {
       "src": "on click increment innerHTML of #d1",
       "family": "increment",
@@ -281,16 +269,6 @@
     },
     "18b09f2381": {
       "src": "on click set :s to ['a','b','c'] as Set remove 'b' from :s put :s.size into me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "4ce5e6a0df": {
-      "src": "on click set :arr to [1,2,3,4] remove :arr[1] put :arr as String into me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "ea053893cb": {
-      "src": "on click set :arr to [1,2,3,4] remove :arr[-1] put :arr as String into me",
       "family": "remove",
       "refused": "en *"
     },
@@ -510,26 +488,16 @@
     "bf3ceac332": {
       "src": "on click set my style[\"color\"] to \"red\"",
       "family": "set",
-      "refused": "ar bn hi it ja ko pl ru th uk vi zh",
-      "silent": "de es id ms pt qu sw tl tr",
+      "refused": "ar bn hi ja ko ru th uk vi zh",
+      "silent": "de es id it ms pl pt qu sw tl tr",
       "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
     },
     "8ecf869842": {
       "src": "on click set foo to \"color\" then set my style[foo] to \"red\"",
       "family": "set",
-      "refused": "ar bn hi it ja ko pl ru th uk vi zh",
-      "silent": "de es id ms pt qu sw tl tr",
+      "refused": "ar bn hi ja ko ru th uk vi zh",
+      "silent": "de es id it ms pl pt qu sw tl tr",
       "why": "localized-dom-names: a DOM property or type name is translated as a word (`my children` → de `my kinder`, `my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back"
-    },
-    "769eede266": {
-      "src": "on click set arr to [1, 2, 3] set arr[0] to \"red\" set my *color to arr[0]",
-      "family": "set",
-      "refused": "it pl ru uk"
-    },
-    "c5ca44049d": {
-      "src": "on click set arr to [1, 2, 3] set idx to 0 set arr[idx] to \"red\" set my *color to arr[0]",
-      "family": "set",
-      "refused": "it pl ru uk"
     },
     "a9677f770b": {
       "src": "on click show <#d1, #d2/> with display: inline-block",
@@ -561,25 +529,10 @@
       "family": "show",
       "refused": "id ms qu"
     },
-    "93ce107f93": {
-      "src": "on click take @data-foo=baz from .div",
-      "family": "take",
-      "refused": "en *"
-    },
-    "083aedbcb6": {
-      "src": "on click take @data-foo=baz with \"qux\" from .div",
-      "family": "take",
-      "refused": "en *"
-    },
     "edd578621b": {
       "src": "on click take @data-foo=baz with my @data-foo from .div",
       "family": "take",
-      "refused": "en *"
-    },
-    "2e5e71153b": {
-      "src": "on click take @data-foo=baz from .div giving \"qux\"",
-      "family": "take",
-      "refused": "en *"
+      "refused": "id vi"
     },
     "8353b546d7": {
       "src": "on click throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML end",
@@ -888,26 +841,6 @@
       "family": "core/scoping",
       "refused": "*"
     },
-    "b4fbe37d69": {
-      "src": "on click set var to [0,1,2,3,4,5] then put var[..3] as String into #d1",
-      "family": "expressions/arrayIndex",
-      "refused": "en *"
-    },
-    "0886e961b7": {
-      "src": "on click set var to [0,1,2,3,4,5] then put var[2 .. 3] as String into #d1",
-      "family": "expressions/arrayIndex",
-      "refused": "en *"
-    },
-    "15d981be2d": {
-      "src": "on click set index to 3 then set var to [0,1,2,3,4,5] then put var[(index-1)..(index+1)] as String into #d1",
-      "family": "expressions/arrayIndex",
-      "refused": "en *"
-    },
-    "11324f6854": {
-      "src": "on click set var to [0,1,2,3,4,5] then put var[3 ..] as String into #d1",
-      "family": "expressions/arrayIndex",
-      "refused": "en *"
-    },
     "1c0539c39f": {
       "src": "on click set #target to '<div id=target _=\"on click put `clicked` into me\">new</div>'",
       "family": "expressions/assignableElements",
@@ -915,21 +848,6 @@
     },
     "8a13ec8232": {
       "src": "on click set my [@data-foo] to \"blue\"",
-      "family": "expressions/attributeRef",
-      "refused": "en *"
-    },
-    "8f02a24c06": {
-      "src": "on click add @data-foo=blue",
-      "family": "expressions/attributeRef",
-      "refused": "en *"
-    },
-    "47b04cd69b": {
-      "src": "on click add @data-foo=\"blue\"",
-      "family": "expressions/attributeRef",
-      "refused": "en *"
-    },
-    "1dc00d5d74": {
-      "src": "on click add @data-foo=\"blue green\"",
       "family": "expressions/attributeRef",
       "refused": "en *"
     },
@@ -1086,11 +1004,6 @@
       "src": "on click elsewhere add .clicked",
       "family": "on",
       "refused": "bn it th"
-    },
-    "567ce21730": {
-      "src": "on example[foo] increment @count then put it into me",
-      "family": "on",
-      "refused": "en *"
     },
     "a8613168a4": {
       "src": "on foo(bar)[bar] put \"triggered\" into my.innerHTML",

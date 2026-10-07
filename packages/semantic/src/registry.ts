@@ -505,11 +505,70 @@ export function isLanguageSupported(code: string): boolean {
  */
 export function tokenize(input: string, language: string): TokenStream {
   const tokenizer = getTokenizer(language);
-  const stream = fuseScopedNames(
-    markLineStarts(tokenizer.tokenize(input), input, language),
+  const stream = fuseGluedValues(
+    fuseScopedNames(markLineStarts(tokenizer.tokenize(input), input, language), language),
     language
   );
   return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+}
+
+/**
+ * A value upstream reads whole that a tokenizer splits where nothing spaces it:
+ * an attribute with its value (`@data-foo=baz`, `@data-foo="a b"`: `@name`,
+ * `=`, the value) and a name with its index or range (`:arr[1]`, `var[..3]`,
+ * `var[2 .. 3]`: the name, then its bracket). Each part was read on its own,
+ * and the reader kept the first and dropped the rest. Fused, every reader takes
+ * it as one value, and every language writes it as written.
+ */
+function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
+  const tokens = stream.tokens;
+  const out: LanguageToken[] = [];
+  let changed = false;
+  const touches = (a: LanguageToken | undefined, b: LanguageToken | undefined): boolean =>
+    !!a && !!b && a.position.end === b.position.start;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]!;
+    const next = tokens[i + 1];
+    const value = tokens[i + 2];
+    // `@name=value`: the value a word or a string, every part touching.
+    if (
+      /^@[\w-]+$/.test(t.value) &&
+      next?.value === '=' &&
+      touches(t, next) &&
+      value &&
+      touches(next, value) &&
+      (value.kind === 'literal' || /^[\w-]+$/.test(value.value))
+    ) {
+      out.push({
+        value: `${t.value}=${value.value}`,
+        kind: t.kind,
+        position: { ...t.position, end: value.position.end },
+      } as LanguageToken);
+      i += 2;
+      changed = true;
+      continue;
+    }
+    // `name[…]`: a name (`arr`, `:arr`, `$arr`) and the bracket touching it.
+    if (
+      t.kind === 'identifier' &&
+      /^[:$]?[A-Za-z_][\w]*$/.test(t.value) &&
+      next &&
+      touches(t, next) &&
+      next.value.startsWith('[') &&
+      next.value.endsWith(']')
+    ) {
+      out.push({
+        value: `${t.value}${next.value}`,
+        kind: 'identifier',
+        position: { ...t.position, end: next.position.end },
+      } as LanguageToken);
+      i += 1;
+      changed = true;
+      continue;
+    }
+    out.push(t);
+  }
+  return changed ? new TokenStreamImpl(out, language) : stream;
 }
 
 /** The words that name a variable's scope before it, as upstream reads them. */
