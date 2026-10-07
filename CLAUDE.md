@@ -629,16 +629,16 @@ Every gate above reads the **corpus**, and most value shapes are not in it. The
 **value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
 generates them instead: eleven operand kinds (a reference's property among them:
 `event's type`, `the type of event`; and a sigil variable, `$n`) × the operators ×
-eight value positions (`put` and `set` values, a `set` in the second command of a
-chain, `if` and `repeat while` conditions, a loop's count, `increment … by`, what a
-`get` reads), plus
+nine value positions (`put` and `set` values, a `set` in the second command of a
+chain, `if` and `repeat while` conditions, an `if` with no `then` before a command
+that names no target, a loop's count, `increment … by`, what a `get` reads), plus
 two WRITTEN-target positions (what a `set`
 writes, what an `increment` counts) and a derived axis of **colliding names** —
 variables spelled like some language's marker, particle or connective (es `a`, pl
 `w`, de `um`), and English words upstream runs as variables (`input`, `when`, `index`:
 `KEYWORD_NAMES`), which a translation writes verbatim, as a whole value and as an
 operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 4,537 cells. It EXECUTES each one: the English source on upstream
+…) — 5,296 cells. It EXECUTES each one: the English source on upstream
 `hyperscript.org` is the oracle, and 48 lanes must match it — semantic's English
 round trip, each language through the adapter on upstream, and (since 2026-10-01)
 the English source and each language's adapter output on `@hyperfixi/engine`
@@ -648,12 +648,14 @@ two is a difference between the engines). Core's lanes retired with its engine: 
 passing it, and the `en` lane (its English) in C4, whose only failures were the eight
 accepted `the X of Y as T` cells. Its baseline (`baselines/value-matrix.json`) lists
 every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (it's `di`
-ambiguity) stay listed and are reported apart. The rules that tell a variable
+ambiguity) stay listed and are reported apart. Since 2026-10-07 it also lists the
+`branch` position's REFUSED pairs (610: an SOV condition that ends in an owner takes the
+branch's `.y`, and `translate()` says so); none silent. The rules that tell a variable
 spelled like a structure word from the word (each with its PR and the test that pins it) are in
 `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
 PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
 can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
-phrase cells in `value-matrix.<position>-phrases.test.ts`: fifteen parallel shards in
+phrase cells in `value-matrix.<position>-phrases.test.ts`: seventeen parallel shards in
 the package's ordinary suite) fails on a new failing pair AND on a listed pair that
 passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (it
 refuses to add pairs without `--allow-new`). It is the queue for value work: the

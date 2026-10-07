@@ -75,7 +75,13 @@ pair left is in a named family with a reason (`SILENT_FAMILIES`); the English la
 **Fixes by family** (#1404–#1417): program structure; control flow; trailing clauses, by one
 mechanism (a clause no pattern models, and upstream's `on` head forms, kept as written); scoped
 names (P45); values as one token (`@a=v`, `arr[1]`) and bracket interiors as written.
-`packages/semantic/src/parser` grew by 862 lines net since 4.1.0.
+`packages/semantic/src/parser` grew by 862 lines net since 4.1.0. Then a word is written only where
+its reader brings it back (#1419), and three losses no gate held (step 2): tr read an `if` with no
+`then` as the condition's head plus a branch whose destination was the condition's tail (P54; the
+value matrix's `branch` position now holds the shape), core's `swap into`/`over` were written as an
+exchange with a property, and a strategy upstream cannot spell is refused (`core-only`, S6).
+`it.value` written `its.value` (P14) was measured as no loss: both engines read `its` as `it`, and
+upstream's own suite writes `its.ok`.
 
 | Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
 | ---------------------- | ------ | ------- | ------ | --------------------------------- |
@@ -86,8 +92,9 @@ names (P45); values as one token (`@a=v`, `arr[1]`) and bracket interiors as wri
 **Left.** English refusals: `scroll … by` (P8), `.stop*` classes (P2), `default … in` (P10),
 `make a Set` (P11), a second `on` after `send` (P26), `halt default`, `don't throw`, `send` arguments,
 `beep!`, `.foo()` chains, `closest @foo`, `otherwise`, `on every click`, `init immediately`, `on "a-b"`,
-and the LOUD families; `it.value` (P14) is still silent. Group 6, foreign lanes: P9, P15, P18, P21,
-P52, P54, foreign bare counts and `queue` forms, ko verbs that are also events. The gate's `--report`
+and the LOUD families. Group 6, foreign lanes: P9, P15, P18, P21, P52, foreign bare counts and `queue`
+forms, ko verbs that are also events, and the `branch` refusals (an SOV condition ending in an owner
+takes the branch's `.y`). The gate's `--report`
 lists the silent families. **Exit:** every IN family passes or has a reason; stop widening when a
 widening finds nothing a user would write (rule 4).
 
@@ -270,7 +277,7 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
 | Gate                             | Sees                                                         | Blind to                                              |
 | -------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
 | Multilingual `--regression` (11) | corpus parses: actions, roles, values, execution (R2 subset) | shapes not in the corpus; naturalness; confidence     |
-| Value matrix                     | value shapes in 10 positions, executed on both engines       | command/structure shapes (the command-shape gate)     |
+| Value matrix                     | value shapes in 11 positions, executed on both engines       | command/structure shapes (the command-shape gate)     |
 | Command shapes                   | authors' scripts (upstream's tests, core's docs), round trip | values the scripts lack (value matrix); naturalness   |
 | Canonical validity (R4 + en)     | renders upstream rejects                                     | renders upstream accepts but that mean something else |
 | en-reference-preservation        | English parses that lose source content (corpus)             | shapes not in the corpus                              |

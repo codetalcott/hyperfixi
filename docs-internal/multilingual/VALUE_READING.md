@@ -59,6 +59,13 @@ word by word:
 | S2  | after a copula the next word is its predicate, not a branch: a normalized copula always; ar `هو`, th `เป็น`, hi `है`/`नहीं`, qu `mana` only before a predicate                              | `copulaHoldsCondition` (`value-reading.ts`) | #396; `नहीं` 41, `mana` 78   | `multilingual-roadmap-fixes.test.ts`, `condition-words.test.ts`, `direct-path-shapes` (core's `condition-copula-direct-path` cases, carried over in C2) |
 | S3  | a copula that is the condition's first word is a variable (es `si es poner …`); ~~a leading negation keeps its operand unless a command verb follows~~ (dropped by PR 104: tr `if yok`)       | `copulaHoldsCondition` (`value-reading.ts`) | 84; negation half 84–104     | `colliding-names.test.ts`                                                                          |
 
+**The marker group** (`PatternMatcher.matchGroupToken`, `pattern-matcher.ts`): a split the condition
+scan tests (does a command begin here?) reads the command's first group, so its rule decides the seam too.
+
+| #   | Reads                                                                                                                                                                                                         | Where             | PR             | Pinned by                                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | -------------- | ------------------------------------------------------------------------------- |
+| G1  | a group whose marker may be dropped (tr's `markersOptional`) binds its role only when its LAST token is the marker; a marker word inside the value is the value's (tr `in` the operator, `a` the article, `nin` the possessive) | `matchGroupToken` | #959; last token P54 | `marker-less-optional-slot-verb.test.ts`; the value matrix's `branch` cells |
+
 **What they share.** Four sub-predicates recur. Since PR 87 each has one definition, on the
 `SlotContext` a capture builds once, at the token its value starts at (`value-reading.ts`):
 
