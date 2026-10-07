@@ -164,7 +164,7 @@ export interface MatrixCell {
  */
 export const FIXTURE =
   '<div id="out">∅</div>' +
-  '<p id="a" class="x" title="t1">6</p>' +
+  '<p id="a" class="x" title="t1" aria-pressed="true">6</p>' +
   '<div id="w"><p class="w">w</p><p class="w">v</p></div>' +
   '<button id="b">b</button>';
 
@@ -215,6 +215,10 @@ export const OPERANDS: readonly Operand[] = [
   { kind: 'call', type: 'bool', text: 'Array.isArray(arr)' },
   { kind: 'array', type: 'arr', text: '[1, 2]' },
   { kind: 'array', type: 'arr', text: '[n, 2]' },
+  // A word some language's lexicon translates, inside an array in a larger
+  // expression: every reader takes a bracket group whole, so a renderer that
+  // localized `true` there (es `2 is in [verdadero, n]`) lost it in all 23.
+  { kind: 'array', type: 'arr', text: '[true, n]' },
   { kind: 'parens', type: 'num', text: '(n + 1)' },
   { kind: 'parens', type: 'str', text: '(s + "c")' },
   { kind: 'parens', type: 'bool', text: '(n > 1)' },
@@ -330,7 +334,16 @@ export const BINARY_OPERATORS: readonly BinaryOperator[] = [
     representative: true,
     signatures: [sig('num', 'arr', '2', '[1, 2, 6]', 'bool')],
   },
-  { op: 'matches', representative: true, signatures: [sig('one', 'none', '#a', '.x', 'bool')] },
+  {
+    op: 'matches',
+    representative: true,
+    // An attribute selector whose value a lexicon translates: es wrote
+    // `<[aria-pressed=verdadero]/>`, another selector, in all 23 languages.
+    signatures: [
+      sig('one', 'none', '#a', '.x', 'bool'),
+      sig('one', 'none', '#a', '<[aria-pressed=true]/>', 'bool'),
+    ],
+  },
   // Operator PHRASES (the after-85 handoff, part 2): the words each language
   // renders for them are read back by the join and the sense table, which no
   // single-word operator exercises. One of each class is representative, so the
