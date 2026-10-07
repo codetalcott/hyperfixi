@@ -3934,6 +3934,9 @@ export class PatternMatcher {
     increment: 'patient',
     decrement: 'patient',
     set: 'destination',
+    // The side a binding writes: `bind $theme and @data-theme` read `$theme and
+    // @data-theme` as one logical run, and the binding did not parse.
+    bind: 'destination',
   };
 
   /**

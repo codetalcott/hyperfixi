@@ -1078,7 +1078,10 @@ export const bindSchema: CommandSchema = {
       role: 'destination',
       description: 'The variable to bind',
       required: true,
-      expectedTypes: ['reference', 'expression'],
+      // Either side of a binding can be any writable expression (upstream reads
+      // `bind <expr> and|with|to <expr>`): a class (`bind .dark to $isDark`, a
+      // class toggle), an attribute, a possessive (`bind my value to …`).
+      expectedTypes: ['reference', 'expression', 'selector', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
       // Bound variable mirrors `set`'s destination marking. The bound

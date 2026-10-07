@@ -34,6 +34,7 @@ import { swapPatternsEn } from './languages/en/swap';
 // rationale: this module kept its own copy, so a change to the leaf (its value
 // types) had no effect on the registered `en` module.
 import { setPossessiveEnglish } from './languages/en/set';
+import { bindAndEnglish } from './languages/en/bind';
 
 // English's own functions, not the dispatchers: dist/languages/en.js inlines this
 // module, and an inlined dispatcher reads an inlined copy of the hand-crafted
@@ -299,6 +300,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
     repeatTimesEnglish,
     repeatForeverEnglish,
     setPossessiveEnglish,
+    bindAndEnglish,
     forEnglish,
     ifEnglish,
     unlessEnglish,
