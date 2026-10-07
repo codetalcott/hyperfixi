@@ -10,7 +10,7 @@
  * keeps `$name` whole and the matcher/type-validation treat it as a reference).
  */
 import { describe, it, expect } from 'vitest';
-import { parse, canParse } from '../src';
+import { parse, canParse, render, translate } from '../src';
 import type {
   CommandSemanticNode,
   CompoundSemanticNode,
@@ -47,8 +47,7 @@ describe('bind command', () => {
     // while the parser dropped the second bind, and would have thrown the
     // moment it stopped. Assert the sequence unconditionally.
     const node = parse('bind :name to #input-a then bind :name to #input-b', 'en') as
-      | CompoundSemanticNode
-      | CommandSemanticNode;
+      CompoundSemanticNode | CommandSemanticNode;
 
     expect(node.kind).toBe('compound');
     const actions = (node as CompoundSemanticNode).statements.map(
@@ -67,5 +66,61 @@ describe('bind command', () => {
     expect(node.action).toBe('bind');
     expect(node.roles.get('destination')?.value).toBe('$greeting');
     expect(node.roles.get('source')?.value).toBe('#name-input');
+  });
+});
+
+// Upstream reads `bind <left> and|with|to <right>` as one feature, and either
+// side is any writable expression (M1 phase 3). Only `to` parsed, with a
+// variable on the left.
+describe('bind connectives and sides', () => {
+  const en = (code: string) => render(parse(code, 'en'), 'en');
+
+  it.each([
+    ['bind $theme and @data-theme', 'bind $theme to @data-theme'],
+    ['bind $x with #a', 'bind $x to #a'],
+    ['bind .dark and $darkMode', 'bind .dark to $darkMode'],
+    ['bind .highlight to $highlighted', 'bind .highlight to $highlighted'],
+    ["bind my value and #slider's value", "bind my value to #slider's value"],
+    ["bind @data-title and #title-input's value", "bind @data-title to #title-input's value"],
+    ['bind $opacity and *opacity', 'bind $opacity to *opacity'],
+  ])('%s', (code, english) => {
+    const node = parse(code, 'en') as CommandSemanticNode;
+    expect(node.action).toBe('bind');
+    expect(en(code)).toBe(english);
+  });
+
+  it('`and` never joins the bound side into a logical run', () => {
+    const node = parse('bind $theme and @data-theme', 'en') as CommandSemanticNode;
+    expect(node.roles.get('destination')?.value).toBe('$theme');
+  });
+
+  it.each(['es', 'ja', 'ar', 'ko', 'de', 'zh'])('round-trips in %s', language => {
+    for (const code of ['bind .dark and $darkMode', "bind @data-title and #title-input's value"]) {
+      expect(translate(translate(code, 'en', language), language, 'en')).toBe(en(code));
+    }
+  });
+});
+
+describe('a bind feature before another feature', () => {
+  // A command feature is closed with `end` (upstream allows it) where the next
+  // feature has no head word to split at: read back without one, `bind` and
+  // `live` ran together as one command sequence in every language.
+  const code = 'bind $username to me end\nlive set my @data-mirror to $username';
+
+  it('is written with its end', () => {
+    expect(render(parse(code, 'en'), 'en')).toBe(
+      'bind $username to me\nend\nlive\n  set my @data-mirror to $username\nend'
+    );
+  });
+
+  it.each(['es', 'ja', 'ar', 'ko', 'de', 'zh'])('round-trips in %s', language => {
+    const english = render(parse(code, 'en'), 'en');
+    expect(translate(translate(code, 'en', language), language, 'en')).toBe(english);
+  });
+
+  it('needs none before a handler, whose head splits it', () => {
+    expect(render(parse('set :foo to 42 on click put :foo into me', 'en'), 'en')).toBe(
+      'set :foo to 42\non click put :foo into me\nend'
+    );
   });
 });

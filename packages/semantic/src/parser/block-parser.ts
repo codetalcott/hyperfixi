@@ -219,7 +219,11 @@ function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerFo
       return !!after && (tokenMatches(after, forms.inForms) || after.normalized === 'in');
     }
   }
-  if (action === 'if' && prev && tokenMatches(prev, forms.elseForms)) return false;
+  // `else if` continues the chain on the else's line only; an `if` on the next
+  // line opens a block of its own, with its own `end` (isElseIfChain).
+  if (action === 'if' && prev && tokenMatches(prev, forms.elseForms) && !tok.metadata?.lineStart) {
+    return false;
+  }
   return true;
 }
 

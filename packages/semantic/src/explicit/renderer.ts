@@ -342,10 +342,19 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (isProgram(node)) {
       const endKw = this.keyword(language, 'end');
       const lines: string[] = [];
-      for (const feature of node.statements) {
+      node.statements.forEach((feature, i) => {
         lines.push(this.render(feature, language));
         if (feature.kind === 'event-handler') lines.push(endKw);
-      }
+        // A command feature (`bind`, `set`, `install`) closed by an `end`, as
+        // upstream allows, where the next feature has no head word a reader
+        // splits at (`bind $x to me end` then `live …`). Read back without one,
+        // the two ran together as one command sequence; before a handler, its
+        // head word does the work.
+        const next = node.statements[i + 1];
+        if (feature.kind === 'command' && next && next.kind !== 'event-handler') {
+          lines.push(endKw);
+        }
+      });
       return lines.join('\n');
     }
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
