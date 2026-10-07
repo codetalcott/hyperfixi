@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 21597,
-  "refused": 5232,
-  "silent": 411,
+  "pass": 21669,
+  "refused": 5190,
+  "silent": 381,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
@@ -1480,17 +1480,6 @@
       "family": "reset",
       "refused": "hi"
     },
-    "315f1121a3": {
-      "src": "swap innerHTML of #target with result",
-      "family": "swap",
-      "refused": "*",
-      "silent": "en"
-    },
-    "dbb9beca52": {
-      "src": "fetch /api/${id} as json",
-      "family": "fetch",
-      "silent": "en *"
-    },
     "62d0c2127b": {
       "src": "pick characters 0 to 3 from \"hello\"",
       "family": "pick",
@@ -1574,12 +1563,6 @@
       "src": "close #myDialog close #details close #popup",
       "family": "close",
       "refused": "ko"
-    },
-    "951b2209ca": {
-      "src": "swap #a with #b swap innerHTML of #target with response",
-      "family": "swap",
-      "refused": "ar de es fr he id it ko ms pl pt ru sw th tl tr uk vi zh",
-      "silent": "en bn hi ja qu"
     },
     "4d698f4f27": {
       "src": "scroll to #section scroll to the top of me scroll down by 200",
