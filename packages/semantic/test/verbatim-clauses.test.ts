@@ -67,6 +67,26 @@ describe('a clause the pattern does not model is kept as written', () => {
   });
 });
 
+describe('a tool that checks a script still sees the clause no role reads', () => {
+  const clauses = (code: string): string[] =>
+    (
+      (parse(code, 'en') as { diagnostics?: Array<{ code?: string; message: string }> })
+        .diagnostics ?? []
+    )
+      .filter(d => d.code === 'verbatim-clause')
+      .map(d => d.message);
+
+  it('the top node carries it, from any depth', () => {
+    expect(clauses('on click add .foo .bar')).toEqual([
+      'clause kept as written, read by no role: ".bar"',
+    ]);
+    expect(clauses('on click repeat 3 times add .foo .bar end')).toHaveLength(1);
+    // A behavior's handler is parsed on its own, and its clause hoisted.
+    expect(clauses('behavior B on click add .foo .bar end')).toHaveLength(1);
+    expect(clauses('on click add .foo to .bar')).toEqual([]);
+  });
+});
+
 describe('a group that reads its marker and binds nothing gives the marker back', () => {
   it.each([
     'on click take .foo from .div for #d3',

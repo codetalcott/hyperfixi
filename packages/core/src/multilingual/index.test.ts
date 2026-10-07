@@ -45,12 +45,14 @@ describe('@hyperfixi/core/multilingual', () => {
     // semantic refuses a translation that would drop part of the script; core
     // does not swallow that as "cannot be translated" (M1 fail-loud).
     it('refuses a translation that would drop part of the script', async () => {
-      await expect(translate('on click toggle .a .b', 'en', 'es')).rejects.toMatchObject({
+      // `ask` has no schema yet (an owner vocabulary decision): it is dropped.
+      const code = 'on click ask "Name?" then put it into me';
+      await expect(translate(code, 'en', 'es')).rejects.toMatchObject({
         name: 'LossyTranslationError',
-        loss: { kind: 'truncation', lost: ['.b'] },
+        loss: { kind: 'truncation', lost: ['ask "Name?"'] },
       });
-      const partial = await translate('on click toggle .a .b', 'en', 'es', { lossy: 'allow' });
-      expect(partial).not.toContain('.b');
+      const partial = await translate(code, 'en', 'es', { lossy: 'allow' });
+      expect(partial).not.toContain('Name?');
     });
 
     it('returns the input unchanged when it does not parse', async () => {

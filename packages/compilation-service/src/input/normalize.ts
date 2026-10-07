@@ -104,13 +104,18 @@ function liftNodeDiagnostics(node: unknown, diagnostics: Diagnostic[]): void {
   if (!Array.isArray(nodeDiags)) return;
   for (const d of nodeDiags) {
     if (d.severity !== 'warning' && d.severity !== 'error') continue;
+    // A clause the parser keeps as written is read by no role either: for a
+    // validate/repair loop it is the same signal as a dropped one.
+    const unread = d.code === 'unconsumed-input' || d.code === 'verbatim-clause';
     const diag: Diagnostic = {
       severity: d.severity,
       // Parser codes are kebab-case; this surface uses UPPER_SNAKE (PARSE_ERROR &c).
-      code: (d.code ?? 'PARSE_DIAGNOSTIC').replace(/-/g, '_').toUpperCase(),
+      code: unread
+        ? 'UNCONSUMED_INPUT'
+        : (d.code ?? 'PARSE_DIAGNOSTIC').replace(/-/g, '_').toUpperCase(),
       message: d.message ?? 'parser diagnostic',
     };
-    if (d.code === 'unconsumed-input') {
+    if (unread) {
       diag.suggestion =
         'Dropped tokens were parsed but bound to no role — usually a missing role ' +
         "marker (e.g. 'to'/'on'/'from' before the target), so the role fell back to " +

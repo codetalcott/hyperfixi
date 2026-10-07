@@ -91,7 +91,8 @@ describe('translate_code', () => {
   // `partial` — never `code`.
   it('refuses a translation that would drop part of the script', async () => {
     const result = await handleCompilationTool('translate_code', {
-      code: 'on click toggle .foo .bar',
+      // `ask` has no schema yet (an owner vocabulary decision): it is dropped.
+      code: 'on click ask "Name?" then put it into me',
       from: 'en',
       to: 'es',
     });
@@ -100,7 +101,7 @@ describe('translate_code', () => {
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.ok).toBe(false);
     expect(parsed.code).toBeUndefined();
-    expect(parsed.loss.lost).toContain('.bar');
+    expect(parsed.loss.lost).toContain('ask "Name?"');
     expect(typeof parsed.partial).toBe('string');
     expect(parsed.diagnostics.map((d: { code: string }) => d.code)).toEqual(['LOSSY_TRANSLATION']);
   }, 30000);

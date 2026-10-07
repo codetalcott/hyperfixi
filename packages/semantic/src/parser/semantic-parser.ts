@@ -559,8 +559,8 @@ const COVERAGE_RESIDUE_NORMALIZED = new Set([
 ]);
 
 /**
- * Hoist `unconsumed-input` diagnostics from every descendant node onto the top
- * node, deduplicated by message. The coverage sweep and `compile(...).meta`
+ * Hoist `unconsumed-input` and `verbatim-clause` diagnostics from every
+ * descendant node onto the top node, deduplicated by message. The coverage sweep and `compile(...).meta`
  * read only the TOP node's diagnostics; per-segment drops are recorded on the
  * node whose parse produced them (so they die with a discarded speculative
  * parse), and this lifts the survivors into view at the outermost parse exit.
@@ -572,7 +572,7 @@ function hoistUnconsumedDiagnostics(top: SemanticNode): SemanticNode {
     if (!node || typeof node !== 'object') return;
     if (node !== top) {
       for (const d of node.diagnostics ?? []) {
-        if (d.code !== 'unconsumed-input') continue;
+        if (d.code !== 'unconsumed-input' && d.code !== 'verbatim-clause') continue;
         const key = `${d.code}|${d.message}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -1197,6 +1197,15 @@ export class SemanticParserImpl implements ISemanticParser {
     });
     const node = owner as { verbatimClause?: string };
     node.verbatimClause = node.verbatimClause ? `${node.verbatimClause} ${text}` : text;
+    // No role reads it: a tool that checks a script (validate, a fidelity
+    // score) still sees the part no pattern models. Translation does not.
+    this.coverageFrames[this.coverageFrames.length - 1]?.push(
+      parseDiagnostic(
+        `clause kept as written, read by no role: "${text}"`,
+        'warning',
+        'verbatim-clause'
+      )
+    );
     return true;
   }
 
