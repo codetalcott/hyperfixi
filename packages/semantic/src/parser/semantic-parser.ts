@@ -518,6 +518,23 @@ const CLAUSE_LESS: ReadonlySet<string> = new Set([
   'else',
 ]);
 
+/**
+ * The words that open what upstream's `on` reads between the event and the
+ * body (besides a count): `elsewhere`, `in #d1`, `of attributes` (mutation),
+ * `or click from #d2`, `queue first`, `having threshold 0.1`.
+ */
+const HEAD_OPENERS: ReadonlySet<string> = new Set([
+  'elsewhere',
+  'in',
+  'of',
+  'or',
+  'queue',
+  'having',
+]);
+
+/** The most words a head clause holds: upstream's are short (`of attributes from #d1`). */
+const HEAD_CLAUSE_WORDS = 8;
+
 /** Words that end a command's clause: a block's structure, or a feature's head. */
 const CLAUSE_BOUNDARIES: ReadonlySet<string> = new Set([
   'else',
@@ -2517,6 +2534,7 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     let body: SemanticNode[];
+    let headClause: string | undefined;
 
     // Check if pattern captured an action (grammar-transformed patterns)
     // These patterns combine event + action in a single match
@@ -3481,6 +3499,7 @@ export class SemanticParserImpl implements ISemanticParser {
         body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
         while (!tokens.isAtEnd()) tokens.advance();
       } else {
+        headClause = this.takeHeadClause(tokens, commandPatterns, language);
         // Use parseBodyWithClauses() to properly handle multi-clause then-chains
         body = this.parseBodyWithClauses(tokens, commandPatterns, language);
       }
@@ -3509,11 +3528,51 @@ export class SemanticParserImpl implements ISemanticParser {
     const foldedBody =
       body.length > 1 ? [createCompoundNode(body, 'then', { sourceLanguage: language })] : body;
 
-    return createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
+    const handler = createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
       confidence: match.confidence,
     });
+    return headClause ? { ...handler, headClause } : handler;
+  }
+
+  /**
+   * What upstream's `on` reads between the event and the body and no event
+   * pattern models (`on click elsewhere`, `on click 1 to 2`, `on mutation of
+   * attributes`, `on foo queue first`, `on x having threshold 0.1`), taken as
+   * the handler's head clause, kept as written (M1 phase 3). It opens with a
+   * word of upstream's `on` grammar or a count, and runs to the first command;
+   * the guards of a command's clause apply (keepVerbatimClause).
+   */
+  private takeHeadClause(
+    tokens: TokenStream,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): string | undefined {
+    const all = tokens.tokens as LanguageToken[];
+    const start = tokens.position();
+    const first = all[start];
+    if (!first) return undefined;
+    const opens = HEAD_OPENERS.has(first.value.toLowerCase()) || /^\d+$/.test(first.value);
+    if (!opens) return undefined;
+    let end = start + 1;
+    while (end < all.length && end - start <= HEAD_CLAUSE_WORDS) {
+      if (this.tokensBeginCommand(all.slice(end), commandPatterns, language)) break;
+      end++;
+    }
+    if (end >= all.length || end - start > HEAD_CLAUSE_WORDS) return undefined;
+    const run = all.slice(start, end);
+    // A count is upstream's `1` or `1 to 2`; a number that opens the body (an
+    // SOV loop's `3 + 3 times`) is no head clause. Another language's body can
+    // open with a number where its head ends (ja `2 is in [1, 2] を #out に
+    // 置く`), so there a count is read only in the form no value takes, `1 to 2`.
+    const words = run.map(t => t.value).join(' ');
+    const count = language === 'en' ? /^\d+(?: to \d+)?$/ : /^\d+ to \d+$/;
+    if (/^\d/.test(first.value) && !count.test(words)) return undefined;
+    const holder = { kind: 'command', action: 'on' } as unknown as SemanticNode;
+    if (!this.keepVerbatimClause(holder, run, all[start - 1], language)) return undefined;
+    while (tokens.position() < end) tokens.advance();
+    return (holder as { verbatimClause?: string }).verbatimClause;
   }
 
   /**

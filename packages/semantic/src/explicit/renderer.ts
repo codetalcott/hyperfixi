@@ -1003,8 +1003,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     eventPart: number,
     language: string
   ): void {
-    const em = node.eventModifiers;
-    if (!em) return;
+    const em = node.eventModifiers ?? {};
+    if (!node.eventModifiers && !node.headClause) return;
     if (eventPart >= 0 && em.queue) parts[eventPart] += `.queue(${em.queue})`;
     if (em.once && em.onceAsFirst) {
       // `on first click`, the form both engines run once; every other
@@ -1034,6 +1034,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const duration = (ms: number): string => (ms % 1000 === 0 ? `${ms / 1000}s` : `${ms}ms`);
     if (typeof em.debounce === 'number') tail.push(`debounced at ${duration(em.debounce)}`);
     if (typeof em.throttle === 'number') tail.push(`throttled at ${duration(em.throttle)}`);
+    // What upstream's `on` reads that no pattern models, as written, after the
+    // whole head (zh's closes on 就, after its event).
+    if (node.headClause) parts.push(node.headClause);
     if (tail.length === 0) return;
     // After the event when the head carries one; else after the head (SOV heads
     // end in their event marker, which the modifiers must follow).

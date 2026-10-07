@@ -161,13 +161,17 @@ function verbatimClauses(node: unknown, out: string[] = [], depth = 0): string[]
     for (const n of node) verbatimClauses(n, out, depth + 1);
     return out;
   }
-  const rec = node as { action?: string; verbatimClause?: string } & Record<string, unknown>;
-  if (rec.verbatimClause) {
-    out.push(`${rec.action}: ${rec.verbatimClause.replace(/\s+/g, ' ').trim()}`);
+  const rec = node as {
+    action?: string;
+    verbatimClause?: string;
+    headClause?: string;
+  } & Record<string, unknown>;
+  for (const clause of [rec.verbatimClause, rec.headClause]) {
+    if (clause) out.push(`${rec.action}: ${clause.replace(/\s+/g, ' ').trim()}`);
   }
   for (const [key, child] of Object.entries(rec)) {
     if (key === 'roles' || key === 'metadata' || key === 'diagnostics') continue;
-    if (key === 'verbatimClause') continue;
+    if (key === 'verbatimClause' || key === 'headClause') continue;
     if (child && typeof child === 'object') verbatimClauses(child, out, depth + 1);
   }
   return out;
