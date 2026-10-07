@@ -3,20 +3,15 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 21490,
-  "refused": 5287,
-  "silent": 463,
+  "pass": 21597,
+  "refused": 5232,
+  "silent": 411,
   "entries": {
     "a1ca7a74a0": {
       "src": "on click add .foo to my children",
       "family": "add",
       "refused": "ar bn hi id ko ru th tr uk zh",
       "silent": "de es fr it ja ms pl pt qu sw tl vi"
-    },
-    "d779d2d4ee": {
-      "src": "on click add {color: red; font-family: monospace}",
-      "family": "add",
-      "silent": "en *"
     },
     "52176aeb50": {
       "src": "on click add .foo .bar",
@@ -574,25 +569,10 @@
       "family": "set",
       "refused": "it pl ru uk"
     },
-    "2b181df899": {
-      "src": "on click show me with display: flex",
-      "family": "show",
-      "refused": "en *"
-    },
-    "59e26285f5": {
-      "src": "on click show me with display: inline-block",
-      "family": "show",
-      "refused": "en *"
-    },
     "a9677f770b": {
       "src": "on click show <#d1, #d2/> with display: inline-block",
       "family": "show",
       "refused": "en *"
-    },
-    "b80e4f0edf": {
-      "src": "on click show .c1 with display:inline-block",
-      "family": "show",
-      "silent": "en *"
     },
     "d9ecdbc854": {
       "src": "on click toggle .foo show when I match .foo",
@@ -618,12 +598,6 @@
       "src": "on click show <p/> in me when its textContent is 'yes' if the result is empty put 'none' into #out else put 'some' into…",
       "family": "show",
       "refused": "en *"
-    },
-    "17039d15e3": {
-      "src": "on click set arr to [1,2,3] then swap arr[0] with arr[2] then put arr as String into me",
-      "family": "swap",
-      "refused": "ar bn he hi qu tr zh",
-      "silent": "en ja ko"
     },
     "7190d033fa": {
       "src": "on click take .foo from .div for #d3",
@@ -1584,7 +1558,7 @@
     "2218bab0ca": {
       "src": "on click call navigator.clipboard.writeText(#input's value) then add .copied then wait 1s then remove .copied",
       "family": "reference/patterns",
-      "silent": "en *"
+      "silent": "*"
     },
     "8712ddea5b": {
       "src": "put \"Hello\" into #message put response at end of #results",
