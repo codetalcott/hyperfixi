@@ -646,11 +646,6 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     ],
   },
   {
-    name: 'index-as-amount',
-    reason: '`increment arr[1]` reads its index as the amount (`increment arr by [1]`)',
-    ids: ['a7073f5941', '8e5fb7d3a8'],
-  },
-  {
     name: 'else-word',
     reason:
       "an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and " +
