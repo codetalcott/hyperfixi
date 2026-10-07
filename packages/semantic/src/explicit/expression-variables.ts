@@ -32,32 +32,27 @@ export function isVariableName(name: string): boolean {
  * An English expression's names: its VARIABLES, each identifier of its parse
  * that is not a property, a method or a conversion's type, and that is a
  * variable name (above); and its PROPERTIES, the names it reads off a value
- * (`children` in `my children`, `#a's children`, `the children of #a`), not a
- * computed index (`arr[i]`).
+ * (`children` in `my children`, `#a's children`, `the children of #a`).
  */
 export function expressionNames(raw: string): { variables: Set<string>; properties: Set<string> } {
   const variables = new Set<string>();
   const properties = new Set<string>();
   const parsed = parseExpression(raw);
   if (!parsed.success || !parsed.node) return { variables, properties };
-  const walk = (expr: unknown, key: string | undefined, computed: boolean): void => {
+  const walk = (expr: unknown, key: string | undefined): void => {
     if (Array.isArray(expr)) {
-      for (const item of expr) walk(item, key, false);
+      for (const item of expr) walk(item, key);
       return;
     }
     if (!expr || typeof expr !== 'object') return;
-    const n = expr as { type?: string; name?: string; computed?: boolean };
+    const n = expr as { type?: string; name?: string };
     if (n.type === 'identifier' && typeof n.name === 'string') {
-      if (key === 'property' && !computed) properties.add(n.name);
-      else if (key !== 'property' && key !== 'targetType' && isVariableName(n.name)) {
-        variables.add(n.name);
-      }
+      if (key === 'property') properties.add(n.name);
+      else if (key !== 'targetType' && isVariableName(n.name)) variables.add(n.name);
     }
-    for (const [k, v] of Object.entries(expr)) {
-      if (v && typeof v === 'object') walk(v, k, k === 'property' && n.computed === true);
-    }
+    for (const [k, v] of Object.entries(expr)) if (v && typeof v === 'object') walk(v, k);
   };
-  walk(parsed.node, undefined, false);
+  walk(parsed.node, undefined);
   return { variables, properties };
 }
 

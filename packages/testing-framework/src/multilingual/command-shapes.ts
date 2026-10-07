@@ -607,28 +607,6 @@ export interface SilentFamily {
 
 export const SILENT_FAMILIES: readonly SilentFamily[] = [
   {
-    name: 'localized-call-arguments',
-    reason:
-      "a call's arguments are written in the target language (`sprayInto(أنا)`, " +
-      '`writeText(قيمة لـ #input)`) and read back raw, so English holds the foreign words',
-    ids: ['2d6fa6cf27', '2218bab0ca'],
-  },
-  {
-    name: 'localized-dom-names',
-    reason:
-      'a DOM property or type name is translated as a word (`my children` → de `my kinder`, ' +
-      '`my style[…]` → `my stil […]`, `a Element` → ar `a عنصر`) and not read back',
-    ids: [
-      '76bf595d21',
-      'a1ca7a74a0',
-      'e172bd73af',
-      'ddb498424a',
-      'dc9ce23e31',
-      'bf3ceac332',
-      '8ecf869842',
-    ],
-  },
-  {
     name: 'value-words',
     reason:
       "a language's word inside a value reads back as another English word: `is not` → " +
