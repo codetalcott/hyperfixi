@@ -17,8 +17,9 @@
  *     prefix and postfix forms (`not`, `-`, `no`, `is empty`, `is null`,
  *     `exists`, `as`), and core's operator PHRASES (`is greater than or equal
  *     to`, `does not include`, `is an Element`, …);
- *   - POSITIONS: a `put` value, a `set` value, an `if` condition, a `repeat
- *     while` condition, a loop's count (`repeat … times`), an `increment …
+ *   - POSITIONS: a `put` value, a `set` value, an `if` condition, an `if`
+ *     condition with no `then` before a command that names no target
+ *     (`branch`), a `repeat while` condition, a loop's count (`repeat … times`), an `increment …
  *     by` amount, a `set` value in the second command of a chain (`chain`),
  *     what a `get` reads (`get`), and two written targets: what a `set`
  *     writes (`assign`) and what an `increment` counts (`count`).
@@ -115,12 +116,23 @@ export type OperandKind =
   | 'sigil';
 
 export type Position =
-  'put' | 'set' | 'if' | 'while' | 'times' | 'increment' | 'chain' | 'get' | 'assign' | 'count';
+  | 'put'
+  | 'set'
+  | 'if'
+  | 'branch'
+  | 'while'
+  | 'times'
+  | 'increment'
+  | 'chain'
+  | 'get'
+  | 'assign'
+  | 'count';
 
 export const POSITIONS: readonly Position[] = [
   'put',
   'set',
   'if',
+  'branch',
   'while',
   'times',
   'increment',
@@ -643,6 +655,7 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
   put: e => `on click put ${e} into #out`,
   set: e => `on click set x to ${e} then put x into #out`,
   if: e => `on click if ${e} then put "Y" into #out else put "N" into #out end`,
+  branch: e => `on click if ${e} add .y else add .n end then put my className into #out`,
   while: e => `on click set i to 0 then repeat while i < ${e} increment i end then put i into #out`,
   times: e => `on click set i to 0 then repeat ${e} times increment i end then put i into #out`,
   increment: e => `on click set i to 1 then increment i by ${e} then put i into #out`,
@@ -669,10 +682,18 @@ const TEMPLATES: Record<Position, (expression: string) => string> = {
  * `it`, but its role took no literal, so English dropped `get "hello"`, `get
  * 3` and `get true` whole (and every translation with them) while `get n` and
  * `get #a's textContent` read.
+ *
+ * A `branch` condition is every `if` condition but the names (none failed
+ * there that `if` did not). The `if` cells write `then` and a `put` with its
+ * target, so a reader always saw where the condition ended. Without `then`, an
+ * SOV language writes the branch's first role right after the condition, and
+ * its reader has to find the seam: tr read `if 2 is in arr add .a end` as
+ * `if 2 add .a to is in arr end` (its destination marker is optional, and `in`
+ * is also one), with every operand, and the `if` cells all passed.
  */
 function positionsFor(type: ValueType, bare: boolean, group: MatrixCell['group']): Position[] {
   const out: Position[] = ['put', 'set'];
-  if (type === 'bool' || bare) out.push('if');
+  if (type === 'bool' || bare) out.push('if', 'branch');
   if (type === 'num' || type === 'nstr') out.push('while', 'times', 'increment');
   if (group !== 'operand-operator') out.push('chain', 'get');
   return out;

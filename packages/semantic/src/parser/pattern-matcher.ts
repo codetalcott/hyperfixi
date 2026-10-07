@@ -3927,6 +3927,14 @@ export class PatternMatcher {
     // renderRequired literal-only sub-group (the generated postpositional
     // shape); prepositional groups ([จาก {source}]) fail fast on their leading
     // literal and never reach this.
+    //
+    // The marker is the group's LAST token: the sub-group follows the role. A
+    // marker word inside the role's own run is the value's, not the role's
+    // marker: tr `in` is also the operator (`2 dir in arr`), `a` the article
+    // (`id dir a Number`), `nin` the possessive (`length nin textContent nin
+    // #a < 4`). Counted anywhere, they let the unmarked destination take an
+    // `if` condition's tail, so `if 2 is in arr add .a end` read `if 2 add .a
+    // to is in arr end` (P54).
     if (success) {
       const markerLiterals: string[] = [];
       for (const inner of patternToken.tokens) {
@@ -3939,10 +3947,11 @@ export class PatternMatcher {
       if (markerLiterals.length > 0) {
         const addedRole = [...captured.keys()].some(role => !capturedBefore.has(role));
         if (addedRole) {
-          const consumed = tokens.tokens.slice(mark.position, tokens.position()) as LanguageToken[];
-          const markerSeen = consumed.some(tok =>
-            markerLiterals.some(lit => this.getMatchType(tok, lit) !== 'none')
-          );
+          const last = tokens.tokens[tokens.position() - 1] as LanguageToken | undefined;
+          const markerSeen =
+            last !== undefined &&
+            tokens.position() > mark.position &&
+            markerLiterals.some(lit => this.getMatchType(last, lit) !== 'none');
           if (!markerSeen) success = false;
         }
       }

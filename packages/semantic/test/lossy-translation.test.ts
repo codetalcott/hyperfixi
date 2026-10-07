@@ -43,6 +43,29 @@ describe('translate() refuses a lossy translation', () => {
     expect(refusal("on click halt the event's bubbling", 'en', 'en').loss.kind).toBe('truncation');
   });
 
+  it('core-only: a form only core ran that upstream reads with another meaning', () => {
+    // Upstream and the engine read `swap morph of #t with it` as an exchange of
+    // #t's `morph` property with `it`: no spelling of core's morph, in any language.
+    for (const to of ['en', 'es', 'ja']) {
+      expect(refusal('on click swap morph of #t with it', 'en', to).loss).toEqual({
+        kind: 'core-only',
+        lost: ['swap morph'],
+      });
+    }
+    expect(refusal('on click swap none of #t with it', 'en', 'en').loss.lost).toEqual([
+      'swap none',
+    ]);
+    // A strategy with no content: core threw, upstream reads `innerHTML of #t`.
+    expect(refusal('on click swap innerHTML #t', 'en', 'en').loss.lost).toEqual(['swap innerHTML']);
+    // In a finally clause too.
+    expect(
+      refusal('on click log 1 finally swap outermorph of #t with it', 'en', 'en').loss.kind
+    ).toBe('core-only');
+    // A strategy upstream spells, and an exchange of two values, translate.
+    expect(translate('on click swap into #t with it', 'en', 'en')).toBe('on click put it into #t');
+    expect(translate('on click swap #a with #b', 'en', 'en')).toBe('on click swap #a with #b');
+  });
+
   it("`lossy: 'allow'` returns the partial output instead", () => {
     const partial = translate(unreadSpanish, 'es', 'en', { lossy: 'allow' });
     expect(partial).toBe(refusal(unreadSpanish, 'es', 'en').partial);

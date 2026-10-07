@@ -9,10 +9,13 @@
  * returned and what the translation loses. A caller that wants the partial
  * output anyway passes `{ lossy: 'allow' }`.
  *
- * Three checks, cheapest first:
+ * Four checks, cheapest first:
  *
  *   - `truncation`  the parse of the input left input bound to no role (its
  *                   `unconsumed-input` diagnostics);
+ *   - `core-only`   the input holds a form only core ran that upstream has no
+ *                   spelling for and reads with another meaning (`swap morph of
+ *                   #t with x`; see unspelledForms in upstream-spelling.ts);
  *   - `read-back`   the output, read in the target language, leaves input
  *                   unread, holds other commands than the input's parse
  *                   (counted, so a dropped repeat shows), or does not read;
@@ -31,15 +34,16 @@ import {
   collectRoleSignatureStrict,
 } from '../fidelity';
 import { parse } from '../parser';
-import { toUpstreamSpelling } from './upstream-spelling';
+import { toUpstreamSpelling, unspelledForms } from './upstream-spelling';
 
-export type TranslationLossKind = 'truncation' | 'read-back' | 'invariant';
+export type TranslationLossKind = 'truncation' | 'core-only' | 'read-back' | 'invariant';
 
 /** One way a translation loses part of its input. */
 export interface TranslationLoss {
   kind: TranslationLossKind;
   /**
-   * What is lost: the input left unread (`truncation`); the output left unread
+   * What is lost: the input left unread (`truncation`); the core-only forms
+   * nothing writes (`core-only`, as `swap <strategy>`); the output left unread
    * or the commands it reads back without or with in excess (`read-back`, as
    * `-cmd` / `+cmd`); or the verbatim values missing from the output
    * (`invariant`).
@@ -301,6 +305,10 @@ export function findTranslationLoss(
 ): TranslationLoss | undefined {
   const unread = unconsumedSpans(node);
   if (unread.length) return { kind: 'truncation', lost: unread };
+  // In every language: a translation's English is what upstream and the engine
+  // run, and they would run these as something else.
+  const unspelled = unspelledForms(node);
+  if (unspelled.length) return { kind: 'core-only', lost: unspelled };
 
   let back: SemanticNode;
   try {

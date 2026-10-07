@@ -22,6 +22,7 @@
  *   copy "text"                       → call navigator.clipboard.writeText("text")
  *   swap <strategy> of X with Y       → put Y into / before / after / at start of /
  *                                       at end of X, put Y into X's outerHTML, remove X
+ *                                       (core's `into` is innerHTML, `over` outerHTML)
  *   fetch "X" do not throw            → fetch "X" as text do not throw  (upstream reads
  *                                       a quoted URL followed by `do not` as a comparison)
  *   X has .c / I have .c              → X matches .c / I match .c
@@ -37,6 +38,8 @@
  *
  * Read and written as written, with no upstream spelling: `clone`, `process` (its
  * view-transition tail included: `process partials` is core's in either spelling).
+ * Upstream rejects both, so where one runs it fails loudly. A form upstream READS,
+ * with another meaning, is refused instead (unspelledForms, below).
  */
 
 import type {
@@ -45,6 +48,7 @@ import type {
   CompoundSemanticNode,
   ConditionalSemanticNode,
   DefSemanticNode,
+  ErrorClauses,
   EventHandlerSemanticNode,
   FeatureSemanticNode,
   LoopSemanticNode,
@@ -55,6 +59,7 @@ import type {
   ViewTransitionSemanticNode,
 } from '../types';
 import { isBlockCommand } from '../types';
+import { CHILD_FIELDS } from '../fidelity';
 
 type Roles = ReadonlyMap<SemanticRole, SemanticValue>;
 
@@ -69,6 +74,7 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
         ...handler,
         roles: rewriteRoles(handler.roles),
         body: rewriteAll(handler.body),
+        ...rewriteErrorClauses(handler),
       };
       return out;
     }
@@ -113,7 +119,11 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
     }
     case 'def': {
       const def = node as DefSemanticNode;
-      const out: DefSemanticNode = { ...def, body: rewriteAll(def.body) };
+      const out: DefSemanticNode = {
+        ...def,
+        body: rewriteAll(def.body),
+        ...rewriteErrorClauses(def),
+      };
       return out;
     }
     case 'feature': {
@@ -124,6 +134,37 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
     default:
       return node;
   }
+}
+
+/**
+ * The core-only forms a node holds that upstream has no spelling for and READS,
+ * with another meaning: a swap whose strategy is core's morph (`morph`,
+ * `innermorph`, `outermorph`) or `none`, or that has no content. Written as
+ * they read, upstream and the engine take `swap morph of #t with x` for an
+ * exchange of `#t`'s `morph` property with `x`. A translation that holds one is
+ * refused (explicit/lossy.ts). Core-only forms upstream rejects (`clone`,
+ * `process`) are not listed: where one runs, it fails loudly.
+ */
+export function unspelledForms(node: SemanticNode): string[] {
+  const out: string[] = [];
+  const visit = (value: unknown, depth: number): void => {
+    if (depth > 64 || value === null || typeof value !== 'object') return;
+    const rec = value as Record<string, unknown>;
+    // toUpstreamSpelling writes every strategy it can as another command, so a
+    // swap still holding one is a strategy it cannot write.
+    const method =
+      rec.action === 'swap' ? (rec.roles as Roles | undefined)?.get('method') : undefined;
+    if (method) {
+      const word = method.type === 'literal' ? String(method.value) : sourceText(method);
+      out.push(`swap ${word ?? method.type}`);
+    }
+    for (const field of CHILD_FIELDS) {
+      const child = rec[field];
+      if (Array.isArray(child)) for (const c of child) visit(c, depth + 1);
+    }
+  };
+  visit(toUpstreamSpelling(node), 0);
+  return out;
 }
 
 function rewriteAll(nodes: readonly SemanticNode[]): SemanticNode[] {
@@ -149,6 +190,20 @@ function rewriteAll(nodes: readonly SemanticNode[]): SemanticNode[] {
 function rewriteRoles(roles: Roles): Map<SemanticRole, SemanticValue> {
   return new Map([...roles].map(([role, value]) => [role, rewriteValue(value)]));
 }
+
+/** A handler's or a def's `catch` and `finally` bodies, which run as its body does. */
+function rewriteErrorClauses(node: ErrorClauses): ErrorClauses {
+  return {
+    ...(node.catchBody ? { catchBody: rewriteAll(node.catchBody) } : {}),
+    ...(node.finallyBody ? { finallyBody: rewriteAll(node.finallyBody) } : {}),
+  };
+}
+
+/** Core's two words for a strategy (its STRATEGY_KEYWORDS): `swap into #t with x`. */
+const SWAP_STRATEGY_ALIASES: Readonly<Record<string, string>> = {
+  into: 'innerhtml',
+  over: 'outerhtml',
+};
 
 const SWAP_PUT_MANNER: Readonly<Record<string, string>> = {
   beforebegin: 'before',
@@ -280,8 +335,11 @@ function rewriteCommand(original: CommandSemanticNode): SemanticNode {
       const method = role('method');
       const target = role('destination');
       const content = role('patient');
-      if (method?.type !== 'literal' || typeof method.value !== 'string' || !target) return node;
-      const strategy = method.value.toLowerCase();
+      // A strategy that is also a keyword (`over`) reads as an expression.
+      const word =
+        method?.type === 'literal' ? method.value : method?.type === 'expression' ? method.raw : '';
+      if (typeof word !== 'string' || !word || !target) return node;
+      const strategy = SWAP_STRATEGY_ALIASES[word.toLowerCase()] ?? word.toLowerCase();
       if (strategy === 'delete') return command('remove', [['patient', target]]);
       if (!content) return node;
       if (strategy === 'innerhtml') {
