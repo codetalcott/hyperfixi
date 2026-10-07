@@ -181,7 +181,9 @@ export const commands: Record<string, CommandRef> = {
     description: 'Exchange two elements, or a writable value with another value',
     syntax: 'swap target with value',
     category: 'dom',
-    examples: ['swap #a with #b', 'swap innerHTML of #target with result'],
+    // `swap innerHTML of #t with x` was core's put (a strategy); upstream and the
+    // engine exchange the two values. Neither example names a strategy.
+    examples: ['swap #a with #b', "swap #a's value with #b's value"],
   },
   morph: {
     name: 'morph',
@@ -207,7 +209,8 @@ export const commands: Record<string, CommandRef> = {
     examples: [
       'fetch /api/data as json',
       'fetch https://example.com/api as json',
-      'fetch /api/${id} as json',
+      // A template literal: upstream sends a naked URL's `${id}` literally.
+      'fetch `/api/${id}` as json',
       'fetch /api/users as html',
       'fetch /api/submit with method:"POST"',
     ],

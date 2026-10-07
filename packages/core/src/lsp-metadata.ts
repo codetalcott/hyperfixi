@@ -347,8 +347,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   swap: {
     title: 'swap',
-    description: 'Swaps content between elements.',
-    example: 'swap #a with #b\nswap innerHTML of #target with response',
+    description: 'Exchanges two elements, or two writable values.',
+    example: "swap #a with #b\nswap #a's value with #b's value",
     category: 'command',
   },
   morph: {
