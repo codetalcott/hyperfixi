@@ -17,7 +17,8 @@ What the gates measure. Each claim carries its re-check command:
 | Signal                                  | Value                                                               | Re-check                                                                                                                            |
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
-| Value matrix (4,325 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-06)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
+| Value matrix (4,350 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
+| Command shapes (1,135 scripts × 24)     | 23,763 pass, 3,303 refused, 174 silent; en 1,053 / 82 / 0 (10-07)   | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
 | Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
@@ -29,9 +30,9 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 | English words left in renders                | 769/3542 corpus renders (21.7%), from ~12 constructions that leak identically in all 23 languages                                  | N1, V1 |
 | English DOM event names                      | 1912/3496 handler events; 94–98% in he hi it ms pl ru th tl uk vi                                                                  | N2     |
 | Ungrammatical `me` after a preposition       | 13 languages, 80–92% of such renders (es `a yo`, de `zu ich`, ru `к я`)                                                            | N3     |
-| Commands dropped outside the corpus's shapes | 41 filed parser items (2026-10-06), most in semantic's **English** parse, so every translation inherits them                       | P2–P53 |
+| Commands outside every gate's input          | 36 filed parser items (2026-10-07); since 4.2.0 a translation that would lose part of a script is refused, so most are now loud     | P2–P55 |
 | User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
-| Shipping                                     | 4.1.0 on npm 2026-10-06 (`npm view @hyperfixi/core version`; unreleased: `git log v4.1.0..origin/main -- packages`)                | —      |
+| Shipping                                     | 4.2.0 on npm 2026-10-07 (`npm view @hyperfixi/core version`; unreleased: `git log v4.2.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -58,30 +59,36 @@ The product's gaps are now in what no gate reads. From here:
 
 ### M1: commands a translation silently drops
 
-**Why.** For shapes no corpus row has, semantic's English parse drops whole commands. Examples:
+**Why.** For shapes no corpus row has, semantic's English parse dropped whole commands, and
+`translate()`, MCP `translate_code`, the corpus writer and the adapter inherited the loss (English on
+a page was fine: the engine reads it directly). Plan: `~/.claude/plans/m1-command-shape-gate.md`.
 
-- `on click toggle .stopped` loses its toggle (P2);
-- a bare `if … end` becomes a handler (P3);
-- `break`/`continue` vanish (P5);
-- `scroll down by 100` is lost (P8).
+**The gate** (#1401) reads 1,135 scripts the engine runs: upstream's 0.9.93 tests and core's reference
+and hover examples. Each goes through 24 lanes (`en`, and `en → L → en`), and the engine must parse
+the output as it parses the source, after named equivalences pinned on both engines. A family is IN
+(must round-trip), LOUD (must be refused, with a reason) or OUT (core-only). The baseline only shrinks.
 
-`translate()`, MCP `translate_code`, the corpus writer and the adapter (non-English on a page) all
-inherit the loss. English on a page is unaffected, because `@hyperfixi/engine` reads it directly, which
-is why nobody running English noticed.
+**Fail-loud came first** (#1402, #1403; 4.2.0): `translate()` throws `LossyTranslationError` unless
+`{ lossy: 'allow' }`, and the adapter and build tools keep the author's text and warn. Every silent
+pair left is in a named family with a reason (`SILENT_FAMILIES`); the English lane has none.
 
-**Step 1 — the gate.** A command-shape gate, the value matrix's structural twin:
+**Fixes by family** (#1404–#1417): program structure; control flow; trailing clauses, by one
+mechanism (a clause no pattern models, and upstream's `on` head forms, kept as written); scoped
+names (P45); values as one token (`@a=v`, `arr[1]`) and bracket interiors as written.
+`packages/semantic/src/parser` grew by 862 lines net since 4.1.0.
 
-- **Input:** every syntax form the reference documents (syntax and examples in
-  `packages/core/src/reference/index.ts` and `lsp-metadata.ts`, which `verify:reference` checks against
-  the engine) and upstream's documented forms.
-- **Check:** each form goes through semantic English and is executed against upstream.
-- **Baseline:** shrink-only, like the value matrix.
+| Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
+| ---------------------- | ------ | ------- | ------ | --------------------------------- |
+| first run (2026-10-06) | 18,171 | 1,479   | 7,614  | 793 / 60 / 283                    |
+| 4.2.0 + #1417 (10-07)  | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
 
-**Step 2 — fix by reach.** First the English-parse items (P2–P5, P8, P10–P12, P14, P17, P30), then
-the translation-side ones (P9, P15, P18, P20, P21, P26).
-
-**Exit.** Every documented command form round-trips through semantic English, or is allowlisted with a
-reason.
+**Left.** English refusals: `scroll … by` (P8), `.stop*` classes (P2), `default … in` (P10),
+`make a Set` (P11), a second `on` after `send` (P26), `halt default`, `don't throw`, `send` arguments,
+`beep!`, `.foo()` chains, `closest @foo`, `otherwise`, `on every click`, `init immediately`, `on "a-b"`,
+and the LOUD families; `it.value` (P14) is still silent. Group 6, foreign lanes: P9, P15, P18, P21,
+P52, P54, foreign bare counts and `queue` forms, ko verbs that are also events. The gate's `--report`
+lists the silent families. **Exit:** every IN family passes or has a reason; stop widening when a
+widening finds nothing a user would write (rule 4).
 
 ### M2: translations that read as the language
 
@@ -159,7 +166,8 @@ exists (policy 13).
 
 ### M4: the small queue (take items opportunistically)
 
-- **Parser items not in M1:** P6, P7, P13, P16, P23–P25, P29, P31–P45, P52, P53.
+- **Parser items not in M1:** P6, P7, P13, P16, P17, P23–P25, P29, P31–P44, P53, P55. (P16 and P17
+  left M1 on 2026-10-06: the engine rejects their source.)
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
@@ -167,6 +175,11 @@ exists (policy 13).
 
 ## 4. Parked, and decisions waiting on the owner
 
+- **M1 calls taken:** fail-loud by default (F1 `translate()` throws, F2 the adapter refuses at run time;
+  2026-10-06, shipped in 4.2.0). `swap innerHTML of …` and a naked `${}` URL keep core's meaning in
+  translation, and the docs teach upstream's (2026-10-07).
+- **`ask` / `answer` vocabulary** (M1's LOUD family): neither has a schema or a word in any
+  dictionary, so both are refused. Adding them is a policy-5 vocabulary call.
 - **AOT** retired (owner, 2026-10-04): `packages/aot-compiler` and MCP `compile_hyperscript` were removed for 4.0 (it was parked from 2026-09-27).
 - **`hx-query`** (htmx 4's new verb, V4): core's htmx-compat layer retired in Phase C3, so this is
   vocabulary only now. Give it a localized name in the htmx adapter's vocabulary, or leave it English?
@@ -220,7 +233,9 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    - query-scope `in`;
    - `equal to`;
    - `using view transition`;
-   - brace interiors;
+   - brace and bracket interiors (array literals, attribute selectors, indexes);
+   - a clause no pattern models, and upstream's `on` head forms, kept as written (M1);
+   - scope words (`element x`, `global x`), and `catch` / `finally` until they have words;
    - unsafe event names;
    - `js … end` bodies (never translated).
 
