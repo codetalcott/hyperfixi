@@ -100,8 +100,8 @@ import {
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
-import { localizeValueInterior } from './value-lexicon';
-import { expressionVariables, isVariableName } from './expression-variables';
+import { localizeValueInterior, outsideCallArguments } from './value-lexicon';
+import { expressionNames, isVariableName } from './expression-variables';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 /**
@@ -1423,12 +1423,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // `'s` is English syntax, not vocabulary, and the word-level localizer
         // cannot touch it.
         // A variable keeps its spelling where its localized word would read
-        // back as another variable (`localizedName`).
+        // back as another variable (`localizedName`), and so does a property
+        // name the reader would not bring back (`propertyReadsBack`). A call's
+        // arguments are written as written: every reader takes them so.
         if (/^[A-Za-z_$][\w$]*$/.test(value.raw)) return this.renderLoneName(value.raw, language);
         return this.localizeValue(
-          this.localizeInteriorPossessives(this.valueGuard?.(value.raw) ?? value.raw, language),
+          outsideCallArguments(this.valueGuard?.(value.raw) ?? value.raw, text =>
+            this.localizeInteriorPossessives(text, language)
+          ),
           language,
-          this.variablesKeptAsSpelled(value.raw, language)
+          this.wordsKeptAsSpelled(value.raw, language)
         );
 
       case 'flag':
@@ -1466,13 +1470,49 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return this.localizedName(name, language) ?? name;
   }
 
-  /** The variables of an expression the localizer must leave as spelled (`value + 1`). */
-  private variablesKeptAsSpelled(raw: string, language: string): ReadonlySet<string> | undefined {
+  /**
+   * The words of an expression the localizer must leave as spelled: its
+   * variables that {@link localizedName} keeps (`value + 1`), and its property
+   * names the reader would not bring back (`the children of #bar`).
+   */
+  private wordsKeptAsSpelled(raw: string, language: string): ReadonlySet<string> | undefined {
     if (language === 'en') return undefined;
-    const kept = [...expressionVariables(raw)].filter(
-      name => this.localizedName(name, language) === undefined
-    );
+    const { variables, properties } = expressionNames(raw);
+    const kept = [
+      ...[...variables].filter(name => this.localizedName(name, language) === undefined),
+      ...[...properties].filter(name => !this.propertyReadsBack(name, language)),
+    ];
     return kept.length ? new Set(kept) : undefined;
+  }
+
+  /**
+   * Whether the reader brings a property name's localized word back as that
+   * name: through its property table (es `valor` is `value`) or as a keyword
+   * (es `primero` is `first`). Elsewhere a translation writes the name as
+   * spelled, since a property is the runtime's name: es wrote `my children` as
+   * `mi hijos` and `my style["color"]` as `mi estilo["color"]`, which read back
+   * as properties named `hijos` and `estilo`, in every language whose table
+   * lacks the word.
+   */
+  private propertyReadsBack(name: string, language: string): boolean {
+    const localized = this.localizeValue(name, language);
+    if (localized === name) return true;
+    if (PROPERTY_NAME_LEXICON[language]?.[localized.toLowerCase()] === name.toLowerCase()) {
+      return true;
+    }
+    const [only, ...rest] = tokenize(localized, language).tokens;
+    return (
+      rest.length === 0 &&
+      only?.kind === 'keyword' &&
+      (only.normalized ?? '').toLowerCase() === name.toLowerCase()
+    );
+  }
+
+  /** A property path's property: localized where {@link propertyReadsBack}, else as written. */
+  private localizeProperty(property: string, language: string): string {
+    const head = /^[A-Za-z][\w-]*/.exec(property)?.[0];
+    if (head && !this.propertyReadsBack(head, language)) return property;
+    return this.localizeValue(property, language);
   }
 
   /**
@@ -1632,13 +1672,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       return /^[.?]/.test(property) ? `${object}${property}` : `${object}.${property}`;
     }
 
-    // A BARE property word is vocabulary and localizes (`my value` -> `mi valor`,
-    // `私の 値`); a DOTTED path is a JS/DOM member expression and must not
-    // (`#output.innerText`, `my value.length` stay verbatim in every language).
-    // The localizer's word rule already refuses dot-attached tokens, so this is
-    // one call rather than a special case — and it matches what the corpus has
-    // rendered all along.
-    const property = this.localizeValue(value.property, language);
+    // A BARE property word is vocabulary and localizes where the reader brings
+    // it back (`my value` -> `mi valor`, `私の 値`; `my children` stays); a
+    // DOTTED path is a JS/DOM member expression and must not (`#output.innerText`,
+    // `my value.length` stay verbatim in every language). The localizer's word
+    // rule already refuses dot-attached tokens.
+    const property = this.localizeProperty(value.property, language);
 
     // Get the object reference
     const objectRef = value.object.type === 'reference' ? value.object.value : null;
