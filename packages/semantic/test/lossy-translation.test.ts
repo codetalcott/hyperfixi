@@ -8,6 +8,7 @@ import '../src/languages/_all';
 import { LossyTranslationError, parse, translate } from '../src/index';
 import {
   actionDifference,
+  clauseDifference,
   findTranslationLoss,
   invariantValues,
   lostRoles,
@@ -26,21 +27,25 @@ function refusal(input: string, from: string, to: string): LossyTranslationError
 }
 
 describe('translate() refuses a lossy translation', () => {
-  it('truncation: a second class ref the parse does not read', () => {
-    const e = refusal('on click toggle .foo .bar', 'en', 'es');
-    expect(e.loss).toEqual({ kind: 'truncation', lost: ['.bar'] });
+  // A clause in the language's own words (es `cuando`, when) is that language
+  // unread, never English kept as written.
+  const unreadSpanish = 'al clic alternar .foo cuando .bar';
+
+  it('truncation: a part the parse does not read', () => {
+    const e = refusal(unreadSpanish, 'es', 'en');
+    expect(e.loss).toEqual({ kind: 'truncation', lost: ['cuando .bar'] });
     expect(e.partial).not.toContain('.bar');
-    expect([e.from, e.to]).toEqual(['en', 'es']);
-    expect(e.message).toContain('.bar');
+    expect([e.from, e.to]).toEqual(['es', 'en']);
+    expect(e.message).toContain('cuando .bar');
   });
 
   it('refuses in English too: en → en is the round trip', () => {
-    expect(refusal('on click add .foo .bar', 'en', 'en').loss.kind).toBe('truncation');
+    expect(refusal("on click halt the event's bubbling", 'en', 'en').loss.kind).toBe('truncation');
   });
 
   it("`lossy: 'allow'` returns the partial output instead", () => {
-    const partial = translate('on click toggle .foo .bar', 'en', 'es', { lossy: 'allow' });
-    expect(partial).toBe(refusal('on click toggle .foo .bar', 'en', 'es').partial);
+    const partial = translate(unreadSpanish, 'es', 'en', { lossy: 'allow' });
+    expect(partial).toBe(refusal(unreadSpanish, 'es', 'en').partial);
   });
 
   it('leaves a whole translation alone', () => {
@@ -57,7 +62,9 @@ describe('the checks, one at a time', () => {
   const node = parse('on click toggle .a then add .b', 'en');
 
   it('truncation reads the spans off the top node', () => {
-    expect(unconsumedSpans(parse('on click toggle .foo .bar', 'en'))).toEqual(['.bar']);
+    expect(unconsumedSpans(parse("on click halt the event's bubbling", 'en'))).toEqual([
+      "' s bubbling",
+    ]);
     expect(unconsumedSpans(node)).toEqual([]);
   });
 
@@ -79,10 +86,10 @@ describe('the checks, one at a time', () => {
   });
 
   it('read-back: an output its own reader leaves partly unread', () => {
-    const unread = parse('on click toggle .foo .bar', 'en');
+    const unread = parse("on click halt the event's bubbling", 'en');
     expect(findTranslationLoss('x', node, 'out', 'en', () => unread)).toEqual({
       kind: 'read-back',
-      lost: ['.bar'],
+      lost: ["' s bubbling"],
     });
   });
 
@@ -196,5 +203,36 @@ describe('the read-back sees a lost role', () => {
     expect(() => translate('on foo wait for bar then log 1', 'en', language)).toThrow(
       LossyTranslationError
     );
+  });
+});
+
+describe('the read-back keeps every clause kept as written', () => {
+  const kept = parse('on click add .a to .b when it matches .c', 'en');
+  const bare = parse('on click add .a to .b', 'en');
+
+  it('a clause the read-back lacks is lost', () => {
+    expect(findTranslationLoss('x', kept, 'out', 'en', () => bare)).toEqual({
+      kind: 'read-back',
+      lost: ['-clause add: when it matches .c'],
+    });
+  });
+
+  it('a clause only the read-back has is a part the source never read that way', () => {
+    expect(clauseDifference(bare, kept)).toEqual(['+clause add: when it matches .c']);
+    expect(clauseDifference(kept, kept)).toEqual([]);
+  });
+
+  it('a clause read onto another command is lost from its own', () => {
+    const moved = parse('on click toggle .a when it matches .c', 'en');
+    expect(clauseDifference(kept, moved)).toEqual([
+      '-clause add: when it matches .c',
+      '+clause toggle: when it matches .c',
+    ]);
+  });
+
+  it('an unread run in a translation into English is refused, not kept', () => {
+    // The Spanish reader leaves `cuando .bar` unread; the English reader would
+    // keep the same words, written into the output, as a clause.
+    expect(refusal('al clic alternar .foo cuando .bar', 'es', 'en').loss.kind).toBe('truncation');
   });
 });

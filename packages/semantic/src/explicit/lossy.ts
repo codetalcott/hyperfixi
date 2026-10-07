@@ -131,6 +131,48 @@ export function lostRoles(reference: SemanticNode, candidate: SemanticNode): str
     .map(f => `-${f}`);
 }
 
+/**
+ * The clauses kept as written (`when it matches .doh`) that the source has and
+ * the read-back lacks (`-clause …`), or the read-back has and the source lacks
+ * (`+clause …`). The English reader keeps a run it cannot read as the clause
+ * of the command before it, so in the read-back of a translation into English
+ * the clause is all that remains of a part the source never read that way.
+ */
+export function clauseDifference(reference: SemanticNode, candidate: SemanticNode): string[] {
+  const want = verbatimClauses(reference);
+  const got = verbatimClauses(candidate);
+  const out: string[] = [];
+  for (const clause of want) {
+    const at = got.indexOf(clause);
+    if (at < 0) out.push(`-clause ${clause}`);
+    else got.splice(at, 1);
+  }
+  return [...out, ...got.map(clause => `+clause ${clause}`)];
+}
+
+/**
+ * Every clause kept as written in a tree, in order, each with the command it
+ * follows (`add: when it matches .c`): a clause read onto another command is
+ * another script.
+ */
+function verbatimClauses(node: unknown, out: string[] = [], depth = 0): string[] {
+  if (depth > 64 || !node || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const n of node) verbatimClauses(n, out, depth + 1);
+    return out;
+  }
+  const rec = node as { action?: string; verbatimClause?: string } & Record<string, unknown>;
+  if (rec.verbatimClause) {
+    out.push(`${rec.action}: ${rec.verbatimClause.replace(/\s+/g, ' ').trim()}`);
+  }
+  for (const [key, child] of Object.entries(rec)) {
+    if (key === 'roles' || key === 'metadata' || key === 'diagnostics') continue;
+    if (key === 'verbatimClause') continue;
+    if (child && typeof child === 'object') verbatimClauses(child, out, depth + 1);
+  }
+  return out;
+}
+
 /** The positions (`at start of`, `before`, …) every `put` in a tree names. */
 function putPositions(node: unknown, out: string[] = [], depth = 0): string[] {
   if (depth > 64 || !node || typeof node !== 'object') return out;
@@ -274,6 +316,8 @@ export function findTranslationLoss(
   if (commands.length) return { kind: 'read-back', lost: commands };
   const roles = lostRoles(rendered, back);
   if (roles.length) return { kind: 'read-back', lost: roles };
+  const clauses = clauseDifference(rendered, back);
+  if (clauses.length) return { kind: 'read-back', lost: clauses };
 
   const values = missingInvariants(input, output);
   if (values.length) return { kind: 'invariant', lost: values };

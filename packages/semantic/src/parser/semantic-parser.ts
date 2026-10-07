@@ -488,6 +488,45 @@ const LOOP_FORMS: ReadonlySet<string> = new Set([
   'until-event',
 ]);
 
+/** Command verbs that also open a clause (`when it matches .x`, `take … for #t`). */
+const CLAUSE_OPENERS: ReadonlySet<string> = new Set(['when', 'for']);
+
+/**
+ * A word of the language a token was read in: one it knows (a keyword with
+ * its English form, a particle), or a name outside ASCII.
+ */
+function isOwnWord(t: LanguageToken): boolean {
+  if (t.normalized || t.kind === 'particle') return true;
+  return t.kind === 'identifier' && /[^\x00-\x7f]/.test(t.value);
+}
+
+/** The token before a run in the tokens it was taken from. */
+function tokenBefore(
+  tokens: readonly LanguageToken[],
+  run: readonly LanguageToken[]
+): LanguageToken | undefined {
+  const at = run[0] ? tokens.indexOf(run[0]) : -1;
+  return at > 0 ? tokens[at - 1] : undefined;
+}
+
+/** Commands a clause never follows: a block's head, or a guard. */
+const CLAUSE_LESS: ReadonlySet<string> = new Set([
+  ...BLOCK_HEAD_ACTIONS,
+  'if',
+  'unless',
+  'while',
+  'else',
+]);
+
+/** Words that end a command's clause: a block's structure, or a feature's head. */
+const CLAUSE_BOUNDARIES: ReadonlySet<string> = new Set([
+  'else',
+  'otherwise',
+  'catch',
+  'finally',
+  'on',
+]);
+
 /**
  * Normalized keyword forms that are legitimate skip-residue for the per-segment
  * coverage check (Arc C): role markers the matcher deliberately leaves
@@ -1108,6 +1147,57 @@ export class SemanticParserImpl implements ISemanticParser {
         'unconsumed-input'
       )
     );
+  }
+
+  /**
+   * Keep a run the clause walker would drop as the clause of the command before
+   * it (`add .foo to .bar when it matches .doh`): its pattern does not model the
+   * clause, so it is kept as written and written back as written (M1 phase 3,
+   * group 3) in place of dropping it. A run that holds a command verb or a
+   * structure word (`otherwise`, `on`) is an unread command, not a clause, and
+   * stays dropped, and so does one glued to the command.
+   */
+  private keepVerbatimClause(
+    owner: WalkEntry | undefined,
+    run: readonly LanguageToken[],
+    before: LanguageToken | undefined,
+    language: string
+  ): boolean {
+    const first = run[0];
+    if (!owner || owner.kind !== 'command' || !first) return false;
+    // What follows a block's head is its body (`repeat 3 times xyzzy end`).
+    if (CLAUSE_LESS.has((owner as CommandSemanticNode).action)) return false;
+    // Residue alone (`and` between two commands) is dropped by design.
+    if (run.every(t => this.isCoverageResidueToken(t, language))) return false;
+    // In another language the clause is the English a translation wrote: a run
+    // that holds a word of the language itself is that language unread.
+    if (language !== 'en' && run.some(t => isOwnWord(t))) return false;
+    // Glued to the command, the run splits a value the pattern read part of
+    // (`the event` + `'s bubbling`): what was read is wrong, not incomplete. A
+    // comma only separates (`log me, my`).
+    if (before && before.position.end === first.position.start && first.value !== ',') {
+      return false;
+    }
+    const unread = run.some((t, i) => {
+      const words = [t.value.toLowerCase(), (t.normalized ?? t.value).toLowerCase()];
+      if (i === 0 && words.some(w => CLAUSE_OPENERS.has(w))) return false;
+      return (
+        words.some(w => CLAUSE_BOUNDARIES.has(w)) ||
+        this.isThenKeyword(t.value, language) ||
+        this.isEndKeyword(t.value, language) ||
+        this.isElseKeyword(t.value, language) ||
+        (t.kind === 'keyword' && words.some(w => !!getSchema(w as ActionType)))
+      );
+    });
+    if (unread) return false;
+    let text = '';
+    run.forEach((t, i) => {
+      const prev = run[i - 1];
+      text += !prev || prev.position.end === t.position.start ? t.value : ` ${t.value}`;
+    });
+    const node = owner as { verbatimClause?: string };
+    node.verbatimClause = node.verbatimClause ? `${node.verbatimClause} ${text}` : text;
+    return true;
   }
 
   /**
@@ -4463,6 +4553,14 @@ export class SemanticParserImpl implements ISemanticParser {
       if (skipped.length === 0) return;
       const run = skipped.slice();
       skipped.length = 0;
+      // The clause of the command before it, kept as written (M1 phase 3).
+      const keepAsClause = (): boolean =>
+        this.keepVerbatimClause(
+          commands[commands.length - 1],
+          run,
+          tokenBefore(bodyTokens, run),
+          language
+        );
       if (trailingGuard && commands.length === 0 && leadingCondition === null) {
         leadingCondition = run;
         return;
@@ -4479,6 +4577,7 @@ export class SemanticParserImpl implements ISemanticParser {
           head.kind === 'literal' ||
           (head.kind as string) === 'reference');
       if (!headIsValue) {
+        if (keepAsClause()) return;
         // Discarded without recovery — a keyword-led run is exactly where
         // `break`/`continue` clauses vanish (Arc C). Record the drop.
         this.recordDroppedTokens(run, language, 'body clause');
@@ -4496,7 +4595,8 @@ export class SemanticParserImpl implements ISemanticParser {
           recoveredFromRun = true;
         }
       }
-      if (!recoveredFromRun) this.recordDroppedTokens(run, language, 'body clause');
+      if (recoveredFromRun || keepAsClause()) return;
+      this.recordDroppedTokens(run, language, 'body clause');
     };
 
     while (!clauseStream.isAtEnd()) {
@@ -5887,20 +5987,38 @@ export class SemanticParserImpl implements ISemanticParser {
     // clause with any pattern match is byte-identical to the old behavior.
     let skippedClauseTokens: LanguageToken[] = [];
     let clauseHadMatch = false;
+    let firstClause = true;
+    // The clause of the command before it, kept as written (M1 phase 3): the
+    // run ends the clause, right after its last command, or after the fused
+    // command in the first clause.
+    const keepAsClause = (): boolean => {
+      const run = skippedClauseTokens;
+      const all = tokens.tokens as LanguageToken[];
+      const at = all.indexOf(run[0] as LanguageToken);
+      if (at < 0 || at + run.length !== tokens.position()) return false;
+      if (run.some((t, i) => all[at + i] !== t)) return false;
+      const owner = clauseHadMatch
+        ? commands[commands.length - 1]
+        : firstClause
+          ? leading[leading.length - 1]
+          : undefined;
+      return this.keepVerbatimClause(owner, run, all[at - 1], language);
+    };
     const flushClause = () => {
       if (!clauseHadMatch && skippedClauseTokens.length > 0) {
         const recovered = this.parseSOVClauseByVerbAnchoring(skippedClauseTokens, language);
         commands.push(...recovered);
-        if (recovered.length === 0) {
+        if (recovered.length === 0 && !keepAsClause()) {
           this.recordDroppedTokens(skippedClauseTokens, language, 'fused body walk');
         }
-      } else if (skippedClauseTokens.length > 0) {
+      } else if (skippedClauseTokens.length > 0 && !keepAsClause()) {
         // A clause that DID match a pattern also silently discards its skipped
         // tokens (the recovery is gated on !clauseHadMatch) — record them.
         this.recordDroppedTokens(skippedClauseTokens, language, 'fused body walk');
       }
       skippedClauseTokens = [];
       clauseHadMatch = false;
+      firstClause = false;
     };
 
     // Loop-head "end debt": an `end` owed to an earlier flat loop HEAD

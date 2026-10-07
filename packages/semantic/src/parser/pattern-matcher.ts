@@ -109,6 +109,11 @@ function isSigilProperty(value: string): boolean {
   return value.startsWith('*') || value.startsWith('@');
 }
 
+/** Whether a group binds a role, at any depth. */
+function groupHasRole(group: PatternToken & { type: 'group' }): boolean {
+  return group.tokens.some(t => t.type === 'role' || (t.type === 'group' && groupHasRole(t)));
+}
+
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
@@ -3895,6 +3900,19 @@ export class PatternMatcher {
     const capturedBefore = new Map(captured);
 
     let success = this.matchTokenSequence(tokens, patternToken.tokens, captured, nextPatternToken);
+
+    // A group that read its marker and bound no role (`take .foo from .div for
+    // #d3`: `for` matched, and the recipient slot declined `#d3`) took a word
+    // that now stands for nothing, and the clause after it lost its head.
+    if (
+      success &&
+      tokens.position() > mark.position &&
+      groupHasRole(patternToken) &&
+      [...captured].every(([role, value]) => capturedBefore.get(role) === value) &&
+      captured.size === capturedBefore.size
+    ) {
+      success = false;
+    }
 
     // A postpositional marker group ([{destination} [e]]) can "succeed" by
     // capturing ONLY the role: the role is optional-in-group, the trailing
