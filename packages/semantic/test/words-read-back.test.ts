@@ -52,11 +52,14 @@ describe('a property name the reader cannot bring back is written as spelled', (
         source => [language, source] as const
       )
     )
-  )('%s still writes `value` in its own word, which its reader brings back: %s', (language, source) => {
-    const { foreign, back } = roundTrip(source, language);
-    expect(foreign).not.toMatch(/\bvalue\b/);
-    expect(back).toBe(source);
-  });
+  )(
+    '%s still writes `value` in its own word, which its reader brings back: %s',
+    (language, source) => {
+      const { foreign, back } = roundTrip(source, language);
+      expect(foreign).not.toMatch(/\bvalue\b/);
+      expect(back).toBe(source);
+    }
+  );
 
   it('a word the reader takes as a keyword is still written in the language (es `primero`)', () => {
     const { foreign, back } = roundTrip('on click put the first of .items into #out', 'es');
@@ -73,7 +76,7 @@ describe("a call's arguments are written as written", () => {
     expect(back).toBe('on click call sprayInto(me)');
   });
 
-  it("including a possessive inside them, while one outside still moves (es `valor de #input`)", () => {
+  it('including a possessive inside them, while one outside still moves (es `valor de #input`)', () => {
     const source = "on click put #input's value into #out then call writeText(#input's value)";
     const { foreign, back } = roundTrip(source, 'es');
     expect(foreign).toContain("writeText(#input's value)");
@@ -88,7 +91,10 @@ describe("a call's arguments are written as written", () => {
 
 describe('a type name after `am a` stays as written', () => {
   it.each(LANGUAGES)('%s', language => {
-    const { foreign, back } = roundTrip('on click if I am a Element put "yes" into me end', language);
+    const { foreign, back } = roundTrip(
+      'on click if I am a Element put "yes" into me end',
+      language
+    );
     expect(foreign).toContain('Element');
     expect(back).toContain('am a Element');
   });

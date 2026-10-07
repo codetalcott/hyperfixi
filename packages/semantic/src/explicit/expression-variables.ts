@@ -55,4 +55,3 @@ export function expressionNames(raw: string): { variables: Set<string>; properti
   walk(parsed.node, undefined);
   return { variables, properties };
 }
-
