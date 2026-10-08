@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23629,
-  "leaky": 8170,
-  "findings": 13029,
+  "renders": 23635,
+  "leaky": 7985,
+  "findings": 12655,
   "kinds": {
     "word": {
-      "renders": 5515,
-      "findings": 8902
+      "renders": 5232,
+      "findings": 8528
     },
     "event": {
       "renders": 0,
@@ -51,10 +51,9 @@
       "as case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "05f81357fb": {
-      "at case:me in of repeat": "he",
-      "case:me case:me repeat": "bn hi tr",
-      "case:me repeat": "ar de es it pl pt ru uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at case:me in of": "he",
+      "case:me": "ar de es it pl pt ru uk",
+      "case:me case:me": "bn hi tr"
     },
     "060fa72711": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -411,16 +410,14 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "38fd7baa12": {
-      "at in null of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in null of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "390543ee1c": {
       "global": "*"
     },
     "39744dbe88": {
-      "def": "bn hi ja ko qu tr",
-      "def repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
+      "def": "*"
     },
     "39d7c18b0d": {
       "case:me": "ar bn de es hi it pl pt ru tl tr uk",
@@ -471,10 +468,9 @@
       "smoothly": "fr id ja ko ms qu sw th vi zh"
     },
     "4293df22ee": {
-      "at case:me in of repeat": "he",
-      "case:me case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "case:me repeat": "tl",
-      "repeat": "fr id ja ko ms qu sw th zh"
+      "at case:me in of": "he",
+      "case:me": "tl",
+      "case:me case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "42ab540e4f": {
       "giving": "*"
@@ -494,8 +490,7 @@
       "null": "fr ko vi zh"
     },
     "461f84cebf": {
-      "empty in is repeat": "he",
-      "repeat": "ar de es fr hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
+      "empty in is": "he"
     },
     "465ed43e73": {
       "element": "ar bn es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
@@ -535,8 +530,7 @@
       "empty is": "he"
     },
     "4c2f167281": {
-      "in repeat": "he",
-      "repeat": "ar de es fr hi id it ja ms pl pt qu ru sw th tl tr uk vi zh"
+      "in": "he"
     },
     "4ce5e6a0df": {
       "as": "fr id ja ko ms qu sw th vi zh",
@@ -613,9 +607,9 @@
       "as": "ar bn de es fr he hi id it ja ko ms pl pt ru sw th tl tr uk vi zh"
     },
     "5763f61aac": {
-      "at in index of repeat": "he",
-      "case:me index repeat": "ar bn de es hi it pl pt ru tr uk",
-      "index repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in index of": "he",
+      "case:me index": "ar bn de es hi it pl pt ru tr uk",
+      "index": "fr id ja ko ms qu sw th tl zh"
     },
     "57cc2d6c8c": {
       "case:me": "ar de es hi it pl pt ru tl tr uk",
@@ -773,8 +767,7 @@
       "the": "ar de es fr hi id it ja ko ms pl pt ru sw tl tr uk vi zh"
     },
     "6f6d57c10a": {
-      "in repeat": "he",
-      "repeat": "ar de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "in": "he"
     },
     "6fe313d841": {
       "def def": "*"
@@ -832,9 +825,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "73c2ff9c12": {
-      "at in of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "7409f3b9d8": {
       "not": "he"
@@ -1345,8 +1337,7 @@
       "of the": "vi"
     },
     "b8863db6fb": {
-      "in repeat": "he",
-      "repeat": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "in": "he"
     },
     "b948ed872b": {
       "in": "ar es fr hi id ja ko ms pl pt qu ru sw tl uk zh",
@@ -1461,9 +1452,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "c8992c103b": {
-      "at in is of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in is of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "c9cd8a23c1": {
       "with": "*"
@@ -1567,19 +1557,16 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "db537e799b": {
-      "def event repeat until": "qu",
-      "def repeat": "ar bn de es fr he hi id it ja ko ms pl pt ru sw th tl tr uk vi zh"
+      "def": "ar bn de es fr he hi id it ja ko ms pl pt ru sw th tl tr uk vi zh",
+      "def event repeat until": "qu"
     },
     "db7fef03e9": {
-      "at in of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "dc092ffd38": {
-      "case:me": "bn hi tr",
-      "case:me is repeat": "he",
-      "case:me repeat": "ar de es it pl pt ru tl uk",
-      "repeat": "fr id ms sw th vi zh"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me is": "he"
     },
     "dc8881fc7d": {
       "empty is matches the": "he",
@@ -1609,14 +1596,12 @@
       "first": "he"
     },
     "deac58c100": {
-      "at in of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko qu sw th tl zh"
+      "at in of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "dee03cd129": {
-      "at in is of repeat": "he",
-      "case:me repeat": "ar bn de es hi it pl pt ru tr uk",
-      "repeat": "fr id ja ko ms qu sw th tl zh"
+      "at in is of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "def617e777": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1689,9 +1674,6 @@
     },
     "e8446a57e2": {
       "case:me": "bn he hi tr"
-    },
-    "e8a10dc843": {
-      "repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
     },
     "e8a3bc0263": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1806,8 +1788,7 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "fc731ea661": {
-      "def": "bn hi ja ko qu tr",
-      "def repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
+      "def": "*"
     },
     "fca1795dbc": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1826,7 +1807,7 @@
   },
   "unrendered": {
     "05f81357fb": "vi",
-    "07108f5fc0": "es id it pt th tl uk",
+    "07108f5fc0": "es id it pt tl uk",
     "08702e835c": "*",
     "092699feee": "ar de fr he ja tr",
     "094982a419": "it pl ru uk",
@@ -1857,7 +1838,7 @@
     "280d64d892": "qu",
     "2965af0447": "*",
     "2c6143ba00": "*",
-    "2d9422b3af": "es id it pt th tl uk vi",
+    "2d9422b3af": "es id it pt tl uk vi",
     "2f027486b4": "*",
     "2f7af96b02": "id ms vi",
     "3030e3cc43": "ja ko pl tr",
@@ -1890,7 +1871,7 @@
     "4c2f167281": "bn ko",
     "4d698f4f27": "*",
     "4d988893a9": "*",
-    "4da1d2fe85": "ms th vi",
+    "4da1d2fe85": "vi",
     "4eee0ddc5e": "it pl ru uk",
     "4fa7c5a9f9": "ar de fr he ja tr",
     "5251dc43ae": "uk",
@@ -1944,7 +1925,7 @@
     "85f412f92a": "bn it th",
     "862ede02e6": "ar de fr he ja tr",
     "8712ddea5b": "bn hi ja qu tr",
-    "897b7048f1": "ms th vi",
+    "897b7048f1": "vi",
     "8a13ec8232": "*",
     "8c8e27625d": "*",
     "8e7118ac3b": "ja ko tr",
