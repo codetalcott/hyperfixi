@@ -55,8 +55,8 @@ const CASES: [string, string][] = [
     'on click log 0 then tell #x add .a end then log 1',
   ],
   [
-    'on click if me matches .a tell #x add .b end end',
-    'on click if me matches .a tell #x add .b end end',
+    'on click if I match .a tell #x add .b end end',
+    'on click if I match .a tell #x add .b end end',
   ],
   [
     'on click tell #x tell #y add .a end add .b end then log 1',

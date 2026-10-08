@@ -57,8 +57,8 @@ const CASES: [string, string][] = [
     'on click start view transition using "slide" put "x" into me end',
   ],
   [
-    'on click start view transition if me matches .a add .b to me end end',
-    'on click start view transition if me matches .a add .b to me end end',
+    'on click start view transition if I match .a add .b to me end end',
+    'on click start view transition if I match .a add .b to me end end',
   ],
   [
     'on click start view transition repeat 3 times add .x to me end end then log 1',
@@ -74,8 +74,8 @@ const CASES: [string, string][] = [
     'on click add .a to me then start view transition remove .a from me end',
   ],
   [
-    'on click if me matches .a start view transition add .b to me end end',
-    'on click if me matches .a start view transition add .b to me end end',
+    'on click if I match .a start view transition add .b to me end end',
+    'on click if I match .a start view transition add .b to me end end',
   ],
   [
     'on click start view transition using "slide" swap #a with #b end then remove me',

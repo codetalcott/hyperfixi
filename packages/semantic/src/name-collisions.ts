@@ -205,6 +205,10 @@ export interface NameCollisionFinding {
  */
 function isEnglishKeyword(word: string): boolean {
   if (word === 'a' || word === 'an') return false;
+  // Upstream's first person: `I` is always `me` on both engines, never a
+  // variable. Parenthesized as one (tr, pl), `(I) match` hid it from the
+  // third-person rewrite that writes the language's own words (M2, A2).
+  if (word === 'I') return true;
   const tokens = tokenize(word, 'en').tokens;
   return tokens.length === 1 && tokens[0]?.kind !== 'identifier' && !loneKeywordKind(tokens[0]);
 }

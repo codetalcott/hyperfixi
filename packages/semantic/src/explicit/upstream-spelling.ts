@@ -26,6 +26,8 @@
  *   fetch "X" do not throw            → fetch "X" as text do not throw  (upstream reads
  *                                       a quoted URL followed by `do not` as a comparison)
  *   X has .c / I have .c              → X matches .c / I match .c
+ *   me matches .c / me is a T         → I match .c / I am a T  (the third person a
+ *                                       translation writes for upstream's first, A2)
  *   unless C X                        → X unless C  (a statement modifier, after its command)
  *   my?.a?.b                          → my.a.b  (a property chain is null-safe on both)
  *   previous <input/>.value           → the value of previous <input/>
@@ -178,7 +180,10 @@ function rewriteAll(nodes: readonly SemanticNode[]): SemanticNode[] {
     const condition =
       node.kind === 'command' && node.action === 'unless' ? node.roles.get('condition') : undefined;
     if (condition && next && !(next as { postfixUnless?: unknown }).postfixUnless) {
-      out.push({ ...toUpstreamSpelling(next), postfixUnless: condition } as SemanticNode);
+      out.push({
+        ...toUpstreamSpelling(next),
+        postfixUnless: rewriteValue(condition),
+      } as SemanticNode);
       i++;
       continue;
     }
@@ -435,6 +440,9 @@ export function rewriteExpression(raw: string): string {
       .replace(/\bdoes not have(\s+)(?=[.#[])/g, 'does not match$1')
       .replace(/\bhas(\s+)(?=[.#[])/g, 'matches$1')
       .replace(/\bhave(\s+)(?=[.#[])/g, 'match$1')
+      // The third person a translation writes for upstream's first (M2, A2).
+      .replace(/(^|[^\w$.#@*:-])me matches\b/g, '$1I match')
+      .replace(/(^|[^\w$.#@*:-])me is(\s+not)?(\s+an?\s)/g, '$1I am$2$3')
   );
 }
 

@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23635,
-  "leaky": 7985,
-  "findings": 12655,
+  "leaky": 7922,
+  "findings": 12425,
   "kinds": {
     "word": {
-      "renders": 5232,
-      "findings": 8528
+      "renders": 5153,
+      "findings": 8298
     },
     "event": {
       "renders": 0,
@@ -553,10 +553,9 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "50e7da7fd1": {
-      "I a am": "id ja ko ms qu sw th vi zh",
-      "I a am case:me": "ar bn de he hi pl ru tl uk",
-      "I am": "fr",
-      "I am case:me": "es it pt tr"
+      "a": "id ja ko ms qu sw th vi zh",
+      "a case:me": "ar bn de he hi pl ru tl uk",
+      "case:me": "es it pt tr"
     },
     "50e8f568f6": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -849,14 +848,10 @@
       "a case:me is not": "he",
       "case:me": "es it pt tr"
     },
-    "76829fafba": {
-      "I match": "*"
-    },
     "76bf595d21": {
-      "I a am": "id ja ko ms qu sw th vi zh",
-      "I a am case:me": "ar bn de he hi pl ru tl uk",
-      "I am": "fr",
-      "I am case:me": "es it pt tr"
+      "a": "id ja ko ms qu sw th vi zh",
+      "a case:me": "ar bn de he hi pl ru tl uk",
+      "case:me": "es it pt tr"
     },
     "7740b3f40e": {
       "case:me catch finally": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -1469,8 +1464,7 @@
       "next": "he"
     },
     "cc4909b0a6": {
-      "I case:me match": "bn he hi tr",
-      "I match": "ar de es fr id it ja ko ms pl pt qu ru sw th tl uk vi zh"
+      "case:me": "bn he hi tr"
     },
     "cce78169bd": {
       "and between me of": "ar bn de es fr he hi id ja ko ms pl pt qu ru sw th tl tr uk vi zh",
@@ -1543,8 +1537,7 @@
       "def": "*"
     },
     "d9ecdbc854": {
-      "I case:me match": "bn he hi tr",
-      "I match": "ar de es fr id it ja ko ms pl pt qu ru sw th tl uk vi zh"
+      "case:me": "bn he hi tr"
     },
     "da24c9d768": {
       "closest to": "he",

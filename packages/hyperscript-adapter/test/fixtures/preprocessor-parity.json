@@ -272,14 +272,14 @@
   {
     "lang": "es",
     "input": "al clic si yo coincide .x agregar .no a yo sino agregar .on a yo fin",
-    "full": "on click if me matches .x add .no to me else add .on to me end",
-    "slim": "on click if me matches .x add .no to me else add .on to me end"
+    "full": "on click if I match .x add .no to me else add .on to me end",
+    "slim": "on click if I match .x add .no to me else add .on to me end"
   },
   {
     "lang": "ja",
     "input": "クリック を で もし 私 一致する .x 自分 に .no を 追加 そうでなければ 自分 に .on を 追加 終わり",
-    "full": "on click if me matches .x add .no to me else add .on to me end",
-    "slim": "on click if me matches .x add .no to me else add .on to me end"
+    "full": "on click if I match .x add .no to me else add .on to me end",
+    "slim": "on click if I match .x add .no to me else add .on to me end"
   },
   {
     "lang": "es",

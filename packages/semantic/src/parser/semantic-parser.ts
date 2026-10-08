@@ -4852,7 +4852,12 @@ export class SemanticParserImpl implements ISemanticParser {
     // the per-gap recovery would mis-split into fragments — so a clause that is one
     // such command is parsed correctly, and any per-gap noise is discarded.
     if (directHits === 0) {
-      const sovCommands = this.parseSOVClauseByVerbAnchoring(bodyTokens, language);
+      // Under a trailing `unless`, keep only real commands, as flushSkipped
+      // does: a condition-only clause (ja `それ 一致する .bar ない限り`) anchored
+      // on its operator and added a phantom `matches` command after the guard.
+      const sovCommands = this.parseSOVClauseByVerbAnchoring(bodyTokens, language).filter(
+        n => !trailingGuard || !!getSchema((n as { action?: string }).action as ActionType)
+      );
       if (sovCommands.length > 0) {
         // The whole-clause re-parse consumed what the per-gap walk recorded as
         // dropped — those records are stale.
