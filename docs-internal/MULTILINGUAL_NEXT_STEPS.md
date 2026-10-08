@@ -81,9 +81,13 @@ its reader brings it back (#1419), and three losses no gate held (step 2): tr re
 value matrix's `branch` position now holds the shape), core's `swap into`/`over` were written as an
 exchange with a property, and a strategy upstream cannot spell is refused (`core-only`, S6).
 `it.value` written `its.value` (P14) was measured as no loss: both engines read `its` as `it`, and
-upstream's own suite writes `its.ok`. Step 3 (English refusals) began with values: a CSS length
-(`100px`, `50%`) is one value, `innerHTML of #d1` names a property, a string holding a quote keeps
-closing, and `don't throw` reads (82 → 73 refused).
+upstream's own suite writes `its.ok`. Step 3 (English refusals): a CSS length (`100px`, `50%`) is
+one value, `innerHTML of #d1` names a property, a string holding a quote keeps closing, `don't
+throw`, `at the start/end of`, `remove 3 from :arr` / `remove {color}`, `otherwise` as `else` (which
+also ended the foreign `else-word` silent family), `on every <event>`, `init immediately` (82 → 61
+refused). The other 61 are LOUD, each family with its reason: `scroll … by` and `beep!` wait on
+vocabulary (the M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57),
+the rest are shapes rare in pages.
 
 | Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
 | ---------------------- | ------ | ------- | ------ | --------------------------------- |
@@ -91,15 +95,13 @@ closing, and `don't throw` reads (82 → 73 refused).
 | 4.2.0 (2026-10-07)     | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
 | main (2026-10-07)      | 23,954 | 3,242   | 44     | 1,053 / 82 / 0                    |
 | step 3, values         | 24,139 | 3,057   | 44     | 1,062 / 73 / 0                    |
+| step 3, commands       | 24,386 | 2,823   | 31     | 1,074 / 61 (all LOUD) / 0         |
 
-**Left.** English refusals: `scroll … by` (P8), `.stop*` classes (P2), `default … in` (P10),
-`make a Set` (P11), a second `on` after `send` (P26), `halt default`, `don't throw`, `send` arguments,
-`beep!`, `.foo()` chains, `closest @foo`, `otherwise`, `on every click`, `init immediately`, `on "a-b"`,
-and the LOUD families. Group 6, foreign lanes: P9, P15, P18, P21, P52, foreign bare counts and `queue`
-forms, ko verbs that are also events, and the `branch` refusals (an SOV condition ending in an owner
-takes the branch's `.y`). The gate's `--report`
-lists the silent families. **Exit:** every IN family passes or has a reason; stop widening when a
-widening finds nothing a user would write (rule 4).
+**Left.** The English lane has no refusal outside a LOUD family (step 3's exit). Group 6, foreign
+lanes: P9, P15, P18, P21, P52, foreign bare counts and `queue` forms, ko verbs that are also events,
+and the `branch` refusals (an SOV condition ending in an owner takes the branch's `.y`); 31 silent
+pairs, each in a named family. The gate's `--report` lists them. **Exit:** every IN family passes
+or has a reason; stop widening when a widening finds nothing a user would write (rule 4).
 
 ### M2: translations that read as the language
 
