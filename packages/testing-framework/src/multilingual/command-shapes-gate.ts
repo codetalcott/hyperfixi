@@ -13,6 +13,10 @@
  *
  * The cases file, the baseline's own consistency and the oracle are checked
  * in command-shapes.cases.test.ts and command-shapes.oracle.test.ts.
+ *
+ * Each shard also judges the English left in its renders (english-leaks.ts),
+ * against baselines/english-leaks.shapes.json: the same renders, a second
+ * question, so the gate costs no second translation pass.
  */
 
 import { readFileSync } from 'node:fs';
@@ -27,6 +31,14 @@ import {
   type CommandShapesBaseline,
   type PairChange,
 } from './command-shapes';
+import {
+  diffLeakBaseline,
+  initLeakScanner,
+  loadLeakBaseline,
+  shapeLeaks,
+  type LeakChange,
+  type LeakResults,
+} from './english-leaks';
 
 export const COMMAND_SHAPE_SHARDS = 3;
 
@@ -47,11 +59,16 @@ export function describeCommandShapesShard(shard: number): void {
     `${c.id} [${c.lane}] ${c.listed} → ${c.got}: ${sources.get(c.id)?.slice(0, 80)}` +
     (c.detail ? ` ⇒ ${JSON.stringify(collapse(c.detail).slice(0, 80))}` : '');
 
+  const leakLine = (c: LeakChange, words: string[]): string =>
+    `${c.id} [${c.language}] ${words.join(' ')}: ${sources.get(c.id)?.slice(0, 80)}`;
+
   describe(`command shapes [${shard + 1}/${COMMAND_SHAPE_SHARDS}]`, () => {
     let results: CaseResult[] = [];
+    let leaks: LeakResults = new Map();
 
     beforeAll(async () => {
       results = await runCommandShapes(own);
+      leaks = shapeLeaks(await initLeakScanner(), results, own);
       const pairs = results.reduce((n, r) => n + Object.keys(r.lanes).length, 0);
       const failing = results.reduce(
         (n, r) => n + Object.values(r.lanes).filter(l => l.outcome !== 'pass').length,
@@ -71,6 +88,19 @@ export function describeCommandShapesShard(shard: number): void {
     it('no pair is better than listed (prune it with tools/regen-command-shapes-baseline.ts)', () => {
       const { better } = diffBaseline(results, loadCommandShapesBaseline());
       expect(capped(better.map(line))).toEqual([]);
+    });
+
+    it('no render holds English the leak baseline does not list (english-leaks.ts)', () => {
+      expect(leaks.size).toBeGreaterThan(300);
+      const gained = diffLeakBaseline(leaks, loadLeakBaseline('shapes')).filter(
+        c => c.added.length
+      );
+      expect(capped(gained.map(c => leakLine(c, c.added)))).toEqual([]);
+    });
+
+    it('no listed English is gone (prune it with tools/regen-english-leaks-baseline.ts --shapes)', () => {
+      const gone = diffLeakBaseline(leaks, loadLeakBaseline('shapes')).filter(c => c.gone.length);
+      expect(capped(gone.map(c => leakLine(c, c.gone)))).toEqual([]);
     });
   });
 }

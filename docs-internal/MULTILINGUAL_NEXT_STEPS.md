@@ -18,7 +18,8 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 23,954 pass, 3,242 refused, 44 silent; en 1,053 / 82 / 0 (10-07)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 24,386 pass, 2,823 refused, 31 silent; en 1,074 / 61 / 0 (10-07)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| English left in renders: words / events / `me` case | corpus 18.9% / 32.3% / 8.9% of renders; command shapes 24.2% / 22.0% / 16.3% (10-08) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
 | Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
@@ -27,12 +28,9 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 
 | Gap                                          | Size                                                                                                                               | Items  |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| English words left in renders                | 769/3542 corpus renders (21.7%), from ~12 constructions that leak identically in all 23 languages                                  | N1, V1 |
-| English DOM event names                      | 1912/3496 handler events; 94–98% in he hi it ms pl ru th tl uk vi                                                                  | N2     |
-| Ungrammatical `me` after a preposition       | 13 languages, 80–92% of such renders (es `a yo`, de `zu ich`, ru `к я`)                                                            | N3     |
 | Commands outside every gate's input          | 36 filed parser items (2026-10-07); since 4.2.0 a translation that would lose part of a script is refused, so most are now loud     | P2–P55 |
 | User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
-| Shipping                                     | 4.2.0 on npm 2026-10-07 (`npm view @hyperfixi/core version`; unreleased: `git log v4.2.0..origin/main -- packages`)                | —      |
+| Shipping                                     | 4.3.0 on npm 2026-10-08 (`npm view @hyperfixi/core version`; unreleased: `git log v4.3.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -72,22 +70,12 @@ the output as it parses the source, after named equivalences pinned on both engi
 `{ lossy: 'allow' }`, and the adapter and build tools keep the author's text and warn. Every silent
 pair left is in a named family with a reason (`SILENT_FAMILIES`); the English lane has none.
 
-**Fixes by family** (#1404–#1417): program structure; control flow; trailing clauses, by one
-mechanism (a clause no pattern models, and upstream's `on` head forms, kept as written); scoped
-names (P45); values as one token (`@a=v`, `arr[1]`) and bracket interiors as written.
-`packages/semantic/src/parser` grew by 862 lines net since 4.1.0. Then a word is written only where
-its reader brings it back (#1419), and three losses no gate held (step 2): tr read an `if` with no
-`then` as the condition's head plus a branch whose destination was the condition's tail (P54; the
-value matrix's `branch` position now holds the shape), core's `swap into`/`over` were written as an
-exchange with a property, and a strategy upstream cannot spell is refused (`core-only`, S6).
-`it.value` written `its.value` (P14) was measured as no loss: both engines read `its` as `it`, and
-upstream's own suite writes `its.ok`. Step 3 (English refusals): a CSS length (`100px`, `50%`) is
-one value, `innerHTML of #d1` names a property, a string holding a quote keeps closing, `don't
-throw`, `at the start/end of`, `remove 3 from :arr` / `remove {color}`, `otherwise` as `else` (which
-also ended the foreign `else-word` silent family), `on every <event>`, `init immediately` (82 → 61
-refused). The other 61 are LOUD, each family with its reason: `scroll … by` and `beep!` wait on
-vocabulary (the M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57),
-the rest are shapes rare in pages.
+**Fixes by family** (#1404–#1422, released in 4.2.0 and 4.3.0; the stories are in the PR bodies):
+program structure, control flow, clauses no pattern models kept as written, scoped names, values as one
+token, a word written only where its reader brings it back, and the English refusals. The 61 English
+refusals left are LOUD, each family with its reason: `scroll … by` and `beep!` wait on vocabulary (the
+M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57), the rest are shapes
+rare in pages.
 
 | Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
 | ---------------------- | ------ | ------- | ------ | --------------------------------- |
@@ -105,12 +93,22 @@ or has a reason; stop widening when a widening finds nothing a user would write 
 
 ### M2: translations that read as the language
 
-**Why.** 22% of renders carry English words, half of all handler events are English, and 13 languages
-put a nominative pronoun after a preposition. No gate reads for this: they check that a render parses,
-not that it reads.
+**Why.** 19% of corpus renders (24% of authors' scripts) carry an English word, a third of corpus
+renders keep an English event name, and 13 languages put a nominative pronoun beside a marker. Every
+other gate checks that a render means what the source means, not that it reads as the language.
+Plan: `~/.claude/plans/m2-naturalness.md`.
 
-**Step 1 — the gate.** Commit the survey's English-leak scan as a shrink-only baseline (per language
-and per construction), plus a pronoun-case probe.
+**Step 1 — the gate (2026-10-08).** `english-leaks.ts` counts, per render, English grammar words
+(the tokens the engine's own parser matched as words in the source), English event names the lexicon
+has a word for (N2), and a nominative `me` beside a marker (N3). Two shrink-only halves: the corpus
+(`test:canonical`) and the command-shape cases' renders (in their shards). `--report` splits each word
+by context (`clause`, the English M1 keeps as written, N9; `bracket`; `call`; `property`; `plain`) and
+by whether the language has its own word. Measured: words in 18.9% of corpus renders (top: `repeat`,
+`in`, `I match`, `debounced at`, `of`, `elsewhere`, `as`) and 24.2% of command-shape renders (`def`,
+`the X of Y`, `as`, `catch`/`finally`, `start view transition`; M1's kept clauses, 116 in 59 shapes,
+never occur in the corpus). **Exit targets (proposed 2026-10-08, the owner to confirm):** words in at
+most 5% of corpus renders and 10% of command-shape renders; no `event:` finding a round-tripping word
+could fix (the rest denylisted, with reasons); no `case:me` finding.
 
 **Step 2 — no decision needed (N2).** Native event names in he, hi, it, pl, ru, th, uk and vi, where the
 lexicon's own word round-trips (87–100% of corpus rows). Denylist the pairs that don't:
@@ -288,7 +286,8 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
 | en-reference-preservation        | English parses that lose source content (corpus)             | shapes not in the corpus                              |
 | Bare / wrapped render fidelity   | the handler-free form of each corpus row                     | same                                                  |
 | Vocab V1–V4, lexicon parity      | dictionary ↔ profile ↔ tokenizer agreement                   | whether a word is right, or natural                   |
-| _(none yet)_                     | English leaks, pronoun case, README examples                 | → M2 Step 1, D8                                       |
+| English leaks                    | English words, event names, `me` case in renders (corpus, shapes) | whether a native word is natural (M2 step 5, review) |
+| _(none yet)_                     | README examples                                              | → D8                                                  |
 
 ## 7. Keeping this file honest
 
