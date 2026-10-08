@@ -3146,7 +3146,14 @@ export class SemanticParserImpl implements ISemanticParser {
                   .length >
                   Object.entries(roles).filter(
                     ([r, v]) => !isMarkerConceptJunk(r, v) && !isImplicit(v)
-                  ).length)
+                  ).length ||
+                // (iii) a head-only loop head that reads the same roles and
+                //       then the body, which the fused capture lost: it
+                //       `su mousedown ripetere fino evento mouseup
+                //       incrementare #c` fused as `repeat until event mouseup`
+                //       and dropped the increment once the head wrote the
+                //       language's own verb (M2, sheet A1).
+                (headOnlyPattern && reparsed.length > 1))
             ) {
               commandNode = first as CommandSemanticNode;
               reparsedTail = reparsed.slice(1);
