@@ -101,8 +101,9 @@ describe('event-name translation (Phase 1b)', () => {
       }
     });
 
-    it('non-covered languages keep the English event name', () => {
-      for (const lang of ['hi', 'ru', 'it'] as const) {
+    it('a language with no table keeps the English event name', () => {
+      // ms and tl: their lexicons hold the English words themselves.
+      for (const lang of ['ms', 'tl'] as const) {
         expect(localizeEventName('click', lang)).toBe('click');
       }
     });

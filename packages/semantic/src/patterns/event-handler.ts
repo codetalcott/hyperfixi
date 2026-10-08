@@ -44,6 +44,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     키프레스: 'keypress',
     터치종료: 'touchend',
     터치취소: 'touchcancel',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    더블클릭: 'dblclick',
   },
   // Japanese event names → English
   ja: {
@@ -69,6 +71,7 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     ぼかし: 'blur',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
   },
   // Arabic event names → English
   ar: {
@@ -96,6 +99,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // resize is two words, which the ar tokenizer reads whole: read alone,
     // تغيير is change (P48).
     'تغيير حجم': 'resize',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    ضبابية: 'blur',
   },
   // Spanish event names → English
   es: {
@@ -132,6 +137,10 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     toqueterminar: 'touchend',
     toquemover: 'touchmove',
     toquecancelar: 'touchcancel',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    redimensionar: 'resize',
+    'ratón abajo': 'mousedown',
+    'ratón arriba': 'mouseup',
   },
   // Turkish event names → English
   tr: {
@@ -173,6 +182,7 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     kaydır: 'scroll',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
   },
   // Portuguese event names → English
   pt: {
@@ -212,6 +222,10 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     toqueFim: 'touchend',
     toqueMover: 'touchmove',
     toqueCancelar: 'touchcancel',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    redimensionar: 'resize',
+    'mouse pressionado': 'mousedown',
+    'mouse solto': 'mouseup',
   },
   // Chinese event names → English
   zh: {
@@ -249,6 +263,7 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     调整大小: 'resize',
     触摸开始: 'touchstart',
     触摸移动: 'touchmove',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
   },
   // French event names → English
   fr: {
@@ -289,6 +304,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     toucherfin: 'touchend',
     toucherbouger: 'touchmove',
     toucherannuler: 'touchcancel',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    redimensionner: 'resize',
   },
   // German event names → English
   de: {
@@ -332,6 +349,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     berührungend: 'touchend',
     berührungbewegen: 'touchmove',
     berührungabbrechen: 'touchcancel',
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    größenänderung: 'resize',
   },
   // Indonesian event names → English
   id: {
@@ -377,38 +396,43 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     পরিবর্তন: 'change',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
   },
   // Quechua event names → English (loanwords with native adaptations)
   qu: {
+    // The lexicon's words come first (first wins: they are what renders) for
+    // the events where the old first word did not read back (M2, N2): click
+    // rendered English, and change/focus/load/submit were denylisted.
+    ñitiy: 'click',
+    kambiay: 'change',
+    qhaway: 'focus',
+    apakuy: 'load',
+    apaykachay: 'submit',
     click: 'click',
     "ñit'iy": 'click',
-    ñitiy: 'click',
     yaykuchiy: 'input',
     yaykuy: 'input',
     tikray: 'change',
     "t'ikray": 'change',
-    // Batch 3 aliases (appended so first-wins localization canonicals are
-    // unchanged): the dict now renders kambiay/apaykachay — probe-verified to
-    // capture the canonical event via the tokenizer keyword table, unlike
-    // tikray (captures 'toggle') and kachay ('send' in one corpus slot).
-    kambiay: 'change',
+    // Older spellings, still read; none renders (tikray captures `toggle`,
+    // and kachay `send` in one corpus slot).
     apachiy: 'submit',
     kachay: 'submit',
-    apaykachay: 'submit',
     'llave uray': 'keydown',
     'llave hawa': 'keyup',
     "q'away": 'focus',
-    qhaway: 'focus',
     paqariy: 'blur',
     "mana q'away": 'blur',
     cargay: 'load',
-    apakuy: 'load',
     apamuy: 'load',
     kunray: 'scroll',
     muyuy: 'scroll',
     hatun_kay: 'resize',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
+    ratñitiy: 'mousedown',
+    rathuqariy: 'mouseup',
   },
   // Swahili event names → English
   sw: {
@@ -446,11 +470,89 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
     shuka: 'unload',
   },
+  // he, hi, it, pl, ru, th, uk (M2, N2): each lexicon's own word for an event,
+  // where a hand-written one reads back (on X, on X from #b, send X). The rest
+  // stay English: eventLocalizationDenylist says why.
+  he: {
+    לחיצה: 'click',
+    שינוי: 'change',
+    קלט: 'input',
+    שליחה: 'submit',
+    מקד: 'focus',
+    טשטש: 'blur',
+  },
+  hi: {
+    क्लिक: 'click',
+    परिवर्तन: 'change',
+    इनपुट: 'input',
+    जमा: 'submit',
+    लोड: 'load',
+    फोकस: 'focus',
+    धुंधला: 'blur',
+    माउसनीचे: 'mousedown',
+    माउसऊपर: 'mouseup',
+  },
+  it: {
+    clic: 'click',
+    cambio: 'change',
+    invio: 'submit',
+    carica: 'load',
+    fuoco: 'focus',
+    sfuocare: 'blur',
+    scorrimento: 'scroll',
+    ridimensiona: 'resize',
+  },
+  pl: {
+    kliknięcie: 'click',
+    zmiana: 'change',
+    wejście: 'input',
+    wysłaniu: 'submit',
+    rozmycie: 'blur',
+    przewiń: 'scroll',
+    'zmiana rozmiaru': 'resize',
+  },
+  ru: {
+    клик: 'click',
+    изменение: 'change',
+    ввод: 'input',
+    отправка: 'submit',
+    загрузка: 'load',
+    фокус: 'focus',
+    мышьвниз: 'mousedown',
+    мышьвверх: 'mouseup',
+    изменениеразмера: 'resize',
+  },
+  th: {
+    คลิก: 'click',
+    เปลี่ยนแปลง: 'change',
+    อินพุต: 'input',
+    ส่ง: 'submit',
+    โหลด: 'load',
+    โฟกัส: 'focus',
+    เบลอ: 'blur',
+    เลื่อน: 'scroll',
+    ปรับขนาด: 'resize',
+  },
+  uk: {
+    клік: 'click',
+    зміна: 'change',
+    введення: 'input',
+    надсилання: 'submit',
+    завантаження: 'load',
+    фокус: 'focus',
+    мишавниз: 'mousedown',
+    мишавгору: 'mouseup',
+    змінарозміру: 'resize',
+  },
   // Vietnamese event names → English. Minimal section: resize is the
   // three-word đổi kích thước, which the vi tokenizer reads whole: read alone,
   // đổi is change (P48).
   vi: {
     'đổi kích thước': 'resize',
+    nhấp: 'click',
+    nhập: 'input',
+    cuộn: 'scroll',
+    nộp: 'submit',
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
@@ -514,19 +616,46 @@ const eventNameLocalizations: Record<string, Record<string, string>> = Object.fr
  * Regenerate it from that test if the tokenizers or `eventNameTranslations`
  * change; do not hand-add speculative entries.
  *
- * Notable classes: `de.load`→`laden` and `qu.submit`→`apachiy` re-parse as other
- * commands (`fetch`/`send`); the weaker SOV/agglutinative handler grammars (sw,
- * tr) reject many compounded native event words outright.
+ * Notable classes: `de.load`→`laden` re-parses as another command (`fetch`);
+ * the weaker SOV/agglutinative handler grammars (sw, tr) reject many compounded
+ * native event words outright.
+ *
+ * he, hi, it, pl, ru, th and uk (M2, N2) list the lexicon words their reader
+ * does not take back, written by hand (`on X`, `on X from #b`, `send X`), so
+ * they never entered the table above: coined compounds (it `tastogiù`, pl
+ * `klawiszdół`, ru `клавиша_вниз`), words joined with `_` (policy 5: never), and
+ * collisions (pl `załaduj` reads as `fetch`, ru `наведение` / uk `наведення` as
+ * `hover`). So do id `resize` and sw's mouse events and `resize`, whose lexicon
+ * words are joined with `_`; `every` in bn, ms, th and tl, a handler modifier
+ * (`on every click`) the lexicons file as an event; and `reset` everywhere: the
+ * word is a command too, and English itself does not read `wait for reset from
+ * #b` back (OPEN_ITEMS P59), so no translation can. A native word for one of
+ * these is a vocabulary call (`docs-internal/multilingual/VOCABULARY_SHEET.md`).
  */
 const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
   ar: new Set(['mouseover']),
-  bn: new Set(['resize']),
-  de: new Set(['keydown', 'keyup', 'load', 'mouseout', 'mouseover']),
-  fr: new Set(['blur']),
-  id: new Set(['input', 'keyup', 'mouseout', 'mouseover']),
-  ja: new Set(['keypress', 'mousedown', 'mouseup', 'resize']),
-  qu: new Set(['change', 'focus', 'load', 'resize', 'submit']),
-  sw: new Set(['change', 'click', 'input', 'keydown', 'keyup', 'mouseout', 'mouseover', 'submit']),
+  bn: new Set(['every', 'reset', 'resize']),
+  de: new Set(['keydown', 'keyup', 'load', 'mouseout', 'mouseover', 'reset']),
+  fr: new Set(['blur', 'reset']),
+  id: new Set(['input', 'keyup', 'mouseout', 'mouseover', 'resize']),
+  ja: new Set(['keypress', 'mousedown', 'mouseup', 'reset', 'resize']),
+  qu: new Set(['reset', 'resize']),
+  sw: new Set([
+    'change',
+    'click',
+    'input',
+    'keydown',
+    'keyup',
+    'mousedown',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'mouseup',
+    'resize',
+    'submit',
+  ]),
   tr: new Set([
     'keydown',
     'keyup',
@@ -535,10 +664,110 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mouseout',
     'mouseover',
     'mouseup',
+    'reset',
     'resize',
     'scroll',
   ]),
-  zh: new Set(['focus', 'keyup', 'mouseout', 'mouseover']),
+  zh: new Set(['focus', 'keyup', 'mouseout', 'mouseover', 'reset']),
+  hi: new Set([
+    'dblclick',
+    'keydown',
+    'keypress',
+    'keyup',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'reset',
+    'resize',
+    'scroll',
+    'touchcancel',
+    'touchend',
+    'touchmove',
+    'touchstart',
+    'unload',
+  ]),
+  it: new Set([
+    'dblclick',
+    'keydown',
+    'keypress',
+    'keyup',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'reset',
+    'touchcancel',
+    'touchend',
+    'touchmove',
+    'touchstart',
+    'unload',
+  ]),
+  pl: new Set([
+    'dblclick',
+    'focus',
+    'keydown',
+    'keypress',
+    'keyup',
+    'load',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'reset',
+    'touchcancel',
+    'touchend',
+    'touchmove',
+    'touchstart',
+    'unload',
+  ]),
+  ru: new Set([
+    'blur',
+    'dblclick',
+    'keydown',
+    'keypress',
+    'keyup',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'reset',
+    'scroll',
+    'touchcancel',
+    'touchend',
+    'touchmove',
+    'touchstart',
+    'unload',
+  ]),
+  th: new Set(['every', 'keydown', 'keyup', 'mouseout', 'mouseover', 'reset']),
+  uk: new Set([
+    'blur',
+    'dblclick',
+    'keydown',
+    'keypress',
+    'keyup',
+    'mouseenter',
+    'mouseleave',
+    'mousemove',
+    'mouseout',
+    'mouseover',
+    'reset',
+    'scroll',
+    'touchcancel',
+    'touchend',
+    'touchmove',
+    'touchstart',
+    'unload',
+  ]),
+  ms: new Set(['every']),
+  tl: new Set(['every']),
+  ko: new Set(['reset']),
+  es: new Set(['reset']),
+  pt: new Set(['reset']),
 };
 
 /**

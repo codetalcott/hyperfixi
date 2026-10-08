@@ -1,16 +1,16 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` (a nominative pronoun beside a marker). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 1752,
-  "findings": 2637,
+  "leaky": 909,
+  "findings": 1492,
   "kinds": {
     "word": {
       "renders": 665,
       "findings": 1105
     },
     "event": {
-      "renders": 1138,
-      "findings": 1145
+      "renders": 0,
+      "findings": 0
     },
     "case": {
       "renders": 314,
@@ -19,29 +19,16 @@
   },
   "entries": {
     "accordion-exclusive": {
-      "closest event:click": "he",
-      "event:click": "hi it pl qu ru th uk vi"
+      "closest": "he"
     },
     "accordion-toggle": {
-      "closest event:click": "he",
-      "event:click": "hi it pl qu ru th uk vi"
+      "closest": "he"
     },
     "add-class-basic": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
-    },
-    "add-class-to-other": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "announce-screen-reader": {
       "of": "*"
-    },
-    "append-content": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "beep-debug-expression": {
-      "event:click": "he hi it pl qu ru th uk vi"
     },
     "behavior-draggable": {
       "case:me document document repeat": "bn",
@@ -52,11 +39,9 @@
       "repeat": "ar de es fr id it ja ko ms pl pt ru sw tl uk zh"
     },
     "behavior-removable": {
-      "case:me case:me": "bn tr",
-      "case:me case:me event:click": "hi",
-      "case:me event:click is is or": "he",
-      "event:click": "it pl ru th uk vi",
-      "event:click trigger trigger": "qu"
+      "case:me case:me": "bn hi tr",
+      "case:me is is or": "he",
+      "trigger trigger": "qu"
     },
     "behavior-resizable": {
       "document document repeat": "bn he th vi",
@@ -74,132 +59,60 @@
     "blur-element": {
       "case:me": "bn he hi tr"
     },
-    "book-archive-download-click": {
-      "event:load": "hi it pl ru th uk"
-    },
     "book-counter-increment": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click previous": "he"
-    },
-    "breakpoint-command": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "call-function": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "caret-var-increment": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "previous": "he"
     },
     "caret-var-on-target": {
-      "case:me event:click on": "he hi it pl ru uk",
-      "case:me on": "ar bn de es pt tl tr",
-      "event:click on": "qu th vi",
-      "on": "fr id ja ko ms sw zh"
-    },
-    "caret-var-write": {
-      "event:load": "hi it pl ru th uk"
-    },
-    "chained-access-possessive-dot": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me on": "ar bn de es he hi it pl pt ru tl tr uk",
+      "on": "fr id ja ko ms qu sw th vi zh"
     },
     "closest-ancestor": {
-      "closest event:click": "he",
-      "event:click": "hi it pl qu ru th uk vi"
+      "closest": "he"
     },
     "computed-value": {
-      "as as event:input of the": "he hi ru th uk vi",
-      "as as of the": "ar bn de es fr id it ja ko ms pl pt qu sw tl tr zh"
+      "as as of the": "*"
     },
     "copy-to-clipboard": {
-      "case:me case:me": "ar bn de es pt tl tr",
-      "case:me case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
-    },
-    "decrement-counter": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "default-value": {
-      "event:load": "hi it pl ru th uk"
-    },
-    "document-ready": {
-      "event:load": "hi it pl ru th uk"
+      "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "dropdown-close-outside": {
-      "elsewhere": "ar bn de es fr id ja ko ms pt sw tl tr zh",
-      "elsewhere event:click": "he hi it pl qu ru th uk vi"
+      "elsewhere": "*"
     },
     "dropdown-toggle": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click next": "he"
+      "next": "he"
     },
     "event-debounce": {
-      "at debounced": "ar bn de es fr id it ja ko ms pl pt qu sw tr zh",
-      "at debounced event:input": "he hi ru th uk vi",
+      "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "debounced": "tl"
     },
     "event-from-elsewhere": {
-      "case:me elsewhere": "ar bn de es pt tl tr",
-      "case:me elsewhere event:click": "he hi it pl ru uk",
-      "elsewhere": "fr id ja ko ms sw zh",
-      "elsewhere event:click": "qu th vi"
+      "case:me elsewhere": "ar bn de es he hi it pl pt ru tl tr uk",
+      "elsewhere": "fr id ja ko ms qu sw th vi zh"
     },
     "event-once": {
-      "case:me event:click first": "he hi it pl ru uk",
-      "case:me first": "ar bn de es pt tl tr",
-      "event:click first": "qu th vi",
-      "first": "fr id ja ko ms sw zh"
+      "case:me first": "ar bn de es he hi it pl pt ru tl tr uk",
+      "first": "fr id ja ko ms qu sw th vi zh"
     },
     "event-throttle": {
-      "at event:scroll throttled": "hi pl ru th uk vi",
-      "at throttled": "ar bn de es fr he id it ja ko ms pt qu sw tr zh",
+      "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "throttled": "tl"
     },
     "fade-out-remove": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
-    },
-    "fetch-basic": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "fetch-do-not-throw": {
-      "do event:click not throw": "he hi it qu ru th uk vi",
-      "do not throw": "ar bn de es fr id ja ko ms pt sw tl tr zh",
-      "event:click not throw": "pl"
-    },
-    "fetch-error-handling": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "fetch-formdata": {
-      "event:submit": "he hi it ru th uk vi"
-    },
-    "fetch-json": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "do not throw": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh",
+      "not throw": "pl"
     },
     "fetch-loading-state": {
-      "case:me case:me": "ar bn de es pt tl tr",
-      "case:me case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
+      "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "fetch-with-headers": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
-    },
-    "fetch-with-method": {
-      "event:submit": "he hi it ru th uk vi"
-    },
-    "fetch-with-method-body": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "first-in-parent": {
-      "closest event:click first in": "he",
-      "event:click": "it vi",
-      "event:click in": "hi pl qu ru th uk",
-      "in": "ar bn es fr id ja ko ms pt sw tl zh"
-    },
-    "focus-element": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "closest first in": "he",
+      "in": "ar bn es fr hi id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "focus-trap": {
       "first in in matches": "he",
@@ -207,369 +120,153 @@
       "in in matches": "bn th"
     },
     "form-disable-on-submit": {
-      "case:me case:me": "de tr",
-      "case:me case:me event:submit": "it",
-      "case:me case:me event:submit in in": "hi",
-      "case:me case:me in in": "bn",
-      "event:submit": "vi",
-      "event:submit in in": "he ru th uk",
-      "in in": "ar es fr id ja ko ms pl pt qu sw tl zh"
+      "case:me case:me": "de it tr",
+      "case:me case:me in in": "bn hi",
+      "in in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "form-submit-prevent": {
-      "event:submit": "hi it ru th uk vi",
-      "event:submit is": "he"
-    },
-    "get-attribute-possessive-dot": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "get-value": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "get-value-possessive-dot": {
-      "event:input": "he hi ru th uk vi"
+      "is": "he"
     },
     "go-back": {
-      "back": "ar bn de es fr id ja ko ms pt sw tl tr zh",
-      "back event:click": "he hi it pl qu ru th uk vi"
+      "back": "*"
     },
     "go-url": {
-      "event:click url": "he hi it pl qu ru th uk vi",
-      "url": "ar bn de es fr id ja ko ms pt sw tl tr zh"
-    },
-    "halt-propagation": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "hide-element": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "url": "*"
     },
     "hide-with-transition": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "if-condition": {
-      "I event:click match": "he hi it pl qu ru th uk vi",
-      "I match": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "I match": "*"
     },
     "if-empty": {
-      "case:me": "bn de es pt tl tr",
-      "case:me empty event:blur is next": "he",
-      "case:me event:blur": "ar hi it pl ru uk",
-      "event:blur": "th"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me empty is next": "he"
     },
     "if-exists": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click exists": "he"
+      "exists": "he"
     },
     "if-matches": {
-      "I event:click match": "he hi it pl qu ru th uk vi",
-      "I match": "ar bn de es fr id ja ko ms pt sw tl tr zh"
-    },
-    "increment-by-amount": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "increment-counter": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "input-char-count": {
-      "event:input": "he hi ru th uk vi"
+      "I match": "*"
     },
     "input-clear": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click previous": "he"
-    },
-    "input-mirror": {
-      "event:input": "he hi ru th uk vi"
+      "previous": "he"
     },
     "input-validation": {
-      "case:me case:me": "bn de es pt tl tr",
-      "case:me case:me empty event:blur is": "he",
-      "case:me case:me event:blur": "ar hi it pl ru uk",
-      "event:blur": "th"
-    },
-    "its-value-possessive-dot": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "js-inline": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me case:me empty is": "he"
     },
     "keydown-key-is-syntax": {
       "case:me is": "bn he hi tr",
       "is": "ar de es fr id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "last-in-collection": {
-      "event:click": "it vi",
-      "event:click in": "he hi pl qu ru th uk",
-      "in": "ar bn es fr id ja ko ms pt sw tl zh"
+      "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "live-derived-value": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "log-element": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
-    },
-    "log-value": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "make-element": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "make-toast-element": {
-      "at event:click of": "he",
-      "event:click": "hi it pl qu ru th uk vi"
-    },
-    "method-call-possessive-dot": {
-      "event:input": "he hi ru th uk vi"
+      "at of": "he"
     },
     "modal-close-backdrop": {
-      "event:click": "hi it pl qu ru uk vi",
-      "event:click matches": "he th",
-      "matches": "bn"
+      "matches": "bn he th"
     },
     "modal-close-button": {
-      "closest event:click": "he",
-      "event:click": "hi it pl qu ru th uk vi"
+      "closest": "he"
     },
     "modal-close-escape": {
       "window": "bn he th vi"
     },
-    "modal-open": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "morph-fetch-result": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
     "morph-form-update": {
-      "closest event:submit": "he",
-      "event:submit": "hi it ru th uk vi"
-    },
-    "morph-with-template": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "multiple-events": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "closest": "he"
     },
     "next-element": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click next": "he"
+      "next": "he"
     },
     "on-custom-event-receive": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
-    "optional-chaining-possessive": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
     "pick-text-range": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click of": "he"
+      "of": "he"
     },
     "previous-element": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click previous": "he"
+      "previous": "he"
     },
     "put-after": {
-      "after case:me": "bn",
-      "after case:me event:click": "hi",
-      "case:me": "ar es tl",
-      "event:click": "he it pl qu ru th uk vi"
+      "after case:me": "bn hi",
+      "case:me": "ar es tl"
     },
     "put-before": {
-      "before case:me": "bn",
-      "before case:me event:click": "hi",
-      "case:me": "ar es tl",
-      "event:click": "he it pl qu ru th uk vi"
+      "before case:me": "bn hi",
+      "case:me": "ar es tl"
     },
     "put-content-basic": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
-    },
-    "reactive-array-push": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "remove-class-basic": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
-    },
-    "remove-class-from-all": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "remove-element": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
-    },
-    "render-template-with-data": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "repeat-for-each": {
-      "event:click in repeat": "he",
-      "event:click repeat": "hi it pl qu ru th uk vi",
-      "repeat": "ar bn de es fr id ja ko ms pt sw tl tr zh"
-    },
-    "repeat-forever": {
-      "event:load": "hi it pl ru th uk"
+      "in repeat": "he",
+      "repeat": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
     "repeat-times": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "repeat-until-event": {
-      "event:mousedown event:mouseup repeat": "es hi pt qu ru sw uk",
-      "repeat": "ar bn de fr he id it ja ko ms pl th tl tr vi zh"
+      "repeat": "*"
     },
     "repeat-while": {
-      "event:click": "hi qu",
-      "event:click repeat": "he it pl ru th uk vi",
-      "repeat": "ar de es fr id ms pt sw tl zh"
-    },
-    "send-event": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "send-event-to-form": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "send-with-detail": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-attribute": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-color-variable": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-inner-html-possessive-dot": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-opacity": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-style": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-text-basic": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-text-possessive-dot": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "set-transform": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "settle-animations": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "show-element": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "show-with-transition": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
     },
     "slide-toggle": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click next": "he"
-    },
-    "socket-send": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "next": "he"
     },
     "stagger-animation": {
-      "event:load index repeat": "hi it pl ru th uk",
       "in index repeat": "he",
-      "index repeat": "ar bn de es fr id ja ko ms pt qu sw tl tr vi zh"
-    },
-    "swap-content": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "index repeat": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
     "swap-view-transition": {
-      "event:click start transition view": "he hi it pl qu ru th uk vi",
-      "start transition view": "ar bn de es id ja ko ms pt sw tl tr zh",
+      "start transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "start view": "fr"
     },
     "tabs-aria": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "tabs-basic": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "he hi it pl ru uk",
-      "event:click": "qu th vi"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "tabs-content": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "hi it pl ru uk",
-      "case:me event:click next": "he",
-      "event:click": "qu th vi"
-    },
-    "take-class-from-siblings": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "tell-command": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "tell-other-element": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "template-literal-interpolation": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me next": "he"
     },
     "template-literal-list-build": {
-      "event:click": "hi it pl qu ru th uk vi",
-      "event:click in": "he"
+      "in": "he"
     },
     "toggle-aria-expanded": {
-      "case:me": "ar bn de es pt tl tr",
-      "case:me event:click": "hi it pl ru uk",
-      "case:me event:click next": "he",
-      "event:click": "qu th vi"
-    },
-    "toggle-class-basic": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "toggle-class-on-other": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "toggle-class-temporary": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "toggle-visibility": {
-      "event:click": "he hi it pl qu ru th uk vi"
-    },
-    "transition-color": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me next": "he"
     },
     "transition-opacity": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
-    },
-    "transition-transform": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "trigger-event": {
-      "event:load": "hi it pl ru th uk",
       "trigger": "qu"
     },
-    "two-way-binding": {
-      "event:input": "he hi ru th uk vi"
-    },
     "unless-condition": {
-      "I do event:click match": "hi it qu ru th uk vi",
-      "I do event:click match not": "he",
-      "I do match": "ar bn de es fr id ja ko ms pt sw tl tr zh",
-      "I event:click match": "pl"
-    },
-    "wait-for-event": {
-      "event:click": "he hi it pl qu ru th uk vi"
+      "I do match": "ar bn de es fr hi id it ja ko ms pt qu ru sw th tl tr uk vi zh",
+      "I do match not": "he",
+      "I match": "pl"
     },
     "wait-then": {
-      "case:me": "bn tr",
-      "case:me event:click": "he hi",
-      "event:click": "it pl qu ru th uk vi"
+      "case:me": "bn he hi tr"
     },
     "when-multiple-changes": {
       "or": "he"
@@ -581,16 +278,12 @@
       "window": "bn he th vi"
     },
     "window-resize": {
-      "at debounced": "ar ja ko ms qu tr zh",
-      "at debounced event:resize": "de es fr hi id it pl pt ru sw uk",
-      "at debounced event:resize window": "th",
-      "at debounced window": "bn he vi",
+      "at debounced": "ar de es fr hi id it ja ko ms pl pt qu ru sw tr uk zh",
+      "at debounced window": "bn he th vi",
       "debounced": "tl"
     },
     "window-scroll": {
-      "event:scroll": "hi pl ru uk",
-      "event:scroll window": "th vi",
-      "window": "bn he"
+      "window": "bn he th vi"
     }
   },
   "unrendered": {}

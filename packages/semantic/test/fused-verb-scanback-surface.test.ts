@@ -72,7 +72,7 @@ describe('the two verbs whose normalized form is not the action name', () => {
   // rather than silently reverting the fix to a no-op.
   it.each([
     ['id', 'muat', 'ketika klik muat "/api/user" sebagai json'],
-    ['he', 'הבא', 'ב click הבא "/api/user" כ json'],
+    ['he', 'הבא', 'ב לחיצה הבא "/api/user" כ json'],
   ] as const)('%s renders the verb `%s` and still re-parses the tail', (language, verb, expected) => {
     const rendered = translate('on click fetch /api/user as json', 'en', language);
     expect(rendered).toBe(expected);

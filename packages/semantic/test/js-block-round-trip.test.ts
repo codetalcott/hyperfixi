@@ -106,7 +106,7 @@ describe('a pre-posed patient marker does not leak into the JavaScript', () => {
   // otherwise swallow them as code. Both keep their marker on the surface — the
   // fix is that the marker is not part of the JavaScript.
   it.each([
-    ['he', 'ב click js את console.log("from js") סוף'],
+    ['he', 'ב לחיצה js את console.log("from js") סוף'],
     ['zh', '一 点击 就 JS执行 把 console.log("from js") 结束'],
   ])('%s', (language, expected) => {
     const reference = parseSemantic(SOURCE, 'en')!.node!;
