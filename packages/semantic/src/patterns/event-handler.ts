@@ -625,12 +625,12 @@ const eventNameLocalizations: Record<string, Record<string, string>> = Object.fr
  * they never entered the table above: coined compounds (it `tastogiù`, pl
  * `klawiszdół`, ru `клавиша_вниз`), words joined with `_` (policy 5: never), and
  * collisions (pl `załaduj` reads as `fetch`, ru `наведение` / uk `наведення` as
- * `hover`). So do id `resize` and sw's mouse events and `resize`, whose
- * lexicon words are joined with `_`, and `every` in bn, ms, th and tl: it is a
- * handler modifier (`on every click`), not an event. And `reset` everywhere:
- * the word is a command too, and English itself does not read `wait for reset
- * from #b` back (OPEN_ITEMS P59), so no translation can. A native word for one of these is a vocabulary call
- * (`docs-internal/multilingual/VOCABULARY_SHEET.md`).
+ * `hover`). So do id `resize` and sw's mouse events and `resize`, whose lexicon
+ * words are joined with `_`; `every` in bn, ms, th and tl, a handler modifier
+ * (`on every click`) the lexicons file as an event; and `reset` everywhere: the
+ * word is a command too, and English itself does not read `wait for reset from
+ * #b` back (OPEN_ITEMS P59), so no translation can. A native word for one of
+ * these is a vocabulary call (`docs-internal/multilingual/VOCABULARY_SHEET.md`).
  */
 const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
   ar: new Set(['mouseover']),
