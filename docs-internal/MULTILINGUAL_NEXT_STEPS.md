@@ -34,12 +34,8 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 
 ## 2. How we choose work now
 
-The corpus and value gates are saturated. Each widening of the value matrix found less:
-
-- 3,016 open pairs (PR 93), then 3,419 (PR 108), 371 (PR 124) and 887 (PR 130).
-- PRs 112–128 moved no gate at all.
-
-The product's gaps are now in what no gate reads. From here:
+The corpus and value gates are saturated (each widening of the value matrix found less, and PRs
+112–128 moved no gate), so the product's gaps are in what no gate reads. From here:
 
 1. **What a user sees comes first.** A translation that drops a command or reads as broken outranks a
    gate count.
@@ -106,16 +102,17 @@ by context (`clause`, the English M1 keeps as written, N9; `bracket`; `call`; `p
 by whether the language has its own word. Measured: words in 18.9% of corpus renders (top: `repeat`,
 `in`, `I match`, `debounced at`, `of`, `elsewhere`, `as`) and 24.2% of command-shape renders (`def`,
 `the X of Y`, `as`, `catch`/`finally`, `start view transition`; M1's kept clauses, 116 in 59 shapes,
-never occur in the corpus). **Exit targets (proposed 2026-10-08, the owner to confirm):** words in at
-most 5% of corpus renders and 10% of command-shape renders; no `event:` finding a round-tripping word
-could fix (the rest denylisted, with reasons); no `case:me` finding.
+never occur in the corpus). **Exit targets (decided 2026-10-08), in every language, not on average**
+(an average hid he: words in 35% of its corpus renders, the others near 18%): English words in at most
+5% of corpus renders and 10% of command-shape renders, not counting English a recorded decision keeps
+(policy 6, the sheet's keep rows); no `event:` finding (a denylisted event, each with its reason, is
+none); no `case:me` finding, its forms checked by a native speaker (de, pl, ru and uk pick the case by
+the marker). `--report` prints each language against them (`LEAK_TARGETS`). Words are mostly vocabulary:
+without the sheet the floor is 13.3% / 19.4% (renders with a word the language has none for).
 
 **Step 2 — no decision needed (N2).** Native event names in he, hi, it, pl, ru, th, uk and vi, where the
-lexicon's own word round-trips (87–100% of corpus rows). Denylist the pairs that don't:
-
-- keydown/keyup compounds;
-- pl `załaduj`;
-- ru/uk scroll and blur.
+lexicon's own word round-trips (87–100% of corpus rows). Denylist the pairs that don't (keydown/keyup
+compounds, pl `załaduj`, ru/uk scroll and blur).
 
 **Step 3 — owner vocabulary decisions, batched into one sheet (V1, N1).** The render lexicon is locked
 to the i18n dictionary, so each decision is a dictionary change:
@@ -126,7 +123,8 @@ to the i18n dictionary, so each decision is a dictionary change:
 - the expression words: `the X of Y`, `as T`, positional `in`, `on <target>`. These cross semantic's
   "commands only" scope line.
 
-The sheet proposes a word for each and a recommendation.
+The sheet proposes a word for each and a recommendation. It goes to the owner before step 2's work, which
+lands while the owner answers: it is the words target's critical path.
 
 **Step 4 — design:**
 

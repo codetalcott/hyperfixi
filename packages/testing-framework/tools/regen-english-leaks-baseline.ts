@@ -29,6 +29,8 @@ import {
   gainedLeaks,
   initLeakScanner,
   leakBaselineFrom,
+  leakRatesByLanguage,
+  LEAK_TARGETS,
   shapeLeaks,
   type LeakBaseline,
   type LeakFinding,
@@ -66,10 +68,6 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
       `  ${kind.padEnd(5)}  ${String(doc.kinds[kind].renders).padStart(6)} renders (${pct(doc.kinds[kind].renders, doc.renders)}), ` +
         `${doc.kinds[kind].findings} findings`
     );
-  const perLanguage = new Map<
-    string,
-    { renders: number; leaky: number; word: number; event: number; case: number }
-  >();
   const words = new Map<
     string,
     { n: number; languages: Set<string>; contexts: Map<string, number>; hasWord: number }
@@ -78,11 +76,7 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
   for (const byLanguage of results.values()) {
     for (const [language, findings] of byLanguage) {
       if (!findings) continue;
-      const row = perLanguage.get(language) ?? { renders: 0, leaky: 0, word: 0, event: 0, case: 0 };
-      row.renders++;
-      if (findings.length) row.leaky++;
       for (const f of findings as LeakFinding[]) {
-        row[f.kind]++;
         if (f.kind === 'word') {
           const w = words.get(f.word) ?? {
             n: 0,
@@ -102,17 +96,28 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
           events.set(f.word, e);
         }
       }
-      perLanguage.set(language, row);
     }
   }
-  console.log('\nby language: renders with a finding; words, events, pronoun case');
-  for (const [language, row] of [...perLanguage].sort(
-    (a, b) => b[1].leaky / b[1].renders - a[1].leaky / a[1].renders
-  )) {
+  const targets = LEAK_TARGETS[half];
+  const rates = [...leakRatesByLanguage(results, half)].sort(
+    (a, b) => b[1].rate.word - a[1].rate.word
+  );
+  console.log(
+    `\nby language: share of renders with an English word / event / \`me\` case ` +
+      `(M2 exit targets: at most ${pct(targets.word, 1)} / ${pct(targets.event, 1)} / ${pct(targets.case, 1)} each; \`!\` = not met)`
+  );
+  const mark = (ok: boolean): string => (ok ? ' ' : '!');
+  for (const [language, r] of rates) {
     console.log(
-      `  ${language}  ${String(row.leaky).padStart(5)}/${String(row.renders).padEnd(5)} ${pct(row.leaky, row.renders).padStart(6)}` +
-        `   words ${String(row.word).padStart(5)}  events ${String(row.event).padStart(4)}  case ${String(row.case).padStart(4)}`
+      `  ${language}  ${String(r.renders).padStart(5)}  ` +
+        (['word', 'event', 'case'] as const)
+          .map(k => `${pct(r.rate[k], 1).padStart(6)}${mark(r.met[k])}`)
+          .join(' ')
     );
+  }
+  for (const kind of ['word', 'event', 'case'] as const) {
+    const met = rates.filter(([, r]) => r.met[kind]).length;
+    console.log(`  ${kind.padEnd(5)} target met in ${met}/${rates.length} languages`);
   }
   console.log(
     '\nby English word (tokens, languages, contexts; `+` = the language has a word for it):'

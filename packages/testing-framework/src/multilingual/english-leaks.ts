@@ -321,7 +321,7 @@ function renderWords(text: string): RenderWord[] {
   for (const m of text.matchAll(/\S+/g)) {
     let token = m[0];
     let offset = m.index ?? 0;
-    const lead = /^[(\[,]+/.exec(token)?.[0].length ?? 0;
+    const lead = /^[([,]+/.exec(token)?.[0].length ?? 0;
     token = token.slice(lead);
     offset += lead;
     out.push({ word: token.replace(/[)\],;]+$/, '').replace(/'s$/, ''), offset });
@@ -644,6 +644,61 @@ export const prunableLeaks = (changes: readonly LeakChange[]): LeakChange[] =>
 
 export function loadLeakBaseline(half: LeakHalf): LeakBaseline {
   return JSON.parse(readFileSync(LEAK_BASELINE_PATHS[half], 'utf8')) as LeakBaseline;
+}
+
+// ---------------------------------------------------------------------------
+// M2's exit targets
+// ---------------------------------------------------------------------------
+
+/**
+ * M2's exit targets (decided 2026-10-08): the most of a language's renders that
+ * may hold a finding of each kind, in EVERY language. Per language because a
+ * reader reads one, and an average hid he (35% of corpus renders with an English
+ * word where the others sit near 18%). Words count only English no recorded
+ * decision keeps (policy 6, the vocabulary sheet's keep rows: none is subtracted
+ * yet). Events are already net of the denylist, whose entries carry reasons.
+ */
+export const LEAK_TARGETS: Readonly<Record<LeakHalf, Readonly<Record<LeakKind, number>>>> = {
+  corpus: { word: 0.05, event: 0, case: 0 },
+  shapes: { word: 0.1, event: 0, case: 0 },
+};
+
+const KINDS: readonly LeakKind[] = ['word', 'event', 'case'];
+
+export interface LanguageLeakRates {
+  renders: number;
+  /** The share of the language's renders with a finding of each kind. */
+  rate: Record<LeakKind, number>;
+  /** Whether each rate is within {@link LEAK_TARGETS}. */
+  met: Record<LeakKind, boolean>;
+}
+
+/** Each language's leak rates against the half's targets; a lane with no render is not counted. */
+export function leakRatesByLanguage(
+  results: LeakResults,
+  half: LeakHalf
+): Map<string, LanguageLeakRates> {
+  const counts = new Map<string, { renders: number } & Record<LeakKind, number>>();
+  for (const byLanguage of results.values()) {
+    for (const [language, findings] of byLanguage) {
+      if (!findings) continue;
+      const row = counts.get(language) ?? { renders: 0, word: 0, event: 0, case: 0 };
+      row.renders++;
+      for (const kind of KINDS) if (findings.some(f => f.kind === kind)) row[kind]++;
+      counts.set(language, row);
+    }
+  }
+  const out = new Map<string, LanguageLeakRates>();
+  for (const [language, row] of counts) {
+    const rate = { word: 0, event: 0, case: 0 };
+    const met = { word: true, event: true, case: true };
+    for (const kind of KINDS) {
+      rate[kind] = row[kind] / row.renders;
+      met[kind] = rate[kind] <= LEAK_TARGETS[half][kind];
+    }
+    out.set(language, { renders: row.renders, rate, met });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
