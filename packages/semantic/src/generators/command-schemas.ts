@@ -576,6 +576,61 @@ export const toggleSchema: CommandSchema = {
 };
 
 /**
+ * `… when <condition>` on add, remove, hide and show: which of the targets the
+ * command applies to, tested per element; upstream gives the ones that fail the
+ * test the opposite (`add .x to .item when it matches .y` removes `.x` from the
+ * rest). The marker is each language's own word for `when`, its profile's
+ * `keywords.when` (when-condition.test.ts holds the two together), so this
+ * needs no new vocabulary. The schemas had no such role, so since M1 every
+ * translation kept the clause in English and a bare command was refused.
+ *
+ * First in a verb-final language (ja `それ 一致する .doh とき .bar に .rey を
+ * 追加`), last everywhere else, as upstream writes it.
+ */
+function whenConditionRole(svoPosition: number): RoleSpec {
+  return {
+    role: 'condition',
+    description: 'Which targets it applies to (`when it matches .x`); the rest get the opposite',
+    required: false,
+    expectedTypes: ['expression'],
+    svoPosition,
+    sovPosition: 0,
+    markerOverride: {
+      en: 'when',
+      es: 'cuando',
+      ja: 'とき',
+      ar: 'عندما',
+      ko: '때',
+      zh: '何时',
+      tr: 'iken',
+      pt: 'quando',
+      fr: 'quand',
+      de: 'wenn',
+      id: 'ketika',
+      qu: 'maykama',
+      sw: 'wakati',
+      bn: 'যখন',
+      hi: 'जब',
+      it: 'quando',
+      ms: 'bila',
+      pl: 'kiedy',
+      ru: 'когда',
+      th: 'ขณะที่',
+      tl: 'tuwing',
+      uk: 'коли',
+      vi: 'lúc',
+      he: 'כאשר',
+    },
+    // The profile's other spellings of `when`.
+    markerVariants: {
+      ja: ['ときに'],
+      tr: ['durumunda', 'olduğunda'],
+      he: ['כש'],
+    },
+  };
+}
+
+/**
  * Add command: adds a class or attribute.
  */
 export const addSchema: CommandSchema = {
@@ -584,7 +639,7 @@ export const addSchema: CommandSchema = {
   category: 'dom-class',
   primaryRole: 'patient',
   // `add .active to #button` → { args: ['.active'], modifiers: { to: '#button' } }
-  ast: { args: ['patient'], modifiers: { to: 'destination' } },
+  ast: { args: ['patient'], modifiers: { to: 'destination', when: 'condition' } },
   roles: [
     {
       role: 'patient',
@@ -664,6 +719,7 @@ export const addSchema: CommandSchema = {
         sw: ['kwenye'],
       },
     },
+    whenConditionRole(3),
   ],
   // Runtime error documentation
   errorCodes: ['MISSING_ARGUMENT', 'NO_VALID_CLASS_NAMES', 'PROPERTY_REQUIRES_VALUE'],
@@ -690,7 +746,7 @@ export const removeSchema: CommandSchema = {
   category: 'dom-class',
   primaryRole: 'patient',
   // `remove .active from #btn` → args ['.active'], modifiers { from: '#btn' }.
-  ast: { args: ['patient'], modifiers: { from: 'source' } },
+  ast: { args: ['patient'], modifiers: { from: 'source', when: 'condition' } },
   // Trailing `from X` is captured by the core parser as `target`; map it to source.
   targetRole: 'source',
   // Role markers the traditional parser leaves in `args` as bare identifiers.
@@ -731,6 +787,7 @@ export const removeSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 1,
     },
+    whenConditionRole(3),
   ],
   // Runtime error documentation
   errorCodes: ['MISSING_ARGUMENT', 'NO_VALID_CLASS_NAMES'],
@@ -1307,7 +1364,10 @@ export const showSchema: CommandSchema = {
   // the arg is a first-present-of chain. NOTE: `duration` and `destination`
   // are read here but not declared in `roles` below — the parser relabels into
   // them. Pinned in ast-shape-consistency.test.ts.
-  ast: { args: [['destination', 'patient']], modifiers: { with: ['style', 'duration'] } },
+  ast: {
+    args: [['destination', 'patient']],
+    modifiers: { with: ['style', 'duration'], when: 'condition' },
+  },
   roles: [
     {
       role: 'patient',
@@ -1334,6 +1394,7 @@ export const showSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 2,
     },
+    whenConditionRole(3),
   ],
 };
 
@@ -1347,7 +1408,10 @@ export const hideSchema: CommandSchema = {
   primaryRole: 'patient',
   // The target arrives as EITHER role depending on which pattern matched.
   // NOTE: `duration`/`destination` are read here but not declared in `roles`.
-  ast: { args: [['destination', 'patient']], modifiers: { with: ['style', 'duration'] } },
+  ast: {
+    args: [['destination', 'patient']],
+    modifiers: { with: ['style', 'duration'], when: 'condition' },
+  },
   roles: [
     {
       role: 'patient',
@@ -1371,6 +1435,7 @@ export const hideSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 2,
     },
+    whenConditionRole(3),
   ],
 };
 

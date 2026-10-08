@@ -2806,6 +2806,13 @@ export class PatternMatcher {
         !(
           propertyToken.normalized &&
           PatternMatcher.COMMAND_ACTION_KEYWORDS.has(propertyToken.normalized.toLowerCase())
+        ) &&
+        // Nor is a condition operator: where the pronoun `it` also heads a
+        // possessive (qu `chay`, ms `ia`), `chay tupan .doh` (it matches .doh)
+        // read as `it`'s property `tupan`, in a command's `when` condition.
+        !(
+          propertyToken.normalized &&
+          PatternMatcher.CONDITION_OPERATOR_WORDS.has(propertyToken.normalized.toLowerCase())
         )) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||

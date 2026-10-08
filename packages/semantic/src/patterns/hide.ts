@@ -10,6 +10,7 @@
 import type { ExpectedType, LanguagePattern } from '../types';
 import { ELEMENT_TARGET_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
+import { withWhenCondition } from './when-condition';
 
 /**
  * A handcrafted hide's target takes what the schema's does, a variable
@@ -484,5 +485,5 @@ export function getHidePatternsZh(): LanguagePattern[] {
  * Get hide patterns for a specific language.
  */
 export function getHidePatternsForLanguage(language: string): LanguagePattern[] {
-  return handcrafted('hide', language) ?? [];
+  return withWhenCondition('hide', language, handcrafted('hide', language) ?? []);
 }

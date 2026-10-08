@@ -9,6 +9,7 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
+import { withWhenCondition } from './when-condition';
 
 export function getRemovePatternsBn(): LanguagePattern[] {
   return [
@@ -589,5 +590,5 @@ export function getRemovePatternsZh(): LanguagePattern[] {
  * Get remove patterns for a specific language.
  */
 export function getRemovePatternsForLanguage(language: string): LanguagePattern[] {
-  return handcrafted('remove', language) ?? [];
+  return withWhenCondition('remove', language, handcrafted('remove', language) ?? []);
 }

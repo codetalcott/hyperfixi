@@ -10,6 +10,7 @@
 import type { ExpectedType, LanguagePattern } from '../types';
 import { ELEMENT_TARGET_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
+import { withWhenCondition } from './when-condition';
 
 /**
  * A handcrafted show's target takes what the schema's does, a variable
@@ -501,5 +502,5 @@ export function getShowPatternsZh(): LanguagePattern[] {
  * Get show patterns for a specific language.
  */
 export function getShowPatternsForLanguage(language: string): LanguagePattern[] {
-  return handcrafted('show', language) ?? [];
+  return withWhenCondition('show', language, handcrafted('show', language) ?? []);
 }
