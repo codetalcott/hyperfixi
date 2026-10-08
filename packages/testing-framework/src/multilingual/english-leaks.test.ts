@@ -1,0 +1,241 @@
+/**
+ * The English-leak scanner (english-leaks.ts) on hand-written renders: each
+ * guard is pinned both ways, so a scanner that stopped applying one fails here
+ * rather than silently moving the baselines.
+ *
+ * @vitest-environment node
+ */
+import { describe, it, expect, beforeAll } from 'vitest';
+import {
+  compressLanguages,
+  diffLeakBaseline,
+  expandLanguages,
+  findingKey,
+  initLeakScanner,
+  leakBaselineFrom,
+  type LeakFinding,
+  type LeakResults,
+  type LeakScanner,
+} from './english-leaks';
+
+let scanner: LeakScanner;
+
+beforeAll(async () => {
+  scanner = await initLeakScanner();
+}, 120_000);
+
+/** The finding keys of `render`, a render of English `source` into `language`. */
+function keys(source: string, render: string, language: string): string[] {
+  const info = scanner.sourceInfo(source, 'program');
+  if (!info) throw new Error(`the engine rejects ${source}`);
+  return scanner.scan(render, info, language).map(findingKey).sort();
+}
+
+function findings(source: string, render: string, language: string): LeakFinding[] {
+  const info = scanner.sourceInfo(source, 'program');
+  if (!info) throw new Error(`the engine rejects ${source}`);
+  return scanner.scan(render, info, language);
+}
+
+describe('english-leaks scanner', () => {
+  it('counts an English grammar word the language has its own word for, or not', () => {
+    const source = 'on click if I match .a then add .b to me end';
+    expect(keys(source, 'al clic si I match .a entonces agregar .b a mí fin', 'es')).toEqual([
+      'I',
+      'match',
+    ]);
+  });
+
+  it('never counts a word spelled like the language’s own word (de `in`)', () => {
+    const source = 'on click repeat for x in .item add .y to x end';
+    // es has no word spelled `in`; de's `in` is its own word.
+    expect(keys(source, 'al clic repetir para x in .item agregar .y a x fin', 'es')).toEqual([
+      'in',
+    ]);
+    expect(
+      keys(source, 'bei klick wiederholen für x in .item hinzufügen .y zu x ende', 'de')
+    ).toEqual([]);
+  });
+
+  it('counts a reference the engine reads as a name (`me`)', () => {
+    expect(keys('on click log 1, me', 'al clic registrar 1, me', 'es')).toEqual(['me']);
+  });
+
+  it('never counts a name, even one spelled like a keyword', () => {
+    // `index` is a variable here, a keyword below.
+    expect(keys('on click set index to 1', 'al clic establecer index a 1', 'es')).toEqual([]);
+    expect(
+      keys(
+        'on load repeat for x in .item index i add .v to x end',
+        'al carga repeat x en .item index i agregar .v a x fin',
+        'es'
+      )
+    ).toEqual(['index', 'repeat']);
+  });
+
+  it('counts a word no more often than the source uses it as grammar', () => {
+    // `index` once as a keyword, once as a name: the render's two count once.
+    expect(
+      keys(
+        'on load repeat for x in .item index index add .v to x end',
+        'al carga repetir para x en .item index index agregar .v a x fin',
+        'es'
+      )
+    ).toEqual(['index']);
+  });
+
+  it('does not read strings, `js` blocks (with their parameters) or brace interiors', () => {
+    expect(
+      keys('on click put "repeat in me" into #a', 'al clic poner "repeat in me" en #a', 'es')
+    ).toEqual([]);
+    expect(
+      keys(
+        'on click js(me) return new Date() end then put it into #a',
+        'al clic js (me) return new Date() fin entonces poner ello en #a',
+        'es'
+      )
+    ).toEqual([]);
+    expect(
+      keys(
+        'on click fetch /a with {body: it, method: "POST"}',
+        'al clic buscar "/a" con {body: it, method: "POST"}',
+        'es'
+      )
+    ).toEqual([]);
+  });
+
+  it('does not read a `js` body or its parameter list, even where they repeat a grammar word', () => {
+    // `if` is grammar once (the handler's); the body's `if` is JavaScript.
+    expect(
+      keys(
+        'on click if x then js(x) if (x) return 1 end end',
+        'al clic si x entonces js (x) if (x) return 1 fin fin',
+        'es'
+      )
+    ).toEqual([]);
+    // `me` is a reference once (put's); the parameter list passes it to JavaScript.
+    expect(
+      keys(
+        'on click put me into #a then js(me) return 1 end',
+        'al clic poner yo en #a entonces js (me) return 1 fin',
+        'es'
+      )
+    ).toEqual([]);
+  });
+
+  it("reads a word after a possessive quote (`the element's x`) and not as a string", () => {
+    expect(
+      keys(
+        "on click set the element's x to the element's y",
+        "al clic establecer the element's x a the element's y",
+        'es'
+      )
+    ).toEqual(['element', 'element', 'the', 'the']);
+  });
+
+  it('gives each word its context: clause, bracket, call, property, plain', () => {
+    const clause = findings(
+      'on click add .rey to .bar when it matches .doh',
+      'al clic agregar .rey a .bar when it matches .doh',
+      'es'
+    );
+    expect(clause.map(f => f.context)).toEqual(['clause', 'clause', 'clause']);
+    const bracket = findings(
+      'on keyup[key is "Escape"] add .x',
+      'al keyup[key is "Escape"] agregar .x',
+      'es'
+    );
+    expect(bracket.map(f => `${f.word}/${f.context}`)).toEqual(['is/bracket']);
+    const property = findings(
+      "on click put #a's children into #b",
+      'bei klick setzen children von #a in #b',
+      'de'
+    );
+    expect(property.map(f => `${f.word}/${f.context}/${f.hasWord}`)).toEqual([
+      'children/property/true',
+    ]);
+  });
+
+  it('counts a property name only where the language has a word for it', () => {
+    // innerHTML is a DOM name no lexicon translates.
+    expect(
+      keys("on click put #a's innerHTML into #b", 'bei klick setzen innerHTML von #a in #b', 'de')
+    ).toEqual([]);
+  });
+
+  it('counts an English event only where the lexicon has a word and the renderer may use it', () => {
+    expect(keys('on click add .x', 'при click добавить .x', 'ru')).toEqual(['event:click']);
+    expect(keys('on click add .x', 'при клик добавить .x', 'ru')).toEqual([]);
+    // A custom event has no word anywhere.
+    expect(keys('on foo add .x', 'при foo добавить .x', 'ru')).toEqual([]);
+  });
+
+  it('never counts an event the renderer is told to keep English (its denylist)', async () => {
+    const { getEventLocalizationDenylist } = await import('@lokascript/semantic');
+    const [language, events] = Object.entries(getEventLocalizationDenylist()).find(
+      ([, e]) => e.size > 0
+    )!;
+    const event = [...events][0]!;
+    const found = keys(`on ${event} add .x`, `${event} add .x`, language).filter(k =>
+      k.startsWith('event:')
+    );
+    expect(found).toEqual([]);
+  });
+
+  it('counts a nominative `me` beside a marker, in the languages where that is wrong', () => {
+    expect(keys('on click add .b to me', 'al clic agregar .b a yo', 'es')).toEqual(['case:me']);
+    expect(keys('on click add .b to me', 'tıklama da .b i ben e ekle', 'tr')).toEqual(['case:me']);
+    // fr writes the stressed form; ja's particle attaches to any noun.
+    expect(keys('on click add .b to me', 'sur clic ajouter .b à moi', 'fr')).toEqual([]);
+    expect(keys('on click add .b to me', 'クリック で 自分 に .b を 追加', 'ja')).toEqual([]);
+  });
+});
+
+describe('english-leaks baseline', () => {
+  const finding = (word: string): LeakFinding => ({
+    kind: 'word',
+    word,
+    context: 'plain',
+    hasWord: false,
+  });
+  const results = (byLanguage: Record<string, string[] | null>): LeakResults =>
+    new Map([
+      [
+        'row',
+        new Map(Object.entries(byLanguage).map(([l, ws]) => [l, ws ? ws.map(finding) : null])),
+      ],
+    ]);
+
+  it('groups languages with the same findings, `*` for all 23', () => {
+    const all = expandLanguages('*');
+    expect(all).toHaveLength(23);
+    expect(compressLanguages(all)).toBe('*');
+    const doc = leakBaselineFrom(
+      results(Object.fromEntries(all.map(l => [l, l === 'ja' ? [] : ['repeat']]))),
+      'test'
+    );
+    expect(doc.entries.row).toEqual({ repeat: compressLanguages(all.filter(l => l !== 'ja')) });
+    expect([doc.renders, doc.leaky, doc.findings, doc.kinds.word.renders]).toEqual([
+      23, 22, 22, 22,
+    ]);
+  });
+
+  it('counts a lane with no render as no render, not as a clean one', () => {
+    const doc = leakBaselineFrom(results({ es: ['repeat'], fr: [], de: null }), 'test');
+    expect([doc.renders, doc.leaky]).toEqual([2, 1]);
+  });
+
+  it('reports a finding a pair gained, and a listed one that is gone (a lane with no render included)', () => {
+    const baseline = { entries: { row: { 'match repeat': 'es', repeat: 'de' } } };
+    const changes = diffLeakBaseline(
+      results({ es: ['repeat'], de: ['repeat', 'as'], fr: null }),
+      baseline
+    );
+    expect(changes).toEqual([
+      { id: 'row', language: 'es', added: [], gone: ['match'] },
+      { id: 'row', language: 'de', added: ['as'], gone: [] },
+    ]);
+    const noRender = diffLeakBaseline(results({ es: null }), baseline);
+    expect(noRender).toEqual([{ id: 'row', language: 'es', added: [], gone: ['match', 'repeat'] }]);
+  });
+});

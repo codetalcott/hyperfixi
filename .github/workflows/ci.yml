@@ -1024,11 +1024,10 @@ jobs:
 
       # Ten of testing-framework's files ran in NO job. The ones that did are
       # invoked by id elsewhere — the shipped-sources gates in the
-      # `shipped-sources` job, and the four DB-dependent gates (canonical-validity,
-      # foreign-canonical-validity, render-fidelity, bare-render-fidelity) via
-      # `test:canonical` in `multilingual-validation` — so the package's own suite
+      # `shipped-sources` job, and the DB-dependent gates (the six files
+      # `test:canonical` lists) in `multilingual-validation` — so the package's own suite
       # (assertions, runner, fidelity, vocab, the R2 execution-validator lock) was
-      # never run. Safe without a populate step here: those four self-skip unless
+      # never run. Safe without a populate step here: those six self-skip unless
       # FOREIGN_CANONICAL_VALIDITY=1, which only `test:canonical` sets, after
       # populating. The shipped-examples gate walks the git-TRACKED examples/
       # corpus, so it sees the same tree here as on any dev machine.
@@ -1387,9 +1386,9 @@ jobs:
           cd packages/testing-framework
           npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
-      # Four DB-dependent gates, all of them testing-framework vitest files, so
+      # Six DB-dependent gates, all of them testing-framework vitest files, so
       # they run HERE (not in unit-tests, which never runs testing-framework
-      # vitest) because each needs the populated translations table:
+      # vitest) because each needs the populated corpus:
       #   canonical-validity        — every corpus EN reference rendered to English
       #   foreign-canonical-validity— every authored foreign translation to English
       #     ...both then parsed on the real hyperscript.org engine, failing on any
@@ -1402,9 +1401,14 @@ jobs:
       #     `hyperfixi.translate` and the VS Code badge are routinely handed — was
       #     covered by nothing. 37 of its 69 known failures are invisible to the
       #     wrapped gate, and four of those do not parse back at all.
-      # All five self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
+      #   en-reference-preservation — each row's English parse rendered back to
+      #     English keeps the source's content.
+      #   english-leaks (corpus half) — English words, English event names and
+      #     nominative pronouns left in each row's render (M2's naturalness gate;
+      #     its command-shape half runs in the package's own suite).
+      # All six self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
       # `test:canonical` sets — after the populate step above.
-      - name: Canonical-validity + render-fidelity gates (en, foreign→en, en→foreign, bare)
+      - name: Canonical-validity + render-fidelity + English-leak gates (en, foreign→en, en→foreign, bare)
         run: npm run test:canonical --prefix packages/testing-framework
 
       - name: Upload test results

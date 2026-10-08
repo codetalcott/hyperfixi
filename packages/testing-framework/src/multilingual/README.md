@@ -294,6 +294,38 @@ npx tsx tools/regen-value-matrix-baseline.ts --dry-run --results /tmp/matrix.jso
 A lane that fails in `en-rt` fails in nearly every translation: semantic's English
 parse lost the value, and every translation is rendered from it. Fix that first.
 
+## English left in a translation
+
+Every gate above asks whether a translation means what the source means; none asks
+whether it reads as the language. `english-leaks.ts` counts, in each render, three kinds
+of finding:
+
+| Finding        | What it is                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| `<word>`       | an English word the engine reads as grammar in the source, written in English             |
+| `event:<name>` | an English event name where the language's lexicon has a word and the renderer may use it |
+| `case:me`      | the nominative `me` beside a role marker, in the 13 languages where that form is wrong    |
+
+"Grammar" is derived per source: the tokens the engine's own parser matched as words, plus
+the references in its parse. A word the language spells the same (es `a`, de `in`) and a
+name spelled like a keyword are never counted; strings, `js` blocks and brace interiors
+are not read. The report splits each word by context (`clause`: in a clause semantic keeps
+as written; `bracket`, `call`, `property`, `plain`) and by whether the language has its own
+word for it.
+
+Two halves, each with a shrink-only baseline: `baselines/english-leaks.corpus.json` (every
+non-markup corpus row, `render(parse(en), L)`; in `test:canonical`, after `populate`) and
+`baselines/english-leaks.shapes.json` (the renders the command-shape shards already make).
+
+```bash
+# The burn-down: per language, per word (with contexts), per event
+npx tsx tools/regen-english-leaks-baseline.ts --report
+
+# After a fix: prune the findings that are gone (refuses to add new ones)
+npx tsx tools/regen-english-leaks-baseline.ts            # both halves (corpus needs a fresh populate)
+npx tsx tools/regen-english-leaks-baseline.ts --shapes   # one half
+```
+
 ## Direct-path shapes on the text path
 
 Core's `src/multilingual/*-direct-path.test.ts` files pin shapes core's direct path ran

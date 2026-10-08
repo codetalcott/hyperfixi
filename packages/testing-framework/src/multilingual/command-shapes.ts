@@ -111,6 +111,8 @@ export interface LaneResult {
   /** The lane's English (a silent lane), or the error's first line (a refused one). */
   detail?: string;
   kind?: SilentKind;
+  /** The language's render (`translate(src, 'en', L)`), when there was one: what english-leaks.ts reads. */
+  rendered?: string;
 }
 
 export interface CaseResult {
@@ -497,11 +499,6 @@ export async function initCommandShapes(): Promise<CommandShapeRunner> {
   const readers = await loadEngineReaders();
   const { translate } = (await import('@lokascript/semantic')) as { translate: Translate };
 
-  const lane = (source: string, language: string): string =>
-    language === 'en'
-      ? translate(source, 'en', 'en')
-      : translate(translate(source, 'en', language), language, 'en');
-
   return {
     runCase(shape, lanes = LANES) {
       const engine = readers[readerOf(shape)];
@@ -516,14 +513,26 @@ export async function initCommandShapes(): Promise<CommandShapeRunner> {
         lanes: {},
       };
       for (const language of lanes) {
+        let rendered: string | undefined;
         let english: string;
         try {
-          english = lane(shape.source, language);
+          if (language === 'en') english = translate(shape.source, 'en', 'en');
+          else {
+            rendered = translate(shape.source, 'en', language);
+            english = translate(rendered, language, 'en');
+          }
         } catch (e) {
-          result.lanes[language] = { outcome: 'refused', detail: firstLine(e) };
+          result.lanes[language] = {
+            outcome: 'refused',
+            detail: firstLine(e),
+            ...(rendered !== undefined ? { rendered } : {}),
+          };
           continue;
         }
-        result.lanes[language] = judge(engine, want, wantPlain, english);
+        result.lanes[language] = {
+          ...judge(engine, want, wantPlain, english),
+          ...(rendered !== undefined ? { rendered } : {}),
+        };
       }
       return result;
     },

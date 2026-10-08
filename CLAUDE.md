@@ -571,7 +571,8 @@ at the flip → 0 of 3657), the transformer was retired on the strength of it, a
 a per-row chooser with one renderer is not a chooser — so the modes, the
 `PATTERNS_RENDERER` env, the `--renderer` flag, the kept-rows gate and its
 baseline/tools all went with it. `test:canonical` dropped to four gates; the
-en-reference-preservation gate (2026-09-25, below) made it five again.
+en-reference-preservation gate (2026-09-25, below) made it five again, and the
+English-leak gate's corpus half (2026-10-08, below) six.
 
 Two things survive from that machinery and are worth knowing:
 
@@ -660,6 +661,16 @@ the package's ordinary suite) fails on a new failing pair AND on a listed pair t
 passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (it
 refuses to add pairs without `--allow-new`). It is the queue for value work: the
 family and lane tables it prints say what to fix next.
+
+Every gate above asks whether a translation MEANS what the source means; the
+**English-leak** gate (`english-leaks.ts`, 2026-10-08, M2) asks whether it READS as the
+language. It counts, per render, English grammar words (derived per source: the tokens
+the engine's own parser matched as words), English event names where the lexicon has a
+word (N2), and a nominative `me` beside a marker in the 13 languages where that is wrong
+(N3). Two shrink-only halves: the corpus (`test:canonical`) and the command-shape cases'
+renders (in those shards; no second translation pass). After a fix, prune with
+`npx tsx tools/regen-english-leaks-baseline.ts`; `--report` is M2's queue (per language,
+per word with its context, per event).
 
 The value matrix generates VALUE shapes; the **command-shape gate**
 (`testing-framework/src/multilingual/command-shapes.ts`) reads the shapes around them
