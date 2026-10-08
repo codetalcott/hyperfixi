@@ -72,7 +72,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
-    リセット: 'reset',
   },
   // Arabic event names → English
   ar: {
@@ -142,7 +141,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     redimensionar: 'resize',
     'ratón abajo': 'mousedown',
     'ratón arriba': 'mouseup',
-    reiniciar: 'reset',
   },
   // Turkish event names → English
   tr: {
@@ -185,7 +183,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
-    sıfırla: 'reset',
   },
   // Portuguese event names → English
   pt: {
@@ -229,7 +226,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     redimensionar: 'resize',
     'mouse pressionado': 'mousedown',
     'mouse solto': 'mouseup',
-    redefinir: 'reset',
   },
   // Chinese event names → English
   zh: {
@@ -268,7 +264,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     触摸开始: 'touchstart',
     触摸移动: 'touchmove',
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
-    重置: 'reset',
   },
   // French event names → English
   fr: {
@@ -311,7 +306,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     toucherannuler: 'touchcancel',
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
     redimensionner: 'resize',
-    réinitialiser: 'reset',
   },
   // German event names → English
   de: {
@@ -357,7 +351,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     berührungabbrechen: 'touchcancel',
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
     größenänderung: 'resize',
-    zurücksetzen: 'reset',
   },
   // Indonesian event names → English
   id: {
@@ -404,7 +397,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
     // parse-side registration so the i18n dict forms resolve (round-trip-tested).
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
-    রিসেট: 'reset',
   },
   // Quechua event names → English (loanwords with native adaptations)
   qu: {
@@ -441,7 +433,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
     ratñitiy: 'mousedown',
     rathuqariy: 'mouseup',
-    musuqchay: 'reset',
   },
   // Swahili event names → English
   sw: {
@@ -500,7 +491,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     धुंधला: 'blur',
     माउसनीचे: 'mousedown',
     माउसऊपर: 'mouseup',
-    रीसेट: 'reset',
   },
   it: {
     clic: 'click',
@@ -511,7 +501,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     sfuocare: 'blur',
     scorrimento: 'scroll',
     ridimensiona: 'resize',
-    reimpostare: 'reset',
   },
   pl: {
     kliknięcie: 'click',
@@ -521,7 +510,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     rozmycie: 'blur',
     przewiń: 'scroll',
     'zmiana rozmiaru': 'resize',
-    zresetuj: 'reset',
   },
   ru: {
     клик: 'click',
@@ -533,7 +521,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     мышьвниз: 'mousedown',
     мышьвверх: 'mouseup',
     изменениеразмера: 'resize',
-    сбросить: 'reset',
   },
   th: {
     คลิก: 'click',
@@ -545,7 +532,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     เบลอ: 'blur',
     เลื่อน: 'scroll',
     ปรับขนาด: 'resize',
-    รีเซ็ต: 'reset',
   },
   uk: {
     клік: 'click',
@@ -557,7 +543,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     мишавниз: 'mousedown',
     мишавгору: 'mouseup',
     змінарозміру: 'resize',
-    скинути: 'reset',
   },
   // Vietnamese event names → English. Minimal section: resize is the
   // three-word đổi kích thước, which the vi tokenizer reads whole: read alone,
@@ -642,17 +627,19 @@ const eventNameLocalizations: Record<string, Record<string, string>> = Object.fr
  * collisions (pl `załaduj` reads as `fetch`, ru `наведение` / uk `наведення` as
  * `hover`). So do id `resize` and sw's mouse events and `resize`, whose
  * lexicon words are joined with `_`, and `every` in bn, ms, th and tl: it is a
- * handler modifier (`on every click`), not an event. A native word for one of these is a vocabulary call
+ * handler modifier (`on every click`), not an event. And `reset` everywhere:
+ * the word is a command too, and English itself does not read `wait for reset
+ * from #b` back (OPEN_ITEMS P59), so no translation can. A native word for one of these is a vocabulary call
  * (`docs-internal/multilingual/VOCABULARY_SHEET.md`).
  */
 const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
   ar: new Set(['mouseover']),
-  bn: new Set(['every', 'resize']),
-  de: new Set(['keydown', 'keyup', 'load', 'mouseout', 'mouseover']),
-  fr: new Set(['blur']),
+  bn: new Set(['every', 'reset', 'resize']),
+  de: new Set(['keydown', 'keyup', 'load', 'mouseout', 'mouseover', 'reset']),
+  fr: new Set(['blur', 'reset']),
   id: new Set(['input', 'keyup', 'mouseout', 'mouseover', 'resize']),
-  ja: new Set(['keypress', 'mousedown', 'mouseup', 'resize']),
-  qu: new Set(['resize']),
+  ja: new Set(['keypress', 'mousedown', 'mouseup', 'reset', 'resize']),
+  qu: new Set(['reset', 'resize']),
   sw: new Set([
     'change',
     'click',
@@ -677,10 +664,11 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mouseout',
     'mouseover',
     'mouseup',
+    'reset',
     'resize',
     'scroll',
   ]),
-  zh: new Set(['focus', 'keyup', 'mouseout', 'mouseover']),
+  zh: new Set(['focus', 'keyup', 'mouseout', 'mouseover', 'reset']),
   hi: new Set([
     'dblclick',
     'keydown',
@@ -691,6 +679,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mousemove',
     'mouseout',
     'mouseover',
+    'reset',
     'resize',
     'scroll',
     'touchcancel',
@@ -709,6 +698,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mousemove',
     'mouseout',
     'mouseover',
+    'reset',
     'touchcancel',
     'touchend',
     'touchmove',
@@ -727,6 +717,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mousemove',
     'mouseout',
     'mouseover',
+    'reset',
     'touchcancel',
     'touchend',
     'touchmove',
@@ -744,6 +735,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mousemove',
     'mouseout',
     'mouseover',
+    'reset',
     'scroll',
     'touchcancel',
     'touchend',
@@ -751,7 +743,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'touchstart',
     'unload',
   ]),
-  th: new Set(['every', 'keydown', 'keyup', 'mouseout', 'mouseover']),
+  th: new Set(['every', 'keydown', 'keyup', 'mouseout', 'mouseover', 'reset']),
   uk: new Set([
     'blur',
     'dblclick',
@@ -763,6 +755,7 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
     'mousemove',
     'mouseout',
     'mouseover',
+    'reset',
     'scroll',
     'touchcancel',
     'touchend',
@@ -772,9 +765,9 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
   ]),
   ms: new Set(['every']),
   tl: new Set(['every']),
-  // ko's `reset` event word is its reset command's (`#form 을 재설정`): read as
-  // an event, it took the second command of `reset #a reset <form/>`.
   ko: new Set(['reset']),
+  es: new Set(['reset']),
+  pt: new Set(['reset']),
 };
 
 /**

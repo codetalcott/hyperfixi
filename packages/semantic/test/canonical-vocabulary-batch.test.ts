@@ -83,7 +83,7 @@ describe('a pick range is localized end to end', () => {
 describe('`o` is a role marker in pl, not a conjunction', () => {
   it('pl keeps `zwiększ #score o 10` as one increment', () => {
     const rendered = render(parseSemantic('on click increment #score by 10', 'en')!.node!, 'pl');
-    expect(rendered).toBe('gdy click zwiększ #score o 10');
+    expect(rendered).toBe('gdy kliknięcie zwiększ #score o 10');
     const node = parseSemantic(rendered, 'pl')?.node as
       { roles?: Map<string, unknown> } | undefined;
     // The event swallowed `o 10` — `{ value: 'click or 10' }` — which is what

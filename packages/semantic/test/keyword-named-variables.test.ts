@@ -97,7 +97,7 @@ describe('a variable is written as spelled where its own word would read as anot
   // read as vi's `set` verb: the verified render re-reads it and spells it.
   it('vi spells a variable its own word would fuse with', () => {
     expect(translate('on click put value into #out', 'en', 'vi')).toBe(
-      'khi click đặt value vào #out'
+      'khi nhấp đặt value vào #out'
     );
   });
 

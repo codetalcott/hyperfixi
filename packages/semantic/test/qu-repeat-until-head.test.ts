@@ -46,7 +46,7 @@ describe('the rendered surface is Quechua, and reads back', () => {
   it('renders `kama ruway <event> ta repeat`, with no `hayk _ a` junk', () => {
     const rendered = render(parseSemantic(SOURCE, 'en')!.node!, 'qu');
     expect(rendered, 'the parse tolerance leaked into the surface').not.toContain('hayk');
-    expect(rendered).toContain('kama ruway mouseup ta repeat');
+    expect(rendered).toContain('kama ruway rathuqariy ta repeat');
   });
 
   it('round-trips', () => {
