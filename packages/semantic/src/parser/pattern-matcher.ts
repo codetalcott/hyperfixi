@@ -1808,6 +1808,10 @@ export class PatternMatcher {
     // captured it as the handler event, hiding the SOV repeat-while head
     // (`जब तक {condition} दोहराएं`) it introduces.
     'while',
+    // Nor is the loop verb: once a for-loop head wrote hi's own `दोहराएं`
+    // (M2, sheet A1), `event-hi-bare` read `दोहराएं x में items …` as a handler
+    // for an event named `repeat` and the loop was lost.
+    'repeat',
   ]);
 
   /**

@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` (a nominative pronoun beside a marker). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 909,
-  "findings": 1492,
+  "leaky": 806,
+  "findings": 1340,
   "kinds": {
     "word": {
-      "renders": 665,
-      "findings": 1105
+      "renders": 549,
+      "findings": 953
     },
     "event": {
       "renders": 0,
@@ -31,12 +31,11 @@
       "of": "*"
     },
     "behavior-draggable": {
-      "case:me document document repeat": "bn",
-      "case:me repeat": "hi tr",
-      "document document or repeat": "he",
-      "document document repeat": "th vi",
-      "event repeat trigger trigger trigger until": "qu",
-      "repeat": "ar de es fr id it ja ko ms pl pt ru sw tl uk zh"
+      "case:me": "hi tr",
+      "case:me document document": "bn",
+      "document document": "th vi",
+      "document document or": "he",
+      "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-removable": {
       "case:me case:me": "bn hi tr",
@@ -44,17 +43,15 @@
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
-      "document document repeat": "bn he th vi",
-      "event repeat trigger trigger trigger until": "qu",
-      "repeat": "ar de es fr hi id it ja ko ms pl pt ru sw tl tr uk zh"
+      "document document": "bn he th vi",
+      "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-sortable": {
-      "case:me case:me case:me document document is null or repeat": "he",
-      "case:me case:me case:me document document repeat": "bn",
-      "case:me case:me case:me repeat": "ar de es hi it pl pt ru tl tr uk",
-      "document document repeat": "th vi",
-      "event repeat trigger trigger trigger until": "qu",
-      "repeat": "fr id ja ko ms sw zh"
+      "case:me case:me case:me": "ar de es hi it pl pt ru tl tr uk",
+      "case:me case:me case:me document document": "bn",
+      "case:me case:me case:me document document is null or": "he",
+      "document document": "th vi",
+      "event repeat trigger trigger trigger until": "qu"
     },
     "blur-element": {
       "case:me": "bn he hi tr"
@@ -214,24 +211,17 @@
       "case:me": "bn he hi tr"
     },
     "repeat-for-each": {
-      "in repeat": "he",
-      "repeat": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "in": "he"
     },
     "repeat-times": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
-    },
-    "repeat-until-event": {
-      "repeat": "*"
-    },
-    "repeat-while": {
-      "repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
     },
     "slide-toggle": {
       "next": "he"
     },
     "stagger-animation": {
-      "in index repeat": "he",
-      "index repeat": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "in index": "he",
+      "index": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
     "swap-view-transition": {
       "start transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
