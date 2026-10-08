@@ -12,9 +12,10 @@ import { tryGetProfile } from '../registry';
  * set's dispatcher gives its own a trailing scope. A hand-crafted pattern
  * outranks the generated one, so without the group de read `zeigen ich mit
  * opacity` and left `wenn es passt .foo` unread. Built by the generator's own
- * buildRoleToken, so it reads the marker the generated pattern does, and placed
- * where that pattern places it: last after a verb-first command, first in a
- * verb-final language. A pattern that already reads a condition is kept as is.
+ * buildRoleToken, so it reads the marker the generated pattern does, last, where
+ * that pattern places it. A verb-final language's patterns are kept as they are:
+ * there the condition comes first, where no hand-crafted pattern can begin, and
+ * the generated one reads it (measured the same either way).
  */
 export function withWhenCondition(
   command: ActionType,
@@ -23,21 +24,14 @@ export function withWhenCondition(
 ): LanguagePattern[] {
   const spec = getSchema(command)?.roles.find(r => r.role === 'condition');
   const profile = tryGetProfile(language);
-  if (!spec || !profile || patterns.length === 0) return patterns;
+  if (!spec || !profile || profile.wordOrder === 'SOV') return patterns;
   const group: PatternToken = {
     type: 'group',
     optional: true,
     tokens: buildRoleToken(spec, profile),
   };
-  const first = profile.wordOrder === 'SOV';
-  const marker = spec.markerOverride?.[language];
-  return patterns.map((p): LanguagePattern => {
-    if (p.extraction?.condition) return p;
-    const tokens = first ? [group, ...p.template.tokens] : [...p.template.tokens, group];
-    return {
-      ...p,
-      template: { ...p.template, tokens },
-      extraction: { ...p.extraction, condition: marker ? { marker } : {} },
-    };
-  });
+  return patterns.map(p => ({
+    ...p,
+    template: { ...p.template, tokens: [...p.template.tokens, group] },
+  }));
 }
