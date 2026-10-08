@@ -10,6 +10,8 @@ import {
   compressLanguages,
   diffLeakBaseline,
   expandLanguages,
+  gainedLeaks,
+  prunableLeaks,
   findingKey,
   initLeakScanner,
   leakBaselineFrom,
@@ -223,6 +225,19 @@ describe('english-leaks baseline', () => {
   it('counts a lane with no render as no render, not as a clean one', () => {
     const doc = leakBaselineFrom(results({ es: ['repeat'], fr: [], de: null }), 'test');
     expect([doc.renders, doc.leaky]).toEqual([2, 1]);
+    expect(doc.unrendered).toEqual({ row: 'de' });
+  });
+
+  it('reports a lane that was refused and renders now as one to prune, never as gained English', () => {
+    const baseline = { entries: { row: { repeat: 'es' } }, unrendered: { row: 'de' } };
+    const changes = diffLeakBaseline(results({ es: ['repeat'], de: ['event:click'] }), baseline);
+    expect(changes).toEqual([
+      { id: 'row', language: 'de', added: ['event:click'], gone: [], newRender: true },
+    ]);
+    expect(gainedLeaks(changes)).toEqual([]);
+    expect(prunableLeaks(changes)).toHaveLength(1);
+    // Still unrendered: nothing to say.
+    expect(diffLeakBaseline(results({ de: null }), baseline)).toEqual([]);
   });
 
   it('reports a finding a pair gained, and a listed one that is gone (a lane with no render included)', () => {

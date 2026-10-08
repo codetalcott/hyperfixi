@@ -1,16 +1,16 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23515,
-  "leaky": 11503,
-  "findings": 19146,
+  "renders": 23618,
+  "leaky": 11484,
+  "findings": 18904,
   "kinds": {
     "word": {
-      "renders": 5687,
-      "findings": 9815
+      "renders": 5599,
+      "findings": 9536
     },
     "event": {
-      "renders": 5166,
-      "findings": 5209
+      "renders": 5203,
+      "findings": 5246
     },
     "case": {
       "renders": 3825,
@@ -686,8 +686,8 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "3608d60b77": {
-      "event:click from next of the to": "he it ru th uk vi",
-      "from next of the to": "ar de es fr id ms pt sw tl zh"
+      "event:click": "hi it pl qu ru th uk vi",
+      "event:click next": "he"
     },
     "3614477c6c": {
       "case:me elsewhere": "tr",
@@ -1142,8 +1142,7 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "5ded6059c0": {
-      "event:click from to": "he it ru th uk vi",
-      "from to": "ar de es fr id ms pt sw tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "5df4aec673": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -1642,8 +1641,7 @@
       "def event:click": "he hi it pl qu ru th uk vi"
     },
     "7fe8bdc214": {
-      "event:click from to": "vi",
-      "from to": "tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "801604b875": {
       "event:click here": "he hi it pl qu ru th uk vi",
@@ -2332,8 +2330,7 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "b6d4332c89": {
-      "event:click from to using": "vi",
-      "from to using": "tl zh"
+      "event:click": "he it pl ru th uk vi"
     },
     "b7f2f02c7c": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -2342,8 +2339,7 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "b81ed8569d": {
-      "event:click from of to": "he it ru th uk vi",
-      "from of to": "ar de es fr id ms pt sw tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "b839394853": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -2430,8 +2426,8 @@
       "in": "he"
     },
     "be37dedb54": {
-      "event:click from from to to": "he it ru th uk vi",
-      "from from to to": "ar de es fr id ms pt sw tl zh"
+      "event:click from to": "he it ru th uk vi",
+      "from to": "ar de es fr id ms pt sw tl zh"
     },
     "bed2fafcc3": {
       "case:me": "ar de tr",
@@ -2552,8 +2548,7 @@
       "repeat": "fr id ja ko ms sw tl zh"
     },
     "c934b95f51": {
-      "event:click from over to": "vi",
-      "from over to": "tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "c9be1bb541": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -2979,8 +2974,7 @@
       "repeat": "ar de es fr he id it ms pl pt ru sw th tl uk vi zh"
     },
     "e8a298b630": {
-      "event:click from to": "he it ru th uk vi",
-      "from to": "ar de es fr id ms pt sw tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "e8a3bc0263": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -3166,8 +3160,7 @@
       "catch event:click": "qu th vi"
     },
     "f9d6cb3b20": {
-      "event:click from to": "he it ru th uk vi",
-      "from to": "ar de es fr id ms pt sw tl zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "faf29d32b8": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -3235,5 +3228,218 @@
       "start transition view": "id ja ko ms sw zh",
       "start view": "fr"
     }
+  },
+  "unrendered": {
+    "05f81357fb": "vi",
+    "07108f5fc0": "es id it pt th tl uk",
+    "08702e835c": "*",
+    "092699feee": "ar de fr he ja tr",
+    "094982a419": "it pl ru uk",
+    "09f435f419": "vi",
+    "0fba0cde11": "*",
+    "129c41c03b": "hi qu",
+    "12ff2cf365": "vi",
+    "13cff46824": "bn it th",
+    "15c22f6ecd": "*",
+    "15f8c54697": "*",
+    "162e3e0582": "*",
+    "16fb80c097": "bn it ja ko th tr zh",
+    "1aa9c955fa": "ko",
+    "1ba900c09e": "ja",
+    "1c37112e5a": "*",
+    "1d1fa04268": "*",
+    "1d2b7f9432": "bn es it ko pl ru th tl uk",
+    "1f173a2d64": "ar de fr he ja tr",
+    "20024e932d": "*",
+    "20161acab0": "de it tr",
+    "216845203a": "id ms",
+    "2204b224b3": "es",
+    "237fd5ee40": "ar de fr he ja tr",
+    "239cba8b61": "pt",
+    "23f2b7dd1b": "bn hi",
+    "240935231f": "*",
+    "24725909ec": "ar de es fr he id it ms pl pt qu ru sw th tr uk",
+    "280d64d892": "qu",
+    "2965af0447": "*",
+    "2c6143ba00": "*",
+    "2d9422b3af": "es id it pt th tl uk vi",
+    "2f027486b4": "*",
+    "2f7af96b02": "id ms vi",
+    "3030e3cc43": "ja ko pl tr",
+    "32502101bd": "vi",
+    "32bbb02918": "pl",
+    "32ce88b2e0": "*",
+    "348175b219": "*",
+    "35274bd534": "*",
+    "35f188d961": "*",
+    "3614477c6c": "bn it th",
+    "36bd970993": "*",
+    "38fd7baa12": "vi",
+    "391f640b6b": "hi",
+    "394a7bfb45": "*",
+    "39f0561a3a": "*",
+    "3ba1aed452": "*",
+    "3ca4288cf4": "*",
+    "3f9872bcd4": "bn it pl th",
+    "4293df22ee": "vi",
+    "446cb475ce": "*",
+    "451b518289": "*",
+    "461a675696": "*",
+    "461f84cebf": "bn ko",
+    "47902e382e": "ar de fr he ja tr",
+    "47a37edc5b": "de",
+    "49a761fabb": "*",
+    "4ac868eb40": "*",
+    "4ad324c57b": "*",
+    "4b9dd078a2": "*",
+    "4c2f167281": "bn ko",
+    "4d698f4f27": "*",
+    "4d988893a9": "*",
+    "4da1d2fe85": "ms th vi",
+    "4eee0ddc5e": "it pl ru uk",
+    "4fa7c5a9f9": "ar de fr he ja tr",
+    "5251dc43ae": "uk",
+    "540540cc5a": "bn es it ko pl ru th tl uk",
+    "558a1f8b25": "*",
+    "55c3d28c9e": "*",
+    "5761791c05": "qu",
+    "5763f61aac": "vi",
+    "580655e71a": "it pl ru uk",
+    "599215db33": "*",
+    "5a7e7e17d2": "*",
+    "5c5c4838dc": "*",
+    "5c62479568": "*",
+    "5fc5e421fe": "*",
+    "611ee442a1": "bn it th",
+    "61bc69c358": "*",
+    "62bab43e17": "bn it th",
+    "62d0c2127b": "*",
+    "63143b6f80": "hi",
+    "6428d2ac2e": "ar de fr he ja tr",
+    "65aa7d4176": "*",
+    "6637424a5a": "*",
+    "66878bf2ed": "it pl ru uk",
+    "66a3e903a3": "ja",
+    "6959984db6": "*",
+    "69b9b4ca2b": "*",
+    "6a6afed6dc": "ar de es fr he id it ms pl pt ru sw th tl uk",
+    "6b508f9f6a": "bn it th",
+    "6d61cf7bfb": "*",
+    "6d7856da91": "*",
+    "6f60177037": "qu",
+    "6f6d57c10a": "bn",
+    "73325ff027": "bn zh",
+    "7371a42494": "qu",
+    "73c2ff9c12": "vi",
+    "757da52773": "*",
+    "7835c70e58": "bn hi ko qu",
+    "786ba16f59": "*",
+    "7896ec4b23": "ar de es fr he id it ms pl pt ru sw th tr uk",
+    "78bd8bf920": "*",
+    "798cb5bb41": "vi",
+    "7ab4a541ee": "ar de es fr he id it ms pl pt ru sw th tl tr uk vi zh",
+    "7cf4fa3af7": "bn it th",
+    "7dee91f428": "*",
+    "7e4f56fe1b": "*",
+    "7f192fcdec": "bn it th",
+    "829e32df04": "ja ko pl tr",
+    "82b8bc8836": "*",
+    "8353b546d7": "ja ko tr",
+    "84c8655749": "id ms",
+    "85d0684e94": "*",
+    "85f412f92a": "bn it th",
+    "862ede02e6": "ar de fr he ja tr",
+    "8712ddea5b": "bn hi ja qu tr",
+    "897b7048f1": "ms th vi",
+    "8a13ec8232": "*",
+    "8c8e27625d": "*",
+    "8e7118ac3b": "ja ko tr",
+    "91ef0c1608": "hi",
+    "92546b4cad": "ko",
+    "93c8c96b46": "hi",
+    "961a12b7b7": "*",
+    "998cfdeacf": "*",
+    "9ba514eef4": "*",
+    "9bb9b09088": "*",
+    "9bd61daeaf": "*",
+    "9beb7b2c68": "*",
+    "9fb29051f2": "hi",
+    "a0bcf49227": "*",
+    "a3b6981b27": "*",
+    "a5867275db": "de fr ko",
+    "a68f0afa94": "hi",
+    "a71fce2e79": "*",
+    "a76cd09b5c": "*",
+    "a7ccab261d": "*",
+    "a8613168a4": "*",
+    "a893804c5f": "*",
+    "a9677f770b": "*",
+    "ae5ed6eb80": "*",
+    "ae7e10324c": "de",
+    "ae9fb9c316": "bn it th",
+    "af53446a0a": "*",
+    "b0492a08fb": "*",
+    "b19c6cad07": "qu tr",
+    "b2ec75a2bf": "*",
+    "b2fe1705ef": "*",
+    "b5bb616a88": "ko",
+    "b6d4332c89": "bn hi ja ko qu tr",
+    "b8c084be2a": "*",
+    "b9502de444": "bn hi ko qu",
+    "ba54beb9d5": "*",
+    "bb2c2ab053": "bn it qu th",
+    "bbf040ee1a": "vi",
+    "bcf30473e0": "vi",
+    "bd56aad55e": "bn hi ko",
+    "bd7175dd23": "*",
+    "be1d3cc50d": "bn hi ko sw",
+    "be37dedb54": "bn hi ja ko pl qu tr",
+    "c44765f7b0": "*",
+    "c48b233ac7": "pt sw",
+    "c55282fb85": "*",
+    "c839f2f99f": "*",
+    "c8992c103b": "vi",
+    "ca8adcde99": "*",
+    "cc4909b0a6": "pl tr",
+    "cd6bf33ac9": "*",
+    "ce4506efd5": "ms qu",
+    "ce4872a43b": "*",
+    "d438ab49b4": "bn th vi",
+    "d6ac459628": "*",
+    "d7b35fefe6": "de tr",
+    "d9c92a211d": "*",
+    "d9ecdbc854": "pl tr",
+    "da38860cb8": "hi",
+    "db3346f209": "ja ko tr",
+    "db7fef03e9": "vi",
+    "dc8881fc7d": "qu",
+    "dd2ca23457": "bn de it th tr",
+    "dd8bfb1190": "vi",
+    "ddd8e60406": "*",
+    "deac58c100": "ms vi",
+    "dee03cd129": "vi",
+    "df1d461f99": "bn it th",
+    "df922f3370": "ar de fr he ja tr",
+    "dfea5b51b5": "ko",
+    "e2d9334fb6": "*",
+    "e51cb64feb": "de fr ko",
+    "e71ea44d67": "id ms",
+    "e8446a57e2": "ko",
+    "e856eb7927": "*",
+    "e9e92774e7": "ja ko tr",
+    "eaa5a2fba1": "it pl ru uk",
+    "edd578621b": "id vi",
+    "ee008e0a98": "ja ko pl tr",
+    "eeb30e2d38": "bn hi sw",
+    "ef499d89c4": "ja ko tr",
+    "eff1f1e59f": "qu",
+    "f1554089dd": "pt",
+    "f1bc20c608": "de es fr id it pl pt qu sw tr vi",
+    "f460465218": "*",
+    "f76ff620e1": "*",
+    "f886098f71": "ar de fr he ja tr",
+    "fc1f6f6ab5": "id ms qu",
+    "ff19750b7a": "*",
+    "ffb70089e3": "*"
   }
 }

@@ -33,6 +33,8 @@ import {
 } from './command-shapes';
 import {
   diffLeakBaseline,
+  gainedLeaks,
+  prunableLeaks,
   initLeakScanner,
   loadLeakBaseline,
   shapeLeaks,
@@ -92,15 +94,15 @@ export function describeCommandShapesShard(shard: number): void {
 
     it('no render holds English the leak baseline does not list (english-leaks.ts)', () => {
       expect(leaks.size).toBeGreaterThan(300);
-      const gained = diffLeakBaseline(leaks, loadLeakBaseline('shapes')).filter(
-        c => c.added.length
-      );
+      const gained = gainedLeaks(diffLeakBaseline(leaks, loadLeakBaseline('shapes')));
       expect(capped(gained.map(c => leakLine(c, c.added)))).toEqual([]);
     });
 
-    it('no listed English is gone (prune it with tools/regen-english-leaks-baseline.ts --shapes)', () => {
-      const gone = diffLeakBaseline(leaks, loadLeakBaseline('shapes')).filter(c => c.gone.length);
-      expect(capped(gone.map(c => leakLine(c, c.gone)))).toEqual([]);
+    it('no listed English is gone, nor a listed refusal rendering now (prune with tools/regen-english-leaks-baseline.ts --shapes)', () => {
+      const prune = prunableLeaks(diffLeakBaseline(leaks, loadLeakBaseline('shapes')));
+      expect(capped(prune.map(c => leakLine(c, c.newRender ? ['now renders'] : c.gone)))).toEqual(
+        []
+      );
     });
   });
 }

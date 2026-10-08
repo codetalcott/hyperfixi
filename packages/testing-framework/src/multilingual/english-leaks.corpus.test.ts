@@ -16,6 +16,8 @@ import { getAllPatterns } from '@hyperfixi/patterns-reference';
 import {
   corpusLeaks,
   diffLeakBaseline,
+  gainedLeaks,
+  prunableLeaks,
   initLeakScanner,
   loadLeakBaseline,
   type LeakResults,
@@ -46,9 +48,7 @@ describe.skipIf(!DB_FRESHLY_POPULATED)('english-leaks: corpus renders', () => {
   });
 
   it('no render holds English the baseline does not list', () => {
-    const gained = diffLeakBaseline(results, loadLeakBaseline('corpus')).filter(
-      c => c.added.length
-    );
+    const gained = gainedLeaks(diffLeakBaseline(results, loadLeakBaseline('corpus')));
     expect(
       capped(
         gained.map(
@@ -59,8 +59,12 @@ describe.skipIf(!DB_FRESHLY_POPULATED)('english-leaks: corpus renders', () => {
   });
 
   it('no listed English is gone (prune it with tools/regen-english-leaks-baseline.ts --corpus)', () => {
-    const gone = diffLeakBaseline(results, loadLeakBaseline('corpus')).filter(c => c.gone.length);
-    expect(capped(gone.map(c => `${c.id} [${c.language}] ${c.gone.join(' ')}`))).toEqual([]);
+    const prune = prunableLeaks(diffLeakBaseline(results, loadLeakBaseline('corpus')));
+    expect(
+      capped(
+        prune.map(c => `${c.id} [${c.language}] ${c.newRender ? 'now renders' : c.gone.join(' ')}`)
+      )
+    ).toEqual([]);
   });
 
   it('keeps no entry for a row the corpus no longer holds', () => {

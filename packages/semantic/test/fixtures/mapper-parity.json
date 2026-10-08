@@ -10238,7 +10238,7 @@
       ]
     },
     "transition": {
-      "roles": ["patient", "destination", "duration", "goal"],
+      "roles": ["patient", "source", "duration", "goal"],
       "cases": [
         {
           "name": "no-roles",
@@ -10257,9 +10257,9 @@
               "value": ".patient-v",
               "selectorKind": "class"
             },
-            "destination": {
+            "source": {
               "type": "selector",
-              "value": "#destination-v",
+              "value": "#source-v",
               "selectorKind": "id"
             },
             "duration": {
@@ -10283,6 +10283,12 @@
               }
             ],
             "modifiers": {
+              "from": {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
+                "selectorType": "id"
+              },
               "to": {
                 "type": "literal",
                 "value": "goal-v"
@@ -10290,12 +10296,6 @@
               "over": {
                 "type": "literal",
                 "value": "duration-v"
-              },
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
               }
             }
           }
@@ -10325,9 +10325,9 @@
         {
           "name": "without-patient",
           "roles": {
-            "destination": {
+            "source": {
               "type": "selector",
-              "value": "#destination-v",
+              "value": "#source-v",
               "selectorKind": "id"
             },
             "duration": {
@@ -10344,6 +10344,12 @@
             "name": "transition",
             "args": [],
             "modifiers": {
+              "from": {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
+                "selectorType": "id"
+              },
               "to": {
                 "type": "literal",
                 "value": "goal-v"
@@ -10351,22 +10357,16 @@
               "over": {
                 "type": "literal",
                 "value": "duration-v"
-              },
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
               }
             }
           }
         },
         {
-          "name": "only-destination",
+          "name": "only-source",
           "roles": {
-            "destination": {
+            "source": {
               "type": "selector",
-              "value": "#destination-v",
+              "value": "#source-v",
               "selectorKind": "id"
             }
           },
@@ -10375,17 +10375,17 @@
             "name": "transition",
             "args": [],
             "modifiers": {
-              "on": {
+              "from": {
                 "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
+                "value": "#source-v",
+                "selector": "#source-v",
                 "selectorType": "id"
               }
             }
           }
         },
         {
-          "name": "without-destination",
+          "name": "without-source",
           "roles": {
             "patient": {
               "type": "selector",
@@ -10452,9 +10452,9 @@
               "value": ".patient-v",
               "selectorKind": "class"
             },
-            "destination": {
+            "source": {
               "type": "selector",
-              "value": "#destination-v",
+              "value": "#source-v",
               "selectorKind": "id"
             },
             "goal": {
@@ -10474,15 +10474,15 @@
               }
             ],
             "modifiers": {
+              "from": {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
+                "selectorType": "id"
+              },
               "to": {
                 "type": "literal",
                 "value": "goal-v"
-              },
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
               }
             }
           }
@@ -10515,9 +10515,9 @@
               "value": ".patient-v",
               "selectorKind": "class"
             },
-            "destination": {
+            "source": {
               "type": "selector",
-              "value": "#destination-v",
+              "value": "#source-v",
               "selectorKind": "id"
             },
             "duration": {
@@ -10537,15 +10537,15 @@
               }
             ],
             "modifiers": {
+              "from": {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
+                "selectorType": "id"
+              },
               "over": {
                 "type": "literal",
                 "value": "duration-v"
-              },
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
               }
             }
           }
@@ -10622,6 +10622,12 @@
               }
             ],
             "modifiers": {
+              "from": {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
+                "selectorType": "id"
+              },
               "to": {
                 "type": "literal",
                 "value": "goal-v"
@@ -10629,12 +10635,6 @@
               "over": {
                 "type": "literal",
                 "value": "duration-v"
-              },
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
               }
             }
           }

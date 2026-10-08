@@ -47,7 +47,10 @@ const ALLOWED_WARNINGS: Record<string, string[]> = {
   // set: a variable takes any value, a literal or an element (`set el to
   // #panel`) or an array (`to [1, 2]`, one selector token).
   set: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
-  transition: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
+  // transition: the property is a bare name (`opacity`), a style reference
+  // (`*width`) or an owner's property, which every language but English writes
+  // in the of form (`*width de #foo`): only a property-path role reads it back.
+  transition: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
 };
 
 describe('command schema validation', () => {

@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24386,
-  "refused": 2823,
-  "silent": 31,
+  "pass": 24491,
+  "refused": 2720,
+  "silent": 29,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -516,56 +516,21 @@
       "family": "toggle",
       "refused": "ar de fr he ja tr"
     },
-    "e8a298b630": {
-      "src": "on click transition *width from 0px to 100px",
-      "family": "transition",
-      "refused": "bn hi ja ko pl qu tr"
-    },
     "757da52773": {
       "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
       "family": "transition",
       "refused": "en *",
       "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
-    "f9d6cb3b20": {
-      "src": "on click transition my *width from 0px to 100px",
-      "family": "transition",
-      "refused": "bn hi ja ko pl qu tr"
-    },
     "be37dedb54": {
       "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
-      "family": "transition",
-      "refused": "bn hi ja ko pl qu tr"
-    },
-    "7fe8bdc214": {
-      "src": "on click transition #foo's *width from 0px to 100px",
-      "family": "transition",
-      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
-    },
-    "b81ed8569d": {
-      "src": "on click transition *width of #foo from 0px to 100px",
-      "family": "transition",
-      "refused": "bn hi ja ko pl qu tr"
-    },
-    "5ded6059c0": {
-      "src": "on click get #foo then transition its *width from 0px to 100px",
       "family": "transition",
       "refused": "bn hi ja ko pl qu tr"
     },
     "b6d4332c89": {
       "src": "on click transition #foo's *width from 0px to 100px using \"width 2s ease-in\"",
       "family": "transition",
-      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
-    },
-    "c934b95f51": {
-      "src": "on click transition #foo's *width from 0px to 100px over 2s",
-      "family": "transition",
-      "refused": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk"
-    },
-    "3608d60b77": {
-      "src": "on click transition *width of the next <span/> from 0px to 100px",
-      "family": "transition",
-      "refused": "bn hi ja ko pl qu tr"
+      "refused": "bn hi ja ko qu tr"
     },
     "446cb475ce": {
       "src": "on click 1 transition my *width to 100px on click 2 transition my *width to initial",
@@ -1201,13 +1166,6 @@
       "src": "return",
       "family": "return",
       "refused": "hi"
-    },
-    "7bc08adb98": {
-      "src": "transition #box's *opacity to 0 over 300ms",
-      "family": "transition",
-      "refused": "ar de es fr he id it ms pl pt ru sw th uk",
-      "silent": "qu tr",
-      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
     },
     "7beb55b4c4": {
       "src": "on scroll if me.scrollTop + me.clientHeight >= me.scrollHeight - 100 fetch /api/more then append result to #list end",
