@@ -221,6 +221,21 @@ function restoreSpans(text: string, spans: readonly string[]): string {
 }
 
 /**
+ * Upstream's first person, `I match .x` and `I am a Node`, in the third person
+ * the lexicon has words for: `me matches .x`, `me is a Node` (both engines read
+ * the pairs alike). The word pass then writes each language's own: es `yo
+ * coincide .x`, where `I match .x` stayed English in every language (M2,
+ * vocabulary sheet A2). `I do not match` is a phrase no lexicon has yet.
+ */
+const FIRST_PERSON = /(^|[^\w$.#@*:-])I\s+(match|am)\b/g;
+function thirdPerson(text: string): string {
+  return text.replace(
+    FIRST_PERSON,
+    (_, lead: string, verb: string) => `${lead}me ${verb === 'match' ? 'matches' : 'is'}`
+  );
+}
+
+/**
  * Localize the interior of a value string.
  *
  * Returns the input unchanged when the language has no lexicon, so a language
@@ -254,7 +269,7 @@ export function localizeValueInterior(
     }
   );
 
-  const localized = masked.replace(WORD, (whole, lead: string, word: string) => {
+  const localized = thirdPerson(masked).replace(WORD, (whole, lead: string, word: string) => {
     if (keep?.has(word)) return whole;
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;
