@@ -76,7 +76,35 @@ export interface LeakFinding {
   context: LeakContext;
   /** Does the language have its own word for it? */
   hasWord: boolean;
+  /** English a recorded decision keeps ({@link KEPT_ENGLISH}): not counted toward M2's targets. */
+  kept?: true;
 }
+
+/**
+ * English a recorded decision keeps, so M2's words target does not count it
+ * (the gate still does: it only shrinks). Contexts policy 6 keeps (roadmap §5),
+ * and the vocabulary sheet's keep rows (`docs-internal/multilingual/
+ * VOCABULARY_SHEET.md`, C1–C3, decided 2026-10-08).
+ */
+export const KEPT_ENGLISH: {
+  readonly contexts: ReadonlySet<LeakContext>;
+  readonly phrases: ReadonlyArray<{ readonly phrase: string; readonly why: string }>;
+} = {
+  // Policy 6: bracket and brace interiors, a call's arguments, a property name
+  // its reader cannot bring back, and a clause no pattern models (M1).
+  contexts: new Set(['bracket', 'call', 'property', 'clause']),
+  phrases: [
+    { phrase: 'debounced at', why: 'C1: a term of art with no settled native word' },
+    { phrase: 'throttled at', why: 'C1: a term of art with no settled native word' },
+    { phrase: 'url', why: 'C2: an international loanword (policy 6 keeps push/replace url)' },
+    { phrase: 'dom', why: 'C3: an acronym' },
+    {
+      phrase: 'view transition',
+      why: "C3: the web API's name (policy 6 keeps using view transition)",
+    },
+    { phrase: 'using', why: 'policy 6: `using view transition` (the phrase above holds the rest)' },
+  ],
+};
 
 /** A finding as the baseline writes it: the word, or `event:<name>` / `case:<pronoun>`. */
 export const findingKey = (f: Pick<LeakFinding, 'kind' | 'word'>): string =>
@@ -452,6 +480,18 @@ export async function initLeakScanner(): Promise<LeakScanner> {
         for (const [start, end, kind] of spans) if (start < offset && offset < end) found = kind;
         return found;
       };
+      const keptSpans: Array<[number, number]> = [];
+      for (const { phrase } of KEPT_ENGLISH.phrases)
+        for (const m of text.matchAll(
+          new RegExp(
+            `(?<![\\p{L}\\p{N}])${escapeRegExp(phrase).replace(/ /g, '\\s+')}(?![\\p{L}\\p{N}])`,
+            'gu'
+          )
+        ))
+          keptSpans.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
+      const isKept = (offset: number, context: LeakContext): boolean =>
+        KEPT_ENGLISH.contexts.has(context) ||
+        keptSpans.some(([start, end]) => start <= offset && offset < end);
       const findings: LeakFinding[] = [];
       const grammarLeft = new Map(info.grammar);
       const propsLeft = new Map(info.props);
@@ -475,7 +515,13 @@ export async function initLeakScanner(): Promise<LeakScanner> {
         const context: LeakContext = info.clauseWords.has(word)
           ? 'clause'
           : (contextAt(offset) ?? (prop ? 'property' : 'plain'));
-        findings.push({ kind: 'word', word, context, hasWord: lang.translated.has(word) });
+        findings.push({
+          kind: 'word',
+          word,
+          context,
+          hasWord: lang.translated.has(word),
+          ...(isKept(offset, context) ? { kept: true as const } : {}),
+        });
       }
       if (CASE_LANGUAGES.has(language) && lang.me) {
         const tokens = words.map(w => w.word);
@@ -655,8 +701,8 @@ export function loadLeakBaseline(half: LeakHalf): LeakBaseline {
  * may hold a finding of each kind, in EVERY language. Per language because a
  * reader reads one, and an average hid he (35% of corpus renders with an English
  * word where the others sit near 18%). Words count only English no recorded
- * decision keeps (policy 6, the vocabulary sheet's keep rows: none is subtracted
- * yet). Events are already net of the denylist, whose entries carry reasons.
+ * decision keeps ({@link KEPT_ENGLISH}). Events are already net of the denylist,
+ * whose entries carry reasons.
  */
 export const LEAK_TARGETS: Readonly<Record<LeakHalf, Readonly<Record<LeakKind, number>>>> = {
   corpus: { word: 0.05, event: 0, case: 0 },
@@ -684,7 +730,7 @@ export function leakRatesByLanguage(
       if (!findings) continue;
       const row = counts.get(language) ?? { renders: 0, word: 0, event: 0, case: 0 };
       row.renders++;
-      for (const kind of KINDS) if (findings.some(f => f.kind === kind)) row[kind]++;
+      for (const kind of KINDS) if (findings.some(f => f.kind === kind && !f.kept)) row[kind]++;
       counts.set(language, row);
     }
   }
