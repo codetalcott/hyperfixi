@@ -2488,9 +2488,18 @@ export const transitionSchema: CommandSchema = {
   description: 'Transition an element with animation',
   category: 'dom-visibility',
   primaryRole: 'patient',
-  // `transition *color to red over 500ms on #el` → args ['*color'],
-  // modifiers { to: goal, over: duration, on: destination }.
-  ast: { args: ['patient'], modifiers: { to: 'goal', over: 'duration', on: 'destination' } },
+  // `transition *color from blue to red over 500ms` → args ['*color'],
+  // modifiers { from: source, to: goal, over: duration }. No destination: upstream
+  // has no `transition … on <element>`; the element is the property's owner
+  // (`#foo's *width`, `my opacity`), and `me` when it has none. The role this
+  // schema used to carry only ever held that implicit `me`, and in SOV languages
+  // whose destination markers include the genitive (ja `の`, ko `의`, tr `nin`,
+  // qu `pa`) it read the owner of an of-possessive (`*width nin #foo`) as an
+  // element, silently.
+  ast: {
+    args: ['patient'],
+    modifiers: { from: 'source', to: 'goal', over: 'duration' },
+  },
   // Goal-less `transition {patient} over {duration}` (slide-toggle) parses via
   // a separate generated variant — see the goal role's required NOTE.
   omitRoleVariants: ['goal'],
@@ -2511,12 +2520,24 @@ export const transitionSchema: CommandSchema = {
       // syntax ONLY: `*background-color` / `*max-height` tokenize as selector
       // (transition-color, slide-toggle — en dropped both), and translations
       // already capture patient:selector for them via the lax body walkers.
-      expectedTypes: ['literal', 'expression', 'selector'],
+      // 'property-path' opts it into the "of"-possessive matcher: every language
+      // but English writes `#foo's *width` as `*width de #foo` (tr `*width nin
+      // #foo`), which no other reader takes — es/de/ar/fr refused it, and tr/qu
+      // read `*width` as the destination and `#foo` as the patient, silently.
+      expectedTypes: ['literal', 'expression', 'selector', 'property-path'],
       svoPosition: 1,
       sovPosition: 2,
       // No marker before the CSS property name (SVO/VSO languages)
       // SOV languages (bn, qu) use their default patient marker from profile
       markerOverride: { en: '', ar: '', tl: '', sw: '' },
+    },
+    {
+      role: 'source',
+      description: 'The value to transition from (`from 0px to 100px`)',
+      required: false,
+      expectedTypes: ['literal', 'expression'],
+      svoPosition: 1.5,
+      sovPosition: 2.5,
     },
     {
       role: 'goal',
@@ -2571,15 +2592,6 @@ export const transitionSchema: CommandSchema = {
       },
     },
     {
-      role: 'destination',
-      description: 'The target element (defaults to me)',
-      required: false,
-      expectedTypes: ['selector', 'reference'],
-      default: { type: 'reference', value: 'me' },
-      svoPosition: 3,
-      sovPosition: 1,
-    },
-    {
       role: 'duration',
       description: 'Transition duration (over 500ms, for 2 seconds)',
       required: false,
@@ -2595,6 +2607,9 @@ export const transitionSchema: CommandSchema = {
       expectedTypes: ['literal'],
       svoPosition: 5,
       sovPosition: 5,
+      // Upstream spells it `using "<css transition>"`; `with` is not transition
+      // grammar in either engine.
+      markerOverride: { en: 'using' },
     },
   ],
 };

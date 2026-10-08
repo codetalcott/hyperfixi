@@ -26,6 +26,7 @@ import {
   LEAK_BASELINE_PATHS,
   corpusLeaks,
   diffLeakBaseline,
+  gainedLeaks,
   initLeakScanner,
   leakBaselineFrom,
   shapeLeaks,
@@ -167,10 +168,12 @@ async function main(): Promise<void> {
       ? (JSON.parse(readFileSync(file, 'utf8')) as LeakBaseline)
       : null;
     const changes = previous ? diffLeakBaseline(results, previous) : [];
-    const worse = changes.filter(c => c.added.length);
+    const worse = gainedLeaks(changes);
     const better = changes.filter(c => c.gone.length);
+    const rendering = changes.filter(c => c.newRender);
     console.log(
-      `\nvs the ${half} baseline: ${better.length} pair(s) lost a finding, ${worse.length} gained one`
+      `\nvs the ${half} baseline: ${better.length} pair(s) lost a finding, ${worse.length} gained one, ` +
+        `${rendering.length} refused before and render now`
     );
     for (const w of worse.slice(0, 60))
       console.log(`  GAINED ${w.id} [${w.language}] ${w.added.join(' ')}`);

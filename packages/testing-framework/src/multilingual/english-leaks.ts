@@ -507,6 +507,12 @@ export interface LeakBaseline {
   kinds: Record<LeakKind, { renders: number; findings: number }>;
   /** Per source id: `"<finding> <finding> …"` (sorted keys) → languages (`*` for all 23). */
   entries: Record<string, Record<string, string>>;
+  /**
+   * Per source id, the languages with no render (the translation was refused).
+   * A lane that starts to render is progress, not a leak: the gate reports it
+   * as one to prune, and its English is counted from then on.
+   */
+  unrendered?: Record<string, string>;
 }
 
 /** The results of one half: per source id, per language, the findings (`null`: no render). */
@@ -538,11 +544,16 @@ export function leakBaselineFrom(results: LeakResults, description: string): Lea
       case: { renders: 0, findings: 0 },
     },
     entries: {},
+    unrendered: {},
   };
   for (const [id, byLanguage] of [...results].sort((a, b) => a[0].localeCompare(b[0]))) {
     const groups = new Map<string, string[]>();
+    const unrendered: string[] = [];
     for (const [language, findings] of byLanguage) {
-      if (!findings) continue;
+      if (!findings) {
+        unrendered.push(language);
+        continue;
+      }
       doc.renders++;
       if (!findings.length) continue;
       doc.leaky++;
@@ -555,6 +566,7 @@ export function leakBaselineFrom(results: LeakResults, description: string): Lea
       const key = keysOf(findings).join(' ');
       groups.set(key, [...(groups.get(key) ?? []), language]);
     }
+    if (unrendered.length) doc.unrendered![id] = compressLanguages(unrendered);
     if (!groups.size) continue;
     doc.entries[id] = Object.fromEntries(
       [...groups]
@@ -583,6 +595,8 @@ export interface LeakChange {
   added: string[];
   /** Findings the baseline lists and the pair no longer has. */
   gone: string[];
+  /** The baseline lists the pair as unrendered and it renders now: `added` is its English. */
+  newRender?: boolean;
 }
 
 /** Multiset difference `a − b`. */
@@ -599,11 +613,17 @@ function minus(a: readonly string[], b: readonly string[]): string[] {
 /** Compare results with a baseline, over the sources and languages that ran. */
 export function diffLeakBaseline(
   results: LeakResults,
-  baseline: Pick<LeakBaseline, 'entries'>
+  baseline: Pick<LeakBaseline, 'entries' | 'unrendered'>
 ): LeakChange[] {
   const changes: LeakChange[] = [];
   for (const [id, byLanguage] of results) {
+    const unrendered = expandLanguages(baseline.unrendered?.[id] ?? '');
     for (const [language, findings] of byLanguage) {
+      const wasUnrendered = unrendered.includes(language);
+      if (findings && wasUnrendered) {
+        changes.push({ id, language, added: keysOf(findings), gone: [], newRender: true });
+        continue;
+      }
       const got = keysOf(findings);
       const listed = listedKeys(baseline, id, language);
       const added = minus(got, listed);
@@ -613,6 +633,14 @@ export function diffLeakBaseline(
   }
   return changes;
 }
+
+/** Findings a pair gained: a regression (a lane that starts to render is not one). */
+export const gainedLeaks = (changes: readonly LeakChange[]): LeakChange[] =>
+  changes.filter(c => c.added.length > 0 && !c.newRender);
+
+/** Changes the baseline must be pruned for: findings gone, or a lane that renders now. */
+export const prunableLeaks = (changes: readonly LeakChange[]): LeakChange[] =>
+  changes.filter(c => c.gone.length > 0 || c.newRender);
 
 export function loadLeakBaseline(half: LeakHalf): LeakBaseline {
   return JSON.parse(readFileSync(LEAK_BASELINE_PATHS[half], 'utf8')) as LeakBaseline;

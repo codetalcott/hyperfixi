@@ -750,8 +750,8 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     name: 'possessive-split',
     reason:
       "a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → " +
-      "`me punya`, qu `#box's *opacity` → `#box … on *opacity`",
-    ids: ['76130fbf7d', '36e2294330', 'b839394853', '7bc08adb98'],
+      '`me punya`',
+    ids: ['76130fbf7d', '36e2294330', 'b839394853'],
   },
 ];
 

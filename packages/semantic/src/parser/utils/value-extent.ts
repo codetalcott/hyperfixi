@@ -178,6 +178,17 @@ export const OPERATOR_WORDS: ReadonlySet<string> = new Set([
 const TRAILING_CONVERSION = /\s+as\s+([A-Za-z]\w*)!?\s*$/;
 
 /**
+ * A `*` touching a name is a style reference (`*height`): one operand, as both
+ * engines tokenize it (`2 *y` is a parse error there, not `2 * y`). This
+ * parser's tokenizer reads every `*` as multiplication, so `100px *height`
+ * read as one value and swallowed transition's second property. Written as a
+ * name here, outside strings, the run is two operands with nothing between.
+ */
+const STYLE_REF_OR_STRING = /("[^"]*"|'[^']*')|\*(?=[A-Za-z_-])/g;
+const styleRefsAsNames = (body: string): string =>
+  body.replace(STYLE_REF_OR_STRING, (_match, quoted: string | undefined) => quoted ?? ' style_');
+
+/**
  * Does the expression parser read ALL of `raw` as one expression?
  *
  * - A conversion (`… as Int`) is allowed when it names a known type:
@@ -197,6 +208,7 @@ export function readsAsOneExpression(raw: string): boolean {
   const code = body.replace(/"[^"]*"|'[^']*'/g, '');
   if (/["']/.test(code.replace(/'s\b/g, ''))) return false;
   if (/[^\x00-\x7F]/.test(code)) return false;
+  body = styleRefsAsNames(body);
   const result = parseExpression(body);
   if (!result.success || result.consumed === undefined) return false;
   // The tokenizer ends with an EOF token, which the parser never consumes.
