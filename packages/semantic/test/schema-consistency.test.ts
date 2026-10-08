@@ -86,6 +86,11 @@ describe('Schema Consistency', () => {
       'set.patient': { languages: ['tr', 'zh'], methodCarrier: null },
       'trigger.event': { languages: ['bn', 'hi', 'qu'], methodCarrier: null },
       'go.destination': { languages: ['zh'], methodCarrier: null },
+      // the profile's other spellings of `when` (whenConditionRole)
+      'add.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
+      'remove.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
+      'hide.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
+      'show.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
       // meaning-bearing — held OUT of the merge; `into|before|after` → `method`
       'put.destination': { languages: ['en'], methodCarrier: 'method' },
     };

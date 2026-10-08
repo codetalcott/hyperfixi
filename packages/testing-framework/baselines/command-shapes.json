@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24491,
-  "refused": 2720,
+  "pass": 24502,
+  "refused": 2709,
   "silent": 29,
   "entries": {
     "6f60177037": {
@@ -123,11 +123,6 @@
       "src": "on click 1 hide on click 2 show",
       "family": "hide",
       "refused": "*"
-    },
-    "e71ea44d67": {
-      "src": "on click hide <div/> in me when it matches .hideable",
-      "family": "hide",
-      "refused": "id ms"
     },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
@@ -425,30 +420,15 @@
       "refused": "en *",
       "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
-    "d9ecdbc854": {
-      "src": "on click toggle .foo show when I match .foo",
-      "family": "show",
-      "refused": "pl tr"
-    },
-    "cc4909b0a6": {
-      "src": "on click toggle .foo show with opacity when I match .foo",
-      "family": "show",
-      "refused": "pl tr"
-    },
-    "84c8655749": {
-      "src": "on click show <p/> in me when its innerText contains \"foo\"",
-      "family": "show",
-      "refused": "id ms"
-    },
     "216845203a": {
       "src": "on click get 'found' show <span/> in me when the result is 'found'",
       "family": "show",
-      "refused": "id ms"
+      "refused": "qu"
     },
     "fc1f6f6ab5": {
       "src": "on click show <p/> in me when its textContent is 'yes' if the result is empty put 'none' into #out else put 'some' into…",
       "family": "show",
-      "refused": "id ms qu"
+      "refused": "qu"
     },
     "edd578621b": {
       "src": "on click take @data-foo=baz with my @data-foo from .div",
@@ -1070,13 +1050,13 @@
       "src": "when $data's inner's val changes put it into me",
       "family": "reactive-properties",
       "silent": "qu",
-      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`"
     },
     "36e2294330": {
       "src": "live put $config's label into me",
       "family": "reactive-properties",
       "silent": "qu",
-      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`"
     },
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
@@ -1088,7 +1068,7 @@
       "src": "when my @data-x changes put it into me",
       "family": "when",
       "silent": "id",
-      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`, qu `#box's *opacity` → `#box … on *opacity`"
+      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`"
     },
     "93c8c96b46": {
       "src": "hide",

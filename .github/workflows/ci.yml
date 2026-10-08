@@ -909,7 +909,11 @@ jobs:
     # suite for nothing (the shipped-sources gate is what covers those trees,
     # and it stays ungated). A skipped required check satisfies branch protection.
     if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-    timeout-minutes: 15
+    # 25, not 15: testing-framework's step alone ran 777s on 2026-10-08 (the
+    # command-shape shards ~90s each, the value matrix's shards, the English-leak
+    # scan), and the job reached 14m33s on #1425. #1426 was cancelled 0.1s after
+    # its last test passed, as were two dependabot runs at 15m.
+    timeout-minutes: 25
 
     steps:
       - name: Checkout

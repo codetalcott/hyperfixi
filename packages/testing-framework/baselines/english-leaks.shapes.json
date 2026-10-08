@@ -1,20 +1,20 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23618,
-  "leaky": 11484,
-  "findings": 18904,
+  "renders": 23629,
+  "leaky": 11442,
+  "findings": 18276,
   "kinds": {
     "word": {
-      "renders": 5599,
-      "findings": 9536
+      "renders": 5515,
+      "findings": 8902
     },
     "event": {
-      "renders": 5203,
-      "findings": 5246
+      "renders": 5204,
+      "findings": 5247
     },
     "case": {
-      "renders": 3825,
-      "findings": 4122
+      "renders": 3830,
+      "findings": 4127
     }
   },
   "entries": {
@@ -440,13 +440,14 @@
       "in": "ar es fr id ja ko ms pt sw tl zh"
     },
     "216845203a": {
-      "case:me event:click in is result the when": "hi",
-      "case:me event:click is result the when": "it",
-      "case:me in is result the when": "bn",
-      "case:me is result the when": "de tr",
-      "event:click in is result the when": "he pl qu ru th uk",
-      "event:click is result the when": "vi",
-      "in is result the when": "ar es fr ja ko pt sw tl zh"
+      "case:me": "de tr",
+      "case:me event:click": "it",
+      "case:me event:click in": "hi",
+      "case:me in": "bn",
+      "event:click": "vi",
+      "event:click in": "pl ru th uk",
+      "event:click in is": "he",
+      "in": "ar es fr id ja ko ms pt sw tl zh"
     },
     "21c66949f1": {
       "case:me": "bn tr",
@@ -1359,9 +1360,11 @@
       "event:click": "it pl qu ru th uk vi"
     },
     "6f60177037": {
-      "empty event:click is it matches the when": "he",
-      "event:click it matches the when": "hi it pl ru th uk vi",
-      "it matches the when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "empty event:click is matches the": "he",
+      "event:click matches the": "th",
+      "event:click the": "hi it pl ru uk vi",
+      "matches the": "bn",
+      "the": "ar de es fr id ja ko ms pt sw tl tr zh"
     },
     "6f6d57c10a": {
       "in repeat": "he",
@@ -1417,8 +1420,9 @@
       "event:click": "qu th vi"
     },
     "725196f20e": {
-      "event:click it matches when": "he hi it pl qu ru th uk vi",
-      "it matches when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "event:click": "hi it pl qu ru uk vi",
+      "event:click matches": "he th",
+      "matches": "bn"
     },
     "729177d584": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -1726,13 +1730,14 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "84c8655749": {
-      "case:me contains event:click in its when": "hi",
-      "case:me contains event:click its when": "it",
-      "case:me contains in its when": "bn",
-      "case:me contains its when": "de tr",
-      "contains event:click in its when": "he pl qu ru th uk",
-      "contains event:click its when": "vi",
-      "contains in its when": "ar es fr ja ko pt sw tl zh"
+      "case:me": "de tr",
+      "case:me contains in": "bn",
+      "case:me event:click": "it",
+      "case:me event:click in": "hi",
+      "contains event:click in": "he th",
+      "event:click": "vi",
+      "event:click in": "pl qu ru uk",
+      "in": "ar es fr id ja ko ms pt sw tl zh"
     },
     "85061852ee": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -1781,8 +1786,9 @@
       "as event:click": "qu th vi"
     },
     "87a851fb52": {
-      "event:click it matches when": "he hi it pl qu ru th uk vi",
-      "it matches when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "event:click": "hi it pl qu ru uk vi",
+      "event:click matches": "he th",
+      "matches": "bn"
     },
     "87d42db63b": {
       "after case:me": "bn hi",
@@ -2003,8 +2009,9 @@
       "event:click": "it pl qu ru th uk vi"
     },
     "9a5c1482e6": {
-      "event:click it matches when": "he hi it pl qu ru th uk vi",
-      "it matches when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "event:click": "hi it pl qu ru uk vi",
+      "event:click matches": "he th",
+      "matches": "bn"
     },
     "9b26201426": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -2578,10 +2585,10 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "cc4909b0a6": {
-      "I case:me event:click match when": "he hi",
-      "I case:me match when": "bn",
-      "I event:click match when": "it qu ru th uk vi",
-      "I match when": "ar de es fr id ja ko ms pt sw tl zh"
+      "I case:me event:click match": "he hi",
+      "I case:me match": "bn tr",
+      "I event:click match": "it pl qu ru th uk vi",
+      "I match": "ar de es fr id ja ko ms pt sw tl zh"
     },
     "cce78169bd": {
       "and between event:click me of": "he hi pl qu ru th uk vi",
@@ -2730,8 +2737,10 @@
       "def event:click": "he hi it pl qu ru th uk vi"
     },
     "d9ecdbc854": {
-      "I event:click match when": "he hi it qu ru th uk vi",
-      "I match when": "ar bn de es fr id ja ko ms pt sw tl zh"
+      "I case:me event:click match": "he hi",
+      "I case:me match": "bn tr",
+      "I event:click match": "it pl qu ru th uk vi",
+      "I match": "ar de es fr id ja ko ms pt sw tl zh"
     },
     "da24c9d768": {
       "closest event:click to": "he",
@@ -2786,9 +2795,11 @@
       "repeat": "fr id ms sw zh"
     },
     "dc8881fc7d": {
-      "empty event:click is it matches the when": "he",
-      "event:click it matches the when": "hi it pl ru th uk vi",
-      "it matches the when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "empty event:click is matches the": "he",
+      "event:click matches the": "th",
+      "event:click the": "hi it pl ru uk vi",
+      "matches the": "bn",
+      "the": "ar de es fr id ja ko ms pt sw tl tr zh"
     },
     "dc9ce23e31": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -2944,13 +2955,14 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "e71ea44d67": {
-      "case:me event:click in it matches when": "hi",
-      "case:me event:click it matches when": "it",
-      "case:me in it matches when": "bn",
-      "case:me it matches when": "de tr",
-      "event:click in it matches when": "he pl qu ru th uk",
-      "event:click it matches when": "vi",
-      "in it matches when": "ar es fr ja ko pt sw tl zh"
+      "case:me": "de tr",
+      "case:me event:click": "it",
+      "case:me event:click in": "hi",
+      "case:me in matches": "bn",
+      "event:click": "vi",
+      "event:click in": "pl qu ru uk",
+      "event:click in matches": "he th",
+      "in": "ar es fr id ja ko ms pt sw tl zh"
     },
     "e7687f49e4": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -3123,8 +3135,7 @@
       "event:click": "he hi it pl qu ru th uk vi"
     },
     "f6a83b738c": {
-      "event:click when": "he hi it pl qu ru th uk vi",
-      "when": "ar bn de es fr id ja ko ms pt sw tl tr zh"
+      "event:click": "he hi it pl qu ru th uk vi"
     },
     "f6dd2fc33a": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -3184,14 +3195,14 @@
       "event:click": "qu th vi"
     },
     "fc1f6f6ab5": {
-      "case:me event:click in is its the when": "hi",
-      "case:me event:click is its the when": "it",
-      "case:me in is its the when": "bn",
-      "case:me is its the when": "de tr",
-      "empty event:click in is is its the when": "he",
-      "event:click in is its the when": "pl ru th uk",
-      "event:click is its the when": "vi",
-      "in is its the when": "ar es fr ja ko pt sw tl zh"
+      "case:me event:click in the": "hi",
+      "case:me event:click the": "it",
+      "case:me in the": "bn",
+      "case:me the": "de tr",
+      "empty event:click in is is the": "he",
+      "event:click in the": "pl ru th uk",
+      "event:click the": "vi",
+      "in the": "ar es fr id ja ko ms pt sw tl zh"
     },
     "fc2dcef0f5": {
       "event:click": "he hi it pl qu ru th uk vi"
@@ -3252,7 +3263,7 @@
     "1f173a2d64": "ar de fr he ja tr",
     "20024e932d": "*",
     "20161acab0": "de it tr",
-    "216845203a": "id ms",
+    "216845203a": "qu",
     "2204b224b3": "es",
     "237fd5ee40": "ar de fr he ja tr",
     "239cba8b61": "pt",
@@ -3345,7 +3356,6 @@
     "829e32df04": "ja ko pl tr",
     "82b8bc8836": "*",
     "8353b546d7": "ja ko tr",
-    "84c8655749": "id ms",
     "85d0684e94": "*",
     "85f412f92a": "bn it th",
     "862ede02e6": "ar de fr he ja tr",
@@ -3400,7 +3410,6 @@
     "c839f2f99f": "*",
     "c8992c103b": "vi",
     "ca8adcde99": "*",
-    "cc4909b0a6": "pl tr",
     "cd6bf33ac9": "*",
     "ce4506efd5": "ms qu",
     "ce4872a43b": "*",
@@ -3408,7 +3417,6 @@
     "d6ac459628": "*",
     "d7b35fefe6": "de tr",
     "d9c92a211d": "*",
-    "d9ecdbc854": "pl tr",
     "da38860cb8": "hi",
     "db3346f209": "ja ko tr",
     "db7fef03e9": "vi",
@@ -3423,7 +3431,6 @@
     "dfea5b51b5": "ko",
     "e2d9334fb6": "*",
     "e51cb64feb": "de fr ko",
-    "e71ea44d67": "id ms",
     "e8446a57e2": "ko",
     "e856eb7927": "*",
     "e9e92774e7": "ja ko tr",
@@ -3438,7 +3445,7 @@
     "f460465218": "*",
     "f76ff620e1": "*",
     "f886098f71": "ar de fr he ja tr",
-    "fc1f6f6ab5": "id ms qu",
+    "fc1f6f6ab5": "qu",
     "ff19750b7a": "*",
     "ffb70089e3": "*"
   }
