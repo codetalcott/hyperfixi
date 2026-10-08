@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24502,
-  "refused": 2709,
+  "pass": 24508,
+  "refused": 2703,
   "silent": 29,
   "entries": {
     "6f60177037": {
@@ -181,7 +181,7 @@
     "07108f5fc0": {
       "src": "on click put \"foo\" at end of #d1",
       "family": "put",
-      "refused": "es id it pt th tl uk"
+      "refused": "es id it pt tl uk"
     },
     "7896ec4b23": {
       "src": "on click put 'foo' into #div2's @bar",
@@ -196,7 +196,7 @@
     "2d9422b3af": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
       "family": "put",
-      "refused": "es id it pt th tl uk vi"
+      "refused": "es id it pt tl uk vi"
     },
     "f460465218": {
       "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
@@ -278,12 +278,12 @@
     "4da1d2fe85": {
       "src": "on click repeat 3 times put \"a\" at end of me end",
       "family": "repeat",
-      "refused": "ms th vi"
+      "refused": "vi"
     },
     "897b7048f1": {
       "src": "on click repeat 3 + 3 times put \"a\" at end of me end",
       "family": "repeat",
-      "refused": "ms th vi"
+      "refused": "vi"
     },
     "09f435f419": {
       "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if (x != 'D') then put 'success ' + x + '. ' at end of me continu…",

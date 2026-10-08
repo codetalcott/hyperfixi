@@ -156,6 +156,25 @@ const SOV_REPEAT_TIMES: Array<[string, string, string, string]> = [
 ];
 
 /**
+ * The loop verb a head writes: the language's own (es `repetir`, ja `繰り返し`,
+ * the counted heads' verbs), with English `repeat` still read (M2, sheet A1).
+ * The for/while/until heads wrote the literal `repeat`, which the matcher reads
+ * by normalized form, so every language's loop head rendered in English: es
+ * `repeat item en .items`, ja `まで イベント mouseup を repeat`.
+ */
+const REPEAT_VERBS: ReadonlyMap<string, string> = new Map([
+  ...VERB_FIRST_REPEAT_TIMES.map(([lang, verb]) => [lang, verb] as [string, string]),
+  ...SOV_REPEAT_TIMES.map(([lang, , , verb]) => [lang, verb] as [string, string]),
+]);
+
+function repeatVerb(language: string): PatternToken {
+  const verb = REPEAT_VERBS.get(language);
+  return verb
+    ? { type: 'literal', value: verb, alternatives: ['repeat'] }
+    : { type: 'literal', value: 'repeat' };
+}
+
+/**
  * sw writes the count after its word for `times` (`rudia mara 3`, repeat 3
  * times), where the render writes `rudia 3 times`: the head read `rudia mara`,
  * a `forever` loop (PR 127). Parse-only: its priority sits below the render's
@@ -215,11 +234,10 @@ function repeatTimesHeadWordFirst(language: string, verb: string, word: string):
  */
 function repeatForInHead(
   language: string,
-  spec: { forWords?: string[]; inWords: string[]; requireForWords?: boolean }
+  spec: { forWords?: string[]; inWords: string[]; requireForWords?: boolean },
+  written = false
 ): LanguagePattern {
-  const tokens: LanguagePattern['template']['tokens'] = [
-    { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
-  ];
+  const tokens: LanguagePattern['template']['tokens'] = [repeatVerb(language)];
   if (spec.forWords && spec.forWords.length > 0) {
     if (spec.requireForWords) {
       // Required (not an optional group) so the binder RENDERS — render suppresses
@@ -244,10 +262,11 @@ function repeatForInHead(
     expectedTypes: ['selector', 'expression', 'reference'],
   });
   return {
-    id: `repeat-${language}-for-in`,
+    id: written ? `repeat-${language}-written-for-in` : `repeat-${language}-for-in`,
     language,
     command: 'repeat',
-    priority: 110, // > the generated positional repeat (100)
+    // > the generated positional repeat (100); the written form above the read one
+    priority: written ? 111 : 110,
     template: {
       format: `repeat [${(spec.forWords ?? []).join(' ')}] {patient} ${spec.inWords.join(' ')} {source}`,
       tokens,
@@ -306,7 +325,7 @@ function repeatWhileHead(
   language: string,
   spec: { pre?: string[]; whileWord: string }
 ): LanguagePattern {
-  const tokens: LanguagePattern['template']['tokens'] = [{ type: 'literal', value: 'repeat' }];
+  const tokens: LanguagePattern['template']['tokens'] = [repeatVerb(language)];
   for (const w of spec.pre ?? []) tokens.push({ type: 'literal', value: w });
   tokens.push({ type: 'literal', value: spec.whileWord });
   tokens.push({
@@ -411,7 +430,7 @@ function repeatUntilConditionHead(
   language: string,
   spec: { pre?: string[]; untilWord: string }
 ): LanguagePattern {
-  const tokens: LanguagePattern['template']['tokens'] = [{ type: 'literal', value: 'repeat' }];
+  const tokens: LanguagePattern['template']['tokens'] = [repeatVerb(language)];
   for (const w of spec.pre ?? []) tokens.push({ type: 'literal', value: w });
   tokens.push({ type: 'literal', value: spec.untilWord });
   tokens.push({
@@ -476,7 +495,7 @@ function repeatUntilHeadVerbFirst(
     fromWord: string;
   }
 ): LanguagePattern {
-  const tokens: LanguagePattern['template']['tokens'] = [{ type: 'literal', value: 'repeat' }];
+  const tokens: LanguagePattern['template']['tokens'] = [repeatVerb(language)];
   for (const w of spec.pre ?? []) tokens.push({ type: 'literal', value: w });
   tokens.push({ type: 'literal', value: spec.untilWord });
   if (spec.preEvent) tokens.push({ type: 'literal', value: spec.preEvent });
@@ -567,7 +586,7 @@ function repeatUntilHeadSOV(
         { type: 'literal', value: spec.eventWord },
         { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
         { type: 'literal', value: spec.objMarker },
-        { type: 'literal', value: 'repeat' },
+        repeatVerb(language),
         {
           type: 'group',
           optional: true,
@@ -620,7 +639,7 @@ function repeatUntilHeadSOVVerbFinal(
           expectedTypes: ['selector', 'reference', 'expression'],
         },
         { type: 'literal', value: spec.fromWord },
-        { type: 'literal', value: 'repeat' },
+        repeatVerb(language),
       ],
     },
     extraction: {
@@ -777,8 +796,36 @@ for (const [lang, countWord, marker, verb] of SOV_REPEAT_TIMES) {
   addPattern(lang, repeatTimesHeadSOV(lang, countWord, marker, verb));
 }
 addPattern('sw', repeatTimesHeadWordFirst('sw', 'rudia', 'mara'));
+/**
+ * Where a translation writes the loop's `for` (M2, sheet A1): es `repetir para
+ * item en .items`, not `repeat item en .items`. The verb stays: without it the
+ * head is the `for` command's own (`para item en $items`), which semantic reads
+ * apart from `repeat for` though both engines run the two alike. The optional
+ * group above still reads a head written without it. Not he, zh or tl, whose
+ * for-words are what their readers tolerate (he `עבור את`, zh `为 把`, tl
+ * `para_sa`) rather than a word to write.
+ */
+const WRITES_FOR_WORD: ReadonlySet<string> = new Set([
+  'es',
+  'pt',
+  'fr',
+  'it',
+  'de',
+  'ru',
+  'uk',
+  'pl',
+  'ar',
+  'id',
+  'ms',
+  'sw',
+  'th',
+  'vi',
+]);
 for (const [lang, spec] of FOR_IN_HEADS) {
   addPattern(lang, repeatForInHead(lang, spec));
+  if (WRITES_FOR_WORD.has(lang)) {
+    addPattern(lang, repeatForInHead(lang, { ...spec, requireForWords: true }, true));
+  }
 }
 for (const [lang, spec] of SOV_FOR_BINDING_HEADS) {
   addPattern(lang, sovForBindingHead(lang, spec));
@@ -858,7 +905,7 @@ const repeatUntilHeadQuCanonical: LanguagePattern = {
       { type: 'literal', value: 'ruway' },
       { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
       { type: 'literal', value: 'ta' },
-      { type: 'literal', value: 'repeat' },
+      repeatVerb('qu'),
       {
         type: 'group',
         optional: true,

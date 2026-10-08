@@ -13,7 +13,7 @@
  * That is not Quechua, and it does not re-parse: `repeat-until-event` was the
  * only row of its family qu could not read back. The other SOV five have a
  * proper head from `repeatUntilHeadSOV`; qu now has the same shape in its own
- * words (`kama ruway {event} ta repeat [{source} manta]`), registered ahead of
+ * words (`kama ruway {event} ta kutipay [{source} manta]`), registered ahead of
  * the tolerances, which keep working.
  *
  * It cannot reuse `repeatUntilHeadSOV` directly: that builder derives the id
@@ -43,10 +43,10 @@ function findRepeat(node: SemanticNode | null): SemanticNode | null {
 }
 
 describe('the rendered surface is Quechua, and reads back', () => {
-  it('renders `kama ruway <event> ta repeat`, with no `hayk _ a` junk', () => {
+  it('renders `kama ruway <event> ta kutipay`, with no `hayk _ a` junk', () => {
     const rendered = render(parseSemantic(SOURCE, 'en')!.node!, 'qu');
     expect(rendered, 'the parse tolerance leaked into the surface').not.toContain('hayk');
-    expect(rendered).toContain('kama ruway rathuqariy ta repeat');
+    expect(rendered).toContain('kama ruway rathuqariy ta kutipay');
   });
 
   it('round-trips', () => {
