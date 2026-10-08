@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24139,
-  "refused": 3057,
-  "silent": 44,
+  "pass": 24386,
+  "refused": 2823,
+  "silent": 31,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -116,7 +116,8 @@
     "ae5ed6eb80": {
       "src": "on click halt default",
       "family": "halt",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "halt-modes: halt's `default` (also a command word) and `the event's bubbling|default`: the slot that keeps `call` out of `halt call f()` cannot tell `default` from a command without a halt-only reading (OPEN_ITEMS P56)"
     },
     "599215db33": {
       "src": "on click 1 hide on click 2 show",
@@ -128,16 +129,11 @@
       "family": "hide",
       "refused": "id ms"
     },
-    "e60afa928a": {
-      "src": "on click if false otherwise put \"foo\" into me.innerHTML",
-      "family": "if",
-      "silent": "de es fr hi id ko pt qu ru tl tr uk zh",
-      "why": "else-word: an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and stays a word in the condition"
-    },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
       "family": "if",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "540540cc5a": {
       "src": "on click set t to true then js(t) window.testSuccess = t end",
@@ -167,17 +163,20 @@
     "61bc69c358": {
       "src": "on click measure x,y,left,top,right,bottom,width,height,bounds,scrollLeft,scrollTop,scrollLeftMax,scrollTopMax,scrollWi…",
       "family": "measure",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "b2ec75a2bf": {
       "src": "on click bar().foo() then put the result into my bar",
       "family": "pseudoCommand",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "call-chain-command: a call chain as a command (`bar().foo()`), rare in pages"
     },
     "1c37112e5a": {
       "src": "on click window.bar().foo() then put the result into my bar",
       "family": "pseudoCommand",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "call-chain-command: a call chain as a command (`bar().foo()`), rare in pages"
     },
     "b2fe1705ef": {
       "src": "on click put \"foo\" at start of #d1",
@@ -197,37 +196,17 @@
     "6959984db6": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
       "family": "put",
-      "refused": "en *"
+      "refused": "*"
     },
     "2d9422b3af": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
       "family": "put",
-      "refused": "en *"
+      "refused": "es id it pt th tl uk vi"
     },
     "f460465218": {
       "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
       "family": "put",
       "refused": "*"
-    },
-    "60770598a3": {
-      "src": "on click remove {color} from me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "6916cdcfb9": {
-      "src": "on click remove {color; font-weight} from me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "052e807746": {
-      "src": "on click set :arr to [1,2,3,4] remove 3 from :arr put :arr as String into me",
-      "family": "remove",
-      "refused": "en *"
-    },
-    "18b09f2381": {
-      "src": "on click set :s to ['a','b','c'] as Set remove 'b' from :s put :s.size into me",
-      "family": "remove",
-      "refused": "en *"
     },
     "a4c56acf1e": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
@@ -359,27 +338,32 @@
     "af53446a0a": {
       "src": "on click set :items to [{name:'a', val:5}, {name:'b', val:15}, {name:'c', val:25}] repeat for x in :items where x.val >…",
       "family": "repeat",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "6d7856da91": {
       "src": "on click scroll down by 300px",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "786ba16f59": {
       "src": "on click scroll up by 100px",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "5a7e7e17d2": {
       "src": "on click scroll by 200px",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "65aa7d4176": {
       "src": "on click scroll #box down by 200px",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "20161acab0": {
       "src": "on click scroll to #item in #box",
@@ -389,7 +373,8 @@
     "5c5c4838dc": {
       "src": "on click scroll #box right by 300px",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "aae16fda89": {
       "src": "on foo.bar add .foo-sent",
@@ -399,12 +384,14 @@
     "b0492a08fb": {
       "src": "on click send foo:bar(x:42) to #bar",
       "family": "send",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "colon-event-arguments: a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages"
     },
     "5c62479568": {
       "src": "on click set parentNode.innerHTML of #d1 to \"foo\"",
       "family": "set",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "580655e71a": {
       "src": "on click set innerHTML of #d1.parentNode to \"foo\"",
@@ -429,12 +416,14 @@
     "c839f2f99f": {
       "src": "on click set {bar: 2, baz: 3} on obj",
       "family": "set",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "a9677f770b": {
       "src": "on click show <#d1, #d2/> with display: inline-block",
       "family": "show",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "d9ecdbc854": {
       "src": "on click toggle .foo show when I match .foo",
@@ -514,7 +503,8 @@
     "3ba1aed452": {
       "src": "on click toggle .group-\\[:nth-of-type\\(3\\)_\\&\\]:block",
       "family": "toggle",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "47902e382e": {
       "src": "on click toggle $mode between 'edit' and 'preview'",
@@ -534,7 +524,8 @@
     "757da52773": {
       "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "f9d6cb3b20": {
       "src": "on click transition my *width from 0px to 100px",
@@ -584,7 +575,8 @@
     "35274bd534": {
       "src": "on click transition the next <div/>'s *width from 0px to 100px",
       "family": "transition",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "possessive-after-query: a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; the `of` form (`the textContent of the next <div/>`) is carried"
     },
     "ef499d89c4": {
       "src": "on click trigger foo(x:42) end on foo(x) put x into my.innerHTML",
@@ -604,7 +596,8 @@
     "7dee91f428": {
       "src": "on click trigger foo:bar(x:42) end on foo:bar(x) put x into my.innerHTML",
       "family": "trigger",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "colon-event-arguments: a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages"
     },
     "32ce88b2e0": {
       "src": "on click add .foo then wait for foo then add .bar",
@@ -641,37 +634,44 @@
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
       "family": "core/parser",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
     "6637424a5a": {
       "src": "bind $selectedCount to the length of <:checked/> in the next <tbody/> when $selectedCount changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "9c2d74510e": {
       "src": "when (the length of <:checked/> in #container) changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "348175b219": {
       "src": "live put the length of <:checked/> in #box into me end",
       "family": "core/reactive-queries",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "b854e91693": {
       "src": "when (the length of <:checked/> in #scope) changes put it into me then increment $scopeRuns",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "7d534a111c": {
       "src": "when (the length of <:checked/> in #dynamic-scope) changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "32f8f63295": {
       "src": "when (the length of <:checked/> in #remove-scope) changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "73325ff027": {
       "src": "when (the length of <.picked/> in #list-scope) changes set result to it put the textContent of last <.picked/> in #list…",
@@ -681,17 +681,20 @@
     "e0fca05a2f": {
       "src": "when (the length of <:checked/> in #multi-scope) changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "8fe4616a43": {
       "src": "when (the length of <:checked/> in #dedup-scope) changes put it into me then increment $dedupRuns",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "1a2a9cbb2e": {
       "src": "when (the length of <:checked/> in #cleanup-scope) changes put it into me then increment $cleanupRuns",
       "family": "core/reactive-queries",
-      "refused": "*"
+      "refused": "*",
+      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "3614477c6c": {
       "src": "on click elsewhere remove me",
@@ -701,12 +704,14 @@
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",
       "family": "core/regressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "closest-forms: `closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of `closest` besides a query, rare in pages"
     },
     "ce4872a43b": {
       "src": "on click get the <button/> in me then set it @disabled to true",
       "family": "core/regressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "b19c6cad07": {
       "src": "on click put select2() into me",
@@ -761,7 +766,8 @@
     "240935231f": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo behavior BehaveTwo(foo) on click 2 set e…",
       "family": "core/scoping",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "0fba0cde11": {
       "src": "on click 1 set $x to 10 on click 2 set @out to $x",
@@ -776,7 +782,8 @@
     "8a13ec8232": {
       "src": "on click set my [@data-foo] to \"blue\"",
       "family": "expressions/attributeRef",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "db3346f209": {
       "src": "on hyperscript:beep(value) set my @data-value to the value on click get beep! \"foo\"",
@@ -786,12 +793,14 @@
     "e2d9334fb6": {
       "src": "on click put closest @foo into me",
       "family": "expressions/closest",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "closest-forms: `closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of `closest` besides a query, rare in pages"
     },
     "1d1fa04268": {
       "src": "on click set closest @foo to \"doh\"",
       "family": "expressions/closest",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "closest-forms: `closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of `closest` besides a query, rare in pages"
     },
     "d74a86f3a0": {
       "src": "on click set (closest @foo to #d1) to \"doh\"",
@@ -802,7 +811,8 @@
     "35f188d961": {
       "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
       "family": "expressions/closest",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "da24c9d768": {
       "src": "on click add .doh to closest .bar to .foo",
@@ -813,22 +823,26 @@
     "f76ff620e1": {
       "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
       "family": "expressions/collectionExpressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "998cfdeacf": {
       "src": "set :items to <span/> in #box where it matches .a on click put :items.length into me",
       "family": "expressions/collectionExpressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "162e3e0582": {
       "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
       "family": "expressions/collectionExpressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "55c3d28c9e": {
       "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
       "family": "expressions/collectionExpressions",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
     "9bb9b09088": {
       "src": "on click set ^data on closest .store to 'hello'",
@@ -894,7 +908,8 @@
     "08702e835c": {
       "src": "on click put 'updated' into the next <div/>'s textContent",
       "family": "expressions/relativePositionalExpression",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "possessive-after-query: a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; the `of` form (`the textContent of the next <div/>`) is carried"
     },
     "66878bf2ed": {
       "src": "behavior Behave init set element's foo to 1 set element's bar to {} end on click increment element's foo set element's …",
@@ -906,11 +921,6 @@
       "family": "bind",
       "refused": "bn th vi"
     },
-    "c6183ad650": {
-      "src": "init immediately set window.bar to 42 end",
-      "family": "init",
-      "refused": "en *"
-    },
     "d66d670d34": {
       "src": "on example.event add .called",
       "family": "on",
@@ -919,7 +929,8 @@
     "ca8adcde99": {
       "src": "on \"a-b\" add .called",
       "family": "on",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
     "7cf4fa3af7": {
       "src": "on click elsewhere add .clicked",
@@ -929,12 +940,13 @@
     "a8613168a4": {
       "src": "on foo(bar)[bar] put \"triggered\" into my.innerHTML",
       "family": "on",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
     "d9c92a211d": {
       "src": "on every click put increment() into my.innerHTML then wait for a customEvent",
       "family": "on",
-      "refused": "en *"
+      "refused": "*"
     },
     "239cba8b61": {
       "src": "on foo put increment() into my.innerHTML end on bar put increment() into my.innerHTML",
@@ -994,7 +1006,8 @@
     "bd7175dd23": {
       "src": "on click 2 and on put 1 + my.innerHTML as Int into my.innerHTML",
       "family": "on",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
     "2f027486b4": {
       "src": "on click 1 put \"one\" into my.innerHTML on click 3 put \"three\" into my.innerHTML on click 2 put \"two\" into my.innerHTML",
@@ -1046,16 +1059,6 @@
       "family": "on",
       "refused": "bn it th"
     },
-    "f8db6d2073": {
-      "src": "on click increment :x if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end catch e put e into me",
-      "family": "on",
-      "refused": "en *"
-    },
-    "352263a923": {
-      "src": "on click increment :x if :x is 1 throw \"bar\" otherwise put \"success\" into me end catch e put e into me then throw e",
-      "family": "on",
-      "refused": "en *"
-    },
     "3030e3cc43": {
       "src": "on click put \"foo\" into me then throw \"bar\" on exception(error) put error into me",
       "family": "on",
@@ -1071,20 +1074,11 @@
       "family": "on",
       "refused": "ja ko pl tr"
     },
-    "8c714e3b3d": {
-      "src": "on click increment :x finally if :x is 1 wait 1ms then throw \"bar\" otherwise put \"success\" into me end",
-      "family": "on",
-      "refused": "en *"
-    },
-    "3304ff1362": {
-      "src": "on click increment :x finally if :x is 1 throw \"bar\" otherwise put \"success\" into me end",
-      "family": "on",
-      "refused": "en *"
-    },
     "e856eb7927": {
       "src": "on click from #d1 or click from #d2 increment @count then put @count into me",
       "family": "on",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
     "7f192fcdec": {
       "src": "on intersection(intersecting) having threshold 0.1 if intersecting put \"seen\" into me end",
@@ -1099,7 +1093,8 @@
     "5fc5e421fe": {
       "src": "on click halt the event's bubbling",
       "family": "on",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "halt-modes: halt's `default` (also a command word) and `the event's bubbling|default`: the slot that keeps `call` out of `halt call f()` cannot tell `default` from a command without a halt-only reading (OPEN_ITEMS P56)"
     },
     "26e0df8d83": {
       "src": "when ($obj's x + $obj's y) changes put it into me",
@@ -1121,7 +1116,8 @@
     "a71fce2e79": {
       "src": "behavior MarkIt set @data-marked to 'yes' end",
       "family": "set",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "b839394853": {
       "src": "when my @data-x changes put it into me",
@@ -1157,17 +1153,20 @@
     "62d0c2127b": {
       "src": "pick characters 0 to 3 from \"hello\"",
       "family": "pick",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "a7ccab261d": {
       "src": "beep! me",
       "family": "beep!",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
     "c55282fb85": {
       "src": "beep! :count, result",
       "family": "beep!",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
     "ff19750b7a": {
       "src": "ask \"Your name?\" then put it into #name",
@@ -1190,7 +1189,8 @@
     "451b518289": {
       "src": "scroll down by 200",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "eeb30e2d38": {
       "src": "for item in <li/> add .done to item end",
@@ -1232,7 +1232,8 @@
     "4d698f4f27": {
       "src": "scroll to #section scroll to the top of me scroll down by 200",
       "family": "scroll",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "2c6143ba00": {
       "src": "wait 1s wait 500ms then remove .loading wait for htmx:afterSwap",
@@ -1292,12 +1293,14 @@
     "32bbb02918": {
       "src": "pick items 0 to 2 from :list pick characters 0 to 3 from \"hello\"",
       "family": "pick",
-      "refused": "pl"
+      "refused": "pl",
+      "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
     },
     "69b9b4ca2b": {
       "src": "beep! me beep! :count, result",
       "family": "beep!",
-      "refused": "en *"
+      "refused": "en *",
+      "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
     "36bd970993": {
       "src": "answer \"Saved\" answer \"Delete it?\" with \"yes\" or \"no\"",

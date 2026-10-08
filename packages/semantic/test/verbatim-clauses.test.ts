@@ -110,12 +110,20 @@ describe('what is not a clause stays unread, and the translation is refused', ()
     // A command the reader does not read is no clause of the one before it
     // (a `set` with nothing to set, which upstream does not read either).
     ['on click log 1 set to 5', /set to 5/],
-    // An else word ends the branch.
-    ['on click increment :x if :x is 1 throw "bar" otherwise put "ok" into me end', /otherwise/],
     // Glued to the command, the run splits a value the pattern read part of.
     ["on click halt the event's bubbling", /bubbling/],
   ])('%s', (code, lost) => {
     expect(() => translate(code, 'en', 'en')).toThrow(lost);
+  });
+
+  it('an else word ends the branch, as no clause', () => {
+    expect(
+      translate(
+        'on click increment :x if :x is 1 throw "bar" otherwise put "ok" into me end',
+        'en',
+        'en'
+      )
+    ).toBe('on click increment :x then if :x is 1 throw "bar" else put "ok" into me end');
   });
 
   it("what follows a block's head is its body", () => {

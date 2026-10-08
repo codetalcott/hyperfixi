@@ -234,6 +234,33 @@ export function getPutPatternsEn(): LanguagePattern[] {
         manner: { default: { type: 'literal', value: 'at start of' } },
       },
     },
+    // Upstream also reads `at the start of` / `at the end of`. Below the two
+    // above, so English is still written without `the`.
+    ...(['start', 'end'] as const).map(
+      (edge): LanguagePattern => ({
+        id: `put-en-at-the-${edge}`,
+        language: 'en',
+        command: 'put',
+        priority: 94,
+        template: {
+          format: `put {patient} at the ${edge} of {destination}`,
+          tokens: [
+            { type: 'literal', value: 'put' },
+            { type: 'role', role: 'patient' },
+            { type: 'literal', value: 'at' },
+            { type: 'literal', value: 'the' },
+            { type: 'literal', value: edge },
+            { type: 'literal', value: 'of' },
+            { type: 'role', role: 'destination' },
+          ],
+        },
+        extraction: {
+          patient: { position: 1 },
+          destination: { position: 6 },
+          manner: { default: { type: 'literal', value: `at ${edge} of` } },
+        },
+      })
+    ),
   ];
 }
 

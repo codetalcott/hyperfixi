@@ -589,6 +589,115 @@ export const LOUD: readonly LoudFamily[] = [
       "a possessive with nothing after it (`halt the event's then …`), which the engine " +
       'reads as the bare reference; one upstream test source',
     matches: source => /'s(?=\s+(then|end)\b|\s*$)/.test(source),
+  }, // M1 step 3 (2026-10-07): the English refusals left after the value and
+  // command-form fixes, each family with why it is not carried.
+  {
+    name: 'scroll-by',
+    reason:
+      "scroll's relative form (`scroll #box down by 200px`) names a direction, which no " +
+      "language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)",
+    matches: (_source, _types, plain) =>
+      someNode(plain, node => node.type === 'scrollCommand' && 'by' in node),
+  },
+  {
+    name: 'beep',
+    reason:
+      "`beep!`, upstream's debugging command, has no schema: its form in each language is an " +
+      'owner vocabulary decision (the M2 sheet)',
+    matches: (_source, types) => types.has('beepCommand'),
+  },
+  {
+    name: 'halt-modes',
+    reason:
+      "halt's `default` (also a command word) and `the event's bubbling|default`: the slot " +
+      'that keeps `call` out of `halt call f()` cannot tell `default` from a command without ' +
+      'a halt-only reading (OPEN_ITEMS P56)',
+    matches: source => /\bhalt\s+(default\b|the event's\s+(bubbling|default)\b)/.test(source),
+  },
+  {
+    name: 'collection-expressions',
+    reason:
+      "upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an " +
+      "expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)",
+    // Not `if no <q/> in … where …`, which English reads (its foreign lanes are
+    // the value-words family).
+    matches: (source, types) => types.has('collectionExpression') && !/\bif\s+no\s+</.test(source),
+  },
+  {
+    name: 'pseudo-class-query',
+    reason:
+      'a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local ' +
+      'variable; a tokenizer item, rare in pages',
+    matches: source => /<:[\w-]+\/>/.test(source),
+  },
+  {
+    name: 'closest-forms',
+    reason:
+      "`closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of " +
+      '`closest` besides a query, rare in pages',
+    matches: (_source, _types, plain) =>
+      someNode(
+        plain,
+        node =>
+          node.type === 'closestExpr' &&
+          // Not `closest @foo to #d1`, which English reads (value-words).
+          (node.parentSearch === true ||
+            (String(node.css ?? '').startsWith('[') &&
+              (node.to as { type?: unknown } | undefined)?.type === 'implicitMeTarget'))
+      ),
+  },
+  {
+    name: 'possessive-after-query',
+    reason:
+      "a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; " +
+      'the `of` form (`the textContent of the next <div/>`) is carried',
+    matches: (source, types) => types.has('relativePositionalExpression') && /\/>'s\b/.test(source),
+  },
+  {
+    name: 'colon-event-arguments',
+    reason: 'a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages',
+    matches: (source, types) => types.has('namedArgumentList') && /\w:\w+\(/.test(source),
+  },
+  {
+    name: 'call-chain-command',
+    reason: 'a call chain as a command (`bar().foo()`), rare in pages',
+    matches: (source, types) => types.has('pseudoCommand') && /\)\.\w+\(/.test(source),
+  },
+  {
+    name: 'rare-heads',
+    reason:
+      'handler heads rare in pages: a quoted event name (`on "a-b"`), a filter after ' +
+      'parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a ' +
+      'parenthesized feature (`(on click …)`)',
+    matches: source =>
+      /^\s*on\s+"|^\s*on\s+[\w:.-]+\([^)]*\)\[|\bon\s+\w+\s+\d+\s+and\s+on\b|\bfrom\s+\S+\s+or\s+\w+\s+from\b|^\s*\(on\s/.test(
+        source
+      ),
+  },
+  {
+    name: 'rare-values',
+    reason:
+      'value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma ' +
+      'list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference ' +
+      '(`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses ' +
+      '(`(w)px`), `set {…} on <obj>`',
+    matches: source =>
+      /\\\[|<[^<>]*,[^<>]*\/>|\b(my|its|your)\s+\[@|\bset\s+(it|me|you)\s+@|\b[a-z]\w*\.[a-z]\w*\s+of\b|\)(px|em|rem|%)|\bset\s+\{[^}]*\}\s+on\b/i.test(
+        source
+      ),
+  },
+  {
+    name: 'rare-commands',
+    reason:
+      'commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, ' +
+      'an `if` whose body is empty (`if false end`), a behavior holding a bare command, two ' +
+      'behaviors with no `end` between',
+    matches: (source, types, plain) =>
+      (types.has('measureCommand') && /\bmeasure\s+\w+\s*,/.test(source)) ||
+      someNode(plain, node => node.type === 'pickCommand' && node.variant === 'range') ||
+      /\bif\s+\S+\s+end\b/.test(source) ||
+      (types.has('behaviorFeature') && types.has('setFeature')) ||
+      (source.match(/\bbehavior\b/g)?.length ?? 0) > 1,
   },
 ];
 
@@ -622,13 +731,6 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
       '87250fbc5e',
       '54a65f4602',
     ],
-  },
-  {
-    name: 'else-word',
-    reason:
-      "an empty then-branch's `otherwise` (de `andernfalls`, …) is not read as `else` and " +
-      'stays a word in the condition',
-    ids: ['e60afa928a'],
   },
   {
     name: 'it-locative',

@@ -710,7 +710,10 @@ export const removeSchema: CommandSchema = {
       // core behavior pattern) parses instead of throwing.
       description: 'The class/attribute to remove, or the element to remove',
       required: true,
-      expectedTypes: ELEMENT_TARGET_TYPES,
+      // A literal too: upstream removes a value from a collection (`remove 3
+      // from :arr`) and a style block's properties (`remove {color} from me`,
+      // the brace literal fold).
+      expectedTypes: [...ELEMENT_TARGET_TYPES, 'literal'],
       svoPosition: 1,
       sovPosition: 2,
     },

@@ -24,6 +24,7 @@ import type {
   CompoundSemanticNode,
   EventHandlerSemanticNode,
   DefSemanticNode,
+  FeatureSemanticNode,
   FeatureAction,
   Diagnostic,
 } from '../types';
@@ -1602,6 +1603,7 @@ function featureBodyStart(
   language: string,
   blockEnd: number
 ): number {
+  if (action === 'init' && initImmediately(tokens, keywordIdx)) return keywordIdx + 2;
   if (action === 'live' || action === 'init') return keywordIdx + 1;
 
   if (keywordIdx > 0) {
@@ -1824,13 +1826,21 @@ function parseFeatureBlock(
   const base = sawClosingEnd ? 1 : 0.8;
   const confidence = confidences.length > 0 ? base * meanConfidence(confidences) : base;
   const source = featureSource(action, input, tokens, keywordIdx, bodyStart, language);
-  return createFeatureNode(
+  const node = createFeatureNode(
     action,
     children,
     name,
     meta(confidence),
     source ? new Map([['source', source]]) : undefined
   );
+  if (action !== 'init' || !initImmediately(tokens, keywordIdx)) return node;
+  const immediate: FeatureSemanticNode = { ...node, immediately: true };
+  return immediate;
+}
+
+/** `init immediately`: the word right after the keyword. */
+function initImmediately(tokens: readonly LanguageToken[], keywordIdx: number): boolean {
+  return tokens[keywordIdx + 1]?.value.toLowerCase() === 'immediately';
 }
 
 /**
