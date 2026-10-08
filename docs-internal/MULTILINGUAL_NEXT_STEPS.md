@@ -19,7 +19,7 @@ What the gates measure. Each claim carries its re-check command:
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
 | Command shapes (1,135 scripts × 24)     | 24,502 pass, 2,709 refused, 29 silent; en 1,074 / 61 / 0 (10-08)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
-| English left in renders: words / events / `me` case | corpus 18.9% / 0.0% / 8.9% of renders; command shapes 23.3% / 0.0% / 16.2% (10-08, after N2 and N9's `transition … from` and `… when`) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
+| English left in renders: words / events / `me` case | corpus 18.9% / 0.0% / 8.9% of renders; command shapes 23.3% / 0.0% / 16.2%. Words counted toward the target (kept English out), per language: corpus 11.8–19.0% (he 32.7%), shapes 17.1–23.8% (10-08) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
 | Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
@@ -113,17 +113,13 @@ without the sheet the floor is 13.3% / 19.4% (renders with a word the language h
 **Step 2 — no decision needed (N2): done 2026-10-08.** Native event names in he, hi, it, pl, qu, ru, th, uk
 and vi where the lexicon's own word reads back; the rest denylisted with reasons. Events now 0 in both halves.
 
-**Step 3 — owner vocabulary decisions, batched into one sheet (V1, N1).** The render lexicon is locked
-to the i18n dictionary, so each decision is a dictionary change:
-
-- the loop words: `repeat` in `for`/`while`/`until`/`until event`, `forever`, `with index`;
-- the event modifiers: `once`, `debounced at`, `throttled at`, `from elsewhere`;
-- `I match`, `do not throw`, `go back`, `go to url`, `tell … to`, `def`;
-- the expression words: `the X of Y`, `as T`, positional `in`, `on <target>`. These cross semantic's
-  "commands only" scope line.
-
-The sheet, `multilingual/VOCABULARY_SHEET.md` (2026-10-08), gives a word and a recommendation per row.
-It goes to the owner before step 2's work, which lands while the owner answers: the words target waits on it.
+**Step 3 — owner vocabulary decisions (V1, N1): decided 2026-10-08, all as recommended.** The sheet,
+`multilingual/VOCABULARY_SHEET.md`: A1–A10 render words the dictionaries already have (loop heads,
+`I match`, `the X of Y`, `as T`, positional `in`, `between`, `first`, `do not throw`, `catch`,
+`element`); B1–B7 add a word per language (`def`, `finally`, `go back`, `elsewhere`, `with index`,
+`start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
+counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
+rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after.
 
 **Step 4 — design:**
 
@@ -229,26 +225,26 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    - Recorded keep-or-match calls: `as Boolean`, and `[@name="value"]` as a value.
 5. **The render lexicon is locked to the i18n dictionary**, so changing a rendered word is an owner
    vocabulary decision.
-   - Taken so far: `null` as a loanword in 7 languages, hi `no`, qu `and`, tl/tr `includes`, and
-     counted loops in each language's own words (PR 131).
+   - Taken so far: `null` as a loanword in 7 languages, hi `no`, qu `and`, tl/tr `includes`,
+     counted loops in each language's own words (PR 131), and the M2 sheet (2026-10-08).
    - Don't register words into profiles "for hygiene".
    - Never `_`-join a multi-word keyword.
 6. **English-kept surfaces, by design:**
-   - conversion words and type names;
+   - type names (`as Int`: the conversion word gets the language's own, sheet A4);
    - fetch response types;
    - `set … on`;
-   - push/replace `url`;
-   - query-scope `in`;
+   - `url` (push/replace, and `go to url`: sheet C2), `dom` and `view transition` (C3);
+   - `debounced at` / `throttled at` (C1);
    - `equal to`;
    - `using view transition`;
    - brace and bracket interiors (array literals, attribute selectors, indexes), and a call's arguments;
    - a property name its language's reader cannot bring back (`my children`, `my style[…]`);
    - a clause no pattern models, and upstream's `on` head forms, kept as written (M1);
-   - scope words (`element x`, `global x`), and `catch` / `finally` until they have words;
+   - `global x` until it has a word (sheet C4; `element x`, `catch`, `finally` get theirs: A9, A10, B2);
    - unsafe event names;
    - `js … end` bodies (never translated).
 
-   M2 Step 3 may revisit some of these; until then they stand.
+   The M2 sheet revised these (2026-10-08): query-scope `in` and conversion words get words (A4, A5).
 7. **The corpus writer is semantic-only.**
    - A row it cannot render keeps its English, is counted, and is reported.
    - A markup `_=` body is translated only if its English re-render preserves its content.

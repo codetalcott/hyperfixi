@@ -1,5 +1,9 @@
 # Vocabulary sheet: the English left in translations (M2 step 3)
 
+**Decided 2026-10-08 by the owner: all as recommended.** A and B rows are to be implemented; C1–C3 are
+kept English (`KEPT_ENGLISH`, `packages/testing-framework/src/multilingual/english-leaks.ts`), and C4 is
+deferred (kept English for now, still counted against the target).
+
 > For the owner, 2026-10-08. Each row is one decision. The words target in M2's exit
 > (`MULTILINGUAL_NEXT_STEPS.md`, M2 step 1) waits on it: without these words, 13.3% of corpus
 > renders and 19.4% of command-shape renders hold English the language has no word for. Answer per
