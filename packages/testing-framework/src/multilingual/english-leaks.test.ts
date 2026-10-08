@@ -15,6 +15,7 @@ import {
   findingKey,
   initLeakScanner,
   leakBaselineFrom,
+  leakRatesByLanguage,
   type LeakFinding,
   type LeakResults,
   type LeakScanner,
@@ -252,5 +253,52 @@ describe('english-leaks baseline', () => {
     ]);
     const noRender = diffLeakBaseline(results({ es: null }), baseline);
     expect(noRender).toEqual([{ id: 'row', language: 'es', added: [], gone: ['match', 'repeat'] }]);
+  });
+});
+
+describe('M2 exit targets', () => {
+  const f = (kind: LeakFinding['kind'], word = 'x'): LeakFinding => ({
+    kind,
+    word,
+    context: 'plain',
+    hasWord: false,
+  });
+  /** 20 renders per language: `n` of them with each listed kind, the rest clean. */
+  const rows = (perLanguage: Record<string, LeakFinding['kind'][] | 'none'>): LeakResults => {
+    const out: LeakResults = new Map();
+    for (let i = 0; i < 20; i++) {
+      const byLanguage = new Map<string, LeakFinding[] | null>();
+      for (const [language, kinds] of Object.entries(perLanguage)) {
+        byLanguage.set(language, kinds === 'none' ? null : i < kinds.length ? [f(kinds[i])] : []);
+      }
+      out.set(`row${i}`, byLanguage);
+    }
+    return out;
+  };
+
+  it('holds each language to the target on its own, by share of renders', () => {
+    const rates = leakRatesByLanguage(rows({ es: ['word'], de: ['word', 'word'] }), 'corpus');
+    expect(rates.get('es')).toMatchObject({ renders: 20, met: { word: true } });
+    expect(rates.get('es')!.rate.word).toBeCloseTo(0.05);
+    expect(rates.get('de')!.met.word).toBe(false);
+    // The command-shape half allows twice as many.
+    expect(leakRatesByLanguage(rows({ de: ['word', 'word'] }), 'shapes').get('de')!.met.word).toBe(
+      true
+    );
+  });
+
+  it('allows no event and no pronoun case, and skips a lane with no render', () => {
+    const rates = leakRatesByLanguage(rows({ ru: ['event'], pl: ['case'], he: 'none' }), 'shapes');
+    expect(rates.get('ru')!.met).toEqual({ word: true, event: false, case: true });
+    expect(rates.get('pl')!.met).toEqual({ word: true, event: true, case: false });
+    expect(rates.has('he')).toBe(false);
+  });
+
+  it('counts a render once per kind, however many findings it holds', () => {
+    const results: LeakResults = new Map([
+      ['a', new Map([['es', [f('word', 'in'), f('word', 'of')]]])],
+      ['b', new Map([['es', []]])],
+    ]);
+    expect(leakRatesByLanguage(results, 'corpus').get('es')!.rate.word).toBe(0.5);
   });
 });
