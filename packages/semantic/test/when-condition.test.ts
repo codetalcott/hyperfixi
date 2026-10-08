@@ -63,7 +63,9 @@ describe('the schemas', () => {
     for (const action of COMMANDS) {
       const role = getSchema(action)!.roles.find(r => r.role === 'condition')!;
       expect(role.markerOverride?.[language], action).toBe(when?.primary);
-      expect([...(role.markerVariants?.[language] ?? [])], action).toEqual(when?.alternatives ?? []);
+      expect([...(role.markerVariants?.[language] ?? [])], action).toEqual(
+        when?.alternatives ?? []
+      );
     }
   });
 });
