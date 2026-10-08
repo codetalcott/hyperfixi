@@ -9,13 +9,14 @@ import { tryGetProfile } from '../registry';
 /**
  * Give each of `language`'s hand-crafted `command` patterns the schema's
  * optional `when <condition>` (whenConditionRole in command-schemas.ts), as
- * set's dispatcher gives its own a trailing scope. A hand-crafted pattern
- * outranks the generated one, so without the group de read `zeigen ich mit
- * opacity` and left `wenn es passt .foo` unread. Built by the generator's own
- * buildRoleToken, so it reads the marker the generated pattern does, last, where
- * that pattern places it. A verb-final language's patterns are kept as they are:
- * there the condition comes first, where no hand-crafted pattern can begin, and
- * the generated one reads it (measured the same either way).
+ * set's dispatcher gives its own a trailing scope; builders.ts applies it. A
+ * hand-crafted pattern outranks the generated one, so without the group de read
+ * `zeigen ich mit opacity` and left `wenn es passt .foo` unread. Built by the
+ * generator's own buildRoleToken, so it reads the marker the generated pattern
+ * does, last, where that pattern places it. A verb-final language's patterns are
+ * kept as they are: there the condition comes first, where no hand-crafted
+ * pattern can begin, and the generated one reads it (measured the same either
+ * way).
  */
 export function withWhenCondition(
   command: ActionType,

@@ -30,6 +30,7 @@ import { getTriggerPatternsForLanguage } from './trigger';
 import { getSendPatternsForLanguage } from './send';
 import { getPickPatternsForLanguage } from './pick';
 import { getViewTransitionPatterns } from './view-transition';
+import { withWhenCondition } from './when-condition';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';
@@ -61,6 +62,17 @@ function getViewTransitionPatternsForLanguage(language: string): LanguagePattern
 }
 
 /**
+ * A command's hand-crafted patterns, given the schema's trailing `when
+ * <condition>` (patterns/when-condition.ts). Applied here, not in the command
+ * files: a language module imports those, and the role token comes from the
+ * generator, which only core may hold (test/language-module-reach.test.ts).
+ */
+const withCondition =
+  (command: ActionType, load: PatternLoader): PatternLoader =>
+  language =>
+    withWhenCondition(command, language, load(language));
+
+/**
  * Registry of all pattern loaders.
  * This replaces individual push() calls with a unified registry approach.
  * Order matters: hand-crafted patterns should come before generated patterns.
@@ -73,10 +85,10 @@ const PATTERN_LOADERS: PatternLoader[] = [
   getEventHandlerPatternsForLanguage,
 
   // Multilingual command patterns
-  getAddPatternsForLanguage,
-  getRemovePatternsForLanguage,
-  getShowPatternsForLanguage,
-  getHidePatternsForLanguage,
+  withCondition('add', getAddPatternsForLanguage),
+  withCondition('remove', getRemovePatternsForLanguage),
+  withCondition('show', getShowPatternsForLanguage),
+  withCondition('hide', getHidePatternsForLanguage),
   getSetPatternsForLanguage,
   getGetPatternsForLanguage,
   getIncrementPatternsForLanguage,

@@ -137,11 +137,11 @@ describe('english-leaks scanner', () => {
 
   it('gives each word its context: clause, bracket, call, property, plain', () => {
     const clause = findings(
-      'on click add .rey to .bar when it matches .doh',
-      'al clic agregar .rey a .bar when it matches .doh',
+      'on click take .foo from .div for #d3',
+      'al clic tomar .foo de .div for #d3',
       'es'
     );
-    expect(clause.map(f => f.context)).toEqual(['clause', 'clause', 'clause']);
+    expect(clause.map(f => `${f.word}/${f.context}`)).toEqual(['for/clause']);
     const bracket = findings(
       'on keyup[key is "Escape"] add .x',
       'al keyup[key is "Escape"] agregar .x',

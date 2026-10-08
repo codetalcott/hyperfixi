@@ -54,7 +54,7 @@ export interface RoleSpec {
   readonly markerOverride?: Record<string, string>;
   /**
    * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
-   * own, so the slot needs no marker to be safe. Three kinds:
+   * own, so the slot needs no marker to be safe. The kinds:
    *
    * - `'time'` — a unit-suffixed time literal (`2s`, `500ms`, `1.5s`).
    * - `'reference'` — a CLOSED-CLASS context reference (`me`, `it`, `you` and
@@ -66,6 +66,12 @@ export interface RoleSpec {
    *   match before the slot can capture anything, so the slot is guarded by
    *   construction: nothing else in the grammar can land in it, and its absence
    *   says only that the caller didn't ask for the flag.
+   * - `'clause'` — an expression behind its own marker word (`when <condition>`
+   *   on add/remove/hide/show). The marker must match before the slot captures
+   *   anything, so, as with a keyword phrase, an absent clause says only that
+   *   none was written. Without it the slot cost every add/remove/hide/show
+   *   parse a quarter of its confidence (hi `click पर .a को जोड़ें`: 1.0 →
+   *   0.67). The confidence model is the only reader of this kind.
    *
    * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
    * role counts toward a pattern's score only when captured, so an uncaptured
@@ -87,7 +93,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object';
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object' | 'clause';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -593,6 +599,7 @@ function whenConditionRole(svoPosition: number): RoleSpec {
     description: 'Which targets it applies to (`when it matches .x`); the rest get the opposite',
     required: false,
     expectedTypes: ['expression'],
+    valueShape: 'clause',
     svoPosition,
     sovPosition: 0,
     markerOverride: {

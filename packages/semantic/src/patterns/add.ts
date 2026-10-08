@@ -9,7 +9,6 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
-import { withWhenCondition } from './when-condition';
 
 export function getAddPatternsBn(): LanguagePattern[] {
   return [
@@ -560,5 +559,5 @@ export function getAddPatternsZh(): LanguagePattern[] {
  * Get add patterns for a specific language.
  */
 export function getAddPatternsForLanguage(language: string): LanguagePattern[] {
-  return withWhenCondition('add', language, handcrafted('add', language) ?? []);
+  return handcrafted('add', language) ?? [];
 }

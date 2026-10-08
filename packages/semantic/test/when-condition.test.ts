@@ -5,7 +5,7 @@
  * pass get the class, the rest lose it (hide/show alike). Semantic's schemas had
  * no role for it, so since M1 every translation kept the clause in English (es
  * `agregar .x a .item when it matches .y`) and a bare command was refused, even
- * in English. Three pieces, each pinned here:
+ * in English. Four pieces, each pinned here:
  *
  * 1. A `condition` role on the four commands, marked with each language's own
  *    word for `when` (its profile's `keywords.when`): es `cuando ello coincide
@@ -17,9 +17,11 @@
  * 3. A hand-crafted add/remove/hide/show pattern reads the condition too: it
  *    outranks the generated one, and de read `zeigen ich mit opacity` and left
  *    `wenn es passt .y` unread.
+ * 4. An absent condition costs a parse no confidence (valueShape `'clause'`):
+ *    the slot is behind its marker, so its absence is no evidence.
  */
 import { describe, it, expect } from 'vitest';
-import { getSupportedLanguages, parse, translate } from '../src/index';
+import { getSupportedLanguages, parse, parseWithConfidence, translate } from '../src/index';
 import { getSchema } from '../src/generators/command-schemas';
 import { getProfile } from '../src/registry';
 import type { CommandSemanticNode } from '../src/types';
@@ -63,6 +65,19 @@ describe('the schemas', () => {
       expect(role.markerOverride?.[language], action).toBe(when?.primary);
       expect([...(role.markerVariants?.[language] ?? [])], action).toEqual(when?.alternatives ?? []);
     }
+  });
+});
+
+describe('a command without a condition loses no confidence for the slot', () => {
+  // The slot is behind its marker (valueShape 'clause'): counted against every
+  // parse, it took a quarter off each add/remove/hide/show without one.
+  it.each([
+    ['add .x to .item', 'en'],
+    ['remove .x from .item', 'en'],
+    ['agregar .x a .item', 'es'],
+    ['.item に .x を 追加', 'ja'],
+  ])('%s (%s)', (source, language) => {
+    expect(parseWithConfidence(source, language).confidence).toBe(1);
   });
 });
 

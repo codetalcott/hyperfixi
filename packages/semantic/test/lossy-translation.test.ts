@@ -230,25 +230,25 @@ describe('the read-back sees a lost role', () => {
 });
 
 describe('the read-back keeps every clause kept as written', () => {
-  const kept = parse('on click add .a to .b when it matches .c', 'en');
-  const bare = parse('on click add .a to .b', 'en');
+  const kept = parse('on click take .a from .b when it matches .c', 'en');
+  const bare = parse('on click take .a from .b', 'en');
 
   it('a clause the read-back lacks is lost', () => {
     expect(findTranslationLoss('x', kept, 'out', 'en', () => bare)).toEqual({
       kind: 'read-back',
-      lost: ['-clause add: when it matches .c'],
+      lost: ['-clause take: when it matches .c'],
     });
   });
 
   it('a clause only the read-back has is a part the source never read that way', () => {
-    expect(clauseDifference(bare, kept)).toEqual(['+clause add: when it matches .c']);
+    expect(clauseDifference(bare, kept)).toEqual(['+clause take: when it matches .c']);
     expect(clauseDifference(kept, kept)).toEqual([]);
   });
 
   it('a clause read onto another command is lost from its own', () => {
     const moved = parse('on click toggle .a when it matches .c', 'en');
     expect(clauseDifference(kept, moved)).toEqual([
-      '-clause add: when it matches .c',
+      '-clause take: when it matches .c',
       '+clause toggle: when it matches .c',
     ]);
   });

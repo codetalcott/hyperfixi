@@ -3,6 +3,7 @@
  * command and written back as written (M1 phase 3, group 3): `add .foo to .bar
  * when it matches .doh` lost its `when` filter, and `toggle between .a and .b`
  * its pair. Each case was refused by the read-back before; none is a loss now.
+ * (`when <condition>` has its own role since M2: when-condition.test.ts.)
  */
 import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
@@ -20,8 +21,6 @@ const clauseOf = (code: string, language = 'en'): string | undefined => {
 
 describe('a clause the pattern does not model is kept as written', () => {
   it.each([
-    ['on click add .rey to .bar when it matches .doh', 'when it matches .doh'],
-    ['on click add .foo to #d2 when asyncCheck()', 'when asyncCheck()'],
     ['on click add .foo .bar', '.bar'],
     ['on click toggle between .foo and .bar', '.foo and .bar'],
     ['on click take .foo from .div for #d3', 'for #d3'],
@@ -34,7 +33,7 @@ describe('a clause the pattern does not model is kept as written', () => {
 
   it.each(['ja', 'ar', 'es', 'ko', 'de', 'zh', 'tr', 'pl'])('round-trips through %s', language => {
     for (const code of [
-      'on click add .rey to .bar when it matches .doh',
+      'on click render #tmpl into #target',
       'on click take .foo from .div for #d3',
       'on click add .foo .bar',
       'on click log me, my',
