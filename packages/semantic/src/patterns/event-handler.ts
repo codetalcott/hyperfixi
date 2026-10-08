@@ -45,7 +45,6 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     터치종료: 'touchend',
     터치취소: 'touchcancel',
     // M2 N2: the lexicon's word, read back by hand (on X, on X from #b, send X).
-    재설정: 'reset',
     더블클릭: 'dblclick',
   },
   // Japanese event names → English
@@ -773,6 +772,9 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
   ]),
   ms: new Set(['every']),
   tl: new Set(['every']),
+  // ko's `reset` event word is its reset command's (`#form 을 재설정`): read as
+  // an event, it took the second command of `reset #a reset <form/>`.
+  ko: new Set(['reset']),
 };
 
 /**
