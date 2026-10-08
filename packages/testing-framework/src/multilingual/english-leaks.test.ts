@@ -256,6 +256,37 @@ describe('english-leaks baseline', () => {
   });
 });
 
+describe('English a recorded decision keeps', () => {
+  it('marks a kept phrase and a kept context, and nothing else', () => {
+    const debounced = findings(
+      'on input debounced at 300ms log 1',
+      'al entrada debounced at 300ms registrar 1',
+      'es'
+    );
+    expect(debounced.map(f => `${f.word}:${f.kept ?? false}`)).toEqual([
+      'debounced:true',
+      'at:true',
+    ]);
+    // `start` is counted; the API name after it is kept.
+    const view = findings(
+      'on click start view transition add .a end',
+      'al clic start view transition agregar .a fin',
+      'es'
+    );
+    expect(view.map(f => `${f.word}:${f.kept ?? false}`)).toEqual([
+      'start:false',
+      'view:true',
+      'transition:true',
+    ]);
+    const bracket = findings(
+      'on keyup[key is "Escape"] add .x',
+      'al keyup[key is "Escape"] agregar .x',
+      'es'
+    );
+    expect(bracket.map(f => f.kept)).toEqual([true]);
+  });
+});
+
 describe('M2 exit targets', () => {
   const f = (kind: LeakFinding['kind'], word = 'x'): LeakFinding => ({
     kind,
@@ -292,6 +323,14 @@ describe('M2 exit targets', () => {
     expect(rates.get('ru')!.met).toEqual({ word: true, event: false, case: true });
     expect(rates.get('pl')!.met).toEqual({ word: true, event: true, case: false });
     expect(rates.has('he')).toBe(false);
+  });
+
+  it('does not count a kept finding', () => {
+    const results: LeakResults = new Map([
+      ['a', new Map([['es', [{ ...f('word', 'url'), kept: true as const }]]])],
+      ['b', new Map([['es', [f('word', 'in')]]])],
+    ]);
+    expect(leakRatesByLanguage(results, 'corpus').get('es')!.rate.word).toBe(0.5);
   });
 
   it('counts a render once per kind, however many findings it holds', () => {
