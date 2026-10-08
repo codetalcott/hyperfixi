@@ -123,8 +123,8 @@ to the i18n dictionary, so each decision is a dictionary change:
 - the expression words: `the X of Y`, `as T`, positional `in`, `on <target>`. These cross semantic's
   "commands only" scope line.
 
-The sheet proposes a word for each and a recommendation. It goes to the owner before step 2's work, which
-lands while the owner answers: it is the words target's critical path.
+The sheet, `multilingual/VOCABULARY_SHEET.md` (2026-10-08), gives a word and a recommendation per row.
+It goes to the owner before step 2's work, which lands while the owner answers: the words target waits on it.
 
 **Step 4 — design:**
 
