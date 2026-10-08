@@ -66,8 +66,39 @@ describe('a for-loop writes its for-word, apart from the for command', () => {
 
 describe('a fused handler gives way to the loop head that reads the body', () => {
   it.each(['it', 'pl', 'ms', 'th', 'tl', 'vi'])('%s', language => {
-    const rendered = translate('on mousedown repeat until event mouseup increment #c end', 'en', language);
-    const handler = parse(rendered, language) as unknown as { body: Array<{ action?: string }> };
-    expect(handler.body.map(c => c.action)).toEqual(['repeat', 'increment']);
+    const rendered = translate(
+      'on mousedown repeat until event mouseup increment #c end',
+      'en',
+      language
+    );
+    const actions = (node: unknown): string[] => {
+      const n = node as { action?: string; body?: unknown[] };
+      return [...(n.action ? [n.action] : []), ...(n.body ?? []).flatMap(actions)];
+    };
+    expect(actions(parse(rendered, language))).toEqual(['on', 'repeat', 'increment']);
+  });
+});
+
+describe("a loop body's `at end of` is not the loop's end", () => {
+  // The fused handler's clause scan ended at any end word, so the noun of
+  // `put x at end of me` (ms `tamat`, th `จบ`, he `סוף`) cut the body: counted
+  // loops were refused there before the native verb, for-loops after it.
+  it.each(['he', 'ms', 'th'])('%s', language => {
+    for (const source of [
+      'on click repeat 3 times put x at end of me end',
+      'on click repeat for x in [1, 2, 3] put x at end of me end',
+    ]) {
+      expect(translate(translate(source, 'en', language), language, 'en')).toBe(source);
+    }
+  });
+});
+
+describe('a loop verb is never an event', () => {
+  // hi's bare handler head read `दोहराएं x में items …` as `on repeat`.
+  it('hi', () => {
+    const source = 'repeat for x in items if x is empty break end';
+    expect(translate(translate(source, 'en', 'hi'), 'hi', 'en')).toBe(
+      translate(source, 'en', 'en')
+    );
   });
 });
