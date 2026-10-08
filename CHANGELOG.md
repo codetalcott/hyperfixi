@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-10-07
+
+More of what upstream reads now translates, and what does not is refused instead of lost. On the
+command-shape gate, round trips that came back silently different fell from 174 in 4.2.0 to 31,
+none of them in English; 24,386 of 27,240 now read as their source does. English-to-English refuses
+61 of the 1,135 scripts, down from 82, and each of the 61 now belongs to a named family with the
+reason it is not carried yet.
+
+### Added
+
+- **`@lokascript/semantic` reads `on every <event>` and `init immediately`.** Both lost their head
+  word, so the handler or the block was refused. `EventHandlerSemanticNode.eventModifiers.every` and
+  `FeatureSemanticNode.immediately` carry them. English writes them as upstream does; every other
+  language writes the English word first (`every al clic …`), as it already did for `on first`.
+- **`@hyperfixi/testing-framework`: two new value-matrix axes.** A `branch` position is an `if` with
+  no `then` before a command that names no target (`if 2 is in arr add .a end`). The matrix's `if`
+  cells always wrote `then` and a `put` with its target, so an SOV reader always saw where the
+  condition ended, and none of them could fail the way Turkish did (see Fixed). The 610 pairs that
+  `branch` refuses are listed in the baseline. A twelfth operand kind is a CSS length (`100px`,
+  `50%`). The matrix now has 5,396 cells.
+
+### Changed
+
+- **`@lokascript/semantic` refuses core's swap strategies that upstream has no spelling for.**
+  `translate()` gains a loss kind, `'core-only'` (`TranslationLossKind`). Upstream and the engine
+  read `swap morph of #t with it` as an exchange with a property named `morph`, so core's morph
+  strategies, `none`, and a strategy with no content are now refused in every language. Before,
+  English wrote them as they were read. Core's `swap into #t with x` and `swap over #t with x` are its
+  innerHTML and outerHTML, and they are now written as `put x into #t` and `put x into #t's
+outerHTML`. Before, English wrote `swap into of #t with x`, which runs as an exchange.
+- **`@lokascript/semantic` writes a word in the target language only where that language's reader
+  brings it back.** A property name is localized only through the reader's property table or as a
+  keyword. So `add .foo to my children` keeps `children` in Spanish (`mi children`), where it wrote
+  `mi hijos` and read back a property named `hijos`. A call's arguments are written as written
+  (`call sprayInto(me)` wrote `sprayInto(yo)`). So is every bracket group inside an expression:
+  `2 is in [true, n]` wrote `[verdadero, n]` in Spanish, a variable no reader de-localizes. And so is a
+  type name after `am a`. These spots now show English words in foreign renders where they used to
+  show words that did not come back.
+- **`@lokascript/semantic`: `innerHTML` and `outerHTML` are no longer English keywords.** A swap's
+  strategy slot still reads them, as words.
+
+### Fixed
+
+- **`@lokascript/semantic`: Turkish keeps an `if` condition whole before a command with no target.**
+  `if 2 is in arr add .a end` read back as `if 2 add .a to is in arr end`, with any operand, and so
+  did `is a Number` and `<` after a possessive. Turkish case markers may be dropped, and the marker
+  test counted a marker word anywhere in the value: `in` (also the operator), `a` (also the article),
+  `nin` (also the possessive). The marker must now be the last token of its group.
+- **`@lokascript/semantic`: a number with a CSS unit is one value.** Upstream reads `100px`,
+  `1.5rem` and `50%` as one string. Every tokenizer split them, so `set my *width to 100px` and
+  `transition height to 100px` were refused in all 24 languages. A `%` that an operand touches
+  (`5%2`) or that is spaced still reads as the operator.
+- **`@lokascript/semantic`: more English forms that were refused in every language now read.**
+  `set innerHTML of #d1 to …` and `increment innerHTML of #d1`; a single-quoted string that holds a
+  `"` (`set #t to '<div _="…">'`), which was written back in double quotes and so closed early;
+  `fetch … don't throw`; `put … at the start of` / `at the end of`, where the `end` closed the
+  handler; `remove 3 from :arr` and `remove {color} from me`; `otherwise` as `else`. In a translation
+  of an empty then-branch's `otherwise`, 13 languages wrote their own word for it inside the
+  condition and read it back there, silently.
+- **`@lokascript/semantic`: a handler's `catch` and `finally` bodies are written in upstream's
+  spelling.** `catch e prepend …` kept core's `prepend`, which the engine rejects.
+
 ## [4.2.0] - 2026-10-07
 
 A translation that would lose part of a script is now refused instead of returned short.
