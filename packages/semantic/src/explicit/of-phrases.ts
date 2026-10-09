@@ -15,39 +15,18 @@ export const OF_PHRASE =
   /(^|[^\w$.#@*:'-])(?:the\s+)?((?:[@*]?[A-Za-z][\w-]*\s+of\s+(?:the\s+)?)+)([#.][A-Za-z_-][\w-]*)(?![\w-]|[.[(][\w$])/g;
 
 /**
- * Words an `of` phrase can start with that name no property: positions
- * (`the first of .items`), quantities, and the places `scroll` and `put`
- * name (`the top of #t`, `at the end of #list`).
+ * The positional operators, which the engine reads before `of` as a position,
+ * not a property: `the first of .items` is the first `.items`, where `.items's
+ * first` is a property named `first`. Any other word there is a property
+ * (`the top of #a`, `the end of #a`); `put … at the end of` and `scroll to
+ * the top of` are their commands' clauses, which never reach a value.
  */
-export const NOT_A_PROPERTY: ReadonlySet<string> = new Set([
-  'first',
-  'last',
-  'next',
-  'previous',
-  'random',
-  'closest',
-  'some',
-  'no',
-  'any',
-  'all',
-  'each',
-  'every',
-  'one',
-  'none',
-  'start',
-  'end',
-  'top',
-  'bottom',
-  'left',
-  'right',
-  'middle',
-  'center',
-]);
+const POSITIONAL_OPERATORS: ReadonlySet<string> = new Set(['first', 'last', 'random']);
 
 /** The links of an `of` phrase's chain, outermost first (`innerHTML`, `parentNode`). */
 export function ofPhraseProperties(chain: string): string[] | undefined {
   const properties = chain.split(/\s+of\s+(?:the\s+)?/).filter(Boolean);
-  return properties.some(p => NOT_A_PROPERTY.has(p.toLowerCase())) ? undefined : properties;
+  return properties.some(p => POSITIONAL_OPERATORS.has(p.toLowerCase())) ? undefined : properties;
 }
 
 /** Does a conversion follow `end`? It converts an `of` phrase's owner, a `'s` chain's property. */

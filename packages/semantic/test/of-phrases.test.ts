@@ -79,10 +79,35 @@ describe('an attribute before the of-word reads back', () => {
   });
 });
 
-describe('what stays as written', () => {
-  it('a quoted string', () => {
-    expect(translate('on click put "the value of #a" into #b', 'en', 'es')).toContain(
-      '"the value of #a"'
+// A quoted string is written as written, and the phrase beside it in the
+// language's own words. (Rewritten inside the string, the render would not
+// read back, and the verified render would write both phrases in English.)
+describe('a quoted string stays as written', () => {
+  it.each(LANGUAGES)('%s', language => {
+    const rendered = translate(
+      'on click put "the value of #a" + (the value of #b) into #c',
+      'en',
+      language
+    );
+    expect(rendered).toContain('"the value of #a"');
+    expect(words(rendered.replace('"the value of #a"', ''))).not.toContain('of');
+  });
+});
+
+// The engine reads `the first of .items` as a position (its first match), and
+// `.items's first` as a property named `first`.
+describe('a position is not a property', () => {
+  it('the readings are not equated', () => {
+    expect(ofPhrasesAsPossessives('put the first of .items into #out')).toBe(
+      'put the first of .items into #out'
+    );
+    expect(ofPhrasesAsPossessives('put the top of #a into #out')).toBe("put #a's top into #out");
+  });
+
+  it.each(LANGUAGES)('%s: the translation keeps the position', language => {
+    const source = 'on click put (the last of .items) into #out';
+    expect(reading(translate(translate(source, 'en', language), language, 'en'))).toBe(
+      reading(translate(source, 'en', 'en'))
     );
   });
 });
