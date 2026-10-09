@@ -142,6 +142,7 @@ export const thaiDictionary: Dictionary = {
   },
 
   values: {
+    element: 'องค์ประกอบ',
     me: 'ฉัน',
     my: 'ของฉัน',
     it: 'มัน',

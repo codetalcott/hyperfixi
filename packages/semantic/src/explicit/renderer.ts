@@ -101,6 +101,7 @@ import {
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
 import { grammarWord } from '../parser/utils/grammar-words';
+import { elementScopeWord } from '../element-scope';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import {
   localizeValueInterior,
@@ -1632,6 +1633,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a reference value in the target language.
    */
   private renderReference(value: ReferenceValue, language: string): string {
+    // An element-scoped name, in the language's own `element` (M2 sheet A10):
+    // es `elemento x`. `the element's x` and `element's x` are the same name
+    // on both engines.
+    const scoped = /^(?:the\s+)?element(?:'s)?\s+([A-Za-z_]\w*)$/.exec(value.value);
+    if (scoped && language !== 'en') return `${elementScopeWord(language)} ${scoped[1]}`;
     const profile = tryGetProfile(language);
     if (!profile?.references) {
       return value.value; // Fall back to English reference

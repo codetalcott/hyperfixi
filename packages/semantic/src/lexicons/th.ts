@@ -60,6 +60,7 @@ export const thaiLexicon: LanguageLexicon = {
     times: { primary: 'ครั้ง' },
   },
   values: {
+    element: { primary: 'องค์ประกอบ' },
     body: { primary: 'บอดี้' },
     event: { primary: 'เหตุการณ์' },
     it: { primary: 'มัน' },

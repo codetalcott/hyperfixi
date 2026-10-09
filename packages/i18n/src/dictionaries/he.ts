@@ -91,6 +91,7 @@ export const he: Dictionary = {
   },
 
   values: {
+    element: 'אלמנט',
     body: 'גוף',
     event: 'אירוע',
     it: 'זה',

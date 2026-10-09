@@ -3,11 +3,13 @@
  * `local x`, `dom x`) is one name, as upstream reads it (P45, M1 phase 3 group
  * 4). The tokenizer fuses it into one token in every language, the reader
  * takes it as a reference, as it does `$x`, and every language writes it as
- * written. Before, the scope word stood alone and its command was dropped.
+ * written, `element` in its own word (M2 sheet A10, element-scope.test.ts).
+ * Before, the scope word stood alone and its command was dropped.
  */
 import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
 import { parse, tokenize, translate } from '../src/index';
+import { ELEMENT_SCOPE } from '../src/element-scope';
 
 const roundTrip = (code: string, language: string): string =>
   translate(translate(code, 'en', language), language, 'en');
@@ -44,18 +46,21 @@ describe('a name with its scope is one value', () => {
   });
 
   it.each(['es', 'ja', 'zh', 'ar', 'ko', 'tr', 'ru', 'hi', 'de'])(
-    'every language writes it as written (%s)',
+    'every language writes it as written, element in its own word (%s)',
     language => {
       for (const code of [
         'on click set element x to 10 then put element x into me',
-        "on click set the element's x to 10 then set @out to the element's x",
         'on click set global x to 10 then set @out to x',
       ]) {
         expect(translate(code, 'en', language)).toContain(
-          code.includes('global') ? 'global x' : 'element'
+          code.includes('global') ? 'global x' : `${ELEMENT_SCOPE[language]} x`
         );
         expect(roundTrip(code, language)).toBe(code);
       }
+      // `the element's x` is `element x` on both engines, and reads back so.
+      expect(
+        roundTrip("on click set the element's x to 10 then set @out to the element's x", language)
+      ).toBe('on click set element x to 10 then set @out to element x');
     }
   );
 });
