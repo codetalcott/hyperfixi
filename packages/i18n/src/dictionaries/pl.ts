@@ -199,6 +199,10 @@ export const pl: Dictionary = {
   },
 
   expressions: {
+    back: 'wstecz',
+    elsewhere: 'zewnątrz',
+    index: 'indeks',
+    start: 'rozpocznij',
     characters: 'znaki',
     inclusive: 'włącznie',
     exclusive: 'wyłącznie',

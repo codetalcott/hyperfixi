@@ -30,7 +30,9 @@ import { getTriggerPatternsForLanguage } from './trigger';
 import { getSendPatternsForLanguage } from './send';
 import { getPickPatternsForLanguage } from './pick';
 import { getViewTransitionPatterns } from './view-transition';
+import { getGoBackPatterns } from './go-back';
 import { withWhenCondition } from './when-condition';
+import { grammarWord } from '../parser/utils/grammar-words';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';
@@ -41,7 +43,7 @@ import { getSchema } from '../generators/command-schemas';
 import type { ActionType, ExtractionRule } from '../types';
 
 // Import registry functions for lazy loading support
-import { tryGetProfile } from '../registry';
+import { tryGetProfile, tryGetTokenizer } from '../registry';
 
 // =============================================================================
 // Pattern Loader Registry
@@ -54,11 +56,35 @@ import { tryGetProfile } from '../registry';
 type PatternLoader = (language: string) => LanguagePattern[];
 
 /**
- * The view-transition head: the same words in every language, so core builds it
- * for each registered language instead of each language module carrying a copy.
+ * The view-transition head, with the language's own `start` (grammar-words.ts):
+ * core builds it for each registered language instead of each language module
+ * carrying a copy.
  */
 function getViewTransitionPatternsForLanguage(language: string): LanguagePattern[] {
-  return tryGetProfile(language) ? getViewTransitionPatterns(language) : [];
+  const profile = tryGetProfile(language);
+  if (!profile) return [];
+  if (language === 'en') return getViewTransitionPatterns(language);
+  return getViewTransitionPatterns(language, {
+    words: grammarWord(language, 'start').split(' '),
+    verbFinal: profile.wordOrder === 'SOV',
+  });
+}
+
+/**
+ * `go back` in the language's own words (go-back.ts): its `go` verb, and its
+ * `back` as the tokens its tokenizer writes it in (ko `뒤로` is `뒤` + `로`).
+ */
+function getGoBackPatternsForLanguage(language: string): LanguagePattern[] {
+  const profile = tryGetProfile(language);
+  const go = profile?.keywords?.go;
+  const tokenizer = tryGetTokenizer(language);
+  if (language === 'en' || !go || !tokenizer) return [];
+  return getGoBackPatterns(language, {
+    go: go.primary,
+    goAlternatives: go.alternatives ?? [],
+    back: tokenizer.tokenize(grammarWord(language, 'back')).tokens.map(t => t.value),
+    verbFinal: profile.wordOrder === 'SOV',
+  });
 }
 
 /**
@@ -102,6 +128,7 @@ const PATTERN_LOADERS: PatternLoader[] = [
   getSendPatternsForLanguage,
   getPickPatternsForLanguage,
   getViewTransitionPatternsForLanguage,
+  getGoBackPatternsForLanguage,
 
   // Grammar-transformed patterns (for SOV/VSO grammar output)
   getGrammarTransformedPatternsForLanguage,

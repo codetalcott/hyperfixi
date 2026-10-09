@@ -196,6 +196,10 @@ export const fr: Dictionary = {
   },
 
   expressions: {
+    back: 'arrière',
+    elsewhere: 'ailleurs',
+    index: 'indice',
+    start: 'démarrer',
     characters: 'caractères',
     inclusive: 'inclusif',
     exclusive: 'exclusif',

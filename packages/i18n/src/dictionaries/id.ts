@@ -205,6 +205,10 @@ export const id: Dictionary = {
   },
 
   expressions: {
+    back: 'mundur',
+    elsewhere: 'luaran',
+    index: 'indeks',
+    start: 'memulai',
     characters: 'karakter',
     inclusive: 'inklusif',
     exclusive: 'eksklusif',

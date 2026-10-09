@@ -197,6 +197,10 @@ export const ja: Dictionary = {
   },
 
   expressions: {
+    back: 'バック',
+    elsewhere: '外側',
+    index: 'インデックス',
+    start: '開始',
     characters: '文字',
     inclusive: '含む',
     exclusive: '除く',

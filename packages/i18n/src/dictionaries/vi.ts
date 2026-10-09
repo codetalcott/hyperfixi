@@ -188,6 +188,10 @@ export const vi: Dictionary = {
   },
 
   expressions: {
+    back: 'lùi',
+    elsewhere: 'ngoài',
+    index: 'chỉ số',
+    start: 'bắt đầu',
     random: 'ngẫu nhiên',
     characters: 'ký tự',
     inclusive: 'bao gồm',

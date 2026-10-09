@@ -197,6 +197,10 @@ export const pt: Dictionary = {
   },
 
   expressions: {
+    back: 'atrás',
+    elsewhere: 'exterior',
+    index: 'índice',
+    start: 'começar',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

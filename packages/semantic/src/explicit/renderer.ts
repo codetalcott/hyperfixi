@@ -897,18 +897,33 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         const pinnedKey = pinnedLiteral(rule);
         if (pinnedKey === undefined) continue;
         const actual = node.roles.get(role as SemanticRole);
+        // The value as the pattern would produce it: a literal, or an
+        // expression where the rule says so (`go back`).
         const actualKey =
-          actual?.type === 'literal' ? String(actual.value).trim().toLowerCase() : undefined;
+          actual?.type === (rule.valueIsExpression ? 'expression' : 'literal')
+            ? String(
+                actual.type === 'expression'
+                  ? (actual as { raw?: unknown }).raw
+                  : (actual as { value?: unknown }).value
+              )
+                .trim()
+                .toLowerCase()
+            : undefined;
 
         if (actualKey === pinnedKey) {
           // The pinned form is the whole reason this value exists — prefer it
           // decisively over the neutral pattern, whatever the parse priorities say.
           score += 60;
-        } else if (actualKey === undefined || pinnedValues.get(role)?.has(actualKey)) {
+        } else if (
+          actualKey === undefined ||
+          rule.valueIsExpression ||
+          pinnedValues.get(role)?.has(actualKey)
+        ) {
           // Either the node has no such value (so this pattern would invent one:
           // a plain `put X into Y` must never render as `put X at end of Y`), or it
-          // has a DIFFERENT value that the pattern set treats as an alternative.
-          // Both are wrong surfaces; disqualify.
+          // has a DIFFERENT value that the pattern set treats as an alternative,
+          // or one other than the word an expression pattern spells (`go x` is
+          // never `go back`). All are wrong surfaces; disqualify.
           score -= 200;
         }
         // Otherwise the node's value is not one of the pinned alternatives, so this
@@ -1043,7 +1058,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     const tail: string[] = [];
     if (em.from) {
-      const noun = this.valueToNaturalString(em.from, language);
+      // `from elsewhere`: the language's own word (grammar-words.ts), which the
+      // parser reads against its `from` marker.
+      const elsewhere = em.from.type === 'expression' && em.from.raw === 'elsewhere';
+      const noun = elsewhere
+        ? grammarWord(language, 'elsewhere')
+        : this.valueToNaturalString(em.from, language);
       const marker = tryGetProfile(language)?.roleMarkers?.source;
       const word = marker?.primary ?? 'from';
       if (marker?.position === 'after') {

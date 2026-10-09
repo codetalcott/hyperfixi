@@ -215,6 +215,10 @@ export const sw: Dictionary = {
   },
 
   expressions: {
+    back: 'kurudi',
+    elsewhere: 'kwingineko',
+    index: 'faharasa',
+    start: 'zindua',
     characters: 'herufi',
     first: 'kwanza',
     // 'mwisho' is the END keyword (block terminator) — the tokenizer's keyword

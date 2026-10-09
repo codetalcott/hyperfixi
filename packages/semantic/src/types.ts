@@ -693,6 +693,11 @@ export interface ExtractionRule {
   readonly default?: SemanticValue;
   /** Static value extraction (for event handler wrapped commands) */
   readonly value?: string;
+  /**
+   * The static `value` is an expression, as the English parse types the word
+   * (`go back`'s destination), not a literal.
+   */
+  readonly valueIsExpression?: true;
   /** Extract value from a pattern role by name */
   readonly fromRole?: string;
 }

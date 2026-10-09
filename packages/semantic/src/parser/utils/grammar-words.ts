@@ -60,7 +60,7 @@ export function grammarWordForms(
   split: (word: string) => string[]
 ): string[][] {
   const native = GRAMMAR_WORDS[language]?.[key];
-  const forms = [[key]];
+  const forms: string[][] = [[key]];
   if (native && native !== key) forms.push(split(native).map(w => w.toLowerCase()));
   return forms;
 }

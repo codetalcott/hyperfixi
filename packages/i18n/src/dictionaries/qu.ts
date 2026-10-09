@@ -216,6 +216,10 @@ export const qu: Dictionary = {
   },
 
   expressions: {
+    back: 'kutiy',
+    elsewhere: 'hawa',
+    index: 'yupay',
+    start: 'qallay',
     // Pick unit word (arc 3): native-first per qu convention — `sanampa`
     // ("sign/letter", the standard term for alphabet characters) over a
     // loanword. Paired with the QUECHUA_EXTRAS entry in the semantic

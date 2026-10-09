@@ -56,7 +56,7 @@ import {
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
 import { NOT_THROW_BY_LANG } from './utils/not-throw';
-import { grammarWordForms } from './utils/grammar-words';
+import { GRAMMAR_WORDS, grammarWordForms } from './utils/grammar-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -975,7 +975,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // offset into the input holds).
     if (this.parseDepth === 0) {
       this.boundIdentifiers.clear();
-      input = blankComments(input);
+      input = this.readNativeGrammarWords(blankComments(input), language);
     }
     this.parseDepth++;
     this.coverageFrames.push([]);
@@ -6702,6 +6702,67 @@ export class SemanticParserImpl implements ISemanticParser {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Two of upstream's fixed words in the language's own (M2 sheet B3/B4,
+   * grammar-words.ts), read as English's: each is written as the English word
+   * before any stage sees it, where it sits against what anchors it.
+   *   - `elsewhere` against the language's `from` marker, on the side the
+   *     marker takes (es `de afuera`, ja `外側 から`);
+   *   - `back` against the language's `go` verb, after it or, in a verb-final
+   *     language, before it (es `ir atrás`, ja `バック 移動`).
+   * Every stage already reads English's words in every language: the
+   * handler's `from`, the SOV event strip, a floated phrase's reclaim, and
+   * go's patterns (`go-<lang>-back` takes the bare `ir back`).
+   */
+  private readNativeGrammarWords(input: string, language: string): string {
+    const words = GRAMMAR_WORDS[language];
+    const profile = tryGetProfile(language);
+    if (!words || !profile) return input;
+    const formOf = (w: string) => tokenizeInternal(w, language).tokens.map(t => t.value.toLowerCase());
+    // By the word's first token: a render spaces the tokens (ko `뒤 로`).
+    const present = (form: string[]) => !!form[0] && input.toLowerCase().includes(form[0]);
+    const rules: Array<{ english: string; form: string[]; anchored: (i: number, n: number) => boolean }> = [];
+    let tokens: LanguageToken[] | undefined;
+    const at = (i: number) => tokens![i];
+    const elsewhere = formOf(words.elsewhere);
+    const back = formOf(words.back);
+    const marker = profile.roleMarkers?.source;
+    if (marker && present(elsewhere)) {
+      const markers = new Set([marker.primary, ...(marker.alternatives ?? [])].map(m => m.toLowerCase()));
+      const isMarker = (t: LanguageToken | undefined) => !!t && markers.has(t.value.toLowerCase());
+      rules.push({
+        english: 'elsewhere',
+        form: elsewhere,
+        anchored: (i, n) => (marker.position === 'after' ? isMarker(at(i + n)) : isMarker(at(i - 1))),
+      });
+    }
+    const go = profile.keywords?.go;
+    if (go && present(back)) {
+      const verbs = new Set([go.primary, ...(go.alternatives ?? [])].map(v => v.toLowerCase()));
+      const isGo = (t: LanguageToken | undefined) =>
+        !!t && (t.normalized === 'go' || verbs.has(t.value.toLowerCase()));
+      rules.push({
+        english: 'back',
+        form: back,
+        anchored: (i, n) => (profile.wordOrder === 'SOV' ? isGo(at(i + n)) : isGo(at(i - 1))),
+      });
+    }
+    if (rules.length === 0) return input;
+    tokens = tokenizeInternal(input, language).tokens as LanguageToken[];
+    let out = input;
+    // From the end, so each replacement leaves the offsets before it.
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      for (const { english, form, anchored } of rules) {
+        const n = form.length;
+        if (!form.every((w, j) => tokens![i + j]?.value.toLowerCase() === w)) continue;
+        if (!anchored(i, n)) continue;
+        out = out.slice(0, tokens[i]!.position.start) + english + out.slice(tokens[i + n - 1]!.position.end);
+        break;
+      }
+    }
+    return out;
   }
 
   /**

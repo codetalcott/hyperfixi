@@ -206,6 +206,10 @@ export const zh: Dictionary = {
   },
 
   expressions: {
+    back: '后退',
+    elsewhere: '外部',
+    index: '索引',
+    start: '开始',
     characters: '字符',
     inclusive: '包含',
     exclusive: '排除',

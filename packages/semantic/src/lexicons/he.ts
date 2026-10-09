@@ -51,11 +51,15 @@ export const hebrewLexicon: LanguageLexicon = {
     your: { primary: 'שלך' },
   },
   expressions: {
+    back: { primary: 'אחורה' },
     characters: { primary: 'תווים' },
+    elsewhere: { primary: 'חוץ' },
     exclusive: { primary: 'בלעדי' },
     inclusive: { primary: 'כולל' },
+    index: { primary: 'אינדקס' },
     last: { primary: 'אחרון' },
     random: { primary: 'אקראי' },
+    start: { primary: 'יזום' },
   },
 };
 

@@ -212,6 +212,9 @@ export const malayDictionary: Dictionary = {
   },
 
   expressions: {
+    back: 'undur',
+    elsewhere: 'luar',
+    start: 'memulakan',
     characters: 'aksara',
     inclusive: 'inklusif',
     exclusive: 'eksklusif',

@@ -193,6 +193,10 @@ export const ar: Dictionary = {
   },
 
   expressions: {
+    back: 'خلفا',
+    elsewhere: 'الخارج',
+    index: 'مؤشر',
+    start: 'ابدأ',
     characters: 'حروف',
     inclusive: 'شامل',
     exclusive: 'حصري',

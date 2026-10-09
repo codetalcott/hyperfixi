@@ -206,6 +206,10 @@ export const de: Dictionary = {
   },
 
   expressions: {
+    back: 'zurück',
+    elsewhere: 'außerhalb',
+    index: 'index',
+    start: 'starte',
     characters: 'Zeichen',
     inclusive: 'inklusiv',
     exclusive: 'exklusiv',

@@ -4123,7 +4123,12 @@ export class PatternMatcher {
         }
       } else if (rule.value !== undefined) {
         // Static value extraction (e.g., action: { value: "toggle" })
-        captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
+        captured.set(
+          role as SemanticRole,
+          rule.valueIsExpression
+            ? { type: 'expression', raw: rule.value }
+            : { type: 'literal', value: rule.value }
+        );
       } else if (rule.default) {
         // Copied, never aliased (the rule's default object is shared across
         // parses), and tagged implicit: materialized from the default, not

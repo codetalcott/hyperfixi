@@ -220,6 +220,9 @@ export const tagalogDictionary: Dictionary = {
   },
 
   expressions: {
+    back: 'pabalik',
+    elsewhere: 'labas',
+    start: 'umpisahan',
     characters: 'karakter',
     inclusive: 'kasama',
     exclusive: 'bukod',
