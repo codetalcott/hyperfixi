@@ -1755,7 +1755,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * first of .items`). Before `as` the phrase converts its owner (`the value of
    * #price as Number` is `value of (#price as Number)`), which a property-first
    * rendering keeps and an owner-first one (`#priceの値 として Number`) would
-   * not, so there an owner-first language keeps the English. The verified
+   * not, so there an owner-first language keeps the English; so it does for a
+   * one-link phrase that is the whole value (`set @role of #x`), which it would
+   * read back as a property path where English reads an expression. The verified
    * render re-reads a translation that wrote one, and writes the English where
    * it does not read back (renderEnglishValueWords).
    */
@@ -1773,6 +1775,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         if (!rendered) return whole;
         const propertyFirst = !rendered.startsWith(owner);
         if (!propertyFirst && convertedAt(text, offset + whole.length)) return whole;
+        // One link that is the whole value, written possessive-first (ja
+        // `#xの@role`), reads back as a property path, where English read an
+        // expression: a role of another type. (A chain reads back an
+        // expression, `#d1's parentNode's innerHTML`.)
+        const wholeValue = offset === 0 && whole.length === text.trimEnd().length;
+        if (!propertyFirst && outer.length === 0 && wholeValue) return whole;
         if (propertyFirst) {
           for (const property of outer) rendered = link(createSelector(rendered), property);
         } else {

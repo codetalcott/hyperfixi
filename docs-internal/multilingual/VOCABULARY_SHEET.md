@@ -11,9 +11,10 @@ separate `for` command), A2 (#1432; its negation `I do not match`, #1435), A8 (#
 English's does, in every language, where the reader takes it; it keeps English's where it would read as
 something else: ko `로` is also a marker, th `เป็น` is also `is` before a type core does not have built
 in), A3 (2026-10-09; inside an expression, with an element owner, in the construction a top-level
-property path already used: es `valor de #price`, ja `#priceの値`; before `as`, which converts the
-owner, only where the property comes first; `toggle the *X of Y`, a kept clause, and an owner that is not
-an element, `the length of my value`, stay English). Open: A6, A9, A10, B1, B2, B7. The words of B3–B6,
+property path already used: es `valor de #price`, ja `#priceの値`; only where the property comes first
+before `as`, which converts the owner, and for a one-link phrase that is the whole value (`set @role of
+#x`, which ja would read back as a property path); `toggle the *X of Y`, a kept clause, and an owner that
+is not an element, `the length of my value`, stay English). Open: A6, A9, A10, B1, B2, B7. The words of B3–B6,
 A5 and A4 are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a
 test.
 

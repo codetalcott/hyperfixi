@@ -26,8 +26,6 @@ describe.each([
   'on click if the value of #a is "x" then log 1 end',
   // A chain, each link the next one's owner.
   'on click set the innerHTML of the parentNode of #d1 to "foo"',
-  // An attribute: the corpus's announce-screen-reader row.
-  'on click set @role of #sr-announce to "alert"',
 ])('%s', source => {
   it.each(LANGUAGES)('%s', language => {
     const rendered = translate(source, 'en', language);
@@ -36,6 +34,29 @@ describe.each([
     expect(reading(translate(rendered, language, 'en'))).toBe(
       reading(translate(source, 'en', 'en'))
     );
+  });
+});
+
+// An attribute as the whole value: the corpus's announce-screen-reader row.
+// English reads `@role of #sr-announce` as an expression. An owner-first
+// language would write it possessive-first (ja `#sr-announceの@role`), which
+// reads back as a property path, a role of another type, so there the
+// English stays.
+describe('an attribute of an element as the whole value', () => {
+  const source = 'on click set @role of #sr-announce to "alert"';
+  const destinationType = (code: string, language: string): string | undefined => {
+    const handler = parse(code, language) as unknown as {
+      body: Array<{ roles: Map<string, { type: string }> }>;
+    };
+    return handler.body[0]?.roles.get('destination')?.type;
+  };
+
+  it.each(LANGUAGES)('%s', language => {
+    const rendered = translate(source, 'en', language);
+    if (OWNER_FIRST.includes(language)) expect(words(rendered)).toContain('of');
+    else expect(words(rendered)).not.toContain('of');
+    expect(destinationType(rendered, language)).toBe(destinationType(source, 'en'));
+    expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
   });
 });
 
