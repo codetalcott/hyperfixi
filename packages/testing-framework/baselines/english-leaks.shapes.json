@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23638,
-  "leaky": 7327,
-  "findings": 11204,
+  "renders": 23672,
+  "leaky": 7221,
+  "findings": 10998,
   "kinds": {
     "word": {
-      "renders": 4349,
-      "findings": 7053
+      "renders": 4243,
+      "findings": 6847
     },
     "event": {
       "renders": 0,
@@ -99,7 +99,7 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "0bd96b548f": {
-      "of": "*"
+      "of": "qu tr"
     },
     "0c70d623f4": {
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -536,9 +536,6 @@
       "at of": "he",
       "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
-    "4eee0ddc5e": {
-      "of of the the": "ar bn de es fr he hi id ja ko ms pt qu sw th tl tr vi zh"
-    },
     "4f2c353324": {
       "from with": "*"
     },
@@ -965,7 +962,7 @@
       "on": "fr id ja ko ms qu sw th vi zh"
     },
     "845761d98f": {
-      "of of": "*"
+      "of of": "tr"
     },
     "847f3a46e3": {
       "def": "*"
@@ -1113,9 +1110,6 @@
     },
     "97c0779d08": {
       "case:me": "bn he hi tr"
-    },
-    "987ed0368c": {
-      "of": "*"
     },
     "991b086b82": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1612,7 +1606,7 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "e172bd73af": {
-      "of the": "*"
+      "of the": "qu tr"
     },
     "e1bdb23401": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1814,7 +1808,6 @@
     "239cba8b61": "pt",
     "23f2b7dd1b": "bn hi",
     "240935231f": "*",
-    "24725909ec": "ar de es fr he id it ms pl pt qu ru sw th tr uk",
     "280d64d892": "qu",
     "2965af0447": "*",
     "2c6143ba00": "*",
@@ -1852,7 +1845,6 @@
     "4d698f4f27": "*",
     "4d988893a9": "*",
     "4da1d2fe85": "vi",
-    "4eee0ddc5e": "it pl ru uk",
     "4fa7c5a9f9": "ar de fr he ja tr",
     "5251dc43ae": "uk",
     "540540cc5a": "bn es it ko pl ru th tl uk",
@@ -1890,7 +1882,7 @@
     "757da52773": "*",
     "7835c70e58": "bn hi ko qu",
     "786ba16f59": "*",
-    "7896ec4b23": "ar de es fr he id it ms pl pt ru sw th tr uk",
+    "7896ec4b23": "tr",
     "78bd8bf920": "*",
     "798cb5bb41": "vi",
     "7ab4a541ee": "ar de es fr he id it ms pl pt ru sw th tl tr uk vi zh",
