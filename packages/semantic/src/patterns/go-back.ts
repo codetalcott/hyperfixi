@@ -2,9 +2,9 @@
  * `go back` in the language's own words (M2, vocabulary sheet B3): the
  * language's `go` and its word for `back` (grammar-words.ts), es `ir atrás`, ja
  * `バック 移動`, without the destination marker (`ir a atrás` is "go to
- * backwards"). The parser reads the language's word as English's
- * (readNativeGrammarWords), and English's `back` after the marker is still read
- * by go's generated patterns, as before.
+ * backwards"). English's `back` after the marker is still read by go's
+ * generated patterns, as before; where a handler's body reads the language's
+ * word through them, normalizeCommandRoles (semantic-parser.ts) makes it `back`.
  *
  * The destination is an expression, as English types `go back`, so the
  * pattern pins it as one (`valueIsExpression`): the renderer writes this
@@ -39,17 +39,12 @@ export function getGoBackPatterns(language: string, native: NativeGoBack): Langu
       destination: { value: 'back', valueIsExpression: true },
     },
   });
+  // Above go's generated patterns (100).
   return [
-    // The language's word, which the renderer writes. Above go's generated
-    // patterns (100).
     pattern(
       `go-${language}-back`,
       native.back.map(value => ({ type: 'literal', value })),
       105
     ),
-    // English's word, as the parser reads the language's (readNativeGrammarWords
-    // writes it as `back`): the bare `ir back`, which go's generated patterns,
-    // needing their marker, refuse.
-    pattern(`go-${language}-back-en`, [{ type: 'literal', value: 'back' }], 104),
   ];
 }
