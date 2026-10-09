@@ -99,6 +99,7 @@ import {
   PROPERTY_NAME_LEXICON,
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
+import { notThrowWords } from '../parser/utils/not-throw';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior, outsideCallArguments } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
@@ -1091,10 +1092,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       this.spliceWaitAlternatives(node as CommandSemanticNode, parts, eventPart, language);
     }
 
-    // `fetch … do not throw`, in English in every language (the parser reads
-    // it after the whole command).
+    // `fetch … do not throw`, in the language's own words, after the whole
+    // command, where the parser reads it (not-throw.ts).
     if (node.action === 'fetch' && (node as CommandSemanticNode).doNotThrow) {
-      parts.push('do not throw');
+      parts.push(notThrowWords(language).join(' '));
     }
 
     // `smoothly`/`instantly` after a go or scroll: English in every language,
