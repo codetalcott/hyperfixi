@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23635,
-  "leaky": 7902,
-  "findings": 12338,
+  "renders": 23636,
+  "leaky": 7870,
+  "findings": 11974,
   "kinds": {
     "word": {
-      "renders": 5109,
-      "findings": 8211
+      "renders": 5066,
+      "findings": 7847
     },
     "event": {
       "renders": 0,
@@ -29,9 +29,9 @@
       "case:me": "bn he hi tr"
     },
     "019d591522": {
-      "case:me start transition using view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition using view": "id ja ko ms qu sw th vi zh",
-      "start using view": "fr"
+      "case:me transition using view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition using view": "id ja ko ms qu sw th vi zh",
+      "using view": "fr"
     },
     "0221e693a9": {
       "next": "he"
@@ -89,8 +89,8 @@
       "case:me case:me case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "0b202a7fa5": {
-      "start transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
-      "start view": "fr"
+      "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
+      "view": "fr"
     },
     "0b25d72177": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -138,9 +138,9 @@
       "as": "*"
     },
     "11dc9b2c51": {
-      "case:me start start transition transition view view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start start transition transition view view": "id ja ko ms qu sw th vi zh",
-      "start start view view": "fr"
+      "case:me transition transition view view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition transition view view": "id ja ko ms qu sw th vi zh",
+      "view view": "fr"
     },
     "11e96eeab6": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -169,7 +169,8 @@
       "as": "*"
     },
     "16cf73552a": {
-      "as first": "*"
+      "as": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
+      "as first": "he"
     },
     "16fb80c097": {
       "or": "ar de es fr he hi id ms pl pt qu ru sw tl uk vi"
@@ -430,9 +431,9 @@
       "case:me or": "he"
     },
     "3d08c1eb9c": {
-      "case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     },
     "3d10ae6c9b": {
       "null": "he"
@@ -522,8 +523,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "4a01505336": {
-      "start transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
-      "start view": "fr"
+      "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
+      "view": "fr"
     },
     "4aa203e138": {
       "empty is": "he"
@@ -570,8 +571,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "51dbb84d22": {
-      "start transition using view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
-      "start using view": "fr"
+      "transition using view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
+      "using view": "fr"
     },
     "520002c276": {
       "case:me def": "bn he hi tr",
@@ -605,9 +606,8 @@
       "as": "ar bn de es fr he hi id it ja ko ms pl pt ru sw th tl tr uk vi zh"
     },
     "5763f61aac": {
-      "at in index of": "he",
-      "case:me index": "ar bn de es hi it pl pt ru tr uk",
-      "index": "fr id ja ko ms qu sw th tl zh"
+      "at in of": "he",
+      "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "57cc2d6c8c": {
       "case:me": "ar de es hi it pl pt ru tl tr uk",
@@ -1025,9 +1025,9 @@
       "case:me": "ar es tl"
     },
     "880722ad07": {
-      "case:me case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     },
     "894814af9a": {
       "as": "fr id ja ko ms qu sw th vi zh",
@@ -1165,9 +1165,9 @@
       "def def": "*"
     },
     "9edb2416e1": {
-      "case:me case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     },
     "9f4cde0fe5": {
       "def": "*"
@@ -1218,7 +1218,7 @@
       "previous": "he"
     },
     "a68f0afa94": {
-      "back url": "ar bn de es fr he id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "url": "*"
     },
     "a6b880e963": {
       "case:me finally": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -1288,9 +1288,9 @@
       "def": "*"
     },
     "b0d0618a0f": {
-      "case:me case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     },
     "b19c6cad07": {
       "case:me": "ar bn de es he hi it pl pt ru tl uk"
@@ -1355,9 +1355,9 @@
       "characterData of": "fr id ja ko ms sw vi zh"
     },
     "bb60537d26": {
-      "case:me case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     },
     "bbf040ee1a": {
       "at of": "he",
@@ -1410,9 +1410,6 @@
     },
     "c237d4a678": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
-    },
-    "c3441236fb": {
-      "elsewhere": "*"
     },
     "c3d63e2c32": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1792,9 +1789,9 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "ff30aeb427": {
-      "case:me case:me case:me start transition view": "ar bn de es he hi it pl pt ru tl tr uk",
-      "start transition view": "id ja ko ms qu sw th vi zh",
-      "start view": "fr"
+      "case:me case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
+      "transition view": "id ja ko ms qu sw th vi zh",
+      "view": "fr"
     }
   },
   "unrendered": {
@@ -1934,7 +1931,6 @@
     "a0bcf49227": "*",
     "a3b6981b27": "*",
     "a5867275db": "de fr ko",
-    "a68f0afa94": "hi",
     "a71fce2e79": "*",
     "a76cd09b5c": "*",
     "a7ccab261d": "*",

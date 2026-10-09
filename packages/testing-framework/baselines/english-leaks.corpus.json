@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` (a nominative pronoun beside a marker). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 738,
-  "findings": 1183,
+  "leaky": 650,
+  "findings": 1046,
   "kinds": {
     "word": {
-      "renders": 481,
-      "findings": 796
+      "renders": 368,
+      "findings": 659
     },
     "event": {
       "renders": 0,
@@ -72,9 +72,6 @@
     "copy-to-clipboard": {
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
-    "dropdown-close-outside": {
-      "elsewhere": "*"
-    },
     "dropdown-toggle": {
       "next": "he"
     },
@@ -83,12 +80,11 @@
       "debounced": "tl"
     },
     "event-from-elsewhere": {
-      "case:me elsewhere": "ar bn de es he hi it pl pt ru tl tr uk",
-      "elsewhere": "fr id ja ko ms qu sw th vi zh"
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "event-once": {
-      "case:me first": "ar bn de es he hi it pl pt ru tl tr uk",
-      "first": "fr id ja ko ms qu sw th vi zh"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me first": "he"
     },
     "event-throttle": {
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
@@ -122,9 +118,6 @@
     },
     "form-submit-prevent": {
       "is": "he"
-    },
-    "go-back": {
-      "back": "*"
     },
     "go-url": {
       "url": "*"
@@ -213,12 +206,11 @@
       "next": "he"
     },
     "stagger-animation": {
-      "in index": "he",
-      "index": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "in": "he"
     },
     "swap-view-transition": {
-      "start transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
-      "start view": "fr"
+      "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
+      "view": "fr"
     },
     "tabs-aria": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
