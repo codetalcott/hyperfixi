@@ -7,11 +7,16 @@ deferred (kept English for now, still counted against the target).
 **Implemented:** A1 (#1431; for-loops keep the verb, es `repetir para x en`: a bare `para x en` is the
 separate `for` command), A2 (#1432; its negation `I do not match`, #1435), A8 (#1433), A7 and B3–B6
 (#1434), A5 (#1436; where a language's `in` would read as a marker the command wants, es `obtener
-<input/> en yo`, the translation keeps English's), A4 (2026-10-09; the word stands before the type, as
+<input/> en yo`, the translation keeps English's), A4 (#1437; the word stands before the type, as
 English's does, in every language, where the reader takes it; it keeps English's where it would read as
 something else: ko `로` is also a marker, th `เป็น` is also `is` before a type core does not have built
-in). Open: A3, A6, A9, A10, B1, B2, B7. The words of B3–B6, A5 and A4 are in
-`packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a test.
+in), A3 (2026-10-09; inside an expression, with an element owner, in the construction a top-level
+property path already used: es `valor de #price`, ja `#priceの値`; only where the property comes first
+before `as`, which converts the owner, and for a one-link phrase that is the whole value (`set @role of
+#x`, which ja would read back as a property path); `toggle the *X of Y`, a kept clause, and an owner that
+is not an element, `the length of my value`, stay English). Open: A6, A9, A10, B1, B2, B7. The words of B3–B6,
+A5 and A4 are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a
+test.
 
 **Words changed from the appendix while implementing.** Each proposed word below was already another word
 of its language (a keyword or a role marker), or the tokenizer split it into one; the table has the word

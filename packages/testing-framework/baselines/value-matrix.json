@@ -2,7 +2,7 @@
   "description": "Value matrix (src/multilingual/value-matrix.ts): every failing (cell, lane) pair, per cell. A cell is `<position>|<expression>`; a lane is `en-rt` (semantic English round trip, on upstream), `eng` (English on @hyperfixi/engine), `<lang>/up` (the adapter, on upstream) or `<lang>/eng` (the adapter, on @hyperfixi/engine); `*up` and `*eng` stand for all 23 of each. Shrink-only: regenerate with tools/regen-value-matrix-baseline.ts.",
   "cells": 5396,
   "pairs": 258864,
-  "failing": 616,
+  "failing": 432,
   "accepted": 6,
   "entries": {
     "branch|#a's textContent": {
@@ -30,7 +30,7 @@
       "family": "translation"
     },
     "branch|the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "increment|#a.textContent": {
@@ -56,15 +56,15 @@
       "family": "translation"
     },
     "branch|1 < textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 < the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 < the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 < #a.textContent": {
@@ -96,15 +96,15 @@
       "family": "translation"
     },
     "branch|6 is textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is #a.textContent": {
@@ -124,11 +124,11 @@
       "family": "translation"
     },
     "branch|\"xab6\" contains textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|\"xab6\" contains the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|\"xab6\" contains @title of #a": {
@@ -160,15 +160,15 @@
       "family": "translation"
     },
     "branch|[1, 2, 6] contains textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] contains the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] contains the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] contains #a.textContent": {
@@ -200,15 +200,15 @@
       "family": "translation"
     },
     "branch|6 is equal to textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is equal to the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is equal to the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|6 is equal to #a.textContent": {
@@ -256,15 +256,15 @@
       "family": "translation"
     },
     "branch|1 is greater than or equal to textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 is greater than or equal to the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 is greater than or equal to the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|1 is greater than or equal to #a.textContent": {
@@ -292,11 +292,11 @@
       "family": "translation"
     },
     "branch|\"xab6\" includes textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|\"xab6\" includes the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|\"xab6\" includes @title of #a": {
@@ -328,15 +328,15 @@
       "family": "translation"
     },
     "branch|[1, 2, 6] includes textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] includes the textContent of #a": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] includes the length of the children of #w": {
-      "lanes": "bn/up bn/eng hi/up hi/eng ja/up ja/eng ko/up ko/eng qu/up qu/eng tr/up tr/eng",
+      "lanes": "qu/up qu/eng tr/up tr/eng",
       "family": "translation"
     },
     "branch|[1, 2, 6] includes #a.textContent": {

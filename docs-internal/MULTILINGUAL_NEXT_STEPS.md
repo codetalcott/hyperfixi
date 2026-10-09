@@ -119,9 +119,8 @@ and vi where the lexicon's own word reads back; the rest denylisted with reasons
 `element`); B1–B7 add a word per language (`def`, `finally`, `go back`, `elsewhere`, `with index`,
 `start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
 counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
-rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1, A2, A4, A5,
-A7, A8, B3–B6 (the sheet lists the PRs and the words that changed); next A3 (values), then the shapes
-rows.
+rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1–A5, A7, A8,
+B3–B6 (the sheet lists the PRs and the words that changed); next the shapes rows.
 
 **Step 4 — design:**
 

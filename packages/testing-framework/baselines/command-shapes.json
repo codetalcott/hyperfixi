@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24515,
-  "refused": 2700,
+  "pass": 24549,
+  "refused": 2666,
   "silent": 25,
   "entries": {
     "6f60177037": {
@@ -175,7 +175,7 @@
     "7896ec4b23": {
       "src": "on click put 'foo' into #div2's @bar",
       "family": "put",
-      "refused": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
+      "refused": "qu tr"
     },
     "6959984db6": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the start of me",
@@ -382,20 +382,10 @@
       "family": "set",
       "refused": "it pl ru uk"
     },
-    "4eee0ddc5e": {
-      "src": "on click set the innerHTML of the parentNode of #d1 to \"foo\"",
-      "family": "set",
-      "refused": "it pl ru uk"
-    },
     "094982a419": {
       "src": "on click set .divs.innerHTML to \"foo\"",
       "family": "set",
       "refused": "it pl ru uk"
-    },
-    "24725909ec": {
-      "src": "on click set #div2's @bar to 'foo'",
-      "family": "set",
-      "refused": "ar de es fr he id it ms pl pt qu ru sw th tr uk"
     },
     "c839f2f99f": {
       "src": "on click set {bar: 2, baz: 3} on obj",

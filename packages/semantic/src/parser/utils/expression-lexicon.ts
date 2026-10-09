@@ -1237,12 +1237,13 @@ export function ofChainEnd(
 ): number | undefined {
   const first = tokens[start];
   const marker = tokens[start + 1];
-  if (!first || !marker || !isBareWordHead(first) || !isOfPossessiveMarker(profile, marker)) {
+  if (!first || !marker || !isOfPossessiveMarker(profile, marker)) return undefined;
+  // The first link may also be an attribute or a style, the outermost
+  // property of an element (es `@role de #sr-announce`, M2 sheet A3).
+  if (!isPropertyHeadCandidate(first, languageCode) && !SIGIL_PROPERTY.test(first.value)) {
     return undefined;
   }
-  if (!isPropertyHeadCandidate(first, languageCode)) return undefined;
-  if (tokens[start + 2]?.kind === 'selector') return start + 2;
-  let k = start;
+  let k = start + 2;
   while (
     tokens[k] !== undefined &&
     tokens[k + 1] !== undefined &&
@@ -1251,8 +1252,11 @@ export function ofChainEnd(
   ) {
     k += 2;
   }
-  return k > start + 2 && tokens[k]?.kind === 'selector' ? k : undefined;
+  return tokens[k]?.kind === 'selector' ? k : undefined;
 }
+
+/** An attribute or a style reference (`@role`, `*display`). */
+const SIGIL_PROPERTY = /^[@*][A-Za-z_-][\w-]*$/;
 
 /** Control words and the copula, which are structure and never a value (see isStructureKeyword). */
 const STRUCTURE_WORDS: ReadonlySet<string> = new Set([
