@@ -117,7 +117,7 @@ describe('the VALUE side still localizes OUTSIDE a brace group', () => {
 
   it('de localizes an interior expression that is not inside braces', () => {
     expect(localize('(closest <form/> as FormData)', 'de')).toBe(
-      '(nächstgelegene <form/> as FormData)'
+      '(nächstgelegene <form/> als FormData)'
     );
   });
 });

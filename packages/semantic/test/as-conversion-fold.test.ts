@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest';
 import { parse, translate } from '../src/index';
 import { parseSemantic, render } from '../src/index';
 import type { CommandSemanticNode } from '../src/types';
+import { conversionAsWord } from '../src/parser/utils/grammar-words';
 
 const LANGUAGES = [
   'ar',
@@ -106,15 +107,17 @@ describe("fetch's response-type role is not stolen by the fold", () => {
 });
 
 describe('the conversion round-trips in every language', () => {
-  // The corpus row this fix exists for. The conversion word itself stays
-  // English — no profile has an `as` lexicon entry — so what has to work is
-  // that a foreign surface carrying the English `as JSON` re-parses as one
-  // value rather than stranding two tokens.
+  // The corpus row this fix exists for. The type name stays English, and the
+  // `as` before it is the language's own (M2 sheet A4; English's in he, which
+  // has none yet), so what has to work is that the foreign surface re-parses
+  // as one value rather than stranding two tokens.
   const SOURCE = 'set ^user to attrs.data as JSON';
 
   it.each(LANGUAGES)('%s', language => {
     const rendered = translate(SOURCE, 'en', language);
-    expect(rendered, `${language} dropped the conversion`).toContain('as JSON');
+    expect(rendered, `${language} dropped the conversion`).toContain(
+      `${conversionAsWord(language)} JSON`
+    );
     const node = parse(rendered, language) as CommandSemanticNode | null;
     expect(node, `${language}: ${rendered} did not re-parse`).not.toBeNull();
     expect(render(node!, 'en'), `${language}: ${rendered}`).toBe(SOURCE);
