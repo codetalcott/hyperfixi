@@ -706,6 +706,9 @@ function isPropertyHeadCandidate(token: LanguageToken, languageCode: string): bo
   // A surface the lexicon knows is a property is definitive, whatever its kind
   // (vi `giá trị` tokenizes as one keyword, not an identifier).
   if (translatePropertyName(languageCode, token.value) !== token.value) return true;
+  // A connective never is: id `saya bukan cocok .x` (I do not match .x) read
+  // as `my bukan`, its `not` taken for a property of `me`.
+  if (translateConnective(languageCode, token.value) !== token.value) return false;
   // Otherwise a keyword carries a structural sense — a command verb, connective
   // or marker (ms `tetapkan` = `set`) — and is never a property name.
   return token.kind === 'identifier';
@@ -772,6 +775,10 @@ interface AmbiguousSenseRule {
       `not` and `false`, and `false` never takes an operand (`2 kanqa mana 6`,
       2 is not 6; `mana flag`, not flag). */
   beforeOperand?: string;
+  /** Emitted when the NEXT token is a comparison word with an operand on
+      its left (`matches`): qu `noqa mana tupan .x`, `I do not match .x`, which
+      a translation writes `me not matches .x` (value-lexicon.ts). */
+  beforeComparison?: string;
   /** Emitted when none of the above applies, where the word has no reading
       of its own to fall through to: sw `tupu` is `empty` after a copula and
       `null` anywhere else in a value (its tokenizer reads it as `empty`). */
@@ -873,7 +880,7 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   },
   bn: { আছে: { afterSubject: 'exists', beforeClassRef: 'has' }, আছি: HAS },
   qu: {
-    mana: { beforeOperand: 'not' },
+    mana: { beforeOperand: 'not', beforeComparison: 'not' },
     chusaq: { afterCopula: 'empty' },
     kachkan: HAS,
     kachkani: HAS,
@@ -1011,6 +1018,13 @@ function resolveAmbiguousSense(
     endWordIsValue({ prev: token, beforePrev: prev, next: afterNext }, languageCode);
   if (rule.beforeOperand && (startsOperand(next) || nextEndWordOperand)) {
     return rule.beforeOperand;
+  }
+  if (
+    rule.beforeComparison &&
+    next?.kind === 'keyword' &&
+    COMPARISON_AFTER_OPERAND.has((next.normalized ?? '').toLowerCase())
+  ) {
+    return rule.beforeComparison;
   }
   if (rule.beforeSelector && next?.kind === 'selector') return rule.beforeSelector;
   // Before a class, `has`: `exists` takes no operand, so tl `#a may .x` is
@@ -1858,5 +1872,8 @@ export function joinExpressionTokens(
     );
   }
 
-  return out.trim();
+  // A translation writes `X does not match Y` as the language's `X not matches
+  // Y` (es `yo no coincide .x`, value-lexicon.ts): English's phrase, between
+  // two operands.
+  return out.trim().replace(/(\S) not matches (?=\S)/g, '$1 does not match ');
 }
