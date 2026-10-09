@@ -8729,12 +8729,15 @@ export class SemanticParserImpl implements ISemanticParser {
     const firstLower = firstToken.value.toLowerCase();
 
     // `once` written as `first`: en `on first click …`, and every other
-    // language's leading `first` (as its leading `once`). Semantic had no
-    // reading for either: en dropped the whole head (`on first click add …`
-    // rendered `add …`). A leading `first` before a selector is a positional
-    // query instead (hand-written ja `first <li/> を 隠す`, hide first <li/>).
+    // language's leading `first` (as its leading `once`), in English or in its
+    // own word, which its tokenizer reads as `first` (es `primero`, M2 sheet
+    // A7). Semantic had no reading for either: en dropped the whole head (`on
+    // first click add …` rendered `add …`). A leading `first` before a selector
+    // is a positional query instead (hand-written ja `first <li/> を 隠す`, hide
+    // first <li/>).
     const word = (i: number) => allTokens[i]?.value.toLowerCase();
     const notQuery = (i: number) => !!allTokens[i] && allTokens[i].kind !== 'selector';
+    const leadsWithFirst = (firstToken.normalized ?? firstLower).toLowerCase() === 'first';
     if (firstLower === 'on' && word(1) === 'first' && allTokens.length > 2) {
       return {
         modifiers: { once: true, onceAsFirst: true },
@@ -8742,7 +8745,7 @@ export class SemanticParserImpl implements ISemanticParser {
           input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
       };
     }
-    if (firstLower === 'first' && notQuery(1)) {
+    if (leadsWithFirst && notQuery(1)) {
       return {
         modifiers: { once: true, onceAsFirst: true },
         remainingInput: input.slice(allTokens[1].position.start),

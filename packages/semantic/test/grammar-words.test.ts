@@ -3,10 +3,11 @@
  * `go back`, `from elsewhere`, a loop's `index i`, and the `start` of `start
  * view transition`. Each was English in every translation; no profile had a
  * word for it. The words are the dictionaries' (grammar-words.ts), and every
- * reader still takes English's.
+ * reader still takes English's. And `on first click`'s `first` (A7), which every
+ * dictionary already had.
  */
 import { describe, it, expect } from 'vitest';
-import { getSupportedLanguages, parse, render, translate } from '../src/index';
+import { getLexicon, getSupportedLanguages, parse, render, translate } from '../src/index';
 import { GRAMMAR_WORDS, type GrammarWordKey } from '../src/parser/utils/grammar-words';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
@@ -68,5 +69,22 @@ describe('the words are the dictionaries’', () => {
       language
     ]?.expressions;
     expect(expressions).toMatchObject(GRAMMAR_WORDS[language]!);
+  });
+});
+
+describe('`on first click` writes the language’s `first`', () => {
+  // he has no `first` yet (sheet B7).
+  it.each(FOREIGN.filter(l => l !== 'he'))('%s', language => {
+    const first = getLexicon(language)?.expressions?.first?.primary;
+    for (const source of ['on first click add .a to me', 'on first click toggle .open on #menu then log 1']) {
+      const rendered = translate(source, 'en', language);
+      expect(rendered.startsWith(`${first} `), rendered).toBe(true);
+      expect(rendered.split(/\s+/)).not.toContain('first');
+      expect(translate(rendered, language, 'en')).toBe(source);
+    }
+  });
+
+  it('English’s `first` still reads', () => {
+    expect(translate('first al clic agregar .a a yo', 'es', 'en')).toBe('on first click add .a to me');
   });
 });

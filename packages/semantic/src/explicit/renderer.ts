@@ -1044,9 +1044,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     if (em.once && em.onceAsFirst) {
       // `on first click`, the form both engines run once; every other
-      // language a leading `first`, as its leading `once` below.
+      // language a leading `first` in its own word (es `primero`, M2 sheet
+      // A7), as its leading `once` below.
       if (language === 'en' && eventPart >= 0) parts[eventPart] = `first ${parts[eventPart]}`;
-      else parts.unshift('first');
+      else parts.unshift(this.localizeValue('first', language));
     } else if (em.once) {
       // en: `click.once`, the form core (the English executor) reads — it
       // rejects `on click once`. Every other language: a leading `once`, the
