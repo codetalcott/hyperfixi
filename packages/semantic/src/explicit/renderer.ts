@@ -637,6 +637,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return tryGetProfile(language)?.keywords?.[action]?.primary ?? action;
   }
 
+  /**
+   * `catch` and `finally` in the language's own words (M2, vocabulary sheet
+   * A9, B2; grammar-words.ts), es `atrapar e … finalmente …`. The verified
+   * render re-reads a render that wrote one, and writes English's where it
+   * does not read back (renderEnglishValueWords).
+   */
+  private errorClauseWord(language: string, key: 'catch' | 'finally'): string {
+    const word = this.englishValueWords ? key : grammarWord(language, key);
+    if (word !== key) this.nativeValueWord = true;
+    return word;
+  }
+
   /** `Name` or `Name(p1, p2)` — the parameter list renders verbatim (identifiers). */
   private renderBlockHeader(keyword: string, name: string, parameters: readonly string[]): string {
     return parameters.length > 0
@@ -681,11 +693,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     ];
     for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
     if (node.catchBody) {
-      lines.push(`${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`);
+      lines.push(`${this.errorClauseWord(language, 'catch')} ${node.catchName ?? 'e'}`);
       for (const cmd of node.catchBody) lines.push(`  ${this.render(cmd, language)}`);
     }
     if (node.finallyBody) {
-      lines.push(this.keyword(language, 'finally'));
+      lines.push(this.errorClauseWord(language, 'finally'));
       for (const cmd of node.finallyBody) lines.push(`  ${this.render(cmd, language)}`);
     }
     lines.push(this.keyword(language, 'end'));
@@ -695,7 +707,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /**
    * A handler's error clauses after its commands: ` catch e <commands>` and
    * ` finally <commands>`, the commands chained as a body's are. The words are
-   * the language's, or English's where it has none (keyword falls back).
+   * the language's (errorClauseWord), or English's where it has none.
    */
   private renderErrorClauses(node: ErrorClauses, language: string): string {
     const chain = this.getChainWord('then', language);
@@ -703,11 +715,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       body.map(cmd => this.render(cmd, language)).join(` ${chain} `);
     let out = '';
     if (node.catchBody) {
-      out += ` ${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`;
+      out += ` ${this.errorClauseWord(language, 'catch')} ${node.catchName ?? 'e'}`;
       if (node.catchBody.length) out += ` ${statements(node.catchBody)}`;
     }
     if (node.finallyBody) {
-      out += ` ${this.keyword(language, 'finally')}`;
+      out += ` ${this.errorClauseWord(language, 'finally')}`;
       if (node.finallyBody.length) out += ` ${statements(node.finallyBody)}`;
     }
     return out;

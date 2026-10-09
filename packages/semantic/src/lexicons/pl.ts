@@ -133,6 +133,8 @@ export const polishLexicon: LanguageLexicon = {
     'sorted by': { primary: 'sortowane według' },
     'split by': { primary: 'podzielone przez' },
     start: { primary: 'rozpocznij' },
+    catch: { primary: 'złap' },
+    finally: { primary: 'ostatecznie' },
     'starts with': { primary: 'zaczyna się od' },
     within: { primary: 'wewnątrz' },
   },

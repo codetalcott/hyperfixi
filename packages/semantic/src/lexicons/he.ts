@@ -60,6 +60,8 @@ export const hebrewLexicon: LanguageLexicon = {
     last: { primary: 'אחרון' },
     random: { primary: 'אקראי' },
     start: { primary: 'יזום' },
+    catch: { primary: 'תפוס' },
+    finally: { primary: 'סופית' },
   },
 };
 

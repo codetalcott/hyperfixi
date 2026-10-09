@@ -197,6 +197,8 @@ export const ko: Dictionary = {
     elsewhere: '바깥',
     index: '인덱스',
     start: '시작',
+    catch: '잡다',
+    finally: '결국',
     characters: '문자',
     inclusive: '포함',
     exclusive: '제외',

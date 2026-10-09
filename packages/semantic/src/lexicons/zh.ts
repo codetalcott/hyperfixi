@@ -134,6 +134,8 @@ export const chineseLexicon: LanguageLexicon = {
     'sorted by': { primary: '按_排序' },
     'split by': { primary: '按_分割' },
     start: { primary: '开始' },
+    catch: { primary: '捕获' },
+    finally: { primary: '最终' },
     'starts with': { primary: '以开头' },
     within: { primary: '之内' },
   },

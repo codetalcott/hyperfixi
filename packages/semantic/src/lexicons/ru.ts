@@ -153,6 +153,8 @@ export const russianLexicon: LanguageLexicon = {
     'sorted by': { primary: 'сортировано_по' },
     'split by': { primary: 'разделено_по' },
     start: { primary: 'начать' },
+    catch: { primary: 'поймать' },
+    finally: { primary: 'наконец' },
     'starts with': { primary: 'начинается_с' },
     within: { primary: 'внутри' },
   },

@@ -131,6 +131,8 @@ export const quechuaLexicon: LanguageLexicon = {
     'sorted by': { primary: 'niqpi ruwasqa' },
     'split by': { primary: 'rakisqa' },
     start: { primary: 'qallay' },
+    catch: { primary: 'hapsiy' },
+    finally: { primary: 'qhipamanqa' },
     'starts with': { primary: 'qallarisqa wan' },
     within: { primary: 'ukupi' },
   },

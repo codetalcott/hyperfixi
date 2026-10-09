@@ -197,6 +197,8 @@ export const ar: Dictionary = {
     elsewhere: 'الخارج',
     index: 'مؤشر',
     start: 'ابدأ',
+    catch: 'التقط',
+    finally: 'أخيرا',
     characters: 'حروف',
     inclusive: 'شامل',
     exclusive: 'حصري',

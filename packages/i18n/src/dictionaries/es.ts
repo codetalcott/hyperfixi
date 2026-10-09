@@ -192,6 +192,8 @@ export const es: Dictionary = {
     elsewhere: 'afuera',
     index: 'índice',
     start: 'comenzar',
+    catch: 'atrapar',
+    finally: 'finalmente',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

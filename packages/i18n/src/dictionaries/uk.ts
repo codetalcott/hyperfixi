@@ -222,6 +222,8 @@ export const ukrainianDictionary: Dictionary = {
     elsewhere: 'ззовні',
     index: 'індекс',
     start: 'почати',
+    catch: 'зловити',
+    finally: 'нарешті',
     characters: 'символи',
     inclusive: 'включно',
     exclusive: 'виключно',

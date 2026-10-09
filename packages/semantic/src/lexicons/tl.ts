@@ -151,6 +151,8 @@ export const tagalogLexicon: LanguageLexicon = {
     'sorted by': { primary: 'nakaayos_ayon_sa' },
     'split by': { primary: 'hinati_sa' },
     start: { primary: 'umpisahan' },
+    catch: { primary: 'saluhin' },
+    finally: { primary: 'panghuli' },
     'starts with': { primary: 'nagsisimula_sa' },
     within: { primary: 'sa_loob_ng' },
   },

@@ -133,6 +133,8 @@ export const portugueseLexicon: LanguageLexicon = {
     'sorted by': { primary: 'ordenado por' },
     'split by': { primary: 'dividido por' },
     start: { primary: 'começar' },
+    catch: { primary: 'capturar' },
+    finally: { primary: 'finalmente' },
     'starts with': { primary: 'começa com' },
     within: { primary: 'dentro' },
   },

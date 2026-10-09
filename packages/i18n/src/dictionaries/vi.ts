@@ -192,6 +192,8 @@ export const vi: Dictionary = {
     elsewhere: 'ngoài',
     index: 'chỉ số',
     start: 'bắt đầu',
+    catch: 'bắt',
+    finally: 'rốt cuộc',
     random: 'ngẫu nhiên',
     characters: 'ký tự',
     inclusive: 'bao gồm',

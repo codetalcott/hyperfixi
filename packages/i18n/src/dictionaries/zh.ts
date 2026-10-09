@@ -210,6 +210,8 @@ export const zh: Dictionary = {
     elsewhere: '外部',
     index: '索引',
     start: '开始',
+    catch: '捕获',
+    finally: '最终',
     characters: '字符',
     inclusive: '包含',
     exclusive: '排除',

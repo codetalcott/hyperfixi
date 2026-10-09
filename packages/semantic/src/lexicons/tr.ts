@@ -135,6 +135,8 @@ export const turkishLexicon: LanguageLexicon = {
     'sorted by': { primary: 'göre sıralı' },
     'split by': { primary: 'ile bölünmüş' },
     start: { primary: 'başla' },
+    catch: { primary: 'yakalarsa' },
+    finally: { primary: 'sonunda' },
     'starts with': { primary: 'ile başlar' },
     within: { primary: 'içinde' },
   },

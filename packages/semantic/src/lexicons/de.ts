@@ -133,6 +133,8 @@ export const germanLexicon: LanguageLexicon = {
     'sorted by': { primary: 'sortiert nach' },
     'split by': { primary: 'geteilt durch' },
     start: { primary: 'starte' },
+    catch: { primary: 'fangen' },
+    finally: { primary: 'schließlich' },
     'starts with': { primary: 'beginnt mit' },
     within: { primary: 'innerhalb' },
   },

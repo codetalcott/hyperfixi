@@ -223,6 +223,8 @@ export const russianDictionary: Dictionary = {
     elsewhere: 'снаружи',
     index: 'индекс',
     start: 'начать',
+    catch: 'поймать',
+    finally: 'наконец',
     characters: 'символы',
     inclusive: 'включительно',
     exclusive: 'исключительно',

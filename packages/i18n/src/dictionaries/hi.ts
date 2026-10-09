@@ -223,6 +223,8 @@ export const hindiDictionary: Dictionary = {
     elsewhere: 'अन्यत्र',
     index: 'सूचकांक',
     start: 'शुरू',
+    catch: 'पकड़ें',
+    finally: 'अंततः',
     characters: 'अक्षर',
     first: 'पहला',
     last: 'अंतिम',

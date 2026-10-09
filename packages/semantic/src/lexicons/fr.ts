@@ -133,6 +133,8 @@ export const frenchLexicon: LanguageLexicon = {
     'sorted by': { primary: 'trié par' },
     'split by': { primary: 'divisé par' },
     start: { primary: 'démarrer' },
+    catch: { primary: 'attraper' },
+    finally: { primary: 'finalement' },
     'starts with': { primary: 'commence par' },
     within: { primary: 'dans' },
   },

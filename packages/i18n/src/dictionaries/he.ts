@@ -110,6 +110,8 @@ export const he: Dictionary = {
     elsewhere: 'חוץ',
     index: 'אינדקס',
     start: 'יזום',
+    catch: 'תפוס',
+    finally: 'סופית',
     random: 'אקראי',
     characters: 'תווים',
     inclusive: 'כולל',

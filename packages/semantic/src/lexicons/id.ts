@@ -133,6 +133,8 @@ export const indonesianLexicon: LanguageLexicon = {
     'sorted by': { primary: 'diurutkan berdasarkan' },
     'split by': { primary: 'dipisah oleh' },
     start: { primary: 'memulai' },
+    catch: { primary: 'menangkap' },
+    finally: { primary: 'akhirnya' },
     'starts with': { primary: 'dimulai dengan' },
     within: { primary: 'dalam' },
   },

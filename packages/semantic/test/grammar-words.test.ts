@@ -1,7 +1,8 @@
 /**
  * Upstream's fixed words in each language's own (M2, vocabulary sheet B3–B6):
  * `go back`, `from elsewhere`, a loop's `index i`, and the `start` of `start
- * view transition`. Each was English in every translation; no profile had a
+ * view transition`; and the error clauses' `catch e` and `finally` (A9, B2).
+ * Each was English in every translation; no profile had a
  * word for it. The words are the dictionaries' (grammar-words.ts), and every
  * reader still takes English's. And `on first click`'s `first` (A7), which every
  * dictionary already had.
@@ -24,6 +25,13 @@ const SHAPES: Array<[string, GrammarWordKey]> = [
   ['on click repeat 3 times index i log i end', 'index'],
   ['on click start view transition swap #a with #b end', 'start'],
   ['on click start view transition using "slide" add .x to me end then log 1', 'start'],
+  // A handler's and a function's error clauses (A9, B2).
+  ['on click throw "bar" catch e put e into me', 'catch'],
+  ['on click throw "bar" finally put "bar" into me', 'finally'],
+  ['on click throw "bar" catch e throw e finally put "bar" into me', 'catch'],
+  ['on click throw "bar" catch e throw e finally put "bar" into me', 'finally'],
+  ['def foo() throw "bar" catch e return 42 end', 'catch'],
+  ['def foo() set window.bar to 10 finally set window.bar to 20 end', 'finally'],
 ];
 
 describe.each(SHAPES)('%s', (source, key) => {
@@ -45,6 +53,8 @@ describe('English’s words still read', () => {
     ['es', 'al clic start view transition intercambiar #a con #b fin', 'on click start view transition swap #a with #b end'],
     ['ja', 'クリック で start view transition #a に #b を 交換 終わり', 'on click start view transition swap #a with #b end'],
     ['es', 'al clic repetir 3 veces index i registrar i fin', 'on click repeat 3 times index i log i end'],
+    ['es', 'al clic lanzar "bar" catch e lanzar e finally poner "bar" en yo', 'on click throw "bar" catch e throw e finally put "bar" into me'],
+    ['vi', 'khi nhấp ném "bar" catch e ném e finally đặt "bar" vào tôi', 'on click throw "bar" catch e throw e finally put "bar" into me'],
   ])('%s: %s', (language, source, english) => {
     expect(translate(source, language, 'en')).toBe(english);
   });

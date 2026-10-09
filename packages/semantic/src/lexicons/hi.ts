@@ -151,6 +151,8 @@ export const hindiLexicon: LanguageLexicon = {
     'sorted by': { primary: 'द्वारा_क्रमबद्ध' },
     'split by': { primary: 'द्वारा_विभाजित' },
     start: { primary: 'शुरू' },
+    catch: { primary: 'पकड़ें' },
+    finally: { primary: 'अंततः' },
     'starts with': { primary: 'से_शुरू' },
     within: { primary: 'के_अंदर' },
   },
