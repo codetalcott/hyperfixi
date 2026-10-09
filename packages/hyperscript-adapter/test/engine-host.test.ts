@@ -79,14 +79,15 @@ describe('the plugin on @hyperfixi/engine', () => {
     }
   );
 
-  // Upstream's own block, read in every language (was OPEN_ITEMS D6): its head is
-  // the same English words in all 24. Until the reader knew it, the block parsed
-  // as a `transition` of the body's verb and the body was lost.
+  // Upstream's own block, read in every language (was OPEN_ITEMS D6): its head
+  // keeps `view transition` in English, with the language's own `start` (M2 sheet
+  // B6). Until the reader knew it, the block parsed as a `transition` of the
+  // body's verb and the body was lost.
   it.each(['es', 'ja'])("%s: upstream's view transition block runs in one", async language => {
     const english =
       "on click start view transition put 'B' into #a then add .moved to #a end then add .after to #a";
     const written = render(parseSemantic(english, 'en').node!, language);
-    expect(written).toContain('start view transition');
+    expect(written).toContain(language === 'ja' ? 'view transition 開始' : 'comenzar view transition');
 
     let started = 0;
     const transitions = (update: () => Promise<void>) => {
