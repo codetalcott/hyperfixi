@@ -103,3 +103,44 @@ export const QUERY_IN: Readonly<Record<string, string>> = {
 export function queryInWord(language: string): string {
   return QUERY_IN[language] ?? 'in';
 }
+
+/**
+ * The `as` of a conversion, in each language's own word (M2, vocabulary sheet
+ * A4): `put it as String into me`, `get result as JSONString`, `(my value as
+ * Number)`. It was English in every translation; the type name still is, as
+ * both engines read it (value-lexicon.ts TYPE_NAME). The word is the
+ * dictionary's `modifiers.as` (a test holds the table to it), the one most
+ * languages' `fetch … as json` already writes. It stands where English's
+ * does, before the type, in every language: that is where the reader takes it
+ * (`CONNECTIVE_LEXICON`, and th's `เป็น`, also `is`, by its sense rule). he
+ * has no word yet (sheet B7).
+ */
+export const CONVERSION_AS: Readonly<Record<string, string>> = {
+  ar: 'كـ',
+  bn: 'হিসাবে',
+  de: 'als',
+  es: 'como',
+  fr: 'comme',
+  hi: 'के_रूप_में',
+  id: 'sebagai',
+  it: 'come',
+  ja: 'として',
+  ko: '로',
+  ms: 'sebagai',
+  pl: 'jako',
+  pt: 'como',
+  qu: 'hina',
+  ru: 'как',
+  sw: 'kuwa',
+  th: 'เป็น',
+  tl: 'bilang',
+  tr: 'olarak',
+  uk: 'як',
+  vi: 'như',
+  zh: '作为',
+};
+
+/** The `as` a translation writes before a type name: the language's own, or English's. */
+export function conversionAsWord(language: string): string {
+  return CONVERSION_AS[language] ?? 'as';
+}

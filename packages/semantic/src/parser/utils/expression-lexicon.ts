@@ -956,13 +956,14 @@ export const CONVERSION_TYPE_NAMES = new Set([
     (`hyperfixi.config.conversions.MyType`, upstream's `_hyperscript.config.
     conversions`) is written that way, as every built-in one is, and semantic
     cannot see the registry. Unknown, `put x as MyType into #out` lost its
-    whole `put`. (th's `เป็น` still reads `as` only before a listed name.) */
+    whole `put`. (th's `เป็น` still reads `as` only before a built-in one.) */
 export function isConversionTypeName(name: string): boolean {
-  return (
-    CONVERSION_TYPE_NAMES.has(name) ||
-    /^Fixed(?::\d+)?$/.test(name) ||
-    /^[A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?$/.test(name)
-  );
+  return isBuiltInConversion(name) || /^[A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?$/.test(name);
+}
+
+/** A conversion core has built in: a listed name, or `Fixed` and its digits. */
+function isBuiltInConversion(name: string): boolean {
+  return CONVERSION_TYPE_NAMES.has(name) || /^Fixed(?::\d+)?$/.test(name);
 }
 
 function resolveAmbiguousSense(
@@ -978,12 +979,14 @@ function resolveAmbiguousSense(
   // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
   // though `Number` could look identifier-bare; the sets are disjoint anyway.
   // A type name that is called is a function: `6 เป็น String(n)` is `6 is
-  // String(n)`, not `6 as String` and a stray `(n)`.
+  // String(n)`, not `6 as String` and a stray `(n)`. A built-in name only
+  // (`Fixed:2` too, which the tokenizer splits at its colon): `x เป็น Foo` can
+  // compare `x` with a variable `Foo`.
   if (
     rule.beforeTypeName &&
     next?.kind === 'identifier' &&
     afterNext?.value !== '(' &&
-    (CONVERSION_TYPE_NAMES.has(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
+    (isBuiltInConversion(next.value) || RESPONSE_TYPE_NAMES.has(next.value.toLowerCase()))
   ) {
     return rule.beforeTypeName;
   }

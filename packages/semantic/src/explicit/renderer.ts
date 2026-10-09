@@ -100,9 +100,14 @@ import {
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
-import { grammarWord, queryInWord } from '../parser/utils/grammar-words';
+import { grammarWord } from '../parser/utils/grammar-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
-import { localizeValueInterior, outsideCallArguments, type QueryIn } from './value-lexicon';
+import {
+  localizeValueInterior,
+  nativeValueWords,
+  outsideCallArguments,
+  type ValueWords,
+} from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
@@ -180,37 +185,40 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /** A variable was written in the language's own word during this render. */
   private localizedVariable = false;
 
-  /** Write a query's scope with English's `in` (renderEnglishQueryIn). */
-  private englishQueryIn = false;
+  /** Write a value's grammar words in English's (renderEnglishValueWords). */
+  private englishValueWords = false;
 
-  /** A query's scope was written with the language's own `in` since the last reset. */
-  private nativeQueryIn = false;
+  /** A value's grammar word was written in the language's own since the last reset. */
+  private nativeValueWord = false;
 
-  /** The `in` a query's scope is written with in this render. */
-  private queryIn(language: string): QueryIn {
-    const word = this.englishQueryIn ? 'in' : queryInWord(language);
-    return { word, wrote: () => (this.nativeQueryIn = true) };
+  /** The grammar words a value is written with in this render: a query's `in`, a conversion's `as`. */
+  private valueWords(language: string): ValueWords {
+    const words = this.englishValueWords
+      ? { queryIn: 'in', conversionAs: 'as' }
+      : nativeValueWords(language);
+    return { ...words, wrote: () => (this.nativeValueWord = true) };
   }
 
   /**
-   * Whether a render since the last call wrote a query's scope with the
-   * language's own `in` (es `<button/> en yo`, M2 sheet A5), which the
-   * verified render re-reads: where the language's `in` is also a marker the
-   * command wants (es `en`), the reader can take it as the command's.
+   * Whether a render since the last call wrote one of a value's grammar words
+   * in the language's own (es `<button/> en yo`, M2 sheet A5; es `ello como
+   * String`, A4), which the verified render re-reads: where the word is also
+   * a marker the command wants (es `en`, ko `로`), or has another sense (th
+   * `เป็น` is also `is`), the reader can take it as that.
    */
-  takeNativeQueryIn(): boolean {
-    const wrote = this.nativeQueryIn;
-    this.nativeQueryIn = false;
+  takeNativeValueWords(): boolean {
+    const wrote = this.nativeValueWord;
+    this.nativeValueWord = false;
     return wrote;
   }
 
-  /** Run `render` with each query's scope written with English's `in` (the verified render's fallback). */
-  renderEnglishQueryIn<T>(render: () => T): T {
-    this.englishQueryIn = true;
+  /** Run `render` with a value's grammar words in English's (the verified render's fallback). */
+  renderEnglishValueWords<T>(render: () => T): T {
+    this.englishValueWords = true;
     try {
       return render();
     } finally {
-      this.englishQueryIn = false;
+      this.englishValueWords = false;
     }
   }
 
@@ -1478,9 +1486,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // there, and English's.
         if (!value.scope) return value.value;
         {
-          const queryIn = this.queryIn(language);
-          if (queryIn.word !== 'in') queryIn.wrote?.();
-          return `${value.value} ${queryIn.word} ${this.valueToNaturalString(value.scope, language)}`;
+          const words = this.valueWords(language);
+          if (words.queryIn !== 'in') words.wrote?.();
+          return `${value.value} ${words.queryIn} ${this.valueToNaturalString(value.scope, language)}`;
         }
 
       case 'reference':
@@ -1597,7 +1605,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private localizeValue(raw: string, language: string, keep?: ReadonlySet<string>): string {
     if (language === 'en') return raw;
-    return localizeValueInterior(raw, language, tryGetProfile(language), keep, this.queryIn(language));
+    return localizeValueInterior(
+      raw,
+      language,
+      tryGetProfile(language),
+      keep,
+      this.valueWords(language)
+    );
   }
 
   /**

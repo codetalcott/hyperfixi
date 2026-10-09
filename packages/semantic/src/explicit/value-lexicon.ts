@@ -51,7 +51,7 @@
  */
 import type { LanguageLexicon, LanguageProfile } from '../generators/profiles/types';
 import { getLexicon } from '../lexicon-registry';
-import { queryInWord } from '../parser/utils/grammar-words';
+import { conversionAsWord, queryInWord } from '../parser/utils/grammar-words';
 
 /** Category order matters: first hit wins, mirroring i18n's DICTIONARY_CATEGORIES. */
 const LEXICON_CATEGORIES = ['values', 'expressions', 'logical', 'temporal', 'attributes'] as const;
@@ -90,7 +90,8 @@ const WORD = /(^|[^\w$.#@*:-])([A-Za-z][A-Za-z-]+)(?![\w$.:-])/g;
  * capitalized name after `as`, or after `is a`/`is an`/`is not a`/`is not an`,
  * stays as written, with a `:` suffix (`Fixed:2`, `Values:Form`). PR 95. So
  * does one after `am a`, upstream's spelling for `I`: `if I am a Element` was
- * es `I am a elemento`.
+ * es `I am a elemento`. The `as` before it is written in the language's own
+ * word (conversionLead).
  */
 const TYPE_NAME =
   /(\bas\s+|\b(?:is|am)\s+(?:not\s+)?an?\s+)([A-Z][A-Za-z0-9_]*(?::[A-Za-z0-9_]+)?)\b/g;
@@ -253,19 +254,42 @@ function thirdPerson(text: string): string {
  */
 const QUERY_IN =
   /(<[^<>]*\/>|(?:^|[^\w$.#@*:-])(?:first|last|next|previous|random|closest)\s+[.#][\w-]+)((?:\.[\w-]+)*\s+)in(?=\s+(?:(?:closest\s+)?[#.<]|(?:me|it|you|body|document|target|result)\b))/g;
-function nativeQueryIn(text: string, queryIn: QueryIn, spans: string[]): string {
-  if (queryIn.word === 'in') return text;
+function nativeQueryIn(text: string, words: ValueWords, spans: string[]): string {
+  if (words.queryIn === 'in') return text;
   return text.replace(QUERY_IN, (_, query: string, gap: string) => {
-    queryIn.wrote?.();
-    spans.push(queryIn.word);
+    words.wrote?.();
+    spans.push(words.queryIn);
     return `${query}${gap}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
   });
 }
 
-/** The `in` a query's scope is written with, and who to tell when it is the language's own. */
-export interface QueryIn {
-  readonly word: string;
+/**
+ * A conversion's `as`, in the language's own word (M2, vocabulary sheet A4):
+ * es `ello como String`, where the type name stays English (TYPE_NAME). The
+ * word is masked, so the word pass leaves it alone. The `a` of `is a` is not
+ * a conversion's.
+ */
+function conversionLead(lead: string, words: ValueWords, spans: string[]): string {
+  if (words.conversionAs === 'as' || !/^as\s/.test(lead)) return lead;
+  words.wrote?.();
+  spans.push(words.conversionAs);
+  return `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}${lead.slice(2)}`;
+}
+
+/**
+ * The grammar words a value is written with: the `in` that scopes a query and
+ * the `as` of a conversion, each the language's own or English's, and who to
+ * tell when one is the language's own.
+ */
+export interface ValueWords {
+  readonly queryIn: string;
+  readonly conversionAs: string;
   readonly wrote?: () => void;
+}
+
+/** The language's own value words. */
+export function nativeValueWords(language: string): ValueWords {
+  return { queryIn: queryInWord(language), conversionAs: conversionAsWord(language) };
 }
 
 /**
@@ -280,7 +304,7 @@ export function localizeValueInterior(
   profile?: LanguageProfile,
   /** Words to leave as written: the expression's variables the renderer keeps (P49). */
   keep?: ReadonlySet<string>,
-  queryIn: QueryIn = { word: queryInWord(language) }
+  valueWords: ValueWords = nativeValueWords(language)
 ): string {
   if (!raw) return raw;
   // No registered lexicon means the language's `lexicons/{code}` module was not
@@ -299,11 +323,12 @@ export function localizeValueInterior(
     TYPE_NAME,
     (_, lead: string, type: string) => {
       spans.push(type);
-      return `${lead}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+      const typeMask = `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+      return `${conversionLead(lead, valueWords, spans)}${typeMask}`;
     }
   );
 
-  const localized = thirdPerson(nativeQueryIn(masked, queryIn, spans)).replace(WORD, (whole, lead: string, word: string) => {
+  const localized = thirdPerson(nativeQueryIn(masked, valueWords, spans)).replace(WORD, (whole, lead: string, word: string) => {
     if (keep?.has(word)) return whole;
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;

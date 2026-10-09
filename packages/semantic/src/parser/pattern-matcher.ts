@@ -1014,16 +1014,18 @@ export class PatternMatcher {
   /**
    * How many tokens of conversion is the stream sitting on: `as`, a type, and
    * each further `| type` (`as JSONString | JSON`, which converts left to
-   * right)? 0 when it is not on one. Matched by VALUE as well as normalized
-   * form: the renderer emits the conversion verbatim inside the value's raw
-   * (no profile has an `as` lexicon entry), so a foreign surface carries the
-   * English word — which is what has to re-parse.
+   * right)? 0 when it is not on one. The `as` is English's, or the language's
+   * own as the join reads it (es `como`, th `เป็น` before a built-in type; M2
+   * sheet A4): a tokenizer reads most of those words as plain identifiers, so
+   * a type split at its colon (`Fixed:2`) ended the value before its suffix.
    */
   private conversionRunLength(tokens: TokenStream): number {
     const asToken = tokens.peek();
     if (!asToken) return 0;
     const asWord = (asToken.normalized ?? asToken.value).toLowerCase();
-    if (asWord !== 'as' && asToken.value.toLowerCase() !== 'as') return 0;
+    if (asWord !== 'as' && asToken.value.toLowerCase() !== 'as' && !this.isNativeAs(tokens)) {
+      return 0;
+    }
     let length = this.conversionTypeLength(tokens, 1);
     if (length === 0) return 0;
     length += 1;
@@ -1033,6 +1035,23 @@ export class PatternMatcher {
       if (next === 0) return length;
       length += 1 + next;
     }
+  }
+
+  /**
+   * Does the join read the token at the stream's head as a conversion's `as`?
+   * Not in a command with a responseType: fetch's marker is the same word (es
+   * `buscar "/x" como json`), which a fused handler pattern (`al clic buscar
+   * {source}`) does not model, and a value stops there (value-extent's
+   * `hasResponseType`).
+   */
+  private isNativeAs(tokens: TokenStream): boolean {
+    const language = this.currentProfile?.code;
+    if (!language || language === 'en') return false;
+    if (this.currentSchema()?.roles.some(r => r.role === 'responseType')) return false;
+    const all = tokens.tokens;
+    const at = tokens.position();
+    const word = expressionWordOf(language, all[at]!, all[at - 1], all[at + 1], undefined, all[at + 2]);
+    return word.toLowerCase() === 'as';
   }
 
   /**
