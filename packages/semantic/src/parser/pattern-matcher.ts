@@ -1015,7 +1015,7 @@ export class PatternMatcher {
    * How many tokens of conversion is the stream sitting on: `as`, a type, and
    * each further `| type` (`as JSONString | JSON`, which converts left to
    * right)? 0 when it is not on one. The `as` is English's, or the language's
-   * own as the join reads it (es `como`, th `เป็น` before a type it lists; M2
+   * own as the join reads it (es `como`, th `เป็น` before a built-in type; M2
    * sheet A4): a tokenizer reads most of those words as plain identifiers, so
    * a type split at its colon (`Fixed:2`) ended the value before its suffix.
    */
