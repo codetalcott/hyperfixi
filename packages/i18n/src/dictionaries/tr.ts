@@ -201,6 +201,10 @@ export const tr: Dictionary = {
   },
 
   expressions: {
+    back: 'geri',
+    elsewhere: 'dışarı',
+    index: 'indeks',
+    start: 'başla',
     characters: 'karakterler',
     inclusive: 'dahil',
     exclusive: 'hariç',

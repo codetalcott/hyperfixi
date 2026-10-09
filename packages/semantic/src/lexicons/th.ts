@@ -82,9 +82,11 @@ export const thaiLexicon: LanguageLexicon = {
     value: { primary: 'ค่า' },
   },
   expressions: {
+    back: { primary: 'ย้อน' },
     characters: { primary: 'อักขระ' },
     children: { primary: 'ลูก' },
     closest: { primary: 'ใกล้สุด' },
+    elsewhere: { primary: 'ภายนอก' },
     empty: { primary: 'ล้าง' },
     'ends with': { primary: 'ลงท้ายด้วย' },
     exclusive: { primary: 'ยกเว้น' },
@@ -102,6 +104,7 @@ export const thaiLexicon: LanguageLexicon = {
     random: { primary: 'สุ่ม' },
     'sorted by': { primary: 'เรียงตาม' },
     'split by': { primary: 'แยกด้วย' },
+    start: { primary: 'เริ่ม' },
     'starts with': { primary: 'ขึ้นต้นด้วย' },
   },
 };

@@ -100,6 +100,7 @@ import {
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
+import { grammarWord } from '../parser/utils/grammar-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior, outsideCallArguments } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
@@ -466,11 +467,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.bottomTested) return this.renderBottomTestedLoop(node, language);
     const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
-    // `index i`, in English in every language: the parser reads it right
-    // after the loop head. Core's `with index` (it binds `index`) is read too
-    // and written the same way, `index index`: upstream has only this form.
+    // `index i`, in the language's own word (grammar-words.ts): the parser
+    // reads it right after the loop head. Core's `with index` (it binds
+    // `index`) is read too and written the same way, `index index`: upstream
+    // has only this form.
     if (node.indexVariable) {
-      parts.push(`index ${node.indexVariable}`);
+      parts.push(`${grammarWord(language, 'index')} ${node.indexVariable}`);
     }
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);
@@ -895,8 +897,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         const pinnedKey = pinnedLiteral(rule);
         if (pinnedKey === undefined) continue;
         const actual = node.roles.get(role as SemanticRole);
+        // The value as the pattern would produce it: a literal, or an
+        // expression where the rule says so (`go back`).
         const actualKey =
-          actual?.type === 'literal' ? String(actual.value).trim().toLowerCase() : undefined;
+          actual?.type === (rule.valueIsExpression ? 'expression' : 'literal')
+            ? String(
+                actual.type === 'expression'
+                  ? (actual as { raw?: unknown }).raw
+                  : (actual as { value?: unknown }).value
+              )
+                .trim()
+                .toLowerCase()
+            : undefined;
 
         if (actualKey === pinnedKey) {
           // The pinned form is the whole reason this value exists — prefer it
@@ -1027,9 +1039,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     if (em.once && em.onceAsFirst) {
       // `on first click`, the form both engines run once; every other
-      // language a leading `first`, as its leading `once` below.
+      // language a leading `first` in its own word (es `primero`, M2 sheet
+      // A7), as its leading `once` below.
       if (language === 'en' && eventPart >= 0) parts[eventPart] = `first ${parts[eventPart]}`;
-      else parts.unshift('first');
+      else parts.unshift(this.localizeValue('first', language));
     } else if (em.once) {
       // en: `click.once`, the form core (the English executor) reads — it
       // rejects `on click once`. Every other language: a leading `once`, the
@@ -1041,7 +1054,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     const tail: string[] = [];
     if (em.from) {
-      const noun = this.valueToNaturalString(em.from, language);
+      // `from elsewhere`: the language's own word (grammar-words.ts), which the
+      // parser reads against its `from` marker.
+      const elsewhere = em.from.type === 'expression' && em.from.raw === 'elsewhere';
+      const noun = elsewhere
+        ? grammarWord(language, 'elsewhere')
+        : this.valueToNaturalString(em.from, language);
       const marker = tryGetProfile(language)?.roleMarkers?.source;
       const word = marker?.primary ?? 'from';
       if (marker?.position === 'after') {

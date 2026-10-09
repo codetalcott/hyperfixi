@@ -4,8 +4,9 @@
  * the body's verb (`on click transition swap`), in English and so in every
  * translation, with the block and its body lost.
  *
- * The head is the same English words in every language (patterns/view-transition.ts),
- * as core's `using view transition` tail already is. The clause walker nests the
+ * `view transition` is English in every language (patterns/view-transition.ts), as
+ * core's `using view transition` tail already is, and `start` is the language's own
+ * word (M2 sheet B6), last in a verb-final language. The clause walker nests the
  * body under the head as it nests a loop's, so a command after the block's `end`
  * stays after it; the structural layer counts the head as a block opener, so the
  * `end` is not a handler's or a behavior's. Every English render below parses on
@@ -13,7 +14,8 @@
  * render is held there by the canonical-validity gates).
  */
 import { describe, it, expect } from 'vitest';
-import { parse, render, buildAST } from '../src/index';
+import { parse, render, buildAST, tryGetProfile } from '../src/index';
+import { GRAMMAR_WORDS } from '../src/parser/utils/grammar-words';
 import type { SemanticNode } from '../src/types';
 
 const FOREIGN = [
@@ -160,13 +162,19 @@ describe('English reads the block', () => {
   });
 });
 
-describe('every language writes the head in English and reads it back', () => {
+describe('every language writes the head in its own words and reads it back', () => {
   it.each(FOREIGN.flatMap(lang => [...CASES, ...BLOCKS].map(([src]) => [lang, src] as const)))(
     '%s: %s',
     (lang, src) => {
       const written = render(parse(src, 'en')!, lang);
       // A foreign render keeps core's tail as read; only English rewrites it.
-      if (src.includes('start')) expect(written).toContain('start view transition');
+      if (src.includes('start')) {
+        const start = GRAMMAR_WORDS[lang]!.start;
+        const verbFinal = tryGetProfile(lang)?.wordOrder === 'SOV';
+        expect(written).toContain(
+          verbFinal ? `view transition ${start}` : `${start} view transition`
+        );
+      }
       expect(render(parse(written, lang)!, 'en')).toBe(en(src));
     }
   );

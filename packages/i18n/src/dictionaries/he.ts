@@ -106,6 +106,10 @@ export const he: Dictionary = {
   attributes: {},
 
   expressions: {
+    back: 'אחורה',
+    elsewhere: 'חוץ',
+    index: 'אינדקס',
+    start: 'יזום',
     random: 'אקראי',
     characters: 'תווים',
     inclusive: 'כולל',

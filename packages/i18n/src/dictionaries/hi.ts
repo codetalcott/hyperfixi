@@ -219,6 +219,10 @@ export const hindiDictionary: Dictionary = {
   },
 
   expressions: {
+    back: 'पीछे',
+    elsewhere: 'अन्यत्र',
+    index: 'सूचकांक',
+    start: 'शुरू',
     characters: 'अक्षर',
     first: 'पहला',
     last: 'अंतिम',

@@ -218,6 +218,10 @@ export const ukrainianDictionary: Dictionary = {
   },
 
   expressions: {
+    back: 'назад',
+    elsewhere: 'ззовні',
+    index: 'індекс',
+    start: 'почати',
     characters: 'символи',
     inclusive: 'включно',
     exclusive: 'виключно',

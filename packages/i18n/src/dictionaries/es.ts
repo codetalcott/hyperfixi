@@ -188,6 +188,10 @@ export const es: Dictionary = {
   },
 
   expressions: {
+    back: 'atrás',
+    elsewhere: 'afuera',
+    index: 'índice',
+    start: 'comenzar',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24508,
-  "refused": 2703,
+  "pass": 24509,
+  "refused": 2702,
   "silent": 29,
   "entries": {
     "6f60177037": {
@@ -1187,11 +1187,6 @@
       "src": "trigger click on #btn trigger submit on closest <form/>",
       "family": "trigger",
       "refused": "ko"
-    },
-    "a68f0afa94": {
-      "src": "go to url /home go to #section go back",
-      "family": "go",
-      "refused": "hi"
     },
     "6f6d57c10a": {
       "src": "repeat 5 times log \"hello\" end repeat for item in items log item end",

@@ -56,6 +56,7 @@ import {
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
 import { NOT_THROW_BY_LANG } from './utils/not-throw';
+import { GRAMMAR_WORDS, grammarWordForms } from './utils/grammar-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -656,6 +657,20 @@ const NORMALIZE_CHILD_FIELDS = [
   'finallyBody',
 ] as const;
 
+/**
+ * Whether a go destination, as written, is the language's own `back`: the word,
+ * or its word before a trailing marker the destination took (ko `뒤로`).
+ */
+function isNativeBack(raw: string, language: string): boolean {
+  const native = GRAMMAR_WORDS[language]?.back;
+  if (!native) return false;
+  const word = raw.trim().toLowerCase();
+  if (word === native.toLowerCase()) return true;
+  const tokens = tokenizeInternal(native, language).tokens;
+  const head = tokens.filter(t => t.kind !== 'particle').map(t => t.value.toLowerCase());
+  return head.length > 0 && head.length < tokens.length && word === head.join(' ');
+}
+
 function normalizeCommandRoles(
   node: SemanticNode,
   boundIdentifiers?: Set<string>,
@@ -679,6 +694,18 @@ function normalizeCommandRoles(
       if (value !== undefined) {
         roles.delete('patient');
         roles.set(primary, value);
+      }
+    }
+
+    // `go back` in the language's own word (grammar-words.ts): go's own pattern
+    // reads it (go-back.ts), but a handler's body can read `ir atrás` through
+    // go's generated patterns, whose destination is the word as written (ko's
+    // `뒤로` as `뒤` with its marker `로`).
+    if (node.action === 'go' && language) {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const dest = roles.get('destination');
+      if (dest?.type === 'expression' && isNativeBack(dest.raw, language)) {
+        roles.set('destination', { ...dest, raw: 'back' });
       }
     }
 
@@ -974,7 +1001,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // offset into the input holds).
     if (this.parseDepth === 0) {
       this.boundIdentifiers.clear();
-      input = blankComments(input);
+      input = this.readNativeElsewhere(blankComments(input), language);
     }
     this.parseDepth++;
     this.coverageFrames.push([]);
@@ -6704,6 +6731,39 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * `from elsewhere` in the language's own word (M2 sheet B4, grammar-words.ts:
+   * es `de afuera`, ja `外側 から`), read as English's: the word is written as
+   * `elsewhere` before any stage sees it, where it sits against the language's
+   * `from` marker, on the side the marker takes (before it, or after it in a
+   * postpositional language). Every stage already reads English's word in every
+   * language: the handler's `from`, the SOV event strip, a floated phrase's
+   * reclaim.
+   */
+  private readNativeElsewhere(input: string, language: string): string {
+    const native = GRAMMAR_WORDS[language]?.elsewhere;
+    const marker = tryGetProfile(language)?.roleMarkers?.source;
+    if (!native || !marker) return input;
+    const form = tokenizeInternal(native, language).tokens.map(t => t.value.toLowerCase());
+    // By the word's first token, as a render spaces the tokens.
+    if (!form[0] || !input.toLowerCase().includes(form[0])) return input;
+    const markers = new Set([marker.primary, ...(marker.alternatives ?? [])].map(m => m.toLowerCase()));
+    const tokens = tokenizeInternal(input, language).tokens as LanguageToken[];
+    const isMarker = (t: LanguageToken | undefined) => !!t && markers.has(t.value.toLowerCase());
+    let out = input;
+    // From the end, so each replacement leaves the offsets before it.
+    for (let i = tokens.length - form.length; i >= 0; i--) {
+      if (!form.every((w, j) => tokens[i + j]!.value.toLowerCase() === w)) continue;
+      const placed =
+        marker.position === 'after' ? isMarker(tokens[i + form.length]) : isMarker(tokens[i - 1]);
+      if (!placed) continue;
+      const start = tokens[i]!.position.start;
+      const end = tokens[i + form.length - 1]!.position.end;
+      out = out.slice(0, start) + 'elsewhere' + out.slice(end);
+    }
+    return out;
+  }
+
+  /**
    * `fetch … do not throw` (or `don't throw`). No fetch pattern reads the phrase, so it dropped,
    * in English and so in every translation: a translated fetch then threw on a
    * 404 its author told it to tolerate. Worse, other languages' patterns read
@@ -6864,11 +6924,12 @@ export class SemanticParserImpl implements ISemanticParser {
    * body's `i` was unbound. As with tryTellTo, the phrase is excised before any
    * pattern sees it, the rest re-parsed, and the variable set on the loop it
    * follows: the one whose head's last value ends last before it, when only
-   * that loop's own words sit in between (`3 times を repeat index i`). It is
-   * English in every language, as the renderer writes it, after the loop
-   * head; `with index` is read and written back as `index index`, the same
-   * binding in the form both engines accept (2026-10-01). One phrase per
-   * call: the re-parse takes the next.
+   * that loop's own words sit in between (`3 times を repeat index i`). Each
+   * language writes its own word for `index` (grammar-words.ts, M2 sheet B5)
+   * after the loop head, and English's is read in every language; `with index`
+   * is read and written back as `index index`, the same binding in the form
+   * both engines accept (2026-10-01). One phrase per call: the re-parse takes
+   * the next.
    */
   private tryLoopIndex(
     arr: readonly LanguageToken[],
@@ -6897,13 +6958,28 @@ export class SemanticParserImpl implements ISemanticParser {
     const withWord = tryGetProfile(language)?.roleMarkers?.style?.primary?.toLowerCase();
     const isWith = (t: LanguageToken | undefined): boolean =>
       word(t) === 'with' || (!!withWord && word(t) === withWord);
+    // `index` in English or in the language's own word (grammar-words.ts),
+    // as the tokens it is written in: how many it takes at `at`, or 0.
+    const indexForms = grammarWordForms(language, 'index', w =>
+      tokenizeInternal(w, language).tokens.map(t => t.value)
+    );
+    const indexWordAt = (at: number): number =>
+      indexForms.find(form => form.every((w, j) => word(arr[at + j]) === w))?.length ?? 0;
     for (let at = 0; at + 1 < arr.length; at++) {
       const withIndex = isWith(arr[at]) && word(arr[at + 1]) === 'index';
       // Upstream's other spelling, `indexed by i`: the same binding.
       const indexedBy = word(arr[at]) === 'indexed' && word(arr[at + 1]) === 'by' && !!arr[at + 2];
-      const named = word(arr[at]) === 'index' || indexedBy;
+      const indexWord = indexWordAt(at);
+      const named = (indexWord > 0 && !!arr[at + indexWord]) || indexedBy;
       if (!withIndex && !named) continue;
-      const nameTok = arr[indexedBy ? at + 2 : at + 1]!;
+      const nameTok = arr[indexedBy ? at + 2 : withIndex ? at + 1 : at + indexWord]!;
+      // English's `index` before a marker, in a language with its own word, is
+      // a variable named `index`: a verb-final body that opens on one writes
+      // its marker next (ja `index を x に 置く`), which read as the loop's
+      // `index を` and lost the put. After the language's own word a marker's
+      // spelling can be the name (tr `indeks i`).
+      const english = indexWord > 0 && word(arr[at]) === 'index';
+      if (english && nameTok.kind === 'particle' && indexForms.length > 1) continue;
       const phraseStart = arr[at].position.start;
       const reduced = (
         input.slice(0, phraseStart).trimEnd() +
@@ -8660,12 +8736,15 @@ export class SemanticParserImpl implements ISemanticParser {
     const firstLower = firstToken.value.toLowerCase();
 
     // `once` written as `first`: en `on first click …`, and every other
-    // language's leading `first` (as its leading `once`). Semantic had no
-    // reading for either: en dropped the whole head (`on first click add …`
-    // rendered `add …`). A leading `first` before a selector is a positional
-    // query instead (hand-written ja `first <li/> を 隠す`, hide first <li/>).
+    // language's leading `first` (as its leading `once`), in English or in its
+    // own word, which its tokenizer reads as `first` (es `primero`, M2 sheet
+    // A7). Semantic had no reading for either: en dropped the whole head (`on
+    // first click add …` rendered `add …`). A leading `first` before a selector
+    // is a positional query instead (hand-written ja `first <li/> を 隠す`, hide
+    // first <li/>).
     const word = (i: number) => allTokens[i]?.value.toLowerCase();
     const notQuery = (i: number) => !!allTokens[i] && allTokens[i].kind !== 'selector';
+    const leadsWithFirst = (firstToken.normalized ?? firstLower).toLowerCase() === 'first';
     if (firstLower === 'on' && word(1) === 'first' && allTokens.length > 2) {
       return {
         modifiers: { once: true, onceAsFirst: true },
@@ -8673,7 +8752,7 @@ export class SemanticParserImpl implements ISemanticParser {
           input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
       };
     }
-    if (firstLower === 'first' && notQuery(1)) {
+    if (leadsWithFirst && notQuery(1)) {
       return {
         modifiers: { once: true, onceAsFirst: true },
         remainingInput: input.slice(allTokens[1].position.start),

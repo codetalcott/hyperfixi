@@ -193,6 +193,10 @@ export const ko: Dictionary = {
   },
 
   expressions: {
+    back: '뒤로',
+    elsewhere: '바깥',
+    index: '인덱스',
+    start: '시작',
     characters: '문자',
     inclusive: '포함',
     exclusive: '제외',

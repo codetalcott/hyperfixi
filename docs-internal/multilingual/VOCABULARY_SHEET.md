@@ -4,6 +4,22 @@
 kept English (`KEPT_ENGLISH`, `packages/testing-framework/src/multilingual/english-leaks.ts`), and C4 is
 deferred (kept English for now, still counted against the target).
 
+**Implemented:** A1 (#1431; for-loops keep the verb, es `repetir para x en`: a bare `para x en` is the
+separate `for` command), A2 (#1432), A8 (#1433), A7 and B3–B6 (2026-10-08). Open: A3–A6, A9, A10, B1, B2,
+B7. B3–B6's words are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries
+by a test.
+
+**Words changed from the appendix while implementing.** Each proposed word below was already another word
+of its language (a keyword or a role marker), or the tokenizer split it into one; the table has the word
+used instead. The native review checks these too.
+
+| row | words |
+| --- | ----- |
+| B3 back | ar `خلفا` (`للخلف` reads as two markers); id `mundur`, ms `undur`, ja `バック`, th `ย้อน` (`kembali`, `戻る`, `กลับ` are `return`); sw `kurudi` (`nyuma` is a marker) |
+| B4 elsewhere | es `afuera`, pt `exterior`, sw `kwingineko` (`fuera`, `fora`, `nje` are markers); he `חוץ` (`ב` + word); hi `अन्यत्र` (`बाहर` is `exit`); id `luaran`, ms `luar` (`di` is a marker); pl `zewnątrz` (`gdzie` is `where`); qu `hawa` (`-pi` is a marker); vi `ngoài`; ar `الخارج`, tr `dışarı` (read after `من` / before `den`) |
+| B5 index | ar `مؤشر` (`فهرس` reads as `ف`, `then`) |
+| B6 start | bn `আরম্ভ`, es `comenzar`, he `יזום`, id `memulai`, ms `memulakan`, pt `começar`, sw `zindua`, tl `umpisahan`, tr `başla` (the proposed word is the language's `init`); qu `qallay` (`qallariy` is `default`) |
+
 > For the owner, 2026-10-08. Each row is one decision. The words target in M2's exit
 > (`MULTILINGUAL_NEXT_STEPS.md`, M2 step 1) waits on it: without these words, 13.3% of corpus
 > renders and 19.4% of command-shape renders hold English the language has no word for. Answer per

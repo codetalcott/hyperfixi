@@ -83,9 +83,11 @@ export const bengaliLexicon: LanguageLexicon = {
     value: { primary: 'মান' },
   },
   expressions: {
+    back: { primary: 'পিছনে' },
     characters: { primary: 'অক্ষর' },
     children: { primary: 'সন্তান' },
     closest: { primary: 'নিকটতম' },
+    elsewhere: { primary: 'বাইরে' },
     // The EXPRESSION `empty` is the state predicate (`if my value is empty`),
     // not the command — `খালি-করুন` is the imperative "empty it!" the profile
     // keywords already carry for the `empty` COMMAND. Rendering the imperative
@@ -109,6 +111,7 @@ export const bengaliLexicon: LanguageLexicon = {
     random: { primary: 'এলোমেলো' },
     'sorted by': { primary: 'দ্বারা_সাজানো' },
     'split by': { primary: 'দ্বারা_বিভক্ত' },
+    start: { primary: 'আরম্ভ' },
     'starts with': { primary: 'দিয়ে_শুরু' },
   },
 };

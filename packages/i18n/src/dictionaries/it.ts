@@ -193,6 +193,10 @@ export const it: Dictionary = {
   },
 
   expressions: {
+    back: 'indietro',
+    elsewhere: 'altrove',
+    index: 'indice',
+    start: 'avvia',
     characters: 'caratteri',
     inclusive: 'inclusivo',
     exclusive: 'esclusivo',
