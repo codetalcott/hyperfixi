@@ -28,6 +28,17 @@ import { toUpstreamSpelling } from './upstream-spelling';
 export function render(node: SemanticNode, language: string): string {
   if (language === 'en') return semanticRenderer.render(toUpstreamSpelling(node), language);
   if (!tryGetProfile(language)) return semanticRenderer.render(node, language);
+  semanticRenderer.takeNativeQueryIn();
+  const text = renderReadable(node, language);
+  // A query's scope in the language's own `in` (es `<button/> en yo`) can read
+  // as a marker the command wants (es `obtener valor de primero <input/> en
+  // yo` read `en yo` as get's `on me`); there it is written with English's,
+  // which every reader takes.
+  if (!semanticRenderer.takeNativeQueryIn() || readsAs(text, language, node)) return text;
+  return semanticRenderer.renderEnglishQueryIn(() => renderReadable(node, language));
+}
+
+function renderReadable(node: SemanticNode, language: string): string {
   let wrapped = false;
   const guard = (raw: string): string => {
     const out = parenthesizeCollidingNames(raw, language);

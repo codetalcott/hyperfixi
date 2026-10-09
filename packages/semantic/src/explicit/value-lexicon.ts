@@ -51,6 +51,7 @@
  */
 import type { LanguageLexicon, LanguageProfile } from '../generators/profiles/types';
 import { getLexicon } from '../lexicon-registry';
+import { queryInWord } from '../parser/utils/grammar-words';
 
 /** Category order matters: first hit wins, mirroring i18n's DICTIONARY_CATEGORIES. */
 const LEXICON_CATEGORIES = ['values', 'expressions', 'logical', 'temporal', 'attributes'] as const;
@@ -243,6 +244,31 @@ function thirdPerson(text: string): string {
 }
 
 /**
+ * The `in` that scopes a query, written in the language's own word (M2,
+ * vocabulary sheet A5): after a `<…/>` query, or a positional run (`first
+ * .item`), and before what the reader takes as its scope there: an element
+ * (`#chat`, `.modal`, `<form/>`), `closest <…>`, or a reference (`me`). es
+ * `primero <input/> en cercano <form/>`. The word is masked, so the word pass
+ * leaves it alone. Any other `in` (`x is in y`, a loop's) is not a query's.
+ */
+const QUERY_IN =
+  /(<[^<>]*\/>|(?:^|[^\w$.#@*:-])(?:first|last|next|previous|random|closest)\s+[.#][\w-]+)((?:\.[\w-]+)*\s+)in(?=\s+(?:(?:closest\s+)?[#.<]|(?:me|it|you|body|document|target|result)\b))/g;
+function nativeQueryIn(text: string, queryIn: QueryIn, spans: string[]): string {
+  if (queryIn.word === 'in') return text;
+  return text.replace(QUERY_IN, (_, query: string, gap: string) => {
+    queryIn.wrote?.();
+    spans.push(queryIn.word);
+    return `${query}${gap}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+  });
+}
+
+/** The `in` a query's scope is written with, and who to tell when it is the language's own. */
+export interface QueryIn {
+  readonly word: string;
+  readonly wrote?: () => void;
+}
+
+/**
  * Localize the interior of a value string.
  *
  * Returns the input unchanged when the language has no lexicon, so a language
@@ -253,7 +279,8 @@ export function localizeValueInterior(
   language: string,
   profile?: LanguageProfile,
   /** Words to leave as written: the expression's variables the renderer keeps (P49). */
-  keep?: ReadonlySet<string>
+  keep?: ReadonlySet<string>,
+  queryIn: QueryIn = { word: queryInWord(language) }
 ): string {
   if (!raw) return raw;
   // No registered lexicon means the language's `lexicons/{code}` module was not
@@ -276,7 +303,7 @@ export function localizeValueInterior(
     }
   );
 
-  const localized = thirdPerson(masked).replace(WORD, (whole, lead: string, word: string) => {
+  const localized = thirdPerson(nativeQueryIn(masked, queryIn, spans)).replace(WORD, (whole, lead: string, word: string) => {
     if (keep?.has(word)) return whole;
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;
