@@ -5,9 +5,11 @@ kept English (`KEPT_ENGLISH`, `packages/testing-framework/src/multilingual/engli
 deferred (kept English for now, still counted against the target).
 
 **Implemented:** A1 (#1431; for-loops keep the verb, es `repetir para x en`: a bare `para x en` is the
-separate `for` command), A2 (#1432; its negation `I do not match`, 2026-10-09), A8 (#1433), A7 and B3–B6 (#1434). Open: A3–A6, A9, A10, B1, B2,
-B7. B3–B6's words are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries
-by a test.
+separate `for` command), A2 (#1432; its negation `I do not match`, #1435), A8 (#1433), A7 and B3–B6
+(#1434), A5 (2026-10-09; where a language's `in` would read as a marker the command wants, es `obtener
+<input/> en yo`, the translation keeps English's). Open: A3, A4, A6, A9, A10, B1, B2, B7. The words of
+B3–B6 and A5 are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a
+test.
 
 **Words changed from the appendix while implementing.** Each proposed word below was already another word
 of its language (a keyword or a role marker), or the tokenizer split it into one; the table has the word

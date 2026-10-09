@@ -100,9 +100,9 @@ import {
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
-import { grammarWord } from '../parser/utils/grammar-words';
+import { grammarWord, queryInWord } from '../parser/utils/grammar-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
-import { localizeValueInterior, outsideCallArguments } from './value-lexicon';
+import { localizeValueInterior, outsideCallArguments, type QueryIn } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
@@ -179,6 +179,40 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
   /** A variable was written in the language's own word during this render. */
   private localizedVariable = false;
+
+  /** Write a query's scope with English's `in` (renderEnglishQueryIn). */
+  private englishQueryIn = false;
+
+  /** A query's scope was written with the language's own `in` since the last reset. */
+  private nativeQueryIn = false;
+
+  /** The `in` a query's scope is written with in this render. */
+  private queryIn(language: string): QueryIn {
+    const word = this.englishQueryIn ? 'in' : queryInWord(language);
+    return { word, wrote: () => (this.nativeQueryIn = true) };
+  }
+
+  /**
+   * Whether a render since the last call wrote a query's scope with the
+   * language's own `in` (es `<button/> en yo`, M2 sheet A5), which the
+   * verified render re-reads: where the language's `in` is also a marker the
+   * command wants (es `en`), the reader can take it as the command's.
+   */
+  takeNativeQueryIn(): boolean {
+    const wrote = this.nativeQueryIn;
+    this.nativeQueryIn = false;
+    return wrote;
+  }
+
+  /** Run `render` with each query's scope written with English's `in` (the verified render's fallback). */
+  renderEnglishQueryIn<T>(render: () => T): T {
+    this.englishQueryIn = true;
+    try {
+      return render();
+    } finally {
+      this.englishQueryIn = false;
+    }
+  }
 
   /**
    * Render, and say whether a variable was written in the language's own word
@@ -1439,11 +1473,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         return this.localizeValue(String(value.value), language);
 
       case 'selector':
-        // A scoped query keeps English `in`, as a positional query's does
-        // (`first <li/> in #list`): every language's parser reads it there.
-        return value.scope
-          ? `${value.value} in ${this.valueToNaturalString(value.scope, language)}`
-          : value.value;
+        // A scoped query writes the language's `in` (es `<button/> en yo`), as
+        // a positional query's does (value-lexicon.ts): every reader takes it
+        // there, and English's.
+        if (!value.scope) return value.value;
+        {
+          const queryIn = this.queryIn(language);
+          if (queryIn.word !== 'in') queryIn.wrote?.();
+          return `${value.value} ${queryIn.word} ${this.valueToNaturalString(value.scope, language)}`;
+        }
 
       case 'reference':
         return this.renderReference(value, language);
@@ -1559,7 +1597,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private localizeValue(raw: string, language: string, keep?: ReadonlySet<string>): string {
     if (language === 'en') return raw;
-    return localizeValueInterior(raw, language, tryGetProfile(language), keep);
+    return localizeValueInterior(raw, language, tryGetProfile(language), keep, this.queryIn(language));
   }
 
   /**

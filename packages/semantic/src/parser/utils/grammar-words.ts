@@ -64,3 +64,42 @@ export function grammarWordForms(
   if (native && native !== key) forms.push(split(native).map(w => w.toLowerCase()));
   return forms;
 }
+
+/**
+ * The `in` that scopes a query, in each language's own word (M2, vocabulary
+ * sheet A5): `<button/> in me`, `first <input/> in closest <form/>`, `last
+ * <.message/> in #chat`. It was English in every translation. The word is the
+ * dictionary's `modifiers.in` (a test holds the table to it), the one a loop's
+ * `for x in` already writes; every reader takes it after a query, as it takes
+ * English's (`LOCATIVE_SURFACES`). he has no word yet (sheet B7). The
+ * comparison `x is in y` keeps English's.
+ */
+export const QUERY_IN: Readonly<Record<string, string>> = {
+  ar: 'في',
+  bn: 'এ',
+  de: 'in',
+  es: 'en',
+  fr: 'en',
+  hi: 'में',
+  id: 'dalam',
+  it: 'in',
+  ja: 'の中',
+  ko: '안에',
+  ms: 'dalam',
+  pl: 'w',
+  pt: 'dentro',
+  qu: 'ukupi',
+  ru: 'в',
+  sw: 'ndani',
+  th: 'ใน',
+  tl: 'sa_loob',
+  tr: 'içinde',
+  uk: 'у',
+  vi: 'trong',
+  zh: '在',
+};
+
+/** The `in` a translation writes after a query: the language's own, or English's. */
+export function queryInWord(language: string): string {
+  return QUERY_IN[language] ?? 'in';
+}

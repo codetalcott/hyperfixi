@@ -1,20 +1,20 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23636,
-  "leaky": 7870,
-  "findings": 11974,
+  "leaky": 7758,
+  "findings": 11797,
   "kinds": {
     "word": {
-      "renders": 5066,
-      "findings": 7847
+      "renders": 4924,
+      "findings": 7646
     },
     "event": {
       "renders": 0,
       "findings": 0
     },
     "case": {
-      "renders": 3830,
-      "findings": 4127
+      "renders": 3854,
+      "findings": 4151
     }
   },
   "entries": {
@@ -111,10 +111,9 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "0cee637bb9": {
-      "case:me in it matches where": "ar bn es he hi pl pt ru tl uk",
-      "case:me it matches where": "de it tr",
-      "in it matches where": "fr id ja ko ms qu sw th zh",
-      "it matches where": "vi"
+      "case:me in it matches where": "he",
+      "case:me it matches where": "ar bn de es hi it pl pt ru tl tr uk",
+      "it matches where": "fr id ja ko ms qu sw th vi zh"
     },
     "0eaa74fad5": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -123,10 +122,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "0ff2f70080": {
-      "case:me": "de it tr",
-      "case:me in": "bn hi",
+      "case:me": "bn de it tr",
+      "case:me in": "hi",
       "first in": "he",
-      "in": "ar es fr id ja ko ms pl pt qu ru sw th tl uk zh"
+      "in": "ar es pl ru th"
     },
     "103adfe987": {
       "trigger": "qu"
@@ -246,15 +245,13 @@
       "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "2159462e64": {
-      "case:me": "de it tr",
-      "case:me in": "bn hi",
+      "case:me": "bn de it tr",
+      "case:me in": "hi",
       "first in": "he",
-      "in": "ar es fr id ja ko ms pl pt qu ru sw th tl uk zh"
+      "in": "ar es pl ru th"
     },
     "216845203a": {
-      "case:me": "de it tr",
-      "case:me in": "bn hi",
-      "in": "ar es fr id ja ko ms pl pt ru sw th tl uk zh",
+      "case:me": "ar bn de es hi it pl ru tr",
       "in is": "he"
     },
     "21c66949f1": {
@@ -982,11 +979,10 @@
       "of the": "vi"
     },
     "84c8655749": {
-      "case:me": "de it tr",
-      "case:me contains in": "bn",
-      "case:me in": "hi",
-      "contains in": "he th",
-      "in": "ar es fr id ja ko ms pl pt qu ru sw tl uk zh"
+      "case:me": "ar de es hi it pl ru tr",
+      "case:me contains": "bn",
+      "contains": "th",
+      "contains in": "he"
     },
     "8546811a92": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1006,9 +1002,8 @@
       "catch finally": "fr id ja ko ms qu sw th vi zh"
     },
     "86bfd24dc8": {
-      "case:me": "de it tr",
-      "case:me in": "bn hi",
-      "in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
+      "case:me": "ar bn de es hi it pl ru tr",
+      "in": "he"
     },
     "8712ddea5b": {
       "at of": "he"
@@ -1130,10 +1125,9 @@
       "def": "*"
     },
     "9a110b248d": {
-      "case:me in it matches where": "ar bn es he hi pl pt ru tl uk",
-      "case:me it matches where": "de it tr",
-      "in it matches where": "fr id ja ko ms qu sw th zh",
-      "it matches where": "vi"
+      "case:me in it matches where": "he",
+      "case:me it matches where": "ar bn de es hi it pl pt ru tl tr uk",
+      "it matches where": "fr id ja ko ms qu sw th vi zh"
     },
     "9a50db7c19": {
       "case:me": "bn he hi tr"
@@ -1334,8 +1328,9 @@
       "in": "he"
     },
     "b948ed872b": {
-      "in": "ar es fr hi id ja ko ms pl pt qu ru sw tl uk zh",
-      "in matches no": "bn he th",
+      "in": "qu",
+      "in matches no": "he",
+      "matches no": "bn th",
       "no": "vi"
     },
     "b9502de444": {
@@ -1428,7 +1423,7 @@
       "immediately": "*"
     },
     "c6bb505006": {
-      "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
+      "in": "he"
     },
     "c6f31063f2": {
       "def": "*"
@@ -1492,9 +1487,8 @@
       "catch": "fr id ja ko ms qu sw th vi zh"
     },
     "d4559bb0fb": {
-      "case:me": "de it tr",
-      "case:me in": "bn hi",
-      "in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
+      "case:me": "ar bn de es hi it pl ru tr",
+      "in": "he"
     },
     "d54bf42f20": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1649,11 +1643,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "e71ea44d67": {
-      "case:me": "de it tr",
-      "case:me in": "hi",
-      "case:me in matches": "bn",
-      "in": "ar es fr id ja ko ms pl pt qu ru sw tl uk zh",
-      "in matches": "he th"
+      "case:me": "ar de es hi it pl ru tr",
+      "case:me matches": "bn",
+      "in matches": "he",
+      "matches": "th"
     },
     "e7687f49e4": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1767,11 +1760,9 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "fc1f6f6ab5": {
-      "case:me in the": "bn hi",
-      "case:me the": "de it tr",
+      "case:me the": "ar bn de es hi it pl ru tr",
       "empty in is is the": "he",
-      "in the": "ar es fr id ja ko ms pl pt ru sw th tl uk zh",
-      "the": "vi"
+      "the": "fr id ja ko ms pt sw th tl uk vi zh"
     },
     "fc4fc8f3f1": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"

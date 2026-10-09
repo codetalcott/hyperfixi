@@ -1861,6 +1861,20 @@ export function joinExpressionTokens(
       continue;
     }
 
+    // A query's scope, `<query> <in> <scope>`: a translation writes the
+    // language's `in` there (es `si ningún <li/> en #list`, M2 sheet A5), and
+    // the positional run above reads it only after a positional word.
+    const scoped =
+      previous?.kind === 'selector' && previous.value.startsWith('<')
+        ? matchQueryScope(tokens, i, profile)
+        : null;
+    if (scoped) {
+      append('in', scoped.marker);
+      for (const part of scoped.scope.parts) append(part.text, part.token);
+      i += scoped.scope.consumed;
+      continue;
+    }
+
     // Ambiguous-sense anchor — AFTER the possessive/of/positional anchors (so
     // it can only claim tokens they declined) and before the connective table
     // (these surfaces are deliberately NOT connectives; the sense table is
