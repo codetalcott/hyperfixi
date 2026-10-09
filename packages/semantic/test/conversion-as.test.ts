@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { getSupportedLanguages, parse, render, translate } from '../src/index';
 import { CONVERSION_AS } from '../src/parser/utils/grammar-words';
 import { localizeValueInterior } from '../src/explicit/value-lexicon';
+import { ofPhrasesAsPossessives } from '../src/explicit/of-phrases';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
 // he has no word yet (sheet B7).
@@ -34,7 +35,10 @@ describe.each([
     const rendered = translate(source, 'en', language);
     expect(words(rendered)).toContain(CONVERSION_AS[language]);
     expect(words(rendered)).not.toContain('as');
-    expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
+    // `the value of #price` comes back without its `the` (sheet A3).
+    expect(ofPhrasesAsPossessives(translate(rendered, language, 'en'))).toBe(
+      ofPhrasesAsPossessives(translate(source, 'en', 'en'))
+    );
   });
 });
 

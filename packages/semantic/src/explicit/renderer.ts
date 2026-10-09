@@ -109,6 +109,7 @@ import {
   type ValueWords,
 } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
+import { OF_PHRASE, convertedAt, ofPhraseProperties } from './of-phrases';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 /**
@@ -157,6 +158,17 @@ function pinnedLiteral(rule: ExtractionRule | undefined): string | undefined {
 const EN_PROPERTY_WORDS: ReadonlySet<string> = new Set(
   Object.values(PROPERTY_NAME_LEXICON).flatMap(map => Object.values(map))
 );
+
+/** Apply `rewrite` outside every quoted string, which a translation writes as written. */
+function outsideQuotes(raw: string, rewrite: (text: string) => string): string {
+  if (!/["'`]/.test(raw)) return rewrite(raw);
+  const spans: string[] = [];
+  const masked = raw.replace(/"[^"]*"|`[^`]*`|'(?!s\b)[^']*'/g, quoted => {
+    spans.push(quoted);
+    return `${spans.length - 1}`;
+  });
+  return rewrite(masked).replace(/(\d+)/g, (_, index: string) => spans[Number(index)]!);
+}
 
 /**
  * A quoted string, written back. Double quotes, as the reader takes either
@@ -1688,7 +1700,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // converts `#a` (upstream's reading, and core's). So a phrase before `as`
     // keeps its binding: English leaves the `of` form as it is, and another
     // language parenthesizes a property-first rendering.
-    const convertedAt = (text: string, end: number): boolean => /^\s+as\b/.test(text.slice(end));
     if (language === 'en') {
       return raw.replace(
         /\b(?:the\s+)?([A-Za-z][\w-]*)\s+of\s+([#.][\w-]+)/g,
@@ -1698,13 +1709,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             : whole
       );
     }
-    if (!raw.includes("'s")) return raw;
     const link = (object: SemanticValue, property: string): string =>
       this.renderPropertyPath(
         { type: 'property-path', object, property, access: 'possessive' } as PropertyPathValue,
         language
       );
-    return raw.replace(
+    const ofForms = this.localizeOfPossessives(raw, link);
+    if (!ofForms.includes("'s")) return ofForms;
+    return ofForms.replace(
       /([#.][\w-]+)((?:'s\s+[A-Za-z][\w-]*)+)/g,
       (whole, owner: string, chain: string, offset: number, text: string) => {
         const [first, ...rest] = [...chain.matchAll(/'s\s+([A-Za-z][\w-]*)/g)].map(m => m[1]!);
@@ -1726,6 +1738,49 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           ? `(${rendered})`
           : rendered;
       }
+    );
+  }
+
+  /**
+   * `the X of Y` inside an expression, in the language's own construction (M2,
+   * vocabulary sheet A3): es `( valor de #price ) + 1`, ja `( #priceの値 ) + 1`,
+   * as a top-level property path already was. It was English in every
+   * translation (`( the valor of #price ) + 1`). A chain nests, each link the
+   * next one's owner: `innerHTML of parentElement of .divs` is `.divs's
+   * parentElement's innerHTML`, so it renders as the possessive pass renders
+   * that. `the` goes, as the engine reads the phrase the same without it.
+   *
+   * Only a selector owner, which every reader takes after its of-word; and
+   * only a property, a style or an attribute, never a positional word (`the
+   * first of .items`). Before `as` the phrase converts its owner (`the value of
+   * #price as Number` is `value of (#price as Number)`), which a property-first
+   * rendering keeps and an owner-first one (`#priceの値 として Number`) would
+   * not, so there an owner-first language keeps the English. The verified
+   * render re-reads a translation that wrote one, and writes the English where
+   * it does not read back (renderEnglishValueWords).
+   */
+  private localizeOfPossessives(
+    raw: string,
+    link: (object: SemanticValue, property: string) => string
+  ): string {
+    if (this.englishValueWords || !/\bof\b/.test(raw)) return raw;
+    return outsideQuotes(raw, text =>
+      text.replace(OF_PHRASE, (whole, lead: string, chain: string, owner: string, offset: number) => {
+        const properties = ofPhraseProperties(chain);
+        if (!properties) return whole;
+        const [innermost, ...outer] = properties.reverse();
+        let rendered = link(createSelector(owner), innermost!);
+        if (!rendered) return whole;
+        const propertyFirst = !rendered.startsWith(owner);
+        if (!propertyFirst && convertedAt(text, offset + whole.length)) return whole;
+        if (propertyFirst) {
+          for (const property of outer) rendered = link(createSelector(rendered), property);
+        } else {
+          rendered += outer.map(property => `'s ${property}`).join('');
+        }
+        this.nativeValueWord = true;
+        return `${lead}${rendered}`;
+      })
     );
   }
 

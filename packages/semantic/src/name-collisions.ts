@@ -21,6 +21,7 @@ import { loneKeywordKind, translateConnective } from './parser/utils/expression-
 import { parseExpression } from './ast-builder/expression-parser/parser';
 import { parseWithConfidence } from './utils/confidence-calculator';
 import { render } from './explicit/renderer';
+import { ofPhrasesAsPossessives } from './explicit/of-phrases';
 import type { LanguageToken, SemanticNode } from './types';
 import { VALUE_WORDS } from './value-words';
 
@@ -178,9 +179,18 @@ function withoutNameParens(code: string): string {
  */
 export function readsAs(code: string, language: string, node: SemanticNode): boolean {
   const back = parseWithConfidence(code, language).node;
-  return (
-    !!back && withoutNameParens(readingOfNode(back)) === withoutNameParens(readingOfNode(node))
-  );
+  return !!back && sameReading(readingOfNode(back), readingOfNode(node));
+}
+
+/**
+ * Two English readings, alike up to a name in parentheses and the spelling
+ * of a possessive: a translation reads `valor de #price` back as `value of
+ * #price` and ja `#priceの値` as `#price's value`, which both engines read as
+ * `the value of #price` (M2, sheet A3).
+ */
+function sameReading(a: string, b: string): boolean {
+  const canonical = (reading: string): string => ofPhrasesAsPossessives(withoutNameParens(reading));
+  return canonical(a) === canonical(b);
 }
 
 /** A variable of a program that collides with a word of the program's language. */

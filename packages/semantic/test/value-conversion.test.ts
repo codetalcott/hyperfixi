@@ -19,6 +19,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST } from '../src/index';
 import { readsAsOneExpression } from '../src/parser/utils/value-extent';
+import { ofPhrasesAsPossessives } from '../src/explicit/of-phrases';
 
 const LANGUAGES = [
   'ar',
@@ -48,12 +49,13 @@ const LANGUAGES = [
 
 /**
  * Spellings that are the same program on both engines: the English join spaces
- * a call's parentheses and a unary minus, and a parenthesized `of` phrase is
- * the possessive it renders (`(textContent of #a)` is `#a's textContent`).
+ * a call's parentheses and a unary minus, a parenthesized `of` phrase is the
+ * possessive it renders (`(textContent of #a)` is `#a's textContent`), and so
+ * is any other outside a conversion (`@title of #a`, which ja writes `#aの@title`
+ * and reads back as `#a's @title`; M2 sheet A3).
  */
 const normalize = (code: string): string =>
-  code
-    .replace(/\(\s*([A-Za-z][\w-]*) of ([#.][\w-]+)\s*\)/g, "$2's $1")
+  ofPhrasesAsPossessives(code.replace(/\(\s*([A-Za-z][\w-]*) of ([#.][\w-]+)\s*\)/g, "$2's $1"))
     .replace(/\s*\(\s*/g, '(')
     .replace(/\s*\)/g, ')')
     .replace(/\s*,\s*/g, ', ')
