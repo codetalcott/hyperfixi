@@ -34,6 +34,7 @@ import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
+import { grammarWord } from './utils/grammar-words';
 
 /**
  * NESTED block-opening keywords balanced by a matching `end`. Deliberately
@@ -102,6 +103,9 @@ interface OpenerForms {
   readonly featureForms: Set<string>;
   /** The `on` marker precedes its event (SVO/VSO/V2), so `on <event>` can be read forward. */
   readonly onLeads: boolean;
+  /** The language's own `start` (grammar-words.ts), as its tokens, and whether it comes last. */
+  readonly startWords: readonly string[];
+  readonly startLast: boolean;
 }
 
 function openerForms(language: string): OpenerForms {
@@ -116,6 +120,11 @@ function openerForms(language: string): OpenerForms {
       ['def', 'init', 'behavior'].flatMap(action => [...keywordForms(language, action)])
     ),
     onLeads: tryGetProfile(language)?.wordOrder !== 'SOV',
+    startWords:
+      language === 'en'
+        ? []
+        : tokenize(grammarWord(language, 'start'), language).tokens.map(t => t.value.toLowerCase()),
+    startLast: tryGetProfile(language)?.wordOrder === 'SOV',
   };
 }
 
@@ -145,14 +154,23 @@ function openerActionOf(
 
 /**
  * `start [a] view transition`, the head of a view-transition block, whose `end`
- * closes it. Its words are English in every language (patterns/view-transition.ts),
- * so they are matched as written.
+ * closes it. `view transition` is English in every language, and `start` is
+ * English's or the language's own (patterns/view-transition.ts): before the
+ * pair, or after it in a verb-final language (ja `view transition 開始`), where
+ * the head opens at `view`. Matched as written.
  */
-function opensViewTransition(tokens: readonly LanguageToken[], j: number): boolean {
+function opensViewTransition(
+  tokens: readonly LanguageToken[],
+  j: number,
+  forms: OpenerForms
+): boolean {
   const word = (k: number): string | undefined => tokens[k]?.value.toLowerCase();
-  if (word(j) !== 'start') return false;
-  const view = word(j + 1) === 'a' ? j + 2 : j + 1;
-  return word(view) === 'view' && word(view + 1) === 'transition';
+  const viewAt = (k: number) => word(k) === 'view' && word(k + 1) === 'transition';
+  const startAt = (k: number) =>
+    forms.startWords.length > 0 && forms.startWords.every((w, i) => word(k + i) === w);
+  if (word(j) === 'start') return viewAt(word(j + 1) === 'a' ? j + 2 : j + 1);
+  if (forms.startLast) return viewAt(j) && startAt(j + 2);
+  return startAt(j) && viewAt(j + forms.startWords.length);
 }
 
 /** A `tell` keyword: the tokenizer's normalized form, or the language's own word. */
@@ -208,7 +226,7 @@ function tellTakesAnEnd(tokens: readonly LanguageToken[], j: number, forms: Open
  *   upstream reads it.
  */
 function opensBlock(tokens: readonly LanguageToken[], j: number, forms: OpenerForms): boolean {
-  if (opensViewTransition(tokens, j)) return true;
+  if (opensViewTransition(tokens, j, forms)) return true;
   if (isTellWord(tokens[j], forms)) return tellTakesAnEnd(tokens, j, forms);
   const tok = tokens[j];
   const action = openerActionOf(tok, forms);
